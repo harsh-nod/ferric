@@ -133,6 +133,179 @@ const LOCAL_RUNTIME_ROOTS: &[(&str, &str, &str, &str)] = &[
         "ferric_qwen3_all_kernels_device_v1",
     ),
 ];
+const ED25519_DALEK_CHECKSUM: &str =
+    "70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9";
+const LIBC_CHECKSUM: &str = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2";
+const SHA2_0_11_CHECKSUM: &str = "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4";
+const PROC_MACRO2_CHECKSUM: &str =
+    "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9";
+const QUOTE_CHECKSUM: &str = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001";
+const SYN_CHECKSUM: &str = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297";
+const TOML_CHECKSUM: &str = "3aace63f4bbcdfc2c965b059de67119c89c4017a70d633be6c104910f67056f5";
+
+#[derive(Clone, Copy)]
+struct ExpectedVerifierDependency {
+    name: &'static str,
+    edge_name: &'static str,
+    declared_source: Option<&'static str>,
+    requirement: &'static str,
+    kind: Option<&'static str>,
+    uses_default_features: bool,
+    features: &'static [&'static str],
+    relative_path: Option<&'static str>,
+    resolved_version: &'static str,
+    checksum: Option<&'static str>,
+}
+
+const VERIFIER_NORMAL_DEPENDENCIES: &[ExpectedVerifierDependency] = &[
+    ExpectedVerifierDependency {
+        name: "ed25519-dalek",
+        edge_name: "ed25519_dalek",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=2.2.0",
+        kind: None,
+        uses_default_features: false,
+        features: &["fast", "zeroize"],
+        relative_path: None,
+        resolved_version: "2.2.0",
+        checksum: Some(ED25519_DALEK_CHECKSUM),
+    },
+    ExpectedVerifierDependency {
+        name: "fe2o3-host",
+        edge_name: "fe2o3_host",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedVerifierDependency {
+        name: "fe2o3-hsaco-finalize",
+        edge_name: "fe2o3_hsaco_finalize",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedVerifierDependency {
+        name: "fe2o3-verifier",
+        edge_name: "fe2o3_verifier",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedVerifierDependency {
+        name: "ferric-qwen3-all-kernels-device-v1",
+        edge_name: "ferric_qwen3_all_kernels_device_v1",
+        declared_source: None,
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: Some("device/qwen3-all-kernels-v1"),
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedVerifierDependency {
+        name: "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+        edge_name: "ferric_qwen3_all_kernels_worker_v3_source_pin_v1",
+        declared_source: None,
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: Some("adapters/qwen3-all-kernels-worker-v3-source-pin-v1"),
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedVerifierDependency {
+        name: "libc",
+        edge_name: "libc",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=0.2.189",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.2.189",
+        checksum: Some(LIBC_CHECKSUM),
+    },
+    ExpectedVerifierDependency {
+        name: "sha2",
+        edge_name: "sha2",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=0.11.0",
+        kind: None,
+        uses_default_features: false,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.11.0",
+        checksum: Some(SHA2_0_11_CHECKSUM),
+    },
+];
+
+const VERIFIER_DEV_DEPENDENCIES: &[ExpectedVerifierDependency] = &[
+    ExpectedVerifierDependency {
+        name: "proc-macro2",
+        edge_name: "proc_macro2",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=1.0.107",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "1.0.107",
+        checksum: Some(PROC_MACRO2_CHECKSUM),
+    },
+    ExpectedVerifierDependency {
+        name: "quote",
+        edge_name: "quote",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=1.0.47",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "1.0.47",
+        checksum: Some(QUOTE_CHECKSUM),
+    },
+    ExpectedVerifierDependency {
+        name: "syn",
+        edge_name: "syn",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=2.0.119",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &["full", "visit"],
+        relative_path: None,
+        resolved_version: "2.0.119",
+        checksum: Some(SYN_CHECKSUM),
+    },
+    ExpectedVerifierDependency {
+        name: "toml",
+        edge_name: "toml",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=1.1.4",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "1.1.4+spec-1.1.0",
+        checksum: Some(TOML_CHECKSUM),
+    },
+];
 const AGGREGATE_ROSTER_NAME: &str = "M1AllKernelsWorkerV3RosterV1";
 const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
     (
@@ -175,10 +348,7 @@ const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
         "CompactCompletion",
         "super::logits::ferric_qwen3_compact_completion_v1_gpu::Marker",
     ),
-    (
-        "RmsNorm",
-        "super::rmsnorm::qwen3_rmsnorm_v1_gpu::Marker",
-    ),
+    ("RmsNorm", "super::rmsnorm::qwen3_rmsnorm_v1_gpu::Marker"),
     ("Rope", "super::rope_kv::qwen3_rope_v1_gpu::Marker"),
 ];
 const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
@@ -195,10 +365,7 @@ const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
     "Rope",
     "RmsNorm",
 ];
-const AGGREGATE_HOST_REEXPORT: &[&str] = &[
-    "host_roster",
-    "M1AllKernelsWorkerV3RosterV1",
-];
+const AGGREGATE_HOST_REEXPORT: &[&str] = &["host_roster", "M1AllKernelsWorkerV3RosterV1"];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
     "ferric_engine::cache::KvPool::new_bounded",
     "ferric_engine::system::Engine::new",
@@ -206,11 +373,7 @@ const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
 
 type GateResult<T> = Result<T, String>;
 type ModuleMap = BTreeMap<String, (String, String)>;
-type WalkOutput = (
-    ModuleMap,
-    BTreeSet<Function>,
-    BTreeSet<PathBuf>,
-);
+type WalkOutput = (ModuleMap, BTreeSet<Function>, BTreeSet<PathBuf>);
 
 #[derive(Clone)]
 struct PackageTarget {
@@ -364,6 +527,26 @@ fn string_array(value: &Value, field: &str, description: &str) -> GateResult<Vec
         return Err(format!("duplicate Cargo metadata {description}"));
     }
     Ok(result)
+}
+
+fn ordered_string_array<'a>(
+    value: &'a Value,
+    field: &str,
+    description: &str,
+) -> GateResult<Vec<&'a str>> {
+    value
+        .get(field)
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("Cargo metadata field {field} is absent or malformed"))?
+        .iter()
+        .map(|item| {
+            let item = item
+                .as_str()
+                .ok_or_else(|| format!("Cargo metadata {description} is not a string"))?;
+            safe_tcb_field(item, description)?;
+            Ok(item)
+        })
+        .collect()
 }
 
 fn lock_string(line: &str, field: &str) -> GateResult<Option<String>> {
@@ -612,6 +795,337 @@ fn validate_fe2o3_root_declaration(owner: &str, dependency: &Value) -> GateResul
     Ok(true)
 }
 
+fn nullable_string_field<'a>(value: &'a Value, field: &str) -> GateResult<Option<&'a str>> {
+    match value.get(field) {
+        Some(Value::Null) => Ok(None),
+        Some(Value::String(value)) => Ok(Some(value)),
+        Some(_) => Err(format!("Cargo metadata field {field} is malformed")),
+        None => Err(format!("Cargo metadata field {field} is absent")),
+    }
+}
+
+fn expected_verifier_dependency<'a>(
+    roster: &'a [ExpectedVerifierDependency],
+    name: &str,
+) -> Option<&'a ExpectedVerifierDependency> {
+    roster.iter().find(|expected| expected.name == name)
+}
+
+fn validate_verifier_dependency_declaration(
+    repo: &Path,
+    dependency: &Value,
+    expected: &ExpectedVerifierDependency,
+) -> GateResult<()> {
+    let object = dependency
+        .as_object()
+        .ok_or_else(|| format!("verifier dependency is malformed: {}", expected.name))?;
+    let mut expected_keys = BTreeSet::from([
+        "features",
+        "kind",
+        "name",
+        "optional",
+        "registry",
+        "rename",
+        "req",
+        "source",
+        "target",
+        "uses_default_features",
+    ]);
+    if expected.relative_path.is_some() {
+        expected_keys.insert("path");
+    }
+    let actual_keys = object.keys().map(String::as_str).collect::<BTreeSet<_>>();
+    let features = ordered_string_array(dependency, "features", "verifier dependency feature")?;
+    let path_matches = match expected.relative_path {
+        Some(relative_path) => {
+            let declared = dependency
+                .get("path")
+                .and_then(Value::as_str)
+                .ok_or_else(|| format!("verifier dependency path is absent: {}", expected.name))?;
+            let expected_root = canonical(&repo.join(relative_path))?;
+            expected_root != repo
+                && expected_root.strip_prefix(repo).map_err(|_| {
+                    format!(
+                        "verifier dependency path escapes repository: {}",
+                        expected.name
+                    )
+                })? == Path::new(relative_path)
+                && canonical(Path::new(declared))? == expected_root
+        }
+        None => !object.contains_key("path"),
+    };
+    if actual_keys != expected_keys
+        || string_field(dependency, "name")? != expected.name
+        || nullable_string_field(dependency, "source")? != expected.declared_source
+        || string_field(dependency, "req")? != expected.requirement
+        || nullable_string_field(dependency, "kind")? != expected.kind
+        || nullable_string_field(dependency, "rename")?.is_some()
+        || bool_field(dependency, "optional")?
+        || bool_field(dependency, "uses_default_features")? != expected.uses_default_features
+        || features.as_slice() != expected.features
+        || nullable_string_field(dependency, "target")?.is_some()
+        || nullable_string_field(dependency, "registry")?.is_some()
+        || !path_matches
+    {
+        return Err(format!(
+            "protected verifier dependency declaration drifted: {}",
+            expected.name
+        ));
+    }
+    Ok(())
+}
+
+fn validate_verifier_dependency_declarations(
+    repo: &Path,
+    dependencies: &[Value],
+) -> GateResult<()> {
+    let mut normal = BTreeSet::new();
+    let mut dev = BTreeSet::new();
+    for dependency in dependencies {
+        let name = string_field(dependency, "name")?;
+        let (roster, seen) = match nullable_string_field(dependency, "kind")? {
+            None => (VERIFIER_NORMAL_DEPENDENCIES, &mut normal),
+            Some("dev") => (VERIFIER_DEV_DEPENDENCIES, &mut dev),
+            Some(kind) => {
+                return Err(format!(
+                    "unsupported protected verifier dependency kind: {name}::{kind}"
+                ));
+            }
+        };
+        let expected = expected_verifier_dependency(roster, name).ok_or_else(|| {
+            format!("unexpected protected verifier dependency declaration: {name}")
+        })?;
+        if !seen.insert(name.to_owned()) {
+            return Err(format!(
+                "duplicate protected verifier dependency declaration: {name}"
+            ));
+        }
+        validate_verifier_dependency_declaration(repo, dependency, expected)?;
+    }
+    let expected_normal = VERIFIER_NORMAL_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.name.to_owned())
+        .collect();
+    let expected_dev = VERIFIER_DEV_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.name.to_owned())
+        .collect();
+    if normal != expected_normal {
+        return Err("protected verifier normal dependency declaration roster drifted".to_owned());
+    }
+    if dev != expected_dev {
+        return Err("protected verifier dev dependency declaration roster drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn expected_verifier_dependency_id(
+    repo: &Path,
+    expected: &ExpectedVerifierDependency,
+) -> GateResult<String> {
+    if let Some(relative_path) = expected.relative_path {
+        let root = canonical(&repo.join(relative_path))?;
+        return Ok(format!(
+            "path+file://{}#{}@{}",
+            root.display(),
+            expected.name,
+            expected.resolved_version
+        ));
+    }
+    let source = expected
+        .declared_source
+        .ok_or_else(|| format!("resolved verifier source is absent: {}", expected.name))?;
+    Ok(format!(
+        "{source}#{}@{}",
+        expected.name, expected.resolved_version
+    ))
+}
+
+fn validate_verifier_resolved_identity(
+    repo: &Path,
+    packages_by_id: &BTreeMap<&str, &Value>,
+    checksums: &BTreeMap<(String, String, String), String>,
+    expected: &ExpectedVerifierDependency,
+    dependency_id: &str,
+) -> GateResult<()> {
+    let expected_id = expected_verifier_dependency_id(repo, expected)?;
+    let package = packages_by_id.get(dependency_id).ok_or_else(|| {
+        format!(
+            "protected verifier resolved dependency package is absent: {}",
+            expected.name
+        )
+    })?;
+    let expected_source = if expected.relative_path.is_some() {
+        None
+    } else if expected.declared_source == Some(FE2O3_SOURCE) {
+        Some(FE2O3_RESOLVED_SOURCE)
+    } else {
+        expected.declared_source
+    };
+    let local_manifest_matches = if let Some(relative_path) = expected.relative_path {
+        canonical(Path::new(string_field(package, "manifest_path")?))?
+            == canonical(&repo.join(relative_path).join("Cargo.toml"))?
+    } else {
+        true
+    };
+    let checksum_matches = match expected.checksum {
+        Some(expected_checksum) => checksums
+            .get(&(
+                expected.name.to_owned(),
+                expected.resolved_version.to_owned(),
+                CRATES_IO_SOURCE.to_owned(),
+            ))
+            .is_some_and(|checksum| checksum == expected_checksum),
+        None => true,
+    };
+    if dependency_id != expected_id
+        || string_field(package, "id")? != expected_id
+        || string_field(package, "name")? != expected.name
+        || string_field(package, "version")? != expected.resolved_version
+        || nullable_string_field(package, "source")? != expected_source
+        || !local_manifest_matches
+        || !checksum_matches
+    {
+        return Err(format!(
+            "protected verifier resolved dependency identity drifted: {}",
+            expected.name
+        ));
+    }
+    Ok(())
+}
+
+fn validate_verifier_resolved_dependencies(
+    repo: &Path,
+    packages_by_id: &BTreeMap<&str, &Value>,
+    local_node: &Value,
+    checksums: &BTreeMap<(String, String, String), String>,
+) -> GateResult<()> {
+    let edges = local_node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "protected verifier resolve edges are malformed".to_owned())?;
+    let mut normal_edges = BTreeSet::new();
+    let mut dev_edges = BTreeSet::new();
+    let mut normal_ids = BTreeSet::new();
+    let mut resolved_ids = BTreeSet::new();
+    for edge in edges {
+        let edge_object = edge
+            .as_object()
+            .ok_or_else(|| "protected verifier resolve edge is malformed".to_owned())?;
+        if edge_object
+            .keys()
+            .map(String::as_str)
+            .collect::<BTreeSet<_>>()
+            != BTreeSet::from(["dep_kinds", "name", "pkg"])
+        {
+            return Err("protected verifier resolve edge field roster drifted".to_owned());
+        }
+        let edge_name = string_field(edge, "name")?;
+        let kinds = edge
+            .get("dep_kinds")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                format!("protected verifier resolve edge kinds are malformed: {edge_name}")
+            })?;
+        let [kind] = kinds.as_slice() else {
+            return Err(format!(
+                "protected verifier resolve edge kind roster drifted: {edge_name}"
+            ));
+        };
+        let kind_object = kind.as_object().ok_or_else(|| {
+            format!("protected verifier resolve edge kind is malformed: {edge_name}")
+        })?;
+        if kind_object
+            .keys()
+            .map(String::as_str)
+            .collect::<BTreeSet<_>>()
+            != BTreeSet::from(["kind", "target"])
+        {
+            return Err(format!(
+                "protected verifier resolve edge kind field roster drifted: {edge_name}"
+            ));
+        }
+        if nullable_string_field(kind, "target")?.is_some() {
+            return Err(format!(
+                "protected verifier resolve edge target drifted: {edge_name}"
+            ));
+        }
+        let (roster, seen, is_normal) = match nullable_string_field(kind, "kind")? {
+            None => (VERIFIER_NORMAL_DEPENDENCIES, &mut normal_edges, true),
+            Some("dev") => (VERIFIER_DEV_DEPENDENCIES, &mut dev_edges, false),
+            Some(other) => {
+                return Err(format!(
+                    "unsupported protected verifier resolved dependency kind: {edge_name}::{other}"
+                ));
+            }
+        };
+        let expected = roster
+            .iter()
+            .find(|dependency| dependency.edge_name == edge_name)
+            .ok_or_else(|| {
+                format!("unexpected protected verifier resolved dependency: {edge_name}")
+            })?;
+        if !seen.insert(edge_name.to_owned()) {
+            return Err(format!(
+                "duplicate protected verifier resolved dependency: {edge_name}"
+            ));
+        }
+        let dependency_id = string_field(edge, "pkg")?;
+        if !resolved_ids.insert(dependency_id.to_owned()) {
+            return Err(format!(
+                "duplicate protected verifier resolved dependency ID: {edge_name}"
+            ));
+        }
+        if is_normal {
+            normal_ids.insert(dependency_id.to_owned());
+        }
+        validate_verifier_resolved_identity(
+            repo,
+            packages_by_id,
+            checksums,
+            expected,
+            dependency_id,
+        )?;
+    }
+    let expected_normal_edges = VERIFIER_NORMAL_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.edge_name.to_owned())
+        .collect::<BTreeSet<_>>();
+    let expected_normal_ids = VERIFIER_NORMAL_DEPENDENCIES
+        .iter()
+        .map(|dependency| expected_verifier_dependency_id(repo, dependency))
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    if normal_edges != expected_normal_edges || normal_ids != expected_normal_ids {
+        return Err("protected verifier production resolve edge roster drifted".to_owned());
+    }
+    if !dev_edges.is_empty()
+        && dev_edges
+            != VERIFIER_DEV_DEPENDENCIES
+                .iter()
+                .map(|dependency| dependency.edge_name.to_owned())
+                .collect()
+    {
+        return Err("protected verifier dev resolve edge roster drifted".to_owned());
+    }
+    let dependency_id_values = local_node
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "protected verifier dependency IDs are malformed".to_owned())?;
+    let dependency_ids = dependency_id_values
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| "protected verifier dependency ID is malformed".to_owned())
+        })
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    if dependency_id_values.len() != dependency_ids.len() || dependency_ids != resolved_ids {
+        return Err("protected verifier resolved dependency ID roster drifted".to_owned());
+    }
+    Ok(())
+}
+
 fn validate_local_runtime_package(
     repo: &Path,
     packages_by_id: &BTreeMap<&str, &Value>,
@@ -795,98 +1309,66 @@ fn validate_local_runtime_package(
         ));
     }
 
-    let mut production_dependencies = BTreeSet::new();
-    for package_dependency in package
+    let package_dependencies = package
         .get("dependencies")
         .and_then(Value::as_array)
-        .ok_or_else(|| format!("local runtime package dependencies are malformed: {name}"))?
-    {
-        if is_dev_dependency(package_dependency)? {
-            continue;
-        }
-        let dependency_name = string_field(package_dependency, "name")?;
-        let target = package_dependency
-            .get("target")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let common_drift = !bool_field(package_dependency, "uses_default_features")?
-            || bool_field(package_dependency, "optional")?
-            || package_dependency
-                .get("rename")
-                .is_some_and(|value| !value.is_null())
-            || package_dependency
-                .get("registry")
-                .is_some_and(|value| !value.is_null())
-            || !string_array(
-                package_dependency,
-                "features",
-                "local runtime dependency feature",
-            )?
-            .is_empty();
-        let dependency_drift = if is_protected_verifier {
-            match dependency_name {
-                "fe2o3-host" | "fe2o3-hsaco-finalize" => {
-                    package_dependency.get("source").and_then(Value::as_str)
-                        != Some(FE2O3_SOURCE)
-                        || string_field(package_dependency, "req")? != "=0.1.0"
-                        || package_dependency
-                            .get("path")
-                            .is_some_and(|value| !value.is_null())
-                        || target.is_some()
-                }
-                "ferric-qwen3-all-kernels-device-v1" => {
-                    package_dependency
-                        .get("source")
-                        .is_some_and(|value| !value.is_null())
-                        || string_field(package_dependency, "req")? != "*"
-                        || package_dependency
-                            .get("path")
-                            .and_then(Value::as_str)
-                            .map(Path::new)
-                            .map(canonical)
-                            .transpose()?
-                            != Some(canonical(&repo.join("device/qwen3-all-kernels-v1"))?)
-                        || target.is_some()
-                }
-                _ => true,
+        .ok_or_else(|| format!("local runtime package dependencies are malformed: {name}"))?;
+    if is_protected_verifier {
+        validate_verifier_dependency_declarations(repo, package_dependencies)?;
+    } else {
+        let mut production_dependencies = BTreeSet::new();
+        for package_dependency in package_dependencies {
+            if is_dev_dependency(package_dependency)? {
+                continue;
             }
-        } else {
-            package_dependency.get("source").and_then(Value::as_str) != Some(FE2O3_SOURCE)
+            let dependency_name = string_field(package_dependency, "name")?;
+            let target = package_dependency
+                .get("target")
+                .and_then(Value::as_str)
+                .map(str::to_owned);
+            let common_drift = !bool_field(package_dependency, "uses_default_features")?
+                || bool_field(package_dependency, "optional")?
+                || package_dependency
+                    .get("rename")
+                    .is_some_and(|value| !value.is_null())
+                || package_dependency
+                    .get("registry")
+                    .is_some_and(|value| !value.is_null())
+                || !string_array(
+                    package_dependency,
+                    "features",
+                    "local runtime dependency feature",
+                )?
+                .is_empty();
+            let dependency_drift = package_dependency.get("source").and_then(Value::as_str)
+                != Some(FE2O3_SOURCE)
                 || string_field(package_dependency, "req")? != "=0.1.0"
                 || package_dependency
                     .get("path")
-                    .is_some_and(|value| !value.is_null())
-        };
-        if common_drift || dependency_drift {
-            return Err(format!(
-                "local runtime package dependency drifted: {name}::{dependency_name}"
-            ));
+                    .is_some_and(|value| !value.is_null());
+            if common_drift || dependency_drift {
+                return Err(format!(
+                    "local runtime package dependency drifted: {name}::{dependency_name}"
+                ));
+            }
+            if !production_dependencies.insert((dependency_name.to_owned(), target)) {
+                return Err(format!(
+                    "duplicate local runtime package dependency: {name}::{dependency_name}"
+                ));
+            }
         }
-        if !production_dependencies.insert((dependency_name.to_owned(), target)) {
-            return Err(format!(
-                "duplicate local runtime package dependency: {name}::{dependency_name}"
-            ));
-        }
-    }
-    let expected_dependencies = if is_protected_verifier {
-        BTreeSet::from([
-            ("fe2o3-host".to_owned(), None),
-            ("fe2o3-hsaco-finalize".to_owned(), None),
-            ("ferric-qwen3-all-kernels-device-v1".to_owned(), None),
-        ])
-    } else {
-        BTreeSet::from([
+        let expected_dependencies = BTreeSet::from([
             ("fe2o3-device".to_owned(), None),
             (
                 "fe2o3-host".to_owned(),
                 Some("cfg(not(target_arch = \"amdgpu\"))".to_owned()),
             ),
-        ])
-    };
-    if production_dependencies != expected_dependencies {
-        return Err(format!(
-            "local runtime package dependency roster drifted: {name}"
-        ));
+        ]);
+        if production_dependencies != expected_dependencies {
+            return Err(format!(
+                "local runtime package dependency roster drifted: {name}"
+            ));
+        }
     }
 
     let owner_candidates = packages_by_id
@@ -969,31 +1451,22 @@ fn validate_local_runtime_package(
             "local runtime package resolved features drifted: {name}"
         ));
     }
+    if is_protected_verifier {
+        let checksums = runtime_lock_checksums(repo)?;
+        validate_verifier_resolved_dependencies(repo, packages_by_id, local_node, &checksums)?;
+        return Ok(true);
+    }
     let local_edges = local_node
         .get("deps")
         .and_then(Value::as_array)
         .ok_or_else(|| format!("local runtime package resolve edges are malformed: {name}"))?;
-    let expected_resolved_edges = if is_protected_verifier {
-        BTreeMap::from([
-            ("fe2o3_host", ("fe2o3-host", None)),
-            (
-                "fe2o3_hsaco_finalize",
-                ("fe2o3-hsaco-finalize", None),
-            ),
-            (
-                "ferric_qwen3_all_kernels_device_v1",
-                ("ferric-qwen3-all-kernels-device-v1", None),
-            ),
-        ])
-    } else {
-        BTreeMap::from([
-            ("fe2o3_device", ("fe2o3-device", None)),
-            (
-                "fe2o3_host",
-                ("fe2o3-host", Some("cfg(not(target_arch = \"amdgpu\"))")),
-            ),
-        ])
-    };
+    let expected_resolved_edges = BTreeMap::from([
+        ("fe2o3_device", ("fe2o3-device", None)),
+        (
+            "fe2o3_host",
+            ("fe2o3-host", Some("cfg(not(target_arch = \"amdgpu\"))")),
+        ),
+    ]);
     if local_edges.len() != expected_resolved_edges.len() {
         return Err(format!(
             "local runtime package resolve edge roster drifted: {name}"
@@ -1015,17 +1488,16 @@ fn validate_local_runtime_package(
         let resolved_package = packages_by_id.get(dependency_id).ok_or_else(|| {
             format!("local runtime resolved dependency package is absent: {name}::{edge_name}")
         })?;
-        let resolved_identity_drift = if *expected_package_name
-            == "ferric-qwen3-all-kernels-device-v1"
-        {
-            resolved_package
-                .get("source")
-                .is_some_and(|value| !value.is_null())
-                || canonical(Path::new(string_field(resolved_package, "manifest_path")?))?
-                    != canonical(&repo.join("device/qwen3-all-kernels-v1/Cargo.toml"))?
-        } else {
-            string_field(resolved_package, "source")? != FE2O3_RESOLVED_SOURCE
-        };
+        let resolved_identity_drift =
+            if *expected_package_name == "ferric-qwen3-all-kernels-device-v1" {
+                resolved_package
+                    .get("source")
+                    .is_some_and(|value| !value.is_null())
+                    || canonical(Path::new(string_field(resolved_package, "manifest_path")?))?
+                        != canonical(&repo.join("device/qwen3-all-kernels-v1/Cargo.toml"))?
+            } else {
+                string_field(resolved_package, "source")? != FE2O3_RESOLVED_SOURCE
+            };
         if string_field(resolved_package, "name")? != *expected_package_name
             || string_field(resolved_package, "version")? != "0.1.0"
             || resolved_identity_drift
@@ -2249,14 +2721,12 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
     if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 1 {
         return Err("aggregate host roster module item count drifted".to_owned());
     }
-    for (item, (expected_alias, expected_path)) in
-        items.iter().zip(AGGREGATE_ROSTER_ALIASES.iter())
+    for (item, (expected_alias, expected_path)) in items.iter().zip(AGGREGATE_ROSTER_ALIASES.iter())
     {
         let Item::Type(alias) = item else {
             return Err("aggregate roster ordered alias declaration drifted".to_owned());
         };
-        if alias.ident != *expected_alias || aggregate_type_path(alias)? != *expected_path
-        {
+        if alias.ident != *expected_alias || aggregate_type_path(alias)? != *expected_path {
             return Err(format!(
                 "aggregate roster alias or marker path drifted: {expected_alias}"
             ));
@@ -2271,18 +2741,11 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
             "fe2o3_host",
             "compiler_generated_kernel_expectation_roster_v1",
         ],
-    ) || !matches!(
-        &roster.mac.delimiter,
-        verus_syn::MacroDelimiter::Brace(_)
-    )
+    ) || !matches!(&roster.mac.delimiter, verus_syn::MacroDelimiter::Brace(_))
     {
         return Err("aggregate generated roster macro path drifted".to_owned());
     }
-    parse_generated_roster_declaration(
-        roster,
-        AGGREGATE_ROSTER_NAME,
-        AGGREGATE_ROSTER_MARKERS,
-    )?;
+    parse_generated_roster_declaration(roster, AGGREGATE_ROSTER_NAME, AGGREGATE_ROSTER_MARKERS)?;
     Ok(())
 }
 
@@ -2354,7 +2817,9 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
         match item {
             Item::Mod(module) if module.ident == "host_roster" => {
                 if host_roster.replace(module).is_some() {
-                    return Err("aggregate host roster module is declared more than once".to_owned());
+                    return Err(
+                        "aggregate host roster module is declared more than once".to_owned()
+                    );
                 }
             }
             Item::Mod(module) => {
@@ -2373,17 +2838,17 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
             }
             Item::Use(item_use) => {
                 if host_reexport.replace(item_use).is_some() {
-                    return Err("aggregate host roster re-export is declared more than once".to_owned());
+                    return Err(
+                        "aggregate host roster re-export is declared more than once".to_owned()
+                    );
                 }
             }
-            _ => return Err("aggregate runtime library contains an unadmitted root item".to_owned()),
+            _ => {
+                return Err("aggregate runtime library contains an unadmitted root item".to_owned())
+            }
         }
     }
-    if modules
-        .iter()
-        .map(String::as_str)
-        .ne(expected_modules)
-    {
+    if modules.iter().map(String::as_str).ne(expected_modules) {
         return Err(format!(
             "aggregate runtime kernel module order drifted: {modules:?}"
         ));
@@ -2398,16 +2863,16 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
 }
 
 fn validate_aggregate_runtime_roster(source: &Path) -> GateResult<()> {
-    let metadata = fs::symlink_metadata(source)
-        .map_err(|error| format!("{}: {error}", source.display()))?;
+    let metadata =
+        fs::symlink_metadata(source).map_err(|error| format!("{}: {error}", source.display()))?;
     if metadata.file_type().is_symlink() || !metadata.file_type().is_file() {
         return Err(format!(
             "aggregate runtime roster source is not an exact regular file: {}",
             source.display()
         ));
     }
-    let text = fs::read_to_string(source)
-        .map_err(|error| format!("{}: {error}", source.display()))?;
+    let text =
+        fs::read_to_string(source).map_err(|error| format!("{}: {error}", source.display()))?;
     let file = verus_syn::parse_file(&text)
         .map_err(|error| format!("cannot parse aggregate runtime roster source: {error}"))?;
     validate_aggregate_runtime_roster_file(&file)
@@ -2530,11 +2995,7 @@ impl SourceWalker<'_> {
         let module_path = self.package.crate_name.clone();
         self.walk_file(&root, &module_dir, &module_path)?;
         self.resolve_inherent_methods()?;
-        Ok((
-            self.modules,
-            self.functions,
-            self.visited,
-        ))
+        Ok((self.modules, self.functions, self.visited))
     }
 
     fn add_type_owner(&mut self, owner: &Ident, module_path: &str) -> GateResult<()> {
@@ -3193,10 +3654,14 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::{
-        cfg_test_fixture_item, cfg_test_item, inherent_owner_module,
-        parse_generated_roster_declaration, target_module_dir,
+        cfg_test_fixture_item, cfg_test_item, inherent_owner_module, package_map,
+        parse_generated_roster_declaration, runtime_lock_checksums, target_module_dir,
         validate_aggregate_runtime_roster_file, validate_attributes,
+        validate_verifier_dependency_declarations, validate_verifier_resolved_dependencies,
+        ExpectedVerifierDependency, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE, FE2O3_SOURCE,
+        VERIFIER_DEV_DEPENDENCIES, VERIFIER_NORMAL_DEPENDENCIES,
     };
+    use serde_json::{json, Value};
     use std::collections::{BTreeMap, BTreeSet};
     use std::path::{Path, PathBuf};
     use verus_syn::Item;
@@ -3207,6 +3672,427 @@ mod tests {
     fn replace_once(source: &str, exact: &str, hostile: &str) -> String {
         assert_eq!(source.matches(exact).count(), 1, "fixture anchor drifted");
         source.replace(exact, hostile)
+    }
+
+    fn repo() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .expect("test repository canonicalizes")
+    }
+
+    fn verifier_declaration(repo: &Path, expected: &ExpectedVerifierDependency) -> Value {
+        let mut declaration = json!({
+            "name": expected.name,
+            "source": expected.declared_source,
+            "req": expected.requirement,
+            "kind": expected.kind,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": expected.uses_default_features,
+            "features": expected.features,
+            "target": null,
+            "registry": null,
+        });
+        if let Some(relative_path) = expected.relative_path {
+            declaration
+                .as_object_mut()
+                .expect("declaration is an object")
+                .insert(
+                    "path".to_owned(),
+                    Value::String(repo.join(relative_path).to_string_lossy().into_owned()),
+                );
+        }
+        declaration
+    }
+
+    fn verifier_declarations(repo: &Path) -> Vec<Value> {
+        VERIFIER_NORMAL_DEPENDENCIES
+            .iter()
+            .chain(VERIFIER_DEV_DEPENDENCIES)
+            .map(|dependency| verifier_declaration(repo, dependency))
+            .collect()
+    }
+
+    fn resolved_id(repo: &Path, expected: &ExpectedVerifierDependency) -> String {
+        super::expected_verifier_dependency_id(repo, expected)
+            .expect("fixture dependency ID resolves")
+    }
+
+    fn resolved_package(repo: &Path, expected: &ExpectedVerifierDependency) -> Value {
+        let source = if expected.relative_path.is_some() {
+            None
+        } else if expected.declared_source == Some(FE2O3_SOURCE) {
+            Some(FE2O3_RESOLVED_SOURCE)
+        } else {
+            Some(CRATES_IO_SOURCE)
+        };
+        let manifest = expected.relative_path.map_or_else(
+            || "/registry-or-git/Cargo.toml".to_owned(),
+            |relative_path| {
+                repo.join(relative_path)
+                    .join("Cargo.toml")
+                    .to_string_lossy()
+                    .into_owned()
+            },
+        );
+        json!({
+            "id": resolved_id(repo, expected),
+            "name": expected.name,
+            "version": expected.resolved_version,
+            "source": source,
+            "manifest_path": manifest,
+        })
+    }
+
+    fn resolved_edge(repo: &Path, expected: &ExpectedVerifierDependency) -> Value {
+        json!({
+            "name": expected.edge_name,
+            "pkg": resolved_id(repo, expected),
+            "dep_kinds": [{ "kind": expected.kind, "target": null }],
+        })
+    }
+
+    fn resolved_fixture(repo: &Path, include_dev: bool) -> (Vec<Value>, Value) {
+        let dev_dependencies = if include_dev {
+            VERIFIER_DEV_DEPENDENCIES
+        } else {
+            &[]
+        };
+        let dependencies = VERIFIER_NORMAL_DEPENDENCIES
+            .iter()
+            .chain(dev_dependencies.iter());
+        let packages = dependencies
+            .clone()
+            .map(|dependency| resolved_package(repo, dependency))
+            .collect::<Vec<_>>();
+        let edges = dependencies
+            .clone()
+            .map(|dependency| resolved_edge(repo, dependency))
+            .collect::<Vec<_>>();
+        let ids = dependencies
+            .map(|dependency| resolved_id(repo, dependency))
+            .collect::<Vec<_>>();
+        (
+            packages,
+            json!({
+                "id": "fixture-verifier",
+                "deps": edges,
+                "dependencies": ids,
+                "features": [],
+            }),
+        )
+    }
+
+    fn validate_resolved_fixture(
+        repo: &Path,
+        packages: &[Value],
+        node: &Value,
+        checksums: &BTreeMap<(String, String, String), String>,
+    ) -> super::GateResult<()> {
+        let metadata = json!({ "packages": packages });
+        let packages_by_id = package_map(&metadata)?;
+        validate_verifier_resolved_dependencies(repo, &packages_by_id, node, checksums)
+    }
+
+    fn package_index(packages: &[Value], name: &str) -> usize {
+        packages
+            .iter()
+            .position(|package| package.get("name").and_then(Value::as_str) == Some(name))
+            .expect("fixture package exists")
+    }
+
+    #[test]
+    fn verifier_declaration_rosters_are_exact_and_separate() {
+        let repo = repo();
+        let declarations = verifier_declarations(&repo);
+        assert_eq!(declarations.len(), 12);
+        assert_eq!(
+            declarations
+                .iter()
+                .filter(|dependency| dependency.get("kind") == Some(&Value::Null))
+                .count(),
+            8
+        );
+        assert_eq!(
+            declarations
+                .iter()
+                .filter(|dependency| dependency.get("kind").and_then(Value::as_str) == Some("dev"))
+                .count(),
+            4
+        );
+        assert_eq!(
+            validate_verifier_dependency_declarations(&repo, &declarations),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn verifier_declarations_reject_every_field_drift() {
+        let repo = repo();
+        let exact = verifier_declarations(&repo);
+        let mut hostile = Vec::new();
+
+        for (index, field, replacement) in [
+            (0, "name", json!("ed25519-dalek-decoy")),
+            (0, "source", json!("registry+https://example.invalid/index")),
+            (0, "req", json!("^2.2.0")),
+            (0, "kind", json!("dev")),
+            (0, "rename", json!("signature")),
+            (0, "optional", json!(true)),
+            (0, "uses_default_features", json!(true)),
+            (0, "features", json!(["zeroize", "fast"])),
+            (0, "target", json!("cfg(unix)")),
+            (0, "registry", json!("alternate")),
+            (
+                0,
+                "path",
+                json!(repo.parent().expect("repo has parent").to_string_lossy()),
+            ),
+            (
+                4,
+                "path",
+                json!(repo.parent().expect("repo has parent").to_string_lossy()),
+            ),
+        ] {
+            let mut candidate = exact.clone();
+            candidate[index][field] = replacement;
+            hostile.push(candidate);
+        }
+        let mut missing_path = exact.clone();
+        missing_path[4]
+            .as_object_mut()
+            .expect("declaration is an object")
+            .remove("path");
+        hostile.push(missing_path);
+        let mut unexpected_field = exact.clone();
+        unexpected_field[0]
+            .as_object_mut()
+            .expect("declaration is an object")
+            .insert("escape".to_owned(), Value::Bool(true));
+        hostile.push(unexpected_field);
+
+        for candidate in hostile {
+            assert!(validate_verifier_dependency_declarations(&repo, &candidate).is_err());
+        }
+    }
+
+    #[test]
+    fn verifier_declarations_reject_roster_and_kind_evasions() {
+        let repo = repo();
+        let exact = verifier_declarations(&repo);
+        let mut hostile = Vec::new();
+
+        let mut missing_normal = exact.clone();
+        missing_normal.remove(0);
+        hostile.push(missing_normal);
+        let mut missing_dev = exact.clone();
+        missing_dev.pop();
+        hostile.push(missing_dev);
+        let mut duplicate_normal = exact.clone();
+        duplicate_normal.push(exact[0].clone());
+        hostile.push(duplicate_normal);
+        let mut duplicate_dev = exact.clone();
+        duplicate_dev.push(exact[8].clone());
+        hostile.push(duplicate_dev);
+        let mut unexpected = exact.clone();
+        unexpected.push(json!({
+            "name": "unreviewed",
+            "source": CRATES_IO_SOURCE,
+            "req": "=1.0.0",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null,
+        }));
+        hostile.push(unexpected);
+        let mut build_dependency = exact.clone();
+        build_dependency[8]["kind"] = json!("build");
+        hostile.push(build_dependency);
+        let mut dev_to_normal = exact.clone();
+        dev_to_normal[8]["kind"] = Value::Null;
+        hostile.push(dev_to_normal);
+        let mut normal_to_dev = exact.clone();
+        normal_to_dev[0]["kind"] = json!("dev");
+        hostile.push(normal_to_dev);
+
+        for candidate in hostile {
+            assert!(validate_verifier_dependency_declarations(&repo, &candidate).is_err());
+        }
+    }
+
+    #[test]
+    fn verifier_resolve_accepts_exact_production_and_optional_complete_dev_rosters() {
+        let repo = repo();
+        let checksums = runtime_lock_checksums(&repo).expect("root lock checksums parse");
+
+        // The root metadata invocation resolves this isolated adapter only as a
+        // production dependency, so Cargo omits its dev edges from this node.
+        let (production_packages, production_node) = resolved_fixture(&repo, false);
+        assert_eq!(production_node["deps"].as_array().unwrap().len(), 8);
+        assert_eq!(
+            validate_resolved_fixture(&repo, &production_packages, &production_node, &checksums,),
+            Ok(())
+        );
+
+        // A metadata invocation that includes dev edges is accepted only when
+        // Cargo exposes the complete separately reviewed four-edge dev roster.
+        let (all_packages, all_node) = resolved_fixture(&repo, true);
+        assert_eq!(all_node["deps"].as_array().unwrap().len(), 12);
+        assert_eq!(
+            validate_resolved_fixture(&repo, &all_packages, &all_node, &checksums),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn verifier_resolve_rejects_edge_and_dependency_id_drift() {
+        let repo = repo();
+        let checksums = runtime_lock_checksums(&repo).expect("root lock checksums parse");
+        let (packages, exact_node) = resolved_fixture(&repo, false);
+        let mut hostile = Vec::new();
+
+        let mut missing = exact_node.clone();
+        missing["deps"].as_array_mut().unwrap().remove(0);
+        missing["dependencies"].as_array_mut().unwrap().remove(0);
+        hostile.push(missing);
+        let mut duplicate = exact_node.clone();
+        duplicate["deps"]
+            .as_array_mut()
+            .unwrap()
+            .push(exact_node["deps"][0].clone());
+        duplicate["dependencies"]
+            .as_array_mut()
+            .unwrap()
+            .push(exact_node["dependencies"][0].clone());
+        hostile.push(duplicate);
+        let mut wrong_name = exact_node.clone();
+        wrong_name["deps"][0]["name"] = json!("ed25519_dalek_decoy");
+        hostile.push(wrong_name);
+        let mut wrong_package = exact_node.clone();
+        wrong_package["deps"][0]["pkg"] = exact_node["deps"][1]["pkg"].clone();
+        hostile.push(wrong_package);
+        let mut wrong_kind = exact_node.clone();
+        wrong_kind["deps"][0]["dep_kinds"][0]["kind"] = json!("dev");
+        hostile.push(wrong_kind);
+        let mut build_kind = exact_node.clone();
+        build_kind["deps"][0]["dep_kinds"][0]["kind"] = json!("build");
+        hostile.push(build_kind);
+        let mut wrong_target = exact_node.clone();
+        wrong_target["deps"][0]["dep_kinds"][0]["target"] = json!("cfg(unix)");
+        hostile.push(wrong_target);
+        let mut duplicate_kind = exact_node.clone();
+        duplicate_kind["deps"][0]["dep_kinds"] =
+            json!([{ "kind": null, "target": null }, { "kind": null, "target": null }]);
+        hostile.push(duplicate_kind);
+        let mut extra_edge_field = exact_node.clone();
+        extra_edge_field["deps"][0]["escape"] = json!(true);
+        hostile.push(extra_edge_field);
+        let mut extra_kind_field = exact_node.clone();
+        extra_kind_field["deps"][0]["dep_kinds"][0]["escape"] = json!(true);
+        hostile.push(extra_kind_field);
+        let mut missing_id = exact_node.clone();
+        missing_id["dependencies"].as_array_mut().unwrap().remove(0);
+        hostile.push(missing_id);
+        let mut duplicate_id = exact_node.clone();
+        duplicate_id["dependencies"]
+            .as_array_mut()
+            .unwrap()
+            .push(exact_node["dependencies"][0].clone());
+        hostile.push(duplicate_id);
+        let mut unexpected_id = exact_node.clone();
+        unexpected_id["dependencies"][0] = json!("registry+https://example.invalid#escape@1.0.0");
+        hostile.push(unexpected_id);
+
+        for node in hostile {
+            assert!(validate_resolved_fixture(&repo, &packages, &node, &checksums).is_err());
+        }
+    }
+
+    #[test]
+    fn verifier_resolve_rejects_resolved_identity_and_checksum_drift() {
+        let repo = repo();
+        let checksums = runtime_lock_checksums(&repo).expect("root lock checksums parse");
+        let (exact_packages, node) = resolved_fixture(&repo, false);
+        let mut hostile = Vec::new();
+
+        for (name, field, replacement) in [
+            ("ed25519-dalek", "name", json!("ed25519-dalek-decoy")),
+            ("ed25519-dalek", "version", json!("2.2.1")),
+            (
+                "ed25519-dalek",
+                "source",
+                json!("registry+https://example.invalid/index"),
+            ),
+            (
+                "fe2o3-host",
+                "source",
+                json!("git+https://github.com/harsh-nod/fe2o3.git?rev=0000000000000000000000000000000000000000#0000000000000000000000000000000000000000"),
+            ),
+            ("fe2o3-verifier", "version", json!("0.1.1")),
+            (
+                "ferric-qwen3-all-kernels-device-v1",
+                "manifest_path",
+                json!(repo.join("device/qwen3-gemm-v1/Cargo.toml")),
+            ),
+            (
+                "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+                "manifest_path",
+                json!(repo.parent().expect("repo has parent").join("Cargo.toml")),
+            ),
+        ] {
+            let mut packages = exact_packages.clone();
+            let index = package_index(&packages, name);
+            packages[index][field] = replacement;
+            hostile.push(packages);
+        }
+        let mut wrong_id = exact_packages.clone();
+        let index = package_index(&wrong_id, "libc");
+        wrong_id[index]["id"] = json!("registry+https://example.invalid#index@0.2.189");
+        hostile.push(wrong_id);
+
+        for packages in hostile {
+            assert!(validate_resolved_fixture(&repo, &packages, &node, &checksums).is_err());
+        }
+
+        for name in ["ed25519-dalek", "libc", "sha2"] {
+            let expected = VERIFIER_NORMAL_DEPENDENCIES
+                .iter()
+                .find(|dependency| dependency.name == name)
+                .unwrap();
+            let mut hostile_checksums = checksums.clone();
+            hostile_checksums.insert(
+                (
+                    expected.name.to_owned(),
+                    expected.resolved_version.to_owned(),
+                    CRATES_IO_SOURCE.to_owned(),
+                ),
+                "0".repeat(64),
+            );
+            assert!(
+                validate_resolved_fixture(&repo, &exact_packages, &node, &hostile_checksums)
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn verifier_resolve_rejects_partial_or_escalated_dev_edges() {
+        let repo = repo();
+        let checksums = runtime_lock_checksums(&repo).expect("root lock checksums parse");
+        let (packages, exact_node) = resolved_fixture(&repo, true);
+
+        let mut partial = exact_node.clone();
+        partial["deps"].as_array_mut().unwrap().pop();
+        partial["dependencies"].as_array_mut().unwrap().pop();
+        assert!(validate_resolved_fixture(&repo, &packages, &partial, &checksums).is_err());
+
+        let mut escalated = exact_node.clone();
+        escalated["deps"][8]["dep_kinds"][0]["kind"] = Value::Null;
+        assert!(validate_resolved_fixture(&repo, &packages, &escalated, &checksums).is_err());
     }
 
     fn validate_aggregate_source(source: &str) -> super::GateResult<()> {
