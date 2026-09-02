@@ -2321,8 +2321,8 @@ fn exact_impl_and_direct_child_extraction_reject_wrong_and_nested_decoys() {
     assert!(!configured_binder_policy(&wrong_configured));
 
     let configured_nested_decoy = SOURCE.replacen(
-        "    type Error = M1AllKernelsProductionProtectedVerifierErrorV1;\n\n    unsafe fn verify_protected_roster(",
-        "    type Error = M1AllKernelsProductionProtectedVerifierErrorV1;\n\n    fn nested_decoy() { unsafe fn verify_protected_roster() {} }\n\n    unsafe fn bypass_protected_roster(",
+        "    #[allow(clippy::too_many_lines)]\n    unsafe fn verify_protected_roster(",
+        "    fn nested_decoy() { unsafe fn verify_protected_roster() {} }\n\n    #[allow(clippy::too_many_lines)]\n    unsafe fn bypass_protected_roster(",
         1,
     );
     assert_ne!(configured_nested_decoy, SOURCE);
