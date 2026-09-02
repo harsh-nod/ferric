@@ -1838,6 +1838,40 @@ const fn authenticated_classified_submission_failure(
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1 { phase, retained }
 }
 
+trait M1PreparedRearmCloseEffectV1: fmt::Debug {
+    fn destroy_and_release_effect(
+        self,
+    ) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>>;
+}
+
+impl M1PreparedRearmCloseEffectV1 for AuthenticatedServiceQueueUnboundSessionV1 {
+    fn destroy_and_release_effect(
+        self,
+    ) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
+        self.destroy_and_release()
+            .map(|released| Box::new(released) as Box<dyn fmt::Debug>)
+            .map_err(|quarantined| Box::new(quarantined) as Box<dyn fmt::Debug>)
+    }
+}
+
+fn close_prepared_rearm_submission_core<Q, L>(
+    queue: Q,
+    retained: L,
+) -> AuthenticatedSubmissionOpaqueCustodyV1
+where
+    Q: M1PreparedRearmCloseEffectV1,
+    L: fmt::Debug + 'static,
+{
+    match queue.destroy_and_release_effect() {
+        Ok(release) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((release, retained)))
+        }
+        Err(quarantined) => {
+            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
+        }
+    }
+}
+
 fn close_prepared_rearm_submission(
     prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
@@ -1875,14 +1909,7 @@ fn close_prepared_rearm_submission(
             history,
         ),
     );
-    match lower.destroy_and_release() {
-        Ok(release) => {
-            AuthenticatedSubmissionOpaqueCustodyV1::Released(Box::new((release, retained)))
-        }
-        Err(quarantined) => {
-            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(Box::new((quarantined, retained)))
-        }
-    }
+    close_prepared_rearm_submission_core(lower, retained)
 }
 
 const fn authenticated_submission_phase(

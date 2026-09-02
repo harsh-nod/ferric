@@ -266,6 +266,44 @@ pub(crate) enum M1AuthenticatedPhysicalQueueClosureV1 {
     Quarantined(Box<dyn core::fmt::Debug>),
 }
 
+trait M1AuthenticatedUnsubmittedQueueCloseEffectV1: core::fmt::Debug {
+    fn close(self) -> M1AuthenticatedPhysicalQueueClosureV1;
+}
+
+impl M1AuthenticatedUnsubmittedQueueCloseEffectV1 for M1AuthenticatedPhysicalQueueSessionV1 {
+    fn close(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        self.close_unpublished()
+    }
+}
+
+fn close_without_authority_core<const C: usize, Q, L>(
+    engine: &mut Engine<C>,
+    queue: Q,
+    logical: L,
+) -> M1AuthenticatedPhysicalQueueClosureV1
+where
+    Q: M1AuthenticatedUnsubmittedQueueCloseEffectV1,
+    L: core::fmt::Debug + 'static,
+{
+    engine.quarantine_m1_queue_rearm_failure();
+    match queue.close() {
+        M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, logical)))
+        }
+        M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((quarantined, logical)))
+        }
+    }
+}
+
+fn quarantine_without_authority_core<const C: usize>(
+    engine: &mut Engine<C>,
+    quarantined: Box<dyn core::fmt::Debug>,
+) -> M1AuthenticatedPhysicalQueueClosureV1 {
+    engine.quarantine_m1_queue_rearm_failure();
+    M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined)
+}
+
 fn close_unpublished_case<const N: usize>(
     case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
 ) -> M1AuthenticatedPhysicalQueueClosureV1 {
@@ -1186,22 +1224,11 @@ impl M1AuthenticatedPhysicalQueueSubmitFailureV1 {
         self,
         engine: &mut Engine<C>,
     ) -> M1AuthenticatedPhysicalQueueClosureV1 {
-        engine.quarantine_m1_queue_rearm_failure();
         match self {
-            Self::Currentness { error, retained } => match retained.close_unpublished() {
-                M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
-                    M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, error)))
-                }
-                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
-                    M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
-                        quarantined,
-                        error,
-                    )))
-                }
-            },
-            Self::Queue(quarantined) => {
-                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined)
+            Self::Currentness { error, retained } => {
+                close_without_authority_core(engine, *retained, error)
             }
+            Self::Queue(quarantined) => quarantine_without_authority_core(engine, quarantined),
         }
     }
 }
