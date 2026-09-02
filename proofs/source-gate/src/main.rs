@@ -825,7 +825,7 @@ fn validate_local_runtime_package(
             .is_empty();
         let dependency_drift = if is_protected_verifier {
             match dependency_name {
-                "fe2o3-host" => {
+                "fe2o3-host" | "fe2o3-hsaco-finalize" => {
                     package_dependency.get("source").and_then(Value::as_str)
                         != Some(FE2O3_SOURCE)
                         || string_field(package_dependency, "req")? != "=0.1.0"
@@ -871,6 +871,7 @@ fn validate_local_runtime_package(
     let expected_dependencies = if is_protected_verifier {
         BTreeSet::from([
             ("fe2o3-host".to_owned(), None),
+            ("fe2o3-hsaco-finalize".to_owned(), None),
             ("ferric-qwen3-all-kernels-device-v1".to_owned(), None),
         ])
     } else {
@@ -972,14 +973,13 @@ fn validate_local_runtime_package(
         .get("deps")
         .and_then(Value::as_array)
         .ok_or_else(|| format!("local runtime package resolve edges are malformed: {name}"))?;
-    if local_edges.len() != 2 {
-        return Err(format!(
-            "local runtime package resolve edge roster drifted: {name}"
-        ));
-    }
     let expected_resolved_edges = if is_protected_verifier {
         BTreeMap::from([
             ("fe2o3_host", ("fe2o3-host", None)),
+            (
+                "fe2o3_hsaco_finalize",
+                ("fe2o3-hsaco-finalize", None),
+            ),
             (
                 "ferric_qwen3_all_kernels_device_v1",
                 ("ferric-qwen3-all-kernels-device-v1", None),
@@ -994,6 +994,11 @@ fn validate_local_runtime_package(
             ),
         ])
     };
+    if local_edges.len() != expected_resolved_edges.len() {
+        return Err(format!(
+            "local runtime package resolve edge roster drifted: {name}"
+        ));
+    }
     let mut resolved_dependency_ids = BTreeSet::new();
     for edge in local_edges {
         let edge_name = string_field(edge, "name")?;
@@ -1062,8 +1067,8 @@ fn validate_local_runtime_package(
                 .ok_or_else(|| format!("local runtime dependency ID is malformed: {name}"))
         })
         .collect::<GateResult<BTreeSet<_>>>()?;
-    if dependency_id_values.len() != 2
-        || dependency_ids.len() != 2
+    if dependency_id_values.len() != expected_resolved_edges.len()
+        || dependency_ids.len() != expected_resolved_edges.len()
         || dependency_ids != resolved_dependency_ids
     {
         return Err(format!(

@@ -19,6 +19,11 @@ const COMPACT_BACKEND_IMPL_HEADER: &str = "unsafeimplWorkerV3ProtectedRosterVeri
 const PRIVATE_REJECTION_HELPER_LEAD_IN: &str = "    pub const fn new() -> Self {\n        Self\n    }\n\n    fn reject_missing_protected_receipt";
 const TEST_MODULE_BOUNDARY: &str = "#[cfg(test)]\nmod tests {";
 const REQUIRED_GFX942_TARGET_LITERAL: &str = "\"gfx942:xnack-\"";
+const FINALIZER_CRATE_IDENTIFIER: &str = "fe2o3_hsaco_finalize";
+const FINALIZED_VERIFIER_IDENTIFIER: &str = "verify_finalized";
+const LOW_LEVEL_INSPECTOR_IDENTIFIER: &str = "inspect_and_bind_kernel_descriptors";
+const FULLY_QUALIFIED_FINALIZED_VERIFIER: &str =
+    "::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes())";
 
 struct ProtectedBoundaryRanges {
     verify_method: Range<usize>,
@@ -337,6 +342,11 @@ fn has_no_production_macro_authority(code: &str) -> bool {
         }
         compact = compact.replace(attribute, "");
     }
+    let allowed_checked_coverage_negation = "!*matched";
+    if compact.matches(allowed_checked_coverage_negation).count() != 1 {
+        return false;
+    }
+    compact = compact.replacen(allowed_checked_coverage_negation, "false==*matched", 1);
     if compact.contains("#[") || compact.contains("#![") {
         return false;
     }
@@ -345,6 +355,60 @@ fn has_no_production_macro_authority(code: &str) -> bool {
         .iter()
         .enumerate()
         .any(|(index, byte)| *byte == b'!' && bytes.get(index + 1).is_none_or(|next| *next != b'='))
+}
+
+fn identifier_token_count(source: &str, identifier: &str) -> usize {
+    source
+        .split(|character: char| character != '_' && !character.is_alphanumeric())
+        .filter(|token| *token == identifier)
+        .count()
+}
+
+fn anchored_verifier_method_satisfies_policy(candidate: &str) -> bool {
+    let Some(canonical) = protected_verify_method(SOURCE) else {
+        return false;
+    };
+    candidate == canonical
+        && candidate
+            .matches(FULLY_QUALIFIED_FINALIZED_VERIFIER)
+            .count()
+            == 1
+        && identifier_token_count(candidate, FINALIZED_VERIFIER_IDENTIFIER) == 1
+}
+
+fn protected_verifier_policy_accepts(source: &str) -> bool {
+    let code = rust_code_without_comments_or_strings(source);
+    let Some((production, _tests)) = split_complete_production_and_tests(&code) else {
+        return false;
+    };
+    if !has_unique_private_boundary_items(production)
+        || !has_no_production_macro_authority(&code)
+        || !production_has_no_external_authority_surface(source)
+    {
+        return false;
+    }
+    let compact = compact_rust_code(production);
+    let Some(ranges) = protected_boundary_ranges(&compact) else {
+        return false;
+    };
+    let Some(method) = compact.get(ranges.verify_method) else {
+        return false;
+    };
+    if !anchored_verifier_method_satisfies_policy(method)
+        || identifier_token_count(production, FINALIZER_CRATE_IDENTIFIER) != 1
+        || identifier_token_count(production, FINALIZED_VERIFIER_IDENTIFIER) != 1
+        || identifier_token_count(production, LOW_LEVEL_INSPECTOR_IDENTIFIER) != 0
+    {
+        return false;
+    }
+
+    let Some(canonical_code) = compact_production_code(SOURCE) else {
+        return false;
+    };
+    let Some(canonical_ranges) = protected_boundary_ranges(&canonical_code) else {
+        return false;
+    };
+    compact.get(ranges.rejection_helper) == canonical_code.get(canonical_ranges.rejection_helper)
 }
 
 #[test]
@@ -569,6 +633,10 @@ fn typed_roster_fixes_the_exact_twelve_projection_rows() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn production_backend_projects_then_preflights_in_exact_custody_order() {
+    assert!(
+        protected_verifier_policy_accepts(SOURCE),
+        "canonical production source must satisfy the reusable verifier policy"
+    );
     let code = rust_code_without_comments_or_strings(SOURCE);
     let (production, _tests) = split_complete_production_and_tests(&code)
         .expect("one balanced cfg(test) module must consume the complete source suffix");
@@ -594,6 +662,11 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
     let expected_method_body = r#"
         let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request)
             .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+        let finalized_verification =
+            ::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes());
+        let hsaco_reinspection = finalized_verification.map_err(|_| {
+            M1AllKernelsProtectedVerifierErrorV1::ExactFinalizedHsacoVerificationFailed
+        })?;
         let finalizer_owner = request
             .independently_revalidate_finalizer_derivation()
             .map_err(|_| {
@@ -642,9 +715,19 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
 
                 let markers = request.marker_entries();
                 let proof_roots = proof_inputs_owner.roots();
+                let reinspected = hsaco_reinspection.hsaco();
+                let reinspected_kernels = reinspected.kernels();
+                let reinspected_bindings = hsaco_reinspection.kernel_bindings().bindings();
                 (markers.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
                     && proof_roots.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
-                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1)
+                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && hsaco_reinspection.descriptor_table() == request.descriptor_table()
+                    && reinspected.target() == request.target()
+                    && reinspected.code_object_version().number()
+                        == request.code_object_version().number()
+                    && reinspected_kernels.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && reinspected_bindings.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && hsaco_reinspection.kernel_bindings().load_layout().is_some())
                     .then_some(())
                     .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
 
@@ -664,6 +747,8 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
                 .then_some(())
                 .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
 
+                let mut matched_reinspected_kernels =
+                    [false; M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1];
                 pending_request.entries.iter().try_for_each(|entry| {
                     let (root_index, root) = proof_roots
                         .iter()
@@ -678,10 +763,44 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
                     let descriptor = entry.descriptor.as_ref().ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
-                    let _descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
+                    let descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
                     let physical = entry.physical_kernel.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let mut matching_reinspected_kernels =
+                        reinspected_kernels.iter().enumerate().filter(|(_, kernel)| {
+                            kernel.name() == entry.export_name
+                                && kernel.symbol() == descriptor.descriptor_symbol
+                        });
+                    let (reinspected_index, reinspected_physical) =
+                        matching_reinspected_kernels.next().ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    matching_reinspected_kernels
+                        .next()
+                        .is_none()
+                        .then_some(())
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    let matched = matched_reinspected_kernels
+                        .get_mut(reinspected_index)
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    (!*matched).then_some(()).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    *matched = true;
+                    let reinspected_binding = reinspected_bindings.get(reinspected_index).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let request_physical = request.physical_kernel(entry.ordinal).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let request_binding = request.descriptor_binding(entry.ordinal).ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
                     let target_workgroup = target_binding.workgroup(root_index).ok_or(
@@ -703,12 +822,22 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
                         && descriptor.entry_name == root.export_symbol()
                         && physical.name == root.export_symbol()
                         && physical.symbol == descriptor.descriptor_symbol
+                        && reinspected_physical == request_physical
+                        && *reinspected_binding == request_binding
+                        && reinspected_binding.kernel_index() == reinspected_index
+                        && request_binding.kernel_index() == reinspected_index
+                        && descriptor_binding.kernel_index == reinspected_index
                         && target_workgroup.kernel() == root.kernel_id()
                         && target_workgroup.workgroup() == root.workgroup()
                         && descriptor_workgroup == root.workgroup())
                     .then_some(())
                     .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
-                })
+                })?;
+                matched_reinspected_kernels
+                    .iter()
+                    .all(|matched| *matched)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
             };
             validate_associations()?;
         }
@@ -717,6 +846,7 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
             finalizer_owner,
             proof_inputs_owner,
             target_lineage_owner,
+            hsaco_reinspection,
         )
     "#;
     let expected_method_body =
@@ -728,11 +858,12 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
 
     let rejection_helper = &compact[ranges.rejection_helper];
     let expected_rejection_helper = r"
-        <FinalizerOwner, ProofInputsOwner, TargetLineageOwner>(
+        <FinalizerOwner, ProofInputsOwner, TargetLineageOwner, HsacoReinspectionOwner,>(
             _request: &M1AllKernelsPendingRequestProjectionV1,
             _finalizer_owner: FinalizerOwner,
             _proof_inputs_owner: ProofInputsOwner,
             _target_lineage_owner: TargetLineageOwner,
+            _hsaco_reinspection_owner: HsacoReinspectionOwner,
         ) -> Result<
             WorkerV3ProtectedRosterVerificationEvidenceV1,
             M1AllKernelsProtectedVerifierErrorV1
@@ -752,6 +883,13 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
     assert_eq!(SOURCE.matches("Ok(").count(), 0);
     assert_eq!(
         method
+            .matches("::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes())")
+            .count(),
+        1,
+        "the exact borrowed finalized bytes must be verified exactly once"
+    );
+    assert_eq!(
+        method
             .matches("letvalidate_associations=||->Result<(),Self::Error>{")
             .count(),
         1
@@ -759,6 +897,8 @@ fn production_backend_projects_then_preflights_in_exact_custody_order() {
     assert!(method.contains("};validate_associations()?;}Self::reject_missing_protected_receipt("));
     assert!(!method.contains("proof_roots["));
     assert!(!method.contains("markers["));
+    assert!(!method.contains("reinspected_kernels["));
+    assert!(!method.contains("reinspected_bindings["));
     for owner_type in [
         "RevalidatedProtectedWorkerV3FinalizerDerivationV1",
         "ValidatedCompilerMultiRootProofInputsV1",
@@ -803,9 +943,8 @@ fn exact_target_literal_is_bound_inside_the_anchored_production_method() {
         string_decoy,
         in_method_string_decoy,
     ] {
-        assert_ne!(
-            protected_verify_method(&hostile).as_deref(),
-            Some(canonical.as_str()),
+        assert!(
+            !protected_verifier_policy_accepts(&hostile),
             "a target decoy must not satisfy the anchored verifier method policy"
         );
     }
@@ -820,6 +959,7 @@ fn association_preflight_shape_rejects_each_critical_hostile_mutation() {
     let compact = compact_rust_code(production);
     let ranges = protected_boundary_ranges(&compact).expect("canonical boundary must parse");
     let canonical = &compact[ranges.verify_method];
+    assert!(anchored_verifier_method_satisfies_policy(canonical));
 
     for (needle, replacement) in [
         (
@@ -844,6 +984,27 @@ fn association_preflight_shape_rejects_each_critical_hostile_mutation() {
         ),
         (
             "target_binding.code_object_version()==u16::from(pending_request.code_object_version)",
+            "true",
+        ),
+        (
+            "hsaco_reinspection.descriptor_table()==request.descriptor_table()",
+            "true",
+        ),
+        ("reinspected.target()==request.target()", "true"),
+        (
+            "reinspected.code_object_version().number()==request.code_object_version().number()",
+            "true",
+        ),
+        (
+            "reinspected_kernels.len()==M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1",
+            "true",
+        ),
+        (
+            "reinspected_bindings.len()==M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1",
+            "true",
+        ),
+        (
+            "hsaco_reinspection.kernel_bindings().load_layout().is_some()",
             "true",
         ),
         ("pending_request.target==", "true=="),
@@ -879,6 +1040,26 @@ fn association_preflight_shape_rejects_each_critical_hostile_mutation() {
             "entry.physical_kernel.as_ref().ok_or(",
             "None::<&M1AllKernelsPendingPhysicalKernelProjectionV1>.ok_or(",
         ),
+        ("kernel.name()==entry.export_name", "true"),
+        ("kernel.symbol()==descriptor.descriptor_symbol", "true"),
+        ("matching_reinspected_kernels.next().is_none()", "true"),
+        (
+            "matched_reinspected_kernels.get_mut(reinspected_index)",
+            "matched_reinspected_kernels.get_mut(entry.ordinal)",
+        ),
+        ("(!*matched).then_some(())", "true.then_some(())"),
+        (
+            "reinspected_bindings.get(reinspected_index)",
+            "reinspected_bindings.get(entry.ordinal)",
+        ),
+        (
+            "request.physical_kernel(entry.ordinal).ok_or(",
+            "request.physical_kernel(reinspected_index).ok_or(",
+        ),
+        (
+            "request.descriptor_binding(entry.ordinal).ok_or(",
+            "request.descriptor_binding(reinspected_index).ok_or(",
+        ),
         (
             "target_binding.workgroup(root_index).ok_or(",
             "target_binding.workgroup(entry.ordinal).ok_or(",
@@ -902,25 +1083,201 @@ fn association_preflight_shape_rejects_each_critical_hostile_mutation() {
         ("descriptor.entry_name==root.export_symbol()", "true"),
         ("physical.name==root.export_symbol()", "true"),
         ("physical.symbol==descriptor.descriptor_symbol", "true"),
+        ("reinspected_physical==request_physical", "true"),
+        ("*reinspected_binding==request_binding", "true"),
+        (
+            "reinspected_binding.kernel_index()==reinspected_index",
+            "true",
+        ),
+        ("request_binding.kernel_index()==reinspected_index", "true"),
+        ("descriptor_binding.kernel_index==reinspected_index", "true"),
         ("target_workgroup.kernel()==root.kernel_id()", "true"),
         ("target_workgroup.workgroup()==root.workgroup()", "true"),
         ("descriptor_workgroup==root.workgroup()", "true"),
+        (
+            "matched_reinspected_kernels.iter().all(|matched|*matched)",
+            "true",
+        ),
     ] {
         assert!(
             canonical.contains(needle),
             "missing hostile fixture token {needle}"
         );
         let hostile = canonical.replacen(needle, replacement, 1);
-        assert_ne!(
-            hostile, canonical,
-            "hostile mutation must alter the exact production policy for {needle}"
+        assert!(
+            !anchored_verifier_method_satisfies_policy(&hostile),
+            "anchored verifier policy accepted hostile mutation for {needle}"
         );
     }
 }
 
 #[test]
-fn association_failures_are_exactly_three_coarse_variants() {
+#[allow(clippy::too_many_lines)]
+fn exact_finalized_verifier_policy_rejects_every_call_and_owner_evasion() {
+    assert!(protected_verifier_policy_accepts(SOURCE));
+    let exact_call = "::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes())";
+    assert_eq!(SOURCE.matches(exact_call).count(), 1);
+    let masked_production = rust_code_without_comments_or_strings(SOURCE);
+    let (masked_production, _tests) = split_complete_production_and_tests(&masked_production)
+        .expect("canonical production and tests must split");
+    assert_eq!(
+        identifier_token_count(masked_production, FINALIZER_CRATE_IDENTIFIER),
+        1
+    );
+    assert_eq!(
+        SOURCE
+            .matches("inspect_and_bind_kernel_descriptors")
+            .count(),
+        0
+    );
+
+    let unqualified = SOURCE.replacen(
+        exact_call,
+        "verify_finalized(request.finalized_hsaco_bytes())",
+        1,
+    );
+    let wrapper = unqualified.replacen(
+        TEST_MODULE_BOUNDARY,
+        r"fn verify_finalized(
+    _bytes: &[u8],
+) -> Result<
+    ::fe2o3_hsaco_finalize::FinalizedDescriptorInspection,
+    ::fe2o3_hsaco_finalize::FinalizationError,
+> {
+    ::fe2o3_hsaco_finalize::verify_finalized(&[])
+}
+
+#[cfg(test)]
+mod tests {",
+        1,
+    );
+    let wrong_bytes = SOURCE.replacen("request.finalized_hsaco_bytes()", "&[]", 1);
+    let omitted_call = SOURCE.replacen(exact_call, "omitted_finalized_verification()", 1);
+    let duplicate_call = SOURCE.replacen(
+        "        let pending_request =",
+        r"        let _discarded_reinspection =
+            ::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes());
+        let pending_request =",
+        1,
+    );
+    let second_parser = SOURCE.replacen(
+        "        let entries = request",
+        r"        let _second_parse =
+            ::fe2o3_hsaco::inspect_and_bind_kernel_descriptors(
+                request.finalized_hsaco_bytes(),
+            );
+        let entries = request",
+        1,
+    );
+    let sibling_finalizer_api = SOURCE.replacen(
+        "        let entries = request",
+        r"        let _sibling_inspection =
+            ::fe2o3_hsaco_finalize::inspect_finalized(request.finalized_hsaco_bytes());
+        let entries = request",
+        1,
+    );
+    let crate_alias = SOURCE
+        .replacen(
+            "use std::fmt;",
+            "use fe2o3_hsaco_finalize as hsaco_finalize_again;\nuse std::fmt;",
+            1,
+        )
+        .replacen(
+            "        let entries = request",
+            r"        let _sibling_inspection =
+            hsaco_finalize_again::inspect_finalized(request.finalized_hsaco_bytes());
+        let entries = request",
+            1,
+        );
+    let function_alias = SOURCE.replacen(
+        "use std::fmt;",
+        "use fe2o3_hsaco_finalize::inspect_finalized as inspect_finalized_again;\nuse std::fmt;",
+        1,
+    )
+    .replacen(
+        "        let entries = request",
+        r"        let _sibling_inspection =
+            inspect_finalized_again(request.finalized_hsaco_bytes());
+        let entries = request",
+        1,
+    );
+    let raw_identifier_crate_path = SOURCE.replacen(
+        "        let entries = request",
+        r"        let _sibling_inspection =
+            ::r#fe2o3_hsaco_finalize::inspect_finalized(request.finalized_hsaco_bytes());
+        let entries = request",
+        1,
+    );
+    let parenthesized_callee = SOURCE.replacen(
+        "        let entries = request",
+        r"        let _discarded_reinspection =
+            (::fe2o3_hsaco_finalize::verify_finalized)(
+                request.finalized_hsaco_bytes(),
+            );
+        let entries = request",
+        1,
+    );
+    let function_item_alias = SOURCE.replacen(
+        "        let entries = request",
+        r"        let verifier = ::fe2o3_hsaco_finalize::verify_finalized;
+        let _discarded_reinspection = verifier(request.finalized_hsaco_bytes());
+        let entries = request",
+        1,
+    );
+    let ignored_result = SOURCE.replacen(
+        "        let hsaco_reinspection =",
+        "        let _ignored_hsaco_reinspection =",
+        1,
+    );
+    let weakened_descriptor_table = SOURCE.replacen(
+        "                    && hsaco_reinspection.descriptor_table() == request.descriptor_table()",
+        "                    && true",
+        1,
+    );
+    let dropped_owner = SOURCE.replacen(
+        "            hsaco_reinspection,\n        )",
+        "            (),\n        )",
+        1,
+    );
+
+    for (case, hostile) in [
+        ("unqualified call", unqualified),
+        ("private wrapper", wrapper),
+        ("wrong bytes", wrong_bytes),
+        ("omitted call", omitted_call),
+        ("duplicate direct call", duplicate_call),
+        ("second low-level parser", second_parser),
+        ("sibling finalizer API", sibling_finalizer_api),
+        ("finalizer crate alias", crate_alias),
+        ("finalizer function alias", function_alias),
+        (
+            "raw-identifier finalizer crate path",
+            raw_identifier_crate_path,
+        ),
+        ("parenthesized callee", parenthesized_callee),
+        ("function-item alias", function_item_alias),
+        ("ignored result", ignored_result),
+        (
+            "weakened descriptor-table equality",
+            weakened_descriptor_table,
+        ),
+        ("dropped finalization-verification owner", dropped_owner),
+    ] {
+        assert_ne!(
+            hostile, SOURCE,
+            "hostile fixture was not constructed: {case}"
+        );
+        assert!(
+            !protected_verifier_policy_accepts(&hostile),
+            "exact finalized-verifier policy accepted hostile substitution: {case}"
+        );
+    }
+}
+
+#[test]
+fn association_failures_are_exactly_four_coarse_variants() {
     for variant in [
+        "ExactFinalizedHsacoVerificationFailed",
         "FinalizerArtifactAssociationFailed",
         "CompilerTargetAssociationFailed",
         "RosterEntryAssociationFailed",
@@ -1140,6 +1497,7 @@ emit_bypassing_backend!(verify_protected_roster);
 #[test]
 fn every_common_custody_failure_is_distinct_and_fail_closed() {
     for mapping in [
+        "finalized_verification.map_err(|_| {\n            M1AllKernelsProtectedVerifierErrorV1::ExactFinalizedHsacoVerificationFailed",
         "independently_revalidate_finalizer_derivation()\n            .map_err(|_| {\n                M1AllKernelsProtectedVerifierErrorV1::FinalizerDerivationRevalidationFailed",
         "validate_compiler_multi_root_proof_inputs_v1()\n            .map_err(|_| {\n                M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootProofInputsValidationFailed",
         "validate_compiler_multi_root_target_lineage_v1(&proof_inputs_owner)\n            .map_err(|_| {\n                M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed",
@@ -1149,6 +1507,12 @@ fn every_common_custody_failure_is_distinct_and_fail_closed() {
             "preflight failure lacks exact fail-closed mapping {mapping}"
         );
     }
+    assert_eq!(
+        SOURCE
+            .matches("ExactFinalizedHsacoVerificationFailed")
+            .count(),
+        4
+    );
     assert_eq!(
         SOURCE
             .matches("FinalizerDerivationRevalidationFailed")
@@ -1370,11 +1734,14 @@ fn standalone_manifest_pins_the_current_generic_boundary() {
     assert!(MANIFEST.contains(&format!(
         "fe2o3-host = {{ git = \"https://github.com/harsh-nod/fe2o3.git\", rev = \"{FE2O3_REVISION}\", version = \"=0.1.0\" }}"
     )));
+    assert!(MANIFEST.contains(&format!(
+        "fe2o3-hsaco-finalize = {{ git = \"https://github.com/harsh-nod/fe2o3.git\", rev = \"{FE2O3_REVISION}\", version = \"=0.1.0\" }}"
+    )));
     assert!(MANIFEST.contains(
         "ferric-qwen3-all-kernels-device-v1 = { path = \"../../device/qwen3-all-kernels-v1\" }"
     ));
     assert!(!MANIFEST.contains("Cargo.lock"));
-    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 1);
+    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 2);
 }
 
 #[test]
@@ -1391,25 +1758,43 @@ fn documentation_states_the_non_authority_boundary() {
         "`None` is faithfully projected, but the association preflight rejects it",
         "no public constructor, serializer, or JSON input",
         "no environment, file, or CLI input",
+        "finalized-HSACO verifier exactly once",
+        "exact bytes borrowed from the typed request",
+        "Descriptor-table, binding, parse, or canonical whole-HSACO digest failure",
+        "`ExactFinalizedHsacoVerificationFailed` error",
+        "owned `FinalizedDescriptorInspection`",
+        "same-process descriptive integrity, not an independent authority",
+        "neither owns the artifact bytes nor loads the code object",
         "common-custody preflight in exact order",
         "independently revalidates the finalizer derivation",
         "validates the common multi-root compiler proof inputs",
         "validates the common multi-root target lineage by borrowing those proof inputs",
         "Each failure maps to a distinct fail-closed error",
-        "three inferred move-only owners are retained together",
+        "three inferred move-only common owners and the owned descriptive reinspection are retained together",
         "not exposed or serialized",
         "lexically scoped, zero-argument association closure",
         "finalizer identity and finalized-HSACO digest and length",
         "final LLVM module to both the finalizer compiler module and semantic handoff module",
         "literal `gfx942:xnack-` / COV6 target",
         "exactly 12 markers, proof roots, and target workgroups",
+        "reinspection target and COV must equal the typed request",
+        "complete descriptor table must be fully equal to the typed request table",
+        "exactly 12 metadata kernels and descriptor bindings",
+        "descriptive load layout",
         "marker/proof binding bijection in both directions",
         "by binding identity rather than ordinal",
         "lineage, descriptor, ELF-binding, and physical-kernel facts",
+        "metadata-kernel and marker orders are distinct domains",
+        "one unique reinspected metadata index using both the export name and descriptor symbol",
+        "checked 12-element coverage table",
+        "requires a complete permutation",
+        "never uses the canonical ordinal to index either reinspection array",
+        "fully equal to the typed request values at the canonical ordinal",
+        "both the reinspected and typed binding kernel indices must equal the found metadata index",
         "target workgroup is read at the matched proof-root index",
         "only `BlockSizeV1::Exact` equal to the proof-root workgroup is accepted",
         "`Any`, `AtMost`, or a missing descriptor is rejected",
-        "closure ends before all three owners are moved unchanged",
+        "closure ends before all four owners are moved unchanged",
         "do not establish the per-entry proof-to-executable, Rust layout, or Rust effect joins",
         "does not construct fe2o3 verification evidence",
         "no protected policy key or trust root",

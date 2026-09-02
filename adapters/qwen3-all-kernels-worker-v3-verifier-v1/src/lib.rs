@@ -277,11 +277,13 @@ pub enum M1AllKernelsProtectedVerifierErrorV1 {
     CompilerMultiRootProofInputsValidationFailed,
     /// The common multi-root target lineage did not validate.
     CompilerMultiRootTargetLineageValidationFailed,
+    /// The exact borrowed finalized HSACO failed descriptor-table and digest verification.
+    ExactFinalizedHsacoVerificationFailed,
     /// Finalizer custody did not match the request's exact artifact coordinates.
     FinalizerArtifactAssociationFailed,
     /// Compiler target custody did not match the finalizer, handoff, or target.
     CompilerTargetAssociationFailed,
-    /// The marker, proof-root, descriptor, physical, or workgroup roster drifted.
+    /// The reinspection target, COV, cardinality, load layout, or per-entry association drifted.
     RosterEntryAssociationFailed,
     /// No independently authenticated protected-verification receipt exists.
     MissingProtectedVerificationReceipt {
@@ -301,6 +303,9 @@ impl fmt::Display for M1AllKernelsProtectedVerifierErrorV1 {
             }
             Self::CompilerMultiRootTargetLineageValidationFailed => {
                 formatter.write_str("common multi-root compiler target-lineage validation failed")
+            }
+            Self::ExactFinalizedHsacoVerificationFailed => {
+                formatter.write_str("exact finalized HSACO verification failed")
             }
             Self::FinalizerArtifactAssociationFailed => {
                 formatter.write_str("finalizer and exact artifact association failed")
@@ -339,11 +344,17 @@ impl M1AllKernelsProtectedVerifierV1 {
         Self
     }
 
-    fn reject_missing_protected_receipt<FinalizerOwner, ProofInputsOwner, TargetLineageOwner>(
+    fn reject_missing_protected_receipt<
+        FinalizerOwner,
+        ProofInputsOwner,
+        TargetLineageOwner,
+        HsacoReinspectionOwner,
+    >(
         _request: &M1AllKernelsPendingRequestProjectionV1,
         _finalizer_owner: FinalizerOwner,
         _proof_inputs_owner: ProofInputsOwner,
         _target_lineage_owner: TargetLineageOwner,
+        _hsaco_reinspection_owner: HsacoReinspectionOwner,
     ) -> Result<WorkerV3ProtectedRosterVerificationEvidenceV1, M1AllKernelsProtectedVerifierErrorV1>
     {
         Err(missing_protected_verification_receipt_v1())
@@ -371,6 +382,11 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
     ) -> Result<WorkerV3ProtectedRosterVerificationEvidenceV1, Self::Error> {
         let pending_request = M1AllKernelsPendingRequestProjectionV1::from_request(request)
             .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+        let finalized_verification =
+            ::fe2o3_hsaco_finalize::verify_finalized(request.finalized_hsaco_bytes());
+        let hsaco_reinspection = finalized_verification.map_err(|_| {
+            M1AllKernelsProtectedVerifierErrorV1::ExactFinalizedHsacoVerificationFailed
+        })?;
         let finalizer_owner = request
             .independently_revalidate_finalizer_derivation()
             .map_err(|_| {
@@ -419,11 +435,21 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
 
                 let markers = request.marker_entries();
                 let proof_roots = proof_inputs_owner.roots();
+                let reinspected = hsaco_reinspection.hsaco();
+                let reinspected_kernels = reinspected.kernels();
+                let reinspected_bindings = hsaco_reinspection.kernel_bindings().bindings();
                 (markers.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
                     && proof_roots.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
-                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1)
-                    .then_some(())
-                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
+                    && target_binding.root_count() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && hsaco_reinspection.descriptor_table() == request.descriptor_table()
+                    && reinspected.target() == request.target()
+                    && reinspected.code_object_version().number()
+                        == request.code_object_version().number()
+                    && reinspected_kernels.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && reinspected_bindings.len() == M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1
+                    && hsaco_reinspection.kernel_bindings().load_layout().is_some())
+                .then_some(())
+                .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
 
                 (markers.iter().all(|marker| {
                     proof_roots
@@ -441,6 +467,8 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
                 .then_some(())
                 .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)?;
 
+                let mut matched_reinspected_kernels =
+                    [false; M1_ALL_KERNELS_PENDING_ENTRY_COUNT_V1];
                 pending_request.entries.iter().try_for_each(|entry| {
                     let (root_index, root) = proof_roots
                         .iter()
@@ -455,10 +483,46 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
                     let descriptor = entry.descriptor.as_ref().ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
-                    let _descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
+                    let descriptor_binding = entry.descriptor_binding.as_ref().ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
                     let physical = entry.physical_kernel.as_ref().ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let mut matching_reinspected_kernels = reinspected_kernels
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, kernel)| {
+                            kernel.name() == entry.export_name
+                                && kernel.symbol() == descriptor.descriptor_symbol
+                        });
+                    let (reinspected_index, reinspected_physical) =
+                        matching_reinspected_kernels.next().ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    matching_reinspected_kernels
+                        .next()
+                        .is_none()
+                        .then_some(())
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    let matched = matched_reinspected_kernels
+                        .get_mut(reinspected_index)
+                        .ok_or(
+                            M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                        )?;
+                    (!*matched).then_some(()).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    *matched = true;
+                    let reinspected_binding = reinspected_bindings.get(reinspected_index).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let request_physical = request.physical_kernel(entry.ordinal).ok_or(
+                        M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
+                    )?;
+                    let request_binding = request.descriptor_binding(entry.ordinal).ok_or(
                         M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed,
                     )?;
                     let target_workgroup = target_binding.workgroup(root_index).ok_or(
@@ -480,12 +544,22 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
                         && descriptor.entry_name == root.export_symbol()
                         && physical.name == root.export_symbol()
                         && physical.symbol == descriptor.descriptor_symbol
+                        && reinspected_physical == request_physical
+                        && *reinspected_binding == request_binding
+                        && reinspected_binding.kernel_index() == reinspected_index
+                        && request_binding.kernel_index() == reinspected_index
+                        && descriptor_binding.kernel_index == reinspected_index
                         && target_workgroup.kernel() == root.kernel_id()
                         && target_workgroup.workgroup() == root.workgroup()
                         && descriptor_workgroup == root.workgroup())
                     .then_some(())
                     .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
-                })
+                })?;
+                matched_reinspected_kernels
+                    .iter()
+                    .all(|matched| *matched)
+                    .then_some(())
+                    .ok_or(M1AllKernelsProtectedVerifierErrorV1::RosterEntryAssociationFailed)
             };
             validate_associations()?;
         }
@@ -494,6 +568,7 @@ unsafe impl WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV
             finalizer_owner,
             proof_inputs_owner,
             target_lineage_owner,
+            hsaco_reinspection,
         )
     }
 }
@@ -541,6 +616,10 @@ mod tests {
             M1AllKernelsProtectedVerifierErrorV1::CompilerMultiRootTargetLineageValidationFailed
                 .to_string(),
             "common multi-root compiler target-lineage validation failed"
+        );
+        assert_eq!(
+            M1AllKernelsProtectedVerifierErrorV1::ExactFinalizedHsacoVerificationFailed.to_string(),
+            "exact finalized HSACO verification failed"
         );
         assert_eq!(
             M1AllKernelsProtectedVerifierErrorV1::FinalizerArtifactAssociationFailed.to_string(),

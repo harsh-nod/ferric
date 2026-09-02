@@ -179,7 +179,7 @@ FE2O3_ADAPTER_WORKSPACES = (
     (
         "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
         "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
-        ("fe2o3-host",),
+        ("fe2o3-host", "fe2o3-hsaco-finalize"),
         FE2O3_RESOLVED_PACKAGES,
     ),
     (

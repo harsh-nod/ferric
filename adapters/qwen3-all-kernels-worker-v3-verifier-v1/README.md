@@ -49,29 +49,55 @@ constructor, serializer, or JSON input.
 It has no environment, file, or CLI input. The projection is neither protected
 evidence nor a verifier decision and cannot leave the rejection path.
 
-After constructing that projection, the backend performs an authority-free
-common-custody preflight in exact order. It independently revalidates the
-finalizer derivation from the exact borrowed replay, validates the common
-multi-root compiler proof inputs, and then validates the common multi-root
-target lineage by borrowing those proof inputs. Each failure maps to a distinct
-fail-closed error. The three inferred move-only owners are retained together
-through the private rejection helper; they are not exposed or serialized.
+After constructing that projection, the backend calls the pinned
+`fe2o3-hsaco-finalize` finalized-HSACO verifier exactly once on the exact bytes
+borrowed from the typed request. Descriptor-table, binding, parse, or canonical
+whole-HSACO digest failure maps to the coarse
+`ExactFinalizedHsacoVerificationFailed` error. The returned owned
+`FinalizedDescriptorInspection` is same-process descriptive integrity, not an
+independent authority; the adapter retains it but neither owns the artifact
+bytes nor loads the code object.
+
+The backend then performs an authority-free common-custody preflight in exact
+order. It independently revalidates the finalizer derivation from the exact
+borrowed replay, validates the common multi-root compiler proof inputs, and
+then validates the common multi-root target lineage by borrowing those proof
+inputs. Each failure maps to a distinct fail-closed error. The three inferred
+move-only common owners and the owned descriptive reinspection are retained
+together through the private rejection helper; they are not exposed or
+serialized.
 
 A lexically scoped, zero-argument association closure then borrows all three
-owners and the typed request projection. It checks the finalizer identity and
-finalized-HSACO digest and length, cross-binds the final LLVM module to both the
-finalizer compiler module and semantic handoff module, and requires the literal
-`gfx942:xnack-` / COV6 target. It requires exactly 12 markers, proof roots, and
-target workgroups; establishes marker/proof binding bijection in both
-directions; and matches each entry to its proof root by binding identity rather
-than ordinal. Every matched row must contain lineage, descriptor, ELF-binding,
-and physical-kernel facts with consistent logical name, export name, kernel
+common owners, the owned descriptive reinspection, and the typed request
+projection. It checks the finalizer identity and finalized-HSACO digest and
+length, cross-binds the final LLVM module to both the finalizer compiler module
+and semantic handoff module, and requires the literal
+`gfx942:xnack-` / COV6 target. The reinspection target and COV must equal the
+typed request, its complete descriptor table must be fully equal to the typed
+request table, it must contain exactly 12 metadata kernels and descriptor
+bindings, and it must include a descriptive load layout. The closure requires
+exactly 12 markers, proof roots, and target workgroups; establishes
+marker/proof binding bijection in both directions; and matches each entry to
+its proof root by binding identity rather than ordinal.
+
+The metadata-kernel and marker orders are distinct domains. For every canonical
+entry, the closure finds one unique reinspected metadata index using both the
+export name and descriptor symbol. It marks that index through a checked
+12-element coverage table, rejects duplicates, and requires a complete
+permutation. It never uses the canonical ordinal to index either reinspection
+array. The reinspected physical kernel and descriptor binding must be fully
+equal to the typed request values at the canonical ordinal, and both the
+reinspected and typed binding kernel indices must equal the found metadata
+index.
+
+Every matched row must contain lineage, descriptor, ELF-binding, and
+physical-kernel facts with consistent logical name, export name, kernel
 binding, physical export, and descriptor symbol. The target workgroup is read
 at the matched proof-root index and must name that proof root's Kernel IR kernel
 and exact workgroup. Descriptor launch constraints are matched exhaustively:
 only `BlockSizeV1::Exact` equal to the proof-root workgroup is accepted;
 `Any`, `AtMost`, or a missing descriptor is rejected. The closure ends before
-all three owners are moved unchanged into the private rejection helper.
+all four owners are moved unchanged into the private rejection helper.
 
 Passing the preflight still returns the unconditional
 `Err(MissingProtectedVerificationReceipt)`. The common owners do not establish
