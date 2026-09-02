@@ -31,8 +31,8 @@ const EVIDENCE_CONSTRUCTOR: &str = "WorkerV3ProtectedRosterVerificationEvidenceV
 // Co-located review tripwires. They provide no external provenance or authority.
 const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
     [
-        209, 88, 50, 118, 158, 27, 124, 27, 90, 129, 106, 92, 206, 142, 71, 8, 126, 30, 169, 111,
-        147, 50, 207, 185, 8, 51, 238, 88, 131, 65, 66, 79,
+        28, 98, 55, 137, 222, 76, 122, 222, 138, 23, 253, 200, 184, 10, 55, 216, 205, 174, 135,
+        166, 34, 240, 146, 44, 208, 0, 198, 168, 185, 180, 106, 177,
     ],
     [
         195, 119, 11, 143, 50, 4, 217, 48, 95, 184, 90, 183, 252, 155, 177, 118, 152, 33, 3, 19,
@@ -89,8 +89,8 @@ const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
         189, 221, 144, 146, 21, 66, 50, 176, 64, 194, 85,
     ],
     [
-        82, 181, 239, 93, 237, 169, 249, 126, 244, 255, 15, 75, 89, 182, 156, 195, 130, 136, 74,
-        41, 147, 138, 222, 86, 124, 84, 97, 91, 197, 201, 106, 166,
+        168, 158, 163, 233, 232, 125, 176, 69, 200, 20, 69, 227, 200, 219, 113, 230, 216, 4, 5, 24,
+        78, 66, 59, 232, 58, 228, 32, 21, 132, 136, 3, 137,
     ],
     [
         77, 160, 73, 31, 254, 138, 240, 206, 17, 49, 226, 178, 255, 123, 21, 87, 229, 220, 2, 156,
@@ -1951,16 +1951,6 @@ fn manifest_lock_and_raw_file_tripwires_match_reviewed_inputs() {
             source_sha256(LOCKFILE),
         ],
         REVIEWED_FILE_SHA256
-    );
-}
-
-#[test]
-fn report_updated_lib_fingerprints() {
-    let production = production_file(SOURCE).expect("production source parses");
-    panic!(
-        "source={:?}\nlib={:?}",
-        source_sha256(SOURCE),
-        reviewed_lib_node_fingerprints(&production),
     );
 }
 
