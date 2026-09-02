@@ -37,7 +37,7 @@ pub(crate) struct ModelQueueSnapshotV1 {
 struct ModelQueueStateV1 {
     phase: ModelQueuePhaseV1,
     failures: VecDeque<Option<ModelQueueFailureV1>>,
-    readbacks: VecDeque<Vec<u32>>,
+    readbacks: VecDeque<Vec<ModelMemberReadbackV1>>,
     active_failure: Option<ModelQueueFailureV1>,
     submits: usize,
     waits: usize,
@@ -50,10 +50,16 @@ struct ModelQueueStateV1 {
 #[derive(Clone, Debug)]
 pub(crate) struct ModelQueueV1(Rc<RefCell<ModelQueueStateV1>>);
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ModelMemberReadbackV1 {
+    pub(crate) accepted: u8,
+    pub(crate) emitted: Vec<u32>,
+}
+
 impl ModelQueueV1 {
     pub(crate) fn new(
         failures: impl IntoIterator<Item = Option<ModelQueueFailureV1>>,
-        readbacks: impl IntoIterator<Item = Vec<u32>>,
+        readbacks: impl IntoIterator<Item = Vec<ModelMemberReadbackV1>>,
     ) -> Self {
         Self(Rc::new(RefCell::new(ModelQueueStateV1 {
             phase: ModelQueuePhaseV1::Prepared,
@@ -131,7 +137,7 @@ impl ModelQueueV1 {
         state.phase = ModelQueuePhaseV1::Recycled;
     }
 
-    fn readback(&self) -> Result<Vec<u32>, ModelQueueFailureV1> {
+    fn readback(&self) -> Result<Vec<ModelMemberReadbackV1>, ModelQueueFailureV1> {
         let mut state = self.0.borrow_mut();
         assert_eq!(state.phase, ModelQueuePhaseV1::Recycled);
         state.readback_count += 1;
@@ -195,7 +201,7 @@ pub(crate) struct ModelRecycledQueueV1 {
 #[derive(Debug)]
 pub(crate) struct ModelDiagnosticV1 {
     pub(crate) queue: ModelQueueV1,
-    pub(crate) tokens: Vec<u32>,
+    pub(crate) members: Vec<ModelMemberReadbackV1>,
 }
 
 #[derive(Debug)]
@@ -263,9 +269,9 @@ impl ModelCompletedQueueV1 {
 impl ModelRecycledQueueV1 {
     pub(crate) fn readback(self) -> Result<ModelDiagnosticV1, ModelReadbackFailureV1> {
         match self.queue.readback() {
-            Ok(tokens) => Ok(ModelDiagnosticV1 {
+            Ok(members) => Ok(ModelDiagnosticV1 {
                 queue: self.queue,
-                tokens,
+                members,
             }),
             Err(ModelQueueFailureV1::ReadbackReleased) => Err(ModelReadbackFailureV1 {
                 recycled: self,

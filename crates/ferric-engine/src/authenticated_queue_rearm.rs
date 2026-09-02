@@ -5223,7 +5223,45 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use ferric_spec::Identity;
+
+    #[derive(Debug)]
+    struct ModelPreparedRearmV1 {
+        prepared: ModelPreparedQueueV1,
+        clean: bool,
+    }
+
+    impl M1PreparedRearmCloseEffectV1 for ModelPreparedRearmV1 {
+        fn destroy_and_release(self) -> Result<Box<dyn fmt::Debug>, Box<dyn fmt::Debug>> {
+            self.prepared.destroy(self.clean);
+            if self.clean {
+                Ok(Box::new("released"))
+            } else {
+                Err(Box::new("quarantined"))
+            }
+        }
+    }
+
+    #[test]
+    fn prepared_rearm_closure_executes_one_destroy_and_preserves_classification() {
+        for clean in [true, false] {
+            let queue = ModelQueueV1::new([], []);
+            let custody = close_prepared_rearm_submission_core(
+                ModelPreparedRearmV1 {
+                    prepared: ModelPreparedQueueV1::new(queue.clone()),
+                    clean,
+                },
+                "retained recipe and lineage",
+            );
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(custody, AuthenticatedSubmissionOpaqueCustodyV1::Released(_)),
+                clean
+            );
+        }
+    }
 
     #[test]
     fn authenticated_rearm_shape_kind_join_closes_all_five_shapes() {
@@ -5327,102 +5365,6 @@ mod tests {
         assert!(!diagnostic_capture_is_supported(true, false));
         assert!(diagnostic_capture_is_supported(false, true));
         assert!(!diagnostic_capture_is_supported(true, true));
-    }
-
-    #[test]
-    fn authenticated_repeat_round_surface_has_schedule_release_and_teardown_edges() {
-        type ScheduleNext = fn(
-            M1AuthenticatedLongLivedQueueReleasedRoundV1,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedScheduledLongLivedQueueRearmV1,
-            M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
-        >;
-        type ScheduleNextExact = fn(
-            M1AuthenticatedLongLivedQueueReleasedRoundV1,
-            &mut Engine<32>,
-            CompletionEpoch,
-            &[RequestId],
-        ) -> Result<
-            M1AuthenticatedScheduledLongLivedQueueRearmV1,
-            M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
-        >;
-        type Teardown = fn(
-            M1AuthenticatedLongLivedQueueReleasedRoundV1,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
-            Box<M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>,
-        >;
-        type Release = fn(
-            M1AuthenticatedRearmedCompletionOutcomeV1,
-        ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1;
-        type RetryRelease = fn(
-            M1AuthenticatedRearmedRoundPageReleaseFailureV1,
-        ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1;
-        type ReadbackTeardown = fn(
-            Box<M1AuthenticatedRearmedReadbackFailureV1>,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedRearmedReadbackTeardownSuccessV1,
-            Box<M1AuthenticatedRearmedReadbackTeardownFailureV1>,
-        >;
-        type CompletionPreflightTeardown = fn(
-            M1AuthenticatedRearmedCompletionPreflightFailureV1,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1,
-            Box<M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>,
-        >;
-        fn exhaust_release(outcome: M1AuthenticatedRearmedRoundReleaseOutcomeV1) {
-            match outcome {
-                M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(_)
-                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(_)
-                | M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(_) => {}
-            }
-        }
-
-        let _: ScheduleNext = M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next::<32>;
-        let _: ScheduleNextExact =
-            M1AuthenticatedLongLivedQueueReleasedRoundV1::schedule_next_exact::<32>;
-        let _: Teardown =
-            M1AuthenticatedLongLivedQueueReleasedRoundV1::destroy_queue_and_retain_round::<32>;
-        let _: Release = M1AuthenticatedRearmedCompletionOutcomeV1::release_completed;
-        let _: RetryRelease = M1AuthenticatedRearmedRoundPageReleaseFailureV1::retry;
-        let _: ReadbackTeardown =
-            M1AuthenticatedRearmedReadbackFailureV1::destroy_queue_and_retain_custody::<32>;
-        let _: CompletionPreflightTeardown =
-            M1AuthenticatedRearmedCompletionPreflightFailureV1::destroy_queue_and_retain_custody::<
-                32,
-            >;
-
-        let _: fn(M1AuthenticatedRearmedRoundReleaseOutcomeV1) = exhaust_release;
-    }
-
-    #[test]
-    fn authenticated_rearm_plan_and_recipe_surface_uses_retained_queue_authority() {
-        type BindSelected = fn(
-            &M1AuthenticatedScheduledLongLivedQueueRearmV1,
-            RequestId,
-        ) -> Result<StepPlan, M1AuthenticatedRetainedStepPlanErrorV1>;
-        type DeriveRecipe = fn(
-            &M1AuthenticatedScheduledLongLivedQueueRearmV1,
-            M1FullStepWorkspacePlans,
-        ) -> M1PhysicalRunnerRecipeOutcomeV1;
-        type Prepare = fn(
-            &mut Engine<32>,
-            M1AuthenticatedReservedLongLivedQueueRearmV1,
-            M1FullStepWorkspacePlans,
-        ) -> Result<
-            M1AuthenticatedPreparedLongLivedQueueRearmV1,
-            Box<M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
-        >;
-
-        let _: BindSelected =
-            M1AuthenticatedScheduledLongLivedQueueRearmV1::bind_selected_step_plan;
-        let _: DeriveRecipe =
-            M1AuthenticatedScheduledLongLivedQueueRearmV1::derive_retained_step_recipe;
-        let _: Prepare = prepare_m1_authenticated_long_lived_queue_rearm_v1::<32>;
     }
 
     #[test]

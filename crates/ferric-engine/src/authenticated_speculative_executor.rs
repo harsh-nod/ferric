@@ -4340,10 +4340,214 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::convert::Infallible;
     use ferric_spec::{
         validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan,
     };
+
+    use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    use crate::authenticated_test_runtime::{
+        ModelCompletedQueueV1, ModelDiagnosticV1, ModelMemberReadbackV1, ModelPreparedQueueV1,
+        ModelPublishedQueueV1, ModelQueueFailureV1, ModelQueueV1, ModelReadbackFailureV1,
+        ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
+    };
+    use crate::{CheckedCompletionSemantics, M1SpeculativeTokenBlockV1};
+
+    struct ModelInitialQueueEffectsV1;
+
+    fn close_model_submit_failure(
+        failure: ModelSubmitFailureV1,
+    ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        let clean = failure.releases_cleanly;
+        failure.prepared.destroy(clean);
+        if clean {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model prepared destroyed"))
+        } else {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                "model prepared quarantined",
+            ))
+        }
+    }
+
+    fn close_model_readback_failure(
+        failure: ModelReadbackFailureV1,
+    ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        let clean = failure.releases_cleanly;
+        failure.recycled.destroy(clean);
+        if clean {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model recycled destroyed"))
+        } else {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                "model recycled quarantined",
+            ))
+        }
+    }
+
+    impl M1InitialQueueEffectsV1 for ModelInitialQueueEffectsV1 {
+        type Prepared = ModelPreparedQueueV1;
+        type Published = ModelPublishedQueueV1;
+        type Completed = ModelCompletedQueueV1;
+        type Recycled = ModelRecycledQueueV1;
+        type Observed = ModelDiagnosticV1;
+        type DiagnosticObserved = ModelDiagnosticV1;
+        type Diagnostic = ModelDiagnosticV1;
+        type SubmitFailure = ModelSubmitFailureV1;
+        type WaitFailure = ModelWaitFailureV1;
+        type RecycleFailure = Infallible;
+        type ObservationFailure = ModelReadbackFailureV1;
+        type DiagnosticObservationFailure = Infallible;
+        type JoinFailure = Infallible;
+
+        fn submit(
+            prepared: Self::Prepared,
+        ) -> Result<Self::Published, Self::SubmitFailure> {
+            prepared.submit()
+        }
+
+        fn close_submit_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            close_model_submit_failure(failure)
+        }
+
+        fn wait(published: Self::Published) -> Result<Self::Completed, Self::WaitFailure> {
+            published.wait()
+        }
+
+        fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure> {
+            Ok(completed.recycle())
+        }
+
+        fn observe(recycled: Self::Recycled) -> Result<Self::Observed, Self::ObservationFailure> {
+            recycled.readback()
+        }
+
+        fn close_observation_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ObservationFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            close_model_readback_failure(failure)
+        }
+
+        fn observe_diagnostic(
+            observed: Self::Observed,
+        ) -> Result<Self::DiagnosticObserved, Self::DiagnosticObservationFailure> {
+            Ok(observed)
+        }
+
+        fn close_diagnostic_observation_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::DiagnosticObservationFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            match failure {}
+        }
+
+        fn check(
+            observed: Self::DiagnosticObserved,
+        ) -> Result<Self::Diagnostic, Self::JoinFailure> {
+            Ok(observed)
+        }
+
+        fn close_join_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::JoinFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            match failure {}
+        }
+    }
+
+    struct ModelRearmedQueueEffectsV1;
+
+    impl M1RearmedQueueEffectsV1 for ModelRearmedQueueEffectsV1 {
+        type Prepared = ModelPreparedQueueV1;
+        type Published = ModelPublishedQueueV1;
+        type Completed = ModelCompletedQueueV1;
+        type Recycled = ModelRecycledQueueV1;
+        type Diagnostic = ModelDiagnosticV1;
+        type SubmitFailure = ModelSubmitFailureV1;
+        type ProgressFailure = ModelWaitFailureV1;
+        type ReadbackFailure = ModelReadbackFailureV1;
+
+        fn submit<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> Result<Self::Published, Self::SubmitFailure> {
+            prepared.submit()
+        }
+
+        fn classify_submit_failure(
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_submit_failure(failure)
+        }
+
+        fn wait<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> Result<Self::Completed, Self::ProgressFailure> {
+            published.wait()
+        }
+
+        fn recycle<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> Result<Self::Recycled, Self::ProgressFailure> {
+            Ok(completed.recycle())
+        }
+
+        fn readback(
+            recycled: Self::Recycled,
+        ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+            recycled.readback()
+        }
+
+        fn close_readback_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::ReadbackFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_readback_failure(failure)
+        }
+    }
+
+    impl M1SpeculativeRoundObservationV1 for ModelDiagnosticV1 {
+        fn preflight(
+            &self,
+            coordinator: &M1SpeculativeGenerationLoopV1,
+            binding: crate::M1SpeculativeRoundBindingV1,
+            controls: &[M1SpeculativeMemberControlV1],
+        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+        {
+            let epoch = binding.epoch();
+            let observations: Vec<_> = binding
+                .members()
+                .iter()
+                .zip(&self.members)
+                .map(|(input, member)| CheckedMemberObservationV1 {
+                    request: input.request(),
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: member.accepted,
+                        correction_or_bonus: *member
+                            .emitted
+                            .last()
+                            .expect("model completion has a correction or bonus"),
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&member.emitted)
+                        .expect("model completion respects the selected K bound"),
+                })
+                .collect();
+            coordinator.preflight_observed_round(
+                binding,
+                coordinator.shape().selection(),
+                epoch,
+                &observations,
+                controls,
+            )
+        }
+    }
 
     fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -4365,6 +4569,353 @@ mod tests {
             )],
         )
         .unwrap()
+    }
+
+    fn model_lineage(
+        coordinator: &M1SpeculativeGenerationLoopV1,
+    ) -> M1AuthenticatedSpeculativeCausalLineageV1 {
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let generated = initial_seeds
+            .iter()
+            .map(|seed| (seed.request(), 0))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+                identity: M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap(),
+            },
+            coordinator_identity: coordinator.identity(),
+            selection: coordinator.shape().selection(),
+            initial_seeds,
+            generated,
+            completed_rounds: 0,
+            last_epoch: CompletionEpoch::new(39),
+        }
+    }
+
+    fn model_members(
+        member_count: usize,
+        accepted: u8,
+        stop_lane: Option<usize>,
+    ) -> Vec<ModelMemberReadbackV1> {
+        (0..member_count)
+            .map(|lane| {
+                let mut emitted = (0..accepted)
+                    .map(|token| 500 + u32::from(token) + u32::try_from(lane).unwrap() * 16)
+                    .collect::<Vec<_>>();
+                emitted.push(if stop_lane == Some(lane) {
+                    999
+                } else {
+                    700 + u32::try_from(lane).unwrap()
+                });
+                ModelMemberReadbackV1 { accepted, emitted }
+            })
+            .collect()
+    }
+
+    fn model_coordinator(
+        selected: Qwen3PlanSelection,
+        member_count: usize,
+    ) -> M1SpeculativeGenerationLoopV1 {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds = (0..member_count)
+            .map(|lane| {
+                M1SpeculativeMemberSeedV1::new(
+                    RequestId::new(u32::try_from(lane).unwrap(), 1),
+                    70 + u32::try_from(lane).unwrap(),
+                    10,
+                    10,
+                    policy,
+                )
+            })
+            .collect::<Vec<_>>();
+        M1SpeculativeGenerationLoopV1::new(selected, &seeds).unwrap()
+    }
+
+    fn finish_model_round<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: M1PreparedCoordinatorRoundCoreV1<ModelDiagnosticV1>,
+    ) -> M1CommittedCoordinatorRoundCoreV1<ModelDiagnosticV1> {
+        assert_eq!(
+            prepared.dispositions.len(),
+            prepared.preflighted.members().len()
+        );
+        let committed = commit_coordinator_round_core(
+            engine,
+            prepared.coordinator,
+            prepared.preflighted,
+            prepared.controls,
+            prepared.diagnostic,
+            prepared.lineage,
+        )
+        .unwrap();
+        committed.physical.queue.release_generation();
+        committed
+    }
+
+    #[test]
+    fn model_queue_cores_drive_initial_repeated_and_rollover_lifecycles() {
+        let profiles = [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1_usize, 3_u8),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1, 5),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 1, 9),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 8, 2),
+        ];
+        for (bucket, member_count, accepted) in profiles {
+            let selected = selection(bucket);
+            let queue = ModelQueueV1::new(
+                [None, None],
+                [
+                    model_members(member_count, accepted, None),
+                    model_members(member_count, 1, None),
+                ],
+            );
+            let coordinator = model_coordinator(selected, member_count);
+            let lineage = model_lineage(&coordinator);
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let first = finish_model_round(&mut engine, prepared);
+            assert_eq!(first.outcome.members().len(), member_count);
+            assert!(first
+                .outcome
+                .members()
+                .iter()
+                .all(|member| member.accepted_draft_tokens() == accepted));
+
+            let coordinator = first.coordinator;
+            let lineage = first.lineage;
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let second = finish_model_round(&mut engine, prepared);
+            assert_eq!(second.outcome.completed_round(), 1);
+            assert_eq!(second.lineage.completed_rounds, 2);
+            assert!(!engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.submits, 2);
+            assert_eq!(snapshot.waits, 2);
+            assert_eq!(snapshot.recycles, 2);
+            assert_eq!(snapshot.readbacks, 2);
+            assert_eq!(snapshot.releases, 2);
+
+            let rollover = ModelQueueV1::new(
+                [None],
+                [model_members(member_count, 0, None)],
+            );
+            rollover.publish_for_rollover();
+            let (_diagnostic, logical) =
+                complete_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPublishedQueueV1::from_published(rollover.clone()),
+                    "rollover continuation",
+                )
+                .unwrap();
+            assert_eq!(logical, "rollover continuation");
+            let snapshot = rollover.snapshot();
+            assert_eq!((snapshot.submits, snapshot.waits, snapshot.recycles), (1, 1, 1));
+            assert_eq!(snapshot.readbacks, 1);
+        }
+    }
+
+    #[test]
+    fn model_currentness_and_readback_failures_close_once_without_resubmit() {
+        for failure in [
+            ModelQueueFailureV1::CurrentnessReleased,
+            ModelQueueFailureV1::CurrentnessQuarantined,
+        ] {
+            let queue = ModelQueueV1::new([Some(failure)], []);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (_stage, disposition) =
+                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    "retained logical",
+                )
+                .unwrap_err();
+            assert!(engine.is_faulted());
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(
+                    disposition,
+                    M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+                ),
+                failure == ModelQueueFailureV1::CurrentnessReleased
+            );
+        }
+
+        for failure in [
+            ModelQueueFailureV1::ReadbackReleased,
+            ModelQueueFailureV1::ReadbackQuarantined,
+        ] {
+            let queue = ModelQueueV1::new([Some(failure)], [model_members(1, 0, None)]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (stage, disposition) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    "retained bootstrap",
+                )
+                .unwrap_err();
+            assert_eq!(
+                stage,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionObservation
+            );
+            assert!(engine.is_faulted());
+            assert_eq!(queue.snapshot().submits, 1);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(
+                    disposition,
+                    M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+                ),
+                failure == ModelQueueFailureV1::ReadbackReleased
+            );
+        }
+    }
+
+    #[test]
+    fn model_s8_stops_and_cancels_every_live_lane_after_a_repeat() {
+        use crate::{
+            M1SpeculativeCancellationReasonV1, M1SpeculativeMemberStatusV1,
+            M1SpeculativeTerminalReasonV1,
+        };
+
+        for stop_lane in 0..8 {
+            let cancel_lane = (stop_lane + 1) % 8;
+            let selected = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+            let queue = ModelQueueV1::new(
+                [None, None],
+                [model_members(8, 1, None), model_members(8, 2, Some(stop_lane))],
+            );
+            let coordinator = model_coordinator(selected, 8);
+            let lineage = model_lineage(&coordinator);
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let first = finish_model_round(&mut engine, prepared);
+            let coordinator = first.coordinator;
+            let lineage = first.lineage;
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if lane == cancel_lane {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect::<Vec<_>>();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let second = finish_model_round(&mut engine, prepared);
+            assert_eq!(
+                second.outcome.members()[stop_lane].status(),
+                M1SpeculativeMemberStatusV1::Completed(
+                    M1SpeculativeTerminalReasonV1::StopToken { token: 999 }
+                )
+            );
+            assert_eq!(
+                second.outcome.members()[cancel_lane].status(),
+                M1SpeculativeMemberStatusV1::Cancelled(
+                    M1SpeculativeCancellationReasonV1::Deadline
+                )
+            );
+            assert_eq!(second.outcome.next_active_roster().len(), 6);
+            assert_eq!(queue.snapshot().submits, 2);
+            assert!(!engine.is_faulted());
+        }
     }
 
     fn validated_role_inputs(
@@ -5050,42 +5601,6 @@ mod tests {
             validate_prior_association_header(&hostile),
             Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRoster),
         );
-    }
-
-    #[test]
-    fn production_round_surface_separates_pre_detach_retry_from_terminal_disposition() {
-        type Execute = fn(
-            M1AuthenticatedSpeculativePhysicalExecutorV1,
-            &mut Engine<32>,
-            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
-        ) -> Result<
-            M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
-            Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
-        >;
-        type FinishedCleanup = fn(
-            M1AuthenticatedSpeculativePhysicalExecutorV1,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
-            Box<M1AuthenticatedSpeculativeExecutorTeardownFailureV1>,
-        >;
-        type BootstrapPrepare = fn(
-            M1SpeculativeGenerationLoopV1,
-            Vec<ActiveDeviceKvCache>,
-            M1ScheduledDispatchV1,
-            &LogicalRunnerDeclaration,
-            M1FullStepWorkspacePlans,
-            M1FullStepKvWorkspaceTablesV1,
-        ) -> Result<
-            M1AuthenticatedSpeculativeBootstrapPreparedV1,
-            Box<M1AuthenticatedSpeculativeBootstrapFailureV1>,
-        >;
-        let _: Execute = M1AuthenticatedSpeculativePhysicalExecutorV1::execute_round::<32>;
-        let _: FinishedCleanup =
-            M1AuthenticatedSpeculativePhysicalExecutorV1::destroy_queue_and_retain_state::<32>;
-        let _: BootstrapPrepare = prepare_m1_authenticated_speculative_bootstrap_v1;
-        assert!(production_entry_has_active_members(1));
-        assert!(!production_entry_has_active_members(0));
     }
 
     #[test]

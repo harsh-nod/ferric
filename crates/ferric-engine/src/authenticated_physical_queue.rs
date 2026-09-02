@@ -616,43 +616,50 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 #[cfg(test)]
 mod tests {
     use super::{
-        M1AuthenticatedPhysicalQueueClosureV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
-        M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueueSessionV1,
-        M1AuthenticatedPhysicalQueueSubmitFailureV1,
-        M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1,
-        M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1,
-        M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1,
+        close_without_authority_core, M1AuthenticatedPhysicalQueueClosureV1,
+        M1AuthenticatedUnsubmittedQueueCloseEffectV1,
     };
+    use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use crate::Engine;
 
-    #[test]
-    fn authenticated_effectful_failure_types_expose_consuming_engine_quarantine() {
-        let _: fn(
-            M1AuthenticatedPhysicalQueueCreateFailureV1,
-            &mut Engine<1>,
-        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1 =
-            M1AuthenticatedPhysicalQueueCreateFailureV1::quarantine_engine::<1>;
-        let _: fn(
-            M1AuthenticatedPhysicalQueueSubmitFailureV1,
-            &mut Engine<1>,
-        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1 =
-            M1AuthenticatedPhysicalQueueSubmitFailureV1::quarantine_engine::<1>;
-        let _: fn(
-            M1AuthenticatedPhysicalQueueOperationFailureV1,
-            &mut Engine<1>,
-        ) -> M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1 =
-            M1AuthenticatedPhysicalQueueOperationFailureV1::quarantine_engine::<1>;
+    #[derive(Debug)]
+    struct ModelUnsubmittedQueueV1 {
+        prepared: ModelPreparedQueueV1,
+        clean: bool,
+    }
+
+    impl M1AuthenticatedUnsubmittedQueueCloseEffectV1 for ModelUnsubmittedQueueV1 {
+        fn close(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            self.prepared.destroy(self.clean);
+            if self.clean {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("destroyed"))
+            } else {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new("quarantined"))
+            }
+        }
     }
 
     #[test]
-    fn unpublished_and_currentness_closures_consume_without_resubmit_authority() {
-        let _: fn(M1AuthenticatedPhysicalQueueSessionV1) -> M1AuthenticatedPhysicalQueueClosureV1 =
-            M1AuthenticatedPhysicalQueueSessionV1::close_unpublished;
-        let _: fn(
-            M1AuthenticatedPhysicalQueueSubmitFailureV1,
-            &mut Engine<1>,
-        ) -> M1AuthenticatedPhysicalQueueClosureV1 =
-            M1AuthenticatedPhysicalQueueSubmitFailureV1::close_without_authority::<1>;
+    fn currentness_closure_executes_one_unpublished_destroy_and_faults_engine() {
+        for clean in [true, false] {
+            let queue = ModelQueueV1::new([], []);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let closure = close_without_authority_core(
+                &mut engine,
+                ModelUnsubmittedQueueV1 {
+                    prepared: ModelPreparedQueueV1::new(queue.clone()),
+                    clean,
+                },
+                "currentness failure",
+            );
+            assert!(engine.is_faulted());
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(closure, M1AuthenticatedPhysicalQueueClosureV1::Released(_)),
+                clean
+            );
+        }
     }
 }
 
