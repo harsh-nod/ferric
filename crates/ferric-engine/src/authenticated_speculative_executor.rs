@@ -192,8 +192,17 @@ impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
 
     #[must_use]
     pub const fn retains_causal_lineage(&self) -> bool {
-        let _ = &self.state;
-        true
+        match &self.state {
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Production {
+                lineage,
+                ..
+            } => {
+                let _ = lineage;
+                true
+            }
+            #[cfg(test)]
+            M1AuthenticatedSpeculativeExecutorTeardownSuccessStateV1::Injected { .. } => true,
+        }
     }
 }
 
@@ -2011,9 +2020,12 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
         M1SpeculativeRoundOutcomeV1,
         M1ObservedSpeculativeDiagnosticChoicesV1,
     ) {
-        let M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices) = self.choices
-        else {
-            unreachable!("injected lifecycle has no device diagnostic allocation")
+        let choices = match self.choices {
+            M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Production(choices) => choices,
+            #[cfg(test)]
+            M1AuthenticatedSpeculativeDiagnosticChoicesStateV1::Injected => {
+                unreachable!("injected lifecycle has no device diagnostic allocation")
+            }
         };
         (self.executor, self.outcome, choices)
     }
@@ -2635,15 +2647,15 @@ fn execute_bootstrap_from_allocation<const C: usize>(
             ),
         ));
     }
-    let M1AuthenticatedSpeculativeBootstrapPreparedV1 {
-        state:
-            M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Production {
-                prepared,
-                continuation,
-            },
-    } = bootstrap
-    else {
-        unreachable!("injected bootstrap uses the injected argument backend")
+    let (prepared, continuation) = match bootstrap.state {
+        M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Production {
+            prepared,
+            continuation,
+        } => (prepared, continuation),
+        #[cfg(test)]
+        M1AuthenticatedSpeculativeBootstrapPreparedStateV1::Injected(_) => {
+            unreachable!("injected bootstrap uses the injected argument backend")
+        }
     };
     let mut allocated =
         match crate::allocate_m1_prepublication_workspaces_v1(partitioned_memory, prepared) {
@@ -3876,13 +3888,16 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 inputs,
             ));
         }
-        let M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
-            coordinator,
-            released,
-            lineage,
-        } = self.state
-        else {
-            unreachable!("injected executor is handled before production execution")
+        let (coordinator, released, lineage) = match self.state {
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Production {
+                coordinator,
+                released,
+                lineage,
+            } => (coordinator, released, lineage),
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalExecutorStateV1::Injected(_) => {
+                unreachable!("injected executor is handled before production execution")
+            }
         };
         let epoch = match released
             .current_released()
@@ -3944,17 +3959,23 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 inputs,
             ));
         }
-        let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-            state:
-                M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
-                    kv,
-                    recipe_workspace_plans,
-                    preparation_workspace_plans,
-                    controls,
-                },
-        } = inputs
-        else {
-            unreachable!("injected inputs are handled before production execution")
+        let (kv, recipe_workspace_plans, preparation_workspace_plans, controls) = match inputs.state
+        {
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Production {
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                controls,
+            } => (
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                controls,
+            ),
+            #[cfg(test)]
+            M1AuthenticatedSpeculativePhysicalRoundInputsStateV1::Injected { .. } => {
+                unreachable!("injected inputs are handled before production execution")
+            }
         };
         let scheduled = match released.schedule_next_exact(engine, epoch, &roster) {
             Ok(scheduled) => scheduled,
@@ -5463,6 +5484,40 @@ mod tests {
                 }
             );
         }
+    }
+
+    #[test]
+    fn execute_round_wait_failure_is_opaque_terminal_quarantine() {
+        use crate::authenticated_test_runtime::{
+            InjectedQueueFailureV1, InjectedQueuePhaseV1, InjectedQueueV1,
+        };
+
+        let queue = InjectedQueueV1::new([Some(InjectedQueueFailureV1::Wait)], []);
+        let executor =
+            injected_executor(Qwen3PlanBucket::SpeculativeS1K4C8192, 1, queue.clone(), 0);
+        let controls = vec![M1SpeculativeMemberControlV1::continuing(RequestId::new(
+            0, 1,
+        ))];
+        let mut engine = Engine::<32>::new(8, 4, 32).unwrap();
+        let failure = executor
+            .execute_round(&mut engine, injected_inputs(controls))
+            .unwrap_err();
+        assert_eq!(
+            failure.stage(),
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait
+        );
+        assert!(matches!(
+            failure.disposition(),
+            Some(M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(
+                _
+            ))
+        ));
+        assert!(engine.is_faulted());
+        let snapshot = queue.snapshot();
+        assert_eq!(snapshot.submits, 1);
+        assert_eq!(snapshot.waits, 0);
+        assert_eq!(snapshot.destroys, 0);
+        assert_eq!(snapshot.phase, InjectedQueuePhaseV1::Quarantined);
     }
 
     #[test]
