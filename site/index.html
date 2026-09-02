@@ -201,16 +201,18 @@
             <h2 id="next-title">Accept the aggregate artifact</h2>
           </div>
           <p>
-            Exact head e187ca5 passed strict proof and release qualification on mi300x: 1,493 proof
+            Exact head 7f516e0 passed strict proof and release qualification on mi300x: 1,493 proof
             queries, 645 directly verified bodies, and a source gate covering 151 modules and 6,916
-            executable bodies across a canonical 603-file source closure. This scoped release adds a
-            reject-only aggregate verifier preflight: it first projects the exact typed request,
-            independently revalidates the exact-pinned finalizer derivation, validates common
-            multi-root proof inputs, and validates target lineage by borrowing those inputs. A
-            passing preflight has the sole terminal result MissingProtectedVerificationReceipt and
-            grants no accepted authority. Exact-head CI run 33599537169 and
-            authenticated-verus-release run
-            33599537184 both completed successfully. Ferric's private current aggregate publication
+            executable bodies across a canonical 603-file source closure. The reject-only aggregate
+            verifier now projects the exact typed request, invokes exact-pinned finalized-HSACO
+            reinspection once on the request bytes, reacquires common multi-root compiler custody,
+            and cross-binds the finalizer artifact, LLVM handoffs, gfx942:xnack-/COV6 target, full
+            descriptor table, unique 12-entry metadata permutation, physical kernels, bindings, and
+            exact workgroups. This is same-process descriptive integrity, not independent verifier
+            authority, artifact ownership, load authority, or runtime admission. A passing preflight
+            has the sole terminal result MissingProtectedVerificationReceipt and grants no accepted
+            authority. Exact-head CI run 33615415798 and authenticated-verus-release run
+            33615415693 both completed successfully. Ferric's private current aggregate publication
             selection remains None. There is no successful current-source R32 trace, authenticated
             Qwen hardware run, numerical result, or performance result, and all 33 M1 exit gates
             remain open.

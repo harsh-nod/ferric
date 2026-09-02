@@ -13,13 +13,15 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
-  implementationCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
+  siteRefreshBase: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
+  implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
   aggregateSelectionStatus: "noncurrent-candidate",
   pendingVerifierProjectionCommit: "75c5f724fbc7928bf1b231a86aec0f1d5fdcc3f9",
   commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
+  associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
+  finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   selectedFe2o3Pin: "52815c9ed52a3075e26322cf506144cb22da12d2",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
@@ -36,13 +38,13 @@ const expectedCurrent = Object.freeze({
   openM1Gates: 33,
 });
 const expectedProof = Object.freeze({
-  source: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
+  source: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   closureSha256:
-    "4920f55d8c98681e6ee154b8d5bba64f80d17241e89e07505626f9f365a8a2e2",
+    "f8c4a39eb4d81c61d95f7db50e380eb7b33c63c21375e693311c54cf4ee433f4",
   receiptSha256:
-    "fbdb2ad3f3acdf9f46480be16e993cee2ededf548be22e6e35b787749ed65d21",
+    "44a1710a26b2cb51889f536461d023dbc874b7bc274fb0feb4a1ded615ca4821",
   logSha256:
-    "1a5bb9049f496d1f74f4233147b4a72b588333d4dfbf30ae1658fcb0d67c47fa",
+    "2335372df19fd103d387d8ca24a2ebaac73f177c1d0274e17544d683404cc7bd",
 });
 
 function assert(condition, message) {
@@ -94,6 +96,11 @@ assertCommit(
   project.current.commonCustodyPreflightCommit,
   "current.commonCustodyPreflightCommit",
 );
+assertCommit(project.current.associationPreflightCommit, "current.associationPreflightCommit");
+assertCommit(
+  project.current.finalizedHsacoReinspectionCommit,
+  "current.finalizedHsacoReinspectionCommit",
+);
 assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -118,10 +125,10 @@ assert(
   "envelope must expose the exact current implementation commit",
 );
 assert(
-  envelope.get("Common-custody preflight")?.includes(
+  envelope.get("Aggregate verifier preflight")?.includes(
     "sole terminal result MissingProtectedVerificationReceipt",
   ),
-  "envelope must expose the reject-only common-custody preflight",
+  "envelope must expose the reject-only aggregate verifier preflight",
 );
 assert(Array.isArray(project.readiness) && project.readiness.length > 0, "readiness is empty");
 project.readiness.forEach((item, index) =>
@@ -154,23 +161,25 @@ assert(
     projectionReadiness.detail.includes("cannot leave the rejection path"),
   "aggregate pending-verifier projection must remain private, optional, and reject-only",
 );
-const commonCustodyReadiness = project.readiness.find(
-  (item) => item.label === "Reject-only common-custody verifier preflight",
+const verifierPreflightReadiness = project.readiness.find(
+  (item) => item.label === "Reject-only aggregate verifier preflight",
 );
 assert(
-  commonCustodyReadiness?.state === "integration" &&
-    commonCustodyReadiness.detail.includes(
-      "independently revalidate the exact-pinned finalizer derivation from the borrowed replay",
+  verifierPreflightReadiness?.state === "integration" &&
+    verifierPreflightReadiness.detail.includes(
+      "call the pinned finalized-HSACO verifier exactly once on the request bytes",
     ) &&
-    commonCustodyReadiness.detail.includes(
+    verifierPreflightReadiness.detail.includes(
       "validate common multi-root compiler proof inputs",
     ) &&
-    commonCustodyReadiness.detail.includes(
-      "validate common multi-root target lineage by borrowing those proof inputs",
+    verifierPreflightReadiness.detail.includes(
+      "unique 12-entry export-plus-descriptor-symbol permutation",
     ) &&
-    commonCustodyReadiness.detail.includes("MissingProtectedVerificationReceipt") &&
-    commonCustodyReadiness.detail.includes("grants no protected, load, launch, hardware, Qwen"),
-  "common-custody preflight must preserve its exact order, terminal rejection, and nonclaims",
+    verifierPreflightReadiness.detail.includes("same-process descriptive integrity") &&
+    verifierPreflightReadiness.detail.includes("not independent verifier authority") &&
+    verifierPreflightReadiness.detail.includes("MissingProtectedVerificationReceipt") &&
+    verifierPreflightReadiness.detail.includes("grants no protected, load, launch, hardware, Qwen"),
+  "aggregate verifier preflight must preserve reinspection, associations, rejection, and nonclaims",
 );
 const protectedAcceptance = project.readiness.find(
   (item) => item.label === "Accepting protected aggregate artifact",
@@ -240,8 +249,8 @@ for (const [key, expected] of Object.entries(expectedProof)) {
   );
 }
 assert(
-  project.validation.proof.detail.includes("33599537169") &&
-    project.validation.proof.detail.includes("33599537184") &&
+  project.validation.proof.detail.includes("33615415798") &&
+    project.validation.proof.detail.includes("33615415693") &&
     project.validation.proof.detail.includes("both completed successfully"),
   "proof validation must expose both successful exact-head workflow runs",
 );
@@ -320,29 +329,37 @@ project.evidence.legend.forEach(([state], index) =>
 );
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
+const normalizedHtml = html.replace(/\s+/g, " ");
 for (const claim of [
-  "Exact head e187ca5 passed strict proof and release qualification on mi300x",
-  "33599537169",
-  "33599537184 both completed successfully",
-  "independently revalidates the exact-pinned finalizer derivation",
-  "multi-root proof inputs",
-  "target lineage by borrowing those inputs",
+  "Exact head 7f516e0 passed strict proof and release qualification on mi300x",
+  "33615415798",
+  "33615415693 both completed successfully",
+  "invokes exact-pinned finalized-HSACO reinspection once on the request bytes",
+  "reacquires common multi-root compiler custody",
+  "unique 12-entry metadata permutation",
+  "not independent verifier authority",
   "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
   "selection remains None",
   "successful current-source R32 trace",
   "all 33 M1 exit gates",
 ]) {
-  assert(html.includes(claim), `index.html is missing current claim: ${claim}`);
+  assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
 assert(
-  dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96"),
-  "Pages data must bind the exact qualified common-custody preflight commit",
+  dataSource.includes("7f516e073b8759eb012c998bc9df2eb101d0c7ab") &&
+    dataSource.includes("749324c9e287aaec688c8733c88becddc539b12e") &&
+    dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
+    dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
+    dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607"),
+  "Pages data must bind the exact qualified reinspection and custody lineage",
 );
 assert(
   dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
     dataSource.includes("private current aggregate publication selection remains None") &&
+    dataSource.includes("not independent verifier authority") &&
+    dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
     dataSource.includes("all 33 M1 exit gates remain open"),
-  "Pages data must retain terminal rejection, None selection, and all-open gate nonclaims",
+  "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
 );
 for (const target of [
   "data-readiness",
