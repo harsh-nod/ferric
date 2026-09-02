@@ -212,7 +212,7 @@ pub(crate) struct ModelSubmitFailureV1 {
 
 #[derive(Debug)]
 pub(crate) struct ModelWaitFailureV1 {
-    pub(crate) published: ModelPublishedQueueV1,
+    _published: ModelPublishedQueueV1,
 }
 
 #[derive(Debug)]
@@ -253,7 +253,7 @@ impl ModelPublishedQueueV1 {
 
     pub(crate) fn wait(self) -> Result<ModelCompletedQueueV1, ModelWaitFailureV1> {
         if self.queue.wait().is_err() {
-            return Err(ModelWaitFailureV1 { published: self });
+            return Err(ModelWaitFailureV1 { _published: self });
         }
         Ok(ModelCompletedQueueV1 { queue: self.queue })
     }
