@@ -28,11 +28,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
       - name: Validate static site
+        working-directory: site
         run: |
-          node --check site/data/project.js
-          node --check site/app.js
-          node site/validate.mjs
+          npm ci
+          npx playwright install --with-deps chromium
+          npm test
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

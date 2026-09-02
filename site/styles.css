@@ -575,6 +575,7 @@ h3 {
 
 .validation-detail {
   margin: 17px 0 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 12px;
 }

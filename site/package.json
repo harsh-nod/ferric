@@ -1,0 +1,12 @@
+{
+  "name": "ferric-pages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node --check data/project.js && node --check app.js && node validate.mjs && node render-validate.mjs",
+    "test": "npm run validate"
+  },
+  "devDependencies": {
+    "playwright": "1.60.0"
+  }
+}
