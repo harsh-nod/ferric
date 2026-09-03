@@ -351,6 +351,54 @@ fn validate_policy(policy: &Value) -> BenchResult<()> {
     validate_roster(field(object, "sample_roster", "serving comparison policy")?)
 }
 
+pub(super) fn validate_policy_for_collection(policy: &Value) -> BenchResult<()> {
+    require_protocol()?;
+    validate_policy(policy)
+}
+
+pub(super) fn collected_observations(
+    policy: &Value,
+    policy_sha256: &str,
+    rows: Vec<Value>,
+) -> BenchResult<Value> {
+    let policy_object = policy
+        .as_object()
+        .ok_or_else(|| "serving comparison policy must be an object".to_owned())?;
+    let observations = json!({
+        "authority": OBSERVATIONS_AUTHORITY,
+        "engine_order": field(policy_object, "engine_order", "serving comparison policy")?,
+        "format": OBSERVATIONS_FORMAT,
+        "implementations": field(policy_object, "implementations", "serving comparison policy")?,
+        "nonclaim": NONCLAIM,
+        "obligation_id": "m1.r33",
+        "plan": field(policy_object, "plan", "serving comparison policy")?,
+        "policy_sha256": policy_sha256,
+        "rows": rows,
+        "status": "externally-collected",
+        "target": TARGET,
+    });
+    let _ = validate_observations(&observations, policy, policy_sha256)?;
+    Ok(observations)
+}
+
+pub(super) fn publish_collected_observations(path: &Path, bytes: &[u8]) -> BenchResult<()> {
+    write_new(path, bytes)
+}
+
+pub(super) fn require_collected_output_absent(path: &Path) -> BenchResult<()> {
+    let output_name = safe_output_name(path)?;
+    let parent_path = admitted_output_parent(path)?;
+    let parent = openat2(
+        CWD,
+        &parent_path,
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+        ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+    )
+    .map_err(|error| format!("cannot securely open serving observation parent: {error}"))?;
+    require_absent_at(&parent, &output_name)
+}
+
 fn validate_plan(value: &Value) -> BenchResult<()> {
     let object = exact_object(value, PLAN_KEYS, "serving comparison plan binding")?;
     for key in PLAN_KEYS {

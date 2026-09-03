@@ -9,6 +9,7 @@ use std::process::ExitCode;
 use vstd::prelude::*;
 
 mod m1_r33_partial;
+mod m1_r33_serving_collector;
 mod m1_r33_serving_records;
 
 const METRICS: &[Metric] = &[
@@ -64,6 +65,9 @@ const SUITE: Suite = Suite {
 fn main() -> ExitCode {
     if env::args_os().nth(1).as_deref() == Some(m1_r33_partial::COMMAND.as_ref()) {
         return m1_r33_partial::main_for_arguments(env::args_os().skip(2).collect());
+    }
+    if env::args_os().nth(1).as_deref() == Some(m1_r33_serving_collector::COMMAND.as_ref()) {
+        return m1_r33_serving_collector::main_for_arguments(env::args_os().skip(2).collect());
     }
     if env::args_os().nth(1).as_deref() == Some(m1_r33_serving_records::COMMAND.as_ref()) {
         return m1_r33_serving_records::main_for_arguments(env::args_os().skip(2).collect());
