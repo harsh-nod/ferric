@@ -895,6 +895,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "fe2o3-worker-v3-verification-client"
+version = "0.1.0"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=ff21f24f5349d78583a2a832ba3aa37bf3e0846c#ff21f24f5349d78583a2a832ba3aa37bf3e0846c"
+dependencies = [
+ "fe2o3-compiler-execution-client",
+ "fe2o3-runtime-protocol",
+ "fe2o3-worker-v3-verification-protocol",
+ "rustix",
+ "sha2 0.11.0",
+]
+
+[[package]]
+name = "fe2o3-worker-v3-verification-protocol"
+version = "0.1.0"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=ff21f24f5349d78583a2a832ba3aa37bf3e0846c#ff21f24f5349d78583a2a832ba3aa37bf3e0846c"
+dependencies = [
+ "fe2o3-hsaco",
+ "fe2o3-kernel-descriptor",
+ "fe2o3-runtime-protocol",
+ "sha2 0.11.0",
+]
+
+[[package]]
 name = "ferric-build"
 version = "0.1.0"
 dependencies = [
@@ -1021,10 +1044,14 @@ dependencies = [
  "ed25519-dalek",
  "fe2o3-host",
  "fe2o3-hsaco-finalize",
+ "fe2o3-runtime-protocol",
  "fe2o3-verifier",
+ "fe2o3-worker-v3-verification-client",
+ "fe2o3-worker-v3-verification-protocol",
  "ferric-qwen3-all-kernels-device-v1",
  "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
  "libc",
+ "rustix",
  "sha2 0.11.0",
 ]
 
