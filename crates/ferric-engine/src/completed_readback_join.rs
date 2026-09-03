@@ -133,9 +133,53 @@ pub struct M1CheckedCompletionOutputV1 {
     completion_canary: Option<Box<M1ObservedCompletionCanarySummaryV1>>,
     completion_canary_readback: Option<Box<M1ValidatedCompletionCanaryReadbackV1>>,
     records: Box<[InertCheckedCompletionRecord]>,
+    speculative_lineage: Option<
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    >,
+    speculative_rollover_intent: Option<
+        crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    >,
 }
 
 impl M1CheckedCompletionOutputV1 {
+    pub(crate) fn retain_speculative_lineage(
+        mut self,
+        lineage: Option<
+            crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        >,
+    ) -> Self {
+        debug_assert!(self.speculative_lineage.is_none());
+        self.speculative_lineage = lineage;
+        self
+    }
+
+    pub(crate) const fn speculative_lineage(
+        &self,
+    ) -> Option<
+        &crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    >{
+        self.speculative_lineage.as_ref()
+    }
+
+    pub(crate) fn retain_speculative_rollover_intent(
+        mut self,
+        intent: Option<
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+        >,
+    ) -> Self {
+        debug_assert!(self.speculative_rollover_intent.is_none());
+        self.speculative_rollover_intent = intent;
+        self
+    }
+
+    pub(crate) const fn speculative_rollover_intent(
+        &self,
+    ) -> Option<
+        &crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    > {
+        self.speculative_rollover_intent.as_ref()
+    }
+
     pub(crate) fn retain_completion_canary_readback(
         mut self,
         readback: Option<Box<M1ValidatedCompletionCanaryReadbackV1>>,
@@ -226,6 +270,8 @@ impl M1CheckedCompletionOutputV1 {
             completion_canary: None,
             completion_canary_readback: None,
             records: Box::new([]),
+            speculative_lineage: None,
+            speculative_rollover_intent: None,
         }
     }
 
@@ -245,6 +291,8 @@ impl M1CheckedCompletionOutputV1 {
             completion_canary: None,
             completion_canary_readback: None,
             records,
+            speculative_lineage: None,
+            speculative_rollover_intent: None,
         }
     }
 }
@@ -431,6 +479,8 @@ fn check_m1_completed_output(
         completion_canary: observed.completion_canary().map(Box::new),
         completion_canary_readback: None,
         records: records.into_boxed_slice(),
+        speculative_lineage: None,
+        speculative_rollover_intent: None,
     })
 }
 

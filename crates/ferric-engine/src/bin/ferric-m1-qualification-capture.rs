@@ -9010,6 +9010,463 @@ mod tests {
         assert!(catalog.admission_record().is_some());
     }
 
+    #[cfg(feature = "native-rollover-fixture")]
+    #[test]
+    #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
+    fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
+        use ferric_engine::{
+            bind_m1_authenticated_speculative_rollover_intent_v1,
+            build_m1_native_rollover_fixture_batch_v1, complete_m1_authenticated_physical_step_v1,
+            prepare_m1_authenticated_speculative_rollover_v1,
+            release_m1_authenticated_completed_step_kv_pages_v1,
+            schedule_m1_authenticated_speculative_rollover_v1,
+            submit_m1_authenticated_speculative_rollover_v1, M1AuthenticatedCompletedStepOutcomeV1,
+            M1AuthenticatedPhysicalQueueSessionV1,
+            M1AuthenticatedSpeculativeRolloverMemberIntentV1, M1DeviceKvCompletionMemberV1,
+            M1DeviceKvCompletionRosterV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
+            M1ServingPlanV1, M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+            M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+        };
+
+        let required_path =
+            |name: &str| std::env::var_os(name).map_or_else(|| panic!("set {name}"), PathBuf::from);
+        let snapshot_path = required_path("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT");
+        let selector_path = required_path("FERRIC_M1_AGGREGATE_V2_SELECTOR_MANIFEST");
+        let closure_path = required_path("FERRIC_M1_QUALIFICATION_CLOSURE");
+        let environment_path = required_path("FERRIC_M1_QUALIFICATION_ENVIRONMENT");
+        let gpu_unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
+            .expect("set FERRIC_M1_GPU_UNIQUE_ID")
+            .parse::<u64>()
+            .expect("FERRIC_M1_GPU_UNIQUE_ID must be decimal");
+        let expected_prefill_token = std::env::var("FERRIC_M1_ROLLOVER_PREFILL_TOKEN")
+            .expect("set FERRIC_M1_ROLLOVER_PREFILL_TOKEN from the admitted aggregate")
+            .parse::<u32>()
+            .expect("FERRIC_M1_ROLLOVER_PREFILL_TOKEN must be decimal");
+
+        let selector_bytes = read_r32_selector_manifest(&selector_path)
+            .expect("read exact aggregate V2 selector manifest");
+        let selector = decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
+            .expect("decode aggregate V2 selector manifest");
+        let closure = load_closure(&closure_path).expect("load exact qualification closure");
+        let _environment = load_environment(&environment_path, gpu_unique_id)
+            .expect("load exact qualification environment");
+        let snapshot = SecureDirectory::open(&snapshot_path, "prepacked snapshot root")
+            .expect("open canonical prepacked snapshot");
+        let model = load_model_inputs(&snapshot).expect("load canonical prepacked inputs");
+        let plan_catalog = build_authenticated_sequential_plan_catalog(
+            model.authenticate().expect("authenticate runner inputs"),
+        )
+        .expect("build authenticated runner plan catalog");
+        let memory_plan = model_memory_plan(
+            model
+                .authenticate()
+                .expect("authenticate model-memory inputs"),
+        )
+        .expect("build authenticated model-memory plan");
+        let mut verifier =
+            WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
+        let programs =
+            acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(selector, &mut verifier)
+                .expect("authenticate aggregate Worker V3 program custody");
+        let executable_catalog_id = programs.catalog_id();
+        let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)
+            .expect("bind aggregate identity closure");
+        let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+            .expect("build runner identity closure");
+        let publication = publish_qwen3_gfx942_runner_declaration(
+            generate_qwen3_gfx942_runner_declaration(identity_closure)
+                .expect("generate authenticated runner declaration"),
+        )
+        .expect("publish authenticated runner declaration");
+        let runner =
+            bind_m1_physical_runner_v1(programs, publication).expect("bind authenticated runner");
+
+        let logical_catalog = build_authenticated_sequential_plan_catalog(
+            model
+                .authenticate()
+                .expect("authenticate logical-runner inputs"),
+        )
+        .expect("build logical-runner plan catalog");
+        let logical_external = complete_closure(&closure, &logical_catalog, executable_catalog_id)
+            .expect("bind logical-runner identity closure");
+        let logical_runner = ferric_engine::LogicalRunnerDeclaration::from_published(
+            publish_qwen3_gfx942_runner_declaration(
+                generate_qwen3_gfx942_runner_declaration(
+                    build_preliminary_identity_closure(logical_catalog, logical_external)
+                        .expect("build retained logical-runner closure"),
+                )
+                .expect("generate retained logical runner"),
+            )
+            .expect("publish retained logical runner"),
+        );
+        let ModelInputBytes {
+            target_weights,
+            draft_weights,
+            ..
+        } = model;
+        let checked = OpenedKfd::open_default()
+            .expect("open KFD")
+            .admit_uapi()
+            .expect("admit pinned KFD UAPI")
+            .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+            .expect("bind exact gfx942:xnack- device");
+        let mut memory = initialize_m1_physical_runner_memory_v1(
+            checked,
+            memory_plan,
+            target_weights,
+            draft_weights,
+        )
+        .expect("initialize authenticated model memory");
+
+        let target_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        let draft_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        let target_speculative = r32_target_selection();
+        let draft_decode = r32_draft_decode_selection();
+        let prior = M1ServingPlanV1::new(target_prefill, draft_prefill)
+            .expect("construct paired-prefill serving plan");
+        let next = M1ServingPlanV1::new(target_speculative, draft_decode)
+            .expect("construct S1/K4 serving plan");
+        let workspace = |selection, byte| {
+            workload_workspace_plan(selection, [byte; 32])
+                .expect("construct exact addressless workspace plan")
+        };
+        let prefill_recipe_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace(draft_prefill, 101),
+            workspace(target_prefill, 102),
+        );
+        let prefill_preparation_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace(draft_prefill, 101),
+            workspace(target_prefill, 102),
+        );
+        let rollover_recipe_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace(draft_decode, 103),
+            workspace(target_speculative, 104),
+        );
+        let rollover_preparation_plans = M1FullStepWorkspacePlans::speculative_round(
+            workspace(draft_decode, 103),
+            workspace(target_speculative, 104),
+        );
+
+        let mut engine = Engine::<1>::new(512, 256, 8_192).expect("construct one-lane Engine");
+        let request = engine.admit().expect("admit one request");
+        engine
+            .append_tentative(request, 1)
+            .expect("append paired-prefill completion span");
+        let scheduled = engine
+            .dispatch_m1_ready()
+            .expect("dispatch paired prefill")
+            .expect("paired prefill is ready");
+        let target_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), target_prefill)
+            .expect("bind target prefill plan");
+        let draft_plan = runner
+            .logical_runner()
+            .bind_step_plan(request, scheduled.epoch(), draft_prefill)
+            .expect("bind draft prefill plan");
+        let validated = |plan: StepPlan,
+                         tokens: Vec<u32>,
+                         positions: Vec<u32>,
+                         active_length: u32,
+                         context_length: u32|
+         -> ValidatedM1StepInputs {
+            match validate_m1_step_inputs(M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![context_length],
+            )) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!("fixture input rejected: {:?}", failure.error())
+                }
+            }
+        };
+        let target_inputs = validated(target_plan, vec![1; 128], (0..128).collect(), 128, 0);
+        let draft_inputs = validated(draft_plan, vec![1; 128], (0..128).collect(), 128, 0);
+        let mut cache =
+            ActiveDeviceKvCache::new(memory.device(), request, target_prefill, draft_prefill)
+                .expect("construct paired-prefill KV cache");
+        let target_pages = (0..8)
+            .map(|page| {
+                memory
+                    .lease_page(request, Qwen3ModelRole::Target8B, page)
+                    .expect("lease target prefill page")
+            })
+            .collect();
+        let draft_pages = (0..8)
+            .map(|page| {
+                memory
+                    .lease_page(request, Qwen3ModelRole::Draft06B, page)
+                    .expect("lease draft prefill page")
+            })
+            .collect();
+        let target_pending = cache
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                128,
+                scheduled.epoch(),
+                target_pages,
+            )
+            .expect("reserve target prefill write");
+        let draft_pending = cache
+            .reserve_step_write(
+                request,
+                Qwen3ModelRole::Draft06B,
+                0,
+                128,
+                scheduled.epoch(),
+                draft_pages,
+            )
+            .expect("reserve draft prefill write");
+        let target_table = bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending])
+            .expect("bind target prefill table");
+        let draft_table = bind_m1_kv_workspace_table_v1(draft_inputs, vec![draft_pending])
+            .expect("bind draft prefill table");
+        let target_rollover_page = memory
+            .lease_page(request, Qwen3ModelRole::Target8B, 8)
+            .expect("lease target rollover page");
+        let draft_rollover_page = memory
+            .lease_page(request, Qwen3ModelRole::Draft06B, 8)
+            .expect("lease draft rollover page");
+        let tables = M1FullStepKvWorkspaceTablesV1::PairedPrefill {
+            draft: draft_table,
+            target: target_table,
+        };
+        let recipe = match runner.derive_step_recipe(
+            M1StepDispatchIntent::PairedPrefill(target_prefill),
+            prefill_recipe_plans,
+        ) {
+            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                panic!("derive paired-prefill recipe: {failure:?}")
+            }
+        };
+        let prepared = runner
+            .prepare_scheduled_workspaces(scheduled, prefill_preparation_plans, tables)
+            .expect("prepare paired-prefill workspaces");
+        let policy = M1SpeculativeGenerationPolicyV1::new(32, &[])
+            .expect("construct continuing speculative policy");
+        let intent_prepared = bind_m1_authenticated_speculative_rollover_intent_v1(
+            prepared,
+            next,
+            vec![M1AuthenticatedSpeculativeRolloverMemberIntentV1::new(
+                request, policy,
+            )],
+        )
+        .expect("bind physical/logical rollover intent halves");
+        let (prepared, intent) = intent_prepared.into_parts();
+        let mut allocated = runner
+            .allocate_scheduled_workspaces(memory, prepared)
+            .expect("allocate paired-prefill workspaces");
+        allocated
+            .reserve_finite_speculative_rollover_outputs()
+            .expect("reserve finite rollover output portfolio");
+        let completion = allocated
+            .allocate_completion_output(target_prefill)
+            .expect("allocate paired-prefill completion");
+        let prepublication = runner
+            .prepare_first_step(allocated, recipe, completion)
+            .expect("prepare authenticated paired-prefill publication");
+        let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            prepublication,
+        ) {
+            Ok(queue) => queue,
+            Err(failure) => {
+                let quarantine = failure.quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill queue creation failed closed: {quarantine:?}")
+            }
+        };
+        let published = match queue.submit() {
+            Ok(published) => published,
+            Err(failure) => {
+                let quarantine = failure.quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill submission failed closed: {quarantine:?}")
+            }
+        };
+        let completed = match published.wait() {
+            Ok(completed) => completed,
+            Err(failure) => {
+                let quarantine = (*failure).quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill wait failed closed: {quarantine:?}")
+            }
+        };
+        let recycled = match completed.recycle() {
+            Ok(recycled) => recycled,
+            Err(failure) => {
+                let quarantine = (*failure).quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill recycle failed closed: {quarantine:?}")
+            }
+        };
+        let observed = match recycled.observe_completion() {
+            Ok(observed) => observed,
+            Err(failure) => match failure.retry() {
+                Ok(observed) => observed,
+                Err(failure) => {
+                    let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                    panic!("paired-prefill observation failed after bounded retry: {teardown:?}")
+                }
+            },
+        };
+        let expectations = [CompletionWireSemanticExpectation::DirectFinalRow {
+            choice: expected_prefill_token,
+        }];
+        let readback = match observed.check_completion(&expectations) {
+            Ok(readback) => readback,
+            Err(failure) => match failure.retry(&expectations) {
+                Ok(readback) => readback,
+                Err(failure) => {
+                    let teardown = failure.destroy_queue_and_retain_evidence(&mut engine);
+                    panic!("paired-prefill semantics failed after bounded retry: {teardown:?}")
+                }
+            },
+        };
+        let anchor = expected_prefill_token;
+        let roster =
+            M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
+                cache,
+            )]);
+        let completed =
+            match complete_m1_authenticated_physical_step_v1(&mut engine, readback, roster) {
+                M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
+                M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
+                    let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
+                    panic!("paired-prefill completion rejected and closed: {teardown:?}")
+                }
+                M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
+                    panic!("paired-prefill completion entered terminal poison: {poisoned:?}")
+                }
+            };
+        let released = match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+            Ok(released) => released,
+            Err(failure) => {
+                let (_, completed) = (*failure).into_parts();
+                match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+                    Ok(released) => released,
+                    Err(failure) => {
+                        let (_, completed) = (*failure).into_parts();
+                        let teardown = completed.destroy_queue_and_retain_completion(&mut engine);
+                        panic!("paired-prefill page release failed and closed: {teardown:?}")
+                    }
+                }
+            }
+        };
+
+        let rollover_batch = build_m1_native_rollover_fixture_batch_v1(prior, next, &[request]);
+        let rollover_epoch = rollover_batch.epoch();
+        let target_plan = logical_runner
+            .bind_step_plan(request, rollover_epoch, target_speculative)
+            .expect("bind target speculative plan");
+        let draft_plan = logical_runner
+            .bind_step_plan(request, rollover_epoch, draft_decode)
+            .expect("bind draft decode plan");
+        let target_inputs = validated(
+            target_plan,
+            vec![anchor, 0, 0, 0, 0],
+            (128..133).collect(),
+            5,
+            128,
+        );
+        let draft_inputs = validated(draft_plan, vec![anchor], vec![128], 1, 128);
+        let rollover_inputs = M1FiniteSpeculativeQueueRolloverKvInputsV1::new(
+            draft_inputs,
+            target_inputs,
+            vec![draft_rollover_page],
+            vec![target_rollover_page],
+        );
+        let seed = M1SpeculativeMemberSeedV1::new(request, anchor, 128, 128, policy);
+        let coordinator = M1SpeculativeGenerationLoopV1::new(target_speculative, &[seed])
+            .expect("construct rollover coordinator");
+        let scheduled = match schedule_m1_authenticated_speculative_rollover_v1(
+            &mut engine,
+            released,
+            &rollover_batch,
+            intent,
+            coordinator,
+            rollover_inputs,
+            rollover_recipe_plans,
+            rollover_preparation_plans,
+        ) {
+            Ok(scheduled) => scheduled,
+            Err(
+                ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
+                    error,
+                    retry,
+                },
+            ) => {
+                let disposition = retry.cancel_and_close(&mut engine);
+                assert!(engine.is_faulted());
+                panic!(
+                    "public rollover schedule rejected before detach ({error:?}): {disposition:?}"
+                )
+            }
+            Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
+                error,
+                disposition,
+            }) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover schedule failed after detach ({error:?}): {disposition:?}")
+            }
+        };
+        let prepared = match prepare_m1_authenticated_speculative_rollover_v1(
+            &mut engine,
+            scheduled,
+            &logical_runner,
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover preparation failed closed: {failure:?}")
+            }
+        };
+        let published = match submit_m1_authenticated_speculative_rollover_v1(
+            &mut engine,
+            prepared,
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+        ) {
+            Ok(published) => published,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover submission failed closed: {failure:?}")
+            }
+        };
+        let success = match published.complete_round(
+            &mut engine,
+            vec![M1SpeculativeMemberControlV1::continuing(request)],
+        ) {
+            Ok(success) => success,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover completion failed closed: {failure:?}")
+            }
+        };
+        assert_eq!(success.outcome().completed_round(), 0);
+        assert!(!engine.is_faulted());
+        let (executor, outcome, choices) = success.into_parts();
+        let closed = match executor.destroy_queue_and_retain_state(&mut engine) {
+            Ok(closed) => closed,
+            Err(quarantined) => {
+                assert!(engine.is_faulted());
+                panic!("authenticated rollover queue teardown quarantined: {quarantined:?}")
+            }
+        };
+        assert!(engine.is_faulted());
+        drop((closed, outcome, choices, logical_runner));
+    }
+
     #[test]
     fn input_subcommands_do_not_reserve_ten_argument_plan_names() {
         let new_mode_error = run(vec![OsString::from("generate-inputs")]).unwrap_err();

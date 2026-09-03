@@ -308,6 +308,12 @@ pub struct M1PrepublicationStepCustodyV1 {
     scheduled: M1ScheduledDispatchV1,
     target_plans: [Option<StepPlan>; MAX_LANES],
     kv: M1FullStepKvReservationCustodyV1,
+    speculative_lineage: Option<
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    >,
+    speculative_rollover_intent: Option<
+        crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    >,
 }
 
 impl M1PrepublicationStepCustodyV1 {
@@ -352,6 +358,28 @@ impl M1PrepublicationStepCustodyV1 {
     ) {
         (self.scheduled, self.target_plans, self.kv)
     }
+
+    pub(crate) fn into_parts_with_speculative_lineage(
+        self,
+    ) -> (
+        M1ScheduledDispatchV1,
+        [Option<StepPlan>; MAX_LANES],
+        M1FullStepKvReservationCustodyV1,
+        Option<
+            crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        >,
+        Option<
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+        >,
+    ){
+        (
+            self.scheduled,
+            self.target_plans,
+            self.kv,
+            self.speculative_lineage,
+            self.speculative_rollover_intent,
+        )
+    }
 }
 
 /// Composed workspace images joined to scheduler and KV authority.
@@ -391,6 +419,35 @@ impl M1PreparedScheduledWorkspaceImagesV1 {
         M1PrepublicationStepCustodyV1,
     ) {
         (self.plans, self.images, self.step)
+    }
+
+    #[allow(clippy::result_large_err)]
+    pub(crate) fn retain_speculative_lineage(
+        mut self,
+        lineage: crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    ) -> Result<Self, Self> {
+        if self.step.speculative_lineage.is_some()
+            || self.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound
+        {
+            return Err(self);
+        }
+        self.step.speculative_lineage = Some(lineage);
+        Ok(self)
+    }
+
+    #[allow(clippy::result_large_err)]
+    pub(crate) fn retain_speculative_rollover_intent(
+        mut self,
+        intent: crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    ) -> Result<Self, Self> {
+        if self.step.speculative_rollover_intent.is_some()
+            || self.step.speculative_lineage.is_some()
+            || self.kind() != M1FullStepWorkspaceInputKind::PairedPrefill
+        {
+            return Err(self);
+        }
+        self.step.speculative_rollover_intent = Some(intent);
+        Ok(self)
     }
 }
 
@@ -703,6 +760,8 @@ pub fn prepare_m1_scheduled_workspace_images_v1(
                     scheduled,
                     target_plans,
                     kv,
+                    speculative_lineage: None,
+                    speculative_rollover_intent: None,
                 },
             })
         }

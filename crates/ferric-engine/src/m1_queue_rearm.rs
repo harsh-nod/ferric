@@ -158,6 +158,31 @@ impl M1RearmRoundHistoryEntryV1 {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn from_queue_transition(
+        checked: crate::M1CheckedCompletionOutputV1,
+        logical_accepted_counts: Box<[u32]>,
+        externally_published_counts: Box<[u32]>,
+        release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+        completed_members: usize,
+        total_released: usize,
+        queue_observation: ComputeAqlQueueObservationV1,
+        device: Gfx942DeviceBinding,
+        rollover: Option<M1QueueRolloverObservationV1>,
+    ) -> Self {
+        Self {
+            checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            queue_observation,
+            device,
+            rollover,
+        }
+    }
+
     pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
         &self.checked
     }
@@ -2746,7 +2771,7 @@ impl<T> RetainedCaptureRangesV1<T> {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct RetainedHostCaptureRangesV1 {
+pub(crate) struct RetainedHostCaptureRangesV1 {
     ranges: RetainedCaptureRangesV1<ServiceHostDispatchRangeV1>,
     completion_snapshot: Option<ServiceHostDispatchSnapshotRangeV1>,
 }
@@ -3097,7 +3122,7 @@ impl RearmRangeSelectionV1 {
     }
 }
 
-fn rebuild_bound_rows(
+pub(crate) fn rebuild_bound_rows(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
     composition: &AddresslessM1FullStepWorkspaceComposition,
@@ -3232,7 +3257,7 @@ fn retained_unchanged_range(
     found.ok_or(())
 }
 
-fn build_rollover_bound_rows(
+pub(crate) fn build_rollover_bound_rows(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[M1BoundPhysicalBufferRowV1],
@@ -3592,6 +3617,20 @@ pub struct M1QueueRolloverObservationV1 {
 }
 
 impl M1QueueRolloverObservationV1 {
+    pub(crate) const fn new(
+        previous_queue_destroyed: ComputeAqlQueueDestroyedV1,
+        previous_dispatch_generation: u64,
+        replacement_queue_observation: ComputeAqlQueueObservationV1,
+        replacement_dispatch_generation: u64,
+    ) -> Self {
+        Self {
+            previous_queue_destroyed,
+            previous_dispatch_generation,
+            replacement_queue_observation,
+            replacement_dispatch_generation,
+        }
+    }
+
     /// Returns the lower observation proving predecessor queue destruction.
     #[must_use]
     pub const fn previous_queue_destroyed(&self) -> ComputeAqlQueueDestroyedV1 {
@@ -9586,7 +9625,7 @@ fn reset_retained_diagnostic_capture(
     Ok((lower, completion))
 }
 
-fn retained_host_capture_ranges(
+pub(crate) fn retained_host_capture_ranges(
     completion: &crate::BoundM1CompletionOutputV1,
 ) -> Result<RetainedHostCaptureRangesV1, ()> {
     let qualification = completion.qualification_logits();
@@ -9617,24 +9656,6 @@ fn retained_host_capture_ranges(
             .completion_canary()
             .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
     })
-}
-
-pub(crate) fn rebuild_unchanged_capture_bound_rows(
-    source_rows: &[M1PhysicalBufferRecipeRowV1],
-    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
-    composition: &AddresslessM1FullStepWorkspaceComposition,
-    workspace_ranges: &[FreshWorkspaceRangeV1],
-    completion: &crate::BoundM1CompletionOutputV1,
-) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
-    let capture = retained_host_capture_ranges(completion)?;
-    rebuild_bound_rows(
-        source_rows,
-        old_bound_rows,
-        composition,
-        workspace_ranges,
-        &capture,
-        &capture,
-    )
 }
 
 #[allow(clippy::too_many_arguments)]
