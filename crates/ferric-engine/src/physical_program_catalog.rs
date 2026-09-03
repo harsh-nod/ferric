@@ -408,6 +408,15 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
     })
 }
 
+#[cfg(feature = "engineering-non-authoritative-hsaco")]
+pub(crate) fn bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1(
+    bytes: &[u8],
+    plan: LoadPlan,
+    source: M1PhysicalProgramSourceContractV1,
+) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+    bind_content_bound_catalog_from_source(|_| (bytes, plan, source))
+}
+
 fn bind_content_bound_catalog_from_source<'a>(
     mut source: impl FnMut(
         M1PhysicalProgramV1,

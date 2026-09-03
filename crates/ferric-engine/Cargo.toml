@@ -10,6 +10,7 @@ publish = false
 [features]
 native-rollover-fixture = []
 qualification-fault-injection = ["fe2o3-service-host/qualification-fault-injection"]
+engineering-non-authoritative-hsaco = ["dep:fe2o3-hsaco-finalize", "dep:serde"]
 
 [[bin]]
 name = "ferric-m1-qualification-capture"
@@ -33,6 +34,7 @@ fe2o3-amd-target.workspace = true
 fe2o3-aql.workspace = true
 fe2o3-artifact-transaction.workspace = true
 fe2o3-host.workspace = true
+fe2o3-hsaco-finalize = { workspace = true, optional = true }
 fe2o3-kfd.workspace = true
 fe2o3-runtime-protocol.workspace = true
 fe2o3-service-host.workspace = true
@@ -43,6 +45,7 @@ ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../../adapters/qwen3-all-kernels-worker-v3-verifier-v1" }
 ferric-spec = { path = "../ferric-spec" }
 rustix.workspace = true
+serde = { version = "=1.0.229", features = ["derive"], optional = true }
 serde_json = "=1.0.151"
 sha2.workspace = true
 vstd.workspace = true
