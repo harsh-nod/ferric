@@ -772,12 +772,12 @@ fn validate_inspection(
     if inspection.digest().as_bytes() != &facts.canonical_descriptor_sha256 {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::CanonicalDescriptorDigest);
     }
-    if !inspection
-        .hsaco()
-        .kernels()
-        .iter()
-        .map(fe2o3_hsaco::InspectedKernel::name)
-        .eq(manifest.hsaco.kernel_names.iter().map(String::as_str))
+    let inspected_kernels = inspection.hsaco().kernels();
+    if inspected_kernels.len() != manifest.hsaco.kernel_names.len()
+        || inspected_kernels
+            .iter()
+            .zip(&manifest.hsaco.kernel_names)
+            .any(|(kernel, expected)| kernel.name() != expected)
     {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::MetadataKernelRoster);
     }
@@ -941,6 +941,16 @@ fn read_regular_file(
     subject: M1EngineeringAggregateArtifactFileV1,
     bound: ReadBound,
 ) -> Result<Vec<u8>, M1EngineeringAggregateArtifactOpenErrorV1> {
+    read_regular_file_with_post_read(root, name, subject, bound, || {})
+}
+
+fn read_regular_file_with_post_read(
+    root: &OwnedFd,
+    name: &str,
+    subject: M1EngineeringAggregateArtifactFileV1,
+    bound: ReadBound,
+    post_read: impl FnOnce(),
+) -> Result<Vec<u8>, M1EngineeringAggregateArtifactOpenErrorV1> {
     let descriptor = openat2(
         root,
         name,
@@ -973,6 +983,7 @@ fn read_regular_file(
             file: subject,
             source,
         })?;
+    post_read();
     let final_stat = fstat(&file).map_err(|source| io_error(subject, source))?;
     if !same_file_snapshot(&initial, &final_stat) {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::ChangedWhileReading(subject));
@@ -1208,6 +1219,17 @@ mod tests {
             })
         ));
 
+        for byte_len in [0, MAX_HSACO_BYTES_V1 as u64 + 1] {
+            let mut invalid_hsaco_size = manifest(b"not-a-hsaco");
+            invalid_hsaco_size.hsaco.identity.byte_len = byte_len;
+            assert!(matches!(
+                decode_manifest(&encode(&invalid_hsaco_size)),
+                Err(M1EngineeringAggregateArtifactOpenErrorV1::ManifestPolicy {
+                    field: "hsaco.identity"
+                })
+            ));
+        }
+
         for select in 0..7 {
             let mut oversized_tool = manifest(b"not-a-hsaco");
             let selected = match select {
@@ -1405,6 +1427,24 @@ mod tests {
             decode_manifest(&encode(&too_many)),
             Err(M1EngineeringAggregateArtifactOpenErrorV1::ManifestPolicy { field: "providers" })
         ));
+
+        let mut aggregate_overflow = manifest(b"not-a-hsaco");
+        aggregate_overflow.providers = vec![
+            ManifestProviderV1 {
+                kind: "llvm-bitcode".to_owned(),
+                identity: identity(0x20, MAX_PROVIDER_BYTES_V1 / 2 + 1),
+            },
+            ManifestProviderV1 {
+                kind: "llvm-bitcode".to_owned(),
+                identity: identity(0x21, MAX_PROVIDER_BYTES_V1 / 2),
+            },
+        ];
+        assert!(matches!(
+            decode_manifest(&encode(&aggregate_overflow)),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::ManifestPolicy {
+                field: "providers.identity.byte_len"
+            })
+        ));
     }
 
     #[test]
@@ -1430,6 +1470,31 @@ mod tests {
         assert!(matches!(
             reopen_m1_engineering_aggregate_artifact_v1(&root),
             Err(M1EngineeringAggregateArtifactOpenErrorV1::HsacoIdentity)
+        ));
+    }
+
+    #[test]
+    fn matching_identity_non_hsaco_reaches_finalized_inspection_rejection() {
+        let outer = TestDirectory::new("finalized-inspection");
+        let bytes = b"not-a-hsaco";
+        let manifest = encode(&manifest(bytes));
+        let namespace = outer.0.join(ENGINEERING_NAMESPACE_V1);
+        fs::create_dir(&namespace).unwrap();
+        let root = namespace.join(observation_content_id(&manifest, bytes));
+        fs::create_dir(&root).unwrap();
+        fs::write(
+            root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1),
+            manifest,
+        )
+        .unwrap();
+        fs::write(
+            root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1),
+            bytes,
+        )
+        .unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&root),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::FinalizedHsaco(_))
         ));
     }
 
@@ -1473,6 +1538,153 @@ mod tests {
                 file: M1EngineeringAggregateArtifactFileV1::Manifest,
                 ..
             })
+        ));
+
+        fs::remove_file(root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1)).unwrap();
+        fs::write(
+            root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1),
+            &manifest,
+        )
+        .unwrap();
+        let hsaco_copy = outer.0.join("hsaco-copy");
+        fs::write(&hsaco_copy, bytes).unwrap();
+        fs::remove_file(root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1)).unwrap();
+        symlink(
+            &hsaco_copy,
+            root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1),
+        )
+        .unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&root),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::Io {
+                file: M1EngineeringAggregateArtifactFileV1::Hsaco,
+                ..
+            })
+        ));
+
+        let real_root = outer.0.join("real-root");
+        fs::create_dir(&real_root).unwrap();
+        let root_link = namespace.join("root-link");
+        symlink(&real_root, &root_link).unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&root_link),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::Io {
+                file: M1EngineeringAggregateArtifactFileV1::RootDirectory,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn non_regular_files_and_size_boundaries_fail_closed() {
+        let outer = TestDirectory::new("file-policy");
+        let namespace = outer.0.join(ENGINEERING_NAMESPACE_V1);
+        fs::create_dir(&namespace).unwrap();
+
+        let manifest_directory_root = namespace.join("manifest-directory");
+        fs::create_dir(&manifest_directory_root).unwrap();
+        fs::create_dir(manifest_directory_root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1))
+            .unwrap();
+        fs::write(
+            manifest_directory_root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1),
+            b"x",
+        )
+        .unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&manifest_directory_root),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::NotRegularFile(
+                M1EngineeringAggregateArtifactFileV1::Manifest
+            ))
+        ));
+
+        let bytes = b"not-a-hsaco";
+        let canonical_manifest = encode(&manifest(bytes));
+        let hsaco_directory_root = namespace.join("hsaco-directory");
+        fs::create_dir(&hsaco_directory_root).unwrap();
+        fs::write(
+            hsaco_directory_root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1),
+            &canonical_manifest,
+        )
+        .unwrap();
+        fs::create_dir(hsaco_directory_root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1))
+            .unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&hsaco_directory_root),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::NotRegularFile(
+                M1EngineeringAggregateArtifactFileV1::Hsaco
+            ))
+        ));
+
+        for (name, manifest_bytes) in [
+            ("empty-manifest", Vec::new()),
+            ("oversized-manifest", vec![b'x'; MAX_MANIFEST_BYTES_V1 + 1]),
+        ] {
+            let root = namespace.join(name);
+            fs::create_dir(&root).unwrap();
+            fs::write(
+                root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1),
+                manifest_bytes,
+            )
+            .unwrap();
+            fs::write(
+                root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1),
+                b"x",
+            )
+            .unwrap();
+            assert!(matches!(
+                reopen_m1_engineering_aggregate_artifact_v1(&root),
+                Err(M1EngineeringAggregateArtifactOpenErrorV1::InvalidSize(
+                    M1EngineeringAggregateArtifactFileV1::Manifest
+                ))
+            ));
+        }
+
+        let mismatched_hsaco_root = namespace.join("mismatched-hsaco-size");
+        fs::create_dir(&mismatched_hsaco_root).unwrap();
+        fs::write(
+            mismatched_hsaco_root.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1),
+            canonical_manifest,
+        )
+        .unwrap();
+        fs::write(
+            mismatched_hsaco_root.join(M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1),
+            b"x",
+        )
+        .unwrap();
+        assert!(matches!(
+            reopen_m1_engineering_aggregate_artifact_v1(&mismatched_hsaco_root),
+            Err(M1EngineeringAggregateArtifactOpenErrorV1::InvalidSize(
+                M1EngineeringAggregateArtifactFileV1::Hsaco
+            ))
+        ));
+    }
+
+    #[test]
+    fn post_read_snapshot_rejects_deterministic_file_mutation() {
+        let outer = TestDirectory::new("snapshot-mutation");
+        let path = outer.0.join(M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1);
+        fs::write(&path, b"12345678").unwrap();
+        let root = openat2(
+            CWD,
+            &outer.0,
+            OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::empty(),
+            ResolveFlags::NO_SYMLINKS | ResolveFlags::NO_MAGICLINKS,
+        )
+        .unwrap();
+        assert!(matches!(
+            read_regular_file_with_post_read(
+                &root,
+                M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1,
+                M1EngineeringAggregateArtifactFileV1::Manifest,
+                ReadBound::Exact(8),
+                || fs::write(&path, b"x").unwrap(),
+            ),
+            Err(
+                M1EngineeringAggregateArtifactOpenErrorV1::ChangedWhileReading(
+                    M1EngineeringAggregateArtifactFileV1::Manifest
+                )
+            )
         ));
     }
 
