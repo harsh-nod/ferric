@@ -9029,9 +9029,7 @@ mod tests {
         };
 
         let required_path = |name: &str| {
-            std::env::var_os(name)
-                .map(PathBuf::from)
-                .unwrap_or_else(|| panic!("set {name}"))
+            std::env::var_os(name).map_or_else(|| panic!("set {name}"), PathBuf::from)
         };
         let snapshot_path = required_path("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT");
         let selector_path = required_path("FERRIC_M1_AGGREGATE_V2_SELECTOR_MANIFEST");
