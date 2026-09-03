@@ -1068,8 +1068,8 @@ mod tests {
 
     #[test]
     fn current_canonical_manifest_schema_decodes_exactly() {
-        let manifest = manifest(b"not-a-hsaco");
-        let bytes = encode(&manifest);
+        let canonical_manifest = manifest(b"not-a-hsaco");
+        let bytes = encode(&canonical_manifest);
         let (decoded, facts) = decode_manifest(&bytes).expect("canonical manifest");
         assert_eq!(
             decoded.schema,
@@ -1085,8 +1085,8 @@ mod tests {
 
     #[test]
     fn unknown_reordered_noncanonical_and_non_ascii_fields_fail_closed() {
-        let manifest = manifest(b"not-a-hsaco");
-        let canonical = encode(&manifest);
+        let canonical_manifest = manifest(b"not-a-hsaco");
+        let canonical = encode(&canonical_manifest);
         let mut value: serde_json::Value = serde_json::from_slice(&canonical).unwrap();
         value
             .as_object_mut()
@@ -1107,13 +1107,13 @@ mod tests {
             Err(M1EngineeringAggregateArtifactOpenErrorV1::NonCanonicalManifest)
         ));
 
-        let pretty = serde_json::to_vec_pretty(&manifest).unwrap();
+        let pretty = serde_json::to_vec_pretty(&canonical_manifest).unwrap();
         assert!(matches!(
             decode_manifest(&pretty),
             Err(M1EngineeringAggregateArtifactOpenErrorV1::NonCanonicalManifest)
         ));
 
-        let mut non_ascii = manifest;
+        let mut non_ascii = canonical_manifest;
         non_ascii.tools.worker.worker_build_identity = "worker-\u{2603}".to_owned();
         assert!(matches!(
             decode_manifest(&encode(&non_ascii)),
