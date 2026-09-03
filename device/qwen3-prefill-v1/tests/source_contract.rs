@@ -228,6 +228,32 @@ fn profile_guards_pin_all_eight_lengths_and_disambiguating_page_extents() {
 }
 
 #[test]
+fn each_profile_derived_divisor_has_one_dominating_zero_guard() {
+    let body = compact_tokens(kernel().block);
+    let tokens_derivation = body.find("lettokens=").unwrap();
+    let query_heads_guard = body
+        .find("ifquery_heads==0{fe2o3_device::trap();}")
+        .unwrap();
+    let tokens_guard = body.find("iftokens==0{fe2o3_device::trap();}").unwrap();
+    let gqa_group_size_guard = body
+        .find("ifgqa_group_size==0{fe2o3_device::trap();}")
+        .unwrap();
+    let first_query_heads_use = body.find("letquery_head=vector%query_heads").unwrap();
+    let first_tokens_use = body.find("letquery_token=position%tokens").unwrap();
+    let first_gqa_group_size_use = body.find("letkv_head=query_head/gqa_group_size").unwrap();
+
+    assert!(tokens_derivation < query_heads_guard);
+    assert!(query_heads_guard < tokens_guard);
+    assert!(tokens_guard < gqa_group_size_guard);
+    assert!(gqa_group_size_guard < first_query_heads_use);
+    assert!(gqa_group_size_guard < first_tokens_use);
+    assert!(gqa_group_size_guard < first_gqa_group_size_use);
+    assert_eq!(body.matches("ifquery_heads==0").count(), 1);
+    assert_eq!(body.matches("iftokens==0").count(), 1);
+    assert_eq!(body.matches("ifgqa_group_size==0").count(), 1);
+}
+
+#[test]
 fn coordinates_preserve_vector_lane_gqa_and_global_p16_mapping() {
     let body = compact_tokens(kernel().block);
     for marker in [

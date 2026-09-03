@@ -185,6 +185,15 @@ pub fn qwen3_gqa_prefill_causal_bf16_f32_v1(
         } else {
             2_048
         };
+    if query_heads == 0 {
+        fe2o3_device::trap();
+    }
+    if tokens == 0 {
+        fe2o3_device::trap();
+    }
+    if gqa_group_size == 0 {
+        fe2o3_device::trap();
+    }
 
     let workitem = thread::index_1d();
     let global = workitem.get();

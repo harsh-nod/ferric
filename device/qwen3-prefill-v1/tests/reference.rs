@@ -1,7 +1,8 @@
 use ferric_qwen3_prefill_device_v1::{
     QWEN3_PREFILL_ATTENTION_SCALE_BITS_V1, QWEN3_PREFILL_CACHE_POOL_PAGES_V1,
     QWEN3_PREFILL_HEAD_DIMENSION_V1, QWEN3_PREFILL_KV_HEADS_V1,
-    QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1, QWEN3_PREFILL_PAGE_TOKENS_V1,
+    QWEN3_PREFILL_PAGE_TABLE_ENTRIES_V1, QWEN3_PREFILL_PAGE_TOKENS_V1, QWEN3_PREFILL_PROFILES_V1,
+    Qwen3PrefillProfileV1,
 };
 
 fn widen_bf16(bits: u16) -> f32 {
@@ -123,6 +124,42 @@ fn reference_pair(
 
 fn compact_cache(pages: usize) -> Vec<u16> {
     vec![0; pages * 16 * 8 * 128]
+}
+
+fn reference_coordinates(profile: Qwen3PrefillProfileV1, global: usize) -> Option<[usize; 5]> {
+    if profile.query_heads == 0 || profile.tokens == 0 || profile.gqa_group_size == 0 {
+        return None;
+    }
+    let vector = global / 64;
+    let local = global % 64;
+    let query_head = vector % profile.query_heads;
+    let position = vector / profile.query_heads;
+    let query_token = position % profile.tokens;
+    let sequence = position / profile.tokens;
+    let kv_head = query_head / profile.gqa_group_size;
+    Some([sequence, query_token, query_head, kv_head, local])
+}
+
+#[test]
+fn closed_profiles_make_divisor_guards_unreachable_and_coordinates_round_trip() {
+    for profile in QWEN3_PREFILL_PROFILES_V1 {
+        let workitems = profile.query_elements / 2;
+        for global in [0, workitems - 1] {
+            let [sequence, query_token, query_head, kv_head, local] =
+                reference_coordinates(profile, global)
+                    .expect("closed profiles have nonzero divisors");
+            assert!(sequence < profile.sequences);
+            assert!(query_token < profile.tokens);
+            assert!(query_head < profile.query_heads);
+            assert!(kv_head < QWEN3_PREFILL_KV_HEADS_V1);
+            assert!(local < 64);
+
+            let rebuilt_vector =
+                (sequence * profile.tokens + query_token) * profile.query_heads + query_head;
+            assert_eq!(rebuilt_vector * 64 + local, global);
+            assert_eq!(kv_head, query_head / profile.gqa_group_size);
+        }
+    }
 }
 
 #[test]

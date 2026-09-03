@@ -31,6 +31,9 @@ fn exact_eight_profile_catalog_closes_shape_and_launch_arithmetic() {
         QWEN3_PREFILL_PROFILE_COUNT_V1
     );
     for profile in QWEN3_PREFILL_PROFILES_V1 {
+        assert_ne!(profile.query_heads, 0);
+        assert_ne!(profile.tokens, 0);
+        assert_ne!(profile.gqa_group_size, 0);
         assert_eq!(
             profile.query_elements,
             profile.sequences
