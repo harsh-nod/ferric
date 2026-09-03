@@ -28,7 +28,30 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "36fb8e9",
+  "0c2b73b",
+  "c9072b0",
+  "951d48a",
+  "5099cf3",
+  "41abaa0c",
+  "focused MI300X matrix is green",
+  "Aggregate run 5 launched",
+  "terminated with exit 1",
+  "core::f32::is_finite",
+  "cross-crate unsafe-block authentication boundary",
+  "exact body contract is in progress and not yet committed",
+  "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+  "independent review GO for their stated source scope",
+  "511 engine library tests",
+  "84 capture tests",
+  "145 doctests",
+  "all-target strict clippy",
+  "exact locked final pinning and live hardware execution remain open",
+  "smoke has not executed",
   "CURRENT=None",
+  "Docker access denied",
+  "vLLM and SGLang unavailable",
+  "comparison not run",
   "No authenticated current-source Qwen, hardware, numerical, or performance run exists",
   "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
 ];
@@ -88,6 +111,27 @@ try {
         const rect = section.getBoundingClientRect();
         return { id: section.id || section.className, top: rect.top, bottom: rect.bottom };
       });
+      const authorityChildOverlaps = [...document.querySelectorAll(".authority-item")]
+        .map((item, index) => {
+          const [tag, detail] = item.children;
+          if (!tag || !detail) return null;
+          const tagRect = tag.getBoundingClientRect();
+          const detailRect = detail.getBoundingClientRect();
+          const overlaps =
+            tagRect.left < detailRect.right - 0.5 &&
+            tagRect.right > detailRect.left + 0.5 &&
+            tagRect.top < detailRect.bottom - 0.5 &&
+            tagRect.bottom > detailRect.top + 0.5;
+          return overlaps
+            ? {
+                index,
+                tag: tag.textContent.trim(),
+                tagRight: tagRect.right,
+                detailLeft: detailRect.left,
+              }
+            : null;
+        })
+        .filter(Boolean);
       return {
         body,
         main,
@@ -98,6 +142,7 @@ try {
           Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) -
           window.innerWidth,
         sections,
+        authorityChildOverlaps,
       };
     }, dynamicRoots);
 
@@ -123,6 +168,10 @@ try {
         `${name}: section ${section.id} overlaps ${previous.id}`,
       );
     });
+    assert(
+      result.authorityChildOverlaps.length === 0,
+      `${name}: authority legend children overlap: ${JSON.stringify(result.authorityChildOverlaps)}`,
+    );
     requiredClaims.forEach((claim) => {
       assert(result.currentText.includes(claim), `${name}: rendered current view is missing ${claim}`);
     });
@@ -159,11 +208,37 @@ if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
             return { label: element.textContent.trim(), left: rect.left, right: rect.right };
           })
           .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1);
+        const authorityChildOverlaps = [...document.querySelectorAll(".authority-item")]
+          .map((item, index) => {
+            const [tag, detail] = item.children;
+            if (!tag || !detail) return null;
+            const tagRect = tag.getBoundingClientRect();
+            const detailRect = detail.getBoundingClientRect();
+            const overlaps =
+              tagRect.left < detailRect.right - 0.5 &&
+              tagRect.right > detailRect.left + 0.5 &&
+              tagRect.top < detailRect.bottom - 0.5 &&
+              tagRect.bottom > detailRect.top + 0.5;
+            return overlaps
+              ? {
+                  index,
+                  tag: tag.textContent.trim(),
+                  tagRight: tagRect.right,
+                  detailLeft: detailRect.left,
+                }
+              : null;
+          })
+          .filter(Boolean);
         return {
           overflow:
             Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) -
             window.innerWidth,
           viewportClipping,
+          sections: [...document.querySelectorAll("main > section")].map((section) => {
+            const rect = section.getBoundingClientRect();
+            return { id: section.id || section.className, top: rect.top, bottom: rect.bottom };
+          }),
+          authorityChildOverlaps,
         };
       });
       assert(result.overflow <= 1, `${width}px sweep: page has horizontal overflow`);
@@ -171,6 +246,17 @@ if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
         result.viewportClipping.length === 0,
         `${width}px sweep: clipped status or repository control: ${JSON.stringify(result.viewportClipping)}`,
       );
+      assert(
+        result.authorityChildOverlaps.length === 0,
+        `${width}px sweep: authority legend children overlap: ${JSON.stringify(result.authorityChildOverlaps)}`,
+      );
+      result.sections.slice(1).forEach((section, index) => {
+        const previous = result.sections[index];
+        assert(
+          section.top >= previous.bottom - 1,
+          `${width}px sweep: section ${section.id} overlaps ${previous.id}`,
+        );
+      });
     }
     await page.close();
   } finally {
