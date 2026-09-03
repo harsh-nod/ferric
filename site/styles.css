@@ -894,7 +894,7 @@ h3 {
 .authority-item {
   padding: 13px 0;
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 18px;
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -1251,10 +1251,6 @@ footer {
 
   .evidence-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .authority-item {
-    grid-template-columns: 120px minmax(0, 1fr);
   }
 
   .gate-row {
