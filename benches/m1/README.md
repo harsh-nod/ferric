@@ -565,6 +565,63 @@ fresh server launch or server saturation, is not continuous serving, has no
 measured vLLM/SGLang comparison or independent validator, and cannot close
 `m1.r33`. Existing `describe`, `plan`, and `validate` commands are unchanged.
 
+The complete V2 serving collector runs separately frozen lifecycle and
+measurement adapters for all three engines:
+
+```text
+cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-serving -- \
+  collect-comparison-observations POLICY COMMAND-PLAN OUTPUT-OBSERVATIONS
+```
+
+`COMMAND-PLAN` is canonical
+`FERRIC-M1-R33-SERVING-COLLECTOR-PLAN-V1` with `pre-execution` status. It
+repeats the exact V2 policy identity and plan, binds one policy-named benchmark
+executable by canonical absolute path and byte SHA-256, clears the inherited
+environment, and freezes its replacement environment. Each Ferric, vLLM, and
+SGLang adapter repeats the policy implementation, a canonical working
+directory, a bounded timeout, and distinct SHA-bound `start`, `ready`,
+`measure`, and `stop` argument vectors. The plan also freezes three distinct
+`gfx942:xnack-` hardware-slot identities, one byte-equal hardware-configuration
+identity across those slots, and exact positive successful-request, input-token,
+output-token, and checked total-token work for every window. The collector
+recomputes the policy's `server_start_roster_sha256` over those exact slots and
+all three rotated assignments before it can execute.
+
+For each of three start ordinals, the collector starts and readies all three
+engines on distinct slots, rotating engine-to-slot assignment across starts.
+It then invokes all three measurement adapters sequentially in each row's
+declared cyclic order for ten warmup and ten recorded windows, for 180
+measurement invocations total. Every result must repeat the supplied policy,
+command, engine, order, start, slot, implementation, server-instance, and row
+bindings. A server-instance identity must remain stable within one engine/start
+and be distinct across all nine assignments. On success or failure, every
+applicable stop adapter is attempted in reverse order; a stop failure prevents
+publication. Once a canonical start result exposes a valid server-instance
+identity, that assignment is stoppable even if another start-result binding is
+rejected. An adapter that fails before returning such an identity owns its own
+transactional cleanup.
+
+Measurement results carry the positive monotonic-raw duration from declared
+window start to declared window end, token/request counters, and one positive
+monotonic-raw arrival-to-terminal latency for every successful request. The
+collector requires zero failures and exact equality to each row's
+pre-execution work tuple, then recomputes p99 as nearest-rank
+`ceil(0.99 * N)`. It never accepts a submitted percentile. It constructs the
+exact `FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V2` document, passes that
+document through the existing V2 structural validator, and publishes through
+the same descriptor-held no-replace path. Nonzero exit, stderr, timeout,
+oversized output, noncanonical JSON, identity drift, roster drift, inconsistent
+work, or teardown failure aborts without publishing.
+
+Real use requires three concurrently exclusive MI300X-class slots and
+externally implemented server adapters; Ferric supplies no launcher or default
+vLLM/SGLang configuration. Returned lifecycle and hardware identities remain
+external observations and do not by themselves prove freshness or exclusivity.
+The collector does not run during repository tests and does not establish
+tuning fairness, observation truth, numerical correctness, hardware
+correctness, performance qualification, independent reproduction, `m1.r33`,
+or M1 closure.
+
 An additive post-observation checker constructs one self-contained comparison
 record from a separately frozen policy and externally collected window
 counters:
