@@ -201,27 +201,21 @@
             <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate
-            loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout
-            remediation; all source components received independent review GO for their stated scope.
-            The loader and smoke remain non-authoritative. fe2o3 engineering producer schema 5099cf3
-            is frozen. Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f;
-            its exact MI300X matrix is green, its narrow is_finite/fabs remediations received independent
-            source GO, and it is not the exact locked final Ferric pin. Aggregate run 7 launched, passed
-            the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1 because
-            MemoryVolatileLoad lacks a production semantic expansion. The narrow fe2o3 compiler
-            remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware
-            execution, or Qwen token resulted. The smoke merged at 36fb8e9 with a documentation-only
-            correction. Its earlier ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture
-            tests, 145 doctests, and all-target strict clippy on mi300x; exact locked final pinning and
-            live hardware execution remain open, and the smoke has not executed. A read-only baseline
-            audit found the mi300x
-            host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so the
-            comparison has not run. Ferric-specific inference and kernel ownership remain in Ferric;
-            reusable compiler and runtime work remains in fe2o3. The private current aggregate
-            publication selection remains None (CURRENT=None). No authenticated current-source Qwen,
-            hardware, numerical, or performance run exists. All 33 M1 roadmap gates and all 17 assurance
-            properties remain Open.
+            Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector. The
+            collector has not run and creates no baseline or performance result. fe2o3 compiler slice
+            a240f98, tree 8db547a, has independent GO while the narrow compiler proof remains in progress.
+            In run 10, the outer engineering invocation and rustc extraction child exited 1, while nested
+            Cargo extraction exited 101. The run crossed the old 5,212,493-byte receipt boundary before the
+            row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or
+            current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children
+            containing 19 bodies, and a maximum child of 1,844,110 bytes, then its outer engineering
+            invocation exited 1 at the same 8693231611bf:239:20 proof. These are size observations, not a
+            completed compiler proof. Ferric-specific inference and kernel ownership remain in Ferric;
+            reusable compiler and runtime work remains in fe2o3. All GPUs are currently occupied and
+            baseline container access remains unresolved, so the comparison has not run. The private
+            current aggregate publication selection remains None (CURRENT=None). No current aggregate or
+            engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists. All
+            33 M1 roadmap gates and all 17 assurance properties remain Open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

@@ -13,9 +13,9 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
-  integrationCommit: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
-  integrationTree: "bb8da1d241613fe028e833d746a42be92cd80e70",
+  siteRefreshBase: "31b6f4989d961667900bff39935c75024316a2dc",
+  integrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
+  integrationTree: "a52398ce57ec765a5d49a97904bc160e586a911b",
   implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -26,11 +26,9 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "466f88c02ae5d5a30f7b7f18c263f55e9b679251",
-  fe2o3CompilerCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
-  fe2o3CompilerCandidateAhead: 68,
-  fe2o3CompilerCandidateBehind: 0,
-  fe2o3CompilerCandidateStatus: "source-go-run7-volatile-load-blocked",
+  fe2o3CompilerCandidate: "a240f98ac095be1ee79f7f1d1e146933a5acb1e4",
+  fe2o3CompilerCandidateTree: "8db547a39964cf8a224f037fb278c70cdd61671e",
+  fe2o3CompilerCandidateStatus: "independent-go-narrow-proof-in-progress",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -40,9 +38,19 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
-  engineeringAggregateRun7ExitCode: 1,
-  engineeringAggregateRun7Boundary: "MemoryVolatileLoad",
-  engineeringAggregateRun7Status: "failed-missing-production-expansion",
+  engineeringAggregateRun10OuterExitCode: 1,
+  engineeringAggregateRun10RustcExtractionChildExitCode: 1,
+  engineeringAggregateRun10NestedCargoExtractionExitCode: 101,
+  engineeringAggregateRun10ReceiptBoundaryBytes: 5212493,
+  engineeringAggregateRun10Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
+  engineeringAggregateRun10Status: "crossed-old-receipt-boundary-failed-later-proof",
+  engineeringAggregateRun11OuterExitCode: 1,
+  engineeringAggregateRun11Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
+  engineeringAggregateRun11ParentBytes: 5438,
+  engineeringAggregateRun11ChildCount: 29,
+  engineeringAggregateRun11BodyCount: 19,
+  engineeringAggregateRun11MaxChildBytes: 1844110,
+  narrowCompilerProofStatus: "in-progress",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -53,7 +61,10 @@ const expectedCurrent = Object.freeze({
   targetEngineeringSmokeDoctests: 145,
   targetEngineeringSmokeExactFinalPinStatus: "open",
   targetEngineeringSmokeHardwareStatus: "not-run",
-  baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
+  servingComparisonR33V2IntegrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
+  servingComparisonR33V2Status: "reviewed-integrated-not-run",
+  gpuAvailabilityStatus: "all-gpus-occupied",
+  baselineAuditStatus: "container-access-unresolved",
   comparisonStatus: "not-run",
   protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
   protectedVerifierServiceStatus: "foundation-go-local-undeployed",
@@ -161,7 +172,7 @@ assertCommit(
 assertCommit(project.current.fe2o3EngineeringSchemaCommit, "current.fe2o3EngineeringSchemaCommit");
 assertCommit(project.current.fe2o3EngineeringSchemaTree, "current.fe2o3EngineeringSchemaTree");
 assertCommit(project.current.fe2o3CompilerCandidate, "current.fe2o3CompilerCandidate");
-assertCommit(project.current.fe2o3CompilerCandidateBase, "current.fe2o3CompilerCandidateBase");
+assertCommit(project.current.fe2o3CompilerCandidateTree, "current.fe2o3CompilerCandidateTree");
 assertCommit(
   project.current.productionSpeculativeExecutorCandidate,
   "current.productionSpeculativeExecutorCandidate",
@@ -191,6 +202,10 @@ assertCommit(project.current.targetEngineeringSmokeTree, "current.targetEngineer
 assertCommit(
   project.current.targetEngineeringSmokeIntegrationCommit,
   "current.targetEngineeringSmokeIntegrationCommit",
+);
+assertCommit(
+  project.current.servingComparisonR33V2IntegrationCommit,
+  "current.servingComparisonR33V2IntegrationCommit",
 );
 assertCommit(
   project.current.protectedVerifierServiceLocalCandidate,
@@ -234,6 +249,7 @@ const expectedEnvelopeTerms = [
   "Engineering aggregate loader",
   "Engineering aggregate output",
   "Target-only engineering smoke",
+  "R33 V2 serving comparison",
   "Baseline comparison",
   "Protected verifier status",
   "Aggregate device source",
@@ -274,13 +290,11 @@ assert(
       expectedCurrent.fe2o3EngineeringSchemaTree,
     ) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidate) &&
-    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
-    envelope.get("fe2o3 engineering producer")?.includes("68 ahead / 0 behind") &&
-    envelope.get("fe2o3 engineering producer")?.includes("exact MI300X matrix green") &&
-    envelope.get("fe2o3 engineering producer")?.includes("independent source-remediation GO") &&
-    envelope.get("fe2o3 engineering producer")?.includes("real-aggregate qualification") &&
-    envelope.get("fe2o3 engineering producer")?.includes("not integrated into Ferric"),
-  "envelope must expose the frozen producer schema and exact pushed candidate limits",
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
+    envelope.get("fe2o3 engineering producer")?.includes("independent GO") &&
+    envelope.get("fe2o3 engineering producer")?.includes("narrow compiler proof remains in progress") &&
+    envelope.get("fe2o3 engineering producer")?.includes("ownership remains in fe2o3"),
+  "envelope must expose the frozen producer schema and independently reviewed compiler slice",
 );
 assert(
   envelope.get("Speculative executor")?.includes(
@@ -307,19 +321,25 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-  envelope.get("Engineering aggregate output")?.includes("Run 7 launched") &&
-    envelope.get("Engineering aggregate output")?.includes("terminated with exit 1") &&
-    envelope.get("Engineering aggregate output")?.includes("core::f32::is_finite") &&
-    envelope.get("Engineering aggregate output")?.includes("f32::abs") &&
+  envelope.get("Engineering aggregate output")?.includes("In run 10") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "MemoryVolatileLoad lacks a production semantic expansion",
+      "outer engineering invocation and rustc extraction child exited 1",
     ) &&
-    envelope.get("Engineering aggregate output")?.includes("compiler remediation is in progress") &&
+    envelope.get("Engineering aggregate output")?.includes("nested Cargo extraction exited 101") &&
+    envelope.get("Engineering aggregate output")?.includes("5,212,493-byte receipt boundary") &&
+    envelope.get("Engineering aggregate output")?.includes("8693231611bf:239:20") &&
+    envelope.get("Engineering aggregate output")?.includes("row * vocabulary overflow proof") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+      "zero connect, handoff, worker, or current engineering HSACO",
     ) &&
-    envelope.get("Engineering aggregate output")?.includes("source-integrated but not executed"),
-  "envelope must retain the exact run 7 failure boundary and downstream nonclaims",
+    envelope.get("Engineering aggregate output")?.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
+    envelope.get("Engineering aggregate output")?.includes("29 children containing 19 bodies") &&
+    envelope.get("Engineering aggregate output")?.includes("maximum child of 1,844,110 bytes") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("size observations only"),
+  "envelope must retain the exact run 10 failure and run 11 measurements",
 );
 assert(
   envelope.get("Target-only engineering smoke")?.includes(
@@ -344,10 +364,19 @@ assert(
   "envelope must retain exact target-smoke integration, matrix, and execution limits",
 );
 assert(
-  envelope.get("Baseline comparison")?.includes("Docker access denied") &&
-    envelope.get("Baseline comparison")?.includes("vLLM and SGLang unavailable") &&
+  envelope.get("R33 V2 serving comparison")?.includes(
+    expectedCurrent.servingComparisonR33V2IntegrationCommit,
+  ) &&
+    envelope.get("R33 V2 serving comparison")?.includes("Reviewed checker and full collector") &&
+    envelope.get("R33 V2 serving comparison")?.includes("collector has not run") &&
+    envelope.get("R33 V2 serving comparison")?.includes("no baseline or performance result"),
+  "envelope must retain the reviewed, integrated, unrun R33 V2 comparison surface",
+);
+assert(
+  envelope.get("Baseline comparison")?.includes("All GPUs are currently occupied") &&
+    envelope.get("Baseline comparison")?.includes("container access remains unresolved") &&
     envelope.get("Baseline comparison")?.includes("comparison not run"),
-  "envelope must retain the baseline audit and comparison nonclaim",
+  "envelope must retain current baseline blockers and comparison nonclaim",
 );
 assert(
   envelope.get("Protected verifier status")?.includes(expectedCurrent.verifierBinderCandidate) &&
@@ -446,21 +475,22 @@ assert(
     producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
-    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
-    producerReadiness.detail.includes("68 commits ahead and 0 behind") &&
-    producerReadiness.detail.includes("passed 458 rustc tests") &&
-    producerReadiness.detail.includes("122 simulator tests") &&
-    producerReadiness.detail.includes("Independent review returned source-remediation GO") &&
-    producerReadiness.detail.includes("not integrated into Ferric") &&
-    producerReadiness.detail.includes("Aggregate run 7 launched") &&
-    producerReadiness.detail.includes("passed the prior is_finite boundary") &&
-    producerReadiness.detail.includes("terminated with exit 1") &&
-    producerReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
-    producerReadiness.detail.includes("compiler remediation is in progress") &&
-    producerReadiness.detail.includes(
-      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
-    ),
-  "fe2o3 producer must retain the exact run 7 failure and downstream nonclaims",
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
+    producerReadiness.detail.includes("received independent GO") &&
+    producerReadiness.detail.includes("aggregate run 10") &&
+    producerReadiness.detail.includes("outer engineering invocation and rustc extraction child exited 1") &&
+    producerReadiness.detail.includes("nested Cargo extraction exited 101") &&
+    producerReadiness.detail.includes("5,212,493-byte receipt boundary") &&
+    producerReadiness.detail.includes("8693231611bf:239:20") &&
+    producerReadiness.detail.includes("row * vocabulary overflow proof") &&
+    producerReadiness.detail.includes("zero connect, handoff, worker, or current engineering HSACO") &&
+    producerReadiness.detail.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
+    producerReadiness.detail.includes("29 children containing 19 bodies") &&
+    producerReadiness.detail.includes("maximum child of 1,844,110 bytes") &&
+    producerReadiness.detail.includes("outer engineering invocation exited 1 at the same proof") &&
+    producerReadiness.detail.includes("narrow compiler proof remains in progress") &&
+    producerReadiness.detail.includes("no artifact, runtime, or inference authority"),
+  "fe2o3 producer must retain the exact current proof status and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
   (item) => item.label === "Production speculative executor",
@@ -529,13 +559,19 @@ assert(
     qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
-    qwenReadiness.detail.includes("terminated with exit 1") &&
-    qwenReadiness.detail.includes("core::f32::is_finite") &&
-    qwenReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
-    qwenReadiness.detail.includes("No handoff, worker invocation, HSACO, manifest") &&
-    qwenReadiness.detail.includes("Exact locked final pinning and live hardware execution remain open") &&
-    qwenReadiness.detail.includes("smoke has not executed") &&
-    qwenReadiness.detail.includes("Qwen token resulted"),
+    qwenReadiness.detail.includes("R33 V2 checker and full collector") &&
+    qwenReadiness.detail.includes("neither the smoke nor collector has executed") &&
+    qwenReadiness.detail.includes("outer invocation and rustc extraction child exited 1") &&
+    qwenReadiness.detail.includes("nested Cargo extraction exited 101") &&
+    qwenReadiness.detail.includes("8693231611bf:239:20") &&
+    qwenReadiness.detail.includes("row * vocabulary overflow proof") &&
+    qwenReadiness.detail.includes("zero connect, handoff, worker, or current engineering HSACO") &&
+    qwenReadiness.detail.includes("Run 11 emitted its V5 sizes") &&
+    qwenReadiness.detail.includes("outer invocation exited 1 at the same proof") &&
+    qwenReadiness.detail.includes("narrow compiler proof remains in progress") &&
+    qwenReadiness.detail.includes(
+      "no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
+    ),
   "Qwen, numerical, and performance authority must remain open",
 );
 const baselineReadiness = project.readiness.find(
@@ -543,8 +579,11 @@ const baselineReadiness = project.readiness.find(
 );
 assert(
   baselineReadiness?.state === "open" &&
-    baselineReadiness.detail.includes("Docker access is denied") &&
-    baselineReadiness.detail.includes("neither vLLM nor SGLang is installed") &&
+    baselineReadiness.detail.includes(expectedCurrent.servingComparisonR33V2IntegrationCommit) &&
+    baselineReadiness.detail.includes("reviewed R33 V2 checker and full collector") &&
+    baselineReadiness.detail.includes("collector has not run") &&
+    baselineReadiness.detail.includes("All GPUs are currently occupied") &&
+    baselineReadiness.detail.includes("container access remains unresolved") &&
     baselineReadiness.detail.includes("No baseline server was launched") &&
     baselineReadiness.detail.includes("no Ferric comparison result exists"),
   "baseline comparison must remain open with exact environment limits",
@@ -574,6 +613,20 @@ for (const group of ["runnable", "experimental", "roadmap"]) {
     `capabilities.${group} is empty`,
   );
 }
+const r33CaptureCapability = project.capabilities.experimental.find(
+  (item) => item.name === "R33 V2 serving comparison capture",
+);
+assert(
+  r33CaptureCapability?.detail.includes("construct and structurally validate its V2 observations") &&
+    r33CaptureCapability.detail.includes(
+      "validation command separately constructs the V2 comparison record and applies the gate",
+    ) &&
+    r33CaptureCapability.detail.includes("Neither command has run against the three engines") &&
+    r33CaptureCapability.detail.includes(
+      "no baseline, hardware, numerical, performance, Qwen, or M1 result",
+    ),
+  "R33 V2 capability must distinguish collector observations from validation and retain nonclaims",
+);
 
 assertCommit(project.latestObservation.commit, "latestObservation.commit");
 assertState(project.latestObservation.state, "latestObservation");
@@ -753,6 +806,9 @@ assert(
 assert(
   !currentProjectData.includes("ff21f24") &&
     !currentProjectData.includes("f300ab8") &&
+    !currentProjectData.includes("e70ab68") &&
+    !currentProjectData.includes("466f88c") &&
+    !currentProjectData.includes("Aggregate run 7") &&
     !currentProjectData.includes("NO-GO") &&
     !currentProjectData.toLowerCase().includes("run 5 has not launched"),
   "current Pages data must not present superseded compiler or executor checkpoints",
@@ -764,28 +820,26 @@ for (const claim of forbiddenCurrentDependencyClaims) {
   );
 }
 for (const claim of [
-  "Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout remediation",
-  "all source components received independent review GO for their stated scope",
-  "The loader and smoke remain non-authoritative",
-  "fe2o3 engineering producer schema 5099cf3 is frozen",
-  "Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f",
-  "exact MI300X matrix is green",
-  "Aggregate run 7 launched, passed the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1",
-  "MemoryVolatileLoad lacks a production semantic expansion",
-  "The narrow fe2o3 compiler remediation is in progress",
-  "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
-  "The smoke merged at 36fb8e9 with a documentation-only correction",
-  "ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests",
-  "all-target strict clippy on mi300x",
-  "exact locked final pinning and live hardware execution remain open",
-  "the smoke has not executed",
-  "read-only baseline audit found the mi300x host ready",
-  "Docker access is denied and neither vLLM nor SGLang is installed",
+  "Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector",
+  "The collector has not run and creates no baseline or performance result",
+  "fe2o3 compiler slice a240f98, tree 8db547a, has independent GO",
+  "narrow compiler proof remains in progress",
+  "In run 10, the outer engineering invocation and rustc extraction child exited 1",
+  "nested Cargo extraction exited 101",
+  "crossed the old 5,212,493-byte receipt boundary",
+  "row * vocabulary overflow proof at 8693231611bf:239:20",
+  "zero connect, handoff, worker, or current engineering HSACO events",
+  "Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies",
+  "maximum child of 1,844,110 bytes",
+  "outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof",
+  "These are size observations, not a completed compiler proof",
+  "All GPUs are currently occupied and baseline container access remains unresolved",
   "comparison has not run",
   "Ferric-specific inference and kernel ownership remain in Ferric",
-  "selection remains None",
+  "reusable compiler and runtime work remains in fe2o3",
+  "publication selection remains None",
   "CURRENT=None",
-  "No authenticated current-source Qwen, hardware, numerical, or performance run exists",
+  "No current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
   "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
@@ -801,7 +855,8 @@ assert(
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
-    dataSource.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
+    dataSource.includes(expectedCurrent.servingComparisonR33V2IntegrationCommit) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorIntegrationCommit) &&
@@ -843,18 +898,20 @@ assert(
     dataSource.includes("non-final mi300x probe") &&
     dataSource.includes("received independent review GO") &&
     dataSource.includes("observation-only and non-authoritative") &&
-    dataSource.includes("Aggregate run 7 launched") &&
-    dataSource.includes("terminated with exit 1") &&
-    dataSource.includes("passed the exact core::f32::is_finite -> f32::abs -> fabs") &&
-    dataSource.includes("core::f32::is_finite") &&
-    dataSource.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
-    dataSource.includes("compiler remediation is in progress") &&
-    dataSource.includes(
-      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
-    ) &&
-    dataSource.includes("passed 458 rustc tests") &&
-    dataSource.includes("122 simulator tests") &&
-    dataSource.includes("independent source-remediation GO") &&
+    dataSource.includes("reviewed R33 V2 checker and full collector") &&
+    dataSource.includes("collector has not run") &&
+    dataSource.includes("outer engineering invocation and rustc extraction child exited 1") &&
+    dataSource.includes("nested Cargo extraction exited 101") &&
+    dataSource.includes("5,212,493-byte receipt boundary") &&
+    dataSource.includes("8693231611bf:239:20") &&
+    dataSource.includes("row * vocabulary overflow proof") &&
+    dataSource.includes("zero connect, handoff, worker, or current engineering HSACO") &&
+    dataSource.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
+    dataSource.includes("29 children containing 19 bodies") &&
+    dataSource.includes("maximum child of 1,844,110 bytes") &&
+    dataSource.includes("outer engineering invocation exited 1 at the same") &&
+    dataSource.includes("narrow compiler proof remains in progress") &&
+    dataSource.includes("received independent GO") &&
     dataSource.includes("independent source-integration GO") &&
     dataSource.includes("documentation-only correction") &&
     dataSource.includes("511 engine library tests") &&
@@ -863,14 +920,16 @@ assert(
     dataSource.includes("all-target strict clippy") &&
     dataSource.includes("exact locked final pinning and live hardware execution remain open") &&
     dataSource.includes("smoke has not executed") &&
-    dataSource.includes("Docker access is denied") &&
-    dataSource.includes("neither vLLM nor SGLang is installed") &&
+    dataSource.includes("All GPUs are currently occupied") &&
+    dataSource.includes("baseline container access remains unresolved") &&
     dataSource.includes("No baseline server was launched") &&
     dataSource.includes("passed 28 tests and 6 doctests") &&
     dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
     dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed") &&
-    dataSource.includes("no authenticated current-source Qwen execution") &&
+    dataSource.includes(
+      "no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
+    ) &&
     dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
   "Pages data must retain service, executor, loader, compiler, baseline, Qwen, selection, and all-open claims",
 );
