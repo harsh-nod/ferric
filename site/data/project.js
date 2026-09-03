@@ -3,9 +3,9 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
-    integrationCommit: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
-    integrationTree: "bb8da1d241613fe028e833d746a42be92cd80e70",
+    siteRefreshBase: "31b6f4989d961667900bff39935c75024316a2dc",
+    integrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
+    integrationTree: "a52398ce57ec765a5d49a97904bc160e586a911b",
     implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
     authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
     aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -16,11 +16,9 @@ window.FERRIC_PROJECT = Object.freeze({
     finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
     fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
     fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-    fe2o3CompilerCandidate: "466f88c02ae5d5a30f7b7f18c263f55e9b679251",
-    fe2o3CompilerCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
-    fe2o3CompilerCandidateAhead: 68,
-    fe2o3CompilerCandidateBehind: 0,
-    fe2o3CompilerCandidateStatus: "source-go-run7-volatile-load-blocked",
+    fe2o3CompilerCandidate: "a240f98ac095be1ee79f7f1d1e146933a5acb1e4",
+    fe2o3CompilerCandidateTree: "8db547a39964cf8a224f037fb278c70cdd61671e",
+    fe2o3CompilerCandidateStatus: "independent-go-narrow-proof-in-progress",
     productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
     productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
     productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -30,9 +28,19 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
     engineeringAggregateLoaderStatus: "independent-go-integrated",
     engineeringAggregateHsacoStatus: "not-produced",
-    engineeringAggregateRun7ExitCode: 1,
-    engineeringAggregateRun7Boundary: "MemoryVolatileLoad",
-    engineeringAggregateRun7Status: "failed-missing-production-expansion",
+    engineeringAggregateRun10OuterExitCode: 1,
+    engineeringAggregateRun10RustcExtractionChildExitCode: 1,
+    engineeringAggregateRun10NestedCargoExtractionExitCode: 101,
+    engineeringAggregateRun10ReceiptBoundaryBytes: 5212493,
+    engineeringAggregateRun10Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
+    engineeringAggregateRun10Status: "crossed-old-receipt-boundary-failed-later-proof",
+    engineeringAggregateRun11OuterExitCode: 1,
+    engineeringAggregateRun11Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
+    engineeringAggregateRun11ParentBytes: 5438,
+    engineeringAggregateRun11ChildCount: 29,
+    engineeringAggregateRun11BodyCount: 19,
+    engineeringAggregateRun11MaxChildBytes: 1844110,
+    narrowCompilerProofStatus: "in-progress",
     fe2o3IsFiniteRemediationStatus: "independent-source-go",
     targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
     targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -43,7 +51,10 @@ window.FERRIC_PROJECT = Object.freeze({
     targetEngineeringSmokeDoctests: 145,
     targetEngineeringSmokeExactFinalPinStatus: "open",
     targetEngineeringSmokeHardwareStatus: "not-run",
-    baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
+    servingComparisonR33V2IntegrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
+    servingComparisonR33V2Status: "reviewed-integrated-not-run",
+    gpuAvailabilityStatus: "all-gpus-occupied",
+    baselineAuditStatus: "container-access-unresolved",
     comparisonStatus: "not-run",
     protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
     protectedVerifierServiceStatus: "foundation-go-local-undeployed",
@@ -75,7 +86,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric integration e70ab68 contains the independently reviewed GO speculative executor at 0c2b73b, non-authoritative engineering aggregate loader at c9072b0, non-authoritative target-only smoke at 951d48a, and the reviewed Pages layout remediation. fe2o3 engineering producer schema 5099cf3 is frozen. Pushed candidate 466f88c02, 68 commits ahead and 0 behind origin/main 712c98f, passed its exact MI300X matrix and received independent source-remediation GO; it is not Ferric's exact final pin. Aggregate run 7 launched, passed the exact core::f32::is_finite -> f32::abs -> fabs boundary, and terminated with exit 1 because MemoryVolatileLoad lacks a production semantic expansion. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. The target-only smoke remains source-integrated but unexecuted; its earlier ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy on mi300x. Exact locked final pinning and live hardware execution remain open. A read-only baseline audit found the mi300x host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
+      "Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector, plus the previously reviewed speculative executor, non-authoritative engineering aggregate loader, and non-authoritative target-only smoke. The collector is source-integrated but has not run. fe2o3 compiler slice a240f98, tree 8db547a, has independent GO while its narrow compiler proof remains in progress. In aggregate run 10, the outer engineering invocation and rustc extraction child exited 1, while the nested Cargo extraction exited 101. The run crossed the old 5,212,493-byte receipt boundary before reaching the row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes, then its outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof; these are size observations, not a completed compiler proof. All GPUs are currently occupied and baseline container access remains unresolved, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). No current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists. All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -84,14 +95,15 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "e70ab68b0542663f59dd1d8f5d79c283df4a1db3; exact unpublished integration before this checkpoint update"],
-    ["M1 integration", "e70ab68b0542663f59dd1d8f5d79c283df4a1db3; tree bb8da1d241613fe028e833d746a42be92cd80e70; contains the reviewed executor, engineering loader, target-only smoke, and Pages layout remediation"],
-    ["fe2o3 engineering producer", "schema frozen at 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8; tree e089a7e95eb4c103e61e973321ed79a7b1233364; pushed candidate 466f88c02ae5d5a30f7b7f18c263f55e9b679251 is 68 ahead / 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7, exact MI300X matrix green, independent source-remediation GO, still under real-aggregate qualification, and not integrated into Ferric"],
+    ["Pages refresh base", "31b6f4989d961667900bff39935c75024316a2dc; exact unpublished integration before this checkpoint update"],
+    ["M1 integration", "31b6f4989d961667900bff39935c75024316a2dc; tree a52398ce57ec765a5d49a97904bc160e586a911b; contains the reviewed R33 V2 checker and full collector plus the previously reviewed executor, engineering loader, and target-only smoke"],
+    ["fe2o3 engineering producer", "schema frozen at 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8; tree e089a7e95eb4c103e61e973321ed79a7b1233364; compiler slice a240f98ac095be1ee79f7f1d1e146933a5acb1e4, tree 8db547a39964cf8a224f037fb278c70cdd61671e, has independent GO while the narrow compiler proof remains in progress; compiler and runtime ownership remains in fe2o3"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "Run 7 launched and terminated with exit 1 after the exact core::f32::is_finite -> f32::abs -> fabs chain passed: MemoryVolatileLoad lacks a production semantic expansion. The next narrow fe2o3 compiler remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted; the target-only engineering smoke is source-integrated but not executed"],
+    ["Engineering aggregate output", "In run 10, the outer engineering invocation and rustc extraction child exited 1, while nested Cargo extraction exited 101. It crossed the old 5,212,493-byte receipt boundary before the row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes, then its outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof. The narrow compiler proof is in progress; these are size observations only"],
     ["Target-only engineering smoke", "951d48ac119089a62546cb6f96f324feaad013af; tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c; independent source-integration GO; merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction; ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pin and live hardware remain open; not executed; no Qwen token"],
-    ["Baseline comparison", "Read-only audit: mi300x host ready; Docker access denied; vLLM and SGLang unavailable; comparison not run"],
+    ["R33 V2 serving comparison", "Reviewed checker and full collector are integrated at 31b6f4989d961667900bff39935c75024316a2dc; the collector has not run and creates no baseline or performance result"],
+    ["Baseline comparison", "All GPUs are currently occupied; baseline container access remains unresolved; comparison not run"],
     ["Protected verifier status", "local service candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 / tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1 passed exact-archive qualification and independent review with no P0/P1/P2, and is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but not public main or deployed authority"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
@@ -108,7 +120,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     [
       "Current authority",
-      "CURRENT=None; no aggregate HSACO, Ferric Qwen token, vLLM/SGLang comparison, authenticated current-source hardware, numerical, or performance run exists",
+      "CURRENT=None; no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
     ],
   ],
   readiness: [
@@ -206,7 +218,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 engineering aggregate producer",
       state: "integration",
       detail:
-        "The authority-free engineering manifest schema is frozen at pushed fe2o3 commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8 (tree e089a7e95eb4c103e61e973321ed79a7b1233364). Pushed candidate 466f88c02ae5d5a30f7b7f18c263f55e9b679251 is 68 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its exact MI300X matrix passed 458 rustc tests, 122 simulator tests, route-profile and optimized is_finite -> abs -> fabs extraction, exact source-closure recomputation, and hostile reachable-unsafe denial. Independent review returned source-remediation GO. It is not integrated into Ferric. Aggregate run 7 launched, passed the prior is_finite boundary, and terminated with exit 1 because MemoryVolatileLoad lacks a production semantic expansion. The next narrow fe2o3 compiler remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted.",
+        "The authority-free engineering manifest schema is frozen at pushed fe2o3 commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8 (tree e089a7e95eb4c103e61e973321ed79a7b1233364). Compiler slice a240f98ac095be1ee79f7f1d1e146933a5acb1e4 (tree 8db547a39964cf8a224f037fb278c70cdd61671e) received independent GO. In aggregate run 10, the outer engineering invocation and rustc extraction child exited 1, while nested Cargo extraction exited 101. It crossed the old 5,212,493-byte receipt boundary before the row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes, then its outer engineering invocation exited 1 at the same proof. The narrow compiler proof remains in progress, so these observations create no artifact, runtime, or inference authority.",
     },
     {
       label: "Production speculative executor",
@@ -380,13 +392,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor, non-authoritative engineering loader, and non-authoritative target-only smoke are reviewed and integrated. Aggregate run 7 passed the exact core::f32::is_finite -> f32::abs -> fabs chain but terminated with exit 1 because MemoryVolatileLoad lacks a production semantic expansion. The narrow fe2o3 compiler remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. Exact locked final pinning and live hardware execution remain open; the smoke has not executed. The canonical prepack result is a non-final probe, and no authenticated current-source Qwen execution, numerical result, or performance result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor, non-authoritative engineering loader, target-only smoke, and R33 V2 checker and full collector are reviewed and integrated, but neither the smoke nor collector has executed. Run 10 crossed the old 5,212,493-byte receipt boundary before the row * vocabulary overflow proof at 8693231611bf:239:20; its outer invocation and rustc extraction child exited 1 and nested Cargo extraction exited 101, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted its V5 sizes before its outer invocation exited 1 at the same proof. The narrow compiler proof remains in progress. The canonical prepack result is a non-final probe, and no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
       state: "open",
       detail:
-        "A read-only mi300x audit found the gfx942 host and ROCm environment ready for later work, but Docker access is denied and neither vLLM nor SGLang is installed on the host. No baseline server was launched, no benchmark ran, and no Ferric comparison result exists.",
+        "The reviewed R33 V2 checker and full collector are integrated at 31b6f4989d961667900bff39935c75024316a2dc, but the collector has not run. All GPUs are currently occupied and baseline container access remains unresolved. No baseline server was launched, no benchmark ran, and no Ferric comparison result exists.",
     },
     {
       label: "M1 qualification",
@@ -492,7 +504,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Engineering aggregate producer schema",
         detail:
-          "fe2o3 commit 5099cf3 freezes the bounded, authority-free engineering manifest schema and exact gfx942:xnack-/COV6 production route. Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f; its exact MI300X matrix is green, its is_finite/fabs and simulator remediations received independent source GO, and it is not integrated into Ferric. Run 7 passed that prior boundary before stopping at the missing MemoryVolatileLoad production expansion; no handoff or output artifact exists.",
+          "fe2o3 commit 5099cf3 freezes the bounded, authority-free engineering manifest schema and exact gfx942:xnack-/COV6 production route. Compiler slice a240f98, tree 8db547a, has independent GO. Run 10 crossed the old 5,212,493-byte receipt boundary before reaching the row * vocabulary overflow proof at 8693231611bf:239:20; its outer invocation and rustc extraction child exited 1 and nested Cargo extraction exited 101, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted a 5,438-byte V5 parent, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes before its outer invocation exited 1 at the same proof. The narrow compiler proof remains in progress.",
+      },
+      {
+        name: "R33 V2 serving comparison capture",
+        detail:
+          "Integration 31b6f49 contains the reviewed R33 V2 checker and full collector. The collector can capture the frozen, equal-work three-engine schedule and construct and structurally validate its V2 observations; the validation command separately constructs the V2 comparison record and applies the gate. Neither command has run against the three engines, so source integration creates no baseline, hardware, numerical, performance, Qwen, or M1 result.",
       },
       {
         name: "Non-authoritative engineering aggregate loader",
@@ -584,7 +601,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric compiler integration and authority rosters",
         detail:
-          "Finish the fe2o3 fabs and any subsequent compiler gaps, push and qualify the final producer head, repin every Ferric workspace and adapter, regenerate locks and source-policy bindings, and requalify the integrated tree. Join accepted aggregate owners to Ferric's policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys before exposing runtime authority.",
+          "Finish the narrow fe2o3 compiler proof beyond the 8693231611bf:239:20 row * vocabulary overflow obligation, push and qualify the final producer head, repin every Ferric workspace and adapter, regenerate locks and source-policy bindings, and requalify the integrated tree. Join accepted aggregate owners to Ferric's policy, Worker ledger, lineage, rollback verifier, deployment identities, and keys before exposing runtime authority.",
       },
       {
         name: "Complete Qwen execution",
@@ -594,7 +611,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Compare with vLLM and SGLang",
         detail:
-          "Provision an isolated ROCm baseline environment after access and GPU scheduling are available, then run matched Ferric, vLLM, and SGLang workloads. The read-only audit found the host ready but Docker denied and both baseline frameworks absent, so comparison has not started.",
+          "Resolve baseline container access and obtain the three exclusive GPU slots required by the integrated R33 V2 collector, then run its frozen matched Ferric, vLLM, and SGLang workload. All GPUs are currently occupied, container access remains unresolved, and the comparison has not started.",
       },
       {
         name: "Hardware and evidence closure",
@@ -662,19 +679,19 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "466f88c02ae5d5a30f7b7f18c263f55e9b679251",
+      commit: "a240f98ac095be1ee79f7f1d1e146933a5acb1e4",
       repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Qualify the exact is_finite route forms and fabs simulation",
+      title: "Approve the current compiler slice",
       state: "qualified",
       detail:
-        "This pushed candidate is 68 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its exact archive passed 458 rustc tests, 122 simulator tests, route-profile and optimized is_finite -> abs -> fabs extraction, exact source-closure recomputation, and hostile reachable-unsafe denial. Independent review returned GO for the narrow source remediations. Aggregate run 7 passed the prior boundary and terminated with exit 1 because MemoryVolatileLoad lacks a production semantic expansion. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted.",
+        "Compiler slice a240f98ac095be1ee79f7f1d1e146933a5acb1e4, tree 8db547a39964cf8a224f037fb278c70cdd61671e, received independent GO. In run 10, the outer engineering invocation and rustc extraction child exited 1 while nested Cargo extraction exited 101. It crossed the old 5,212,493-byte receipt boundary before reaching the row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes before its outer engineering invocation exited 1 at the same proof. The narrow compiler proof remains in progress and no artifact or execution authority follows.",
     },
     {
-      commit: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
-      title: "Integrate the reviewed Pages progress checkpoint",
+      commit: "31b6f4989d961667900bff39935c75024316a2dc",
+      title: "Integrate the reviewed R33 V2 checker and full collector",
       state: "integration",
       detail:
-        "This unpublished integration retains the reviewed executor, engineering loader, and target-only smoke and merges the independently reviewed Pages layout remediation. It does not change CURRENT=None or create aggregate HSACO, hardware execution, a Qwen token, comparison evidence, or M1 authority.",
+        "This unpublished integration contains the reviewed R33 V2 checker and full collector and retains the reviewed executor, engineering loader, and target-only smoke. The collector has not run. It does not change CURRENT=None or create current aggregate or engineering HSACO, Qwen, hardware, numerical, performance, baseline, comparison, or M1 evidence.",
     },
     {
       commit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
@@ -1325,7 +1342,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric-owned inference kernels and their concrete protected policy",
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
-      "Unpublished integration e70ab68b0542663f59dd1d8f5d79c283df4a1db3 is this Pages checkpoint base and contains the reviewed executor, engineering aggregate loader, target-only smoke, and Pages layout remediation; earlier 7f516e073b8759eb012c998bc9df2eb101d0c7ab remains the retained strict proof-release source",
+      "Unpublished integration 31b6f4989d961667900bff39935c75024316a2dc is this Pages checkpoint base and contains the reviewed R33 V2 checker and full collector plus the previously reviewed executor, engineering aggregate loader, and target-only smoke; earlier 7f516e073b8759eb012c998bc9df2eb101d0c7ab remains the retained strict proof-release source",
       "One aggregate device package owns all 12 attributed M1 kernel roots across seven canonical source modules",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
       "The typed source-pin adapter admits only the exact aggregate target, code-object version, entry set, and descriptor set; the final repin waits for the current fe2o3 compiler candidate to finish qualification",
@@ -1345,10 +1362,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Engineering aggregate loader c9072b0de61a27be917020baf5eecb4b743734f0, tree c725eb6e3e6f470fa327f94289509fe910eb83ef, received independent GO and is integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c with observation-only, non-authoritative custody",
       "Target-only smoke 951d48ac119089a62546cb6f96f324feaad013af, tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c, received independent source-integration GO and is merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction",
       "The ephemeral 41abaa0c smoke matrix passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pinning and live hardware execution remain open, the smoke has not executed, and no Qwen token follows",
+      "The reviewed R33 V2 checker and full collector are integrated at 31b6f4989d961667900bff39935c75024316a2dc; the collector has not run and creates no baseline or performance result",
       "Local protected-verifier service candidate 9a435522 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and still lacks real protected current, checker, signer, head-store, supervisor, and IPC facilities",
       "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
       "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
-      "Ferric has no aggregate HSACO, target-only engineering smoke result, Qwen token, successful current-source R32 trace, or authenticated current-source Qwen, hardware, numerical, performance, vLLM, or SGLang comparison result",
+      "Ferric has no current aggregate or engineering HSACO, target-only engineering smoke result, Qwen token, successful current-source R32 trace, or authenticated current-source Qwen, hardware, numerical, performance, or baseline result",
       "All 33 M1 roadmap gates and all 17 assurance properties remain Open until their required evidence closes them",
     ],
     fe2o3: [
@@ -1357,11 +1375,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Engineering producer schema commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8, tree e089a7e95eb4c103e61e973321ed79a7b1233364, is pushed and frozen for Ferric's non-authoritative manifest consumer",
-      "Pushed candidate 466f88c02ae5d5a30f7b7f18c263f55e9b679251 is 68 ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7; its exact MI300X matrix is green, its narrow source remediations received independent GO, and Ferric integration remains open",
-      "Aggregate run 7 passed the exact core::f32::is_finite -> f32::abs -> fabs chain and terminated with exit 1 because MemoryVolatileLoad lacks a production semantic expansion",
-      "The narrow MemoryVolatileLoad compiler remediation is in progress; no handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+      "Compiler slice a240f98ac095be1ee79f7f1d1e146933a5acb1e4, tree 8db547a39964cf8a224f037fb278c70cdd61671e, received independent GO while the narrow compiler proof remains in progress",
+      "In aggregate run 10, the outer engineering invocation and rustc extraction child exited 1 while nested Cargo extraction exited 101; it crossed the old 5,212,493-byte receipt boundary before the row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or current engineering HSACO events",
+      "Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies, and a maximum child of 1,844,110 bytes before its outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof; these are size observations, not a completed compiler proof",
       "The engineering producer is reusable compiler source only, not protected aggregate acceptance, runtime admission, or Qwen authority",
-      "The baseline host audit found mi300x ready, but Docker access is denied and vLLM and SGLang are absent; no comparison ran",
+      "All GPUs are currently occupied and baseline container access remains unresolved; no comparison ran",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
       "fe2o3 PR #258 merged compiler-generated write-only KFD arguments at d9552090 with all 20 exact-head checks green",
       "The gfx942 EXEC-control layer assigns no opcode semantics and proves neither machine reconvergence, empty masks, termination, nor launch authority",
