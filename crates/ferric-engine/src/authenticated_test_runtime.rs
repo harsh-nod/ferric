@@ -88,13 +88,6 @@ impl ModelQueueV1 {
         }
     }
 
-    pub(crate) fn publish_for_rollover(&self) {
-        let mut state = self.0.borrow_mut();
-        assert_eq!(state.phase, ModelQueuePhaseV1::Prepared);
-        state.submits += 1;
-        state.phase = ModelQueuePhaseV1::Published;
-    }
-
     fn submit(&self) -> Option<ModelQueueFailureV1> {
         let mut state = self.0.borrow_mut();
         assert!(matches!(
@@ -247,10 +240,6 @@ impl ModelPreparedQueueV1 {
 }
 
 impl ModelPublishedQueueV1 {
-    pub(crate) fn from_published(queue: ModelQueueV1) -> Self {
-        Self { queue }
-    }
-
     pub(crate) fn wait(self) -> Result<ModelCompletedQueueV1, ModelWaitFailureV1> {
         if self.queue.wait().is_err() {
             return Err(ModelWaitFailureV1 { _published: self });

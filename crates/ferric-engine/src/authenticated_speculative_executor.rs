@@ -1095,6 +1095,22 @@ trait M1SpeculativeRoundObservationV1: fmt::Debug {
     ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>;
 }
 
+#[derive(Clone, Copy)]
+struct M1RolloverDiagnosticLineageV1<'a> {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    round: u64,
+    epoch: CompletionEpoch,
+    initial_seeds: &'a [M1SpeculativeMemberSeedV1],
+    checked_selection: Qwen3PlanSelection,
+    checked_epoch: CompletionEpoch,
+}
+
+trait M1RolloverRoundObservationV1: M1SpeculativeRoundObservationV1 {
+    fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>>;
+}
+
 impl M1SpeculativeRoundObservationV1
     for crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1
 {
@@ -1106,6 +1122,25 @@ impl M1SpeculativeRoundObservationV1
     ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
     {
         coordinator.preflight_checked_round(binding, self.checked(), controls)
+    }
+}
+
+impl M1RolloverRoundObservationV1
+    for crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1
+{
+    fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>> {
+        let checked = self.checked();
+        let physical = checked.speculative_lineage()?;
+        Some(M1RolloverDiagnosticLineageV1 {
+            identity: physical.identity,
+            coordinator_identity: physical.coordinator_identity,
+            selection: physical.selection,
+            round: physical.round,
+            epoch: physical.epoch,
+            initial_seeds: &physical.initial_seeds,
+            checked_selection: checked.selection(),
+            checked_epoch: checked.epoch(),
+        })
     }
 }
 
@@ -3505,8 +3540,19 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
 > {
     let prepared =
         prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
-            .map_err(|failure| {
-                let (custody, lineage) = match *failure {
+            .map_err(map_rearmed_coordinator_preparation_failure)?;
+    complete_authenticated_rearmed_speculative_round_prepared(engine, prepared)
+}
+
+fn map_rearmed_coordinator_preparation_failure(
+    failure: Box<
+        M1PrepareCoordinatorRoundCoreFailureV1<
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        >,
+    >,
+) -> Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    let (custody, lineage) =
+        match *failure {
             M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
                 coordinator,
                 diagnostic,
@@ -3539,21 +3585,28 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
                 preflighted,
                 lineage,
             } => (
-                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(Box::new((
-                    coordinator,
-                    diagnostic,
-                    controls,
-                    preflighted,
-                ))),
+                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(Box::new(
+                    (coordinator, diagnostic, controls, preflighted),
+                )),
                 lineage,
             ),
         };
-                Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
-                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
-                    custody,
-                    lineage: Some(lineage),
-                })
-            })?;
+    Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+        custody,
+        lineage: Some(lineage),
+    })
+}
+
+fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1PreparedCoordinatorRoundCoreV1<
+        crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+    >,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+> {
     let M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -3688,6 +3741,17 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     }
 }
 
+#[derive(Debug)]
+enum M1RolloverCoordinatorPreparationFailureV1<D> {
+    Unsettled {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        continuation: M1AuthenticatedSpeculativeRolloverContinuationV1,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    Coordinator(Box<M1PrepareCoordinatorRoundCoreFailureV1<D>>),
+}
+
 impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
     /// Joins the first speculative readback to the causal witness created from
     /// its exact authenticated paired-prefill predecessor.
@@ -3705,45 +3769,78 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         M1AuthenticatedSpeculativeRolloverRoundFailureV1,
     > {
-        self.complete_rollover_round_pending(engine, diagnostic, controls)
-            .map_err(|failure| close_pending_rollover_failure(engine, failure))
+        let prepared = self
+            .complete_rollover_round_pending(engine, diagnostic, controls)
+            .map_err(|failure| {
+                let pending = match *failure {
+                    M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                        stage,
+                        continuation,
+                        diagnostic,
+                        controls,
+                    } => PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+                        stage,
+                        retained: Box::new((continuation, diagnostic, controls)),
+                    },
+                    M1RolloverCoordinatorPreparationFailureV1::Coordinator(failure) => {
+                        PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(
+                            map_rearmed_coordinator_preparation_failure(failure),
+                        )
+                    }
+                };
+                close_pending_rollover_failure(engine, pending)
+            })?;
+        complete_authenticated_rearmed_speculative_round_prepared(engine, prepared).map_err(
+            |failure| {
+                close_pending_rollover_failure(
+                    engine,
+                    PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(failure),
+                )
+            },
+        )
     }
 
-    fn complete_rollover_round_pending<const C: usize>(
+    fn complete_rollover_round_pending<D, const C: usize>(
         self,
         engine: &mut Engine<C>,
-        diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        diagnostic: D,
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Result<
-        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
-        PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1,
-    > {
-        let checked = diagnostic.checked();
-        let Some(physical) = checked.speculative_lineage() else {
-            return Err(
-                PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+        M1PreparedCoordinatorRoundCoreV1<D>,
+        Box<M1RolloverCoordinatorPreparationFailureV1<D>>,
+    >
+    where
+        D: M1RolloverRoundObservationV1,
+    {
+        let Some(physical) = diagnostic.rollover_lineage() else {
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
                     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
-                    retained: Box::new((self, diagnostic, controls)),
+                    continuation: self,
+                    diagnostic,
+                    controls,
                 },
-            );
+            ));
         };
         if physical.identity != self.lineage.identity
             || physical.coordinator_identity != self.coordinator.identity()
             || physical.selection != self.coordinator.shape().selection()
             || physical.round != 0
             || physical.epoch != self.epoch
-            || checked.selection() != physical.selection
-            || checked.epoch() != physical.epoch
+            || physical.checked_selection != physical.selection
+            || physical.checked_epoch != physical.epoch
             || !self
                 .coordinator
-                .matches_bootstrap_seeds(physical.selection, &physical.initial_seeds)
+                .matches_bootstrap_seeds(physical.selection, physical.initial_seeds)
         {
-            return Err(
-                PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
                     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
-                    retained: Box::new((self, diagnostic, controls)),
+                    continuation: self,
+                    diagnostic,
+                    controls,
                 },
-            );
+            ));
         }
         let mut initial_seeds = Vec::new();
         let mut generated = Vec::new();
@@ -3758,25 +3855,29 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
                 .try_reserve_exact(physical.initial_seeds.len())
                 .is_err()
         {
-            return Err(
-                PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
                     stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
-                    retained: Box::new((self, diagnostic, controls)),
+                    continuation: self,
+                    diagnostic,
+                    controls,
                 },
-            );
+            ));
         }
-        initial_seeds.extend_from_slice(&physical.initial_seeds);
+        initial_seeds.extend_from_slice(physical.initial_seeds);
         roster.extend(physical.initial_seeds.iter().map(|seed| seed.request()));
         generated.extend(roster.iter().copied().map(|request| (request, 0)));
         let binding = match self.coordinator.bind_round(0, self.epoch, &roster) {
             Ok(binding) => binding,
             Err(_) => {
-                return Err(
-                    PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+                return Err(Box::new(
+                    M1RolloverCoordinatorPreparationFailureV1::Unsettled {
                         stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Bind,
-                        retained: Box::new((self, diagnostic, controls)),
+                        continuation: self,
+                        diagnostic,
+                        controls,
                     },
-                );
+                ));
             }
         };
         let lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
@@ -3788,7 +3889,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
             completed_rounds: 0,
             last_epoch: self.epoch,
         };
-        complete_authenticated_rearmed_speculative_round(
+        prepare_coordinator_round_core(
             engine,
             self.coordinator,
             binding,
@@ -3796,7 +3897,11 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
             controls,
             lineage,
         )
-        .map_err(PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round)
+        .map_err(|failure| {
+            Box::new(M1RolloverCoordinatorPreparationFailureV1::Coordinator(
+                failure,
+            ))
+        })
     }
 }
 
@@ -4076,6 +4181,14 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
     #[must_use]
     pub fn is_complete(&self) -> bool {
         self.active_count() == 0
+    }
+
+    /// Read-only view of the currently released authenticated round.
+    ///
+    /// This does not transfer queue, completion, or scheduling authority.
+    #[must_use]
+    pub const fn current_released_round(&self) -> &crate::M1AuthenticatedReleasedCompletedStepV1 {
+        self.released.current_released()
     }
 
     /// Destroys the authenticated queue while retaining the final coordinator,
@@ -4533,6 +4646,171 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
+    struct ModelRolloverPreparedQueueV1 {
+        queue: ModelPreparedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverPublishedQueueV1 {
+        queue: ModelPublishedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverCompletedQueueV1 {
+        queue: ModelCompletedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverRecycledQueueV1 {
+        queue: ModelRecycledQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverDiagnosticV1 {
+        diagnostic: ModelDiagnosticV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverSubmitFailureV1 {
+        lower: ModelSubmitFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverProgressFailureV1 {
+        _lower: ModelWaitFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverReadbackFailureV1 {
+        lower: ModelReadbackFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    struct ModelRolloverQueueEffectsV1;
+
+    impl M1RearmedQueueEffectsV1 for ModelRolloverQueueEffectsV1 {
+        type Prepared = ModelRolloverPreparedQueueV1;
+        type Published = ModelRolloverPublishedQueueV1;
+        type Completed = ModelRolloverCompletedQueueV1;
+        type Recycled = ModelRolloverRecycledQueueV1;
+        type Diagnostic = ModelRolloverDiagnosticV1;
+        type SubmitFailure = ModelRolloverSubmitFailureV1;
+        type ProgressFailure = ModelRolloverProgressFailureV1;
+        type ReadbackFailure = ModelRolloverReadbackFailureV1;
+
+        fn submit<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> Result<Self::Published, Self::SubmitFailure> {
+            let ModelRolloverPreparedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = prepared;
+            match queue.submit() {
+                Ok(queue) => Ok(ModelRolloverPublishedQueueV1 {
+                    queue,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverSubmitFailureV1 {
+                    lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn classify_submit_failure(
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_submit_failure(failure.lower)
+        }
+
+        fn wait<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> Result<Self::Completed, Self::ProgressFailure> {
+            let ModelRolloverPublishedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = published;
+            match queue.wait() {
+                Ok(queue) => Ok(ModelRolloverCompletedQueueV1 {
+                    queue,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverProgressFailureV1 {
+                    _lower: lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn recycle<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> Result<Self::Recycled, Self::ProgressFailure> {
+            Ok(ModelRolloverRecycledQueueV1 {
+                queue: completed.queue.recycle(),
+                physical: completed.physical,
+                checked_selection: completed.checked_selection,
+                checked_epoch: completed.checked_epoch,
+            })
+        }
+
+        fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+            let ModelRolloverRecycledQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = recycled;
+            match queue.readback() {
+                Ok(diagnostic) => Ok(ModelRolloverDiagnosticV1 {
+                    diagnostic,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverReadbackFailureV1 {
+                    lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn close_readback_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::ReadbackFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_readback_failure(failure.lower)
+        }
+    }
+
     impl M1SpeculativeRoundObservationV1 for ModelDiagnosticV1 {
         fn preflight(
             &self,
@@ -4566,6 +4844,33 @@ mod tests {
                 &observations,
                 controls,
             )
+        }
+    }
+
+    impl M1SpeculativeRoundObservationV1 for ModelRolloverDiagnosticV1 {
+        fn preflight(
+            &self,
+            coordinator: &M1SpeculativeGenerationLoopV1,
+            binding: crate::M1SpeculativeRoundBindingV1,
+            controls: &[M1SpeculativeMemberControlV1],
+        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+        {
+            self.diagnostic.preflight(coordinator, binding, controls)
+        }
+    }
+
+    impl M1RolloverRoundObservationV1 for ModelRolloverDiagnosticV1 {
+        fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>> {
+            Some(M1RolloverDiagnosticLineageV1 {
+                identity: self.physical.identity,
+                coordinator_identity: self.physical.coordinator_identity,
+                selection: self.physical.selection,
+                round: self.physical.round,
+                epoch: self.physical.epoch,
+                initial_seeds: &self.physical.initial_seeds,
+                checked_selection: self.checked_selection,
+                checked_epoch: self.checked_epoch,
+            })
         }
     }
 
@@ -4611,6 +4916,34 @@ mod tests {
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(39),
         }
+    }
+
+    fn model_rollover_halves(
+        coordinator: M1SpeculativeGenerationLoopV1,
+        epoch: CompletionEpoch,
+    ) -> (
+        M1AuthenticatedSpeculativeRolloverContinuationV1,
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    ) {
+        let identity = M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap();
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let coordinator_identity = coordinator.identity();
+        let selection = coordinator.shape().selection();
+        (
+            M1AuthenticatedSpeculativeRolloverContinuationV1 {
+                coordinator,
+                epoch,
+                lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+            },
+            M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+                identity,
+                coordinator_identity,
+                selection,
+                round: 0,
+                epoch,
+                initial_seeds,
+            },
+        )
     }
 
     fn model_members(
@@ -4670,6 +5003,27 @@ mod tests {
         )
         .unwrap();
         committed.physical.queue.release_generation();
+        committed
+    }
+
+    fn finish_model_rollover_round<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: M1PreparedCoordinatorRoundCoreV1<ModelRolloverDiagnosticV1>,
+    ) -> M1CommittedCoordinatorRoundCoreV1<ModelRolloverDiagnosticV1> {
+        assert_eq!(
+            prepared.dispositions.len(),
+            prepared.preflighted.members().len()
+        );
+        let committed = commit_coordinator_round_core(
+            engine,
+            prepared.coordinator,
+            prepared.preflighted,
+            prepared.controls,
+            prepared.diagnostic,
+            prepared.lineage,
+        )
+        .unwrap();
+        committed.physical.diagnostic.queue.release_generation();
         committed
     }
 
@@ -4819,21 +5173,114 @@ mod tests {
             assert_eq!(snapshot.readbacks, 2);
             assert_eq!(snapshot.releases, 2);
 
-            let rollover = ModelQueueV1::new([None], [model_members(member_count, 0, None)]);
-            rollover.publish_for_rollover();
-            let (_diagnostic, logical) = complete_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
-                &mut engine,
-                ModelPublishedQueueV1::from_published(rollover.clone()),
-                "rollover continuation",
-            )
-            .unwrap();
-            assert_eq!(logical, "rollover continuation");
+            let rollover_epoch = CompletionEpoch::new(42);
+            let rollover_coordinator = model_coordinator(selected, member_count);
+            let rollover = ModelQueueV1::new([None], [model_members(member_count, accepted, None)]);
+            let rollover_controls = rollover_coordinator
+                .active_roster()
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let (continuation, physical) =
+                model_rollover_halves(rollover_coordinator, rollover_epoch);
+            let (diagnostic, (continuation, rollover_controls)) =
+                execute_round_core::<ModelRolloverQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelRolloverPreparedQueueV1 {
+                        queue: ModelPreparedQueueV1::new(rollover.clone()),
+                        physical,
+                        checked_selection: selected,
+                        checked_epoch: rollover_epoch,
+                    },
+                    (continuation, rollover_controls),
+                )
+                .unwrap();
+            let prepared = continuation
+                .complete_rollover_round_pending(&mut engine, diagnostic, rollover_controls)
+                .unwrap();
+            let completed = finish_model_rollover_round(&mut engine, prepared);
+            assert_eq!(completed.outcome.completed_round(), 0);
+            assert!(completed
+                .outcome
+                .members()
+                .iter()
+                .all(|member| member.accepted_draft_tokens() == accepted));
             let snapshot = rollover.snapshot();
             assert_eq!(
                 (snapshot.submits, snapshot.waits, snapshot.recycles),
                 (1, 1, 1)
             );
             assert_eq!(snapshot.readbacks, 1);
+            assert_eq!(snapshot.releases, 1);
+        }
+    }
+
+    #[test]
+    fn rollover_orchestration_stops_and_cancels_every_s8_lane() {
+        use crate::{
+            M1SpeculativeCancellationReasonV1, M1SpeculativeMemberStatusV1,
+            M1SpeculativeTerminalReasonV1,
+        };
+
+        let selected = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        for stop_lane in 0..8 {
+            let cancel_lane = (stop_lane + 1) % 8;
+            let epoch = CompletionEpoch::new(51 + u64::try_from(stop_lane).unwrap());
+            let coordinator = model_coordinator(selected, 8);
+            let controls = coordinator
+                .active_roster()
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if lane == cancel_lane {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect::<Vec<_>>();
+            let (continuation, physical) = model_rollover_halves(coordinator, epoch);
+            let queue = ModelQueueV1::new([None], [model_members(8, 2, Some(stop_lane))]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (continuation, controls)) =
+                execute_round_core::<ModelRolloverQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelRolloverPreparedQueueV1 {
+                        queue: ModelPreparedQueueV1::new(queue.clone()),
+                        physical,
+                        checked_selection: selected,
+                        checked_epoch: epoch,
+                    },
+                    (continuation, controls),
+                )
+                .unwrap();
+            let prepared = continuation
+                .complete_rollover_round_pending(&mut engine, diagnostic, controls)
+                .unwrap();
+            let completed = finish_model_rollover_round(&mut engine, prepared);
+            assert_eq!(
+                completed.outcome.members()[stop_lane].status(),
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999,
+                })
+            );
+            assert_eq!(
+                completed.outcome.members()[cancel_lane].status(),
+                M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Deadline)
+            );
+            assert_eq!(completed.outcome.next_active_roster().len(), 6);
+            assert!(!engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.submits, 1);
+            assert_eq!(snapshot.waits, 1);
+            assert_eq!(snapshot.recycles, 1);
+            assert_eq!(snapshot.readbacks, 1);
+            assert_eq!(snapshot.releases, 1);
+            assert_eq!(snapshot.destroys, 0);
         }
     }
 
