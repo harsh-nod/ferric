@@ -134,7 +134,6 @@ impl Error for M1EngineeringAggregateArtifactOpenErrorV1 {
         match self {
             Self::StrictNoFollowUnavailable(source) | Self::Io { source, .. } => Some(source),
             Self::FinalizedHsaco(source) => Some(source.as_ref()),
-            Self::Loader(source) => Some(source),
             Self::ProgramCatalog(source) => Some(source.as_ref()),
             _ => None,
         }
