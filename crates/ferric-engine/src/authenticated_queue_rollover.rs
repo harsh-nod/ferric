@@ -2938,7 +2938,6 @@ mod tests {
                 Ok((prior, next, M1ServingRolloverReasonV1::Mode))
             );
         }
-
     }
 
     #[test]

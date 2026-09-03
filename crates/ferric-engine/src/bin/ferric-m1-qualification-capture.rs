@@ -9342,20 +9342,17 @@ mod tests {
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
                 cache,
             )]);
-        let completed = match complete_m1_authenticated_physical_step_v1(
-            &mut engine,
-            readback,
-            roster,
-        ) {
-            M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
-            M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
-                let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
-                panic!("paired-prefill completion rejected and closed: {teardown:?}")
-            }
-            M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
-                panic!("paired-prefill completion entered terminal poison: {poisoned:?}")
-            }
-        };
+        let completed =
+            match complete_m1_authenticated_physical_step_v1(&mut engine, readback, roster) {
+                M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
+                M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
+                    let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
+                    panic!("paired-prefill completion rejected and closed: {teardown:?}")
+                }
+                M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
+                    panic!("paired-prefill completion entered terminal poison: {poisoned:?}")
+                }
+            };
         let released = match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
             Ok(released) => released,
             Err(failure) => {
@@ -9407,13 +9404,17 @@ mod tests {
             rollover_preparation_plans,
         ) {
             Ok(scheduled) => scheduled,
-            Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
-                error,
-                retry,
-            }) => {
+            Err(
+                ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
+                    error,
+                    retry,
+                },
+            ) => {
                 let disposition = retry.cancel_and_close(&mut engine);
                 assert!(engine.is_faulted());
-                panic!("public rollover schedule rejected before detach ({error:?}): {disposition:?}")
+                panic!(
+                    "public rollover schedule rejected before detach ({error:?}): {disposition:?}"
+                )
             }
             Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
                 error,
