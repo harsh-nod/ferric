@@ -178,6 +178,9 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedReservedLongLivedQueueRearmV1, M1AuthenticatedRetainedStepPlanErrorV1,
     M1AuthenticatedScheduledLongLivedQueueRearmV1,
 };
+#[cfg(feature = "native-rollover-fixture")]
+#[doc(hidden)]
+pub use authenticated_queue_rollover::build_m1_native_rollover_fixture_batch_v1;
 pub use authenticated_queue_rollover::{
     bind_m1_authenticated_speculative_rollover_intent_v1,
     prepare_m1_authenticated_speculative_rollover_v1,
@@ -197,9 +200,6 @@ pub use authenticated_queue_rollover::{
     M1AuthenticatedSpeculativeRolloverTeardownFailureV1,
     M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
 };
-#[cfg(feature = "native-rollover-fixture")]
-#[doc(hidden)]
-pub use authenticated_queue_rollover::build_m1_native_rollover_fixture_batch_v1;
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,
     M1AuthenticatedSpeculativeBootstrapFailureCustodyV1,

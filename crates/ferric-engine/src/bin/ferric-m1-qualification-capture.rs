@@ -9016,8 +9016,7 @@ mod tests {
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
         use ferric_engine::{
             bind_m1_authenticated_speculative_rollover_intent_v1,
-            build_m1_native_rollover_fixture_batch_v1,
-            complete_m1_authenticated_physical_step_v1,
+            build_m1_native_rollover_fixture_batch_v1, complete_m1_authenticated_physical_step_v1,
             prepare_m1_authenticated_speculative_rollover_v1,
             release_m1_authenticated_completed_step_kv_pages_v1,
             schedule_m1_authenticated_speculative_rollover_v1,
@@ -9025,9 +9024,8 @@ mod tests {
             M1AuthenticatedPhysicalQueueSessionV1,
             M1AuthenticatedSpeculativeRolloverMemberIntentV1, M1DeviceKvCompletionMemberV1,
             M1DeviceKvCompletionRosterV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
-            M1ServingPlanV1, M1SpeculativeGenerationLoopV1,
-            M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1,
-            M1SpeculativeMemberSeedV1,
+            M1ServingPlanV1, M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+            M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
         };
 
         let required_path = |name: &str| {
@@ -9183,16 +9181,14 @@ mod tests {
                          active_length: u32,
                          context_length: u32|
          -> ValidatedM1StepInputs {
-            match validate_m1_step_inputs(
-                M1StepInputCandidate::new(
-                    plan.selection(),
-                    vec![Some(plan)],
-                    tokens,
-                    positions,
-                    vec![active_length],
-                    vec![context_length],
-                ),
-            ) {
+            match validate_m1_step_inputs(M1StepInputCandidate::new(
+                plan.selection(),
+                vec![Some(plan)],
+                tokens,
+                positions,
+                vec![active_length],
+                vec![context_length],
+            )) {
                 M1StepInputValidationOutcome::Validated(inputs) => inputs,
                 M1StepInputValidationOutcome::Rejected(failure) => {
                     panic!("fixture input rejected: {:?}", failure.error())
@@ -9287,34 +9283,93 @@ mod tests {
         let prepublication = runner
             .prepare_first_step(allocated, recipe, completion)
             .expect("prepare authenticated paired-prefill publication");
-        let queue = M1AuthenticatedPhysicalQueueSessionV1::create(
+        let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
             prepublication,
-        )
-        .expect("create authenticated paired-prefill queue");
-        let published = queue.submit().expect("submit paired-prefill queue once");
-        let completed = published.wait().expect("wait paired-prefill queue");
-        let recycled = completed.recycle().expect("recycle paired-prefill signal");
-        let observed = recycled
-            .observe_completion()
-            .expect("observe paired-prefill compact completion");
-        let readback = observed
-            .check_completion(&[CompletionWireSemanticExpectation::DirectFinalRow {
-                choice: expected_prefill_token,
-            }])
-            .expect("authenticate paired-prefill output against admitted expected token");
+        ) {
+            Ok(queue) => queue,
+            Err(failure) => {
+                let quarantine = failure.quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill queue creation failed closed: {quarantine:?}")
+            }
+        };
+        let published = match queue.submit() {
+            Ok(published) => published,
+            Err(failure) => {
+                let quarantine = failure.quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill submission failed closed: {quarantine:?}")
+            }
+        };
+        let completed = match published.wait() {
+            Ok(completed) => completed,
+            Err(failure) => {
+                let quarantine = (*failure).quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill wait failed closed: {quarantine:?}")
+            }
+        };
+        let recycled = match completed.recycle() {
+            Ok(recycled) => recycled,
+            Err(failure) => {
+                let quarantine = (*failure).quarantine_engine(&mut engine);
+                panic!("authenticated paired-prefill recycle failed closed: {quarantine:?}")
+            }
+        };
+        let observed = match recycled.observe_completion() {
+            Ok(observed) => observed,
+            Err(failure) => match failure.retry() {
+                Ok(observed) => observed,
+                Err(failure) => {
+                    let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                    panic!("paired-prefill observation failed after bounded retry: {teardown:?}")
+                }
+            },
+        };
+        let expectations = [CompletionWireSemanticExpectation::DirectFinalRow {
+            choice: expected_prefill_token,
+        }];
+        let readback = match observed.check_completion(&expectations) {
+            Ok(readback) => readback,
+            Err(failure) => match failure.retry(&expectations) {
+                Ok(readback) => readback,
+                Err(failure) => {
+                    let teardown = failure.destroy_queue_and_retain_evidence(&mut engine);
+                    panic!("paired-prefill semantics failed after bounded retry: {teardown:?}")
+                }
+            },
+        };
         let anchor = expected_prefill_token;
         let roster =
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
                 cache,
             )]);
-        let completed =
-            match complete_m1_authenticated_physical_step_v1(&mut engine, readback, roster) {
-                M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
-                outcome => panic!("paired-prefill physical completion rejected: {outcome:?}"),
-            };
-        let released = release_m1_authenticated_completed_step_kv_pages_v1(completed)
-            .expect("release paired-prefill completed pages");
+        let completed = match complete_m1_authenticated_physical_step_v1(
+            &mut engine,
+            readback,
+            roster,
+        ) {
+            M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
+            M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
+                let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
+                panic!("paired-prefill completion rejected and closed: {teardown:?}")
+            }
+            M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
+                panic!("paired-prefill completion entered terminal poison: {poisoned:?}")
+            }
+        };
+        let released = match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+            Ok(released) => released,
+            Err(failure) => {
+                let (_, completed) = (*failure).into_parts();
+                match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+                    Ok(released) => released,
+                    Err(failure) => {
+                        let (_, completed) = (*failure).into_parts();
+                        let teardown = completed.destroy_queue_and_retain_completion(&mut engine);
+                        panic!("paired-prefill page release failed and closed: {teardown:?}")
+                    }
+                }
+            }
+        };
 
         let rollover_batch = build_m1_native_rollover_fixture_batch_v1(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();
@@ -9341,7 +9396,7 @@ mod tests {
         let seed = M1SpeculativeMemberSeedV1::new(request, anchor, 128, 128, policy);
         let coordinator = M1SpeculativeGenerationLoopV1::new(target_speculative, &[seed])
             .expect("construct rollover coordinator");
-        let scheduled = schedule_m1_authenticated_speculative_rollover_v1(
+        let scheduled = match schedule_m1_authenticated_speculative_rollover_v1(
             &mut engine,
             released,
             &rollover_batch,
@@ -9350,33 +9405,67 @@ mod tests {
             rollover_inputs,
             rollover_recipe_plans,
             rollover_preparation_plans,
-        )
-        .expect("schedule public authenticated rollover");
-        let prepared = prepare_m1_authenticated_speculative_rollover_v1(
+        ) {
+            Ok(scheduled) => scheduled,
+            Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
+                error,
+                retry,
+            }) => {
+                let disposition = retry.cancel_and_close(&mut engine);
+                assert!(engine.is_faulted());
+                panic!("public rollover schedule rejected before detach ({error:?}): {disposition:?}")
+            }
+            Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
+                error,
+                disposition,
+            }) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover schedule failed after detach ({error:?}): {disposition:?}")
+            }
+        };
+        let prepared = match prepare_m1_authenticated_speculative_rollover_v1(
             &mut engine,
             scheduled,
             &logical_runner,
-        )
-        .expect("prepare public authenticated rollover");
-        let published = submit_m1_authenticated_speculative_rollover_v1(
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover preparation failed closed: {failure:?}")
+            }
+        };
+        let published = match submit_m1_authenticated_speculative_rollover_v1(
             &mut engine,
             prepared,
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
-        )
-        .expect("submit public authenticated rollover");
-        let success = published
-            .complete_round(
-                &mut engine,
-                vec![M1SpeculativeMemberControlV1::continuing(request)],
-            )
-            .expect("complete public authenticated rollover round");
+        ) {
+            Ok(published) => published,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover submission failed closed: {failure:?}")
+            }
+        };
+        let success = match published.complete_round(
+            &mut engine,
+            vec![M1SpeculativeMemberControlV1::continuing(request)],
+        ) {
+            Ok(success) => success,
+            Err(failure) => {
+                assert!(engine.is_faulted());
+                panic!("public rollover completion failed closed: {failure:?}")
+            }
+        };
         assert_eq!(success.outcome().completed_round(), 0);
         assert!(!engine.is_faulted());
         let (executor, outcome, choices) = success.into_parts();
-        let closed = executor
-            .destroy_queue_and_retain_state(&mut engine)
-            .expect("destroy authenticated rollover queue");
-        assert!(!engine.is_faulted());
+        let closed = match executor.destroy_queue_and_retain_state(&mut engine) {
+            Ok(closed) => closed,
+            Err(quarantined) => {
+                assert!(engine.is_faulted());
+                panic!("authenticated rollover queue teardown quarantined: {quarantined:?}")
+            }
+        };
+        assert!(engine.is_faulted());
         drop((closed, outcome, choices, logical_runner));
     }
 

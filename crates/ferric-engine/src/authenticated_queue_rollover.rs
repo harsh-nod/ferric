@@ -303,6 +303,34 @@ impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
     pub const fn retains_exact_inputs(&self) -> bool {
         true
     }
+
+    /// Cancels this retry owner, faults the scheduler, and destroys its queue.
+    ///
+    /// The result exposes only clean release evidence or opaque quarantine;
+    /// none of the exact retry inputs can be recovered or resubmitted.
+    #[must_use = "cancelled rollover custody remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        let Self {
+            released,
+            intent,
+            coordinator,
+            inputs,
+            recipe_plans,
+            preparation_plans,
+        } = self;
+        let retained = (intent, coordinator, inputs, recipe_plans, preparation_plans);
+        match released.destroy_queue_and_retain_step(engine) {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
 }
 
 /// Internal scheduling custody pending mandatory queue closure.
@@ -611,7 +639,8 @@ pub fn build_m1_native_rollover_fixture_batch_v1(
     registry
         .record_publication(reservation)
         .expect("native rollover fixture publication recording must succeed");
-    let dispositions = vec![crate::M1ServingCompletionDispositionV1::Continue(next); requests.len()];
+    let dispositions =
+        vec![crate::M1ServingCompletionDispositionV1::Continue(next); requests.len()];
     registry
         .preflight_completion_exact_for(identity, epoch, &dispositions)
         .expect("native rollover fixture transition preflight must succeed");
@@ -2878,13 +2907,6 @@ mod tests {
 
     #[test]
     fn authenticated_rollover_transition_gate_covers_all_four_profiles() {
-        type Cancel = fn(
-            M1AuthenticatedScheduledSpeculativeRolloverV1,
-            &mut Engine<32>,
-        ) -> Result<
-            M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
-            Box<M1AuthenticatedSpeculativeRolloverTeardownFailureV1>,
-        >;
         let cases = [
             (
                 Qwen3PlanBucket::PrefillS1T128,
@@ -2917,15 +2939,6 @@ mod tests {
             );
         }
 
-        // These signatures require normal released authentication and prepared
-        // custody; this structural test does not manufacture either as evidence.
-        let _ = bind_m1_authenticated_speculative_rollover_intent_v1;
-        let _ = schedule_m1_authenticated_speculative_rollover_v1::<32>;
-        let _ = prepare_m1_authenticated_speculative_rollover_v1::<32>;
-        let _ = submit_m1_authenticated_speculative_rollover_v1::<32>;
-        let _: Cancel =
-            M1AuthenticatedScheduledSpeculativeRolloverV1::destroy_queue_and_retain_custody::<32>;
-        let _ = core::mem::size_of::<M1AuthenticatedReleasedCompletedStepV1>();
     }
 
     #[test]
