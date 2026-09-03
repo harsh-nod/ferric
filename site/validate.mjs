@@ -13,9 +13,9 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
-  integrationCommit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
-  integrationTree: "4444477fb1cfb6ec8b6e0bdff830d206ec698932",
+  siteRefreshBase: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
+  integrationCommit: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
+  integrationTree: "bb8da1d241613fe028e833d746a42be92cd80e70",
   implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -26,11 +26,11 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3FabsCandidate: "41abaa0c97839f4cae8b1d0527ad7801fc4fa51e",
-  fe2o3FabsCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
-  fe2o3FabsCandidateAhead: 65,
-  fe2o3FabsCandidateBehind: 0,
-  fe2o3FabsCandidateStatus: "pushed-focused-green-run5-cross-crate-blocked",
+  fe2o3CompilerCandidate: "466f88c02ae5d5a30f7b7f18c263f55e9b679251",
+  fe2o3CompilerCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
+  fe2o3CompilerCandidateAhead: 68,
+  fe2o3CompilerCandidateBehind: 0,
+  fe2o3CompilerCandidateStatus: "source-go-run7-volatile-load-blocked",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -40,10 +40,10 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
-  engineeringAggregateRun5ExitCode: 1,
-  engineeringAggregateRun5Boundary: "core::f32::is_finite",
-  engineeringAggregateRun5Status: "failed-cross-crate-unsafe-authentication",
-  fe2o3CrossCrateRemediationStatus: "in-progress-uncommitted",
+  engineeringAggregateRun7ExitCode: 1,
+  engineeringAggregateRun7Boundary: "MemoryVolatileLoad",
+  engineeringAggregateRun7Status: "failed-missing-production-expansion",
+  fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
   targetEngineeringSmokeIntegrationCommit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
@@ -160,8 +160,8 @@ assertCommit(
 );
 assertCommit(project.current.fe2o3EngineeringSchemaCommit, "current.fe2o3EngineeringSchemaCommit");
 assertCommit(project.current.fe2o3EngineeringSchemaTree, "current.fe2o3EngineeringSchemaTree");
-assertCommit(project.current.fe2o3FabsCandidate, "current.fe2o3FabsCandidate");
-assertCommit(project.current.fe2o3FabsCandidateBase, "current.fe2o3FabsCandidateBase");
+assertCommit(project.current.fe2o3CompilerCandidate, "current.fe2o3CompilerCandidate");
+assertCommit(project.current.fe2o3CompilerCandidateBase, "current.fe2o3CompilerCandidateBase");
 assertCommit(
   project.current.productionSpeculativeExecutorCandidate,
   "current.productionSpeculativeExecutorCandidate",
@@ -273,13 +273,14 @@ assert(
     envelope.get("fe2o3 engineering producer")?.includes(
       expectedCurrent.fe2o3EngineeringSchemaTree,
     ) &&
-    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3FabsCandidate) &&
-    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3FabsCandidateBase) &&
-    envelope.get("fe2o3 engineering producer")?.includes("65 ahead / 0 behind") &&
-    envelope.get("fe2o3 engineering producer")?.includes("focused MI300X matrix green") &&
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    envelope.get("fe2o3 engineering producer")?.includes("68 ahead / 0 behind") &&
+    envelope.get("fe2o3 engineering producer")?.includes("exact MI300X matrix green") &&
+    envelope.get("fe2o3 engineering producer")?.includes("independent source-remediation GO") &&
     envelope.get("fe2o3 engineering producer")?.includes("real-aggregate qualification") &&
     envelope.get("fe2o3 engineering producer")?.includes("not integrated into Ferric"),
-  "envelope must expose the frozen producer schema and exact pushed fabs candidate limits",
+  "envelope must expose the frozen producer schema and exact pushed candidate limits",
 );
 assert(
   envelope.get("Speculative executor")?.includes(
@@ -306,19 +307,19 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-  envelope.get("Engineering aggregate output")?.includes("Run 5 launched") &&
+  envelope.get("Engineering aggregate output")?.includes("Run 7 launched") &&
     envelope.get("Engineering aggregate output")?.includes("terminated with exit 1") &&
-    envelope.get("Engineering aggregate output")?.includes("crossing supported fabs lowering") &&
     envelope.get("Engineering aggregate output")?.includes("core::f32::is_finite") &&
+    envelope.get("Engineering aggregate output")?.includes("f32::abs") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "cross-crate unsafe-block authentication failed",
+      "MemoryVolatileLoad lacks a production semantic expansion",
     ) &&
-    envelope.get("Engineering aggregate output")?.includes("not yet committed") &&
+    envelope.get("Engineering aggregate output")?.includes("compiler remediation is in progress") &&
     envelope.get("Engineering aggregate output")?.includes(
       "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
     ) &&
     envelope.get("Engineering aggregate output")?.includes("source-integrated but not executed"),
-  "envelope must retain the exact run 5 failure boundary and downstream nonclaims",
+  "envelope must retain the exact run 7 failure boundary and downstream nonclaims",
 );
 assert(
   envelope.get("Target-only engineering smoke")?.includes(
@@ -444,22 +445,22 @@ assert(
   producerReadiness?.state === "integration" &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
-    producerReadiness.detail.includes(expectedCurrent.fe2o3FabsCandidate) &&
-    producerReadiness.detail.includes(expectedCurrent.fe2o3FabsCandidateBase) &&
-    producerReadiness.detail.includes("65 commits ahead and 0 behind") &&
-    producerReadiness.detail.includes("passed 456 rustc tests") &&
-    producerReadiness.detail.includes("exactly one llvm.fabs.f32") &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    producerReadiness.detail.includes("68 commits ahead and 0 behind") &&
+    producerReadiness.detail.includes("passed 458 rustc tests") &&
+    producerReadiness.detail.includes("122 simulator tests") &&
+    producerReadiness.detail.includes("Independent review returned source-remediation GO") &&
     producerReadiness.detail.includes("not integrated into Ferric") &&
-    producerReadiness.detail.includes("Aggregate run 5 launched") &&
-    producerReadiness.detail.includes("crossed supported fabs lowering") &&
+    producerReadiness.detail.includes("Aggregate run 7 launched") &&
+    producerReadiness.detail.includes("passed the prior is_finite boundary") &&
     producerReadiness.detail.includes("terminated with exit 1") &&
-    producerReadiness.detail.includes("core::f32::is_finite") &&
-    producerReadiness.detail.includes("cross-crate unsafe-block authentication boundary") &&
-    producerReadiness.detail.includes("exact body contract is in progress and not yet committed") &&
+    producerReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
+    producerReadiness.detail.includes("compiler remediation is in progress") &&
     producerReadiness.detail.includes(
       "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
     ),
-  "fe2o3 producer must retain the exact run 5 failure and downstream nonclaims",
+  "fe2o3 producer must retain the exact run 7 failure and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
   (item) => item.label === "Production speculative executor",
@@ -530,8 +531,9 @@ assert(
     qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
     qwenReadiness.detail.includes("terminated with exit 1") &&
     qwenReadiness.detail.includes("core::f32::is_finite") &&
+    qwenReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
     qwenReadiness.detail.includes("No handoff, worker invocation, HSACO, manifest") &&
-    qwenReadiness.detail.includes("exact locked final pinning and live hardware execution remain open") &&
+    qwenReadiness.detail.includes("Exact locked final pinning and live hardware execution remain open") &&
     qwenReadiness.detail.includes("smoke has not executed") &&
     qwenReadiness.detail.includes("Qwen token resulted"),
   "Qwen, numerical, and performance authority must remain open",
@@ -697,8 +699,8 @@ assert(
   "recent progress must include the frozen fe2o3 engineering schema",
 );
 assert(
-  progressCommits.has(expectedCurrent.fe2o3FabsCandidate),
-  "recent progress must include the pushed focused-green fabs candidate",
+  progressCommits.has(expectedCurrent.fe2o3CompilerCandidate),
+  "recent progress must include the pushed compiler candidate",
 );
 assert(
   progressCommits.has(expectedCurrent.targetEngineeringSmokeCandidate),
@@ -762,15 +764,15 @@ for (const claim of forbiddenCurrentDependencyClaims) {
   );
 }
 for (const claim of [
-  "Ferric integration 36fb8e9 contains speculative executor 0c2b73b, engineering aggregate loader c9072b0, and target-only engineering smoke 951d48a",
-  "all received independent review GO for their stated source scope",
+  "Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout remediation",
+  "all source components received independent review GO for their stated scope",
   "The loader and smoke remain non-authoritative",
   "fe2o3 engineering producer schema 5099cf3 is frozen",
-  "Pushed fabs candidate 41abaa0c is 65 commits ahead and 0 behind origin/main 712c98f",
-  "focused MI300X matrix is green",
-  "Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1",
-  "exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary",
-  "fe2o3 remediation with an exact body contract is in progress and not yet committed",
+  "Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f",
+  "exact MI300X matrix is green",
+  "Aggregate run 7 launched, passed the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1",
+  "MemoryVolatileLoad lacks a production semantic expansion",
+  "The narrow fe2o3 compiler remediation is in progress",
   "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
   "The smoke merged at 36fb8e9 with a documentation-only correction",
   "ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests",
@@ -798,8 +800,8 @@ assert(
     dataSource.includes(expectedCurrent.integrationTree) &&
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
-    dataSource.includes(expectedCurrent.fe2o3FabsCandidate) &&
-    dataSource.includes(expectedCurrent.fe2o3FabsCandidateBase) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorIntegrationCommit) &&
@@ -841,17 +843,18 @@ assert(
     dataSource.includes("non-final mi300x probe") &&
     dataSource.includes("received independent review GO") &&
     dataSource.includes("observation-only and non-authoritative") &&
-    dataSource.includes("Aggregate run 5 launched") &&
+    dataSource.includes("Aggregate run 7 launched") &&
     dataSource.includes("terminated with exit 1") &&
-    dataSource.includes("crossed supported fabs lowering") &&
+    dataSource.includes("passed the exact core::f32::is_finite -> f32::abs -> fabs") &&
     dataSource.includes("core::f32::is_finite") &&
-    dataSource.includes("cross-crate unsafe-block authentication boundary") &&
-    dataSource.includes("exact body contract is in progress and not yet committed") &&
+    dataSource.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
+    dataSource.includes("compiler remediation is in progress") &&
     dataSource.includes(
       "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
     ) &&
-    dataSource.includes("passed 456 rustc tests") &&
-    dataSource.includes("exactly one llvm.fabs.f32") &&
+    dataSource.includes("passed 458 rustc tests") &&
+    dataSource.includes("122 simulator tests") &&
+    dataSource.includes("independent source-remediation GO") &&
     dataSource.includes("independent source-integration GO") &&
     dataSource.includes("documentation-only correction") &&
     dataSource.includes("511 engine library tests") &&

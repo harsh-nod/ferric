@@ -201,19 +201,21 @@
             <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Ferric integration 36fb8e9 contains speculative executor 0c2b73b, engineering aggregate
-            loader c9072b0, and target-only engineering smoke 951d48a; all received independent review
-            GO for their stated source scope. The loader and smoke remain non-authoritative. fe2o3
-            engineering producer schema 5099cf3 is frozen. Pushed fabs candidate 41abaa0c is 65 commits
-            ahead and 0 behind origin/main 712c98f; its focused MI300X matrix is green but it is not the
-            exact locked final Ferric pin. Aggregate run 5 launched, crossed supported fabs lowering,
-            and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block
-            authentication boundary. fe2o3 remediation with an exact body contract is in progress and
-            not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or
-            Qwen token resulted. The smoke merged at 36fb8e9 with a documentation-only correction. Its
-            ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and
-            all-target strict clippy on mi300x; exact locked final pinning and live hardware execution
-            remain open, and the smoke has not executed. A read-only baseline audit found the mi300x
+            Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate
+            loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout
+            remediation; all source components received independent review GO for their stated scope.
+            The loader and smoke remain non-authoritative. fe2o3 engineering producer schema 5099cf3
+            is frozen. Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f;
+            its exact MI300X matrix is green, its narrow is_finite/fabs remediations received independent
+            source GO, and it is not the exact locked final Ferric pin. Aggregate run 7 launched, passed
+            the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1 because
+            MemoryVolatileLoad lacks a production semantic expansion. The narrow fe2o3 compiler
+            remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware
+            execution, or Qwen token resulted. The smoke merged at 36fb8e9 with a documentation-only
+            correction. Its earlier ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture
+            tests, 145 doctests, and all-target strict clippy on mi300x; exact locked final pinning and
+            live hardware execution remain open, and the smoke has not executed. A read-only baseline
+            audit found the mi300x
             host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so the
             comparison has not run. Ferric-specific inference and kernel ownership remain in Ferric;
             reusable compiler and runtime work remains in fe2o3. The private current aggregate
