@@ -20,7 +20,7 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3FabsCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
     fe2o3FabsCandidateAhead: 65,
     fe2o3FabsCandidateBehind: 0,
-    fe2o3FabsCandidateStatus: "pushed-focused-green-awaiting-aggregate",
+    fe2o3FabsCandidateStatus: "pushed-focused-green-run5-cross-crate-blocked",
     productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
     productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
     productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -30,6 +30,10 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
     engineeringAggregateLoaderStatus: "independent-go-integrated",
     engineeringAggregateHsacoStatus: "not-produced",
+    engineeringAggregateRun5ExitCode: 1,
+    engineeringAggregateRun5Boundary: "core::f32::is_finite",
+    engineeringAggregateRun5Status: "failed-cross-crate-unsafe-authentication",
+    fe2o3CrossCrateRemediationStatus: "in-progress-uncommitted",
     targetEngineeringSmokeStatus: "planned-in-progress",
     baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
     comparisonStatus: "not-run",
@@ -63,7 +67,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric integration 99cf0d5 contains the independently reviewed GO speculative executor at 0c2b73b and the independently reviewed GO non-authoritative engineering aggregate loader at c9072b0. fe2o3 engineering producer schema 5099cf3 is frozen. Pushed fabs candidate 41abaa0c, 65 commits ahead and 0 behind origin/main 712c98f, passed its focused MI300X matrix and remains under broader and real-aggregate qualification, not integrated into Ferric. Aggregate run 5 has not launched, so no aggregate HSACO has been produced and no Qwen token has run through Ferric. The target-only engineering smoke is planned and in progress. A read-only baseline audit found the mi300x host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
+      "Ferric integration 99cf0d5 contains the independently reviewed GO speculative executor at 0c2b73b and the independently reviewed GO non-authoritative engineering aggregate loader at c9072b0. fe2o3 engineering producer schema 5099cf3 is frozen. Pushed fabs candidate 41abaa0c, 65 commits ahead and 0 behind origin/main 712c98f, passed its focused MI300X matrix and is not integrated into Ferric. Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. fe2o3 remediation with an exact body contract is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. The target-only engineering smoke is planned and in progress. A read-only baseline audit found the mi300x host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -77,7 +81,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["fe2o3 engineering producer", "schema frozen at 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8; tree e089a7e95eb4c103e61e973321ed79a7b1233364; pushed fabs candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 ahead / 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7, focused MI300X matrix green, still under broader and real-aggregate qualification, and not integrated into Ferric"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "Aggregate run 5 has not launched. No aggregate HSACO exists; the target-only engineering smoke is planned and in progress; no Qwen token has run through Ferric"],
+    ["Engineering aggregate output", "Run 5 launched and terminated with exit 1 after crossing supported fabs lowering: exact sealed core::f32::is_finite cross-crate unsafe-block authentication failed. fe2o3 exact-body-contract remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted; the target-only engineering smoke remains planned and in progress"],
     ["Baseline comparison", "Read-only audit: mi300x host ready; Docker access denied; vLLM and SGLang unavailable; comparison not run"],
     ["Protected verifier status", "local service candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 / tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1 passed exact-archive qualification and independent review with no P0/P1/P2, and is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but not public main or deployed authority"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
@@ -187,7 +191,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 engineering aggregate producer",
       state: "integration",
       detail:
-        "The authority-free engineering manifest schema is frozen at pushed fe2o3 commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8 (tree e089a7e95eb4c103e61e973321ed79a7b1233364). Pushed candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its focused MI300X matrix passed 456 rustc tests, positive extraction with exactly one llvm.fabs.f32, and the KIR, LLVM, and simulator suites. It remains under broader and real-aggregate qualification and is not integrated into Ferric. Aggregate run 5 has not launched and no aggregate HSACO has been emitted.",
+        "The authority-free engineering manifest schema is frozen at pushed fe2o3 commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8 (tree e089a7e95eb4c103e61e973321ed79a7b1233364). Pushed candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its focused MI300X matrix passed 456 rustc tests, positive extraction with exactly one llvm.fabs.f32, and the KIR, LLVM, and simulator suites. It is not integrated into Ferric. Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. fe2o3 remediation with an exact body contract is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted.",
     },
     {
       label: "Production speculative executor",
@@ -361,7 +365,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor and non-authoritative engineering loader are reviewed and integrated, but the pushed fe2o3 fabs candidate still awaits broader and real-aggregate qualification. Aggregate run 5 has not launched, no aggregate HSACO exists, and the target-only engineering prompt smoke remains planned and in progress. The canonical prepack result is a non-final probe. No Qwen token, authenticated current-source Qwen execution, hardware run, numerical result, or performance result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor and non-authoritative engineering loader are reviewed and integrated. Aggregate run 5 crossed supported fabs lowering but terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. The exact-body-contract fe2o3 remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted, and the target-only engineering prompt smoke remains planned and in progress. The canonical prepack result is a non-final probe; no authenticated current-source Qwen execution, numerical result, or performance result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
@@ -473,7 +477,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Engineering aggregate producer schema",
         detail:
-          "fe2o3 commit 5099cf3 freezes the bounded, authority-free engineering manifest schema and exact gfx942:xnack-/COV6 production route. Pushed fabs candidate 41abaa0c is 65 commits ahead and 0 behind origin/main 712c98f; its focused MI300X matrix is green. It remains under broader and real-aggregate qualification, has not emitted the Ferric aggregate HSACO, and is not integrated into Ferric.",
+          "fe2o3 commit 5099cf3 freezes the bounded, authority-free engineering manifest schema and exact gfx942:xnack-/COV6 production route. Pushed fabs candidate 41abaa0c is 65 commits ahead and 0 behind origin/main 712c98f; its focused MI300X matrix is green and it is not integrated into Ferric. Run 5 crossed supported fabs lowering before the sealed core::f32::is_finite cross-crate unsafe-block authentication boundary failed. Exact-body-contract remediation is in progress and uncommitted; no handoff or output artifact exists.",
       },
       {
         name: "Non-authoritative engineering aggregate loader",
@@ -664,7 +668,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Qualify focused fabs compiler support",
       state: "integration",
       detail:
-        "This pushed candidate is 65 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its focused MI300X matrix passed 456 rustc tests, positive extraction with exactly one llvm.fabs.f32, and the KIR, LLVM, and simulator suites. It remains under broader and real-aggregate qualification and is not integrated into Ferric. Aggregate run 5 has not launched, so no aggregate HSACO or Qwen token exists.",
+        "This pushed candidate is 65 commits ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7. Its focused MI300X matrix passed 456 rustc tests, positive extraction with exactly one llvm.fabs.f32, and the KIR, LLVM, and simulator suites. It is not integrated into Ferric. Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. Exact-body-contract remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted.",
     },
     {
       commit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
@@ -1302,8 +1306,9 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Engineering producer schema commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8, tree e089a7e95eb4c103e61e973321ed79a7b1233364, is pushed and frozen for Ferric's non-authoritative manifest consumer",
-      "Pushed fabs candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7; its focused MI300X matrix is green, but broader and real-aggregate qualification and Ferric integration remain open",
-      "Aggregate run 5 has not launched and the exact aggregate build has not produced HSACO",
+      "Pushed fabs candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 ahead and 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7; its focused MI300X matrix is green and Ferric integration remains open",
+      "Aggregate run 5 crossed supported fabs lowering and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary",
+      "fe2o3 exact-body-contract remediation is in progress and not yet committed; no handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
       "The engineering producer is reusable compiler source only, not protected aggregate acceptance, runtime admission, or Qwen authority",
       "The baseline host audit found mi300x ready, but Docker access is denied and vLLM and SGLang are absent; no comparison ran",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",

@@ -30,7 +30,7 @@ const expectedCurrent = Object.freeze({
   fe2o3FabsCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
   fe2o3FabsCandidateAhead: 65,
   fe2o3FabsCandidateBehind: 0,
-  fe2o3FabsCandidateStatus: "pushed-focused-green-awaiting-aggregate",
+  fe2o3FabsCandidateStatus: "pushed-focused-green-run5-cross-crate-blocked",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -40,6 +40,10 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
+  engineeringAggregateRun5ExitCode: 1,
+  engineeringAggregateRun5Boundary: "core::f32::is_finite",
+  engineeringAggregateRun5Status: "failed-cross-crate-unsafe-authentication",
+  fe2o3CrossCrateRemediationStatus: "in-progress-uncommitted",
   targetEngineeringSmokeStatus: "planned-in-progress",
   baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
   comparisonStatus: "not-run",
@@ -287,11 +291,19 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-  envelope.get("Engineering aggregate output")?.includes("No aggregate HSACO exists") &&
-    envelope.get("Engineering aggregate output")?.includes("run 5 has not launched") &&
-    envelope.get("Engineering aggregate output")?.includes("planned and in progress") &&
-    envelope.get("Engineering aggregate output")?.includes("no Qwen token"),
-  "envelope must retain the aggregate and target-smoke nonclaims",
+  envelope.get("Engineering aggregate output")?.includes("Run 5 launched") &&
+    envelope.get("Engineering aggregate output")?.includes("terminated with exit 1") &&
+    envelope.get("Engineering aggregate output")?.includes("crossing supported fabs lowering") &&
+    envelope.get("Engineering aggregate output")?.includes("core::f32::is_finite") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "cross-crate unsafe-block authentication failed",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("not yet committed") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("planned and in progress"),
+  "envelope must retain the exact run 5 failure boundary and downstream nonclaims",
 );
 assert(
   envelope.get("Baseline comparison")?.includes("Docker access denied") &&
@@ -400,11 +412,17 @@ assert(
     producerReadiness.detail.includes("65 commits ahead and 0 behind") &&
     producerReadiness.detail.includes("passed 456 rustc tests") &&
     producerReadiness.detail.includes("exactly one llvm.fabs.f32") &&
-    producerReadiness.detail.includes("under broader and real-aggregate qualification") &&
     producerReadiness.detail.includes("not integrated into Ferric") &&
-    producerReadiness.detail.includes("Aggregate run 5 has not launched") &&
-    producerReadiness.detail.includes("no aggregate HSACO has been emitted"),
-  "fe2o3 producer must retain the frozen schema, candidate status, and output nonclaim",
+    producerReadiness.detail.includes("Aggregate run 5 launched") &&
+    producerReadiness.detail.includes("crossed supported fabs lowering") &&
+    producerReadiness.detail.includes("terminated with exit 1") &&
+    producerReadiness.detail.includes("core::f32::is_finite") &&
+    producerReadiness.detail.includes("cross-crate unsafe-block authentication boundary") &&
+    producerReadiness.detail.includes("exact body contract is in progress and not yet committed") &&
+    producerReadiness.detail.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ),
+  "fe2o3 producer must retain the exact run 5 failure and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
   (item) => item.label === "Production speculative executor",
@@ -450,12 +468,14 @@ const qwenReadiness = project.readiness.find(
   (item) => item.label === "End-to-end Qwen through Ferric",
 );
 assert(
-  qwenReadiness?.state === "open" &&
+    qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
-    qwenReadiness.detail.includes("no aggregate HSACO exists") &&
+    qwenReadiness.detail.includes("terminated with exit 1") &&
+    qwenReadiness.detail.includes("core::f32::is_finite") &&
+    qwenReadiness.detail.includes("No handoff, worker invocation, HSACO, manifest") &&
     qwenReadiness.detail.includes("planned and in progress") &&
-    qwenReadiness.detail.includes("No Qwen token"),
+    qwenReadiness.detail.includes("Qwen token resulted"),
   "Qwen, numerical, and performance authority must remain open",
 );
 const baselineReadiness = project.readiness.find(
@@ -670,7 +690,7 @@ assert(
   !currentProjectData.includes("ff21f24") &&
     !currentProjectData.includes("f300ab8") &&
     !currentProjectData.includes("NO-GO") &&
-    !currentProjectData.includes("remediation is in progress"),
+    !currentProjectData.toLowerCase().includes("run 5 has not launched"),
   "current Pages data must not present superseded compiler or executor checkpoints",
 );
 for (const claim of forbiddenCurrentDependencyClaims) {
@@ -686,11 +706,12 @@ for (const claim of [
   "fe2o3 engineering producer schema 5099cf3 is frozen",
   "Pushed fabs candidate 41abaa0c is 65 commits ahead and 0 behind origin/main 712c98f",
   "focused MI300X matrix is green",
-  "broader and real-aggregate qualification and Ferric integration remain open",
-  "Aggregate run 5 has not launched",
+  "Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1",
+  "exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary",
+  "fe2o3 remediation with an exact body contract is in progress and not yet committed",
+  "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
   "emit the first real aggregate HSACO",
   "target-only engineering smoke is planned and in progress",
-  "no Qwen token has run through Ferric",
   "read-only baseline audit found the mi300x host ready",
   "Docker access is denied and neither vLLM nor SGLang is installed",
   "comparison has not run",
@@ -752,11 +773,17 @@ assert(
     dataSource.includes("non-final mi300x probe") &&
     dataSource.includes("received independent review GO") &&
     dataSource.includes("observation-only and non-authoritative") &&
-    dataSource.includes("No aggregate HSACO") &&
-    dataSource.includes("Aggregate run 5 has not launched") &&
+    dataSource.includes("Aggregate run 5 launched") &&
+    dataSource.includes("terminated with exit 1") &&
+    dataSource.includes("crossed supported fabs lowering") &&
+    dataSource.includes("core::f32::is_finite") &&
+    dataSource.includes("cross-crate unsafe-block authentication boundary") &&
+    dataSource.includes("exact body contract is in progress and not yet committed") &&
+    dataSource.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ) &&
     dataSource.includes("passed 456 rustc tests") &&
     dataSource.includes("exactly one llvm.fabs.f32") &&
-    dataSource.includes("no Qwen token") &&
     dataSource.includes("Docker access is denied") &&
     dataSource.includes("neither vLLM nor SGLang is installed") &&
     dataSource.includes("No baseline server was launched") &&
@@ -764,7 +791,7 @@ assert(
     dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
     dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed") &&
-    dataSource.includes("No Qwen token, authenticated current-source Qwen execution") &&
+    dataSource.includes("no authenticated current-source Qwen execution") &&
     dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
   "Pages data must retain service, executor, loader, compiler, baseline, Qwen, selection, and all-open claims",
 );
