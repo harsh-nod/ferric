@@ -13,7 +13,9 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
+  siteRefreshBase: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
+  integrationCommit: "e70ab68b0542663f59dd1d8f5d79c283df4a1db3",
+  integrationTree: "bb8da1d241613fe028e833d746a42be92cd80e70",
   implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -22,11 +24,43 @@ const expectedCurrent = Object.freeze({
   commonCustodyPreflightCommit: "e187ca52dfdaee79fdc17921c9acffebeed6ca96",
   associationPreflightCommit: "eb3b1937ec509cb6ecea080a25965dd3e8bc5457",
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
-  selectedFe2o3Pin: "57d2d9ced5c113d40546ea1dee603e8ba499cf40",
-  fe2o3CallerChallengeCandidate: "40cb4337c1b495e43eed66276d81cd4cae36d3bf",
-  fe2o3VerificationTransportCandidate: "701449c39029de040cd285a2d527dcc185a8750b",
-  fe2o3DescriptorEnvelopeCandidate: "ac00e7ae89d7c73737612d6d0565a632db898890",
-  productionSpeculativeExecutorStatus: "in-progress",
+  fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
+  fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
+  fe2o3CompilerCandidate: "466f88c02ae5d5a30f7b7f18c263f55e9b679251",
+  fe2o3CompilerCandidateBase: "712c98f317d98298c1c2a6e466e36967d69f71f7",
+  fe2o3CompilerCandidateAhead: 68,
+  fe2o3CompilerCandidateBehind: 0,
+  fe2o3CompilerCandidateStatus: "source-go-run7-volatile-load-blocked",
+  productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
+  productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
+  productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
+  productionSpeculativeExecutorStatus: "independent-go-integrated",
+  engineeringAggregateLoaderCandidate: "c9072b0de61a27be917020baf5eecb4b743734f0",
+  engineeringAggregateLoaderTree: "c725eb6e3e6f470fa327f94289509fe910eb83ef",
+  engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
+  engineeringAggregateLoaderStatus: "independent-go-integrated",
+  engineeringAggregateHsacoStatus: "not-produced",
+  engineeringAggregateRun7ExitCode: 1,
+  engineeringAggregateRun7Boundary: "MemoryVolatileLoad",
+  engineeringAggregateRun7Status: "failed-missing-production-expansion",
+  fe2o3IsFiniteRemediationStatus: "independent-source-go",
+  targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
+  targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
+  targetEngineeringSmokeIntegrationCommit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
+  targetEngineeringSmokeStatus: "independent-go-integrated-not-executed",
+  targetEngineeringSmokeEngineTests: 511,
+  targetEngineeringSmokeCaptureTests: 84,
+  targetEngineeringSmokeDoctests: 145,
+  targetEngineeringSmokeExactFinalPinStatus: "open",
+  targetEngineeringSmokeHardwareStatus: "not-run",
+  baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
+  comparisonStatus: "not-run",
+  protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
+  protectedVerifierServiceStatus: "foundation-go-local-undeployed",
+  verifierBinderCandidate: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
+  verifierBinderCandidateTree: "4690d8c9e502de18a947d6def2f8c09d4f153ea1",
+  verifierBinderIntegrationCommit: "ed708de7fc906926091be29ff118af95ee50a42b",
+  verifierBinderStatus: "qualified-go-local-integration",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -44,6 +78,7 @@ const expectedCurrent = Object.freeze({
   sourceGateBodies: 6916,
   sourceClosureFiles: 603,
   openM1Gates: 33,
+  openAssuranceProperties: 17,
 });
 const expectedProof = Object.freeze({
   source: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
@@ -72,6 +107,17 @@ function assertCommit(commit, location) {
   );
 }
 
+function assertExactKeys(value, expected, location) {
+  const actualKeys = Reflect.ownKeys(value)
+    .map((key) => (typeof key === "symbol" ? key.toString() : key))
+    .sort();
+  const expectedKeys = Object.keys(expected).sort();
+  assert(
+    JSON.stringify(actualKeys) === JSON.stringify(expectedKeys),
+    `${location} keys must exactly match the reviewed schema`,
+  );
+}
+
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
@@ -92,7 +138,10 @@ assert(
   "fe2o3Repository must be a GitHub repository URL",
 );
 assert(project.current && typeof project.current === "object", "current status is missing");
+assertExactKeys(project.current, expectedCurrent, "current");
 assertCommit(project.current.siteRefreshBase, "current.siteRefreshBase");
+assertCommit(project.current.integrationCommit, "current.integrationCommit");
+assertCommit(project.current.integrationTree, "current.integrationTree");
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(project.current.authenticatedR32Commit, "current.authenticatedR32Commit");
 assertCommit(project.current.aggregateSelectionCommit, "current.aggregateSelectionCommit");
@@ -109,18 +158,55 @@ assertCommit(
   project.current.finalizedHsacoReinspectionCommit,
   "current.finalizedHsacoReinspectionCommit",
 );
-assertCommit(project.current.selectedFe2o3Pin, "current.selectedFe2o3Pin");
+assertCommit(project.current.fe2o3EngineeringSchemaCommit, "current.fe2o3EngineeringSchemaCommit");
+assertCommit(project.current.fe2o3EngineeringSchemaTree, "current.fe2o3EngineeringSchemaTree");
+assertCommit(project.current.fe2o3CompilerCandidate, "current.fe2o3CompilerCandidate");
+assertCommit(project.current.fe2o3CompilerCandidateBase, "current.fe2o3CompilerCandidateBase");
 assertCommit(
-  project.current.fe2o3CallerChallengeCandidate,
-  "current.fe2o3CallerChallengeCandidate",
+  project.current.productionSpeculativeExecutorCandidate,
+  "current.productionSpeculativeExecutorCandidate",
 );
 assertCommit(
-  project.current.fe2o3VerificationTransportCandidate,
-  "current.fe2o3VerificationTransportCandidate",
+  project.current.productionSpeculativeExecutorTree,
+  "current.productionSpeculativeExecutorTree",
 );
 assertCommit(
-  project.current.fe2o3DescriptorEnvelopeCandidate,
-  "current.fe2o3DescriptorEnvelopeCandidate",
+  project.current.productionSpeculativeExecutorIntegrationCommit,
+  "current.productionSpeculativeExecutorIntegrationCommit",
+);
+assertCommit(
+  project.current.engineeringAggregateLoaderCandidate,
+  "current.engineeringAggregateLoaderCandidate",
+);
+assertCommit(
+  project.current.engineeringAggregateLoaderTree,
+  "current.engineeringAggregateLoaderTree",
+);
+assertCommit(
+  project.current.engineeringAggregateLoaderIntegrationCommit,
+  "current.engineeringAggregateLoaderIntegrationCommit",
+);
+assertCommit(project.current.targetEngineeringSmokeCandidate, "current.targetEngineeringSmokeCandidate");
+assertCommit(project.current.targetEngineeringSmokeTree, "current.targetEngineeringSmokeTree");
+assertCommit(
+  project.current.targetEngineeringSmokeIntegrationCommit,
+  "current.targetEngineeringSmokeIntegrationCommit",
+);
+assertCommit(
+  project.current.protectedVerifierServiceLocalCandidate,
+  "current.protectedVerifierServiceLocalCandidate",
+);
+assertCommit(
+  project.current.verifierBinderCandidate,
+  "current.verifierBinderCandidate",
+);
+assertCommit(
+  project.current.verifierBinderCandidateTree,
+  "current.verifierBinderCandidateTree",
+);
+assertCommit(
+  project.current.verifierBinderIntegrationCommit,
+  "current.verifierBinderIntegrationCommit",
 );
 assertCommit(project.current.aggregateSourceCommit, "current.aggregateSourceCommit");
 assertCommit(project.current.aggregateProducerCommit, "current.aggregateProducerCommit");
@@ -134,15 +220,149 @@ for (const [key, expected] of Object.entries(expectedCurrent)) {
 }
 assertState(project.milestone.state, "milestone");
 
-assert(Array.isArray(project.envelope) && project.envelope.length > 0, "envelope is empty");
+const expectedEnvelopeTerms = [
+  "Target",
+  "Draft",
+  "Device",
+  "Precision",
+  "Context",
+  "Concurrency",
+  "Pages refresh base",
+  "M1 integration",
+  "fe2o3 engineering producer",
+  "Speculative executor",
+  "Engineering aggregate loader",
+  "Engineering aggregate output",
+  "Target-only engineering smoke",
+  "Baseline comparison",
+  "Protected verifier status",
+  "Aggregate device source",
+  "Aggregate source-pin policy",
+  "Aggregate build producer",
+  "Authenticated R32 capture",
+  "Aggregate selection candidate",
+  "Pending verifier projection",
+  "Aggregate verifier preflight",
+  "Strict proof release",
+  "Protected acceptance",
+  "Historical protected artifact",
+  "Current authority",
+];
+assert(
+  Array.isArray(project.envelope) && project.envelope.length === expectedEnvelopeTerms.length,
+  "envelope must contain exactly the reviewed rows",
+);
+project.envelope.forEach((entry, index) => {
+  assert(
+    Array.isArray(entry) &&
+      entry.length === 2 &&
+      entry.every((value) => typeof value === "string" && value.length > 0),
+    `envelope[${index}] must be a non-empty term and definition pair`,
+  );
+});
 const envelope = new Map(project.envelope);
 assert(
-  envelope.get("Selected fe2o3 pin")?.includes(expectedCurrent.selectedFe2o3Pin),
-  "envelope must expose the exact selected fe2o3 pin",
+  envelope.size === expectedEnvelopeTerms.length &&
+    expectedEnvelopeTerms.every((term) => envelope.has(term)),
+  "envelope terms must exactly match the reviewed rows",
 );
 assert(
-  envelope.get("M1 implementation")?.includes(expectedCurrent.implementationCommit),
-  "envelope must expose the exact current implementation commit",
+  envelope.get("fe2o3 engineering producer")?.includes(
+    expectedCurrent.fe2o3EngineeringSchemaCommit,
+  ) &&
+    envelope.get("fe2o3 engineering producer")?.includes(
+      expectedCurrent.fe2o3EngineeringSchemaTree,
+    ) &&
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    envelope.get("fe2o3 engineering producer")?.includes("68 ahead / 0 behind") &&
+    envelope.get("fe2o3 engineering producer")?.includes("exact MI300X matrix green") &&
+    envelope.get("fe2o3 engineering producer")?.includes("independent source-remediation GO") &&
+    envelope.get("fe2o3 engineering producer")?.includes("real-aggregate qualification") &&
+    envelope.get("fe2o3 engineering producer")?.includes("not integrated into Ferric"),
+  "envelope must expose the frozen producer schema and exact pushed candidate limits",
+);
+assert(
+  envelope.get("Speculative executor")?.includes(
+    expectedCurrent.productionSpeculativeExecutorCandidate,
+  ) &&
+    envelope.get("Speculative executor")?.includes(
+      expectedCurrent.productionSpeculativeExecutorTree,
+    ) &&
+    envelope.get("Speculative executor")?.includes(
+      expectedCurrent.productionSpeculativeExecutorIntegrationCommit,
+    ) &&
+    envelope.get("Speculative executor")?.includes("independent review GO"),
+  "envelope must expose the exact integrated speculative executor and independent GO",
+);
+assert(
+  envelope.get("Engineering aggregate loader")?.includes(
+    expectedCurrent.engineeringAggregateLoaderCandidate,
+  ) &&
+    envelope.get("Engineering aggregate loader")?.includes(
+      expectedCurrent.engineeringAggregateLoaderTree,
+    ) &&
+    envelope.get("Engineering aggregate loader")?.includes("independent review GO") &&
+    envelope.get("Engineering aggregate loader")?.includes("non-authoritative"),
+  "envelope must expose the exact engineering loader, independent GO, and nonauthority",
+);
+assert(
+  envelope.get("Engineering aggregate output")?.includes("Run 7 launched") &&
+    envelope.get("Engineering aggregate output")?.includes("terminated with exit 1") &&
+    envelope.get("Engineering aggregate output")?.includes("core::f32::is_finite") &&
+    envelope.get("Engineering aggregate output")?.includes("f32::abs") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "MemoryVolatileLoad lacks a production semantic expansion",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("compiler remediation is in progress") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("source-integrated but not executed"),
+  "envelope must retain the exact run 7 failure boundary and downstream nonclaims",
+);
+assert(
+  envelope.get("Target-only engineering smoke")?.includes(
+    expectedCurrent.targetEngineeringSmokeCandidate,
+  ) &&
+    envelope.get("Target-only engineering smoke")?.includes(
+      expectedCurrent.targetEngineeringSmokeTree,
+    ) &&
+    envelope.get("Target-only engineering smoke")?.includes(
+      expectedCurrent.targetEngineeringSmokeIntegrationCommit,
+    ) &&
+    envelope.get("Target-only engineering smoke")?.includes("independent source-integration GO") &&
+    envelope.get("Target-only engineering smoke")?.includes("documentation-only correction") &&
+    envelope.get("Target-only engineering smoke")?.includes("511 engine library tests") &&
+    envelope.get("Target-only engineering smoke")?.includes("84 capture tests") &&
+    envelope.get("Target-only engineering smoke")?.includes("145 doctests") &&
+    envelope.get("Target-only engineering smoke")?.includes("all-target strict clippy") &&
+    envelope.get("Target-only engineering smoke")?.includes("exact locked final pin") &&
+    envelope.get("Target-only engineering smoke")?.includes("live hardware remain open") &&
+    envelope.get("Target-only engineering smoke")?.includes("not executed") &&
+    envelope.get("Target-only engineering smoke")?.includes("no Qwen token"),
+  "envelope must retain exact target-smoke integration, matrix, and execution limits",
+);
+assert(
+  envelope.get("Baseline comparison")?.includes("Docker access denied") &&
+    envelope.get("Baseline comparison")?.includes("vLLM and SGLang unavailable") &&
+    envelope.get("Baseline comparison")?.includes("comparison not run"),
+  "envelope must retain the baseline audit and comparison nonclaim",
+);
+assert(
+  envelope.get("Protected verifier status")?.includes(expectedCurrent.verifierBinderCandidate) &&
+    envelope.get("Protected verifier status")?.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    envelope.get("Protected verifier status")?.includes(
+      expectedCurrent.verifierBinderIntegrationCommit,
+    ) &&
+    envelope.get("Protected verifier status")?.includes("no P0/P1/P2") &&
+    envelope.get("Protected verifier status")?.includes("not public main or deployed authority"),
+  "envelope must expose the qualified binder candidate and its local-only authority",
+);
+assert(
+  envelope.get("M1 integration")?.includes(expectedCurrent.integrationCommit) &&
+    envelope.get("M1 integration")?.includes(expectedCurrent.integrationTree),
+  "envelope must expose the exact current integration commit and tree",
 );
 assert(
   envelope.get("Aggregate verifier preflight")?.includes(
@@ -207,29 +427,127 @@ const protectedAcceptance = project.readiness.find(
 assert(
   protectedAcceptance?.state === "open" &&
     protectedAcceptance.detail.includes("remains None") &&
-    protectedAcceptance.detail.includes(
-      "sole terminal result MissingProtectedVerificationReceipt",
-    ) &&
-    protectedAcceptance.detail.includes(
-      "neither a provisioned protected compiler-execution service and client profile",
-    ) &&
-    protectedAcceptance.detail.includes(
-      "nor an independent protected-verifier signer and durable currentness service",
-    ) &&
-    protectedAcceptance.detail.includes("earlier preflight failures return their distinct"),
+    protectedAcceptance.detail.includes("passed 28 tests and 6 doctests") &&
+    protectedAcceptance.detail.includes("foundation GO") &&
+    protectedAcceptance.detail.includes("not publicly linked") &&
+    protectedAcceptance.detail.includes("not deployed") &&
+    protectedAcceptance.detail.includes("protected current, checker, signer, head-store") &&
+    protectedAcceptance.detail.includes("Binder candidate 6846d92") &&
+    protectedAcceptance.detail.includes("independently reviewed GO with no P0/P1/P2") &&
+    protectedAcceptance.detail.includes("integrated locally at ed708de") &&
+    protectedAcceptance.detail.includes("not public main or deployed authority"),
   "protected aggregate acceptance must remain fail-closed and open",
+);
+const producerReadiness = project.readiness.find(
+  (item) => item.label === "fe2o3 engineering aggregate producer",
+);
+assert(
+  producerReadiness?.state === "integration" &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    producerReadiness.detail.includes("68 commits ahead and 0 behind") &&
+    producerReadiness.detail.includes("passed 458 rustc tests") &&
+    producerReadiness.detail.includes("122 simulator tests") &&
+    producerReadiness.detail.includes("Independent review returned source-remediation GO") &&
+    producerReadiness.detail.includes("not integrated into Ferric") &&
+    producerReadiness.detail.includes("Aggregate run 7 launched") &&
+    producerReadiness.detail.includes("passed the prior is_finite boundary") &&
+    producerReadiness.detail.includes("terminated with exit 1") &&
+    producerReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
+    producerReadiness.detail.includes("compiler remediation is in progress") &&
+    producerReadiness.detail.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ),
+  "fe2o3 producer must retain the exact run 7 failure and downstream nonclaims",
+);
+const executorReadiness = project.readiness.find(
+  (item) => item.label === "Production speculative executor",
+);
+assert(
+  executorReadiness?.state === "integration" &&
+    executorReadiness.detail.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
+    executorReadiness.detail.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
+    executorReadiness.detail.includes(expectedCurrent.productionSpeculativeExecutorIntegrationCommit) &&
+    executorReadiness.detail.includes("received independent review GO") &&
+    executorReadiness.detail.includes("not an aggregate artifact, GPU execution, Qwen token"),
+  "speculative executor must retain exact integration, independent GO, and evidence limits",
+);
+const engineeringLoaderReadiness = project.readiness.find(
+  (item) => item.label === "Non-authoritative engineering aggregate loader",
+);
+assert(
+  engineeringLoaderReadiness?.state === "integration" &&
+    engineeringLoaderReadiness.detail.includes(expectedCurrent.engineeringAggregateLoaderCandidate) &&
+    engineeringLoaderReadiness.detail.includes(expectedCurrent.engineeringAggregateLoaderTree) &&
+    engineeringLoaderReadiness.detail.includes(expectedCurrent.engineeringAggregateLoaderIntegrationCommit) &&
+    engineeringLoaderReadiness.detail.includes("independent review GO") &&
+    engineeringLoaderReadiness.detail.includes("cannot create Worker V3") &&
+    engineeringLoaderReadiness.detail.includes("no real aggregate HSACO"),
+  "engineering loader must retain exact integration, nonauthority, and unused-output status",
+);
+const targetSmokeReadiness = project.readiness.find(
+  (item) => item.label === "Non-authoritative target-only engineering smoke",
+);
+assert(
+  targetSmokeReadiness?.state === "integration" &&
+    targetSmokeReadiness.detail.includes(expectedCurrent.targetEngineeringSmokeCandidate) &&
+    targetSmokeReadiness.detail.includes(expectedCurrent.targetEngineeringSmokeTree) &&
+    targetSmokeReadiness.detail.includes(expectedCurrent.targetEngineeringSmokeIntegrationCommit) &&
+    targetSmokeReadiness.detail.includes("independent source-integration GO") &&
+    targetSmokeReadiness.detail.includes("documentation-only correction") &&
+    targetSmokeReadiness.detail.includes("511 engine library tests") &&
+    targetSmokeReadiness.detail.includes("84 capture tests") &&
+    targetSmokeReadiness.detail.includes("145 doctests") &&
+    targetSmokeReadiness.detail.includes("all-target strict clippy") &&
+    targetSmokeReadiness.detail.includes("Exact locked final pinning") &&
+    targetSmokeReadiness.detail.includes("live hardware execution remain open") &&
+    targetSmokeReadiness.detail.includes("has not executed") &&
+    targetSmokeReadiness.detail.includes("no Qwen token"),
+  "target smoke must retain exact integration, ephemeral matrix, and no-execution limits",
+);
+const binderReadiness = project.readiness.find(
+  (item) => item.label === "Protected verifier binder",
+);
+assert(
+  binderReadiness?.state === "qualified" &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderCandidate) &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    binderReadiness.detail.includes(expectedCurrent.verifierBinderIntegrationCommit) &&
+    binderReadiness.detail.includes("ahead of reservation and one-shot FD consumption") &&
+    binderReadiness.detail.includes("single absolute-deadline API") &&
+    binderReadiness.detail.includes("exact-archive mi300x matrix passed") &&
+    binderReadiness.detail.includes("GO with no P0, P1, or P2 findings") &&
+    binderReadiness.detail.includes("not public main or deployed authority"),
+  "binder candidate must retain exact qualification, independent GO, and deployment limits",
 );
 const qwenReadiness = project.readiness.find(
   (item) => item.label === "End-to-end Qwen through Ferric",
 );
 assert(
-  qwenReadiness?.state === "open" &&
-    qwenReadiness.detail.includes("protected compiler and independent verifier services") &&
+    qwenReadiness?.state === "open" &&
+    qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
-    qwenReadiness.detail.includes(
-      "no authenticated full-Qwen execution, numerical result, or performance result",
-    ),
+    qwenReadiness.detail.includes("terminated with exit 1") &&
+    qwenReadiness.detail.includes("core::f32::is_finite") &&
+    qwenReadiness.detail.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
+    qwenReadiness.detail.includes("No handoff, worker invocation, HSACO, manifest") &&
+    qwenReadiness.detail.includes("Exact locked final pinning and live hardware execution remain open") &&
+    qwenReadiness.detail.includes("smoke has not executed") &&
+    qwenReadiness.detail.includes("Qwen token resulted"),
   "Qwen, numerical, and performance authority must remain open",
+);
+const baselineReadiness = project.readiness.find(
+  (item) => item.label === "vLLM and SGLang baseline comparison",
+);
+assert(
+  baselineReadiness?.state === "open" &&
+    baselineReadiness.detail.includes("Docker access is denied") &&
+    baselineReadiness.detail.includes("neither vLLM nor SGLang is installed") &&
+    baselineReadiness.detail.includes("No baseline server was launched") &&
+    baselineReadiness.detail.includes("no Ferric comparison result exists"),
+  "baseline comparison must remain open with exact environment limits",
 );
 const prepackProbe = project.readiness.find(
   (item) => item.label === "Canonical Qwen prepack probe",
@@ -344,6 +662,18 @@ project.recentProgress.forEach((item, index) => {
   assert(!progressCommits.has(item.commit), `duplicate progress commit ${item.commit}`);
   progressCommits.add(item.commit);
 });
+const historicalFe2o3Pin = "57d2d9ced5c113d40546ea1dee603e8ba499cf40";
+const historicalPinEntries = project.recentProgress.filter((item) =>
+  `${item.commit} ${item.title} ${item.detail}`.includes(historicalFe2o3Pin.slice(0, 8)),
+);
+assert(historicalPinEntries.length > 0, "historical fe2o3 progress must remain present");
+historicalPinEntries.forEach((item) => {
+  assert(
+    /\b(?:historical|earlier)\b/i.test(`${item.title} ${item.detail}`) &&
+      /\b(?:current repin|current dependency repin)\b/i.test(item.detail),
+    `historical fe2o3 progress ${item.commit} must be explicitly historical and point forward`,
+  );
+});
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
   "recent progress must include the current implementation commit",
@@ -353,12 +683,32 @@ assert(
   "recent progress must include the authenticated R32 implementation commit",
 );
 assert(
-  progressCommits.has(expectedCurrent.selectedFe2o3Pin),
-  "recent progress must include the selected fe2o3 pin",
+  progressCommits.has(expectedCurrent.integrationCommit),
+  "recent progress must include the current integration",
 );
 assert(
-  progressCommits.has(expectedCurrent.fe2o3CallerChallengeCandidate),
-  "recent progress must include the pushed caller-challenge feature candidate",
+  progressCommits.has(expectedCurrent.productionSpeculativeExecutorCandidate),
+  "recent progress must include the independently approved executor",
+);
+assert(
+  progressCommits.has(expectedCurrent.engineeringAggregateLoaderCandidate),
+  "recent progress must include the independently approved engineering loader",
+);
+assert(
+  progressCommits.has(expectedCurrent.fe2o3EngineeringSchemaCommit),
+  "recent progress must include the frozen fe2o3 engineering schema",
+);
+assert(
+  progressCommits.has(expectedCurrent.fe2o3CompilerCandidate),
+  "recent progress must include the pushed compiler candidate",
+);
+assert(
+  progressCommits.has(expectedCurrent.targetEngineeringSmokeCandidate),
+  "recent progress must include the independently approved target smoke",
+);
+assert(
+  progressCommits.has(expectedCurrent.verifierBinderCandidate),
+  "recent progress must include the qualified verifier binder candidate",
 );
 
 project.evidence.gates.forEach(([label, count, state], index) => {
@@ -370,6 +720,12 @@ assert(
   roadmapGate?.[1] === String(expectedCurrent.openM1Gates) && roadmapGate?.[2] === "open",
   "the exact M1 roadmap gate count must remain open",
 );
+const assuranceGate = project.evidence.gates.find(([label]) => label === "Assurance properties");
+assert(
+  assuranceGate?.[1] === String(expectedCurrent.openAssuranceProperties) &&
+    assuranceGate?.[2] === "open",
+  "the exact assurance property count must remain open",
+);
 assert(
   project.evidence.gates.every(([, , state]) => state === "open"),
   "every M1 closure roster remains open without its required evidence",
@@ -380,28 +736,57 @@ project.evidence.legend.forEach(([state], index) =>
 
 const html = await readFile(join(siteRoot, "index.html"), "utf8");
 const normalizedHtml = html.replace(/\s+/g, " ");
+const currentProjectData = JSON.stringify(
+  Object.fromEntries(
+    Object.entries(project).filter(([key]) => key !== "recentProgress"),
+  ),
+);
+const forbiddenCurrentDependencyClaims = [
+  /\bselected fe2o3 pin\b/i,
+  /\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i,
+];
+assert(
+  !currentProjectData.includes(historicalFe2o3Pin) &&
+    !currentProjectData.includes(historicalFe2o3Pin.slice(0, 8)),
+  "current Pages data must not contain the historical fe2o3 pin",
+);
+assert(
+  !currentProjectData.includes("ff21f24") &&
+    !currentProjectData.includes("f300ab8") &&
+    !currentProjectData.includes("NO-GO") &&
+    !currentProjectData.toLowerCase().includes("run 5 has not launched"),
+  "current Pages data must not present superseded compiler or executor checkpoints",
+);
+for (const claim of forbiddenCurrentDependencyClaims) {
+  assert(
+    !claim.test(currentProjectData),
+    `current Pages data contains a forbidden selected-dependency claim: ${claim}`,
+  );
+}
 for (const claim of [
-  "Exact head 7f516e0 passed strict proof and release qualification on mi300x",
-  "33615415798",
-  "33615415693 both completed successfully",
-  "invokes exact-pinned finalized-HSACO reinspection once on the request bytes",
-  "reacquires common multi-root compiler custody",
-  "unique 12-entry metadata permutation",
-  "not independent verifier authority",
-  "passing preflight has the sole terminal result MissingProtectedVerificationReceipt",
-  "exact fe2o3 source 57d2d9c",
-  "caller-challenge/current-record API candidate 40cb4337 passed its exact-archive matrix",
-  "generic V2 protected verification transport candidate 701449c3",
-  "descriptor/exact envelope candidate ac00e7ae still awaits its final rerun",
-  "feature candidates do not replace the selected 57d2d9c pin",
-  "production speculative executor remains in progress",
-  "canonical Qwen prepack result is a non-final probe",
-  "protected-verifier signer and durable currentness service",
+  "Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout remediation",
+  "all source components received independent review GO for their stated scope",
+  "The loader and smoke remain non-authoritative",
+  "fe2o3 engineering producer schema 5099cf3 is frozen",
+  "Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f",
+  "exact MI300X matrix is green",
+  "Aggregate run 7 launched, passed the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1",
+  "MemoryVolatileLoad lacks a production semantic expansion",
+  "The narrow fe2o3 compiler remediation is in progress",
+  "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+  "The smoke merged at 36fb8e9 with a documentation-only correction",
+  "ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests",
+  "all-target strict clippy on mi300x",
+  "exact locked final pinning and live hardware execution remain open",
+  "the smoke has not executed",
+  "read-only baseline audit found the mi300x host ready",
+  "Docker access is denied and neither vLLM nor SGLang is installed",
+  "comparison has not run",
   "Ferric-specific inference and kernel ownership remain in Ferric",
   "selection remains None",
   "CURRENT=None",
-  "successful current-source R32 trace",
-  "all 33 M1 exit gates",
+  "No authenticated current-source Qwen, hardware, numerical, or performance run exists",
+  "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
@@ -411,29 +796,83 @@ assert(
     dataSource.includes("eb3b1937ec509cb6ecea080a25965dd3e8bc5457") &&
     dataSource.includes("e187ca52dfdaee79fdc17921c9acffebeed6ca96") &&
     dataSource.includes("24748e11358db7ad3ab5fe35992cff354896e607") &&
-    dataSource.includes("57d2d9ced5c113d40546ea1dee603e8ba499cf40") &&
-    dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
-    dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
-    dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890"),
-  "Pages data must bind the exact qualified reinspection and custody lineage",
+    dataSource.includes(expectedCurrent.integrationCommit) &&
+    dataSource.includes(expectedCurrent.integrationTree) &&
+    dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
+    dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidateBase) &&
+    dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
+    dataSource.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
+    dataSource.includes(expectedCurrent.productionSpeculativeExecutorIntegrationCommit) &&
+    dataSource.includes(expectedCurrent.engineeringAggregateLoaderCandidate) &&
+    dataSource.includes(expectedCurrent.engineeringAggregateLoaderTree) &&
+    dataSource.includes(expectedCurrent.targetEngineeringSmokeCandidate) &&
+    dataSource.includes(expectedCurrent.targetEngineeringSmokeTree) &&
+    dataSource.includes(expectedCurrent.targetEngineeringSmokeIntegrationCommit) &&
+    dataSource.includes(expectedCurrent.protectedVerifierServiceLocalCandidate) &&
+    dataSource.includes(expectedCurrent.verifierBinderCandidate) &&
+    dataSource.includes(expectedCurrent.verifierBinderCandidateTree) &&
+    dataSource.includes(expectedCurrent.verifierBinderIntegrationCommit),
+  "Pages data must bind the exact current candidate and retained implementation lineage",
 );
 assert(
-  dataSource.includes("6638bc3c387e87339145df42e7757377fc14f485") &&
-    dataSource.includes("52815c9ed52a3075e26322cf506144cb22da12d2") &&
-    dataSource.includes("324004a21488895d07359b263cc19ea7a9d4df24") &&
-    dataSource.includes("were not moved into fe2o3"),
-  "Pages data must retain both fe2o3 merge parents and the Ferric ownership boundary",
+  !dataSource.includes("40cb4337c1b495e43eed66276d81cd4cae36d3bf") &&
+    !dataSource.includes("701449c39029de040cd285a2d527dcc185a8750b") &&
+    !dataSource.includes("ac00e7ae89d7c73737612d6d0565a632db898890") &&
+    !normalizedHtml.includes("57d2d9c"),
+  "Pages must not present superseded feature candidates or the historical pin as current",
 );
+for (const staleBinderClaim of [
+  "verifier binder deadline/source-order repair is still in progress",
+  "binder deadline/source-order fix is unqualified work in progress",
+  "binder's absolute-deadline and source-policy-order fix is still in progress",
+  "binder repair and executor custody remediation remain unfinished",
+  "companion binder deadline/source-order repair remains unqualified work in progress",
+  "verifier binder absolute-deadline and source-policy-order fix remains in progress",
+]) {
+  assert(
+    !dataSource.toLowerCase().includes(staleBinderClaim) &&
+      !normalizedHtml.toLowerCase().includes(staleBinderClaim),
+    `Pages must not retain stale binder claim: ${staleBinderClaim}`,
+  );
+}
 assert(
-  dataSource.includes("sole terminal result MissingProtectedVerificationReceipt") &&
-    dataSource.includes("private current aggregate publication selection remains None") &&
+  dataSource.includes("private current aggregate publication selection remains None") &&
     dataSource.includes("not independent verifier authority") &&
     dataSource.includes("non-final mi300x probe") &&
-    dataSource.includes("protected-verifier signer and durable currentness service") &&
-    dataSource.includes("production speculative executor remains in progress") &&
-    dataSource.includes("no authenticated full-Qwen execution, numerical result, or performance result") &&
-    dataSource.includes("all 33 M1 exit gates remain open"),
-  "Pages data must retain verifier, Qwen, selection, and all-open gate nonclaims",
+    dataSource.includes("received independent review GO") &&
+    dataSource.includes("observation-only and non-authoritative") &&
+    dataSource.includes("Aggregate run 7 launched") &&
+    dataSource.includes("terminated with exit 1") &&
+    dataSource.includes("passed the exact core::f32::is_finite -> f32::abs -> fabs") &&
+    dataSource.includes("core::f32::is_finite") &&
+    dataSource.includes("MemoryVolatileLoad lacks a production semantic expansion") &&
+    dataSource.includes("compiler remediation is in progress") &&
+    dataSource.includes(
+      "No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted",
+    ) &&
+    dataSource.includes("passed 458 rustc tests") &&
+    dataSource.includes("122 simulator tests") &&
+    dataSource.includes("independent source-remediation GO") &&
+    dataSource.includes("independent source-integration GO") &&
+    dataSource.includes("documentation-only correction") &&
+    dataSource.includes("511 engine library tests") &&
+    dataSource.includes("84 capture tests") &&
+    dataSource.includes("145 doctests") &&
+    dataSource.includes("all-target strict clippy") &&
+    dataSource.includes("exact locked final pinning and live hardware execution remain open") &&
+    dataSource.includes("smoke has not executed") &&
+    dataSource.includes("Docker access is denied") &&
+    dataSource.includes("neither vLLM nor SGLang is installed") &&
+    dataSource.includes("No baseline server was launched") &&
+    dataSource.includes("passed 28 tests and 6 doctests") &&
+    dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
+    dataSource.includes("not public main or deployed authority") &&
+    dataSource.includes("not deployed") &&
+    dataSource.includes("no authenticated current-source Qwen execution") &&
+    dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
+  "Pages data must retain service, executor, loader, compiler, baseline, Qwen, selection, and all-open claims",
 );
 for (const target of [
   "data-readiness",

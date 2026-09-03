@@ -38,12 +38,14 @@
 }
 
 html {
+  overflow-x: clip;
   scroll-behavior: smooth;
   scroll-padding-top: 78px;
 }
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family:
@@ -98,7 +100,7 @@ a:hover {
   min-height: 64px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 36px;
 }
@@ -117,6 +119,7 @@ a:hover {
 }
 
 nav {
+  min-width: 0;
   display: flex;
   gap: 28px;
 }
@@ -147,6 +150,16 @@ nav a,
   grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.92fr);
   gap: 72px;
   align-items: start;
+}
+
+.overview-copy,
+.readiness,
+.capability-group,
+.timeline-body,
+.section-heading > *,
+.evidence-grid > *,
+.next-layout > * {
+  min-width: 0;
 }
 
 .section-label,
@@ -278,17 +291,26 @@ h3 {
   gap: 20px;
 }
 
+.readiness-row-heading > :first-child,
+.timeline-heading > :first-child,
+.observation-heading > :first-child,
+.validation-item-heading > :first-child {
+  min-width: 0;
+}
+
 .readiness-row-heading strong {
   font-size: 14px;
 }
 
 .readiness-row p {
   margin: 7px 0 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 13px;
 }
 
 .state-tag {
+  flex: 0 0 auto;
   display: inline-flex;
   min-height: 24px;
   padding: 3px 8px;
@@ -472,6 +494,7 @@ h3 {
 
 .capability-list p {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 13px;
 }
@@ -510,6 +533,7 @@ h3 {
 .validation-item-heading {
   margin-bottom: 20px;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -561,6 +585,7 @@ h3 {
 
 .validation-detail {
   margin: 17px 0 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 12px;
 }
@@ -693,6 +718,7 @@ h3 {
 .boundary li {
   margin-bottom: 7px;
   break-inside: avoid;
+  overflow-wrap: anywhere;
   color: #bec9c5;
   font-size: 12px;
 }
@@ -832,6 +858,8 @@ h3 {
 
 .commit-link {
   margin-right: 6px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
   color: var(--ferric-dark);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
@@ -840,6 +868,7 @@ h3 {
 .timeline-body p {
   max-width: 850px;
   margin: 8px 0 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 13px;
 }
@@ -865,7 +894,7 @@ h3 {
 .authority-item {
   padding: 13px 0;
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 18px;
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -1011,7 +1040,7 @@ footer {
   .overview-grid,
   .section-heading,
   .evidence-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .overview-grid {
@@ -1083,15 +1112,7 @@ footer {
   }
 }
 
-@media (max-width: 700px) {
-  :root {
-    --shell: calc(100% - 28px);
-  }
-
-  html {
-    scroll-padding-top: 60px;
-  }
-
+@media (max-width: 720px) {
   .site-header {
     position: static;
   }
@@ -1123,6 +1144,16 @@ footer {
   nav a {
     padding-right: 0;
     font-size: 11px;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --shell: calc(100% - 28px);
+  }
+
+  html {
+    scroll-padding-top: 60px;
   }
 
   .overview {
@@ -1220,10 +1251,6 @@ footer {
 
   .evidence-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .authority-item {
-    grid-template-columns: 120px minmax(0, 1fr);
   }
 
   .gate-row {
