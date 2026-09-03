@@ -3544,6 +3544,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     complete_authenticated_rearmed_speculative_round_prepared(engine, prepared)
 }
 
+#[allow(clippy::unnecessary_box_returns)]
 fn map_rearmed_coordinator_preparation_failure(
     failure: Box<
         M1PrepareCoordinatorRoundCoreFailureV1<
