@@ -3,9 +3,9 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
-    integrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
-    integrationTree: "392e43038367b9e9e6ebf59879d631d5b1639472",
+    siteRefreshBase: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
+    integrationCommit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
+    integrationTree: "4444477fb1cfb6ec8b6e0bdff830d206ec698932",
     implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
     authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
     aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -34,7 +34,15 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateRun5Boundary: "core::f32::is_finite",
     engineeringAggregateRun5Status: "failed-cross-crate-unsafe-authentication",
     fe2o3CrossCrateRemediationStatus: "in-progress-uncommitted",
-    targetEngineeringSmokeStatus: "planned-in-progress",
+    targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
+    targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
+    targetEngineeringSmokeIntegrationCommit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
+    targetEngineeringSmokeStatus: "independent-go-integrated-not-executed",
+    targetEngineeringSmokeEngineTests: 511,
+    targetEngineeringSmokeCaptureTests: 84,
+    targetEngineeringSmokeDoctests: 145,
+    targetEngineeringSmokeExactFinalPinStatus: "open",
+    targetEngineeringSmokeHardwareStatus: "not-run",
     baselineAuditStatus: "host-ready-vllm-sglang-unavailable",
     comparisonStatus: "not-run",
     protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
@@ -67,7 +75,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric integration 99cf0d5 contains the independently reviewed GO speculative executor at 0c2b73b and the independently reviewed GO non-authoritative engineering aggregate loader at c9072b0. fe2o3 engineering producer schema 5099cf3 is frozen. Pushed fabs candidate 41abaa0c, 65 commits ahead and 0 behind origin/main 712c98f, passed its focused MI300X matrix and is not integrated into Ferric. Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. fe2o3 remediation with an exact body contract is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. The target-only engineering smoke is planned and in progress. A read-only baseline audit found the mi300x host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
+      "Ferric integration 36fb8e9 contains the independently reviewed GO speculative executor at 0c2b73b, non-authoritative engineering aggregate loader at c9072b0, and non-authoritative target-only smoke at 951d48a. fe2o3 engineering producer schema 5099cf3 is frozen. Pushed fabs candidate 41abaa0c, 65 commits ahead and 0 behind origin/main 712c98f, passed its focused MI300X matrix and is not Ferric's exact final pin. Aggregate run 5 launched, crossed supported fabs lowering, and terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. fe2o3 remediation with an exact body contract is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. The smoke received independent source-integration GO and merged at 36fb8e9 with a documentation-only correction. An ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy on mi300x; exact locked final pinning and live hardware execution remain open. A read-only baseline audit found the mi300x host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so no comparison has run. Ferric's private current aggregate publication selection remains None (CURRENT=None). All 33 M1 roadmap gates and all 17 assurance properties remain Open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -76,12 +84,13 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "99cf0d514feb7fccb916f066c645c3a1cf831a0c; exact unpublished integration before this checkpoint update"],
-    ["M1 integration", "99cf0d514feb7fccb916f066c645c3a1cf831a0c; tree 392e43038367b9e9e6ebf59879d631d5b1639472; contains the reviewed executor and engineering loader"],
+    ["Pages refresh base", "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b; exact unpublished integration before this checkpoint update"],
+    ["M1 integration", "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b; tree 4444477fb1cfb6ec8b6e0bdff830d206ec698932; contains the reviewed executor, engineering loader, and target-only smoke"],
     ["fe2o3 engineering producer", "schema frozen at 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8; tree e089a7e95eb4c103e61e973321ed79a7b1233364; pushed fabs candidate 41abaa0c97839f4cae8b1d0527ad7801fc4fa51e is 65 ahead / 0 behind origin/main 712c98f317d98298c1c2a6e466e36967d69f71f7, focused MI300X matrix green, still under broader and real-aggregate qualification, and not integrated into Ferric"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "Run 5 launched and terminated with exit 1 after crossing supported fabs lowering: exact sealed core::f32::is_finite cross-crate unsafe-block authentication failed. fe2o3 exact-body-contract remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted; the target-only engineering smoke remains planned and in progress"],
+    ["Engineering aggregate output", "Run 5 launched and terminated with exit 1 after crossing supported fabs lowering: exact sealed core::f32::is_finite cross-crate unsafe-block authentication failed. fe2o3 exact-body-contract remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted; the target-only engineering smoke is source-integrated but not executed"],
+    ["Target-only engineering smoke", "951d48ac119089a62546cb6f96f324feaad013af; tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c; independent source-integration GO; merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction; ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pin and live hardware remain open; not executed; no Qwen token"],
     ["Baseline comparison", "Read-only audit: mi300x host ready; Docker access denied; vLLM and SGLang unavailable; comparison not run"],
     ["Protected verifier status", "local service candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 / tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1 passed exact-archive qualification and independent review with no P0/P1/P2, and is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but not public main or deployed authority"],
     ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
@@ -162,6 +171,12 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       detail:
         "Candidate c9072b0de61a27be917020baf5eecb4b743734f0 (tree c725eb6e3e6f470fa327f94289509fe910eb83ef) received independent review GO and is integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c. It strictly admits a descriptor-relative engineering observation and maps one structurally inspected gfx942:xnack-/COV6 aggregate to the exact 12-program catalog through borrowed callback custody. It cannot create Worker V3, protected verification, publication, load, or launch authority, and no real aggregate HSACO has passed through it yet.",
+    },
+    {
+      label: "Non-authoritative target-only engineering smoke",
+      state: "integration",
+      detail:
+        "Candidate 951d48ac119089a62546cb6f96f324feaad013af (tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c) received independent source-integration GO and is merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction. A remote ephemeral repin to 41abaa0c passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy. Exact locked final pinning and live hardware execution remain open. The smoke has not executed and has produced no Qwen token, numerical result, performance result, production authority, or M1 evidence.",
     },
     {
       label: "Aggregate publication-selection candidate",
@@ -365,7 +380,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor and non-authoritative engineering loader are reviewed and integrated. Aggregate run 5 crossed supported fabs lowering but terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. The exact-body-contract fe2o3 remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted, and the target-only engineering prompt smoke remains planned and in progress. The canonical prepack result is a non-final probe; no authenticated current-source Qwen execution, numerical result, or performance result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). The executor, non-authoritative engineering loader, and non-authoritative target-only smoke are reviewed and integrated. Aggregate run 5 crossed supported fabs lowering but terminated with exit 1 at the exact sealed core::f32::is_finite cross-crate unsafe-block authentication boundary. The exact-body-contract fe2o3 remediation is in progress and not yet committed. No handoff, worker invocation, HSACO, manifest, hardware execution, or Qwen token resulted. The smoke's ephemeral 41abaa0c source matrix is green, but exact locked final pinning and live hardware execution remain open; the smoke has not executed. The canonical prepack result is a non-final probe, and no authenticated current-source Qwen execution, numerical result, or performance result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
@@ -485,6 +500,11 @@ window.FERRIC_PROJECT = Object.freeze({
           "Ferric candidate c9072b0 received independent review GO and is integrated at 99cf0d5. It validates the bounded engineering manifest, exact source and tool identities, aggregate digest, target, COV6, and 12-program roster before lending a structural catalog to a callback. It grants no production admission, load, launch, or Qwen authority.",
       },
       {
+        name: "Non-authoritative target-only engineering smoke",
+        detail:
+          "Ferric candidate 951d48a received independent source-integration GO and is merged at 36fb8e9 with a documentation-only correction. An ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy on mi300x. Exact locked final pinning and live hardware execution remain open; the smoke has not executed and has produced no Qwen token.",
+      },
+      {
         name: "Protected verifier service foundation",
         detail:
           "Local service candidate 9a435522 is not publicly linked. It passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and does not supply real protected current, checker, signer, head-store, supervisor, or IPC authority. Companion binder candidate 6846d92 passed exact-archive qualification and independent review with no P0/P1/P2 and is integrated locally at ed708de, but is not public main or deployed authority.",
@@ -569,7 +589,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Complete Qwen execution",
         detail:
-          "First implement and run the target-only engineering prompt smoke against a real structurally admitted aggregate, then join an accepted aggregate artifact set to the full target and draft graph, model bundle, generated runner, and production KFD path. No Qwen token exists yet.",
+          "Finish the compiler repair and exact final pin, then run the source-integrated target-only engineering prompt smoke against a real structurally admitted aggregate. After that, join an accepted aggregate artifact set to the full target and draft graph, model bundle, generated runner, and production KFD path. No Qwen token exists yet.",
       },
       {
         name: "Compare with vLLM and SGLang",
@@ -641,6 +661,20 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b",
+      title: "Integrate the reviewed target-only engineering smoke",
+      state: "integration",
+      detail:
+        "This unpublished integration merges the independently source-reviewed GO smoke at 951d48a and a documentation-only correction. Exact locked final pinning and live hardware execution remain open. The source integration has not produced a handoff, worker invocation, HSACO, manifest, hardware result, or Qwen token and grants no production or M1 authority.",
+    },
+    {
+      commit: "951d48ac119089a62546cb6f96f324feaad013af",
+      title: "Approve the non-authoritative target-only smoke source",
+      state: "qualified",
+      detail:
+        "Independent review returned source-integration GO. A remote ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy on mi300x. The exact locked final pin and live hardware remain open; the smoke has not executed and no Qwen token, numerical result, performance result, production authority, or M1 evidence follows.",
+    },
     {
       commit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
       title: "Integrate the reviewed executor and engineering loader",
@@ -1276,7 +1310,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric-owned inference kernels and their concrete protected policy",
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
-      "Unpublished integration 99cf0d514feb7fccb916f066c645c3a1cf831a0c is this Pages checkpoint base and contains the reviewed executor and engineering aggregate loader; earlier 7f516e073b8759eb012c998bc9df2eb101d0c7ab remains the retained strict proof-release source",
+      "Unpublished integration 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b is this Pages checkpoint base and contains the reviewed executor, engineering aggregate loader, and target-only smoke; earlier 7f516e073b8759eb012c998bc9df2eb101d0c7ab remains the retained strict proof-release source",
       "One aggregate device package owns all 12 attributed M1 kernel roots across seven canonical source modules",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
       "The typed source-pin adapter admits only the exact aggregate target, code-object version, entry set, and descriptor set; the final repin waits for the current fe2o3 compiler candidate to finish qualification",
@@ -1294,6 +1328,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric's private current aggregate publication selection remains None with no public, environment, CLI, or file override, and the zero-state protected verifier has no protected receipt",
       "Speculative executor candidate 0c2b73bfb8d4e62c100c42a125171c271c8850d8, tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568, closed the prior custody findings, passed its exact mi300x matrix, received independent GO, and is integrated at 867f863e223d00e3b304d324e89146e27d2c5c28",
       "Engineering aggregate loader c9072b0de61a27be917020baf5eecb4b743734f0, tree c725eb6e3e6f470fa327f94289509fe910eb83ef, received independent GO and is integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c with observation-only, non-authoritative custody",
+      "Target-only smoke 951d48ac119089a62546cb6f96f324feaad013af, tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c, received independent source-integration GO and is merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction",
+      "The ephemeral 41abaa0c smoke matrix passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pinning and live hardware execution remain open, the smoke has not executed, and no Qwen token follows",
       "Local protected-verifier service candidate 9a435522 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but it is not deployed and still lacks real protected current, checker, signer, head-store, supervisor, and IPC facilities",
       "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
       "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
