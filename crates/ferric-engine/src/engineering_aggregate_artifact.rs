@@ -355,10 +355,12 @@ pub fn reopen_m1_engineering_aggregate_artifact_v1(
     })?;
     validate_inspection(&manifest, &facts, &inspection)?;
 
-    let envelope = fe2o3_amdhsa_loader::validate(&hsaco_bytes, AdmittedProfile::Gfx942XnackOffCov6)
-        .map_err(M1EngineeringAggregateArtifactOpenErrorV1::Loader)?;
-    let plan = *envelope.plan();
-    drop(envelope);
+    let plan = {
+        let envelope =
+            fe2o3_amdhsa_loader::validate(&hsaco_bytes, AdmittedProfile::Gfx942XnackOffCov6)
+                .map_err(M1EngineeringAggregateArtifactOpenErrorV1::Loader)?;
+        *envelope.plan()
+    };
 
     let source = M1PhysicalProgramSourceContractV1::new(
         facts.compiler_handoff.sha256,
@@ -749,7 +751,7 @@ fn validate_manifest_kernel_roster(
     }
     let mut expected = expected
         .iter()
-        .map(|entry| entry.export_name())
+        .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
         .collect::<Vec<_>>();
     expected.sort_unstable();
     require(actual == expected, "hsaco.kernel_names")
@@ -774,7 +776,7 @@ fn validate_inspection(
         .hsaco()
         .kernels()
         .iter()
-        .map(|kernel| kernel.name())
+        .map(fe2o3_hsaco::InspectedKernel::name)
         .eq(manifest.hsaco.kernel_names.iter().map(String::as_str))
     {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::MetadataKernelRoster);
