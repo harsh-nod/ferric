@@ -9010,11 +9010,13 @@ mod tests {
         assert!(catalog.admission_record().is_some());
     }
 
+    #[cfg(feature = "native-rollover-fixture")]
     #[test]
     #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
         use ferric_engine::{
             bind_m1_authenticated_speculative_rollover_intent_v1,
+            build_m1_native_rollover_fixture_batch_v1,
             complete_m1_authenticated_physical_step_v1,
             prepare_m1_authenticated_speculative_rollover_v1,
             release_m1_authenticated_completed_step_kv_pages_v1,
@@ -9023,9 +9025,9 @@ mod tests {
             M1AuthenticatedPhysicalQueueSessionV1,
             M1AuthenticatedSpeculativeRolloverMemberIntentV1, M1DeviceKvCompletionMemberV1,
             M1DeviceKvCompletionRosterV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
-            M1ServingCompletionDispositionV1, M1ServingPlanV1, M1ServingRegistryV1,
-            M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
-            M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+            M1ServingPlanV1, M1SpeculativeGenerationLoopV1,
+            M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1,
+            M1SpeculativeMemberSeedV1,
         };
 
         let required_path = |name: &str| {
@@ -9041,6 +9043,10 @@ mod tests {
             .expect("set FERRIC_M1_GPU_UNIQUE_ID")
             .parse::<u64>()
             .expect("FERRIC_M1_GPU_UNIQUE_ID must be decimal");
+        let expected_prefill_token = std::env::var("FERRIC_M1_ROLLOVER_PREFILL_TOKEN")
+            .expect("set FERRIC_M1_ROLLOVER_PREFILL_TOKEN from the admitted aggregate")
+            .parse::<u32>()
+            .expect("FERRIC_M1_ROLLOVER_PREFILL_TOKEN must be decimal");
 
         let selector_bytes = read_r32_selector_manifest(&selector_path)
             .expect("read exact aggregate V2 selector manifest");
@@ -9171,8 +9177,13 @@ mod tests {
             .logical_runner()
             .bind_step_plan(request, scheduled.epoch(), draft_prefill)
             .expect("bind draft prefill plan");
-        let validated =
-            |plan, tokens, positions, active_length, context_length| match validate_m1_step_inputs(
+        let validated = |plan: StepPlan,
+                         tokens: Vec<u32>,
+                         positions: Vec<u32>,
+                         active_length: u32,
+                         context_length: u32|
+         -> ValidatedM1StepInputs {
+            match validate_m1_step_inputs(
                 M1StepInputCandidate::new(
                     plan.selection(),
                     vec![Some(plan)],
@@ -9186,7 +9197,8 @@ mod tests {
                 M1StepInputValidationOutcome::Rejected(failure) => {
                     panic!("fixture input rejected: {:?}", failure.error())
                 }
-            };
+            }
+        };
         let target_inputs = validated(target_plan, vec![1; 128], (0..128).collect(), 128, 0);
         let draft_inputs = validated(draft_plan, vec![1; 128], (0..128).collect(), 128, 0);
         let mut cache =
@@ -9272,9 +9284,6 @@ mod tests {
         let completion = allocated
             .allocate_completion_output(target_prefill)
             .expect("allocate paired-prefill completion");
-        let completion = allocated
-            .enable_direct_diagnostic_choices_capture(completion)
-            .expect("enable direct paired-prefill choice capture");
         let prepublication = runner
             .prepare_first_step(allocated, recipe, completion)
             .expect("prepare authenticated paired-prefill publication");
@@ -9289,14 +9298,12 @@ mod tests {
         let observed = recycled
             .observe_completion()
             .expect("observe paired-prefill compact completion");
-        let direct = observed
-            .observe_direct_diagnostic_choices()
-            .expect("observe paired-prefill direct choice");
-        let joined = direct
-            .check_completion()
-            .expect("join paired-prefill completion to direct choice");
-        let (readback, direct_choices) = joined.into_parts();
-        let anchor = direct_choices.choices()[0];
+        let readback = observed
+            .check_completion(&[CompletionWireSemanticExpectation::DirectFinalRow {
+                choice: expected_prefill_token,
+            }])
+            .expect("authenticate paired-prefill output against admitted expected token");
+        let anchor = expected_prefill_token;
         let roster =
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
                 cache,
@@ -9309,29 +9316,7 @@ mod tests {
         let released = release_m1_authenticated_completed_step_kv_pages_v1(completed)
             .expect("release paired-prefill completed pages");
 
-        let mut registry = M1ServingRegistryV1::<1>::new().expect("construct serving registry");
-        registry.admit(request, prior).expect("admit prefill plan");
-        let prefill_batch = registry
-            .plan_next()
-            .expect("plan prefill")
-            .expect("prefill registry member is ready");
-        let reservation = registry
-            .reserve_publication(prefill_batch)
-            .expect("reserve prefill publication");
-        let identity = reservation.registry_identity();
-        let prefill_epoch = reservation.physical_batch().epoch();
-        registry
-            .record_publication(reservation)
-            .expect("record prefill publication");
-        let dispositions = [M1ServingCompletionDispositionV1::Continue(next)];
-        registry
-            .preflight_completion_exact_for(identity, prefill_epoch, &dispositions)
-            .expect("preflight serving transition");
-        registry.apply_preflighted_completion(prefill_epoch, &dispositions);
-        let rollover_batch = registry
-            .plan_next()
-            .expect("plan rollover")
-            .expect("rollover registry member is ready");
+        let rollover_batch = build_m1_native_rollover_fixture_batch_v1(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();
         let target_plan = logical_runner
             .bind_step_plan(request, rollover_epoch, target_speculative)
@@ -9392,7 +9377,7 @@ mod tests {
             .destroy_queue_and_retain_state(&mut engine)
             .expect("destroy authenticated rollover queue");
         assert!(!engine.is_faulted());
-        drop((closed, outcome, choices, direct_choices, logical_runner));
+        drop((closed, outcome, choices, logical_runner));
     }
 
     #[test]

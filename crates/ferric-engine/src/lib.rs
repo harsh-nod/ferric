@@ -197,6 +197,9 @@ pub use authenticated_queue_rollover::{
     M1AuthenticatedSpeculativeRolloverTeardownFailureV1,
     M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
 };
+#[cfg(feature = "native-rollover-fixture")]
+#[doc(hidden)]
+pub use authenticated_queue_rollover::build_m1_native_rollover_fixture_batch_v1;
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,
     M1AuthenticatedSpeculativeBootstrapFailureCustodyV1,

@@ -8,6 +8,7 @@ version.workspace = true
 publish = false
 
 [features]
+native-rollover-fixture = []
 qualification-fault-injection = ["fe2o3-service-host/qualification-fault-injection"]
 
 [[bin]]

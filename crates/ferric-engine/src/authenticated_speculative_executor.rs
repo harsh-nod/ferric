@@ -4183,14 +4183,6 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         self.active_count() == 0
     }
 
-    /// Read-only view of the currently released authenticated round.
-    ///
-    /// This does not transfer queue, completion, or scheduling authority.
-    #[must_use]
-    pub const fn current_released_round(&self) -> &crate::M1AuthenticatedReleasedCompletedStepV1 {
-        self.released.current_released()
-    }
-
     /// Destroys the authenticated queue while retaining the final coordinator,
     /// checked completion, and complete queue history on either lower outcome.
     ///
