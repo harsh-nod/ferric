@@ -1,9 +1,11 @@
 //! Non-authoritative admission of one fe2o3 engineering aggregate observation.
 //!
-//! This feature-gated path deliberately stops at an inert, lexically borrowed
-//! structural program catalog. It cannot construct authenticated Worker V3
-//! custody, select a current publication, load an executable, or publish a
-//! queue. The private manifest decoder mirrors the current canonical
+//! This feature-gated admission API deliberately stops at an inert, lexically
+//! borrowed structural program catalog. It cannot construct authenticated
+//! Worker V3 custody or select a current publication. A separate, stronger
+//! engineering execution feature may privately retain that catalog in the
+//! legacy structural runner, but does not change this public admission
+//! contract. The private manifest decoder mirrors the current canonical
 //! `EngineeringHsacoObservationV1` JSON schema. Any schema or canonical field
 //! order change fails closed until Ferric audits and updates this decoder.
 
@@ -197,6 +199,16 @@ impl fmt::Debug for M1EngineeringAggregateArtifactV1 {
 }
 
 impl M1EngineeringAggregateArtifactV1 {
+    pub(super) fn content_bound_program_catalog_v1(
+        &self,
+    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+        bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1(
+            &self.bytes,
+            self.plan,
+            self.source,
+        )
+    }
+
     /// SHA-256 identity of the exact canonical observation manifest bytes.
     #[must_use]
     pub const fn manifest_id(&self) -> Identity {
@@ -247,11 +259,7 @@ impl M1EngineeringAggregateArtifactV1 {
         &self,
         use_catalog: impl for<'catalog> FnOnce(ContentBoundM1ProgramCatalogV1<'catalog>) -> R,
     ) -> Result<R, M1PhysicalProgramCatalogErrorV1> {
-        let catalog = bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1(
-            &self.bytes,
-            self.plan,
-            self.source,
-        )?;
+        let catalog = self.content_bound_program_catalog_v1()?;
         Ok(use_catalog(catalog))
     }
 
@@ -1702,6 +1710,20 @@ mod tests {
             observation_content_id(b"manifest", b"hsaco"),
             observation_content_id(b"manifest", b"hsaco-2")
         );
+    }
+
+    #[test]
+    fn public_admission_surface_remains_callback_only_and_non_authoritative() {
+        let source = include_str!("engineering_aggregate_artifact.rs");
+        assert!(source.contains("pub fn with_structural_program_catalog_v1"));
+        assert!(source.contains("pub(super) fn content_bound_program_catalog_v1"));
+        let direct_public_catalog = ["pub fn content_bound_program_", "catalog_v1"].concat();
+        let engineering_runner_bind =
+            ["bind_engineering_structural_", "m1_physical_runner_v1"].concat();
+        let implicit_conversion = ["impl From<M1Engineering", "AggregateArtifactV1"].concat();
+        assert!(!source.contains(&direct_public_catalog));
+        assert!(!source.contains(&engineering_runner_bind));
+        assert!(!source.contains(&implicit_conversion));
     }
 
     #[test]
