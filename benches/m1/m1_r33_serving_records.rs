@@ -721,7 +721,8 @@ fn build_record(
     for (engine, mut sample) in ENGINES.iter().zip(samples) {
         let input_throughput = median(&mut sample.input_throughput)?;
         let output_throughput = median(&mut sample.output_throughput)?;
-        let total_throughput = median(&mut sample.total_throughput)?;
+        let mut total_throughput_for_median = sample.total_throughput.clone();
+        let total_throughput = median(&mut total_throughput_for_median)?;
         let latency = median(&mut sample.latency)?;
         if latency.numerator > u128::from(slo) * latency.denominator {
             return Err(format!(
@@ -1758,6 +1759,88 @@ mod tests {
         }
         let (policy_path, observations_path) = write_fixture(&temporary.0, &original, &too_slow);
         assert!(validate(&policy_path, &observations_path).is_err());
+    }
+
+    #[test]
+    fn crossed_window_record_bootstrap_preserves_original_pairing() {
+        let temporary = Temporary::new();
+        let policy = policy();
+        let mut observations = observations(&policy);
+        let mut ferric_samples = Vec::new();
+        let mut vllm_samples = Vec::new();
+        let mut recorded = 0_usize;
+        for row in observations["rows"].as_array_mut().unwrap() {
+            if row["phase"] != "recorded" {
+                continue;
+            }
+            for &engine in ENGINES {
+                row["values"][engine]["input_tokens"] = json!(68);
+                row["values"][engine]["output_tokens"] = json!(34);
+                row["values"][engine]["total_tokens"] = json!(102);
+            }
+            let ferric_duration = if recorded.is_multiple_of(2) {
+                1_020
+            } else {
+                1_000
+            };
+            let vllm_duration = if recorded.is_multiple_of(2) {
+                1_000
+            } else {
+                1_020
+            };
+            row["values"]["ferric"]["duration_ns"] = json!(ferric_duration);
+            row["values"]["vllm"]["duration_ns"] = json!(vllm_duration);
+            row["values"]["sglang"]["duration_ns"] = json!(1_030);
+            ferric_samples.push(rate(102, ferric_duration).unwrap());
+            vllm_samples.push(rate(102, vllm_duration).unwrap());
+            recorded += 1;
+        }
+        assert_eq!(recorded, SERVER_STARTS * RECORDED_PER_START);
+
+        let policy_bytes = encode_canonical_document(&policy).unwrap();
+        let observations_bytes = encode_canonical_document(&observations).unwrap();
+        let policy_sha256 = sha256_identity(&policy_bytes);
+        let observations_sha256 = sha256_identity(&observations_bytes);
+        let aligned = paired_bootstrap_interval(
+            &ferric_samples,
+            &vllm_samples,
+            &policy_sha256,
+            &observations_sha256,
+        )
+        .unwrap();
+        let mut independently_sorted_ferric = ferric_samples.clone();
+        let mut independently_sorted_vllm = vllm_samples.clone();
+        independently_sorted_ferric.sort_unstable();
+        independently_sorted_vllm.sort_unstable();
+        let independently_sorted = paired_bootstrap_interval(
+            &independently_sorted_ferric,
+            &independently_sorted_vllm,
+            &policy_sha256,
+            &observations_sha256,
+        )
+        .unwrap();
+        assert_ne!(aligned, independently_sorted);
+        assert!(aligned.lower_ppm >= COMPETITIVENESS_GATE_PPM);
+
+        let (policy_path, observations_path) = write_fixture(&temporary.0, &policy, &observations);
+        let record = validate(&policy_path, &observations_path).unwrap();
+        assert_eq!(record["fastest_baseline"], "vllm");
+        assert_eq!(
+            record["paired_bootstrap_95_percent"]["lower_bound_ppm"],
+            aligned.lower_ppm
+        );
+        assert_eq!(
+            record["paired_bootstrap_95_percent"]["seed_sha256"],
+            aligned.seed_sha256
+        );
+        assert_eq!(
+            record["paired_bootstrap_95_percent"]["upper_bound_ppm"],
+            aligned.upper_ppm
+        );
+        assert_ne!(
+            record["paired_bootstrap_95_percent"]["lower_bound_ppm"],
+            independently_sorted.lower_ppm
+        );
     }
 
     #[test]
