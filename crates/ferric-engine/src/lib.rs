@@ -18,6 +18,8 @@ mod completion_output;
 mod completion_wire;
 mod device_cache;
 mod direct_diagnostic_choices;
+#[cfg(feature = "engineering-non-authoritative-hsaco")]
+mod engineering_aggregate_artifact;
 mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
@@ -225,6 +227,13 @@ pub use direct_diagnostic_choices::{
     M1DirectDiagnosticChoicesAllocationFailureV1, M1DirectDiagnosticChoicesErrorV1,
     M1DirectDiagnosticChoicesShapeV1, M1ObservedDirectDiagnosticChoicesV1,
     M1_DIRECT_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
+};
+#[cfg(feature = "engineering-non-authoritative-hsaco")]
+pub use engineering_aggregate_artifact::{
+    reopen_m1_engineering_aggregate_artifact_v1, M1EngineeringAggregateArtifactFileV1,
+    M1EngineeringAggregateArtifactOpenErrorV1, M1EngineeringAggregateArtifactV1,
+    M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1, M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1,
+    M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1,
 };
 pub use epoch::ExactCompletion;
 pub use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
