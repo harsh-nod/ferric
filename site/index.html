@@ -198,27 +198,23 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Accept the aggregate artifact</h2>
+            <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Public fe2o3 candidate ff21f24, tree 861ad57c, is based on latest main 308d8fa and
-            passed exact-archive qualification on mi300x. It carries one caller-supplied absolute
-            deadline through Worker V3 V2 and safely destroys or releases unpublished prepared
-            queues. Ferric has not completed its dependency repin. Speculative executor candidate
-            f300ab8 passed 492 library tests and 136 doctests on mi300x, but independent re-review
-            found four P1 custody and lifecycle escapes. It is explicitly NO-GO and remediation is
-            in progress. Local protected-verifier service candidate 9a435522 is not publicly linked;
-            it passed 28 tests and 6 doctests and received independent foundation GO, but it is not
-            deployed and still needs real protected current, checker, signer, head-store, supervisor,
-            and IPC facilities. Binder candidate 6846d92, tree 4690d8c, passed its exact-archive
-            mi300x matrix and independent review returned GO with no P0, P1, or P2 findings. It is
-            integrated locally into the M1 branch at ed708de, but is not public main or deployed
-            authority. Ferric-specific inference and kernel ownership remain in Ferric; reusable
-            compiler and runtime work remains in fe2o3. The private current
-            aggregate publication selection remains None (CURRENT=None). No authenticated
-            current-source Qwen, hardware, numerical, or performance run exists. All 33 M1 roadmap
-            gates and all 17 assurance
-            properties remain Open.
+            Ferric integration 99cf0d5 contains speculative executor 0c2b73b and engineering
+            aggregate loader c9072b0; both received independent review GO before integration. The
+            loader remains observation-only and non-authoritative. fe2o3 engineering producer schema
+            5099cf3 is frozen. Pushed fabs candidate 41abaa0c is 65 commits ahead and 0 behind
+            origin/main 712c98f; its focused MI300X matrix is green, but broader and real-aggregate
+            qualification and Ferric integration remain open. Aggregate run 5 has not launched. The
+            next concrete step is to emit the first real aggregate HSACO and pass it through strict
+            structural admission. The target-only engineering smoke is planned and in progress; no
+            Qwen token has run through Ferric. A read-only baseline audit found the mi300x host ready,
+            but Docker access is denied and neither vLLM nor SGLang is installed, so the comparison has
+            not run. Ferric-specific inference and kernel ownership remain in Ferric; reusable compiler
+            and runtime work remains in fe2o3. The private current aggregate publication selection
+            remains None (CURRENT=None). No authenticated current-source Qwen, hardware, numerical, or
+            performance run exists. All 33 M1 roadmap gates and all 17 assurance properties remain Open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

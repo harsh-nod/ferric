@@ -28,7 +28,19 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "99cf0d5",
+  "0c2b73b",
+  "c9072b0",
+  "5099cf3",
+  "41abaa0c",
+  "focused MI300X matrix is green",
+  "Aggregate run 5 has not launched",
   "CURRENT=None",
+  "No aggregate HSACO exists",
+  "no Qwen token has run through Ferric",
+  "Docker access denied",
+  "vLLM and SGLang unavailable",
+  "comparison not run",
   "No authenticated current-source Qwen, hardware, numerical, or performance run exists",
   "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
 ];
@@ -164,6 +176,10 @@ if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
             Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) -
             window.innerWidth,
           viewportClipping,
+          sections: [...document.querySelectorAll("main > section")].map((section) => {
+            const rect = section.getBoundingClientRect();
+            return { id: section.id || section.className, top: rect.top, bottom: rect.bottom };
+          }),
         };
       });
       assert(result.overflow <= 1, `${width}px sweep: page has horizontal overflow`);
@@ -171,6 +187,13 @@ if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
         result.viewportClipping.length === 0,
         `${width}px sweep: clipped status or repository control: ${JSON.stringify(result.viewportClipping)}`,
       );
+      result.sections.slice(1).forEach((section, index) => {
+        const previous = result.sections[index];
+        assert(
+          section.top >= previous.bottom - 1,
+          `${width}px sweep: section ${section.id} overlaps ${previous.id}`,
+        );
+      });
     }
     await page.close();
   } finally {
