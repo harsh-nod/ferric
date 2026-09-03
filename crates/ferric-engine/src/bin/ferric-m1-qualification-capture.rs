@@ -2097,6 +2097,12 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     if arguments.first().and_then(|argument| argument.to_str()) == Some(m1_target_smoke::COMMAND) {
         return m1_target_smoke::run(&arguments[1..]);
     }
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    if arguments.first().and_then(|argument| argument.to_str())
+        == Some(m1_target_smoke::ENGINEERING_COMMAND)
+    {
+        return m1_target_smoke::run_engineering(&arguments[1..]);
+    }
     if arguments.len() != 10 {
         match arguments.first().and_then(|argument| argument.to_str()) {
             Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
@@ -9612,6 +9618,8 @@ mod tests {
             "KERNEL-ARTIFACTS",
             "reopen_persisted_m1_kernel_artifacts_v1",
             "bind_structural_m1_physical_runner_v1",
+            "reopen_m1_engineering_aggregate_artifact_v1",
+            "bind_engineering_structural_m1_physical_runner_v1",
             "require_m1_authenticated_roster_acquisition_v1",
             "Synthetic",
             "TestVerifier",

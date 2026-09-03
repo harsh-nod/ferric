@@ -1,8 +1,8 @@
 //! Linear logical and physical composition for the exact M1 Qwen3 runner.
 //!
 //! Logical publication remains independently observable, while
-//! [`M1PhysicalRunnerV1`] additionally retains the admitted persisted K1-K7
-//! bytes and the exact generated operation bindings derived from that manifest.
+//! [`M1PhysicalRunnerV1`] additionally retains one admitted structural program
+//! source and the exact generated operation bindings derived from that source.
 //! Effectful methods only compose existing Ferric ownership transitions. They
 //! expose no native address, add no fallback, and preserve lower recovery or
 //! quarantine owners in every failure result.
@@ -21,6 +21,8 @@ use ferric_spec::{Identity, Qwen3PlanSelection, RequestId, StepPlan};
 
 use crate::m1_prepublication::build_m1_authenticated_prepublication_batch_v1;
 use crate::operation_kernel_plan::derive_canonical_operation_bindings;
+#[cfg(feature = "engineering-non-authoritative-execution")]
+use crate::M1EngineeringAggregateArtifactV1;
 use crate::{
     allocate_initialized_m1_model_memory_on_device_v1, allocate_m1_prepublication_workspaces_v1,
     bind_declared_operation_kernel_plan, bind_m1_partitioned_model_memory_kv_pool_v1,
@@ -214,15 +216,63 @@ impl LogicalRunnerDeclaration {
     }
 }
 
-/// Legacy structural physical runner for admitted raw M1 artifacts.
+/// Legacy structural physical runner for admitted non-production program sources.
 ///
 /// This owner remains available to structural tests and diagnostics. Production
 /// entry points must use the authenticated physical runner instead.
 #[must_use = "physical runner artifact and declaration custody must remain retained"]
 #[derive(Debug)]
 pub struct M1PhysicalRunnerV1 {
-    artifacts: AdmittedPersistedM1KernelArtifactsV1,
+    source: M1StructuralProgramSourceV1,
     operations: DeclaredOperationKernelPlan,
+}
+
+#[derive(Debug)]
+enum M1StructuralProgramSourceV1 {
+    Persisted(Box<AdmittedPersistedM1KernelArtifactsV1>),
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    Engineering(Box<M1EngineeringAggregateArtifactV1>),
+}
+
+impl M1StructuralProgramSourceV1 {
+    const fn admission_manifest_id(&self) -> Identity {
+        match self {
+            Self::Persisted(artifacts) => Identity::new(*artifacts.manifest().identity().sha256()),
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => artifact.manifest_id(),
+        }
+    }
+
+    const fn program_catalog_id(&self) -> Identity {
+        match self {
+            Self::Persisted(artifacts) => artifacts.program_catalog_id(),
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => artifact.program_catalog_id(),
+        }
+    }
+
+    fn with_program_catalog<R>(
+        &self,
+        use_catalog: impl for<'catalog> FnOnce(ContentBoundM1ProgramCatalogV1<'catalog>) -> R,
+    ) -> Result<R, M1PhysicalProgramCatalogErrorV1> {
+        match self {
+            Self::Persisted(artifacts) => {
+                artifacts.with_content_bound_program_catalog_v1(use_catalog)
+            }
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => artifact.with_structural_program_catalog_v1(use_catalog),
+        }
+    }
+
+    fn content_bound_program_catalog_v1(
+        &self,
+    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+        match self {
+            Self::Persisted(artifacts) => artifacts.content_bound_program_catalog_v1(),
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => artifact.content_bound_program_catalog_v1(),
+        }
+    }
 }
 
 /// Production physical runner retaining authenticated Worker V3 program custody.
@@ -365,16 +415,16 @@ impl M1AuthenticatedPhysicalRunnerV1 {
 }
 
 impl M1PhysicalRunnerV1 {
-    /// Exact canonical persisted K1-K7 manifest identity.
+    /// Exact structural artifact-admission manifest identity.
     #[must_use]
     pub const fn kernel_artifact_manifest_id(&self) -> Identity {
-        Identity::new(*self.artifacts.manifest().identity().sha256())
+        self.source.admission_manifest_id()
     }
 
     /// Exact content-bound twelve-program catalog identity.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
-        self.artifacts.program_catalog_id()
+        self.source.program_catalog_id()
     }
 
     /// Exact generated runner declaration identity.
@@ -412,8 +462,7 @@ impl M1PhysicalRunnerV1 {
         &self,
         use_catalog: impl for<'catalog> FnOnce(ContentBoundM1ProgramCatalogV1<'catalog>) -> R,
     ) -> Result<R, M1PhysicalProgramCatalogErrorV1> {
-        self.artifacts
-            .with_content_bound_program_catalog_v1(use_catalog)
+        self.source.with_program_catalog(use_catalog)
     }
 
     /// Derives the complete addressless physical recipe for one admitted step.
@@ -480,7 +529,7 @@ impl M1PhysicalRunnerV1 {
         completion_output: BoundM1CompletionOutputV1,
     ) -> Result<M1PhysicalPublishedQueueSessionV1, M1PhysicalRunnerFirstPublicationFailureV1<'runner>>
     {
-        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+        let catalog = match self.source.content_bound_program_catalog_v1() {
             Ok(catalog) => catalog,
             Err(error) => {
                 return Err(M1PhysicalRunnerFirstPublicationFailureV1::Catalog {
@@ -597,7 +646,7 @@ impl M1PhysicalRunnerV1 {
         prepared: M1PreparedLongLivedQueueRearmV1,
         recipe: AddresslessM1PhysicalBufferRecipeV1,
     ) -> Result<M1RearmedPublishedQueueV1, M1PhysicalRunnerRearmSubmissionFailureV1<'runner>> {
-        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+        let catalog = match self.source.content_bound_program_catalog_v1() {
             Ok(catalog) => catalog,
             Err(error) => {
                 return Err(M1PhysicalRunnerRearmSubmissionFailureV1::Catalog {
@@ -627,7 +676,7 @@ impl M1PhysicalRunnerV1 {
         recipe: AddresslessM1PhysicalBufferRecipeV1,
     ) -> Result<M1RearmedPublishedQueueV1, M1PhysicalRunnerS1K4RolloverSubmissionFailureV1<'runner>>
     {
-        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+        let catalog = match self.source.content_bound_program_catalog_v1() {
             Ok(catalog) => catalog,
             Err(error) => {
                 return Err(M1PhysicalRunnerS1K4RolloverSubmissionFailureV1::Catalog {
@@ -661,7 +710,7 @@ impl M1PhysicalRunnerV1 {
         M1RearmedPublishedQueueV1,
         M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1<'runner>,
     > {
-        let catalog = match self.artifacts.content_bound_program_catalog_v1() {
+        let catalog = match self.source.content_bound_program_catalog_v1() {
             Ok(catalog) => catalog,
             Err(error) => {
                 return Err(
@@ -849,7 +898,7 @@ pub fn bind_structural_m1_physical_runner_v1(
     };
     match bind_declared_operation_kernel_plan(runner, families, operations) {
         OperationKernelPlanOutcome::Bound(operations) => Ok(M1PhysicalRunnerV1 {
-            artifacts,
+            source: M1StructuralProgramSourceV1::Persisted(Box::new(artifacts)),
             operations,
         }),
         OperationKernelPlanOutcome::Rejected(failure) => {
@@ -859,6 +908,138 @@ pub fn bind_structural_m1_physical_runner_v1(
             })
         }
     }
+}
+
+/// Engineering aggregate to structural-runner binding failure.
+///
+/// No failure variant constructs authenticated Worker V3 or physical-runner
+/// custody.
+#[cfg(feature = "engineering-non-authoritative-execution")]
+#[must_use = "engineering structural binding rejection retains every exact input"]
+#[derive(Debug)]
+pub enum M1EngineeringStructuralPhysicalRunnerBindFailureV1 {
+    /// The generated declaration asserted a different executable catalog.
+    ExecutableCatalog {
+        /// Exact admitted engineering aggregate catalog identity.
+        expected: Identity,
+        /// Executable catalog asserted by the generated declaration.
+        actual: Identity,
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Unchanged published declaration owner.
+        publication: Box<PublishedRunnerDeclaration>,
+    },
+    /// Canonical operation derivation rejected the exact logical declaration.
+    Canonical {
+        /// Exact structural derivation error.
+        error: OperationKernelPlanError,
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Logical declaration owner derived from the publication.
+        runner: Box<LogicalRunnerDeclaration>,
+    },
+    /// Final structural operation binding rejected the exact inputs.
+    Structural {
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Structural binding failure retaining declaration and family facts.
+        failure: Box<OperationKernelPlanFailure>,
+    },
+}
+
+/// Binds one non-authoritative engineering aggregate to the legacy structural runner.
+///
+/// Compilation of this API requires the explicit
+/// `engineering-non-authoritative-execution` feature. The returned runner is
+/// never an authenticated Worker V3 runner and cannot enter authenticated queue
+/// APIs. The engineering observation remains authority `none`; explicit caller
+/// invocation supplies consent to attempt a diagnostic load and execution.
+///
+/// # Errors
+///
+/// Returns exact identity, canonical derivation, or structural binding failure
+/// with both move-only inputs retained.
+#[cfg(feature = "engineering-non-authoritative-execution")]
+#[doc(hidden)]
+pub fn bind_engineering_structural_m1_physical_runner_v1(
+    artifact: M1EngineeringAggregateArtifactV1,
+    publication: PublishedRunnerDeclaration,
+) -> Result<M1PhysicalRunnerV1, M1EngineeringStructuralPhysicalRunnerBindFailureV1> {
+    let expected = artifact.program_catalog_id();
+    let actual = publication.executable_catalog_id();
+    if !engineering_executable_catalog_matches(expected, actual) {
+        return Err(
+            M1EngineeringStructuralPhysicalRunnerBindFailureV1::ExecutableCatalog {
+                expected,
+                actual,
+                artifact: Box::new(artifact),
+                publication: Box::new(publication),
+            },
+        );
+    }
+    let runner = LogicalRunnerDeclaration::from_published(publication);
+    let families = engineering_aggregate_family_artifacts(&artifact);
+    let operations = match derive_canonical_operation_bindings(&runner, &families) {
+        Ok(operations) => operations,
+        Err(error) => {
+            return Err(
+                M1EngineeringStructuralPhysicalRunnerBindFailureV1::Canonical {
+                    error,
+                    artifact: Box::new(artifact),
+                    runner: Box::new(runner),
+                },
+            );
+        }
+    };
+    match bind_declared_operation_kernel_plan(runner, families, operations) {
+        OperationKernelPlanOutcome::Bound(operations) => Ok(M1PhysicalRunnerV1 {
+            source: M1StructuralProgramSourceV1::Engineering(Box::new(artifact)),
+            operations,
+        }),
+        OperationKernelPlanOutcome::Rejected(failure) => Err(
+            M1EngineeringStructuralPhysicalRunnerBindFailureV1::Structural {
+                artifact: Box::new(artifact),
+                failure: Box::new(failure),
+            },
+        ),
+    }
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+fn engineering_aggregate_family_artifacts(
+    artifact: &M1EngineeringAggregateArtifactV1,
+) -> Box<[DeclaredKernelFamilyArtifact]> {
+    engineering_aggregate_family_artifacts_from_ids(
+        artifact.compiler_handoff_id(),
+        artifact.hsaco_id(),
+        artifact.program_catalog_id(),
+    )
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+fn engineering_executable_catalog_matches(expected: Identity, actual: Identity) -> bool {
+    expected.equals(&actual)
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+fn engineering_aggregate_family_artifacts_from_ids(
+    build_id: Identity,
+    artifact_id: Identity,
+    abi_layout_id: Identity,
+) -> Box<[DeclaredKernelFamilyArtifact]> {
+    [
+        KernelFamily::K1GemmGemv,
+        KernelFamily::K2RmsNormResidual,
+        KernelFamily::K3RopePagedKv,
+        KernelFamily::K4GqaPrefill,
+        KernelFamily::K5PagedGqaDecode,
+        KernelFamily::K6SwiGlu,
+        KernelFamily::K7LogitsCompact,
+    ]
+    .into_iter()
+    .map(|family| DeclaredKernelFamilyArtifact::new(family, build_id, artifact_id, abi_layout_id))
+    .collect::<Vec<_>>()
+    .into_boxed_slice()
 }
 
 fn physical_family_artifacts(
@@ -1346,6 +1527,50 @@ mod tests {
     use crate::{Engine, M1FullStepWorkspacePlans, M1StepDispatchIntent};
     use ferric_spec::scheduling::RequestState;
     use std::cell::Cell;
+
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    #[test]
+    fn engineering_family_facts_are_exactly_ordered_and_share_aggregate_identity() {
+        use ferric_kernels::KernelFamily;
+
+        use super::engineering_aggregate_family_artifacts_from_ids;
+
+        let build = Identity::new([81; 32]);
+        let artifact = Identity::new([82; 32]);
+        let abi = Identity::new([83; 32]);
+        let facts = engineering_aggregate_family_artifacts_from_ids(build, artifact, abi);
+        assert_eq!(facts.len(), 7);
+        assert_eq!(
+            facts.iter().map(|fact| fact.family()).collect::<Vec<_>>(),
+            vec![
+                KernelFamily::K1GemmGemv,
+                KernelFamily::K2RmsNormResidual,
+                KernelFamily::K3RopePagedKv,
+                KernelFamily::K4GqaPrefill,
+                KernelFamily::K5PagedGqaDecode,
+                KernelFamily::K6SwiGlu,
+                KernelFamily::K7LogitsCompact,
+            ]
+        );
+        for fact in &facts {
+            assert_eq!(fact.build_id(), build);
+            assert_eq!(fact.artifact_id(), artifact);
+            assert_eq!(fact.abi_layout_id(), abi);
+        }
+    }
+
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    #[test]
+    fn engineering_executable_catalog_join_rejects_any_mismatch() {
+        use super::engineering_executable_catalog_matches;
+
+        let exact = Identity::new([84; 32]);
+        assert!(engineering_executable_catalog_matches(exact, exact));
+        assert!(!engineering_executable_catalog_matches(
+            exact,
+            Identity::new([85; 32])
+        ));
+    }
 
     #[test]
     fn retry_routing_preserves_owner_identity_and_exact_attempt_policy() {

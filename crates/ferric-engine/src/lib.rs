@@ -635,6 +635,11 @@ pub use qualification_logits::{
     M1QualificationLogitsErrorV1, M1QualificationLogitsShapeV1,
     M1_QUALIFICATION_LOGITS_ALIGNMENT_V1, M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
 };
+#[cfg(feature = "engineering-non-authoritative-execution")]
+pub use runner::{
+    bind_engineering_structural_m1_physical_runner_v1,
+    M1EngineeringStructuralPhysicalRunnerBindFailureV1,
+};
 pub use runner::{
     bind_m1_physical_runner_v1, bind_structural_m1_physical_runner_v1,
     initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration, LogicalRunnerError,
