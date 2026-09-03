@@ -11,6 +11,7 @@ publish = false
 native-rollover-fixture = []
 qualification-fault-injection = ["fe2o3-service-host/qualification-fault-injection"]
 engineering-non-authoritative-hsaco = ["dep:fe2o3-hsaco-finalize", "dep:serde"]
+engineering-non-authoritative-execution = ["engineering-non-authoritative-hsaco"]
 
 [[bin]]
 name = "ferric-m1-qualification-capture"

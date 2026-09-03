@@ -262,6 +262,15 @@ impl PublishedRunnerDeclaration {
         self.declaration.kernel_catalog_id
     }
 
+    /// Returns the caller-supplied executable-catalog identity retained by the
+    /// preliminary closure.
+    ///
+    /// This is an inert declaration field, not executable or load authority.
+    #[must_use]
+    pub const fn executable_catalog_id(&self) -> Identity {
+        self.declaration.closure.external().executable_catalog
+    }
+
     /// Returns the retained preliminary identity-closure identity.
     #[must_use]
     pub const fn closure_id(&self) -> Identity {
@@ -1697,5 +1706,15 @@ mod tests {
             validate_qwen3_gfx942_runner_declaration(&declaration),
             Err(GeneratedRunnerError::DeclarationDrift)
         );
+    }
+
+    #[test]
+    fn published_executable_catalog_getter_is_inert_and_exact() {
+        let expected = identity(39);
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(exact_closure()).expect("exact declaration");
+        let publication =
+            publish_qwen3_gfx942_runner_declaration(declaration).expect("exact publication");
+        assert_eq!(publication.executable_catalog_id(), expected);
     }
 }

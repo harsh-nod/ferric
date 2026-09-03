@@ -25,6 +25,11 @@ use ferric_build::{
     authenticate_qwen3_tokenizer, SpecialTokenDecodePolicy, SpecialTokenEncodePolicy,
     TokenizerExecutionLimits,
 };
+#[cfg(feature = "engineering-non-authoritative-execution")]
+use ferric_engine::{
+    bind_engineering_structural_m1_physical_runner_v1, reopen_m1_engineering_aggregate_artifact_v1,
+    M1EngineeringAggregateArtifactV1,
+};
 use ferric_engine::{
     bind_structural_m1_physical_runner_v1, complete_m1_physical_step_v1,
     initialize_m1_physical_runner_memory_v1, require_m1_authenticated_roster_acquisition_v1,
@@ -41,11 +46,17 @@ use std::io::{Cursor, Write};
 use std::process;
 
 pub(super) const COMMAND: &str = "run-target-smoke";
+#[cfg(feature = "engineering-non-authoritative-execution")]
+pub(super) const ENGINEERING_COMMAND: &str = "run-engineering-target-smoke";
 
 const STATUS: &str = "smoke-non-evidence-non-qualification";
 const AUTHORITY: &str = "ferric-target-only-smoke-only";
 const NONCLAIM: &str = "Raw-prompt target-only text smoke only. Every prompt-priming and generation choice is reported as a non-evidence diagnostic and settled from the same inert physical K7 observation. This output is not evidence, is not a qualification result, does not establish numerical or hardware correctness, and closes no M1 requirement.";
 const TARGET: &str = "gfx942:xnack-";
+#[cfg(feature = "engineering-non-authoritative-execution")]
+const ENGINEERING_STATUS: &str = "engineering-hardware-observation-non-evidence-non-qualification";
+#[cfg(feature = "engineering-non-authoritative-execution")]
+const ENGINEERING_NONCLAIM: &str = "Raw-prompt target-only execution of a structurally admitted fe2o3 engineering aggregate whose authority is none. Reported choices are raw device observations, not verified model answers. This output authenticates no compiler process or Worker V3 publication, selects no current protected publication, establishes no numerical or hardware correctness, is not benchmark evidence, and closes no M1 requirement.";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum StopReason {
@@ -150,9 +161,62 @@ impl SmokeTokenLoop {
 
 #[derive(Debug)]
 struct SmokeExecution {
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    prompt_tokens: Vec<u32>,
     generated_tokens: Vec<u32>,
     prompt_observations: Vec<u32>,
     stop_reason: StopReason,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum ArtifactMode {
+    Persisted,
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    Engineering,
+}
+
+#[derive(Debug)]
+enum SmokeArtifactSource {
+    Persisted(Box<ferric_engine::AdmittedPersistedM1KernelArtifactsV1>),
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    Engineering(Box<M1EngineeringAggregateArtifactV1>),
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+#[derive(Clone, Copy, Debug)]
+struct EngineeringObservationFacts {
+    manifest: ferric_spec::Identity,
+    hsaco: ferric_spec::Identity,
+    compiler_handoff: ferric_spec::Identity,
+    canonical_descriptor: ferric_spec::Identity,
+    program_catalog: ferric_spec::Identity,
+}
+
+impl SmokeArtifactSource {
+    fn program_catalog_id(&self) -> ferric_spec::Identity {
+        match self {
+            Self::Persisted(artifacts) => artifacts.program_catalog_id(),
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => artifact.program_catalog_id(),
+        }
+    }
+
+    fn bind(
+        self,
+        publication: ferric_build::PublishedRunnerDeclaration,
+    ) -> CaptureResult<M1PhysicalRunnerV1> {
+        match self {
+            Self::Persisted(artifacts) => {
+                bind_structural_m1_physical_runner_v1(*artifacts, publication)
+                    .map_err(|error| format!("cannot bind physical runner: {error:?}"))
+            }
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            Self::Engineering(artifact) => {
+                bind_engineering_structural_m1_physical_runner_v1(*artifact, publication)
+                    .map_err(|error| format!("cannot bind engineering physical runner: {error:?}"))
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -193,10 +257,23 @@ impl ReleasedRound {
 }
 
 pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
+    run_with_mode(arguments, ArtifactMode::Persisted)
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+pub(super) fn run_engineering(arguments: &[OsString]) -> CaptureResult<()> {
+    run_with_mode(arguments, ArtifactMode::Engineering)
+}
+
+fn run_with_mode(arguments: &[OsString], mode: ArtifactMode) -> CaptureResult<()> {
     let [prepacked_root, artifact_root, closure_path, gpu_unique_id, max_new_tokens, prompt] =
         arguments
     else {
-        return Err("usage: ferric-m1-qualification-capture run-target-smoke PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE GPU-UNIQUE-ID MAX-NEW-TOKENS RAW-PROMPT".to_owned());
+        return Err(match mode {
+            ArtifactMode::Persisted => "usage: ferric-m1-qualification-capture run-target-smoke PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE GPU-UNIQUE-ID MAX-NEW-TOKENS RAW-PROMPT".to_owned(),
+            #[cfg(feature = "engineering-non-authoritative-execution")]
+            ArtifactMode::Engineering => "usage: ferric-m1-qualification-capture run-engineering-target-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY CLOSURE GPU-UNIQUE-ID MAX-NEW-TOKENS RAW-PROMPT".to_owned(),
+        });
     };
     let gpu_unique_id = gpu_unique_id
         .to_str()
@@ -212,12 +289,33 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .to_str()
         .ok_or_else(|| "RAW-PROMPT must be UTF-8".to_owned())?;
 
-    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
-        .map_err(|error| error.to_string())?;
-
     let closure = load_closure(Path::new(closure_path))?;
-    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
-        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    let mut engineering_facts = None;
+    let artifacts = match mode {
+        ArtifactMode::Persisted => {
+            require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
+                .map_err(|error| error.to_string())?;
+            SmokeArtifactSource::Persisted(Box::new(
+                reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root)).map_err(
+                    |error| format!("cannot authenticate persisted kernel artifacts: {error}"),
+                )?,
+            ))
+        }
+        #[cfg(feature = "engineering-non-authoritative-execution")]
+        ArtifactMode::Engineering => {
+            let artifact = reopen_m1_engineering_aggregate_artifact_v1(Path::new(artifact_root))
+                .map_err(|error| format!("cannot admit engineering aggregate: {error}"))?;
+            engineering_facts = Some(EngineeringObservationFacts {
+                manifest: artifact.manifest_id(),
+                hsaco: artifact.hsaco_id(),
+                compiler_handoff: artifact.compiler_handoff_id(),
+                canonical_descriptor: artifact.canonical_descriptor_id(),
+                program_catalog: artifact.program_catalog_id(),
+            });
+            SmokeArtifactSource::Engineering(Box::new(artifact))
+        }
+    };
     let executable_catalog_id = artifacts.program_catalog_id();
     let snapshot =
         super::SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
@@ -244,8 +342,10 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
-        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+    let runner = artifacts.bind(publication)?;
+    if runner.program_catalog_id() != executable_catalog_id {
+        return Err("bound physical runner executable catalog drifted".to_owned());
+    }
 
     let memory_admission = model.authenticate()?;
     let memory_plan = model_memory_plan(memory_admission)?;
@@ -276,20 +376,35 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .prompt_observations
         .len()
         .saturating_add(execution.generated_tokens.len());
-    let report = json!({
-        "authority": AUTHORITY,
-        "direct_published_token_count": direct_published_token_count,
-        "generated_token_count": execution.generated_tokens.len(),
-        "generated_token_ids": execution.generated_tokens,
-        "nonclaim": NONCLAIM,
-        "prompt_priming_published_choice_token_ids": execution.prompt_observations,
-        "status": STATUS,
-        "target": TARGET,
-        "termination": execution.stop_reason.as_str(),
-        "text": text,
-        "text_bytes_hex": hex_bytes(&text_bytes),
-        "text_utf8_policy": "lossy-replacement",
-    });
+    let report = match mode {
+        ArtifactMode::Persisted => json!({
+            "authority": AUTHORITY,
+            "direct_published_token_count": direct_published_token_count,
+            "generated_token_count": execution.generated_tokens.len(),
+            "generated_token_ids": execution.generated_tokens,
+            "nonclaim": NONCLAIM,
+            "prompt_priming_published_choice_token_ids": execution.prompt_observations,
+            "status": STATUS,
+            "target": TARGET,
+            "termination": execution.stop_reason.as_str(),
+            "text": text,
+            "text_bytes_hex": hex_bytes(&text_bytes),
+            "text_utf8_policy": "lossy-replacement",
+        }),
+        #[cfg(feature = "engineering-non-authoritative-execution")]
+        ArtifactMode::Engineering => {
+            let facts =
+                engineering_facts.expect("engineering mode retains its admitted observation facts");
+            engineering_report(
+                execution,
+                facts,
+                runner.declaration_id(),
+                runner.logical_runner().bundle_id(),
+                text,
+                &text_bytes,
+            )
+        }
+    };
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize smoke report: {error}"))?;
@@ -297,6 +412,50 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .write_all(b"\n")
         .map_err(|error| format!("cannot write smoke report: {error}"))?;
     Ok(())
+}
+
+#[cfg(feature = "engineering-non-authoritative-execution")]
+fn engineering_report(
+    execution: SmokeExecution,
+    facts: EngineeringObservationFacts,
+    runner_declaration: ferric_spec::Identity,
+    model_bundle: ferric_spec::Identity,
+    text: String,
+    text_bytes: &[u8],
+) -> serde_json::Value {
+    let target_choice_observation_count = execution
+        .prompt_observations
+        .len()
+        .saturating_add(execution.generated_tokens.len());
+    json!({
+        "artifact_authority": "none",
+        "authority": "none",
+        "canonical_descriptor_sha256": hex_bytes(facts.canonical_descriptor.as_bytes()),
+        "compiler_handoff_sha256": hex_bytes(facts.compiler_handoff.as_bytes()),
+        "compiler_origin_authenticated": false,
+        "current_publication_selected": false,
+        "generated_runner_declaration_sha256": hex_bytes(runner_declaration.as_bytes()),
+        "generated_token_count": execution.generated_tokens.len(),
+        "generated_token_ids": execution.generated_tokens,
+        "hardware_completion_observed": true,
+        "hsaco_sha256": hex_bytes(facts.hsaco.as_bytes()),
+        "model_bundle_sha256": hex_bytes(model_bundle.as_bytes()),
+        "nonclaim": ENGINEERING_NONCLAIM,
+        "observation_manifest_sha256": hex_bytes(facts.manifest.as_bytes()),
+        "program_catalog_sha256": hex_bytes(facts.program_catalog.as_bytes()),
+        "prompt_priming_choice_token_ids": execution.prompt_observations,
+        "prompt_token_count": execution.prompt_tokens.len(),
+        "prompt_token_ids": execution.prompt_tokens,
+        "schema": "ferric.m1-engineering-target-smoke-observation.v1",
+        "status": ENGINEERING_STATUS,
+        "target": TARGET,
+        "target_choice_observation_count": target_choice_observation_count,
+        "termination": execution.stop_reason.as_str(),
+        "text": text,
+        "text_bytes_hex": hex_bytes(text_bytes),
+        "text_utf8_policy": "lossy-replacement",
+        "worker_v3_authenticated": false,
+    })
 }
 
 fn execute(
@@ -670,6 +829,8 @@ fn smoke_workspace_identity(tokens: &SmokeTokenLoop) -> [u8; 32] {
 
 fn finish_execution(tokens: SmokeTokenLoop, stop_reason: StopReason) -> SmokeExecution {
     SmokeExecution {
+        #[cfg(feature = "engineering-non-authoritative-execution")]
+        prompt_tokens: tokens.prompt,
         generated_tokens: tokens.generated,
         prompt_observations: tokens.prompt_observations,
         stop_reason,
@@ -804,6 +965,78 @@ fn fail_stop_opaque<T>(phase: &'static str, custody: T) -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    #[test]
+    fn engineering_usage_and_report_are_explicitly_non_authoritative() {
+        let error = run_engineering(&[]).unwrap_err();
+        assert!(error.contains("run-engineering-target-smoke"));
+        assert!(error.contains("ENGINEERING-OBSERVATION-DIRECTORY"));
+
+        let report = engineering_report(
+            SmokeExecution {
+                prompt_tokens: vec![11, 12],
+                generated_tokens: vec![13],
+                prompt_observations: vec![91],
+                stop_reason: StopReason::MaxNewTokens,
+            },
+            EngineeringObservationFacts {
+                manifest: ferric_spec::Identity::new([1; 32]),
+                hsaco: ferric_spec::Identity::new([2; 32]),
+                compiler_handoff: ferric_spec::Identity::new([3; 32]),
+                canonical_descriptor: ferric_spec::Identity::new([4; 32]),
+                program_catalog: ferric_spec::Identity::new([5; 32]),
+            },
+            ferric_spec::Identity::new([6; 32]),
+            ferric_spec::Identity::new([7; 32]),
+            "x".to_owned(),
+            b"x",
+        );
+        assert_eq!(report["authority"], "none");
+        assert_eq!(report["artifact_authority"], "none");
+        assert_eq!(
+            report["schema"],
+            "ferric.m1-engineering-target-smoke-observation.v1"
+        );
+        assert_eq!(report["status"], ENGINEERING_STATUS);
+        assert_eq!(report["prompt_token_ids"], json!([11, 12]));
+        assert_eq!(report["generated_token_ids"], json!([13]));
+        assert_eq!(report["target_choice_observation_count"], 2);
+        assert_eq!(report["hardware_completion_observed"], true);
+        for field in [
+            "compiler_origin_authenticated",
+            "current_publication_selected",
+            "worker_v3_authenticated",
+        ] {
+            assert_eq!(report[field], false, "{field} must remain false");
+        }
+        assert!(report["nonclaim"]
+            .as_str()
+            .unwrap()
+            .contains("closes no M1 requirement"));
+        let object = report.as_object().unwrap();
+        for forbidden in ["qualified", "correct", "current", "worker_v3_authority"] {
+            assert!(!object.contains_key(forbidden));
+        }
+    }
+
+    #[cfg(feature = "engineering-non-authoritative-execution")]
+    #[test]
+    #[ignore = "requires a real fe2o3 observation, canonical prepacked snapshot, and exclusive MI300X"]
+    fn configured_mi300x_engineering_target_first_token_observation() {
+        let required = |name: &str| {
+            std::env::var_os(name).unwrap_or_else(|| panic!("set {name} for the exact fixture"))
+        };
+        let arguments = [
+            required("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT"),
+            required("FERRIC_M1_ENGINEERING_AGGREGATE_OBSERVATION_DIRECTORY"),
+            required("FERRIC_M1_QUALIFICATION_CLOSURE"),
+            required("FERRIC_M1_GPU_UNIQUE_ID"),
+            OsString::from("1"),
+            required("FERRIC_M1_ENGINEERING_SMOKE_PROMPT"),
+        ];
+        run_engineering(&arguments).expect("one real engineering target token completes");
+    }
 
     #[test]
     fn raw_prompt_is_teacher_forced_before_first_generated_token() {
