@@ -271,7 +271,7 @@ pub fn ferric_qwen3_lowest_id_argmax_bf16_v1(
 #[kernel(
     typed,
     launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [32, 1, 1]),
-    control_flow(loop_bounds(32, 16, 2))
+    control_flow(loop_bounds(32, 16, 2), integer_switches(u32))
 )]
 #[allow(clippy::too_many_arguments)]
 pub fn ferric_qwen3_compact_completion_v1(
@@ -289,7 +289,7 @@ pub fn ferric_qwen3_compact_completion_v1(
 ) {
     let sequences = sequences as usize;
     let active_tokens = active_tokens as usize;
-    let speculative_k = speculative_k as usize;
+    let speculative_k_usize = speculative_k as usize;
     if !((speculative_k == 0
         && ((sequences == 1
             && (active_tokens == 1
@@ -302,7 +302,7 @@ pub fn ferric_qwen3_compact_completion_v1(
         || (speculative_k == 8 && active_tokens == 9 && sequences == 1)
         || (speculative_k == 16 && active_tokens == 17 && sequences == 1))
         || choices.len() != sequences * active_tokens
-        || draft.len() != sequences * speculative_k
+        || draft.len() != sequences * speculative_k_usize
         || active_lengths.len() != sequences
         || request_slots.len() != sequences
         || request_generations.len() != sequences
@@ -377,22 +377,34 @@ pub fn ferric_qwen3_compact_completion_v1(
 
     let choice_base = sequence * active_tokens;
     let mut accepted = 0;
-    if !direct {
-        while accepted < speculative_k {
-            let draft_index = accepted * sequences + sequence;
-            let target_index = choice_base + accepted;
-            let draft_token = memory::volatile_load(draft, draft_index);
-            let target_token = memory::volatile_load(choices, target_index);
-            if draft_token as usize >= QWEN3_LOGITS_VOCABULARY_V1
-                || target_token as usize >= QWEN3_LOGITS_VOCABULARY_V1
-            {
-                fe2o3_device::trap();
+    let mut candidate = 0;
+    let mut matching_prefix = true;
+    match speculative_k {
+        0 => {}
+        _ => {
+            while candidate < speculative_k_usize {
+                if matching_prefix {
+                    let draft_index = candidate * sequences + sequence;
+                    let target_index = choice_base + candidate;
+                    let draft_token = memory::volatile_load(draft, draft_index);
+                    let target_token = memory::volatile_load(choices, target_index);
+                    if draft_token as usize >= QWEN3_LOGITS_VOCABULARY_V1
+                        || target_token as usize >= QWEN3_LOGITS_VOCABULARY_V1
+                    {
+                        fe2o3_device::trap();
+                    }
+                    if draft_token == target_token {
+                        accepted += 1;
+                    } else {
+                        matching_prefix = false;
+                    }
+                }
+                candidate += 1;
             }
-            if draft_token != target_token {
-                break;
-            }
-            accepted += 1;
         }
+    }
+    if accepted >= active_tokens {
+        fe2o3_device::trap();
     }
     let correction_index = if direct {
         choice_base + live - 1

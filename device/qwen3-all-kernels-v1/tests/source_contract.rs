@@ -96,3 +96,67 @@ fn shared_family_sources_expose_exactly_twelve_kernel_roots() {
         ]
     );
 }
+
+#[test]
+fn compact_completion_uses_one_header_exit_and_an_inert_mismatch_tail() {
+    let source = FAMILY_SOURCES
+        .iter()
+        .find_map(|(family, source)| (*family == "logits").then_some(*source))
+        .expect("logits source is in the aggregate family roster");
+    let compact = source
+        .split_once("pub fn ferric_qwen3_compact_completion_v1(")
+        .and_then(|(_, tail)| {
+            tail.split_once("pub fn ferric_qwen3_speculative_token_assembly_v1(")
+                .map(|(body, _)| body)
+        })
+        .expect("compact completion source boundaries are present");
+    let compact_no_whitespace = compact
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+
+    for marker in [
+        "let mut candidate = 0;",
+        "let mut matching_prefix = true;",
+        "let speculative_k_usize = speculative_k as usize;",
+        "while candidate < speculative_k_usize",
+        "if matching_prefix",
+        "let draft_index = candidate * sequences + sequence;",
+        "let target_index = choice_base + candidate;",
+        "if draft_token == target_token",
+        "matching_prefix = false;",
+        "candidate += 1;",
+        "if accepted >= active_tokens {",
+    ] {
+        assert!(compact.contains(marker), "missing compact marker {marker}");
+    }
+    assert!(
+        compact_no_whitespace
+            .contains("matchspeculative_k{0=>{}_=>{whilecandidate<speculative_k_usize")
+    );
+    let optional_entry = compact_no_whitespace
+        .split_once("letmutaccepted=0")
+        .and_then(|(_, tail)| {
+            tail.split_once("letcorrection_index=")
+                .map(|(entry, _)| entry)
+        })
+        .expect("optional compact entry is bounded by accepted and correction");
+    assert!(!optional_entry.contains("matchspeculative_k_usize"));
+    assert!(!optional_entry.contains("ifdirect"));
+    assert!(!optional_entry.contains("if!direct"));
+    assert!(!compact.contains("while accepted < speculative_k"));
+    assert!(!compact.contains("break;"));
+    let (_, after_accepted_bound) = compact_no_whitespace
+        .split_once("ifaccepted>=active_tokens{fe2o3_device::trap();}")
+        .expect("accepted bound guard follows optional prefix matching");
+    assert!(
+        after_accepted_bound.starts_with("letcorrection_index="),
+        "accepted bound guard must immediately precede correction indexing"
+    );
+    assert_eq!(
+        compact_no_whitespace
+            .matches("ifaccepted>=active_tokens")
+            .count(),
+        1
+    );
+}

@@ -139,6 +139,7 @@ fn launch_attributes_pin_wave64_and_exact_grid_caps() {
     assert!(launch_tokens(&kernels[0]).contains("loop_bounds (151936)"));
     assert!(launch_tokens(&kernels[1]).contains("max_grid = [32 , 1 , 1]"));
     assert!(launch_tokens(&kernels[1]).contains("loop_bounds (32 , 16 , 2)"));
+    assert!(launch_tokens(&kernels[1]).contains("integer_switches (u32)"));
     assert!(launch_tokens(&kernels[2]).contains("max_grid = [8 , 1 , 1]"));
     assert!(!launch_tokens(&kernels[2]).contains("control_flow"));
 }
@@ -176,8 +177,16 @@ fn compact_source_retains_canonical_record_and_direct_empty_draft_semantics() {
         "letgeneration=memory::volatile_load(request_generations,sequence)",
         "whileplan_byte<32",
         "if!plan_present",
-        "if!direct{whileaccepted<speculative_k",
-        "ifdraft_token!=target_token{break;}",
+        "letmutcandidate=0",
+        "letmutmatching_prefix=true",
+        "letspeculative_k_usize=speculative_kasusize",
+        "matchspeculative_k{0=>{}_=>{whilecandidate<speculative_k_usize",
+        "ifmatching_prefix",
+        "letdraft_index=candidate*sequences+sequence",
+        "lettarget_index=choice_base+candidate",
+        "ifdraft_token==target_token{accepted+=1;}else{matching_prefix=false;}",
+        "candidate+=1",
+        "ifaccepted>=active_tokens{fe2o3_device::trap();}",
         "choice_base+live-1",
         "letbyte=component*64+lane",
         "ifbyte<QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1",
@@ -187,6 +196,26 @@ fn compact_source_retains_canonical_record_and_direct_empty_draft_semantics() {
     ] {
         assert!(compact.contains(marker), "missing compact marker {marker}");
     }
+    let optional_entry = compact
+        .split_once("letmutaccepted=0")
+        .and_then(|(_, tail)| {
+            tail.split_once("letcorrection_index=")
+                .map(|(entry, _)| entry)
+        })
+        .expect("optional compact entry is bounded by accepted and correction");
+    assert!(!optional_entry.contains("ifdirect"));
+    assert!(!optional_entry.contains("if!direct"));
+    assert!(!optional_entry.contains("matchspeculative_k_usize"));
+    assert!(!compact.contains("whileaccepted<speculative_k"));
+    assert!(!compact.contains("break;"));
+    let (_, after_accepted_bound) = compact
+        .split_once("ifaccepted>=active_tokens{fe2o3_device::trap();}")
+        .expect("accepted bound guard follows optional prefix matching");
+    assert!(
+        after_accepted_bound.starts_with("letcorrection_index="),
+        "accepted bound guard must immediately precede correction indexing"
+    );
+    assert_eq!(compact.matches("ifaccepted>=active_tokens").count(), 1);
     assert!(!compact.contains("draft["));
     assert!(!compact.contains("records["));
 }
