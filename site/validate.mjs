@@ -26,9 +26,11 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "a240f98ac095be1ee79f7f1d1e146933a5acb1e4",
-  fe2o3CompilerCandidateTree: "8db547a39964cf8a224f037fb278c70cdd61671e",
-  fe2o3CompilerCandidateStatus: "independent-go-narrow-proof-in-progress",
+  fe2o3CompilerCandidate: "83bbf0ffb1ef7c7d66f9251d608f469cf51173b5",
+  fe2o3CompilerCandidateTree: "a2675071fb066f6366227a56eae5f4cc62723ddd",
+  fe2o3CompilerQualificationBase: "9176b9c27696ac3c86814dea60ef9ecc12f10539",
+  fe2o3LatestMain: "2df6130c5f897b5120cdf6ade44d53030690fa8b",
+  fe2o3CompilerCandidateStatus: "pushed-independent-go-qualified-on-9176b9c",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -38,19 +40,18 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderIntegrationCommit: "99cf0d514feb7fccb916f066c645c3a1cf831a0c",
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
-  engineeringAggregateRun10OuterExitCode: 1,
-  engineeringAggregateRun10RustcExtractionChildExitCode: 1,
-  engineeringAggregateRun10NestedCargoExtractionExitCode: 101,
-  engineeringAggregateRun10ReceiptBoundaryBytes: 5212493,
-  engineeringAggregateRun10Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
-  engineeringAggregateRun10Status: "crossed-old-receipt-boundary-failed-later-proof",
-  engineeringAggregateRun11OuterExitCode: 1,
-  engineeringAggregateRun11Boundary: "8693231611bf:239:20-row-times-vocabulary-overflow-proof",
-  engineeringAggregateRun11ParentBytes: 5438,
-  engineeringAggregateRun11ChildCount: 29,
-  engineeringAggregateRun11BodyCount: 19,
-  engineeringAggregateRun11MaxChildBytes: 1844110,
-  narrowCompilerProofStatus: "in-progress",
+  engineeringAggregateRun32OuterExitCode: 1,
+  engineeringAggregateRun32NestedCargoExitCode: 101,
+  engineeringAggregateRun32Boundary: "logits.rs:409-choice-base-plus-accepted-overflow-proof",
+  engineeringAggregateRun32ConnectCount: 0,
+  engineeringAggregateRun32OutputCount: 0,
+  engineeringAggregateRun32Status: "cleared-raw-u32-optional-entry-failed-next-overflow-proof",
+  rawMatchLogitsSha256:
+    "0b67a85afb620278efa79d674d757749fe84c858bddc980bef3b7bb3552eb940",
+  acceptedBoundGuardSha256:
+    "a172807a5a13473775d13d829a68cb4424c689e6285cebdd468124b50618e4a6",
+  acceptedBoundGuardStatus: "uncommitted-independent-go-packages-21-of-21",
+  engineeringSchemaIntegrationStatus: "v11-tag64-in-progress",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -174,6 +175,19 @@ assertCommit(project.current.fe2o3EngineeringSchemaTree, "current.fe2o3Engineeri
 assertCommit(project.current.fe2o3CompilerCandidate, "current.fe2o3CompilerCandidate");
 assertCommit(project.current.fe2o3CompilerCandidateTree, "current.fe2o3CompilerCandidateTree");
 assertCommit(
+  project.current.fe2o3CompilerQualificationBase,
+  "current.fe2o3CompilerQualificationBase",
+);
+assertCommit(project.current.fe2o3LatestMain, "current.fe2o3LatestMain");
+assert(
+  /^[0-9a-f]{64}$/.test(project.current.rawMatchLogitsSha256),
+  "current.rawMatchLogitsSha256 must be an exact SHA-256 digest",
+);
+assert(
+  /^[0-9a-f]{64}$/.test(project.current.acceptedBoundGuardSha256),
+  "current.acceptedBoundGuardSha256 must be an exact SHA-256 digest",
+);
+assertCommit(
   project.current.productionSpeculativeExecutorCandidate,
   "current.productionSpeculativeExecutorCandidate",
 );
@@ -291,10 +305,14 @@ assert(
     ) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
-    envelope.get("fe2o3 engineering producer")?.includes("independent GO") &&
-    envelope.get("fe2o3 engineering producer")?.includes("narrow compiler proof remains in progress") &&
+    envelope.get("fe2o3 engineering producer")?.includes(
+      expectedCurrent.fe2o3CompilerQualificationBase,
+    ) &&
+    envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3LatestMain) &&
+    envelope.get("fe2o3 engineering producer")?.includes("independently reviewed") &&
+    envelope.get("fe2o3 engineering producer")?.includes("V11/tag 64 integration remains in progress") &&
     envelope.get("fe2o3 engineering producer")?.includes("ownership remains in fe2o3"),
-  "envelope must expose the frozen producer schema and independently reviewed compiler slice",
+  "envelope must expose the reviewed raw-u32 candidate and current schema integration",
 );
 assert(
   envelope.get("Speculative executor")?.includes(
@@ -321,25 +339,24 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-  envelope.get("Engineering aggregate output")?.includes("In run 10") &&
+  envelope.get("Engineering aggregate output")?.includes("Run 32") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "outer engineering invocation and rustc extraction child exited 1",
+      expectedCurrent.rawMatchLogitsSha256,
     ) &&
-    envelope.get("Engineering aggregate output")?.includes("nested Cargo extraction exited 101") &&
-    envelope.get("Engineering aggregate output")?.includes("5,212,493-byte receipt boundary") &&
-    envelope.get("Engineering aggregate output")?.includes("8693231611bf:239:20") &&
-    envelope.get("Engineering aggregate output")?.includes("row * vocabulary overflow proof") &&
+    envelope.get("Engineering aggregate output")?.includes("raw-u32 optional-entry proof") &&
+    envelope.get("Engineering aggregate output")?.includes("outer invocation exited 1") &&
+    envelope.get("Engineering aggregate output")?.includes("nested Cargo exited 101") &&
+    envelope.get("Engineering aggregate output")?.includes("logits.rs:409") &&
+    envelope.get("Engineering aggregate output")?.includes("choice_base + accepted") &&
+    envelope.get("Engineering aggregate output")?.includes("zero connects and zero output or HSACO") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "zero connect, handoff, worker, or current engineering HSACO",
+      expectedCurrent.acceptedBoundGuardSha256,
     ) &&
-    envelope.get("Engineering aggregate output")?.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
-    envelope.get("Engineering aggregate output")?.includes("29 children containing 19 bodies") &&
-    envelope.get("Engineering aggregate output")?.includes("maximum child of 1,844,110 bytes") &&
-    envelope.get("Engineering aggregate output")?.includes(
-      "outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof",
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes("size observations only"),
-  "envelope must retain the exact run 10 failure and run 11 measurements",
+    envelope.get("Engineering aggregate output")?.includes("two 21/21 package passes") &&
+    envelope.get("Engineering aggregate output")?.includes("uncommitted candidate") &&
+    envelope.get("Engineering aggregate output")?.includes("V11/tag 64 integration remains in progress") &&
+    envelope.get("Engineering aggregate output")?.includes("no artifact or execution authority"),
+  "envelope must retain the exact run 32 boundary and uncommitted repair limits",
 );
 assert(
   envelope.get("Target-only engineering smoke")?.includes(
@@ -476,20 +493,21 @@ assert(
     producerReadiness.detail.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
-    producerReadiness.detail.includes("received independent GO") &&
-    producerReadiness.detail.includes("aggregate run 10") &&
-    producerReadiness.detail.includes("outer engineering invocation and rustc extraction child exited 1") &&
-    producerReadiness.detail.includes("nested Cargo extraction exited 101") &&
-    producerReadiness.detail.includes("5,212,493-byte receipt boundary") &&
-    producerReadiness.detail.includes("8693231611bf:239:20") &&
-    producerReadiness.detail.includes("row * vocabulary overflow proof") &&
-    producerReadiness.detail.includes("zero connect, handoff, worker, or current engineering HSACO") &&
-    producerReadiness.detail.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
-    producerReadiness.detail.includes("29 children containing 19 bodies") &&
-    producerReadiness.detail.includes("maximum child of 1,844,110 bytes") &&
-    producerReadiness.detail.includes("outer engineering invocation exited 1 at the same proof") &&
-    producerReadiness.detail.includes("narrow compiler proof remains in progress") &&
-    producerReadiness.detail.includes("no artifact, runtime, or inference authority"),
+    producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3LatestMain) &&
+    producerReadiness.detail.includes("pushed and independently reviewed") &&
+    producerReadiness.detail.includes("focused and full 483-test library validation") &&
+    producerReadiness.detail.includes("backend/worker checks") &&
+    producerReadiness.detail.includes("ROCm compile passed") &&
+    producerReadiness.detail.includes("Run 32") &&
+    producerReadiness.detail.includes("raw-u32 optional-entry proof") &&
+    producerReadiness.detail.includes("logits.rs:409") &&
+    producerReadiness.detail.includes("choice_base + accepted") &&
+    producerReadiness.detail.includes("independent GO and two 21/21 package passes") &&
+    producerReadiness.detail.includes("not committed") &&
+    producerReadiness.detail.includes("V10 tag 63") &&
+    producerReadiness.detail.includes("V11/tag 64 integration remains in progress") &&
+    producerReadiness.detail.includes("No artifact, runtime, or inference authority"),
   "fe2o3 producer must retain the exact current proof status and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
@@ -558,17 +576,19 @@ const qwenReadiness = project.readiness.find(
 assert(
     qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
-    qwenReadiness.detail.includes("canonical prepack result is a non-final probe") &&
+    qwenReadiness.detail.includes("canonical prepack result remains a non-final probe") &&
     qwenReadiness.detail.includes("R33 V2 checker and full collector") &&
-    qwenReadiness.detail.includes("neither the smoke nor collector has executed") &&
-    qwenReadiness.detail.includes("outer invocation and rustc extraction child exited 1") &&
-    qwenReadiness.detail.includes("nested Cargo extraction exited 101") &&
-    qwenReadiness.detail.includes("8693231611bf:239:20") &&
-    qwenReadiness.detail.includes("row * vocabulary overflow proof") &&
-    qwenReadiness.detail.includes("zero connect, handoff, worker, or current engineering HSACO") &&
-    qwenReadiness.detail.includes("Run 11 emitted its V5 sizes") &&
-    qwenReadiness.detail.includes("outer invocation exited 1 at the same proof") &&
-    qwenReadiness.detail.includes("narrow compiler proof remains in progress") &&
+    qwenReadiness.detail.includes("neither smoke nor collector has executed") &&
+    qwenReadiness.detail.includes("Run 32") &&
+    qwenReadiness.detail.includes("raw-u32 optional-entry proof") &&
+    qwenReadiness.detail.includes("choice_base + accepted") &&
+    qwenReadiness.detail.includes("logits.rs:409") &&
+    qwenReadiness.detail.includes("status 1, nested Cargo 101") &&
+    qwenReadiness.detail.includes("zero connects, and zero output or HSACO") &&
+    qwenReadiness.detail.includes(
+      "accepted-bound guard with compact-loop structure is reviewed but uncommitted",
+    ) &&
+    qwenReadiness.detail.includes("V11/tag 64 integration is still underway") &&
     qwenReadiness.detail.includes(
       "no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
     ),
@@ -808,7 +828,11 @@ assert(
     !currentProjectData.includes("f300ab8") &&
     !currentProjectData.includes("e70ab68") &&
     !currentProjectData.includes("466f88c") &&
+    !currentProjectData.includes("a240f98") &&
     !currentProjectData.includes("Aggregate run 7") &&
+    !currentProjectData.includes("run 10") &&
+    !currentProjectData.includes("Run 10") &&
+    !currentProjectData.includes("Run 11") &&
     !currentProjectData.includes("NO-GO") &&
     !currentProjectData.toLowerCase().includes("run 5 has not launched"),
   "current Pages data must not present superseded compiler or executor checkpoints",
@@ -821,26 +845,27 @@ for (const claim of forbiddenCurrentDependencyClaims) {
 }
 for (const claim of [
   "Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector",
-  "The collector has not run and creates no baseline or performance result",
-  "fe2o3 compiler slice a240f98, tree 8db547a, has independent GO",
-  "narrow compiler proof remains in progress",
-  "In run 10, the outer engineering invocation and rustc extraction child exited 1",
-  "nested Cargo extraction exited 101",
-  "crossed the old 5,212,493-byte receipt boundary",
-  "row * vocabulary overflow proof at 8693231611bf:239:20",
-  "zero connect, handoff, worker, or current engineering HSACO events",
-  "Run 11 emitted a V5 parent of 5,438 bytes, 29 children containing 19 bodies",
-  "maximum child of 1,844,110 bytes",
-  "outer engineering invocation exited 1 at the same 8693231611bf:239:20 proof",
-  "These are size observations, not a completed compiler proof",
-  "All GPUs are currently occupied and baseline container access remains unresolved",
-  "comparison has not run",
+  "neither the collector nor target-only smoke has run",
+  "Pushed fe2o3 candidate 83bbf0f, tree a267507, received independent GO",
+  "focused and full 483-test library validation",
+  "backend/worker checks, and ROCm compile against main 9176b9c",
+  "Run 32 used Ferric raw-match logits SHA-256 0b67a85a",
+  "cleared the raw-u32 optional-entry proof",
+  "choice_base + accepted at logits.rs:409",
+  "outer status was 1, nested Cargo was 101",
+  "zero connects and zero output or HSACO",
+  "accepted-bound guard with compact-loop structure at source SHA-256 a172807a",
+  "independent GO and two 21/21 package passes",
+  "remains uncommitted",
+  "Current fe2o3 main is 2df6130",
+  "sound schema V11/tag 64 integration is in progress",
+  "workgroup-scan V10 tag 63 collides with the branch's volatile tag 63",
   "Ferric-specific inference and kernel ownership remain in Ferric",
   "reusable compiler and runtime work remains in fe2o3",
   "publication selection remains None",
   "CURRENT=None",
-  "No current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
-  "All 33 M1 roadmap gates and all 17 assurance properties remain Open",
+  "No aggregate HSACO, current Qwen token, hardware, numerical, performance, or vLLM/SGLang comparison result exists",
+  "All 33 M1 gates and all 17 assurance properties remain Open",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
@@ -856,6 +881,10 @@ assert(
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
+    dataSource.includes(expectedCurrent.fe2o3LatestMain) &&
+    dataSource.includes(expectedCurrent.rawMatchLogitsSha256) &&
+    dataSource.includes(expectedCurrent.acceptedBoundGuardSha256) &&
     dataSource.includes(expectedCurrent.servingComparisonR33V2IntegrationCommit) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
@@ -900,17 +929,21 @@ assert(
     dataSource.includes("observation-only and non-authoritative") &&
     dataSource.includes("reviewed R33 V2 checker and full collector") &&
     dataSource.includes("collector has not run") &&
-    dataSource.includes("outer engineering invocation and rustc extraction child exited 1") &&
-    dataSource.includes("nested Cargo extraction exited 101") &&
-    dataSource.includes("5,212,493-byte receipt boundary") &&
-    dataSource.includes("8693231611bf:239:20") &&
-    dataSource.includes("row * vocabulary overflow proof") &&
-    dataSource.includes("zero connect, handoff, worker, or current engineering HSACO") &&
-    dataSource.includes("Run 11 emitted a V5 parent of 5,438 bytes") &&
-    dataSource.includes("29 children containing 19 bodies") &&
-    dataSource.includes("maximum child of 1,844,110 bytes") &&
-    dataSource.includes("outer engineering invocation exited 1 at the same") &&
-    dataSource.includes("narrow compiler proof remains in progress") &&
+    dataSource.includes("focused and full 483-test library validation") &&
+    dataSource.includes("backend/worker checks") &&
+    dataSource.includes("ROCm compile passed") &&
+    dataSource.includes("Run 32") &&
+    dataSource.includes("raw-u32 optional-entry proof") &&
+    dataSource.includes("logits.rs:409") &&
+    dataSource.includes("choice_base + accepted") &&
+    dataSource.includes("status 1, nested Cargo 101") &&
+    dataSource.includes("zero connects, and zero output or HSACO") &&
+    dataSource.includes(expectedCurrent.rawMatchLogitsSha256) &&
+    dataSource.includes(expectedCurrent.acceptedBoundGuardSha256) &&
+    dataSource.includes("two 21/21 package passes") &&
+    dataSource.includes("uncommitted") &&
+    dataSource.includes("V10 tag 63") &&
+    dataSource.includes("V11/tag 64 integration") &&
     dataSource.includes("received independent GO") &&
     dataSource.includes("independent source-integration GO") &&
     dataSource.includes("documentation-only correction") &&
@@ -927,9 +960,7 @@ assert(
     dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
     dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed") &&
-    dataSource.includes(
-      "no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
-    ) &&
+    dataSource.includes("no current aggregate or engineering HSACO, Qwen token") &&
     dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
   "Pages data must retain service, executor, loader, compiler, baseline, Qwen, selection, and all-open claims",
 );

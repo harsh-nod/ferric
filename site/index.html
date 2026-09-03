@@ -59,7 +59,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-02">Updated 2026-09-02</time>
+              <time data-updated datetime="2026-09-03">Updated 2026-09-03</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -201,21 +201,22 @@
             <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector. The
-            collector has not run and creates no baseline or performance result. fe2o3 compiler slice
-            a240f98, tree 8db547a, has independent GO while the narrow compiler proof remains in progress.
-            In run 10, the outer engineering invocation and rustc extraction child exited 1, while nested
-            Cargo extraction exited 101. The run crossed the old 5,212,493-byte receipt boundary before the
-            row * vocabulary overflow proof at 8693231611bf:239:20, with zero connect, handoff, worker, or
-            current engineering HSACO events. Run 11 emitted a V5 parent of 5,438 bytes, 29 children
-            containing 19 bodies, and a maximum child of 1,844,110 bytes, then its outer engineering
-            invocation exited 1 at the same 8693231611bf:239:20 proof. These are size observations, not a
-            completed compiler proof. Ferric-specific inference and kernel ownership remain in Ferric;
-            reusable compiler and runtime work remains in fe2o3. All GPUs are currently occupied and
-            baseline container access remains unresolved, so the comparison has not run. The private
-            current aggregate publication selection remains None (CURRENT=None). No current aggregate or
-            engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists. All
-            33 M1 roadmap gates and all 17 assurance properties remain Open.
+            Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector; neither the
+            collector nor target-only smoke has run. Pushed fe2o3 candidate 83bbf0f, tree a267507, received
+            independent GO and passed remote fmt/check, focused and full 483-test library validation,
+            backend/worker checks, and ROCm compile against main 9176b9c. Run 32 used Ferric raw-match
+            logits SHA-256 0b67a85a..., cleared the raw-u32 optional-entry proof, then stopped at the next
+            checked index, choice_base + accepted at logits.rs:409. Its outer status was 1, nested Cargo was
+            101, and it produced zero connects and zero output or HSACO. A later Ferric accepted-bound guard
+            with compact-loop structure at source SHA-256 a172807a... received independent GO and two 21/21
+            package passes, but remains uncommitted. Current fe2o3 main is 2df6130; sound schema V11/tag 64
+            integration is in progress
+            because main's workgroup-scan V10 tag 63 collides with the branch's volatile tag 63.
+            Ferric-specific inference and kernel ownership remain in Ferric; reusable compiler and runtime
+            work remains in fe2o3. The private current aggregate publication selection remains None
+            (CURRENT=None). No aggregate HSACO, current Qwen token, hardware, numerical, performance, or
+            vLLM/SGLang comparison result exists. All 33 M1 gates and all 17 assurance properties remain
+            Open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
