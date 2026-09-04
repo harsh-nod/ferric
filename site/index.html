@@ -201,22 +201,18 @@
             <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Ferric integration 31b6f49 contains the reviewed R33 V2 checker and full collector; neither the
-            collector nor target-only smoke has run. Pushed fe2o3 candidate 83bbf0f, tree a267507, received
-            independent GO and passed remote fmt/check, focused and full 483-test library validation,
-            backend/worker checks, and ROCm compile against main 9176b9c. Run 32 used Ferric raw-match
-            logits SHA-256 0b67a85a..., cleared the raw-u32 optional-entry proof, then stopped at the next
-            checked index, choice_base + accepted at logits.rs:409. Its outer status was 1, nested Cargo was
-            101, and it produced zero connects and zero output or HSACO. A later Ferric accepted-bound guard
-            with compact-loop structure at source SHA-256 a172807a... received independent GO and two 21/21
-            package passes, but remains uncommitted. Current fe2o3 main is 2df6130; sound schema V11/tag 64
-            integration is in progress
-            because main's workgroup-scan V10 tag 63 collides with the branch's volatile tag 63.
-            Ferric-specific inference and kernel ownership remain in Ferric; reusable compiler and runtime
-            work remains in fe2o3. The private current aggregate publication selection remains None
-            (CURRENT=None). No aggregate HSACO, current Qwen token, hardware, numerical, performance, or
-            vLLM/SGLang comparison result exists. All 33 M1 gates and all 17 assurance properties remain
-            Open.
+            Pushed Ferric checkpoint 4796efd, tree c8b98c6, adds qualified profile-extent guards in the RoPE
+            and paged-KV kernels. Remote rustfmt, 22 rope-wrapper tests, and 21 aggregate tests passed, and
+            independent review returned GO. Pushed fe2o3 candidate efb8931, tree 4718138, includes current
+            origin/main 57b7d21 and has green remote KFD 295, compiler 489, debug-protocol, closure 12, and
+            worker evidence. The exact current-compiler aggregate using pre-guard Ferric 362b275 crossed
+            prefill and rope_kv.rs lines 212 and 213, then the outer invocation exited 1 at rope_kv.rs:143,
+            rows * query_columns, with zero connects and zero outputs. The post-guard aggregate attempt is
+            pending and grants no correctness or execution authority. Ferric-specific inference and kernel
+            ownership remain in Ferric; reusable compiler and runtime work remains in fe2o3. The private
+            current aggregate publication selection remains None (CURRENT=None). No aggregate HSACO,
+            current Qwen token, hardware, numerical, performance, or vLLM/SGLang comparison result exists.
+            All 33 M1 gates and all 17 assurance properties remain Open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
