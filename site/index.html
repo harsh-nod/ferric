@@ -201,18 +201,15 @@
             <h2 id="next-title">Emit the first aggregate HSACO</h2>
           </div>
           <p>
-            Pushed Ferric checkpoint 4796efd, tree c8b98c6, adds qualified profile-extent guards in the RoPE
-            and paged-KV kernels. Remote rustfmt, 22 rope-wrapper tests, and 21 aggregate tests passed, and
-            independent review returned GO. Pushed fe2o3 candidate efb8931, tree 4718138, includes current
-            origin/main 57b7d21 and has green remote KFD 295, compiler 489, debug-protocol, closure 12, and
-            worker evidence. The exact current-compiler aggregate using pre-guard Ferric 362b275 crossed
-            prefill and rope_kv.rs lines 212 and 213, then the outer invocation exited 1 at rope_kv.rs:143,
-            rows * query_columns, with zero connects and zero outputs. The post-guard aggregate attempt is
-            pending and grants no correctness or execution authority. Ferric-specific inference and kernel
-            ownership remain in Ferric; reusable compiler and runtime work remains in fe2o3. The private
-            current aggregate publication selection remains None (CURRENT=None). No aggregate HSACO,
-            current Qwen token, hardware, numerical, performance, or vLLM/SGLang comparison result exists.
-            All 33 M1 gates and all 17 assurance properties remain Open.
+            Durable Ferric checkpoint 5c5ddef requires fe2o3 production build config V2 with
+            source-isa-summary-v1 observation for the aggregate producer. Ferric owns 12 local Rust kernel
+            roots across seven modules and has no prebuilt or vendor kernel dependency. fe2o3 branch 80aaaf3
+            includes origin/main c58785c and reviewed guarded-subtraction support e745bc75c; compiler, runtime,
+            and KFD work stays in fe2o3 while model kernels and inference stay in Ferric. Remote exact aggregate
+            qualification remains incomplete and grants no correctness or execution authority. The private
+            current aggregate publication selection remains None (CURRENT=None). No aggregate HSACO has been
+            produced or executed on hardware, and no current Qwen serving, numerical, performance, or
+            vLLM/SGLang comparison result exists. All 33 M1 gates and all 17 assurance properties remain Open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

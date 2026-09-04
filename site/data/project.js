@@ -3,14 +3,17 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "f5259d762c53e8dd3349791f0cd00b3684bb25b9",
+    siteRefreshBase: "8d05ef407237488ece225796697f1379ca05bff8",
     integrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
     integrationTree: "a52398ce57ec765a5d49a97904bc160e586a911b",
-    ferricCheckpointCommit: "4796efd75ca62ae980e67110fa68c3a94a89a67c",
-    ferricCheckpointTree: "c8b98c6e74df511ca4cf737cded27f6dba268c24",
-    ferricCheckpointStatus: "pushed-qualified-rope-guard-post-aggregate-pending",
-    ferricRopeSourceSha256:
-      "3694d0fb2eedce6b94ca3e1ef427dcfd5d4621cd91cb1fb3ebd5e61a1607d306",
+    ferricCheckpointCommit: "5c5ddef24a4a4db921d6a111315aa26190d53f57",
+    ferricCheckpointTree: "68bbe0a7216e69002114875d3e868aca770f7e79",
+    ferricCheckpointStatus: "pushed-aggregate-production-config-v2-exact-qualification-open",
+    aggregateBuildConfigFormat: "fe2o3-production-build-config-v2",
+    aggregateBuildObservation: "source-isa-summary-v1",
+    aggregateKernelModuleCount: 7,
+    aggregatePrebuiltKernelDependency: false,
+    aggregateVendorKernelDependency: false,
     implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
     authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
     aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -21,14 +24,12 @@ window.FERRIC_PROJECT = Object.freeze({
     finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
     fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
     fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-    fe2o3CompilerCandidate: "efb8931287f4eb34dcd636594b31aa7a5a78a0cb",
-    fe2o3CompilerCandidateTree: "4718138f5078cd2147a0f23d2ea45a3986261a79",
-    fe2o3CompilerQualificationBase: "57b7d2197230c9a46da5dfe8ed400e5f202275c0",
-    fe2o3LatestMain: "57b7d2197230c9a46da5dfe8ed400e5f202275c0",
-    fe2o3CompilerCandidateStatus: "pushed-qualified-includes-current-main",
-    fe2o3KfdTests: 295,
-    fe2o3CompilerTests: 489,
-    fe2o3ClosureTests: 12,
+    fe2o3CompilerCandidate: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
+    fe2o3CompilerCandidateTree: "3cfb4de14376272e1c22459e6bd926c403413c93",
+    fe2o3CompilerQualificationBase: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
+    fe2o3LatestMain: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
+    fe2o3GuardedSubtractionCommit: "e745bc75c",
+    fe2o3CompilerCandidateStatus: "reviewed-includes-current-main-exact-aggregate-open",
     productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
     productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
     productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -40,12 +41,12 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateHsacoStatus: "not-produced",
     engineeringAggregateAttemptOuterExitCode: 1,
     engineeringAggregateAttemptBoundary:
-      "rope_kv.rs:143-rows-times-query-columns-overflow-proof",
+      "current-source-exact-aggregate-qualification-incomplete-at-compiler-proof-boundary",
     engineeringAggregateAttemptConnectCount: 0,
     engineeringAggregateAttemptOutputCount: 0,
     engineeringAggregateAttemptStatus:
-      "current-compiler-pre-guard-ferric-crossed-prefill-and-rope-212-213-failed-next-proof",
-    followupProofFixStatus: "pushed-qualified-post-guard-aggregate-pending",
+      "remote-exact-current-source-incomplete-no-hsaco",
+    followupProofFixStatus: "reviewed-guarded-subtraction-support-exact-aggregate-open",
     fe2o3CurrentnessStatus: "candidate-includes-current-origin-main",
     fe2o3IsFiniteRemediationStatus: "independent-source-go",
     targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
@@ -92,7 +93,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Pushed Ferric checkpoint 4796efd, tree c8b98c6, adds qualified profile-extent guards in the RoPE and paged-KV kernels on top of the compact-completion and prefill-guard work. Remote rustfmt, 22 rope-wrapper tests, and 21 aggregate tests passed, and independent review returned GO. Pushed fe2o3 candidate efb8931, tree 4718138, includes current origin/main 57b7d21 and has green remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence. The exact current-compiler aggregate using pre-guard Ferric 362b275 crossed prefill and rope_kv.rs lines 212 and 213, then the outer invocation exited 1 at rope_kv.rs:143, `rows * query_columns`, with zero connects and zero outputs. No post-guard aggregate attempt has run. No aggregate HSACO, current Qwen token, hardware result, or vLLM/SGLang benchmark exists. CURRENT=None, and all 33 M1 gates plus all 17 assurance properties remain Open.",
+      "Durable Ferric checkpoint 5c5ddef requires fe2o3 production build config V2 with source-isa-summary-v1 observation for the aggregate path. Ferric owns 12 local Rust kernel roots across seven modules with no prebuilt or vendor kernel dependency. fe2o3 branch 80aaaf3 includes origin/main c58785c and reviewed guarded-subtraction support while retaining compiler, runtime, and KFD ownership only. Remote exact aggregate qualification is incomplete, so no aggregate HSACO has been produced or executed on hardware. Qwen serving and vLLM/SGLang comparisons have not run. CURRENT=None, and all 33 M1 gates plus all 17 assurance properties remain Open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -101,19 +102,19 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "f5259d762c53e8dd3349791f0cd00b3684bb25b9; exact origin/main Pages source before this checkpoint update"],
-    ["Ferric implementation checkpoint", "4796efd75ca62ae980e67110fa68c3a94a89a67c; tree c8b98c6e74df511ca4cf737cded27f6dba268c24; RoPE source SHA-256 3694d0fb2eedce6b94ca3e1ef427dcfd5d4621cd91cb1fb3ebd5e61a1607d306; pushed profile-extent guards in the RoPE and paged-KV kernels; remote rustfmt, rope-wrapper 22/22, and aggregate 21/21 passed; independent review GO; no post-guard aggregate result or current runtime authority"],
-    ["fe2o3 engineering producer", "candidate efb8931287f4eb34dcd636594b31aa7a5a78a0cb; tree 4718138f5078cd2147a0f23d2ea45a3986261a79; includes current origin/main 57b7d2197230c9a46da5dfe8ed400e5f202275c0 and has green remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence; compiler and runtime ownership remains in fe2o3"],
+    ["Pages refresh base", "8d05ef407237488ece225796697f1379ca05bff8; exact Pages branch source before this checkpoint update"],
+    ["Ferric implementation checkpoint", "5c5ddef24a4a4db921d6a111315aa26190d53f57; tree 68bbe0a7216e69002114875d3e868aca770f7e79; durable aggregate producer policy requires fe2o3-production-build-config-v2 and source-isa-summary-v1 observation; exact aggregate qualification remains open and grants no current runtime authority"],
+    ["fe2o3 engineering producer", "branch 80aaaf3d9699d5861705386c4d1ffdb518fe5236; tree 3cfb4de14376272e1c22459e6bd926c403413c93; includes origin/main c58785c1cefe210fa5a9b08c6465e3a5215ef50f and reviewed guarded-subtraction support e745bc75c; compiler, runtime, and KFD ownership remains in fe2o3; model kernels and inference remain in Ferric"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "The exact current-compiler attempt used fe2o3 efb8931 with pre-guard Ferric 362b275. It crossed prefill and rope_kv.rs lines 212 and 213, then the outer invocation exited 1 at rope_kv.rs:143, `rows * query_columns`, with zero connects and zero outputs and no HSACO. Ferric 4796efd contains the qualified guard, but its post-guard aggregate attempt is pending. These observations create no artifact, hardware, Qwen, or execution authority"],
+    ["Engineering aggregate output", "Remote exact aggregate qualification against the evolving current compiler remains incomplete at compiler proof boundaries, with zero aggregate outputs and no HSACO. No aggregate hardware execution, Qwen serving, vLLM/SGLang comparison, artifact, or execution authority follows"],
     ["Target-only engineering smoke", "951d48ac119089a62546cb6f96f324feaad013af; tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c; independent source-integration GO; merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction; ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pin and live hardware remain open; not executed; no Qwen token"],
     ["R33 V2 serving comparison", "Reviewed checker and full collector are integrated at 31b6f4989d961667900bff39935c75024316a2dc; the collector has not run and creates no baseline or performance result"],
     ["Baseline comparison", "GPU availability and baseline container access were not revalidated for this checkpoint; comparison not run"],
     ["Protected verifier status", "local service candidate 9a435522a4a88d55108f7c6a4cb493aabb01ad93 is not publicly linked; it passed 28 tests and 6 doctests and received independent foundation GO, but is not deployed and still requires real protected current, checker, signer, head store, supervisor, and IPC facilities; binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8 / tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1 passed exact-archive qualification and independent review with no P0/P1/P2, and is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but not public main or deployed authority"],
-    ["Aggregate device source", "one selected compilation unit owns all 12 attributed M1 kernel roots across the seven canonical source modules"],
+    ["Aggregate device source", "one selected compilation unit owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules; it has no prebuilt or vendor kernel dependency"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
-    ["Aggregate build producer", "the bounded producer retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
+    ["Aggregate build producer", "the bounded producer requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation, retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
     ["Authenticated R32 capture", "partial-non-evidence; aggregate V2 selector intake, authenticated first S1/K4 publication, Engine completion, KV release, queue teardown, and V2 partial capture; no rearm path"],
     ["Aggregate selection candidate", "owner-private and noncurrent; exact observational record, source, target, COV6, ordered 12-symbol roster, source-pin, envelope, and finalized-HSACO identities only"],
     ["Pending verifier projection", "private and reject-only; exact typed request plus 12 Option-preserving entry rows; retained as the first preflight step"],
@@ -152,7 +153,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate 12-kernel source roster",
       state: "implemented",
       detail:
-        "Commit 5514afe consolidates all 12 attributed Ferric M1 roots into one selected device package over seven canonical source modules. Historical family crates are non-authoritative wrappers over the same files. Source presence and compiler-generated roster binding grant no artifact, verifier, load, launch, hardware, Qwen, or M1 authority.",
+        "Commit 5514afe consolidates all 12 attributed Ferric M1 roots into one selected device package over seven canonical local Rust source modules. Historical family crates are non-authoritative wrappers over the same files. The aggregate has no prebuilt or vendor kernel dependency. Source presence and compiler-generated roster binding grant no artifact, verifier, load, launch, hardware, Qwen, or M1 authority.",
     },
     {
       label: "Generic Worker V3 roster admission",
@@ -182,7 +183,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate protected-build producer policy",
       state: "implemented",
       detail:
-        "Commit e57c425 adds a bounded producer that holds exact committed aggregate device and adapter sources, invokes the source-prebound typed adapter, and emits one observational record. Commit 8d95881 requires its hostile policy suite in CI and release qualification; 6a20199 aligns the source gate with the exact aggregate roster order.",
+        "Commit e57c425 adds a bounded producer that holds exact committed aggregate device and adapter sources, invokes the source-prebound typed adapter, and emits one observational record. Durable checkpoint 5c5ddef requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation for this aggregate producer. Commit 8d95881 requires its hostile policy suite in CI and release qualification; 6a20199 aligns the source gate with the exact aggregate roster order.",
     },
     {
       label: "Non-authoritative engineering aggregate loader",
@@ -224,7 +225,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 engineering aggregate producer",
       state: "integration",
       detail:
-        "Pushed fe2o3 candidate efb8931287f4eb34dcd636594b31aa7a5a78a0cb (tree 4718138f5078cd2147a0f23d2ea45a3986261a79) includes current origin/main 57b7d2197230c9a46da5dfe8ed400e5f202275c0. Remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence is green. Its exact aggregate attempt with pre-guard Ferric 362b275 crossed prefill and rope_kv.rs lines 212 and 213, then exited 1 at rope_kv.rs:143, `rows * query_columns`, with zero connects and zero outputs. Ferric guard 4796efd is pushed and qualified, but the post-guard aggregate attempt remains pending. No artifact, runtime, inference, or correctness authority follows.",
+        "fe2o3 branch 80aaaf3d9699d5861705386c4d1ffdb518fe5236 (tree 3cfb4de14376272e1c22459e6bd926c403413c93) includes origin/main c58785c1cefe210fa5a9b08c6465e3a5215ef50f and reviewed guarded-subtraction support e745bc75c. Remote exact aggregate qualification remains incomplete at compiler proof boundaries, with zero aggregate outputs and no HSACO. fe2o3 owns reusable compiler, runtime, and KFD work only; Ferric owns model kernels and inference. No artifact, runtime, inference, or correctness authority follows.",
     },
     {
       label: "Production speculative executor",
@@ -398,7 +399,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Pushed checkpoint 4796efd contains independently reviewed, remotely qualified profile-extent guards for the RoPE and paged-KV kernels, but source qualification is not execution authority. The exact current-compiler aggregate using pre-guard Ferric 362b275 crossed prefill and two later rope_kv checks, then exited 1 at `rows * query_columns` in rope_kv.rs:143 with zero connects and zero outputs. The post-guard aggregate attempt remains pending. The canonical prepack result remains a non-final probe; no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Durable checkpoint 5c5ddef requires aggregate production build config V2, but remote exact aggregate qualification remains incomplete and source integration is not execution authority. The canonical prepack result remains a non-final probe; no current aggregate or engineering HSACO, Qwen token, aggregate hardware execution, numerical, performance, or baseline result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
@@ -510,7 +511,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Engineering aggregate producer schema",
         detail:
-          "fe2o3 candidate efb8931, tree 4718138, includes current origin/main 57b7d21 and retains green remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence. Its exact aggregate attempt with pre-guard Ferric 362b275 crossed prefill and rope_kv.rs lines 212 and 213 before failing at the checked `rows * query_columns` expression on line 143. Ferric 4796efd contains the pushed, qualified guard; its post-guard aggregate attempt remains pending and no execution authority follows.",
+          "Ferric checkpoint 5c5ddef requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation for the aggregate producer. fe2o3 branch 80aaaf3, tree 3cfb4de1, includes origin/main c58785c and reviewed guarded-subtraction support e745bc75c. Remote exact aggregate qualification remains incomplete at compiler proof boundaries, with no aggregate HSACO or execution authority.",
       },
       {
         name: "R33 V2 serving comparison capture",
@@ -597,7 +598,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce and accept the aggregate artifact",
         detail:
-          "Run the pending aggregate attempt with current fe2o3 efb8931 and qualified Ferric guard 4796efd, then continue through any remaining compiler proof boundaries. Only after that should the engineering path try to structurally admit its first aggregate HSACO. A current protected publication still needs independent compiler, finalizer, verifier, and rollback authority before its exact 12-kernel artifact can enter production runtime acceptance.",
+          "Complete remote exact aggregate qualification with the reviewed fe2o3 80aa compiler branch and Ferric's required aggregate production config V2, then structurally admit the first aggregate HSACO. A current protected publication still needs independent compiler, finalizer, verifier, and rollback authority before its exact 12-kernel artifact can enter production runtime acceptance.",
       },
       {
         name: "Authenticated fixed-batch KFD",
@@ -607,12 +608,12 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric compiler integration and authority rosters",
         detail:
-          "Run the post-guard aggregate with current fe2o3 efb8931 and qualified Ferric 4796efd, continue through remaining proof boundaries, then perform any required final repin and regenerate locks and source-policy bindings before exposing runtime authority.",
+          "Continue through the remaining remote exact aggregate proof boundaries, then perform the final fe2o3 repin and regenerate locks and source-policy bindings before exposing runtime authority. The aggregate producer must retain production config V2 and source-isa-summary-v1 observation.",
       },
       {
         name: "Complete Qwen execution",
         detail:
-          "Run the current compiler and qualified Ferric guard through the remaining aggregate proof boundaries, emit and structurally admit a real aggregate HSACO, and run the source-integrated target-only prompt smoke. Then join an accepted aggregate artifact set to the full target and draft graph, model bundle, generated runner, and production KFD path. No current Qwen token exists yet.",
+          "Complete exact aggregate qualification, emit and structurally admit a real aggregate HSACO, and run the source-integrated target-only prompt smoke on hardware. Then join an accepted aggregate artifact set to the full target and draft graph, model bundle, generated runner, and production KFD path. No current Qwen token exists yet.",
       },
       {
         name: "Compare with vLLM and SGLang",
@@ -684,6 +685,21 @@ window.FERRIC_PROJECT = Object.freeze({
       "The catalog records host-validated source paths. Target-only decode and every unlisted cross-plan transition require explicit queue retirement and a fresh admitted launch; none inherit rollover authority.",
   },
   recentProgress: [
+    {
+      commit: "5c5ddef24a4a4db921d6a111315aa26190d53f57",
+      title: "Require aggregate production config V2",
+      state: "integration",
+      detail:
+        "Durable Ferric checkpoint 5c5ddef requires fe2o3-production-build-config-v2 and source-isa-summary-v1 observation for the aggregate build producer. Ferric retains 12 local Rust kernel roots across seven modules with no prebuilt or vendor kernel dependency. Remote exact aggregate qualification, HSACO hardware execution, Qwen serving, and vLLM/SGLang comparison remain incomplete, so all M1 gates stay Open.",
+    },
+    {
+      commit: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Carry the reviewed compiler support on current main",
+      state: "integration",
+      detail:
+        "fe2o3 branch 80aaaf3 includes origin/main c58785c and reviewed guarded-subtraction support e745bc75c. It contains reusable compiler, runtime, and KFD work only; Ferric retains model-kernel and inference ownership. This compiler checkpoint does not complete aggregate qualification or create an HSACO, hardware, serving, comparison, or M1 result.",
+    },
     {
       commit: "4796efd75ca62ae980e67110fa68c3a94a89a67c",
       title: "Guard the latest Ferric aggregate source",
@@ -876,14 +892,14 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Historical compiler/runtime selection",
       state: "integration",
       detail:
-        "At an earlier checkpoint, Ferric's workspace, aggregate device package, and typed aggregate source-pin adapter selected this exact fe2o3 revision. Current repin work follows candidate efb8931, which includes main 57b7d21. This historical selection supplied neither accepted aggregate publication nor runtime, Qwen, or M1 authority.",
+        "At an earlier checkpoint, Ferric's workspace, aggregate device package, and typed aggregate source-pin adapter selected this exact fe2o3 revision. A later repin checkpoint followed candidate efb8931 on main 57b7d21. This historical selection supplied neither accepted aggregate publication nor runtime, Qwen, or M1 authority.",
     },
     {
       commit: "5f40e404ba4bc76c16eed15868c63a72e60e716c",
       title: "Integrate the earlier family device roots",
       state: "qualified",
       detail:
-        "This earlier integration selected fe2o3 b5374c6e across seven family packages and passed its recorded scoped checks. A later historical aggregate checkpoint selected fe2o3 57d2d9c, while current repin work follows candidate efb8931 on main 57b7d21. None of these source selections alone grants artifact, runtime, Qwen, performance, or M1 authority.",
+        "This earlier integration selected fe2o3 b5374c6e across seven family packages and passed its recorded scoped checks. Later historical repin checkpoints selected 57d2d9c and followed candidate efb8931 on main 57b7d21. None of these source selections alone grants artifact, runtime, Qwen, performance, or M1 authority.",
     },
     {
       commit: "b5374c6e6a4c1215ad481cefcd294334dcb1cbeb",
@@ -891,7 +907,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Select the earlier Ferric compiler/runtime pin",
       state: "integration",
       detail:
-        "This exact upstream source was selected for Ferric implementation 5f40e40 and its seven standalone packages. Later historical checkpoints selected 52815c9 and 57d2d9c; current repin work follows candidate efb8931 on main 57b7d21. No source pin alone supplies protected artifact, runtime, or Qwen authority.",
+        "This exact upstream source was selected for Ferric implementation 5f40e40 and its seven standalone packages. Later historical checkpoints selected 52815c9 and 57d2d9c, then followed candidate efb8931 on main 57b7d21. No source pin alone supplies protected artifact, runtime, or Qwen authority.",
     },
     {
       commit: "922dcb621e5bb2acc41eb623cf2894b5ffa21a37",
@@ -1355,11 +1371,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Ferric-owned inference kernels and their concrete protected policy",
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
-      "Pushed checkpoint 4796efd75ca62ae980e67110fa68c3a94a89a67c, tree c8b98c6e74df511ca4cf737cded27f6dba268c24, adds qualified profile-extent guards in the RoPE and paged-KV kernels; remote rustfmt, rope-wrapper 22/22, and aggregate 21/21 passed with independent review GO, while the post-guard aggregate attempt remains pending",
-      "One aggregate device package owns all 12 attributed M1 kernel roots across seven canonical source modules",
+      "Durable checkpoint 5c5ddef24a4a4db921d6a111315aa26190d53f57, tree 68bbe0a7216e69002114875d3e868aca770f7e79, requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation for the aggregate producer",
+      "One aggregate device package owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules with no prebuilt or vendor kernel dependency",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
       "The typed source-pin adapter admits only the exact aggregate target, code-object version, entry set, and descriptor set; the final repin waits for the current fe2o3 compiler candidate to finish qualification",
-      "The aggregate producer holds committed device and adapter source identities and emits an observational, authority-free build record",
+      "The aggregate producer holds committed device and adapter source identities, requires production config V2, and emits an observational, authority-free build record",
       "CI and release qualification require the aggregate producer-policy suite",
       "Authenticated R32 first-publication capture is partial-non-evidence, generation 1 only, and composes aggregate selector intake, protected verification, runner binding, KFD queue execution, ordered K4 choice readback, Engine completion, KV release, queue teardown, and V2 partial-capture publication",
       "The R32 command has no raw artifact fallback, is excluded from rearm, and retains authenticated queue, program, completion, KV, choice, and model-memory custody or typed quarantine on failure",
@@ -1388,9 +1404,9 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Engineering producer schema commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8, tree e089a7e95eb4c103e61e973321ed79a7b1233364, is pushed and frozen for Ferric's non-authoritative manifest consumer",
-      "Candidate efb8931287f4eb34dcd636594b31aa7a5a78a0cb, tree 4718138f5078cd2147a0f23d2ea45a3986261a79, is pushed, includes current origin/main 57b7d2197230c9a46da5dfe8ed400e5f202275c0, and has green remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence",
-      "The exact current-compiler aggregate attempt with pre-guard Ferric 362b275 crossed prefill and rope_kv.rs lines 212 and 213, then the outer invocation exited 1 at rope_kv.rs:143, `rows * query_columns`, with zero connects and zero outputs and no HSACO",
-      "Ferric 4796efd contains the pushed and qualified guard, but its post-guard aggregate attempt is pending and no correctness, artifact, or execution authority follows",
+      "Branch 80aaaf3d9699d5861705386c4d1ffdb518fe5236, tree 3cfb4de14376272e1c22459e6bd926c403413c93, includes origin/main c58785c1cefe210fa5a9b08c6465e3a5215ef50f and reviewed guarded-subtraction support e745bc75c",
+      "Remote exact aggregate qualification remains incomplete at compiler proof boundaries, with zero aggregate outputs and no HSACO",
+      "fe2o3 owns reusable compiler, runtime, and KFD work only; Ferric owns model kernels and inference",
       "The engineering producer is reusable compiler source only, not protected aggregate acceptance, runtime admission, or Qwen authority",
       "GPU availability and baseline container access were not revalidated for this checkpoint; no comparison ran",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",

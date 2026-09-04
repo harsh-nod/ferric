@@ -13,14 +13,17 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "f5259d762c53e8dd3349791f0cd00b3684bb25b9",
+  siteRefreshBase: "8d05ef407237488ece225796697f1379ca05bff8",
   integrationCommit: "31b6f4989d961667900bff39935c75024316a2dc",
   integrationTree: "a52398ce57ec765a5d49a97904bc160e586a911b",
-  ferricCheckpointCommit: "4796efd75ca62ae980e67110fa68c3a94a89a67c",
-  ferricCheckpointTree: "c8b98c6e74df511ca4cf737cded27f6dba268c24",
-  ferricCheckpointStatus: "pushed-qualified-rope-guard-post-aggregate-pending",
-  ferricRopeSourceSha256:
-    "3694d0fb2eedce6b94ca3e1ef427dcfd5d4621cd91cb1fb3ebd5e61a1607d306",
+  ferricCheckpointCommit: "5c5ddef24a4a4db921d6a111315aa26190d53f57",
+  ferricCheckpointTree: "68bbe0a7216e69002114875d3e868aca770f7e79",
+  ferricCheckpointStatus: "pushed-aggregate-production-config-v2-exact-qualification-open",
+  aggregateBuildConfigFormat: "fe2o3-production-build-config-v2",
+  aggregateBuildObservation: "source-isa-summary-v1",
+  aggregateKernelModuleCount: 7,
+  aggregatePrebuiltKernelDependency: false,
+  aggregateVendorKernelDependency: false,
   implementationCommit: "7f516e073b8759eb012c998bc9df2eb101d0c7ab",
   authenticatedR32Commit: "d67fae3b063b1997aaa92b0cbc6f4c960c3b010b",
   aggregateSelectionCommit: "eceffdf00c1ec0f7241be95d6b636fa1ea69a46d",
@@ -31,14 +34,12 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "efb8931287f4eb34dcd636594b31aa7a5a78a0cb",
-  fe2o3CompilerCandidateTree: "4718138f5078cd2147a0f23d2ea45a3986261a79",
-  fe2o3CompilerQualificationBase: "57b7d2197230c9a46da5dfe8ed400e5f202275c0",
-  fe2o3LatestMain: "57b7d2197230c9a46da5dfe8ed400e5f202275c0",
-  fe2o3CompilerCandidateStatus: "pushed-qualified-includes-current-main",
-  fe2o3KfdTests: 295,
-  fe2o3CompilerTests: 489,
-  fe2o3ClosureTests: 12,
+  fe2o3CompilerCandidate: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
+  fe2o3CompilerCandidateTree: "3cfb4de14376272e1c22459e6bd926c403413c93",
+  fe2o3CompilerQualificationBase: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
+  fe2o3LatestMain: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
+  fe2o3GuardedSubtractionCommit: "e745bc75c",
+  fe2o3CompilerCandidateStatus: "reviewed-includes-current-main-exact-aggregate-open",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -50,12 +51,11 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateHsacoStatus: "not-produced",
   engineeringAggregateAttemptOuterExitCode: 1,
   engineeringAggregateAttemptBoundary:
-    "rope_kv.rs:143-rows-times-query-columns-overflow-proof",
+    "current-source-exact-aggregate-qualification-incomplete-at-compiler-proof-boundary",
   engineeringAggregateAttemptConnectCount: 0,
   engineeringAggregateAttemptOutputCount: 0,
-  engineeringAggregateAttemptStatus:
-    "current-compiler-pre-guard-ferric-crossed-prefill-and-rope-212-213-failed-next-proof",
-  followupProofFixStatus: "pushed-qualified-post-guard-aggregate-pending",
+  engineeringAggregateAttemptStatus: "remote-exact-current-source-incomplete-no-hsaco",
+  followupProofFixStatus: "reviewed-guarded-subtraction-support-exact-aggregate-open",
   fe2o3CurrentnessStatus: "candidate-includes-current-origin-main",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
@@ -161,9 +161,9 @@ assertCommit(project.current.integrationCommit, "current.integrationCommit");
 assertCommit(project.current.integrationTree, "current.integrationTree");
 assertCommit(project.current.ferricCheckpointCommit, "current.ferricCheckpointCommit");
 assertCommit(project.current.ferricCheckpointTree, "current.ferricCheckpointTree");
-assert(
-  /^[0-9a-f]{64}$/.test(project.current.ferricRopeSourceSha256),
-  "current.ferricRopeSourceSha256 must be an exact SHA-256 digest",
+assertCommit(
+  project.current.fe2o3GuardedSubtractionCommit,
+  "current.fe2o3GuardedSubtractionCommit",
 );
 assertCommit(project.current.implementationCommit, "current.implementationCommit");
 assertCommit(project.current.authenticatedR32Commit, "current.authenticatedR32Commit");
@@ -304,20 +304,31 @@ assert(
     expectedCurrent.ferricCheckpointCommit,
   ) &&
     envelope.get("Ferric implementation checkpoint")?.includes(expectedCurrent.ferricCheckpointTree) &&
-    envelope.get("Ferric implementation checkpoint")?.includes(expectedCurrent.ferricRopeSourceSha256) &&
-    envelope.get("Ferric implementation checkpoint")?.includes("rope-wrapper 22/22") &&
-    envelope.get("Ferric implementation checkpoint")?.includes("aggregate 21/21") &&
-    envelope.get("Ferric implementation checkpoint")?.includes("no post-guard aggregate result") &&
+    envelope.get("Ferric implementation checkpoint")?.includes(
+      expectedCurrent.aggregateBuildConfigFormat,
+    ) &&
+    envelope.get("Ferric implementation checkpoint")?.includes(
+      expectedCurrent.aggregateBuildObservation,
+    ) &&
+    envelope.get("Ferric implementation checkpoint")?.includes(
+      "exact aggregate qualification remains open",
+    ) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
     envelope.get("fe2o3 engineering producer")?.includes(
       expectedCurrent.fe2o3CompilerQualificationBase,
     ) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3LatestMain) &&
-    envelope.get("fe2o3 engineering producer")?.includes("includes current origin/main") &&
-    envelope.get("fe2o3 engineering producer")?.includes("green remote KFD 295, compiler 489") &&
-    envelope.get("fe2o3 engineering producer")?.includes("closure 12, and worker evidence") &&
-    envelope.get("fe2o3 engineering producer")?.includes("ownership remains in fe2o3"),
+    envelope.get("fe2o3 engineering producer")?.includes("includes origin/main") &&
+    envelope.get("fe2o3 engineering producer")?.includes(
+      expectedCurrent.fe2o3GuardedSubtractionCommit,
+    ) &&
+    envelope.get("fe2o3 engineering producer")?.includes(
+      "compiler, runtime, and KFD ownership remains in fe2o3",
+    ) &&
+    envelope.get("fe2o3 engineering producer")?.includes(
+      "model kernels and inference remain in Ferric",
+    ),
   "envelope must expose the durable Ferric and fe2o3 checkpoints without current authority",
 );
 assert(
@@ -345,20 +356,34 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-  envelope.get("Engineering aggregate output")?.includes("exact current-compiler attempt") &&
-    envelope.get("Engineering aggregate output")?.includes("pre-guard Ferric 362b275") &&
-    envelope.get("Engineering aggregate output")?.includes("crossed prefill") &&
-    envelope.get("Engineering aggregate output")?.includes("rope_kv.rs lines 212 and 213") &&
-    envelope.get("Engineering aggregate output")?.includes("outer invocation exited 1") &&
-    envelope.get("Engineering aggregate output")?.includes("rope_kv.rs:143") &&
-    envelope.get("Engineering aggregate output")?.includes("rows * query_columns") &&
-    envelope.get("Engineering aggregate output")?.includes("zero connects and zero outputs") &&
+  envelope.get("Engineering aggregate output")?.includes(
+    "Remote exact aggregate qualification",
+  ) &&
+    envelope.get("Engineering aggregate output")?.includes("remains incomplete") &&
+    envelope.get("Engineering aggregate output")?.includes("zero aggregate outputs") &&
     envelope.get("Engineering aggregate output")?.includes("no HSACO") &&
-    envelope.get("Engineering aggregate output")?.includes("post-guard aggregate attempt is pending") &&
+    envelope.get("Engineering aggregate output")?.includes("No aggregate hardware execution") &&
+    envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
+    envelope.get("Engineering aggregate output")?.includes("vLLM/SGLang comparison") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "no artifact, hardware, Qwen, or execution authority",
+      "artifact, or execution authority",
     ),
-  "envelope must retain the exact latest aggregate boundary and pending post-guard limits",
+  "envelope must retain the current aggregate qualification and execution limits",
+);
+assert(
+  envelope.get("Aggregate device source")?.includes("12 Ferric-local Rust M1 kernel roots") &&
+    envelope.get("Aggregate device source")?.includes("seven canonical source modules") &&
+    envelope.get("Aggregate device source")?.includes("no prebuilt or vendor kernel dependency"),
+  "envelope must expose the local aggregate source roster and dependency boundary",
+);
+assert(
+  envelope.get("Aggregate build producer")?.includes(
+    expectedCurrent.aggregateBuildConfigFormat,
+  ) &&
+    envelope.get("Aggregate build producer")?.includes(
+      expectedCurrent.aggregateBuildObservation,
+    ),
+  "aggregate build producer must require production config V2 observation",
 );
 assert(
   envelope.get("Target-only engineering smoke")?.includes(
@@ -496,18 +521,14 @@ assert(
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3LatestMain) &&
-    producerReadiness.detail.includes("includes current origin/main") &&
-    producerReadiness.detail.includes("Remote KFD 295, compiler 489") &&
-    producerReadiness.detail.includes("closure 12, and worker evidence is green") &&
-    producerReadiness.detail.includes("pre-guard Ferric 362b275") &&
-    producerReadiness.detail.includes("rope_kv.rs lines 212 and 213") &&
-    producerReadiness.detail.includes("rope_kv.rs:143") &&
-    producerReadiness.detail.includes("rows * query_columns") &&
-    producerReadiness.detail.includes("zero connects and zero outputs") &&
-    producerReadiness.detail.includes("Ferric guard 4796efd is pushed and qualified") &&
-    producerReadiness.detail.includes("post-guard aggregate attempt remains pending") &&
+    producerReadiness.detail.includes(expectedCurrent.fe2o3GuardedSubtractionCommit) &&
+    producerReadiness.detail.includes("includes origin/main") &&
+    producerReadiness.detail.includes("Remote exact aggregate qualification remains incomplete") &&
+    producerReadiness.detail.includes("zero aggregate outputs and no HSACO") &&
+    producerReadiness.detail.includes("compiler, runtime, and KFD work only") &&
+    producerReadiness.detail.includes("Ferric owns model kernels and inference") &&
     producerReadiness.detail.includes("No artifact, runtime, inference, or correctness authority"),
-  "fe2o3 producer must retain the exact current proof status and downstream nonclaims",
+  "fe2o3 producer must retain the current ownership, proof status, and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
   (item) => item.label === "Production speculative executor",
@@ -576,16 +597,12 @@ assert(
     qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("canonical prepack result remains a non-final probe") &&
-    qwenReadiness.detail.includes("Pushed checkpoint 4796efd") &&
-    qwenReadiness.detail.includes("source qualification is not execution authority") &&
-    qwenReadiness.detail.includes("pre-guard Ferric 362b275") &&
-    qwenReadiness.detail.includes("rope_kv checks") &&
-    qwenReadiness.detail.includes("rows * query_columns") &&
-    qwenReadiness.detail.includes("rope_kv.rs:143") &&
-    qwenReadiness.detail.includes("zero connects and zero outputs") &&
-    qwenReadiness.detail.includes("post-guard aggregate attempt remains pending") &&
+    qwenReadiness.detail.includes("Durable checkpoint 5c5ddef") &&
+    qwenReadiness.detail.includes("aggregate production build config V2") &&
+    qwenReadiness.detail.includes("remote exact aggregate qualification remains incomplete") &&
+    qwenReadiness.detail.includes("source integration is not execution authority") &&
     qwenReadiness.detail.includes(
-      "no current aggregate or engineering HSACO, Qwen token, hardware, numerical, performance, or baseline result exists",
+      "no current aggregate or engineering HSACO, Qwen token, aggregate hardware execution, numerical, performance, or baseline result exists",
     ),
   "Qwen, numerical, and performance authority must remain open",
 );
@@ -737,10 +754,14 @@ assert(historicalPinEntries.length > 0, "historical fe2o3 progress must remain p
 historicalPinEntries.forEach((item) => {
   assert(
     /\b(?:historical|earlier)\b/i.test(`${item.title} ${item.detail}`) &&
-      /\b(?:current repin|current dependency repin)\b/i.test(item.detail),
+      /\b(?:later historical repin checkpoints|later repin checkpoint)\b/i.test(item.detail),
     `historical fe2o3 progress ${item.commit} must be explicitly historical and point forward`,
   );
 });
+assert(
+  progressCommits.has(expectedCurrent.ferricCheckpointCommit),
+  "recent progress must include the durable Ferric checkpoint",
+);
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
   "recent progress must include the current implementation commit",
@@ -840,24 +861,29 @@ for (const claim of forbiddenCurrentDependencyClaims) {
   );
 }
 for (const claim of [
-  "Pushed Ferric checkpoint 4796efd, tree c8b98c6",
-  "qualified profile-extent guards in the RoPE and paged-KV kernels",
-  "Remote rustfmt, 22 rope-wrapper tests, and 21 aggregate tests passed",
-  "independent review returned GO",
-  "Pushed fe2o3 candidate efb8931, tree 4718138, includes current origin/main 57b7d21",
-  "green remote KFD 295, compiler 489, debug-protocol, closure 12, and worker evidence",
-  "exact current-compiler aggregate using pre-guard Ferric 362b275",
-  "crossed prefill and rope_kv.rs lines 212 and 213",
-  "outer invocation exited 1 at rope_kv.rs:143",
-  "rows * query_columns",
-  "zero connects and zero outputs",
-  "post-guard aggregate attempt is pending",
+  /fe2o3-production-build-config-v1/i,
+  /exact aggregate qualification (?:is )?(?:complete|qualified|green)/i,
+  /(?:current|qualified|available) aggregate HSACO/i,
+  /Qwen serving (?:is )?(?:ready|complete|running)/i,
+  /vLLM\/SGLang comparison (?:is )?(?:complete|passed|green)/i,
+]) {
+  assert(!claim.test(currentProjectData), `current Pages data overclaims open work: ${claim}`);
+}
+for (const claim of [
+  "Durable Ferric checkpoint 5c5ddef requires fe2o3 production build config V2",
+  "source-isa-summary-v1 observation",
+  "Ferric owns 12 local Rust kernel roots across seven modules",
+  "no prebuilt or vendor kernel dependency",
+  "fe2o3 branch 80aaaf3 includes origin/main c58785c",
+  "reviewed guarded-subtraction support e745bc75c",
+  "compiler, runtime, and KFD work stays in fe2o3",
+  "model kernels and inference stay in Ferric",
+  "Remote exact aggregate qualification remains incomplete",
   "grants no correctness or execution authority",
-  "Ferric-specific inference and kernel ownership remain in Ferric",
-  "reusable compiler and runtime work remains in fe2o3",
   "publication selection remains None",
   "CURRENT=None",
-  "No aggregate HSACO, current Qwen token, hardware, numerical, performance, or vLLM/SGLang comparison result exists",
+  "No aggregate HSACO has been produced or executed on hardware",
+  "no current Qwen serving, numerical, performance, or vLLM/SGLang comparison result exists",
   "All 33 M1 gates and all 17 assurance properties remain Open",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
@@ -872,13 +898,15 @@ assert(
     dataSource.includes(expectedCurrent.integrationTree) &&
     dataSource.includes(expectedCurrent.ferricCheckpointCommit) &&
     dataSource.includes(expectedCurrent.ferricCheckpointTree) &&
-    dataSource.includes(expectedCurrent.ferricRopeSourceSha256) &&
+    dataSource.includes(expectedCurrent.aggregateBuildConfigFormat) &&
+    dataSource.includes(expectedCurrent.aggregateBuildObservation) &&
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaCommit) &&
     dataSource.includes(expectedCurrent.fe2o3EngineeringSchemaTree) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
     dataSource.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
     dataSource.includes(expectedCurrent.fe2o3LatestMain) &&
+    dataSource.includes(expectedCurrent.fe2o3GuardedSubtractionCommit) &&
     dataSource.includes(expectedCurrent.servingComparisonR33V2IntegrationCommit) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorCandidate) &&
     dataSource.includes(expectedCurrent.productionSpeculativeExecutorTree) &&
@@ -923,18 +951,15 @@ assert(
     dataSource.includes("observation-only and non-authoritative") &&
     dataSource.includes("reviewed R33 V2 checker and full collector") &&
     dataSource.includes("collector has not run") &&
-    dataSource.includes("profile-extent guards in the RoPE and paged-KV kernels") &&
-    dataSource.includes("rope-wrapper 22/22") &&
-    dataSource.includes("aggregate 21/21") &&
-    dataSource.includes("KFD 295, compiler 489") &&
-    dataSource.includes("closure 12, and worker evidence") &&
-    dataSource.includes("pre-guard Ferric 362b275") &&
-    dataSource.includes("rope_kv.rs lines 212 and 213") &&
-    dataSource.includes("rope_kv.rs:143") &&
-    dataSource.includes("rows * query_columns") &&
-    dataSource.includes("zero connects and zero outputs") &&
-    dataSource.includes("post-guard aggregate attempt") &&
-    dataSource.includes("pending") &&
+    dataSource.includes("12 Ferric-local Rust M1 kernel roots") &&
+    dataSource.includes("seven canonical source modules") &&
+    dataSource.includes("no prebuilt or vendor kernel dependency") &&
+    dataSource.includes("fe2o3-production-build-config-v2") &&
+    dataSource.includes("source-isa-summary-v1") &&
+    dataSource.includes("reviewed guarded-subtraction support") &&
+    dataSource.includes("Remote exact aggregate qualification") &&
+    dataSource.includes("zero aggregate outputs") &&
+    dataSource.includes("no HSACO") &&
     dataSource.includes("received independent GO") &&
     dataSource.includes("independent source-integration GO") &&
     dataSource.includes("documentation-only correction") &&
