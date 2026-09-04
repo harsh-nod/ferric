@@ -1,8 +1,9 @@
 use ferric_qwen3_rope_kv_device_v1::{
     QWEN3_KV_CACHE_ELEMENTS_V1, QWEN3_KV_PAGE_TABLE_ENTRIES_V1, QWEN3_KV_PAGE_TOKENS_V1,
     QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1,
-    QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1,
-    qwen3_paged_kv_write_profile_is_admitted_v1, qwen3_rope_profile_is_admitted_v1,
+    QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1,
+    QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1, qwen3_paged_kv_write_profile_is_admitted_v1,
+    qwen3_rope_profile_is_admitted_v1,
 };
 
 fn widen_bf16(bits: u16) -> f32 {
@@ -104,6 +105,7 @@ fn exact_profile_rosters_are_finite_and_fit_the_flat_grid_maximum() {
         assert!(qwen3_paged_kv_write_profile_is_admitted_v1(
             active, sequences, context
         ));
+        assert!(active * sequences <= QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1);
         rope_machine_profiles += 1;
     }
     for [active, sequences, context] in DRAFT_SPECULATIVE {
@@ -116,9 +118,15 @@ fn exact_profile_rosters_are_finite_and_fit_the_flat_grid_maximum() {
         assert!(qwen3_paged_kv_write_profile_is_admitted_v1(
             active, sequences, context
         ));
+        assert!(active * sequences <= QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1);
         rope_machine_profiles += 1;
     }
     assert_eq!(rope_machine_profiles, 22);
+    assert_eq!(QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1, 2_048);
+    assert_eq!(
+        QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1,
+        QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1
+    );
     assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 16_384);
     assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1_048_576);
 

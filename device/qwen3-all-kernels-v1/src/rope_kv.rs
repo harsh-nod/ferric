@@ -10,7 +10,8 @@ use fe2o3_device::{
 pub const QWEN3_ROPE_KERNEL_SYMBOL_V1: &str = "qwen3_rope_v1";
 pub const QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1: &str = "qwen3_paged_kv_write_v1";
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
-pub const QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1: u32 = 2_048;
+pub const QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1: u32 = 2_048;
+pub const QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1: u32 = QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1;
 pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = 16_384;
 pub const QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1: usize =
     QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1 as usize * 64;
@@ -138,15 +139,21 @@ pub fn qwen3_rope_v1(
     let query_heads = query_heads as usize;
     let context_tokens = context_tokens as usize;
     let rows = active_tokens * sequences;
+    if rows < (QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1 as usize + 1) {
+    } else {
+        fe2o3_device::trap();
+    }
     let query_columns = query_heads * 128;
     let key_columns = 8 * 128;
-    if query_bf16.len() != rows * query_columns
-        || key_bf16.len() != rows * key_columns
+    let query_elements = rows * query_columns;
+    let key_elements = rows * key_columns;
+    if query_bf16.len() != query_elements
+        || key_bf16.len() != key_elements
         || position_ids.len() != rows
         || cos_table_f32.len() != QWEN3_ROPE_TRIG_TABLE_ELEMENTS_V1
         || sin_table_f32.len() != QWEN3_ROPE_TRIG_TABLE_ELEMENTS_V1
-        || rotated_query_bf16.len() != rows * query_columns
-        || rotated_key_bf16.len() != rows * key_columns
+        || rotated_query_bf16.len() != query_elements
+        || rotated_key_bf16.len() != key_elements
         || thread::launch_extent_1d() != rows * 64
     {
         fe2o3_device::trap();
@@ -279,12 +286,20 @@ pub fn qwen3_paged_kv_write_v1(
         fe2o3_device::trap();
     }
     let active_tokens = active_tokens as usize;
+    if active_tokens == 0 {
+        fe2o3_device::trap();
+    }
     let sequences = sequences as usize;
     let context_tokens = context_tokens as usize;
     let rows = active_tokens * sequences;
+    if rows < (QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1 as usize + 1) {
+    } else {
+        fe2o3_device::trap();
+    }
     let kv_columns = 8 * 128;
-    if rotated_key_bf16.len() != rows * kv_columns
-        || value_bf16.len() != rows * kv_columns
+    let kv_elements = rows * kv_columns;
+    if rotated_key_bf16.len() != kv_elements
+        || value_bf16.len() != kv_elements
         || logical_starts.len() != sequences
         || page_indices.len() != sequences * QWEN3_KV_PAGE_TABLE_ENTRIES_V1 as usize
         || key_cache_bf16.len() != QWEN3_KV_CACHE_ELEMENTS_V1

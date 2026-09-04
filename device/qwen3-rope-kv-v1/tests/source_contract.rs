@@ -180,6 +180,70 @@ fn attributes_pin_wave64_flat_grid_and_exact_loop_bounds() {
 }
 
 #[test]
+fn profile_row_guards_dominate_all_row_extent_products() {
+    let compact = SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    let guard = "ifrows<(QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1asusize+1){}else{fe2o3_device::trap();}";
+    assert_eq!(compact.matches(guard).count(), 2);
+
+    let (_, rope_tail) = compact
+        .split_once("pubfnqwen3_rope_v1(")
+        .expect("RoPE root is present");
+    let (rope, kv_tail) = rope_tail
+        .split_once("pubfnqwen3_paged_kv_write_v1(")
+        .expect("paged-KV root follows RoPE");
+    let rope_guard = rope.find(guard).expect("RoPE row guard is present");
+    let query_extent = rope
+        .find("letquery_elements=rows*query_columns;")
+        .expect("RoPE query extent is explicit");
+    let key_extent = rope
+        .find("letkey_elements=rows*key_columns;")
+        .expect("RoPE key extent is explicit");
+    assert!(rope_guard < query_extent);
+    assert!(rope_guard < key_extent);
+    assert_eq!(rope.matches("rows*query_columns").count(), 1);
+    assert_eq!(rope.matches("rows*key_columns").count(), 1);
+    let launch_extent = rope
+        .find("thread::launch_extent_1d()!=rows*64")
+        .expect("RoPE launch extent is explicit");
+    assert!(rope_guard < launch_extent);
+    assert_eq!(rope.matches("rows*64").count(), 1);
+
+    let kv_guard = kv_tail.find(guard).expect("paged-KV row guard is present");
+    let kv_extent = kv_tail
+        .find("letkv_elements=rows*kv_columns;")
+        .expect("paged-KV extent is explicit");
+    assert!(kv_guard < kv_extent);
+    assert_eq!(kv_tail.matches("rows*kv_columns").count(), 1);
+}
+
+#[test]
+fn paged_kv_active_token_guard_dominates_division_and_remainder() {
+    let compact = SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    let (_, kv) = compact
+        .split_once("pubfnqwen3_paged_kv_write_v1(")
+        .expect("paged-KV root is present");
+    let guard = "ifactive_tokens==0{fe2o3_device::trap();}";
+    let guard_position = kv.find(guard).expect("active-token guard is present");
+    let division = kv
+        .find("letsequence=row/active_tokens;")
+        .expect("active-token division is present");
+    let remainder = kv
+        .find("letlocal_token=row%active_tokens;")
+        .expect("active-token remainder is present");
+    assert!(guard_position < division);
+    assert!(guard_position < remainder);
+    assert_eq!(kv.matches(guard).count(), 1);
+    assert_eq!(kv.matches("/active_tokens").count(), 1);
+    assert_eq!(kv.matches("%active_tokens").count(), 1);
+}
+
+#[test]
 fn source_signatures_match_the_exact_host_abis() {
     let kernels = kernels();
     let rope = &kernels[0];
