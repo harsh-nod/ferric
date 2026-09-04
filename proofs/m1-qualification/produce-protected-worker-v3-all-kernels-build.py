@@ -19,16 +19,17 @@ from types import ModuleType
 from typing import Any, BinaryIO, NoReturn
 
 
-FORMAT = "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V1"
+FORMAT = "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V2"
 AUTHORITY = "identity-and-structure-observation-only"
 NONCLAIM = (
     "This record preserves byte identities, bounded namespace custody, descriptive HSACO "
-    "inspection, and output from a source-prebound typed source-pin adapter only. Its "
-    "shallow checksum parsing is not typed decoding of every durable record and does not "
-    "reauthenticate a current durable publication lease. It does not establish protected "
-    "compiler origin, compilation or finalization authenticity, durable publication, "
-    "verifier authority, GPU load or dispatch, numerical correctness, performance, Qwen "
-    "model execution, or M1 qualification."
+    "inspection, and output from a source-prebound typed source-pin adapter only. It records "
+    "the configured Source/ISA observation request but does not retain or authenticate emitted "
+    "Source/ISA telemetry. Its shallow checksum parsing is not typed decoding of every durable "
+    "record and does not reauthenticate a current durable publication lease. It does not "
+    "establish protected compiler origin, compilation or finalization authenticity, durable "
+    "publication, verifier authority, GPU load or dispatch, numerical correctness, performance, "
+    "Qwen model execution, or M1 qualification."
 )
 ESTABLISHED = [
     "aggregate-byte-identity-observation",
@@ -47,6 +48,7 @@ EXCLUDED = [
     "performance",
     "protected-compilation-authentication",
     "qwen-execution",
+    "source-isa-observation-authentication",
     "verifier-authority",
     "worker-v3-finalization-authentication",
 ]
@@ -305,13 +307,21 @@ def exact_config(config: Any, source_repo: Path) -> dict[str, Any]:
         "format",
         "limits",
         "link_options",
+        "observation",
         "providers",
         "units",
         "worker",
     }:
         fail("production config fields drifted")
+    observation = value["observation"]
     if (
-        value["format"] != "fe2o3-production-build-config-v1"
+        not isinstance(observation, dict)
+        or set(observation) != {"kind"}
+        or observation.get("kind") != "source-isa-summary-v1"
+    ):
+        fail("production config must select the exact source-isa-summary-v1 observation")
+    if (
+        value["format"] != "fe2o3-production-build-config-v2"
         or value["candidate_output_max_bytes"] != 4_194_304
         or value["providers"] != []
         or value["limits"]
@@ -368,8 +378,10 @@ def exact_config(config: Any, source_repo: Path) -> dict[str, Any]:
         fail("production config worker pin drifted")
     return {
         "candidate_output_max_bytes": value["candidate_output_max_bytes"],
+        "format": value["format"],
         "limits": value["limits"],
         "link_options": value["link_options"],
+        "observation": {"kind": observation["kind"]},
         "sha256": CUSTODY.sha256(raw),
         "unit": {
             "crate_name": unit["crate_name"],

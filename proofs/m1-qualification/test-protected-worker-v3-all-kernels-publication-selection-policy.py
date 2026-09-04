@@ -228,6 +228,7 @@ def build_record(
         },
         "observed_production_recipe": {
             "candidate_output_max_bytes": 4_194_304,
+            "format": "fe2o3-production-build-config-v2",
             "limits": {"stderr_bytes": 65_536, "stdout_bytes": 8_388_608, "timeout_ms": 120_000},
             "link_options": [
                 {"name": "code-object-version", "value": "6"},
@@ -235,6 +236,7 @@ def build_record(
                 {"name": "strip-debug", "value": "true"},
                 {"name": "verify-each", "value": "true"},
             ],
+            "observation": {"kind": "source-isa-summary-v1"},
             "sha256": digest("config"),
             "unit": {
                 "crate_name": "ferric_qwen3_all_kernels_device_v1",
@@ -472,7 +474,61 @@ def main() -> None:
         ):
             fail(f"validator rejected canonical record: {accepted.stdout!r}")
 
+        recipe_mutations: list[tuple[str, Mutation]] = [
+            (
+                "record-version",
+                set_path(
+                    ("format",),
+                    "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V1",
+                ),
+            ),
+            (
+                "recipe-version",
+                set_path(
+                    ("observed_production_recipe", "format"),
+                    "fe2o3-production-build-config-v1",
+                ),
+            ),
+            (
+                "recipe-observation-missing",
+                lambda value: value["observed_production_recipe"].pop("observation"),
+            ),
+            (
+                "recipe-observation-summary-version",
+                set_path(
+                    ("observed_production_recipe", "observation", "kind"),
+                    "source-isa-summary-v2",
+                ),
+            ),
+            (
+                "recipe-observation-characteristic",
+                set_path(
+                    ("observed_production_recipe", "observation", "kind"),
+                    "source-isa-characteristic-v1",
+                ),
+            ),
+            (
+                "recipe-observation-scalar",
+                set_path(
+                    ("observed_production_recipe", "observation"),
+                    "source-isa-summary-v1",
+                ),
+            ),
+            (
+                "recipe-observation-extra-field",
+                lambda value: value["observed_production_recipe"]["observation"].__setitem__(
+                    "output", "stderr"
+                ),
+            ),
+            (
+                "recipe-extra-field",
+                lambda value: value["observed_production_recipe"].__setitem__(
+                    "source_isa_observation", True
+                ),
+            ),
+        ]
         mutations: list[tuple[str, Mutation]] = [
+            *recipe_mutations,
             ("schema", lambda value: value.__setitem__("hostile", True)),
             ("field", lambda value: value["source_pin_observation"]["projection"]["source_pin"].pop("compiler_module_length")),
             ("order", lambda value: value["inspection"]["kernels"].reverse()),
@@ -536,6 +592,7 @@ def main() -> None:
             value["source"]["device_provider_tree"] = compiler_tree
 
         producer_mutations: list[tuple[str, Mutation]] = [
+            *recipe_mutations,
             (
                 "device-source-bytes",
                 set_path(("source", "device_files", 0, "sha256"), digest("other-device-source")),

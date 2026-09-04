@@ -440,41 +440,40 @@ def main() -> None:
         helpers.commit(source_repo, "pre-bind aggregate source-pin adapter")
 
         config = root / "production-config.json"
-        config.write_bytes(
-            helpers.canonical_compact(
+        production_config = {
+            "candidate_output_max_bytes": 4_194_304,
+            "format": "fe2o3-production-build-config-v2",
+            "limits": {
+                "stderr_bytes": 65_536,
+                "stdout_bytes": 8_388_608,
+                "timeout_ms": 120_000,
+            },
+            "link_options": [
+                {"name": "code-object-version", "value": "6"},
+                {"name": "opt-level", "value": "2"},
+                {"name": "strip-debug", "value": "true"},
+                {"name": "verify-each", "value": "true"},
+            ],
+            "observation": {"kind": "source-isa-summary-v1"},
+            "providers": [],
+            "units": [
                 {
-                    "candidate_output_max_bytes": 4_194_304,
-                    "format": "fe2o3-production-build-config-v1",
-                    "limits": {
-                        "stderr_bytes": 65_536,
-                        "stdout_bytes": 8_388_608,
-                        "timeout_ms": 120_000,
-                    },
-                    "link_options": [
-                        {"name": "code-object-version", "value": "6"},
-                        {"name": "opt-level", "value": "2"},
-                        {"name": "strip-debug", "value": "true"},
-                        {"name": "verify-each", "value": "true"},
-                    ],
-                    "providers": [],
-                    "units": [
-                        {
-                            "crate_name": "ferric_qwen3_all_kernels_device_v1",
-                            "source": "src/lib.rs",
-                            "working_directory": str(device),
-                        }
-                    ],
-                    "worker": {
-                        "byte_len": 42,
-                        "llvm_build_identity": "7.2.4",
-                        "path": str(root / "worker"),
-                        "sha256": hashlib.sha256(b"synthetic aggregate worker").hexdigest(),
-                        "worker_build_identity": "fe2o3-worker-v1-sha256-"
-                        + hashlib.sha256(b"synthetic aggregate worker build").hexdigest(),
-                    },
+                    "crate_name": "ferric_qwen3_all_kernels_device_v1",
+                    "source": "src/lib.rs",
+                    "working_directory": str(device),
                 }
-            )
-        )
+            ],
+            "worker": {
+                "byte_len": 42,
+                "llvm_build_identity": "7.2.4",
+                "path": str(root / "worker"),
+                "sha256": hashlib.sha256(b"synthetic aggregate worker").hexdigest(),
+                "worker_build_identity": "fe2o3-worker-v1-sha256-"
+                + hashlib.sha256(b"synthetic aggregate worker build").hexdigest(),
+            },
+        }
+        canonical_config = helpers.canonical_compact(production_config)
+        config.write_bytes(canonical_config)
         arguments = [
             source_repo,
             compiler_repo,
@@ -497,8 +496,12 @@ def main() -> None:
             fail("aggregate producer output is not canonical JSON")
         if (
             record.get("format")
-            != "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V1"
+            != "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V2"
             or record.get("authority") != "identity-and-structure-observation-only"
+            or record.get("observed_production_recipe", {}).get("format")
+            != "fe2o3-production-build-config-v2"
+            or record.get("observed_production_recipe", {}).get("observation")
+            != {"kind": "source-isa-summary-v1"}
             or record.get("inspection", {}).get("kernel_count") != 12
             or {item["name"] for item in record["inspection"]["kernels"]} != set(KERNELS)
             or record.get("inspection", {}).get("ordering_claim") != "none"
@@ -531,6 +534,73 @@ def main() -> None:
             b"PASS: canonical aggregate protected Worker V3 build record sha256="
         ):
             fail(f"canonical validator rejected producer output: {validated.stdout!r}")
+
+        old_v1 = copy.deepcopy(production_config)
+        old_v1["format"] = "fe2o3-production-build-config-v1"
+        del old_v1["observation"]
+        v1_with_observation = copy.deepcopy(production_config)
+        v1_with_observation["format"] = "fe2o3-production-build-config-v1"
+        missing_observation = copy.deepcopy(production_config)
+        del missing_observation["observation"]
+        wrong_summary = copy.deepcopy(production_config)
+        wrong_summary["observation"]["kind"] = "source-isa-summary-v2"
+        characteristic = copy.deepcopy(production_config)
+        characteristic["observation"]["kind"] = "source-isa-characteristic-v1"
+        empty_observation = copy.deepcopy(production_config)
+        empty_observation["observation"] = {}
+        scalar_observation = copy.deepcopy(production_config)
+        scalar_observation["observation"] = "source-isa-summary-v1"
+        non_string_kind = copy.deepcopy(production_config)
+        non_string_kind["observation"]["kind"] = 1
+        extra_observation_field = copy.deepcopy(production_config)
+        extra_observation_field["observation"]["output"] = "stderr"
+        extra_root_field = copy.deepcopy(production_config)
+        extra_root_field["source_isa_observation"] = True
+        hostile_configs = [
+            (helpers.canonical_compact(old_v1), "an old production V1 config"),
+            (
+                helpers.canonical_compact(v1_with_observation),
+                "a V1 format in the V2 config shape",
+            ),
+            (
+                helpers.canonical_compact(missing_observation),
+                "a V2 config missing observation",
+            ),
+            (
+                helpers.canonical_compact(wrong_summary),
+                "a wrong summary observation version",
+            ),
+            (
+                helpers.canonical_compact(characteristic),
+                "a characteristic observation in the summary-only aggregate policy",
+            ),
+            (
+                helpers.canonical_compact(empty_observation),
+                "an empty observation object",
+            ),
+            (helpers.canonical_compact(scalar_observation), "a scalar observation"),
+            (helpers.canonical_compact(non_string_kind), "a non-string observation kind"),
+            (
+                helpers.canonical_compact(extra_observation_field),
+                "an extra observation field",
+            ),
+            (helpers.canonical_compact(extra_root_field), "an extra V2 root field"),
+            (
+                json.dumps(
+                    production_config, ensure_ascii=True, sort_keys=True
+                ).encode("ascii"),
+                "a noncanonical V2 config",
+            ),
+        ]
+        for index, (hostile_config, description) in enumerate(hostile_configs):
+            config.write_bytes(hostile_config)
+            require_rejection(
+                producer,
+                arguments,
+                root / f"hostile-config-{index}.json",
+                description,
+            )
+        config.write_bytes(canonical_config)
 
         require_rejection(producer, arguments, output, "a preexisting output")
 

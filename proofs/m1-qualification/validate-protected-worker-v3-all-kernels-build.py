@@ -13,16 +13,17 @@ import sys
 from typing import Any, NoReturn
 
 
-FORMAT = "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V1"
+FORMAT = "FERRIC-M1-PROTECTED-WORKER-V3-ALL-KERNELS-BUILD-V2"
 AUTHORITY = "identity-and-structure-observation-only"
 NONCLAIM = (
     "This record preserves byte identities, bounded namespace custody, descriptive HSACO "
-    "inspection, and output from a source-prebound typed source-pin adapter only. Its "
-    "shallow checksum parsing is not typed decoding of every durable record and does not "
-    "reauthenticate a current durable publication lease. It does not establish protected "
-    "compiler origin, compilation or finalization authenticity, durable publication, "
-    "verifier authority, GPU load or dispatch, numerical correctness, performance, Qwen "
-    "model execution, or M1 qualification."
+    "inspection, and output from a source-prebound typed source-pin adapter only. It records "
+    "the configured Source/ISA observation request but does not retain or authenticate emitted "
+    "Source/ISA telemetry. Its shallow checksum parsing is not typed decoding of every durable "
+    "record and does not reauthenticate a current durable publication lease. It does not "
+    "establish protected compiler origin, compilation or finalization authenticity, durable "
+    "publication, verifier authority, GPU load or dispatch, numerical correctness, performance, "
+    "Qwen model execution, or M1 qualification."
 )
 ESTABLISHED = [
     "aggregate-byte-identity-observation",
@@ -41,6 +42,7 @@ EXCLUDED = [
     "performance",
     "protected-compilation-authentication",
     "qwen-execution",
+    "source-isa-observation-authentication",
     "verifier-authority",
     "worker-v3-finalization-authentication",
 ]
@@ -308,11 +310,24 @@ def validate(record: dict[str, Any]) -> None:
 
     recipe = exact(
         record["observed_production_recipe"],
-        {"candidate_output_max_bytes", "limits", "link_options", "sha256", "unit", "worker"},
+        {
+            "candidate_output_max_bytes",
+            "format",
+            "limits",
+            "link_options",
+            "observation",
+            "sha256",
+            "unit",
+            "worker",
+        },
         "observed production recipe",
+    )
+    observation = exact(
+        recipe["observation"], {"kind"}, "observed production recipe observation"
     )
     if (
         recipe["candidate_output_max_bytes"] != 4_194_304
+        or recipe["format"] != "fe2o3-production-build-config-v2"
         or recipe["limits"]
         != {"stderr_bytes": 65_536, "stdout_bytes": 8_388_608, "timeout_ms": 120_000}
         or recipe["link_options"]
@@ -322,8 +337,9 @@ def validate(record: dict[str, Any]) -> None:
             {"name": "strip-debug", "value": "true"},
             {"name": "verify-each", "value": "true"},
         ]
+        or observation["kind"] != "source-isa-summary-v1"
     ):
-        fail("aggregate production recipe or COV6 selection drifted")
+        fail("aggregate V2 production recipe, summary observation, or COV6 selection drifted")
     sha256(recipe["sha256"], "production recipe SHA-256")
     unit = exact(recipe["unit"], {"crate_name", "source", "working_directory_relative"}, "unit")
     if unit != {
