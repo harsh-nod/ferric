@@ -393,6 +393,75 @@ pub struct M1ReleasedQueueTeardownFailureV1 {
     total_released: usize,
 }
 
+/// Exact pre-mutation rejection of a healthy all-terminal queue shutdown.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AllTerminalQueueShutdownErrorV1 {
+    /// The paired Engine was already permanently faulted.
+    EngineFaulted,
+    /// One current released member still owns an active KV cache.
+    ActiveMember { lane: usize, request: RequestId },
+    /// The Engine still retains a live scheduler/KV request.
+    EngineNotQuiescent { live_count: usize },
+    /// A long-lived rearm owner still retains an active parked cache.
+    ParkedMembers { count: usize },
+}
+
+/// Intact generic released-step owner rejected before queue destruction.
+#[must_use = "the unchanged released-step owner remains retry-capable"]
+#[derive(Debug)]
+pub struct M1ReleasedAllTerminalQueueShutdownRejectionV1 {
+    error: M1AllTerminalQueueShutdownErrorV1,
+    released: Box<M1ReleasedCompletedStepV1>,
+}
+
+impl M1ReleasedAllTerminalQueueShutdownRejectionV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AllTerminalQueueShutdownErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the exact released-step owner remains retained"]
+    pub const fn released(&self) -> &M1ReleasedCompletedStepV1 {
+        &self.released
+    }
+
+    /// Returns the rejection and unchanged released-step owner exactly once.
+    #[must_use = "the rejection and released-step owner remain retained"]
+    pub fn into_parts(self) -> (M1AllTerminalQueueShutdownErrorV1, M1ReleasedCompletedStepV1) {
+        (self.error, *self.released)
+    }
+}
+
+/// Confirmed generic queue destruction after exact all-terminal preflight.
+#[must_use = "healthy all-terminal queue shutdown evidence remains retained"]
+#[derive(Debug)]
+pub struct M1ReleasedAllTerminalQueueShutdownSuccessV1 {
+    teardown: M1ReleasedQueueTeardownSuccessV1,
+}
+
+impl M1ReleasedAllTerminalQueueShutdownSuccessV1 {
+    #[must_use = "queue-destruction evidence and released-step custody remain retained"]
+    pub const fn teardown(&self) -> &M1ReleasedQueueTeardownSuccessV1 {
+        &self.teardown
+    }
+
+    /// Returns confirmed destruction evidence and released-step custody.
+    #[must_use = "queue-destruction evidence and released-step custody remain retained"]
+    pub fn into_teardown(self) -> M1ReleasedQueueTeardownSuccessV1 {
+        self.teardown
+    }
+}
+
+/// Exhaustive generic all-terminal shutdown rejection or terminal quarantine.
+#[must_use = "all-terminal shutdown failure retains exact linear custody"]
+#[derive(Debug)]
+pub enum M1ReleasedAllTerminalQueueShutdownFailureV1 {
+    /// Pure preflight rejection retaining the unchanged released step.
+    Rejected(Box<M1ReleasedAllTerminalQueueShutdownRejectionV1>),
+    /// Native release failed and the Engine was permanently quarantined.
+    Quarantined(Box<M1ReleasedQueueTeardownFailureV1>),
+}
+
 /// Successful authenticated final queue release retaining completed-step
 /// observations and a consuming program-owner handoff.
 ///
@@ -440,6 +509,67 @@ pub struct M1AuthenticatedReleasedQueueTeardownFailureV1 {
     release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
     completed_members: usize,
     total_released: usize,
+}
+
+/// Intact authenticated released-step owner rejected before queue destruction.
+#[must_use = "the unchanged authenticated released-step owner remains retry-capable"]
+#[derive(Debug)]
+pub struct M1AuthenticatedReleasedAllTerminalQueueShutdownRejectionV1 {
+    error: M1AllTerminalQueueShutdownErrorV1,
+    released: Box<M1AuthenticatedReleasedCompletedStepV1>,
+}
+
+impl M1AuthenticatedReleasedAllTerminalQueueShutdownRejectionV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AllTerminalQueueShutdownErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the exact authenticated released-step owner remains retained"]
+    pub const fn released(&self) -> &M1AuthenticatedReleasedCompletedStepV1 {
+        &self.released
+    }
+
+    /// Returns the rejection and unchanged authenticated owner exactly once.
+    #[must_use = "the rejection and authenticated released-step owner remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AllTerminalQueueShutdownErrorV1,
+        M1AuthenticatedReleasedCompletedStepV1,
+    ) {
+        (self.error, *self.released)
+    }
+}
+
+/// Confirmed authenticated destruction after exact all-terminal preflight.
+#[must_use = "healthy authenticated all-terminal shutdown evidence remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1 {
+    teardown: M1AuthenticatedReleasedQueueTeardownSuccessV1,
+}
+
+impl M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1 {
+    #[must_use = "authenticated release and released-step custody remain retained"]
+    pub const fn teardown(&self) -> &M1AuthenticatedReleasedQueueTeardownSuccessV1 {
+        &self.teardown
+    }
+
+    /// Returns the authenticated release and released-step custody exactly once.
+    #[must_use = "authenticated release and released-step custody remain retained"]
+    pub fn into_teardown(self) -> M1AuthenticatedReleasedQueueTeardownSuccessV1 {
+        self.teardown
+    }
+}
+
+/// Exhaustive authenticated all-terminal rejection or terminal quarantine.
+#[must_use = "authenticated all-terminal shutdown failure retains exact custody"]
+#[derive(Debug)]
+pub enum M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1 {
+    /// Pure preflight rejection retaining the unchanged authenticated step.
+    Rejected(Box<M1AuthenticatedReleasedAllTerminalQueueShutdownRejectionV1>),
+    /// Native release failed and the Engine was permanently quarantined.
+    Quarantined(Box<M1AuthenticatedReleasedQueueTeardownFailureV1>),
 }
 
 impl M1ReleasedQueueTeardownFailureV1 {
@@ -618,6 +748,41 @@ impl M1AuthenticatedReleasedQueueTeardownFailureV1 {
     }
 }
 
+fn preflight_all_terminal_queue_shutdown<const C: usize>(
+    engine: &Engine<C>,
+    members: &[M1ReleasedDeviceKvMemberV1],
+) -> Result<(), M1AllTerminalQueueShutdownErrorV1> {
+    if engine.is_faulted() {
+        return Err(M1AllTerminalQueueShutdownErrorV1::EngineFaulted);
+    }
+    for (lane, member) in members.iter().enumerate() {
+        if let M1ReleasedDeviceKvMemberV1::Active(cache) = member {
+            return Err(M1AllTerminalQueueShutdownErrorV1::ActiveMember {
+                lane,
+                request: cache.projection().request,
+            });
+        }
+    }
+    let live_count = engine.live_count();
+    if live_count != 0 {
+        return Err(M1AllTerminalQueueShutdownErrorV1::EngineNotQuiescent { live_count });
+    }
+    Ok(())
+}
+
+fn retain_engine_health_only_on_confirmed_release<const C: usize, T, E>(
+    engine: &mut Engine<C>,
+    release: Result<T, E>,
+) -> Result<T, E> {
+    match release {
+        Ok(confirmed) => Ok(confirmed),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
 impl M1ReleasedCompletedStepV1 {
     pub const fn queue(&self) -> &M1PhysicalReadbackQueueSessionV1 {
         &self.queue
@@ -654,6 +819,71 @@ impl M1ReleasedCompletedStepV1 {
     #[must_use]
     pub const fn total_released(&self) -> usize {
         self.total_released
+    }
+
+    /// Destroys one fully terminal queue while preserving a healthy Engine.
+    ///
+    /// The complete current member roster and Engine quiescence are checked
+    /// before the queue is consumed. Success is returned only with the native
+    /// queue-destruction and allocation-release observation. A native release
+    /// failure permanently quarantines the Engine and retains every available
+    /// lower and Ferric owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns a retry-safe unchanged owner for preflight rejection, or
+    /// terminal release quarantine after queue destruction becomes ambiguous.
+    pub fn shutdown_all_terminal_queue<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1ReleasedAllTerminalQueueShutdownSuccessV1,
+        M1ReleasedAllTerminalQueueShutdownFailureV1,
+    > {
+        if let Err(error) = preflight_all_terminal_queue_shutdown(engine, &self.members) {
+            return Err(M1ReleasedAllTerminalQueueShutdownFailureV1::Rejected(
+                Box::new(M1ReleasedAllTerminalQueueShutdownRejectionV1 {
+                    error,
+                    released: Box::new(self),
+                }),
+            ));
+        }
+        let Self {
+            queue,
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+        } = self;
+        match retain_engine_health_only_on_confirmed_release(engine, queue.destroy_and_release()) {
+            Ok(queue_release) => Ok(M1ReleasedAllTerminalQueueShutdownSuccessV1 {
+                teardown: M1ReleasedQueueTeardownSuccessV1 {
+                    queue_release,
+                    checked,
+                    members,
+                    logical_accepted_counts,
+                    externally_published_counts,
+                    release_counts,
+                    completed_members,
+                    total_released,
+                },
+            }),
+            Err(source) => Err(M1ReleasedAllTerminalQueueShutdownFailureV1::Quarantined(
+                Box::new(M1ReleasedQueueTeardownFailureV1 {
+                    source,
+                    checked,
+                    members,
+                    logical_accepted_counts,
+                    externally_published_counts,
+                    release_counts,
+                    completed_members,
+                    total_released,
+                }),
+            )),
+        }
     }
 
     /// Destroys the completed queue and releases its allocation session while
@@ -777,6 +1007,75 @@ impl M1AuthenticatedReleasedCompletedStepV1 {
     #[must_use]
     pub const fn total_released(&self) -> usize {
         self.total_released
+    }
+
+    /// Destroys one fully terminal authenticated queue while preserving a
+    /// healthy Engine.
+    ///
+    /// The complete current member roster and Engine quiescence are checked
+    /// before the authenticated queue is consumed. Native release failure
+    /// permanently quarantines the Engine and retains opaque authenticated
+    /// lower custody plus every released-step owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns a retry-safe unchanged authenticated owner for preflight
+    /// rejection, or terminal quarantine after release becomes ambiguous.
+    pub fn shutdown_all_terminal_queue<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1,
+        M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1,
+    > {
+        if let Err(error) = preflight_all_terminal_queue_shutdown(engine, &self.members) {
+            return Err(
+                M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Rejected(Box::new(
+                    M1AuthenticatedReleasedAllTerminalQueueShutdownRejectionV1 {
+                        error,
+                        released: Box::new(self),
+                    },
+                )),
+            );
+        }
+        let Self {
+            queue,
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+        } = self;
+        match retain_engine_health_only_on_confirmed_release(engine, queue.destroy_and_release()) {
+            Ok(queue_release) => Ok(M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1 {
+                teardown: M1AuthenticatedReleasedQueueTeardownSuccessV1 {
+                    queue_release,
+                    checked,
+                    members,
+                    logical_accepted_counts,
+                    externally_published_counts,
+                    release_counts,
+                    completed_members,
+                    total_released,
+                },
+            }),
+            Err(source) => Err(
+                M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Quarantined(Box::new(
+                    M1AuthenticatedReleasedQueueTeardownFailureV1 {
+                        source: *source,
+                        checked,
+                        members,
+                        logical_accepted_counts,
+                        externally_published_counts,
+                        release_counts,
+                        completed_members,
+                        total_released,
+                    },
+                )),
+            ),
+        }
     }
 
     /// Faults the logical Engine, destroys the authenticated queue, and
@@ -1503,6 +1802,41 @@ pub fn release_m1_authenticated_completed_step_kv_pages_v1(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::device_cache::test_support::bind_gfx942_device;
+    use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection};
+
+    fn test_cache(request: RequestId) -> ActiveDeviceKvCache {
+        let device = bind_gfx942_device(
+            Identity::new([83; 32]),
+            7,
+            crate::GFX942_PROCESSOR,
+            crate::GFX942_TARGET_FEATURES,
+        )
+        .unwrap();
+        let target = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        let draft = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        ActiveDeviceKvCache::new(device, request, target, draft).unwrap()
+    }
+
+    fn terminal_member(request: RequestId) -> M1ReleasedDeviceKvMemberV1 {
+        let cache = test_cache(request);
+        let projection = cache.projection();
+        M1ReleasedDeviceKvMemberV1::Terminal(M1ReleasedTerminalDeviceKvMemberV1 {
+            request,
+            completion_epoch: CompletionEpoch::new(9),
+            target: projection.target,
+            draft: projection.draft,
+            released: M1CompletedKvPageReleaseCountsV1::default(),
+        })
+    }
 
     #[test]
     fn raw_and_authenticated_release_use_the_same_private_contracts() {
@@ -1513,6 +1847,114 @@ mod tests {
         assert_queue::<M1AuthenticatedPhysicalReadbackQueueSessionV1>();
         assert_carrier::<M1CompletedStepSuccessV1>();
         assert_carrier::<M1AuthenticatedCompletedStepSuccessV1>();
+    }
+
+    #[test]
+    fn all_terminal_shutdown_preflight_is_exact_and_nonmutating() {
+        let terminal = vec![terminal_member(RequestId::new(3, 8))];
+        let healthy = Engine::<1>::new(8, 4, 32).unwrap();
+        assert_eq!(
+            preflight_all_terminal_queue_shutdown(&healthy, &terminal),
+            Ok(())
+        );
+        assert!(!healthy.is_faulted());
+
+        let active_request = RequestId::new(4, 8);
+        let active = vec![M1ReleasedDeviceKvMemberV1::Active(test_cache(
+            active_request,
+        ))];
+        assert_eq!(
+            preflight_all_terminal_queue_shutdown(&healthy, &active),
+            Err(M1AllTerminalQueueShutdownErrorV1::ActiveMember {
+                lane: 0,
+                request: active_request,
+            })
+        );
+        assert!(!healthy.is_faulted());
+
+        let mut nonquiescent = Engine::<1>::new(8, 4, 32).unwrap();
+        let _live = nonquiescent.admit().unwrap();
+        let terminal = vec![terminal_member(RequestId::new(5, 8))];
+        assert_eq!(
+            preflight_all_terminal_queue_shutdown(&nonquiescent, &terminal),
+            Err(M1AllTerminalQueueShutdownErrorV1::EngineNotQuiescent { live_count: 1 })
+        );
+        assert!(!nonquiescent.is_faulted());
+
+        nonquiescent.quarantine_m1_queue_rearm_failure();
+        assert_eq!(
+            preflight_all_terminal_queue_shutdown(&nonquiescent, &[]),
+            Err(M1AllTerminalQueueShutdownErrorV1::EngineFaulted)
+        );
+    }
+
+    #[test]
+    fn engine_stays_healthy_only_for_confirmed_release() {
+        let mut confirmed = Engine::<1>::new(8, 4, 32).unwrap();
+        assert_eq!(
+            retain_engine_health_only_on_confirmed_release(&mut confirmed, Ok::<_, ()>(17)),
+            Ok(17)
+        );
+        assert!(!confirmed.is_faulted());
+
+        let mut ambiguous = Engine::<1>::new(8, 4, 32).unwrap();
+        assert_eq!(
+            retain_engine_health_only_on_confirmed_release(&mut ambiguous, Err::<(), _>(23)),
+            Err(23)
+        );
+        assert!(ambiguous.is_faulted());
+    }
+
+    #[test]
+    fn clean_shutdown_source_orders_preflight_release_and_quarantine() {
+        let source = include_str!("m1_completed_step_release.rs");
+        let quarantine_call = "engine.quarantine_m1_queue_rearm_failure();";
+        let preflight = source
+            .find(
+                "if let Err(error) = preflight_all_terminal_queue_shutdown(engine, &self.members)",
+            )
+            .unwrap();
+        let release = source[preflight..]
+            .find("queue.destroy_and_release()")
+            .map(|offset| preflight + offset)
+            .unwrap();
+        let helper = source
+            .find("fn retain_engine_health_only_on_confirmed_release")
+            .unwrap();
+        let helper_end = source[helper..]
+            .find("impl M1ReleasedCompletedStepV1")
+            .map(|offset| helper + offset)
+            .unwrap();
+        let helper_body = &source[helper..helper_end];
+        let confirmed = helper_body.find("Ok(confirmed) => Ok(confirmed)").unwrap();
+        let quarantine = helper_body.find(quarantine_call).unwrap();
+
+        let generic_start = source.find("impl M1ReleasedCompletedStepV1").unwrap();
+        let authenticated_start = source
+            .find("impl M1AuthenticatedReleasedCompletedStepV1")
+            .unwrap();
+        let generic_impl = &source[generic_start..authenticated_start];
+        let authenticated_end = source[authenticated_start..]
+            .find("impl M1CompletedStepKvReleaseQueueV1")
+            .map(|offset| authenticated_start + offset)
+            .unwrap();
+        let authenticated_impl = &source[authenticated_start..authenticated_end];
+
+        assert!(preflight < release);
+        assert!(confirmed < quarantine);
+        assert_eq!(helper_body.matches(quarantine_call).count(), 1);
+        for legacy_impl in [generic_impl, authenticated_impl] {
+            assert_eq!(legacy_impl.matches(quarantine_call).count(), 1);
+            let clean = legacy_impl
+                .find("pub fn shutdown_all_terminal_queue")
+                .unwrap();
+            let legacy = legacy_impl
+                .find("pub fn destroy_queue_and_retain_step")
+                .unwrap();
+            assert!(clean < legacy);
+            assert!(!legacy_impl[clean..legacy].contains(quarantine_call));
+            assert!(legacy_impl[legacy..].contains(quarantine_call));
+        }
     }
 
     #[test]

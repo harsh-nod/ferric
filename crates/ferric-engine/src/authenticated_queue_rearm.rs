@@ -26,8 +26,9 @@ use ferric_spec::{
 };
 
 use crate::m1_queue_rearm::{
-    append_workspace_ranges, member_layout, rebuild_bound_rows, retained_host_capture_ranges,
-    M1NonEmptyRearmRoundHistoryV1, M1RearmRoundHistoryV1,
+    append_workspace_ranges, member_layout, preflight_all_terminal_rearm_shutdown,
+    rebuild_bound_rows, retained_host_capture_ranges, M1NonEmptyRearmRoundHistoryV1,
+    M1RearmRoundHistoryV1,
 };
 use crate::physical_fixed_batch::{
     build_m1_authenticated_queue_packet_batch_v1, validate_authenticated_operation_plan_v1,
@@ -82,6 +83,85 @@ pub struct M1AuthenticatedLongLivedQueueReleasedRoundV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+}
+
+/// Confirmed healthy shutdown of an all-terminal authenticated queue.
+#[must_use = "authenticated queue release and complete round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
+    released: crate::M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1RearmRoundHistoryV1,
+}
+
+impl M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
+    #[must_use = "authenticated destruction and current-step custody remain retained"]
+    pub const fn released(
+        &self,
+    ) -> &crate::M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1 {
+        &self.released
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        0
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&crate::M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+}
+
+/// Retry-safe authenticated all-terminal shutdown rejection.
+#[must_use = "the unchanged authenticated released round remains retry-capable"]
+#[derive(Debug)]
+pub struct M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1 {
+    error: crate::M1AllTerminalQueueShutdownErrorV1,
+    released: Box<M1AuthenticatedLongLivedQueueReleasedRoundV1>,
+}
+
+impl M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1 {
+    #[must_use]
+    pub const fn error(&self) -> crate::M1AllTerminalQueueShutdownErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the complete unchanged authenticated round remains retained"]
+    pub const fn released(&self) -> &M1AuthenticatedLongLivedQueueReleasedRoundV1 {
+        &self.released
+    }
+
+    /// Returns the rejection and unchanged authenticated round exactly once.
+    #[must_use = "the rejection and authenticated round remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        crate::M1AllTerminalQueueShutdownErrorV1,
+        M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    ) {
+        (self.error, *self.released)
+    }
+}
+
+/// Exhaustive authenticated all-terminal rejection or terminal quarantine.
+#[must_use = "authenticated all-terminal shutdown failure retains complete custody"]
+#[derive(Debug)]
+pub enum M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1 {
+    /// Pure preflight rejection retaining the unchanged round.
+    Rejected(Box<M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1>),
+    /// Native release failed and the Engine was permanently quarantined.
+    Quarantined(Box<M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>),
 }
 
 impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
@@ -150,6 +230,79 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                     .is_some_and(|entry| entry.checked().selection() == selection)
             })
             .count()
+    }
+
+    /// Shuts down an all-terminal authenticated queue without faulting its Engine.
+    ///
+    /// Parked ownership is rejected before any queue or released-step owner is
+    /// consumed. The lower transition then requires every current member and
+    /// the Engine itself to be quiescent. Only confirmed authenticated native
+    /// destruction returns success with a still-healthy Engine.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged round on preflight rejection, or terminal
+    /// authenticated release quarantine joined to every round owner.
+    pub fn shutdown_all_terminal_queue<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1,
+        M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1,
+    > {
+        if let Err(error) = preflight_all_terminal_rearm_shutdown(self.parked.len()) {
+            return Err(
+                M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1::Rejected(Box::new(
+                    M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1 {
+                        error,
+                        released: Box::new(self),
+                    },
+                )),
+            );
+        }
+        let Self {
+            released,
+            parked,
+            terminal,
+            history,
+        } = self;
+        match released.shutdown_all_terminal_queue(engine) {
+            Ok(released) => Ok(M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
+                released,
+                terminal,
+                history,
+            }),
+            Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Rejected(
+                rejection,
+            )) => {
+                let (error, released) = rejection.into_parts();
+                Err(
+                    M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1::Rejected(Box::new(
+                        M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1 {
+                            error,
+                            released: Box::new(Self {
+                                released,
+                                parked,
+                                terminal,
+                                history,
+                            }),
+                        },
+                    )),
+                )
+            }
+            Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Quarantined(
+                released,
+            )) => Err(
+                M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1::Quarantined(Box::new(
+                    M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
+                        released,
+                        parked,
+                        terminal,
+                        history,
+                    },
+                )),
+            ),
+        }
     }
 
     /// Destroys the authenticated queue while retaining current and prior lineage.

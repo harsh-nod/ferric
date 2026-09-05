@@ -8849,6 +8849,95 @@ pub struct M1LongLivedQueueReleasedRoundV1 {
     history: M1NonEmptyRearmRoundHistoryV1,
 }
 
+/// Confirmed healthy shutdown of an all-terminal long-lived generic queue.
+#[must_use = "all-terminal queue release and complete round lineage remain retained"]
+#[derive(Debug)]
+pub struct M1LongLivedQueueAllTerminalShutdownSuccessV1 {
+    released: crate::M1ReleasedAllTerminalQueueShutdownSuccessV1,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    history: M1NonEmptyRearmRoundHistoryV1,
+}
+
+impl M1LongLivedQueueAllTerminalShutdownSuccessV1 {
+    #[must_use = "confirmed queue destruction and current-step custody remain retained"]
+    pub const fn released(&self) -> &crate::M1ReleasedAllTerminalQueueShutdownSuccessV1 {
+        &self.released
+    }
+
+    #[must_use]
+    pub const fn parked_count(&self) -> usize {
+        0
+    }
+
+    #[must_use]
+    pub const fn terminal_lineage_count(&self) -> usize {
+        self.terminal.len()
+    }
+
+    #[must_use]
+    pub const fn round_history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    #[must_use]
+    pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
+        self.history.get(index)
+    }
+}
+
+/// Retry-safe preflight rejection retaining one complete released round.
+#[must_use = "the unchanged long-lived released round remains retry-capable"]
+#[derive(Debug)]
+pub struct M1LongLivedQueueAllTerminalShutdownRejectionV1 {
+    error: crate::M1AllTerminalQueueShutdownErrorV1,
+    released: Box<M1LongLivedQueueReleasedRoundV1>,
+}
+
+impl M1LongLivedQueueAllTerminalShutdownRejectionV1 {
+    #[must_use]
+    pub const fn error(&self) -> crate::M1AllTerminalQueueShutdownErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the complete unchanged released round remains retained"]
+    pub const fn released(&self) -> &M1LongLivedQueueReleasedRoundV1 {
+        &self.released
+    }
+
+    /// Returns the rejection and unchanged long-lived owner exactly once.
+    #[must_use = "the rejection and long-lived released round remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        crate::M1AllTerminalQueueShutdownErrorV1,
+        M1LongLivedQueueReleasedRoundV1,
+    ) {
+        (self.error, *self.released)
+    }
+}
+
+/// Exhaustive long-lived all-terminal rejection or terminal quarantine.
+#[must_use = "all-terminal long-lived shutdown failure retains complete custody"]
+#[derive(Debug)]
+pub enum M1LongLivedQueueAllTerminalShutdownFailureV1 {
+    /// Pure preflight rejection retaining the unchanged round.
+    Rejected(Box<M1LongLivedQueueAllTerminalShutdownRejectionV1>),
+    /// Native release failed and the Engine was permanently quarantined.
+    Quarantined(Box<M1LongLivedQueueRearmTeardownFailureV1>),
+}
+
+pub(crate) fn preflight_all_terminal_rearm_shutdown(
+    parked_count: usize,
+) -> Result<(), crate::M1AllTerminalQueueShutdownErrorV1> {
+    if parked_count == 0 {
+        Ok(())
+    } else {
+        Err(crate::M1AllTerminalQueueShutdownErrorV1::ParkedMembers {
+            count: parked_count,
+        })
+    }
+}
+
 impl M1LongLivedQueueReleasedRoundV1 {
     pub const fn current_released(&self) -> &M1ReleasedCompletedStepV1 {
         &self.released
@@ -8911,6 +9000,72 @@ impl M1LongLivedQueueReleasedRoundV1 {
     #[must_use]
     pub fn round_history(&self, index: usize) -> Option<&M1RearmRoundHistoryEntryV1> {
         self.history.get(index)
+    }
+
+    /// Shuts down an all-terminal long-lived queue without faulting its Engine.
+    ///
+    /// Parked ownership is rejected before any queue or released-step owner is
+    /// consumed. The lower transition then requires every current member and
+    /// the Engine itself to be quiescent. Only confirmed native destruction
+    /// returns success with a still-healthy Engine; ambiguous native failure
+    /// returns the existing terminal quarantine joined to all round lineage.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged round on pure preflight rejection, or terminal
+    /// exhaustive quarantine after the native release attempt fails.
+    pub fn shutdown_all_terminal_queue<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1LongLivedQueueAllTerminalShutdownSuccessV1,
+        M1LongLivedQueueAllTerminalShutdownFailureV1,
+    > {
+        if let Err(error) = preflight_all_terminal_rearm_shutdown(self.parked.len()) {
+            return Err(M1LongLivedQueueAllTerminalShutdownFailureV1::Rejected(
+                Box::new(M1LongLivedQueueAllTerminalShutdownRejectionV1 {
+                    error,
+                    released: Box::new(self),
+                }),
+            ));
+        }
+        let Self {
+            released,
+            parked,
+            terminal,
+            history,
+        } = self;
+        match released.shutdown_all_terminal_queue(engine) {
+            Ok(released) => Ok(M1LongLivedQueueAllTerminalShutdownSuccessV1 {
+                released,
+                terminal,
+                history,
+            }),
+            Err(crate::M1ReleasedAllTerminalQueueShutdownFailureV1::Rejected(rejection)) => {
+                let (error, released) = rejection.into_parts();
+                Err(M1LongLivedQueueAllTerminalShutdownFailureV1::Rejected(
+                    Box::new(M1LongLivedQueueAllTerminalShutdownRejectionV1 {
+                        error,
+                        released: Box::new(Self {
+                            released,
+                            parked,
+                            terminal,
+                            history,
+                        }),
+                    }),
+                ))
+            }
+            Err(crate::M1ReleasedAllTerminalQueueShutdownFailureV1::Quarantined(released)) => {
+                Err(M1LongLivedQueueAllTerminalShutdownFailureV1::Quarantined(
+                    Box::new(M1LongLivedQueueRearmTeardownFailureV1 {
+                        released,
+                        parked,
+                        terminal,
+                        history: M1RearmRoundHistoryV1::NonEmpty(history),
+                    }),
+                ))
+            }
+        }
     }
 
     /// Destroys the completed queue while retaining current and prior lineage.
@@ -11374,6 +11529,76 @@ mod tests {
             .iter()
             .all(|disposition| *disposition == crate::M1DeviceKvCompletionDispositionV1::Retire));
         assert!(retiring_dispositions(0).unwrap().is_empty());
+    }
+
+    #[test]
+    fn all_terminal_rearm_shutdown_rejects_every_parked_owner() {
+        assert_eq!(preflight_all_terminal_rearm_shutdown(0), Ok(()));
+        for count in [1, 2, usize::try_from(M1_MAX_ACTIVE_SEQUENCES).unwrap()] {
+            assert_eq!(
+                preflight_all_terminal_rearm_shutdown(count),
+                Err(crate::M1AllTerminalQueueShutdownErrorV1::ParkedMembers { count })
+            );
+        }
+    }
+
+    #[test]
+    fn all_terminal_shutdown_apis_are_linear_and_source_ordered() {
+        fn assert_nameable<T>() {}
+
+        type GenericShutdown = fn(
+            crate::M1LongLivedQueueReleasedRoundV1,
+            &mut Engine<32>,
+        ) -> Result<
+            crate::M1LongLivedQueueAllTerminalShutdownSuccessV1,
+            crate::M1LongLivedQueueAllTerminalShutdownFailureV1,
+        >;
+        type AuthenticatedShutdown = fn(
+            crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
+            &mut Engine<32>,
+        ) -> Result<
+            crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1,
+            crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1,
+        >;
+
+        assert_nameable::<crate::M1AllTerminalQueueShutdownErrorV1>();
+        assert_nameable::<crate::M1ReleasedAllTerminalQueueShutdownSuccessV1>();
+        assert_nameable::<crate::M1ReleasedAllTerminalQueueShutdownRejectionV1>();
+        assert_nameable::<crate::M1ReleasedAllTerminalQueueShutdownFailureV1>();
+        assert_nameable::<crate::M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1>();
+        assert_nameable::<crate::M1AuthenticatedReleasedAllTerminalQueueShutdownRejectionV1>();
+        assert_nameable::<crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1>();
+        assert_nameable::<crate::M1LongLivedQueueAllTerminalShutdownSuccessV1>();
+        assert_nameable::<crate::M1LongLivedQueueAllTerminalShutdownRejectionV1>();
+        assert_nameable::<crate::M1LongLivedQueueAllTerminalShutdownFailureV1>();
+        assert_nameable::<crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1>();
+        assert_nameable::<crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownRejectionV1>();
+        assert_nameable::<crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1>();
+
+        let _: GenericShutdown =
+            crate::M1LongLivedQueueReleasedRoundV1::shutdown_all_terminal_queue::<32>;
+        let _: AuthenticatedShutdown =
+            crate::M1AuthenticatedLongLivedQueueReleasedRoundV1::shutdown_all_terminal_queue::<32>;
+
+        for source in [
+            include_str!("m1_queue_rearm.rs"),
+            include_str!("authenticated_queue_rearm.rs"),
+        ] {
+            let preflight = source
+                .find("preflight_all_terminal_rearm_shutdown(self.parked.len())")
+                .unwrap();
+            let destructure = source[preflight..]
+                .find("let Self {")
+                .map(|offset| preflight + offset)
+                .unwrap();
+            let lower = source[destructure..]
+                .find("released.shutdown_all_terminal_queue(engine)")
+                .map(|offset| destructure + offset)
+                .unwrap();
+            assert!(preflight < destructure);
+            assert!(destructure < lower);
+            assert!(source.contains("destroy_queue_and_retain_round"));
+        }
     }
 
     #[test]
