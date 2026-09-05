@@ -13,9 +13,9 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "0df27779047ccd8b9dadbd2973880e8d65559ba6",
-  integrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
-  integrationTree: "ca09f1c032a91919f7dbdc2706872a557dcd9c0f",
+  siteRefreshBase: "87ebd925f3d331bf2e5cff17c64a69d9ddc4ebcc",
+  integrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+  integrationTree: "a7266c25cb10cc2976babc13ba119c2fb70a227f",
   ferricCheckpointCommit: "9431cb4638401718b8085bcf258a390650c719ef",
   ferricCheckpointTree: "09c48165b19883aebbebd2e77b827794cd039164",
   ferricFeatureBranch: "origin/codex/fe2o3-current-main-repin-v1",
@@ -55,13 +55,13 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
   engineeringAggregateAttemptOuterExitCode: 1,
-  engineeringAggregateAttemptBoundary: "current-prefill-overflow-proof-work-before-hsaco",
+  engineeringAggregateAttemptBoundary: "v9-prefill-loop-tail-key-token-increment-before-hsaco",
   engineeringAggregateAttemptConnectCount: 0,
   engineeringAggregateAttemptOutputCount: 0,
   engineeringAggregateAttemptStatus:
-    "exact-5f-aggregate-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
-  followupProofFixStatus: "ferric-prefill-overflow-proof-work-in-progress",
-  fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-7f4a251",
+    "exact-5f-aggregate-v9-passed-address-value-proofs-stopped-at-prefill-key-token-increment-no-hsaco",
+  followupProofFixStatus: "authenticated-bounds-audited-v10-explicit-2048-8192-increment-guards-active",
+  fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-1e7695d",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -78,7 +78,8 @@ const expectedCurrent = Object.freeze({
   baselineAuditStatus: "not-revalidated-at-this-checkpoint",
   comparisonStatus: "not-run",
   protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
-  protectedVerifierServiceStatus: "blocked-protected-profile-and-socket-absent",
+  protectedVerifierServiceStatus:
+    "one-shot-listener-integrated-not-deployed-no-checker-signer-supervisor-or-r33-backend",
   verifierBinderCandidate: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
   verifierBinderCandidateTree: "4690d8c9e502de18a947d6def2f8c09d4f153ea1",
   verifierBinderIntegrationCommit: "ed708de7fc906926091be29ff118af95ee50a42b",
@@ -100,32 +101,48 @@ const expectedCurrent = Object.freeze({
   supervisedR33WireCommit: "66b8547ab7ce1572d29557d2e9c16d58b2b6f41f",
   supervisedR33WireTree: "8e7348bcd1b99cffa488da44a77813e44bbb3bc7",
   supervisedR33WireStatus: "public-feature-branch-authority-free-no-serving",
-  localIntegrationCandidate: "7f4a251707d2b0d8811184533b1d8f805a745726",
+  localIntegrationCandidate: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
   localIntegrationCandidateStatus:
     "local-unpublished-non-final-latest-fe2-integration-no-release-qualification",
   localBoundedQueueWaitCandidate: "9f3618bba902b6e5468ea017e1fdef826f89f130",
   localBoundedQueueWaitCandidateStatus:
-    "local-focused-qualified-integrated-as-e3cfc62-in-7f4a251-stack",
+    "local-focused-qualified-integrated-as-e3cfc62-in-1e7695d-stack",
   catalogBindingIntegrationCommit: "5b23a36c04057850fa3382db05e2eff905f41213",
   descriptorOrderIntegrationCommit: "e0e79fe9980a5a302a8b2bd18eef0f9e13161a3c",
   boundedQueueWaitIntegrationCommit: "e3cfc62e14d0ac35a6b48e6e754e5165f8cb0b68",
   combinedPolicyIntegrationCommit: "c29c52cf5e05e298bf9b52af204d0881e7fa3cdf",
   connectedPathIntegrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
-  combinedEngineTestsPassed: 565,
+  protectedVerifierListenerIntegrationCommit: "64ab4fc98ecc64e78b4591197a47674f27bc992e",
+  boundedProductionQueueWaitIntegrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+  combinedEngineTestsPassed: 569,
   combinedEngineTestsFailed: 0,
-  combinedEngineEnvGatedIgnored: 5,
+  combinedEngineEnvGatedIgnored: 2,
+  boundedWaitHarnessTestsPassed: 11,
+  boundedWaitPacketTestsPassed: 2,
+  boundedWaitQualificationTestsPassed: 75,
+  boundedWaitQualificationTestsIgnored: 2,
+  boundedWaitPreflightTestsPassed: 2,
+  boundedWaitDoctestsPassed: 148,
+  boundedWaitAdapterTestsPassed: 8,
+  boundedWaitAdapterDoctestsPassed: 3,
+  boundedWaitClippyStatus: "pass",
   combinedSourceGateModules: 162,
   combinedSourceGateBodies: 7533,
   combinedSourceGateTestsPassed: 28,
   combinedSourceGateTestsFailed: 0,
   boundedWaitHostilePolicyStatus: "pass",
-  connectedPathAdapterTestsPassed: 82,
-  connectedPathServiceTestsPassed: 32,
+  connectedPathAdapterTestsPassed: 88,
+  connectedPathServiceTestsPassed: 46,
   connectedPathIntentionalIgnores: 3,
   connectedPathAdapterClippyStatus: "pass",
   connectedPathServiceClippyStatus: "pass",
+  protectedListenerSourceGateTestsPassed: 28,
+  combinedSourceInventoryUnadmitted: 10,
+  combinedSourceInventoryStale: 0,
+  combinedFormalRegenerationStatus: "pending",
+  authenticatedNewWindowJoinStatus: "active-local-work-in-progress",
   protectedDeploymentStatus:
-    "open-no-protected-verifier-listener-supervisor-concrete-checker-or-signer-service",
+    "open-one-shot-listener-integrated-no-supervisor-concrete-checker-signer-or-production-r33-backend",
   localPolicyCandidate: "829eb98ba11c645958ef762a01da4c81c4bf795b",
   localPolicyCandidateStatus:
     "local-unpublished-non-final-v5-qualified-exact-829-on-ce44-only-no-combined-or-m1-authority",
@@ -154,7 +171,7 @@ const expectedCurrent = Object.freeze({
   priorAggregateStorageObserved: 3188438,
   priorAggregateStorageLimit: 2097152,
   aggregateRerunStatus:
-    "exact-5f-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
+    "exact-5f-v9-stopped-at-prefill-key-token-increment-v10-guard-gates-active-no-hsaco",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -382,6 +399,14 @@ assertCommit(
   project.current.connectedPathIntegrationCommit,
   "current.connectedPathIntegrationCommit",
 );
+assertCommit(
+  project.current.protectedVerifierListenerIntegrationCommit,
+  "current.protectedVerifierListenerIntegrationCommit",
+);
+assertCommit(
+  project.current.boundedProductionQueueWaitIntegrationCommit,
+  "current.boundedProductionQueueWaitIntegrationCommit",
+);
 assertCommit(project.current.localPolicyCandidate, "current.localPolicyCandidate");
 assertCommit(project.current.localSelectorCandidate, "current.localSelectorCandidate");
 assertCommit(
@@ -509,9 +534,6 @@ assert(
     envelope.get("Local Ferric integration")?.includes(expectedCurrent.integrationTree) &&
     envelope
       .get("Local Ferric integration")
-      ?.includes(expectedCurrent.localBoundedQueueWaitCandidate.slice(0, 7)) &&
-    envelope
-      .get("Local Ferric integration")
       ?.includes(expectedCurrent.catalogBindingIntegrationCommit.slice(0, 7)) &&
     envelope
       .get("Local Ferric integration")
@@ -519,18 +541,27 @@ assert(
     envelope
       .get("Local Ferric integration")
       ?.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
+    envelope
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7)) &&
+    envelope
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7)) &&
     envelope.get("Local Ferric integration")?.includes("local, unpublished, non-final") &&
     envelope.get("Local Ferric integration")?.includes("no current artifact, Qwen"),
   "envelope must identify the local combined Ferric head without public or runtime authority",
 );
 assert(
   envelope.get("Local validation")?.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    envelope.get("Local validation")?.includes("565 engine tests passed") &&
-    envelope.get("Local validation")?.includes("0 failed") &&
-    envelope.get("Local validation")?.includes("5 environment-gated ignored") &&
-    envelope.get("Local validation")?.includes("162 modules and 7,533 executable bodies") &&
-    envelope.get("Local validation")?.includes("28 passed and 0 failed") &&
-    envelope.get("Local validation")?.includes("bounded hostile policy PASS") &&
+    envelope.get("Local validation")?.includes("569 engine library tests passed") &&
+    envelope.get("Local validation")?.includes("11 harness tests") &&
+    envelope.get("Local validation")?.includes("75 qualification tests with 2 intentional ignores") &&
+    envelope.get("Local validation")?.includes("148 doctests") &&
+    envelope.get("Local validation")?.includes("46 service tests with 3 intentional ignores") &&
+    envelope.get("Local validation")?.includes("88 adapter tests") &&
+    envelope.get("Local validation")?.includes("28 source-gate tests") &&
+    envelope.get("Local validation")?.includes("10 unadmitted and 0 stale") &&
+    envelope.get("Local validation")?.includes("pending formal regeneration") &&
     envelope.get("Local validation")?.includes("not a release qualification") &&
     envelope.get("Local validation")?.includes("closed M1 gate"),
   "envelope must bind exact combined validation evidence without release authority",
@@ -560,16 +591,13 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-    envelope
-      .get("Engineering aggregate output")
-      ?.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
     envelope.get("Engineering aggregate output")?.includes("public fe2o3 5f46dd2") &&
-    envelope.get("Engineering aggregate output")?.includes("has been executed") &&
-    envelope
-      .get("Engineering aggregate output")
-      ?.includes("reaches Ferric prefill overflow-proof work") &&
+    envelope.get("Engineering aggregate output")?.includes("v9") &&
+    envelope.get("Engineering aggregate output")?.includes("passed all new address and value proofs") &&
+    envelope.get("Engineering aggregate output")?.includes("prefill loop-tail key_token increment") &&
+    envelope.get("Engineering aggregate output")?.includes("v10 focused gates are active") &&
     envelope.get("Engineering aggregate output")?.includes("kernel work remains in progress") &&
-    envelope.get("Engineering aggregate output")?.includes("no aggregate Worker V3 HSACO") &&
+    envelope.get("Engineering aggregate output")?.includes("No aggregate Worker V3 HSACO") &&
     envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
     envelope.get("Engineering aggregate output")?.includes(
       "artifact authority, or execution authority",
@@ -621,8 +649,12 @@ assert(
     ) &&
     envelope
       .get("Authenticated target rollover")
-      ?.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
+      ?.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7)) &&
+    envelope
+      .get("Authenticated target rollover")
+      ?.includes(expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7)) &&
     envelope.get("Authenticated target rollover")?.includes("exact-slot reincarnation") &&
+    envelope.get("Authenticated target rollover")?.includes("authenticated new-window join is active") &&
     envelope.get("Authenticated target rollover")?.includes("unpublished, non-final") &&
     envelope.get("Authenticated target rollover")?.includes("release-qualified") &&
     envelope.get("Authenticated target rollover")?.includes("evidence of Qwen"),
@@ -660,10 +692,12 @@ assert(
   "envelope must avoid asserting stale baseline infrastructure availability",
 );
 assert(
-  envelope.get("Protected verifier status")?.includes("protected execution profile") &&
-    envelope.get("Protected verifier status")?.includes("protected service socket") &&
-    envelope.get("Protected verifier status")?.includes("absent") &&
-    envelope.get("Protected verifier status")?.includes("do not create a deployed verifier"),
+  envelope.get("Protected verifier status")?.includes(
+    expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7),
+  ) &&
+    envelope.get("Protected verifier status")?.includes("one-shot protected-verifier listener") &&
+    envelope.get("Protected verifier status")?.includes("production R33 backend remain absent") &&
+    envelope.get("Protected verifier status")?.includes("does not create a deployed verifier"),
   "envelope must expose the missing protected deployment inputs",
 );
 assert(
@@ -733,13 +767,27 @@ assert(
 const protectedAcceptance = project.readiness.find(
   (item) => item.label === "Accepting protected aggregate artifact",
 );
+const listenerReadiness = project.readiness.find(
+  (item) => item.label === "Protected one-shot verifier listener",
+);
+assert(
+  listenerReadiness?.state === "integration" &&
+    listenerReadiness.detail.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7)) &&
+    listenerReadiness.detail.includes("46 service tests with 3 intentional ignores") &&
+    listenerReadiness.detail.includes("88 adapter tests") &&
+    listenerReadiness.detail.includes("28 source-gate tests") &&
+    listenerReadiness.detail.includes("strict Clippy") &&
+    listenerReadiness.detail.includes("production R33 backend") &&
+    listenerReadiness.detail.includes("source integration only"),
+  "protected listener readiness must retain exact gates and deployment nonclaims",
+);
 assert(
   protectedAcceptance?.state === "open" &&
     protectedAcceptance.detail.includes("remains None") &&
-    protectedAcceptance.detail.includes("protected execution profile") &&
-    protectedAcceptance.detail.includes("protected service socket") &&
+    protectedAcceptance.detail.includes("protected one-shot listener exists in local source") &&
+    protectedAcceptance.detail.includes("concrete checker, signer, supervisor") &&
+    protectedAcceptance.detail.includes("production R33 backend") &&
     protectedAcceptance.detail.includes("absent") &&
-    protectedAcceptance.detail.includes("cannot provide a deployed verifier") &&
     protectedAcceptance.detail.includes("No independent verifier") &&
     protectedAcceptance.detail.includes("runtime authority exists"),
   "protected aggregate acceptance must remain fail-closed and open",
@@ -772,15 +820,34 @@ assert(
     ) &&
     transportReadiness.detail.includes(expectedCurrent.fe2o3BoundedQueueWaitCommit.slice(0, 7)) &&
     transportReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    transportReadiness.detail.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
-    transportReadiness.detail.includes("deployment remains in progress") &&
-    transportReadiness.detail.includes("caller-pinned client admission") &&
-    transportReadiness.detail.includes("accepted-endpoint service core") &&
     transportReadiness.detail.includes(
-      "no protected-verifier listener, supervisor, concrete checker, or signer service",
+      expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7),
     ) &&
+    transportReadiness.detail.includes(
+      expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7),
+    ) &&
+    transportReadiness.detail.includes("Deployment remains in progress") &&
+    transportReadiness.detail.includes("caller-pinned admission") &&
+    transportReadiness.detail.includes("no supervisor, concrete checker, signer") &&
+    transportReadiness.detail.includes("production R33 backend") &&
     transportReadiness.detail.includes("Qwen execution"),
   "Ferric transport adoption must remain in progress without Qwen authority",
+);
+const boundedWaitReadiness = project.readiness.find(
+  (item) => item.label === "Bounded production queue waits",
+);
+assert(
+  boundedWaitReadiness?.state === "integration" &&
+    boundedWaitReadiness.detail.includes(
+      expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7),
+    ) &&
+    boundedWaitReadiness.detail.includes("569 engine library tests") &&
+    boundedWaitReadiness.detail.includes("11 harness tests") &&
+    boundedWaitReadiness.detail.includes("75 qualification tests with 2 intentional ignores") &&
+    boundedWaitReadiness.detail.includes("148 doctests") &&
+    boundedWaitReadiness.detail.includes("strict Clippy") &&
+    boundedWaitReadiness.detail.includes("not a GPU, Qwen, serving, or performance result"),
+  "bounded production waits must retain exact gates and execution nonclaims",
 );
 const plannerReadiness = project.readiness.find(
   (item) => item.label === "Variable-cardinality planner",
@@ -867,8 +934,12 @@ assert(
     qwenReadiness.detail.includes("Real target and draft prepack inputs are verified") &&
     qwenReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
     qwenReadiness.detail.includes("public fe2o3 5f46dd2") &&
-    qwenReadiness.detail.includes("prefill overflow-proof work") &&
-    qwenReadiness.detail.includes("connected-path deployment closure") &&
+    qwenReadiness.detail.includes("v9 passed all new address and value proofs") &&
+    qwenReadiness.detail.includes("prefill loop-tail key_token increment") &&
+    qwenReadiness.detail.includes("v10 focused guard gates are active") &&
+    qwenReadiness.detail.includes("production R33 backend") &&
+    qwenReadiness.detail.includes("authenticated new-window join") &&
+    qwenReadiness.detail.includes("combined formal regeneration") &&
     qwenReadiness.detail.includes("release qualification remain in progress") &&
     qwenReadiness.detail.includes("No aggregate HSACO") &&
     qwenReadiness.detail.includes("Qwen token") &&
@@ -1054,14 +1125,22 @@ assert(
     integrationTeam.completed.includes(
       expectedCurrent.descriptorOrderIntegrationCommit.slice(0, 7),
     ) &&
-    integrationTeam.completed.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
+    integrationTeam.completed.includes(
+      expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7),
+    ) &&
+    integrationTeam.completed.includes(
+      expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7),
+    ) &&
     integrationTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    integrationTeam.current.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
     integrationTeam.current.includes("local, unpublished/non-final") &&
-    integrationTeam.current.includes("565 engine tests") &&
-    integrationTeam.current.includes("82 adapter and 32 service tests") &&
+    integrationTeam.current.includes("46 service tests with 3 ignores") &&
+    integrationTeam.current.includes("88 adapter tests") &&
+    integrationTeam.current.includes("569 library tests") &&
+    integrationTeam.current.includes("75 qualification with 2 ignores") &&
     integrationTeam.current.includes("No release qualification") &&
-    integrationTeam.validation.includes("7f4a251 local, unpublished, non-final"),
+    integrationTeam.validation.includes("1e7695d local, unpublished, non-final") &&
+    integrationTeam.blockedBy.includes("No active team is idle or blocked") &&
+    integrationTeam.blockedBy.includes("production R33 backend"),
   "integration team must expose the exact latest-fe2 and bounded-wait candidates",
 );
 assert(
@@ -1072,8 +1151,9 @@ assert(
     kernelTeam.completed.includes(expectedCurrent.swigluCheckedBlockCommit.slice(0, 7)) &&
     kernelTeam.completed.includes(expectedCurrent.fe2o3CheckedComponentProjectionCommit.slice(0, 7)) &&
     kernelTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    kernelTeam.current.includes("exact aggregate compile") &&
-    kernelTeam.current.includes("prefill overflow-proof work") &&
+    kernelTeam.current.includes("v9 passed all new address and value proofs") &&
+    kernelTeam.current.includes("prefill loop-tail key_token increment") &&
+    kernelTeam.current.includes("v10 focused gates are active") &&
     kernelTeam.current.includes("Kernel implementation remains in progress") &&
     kernelTeam.current.includes("no aggregate HSACO") &&
     kernelTeam.blockedBy.includes("kernel team is making progress") &&
@@ -1082,19 +1162,22 @@ assert(
 );
 assert(
   engineTeam.completed.includes(expectedCurrent.authenticatedTargetRolloverCommit.slice(0, 7)) &&
-    engineTeam.completed.includes(expectedCurrent.servingComparisonR33V3IntegrationCommit.slice(0, 7)) &&
     engineTeam.completed.includes(expectedCurrent.healthyAllTerminalShutdownCommit.slice(0, 7)) &&
-    engineTeam.completed.includes(expectedCurrent.supervisedR33WireCommit.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
-    engineTeam.current.includes("Local unpublished/non-final") &&
-    engineTeam.current.includes("Connected-path deployment remains in progress") &&
-    engineTeam.current.includes(
-      "protected-verifier listener, supervisor, concrete checker, and signer service are absent",
+    engineTeam.completed.includes(
+      expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7),
     ) &&
+    engineTeam.completed.includes(
+      expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7),
+    ) &&
+    engineTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    engineTeam.current.includes("Local unpublished/non-final") &&
+    engineTeam.current.includes("authenticated new-window join is active") &&
+    engineTeam.current.includes("Protected deployment remains in progress") &&
+    engineTeam.current.includes("supervisor, concrete checker, signer") &&
+    engineTeam.current.includes("production R33 backend") &&
     engineTeam.blockedBy.includes("engine team is making progress") &&
     engineTeam.blockedBy.includes("current aggregate HSACO") &&
-    engineTeam.next.includes("Finish connected-path protected deployment") &&
+    engineTeam.next.includes("Finish the authenticated new-window join") &&
     engineTeam.validation.includes("no release qualification") &&
     engineTeam.validation.includes("no release qualification, HSACO, hardware, serving, or comparison result"),
   "engine team must expose implemented runtime work and missing execution inputs",
@@ -1104,12 +1187,13 @@ assert(
     verificationTeam.completed.includes("Draft06B=>1 same-source mutation") &&
     verificationTeam.completed.includes(expectedCurrent.daemonLifecycleProofCommit.slice(0, 7)) &&
     verificationTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    verificationTeam.current.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
-    verificationTeam.current.includes("162-module, 7,533-body source inventory") &&
-    verificationTeam.current.includes("Source-gate unit tests pass 28/28") &&
-    verificationTeam.current.includes("connected-path adapter and service tests pass") &&
+    verificationTeam.current.includes("expected 10 unadmitted and 0 stale") &&
+    verificationTeam.current.includes("Combined formal regeneration is pending") &&
+    verificationTeam.current.includes("listener source gate passes 28/28") &&
+    verificationTeam.current.includes("listener and bounded-wait scoped gates pass strict Clippy") &&
     verificationTeam.current.includes("No release receipt") &&
-    verificationTeam.validation.includes("7f4a251 connected-path tests and Clippy PASS") &&
+    verificationTeam.validation.includes("1e7695d source inventory observed") &&
+    verificationTeam.validation.includes("10 unadmitted / 0 stale") &&
     verificationTeam.validation.includes("release qualification open"),
   "verification team must expose integrated proof work and the open final receipt",
 );
@@ -1145,6 +1229,8 @@ assert(
 );
 assert(
   progressCommits.has(expectedCurrent.localIntegrationCandidate) &&
+    progressCommits.has(expectedCurrent.protectedVerifierListenerIntegrationCommit) &&
+    progressCommits.has(expectedCurrent.boundedProductionQueueWaitIntegrationCommit) &&
     progressCommits.has(expectedCurrent.localBoundedQueueWaitCandidate) &&
     progressCommits.has(expectedCurrent.catalogBindingIntegrationCommit) &&
     progressCommits.has(expectedCurrent.descriptorOrderIntegrationCommit) &&
@@ -1296,19 +1382,20 @@ for (const claim of [
   "Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
   "Compiler, runtime, KFD, and generic transport work stays in fe2o3",
   "Ferric owns all Qwen kernels, inference, and Ferric-specific policy",
-  "Local Ferric integration 7f4a251 pins every fe2o3 dependency to exact public 5f46dd2",
-  "catalog binding 5b23a36, descriptor order e0e79fe, bounded authenticated queue waits e3cfc62",
-  "caller-pinned connected-path admission",
-  "Scoped remote checks at c29c52c pass 565 engine tests with 0 failures and 5 environment-gated ignores",
-  "162-module/7,533-body source gate, 28 source-gate unit tests, and the bounded hostile policy",
-  "Connected-path checks at 7f4a251 pass 82 adapter tests, 32 service tests, and both Clippy gates with 3 intentional ignores",
-  "focused integration evidence, not a release qualification",
-  "An exact aggregate compile has been executed and currently reaches Ferric prefill overflow-proof work",
-  "Kernel implementation remains in progress and no aggregate HSACO was produced",
-  "Connected-path deployment also remains in progress",
-  "no protected-verifier listener, supervisor, concrete checker, or signer service exists",
+  "integration 1e7695d pins every fe2o3 dependency to exact public 5f46dd2",
+  "protected one-shot verifier listener at 64ab4fc",
+  "production-wide bounded queue waits",
+  "Listener remote checks pass 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy",
+  "Engine checks pass 569 library tests, 11 harness tests, 2 packet tests, 75 qualification tests",
+  "expected 10 unadmitted and 0 stale entries before combined formal regeneration",
+  "focused integration evidence, not release qualification",
+  "v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment",
+  "v10 focused gates are active with explicit &lt; 2048 and &lt; 8192 increment guards",
+  "no aggregate HSACO was produced",
+  "authenticated new-window join is active",
+  "no supervisor, concrete checker, signer",
+  "production R33 backend exists",
   "integration is unpublished, non-final, and not release-qualified",
-  "deployed protected profile and service socket",
   "No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint",
   "All 33 M1 gates remain open",
 ]) {
@@ -1429,10 +1516,14 @@ assert(
     dataSource.includes("162 modules / 7,526 bodies") &&
     dataSource.includes("runtime variable-cardinality wiring") &&
     dataSource.includes("transition atomicity") &&
-    dataSource.includes("has been executed and currently reaches Ferric prefill overflow-proof work") &&
-    dataSource.includes("reaches Ferric prefill overflow-proof work") &&
+    dataSource.includes("prefill loop-tail key_token increment") &&
+    dataSource.includes("v10 focused gates are active") &&
     dataSource.includes("Kernel implementation remains in progress") &&
-    dataSource.includes("Ferric connected-path deployment remains in progress") &&
+    dataSource.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit) &&
+    dataSource.includes(expectedCurrent.boundedProductionQueueWaitIntegrationCommit) &&
+    dataSource.includes("10 unadmitted and 0 stale") &&
+    dataSource.includes("Combined formal regeneration is pending") &&
+    dataSource.includes("authenticated new-window join is active") &&
     dataSource.includes("no aggregate Worker V3 HSACO") &&
     dataSource.includes("integrates the independent, authority-free R33 daemon lifecycle proof at 3f5b498") &&
     dataSource.includes("authority-free supervised R33 wire foundation at 66b8547") &&
@@ -1443,7 +1534,7 @@ assert(
     dataSource.includes("lower physical model/KV rebind remains unavailable") &&
     dataSource.includes("No aggregate HSACO, Qwen token, serving or HTTP endpoint") &&
     dataSource.includes("received independent GO") &&
-    dataSource.includes("protected execution profile and protected service socket are absent") &&
+    dataSource.includes("production R33 backend") &&
     dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
     dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed authority") &&

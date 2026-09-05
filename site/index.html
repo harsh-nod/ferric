@@ -221,17 +221,19 @@
             Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c supplies reusable compiler,
             runtime, KFD, and generic verification transport. Compiler, runtime, KFD, and generic transport
             work stays in fe2o3; Ferric owns all Qwen kernels, inference, and Ferric-specific policy. Local Ferric
-            integration 7f4a251 pins every fe2o3 dependency to exact public 5f46dd2 and includes catalog binding
-            5b23a36, descriptor order e0e79fe, bounded authenticated queue waits e3cfc62, and caller-pinned
-            connected-path admission. Scoped remote checks at c29c52c pass 565 engine tests with 0 failures and 5
-            environment-gated ignores, a 162-module/7,533-body source gate, 28 source-gate unit tests, and the bounded
-            hostile policy. Connected-path checks at 7f4a251 pass 82 adapter tests, 32 service tests, and both Clippy
-            gates with 3 intentional ignores. This is focused integration evidence, not a release qualification.
-            An exact aggregate compile has been executed and currently reaches Ferric prefill
-            overflow-proof work. Kernel implementation remains in progress and no aggregate HSACO was produced.
-            Connected-path deployment also remains in progress: no protected-verifier listener, supervisor, concrete checker, or signer
-            service exists. The integration is unpublished, non-final, and not release-qualified. A deployed protected
-            profile and service socket are absent. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
+            integration 1e7695d pins every fe2o3 dependency to exact public 5f46dd2 and includes the protected
+            one-shot verifier listener at 64ab4fc plus production-wide bounded queue waits. Listener remote checks
+            pass 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict
+            Clippy. Engine checks pass 569 library tests, 11 harness tests, 2 packet tests, 75 qualification tests
+            with 2 intentional ignores, 2 preflight tests, 148 doctests, 8 adapter tests, 3 adapter doctests, and
+            strict Clippy. The source inventory has the expected 10 unadmitted and 0 stale entries before combined
+            formal regeneration. This is focused integration evidence, not release qualification. Exact aggregate
+            v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token
+            increment. Authenticated bounds are audited, and v10 focused gates are active with explicit
+            &lt; 2048 and &lt; 8192 increment guards; no aggregate HSACO was produced. The authenticated new-window
+            join is active. Protected deployment remains open because no supervisor, concrete checker, signer,
+            deployed protected profile, or production R33 backend exists. The integration is unpublished,
+            non-final, and not release-qualified. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
             endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>

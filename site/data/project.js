@@ -3,9 +3,9 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "0df27779047ccd8b9dadbd2973880e8d65559ba6",
-    integrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
-    integrationTree: "ca09f1c032a91919f7dbdc2706872a557dcd9c0f",
+    siteRefreshBase: "87ebd925f3d331bf2e5cff17c64a69d9ddc4ebcc",
+    integrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+    integrationTree: "a7266c25cb10cc2976babc13ba119c2fb70a227f",
     ferricCheckpointCommit: "9431cb4638401718b8085bcf258a390650c719ef",
     ferricCheckpointTree: "09c48165b19883aebbebd2e77b827794cd039164",
     ferricFeatureBranch: "origin/codex/fe2o3-current-main-repin-v1",
@@ -45,13 +45,13 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateLoaderStatus: "independent-go-integrated",
     engineeringAggregateHsacoStatus: "not-produced",
     engineeringAggregateAttemptOuterExitCode: 1,
-    engineeringAggregateAttemptBoundary: "current-prefill-overflow-proof-work-before-hsaco",
+    engineeringAggregateAttemptBoundary: "v9-prefill-loop-tail-key-token-increment-before-hsaco",
     engineeringAggregateAttemptConnectCount: 0,
     engineeringAggregateAttemptOutputCount: 0,
     engineeringAggregateAttemptStatus:
-      "exact-5f-aggregate-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
-    followupProofFixStatus: "ferric-prefill-overflow-proof-work-in-progress",
-    fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-7f4a251",
+      "exact-5f-aggregate-v9-passed-address-value-proofs-stopped-at-prefill-key-token-increment-no-hsaco",
+    followupProofFixStatus: "authenticated-bounds-audited-v10-explicit-2048-8192-increment-guards-active",
+    fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-1e7695d",
     fe2o3IsFiniteRemediationStatus: "independent-source-go",
     targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
     targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -68,7 +68,8 @@ window.FERRIC_PROJECT = Object.freeze({
     baselineAuditStatus: "not-revalidated-at-this-checkpoint",
     comparisonStatus: "not-run",
     protectedVerifierServiceLocalCandidate: "9a435522a4a88d55108f7c6a4cb493aabb01ad93",
-    protectedVerifierServiceStatus: "blocked-protected-profile-and-socket-absent",
+    protectedVerifierServiceStatus:
+      "one-shot-listener-integrated-not-deployed-no-checker-signer-supervisor-or-r33-backend",
     verifierBinderCandidate: "6846d9282f858c80dd2b0b4abfe247dc89e9d8f8",
     verifierBinderCandidateTree: "4690d8c9e502de18a947d6def2f8c09d4f153ea1",
     verifierBinderIntegrationCommit: "ed708de7fc906926091be29ff118af95ee50a42b",
@@ -90,32 +91,48 @@ window.FERRIC_PROJECT = Object.freeze({
     supervisedR33WireCommit: "66b8547ab7ce1572d29557d2e9c16d58b2b6f41f",
     supervisedR33WireTree: "8e7348bcd1b99cffa488da44a77813e44bbb3bc7",
     supervisedR33WireStatus: "public-feature-branch-authority-free-no-serving",
-    localIntegrationCandidate: "7f4a251707d2b0d8811184533b1d8f805a745726",
+    localIntegrationCandidate: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
     localIntegrationCandidateStatus:
       "local-unpublished-non-final-latest-fe2-integration-no-release-qualification",
     localBoundedQueueWaitCandidate: "9f3618bba902b6e5468ea017e1fdef826f89f130",
     localBoundedQueueWaitCandidateStatus:
-      "local-focused-qualified-integrated-as-e3cfc62-in-7f4a251-stack",
+      "local-focused-qualified-integrated-as-e3cfc62-in-1e7695d-stack",
     catalogBindingIntegrationCommit: "5b23a36c04057850fa3382db05e2eff905f41213",
     descriptorOrderIntegrationCommit: "e0e79fe9980a5a302a8b2bd18eef0f9e13161a3c",
     boundedQueueWaitIntegrationCommit: "e3cfc62e14d0ac35a6b48e6e754e5165f8cb0b68",
     combinedPolicyIntegrationCommit: "c29c52cf5e05e298bf9b52af204d0881e7fa3cdf",
     connectedPathIntegrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
-    combinedEngineTestsPassed: 565,
+    protectedVerifierListenerIntegrationCommit: "64ab4fc98ecc64e78b4591197a47674f27bc992e",
+    boundedProductionQueueWaitIntegrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+    combinedEngineTestsPassed: 569,
     combinedEngineTestsFailed: 0,
-    combinedEngineEnvGatedIgnored: 5,
+    combinedEngineEnvGatedIgnored: 2,
+    boundedWaitHarnessTestsPassed: 11,
+    boundedWaitPacketTestsPassed: 2,
+    boundedWaitQualificationTestsPassed: 75,
+    boundedWaitQualificationTestsIgnored: 2,
+    boundedWaitPreflightTestsPassed: 2,
+    boundedWaitDoctestsPassed: 148,
+    boundedWaitAdapterTestsPassed: 8,
+    boundedWaitAdapterDoctestsPassed: 3,
+    boundedWaitClippyStatus: "pass",
     combinedSourceGateModules: 162,
     combinedSourceGateBodies: 7533,
     combinedSourceGateTestsPassed: 28,
     combinedSourceGateTestsFailed: 0,
     boundedWaitHostilePolicyStatus: "pass",
-    connectedPathAdapterTestsPassed: 82,
-    connectedPathServiceTestsPassed: 32,
+    connectedPathAdapterTestsPassed: 88,
+    connectedPathServiceTestsPassed: 46,
     connectedPathIntentionalIgnores: 3,
     connectedPathAdapterClippyStatus: "pass",
     connectedPathServiceClippyStatus: "pass",
+    protectedListenerSourceGateTestsPassed: 28,
+    combinedSourceInventoryUnadmitted: 10,
+    combinedSourceInventoryStale: 0,
+    combinedFormalRegenerationStatus: "pending",
+    authenticatedNewWindowJoinStatus: "active-local-work-in-progress",
     protectedDeploymentStatus:
-      "open-no-protected-verifier-listener-supervisor-concrete-checker-or-signer-service",
+      "open-one-shot-listener-integrated-no-supervisor-concrete-checker-signer-or-production-r33-backend",
     localPolicyCandidate: "829eb98ba11c645958ef762a01da4c81c4bf795b",
     localPolicyCandidateStatus:
       "local-unpublished-non-final-v5-qualified-exact-829-on-ce44-only-no-combined-or-m1-authority",
@@ -144,7 +161,7 @@ window.FERRIC_PROJECT = Object.freeze({
     priorAggregateStorageObserved: 3188438,
     priorAggregateStorageLimit: 2097152,
     aggregateRerunStatus:
-      "exact-5f-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
+      "exact-5f-v9-stopped-at-prefill-key-token-increment-v10-guard-gates-active-no-hsaco",
     aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
     aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
     aggregateKernelCount: 12,
@@ -170,7 +187,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Public fe2o3 main is 5f46dd2. Local Ferric integration 7f4a251 pins that exact revision and includes catalog binding 5b23a36, descriptor order e0e79fe, bounded waits e3cfc62, and caller-pinned connected-path admission. Scoped remote checks pass at their recorded heads. Connected-path deployment remains in progress because there is no protected-verifier listener, supervisor, concrete checker, or signer service. An exact aggregate compile reaches Ferric prefill overflow-proof work, and kernel work remains in progress. No aggregate HSACO, protected deployment, Qwen token, measured TTFT or TPOT, baseline, serving endpoint, or HTTP result exists. All 33 M1 gates remain open.",
+      "Public fe2o3 main remains 5f46dd2. Local reviewed Ferric integration 1e7695d pins that exact revision and now includes the protected one-shot verifier listener at 64ab4fc and production-wide bounded queue waits at 1e7695d. Their scoped remote gates pass. Combined formal inventory regeneration remains pending with 10 expected unadmitted and 0 stale entries. Exact aggregate v9 passed the new address and value proofs, then stopped at the prefill loop-tail key_token increment; authenticated bounds are audited and v10 focused gates are active with explicit < 2048 and < 8192 increment guards. No aggregate HSACO, production R33 backend, concrete checker/signer/supervisor, Qwen run, measured TTFT or TPOT, baseline, serving endpoint, or HTTP result exists. All 33 M1 gates remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -179,21 +196,21 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "0df27779047ccd8b9dadbd2973880e8d65559ba6; exact public Pages source before this checkpoint update"],
+    ["Pages refresh base", "87ebd925f3d331bf2e5cff17c64a69d9ddc4ebcc; exact public Pages source before this checkpoint update"],
     ["Ferric implementation checkpoint", "public feature branch origin/codex/fe2o3-current-main-repin-v1 contains 9431cb4638401718b8085bcf258a390650c719ef, tree 09c48165b19883aebbebd2e77b827794cd039164; it is not on Ferric main or final; all 33 M1 gates remain open"],
     ["fe2o3 public main", "5f46dd23cfa3cf58118a93ee2bf5e1252903366c; tree 52ec0a254d626102cbfa37b79a906722490cc9d8; not yet consumed by the public Ferric feature checkpoint; compiler, runtime, KFD, and generic verification transport ownership remains in fe2o3; model kernels, inference, and Ferric policy remain in Ferric"],
-    ["Local Ferric integration", "latest-fe2 integration 7f4a251707d2b0d8811184533b1d8f805a745726, tree ca09f1c032a91919f7dbdc2706872a557dcd9c0f; includes catalog binding 5b23a36, descriptor order e0e79fe, bounded waits e3cfc62 from focused candidate 9f3618b, and caller-pinned connected-path client admission plus accepted-endpoint service core; local, unpublished, non-final, and provides no current artifact, Qwen, performance, or M1 authority"],
-    ["Local validation", "on c29c52c, remote checks report 565 engine tests passed, 0 failed, and 5 environment-gated ignored; source gate 162 modules and 7,533 executable bodies; source-gate unit tests 28 passed and 0 failed; bounded hostile policy PASS. Connected-path checks at 7f4a251 report 82 adapter tests, 32 service tests, 3 intentional ignores, and both Clippy gates PASS. This is focused integration evidence, not a release qualification, hardware result, or closed M1 gate"],
+    ["Local Ferric integration", "latest-fe2 reviewed integration 1e7695d9517a9711389a907c1ebbc2a6bc76249a, tree a7266c25cb10cc2976babc13ba119c2fb70a227f; includes catalog binding 5b23a36, descriptor order e0e79fe, bounded waits e3cfc62, caller-pinned connected-path admission, protected one-shot verifier listener 64ab4fc, and production-wide bounded queue waits 1e7695d; local, unpublished, non-final, and provides no current artifact, Qwen, performance, serving, or M1 authority"],
+    ["Local validation", "on 1e7695d, bounded-production-wait remote checks report 569 engine library tests passed, 11 harness tests, 2 packet tests, 75 qualification tests with 2 intentional ignores, 2 preflight tests, 148 doctests, 8 adapter tests, 3 adapter doctests, and strict Clippy PASS. Listener checks at 64ab4fc report 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy PASS. The combined source inventory has the expected 10 unadmitted and 0 stale entries pending formal regeneration. This is scoped integration evidence, not a release qualification, hardware result, or closed M1 gate"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "An exact aggregate compile from local integration c29c52c against public fe2o3 5f46dd2 has been executed and currently reaches Ferric prefill overflow-proof work. Ferric kernel work remains in progress. The compile has produced no aggregate Worker V3 HSACO, hardware execution, Qwen serving, timing, baseline, artifact authority, or execution authority"],
+    ["Engineering aggregate output", "Exact aggregate v9 against public fe2o3 5f46dd2 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment. Authenticated bounds are audited, and v10 focused gates are active with explicit < 2048 and < 8192 increment guards. Ferric kernel work remains in progress. No aggregate Worker V3 HSACO, hardware execution, Qwen serving, timing, baseline, artifact authority, or execution authority has been produced"],
     ["Canonical Qwen prepack", "real pinned Qwen3-8B target plus Qwen3-0.6B draft were canonically prepacked and reverified on mi300x; bundle 6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b; admission 6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16; this validates input packaging, not a protected artifact, GPU run, token, or serving result"],
-    ["Authenticated target rollover", "paired-prefill rollover is public at 047ee32f6d0bb1861adb211c9ced1f403a22514c. Local latest-fe2 integration 7f4a251707d2b0d8811184533b1d8f805a745726 includes exact-slot reincarnation, new-window physical invariants, speculative-retirement preflight, timing, authenticated executable-catalog binding at 5b23a36, descriptor-order work at e0e79fe, bounded authenticated queue waits at e3cfc62, and caller-pinned connected-path admission. It is unpublished, non-final, not release-qualified, and not evidence of Qwen, endpoint, or performance behavior"],
+    ["Authenticated target rollover", "paired-prefill rollover is public at 047ee32f6d0bb1861adb211c9ced1f403a22514c. Local latest-fe2 integration 1e7695d9517a9711389a907c1ebbc2a6bc76249a includes exact-slot reincarnation, new-window physical invariants, speculative-retirement preflight, timing, catalog and descriptor binding, connected-path admission, the protected one-shot listener at 64ab4fc, and production-wide bounded waits. A further authenticated new-window join is active. The integration is unpublished, non-final, not release-qualified, and not evidence of Qwen, endpoint, or performance behavior"],
     ["R33 wire and lifecycle proof", "Public feature checkpoint 9431cb4 integrates the authority-free supervised wire foundation at 66b8547ab7ce1572d29557d2e9c16d58b2b6f41f and executable lifecycle proof at 3f5b4982fa08c4488ff13bb7db37bcbb0ab8368f, tree cb79327ebd365d396f388c7a55023c4557a2b0d8. Four exact positive rows prove the model; two hostile actual-body mutations are rejected. The model is independent of the service implementation and proves no adapter conformance, protected authority, GPU execution, or serving result"],
     ["Target-only engineering smoke", "Ferric source contains gfx942 binding, authenticated model-memory upload, physical KV partitioning, a 545-packet target batch, submit/wait/recycle/readback, token feedback, and monotonic-raw single-request timing. It has not executed with a current aggregate artifact and is not a continuous-serving or HTTP endpoint"],
     ["R33 V3 serving comparison", "Event-backed collector and record validation are on the public feature branch at a2bb2dc9f0087d4573d58b7c0f5b15aee3b3245b, not on main or final. They retain paired per-request work and recompute p50/p90/p99 E2E, TTFT, and TPOT with exact units; no Qwen measurement, vLLM/SGLang baseline, or comparison has run"],
     ["Baseline comparison", "No Ferric Qwen timing and no vLLM/SGLang baseline result exist; comparison not run"],
-    ["Protected verifier status", "The required protected execution profile and protected service socket are absent. Earlier service and binder foundations do not create a deployed verifier, protected artifact acceptance, runtime admission, or serving authority"],
+    ["Protected verifier status", "Local integration 64ab4fc contains a reviewed, one-shot protected-verifier listener with scoped remote gates green. The required deployed protected execution profile, concrete checker, signer, supervisor, and production R33 backend remain absent; listener source alone does not create a deployed verifier, protected artifact acceptance, runtime admission, or serving authority"],
     ["Aggregate device source", "one selected compilation unit owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules; it has no prebuilt or vendor kernel dependency"],
     ["Aggregate source-pin policy", "the typed adapter admits LLVM text IR for gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors; its projection is identity-observation-only"],
     ["Aggregate build producer", "the bounded producer requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation, retains committed device and adapter source identities, invokes the prebound typed adapter, and emits an observational record with explicit nonclaims"],
@@ -217,7 +234,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Ferric inference foundations",
       state: "implemented",
       detail:
-        "Authenticated model inputs, exact target and draft plans, generational scheduling, paged KV custody, cancellation, completion epochs, and finite speculative lifecycle paths exist in source. Local integration 7f4a251 consumes exact public fe2o3 5f46dd2 and includes catalog binding, descriptor order, bounded authenticated queue waits, and caller-pinned connected-path admission. It is unpublished, non-final, and not release-qualified. No serving endpoint exists.",
+        "Authenticated model inputs, exact target and draft plans, generational scheduling, paged KV custody, cancellation, completion epochs, and finite speculative lifecycle paths exist in source. Local integration 1e7695d consumes exact public fe2o3 5f46dd2 and includes a protected one-shot verifier listener plus production-wide bounded queue waits. It is unpublished, non-final, and not release-qualified. No serving endpoint exists.",
     },
     {
       label: "Durable compiler receipt path",
@@ -241,7 +258,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate 12-kernel source roster",
       state: "integration",
       detail:
-        "Ferric's source roster contains 12 K1-K7 entrypoints across seven canonical local Rust modules and 440 exact profiles. Local integration 7f4a251 pins public fe2o3 5f46dd2; the latest exact aggregate compile in this integration line has been executed and currently reaches Ferric prefill overflow-proof work. Kernel implementation remains in progress, with no aggregate Worker V3 HSACO, admission, or GPU run.",
+        "Ferric's source roster contains 12 K1-K7 entrypoints across seven canonical local Rust modules and 440 exact profiles. Local integration 1e7695d pins public fe2o3 5f46dd2. Exact aggregate v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment. Authenticated bounds are audited, and v10 focused gates are active with explicit < 2048 and < 8192 increment guards. Kernel implementation remains in progress, with no aggregate Worker V3 HSACO, admission, or GPU run.",
     },
     {
       label: "Generic Worker V3 roster admission",
@@ -265,7 +282,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Typed aggregate source-pin projection",
       state: "implemented",
       detail:
-        "The adapter strictly decodes one canonical receipt-bearing Worker V3 V2 envelope and admits only LLVM text IR, gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors. Local Ferric integration 7f4a251 consumes exact public fe2o3 5f46dd2, but remains unpublished, non-final, and unqualified as a release. The projection remains non-authoritative and grants no compiler-origin, verifier, publication, load, or launch authority.",
+        "The adapter strictly decodes one canonical receipt-bearing Worker V3 V2 envelope and admits only LLVM text IR, gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors. Local Ferric integration 1e7695d consumes exact public fe2o3 5f46dd2, but remains unpublished, non-final, and unqualified as a release. The projection remains non-authoritative and grants no compiler-origin, verifier, publication, load, or launch authority.",
     },
     {
       label: "Aggregate protected-build producer policy",
@@ -310,22 +327,34 @@ window.FERRIC_PROJECT = Object.freeze({
         "Qualified head 7f516e0 extends the zero-state backend after projection in one exact order: call the pinned finalized-HSACO verifier exactly once on the request bytes; independently revalidate the finalizer derivation; validate common multi-root compiler proof inputs and target lineage; then cross-bind finalizer artifact, LLVM handoffs, literal gfx942:xnack-/COV6 target, the full descriptor table, a unique 12-entry export-plus-descriptor-symbol permutation, full physical-kernel and binding equality, and exact launch workgroups. The owned reinspection and three inferred move-only owners reach the private rejection helper unchanged. This is same-process descriptive integrity, not independent verifier authority, artifact ownership, or load authority. A passing preflight has the sole terminal result MissingProtectedVerificationReceipt and grants no protected, load, launch, hardware, Qwen, numerical, performance, or M1 authority.",
     },
     {
+      label: "Protected one-shot verifier listener",
+      state: "integration",
+      detail:
+        "Local integration 64ab4fc adds the reviewed caller-pinned, one-shot listener path. Remote gates passed 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy. It is source integration only: no deployed protected profile, concrete checker, signer, supervisor, production R33 backend, artifact acceptance, or serving authority follows.",
+    },
+    {
       label: "Accepting protected aggregate artifact",
       state: "open",
       detail:
-        "Ferric's private current aggregate publication selection remains None. The required protected execution profile and protected service socket are absent, so earlier service and binder foundations cannot provide a deployed verifier or receipt. No independent verifier, rollback-currentness, protected acceptance, load, launch, or runtime authority exists.",
+        "Ferric's private current aggregate publication selection remains None. A protected one-shot listener exists in local source, but the required deployed protected execution profile, concrete checker, signer, supervisor, and production R33 backend are absent. No independent verifier, rollback-currentness, protected acceptance, load, launch, or runtime authority exists.",
     },
     {
       label: "fe2o3 engineering aggregate producer",
       state: "integration",
       detail:
-        "Public fe2o3 main is 5f46dd23cfa3cf58118a93ee2bf5e1252903366c (tree 52ec0a254d626102cbfa37b79a906722490cc9d8). Local Ferric integration 7f4a251 pins that exact revision and remains unpublished, non-final, and without release qualification. fe2o3 owns reusable compiler, runtime, KFD, and generic verification transport only; Ferric owns model kernels, inference, and Ferric policy. No Ferric artifact, runtime result, inference result, or correctness authority follows.",
+        "Public fe2o3 main is 5f46dd23cfa3cf58118a93ee2bf5e1252903366c (tree 52ec0a254d626102cbfa37b79a906722490cc9d8). Local Ferric integration 1e7695d pins that exact revision and remains unpublished, non-final, and without release qualification. fe2o3 owns reusable compiler, runtime, KFD, and generic verification transport only; Ferric owns model kernels, inference, and Ferric policy. No Ferric artifact, runtime result, inference result, or correctness authority follows.",
     },
     {
       label: "Ferric connected-path and bounded queue adoption",
       state: "integration",
       detail:
-        "Public fe2o3 1167b9c provides connected-filesystem-path Worker V3 V2 admission and 5f46dd2 provides bounded service and authenticated queue waits. Local integration 7f4a251 includes bounded waits at e3cfc62 plus caller-pinned client admission and an accepted-endpoint service core. Ferric connected-path deployment remains in progress because no protected-verifier listener, supervisor, concrete checker, or signer service exists. Protected Qwen execution has not run.",
+        "Public fe2o3 1167b9c provides connected-filesystem-path Worker V3 V2 admission and 5f46dd2 provides bounded service and authenticated queue waits. Local integration 1e7695d includes caller-pinned admission, the protected one-shot listener at 64ab4fc, and production-wide bounded waits at 1e7695d. Remote listener and engine matrices pass at their recorded heads. Deployment remains in progress because no supervisor, concrete checker, signer, production R33 backend, or deployed protected profile exists. Protected Qwen execution has not run.",
+    },
+    {
+      label: "Bounded production queue waits",
+      state: "integration",
+      detail:
+        "Local integration 1e7695d carries one nonzero timeout through initial submit, retries, rollover custody, and rearmed execution while enforcing progress and wall-clock deadlines. Remote gates passed 569 engine library tests, 11 harness tests, 2 packet tests, 75 qualification tests with 2 intentional ignores, 2 preflight tests, 148 doctests, 8 adapter tests, 3 adapter doctests, and strict Clippy. This is host source qualification, not a GPU, Qwen, serving, or performance result.",
     },
     {
       label: "Production speculative executor",
@@ -499,7 +528,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Real target and draft prepack inputs are verified, local integration 7f4a251 consumes public fe2o3 5f46dd2, and the latest exact aggregate compile reaches Ferric prefill overflow-proof work. Ferric kernel completion, connected-path deployment closure, and release qualification remain in progress. No aggregate HSACO, Qwen token, serving or HTTP endpoint, measured TTFT/TPOT, numerical result, or baseline result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Real target and draft prepack inputs are verified, and local integration 1e7695d consumes public fe2o3 5f46dd2. Aggregate v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment; authenticated bounds are audited and v10 focused guard gates are active. Kernel completion, concrete verifier authority, a production R33 backend, the active authenticated new-window join, combined formal regeneration, and release qualification remain in progress. No aggregate HSACO, Qwen token, serving or HTTP endpoint, measured TTFT/TPOT, numerical result, or baseline result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
@@ -636,7 +665,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Protected verifier service foundation",
         detail:
-          "Earlier service and binder foundations remain non-deployed. The required protected execution profile and protected service socket are absent, so there is no real protected current, checker, signer, head-store, supervisor, IPC, or runtime authority.",
+          "Local integration 64ab4fc adds a reviewed one-shot listener, and its scoped service, adapter, source-gate, and strict-Clippy checks pass. It remains non-deployed source: the protected execution profile, concrete checker, signer, head-store, supervisor, production R33 backend, and runtime authority are absent.",
       },
       {
         name: "Qualified proof ledger",
@@ -802,14 +831,14 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Making progress",
       completed:
-        "Public fe2o3 main is 5f46dd2. Local Ferric integration 7f4a251 now pins that exact revision and includes catalog binding 5b23a36, descriptor order e0e79fe, bounded authenticated queue waits e3cfc62, and connected-path client/service-core source.",
+        "Public fe2o3 main is 5f46dd2. Local reviewed Ferric integration 1e7695d pins that exact revision and includes catalog binding 5b23a36, descriptor order e0e79fe, protected one-shot listener 64ab4fc, and production-wide bounded queue waits 1e7695d.",
       current:
-        "Integration 7f4a251 is local, unpublished/non-final. Scoped checks at c29c52c pass 565 engine tests, a 162-module/7,533-body source gate, 28 source-gate tests, and bounded hostile-policy PASS; connected-path checks at 7f4a251 pass 82 adapter and 32 service tests with 3 intentional ignores and both Clippy gates PASS. No release qualification exists.",
+        "Integration 1e7695d is local, unpublished/non-final. Listener checks pass 46 service tests with 3 ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy. Engine checks pass 569 library tests, 11 harness, 2 packet, 75 qualification with 2 ignores, 2 preflight, 148 doctests, 8 adapter, 3 adapter doctests, and strict Clippy. No release qualification exists.",
       blockedBy:
-        "No integration team is idle or blocked; production execution still depends on an aggregate HSACO and the absent protected execution profile plus service socket.",
+        "No active team is idle or blocked; production execution still depends on an aggregate HSACO, a deployed protected profile, concrete checker/signer/supervisor, and the production R33 backend.",
       next:
-        "Finish the prefill overflow proof and connected-path deployment, qualify the exact remote tree, and publish only after identities and receipts agree.",
-      validation: "fe2o3 5f46dd2 public; Ferric 7f4a251 local, unpublished, non-final; release qualification open",
+        "Integrate the kernel and authenticated new-window work, regenerate combined formal inventories, qualify the exact remote tree, and publish only after identities and receipts agree.",
+      validation: "fe2o3 5f46dd2 public; Ferric 1e7695d local, unpublished, non-final; scoped gates green; release qualification open",
     },
     {
       name: "Kernel",
@@ -819,12 +848,12 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Ferric retains one aggregate source unit containing 12 K1-K7 entrypoints across 440 exact profiles, GEMM reductions at 720c9bc, and SwiGLU checked indices at ff2ca04. Generic checked component projection is public in fe2o3 b4f600a, an ancestor of 5f46dd2.",
       current:
-        "The latest exact aggregate compile in local integration line 7f4a251 with public fe2o3 5f46dd2 has been executed and currently reaches Ferric prefill overflow-proof work. Kernel implementation remains in progress; no aggregate HSACO has been produced.",
+        "Against local integration 1e7695d and public fe2o3 5f46dd2, exact aggregate v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment. Authenticated bounds are audited, and v10 focused gates are active with explicit < 2048 and < 8192 increment guards. Kernel implementation remains in progress; no aggregate HSACO has been produced.",
       blockedBy:
         "The kernel team is making progress; source work is not blocked, while artifact execution depends on the combined repin/qualification and protected publication inputs.",
       next:
-        "Rerun and structurally inspect the aggregate on 5f46dd2 without weakening authorization; keep all model kernels and inference-specific policy in Ferric.",
-      validation: "exact 5f46dd2 aggregate compile executed through Ferric prefill overflow-proof work; no HSACO, admission, or GPU result",
+        "Complete the compiler-admitted column proof, rerun and structurally inspect the aggregate on 5f46dd2 without weakening authorization, and keep every model kernel in Ferric.",
+      validation: "aggregate v9 passed new address/value proofs then stopped at prefill key_token increment; v10 explicit increment-guard gates active; no HSACO, admission, or GPU result",
     },
     {
       name: "Engine",
@@ -832,14 +861,14 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Making progress",
       completed:
-        "Public Ferric includes authenticated prefill-to-target-decode rollover at 047ee32, healthy all-terminal queue shutdown at 9eba943, the authority-free supervised R33 wire foundation at 66b8547, and event-backed comparison records at a2bb2dc.",
+        "Ferric includes authenticated prefill-to-target-decode rollover at 047ee32, healthy all-terminal queue shutdown at 9eba943, a protected one-shot listener at 64ab4fc, and production-wide bounded queue waits at 1e7695d.",
       current:
-        "Local unpublished/non-final integration 7f4a251 consumes exact fe2o3 5f46dd2 and joins selector, new-window, cardinality, direct data-index, descriptor-order, bounded-wait e3cfc62, and connected-path client/service-core work. Connected-path deployment remains in progress because the protected-verifier listener, supervisor, concrete checker, and signer service are absent.",
+        "Local unpublished/non-final integration 1e7695d consumes exact fe2o3 5f46dd2. The authenticated new-window join is active. Protected deployment remains in progress because the supervisor, concrete checker, signer, deployed profile, and production R33 backend are absent.",
       blockedBy:
         "The engine team is making progress; Qwen execution still lacks a current aggregate HSACO, protected deployment, complete current qualification, and a joined production serving path.",
       next:
-        "Finish connected-path protected deployment and qualify the production path; Qwen and baseline timing come only after a real run.",
-      validation: "local 7f4a251 connected path 82 adapter / 32 service tests with 3 ignores and Clippy PASS; no release qualification, HSACO, hardware, serving, or comparison result",
+        "Finish the authenticated new-window join, then implement and qualify the production R33 backend and protected authority; Qwen and baseline timing come only after a real run.",
+      validation: "local 1e7695d listener and bounded-wait matrices pass with strict Clippy; no release qualification, HSACO, hardware, serving, or comparison result",
     },
     {
       name: "Verification",
@@ -849,16 +878,30 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Checkpoint 756e813 integrated the canonical weight-role byte theorem: Target8B=1 and Draft06B=2, with the Draft06B=>1 same-source mutation rejected by Verus. Public checkpoint 9431cb4 integrates the independent R33 daemon lifecycle proof at 3f5b498.",
       current:
-        "Integration line 7f4a251 carries c29c52c's 162-module, 7,533-body source inventory on exact fe2o3 5f46dd2. Source-gate unit tests pass 28/28 and the bounded hostile policy passes; connected-path adapter and service tests pass at 7f4a251. No release receipt, runtime-atomicity proof, or deployment-conformance claim exists.",
+        "Integration line 1e7695d has the expected 10 unadmitted and 0 stale source-inventory entries after the listener and bounded-wait changes. Combined formal regeneration is pending. The listener source gate passes 28/28, and the listener and bounded-wait scoped gates pass strict Clippy. No release receipt, runtime-atomicity proof, or deployment-conformance claim exists.",
       blockedBy:
         "The verification team is making progress with no proof-design blocker; combined exact-head integration, regenerated inventories, and qualification remain pending.",
       next:
         "Finish the exact tree, regenerate proof/source inventories, and produce a release receipt before any public completion claim.",
       validation:
-        "c29c52c source inventory observed; 7f4a251 connected-path tests and Clippy PASS; release qualification open",
+        "1e7695d source inventory observed at expected 10 unadmitted / 0 stale; combined formal regeneration pending; release qualification open",
     },
   ],
   recentProgress: [
+    {
+      commit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+      title: "Bound production queue waits",
+      state: "integration",
+      detail:
+        "Local reviewed integration retains one nonzero timeout through production submit, retry, rollover, and rearm paths. Remote checks pass 569 engine library tests, 11 harness tests, 2 packet tests, 75 qualification tests with 2 intentional ignores, 2 preflight tests, 148 doctests, 8 adapter tests, 3 adapter doctests, and strict Clippy. It creates no GPU, Qwen, serving, or performance authority.",
+    },
+    {
+      commit: "64ab4fc98ecc64e78b4591197a47674f27bc992e",
+      title: "Integrate the protected one-shot verifier listener",
+      state: "integration",
+      detail:
+        "Local reviewed source adds a caller-pinned one-shot protected-verifier listener. Remote checks pass 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy. A supervisor, concrete checker, signer, production R33 backend, and deployed protected profile remain absent.",
+    },
     {
       commit: "7f4a251707d2b0d8811184533b1d8f805a745726",
       title: "Integrate the protected connected path",
@@ -1733,13 +1776,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Public feature branch origin/codex/fe2o3-current-main-repin-v1 contains 9431cb4638401718b8085bcf258a390650c719ef, tree 09c48165b19883aebbebd2e77b827794cd039164; it is not on main or final and closes none of the 33 M1 gates",
-      "Local Ferric integration 51222286a76be0e5e85c90232d0451cd30bfa930, policy 829eb98ba11c645958ef762a01da4c81c4bf795b, selector e18eb0e06473fabc6dbfe4cef80b692e34b04a22, physical-new-window proof a18de34ac7ffb39d8eaa632e1deb07b3dd1df274, and variable-cardinality planner c3fe1f076e6ceded02633fa1e6c6973b5afb4d75 are unpublished, non-final candidates with no current or serving authority",
+      "Local reviewed Ferric integration 1e7695d9517a9711389a907c1ebbc2a6bc76249a includes protected one-shot listener 64ab4fc98ecc64e78b4591197a47674f27bc992e and production-wide bounded waits; it and the active authenticated new-window join are unpublished and non-final with no current or serving authority",
       "Direct data-index candidate c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046 is also local, unpublished, and non-final",
       "Exact local policy v5 for 829eb98 on ce44dc0 passed all quality gates over a 656-file closure; closure d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714 and receipt 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641 bind only that scope, not a future combined or 5f46dd2 tree, and close no M1 gate",
       "The local variable-cardinality planner passed focused arithmetic, direct Verus, hostile-formula, and branch-coverage gates; it does not implement runtime variable-cardinality wiring or prove transition atomicity",
       "One aggregate device package owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules with no prebuilt or vendor kernel dependency",
       "The aggregate catalog contains 12 K1-K7 entrypoints across 440 exact profiles and target S1 expands from 544 logical operations to 545 physical packets",
-      "A historical local post-ff2ca04 aggregate rerun using public fe2o3 b2cce9c source stopped before Worker or link at missing DisjointBlockComponentIndex production expansion; it was not a published Ferric result. Public fe2o3 b4f600a now supplies that generic checked projection; the latest exact 5f46dd2 compile reaches Ferric prefill overflow-proof work and has produced no current Worker V3 HSACO",
+      "A historical local post-ff2ca04 aggregate rerun using public fe2o3 b2cce9c source stopped before Worker or link at missing DisjointBlockComponentIndex production expansion; it was not a published Ferric result. Public fe2o3 b4f600a now supplies that generic checked projection. Exact aggregate v9 passed the new address and value proofs before stopping at the prefill loop-tail key_token increment; authenticated bounds are audited, v10 explicit increment-guard gates are active, and no current Worker V3 HSACO exists",
       "Real Qwen3-8B target and Qwen3-0.6B draft prepack verification produced bundle identity 6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b and admission identity 6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16",
       "An internal move-only non-authoritative program-source capability carries exact observation, descriptor, compiler-handoff, HSACO-byte, allocation, and lineage custody into engine admission and returns it intact on failure",
       "The physical runner binds gfx942, uploads authenticated model memory, partitions physical KV, publishes target-only fixed batches, waits, recycles, reads back, releases pages, and supports same-shape decode rearm",
@@ -1760,16 +1803,16 @@ window.FERRIC_PROJECT = Object.freeze({
       "A passing preflight has the sole terminal result MissingProtectedVerificationReceipt; earlier validation failures remain distinct and no accepted verification, load, launch, inference, hardware, Qwen, numerical, performance, or M1 authority follows",
       "Strict mi300x proof/release qualification at 7f516e0 passed 1,493 queries, 645 direct bodies, zero errors across eight packages, 37 actual-body hostile mutations, and 13 source-quality PASS markers over a source gate of 151 modules / 6,916 bodies and a canonical 603-file closure; exact-head CI run 33615415798 and authenticated-verus-release run 33615415693 are green",
       "Ferric's private current aggregate publication selection remains None with no public, environment, CLI, or file override, and the zero-state protected verifier has no protected receipt",
-      "The required protected execution profile and protected service socket are absent, so no deployed protected admission path exists",
+      "Local source includes a reviewed one-shot protected-verifier listener, but the deployed protected execution profile, concrete checker, signer, supervisor, and production R33 backend are absent, so no deployed protected admission path exists",
       "Speculative executor candidate 0c2b73bfb8d4e62c100c42a125171c271c8850d8, tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568, closed the prior custody findings, passed its exact mi300x matrix, received independent GO, and is integrated at 867f863e223d00e3b304d324e89146e27d2c5c28",
       "Engineering aggregate loader c9072b0de61a27be917020baf5eecb4b743734f0, tree c725eb6e3e6f470fa327f94289509fe910eb83ef, received independent GO and is integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c with observation-only, non-authoritative custody",
       "Target-only smoke 951d48ac119089a62546cb6f96f324feaad013af, tree ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c, received independent source-integration GO and is merged at 36fb8e9a078953fa7f7078e2e960ba5ea9fc8b4b with a documentation-only correction",
       "The ephemeral 41abaa0c smoke matrix passed 511 engine library tests, 84 capture tests, 145 doctests, and all-target strict clippy; exact locked final pinning and live hardware execution remain open, the smoke has not executed, and no Qwen token follows",
       "R33 V3 event-backed E2E, TTFT, and TPOT comparison support is retained on the public feature branch from a2bb2dc9f0087d4573d58b7c0f5b15aee3b3245b; checkpoint 9431cb4 integrates daemon proof 3f5b498 and the authority-free supervised wire foundation at 66b8547, but no service conformance, runtime authority, Qwen timing, baseline, or comparison follows",
-      "The protected execution profile and protected service socket are absent; earlier verifier foundations are not deployed authority",
+      "The local one-shot listener is not deployed authority; the protected profile, concrete checker, signer, supervisor, and production R33 backend remain absent",
       "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
       "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
-      "Public fe2o3 5f46dd2 includes generic checked component projection, LLVM 22 Worker compatibility, connected-path Worker V3 V2 transport, and bounded queue waits; local Ferric integration 7f4a251 consumes it but is unpublished and has no protected deployment, current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result",
+      "Public fe2o3 5f46dd2 includes generic checked component projection, LLVM 22 Worker compatibility, connected-path Worker V3 V2 transport, and bounded queue waits; local Ferric integration 1e7695d consumes it and includes listener 64ab4fc plus production-wide bounded waits, but is unpublished and has no protected deployment, current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result",
       "All 33 M1 roadmap gates and all 17 assurance properties remain Open until their required evidence closes them",
     ],
     fe2o3: [
@@ -1801,7 +1844,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
-      "Local Ferric integration 7f4a251 consumes current fe2o3 main but is not public; Ferric still has no published production aggregate, accepted production artifact/source pin, or authenticated full-Qwen result",
+      "Local Ferric integration 1e7695d consumes current fe2o3 main but is not public; Ferric still has no published production aggregate, accepted production artifact/source pin, production R33 backend, or authenticated full-Qwen result",
       "Ferric-specific inference and kernel ownership remain in Ferric and were not moved into fe2o3",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
