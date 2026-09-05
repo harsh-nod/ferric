@@ -873,10 +873,11 @@ impl<const C: usize> M1ServingRegistryV1<C> {
     ///
     /// This transition is deliberately narrower than admission while a queue
     /// is active: every existing registry entry must be `Retired` from a
-    /// completed physical generation. The replacement must retain the same
-    /// slots in the same lane order and advance each generation exactly once,
-    /// and the complete roster must fit one paired-prefill batch. The removed
-    /// entries move into the returned token before any physical detachment.
+    /// completed physical generation no newer than the registry completion
+    /// frontier. The replacement must retain the same slots in the same lane
+    /// order and advance each generation exactly once, and the complete roster
+    /// must fit one paired-prefill batch. The removed entries move into the
+    /// returned token before any physical detachment.
     /// Restoring that token reinstalls the exact entries, including order,
     /// plans, phases, and quiescence.
     ///
@@ -917,28 +918,10 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             );
         }
         for (index, entry) in self.entries.iter().enumerate() {
-            if entry.plan != prior {
-                return reject(
-                    M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index },
-                    requests,
-                );
-            }
-            let M1ServingRequestPhaseV1::Retired {
-                quiescence: M1ServingQuiescenceV1::Completed(epoch),
-            } = entry.phase
-            else {
-                return reject(
-                    M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index },
-                    requests,
-                );
-            };
-            if epoch != CompletionEpoch::new(self.completed_epoch)
-                || entry.last_quiescence != Some(epoch)
+            if let Err(error) =
+                validate_completed_window_predecessor(entry, prior, self.completed_epoch, index)
             {
-                return reject(
-                    M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index },
-                    requests,
-                );
+                return reject(error, requests);
             }
         }
         if plan.mode() != Qwen3ExecutionMode::Prefill {
@@ -1389,20 +1372,12 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
         }
         for (index, entry) in reservation.predecessors.iter().enumerate() {
-            if entry.plan != reservation.prior {
-                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index });
-            }
-            let M1ServingRequestPhaseV1::Retired {
-                quiescence: M1ServingQuiescenceV1::Completed(epoch),
-            } = entry.phase
-            else {
-                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index });
-            };
-            if epoch != CompletionEpoch::new(self.completed_epoch)
-                || entry.last_quiescence != Some(epoch)
-            {
-                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index });
-            }
+            validate_completed_window_predecessor(
+                entry,
+                reservation.prior,
+                self.completed_epoch,
+                index,
+            )?;
         }
         for (lane, (entry, request)) in self
             .entries
@@ -1433,6 +1408,28 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }
         Ok(())
     }
+}
+
+fn validate_completed_window_predecessor(
+    entry: &M1ServingEntryV1,
+    prior: M1ServingPlanV1,
+    completed_epoch: u64,
+    index: usize,
+) -> Result<(), M1ServingRegistryErrorV1> {
+    if entry.plan != prior {
+        return Err(M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index });
+    }
+    let M1ServingRequestPhaseV1::Retired {
+        quiescence: M1ServingQuiescenceV1::Completed(epoch),
+    } = entry.phase
+    else {
+        return Err(M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index });
+    };
+    if epoch.value() == 0 || epoch.value() > completed_epoch || entry.last_quiescence != Some(epoch)
+    {
+        return Err(M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index });
+    }
+    Ok(())
 }
 
 fn validate_plan_transition(
@@ -2657,6 +2654,146 @@ mod tests {
                 quiescence: M1ServingQuiescenceV1::Completed(CompletionEpoch::new(1)),
             })
         );
+    }
+
+    #[test]
+    fn completed_window_reservation_accepts_staggered_terminal_epochs() {
+        let first = RequestId::new(0, 1);
+        let second = RequestId::new(1, 1);
+        let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+        registry.admit(first, prefill_s8()).unwrap();
+        registry.admit(second, prefill_s8()).unwrap();
+        publish_and_complete(
+            &mut registry,
+            &[
+                M1ServingCompletionDispositionV1::Continue(speculative_s8()),
+                M1ServingCompletionDispositionV1::Continue(speculative_s8()),
+            ],
+        );
+        publish_and_complete(
+            &mut registry,
+            &[
+                M1ServingCompletionDispositionV1::Retire,
+                M1ServingCompletionDispositionV1::Continue(speculative_s8()),
+            ],
+        );
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+
+        let first_epoch = CompletionEpoch::new(2);
+        let second_epoch = CompletionEpoch::new(3);
+        assert_eq!(
+            registry.phase(first),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(first_epoch),
+            })
+        );
+        assert_eq!(
+            registry.phase(second),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(second_epoch),
+            })
+        );
+
+        let next_first = RequestId::new(0, 2);
+        let next_second = RequestId::new(1, 2);
+        let reservation = registry
+            .reserve_completed_window_replacement(
+                prefill_s8(),
+                vec![next_first, next_second].into_boxed_slice(),
+            )
+            .unwrap();
+        assert_eq!(reservation.prior_plan(), speculative_s8());
+        assert_eq!(reservation.epoch(), CompletionEpoch::new(4));
+        assert_eq!(
+            reservation
+                .predecessor(0)
+                .map(|member| member.completion_epoch()),
+            Some(first_epoch)
+        );
+        assert_eq!(
+            reservation
+                .predecessor(1)
+                .map(|member| member.completion_epoch()),
+            Some(second_epoch)
+        );
+        registry
+            .preflight_new_window_publication(&reservation)
+            .unwrap();
+
+        let restored = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap();
+        assert_eq!(restored.into_requests().as_ref(), [next_first, next_second]);
+        assert_eq!(
+            registry.phase(first).unwrap(),
+            M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(first_epoch),
+            }
+        );
+        assert_eq!(
+            registry.phase(second).unwrap(),
+            M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(second_epoch),
+            }
+        );
+    }
+
+    #[test]
+    fn completed_window_reservation_rejects_invalid_predecessor_quiescence() {
+        let first = RequestId::new(0, 1);
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(first, prefill_s1()).unwrap();
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+        let next = RequestId::new(0, 2);
+        let completed = CompletionEpoch::new(1);
+
+        registry.entries[0].last_quiescence = None;
+        let failure = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index: 0 }
+        );
+        assert_eq!(failure.into_requests().as_ref(), [next]);
+        assert!(!registry.has_publication_reservation());
+
+        registry.entries[0].last_quiescence = Some(CompletionEpoch::new(2));
+        let failure = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index: 0 }
+        );
+        assert_eq!(failure.into_requests().as_ref(), [next]);
+        assert!(!registry.has_publication_reservation());
+
+        let future = CompletionEpoch::new(2);
+        registry.entries[0].phase = M1ServingRequestPhaseV1::Retired {
+            quiescence: M1ServingQuiescenceV1::Completed(future),
+        };
+        registry.entries[0].last_quiescence = Some(future);
+        let failure = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index: 0 }
+        );
+        assert_eq!(failure.into_requests().as_ref(), [next]);
+        assert!(!registry.has_publication_reservation());
+
+        registry.entries[0].phase = M1ServingRequestPhaseV1::Retired {
+            quiescence: M1ServingQuiescenceV1::Completed(completed),
+        };
+        registry.entries[0].last_quiescence = Some(completed);
+        let reservation = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap();
+        let _ = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap();
     }
 
     #[test]
