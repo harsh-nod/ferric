@@ -26,6 +26,7 @@
           <a href="#capabilities">Capabilities</a>
           <a href="#validation">Validation</a>
           <a href="#architecture">Architecture</a>
+          <a href="#teams">Teams</a>
           <a href="#progress">Progress</a>
           <a href="#evidence">Evidence</a>
         </nav>
@@ -59,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-03">Updated 2026-09-03</time>
+              <time data-updated datetime="2026-09-04">Updated 2026-09-04</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -156,6 +157,22 @@
         </div>
       </section>
 
+      <section class="band teams-band" id="teams" aria-labelledby="teams-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Parallel execution</div>
+              <h2 id="teams-title">M1 team ledger</h2>
+            </div>
+            <p>
+              Each team reports completed work, its active task, concrete dependencies, the next
+              deliverable, and the latest validation boundary.
+            </p>
+          </div>
+          <div class="team-grid" data-teams></div>
+        </div>
+      </section>
+
       <section class="band progress-band" id="progress" aria-labelledby="progress-title">
         <div class="shell">
           <div class="section-heading">
@@ -198,18 +215,19 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Emit the first aggregate HSACO</h2>
+            <h2 id="next-title">Qualify the compiler, then emit the aggregate</h2>
           </div>
           <p>
-            Durable Ferric checkpoint 5c5ddef requires fe2o3 production build config V2 with
-            source-isa-summary-v1 observation for the aggregate producer. Ferric owns 12 local Rust kernel
-            roots across seven modules and has no prebuilt or vendor kernel dependency. fe2o3 branch 80aaaf3
-            includes origin/main c58785c and reviewed guarded-subtraction support e745bc75c; compiler, runtime,
-            and KFD work stays in fe2o3 while model kernels and inference stay in Ferric. Remote exact aggregate
-            qualification remains incomplete and grants no correctness or execution authority. The private
-            current aggregate publication selection remains None (CURRENT=None). No aggregate HSACO has been
-            produced or executed on hardware, and no current Qwen serving, numerical, performance, or
-            vLLM/SGLang comparison result exists. All 33 M1 gates and all 17 assurance properties remain Open.
+            fe2o3 candidate ab96e097be6654a1711b737d3ee740f6b449db48 is rebased on current
+            origin/main 4413b086482f2f4ad218f28e4485dc089d6cc020, but it is not on main: its
+            generic exact-SHA gate is running, with Verus and ROCm pending. Compiler, runtime, and KFD
+            work stays in fe2o3; Ferric owns all Qwen kernels and inference. Ferric source already has 12
+            K1-K7 entrypoints across 440 profiles, a 545-packet target runner, physical KV custody, and
+            same-shape decode rearm. The current aggregate Worker V3 HSACO is still absent. Draft
+            d6c225f4 implements the exact target transition and scheduler as dormant source while the live
+            registry stays on supported finite-speculative routes. The atomic physical target route, remote
+            validation, integration, and token feedback remain open. No honest Qwen token, TTFT, TPOT,
+            serving result, or vLLM/SGLang comparison exists.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

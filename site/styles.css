@@ -404,6 +404,7 @@ h3 {
 .capabilities-band,
 .validation-band,
 .architecture-band,
+.teams-band,
 .progress-band,
 .evidence-band {
   padding: 82px 0;
@@ -729,6 +730,89 @@ h3 {
   color: #f2a48d;
 }
 
+.teams-band {
+  background: var(--paper);
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.team-item {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--ferric);
+  border-radius: var(--radius);
+  background: var(--paper-alt);
+}
+
+.team-heading {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.team-identity,
+.team-state {
+  min-width: 0;
+}
+
+.team-identity h3 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.team-scope-label {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.team-state {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.team-state strong {
+  color: var(--green);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.team-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  border-top: 1px solid var(--line);
+}
+
+.team-facts dt,
+.team-facts dd {
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.team-facts dt {
+  color: var(--muted);
+  font-weight: 730;
+}
+
+.team-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink-soft);
+}
+
 .progress-band {
   background: var(--paper-alt);
 }
@@ -971,6 +1055,7 @@ h3 {
 
 .next-layout p {
   margin: 0;
+  overflow-wrap: anywhere;
   color: #564a31;
   font-size: 13px;
 }
@@ -1102,6 +1187,10 @@ footer {
     gap: 28px;
   }
 
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+
   .next-layout {
     grid-template-columns: 1fr 1fr;
     gap: 24px;
@@ -1196,6 +1285,7 @@ footer {
   .capabilities-band,
   .validation-band,
   .architecture-band,
+  .teams-band,
   .progress-band,
   .evidence-band {
     padding: 58px 0;
@@ -1224,10 +1314,28 @@ footer {
 
   .observation-heading,
   .validation-item-heading,
+  .team-heading,
   .timeline-heading,
   .readiness-row-heading {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .team-state {
+    justify-items: start;
+  }
+
+  .team-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .team-facts dt {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .team-facts dd {
+    padding-top: 2px;
   }
 
   .transition-heading {
