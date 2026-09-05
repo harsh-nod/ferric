@@ -173,6 +173,7 @@
         "fe2o3-kfd-queue-foundation",
         "fe2o3-typed-allocation",
         "kernel-schedule-catalog",
+        "serving-bench",
         "weight-stream"
       ],
       "required_status_at_closure": "Proved"

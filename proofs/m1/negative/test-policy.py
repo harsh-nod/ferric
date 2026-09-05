@@ -66,6 +66,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "crates/ferric-spec/src/request_isolation.rs",
         "crates/ferric-spec/src/speculative_step_composition.rs",
         "crates/ferric-spec/src/step_plan_publication.rs",
+        "proofs/m1/r33_daemon_lifecycle.rs",
     ):
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -204,8 +205,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 25:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 25")
+        if len(rows) != 27:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 27")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
