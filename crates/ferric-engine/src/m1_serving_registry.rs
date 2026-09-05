@@ -2707,13 +2707,13 @@ mod tests {
         assert_eq!(
             reservation
                 .predecessor(0)
-                .map(|member| member.completion_epoch()),
+                .map(M1ServingCompletedWindowMemberV1::completion_epoch),
             Some(first_epoch)
         );
         assert_eq!(
             reservation
                 .predecessor(1)
-                .map(|member| member.completion_epoch()),
+                .map(M1ServingCompletedWindowMemberV1::completion_epoch),
             Some(second_epoch)
         );
         registry
