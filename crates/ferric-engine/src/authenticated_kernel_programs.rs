@@ -48,7 +48,7 @@ const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
 const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-map.v2";
 const M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] =
-    [7, 6, 8, 11, 10, 3, 1, 4, 0, 2, 9, 5];
+    [11, 8, 3, 6, 5, 0, 2, 7, 1, 10, 9, 4];
 
 /// Exact production target admitted by the M1 physical runner.
 pub const M1_AUTHENTICATED_PROGRAM_TARGET_V1: &str = "gfx942:xnack-";
@@ -684,7 +684,7 @@ mod tests {
             service_index::<LogitsCompactMarkerV1>(),
             service_index::<SpeculativeAssemblyMarkerV1>(),
         ];
-        assert_eq!(actual, [7, 6, 8, 11, 10, 3, 1, 4, 0, 2, 9, 5]);
+        assert_eq!(actual, [11, 8, 3, 6, 5, 0, 2, 7, 1, 10, 9, 4]);
         assert_eq!(actual, M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
     }
 
@@ -693,12 +693,12 @@ mod tests {
         let entries = M1AllKernelsWorkerV3RosterV1::ENTRIES;
         for (ordinal, binding, contract) in [
             (
-                3,
+                0,
                 PagedKvWriteMarkerV1::KERNEL_BINDING_ID_V1,
                 PagedKvWriteMarkerV1::PROFILE.generated_host_contract_identity(),
             ),
             (
-                10,
+                5,
                 RopeMarkerV1::KERNEL_BINDING_ID_V1,
                 RopeMarkerV1::PROFILE.generated_host_contract_identity(),
             ),
