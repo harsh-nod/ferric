@@ -213,7 +213,9 @@ fn matrix_roots_use_no_call_sequential_indices_after_finite_caps() {
             "ifn<151_937{}else{fe2o3_device::trap();}",
             "ifk<12_289{}else{fe2o3_device::trap();}",
         ] {
-            let position = body.find(cap).expect("matrix pins every finite dimension cap");
+            let position = body
+                .find(cap)
+                .expect("matrix pins every finite dimension cap");
             assert!(previous_cap < position);
             previous_cap = position;
         }
@@ -241,11 +243,13 @@ fn matrix_roots_use_no_call_sequential_indices_after_finite_caps() {
             } else {
                 format!("letrow_{component}=row_{}+1;", component - 1)
             };
-            let row = body.find(&source).unwrap_or_else(|| {
-                panic!("missing sequential bounded row component {component}")
-            });
+            let row = body
+                .find(&source)
+                .unwrap_or_else(|| panic!("missing sequential bounded row component {component}"));
             let active = body
-                .find(&format!("letactive_{component}=row_{component}<m&&column<n;"))
+                .find(&format!(
+                    "letactive_{component}=row_{component}<m&&column<n;"
+                ))
                 .unwrap_or_else(|| panic!("missing access gate for row component {component}"));
             assert!(previous_row < row);
             assert!(row < active);
@@ -253,7 +257,10 @@ fn matrix_roots_use_no_call_sequential_indices_after_finite_caps() {
             previous_row = row;
         }
         if index == 0 {
-            assert_eq!(body.matches("letright_index=reduction*n+column;").count(), 1);
+            assert_eq!(
+                body.matches("letright_index=reduction*n+column;").count(),
+                1
+            );
             assert_eq!(body.matches("letleft_index=row_").count(), 4);
         } else {
             let nonzero_guard = body
@@ -305,9 +312,7 @@ fn reduction_ast_pins_each_load_pair_and_ascending_accumulation() {
     let vector = compact_tokens(&kernels[1].block);
 
     fn reduction_loop<'a>(body: &'a str, step: &str) -> &'a str {
-        let start = body
-            .find("while")
-            .expect("kernel has a reduction loop");
+        let start = body.find("while").expect("kernel has a reduction loop");
         let end = body[start..]
             .find(step)
             .map(|offset| start + offset)
@@ -590,9 +595,7 @@ fn admitted_tile_column_endpoints_are_in_bounds_and_hostile_columns_fail_closed(
 
 #[test]
 fn admitted_tile_rows_and_component_offsets_fit_checked_arithmetic() {
-    for m in [
-        1_usize, 4, 5, 8, 9, 16, 17, 32, 40, 128, 512, 1_024, 2_048,
-    ] {
+    for m in [1_usize, 4, 5, 8, 9, 16, 17, 32, 40, 128, 512, 1_024, 2_048] {
         let tile_rows = m.div_ceil(16);
         assert!(tile_rows <= 128);
         for tile_row in 0..tile_rows {
@@ -620,12 +623,7 @@ fn admitted_tile_rows_and_component_offsets_fit_checked_arithmetic() {
 
 #[test]
 fn admitted_a4_reduction_backedges_fit_checked_arithmetic() {
-    assert_eq!(
-        SOURCE
-            .matches("let reduction_bound = k as u64;")
-            .count(),
-        1
-    );
+    assert_eq!(SOURCE.matches("let reduction_bound = k as u64;").count(), 1);
     assert_eq!(
         SOURCE
             .matches("while reduction_wide < reduction_bound {\n        let reduction = reduction_wide as usize;")
