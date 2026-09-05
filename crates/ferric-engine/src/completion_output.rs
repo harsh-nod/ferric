@@ -13,7 +13,7 @@ use fe2o3_service_host::{
     ServiceAllocationSessionV1, ServiceHostDispatchRangeV1,
 };
 use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
-use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection};
+use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
 
 use crate::{
     BoundM1CompletionCanaryV1, BoundM1DirectDiagnosticChoicesV1, BoundM1QualificationLogitsV1,
@@ -258,6 +258,42 @@ impl BoundM1CompletionOutputV1 {
         self.speculative_diagnostic_choices.as_mut()
     }
 
+    /// Retargets the bare S1 prefill output binding for the exact S1 direct
+    /// decode successor. The allocation and dispatch range are unchanged; both
+    /// selections have one compact record with identical byte geometry.
+    /// Selection-bound diagnostic and guard attachments are rejected intact.
+    pub(crate) fn retarget_exact_s1_prefill_to_decode(
+        mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        let Ok(next) = m1_completion_output_shape_v1(selection) else {
+            return Err(Box::new(self));
+        };
+        if !exact_s1_prefill_decode_output_transition(self.shape, next)
+            || self.completion_canary.is_some()
+            || self.direct_diagnostic_choices.is_some()
+            || self.qualification_logits.is_some()
+            || self.speculative_diagnostic_choices.is_some()
+        {
+            return Err(Box::new(self));
+        }
+        self.shape = next;
+        Ok(self)
+    }
+
+    pub(crate) fn can_retarget_exact_s1_prefill_to_decode(
+        &self,
+        selection: Qwen3PlanSelection,
+    ) -> bool {
+        m1_completion_output_shape_v1(selection).is_ok_and(|next| {
+            exact_s1_prefill_decode_output_transition(self.shape, next)
+                && self.completion_canary.is_none()
+                && self.direct_diagnostic_choices.is_none()
+                && self.qualification_logits.is_none()
+                && self.speculative_diagnostic_choices.is_none()
+        })
+    }
+
     pub(crate) fn attach_qualification_logits(
         mut self,
         qualification_logits: BoundM1QualificationLogitsV1,
@@ -328,6 +364,23 @@ impl BoundM1CompletionOutputV1 {
         }
         Ok(range)
     }
+}
+
+fn exact_s1_prefill_decode_output_transition(
+    prior: M1CompletionOutputShapeV1,
+    next: M1CompletionOutputShapeV1,
+) -> bool {
+    let prior_selection = prior.selection();
+    let next_selection = next.selection();
+    prior_selection.role == Qwen3ModelRole::Target8B
+        && prior_selection.mode == Qwen3ExecutionMode::Prefill
+        && prior_selection.bucket == Qwen3PlanBucket::PrefillS1T128
+        && next_selection.role == Qwen3ModelRole::Target8B
+        && next_selection.mode == Qwen3ExecutionMode::Decode
+        && next_selection.bucket == Qwen3PlanBucket::DecodeS1C8192
+        && prior.sequences() == 1
+        && prior.sequences() == next.sequences()
+        && prior.extent_bytes() == next.extent_bytes()
 }
 
 /// Derives the exact M1 compact-output geometry for one target selection.
@@ -586,6 +639,39 @@ mod tests {
             Err(M1CompletionOutputErrorV1::SelectionDrift { expected, actual })
                 if expected == exact && actual == stale
         ));
+    }
+
+    #[test]
+    fn output_retarget_gate_admits_only_exact_s1_prefill_to_decode() {
+        let prefill = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        ))
+        .unwrap();
+        let decode = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ))
+        .unwrap();
+        assert!(exact_s1_prefill_decode_output_transition(prefill, decode));
+
+        for rejected in [
+            m1_completion_output_shape_v1(target(
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T512,
+            ))
+            .unwrap(),
+            m1_completion_output_shape_v1(target(
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ))
+            .unwrap(),
+        ] {
+            assert!(!exact_s1_prefill_decode_output_transition(rejected, decode));
+            assert!(!exact_s1_prefill_decode_output_transition(
+                prefill, rejected
+            ));
+        }
     }
 
     #[test]

@@ -10374,6 +10374,7 @@ fn submit_m1_finite_speculative_queue_rollover_inner_v1(
         completion_output: prior_output,
         source_rows: old_source_rows,
         bound_rows: old_bound_rows,
+        retired_rollover_custody,
     } = custody.into_rearm_parts();
     let (plans, workspace_images, step) = prepared.into_rearm_parts();
     let (old_draft, old_target, draft_plan, target_plan, draft_bytes, target_bytes) =
@@ -10857,6 +10858,7 @@ fn submit_m1_finite_speculative_queue_rollover_inner_v1(
             completion_output,
             source_rows,
             bound_rows,
+            retired_rollover_custody,
         });
     let (queue, selected, residue, rollover_observation) = match batch {
         RebuiltBatchV1::SpeculativeK4(batch) => rollover_and_submit_finite_speculative(

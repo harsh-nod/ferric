@@ -22,7 +22,9 @@ use crate::authenticated_speculative_executor::{
     M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
     M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
 };
-use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
+use crate::m1_serving_registry::{
+    admit_m1_production_rollover_transition_v1, admit_m1_target_decode_rollover_transition_v1,
+};
 use crate::{
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
     DeviceKvCacheProjection, Engine, LogicalRunnerDeclaration,
@@ -40,7 +42,7 @@ use crate::{
     M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
     M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1, M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
 
 /// One request and immutable generation policy fixed before paired-prefill
@@ -1755,6 +1757,13 @@ enum PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
             >,
         >,
     ),
+    NativeTarget(
+        Box<
+            M1AuthenticatedSpeculativeNativeRolloverFailureV1<
+                M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+            >,
+        >,
+    ),
     Observation {
         queue: Box<M1AuthenticatedPhysicalQueueSessionV1>,
         retained: Box<dyn fmt::Debug>,
@@ -1770,7 +1779,7 @@ impl PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     const fn stage(&self) -> M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
         match self {
             Self::Closed { stage, .. } | Self::Quarantined { stage, .. } => *stage,
-            Self::NativeK4(_) | Self::NativeK8(_) | Self::NativeK16(_) => {
+            Self::NativeK4(_) | Self::NativeK8(_) | Self::NativeK16(_) | Self::NativeTarget(_) => {
                 M1AuthenticatedSpeculativeRolloverSubmissionStageV1::NativeRollover
             }
             Self::Observation { .. } => {
@@ -1813,6 +1822,9 @@ fn close_pending_submission_failure<const C: usize>(
             disposition_from_native_closure(source.close())
         }
         PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK16(source) => {
+            disposition_from_native_closure(source.close())
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeTarget(source) => {
             disposition_from_native_closure(source.close())
         }
         PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
@@ -1925,6 +1937,13 @@ type M1AuthenticatedPrefillDraftWorkspaceV1 =
     BoundM1StepWorkspaceSubleases<M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
 type M1AuthenticatedOrdinaryTargetWorkspaceV1 =
     BoundM1StepWorkspaceSubleases<M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
+type M1AuthenticatedTargetDecodeWorkspaceTransitionPartsV1 = (
+    AuthenticatedServiceQueueUnboundSessionV1,
+    Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+    Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+    Box<ferric_build::AddresslessM1StepWorkspacePlan>,
+    Box<[u8]>,
+);
 
 /// Exact detached workspace inputs for the dormant authenticated
 /// S1/T128-prefill to S1/C8192 target-decode transition.
@@ -1955,6 +1974,17 @@ impl M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1 {
             target_plan: Box::new(target_plan),
             target_bytes,
         }
+    }
+
+    #[must_use = "all unmodified transition inputs remain linear"]
+    pub(crate) fn into_parts(self) -> M1AuthenticatedTargetDecodeWorkspaceTransitionPartsV1 {
+        (
+            self.lower,
+            self.old_draft,
+            self.old_target,
+            self.target_plan,
+            self.target_bytes,
+        )
     }
 }
 
@@ -2324,6 +2354,614 @@ where
     ))
 }
 
+/// Terminal failure for the exact authenticated target-decode rollover.
+///
+/// The underlying custody representation is shared with authenticated
+/// speculative rollover because both paths close the same generic queue states.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1;
+/// fn resubmit(failure: M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1) {
+///     let _queue = failure.into_queue();
+/// }
+/// ```
+pub type M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 =
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1;
+
+fn close_target_decode_released<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    let disposition = match released.destroy_queue_and_retain_step(engine) {
+        Ok(released) => released_disposition((released, retained)),
+        Err(quarantined) => quarantined_disposition((quarantined, retained)),
+    };
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+        stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+        disposition,
+    }
+}
+
+fn close_target_decode_unbound<const C: usize>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 {
+    let pending = close_unbound(engine, stage, lower, retained);
+    close_pending_submission_failure(engine, pending)
+}
+
+fn close_target_decode_workspace_failure<const C: usize, const N: usize>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
+    failure: Box<crate::authenticated_queue_rearm::AuthenticatedWorkspaceReplacementFailureV1<N>>,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 {
+    let pending = close_workspace_failure(engine, stage, failure, retained);
+    close_pending_submission_failure(engine, pending)
+}
+
+fn target_decode_submission_preflight<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    prepared: &M1PreparedScheduledWorkspaceImagesV1,
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+) -> bool {
+    let M1ServingQueueActionV1::QuiescentRollover {
+        prior,
+        next,
+        reason,
+    } = batch.action()
+    else {
+        return false;
+    };
+    let Some(transition) = admit_m1_target_decode_rollover_transition_v1(prior, next) else {
+        return false;
+    };
+    let scheduled = prepared.step().scheduled_dispatch();
+    let old = released.queue().custody();
+    let [record] = released.checked().records() else {
+        return false;
+    };
+    let [M1ReleasedDeviceKvMemberV1::Active(cache)] = released.members() else {
+        return false;
+    };
+    let projection = cache.projection();
+    transition.reason() == reason
+        && !engine.is_faulted()
+        && batch.requests().len() == 1
+        && batch.requests()[0] == record.record().request
+        && batch.epoch() == scheduled.epoch()
+        && scheduled.member_count() == 1
+        && scheduled.member(0) == Some(batch.requests()[0])
+        && released.checked().epoch().value().checked_add(1) == Some(batch.epoch().value())
+        && released.queue().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && old.selection() == prior.target()
+        && released.checked().selection() == prior.target()
+        && old.workspace_owners().kind() == M1FullStepWorkspaceInputKind::PairedPrefill
+        && !old.retains_retired_rollover_custody()
+        && old
+            .completion_output()
+            .can_retarget_exact_s1_prefill_to_decode(next.target())
+        && record.record().emitted_token_count == 1
+        && released.logical_accepted_counts() == [1]
+        && released.externally_published_counts() == [1]
+        && projection.request == batch.requests()[0]
+        && projection.target.committed_tokens != 0
+        && projection.target.resident_tokens == projection.target.committed_tokens
+        && cache
+            .preflight_quiescent_reselection(next.target(), next.draft_cache_selection())
+            .is_ok()
+        && prepared.kind() == M1FullStepWorkspaceInputKind::TargetOnly
+        && prepared.step().kv_reservations().target_selection() == next.target()
+        && prepared
+            .step()
+            .kv_reservations()
+            .draft_allocation_id()
+            .is_none()
+        && prepared.step().kv_reservations().target_allocation_id()
+            == old
+                .partitioned_memory()
+                .allocation_id(Qwen3ModelRole::Target8B)
+        && prepared
+            .step()
+            .kv_reservations()
+            .all_devices_match(old.device())
+        && recipe.workspace_composition().workspace_plans() == prepared.plans()
+        && recipe
+            .workspace_composition()
+            .dispatch_plan()
+            .intent()
+            .target_selection()
+            == next.target()
+        && !recipe.requires_future_materialization()
+        && recipe.rows().len() == M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1
+        && recipe.kernarg_recipe().images().len() == M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1
+}
+
+/// Publishes the exact authenticated S1/T128 paired-prefill to S1/C8192
+/// target-decode rollover selected by a live serving-registry batch.
+///
+/// The caller supplies no selection or currentness authority. The successor is
+/// joined from the registry action, the Engine-issued dispatch retained by
+/// `prepared`, and the authenticated released queue. All checks occur before
+/// detachment. Every later failure closes or quarantines queue custody and
+/// permanently faults the Engine.
+///
+/// # Errors
+///
+/// Returns terminal clean-release or quarantine custody when the registry,
+/// scheduler, KV, workspace, packet, or native queue join fails.
+///
+/// # Panics
+///
+/// Panics only if a move-only owner changes its already-preflighted enum shape
+/// while being consumed in the same call.
+#[allow(clippy::too_many_lines)]
+pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    ring_bytes: u32,
+) -> Result<
+    M1AuthenticatedRearmedPublishedQueueV1,
+    M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1,
+> {
+    if !target_decode_submission_preflight(engine, &released, batch, &prepared, &recipe) {
+        return Err(close_target_decode_released(
+            engine,
+            released,
+            (
+                batch.epoch(),
+                batch.action(),
+                batch.requests().to_vec(),
+                prepared,
+                recipe,
+            ),
+        ));
+    }
+    let M1ServingQueueActionV1::QuiescentRollover {
+        prior: _,
+        next,
+        reason: _,
+    } = batch.action()
+    else {
+        unreachable!("target rollover action was preflighted")
+    };
+    let (
+        queue,
+        checked,
+        mut members,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    ) = released.into_rearm_parts();
+    let queue = match queue.detach() {
+        Ok(queue) => queue,
+        Err(source) => {
+            use crate::authenticated_speculative_executor::quarantined_disposition;
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+                stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                disposition: quarantined_disposition((source, members, checked, prepared, recipe)),
+            });
+        }
+    };
+    let M1ReleasedDeviceKvMemberV1::Active(mut selected) = members.pop().unwrap() else {
+        unreachable!("single active cache was preflighted")
+    };
+    if let Err(source) = selected.reselect_quiescent(next.target(), next.draft_cache_selection()) {
+        let detached = M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+            error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::CacheReselection { lane: 0 },
+            queue,
+            retained: Box::new((source, selected, checked, prepared, recipe)),
+        };
+        let disposition = match detached.destroy_queue_and_retain_custody(engine) {
+            Ok(released) => {
+                crate::authenticated_speculative_executor::released_disposition(released)
+            }
+            Err(quarantined) => {
+                crate::authenticated_speculative_executor::quarantined_disposition(quarantined)
+            }
+        };
+        return Err(M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+            stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+            disposition,
+        });
+    }
+    let selected = vec![selected];
+    let residue = M1AuthenticatedSpeculativeRolloverResidueV1 {
+        checked,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    };
+    let (old_shape, lower, witness, operations, custody) = queue.into_rearm_parts();
+    let predecessor_observation = lower.observation();
+    let predecessor_generation = lower.detached_dispatch_generation();
+    let device = custody.device();
+    let crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1 {
+        catalog_id,
+        selection: old_selection,
+        physical_recipe: old_physical_recipe,
+        workspace_composition: old_workspace_composition,
+        workspace_owners,
+        partitioned_memory,
+        completion_output: prior_output,
+        source_rows: old_source_rows,
+        bound_rows: old_bound_rows,
+        retired_rollover_custody,
+    } = custody.into_rearm_parts();
+    let (plans, images, step) = prepared.into_rearm_parts();
+    let (old_draft, old_target, target_plan, target_bytes) = match (workspace_owners, plans, images)
+    {
+        (
+            M1FullStepWorkspaceSubleaseOwners::PairedPrefill { draft, target },
+            M1FullStepWorkspacePlans::TargetOnly {
+                target: target_plan,
+            },
+            M1FullStepWorkspaceImagesV1::TargetOnly {
+                target: target_bytes,
+            },
+        ) => (draft, target, target_plan, target_bytes),
+        (workspace_owners, plans, images) => {
+            return Err(close_target_decode_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    (
+                        old_shape,
+                        witness,
+                        operations,
+                        catalog_id,
+                        old_selection,
+                        old_physical_recipe,
+                        old_workspace_composition,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                    ),
+                    (
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        plans,
+                        images,
+                        step,
+                        selected,
+                        residue,
+                        recipe,
+                    ),
+                ),
+            ));
+        }
+    };
+    let transition = transition_m1_authenticated_target_decode_workspaces_v1(
+        M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1::new(
+            lower,
+            *old_draft,
+            *old_target,
+            *target_plan,
+            target_bytes,
+        ),
+    );
+    let (lower, retired_draft, target, target_ranges) = match transition {
+        Ok(transition) => transition.into_parts(),
+        Err(failure) => match *failure {
+            M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Rejected {
+                stage,
+                source,
+                retry,
+            } => {
+                let (lower, old_draft, old_target, target_plan, target_bytes) =
+                    retry.into_parts();
+                return Err(close_target_decode_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::TargetWorkspace,
+                    lower,
+                    (
+                        (
+                            stage,
+                            source,
+                            old_draft,
+                            old_target,
+                            target_plan,
+                            target_bytes,
+                            witness,
+                        ),
+                        (
+                            operations,
+                            partitioned_memory,
+                            prior_output,
+                            step,
+                            selected,
+                            residue,
+                            recipe,
+                        ),
+                    ),
+                ));
+            }
+            M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Terminal {
+                stage,
+                custody,
+            } => match *custody {
+                M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1::DraftRemovalQuarantined {
+                    source,
+                    lower,
+                    old_draft,
+                    old_target,
+                    target_plan,
+                    target_bytes,
+                } => {
+                    return Err(close_pending_submission_failure(
+                        engine,
+                        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Quarantined {
+                            stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::DraftWorkspace,
+                            source: lower,
+                            retained: Box::new((
+                                (
+                                    stage,
+                                    source,
+                                    old_draft,
+                                    old_target,
+                                    target_plan,
+                                    target_bytes,
+                                    witness,
+                                ),
+                                (
+                                    operations,
+                                    partitioned_memory,
+                                    prior_output,
+                                    step,
+                                    selected,
+                                    residue,
+                                    recipe,
+                                ),
+                            )),
+                        },
+                    ));
+                }
+                M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1::TargetReplacement {
+                    failure,
+                    retired_draft,
+                    old_target,
+                } => {
+                    return Err(close_target_decode_workspace_failure(
+                        engine,
+                        M1AuthenticatedSpeculativeRolloverSubmissionStageV1::TargetWorkspace,
+                        failure,
+                        (
+                            stage,
+                            retired_draft,
+                            old_target,
+                            witness,
+                            operations,
+                            partitioned_memory,
+                            prior_output,
+                            step,
+                            selected,
+                            residue,
+                            recipe,
+                        ),
+                    ));
+                }
+            },
+        },
+    };
+    let completion_output = match prior_output.retarget_exact_s1_prefill_to_decode(next.target()) {
+        Ok(output) => output,
+        Err(prior_output) => {
+            return Err(close_target_decode_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::OutputActivation,
+                lower,
+                (
+                    retired_draft,
+                    target,
+                    target_ranges,
+                    witness,
+                    operations,
+                    partitioned_memory,
+                    prior_output,
+                    step,
+                    selected,
+                    residue,
+                    recipe,
+                ),
+            ));
+        }
+    };
+    let mut workspace_ranges = Vec::new();
+    if workspace_ranges
+        .try_reserve_exact(target_ranges.len())
+        .is_err()
+    {
+        return Err(close_target_decode_unbound(
+            engine,
+            M1AuthenticatedSpeculativeRolloverSubmissionStageV1::BoundRows,
+            lower,
+            (
+                retired_draft,
+                target,
+                target_ranges,
+                witness,
+                operations,
+                partitioned_memory,
+                completion_output,
+                step,
+                selected,
+                residue,
+                recipe,
+            ),
+        ));
+    }
+    crate::m1_queue_rearm::append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Target,
+        &target,
+        *target_ranges,
+    );
+    let capture = crate::m1_queue_rearm::retained_host_capture_ranges(&completion_output)
+        .expect("bare target rollover output was preflighted");
+    let bound_rows = match crate::m1_queue_rearm::build_rollover_bound_rows(
+        recipe.rows(),
+        &old_source_rows,
+        &old_bound_rows,
+        recipe.workspace_composition(),
+        &workspace_ranges,
+        &capture,
+    ) {
+        Ok(rows) => rows,
+        Err(()) => {
+            return Err(close_target_decode_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::BoundRows,
+                lower,
+                (
+                    retired_draft,
+                    target,
+                    workspace_ranges,
+                    witness,
+                    operations,
+                    partitioned_memory,
+                    completion_output,
+                    step,
+                    selected,
+                    residue,
+                    recipe,
+                ),
+            ));
+        }
+    };
+    let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(
+        crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1 {
+            catalog_id,
+            selection: next.target(),
+            physical_recipe: old_physical_recipe,
+            workspace_composition: old_workspace_composition,
+            workspace_owners: M1FullStepWorkspaceSubleaseOwners::target_only(*target),
+            partitioned_memory,
+            completion_output,
+            source_rows: old_source_rows,
+            bound_rows: old_bound_rows,
+            retired_rollover_custody: Some(Box::new((retired_rollover_custody, retired_draft))),
+        },
+    );
+    let batch = match crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
+        &witness,
+        &operations,
+        recipe,
+        bound_rows,
+        custody,
+    ) {
+        Ok(crate::physical_fixed_batch::M1AuthenticatedQueuePacketBatchV1::TargetOnly(batch)) => {
+            batch
+        }
+        Ok(batch) => {
+            return Err(close_target_decode_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::PacketLowering,
+                lower,
+                (batch, witness, operations, step, selected, residue),
+            ));
+        }
+        Err(source) => {
+            return Err(close_target_decode_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::PacketLowering,
+                lower,
+                (source, witness, operations, step, selected, residue),
+            ));
+        }
+    };
+    let (queue, rollover) = match rollover_case(
+        lower,
+        ring_bytes,
+        *batch,
+        witness,
+        operations,
+        step,
+        predecessor_generation,
+        |case| M1AuthenticatedPhysicalQueueSessionV1::TargetOnly(Box::new(case)),
+    ) {
+        Ok(value) => value,
+        Err(mut source) => {
+            source.retained = Box::new((source.retained, selected, residue));
+            return Err(close_pending_submission_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeTarget(
+                    Box::new(source),
+                ),
+            ));
+        }
+    };
+    if rollover.previous_dispatch_generation() != predecessor_generation
+        || predecessor_generation
+            .checked_add(1)
+            .is_none_or(|next_generation| {
+                rollover.replacement_dispatch_generation() != next_generation
+            })
+    {
+        return Err(close_pending_submission_failure(
+            engine,
+            PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
+                queue: Box::new(queue),
+                retained: Box::new((selected, residue, rollover)),
+            },
+        ));
+    }
+    let queue = match queue.submit() {
+        Ok(queue) => queue,
+        Err(source) => {
+            return Err(close_pending_submission_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Submit {
+                    source: Box::new(source),
+                    retained: Box::new((selected, residue, rollover)),
+                },
+            ));
+        }
+    };
+    let M1AuthenticatedSpeculativeRolloverResidueV1 {
+        checked,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    } = residue;
+    Ok(
+        M1AuthenticatedRearmedPublishedQueueV1::from_authenticated_rollover(
+            queue,
+            selected,
+            checked.epoch(),
+            checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            predecessor_observation,
+            device,
+            rollover,
+        ),
+    )
+}
+
 /// Replaces the authenticated paired-prefill queue with a prepared finite-
 /// speculative generation, then attempts its exact publication.
 ///
@@ -2411,6 +3049,7 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         completion_output: prior_output,
         source_rows: old_source_rows,
         bound_rows: old_bound_rows,
+        retired_rollover_custody,
     } = custody.into_rearm_parts();
     let (plans, images, step) = prepared.into_rearm_parts();
     let (old_draft, old_target, draft_plan, target_plan, draft_bytes, target_bytes) =
@@ -2795,6 +3434,7 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             completion_output,
             source_rows: old_source_rows,
             bound_rows: old_bound_rows,
+            retired_rollover_custody,
         },
     );
     let batch = match crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(

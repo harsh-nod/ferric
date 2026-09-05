@@ -186,6 +186,7 @@ impl M1PhysicalFixedBatchCustodyV1 {
                 completion_output: self.completion_output,
                 source_rows: self.source_rows,
                 bound_rows: self.bound_rows,
+                retired_rollover_custody: None,
             },
         )
     }
@@ -229,6 +230,7 @@ pub struct M1PhysicalQueueBatchCustodyV1 {
     completion_output: BoundM1CompletionOutputV1,
     source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    retired_rollover_custody: Option<Box<dyn fmt::Debug>>,
 }
 
 #[derive(Debug)]
@@ -242,6 +244,7 @@ pub(crate) struct M1PhysicalQueueBatchRearmPartsV1 {
     pub(crate) completion_output: BoundM1CompletionOutputV1,
     pub(crate) source_rows: Box<[M1PhysicalBufferRecipeRowV1]>,
     pub(crate) bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    pub(crate) retired_rollover_custody: Option<Box<dyn fmt::Debug>>,
 }
 
 impl M1PhysicalQueueBatchCustodyV1 {
@@ -317,6 +320,13 @@ impl M1PhysicalQueueBatchCustodyV1 {
         )
     }
 
+    /// Whether a cross-shape rollover retired an allocation witness that must
+    /// remain paired with this queue for its complete lifetime.
+    #[must_use]
+    pub const fn retains_retired_rollover_custody(&self) -> bool {
+        self.retired_rollover_custody.is_some()
+    }
+
     pub(crate) fn into_rearm_parts(self) -> M1PhysicalQueueBatchRearmPartsV1 {
         M1PhysicalQueueBatchRearmPartsV1 {
             catalog_id: self.catalog_id,
@@ -328,6 +338,7 @@ impl M1PhysicalQueueBatchCustodyV1 {
             completion_output: self.completion_output,
             source_rows: self.source_rows,
             bound_rows: self.bound_rows,
+            retired_rollover_custody: self.retired_rollover_custody,
         }
     }
 
@@ -342,6 +353,7 @@ impl M1PhysicalQueueBatchCustodyV1 {
             completion_output: parts.completion_output,
             source_rows: parts.source_rows,
             bound_rows: parts.bound_rows,
+            retired_rollover_custody: parts.retired_rollover_custody,
         }
     }
 }

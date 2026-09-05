@@ -986,13 +986,16 @@ impl M1ServingProductionRolloverTransitionV1 {
 
 /// Admits the exact finite production rollover catalog.
 ///
-/// The only admitted cross-plan successors are S1/T128 paired prefill into
-/// S1/K4, S1/K8, or S1/K16 speculation and S8/T128 paired prefill into S8/K4
-/// speculation. Callers must fail closed for `None`.
+/// The admitted cross-plan successors are S1/T128 paired prefill into exact
+/// S1/C8192 target decode or S1/K4, S1/K8, or S1/K16 speculation, and S8/T128
+/// paired prefill into S8/K4 speculation. Callers must fail closed for `None`.
 pub(crate) fn admit_m1_production_rollover_transition_v1(
     prior: M1ServingPlanV1,
     next: M1ServingPlanV1,
 ) -> Option<M1ServingProductionRolloverTransitionV1> {
+    if let Some(transition) = admit_m1_target_decode_rollover_transition_v1(prior, next) {
+        return Some(transition);
+    }
     let admitted = matches!(
         (prior.target().bucket, next.target().bucket),
         (
@@ -1014,10 +1017,7 @@ pub(crate) fn admit_m1_production_rollover_transition_v1(
     })
 }
 
-/// Recognizes the exact target-only transition owned by the dormant scheduler.
-///
-/// The live serving registry intentionally does not admit this transition until
-/// its physical quiescent-rollover route can be activated atomically.
+/// Recognizes the exact authenticated target-only production transition.
 pub(crate) fn admit_m1_target_decode_rollover_transition_v1(
     prior: M1ServingPlanV1,
     next: M1ServingPlanV1,
@@ -1164,18 +1164,19 @@ mod tests {
     }
 
     fn expected_production_rollover(prior: M1ServingPlanV1, next: M1ServingPlanV1) -> bool {
-        matches!(
-            (prior.target().bucket, next.target().bucket),
-            (
-                Qwen3PlanBucket::PrefillS1T128,
-                Qwen3PlanBucket::SpeculativeS1K4C8192
-                    | Qwen3PlanBucket::SpeculativeS1K8C8192
-                    | Qwen3PlanBucket::SpeculativeS1K16C8192
-            ) | (
-                Qwen3PlanBucket::PrefillS8T128,
-                Qwen3PlanBucket::SpeculativeS8K4C8192
+        expected_target_decode_rollover(prior, next)
+            || matches!(
+                (prior.target().bucket, next.target().bucket),
+                (
+                    Qwen3PlanBucket::PrefillS1T128,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192
+                        | Qwen3PlanBucket::SpeculativeS1K8C8192
+                        | Qwen3PlanBucket::SpeculativeS1K16C8192
+                ) | (
+                    Qwen3PlanBucket::PrefillS8T128,
+                    Qwen3PlanBucket::SpeculativeS8K4C8192
+                )
             )
-        )
     }
 
     fn expected_target_decode_rollover(prior: M1ServingPlanV1, next: M1ServingPlanV1) -> bool {
@@ -1334,7 +1335,7 @@ mod tests {
                 let classified = classify_queue_action(Some(prior), next);
                 if prior == next {
                     assert_eq!(classified, Ok(M1ServingQueueActionV1::SameShapeRearm));
-                } else if expected {
+                } else if expected || target_expected {
                     assert_eq!(
                         classified,
                         Ok(M1ServingQueueActionV1::QuiescentRollover {
@@ -1355,12 +1356,13 @@ mod tests {
                 Ok(M1ServingQueueActionV1::FreshLaunch)
             );
         }
-        assert_eq!(admitted, 4);
+        assert_eq!(admitted, 5);
     }
 
     #[test]
     fn registry_plans_each_exact_prompt_compatible_rollover() {
         let cases = [
+            (prefill_s1(), decode_s1()),
             (prefill_s1(), speculative_s1()),
             (prefill_s1(), speculative_s1_k8()),
             (prefill_s1(), speculative_s1_k16()),
@@ -1403,7 +1405,7 @@ mod tests {
     fn unsupported_native_rollover_retires_before_fresh_successor_launch() {
         let request = RequestId::new(0, 1);
         let prior = prefill_s1();
-        let successor = decode_s1();
+        let successor = decode_s8();
         let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
         registry.admit(request, prior).unwrap();
         let batch = registry.plan_next().unwrap().unwrap();

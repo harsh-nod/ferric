@@ -371,17 +371,21 @@ def main() -> None:
     validator = load_validator(validator_path)
     engine_source = (repo / "crates/ferric-engine/src/authenticated_kernel_programs.rs").read_text(encoding="ascii")
     required_engine_custody = [
-        "struct M1AggregatePublicationSelectionV1",
-        "finalized_artifact_sha256: [u8; 32]",
-        "finalized_artifact_length: u64",
-        "const M1_CURRENT_AGGREGATE_PUBLICATION_SELECTION_V1: Option<M1AggregatePublicationSelectionV1> =",
-        "    None;",
+        "roster.revalidate_currentness()",
+        "roster.authenticates_verification_authority()",
+        "verification.retains_current_compiler_and_signed_verus_evidence()",
+        "verification.validated_compiler_proof_inputs().is_none()",
+        "verification.validated_compiler_target_lineage().is_none()",
+        "let roster_catalog_id = authenticated_catalog_id(&roster);",
     ]
     for required in required_engine_custody:
         if required not in engine_source:
             fail(f"private engine selection custody drifted: missing {required}")
     forbidden_engine_overrides = [
+        "struct M1AggregatePublicationSelectionV1",
         "pub struct M1AggregatePublicationSelectionV1",
+        "M1_CURRENT_AGGREGATE_PUBLICATION_SELECTION_V1",
+        "MissingAggregateSourcePin",
         "std::env", "var_os(", "var(", "from_path", "read_to_end", "read_to_string",
     ]
     for forbidden in forbidden_engine_overrides:
