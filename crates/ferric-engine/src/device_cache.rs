@@ -820,7 +820,7 @@ enum M1S1K4RolloverOutputPortfolioV1 {
     Reserved(Vec<M1S1K4RolloverOutputReserveV1>),
     Activated {
         retired_direct: Box<BoundM1CompletionOutputV1>,
-        _unused: Vec<M1S1K4RolloverOutputReserveV1>,
+        unused: Vec<M1S1K4RolloverOutputReserveV1>,
     },
 }
 
@@ -903,6 +903,39 @@ impl M1S1K4RolloverOutputActivationFailureV1 {
 
     #[must_use = "the unchanged predecessor output remains live"]
     pub fn into_prior(self) -> BoundM1CompletionOutputV1 {
+        *self.prior
+    }
+}
+
+/// Fail-closed reverse-rotation diagnostic for one completed speculative window.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum M1FiniteSpeculativeOutputRotationErrorV1 {
+    PortfolioUnavailable(M1FiniteSpeculativeRolloverOutputPortfolioStateV1),
+    DirectOutputDrift,
+    PriorOutputDrift,
+    ReserveCountDrift,
+    ReserveOutputDrift { index: usize },
+    ReserveCapacityDrift,
+}
+
+/// Failed reverse rotation retaining the unchanged current speculative output.
+#[must_use = "the current speculative output remains live after rotation rejection"]
+#[derive(Debug)]
+#[allow(dead_code)] // Returned by the pending all-terminal new-window bridge.
+pub(crate) struct M1FiniteSpeculativeOutputRotationFailureV1 {
+    error: M1FiniteSpeculativeOutputRotationErrorV1,
+    prior: Box<BoundM1CompletionOutputV1>,
+}
+
+#[allow(dead_code)] // Consumed by the pending all-terminal new-window bridge.
+impl M1FiniteSpeculativeOutputRotationFailureV1 {
+    #[must_use]
+    pub(crate) const fn error(&self) -> M1FiniteSpeculativeOutputRotationErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the unchanged current speculative output remains live"]
+    pub(crate) fn into_prior(self) -> BoundM1CompletionOutputV1 {
         *self.prior
     }
 }
@@ -1036,9 +1069,78 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         let reserve = reserves.remove(reserve_index);
         self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Activated {
             retired_direct: Box::new(prior),
-            _unused: reserves,
+            unused: reserves,
         };
         Ok(reserve.output)
+    }
+
+    /// Restores one completed finite-speculative output to its exact reserve
+    /// slot and returns the predecessor direct output for a fresh paired-prefill
+    /// R33 window.
+    ///
+    /// This is an all-terminal fixed-roster transition only. It neither admits
+    /// continuous or late-arriving work nor implements the authenticated
+    /// target-only serving join. Every semantic and catalog check completes
+    /// before ownership moves; the final rotation uses existing vector capacity
+    /// and cannot allocate.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged current speculative output and leaves the
+    /// portfolio untouched when state, selection, attachment, catalog order,
+    /// cardinality, or retained capacity drifts.
+    #[allow(dead_code)] // Consumed by the pending all-terminal new-window bridge.
+    pub(crate) fn rotate_finite_speculative_output_for_new_window(
+        &mut self,
+        next_prefill: Qwen3PlanSelection,
+        prior_speculative: Qwen3PlanSelection,
+        prior: BoundM1CompletionOutputV1,
+    ) -> Result<BoundM1CompletionOutputV1, M1FiniteSpeculativeOutputRotationFailureV1> {
+        let state = self.s1_k4_rollover_output.state();
+        let M1S1K4RolloverOutputPortfolioV1::Activated {
+            retired_direct,
+            unused,
+        } = &self.s1_k4_rollover_output
+        else {
+            return Err(M1FiniteSpeculativeOutputRotationFailureV1 {
+                error: M1FiniteSpeculativeOutputRotationErrorV1::PortfolioUnavailable(state),
+                prior: Box::new(prior),
+            });
+        };
+        let reserve_index = match preflight_finite_speculative_output_rotation(
+            next_prefill,
+            prior_speculative,
+            completion_output_binding_projection(retired_direct),
+            completion_output_binding_projection(&prior),
+            unused,
+            unused.capacity(),
+            |reserve| completion_output_binding_projection(&reserve.output),
+        ) {
+            Ok(index) => index,
+            Err(error) => {
+                return Err(M1FiniteSpeculativeOutputRotationFailureV1 {
+                    error,
+                    prior: Box::new(prior),
+                });
+            }
+        };
+
+        let M1S1K4RolloverOutputPortfolioV1::Activated {
+            retired_direct,
+            mut unused,
+        } = core::mem::replace(
+            &mut self.s1_k4_rollover_output,
+            M1S1K4RolloverOutputPortfolioV1::Vacant,
+        )
+        else {
+            unreachable!("activated portfolio was checked before output rotation")
+        };
+        unused.insert(
+            reserve_index,
+            M1S1K4RolloverOutputReserveV1 { output: prior },
+        );
+        self.s1_k4_rollover_output = M1S1K4RolloverOutputPortfolioV1::Reserved(unused);
+        Ok(*retired_direct)
     }
 
     /// Returns one exact role-scoped KV allocation identity without exposing its owner.
@@ -1124,32 +1226,143 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     }
 }
 
-fn direct_prefill_output_is_valid_for(
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1CompletionOutputAttachmentProjectionV1 {
+    Bare,
+    CompletionCanary,
+    DirectDiagnostic,
+    SpeculativeDiagnostic,
+    QualificationLogits,
+    Mixed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1CompletionOutputBindingProjectionV1 {
+    selection: Qwen3PlanSelection,
+    sequences: u32,
+    attachment: M1CompletionOutputAttachmentProjectionV1,
+}
+
+fn completion_output_attachment_projection(
+    attachments: [bool; 4],
+) -> M1CompletionOutputAttachmentProjectionV1 {
+    match attachments {
+        [false, false, false, false] => M1CompletionOutputAttachmentProjectionV1::Bare,
+        [true, false, false, false] => M1CompletionOutputAttachmentProjectionV1::CompletionCanary,
+        [false, true, false, false] => M1CompletionOutputAttachmentProjectionV1::DirectDiagnostic,
+        [false, false, true, false] => {
+            M1CompletionOutputAttachmentProjectionV1::SpeculativeDiagnostic
+        }
+        [false, false, false, true] => {
+            M1CompletionOutputAttachmentProjectionV1::QualificationLogits
+        }
+        _ => M1CompletionOutputAttachmentProjectionV1::Mixed,
+    }
+}
+
+fn completion_output_binding_projection(
     output: &BoundM1CompletionOutputV1,
+) -> M1CompletionOutputBindingProjectionV1 {
+    let attachments = [
+        output.completion_canary().is_some(),
+        output.direct_diagnostic_choices().is_some(),
+        output.speculative_diagnostic_choices().is_some(),
+        output.qualification_logits().is_some(),
+    ];
+    M1CompletionOutputBindingProjectionV1 {
+        selection: output.shape().selection(),
+        sequences: output.shape().sequences(),
+        attachment: completion_output_attachment_projection(attachments),
+    }
+}
+
+fn direct_prefill_projection_is_valid_for(
+    output: M1CompletionOutputBindingProjectionV1,
     successor: Qwen3PlanSelection,
 ) -> bool {
-    let selection = output.shape().selection();
-    selection.role == Qwen3ModelRole::Target8B
-        && selection.mode == Qwen3ExecutionMode::Prefill
-        && output.shape().sequences()
+    output.selection.role == Qwen3ModelRole::Target8B
+        && output.selection.mode == Qwen3ExecutionMode::Prefill
+        && output.sequences
             == successor
                 .bucket
                 .dimensions(successor.role, successor.mode)
                 .map_or(0, |dimensions| dimensions.sequences)
-        && output.direct_diagnostic_choices().is_some()
-        && output.speculative_diagnostic_choices().is_none()
-        && output.qualification_logits().is_none()
+        && output.attachment == M1CompletionOutputAttachmentProjectionV1::DirectDiagnostic
+}
+
+fn direct_prefill_output_is_valid_for(
+    output: &BoundM1CompletionOutputV1,
+    successor: Qwen3PlanSelection,
+) -> bool {
+    direct_prefill_projection_is_valid_for(completion_output_binding_projection(output), successor)
+}
+
+fn finite_speculative_rollover_reserve_projection_is_valid(
+    output: M1CompletionOutputBindingProjectionV1,
+    selection: Qwen3PlanSelection,
+) -> bool {
+    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.contains(&selection)
+        && output.selection == selection
+        && output.attachment == M1CompletionOutputAttachmentProjectionV1::SpeculativeDiagnostic
 }
 
 fn finite_speculative_rollover_reserve_output_is_valid(
     output: &BoundM1CompletionOutputV1,
     selection: Qwen3PlanSelection,
 ) -> bool {
-    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.contains(&selection)
-        && output.shape().selection() == selection
-        && output.direct_diagnostic_choices().is_none()
-        && output.speculative_diagnostic_choices().is_some()
-        && output.qualification_logits().is_none()
+    finite_speculative_rollover_reserve_projection_is_valid(
+        completion_output_binding_projection(output),
+        selection,
+    )
+}
+
+fn preflight_finite_speculative_output_rotation<T>(
+    next_prefill: Qwen3PlanSelection,
+    prior_speculative: Qwen3PlanSelection,
+    direct: M1CompletionOutputBindingProjectionV1,
+    prior: M1CompletionOutputBindingProjectionV1,
+    unused: &[T],
+    retained_capacity: usize,
+    projection: impl Fn(&T) -> M1CompletionOutputBindingProjectionV1,
+) -> Result<usize, M1FiniteSpeculativeOutputRotationErrorV1> {
+    let Some(reserve_index) = M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1
+        .iter()
+        .position(|selection| *selection == prior_speculative)
+    else {
+        return Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift);
+    };
+    if direct.selection != next_prefill
+        || !direct_prefill_projection_is_valid_for(direct, prior_speculative)
+    {
+        return Err(M1FiniteSpeculativeOutputRotationErrorV1::DirectOutputDrift);
+    }
+    if !finite_speculative_rollover_reserve_projection_is_valid(prior, prior_speculative) {
+        return Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift);
+    }
+    if unused.len() != M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len() - 1 {
+        return Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCountDrift);
+    }
+    let mut unused_index = 0;
+    for expected in M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1 {
+        if expected == prior_speculative {
+            continue;
+        }
+        if !finite_speculative_rollover_reserve_projection_is_valid(
+            projection(&unused[unused_index]),
+            expected,
+        ) {
+            return Err(
+                M1FiniteSpeculativeOutputRotationErrorV1::ReserveOutputDrift {
+                    index: unused_index,
+                },
+            );
+        }
+        unused_index += 1;
+    }
+    if retained_capacity < M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len() {
+        return Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCapacityDrift);
+    }
+    Ok(reserve_index)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -5888,6 +6101,9 @@ mod tests {
         Qwen3ExecutionMode, Qwen3PlanBucket, StepPlan, ValidatedM1StepInputs,
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
+    use M1CompletionOutputAttachmentProjectionV1::{
+        Bare, CompletionCanary, DirectDiagnostic, Mixed, QualificationLogits, SpeculativeDiagnostic,
+    };
 
     #[test]
     fn finite_rollover_catalog_failures_retain_every_prior_member() {
@@ -5919,6 +6135,217 @@ mod tests {
             }
             .state(),
             M1S1K4RolloverOutputPortfolioStateV1::Reserved
+        );
+    }
+
+    fn output_projection(
+        selection: Qwen3PlanSelection,
+        attachment: M1CompletionOutputAttachmentProjectionV1,
+    ) -> M1CompletionOutputBindingProjectionV1 {
+        M1CompletionOutputBindingProjectionV1 {
+            selection,
+            sequences: selection
+                .bucket
+                .dimensions(selection.role, selection.mode)
+                .unwrap()
+                .sequences,
+            attachment,
+        }
+    }
+
+    fn prefill_for_finite_speculative(selection: Qwen3PlanSelection) -> Qwen3PlanSelection {
+        let bucket = if selection
+            .bucket
+            .dimensions(selection.role, selection.mode)
+            .unwrap()
+            .sequences
+            == 8
+        {
+            Qwen3PlanBucket::PrefillS8T128
+        } else {
+            Qwen3PlanBucket::PrefillS1T128
+        };
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket,
+        }
+    }
+
+    #[test]
+    fn finite_output_rotation_accepts_every_exact_prefix_suffix_catalog() {
+        for (reserve_index, prior_selection) in M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1
+            .iter()
+            .copied()
+            .enumerate()
+        {
+            let next_prefill = prefill_for_finite_speculative(prior_selection);
+            let mut unused = Vec::with_capacity(M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len());
+            unused.extend(
+                M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1
+                    .iter()
+                    .copied()
+                    .filter(|selection| *selection != prior_selection)
+                    .map(|selection| output_projection(selection, SpeculativeDiagnostic)),
+            );
+            assert_eq!(
+                preflight_finite_speculative_output_rotation(
+                    next_prefill,
+                    prior_selection,
+                    output_projection(next_prefill, DirectDiagnostic),
+                    output_projection(prior_selection, SpeculativeDiagnostic),
+                    &unused,
+                    unused.capacity(),
+                    |projection| *projection,
+                ),
+                Ok(reserve_index)
+            );
+        }
+    }
+
+    #[test]
+    fn finite_output_attachment_projection_is_total_and_mixed_is_fail_closed() {
+        for mask in 0_u8..16 {
+            let attachments = [mask & 1 != 0, mask & 2 != 0, mask & 4 != 0, mask & 8 != 0];
+            let expected = match mask {
+                0 => Bare,
+                1 => CompletionCanary,
+                2 => DirectDiagnostic,
+                4 => SpeculativeDiagnostic,
+                8 => QualificationLogits,
+                _ => Mixed,
+            };
+            assert_eq!(
+                completion_output_attachment_projection(attachments),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn finite_output_rotation_rejects_shape_and_attachment_substitution() {
+        let prior_selection = M1_S1_K4_TARGET_SELECTION_V1;
+        let next_prefill = prefill_for_finite_speculative(prior_selection);
+        let unused = M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1[1..]
+            .iter()
+            .copied()
+            .map(|selection| output_projection(selection, SpeculativeDiagnostic))
+            .collect::<Vec<_>>();
+        let exact_direct = output_projection(next_prefill, DirectDiagnostic);
+        let exact_prior = output_projection(prior_selection, SpeculativeDiagnostic);
+
+        let mut wrong_prefill = exact_direct;
+        wrong_prefill.selection.bucket = Qwen3PlanBucket::PrefillS1T512;
+        let mut wrong_direct_attachment = exact_direct;
+        wrong_direct_attachment.attachment = SpeculativeDiagnostic;
+        let mut extra_direct_attachment = exact_direct;
+        extra_direct_attachment.attachment = Mixed;
+        let mut guarded_direct = exact_direct;
+        guarded_direct.attachment = CompletionCanary;
+        for hostile in [
+            wrong_prefill,
+            wrong_direct_attachment,
+            extra_direct_attachment,
+            guarded_direct,
+        ] {
+            assert_eq!(
+                preflight_finite_speculative_output_rotation(
+                    next_prefill,
+                    prior_selection,
+                    hostile,
+                    exact_prior,
+                    &unused,
+                    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len(),
+                    |projection| *projection,
+                ),
+                Err(M1FiniteSpeculativeOutputRotationErrorV1::DirectOutputDrift)
+            );
+        }
+
+        let mut wrong_prior_selection = exact_prior;
+        wrong_prior_selection.selection = M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1[1];
+        let mut wrong_prior_attachment = exact_prior;
+        wrong_prior_attachment.attachment = DirectDiagnostic;
+        let mut extra_prior_attachment = exact_prior;
+        extra_prior_attachment.attachment = Mixed;
+        let mut qualified_prior = exact_prior;
+        qualified_prior.attachment = QualificationLogits;
+        for hostile in [
+            wrong_prior_selection,
+            wrong_prior_attachment,
+            extra_prior_attachment,
+            qualified_prior,
+        ] {
+            assert_eq!(
+                preflight_finite_speculative_output_rotation(
+                    next_prefill,
+                    prior_selection,
+                    exact_direct,
+                    hostile,
+                    &unused,
+                    M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len(),
+                    |projection| *projection,
+                ),
+                Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift)
+            );
+        }
+    }
+
+    #[test]
+    fn finite_output_rotation_rejects_catalog_and_capacity_drift() {
+        let prior_selection = M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1[1];
+        let next_prefill = prefill_for_finite_speculative(prior_selection);
+        let direct = output_projection(next_prefill, DirectDiagnostic);
+        let prior = output_projection(prior_selection, SpeculativeDiagnostic);
+        let exact = M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1
+            .iter()
+            .copied()
+            .filter(|selection| *selection != prior_selection)
+            .map(|selection| output_projection(selection, SpeculativeDiagnostic))
+            .collect::<Vec<_>>();
+        let run = |unused: &Vec<M1CompletionOutputBindingProjectionV1>, capacity| {
+            preflight_finite_speculative_output_rotation(
+                next_prefill,
+                prior_selection,
+                direct,
+                prior,
+                unused,
+                capacity,
+                |projection| *projection,
+            )
+        };
+
+        assert_eq!(
+            run(
+                &exact[..2].to_vec(),
+                M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len()
+            ),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCountDrift)
+        );
+        let mut reordered = exact.clone();
+        reordered.swap(0, 1);
+        assert_eq!(
+            run(&reordered, M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len()),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveOutputDrift { index: 0 })
+        );
+        let mut duplicate = exact.clone();
+        duplicate[1] = duplicate[0];
+        assert_eq!(
+            run(&duplicate, M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len()),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveOutputDrift { index: 1 })
+        );
+        let mut extra_attachment = exact.clone();
+        extra_attachment[2].attachment = Mixed;
+        assert_eq!(
+            run(
+                &extra_attachment,
+                M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len()
+            ),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveOutputDrift { index: 2 })
+        );
+        assert_eq!(
+            run(&exact, exact.len()),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCapacityDrift)
         );
     }
 
