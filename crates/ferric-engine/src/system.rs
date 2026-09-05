@@ -500,6 +500,157 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    closed spec fn reincarnation_success_step(
+        &self,
+        before: &Self,
+        predecessor: RequestId,
+        permit: KvQuiescencePermit,
+        detached: KvDetachedRequest,
+        after_take: Scheduler<C>,
+        after_release: KvPool,
+        successor: RequestId,
+    ) -> bool {
+        &&& before.scheduler.reincarnation_candidate(predecessor)
+        &&& after_take.retiring_permit_refines(
+            &before.scheduler,
+            &Ok(Some(permit)),
+        )
+        &&& permit.request_spec() == predecessor
+        &&& before.kv.release_authority_enabled(predecessor, &permit)
+        &&& before.kv.release_authority_decision(predecessor, &permit) == Ok(())
+        &&& detached.request_spec() == predecessor
+        &&& detached.origin_spec() == permit.origin_spec()
+        &&& !after_release.request_live_by_slot_spec(predecessor.slot_spec() as int)
+        &&& after_release.request_generation_by_slot_spec(
+            predecessor.slot_spec() as int,
+        ) == before.kv.request_generation_by_slot_spec(
+            predecessor.slot_spec() as int,
+        ) + 1
+        &&& after_release.identity_frame_except(
+            &before.kv,
+            predecessor.slot_spec() as int,
+        )
+        &&& self.scheduler.reincarnated_detached_refines(
+            &after_take,
+            &detached,
+            successor,
+        )
+        &&& exists|kv_result: Result<(), KvError>|
+            #[trigger] self.kv.create_refines(
+                &after_release,
+                successor,
+                &kv_result,
+            ) && kv_result.is_ok()
+    }
+
+    closed spec fn reincarnation_success_refines(
+        &self,
+        before: &Self,
+        successor: RequestId,
+    ) -> bool {
+        &&& self.permits@ == before.permits@
+        &&& !before.faulted_spec()
+        &&& !self.faulted_spec()
+        &&& exists|predecessor: RequestId,
+            permit: KvQuiescencePermit,
+            detached: KvDetachedRequest,
+            after_take: Scheduler<C>,
+            after_release: KvPool|
+            #[trigger] self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            )
+    }
+
+    proof fn reincarnation_success_establishes_witness(
+        &self,
+        before: &Self,
+        predecessor: RequestId,
+        permit: KvQuiescencePermit,
+        detached: KvDetachedRequest,
+        after_take: Scheduler<C>,
+        after_release: KvPool,
+        successor: RequestId,
+    )
+        requires
+            self.permits@ == before.permits@,
+            !before.faulted_spec(),
+            !self.faulted_spec(),
+            self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            ),
+        ensures self.reincarnation_success_refines(before, successor),
+    {
+        reveal(Engine::reincarnation_success_refines);
+        assert(exists|witness_predecessor: RequestId,
+            witness_permit: KvQuiescencePermit,
+            witness_detached: KvDetachedRequest,
+            witness_after_take: Scheduler<C>,
+            witness_after_release: KvPool|
+            #[trigger] self.reincarnation_success_step(
+                before,
+                witness_predecessor,
+                witness_permit,
+                witness_detached,
+                witness_after_take,
+                witness_after_release,
+                successor,
+            )) by {
+            assert(self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            ));
+        };
+    }
+
+    pub closed spec fn reincarnate_next_retiring_refines(
+        &self,
+        before: &Self,
+        result: &Result<RequestId, EngineError>,
+    ) -> bool {
+        match result {
+            Err(EngineError::Faulted) => {
+                &&& self.permits@ == before.permits@
+                &&& before.faulted_spec()
+                &&& self.same_state(before)
+            }
+            Err(EngineError::Scheduler(error)) => {
+                &&& self.permits@ == before.permits@
+                &&& !before.faulted_spec()
+                &&& (*error == SchedulerError::DetachmentMismatch
+                    || *error == SchedulerError::GenerationExhausted)
+                &&& self.same_state(before)
+            }
+            Err(EngineError::Kv(_)) => {
+                &&& self.permits@ == before.permits@
+                &&& !before.faulted_spec()
+                &&& self.faulted_spec()
+                &&& self.kv.same_state(&before.kv)
+                &&& self.scheduler.identity_frame(&before.scheduler)
+            }
+            Ok(successor) => {
+                self.reincarnation_success_refines(before, *successor)
+            }
+            Err(_) => false,
+        }
+    }
+
     closed spec fn reclaim_success_step(
         &self,
         before: &Self,
@@ -1852,6 +2003,298 @@ impl<const C: usize> Engine<C> {
                     &Err(EngineError::Scheduler(*error)),
                 ));
                 Err(EngineError::Scheduler(*error))
+            }
+        }
+    }
+
+    /// Replaces the next already-quiescent retiring request with its exact
+    /// same-slot, next-generation ready successor.
+    ///
+    /// The successor never enters the free ring, so unrelated vacant slots
+    /// retain their admission order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, a scheduler error when
+    /// no retiring generation is available or its generation is exhausted,
+    /// or a KV error after faulting on an internal authority mismatch.
+    pub fn reincarnate_next_retiring(
+        &mut self,
+    ) -> (result: Result<RequestId, EngineError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).reincarnate_next_retiring_refines(old(self), &result),
+            match result {
+                Ok(successor) => {
+                    &&& final(self).state_spec(successor) == Some(RequestState::Ready)
+                    &&& final(self).resident_tokens_spec(successor) == Some(0)
+                    &&& final(self).committed_tokens_spec(successor) == Some(0)
+                    &&& final(self).live_count_spec() == old(self).live_count_spec()
+                }
+                Err(_) => true,
+            },
+    {
+        let ghost entry = *self;
+        reveal(Engine::well_formed);
+        reveal(Engine::reincarnate_next_retiring_refines);
+        reveal(Engine::faulted_spec);
+        reveal(Engine::same_state);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
+        self.require_healthy()?;
+
+        let predecessor = match self.scheduler.preflight_next_reincarnation() {
+            Ok(request) => request,
+            Err(error) => {
+                assert(self.scheduler == entry.scheduler);
+                assert(self.kv == entry.kv);
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(error == SchedulerError::DetachmentMismatch
+                    || error == SchedulerError::GenerationExhausted);
+                assert(self.same_state(&entry));
+                assert(self.reincarnate_next_retiring_refines(
+                    &entry,
+                    &Err(EngineError::Scheduler(error)),
+                ));
+                return Err(EngineError::Scheduler(error));
+            }
+        };
+        assert(entry.scheduler.reincarnation_candidate(predecessor));
+        proof {
+            entry.scheduler.apply_reincarnation_candidate_identity(predecessor);
+        }
+
+        let ghost entry_scheduler = self.scheduler;
+        let ghost entry_kv = self.kv;
+        let take_result = self.scheduler.take_retiring_permit();
+        proof {
+            entry_scheduler.reincarnation_candidate_requires_taken_permit(
+                &self.scheduler,
+                predecessor,
+                &take_result,
+            );
+        }
+        let permit = match take_result {
+            Ok(Some(permit)) => permit,
+            Ok(None) | Err(_) => {
+                assert(false);
+                return Err(EngineError::Scheduler(SchedulerError::InvariantViolation));
+            }
+        };
+        let ghost taken_permit = permit;
+        let ghost after_take_scheduler = self.scheduler;
+        assert(after_take_scheduler.retiring_permit_refines(
+            &entry_scheduler,
+            &Ok(Some(taken_permit)),
+        ));
+        proof {
+            after_take_scheduler.retiring_permit_preserves_live_count(
+                &entry_scheduler,
+                taken_permit,
+            );
+        }
+        assert(permit.request_spec() == predecessor) by {
+            entry_scheduler.reincarnation_candidate_matches_taken_permit(
+                &after_take_scheduler,
+                predecessor,
+                taken_permit,
+            );
+        }
+
+        let detached = match self.kv.release_request(predecessor, permit) {
+            Ok(detached) => detached,
+            Err(failure) => {
+                let (error, _permit) = failure.into_parts();
+                self.faulted = true;
+                assert(self.kv.same_state(&entry.kv));
+                assert(self.scheduler.identity_frame(&entry.scheduler));
+                assert(self.permits@ == entry.permits@);
+                assert forall|slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    assert(self.scheduler.slot_is_live_spec(slot)
+                        == entry.scheduler.slot_is_live_spec(slot));
+                    assert(self.scheduler.slot_generation_spec(slot)
+                        == entry.scheduler.slot_generation_spec(slot));
+                }
+                assert(self.well_formed());
+                assert(self.reincarnate_next_retiring_refines(
+                    &entry,
+                    &Err(EngineError::Kv(error)),
+                ));
+                return Err(EngineError::Kv(error));
+            }
+        };
+        let ghost released_detached = detached;
+        let ghost after_release_kv = self.kv;
+        assert(detached.request_spec() == predecessor);
+        assert(detached.origin_spec() == taken_permit.origin_spec());
+        assert(after_take_scheduler.detachment_ready(
+            predecessor,
+            detached.origin_spec(),
+        ));
+        assert(after_take_scheduler.detached_enabled(&detached)) by {
+            reveal(Scheduler::detached_enabled);
+            entry_scheduler.apply_reincarnation_candidate_identity(predecessor);
+            after_take_scheduler.apply_detachment_ready_identity(
+                predecessor,
+                detached.origin_spec(),
+            );
+        }
+
+        let ghost before_reincarnate_scheduler = self.scheduler;
+        let successor = self.scheduler.reincarnate_detached(detached);
+        assert(self.scheduler.reincarnated_detached_refines(
+            &before_reincarnate_scheduler,
+            &released_detached,
+            successor,
+        ));
+        proof {
+            self.scheduler.apply_reincarnated_detached_identity(
+                &before_reincarnate_scheduler,
+                &released_detached,
+                successor,
+            );
+        }
+        assert(self.kv == after_release_kv);
+        assert(self.kv.create_enabled(successor)) by {
+            reveal(KvPool::create_enabled);
+            assert(successor.slot_spec() == predecessor.slot_spec());
+            assert(successor.generation_spec() == predecessor.generation_spec() + 1);
+            assert(entry_scheduler.slot_generation_spec(predecessor.slot_spec() as int)
+                == entry_kv.request_generation_by_slot_spec(predecessor.slot_spec() as int)) by {
+                reveal(Engine::identity_agreement);
+            }
+            assert(!after_release_kv.request_live_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ));
+            assert(after_release_kv.request_generation_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ) == entry_kv.request_generation_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ) + 1);
+        }
+        let create_result = self.kv.create_request(successor);
+        assert(self.kv.create_refines(&after_release_kv, successor, &create_result));
+        match &create_result {
+            Err(error) => {
+                assert(false);
+                self.faulted = true;
+                Err(EngineError::Kv(*error))
+            }
+            Ok(()) => {
+                assert(create_result.is_ok());
+                assert(exists|kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.create_refines(
+                        &after_release_kv,
+                        successor,
+                        &kv_result,
+                    ) && kv_result.is_ok()) by {
+                }
+                proof {
+                    self.kv.successful_create_has_empty_tokens(
+                        &after_release_kv,
+                        successor,
+                        &create_result,
+                    );
+                }
+                assert forall|slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    if slot == successor.slot_spec() as int {
+                        assert(self.scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == successor.generation_spec());
+                        assert(self.kv.request_live_by_slot_spec(slot));
+                        assert(self.kv.request_generation_by_slot_spec(slot)
+                            == successor.generation_spec());
+                    } else {
+                        assert(self.scheduler.slot_is_live_spec(slot)
+                            == before_reincarnate_scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == before_reincarnate_scheduler.slot_generation_spec(slot));
+                        assert(before_reincarnate_scheduler.slot_is_live_spec(slot)
+                            == entry_scheduler.slot_is_live_spec(slot));
+                        assert(before_reincarnate_scheduler.slot_generation_spec(slot)
+                            == entry_scheduler.slot_generation_spec(slot));
+                        self.kv.apply_identity_frame_except(
+                            &after_release_kv,
+                            successor.slot_spec() as int,
+                            slot,
+                        );
+                        after_release_kv.apply_identity_frame_except(
+                            &entry_kv,
+                            predecessor.slot_spec() as int,
+                            slot,
+                        );
+                    }
+                }
+                assert forall|slot: int| C <= slot < MAX_REQUEST_SLOTS implies {
+                    &&& !self.kv.request_live_by_slot_spec(slot)
+                    &&& self.kv.request_generation_by_slot_spec(slot) == 1
+                } by {
+                    assert(slot != successor.slot_spec() as int);
+                    self.kv.apply_identity_frame_except(
+                        &after_release_kv,
+                        successor.slot_spec() as int,
+                        slot,
+                    );
+                    after_release_kv.apply_identity_frame_except(
+                        &entry_kv,
+                        predecessor.slot_spec() as int,
+                        slot,
+                    );
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.well_formed());
+                assert(self.reincarnation_success_step(
+                    &entry,
+                    predecessor,
+                    taken_permit,
+                    released_detached,
+                    after_take_scheduler,
+                    after_release_kv,
+                    successor,
+                )) by {
+                    reveal(Engine::reincarnation_success_step);
+                }
+                proof {
+                    self.reincarnation_success_establishes_witness(
+                        &entry,
+                        predecessor,
+                        taken_permit,
+                        released_detached,
+                        after_take_scheduler,
+                        after_release_kv,
+                        successor,
+                    );
+                }
+                assert(self.reincarnation_success_refines(&entry, successor));
+                let ghost success_result: Result<RequestId, EngineError> = Ok(successor);
+                assert(success_result == Ok(successor));
+                assert(self.reincarnate_next_retiring_refines(&entry, &success_result)) by {
+                    reveal(Engine::reincarnate_next_retiring_refines);
+                }
+                reveal(Engine::state_spec);
+                reveal(Engine::resident_tokens_spec);
+                reveal(Engine::committed_tokens_spec);
+                reveal(Engine::live_count_spec);
+                assert(self.scheduler.state_spec(successor) == Some(RequestState::Ready));
+                assert(self.kv.resident_tokens_spec(successor) == Some(0));
+                assert(self.kv.committed_tokens_spec(successor) == Some(0));
+                assert(self.scheduler.live_count_spec()
+                    == entry.scheduler.live_count_spec());
+                Ok(successor)
             }
         }
     }
@@ -3388,6 +3831,57 @@ mod tests {
         let second = engine.admit().unwrap();
         assert_eq!(second.slot(), first.slot());
         assert_eq!(second.generation(), first.generation() + 1);
+    }
+
+    #[test]
+    fn exact_slot_reincarnation_preserves_unused_free_head_and_dispatches() {
+        let mut engine = Engine::<32>::new(64, 4, 32).unwrap();
+        let predecessor = engine.admit().unwrap();
+        assert_eq!(predecessor, RequestId::new(0, 1));
+        engine.retire(predecessor).unwrap();
+
+        let successor = engine.reincarnate_next_retiring().unwrap();
+        assert_eq!(successor, RequestId::new(0, 2));
+        assert_eq!(engine.state(predecessor), None);
+        assert_eq!(engine.state(successor), Some(RequestState::Ready));
+        assert_eq!(engine.resident_tokens(successor), Some(0));
+
+        engine.append_tentative(successor, 1).unwrap();
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[successor])
+            .unwrap();
+        assert_eq!(scheduled.member(0), Some(successor));
+
+        let untouched = engine.admit().unwrap();
+        assert_eq!(untouched, RequestId::new(1, 1));
+    }
+
+    #[test]
+    fn reincarnation_order_is_independent_of_requested_roster_order() {
+        let mut engine = Engine::<32>::new(64, 4, 32).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.retire(first).unwrap();
+        engine.retire(second).unwrap();
+
+        let requested = [
+            RequestId::new(second.slot(), second.generation() + 1),
+            RequestId::new(first.slot(), first.generation() + 1),
+        ];
+        let reclaimed_first = engine.reincarnate_next_retiring().unwrap();
+        let reclaimed_second = engine.reincarnate_next_retiring().unwrap();
+        assert_eq!(reclaimed_first, requested[1]);
+        assert_eq!(reclaimed_second, requested[0]);
+
+        engine.append_tentative(requested[0], 1).unwrap();
+        engine.append_tentative(requested[1], 1).unwrap();
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &requested)
+            .unwrap();
+        assert_eq!(scheduled.member(0), Some(requested[0]));
+        assert_eq!(scheduled.member(1), Some(requested[1]));
+
+        assert_eq!(engine.admit().unwrap(), RequestId::new(2, 1));
     }
 
     #[test]

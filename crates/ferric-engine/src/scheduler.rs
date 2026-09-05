@@ -929,6 +929,132 @@ impl<const C: usize> Scheduler<C> {
         &&& self.slot_generation_spec(request.slot_spec() as int) < u32::MAX
     }
 
+    pub(crate) closed spec fn reincarnation_candidate(&self, request: RequestId) -> bool {
+        let slot_index = self.reclaim_ring@[self.reclaim_head as int];
+        &&& self.reclaim_len > 0
+        &&& request.slot_spec() == slot_index
+        &&& request.generation_spec() == self.slots@[slot_index as int].generation
+        &&& request.generation_spec() < u32::MAX
+    }
+
+    pub(crate) proof fn apply_reincarnation_candidate_identity(&self, request: RequestId)
+        requires
+            self.basic_invariant(),
+            self.reincarnation_candidate(request),
+        ensures
+            request.slot_spec() < C,
+            request.generation_spec() < u32::MAX,
+    {
+        self.basic_implies_reclaim_ring();
+        self.reclaim_ring_entry_facts(0);
+        assert(ring_position::<C>(self.reclaim_head, 0) == self.reclaim_head) by {
+            reveal(ring_position);
+        }
+    }
+
+    pub(crate) proof fn reincarnation_candidate_matches_taken_permit(
+        &self,
+        after_take: &Self,
+        predecessor: RequestId,
+        permit: KvQuiescencePermit,
+    )
+        requires
+            self.basic_invariant(),
+            self.reincarnation_candidate(predecessor),
+            after_take.retiring_permit_refines(self, &Ok(Some(permit))),
+        ensures permit.request_spec() == predecessor,
+    {
+        RequestId::extensional(&permit.request_spec(), &predecessor);
+    }
+
+    pub(crate) proof fn reincarnation_candidate_requires_taken_permit(
+        &self,
+        after_take: &Self,
+        predecessor: RequestId,
+        result: &Result<Option<KvQuiescencePermit>, SchedulerError>,
+    )
+        requires
+            self.reincarnation_candidate(predecessor),
+            after_take.retiring_permit_refines(self, result),
+        ensures match result {
+            Ok(Some(_)) => true,
+            Ok(None) | Err(_) => false,
+        },
+    {
+    }
+
+    pub(crate) proof fn retiring_permit_preserves_live_count(
+        &self,
+        before: &Self,
+        permit: KvQuiescencePermit,
+    )
+        requires self.retiring_permit_refines(before, &Ok(Some(permit))),
+        ensures self.live_count_spec() == before.live_count_spec(),
+    {
+        reveal(Scheduler::retiring_permit_refines);
+        reveal(Scheduler::live_count_spec);
+    }
+
+    pub(crate) closed spec fn reincarnated_detached_refines(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        successor: RequestId,
+    ) -> bool {
+        let predecessor = detached.request_spec();
+        let slot_index = predecessor.slot_spec() as int;
+        let replacement = Slot {
+            generation: successor.generation_spec(),
+            state: RequestState::Ready,
+            active_epoch: NO_EPOCH,
+            last_quiescent_epoch: NO_EPOCH,
+            in_free_ring: false,
+            in_reclaim_ring: false,
+        };
+        &&& before.detached_enabled(detached)
+        &&& successor.slot_spec() == predecessor.slot_spec()
+        &&& successor.generation_spec() == predecessor.generation_spec() + 1
+        &&& self.slots@ == before.slots@.update(slot_index, replacement)
+        &&& self.free_ring@ == before.free_ring@
+        &&& self.free_head == before.free_head
+        &&& self.free_len == before.free_len
+        &&& self.reclaim_ring@ == before.reclaim_ring@
+        &&& self.reclaim_head == before.reclaim_head
+        &&& self.reclaim_len == before.reclaim_len
+        &&& self.member_ring@ == before.member_ring@
+        &&& self.member_head == before.member_head
+        &&& self.member_len == before.member_len
+        &&& self.batch_ring@ == before.batch_ring@
+        &&& self.batch_head == before.batch_head
+        &&& self.batch_len == before.batch_len
+        &&& self.cursor == before.cursor
+        &&& self.submitted == before.submitted
+        &&& self.completed == before.completed
+        &&& self.live_count == before.live_count
+    }
+
+    pub(crate) proof fn apply_reincarnated_detached_identity(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        successor: RequestId,
+    )
+        requires self.reincarnated_detached_refines(before, detached, successor),
+        ensures
+            successor.slot_spec() == detached.request_spec().slot_spec(),
+            successor.generation_spec() == detached.request_spec().generation_spec() + 1,
+            self.slot_is_live_spec(successor.slot_spec() as int),
+            self.slot_generation_spec(successor.slot_spec() as int)
+                == successor.generation_spec(),
+            self.state_spec(successor) == Some(RequestState::Ready),
+            self.live_count_spec() == before.live_count_spec(),
+    {
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(Scheduler::slot_generation_spec);
+        reveal(Scheduler::state_spec);
+        reveal(Scheduler::live_count_spec);
+    }
+
     pub closed spec fn slots_frame_except(&self, before: &Self, changed: int) -> bool {
         forall|slot_index: int| 0 <= slot_index < C && slot_index != changed ==>
             #[trigger] self.slots@[slot_index] == before.slots@[slot_index]
@@ -13004,6 +13130,42 @@ impl<const C: usize> Scheduler<C> {
         Ok(batch.member_count)
     }
 
+    /// Validates the next quiescent retiring generation without consuming it.
+    pub(crate) fn preflight_next_reincarnation(
+        &self,
+    ) -> (result: Result<RequestId, SchedulerError>)
+        requires self.basic_invariant(),
+        ensures
+            match result {
+                Ok(request) => self.reincarnation_candidate(request),
+                Err(SchedulerError::DetachmentMismatch) => true,
+                Err(SchedulerError::GenerationExhausted) => true,
+                Err(_) => false,
+            },
+    {
+        proof {
+            self.basic_implies_scalar();
+            self.basic_implies_reclaim_ring();
+        }
+        if self.reclaim_len == 0 {
+            return Err(SchedulerError::DetachmentMismatch);
+        }
+        proof {
+            self.retiring_head_facts();
+        }
+        let slot_index = self.reclaim_ring[self.reclaim_head];
+        assert(slot_index < C);
+        let slot = self.slots[slot_index];
+        if slot.generation == u32::MAX {
+            return Err(SchedulerError::GenerationExhausted);
+        }
+        let request = RequestId::new(slot_index_to_u32(slot_index), slot.generation);
+        assert(self.reincarnation_candidate(request)) by {
+            reveal(Scheduler::reincarnation_candidate);
+        }
+        Ok(request)
+    }
+
     /// Removes one already-quiescent terminal request from the O(1) reclaim
     /// ring and returns the only authority that can detach its KV state.
     pub(crate) fn take_retiring_permit(
@@ -13996,6 +14158,256 @@ impl<const C: usize> Scheduler<C> {
         Ok(generation + 1)
     }
 
+    proof fn reincarnated_detached_preserves_basic(
+        &self,
+        before: &Self,
+        detached: &KvDetachedRequest,
+        successor: RequestId,
+    )
+        requires
+            before.basic_invariant(),
+            self.reincarnated_detached_refines(before, detached, successor),
+        ensures self.basic_invariant(),
+    {
+        let changed = detached.request_spec().slot_spec() as int;
+        reveal(Scheduler::reincarnated_detached_refines);
+        reveal(Scheduler::detached_enabled);
+        reveal(Scheduler::detachment_ready_inner);
+        before.basic_implies_scalar();
+        before.basic_implies_slots();
+        before.basic_implies_free_ring();
+        before.basic_implies_reclaim_ring();
+        before.basic_implies_member_ring();
+        before.basic_implies_batch_ring();
+
+        live_count_update_nonvacant(
+            before.slots@,
+            changed,
+            self.slots@[changed],
+            C as nat,
+        );
+        nonreclaim_count_update_preserved(
+            before.slots@,
+            changed,
+            self.slots@[changed],
+            C as nat,
+        );
+        assert(self.scalar_invariant()) by {
+            reveal(Scheduler::scalar_invariant);
+        }
+
+        assert(self.slot_invariant()) by {
+            reveal(Scheduler::slot_invariant);
+            assert forall|slot_index: int| 0 <= slot_index < C implies {
+                let slot = #[trigger] self.slots@[slot_index];
+                match slot.state {
+                    RequestState::Vacant => {
+                        &&& slot.active_epoch == NO_EPOCH
+                        &&& slot.last_quiescent_epoch == NO_EPOCH
+                        &&& slot.in_free_ring
+                        &&& !slot.in_reclaim_ring
+                    }
+                    RequestState::Ready => {
+                        &&& slot.active_epoch == NO_EPOCH
+                        &&& slot.last_quiescent_epoch <= self.completed
+                        &&& !slot.in_free_ring
+                        &&& !slot.in_reclaim_ring
+                    }
+                    RequestState::InFlight => {
+                        &&& NO_EPOCH < slot.active_epoch <= self.submitted
+                        &&& slot.last_quiescent_epoch <= self.completed
+                        &&& !slot.in_free_ring
+                        &&& !slot.in_reclaim_ring
+                    }
+                    RequestState::Retiring => {
+                        &&& !slot.in_free_ring
+                        &&& slot.active_epoch <= self.submitted
+                        &&& slot.last_quiescent_epoch <= self.completed
+                    }
+                }
+            } by {
+                if slot_index != changed {
+                    assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                }
+            }
+        }
+
+        assert(self.free_ring_invariant()) by {
+            reveal(Scheduler::free_ring_invariant);
+            assert forall|offset: int| 0 <= offset < self.free_len implies {
+                let slot_index = #[trigger] self.free_ring@[
+                    ring_position::<C>(self.free_head, offset as nat)
+                ];
+                &&& slot_index < C
+                &&& self.slots@[slot_index as int].state == RequestState::Vacant
+                &&& self.slots@[slot_index as int].in_free_ring
+            } by {
+                let slot_index = before.free_ring@[
+                    ring_position::<C>(before.free_head, offset as nat)
+                ];
+                assert(before.slots@[slot_index as int].in_free_ring);
+                assert(slot_index as int != changed);
+                assert(self.slots@[slot_index as int] == before.slots@[slot_index as int]);
+            }
+            assert forall|slot_index: int| 0 <= slot_index < C implies
+                #[trigger] self.slots@[slot_index].in_free_ring
+                    == usize_ring_contains::<C>(
+                        self.free_ring@,
+                        self.free_head,
+                        self.free_len,
+                        slot_index,
+                    ) by {
+                if slot_index != changed {
+                    assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                } else {
+                    assert(!before.slots@[slot_index].in_free_ring);
+                }
+            }
+        }
+
+        assert(self.reclaim_ring_invariant()) by {
+            reveal(Scheduler::reclaim_ring_invariant);
+            assert forall|offset: int| 0 <= offset < self.reclaim_len implies {
+                let slot_index = #[trigger] self.reclaim_ring@[
+                    ring_position::<C>(self.reclaim_head, offset as nat)
+                ];
+                &&& slot_index < C
+                &&& self.slots@[slot_index as int].state == RequestState::Retiring
+                &&& self.slots@[slot_index as int].active_epoch == NO_EPOCH
+                &&& self.slots@[slot_index as int].in_reclaim_ring
+            } by {
+                let slot_index = before.reclaim_ring@[
+                    ring_position::<C>(before.reclaim_head, offset as nat)
+                ];
+                assert(before.slots@[slot_index as int].in_reclaim_ring);
+                assert(slot_index as int != changed);
+                assert(self.slots@[slot_index as int] == before.slots@[slot_index as int]);
+            }
+            assert forall|slot_index: int| 0 <= slot_index < C implies
+                #[trigger] self.slots@[slot_index].in_reclaim_ring
+                    == usize_ring_contains::<C>(
+                        self.reclaim_ring@,
+                        self.reclaim_head,
+                        self.reclaim_len,
+                        slot_index,
+                    ) by {
+                if slot_index != changed {
+                    assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                } else {
+                    assert(!before.slots@[slot_index].in_reclaim_ring);
+                }
+            }
+        }
+
+        assert(self.member_entries_invariant()) by {
+            reveal(Scheduler::member_entries_invariant);
+            assert forall|offset: int| 0 <= offset < self.member_len implies
+                #[trigger] self.member_entry_valid(offset) by {
+                let handle = before.member_ring@[
+                    ring_position::<C>(before.member_head, offset as nat)
+                ];
+                assert(before.member_entry_valid(offset));
+                assert(handle.slot_spec() as int != changed) by {
+                    reveal(Scheduler::member_entry_valid);
+                }
+                assert(self.slots@[handle.slot_spec() as int]
+                    == before.slots@[handle.slot_spec() as int]);
+                reveal(Scheduler::member_entry_valid);
+            }
+        }
+        assert(self.member_distinct_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+            reveal(Scheduler::member_distinct_invariant);
+        }
+        assert(self.member_membership_invariant()) by {
+            reveal(Scheduler::member_membership_invariant);
+            reveal(Scheduler::member_ring_invariant);
+            assert forall|slot_index: int| 0 <= slot_index < C implies
+                (((#[trigger] self.slots@[slot_index].state == RequestState::InFlight
+                    || self.slots@[slot_index].state == RequestState::Retiring)
+                    && self.completed < self.slots@[slot_index].active_epoch)
+                    == request_ring_contains_slot::<C>(
+                        self.member_ring@,
+                        self.member_head,
+                        self.member_len,
+                        slot_index,
+                    )) by {
+                if slot_index != changed {
+                    assert(self.slots@[slot_index] == before.slots@[slot_index]);
+                }
+            }
+        }
+        assert(self.member_ring_invariant()) by {
+            reveal(Scheduler::member_ring_invariant);
+        }
+
+        assert(self.batch_ring_invariant()) by {
+            reveal(Scheduler::batch_ring_invariant);
+            assert forall|batch_offset: int| 0 <= batch_offset < self.batch_len implies {
+                let batch = #[trigger] self.batch_ring@[
+                    ring_position::<C>(self.batch_head, batch_offset as nat)
+                ];
+                &&& batch.member_count > 0
+                &&& batch.epoch.value as int == self.completed as int + batch_offset + 1
+                &&& batch.epoch.value <= self.submitted
+                &&& (forall|member_offset: int|
+                    batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat,
+                    ) <= member_offset < batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat + 1,
+                    ) ==> {
+                        let handle = #[trigger] self.member_ring@[
+                            ring_position::<C>(self.member_head, member_offset as nat)
+                        ];
+                        self.slots@[handle.slot_spec() as int].active_epoch
+                            == batch.epoch.value
+                    })
+            } by {
+                let batch = before.batch_ring@[
+                    ring_position::<C>(before.batch_head, batch_offset as nat)
+                ];
+                assert forall|member_offset: int|
+                    batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat,
+                    ) <= member_offset < batch_member_sum::<C>(
+                        self.batch_ring@,
+                        self.batch_head,
+                        batch_offset as nat + 1,
+                    ) implies {
+                        let handle = #[trigger] self.member_ring@[
+                            ring_position::<C>(self.member_head, member_offset as nat)
+                        ];
+                        self.slots@[handle.slot_spec() as int].active_epoch == batch.epoch.value
+                } by {
+                    let handle = before.member_ring@[
+                        ring_position::<C>(before.member_head, member_offset as nat)
+                    ];
+                    assert(0 <= member_offset < before.member_len) by {
+                        batch_member_sum_monotonic::<C>(
+                            before.batch_ring@,
+                            before.batch_head,
+                            batch_offset as nat + 1,
+                            before.batch_len as nat,
+                        );
+                    }
+                    assert(before.member_entry_valid(member_offset));
+                    assert(handle.slot_spec() as int != changed) by {
+                        reveal(Scheduler::member_entry_valid);
+                    }
+                    assert(self.slots@[handle.slot_spec() as int]
+                        == before.slots@[handle.slot_spec() as int]);
+                }
+            }
+        }
+        reveal(Scheduler::basic_invariant);
+    }
+
     fn detached_preflight(
         &self,
         detached: &KvDetachedRequest,
@@ -14218,6 +14630,77 @@ impl<const C: usize> Scheduler<C> {
             );
         }
         request
+    }
+
+    /// Consumes exact detachment evidence directly into the next ready
+    /// generation without publishing the slot through the free ring.
+    pub(crate) fn reincarnate_detached(
+        &mut self,
+        detached: KvDetachedRequest,
+    ) -> (successor: RequestId)
+        requires
+            old(self).basic_invariant(),
+            old(self).detached_enabled(&detached),
+        ensures
+            final(self).basic_invariant(),
+            final(self).reincarnated_detached_refines(old(self), &detached, successor),
+            final(self).state_spec(successor) == Some(RequestState::Ready),
+            final(self).slot_is_live_spec(successor.slot_spec() as int),
+            final(self).slot_generation_spec(successor.slot_spec() as int)
+                == old(self).slot_generation_spec(successor.slot_spec() as int) + 1,
+            forall|other: int|
+                0 <= other < C && other != successor.slot_spec() as int ==> {
+                    &&& final(self).slot_is_live_spec(other)
+                        == old(self).slot_is_live_spec(other)
+                    &&& final(self).slot_generation_spec(other)
+                        == old(self).slot_generation_spec(other)
+                },
+    {
+        reveal(Scheduler::detached_enabled);
+        let predecessor = detached.request();
+        let slot_index = predecessor.slot() as usize;
+        proof {
+            self.apply_detachment_ready_identity(predecessor, detached.origin_spec());
+            self.basic_implies_slots();
+        }
+        assert(slot_index < C);
+        let next_generation = match self.reclaim_next_generation(slot_index) {
+            Ok(next_generation) => next_generation,
+            Err(_) => {
+                assert(false);
+                1
+            }
+        };
+        let successor = RequestId::new(slot_index_to_u32(slot_index), next_generation);
+        let ghost old_slots = self.slots@;
+        self.slots[slot_index] = Slot {
+            generation: next_generation,
+            state: RequestState::Ready,
+            active_epoch: NO_EPOCH,
+            last_quiescent_epoch: NO_EPOCH,
+            in_free_ring: false,
+            in_reclaim_ring: false,
+        };
+        assert(self.slots@ == old_slots.update(slot_index as int, self.slots@[slot_index as int]));
+        assert(self.reincarnated_detached_refines(old(self), &detached, successor)) by {
+            reveal(Scheduler::reincarnated_detached_refines);
+        }
+        proof {
+            self.reincarnated_detached_preserves_basic(old(self), &detached, successor);
+        }
+        reveal(Scheduler::state_spec);
+        reveal(Scheduler::slot_is_live_spec);
+        reveal(Scheduler::slot_generation_spec);
+        reveal(Scheduler::reincarnated_detached_refines);
+        assert forall|other: int|
+            0 <= other < C && other != successor.slot_spec() as int implies {
+                &&& self.slot_is_live_spec(other) == old(self).slot_is_live_spec(other)
+                &&& self.slot_generation_spec(other)
+                    == old(self).slot_generation_spec(other)
+        } by {
+            assert(self.slots@[other] == old(self).slots@[other]);
+        }
+        successor
     }
 
     /// Returns a terminal slot to the free ring only after exact cache-owned

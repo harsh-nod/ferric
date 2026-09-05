@@ -514,6 +514,8 @@ impl KvPool {
                 &&& self.request_live_by_slot_spec(request.slot_spec() as int)
                 &&& self.request_generation_by_slot_spec(request.slot_spec() as int)
                     == request.generation_spec()
+                &&& self.resident_tokens_spec(request) == Some(0)
+                &&& self.committed_tokens_spec(request) == Some(0)
                 &&& self.request_frame_except(before, request.slot_spec() as int)
                 &&& self.identity_frame_except(before, request.slot_spec() as int)
             }
@@ -524,6 +526,22 @@ impl KvPool {
                 &&& self.identity_frame(before)
             }
         }
+    }
+
+    pub(crate) proof fn successful_create_has_empty_tokens(
+        &self,
+        before: &Self,
+        request: RequestId,
+        result: &Result<(), KvError>,
+    )
+        requires
+            self.create_refines(before, request, result),
+            result.is_ok(),
+        ensures
+            self.resident_tokens_spec(request) == Some(0),
+            self.committed_tokens_spec(request) == Some(0),
+    {
+        reveal(KvPool::create_refines);
     }
 
     closed spec fn create_key_enabled(&self, request: RequestKey) -> bool {
@@ -1769,6 +1787,9 @@ impl KvPool {
                     &&& request.slot < MAX_REQUEST_SLOTS
                     &&& final(self).requests@[request.slot as int].live
                     &&& final(self).requests@[request.slot as int].generation == request.generation
+                    &&& final(self).requests@[request.slot as int].committed_tokens == 0
+                    &&& final(self).requests@[request.slot as int].resident_tokens == 0
+                    &&& final(self).requests@[request.slot as int].page_count == 0
                     &&& final(self).request_frame_except(old(self), request.slot as int)
                     &&& final(self).identity_frame_except(old(self), request.slot as int)
                 }
@@ -5627,6 +5648,8 @@ impl KvPool {
                     &&& final(self).request_generation_by_slot_spec(
                         request.slot_spec() as int,
                     ) == request.generation_spec()
+                    &&& final(self).resident_tokens_spec(request) == Some(0)
+                    &&& final(self).committed_tokens_spec(request) == Some(0)
                     &&& final(self).request_frame_except(
                         old(self),
                         request.slot_spec() as int,
