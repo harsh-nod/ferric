@@ -11,7 +11,10 @@
 use core::fmt;
 use std::collections::{TryReserveError, VecDeque};
 
-use ferric_spec::{completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, RequestId};
+use ferric_spec::{
+    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, RequestId, TokenId,
+    ValidatedM1StepInputs,
+};
 
 use crate::{
     prepare_m1_finite_speculative_queue_rollover_v1, prepare_m1_long_lived_queue_rearm_v1,
@@ -33,6 +36,27 @@ pub enum M1ServingQueuedGenerationPhaseV1 {
     SameShapeRearm,
     /// Finite-speculative rollover; retains its original public name.
     S1K4Rollover,
+}
+
+/// Read-only rejection of a bounded first-publication work binding.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingFirstPublicationWorkMatchErrorV1 {
+    QueueEmpty,
+    QueuePhase,
+    Plan,
+    Roster,
+    PromptRoster,
+    WorkspaceKind,
+    WorkspaceSelection,
+    SelectedRoster,
+    Device,
+    InputLaneCount,
+    InputRequest { lane: usize },
+    InputEpoch { lane: usize },
+    InputActiveLength { lane: usize },
+    InputContextLength { lane: usize },
+    InputToken { lane: usize, column: usize },
+    InputPosition { lane: usize, column: usize },
 }
 
 /// Immutable registry binding carried beside every move-only physical input.
@@ -527,11 +551,164 @@ impl M1QueuedServingPhysicalInputProviderV1 {
             .map(M1ServingQueuedGenerationInputV1::phase)
     }
 
+    /// Preflights the queued first publication against exact pretokenized work.
+    ///
+    /// This read-only check does not expose or move allocation, page, cache, or
+    /// workspace authority. The later physical preparation repeats its own
+    /// scheduler-epoch and custody checks before dequeuing the generation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an absent or wrong-phase first generation, any plan or ordered
+    /// roster substitution, or any workspace lane whose prompt differs.
+    pub fn preflight_first_publication_work(
+        &self,
+        plan: M1ServingPlanV1,
+        requests: &[RequestId],
+        prompt_tokens: &[&[TokenId]],
+    ) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+        let Some(front) = self.pending.front() else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::QueueEmpty);
+        };
+        let M1ServingQueuedGenerationInputV1::FirstPublication(input) = front else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::QueuePhase);
+        };
+        preflight_first_binding(&input.binding, plan, requests, prompt_tokens)?;
+        let expected_kind = workspace_kind(plan);
+        if input.tables.kind() != expected_kind
+            || input.preparation_plans.kind() != expected_kind
+            || input.recipe_plans.kind() != expected_kind
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceKind);
+        }
+        if input.selected.len() != requests.len()
+            || input
+                .selected
+                .iter()
+                .zip(requests)
+                .any(|(cache, request)| cache.projection().request != *request)
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::SelectedRoster);
+        }
+        let device = input.memory.device();
+        if input
+            .selected
+            .iter()
+            .any(|cache| cache.projection().device != device)
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::Device);
+        }
+        let M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target } = &input.tables else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceKind);
+        };
+        if draft.selection() != plan.draft() || target.selection() != plan.target() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceSelection);
+        }
+        preflight_prompt_rows(
+            draft.inputs(),
+            plan.draft(),
+            input.binding.epoch(),
+            requests,
+            prompt_tokens,
+        )?;
+        preflight_prompt_rows(
+            target.inputs(),
+            plan.target(),
+            input.binding.epoch(),
+            requests,
+            prompt_tokens,
+        )
+    }
+
     /// Recovers every generation that has not been consumed by preparation.
     #[must_use = "pending physical generations remain linear"]
     pub fn into_pending_inputs(self) -> VecDeque<M1ServingQueuedGenerationInputV1> {
         self.pending
     }
+}
+
+fn preflight_first_binding(
+    binding: &M1ServingQueuedGenerationBindingV1,
+    plan: M1ServingPlanV1,
+    requests: &[RequestId],
+    prompt_tokens: &[&[TokenId]],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    if requests.len() != prompt_tokens.len() {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::PromptRoster);
+    }
+    if binding.plan() != plan {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::Plan);
+    }
+    if binding.requests() != requests {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::Roster);
+    }
+    Ok(())
+}
+
+fn preflight_prompt_rows(
+    inputs: &ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    requests: &[RequestId],
+    prompt_tokens: &[&[TokenId]],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    if inputs.selection() != selection {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceSelection);
+    }
+    if inputs.live_lane_count() as usize != requests.len() {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+    }
+    let width = inputs.dimensions().active_tokens as usize;
+    for (lane, (request, prompt)) in requests.iter().zip(prompt_tokens).enumerate() {
+        let Some(plan) = inputs.lanes()[lane].as_ref() else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane });
+        };
+        if plan.request() != *request || plan.selection() != selection {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane });
+        }
+        if plan.completion_epoch() != epoch {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputEpoch { lane });
+        }
+        if inputs.active_lengths()[lane] as usize != prompt.len() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputActiveLength { lane });
+        }
+        if inputs.context_lengths()[lane] != 0 {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputContextLength { lane });
+        }
+        let Some(row_start) = lane.checked_mul(width) else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+        };
+        let Some(row_end) = row_start.checked_add(width) else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+        };
+        preflight_prompt_row(
+            lane,
+            inputs.token_ids().get(row_start..row_end),
+            inputs.position_ids().get(row_start..row_end),
+            prompt,
+        )?;
+    }
+    Ok(())
+}
+
+fn preflight_prompt_row(
+    lane: usize,
+    tokens: Option<&[TokenId]>,
+    positions: Option<&[u32]>,
+    prompt: &[TokenId],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    let (Some(tokens), Some(positions)) = (tokens, positions) else {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+    };
+    for (column, expected) in prompt.iter().copied().enumerate() {
+        if tokens.get(column) != Some(&expected) {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputToken { lane, column });
+        }
+        if positions.get(column).copied() != u32::try_from(column).ok() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputPosition { lane, column });
+        }
+    }
+    Ok(())
 }
 
 fn workspace_kind(plan: M1ServingPlanV1) -> M1FullStepWorkspaceInputKind {
@@ -1114,14 +1291,17 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
 #[cfg(test)]
 mod tests {
     use ferric_spec::{
-        completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-        Qwen3PlanSelection, RequestId,
+        completion::CompletionEpoch, validate_m1_step_inputs, Identity, M1StepInputCandidate,
+        M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+        Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs,
     };
 
     use super::{
         dispatch_intent, is_admitted_finite_speculative_plan, is_exact_s1_k4_plan,
-        is_finite_rollover_source_plan, semantic_evidence, workspace_kind,
-        M1QueuedServingPhysicalInputProviderV1, M1ServingQueuedGenerationBindingV1,
+        is_finite_rollover_source_plan, preflight_first_binding, preflight_prompt_row,
+        preflight_prompt_rows, semantic_evidence, workspace_kind,
+        M1QueuedServingPhysicalInputProviderV1, M1ServingFirstPublicationWorkMatchErrorV1,
+        M1ServingQueuedGenerationBindingV1,
     };
     use crate::{
         M1FullStepWorkspaceInputKind, M1PhysicalFixedBatchShapeV1, M1ServingPlanV1,
@@ -1149,6 +1329,44 @@ mod tests {
         .expect("test plan must be valid")
     }
 
+    fn prefill_inputs(
+        request: RequestId,
+        tokens: &[u32],
+        role: Qwen3ModelRole,
+    ) -> ValidatedM1StepInputs {
+        let selected = selection(
+            role,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let plan = StepPlan::new(
+            request,
+            CompletionEpoch::new(1),
+            Identity::new([7; 32]),
+            selected,
+        );
+        let mut row = vec![0; 128];
+        row[..tokens.len()].copy_from_slice(tokens);
+        let mut positions = vec![0; 128];
+        for (position, value) in positions.iter_mut().take(tokens.len()).enumerate() {
+            *value = u32::try_from(position).expect("test position fits u32");
+        }
+        let candidate = M1StepInputCandidate::new(
+            selected,
+            vec![Some(plan)],
+            row,
+            positions,
+            vec![u32::try_from(tokens.len()).expect("test token count fits u32")],
+            vec![0],
+        );
+        match validate_m1_step_inputs(candidate) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("test prompt inputs rejected: {:?}", failure.error())
+            }
+        }
+    }
+
     #[test]
     fn exact_binding_rejects_plan_epoch_roster_and_order_drift() {
         let selected_plan = serving_plan(
@@ -1172,6 +1390,94 @@ mod tests {
             Qwen3PlanBucket::PrefillS1T128,
         );
         assert!(!binding.matches(other, &requests, epoch));
+    }
+
+    #[test]
+    fn first_publication_work_match_rejects_plan_roster_and_token_substitution() {
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let request = RequestId::new(7, 1);
+        let binding = M1ServingQueuedGenerationBindingV1::new(
+            plan,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(1),
+        );
+        let prompt = [11, 12, 13];
+        assert_eq!(
+            preflight_first_binding(&binding, plan, &[request], &[&prompt]),
+            Ok(())
+        );
+        let other_plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        assert_eq!(
+            preflight_first_binding(&binding, other_plan, &[request], &[&prompt]),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::Plan)
+        );
+        assert_eq!(
+            preflight_first_binding(&binding, plan, &[RequestId::new(8, 1)], &[&prompt],),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::Roster)
+        );
+
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let selected = selection(
+                role,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            );
+            let inputs = prefill_inputs(request, &prompt, role);
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[request],
+                    &[&prompt],
+                ),
+                Ok(())
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(2),
+                    &[request],
+                    &[&prompt],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputEpoch { lane: 0 })
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[request],
+                    &[&[11, 99, 13]],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputToken { lane: 0, column: 1 })
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[RequestId::new(8, 1)],
+                    &[&prompt],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane: 0 })
+            );
+        }
+        assert_eq!(
+            preflight_prompt_row(0, Some(&prompt), Some(&[0, 2, 2]), &prompt),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::InputPosition { lane: 0, column: 1 })
+        );
     }
 
     #[test]

@@ -2,6 +2,7 @@ const MANIFEST: &str = include_str!("../Cargo.toml");
 const SOURCE: &str = include_str!("../src/lib.rs");
 const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-smoke.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
+const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
 const ROOT_MANIFEST: &str = include_str!("../../../Cargo.toml");
 const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.toml");
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
@@ -134,5 +135,46 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
                 "engineering CLI contains forbidden authority marker {forbidden}"
             );
         }
+    }
+}
+
+#[test]
+fn r33_lifecycle_is_bounded_real_clocked_and_bound_to_production_operations() {
+    for required in [
+        "ClockId::MonotonicRaw",
+        "M1_MAX_ACTIVE_SEQUENCES",
+        "M1ServingPhysicalRunnerOperationsV1",
+        "M1QueuedServingPhysicalInputProviderV1",
+        "M1CheckedCompletionOutputV1",
+        "engine.admit()",
+        ".admit(request, prefill)",
+        "preflight_first_publication_work",
+        "checked_completion_for_readback",
+        "observe_physical_readback",
+        "observe_terminal_after_settlement",
+        "arrival_offset_ns",
+        "first_token_offset_ns",
+        "terminal_offset_ns",
+    ] {
+        assert!(
+            R33_LIFECYCLE_SOURCE.contains(required),
+            "R33 lifecycle is missing required production marker {required}"
+        );
+    }
+    assert_eq!(R33_LIFECYCLE_SOURCE.matches("pub fn admit(").count(), 1);
+    assert!(!R33_LIFECYCLE_SOURCE.contains("pub fn observe_output("));
+    assert!(!R33_LIFECYCLE_SOURCE.contains("pub fn observe_terminal("));
+    for forbidden in [
+        "std::time::Instant",
+        "SystemTime",
+        "thread::sleep",
+        "TcpListener",
+        "hyper::",
+        "axum::",
+    ] {
+        assert!(
+            !R33_LIFECYCLE_SOURCE.contains(forbidden),
+            "R33 lifecycle contains forbidden timing or HTTP marker {forbidden}"
+        );
     }
 }

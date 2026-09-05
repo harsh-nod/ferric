@@ -1127,6 +1127,41 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
         self.provider.as_ref()
     }
 
+    /// Borrows checked completion only from this adapter's exact readback custody.
+    ///
+    /// # Errors
+    ///
+    /// Rejects cross-adapter custody, any non-readback phase or epoch, and plan
+    /// drift between the bridge wrapper, operation custody, and active adapter.
+    pub fn checked_completion_for_readback<'b>(
+        &self,
+        readback: &'b M1ServingPhysicalReadbackV1<M1ServingPhysicalRunnerReadbackV1>,
+    ) -> Result<&'b M1CheckedCompletionOutputV1, M1ServingPhysicalRunnerOperationErrorV1>
+    where
+        P: M1ServingPhysicalInputProviderV1<C>,
+        P::Failure: 'a,
+    {
+        let custody = readback.operation_custody();
+        validate_custody_guard(
+            self.identity,
+            custody.adapter_identity(),
+            matches!(
+                self.phase,
+                M1ServingPhysicalRunnerAdapterPhaseV1::Readback { epoch }
+                    if epoch == custody.epoch()
+            ),
+        )?;
+        if self.active_plan != Some(custody.plan())
+            || readback.plan() != custody.plan()
+            || readback.epoch() != custody.epoch()
+            || readback.batch().plan() != custody.plan()
+            || readback.batch().epoch() != custody.epoch()
+        {
+            return Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch);
+        }
+        Ok(self.checked_completion(custody))
+    }
+
     fn terminal<Q, F>(
         &mut self,
         lower: M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F>,

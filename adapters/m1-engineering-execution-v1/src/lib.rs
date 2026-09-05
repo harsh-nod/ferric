@@ -7,6 +7,8 @@
 //! `EngineeringHsacoObservationV1` JSON schema. Any schema or canonical field
 //! order change fails closed until Ferric audits and updates this decoder.
 
+pub mod r33_lifecycle;
+
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fmt;
