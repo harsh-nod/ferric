@@ -551,18 +551,18 @@ const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
     ("Rope", "super::rope_kv::qwen3_rope_v1_gpu::Marker"),
 ];
 const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
-    "PagedKvWrite",
-    "SwiGlu",
-    "Prefill",
-    "TokenEmbedding",
-    "SpeculativeAssembly",
-    "Rope",
-    "RmsNorm",
-    "PagedDecode",
-    "GemmVectorized",
-    "CompactCompletion",
-    "LowestIdArgmax",
     "GemmReference",
+    "SwiGlu",
+    "Rope",
+    "SpeculativeAssembly",
+    "TokenEmbedding",
+    "PagedDecode",
+    "Prefill",
+    "PagedKvWrite",
+    "CompactCompletion",
+    "GemmVectorized",
+    "LowestIdArgmax",
+    "RmsNorm",
 ];
 const AGGREGATE_HOST_REEXPORT: &[&str] = &["host_roster", "M1AllKernelsWorkerV3RosterV1"];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
@@ -6639,8 +6639,8 @@ mod tests {
     fn aggregate_runtime_roster_rejects_marker_order_drift() {
         let reordered = replace_once(
             AGGREGATE_RUNTIME_SOURCE,
-            "            PagedKvWrite,\n            SwiGlu,",
-            "            SwiGlu,\n            PagedKvWrite,",
+            "            GemmReference,\n            SwiGlu,",
+            "            SwiGlu,\n            GemmReference,",
         );
         assert!(validate_aggregate_source(&reordered).is_err());
     }
