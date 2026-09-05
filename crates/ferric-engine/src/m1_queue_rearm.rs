@@ -31,7 +31,7 @@ use fe2o3_service_host::{
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanSelection,
-    RequestId, M1_MAX_ACTIVE_SEQUENCES,
+    RequestId, M1_KV_PAGE_TOKENS, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::physical_buffer_bindings::{
@@ -53,10 +53,12 @@ use crate::{
     M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSourceV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1, M1PhysicalQueuePhaseCaseV1,
     M1PhysicalQueueSessionV1, M1PhysicalReadbackDetachedQueueSessionV1,
-    M1PhysicalReadbackQueueOperationFailureV1, M1PrepareFailureV1,
-    M1PreparedFiniteSpeculativeQueueRolloverV1, M1PreparedS1K4QueueRolloverV1,
+    M1PhysicalReadbackQueueOperationFailureV1, M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1,
+    M1PrepareFailureV1, M1PreparedFiniteSpeculativeQueueRolloverV1, M1PreparedS1K4QueueRolloverV1,
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
     M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
+    M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1,
+    M1ServingQueuedPairedPrefillNewWindowV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
@@ -11127,6 +11129,1216 @@ pub fn submit_m1_finite_speculative_queue_rollover_v1<'a, const C: usize>(
     }
 }
 
+/// Read-only admission for the bounded all-terminal new-window transaction.
+///
+/// This check runs while both the released queue and provider input remain in
+/// their original owners. Success is the explicit commit permit: every later
+/// rejection is terminal and retains the consumed owners.
+pub(crate) fn preflight_m1_all_terminal_paired_prefill_new_window_v1<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1LongLivedQueueReleasedRoundV1,
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    batch: &M1ServingBatchPlanV1,
+    input: &M1ServingQueuedPairedPrefillNewWindowV1,
+) -> bool {
+    let current = released.current_released();
+    let expected_epoch = current
+        .checked()
+        .epoch()
+        .value()
+        .checked_add(1)
+        .map(CompletionEpoch::new);
+    matches!(
+        batch.action(),
+        M1ServingQueueActionV1::QuiescentNewWindow {
+            prior: action_prior,
+            next: action_next,
+        } if action_prior == prior && action_next == next
+    ) && matches!(
+        prior.shape(),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+    ) && next.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && batch.plan() == next
+        && expected_epoch == Some(batch.epoch())
+        && released.parked_count() == 0
+        && released.round_history_len() < M1_MAX_REARM_ROUND_HISTORY_V1
+        && current.queue().shape() == prior.shape()
+        && current.queue().custody().selection() == prior.target()
+        && current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .finite_speculative_rollover_output_state()
+            == M1FiniteSpeculativeRolloverOutputPortfolioStateV1::Activated
+        && !current.members().is_empty()
+        && current
+            .members()
+            .iter()
+            .all(|member| matches!(member, M1ReleasedDeviceKvMemberV1::Terminal(_)))
+        && current.members().iter().all(|member| {
+            !batch
+                .requests()
+                .iter()
+                .any(|request| request.slot() == member.request().slot())
+        })
+        && engine.live_count() == batch.requests().len()
+        && batch
+            .requests()
+            .iter()
+            .copied()
+            .enumerate()
+            .all(|(lane, request)| {
+                engine.state(request) == Some(RequestState::Ready)
+                    && batch.requests()[..lane]
+                        .iter()
+                        .all(|prior| prior.slot() != request.slot())
+            })
+        && current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .preflight_new_window_pages(
+                batch.requests(),
+                ferric_spec::Qwen3ModelRole::Draft06B,
+                input.draft_prefill().active_lengths(),
+            )
+            .is_ok()
+        && current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .preflight_new_window_pages(
+                batch.requests(),
+                ferric_spec::Qwen3ModelRole::Target8B,
+                input.target_prefill().active_lengths(),
+            )
+            .is_ok()
+        && input.physical_inputs_match(batch)
+}
+
+struct M1NewWindowRetainedCustodyV1<T>(T);
+
+struct M1NewWindowReleasedResidueV1 {
+    round: ReleasedStepResidueV1,
+    terminal_lineage: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+}
+
+impl<T> fmt::Debug for M1NewWindowRetainedCustodyV1<T> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.0;
+        formatter
+            .debug_struct("M1NewWindowRetainedCustodyV1")
+            .finish_non_exhaustive()
+    }
+}
+
+fn new_window_submission_failure<'a, T: 'a>(
+    phase: M1LongLivedQueueRearmSubmissionPhaseV1,
+    retained: T,
+) -> M1LongLivedQueueRearmSubmissionFailureV1<'a> {
+    submission_failure(phase, M1NewWindowRetainedCustodyV1(retained))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1LongLivedQueueReleasedRoundV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    runner: &M1PhysicalRunnerV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    ring_bytes: u32,
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    if !preflight_m1_all_terminal_paired_prefill_new_window_v1(
+        engine, &released, prior, next, batch, &input,
+    ) || catalog.catalog_id() != released.current_released().queue().custody().catalog_id()
+    {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (released, input, catalog),
+        ));
+    }
+
+    let (binding, draft_prefill, target_prefill, preparation_plans, recipe_plans) =
+        input.into_parts();
+    let recipe = match runner.derive_step_recipe(
+        crate::M1StepDispatchIntent::PairedPrefill(next.target()),
+        recipe_plans,
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    released,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    failure,
+                    catalog,
+                ),
+            ));
+        }
+    };
+    if recipe.workspace_composition().workspace_plans() != &preparation_plans
+        || recipe.requires_future_materialization()
+        || recipe.rows().len() != M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+        || recipe.kernarg_recipe().images().len() != M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+    {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                released,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                catalog,
+            ),
+        ));
+    }
+
+    let Some(workspace_range_capacity) = preparation_plans.draft().and_then(|draft| {
+        draft
+            .ranges()
+            .len()
+            .checked_add(preparation_plans.target().ranges().len())
+    }) else {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                released,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                catalog,
+            ),
+        ));
+    };
+    let Some(terminal_lineage_capacity) = released
+        .terminal_lineage_count()
+        .checked_add(released.current_released().members().len())
+    else {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                released,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                catalog,
+            ),
+        ));
+    };
+    let mut selected = Vec::new();
+    let mut draft_reservations = Vec::new();
+    let mut target_reservations = Vec::new();
+    let mut draft_page_leases = Vec::new();
+    let mut target_page_leases = Vec::new();
+    let mut workspace_ranges = Vec::new();
+    let mut terminal_lineage = Vec::new();
+    if selected.try_reserve_exact(batch.requests().len()).is_err()
+        || draft_reservations
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
+        || target_reservations
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
+        || draft_page_leases
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
+        || target_page_leases
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
+        || workspace_ranges
+            .try_reserve_exact(workspace_range_capacity)
+            .is_err()
+        || terminal_lineage
+            .try_reserve_exact(terminal_lineage_capacity)
+            .is_err()
+    {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                released,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                catalog,
+                selected,
+                draft_reservations,
+                target_reservations,
+                draft_page_leases,
+                target_page_leases,
+                workspace_ranges,
+                terminal_lineage,
+            ),
+        ));
+    }
+    for lane in 0..batch.requests().len() {
+        let draft_pages = draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let target_pages = target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let mut draft_leases = Vec::new();
+        let mut target_leases = Vec::new();
+        if draft_leases
+            .try_reserve_exact(draft_pages as usize)
+            .is_err()
+            || target_leases
+                .try_reserve_exact(target_pages as usize)
+                .is_err()
+        {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    released,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    draft_leases,
+                    target_leases,
+                    workspace_ranges,
+                    terminal_lineage,
+                ),
+            ));
+        }
+        draft_page_leases.push(draft_leases);
+        target_page_leases.push(target_leases);
+    }
+
+    let M1LongLivedQueueReleasedRoundV1 {
+        mut released,
+        parked,
+        terminal,
+        history,
+    } = released;
+    debug_assert!(parked.is_empty());
+    if released.try_reserve_rearm_members(terminal.len()).is_err() {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            (
+                released,
+                parked,
+                terminal,
+                history,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                catalog,
+                selected,
+                draft_reservations,
+                target_reservations,
+                draft_page_leases,
+                target_page_leases,
+                workspace_ranges,
+                terminal_lineage,
+            ),
+        ));
+    }
+    let (
+        queue,
+        checked,
+        mut members,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    ) = released.into_rearm_parts();
+    members.extend(
+        terminal
+            .into_iter()
+            .map(M1ReleasedDeviceKvMemberV1::Terminal),
+    );
+    let residue = M1NewWindowReleasedResidueV1 {
+        round: ReleasedStepResidueV1 {
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history: M1RearmRoundHistoryV1::NonEmpty(history),
+        },
+        terminal_lineage,
+    };
+    let queue = match queue.detach() {
+        Ok(queue) => queue,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    failure,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    workspace_ranges,
+                ),
+            ));
+        }
+    };
+    let scheduled = match engine.dispatch_m1_exact_ready(batch.epoch(), batch.requests()) {
+        Ok(scheduled) => scheduled,
+        Err(error) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    queue,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    error,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    workspace_ranges,
+                ),
+            ));
+        }
+    };
+
+    let (old_shape, lower, custody) = queue.into_rearm_parts();
+    let predecessor_observation = lower.observation();
+    let predecessor_generation = lower.detached_dispatch_generation();
+    let device = custody.device();
+    let M1PhysicalQueueBatchRearmPartsV1 {
+        catalog_id,
+        selection: old_selection,
+        physical_recipe: old_physical_recipe,
+        workspace_composition: old_workspace_composition,
+        workspace_owners,
+        mut partitioned_memory,
+        completion_output: prior_output,
+        source_rows: old_source_rows,
+        bound_rows: old_bound_rows,
+        retired_rollover_custody,
+    } = custody.into_rearm_parts();
+    let retired_physical_metadata = (
+        old_shape,
+        old_selection,
+        old_physical_recipe,
+        old_workspace_composition,
+    );
+
+    for lane in 0..batch.requests().len() {
+        let request = batch.requests()[lane];
+        let mut cache = match ActiveDeviceKvCache::new(device, request, next.target(), next.draft())
+        {
+            Ok(cache) => cache,
+            Err(error) => {
+                return Err(new_window_submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                    (
+                        lower,
+                        retired_physical_metadata,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        catalog,
+                        scheduled,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        workspace_ranges,
+                        lane,
+                        error,
+                    ),
+                ));
+            }
+        };
+        let draft_pages = draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let target_pages = target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let mut draft_leases = core::mem::take(&mut draft_page_leases[lane]);
+        let mut target_leases = core::mem::take(&mut target_page_leases[lane]);
+        for page in 0..draft_pages {
+            match partitioned_memory.lease_page_for_detached_queue(
+                &lower,
+                request,
+                ferric_spec::Qwen3ModelRole::Draft06B,
+                page,
+            ) {
+                Ok(lease) => draft_leases.push(lease),
+                Err(error) => {
+                    return Err(new_window_submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                        (
+                            lower,
+                            retired_physical_metadata,
+                            workspace_owners,
+                            partitioned_memory,
+                            prior_output,
+                            old_source_rows,
+                            old_bound_rows,
+                            retired_rollover_custody,
+                            residue,
+                            binding,
+                            draft_prefill,
+                            target_prefill,
+                            preparation_plans,
+                            recipe,
+                            catalog,
+                            scheduled,
+                            selected,
+                            draft_reservations,
+                            target_reservations,
+                            draft_page_leases,
+                            target_page_leases,
+                            workspace_ranges,
+                            cache,
+                            draft_leases,
+                            target_leases,
+                            error,
+                        ),
+                    ));
+                }
+            }
+        }
+        for page in 0..target_pages {
+            match partitioned_memory.lease_page_for_detached_queue(
+                &lower,
+                request,
+                ferric_spec::Qwen3ModelRole::Target8B,
+                page,
+            ) {
+                Ok(lease) => target_leases.push(lease),
+                Err(error) => {
+                    return Err(new_window_submission_failure(
+                        M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                        (
+                            lower,
+                            retired_physical_metadata,
+                            workspace_owners,
+                            partitioned_memory,
+                            prior_output,
+                            old_source_rows,
+                            old_bound_rows,
+                            retired_rollover_custody,
+                            residue,
+                            binding,
+                            draft_prefill,
+                            target_prefill,
+                            preparation_plans,
+                            recipe,
+                            catalog,
+                            scheduled,
+                            selected,
+                            draft_reservations,
+                            target_reservations,
+                            draft_page_leases,
+                            target_page_leases,
+                            workspace_ranges,
+                            cache,
+                            draft_leases,
+                            target_leases,
+                            error,
+                        ),
+                    ));
+                }
+            }
+        }
+        let draft = match cache.reserve_step_write(
+            request,
+            ferric_spec::Qwen3ModelRole::Draft06B,
+            0,
+            draft_prefill.active_lengths()[lane],
+            batch.epoch(),
+            draft_leases,
+        ) {
+            Ok(reservation) => reservation,
+            Err(failure) => {
+                return Err(new_window_submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                    (
+                        lower,
+                        retired_physical_metadata,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        catalog,
+                        scheduled,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        workspace_ranges,
+                        cache,
+                        failure,
+                        target_leases,
+                    ),
+                ));
+            }
+        };
+        let target = match cache.reserve_step_write(
+            request,
+            ferric_spec::Qwen3ModelRole::Target8B,
+            0,
+            target_prefill.active_lengths()[lane],
+            batch.epoch(),
+            target_leases,
+        ) {
+            Ok(reservation) => reservation,
+            Err(failure) => {
+                return Err(new_window_submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                    (
+                        lower,
+                        retired_physical_metadata,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        catalog,
+                        scheduled,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        workspace_ranges,
+                        cache,
+                        draft,
+                        failure,
+                    ),
+                ));
+            }
+        };
+        selected.push(cache);
+        draft_reservations.push(draft);
+        target_reservations.push(target);
+    }
+
+    let target = match crate::bind_m1_kv_workspace_table_v1(target_prefill, target_reservations) {
+        Ok(table) => table,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    scheduled,
+                    selected,
+                    draft_reservations,
+                    failure,
+                ),
+            ));
+        }
+    };
+    let draft = match crate::bind_m1_kv_workspace_table_v1(draft_prefill, draft_reservations) {
+        Ok(table) => table,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    target,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    scheduled,
+                    selected,
+                    failure,
+                ),
+            ));
+        }
+    };
+    let prepared = match prepare_m1_scheduled_workspace_images_v1(
+        scheduled,
+        runner.logical_runner(),
+        preparation_plans,
+        M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target },
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    failure,
+                ),
+            ));
+        }
+    };
+    let (plans, workspace_images, step) = prepared.into_rearm_parts();
+    let (old_draft, old_target, draft_plan, target_plan, draft_bytes, target_bytes) =
+        match (workspace_owners, plans, workspace_images) {
+            (
+                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound {
+                    draft_decode,
+                    target_speculative,
+                },
+                M1FullStepWorkspacePlans::PairedPrefill { draft, target },
+                M1FullStepWorkspaceImagesV1::PairedPrefill {
+                    draft: draft_bytes,
+                    target: target_bytes,
+                },
+            ) => (
+                draft_decode,
+                target_speculative,
+                draft,
+                target,
+                draft_bytes,
+                target_bytes,
+            ),
+            (workspace_owners, plans, workspace_images) => {
+                return Err(new_window_submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                    (
+                        lower,
+                        retired_physical_metadata,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        recipe,
+                        catalog,
+                        selected,
+                        plans,
+                        workspace_images,
+                        step,
+                    ),
+                ));
+            }
+        };
+    let draft_descriptor = match crate::m1_step_workspace_content_descriptor_v1(
+        M1InitializedWorkspaceSlotV1::PairedPrefillDraft,
+        &draft_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(error) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    old_draft,
+                    old_target,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_plan,
+                    target_plan,
+                    draft_bytes,
+                    target_bytes,
+                    step,
+                    error,
+                ),
+            ));
+        }
+    };
+    let target_descriptor = match crate::m1_step_workspace_content_descriptor_v1(
+        M1InitializedWorkspaceSlotV1::PairedPrefillTarget,
+        &target_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(error) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    old_draft,
+                    old_target,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_plan,
+                    target_plan,
+                    draft_bytes,
+                    target_bytes,
+                    step,
+                    draft_descriptor,
+                    error,
+                ),
+            ));
+        }
+    };
+    let (lower, draft, draft_ranges) = match replace_rollover_workspace(
+        lower,
+        &old_draft,
+        *draft_plan,
+        draft_bytes,
+        draft_descriptor,
+    ) {
+        Ok(replaced) => replaced,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::DraftWorkspaceReplacement,
+                (
+                    failure,
+                    retired_physical_metadata,
+                    old_target,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    target_plan,
+                    target_bytes,
+                    step,
+                ),
+            ));
+        }
+    };
+    let (lower, target, target_ranges) = match replace_rollover_workspace(
+        lower,
+        &old_target,
+        *target_plan,
+        target_bytes,
+        target_descriptor,
+    ) {
+        Ok(replaced) => replaced,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::TargetWorkspaceReplacement,
+                (
+                    failure,
+                    retired_physical_metadata,
+                    draft,
+                    draft_ranges,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    step,
+                ),
+            ));
+        }
+    };
+    let workspace_range_count = draft_ranges.len().checked_add(target_ranges.len());
+    if workspace_range_count.is_none_or(|count| workspace_ranges.capacity() < count) {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+            (
+                lower,
+                retired_physical_metadata,
+                draft,
+                target,
+                draft_ranges,
+                target_ranges,
+                workspace_ranges,
+                partitioned_memory,
+                prior_output,
+                old_source_rows,
+                old_bound_rows,
+                retired_rollover_custody,
+                residue,
+                binding,
+                recipe,
+                catalog,
+                selected,
+                step,
+            ),
+        ));
+    }
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Draft,
+        &draft,
+        draft_ranges,
+    );
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Target,
+        &target,
+        target_ranges,
+    );
+    let completion_output = match partitioned_memory
+        .rotate_finite_speculative_output_for_new_window(
+            next.target(),
+            prior.target(),
+            prior_output,
+        ) {
+        Ok(output) => output,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::RolloverOutputActivation,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    failure,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    step,
+                ),
+            ));
+        }
+    };
+    let retained_capture = match retained_host_capture_ranges(&completion_output) {
+        Ok(capture) => capture,
+        Err(()) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    completion_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    step,
+                ),
+            ));
+        }
+    };
+    let bound_rows = match build_rollover_bound_rows(
+        recipe.rows(),
+        &old_source_rows,
+        &old_bound_rows,
+        recipe.workspace_composition(),
+        &workspace_ranges,
+        &retained_capture,
+    ) {
+        Ok(rows) => rows,
+        Err(()) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    completion_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    catalog,
+                    selected,
+                    step,
+                ),
+            ));
+        }
+    };
+    let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
+    let (physical_recipe, images) = kernargs.into_parts();
+    let batch = match lower_boxed_rearm_batch::<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>(
+        catalog,
+        &physical_recipe,
+        images,
+        &bound_rows,
+    ) {
+        Ok(batch) => batch,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                (
+                    lower,
+                    retired_physical_metadata,
+                    draft,
+                    target,
+                    partitioned_memory,
+                    completion_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    physical_recipe,
+                    source_rows,
+                    bound_rows,
+                    failure,
+                    selected,
+                    step,
+                ),
+            ));
+        }
+    };
+    let custody =
+        M1PhysicalQueueBatchCustodyV1::from_rearm_parts(M1PhysicalQueueBatchRearmPartsV1 {
+            catalog_id,
+            selection: next.target(),
+            physical_recipe,
+            workspace_composition,
+            workspace_owners: M1FullStepWorkspaceSubleaseOwners::paired_prefill(draft, target),
+            partitioned_memory,
+            completion_output,
+            source_rows,
+            bound_rows,
+            retired_rollover_custody,
+        });
+    let rollover = match lower.rollover(ring_bytes, *batch) {
+        Ok(rollover) => rollover,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                (
+                    failure,
+                    retired_physical_metadata,
+                    custody,
+                    step,
+                    selected,
+                    residue,
+                    binding,
+                ),
+            ));
+        }
+    };
+    let rollover_observation = M1QueueRolloverObservationV1::new(
+        rollover.previous_queue_destroyed(),
+        rollover.previous_dispatch_generation(),
+        rollover.replacement_queue_observation(),
+        rollover.replacement_dispatch_generation(),
+    );
+    let expected_replacement_generation = predecessor_generation.checked_add(1);
+    if rollover_observation.previous_dispatch_generation() != predecessor_generation
+        || Some(rollover_observation.replacement_dispatch_generation())
+            != expected_replacement_generation
+    {
+        return Err(new_window_submission_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::QueueObservation,
+            (
+                rollover,
+                retired_physical_metadata,
+                custody,
+                step,
+                selected,
+                residue,
+                binding,
+                rollover_observation,
+            ),
+        ));
+    }
+    let queue = M1PhysicalQueueSessionV1::PairedPrefill(Box::new(
+        M1PhysicalQueuePhaseCaseV1::from_queue_rearm(rollover.into_queue(), custody, step),
+    ));
+    let queue = match queue.submit() {
+        Ok(queue) => queue,
+        Err(failure) => {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                (
+                    failure,
+                    retired_physical_metadata,
+                    selected,
+                    residue,
+                    binding,
+                    rollover_observation,
+                ),
+            ));
+        }
+    };
+
+    let M1NewWindowReleasedResidueV1 {
+        round: residue,
+        terminal_lineage: mut terminal,
+    } = residue;
+    debug_assert!(terminal.capacity() >= residue.members.len());
+    for member in residue.members {
+        terminal.push(match member {
+            M1ReleasedDeviceKvMemberV1::Terminal(terminal) => terminal,
+            M1ReleasedDeviceKvMemberV1::Active(_) => {
+                unreachable!("all-terminal new-window preflight rejected active custody")
+            }
+        });
+    }
+    let previous_epoch = residue.checked.epoch();
+    Ok(M1RearmedPublishedQueueV1 {
+        queue,
+        carry: M1RearmContinuationCustodyV1 {
+            selected,
+            parked: Vec::new(),
+            terminal,
+            previous_epoch,
+            prior_checked: residue.checked,
+            logical_accepted_counts: residue.logical_accepted_counts,
+            externally_published_counts: residue.externally_published_counts,
+            release_counts: residue.release_counts,
+            completed_members: residue.completed_members,
+            total_released: residue.total_released,
+            history: residue.history,
+            rollover: Some(rollover_observation),
+        },
+        queue_observation: predecessor_observation,
+        device,
+    })
+}
+
+/// Commits one all-terminal speculative-to-paired-prefill physical new window.
+///
+/// The caller must run the read-only preflight before consuming provider input.
+/// This function repeats it defensively, then classifies every rejection as
+/// terminal and quarantines the Engine because its input has crossed the
+/// explicit commit boundary.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn submit_m1_all_terminal_paired_prefill_new_window_v1<'a, const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1LongLivedQueueReleasedRoundV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    runner: &M1PhysicalRunnerV1,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    ring_bytes: u32,
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    let result = submit_m1_all_terminal_paired_prefill_new_window_inner_v1(
+        engine, released, input, runner, catalog, ring_bytes, prior, next, batch,
+    );
+    quarantine_failed_new_window_submission(engine, result)
+}
+
+fn quarantine_failed_new_window_submission<'a, T, const C: usize>(
+    engine: &mut Engine<C>,
+    result: Result<T, M1LongLivedQueueRearmSubmissionFailureV1<'a>>,
+) -> Result<T, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+    if result.is_err() {
+        engine.quarantine_m1_queue_rearm_failure();
+    }
+    result
+}
+
 impl M1RearmedPublishedQueueV1 {
     #[must_use]
     pub const fn round_history_len(&self) -> usize {
@@ -11312,6 +12524,10 @@ mod tests {
     use super::*;
     use crate::device_cache::test_support::bind_gfx942_device;
     use ferric_spec::{Identity, Qwen3ModelRole, Qwen3PlanBucket};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
 
     const fn selection(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -11329,6 +12545,108 @@ mod tests {
             crate::GFX942_TARGET_FEATURES,
         )
         .unwrap()
+    }
+
+    #[derive(Debug)]
+    struct NewWindowRetainedDropProbe(Arc<AtomicUsize>);
+
+    impl Drop for NewWindowRetainedDropProbe {
+        fn drop(&mut self) {
+            self.0.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    fn assert_injected_new_window_failure_is_closed(phase: M1LongLivedQueueRearmSubmissionPhaseV1) {
+        let dropped = Arc::new(AtomicUsize::new(0));
+        let mut engine = Engine::<1>::new(512, 256, 8_192).expect("construct test Engine");
+        let failure = quarantine_failed_new_window_submission(
+            &mut engine,
+            Err::<(), _>(new_window_submission_failure(
+                phase,
+                NewWindowRetainedDropProbe(Arc::clone(&dropped)),
+            )),
+        )
+        .expect_err("injected committed-stage failure must remain rejected");
+
+        assert!(engine.is_faulted());
+        assert_eq!(failure.phase(), phase);
+        assert!(failure.is_terminal());
+        assert!(failure.retains_custody());
+        assert_eq!(dropped.load(Ordering::SeqCst), 0);
+        drop(failure);
+        assert_eq!(dropped.load(Ordering::SeqCst), 1);
+    }
+
+    macro_rules! new_window_committed_failure_test {
+        ($name:ident, $phase:ident) => {
+            #[test]
+            fn $name() {
+                assert_injected_new_window_failure_is_closed(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::$phase,
+                );
+            }
+        };
+    }
+
+    new_window_committed_failure_test!(
+        new_window_post_dequeue_preparation_failure_is_closed,
+        Preflight
+    );
+    new_window_committed_failure_test!(
+        new_window_draft_workspace_replacement_failure_is_closed,
+        DraftWorkspaceReplacement
+    );
+    new_window_committed_failure_test!(
+        new_window_target_workspace_replacement_failure_is_closed,
+        TargetWorkspaceReplacement
+    );
+    new_window_committed_failure_test!(
+        new_window_workspace_range_rebinding_failure_is_closed,
+        WorkspaceRangeRebinding
+    );
+    new_window_committed_failure_test!(
+        new_window_output_rotation_failure_is_closed,
+        RolloverOutputActivation
+    );
+    new_window_committed_failure_test!(
+        new_window_fixed_batch_rebuild_failure_is_closed,
+        FixedBatchRebuild
+    );
+    new_window_committed_failure_test!(new_window_native_rollover_failure_is_closed, QueueRollover);
+    new_window_committed_failure_test!(
+        new_window_rollover_observation_failure_is_closed,
+        QueueObservation
+    );
+    new_window_committed_failure_test!(new_window_queue_submit_failure_is_closed, QueueSubmit);
+
+    #[test]
+    fn new_window_terminal_lineage_capacity_precedes_detach_and_fill_follows_submit() {
+        let source = include_str!("m1_queue_rearm.rs");
+        let start = source
+            .find("fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1")
+            .expect("committed new-window helper remains present");
+        let end = source[start..]
+            .find("/// Commits one all-terminal speculative-to-paired-prefill physical new window")
+            .map(|offset| start + offset)
+            .expect("committed new-window helper remains bounded");
+        let transaction = &source[start..end];
+        let reserve = transaction
+            .find("try_reserve_exact(terminal_lineage_capacity)")
+            .expect("terminal lineage capacity remains preallocated");
+        let detach = transaction
+            .find("queue.detach()")
+            .expect("new-window queue detach remains explicit");
+        let submit = transaction
+            .find("queue.submit()")
+            .expect("new-window queue submit remains explicit");
+        let fill = transaction
+            .find("for member in residue.members")
+            .expect("terminal lineage fill remains explicit");
+
+        assert!(reserve < detach);
+        assert!(detach < submit);
+        assert!(submit < fill);
+        assert!(!transaction[submit..].contains(".collect()"));
     }
 
     const fn qualification_capture_ranges(

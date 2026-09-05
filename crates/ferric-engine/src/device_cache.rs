@@ -1168,6 +1168,134 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         }
     }
 
+    /// Mints one fresh page while the generic allocation session is retained by
+    /// a detached queue. Ferric's private generation ledger remains the only
+    /// source of page authority; the queue is used solely to reissue and check
+    /// the current addressless partition ranges.
+    pub(crate) fn lease_page_for_detached_queue(
+        &mut self,
+        queue: &fe2o3_service_host::ServiceQueueUnboundSessionV1,
+        request: RequestId,
+        role: Qwen3ModelRole,
+        physical_index: u32,
+    ) -> Result<DeviceKvPageLease, M1DeviceKvArenaLeaseErrorV1> {
+        let global_index = global_page_index(request, physical_index)?;
+        let state = *self
+            .page_ledger(role)
+            .get(global_index)
+            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+        let generation = free_page_generation(state)?;
+
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        let page = PhysicalPageId::new(role, physical_index, generation);
+        let target_ranges = queue
+            .reissue_partitioned_device_local(&self.target_planes)
+            .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+        let draft_ranges = queue
+            .reissue_partitioned_device_local(&self.draft_planes)
+            .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+        for layer in 0..role.layers() {
+            for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                let binding = self
+                    .model_memory
+                    .plan()
+                    .kv_request_page(request, page, component, layer)
+                    .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                if usize::try_from(binding.global_page()) != Ok(global_index)
+                    || binding.range().allocation_id() != self.allocation_id(role)
+                    || binding.range().byte_len() != QWEN3_KV_PAGE_BYTES_V1
+                {
+                    return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                }
+                let member_index = plane_member_index(role, component, layer)?;
+                let relative_offset = u64::from(binding.global_page())
+                    .checked_mul(QWEN3_KV_PAGE_BYTES_V1)
+                    .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                let member = match role {
+                    Qwen3ModelRole::Target8B => target_ranges.get(member_index),
+                    Qwen3ModelRole::Draft06B => draft_ranges.get(member_index),
+                }
+                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                let dispatch = member
+                    .checked_subrange(
+                        relative_offset,
+                        QWEN3_KV_PAGE_BYTES_V1,
+                        QWEN3_KV_ARENA_ALIGNMENT_V1,
+                    )
+                    .map_err(|source| M1DeviceKvArenaLeaseErrorV1::Allocation { role, source })?;
+                if dispatch.offset_bytes() != binding.range().offset()
+                    || dispatch.extent_bytes() != QWEN3_KV_PAGE_BYTES_V1
+                {
+                    return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                }
+            }
+        }
+
+        self.page_ledger_mut(role)[global_index] = M1KvPoolPageStateV1::Leased {
+            request,
+            generation,
+        };
+        Ok(DeviceKvPageLease {
+            device: self.device,
+            allocation_id: self.allocation_id(role),
+            request,
+            page,
+        })
+    }
+
+    /// Checks the complete fresh-roster page set without moving queue or ledger
+    /// authority. Generic dispatch ranges cannot be reissued until the queue is
+    /// detached, but every request slot, ledger generation, model binding, and
+    /// addressless plane coordinate is validated before that commit point.
+    pub(crate) fn preflight_new_window_pages(
+        &self,
+        requests: &[RequestId],
+        role: Qwen3ModelRole,
+        active_lengths: &[u32],
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        if active_lengths.len() < requests.len() {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        for (request, active_tokens) in requests.iter().copied().zip(active_lengths) {
+            let page_count = active_tokens.div_ceil(M1_KV_PAGE_TOKENS);
+            for physical_index in 0..page_count {
+                let global_index = global_page_index(request, physical_index)?;
+                let state = *self
+                    .page_ledger(role)
+                    .get(global_index)
+                    .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+                let generation = free_page_generation(state)?;
+                let page = PhysicalPageId::new(role, physical_index, generation);
+                for layer in 0..role.layers() {
+                    for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                        let binding = self
+                            .model_memory
+                            .plan()
+                            .kv_request_page(request, page, component, layer)
+                            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                        if usize::try_from(binding.global_page()) != Ok(global_index)
+                            || binding.range().allocation_id() != self.allocation_id(role)
+                            || binding.range().byte_len() != QWEN3_KV_PAGE_BYTES_V1
+                            || plane_member_index(role, component, layer)?
+                                >= match role {
+                                    Qwen3ModelRole::Target8B => self.target_planes.len(),
+                                    Qwen3ModelRole::Draft06B => self.draft_planes.len(),
+                                }
+                        {
+                            return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub(crate) fn revalidate_page_return_authority(
         &self,
     ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {

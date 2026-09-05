@@ -15,6 +15,10 @@ use core::{
 
 use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, RequestId};
 
+use crate::m1_queue_rearm::{
+    preflight_m1_all_terminal_paired_prefill_new_window_v1,
+    submit_m1_all_terminal_paired_prefill_new_window_v1,
+};
 use crate::m1_serving_physical_input_provider::M1ServingCommittedSpeculativeMemberBindingV1;
 use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
 
@@ -37,8 +41,9 @@ use crate::{
     M1ServingPhysicalOperationFailureV1, M1ServingPhysicalOperationResultV1,
     M1ServingPhysicalOperationsV1, M1ServingPhysicalReadbackV1, M1ServingPlanV1,
     M1ServingQueuedFiniteSpeculativeRolloverV1, M1ServingQueuedGenerationBindingV1,
-    M1ServingQueuedS1K4RolloverV1, M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1,
-    M1SpeculativeMemberStatusV1, M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1ServingQueuedPairedPrefillNewWindowV1, M1ServingQueuedS1K4RolloverV1,
+    M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1, M1SpeculativeMemberStatusV1,
+    M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -228,6 +233,30 @@ pub trait M1ServingPhysicalInputProviderV1<const C: usize> {
         scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
     ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
         self.prepare_s1_k4_rollover(runner, engine, batch, scheduled)
+    }
+
+    /// Read-only capability and exact-input check for an all-terminal new window.
+    #[must_use]
+    fn preflight_paired_prefill_new_window(&self, _batch: &M1ServingBatchPlanV1) -> bool {
+        false
+    }
+
+    /// Borrows the exact new-window owner after a successful read-only check.
+    #[must_use]
+    fn paired_prefill_new_window_input(
+        &self,
+        _batch: &M1ServingBatchPlanV1,
+    ) -> Option<&M1ServingQueuedPairedPrefillNewWindowV1> {
+        None
+    }
+
+    /// Consumes the input whose exact binding was accepted by the read-only
+    /// preflight. Existing providers remain fail-closed by default.
+    fn take_paired_prefill_new_window(
+        &mut self,
+        _batch: &M1ServingBatchPlanV1,
+    ) -> Option<Box<M1ServingQueuedPairedPrefillNewWindowV1>> {
+        None
     }
 }
 
@@ -777,6 +806,8 @@ pub enum M1ServingPhysicalRunnerOperationErrorV1 {
     RolloverSchedule,
     RolloverPublication,
     RolloverUnavailable,
+    NewWindowCatalog,
+    NewWindowCatalogMismatch,
     EpochMismatch,
     QueueWait,
     QueueRecycle,
@@ -867,6 +898,17 @@ pub enum M1ServingPhysicalRunnerTerminalLowerCustodyV1<'a, F> {
     RolloverUnexpectedShape {
         published: Box<M1RearmedPublishedQueueV1>,
         semantic_evidence: M1ServingPreparedSemanticEvidenceV1,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    NewWindowProviderCommit {
+        custody: Box<M1ServingPhysicalRunnerQuiescentV1>,
+    },
+    NewWindowPublication {
+        failure: crate::M1LongLivedQueueRearmSubmissionFailureV1<'a>,
+        history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    },
+    NewWindowUnexpectedShape {
+        published: Box<M1RearmedPublishedQueueV1>,
         history: M1ServingPhysicalRunnerDiagnosticHistoryV1,
     },
     FirstQueueWait {
@@ -963,7 +1005,8 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             }
             Self::FirstProviderPreparation(_)
             | Self::RearmProviderPreparation { .. }
-            | Self::RolloverProviderPreparation { .. } => {
+            | Self::RolloverProviderPreparation { .. }
+            | Self::NewWindowProviderCommit { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::ProviderPreparation
             }
             Self::FirstPreparedRosterRejected(_) => {
@@ -974,7 +1017,8 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             | Self::RolloverPreparedInputRejected { .. }
             | Self::FirstUnexpectedShape { .. }
             | Self::RearmUnexpectedShape { .. }
-            | Self::RolloverUnexpectedShape { .. } => {
+            | Self::RolloverUnexpectedShape { .. }
+            | Self::NewWindowUnexpectedShape { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::UnsupportedEvidenceShape
             }
             Self::FirstPublication { .. } => {
@@ -989,7 +1033,7 @@ impl<F> M1ServingPhysicalRunnerTerminalLowerCustodyV1<'_, F> {
             Self::RolloverSchedule { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::RolloverSchedule
             }
-            Self::RolloverPublication { .. } => {
+            Self::RolloverPublication { .. } | Self::NewWindowPublication { .. } => {
                 M1ServingPhysicalRunnerOperationErrorV1::RolloverPublication
             }
             Self::FirstQueueWait { .. } => M1ServingPhysicalRunnerOperationErrorV1::QueueWait,
@@ -2330,20 +2374,154 @@ where
     fn quiescent_new_window(
         &mut self,
         custody: Self::Quiescent,
-        _prior: M1ServingPlanV1,
-        _next: M1ServingPlanV1,
-        _batch: &M1ServingBatchPlanV1,
+        prior: M1ServingPlanV1,
+        next: M1ServingPlanV1,
+        batch: &M1ServingBatchPlanV1,
     ) -> M1ServingPhysicalOperationResultV1<
         Self::Published,
         Self::Quiescent,
         Self::TerminalCustody,
         Self::Error,
     > {
-        // The registry/bridge transaction is complete, but the concrete lower
-        // transition must retain and rebind all-terminal model/KV custody first.
-        Err(M1ServingPhysicalOperationFailureV1::Retryable {
-            source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
-            custody,
+        if self.provider.is_none() {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedQuiescent(Box::new(
+                    custody,
+                )),
+            ));
+        }
+        if let Err(source) = validate_custody_guard(
+            self.identity,
+            custody.adapter_identity(),
+            self.phase
+                == (M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
+                    epoch: custody.epoch(),
+                }),
+        ) {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody });
+        }
+        if custody.plan() != prior || batch.plan() != next {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch,
+                custody,
+            });
+        }
+        let M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
+            released,
+            diagnostic_history: _,
+        } = &custody.state
+        else {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
+                custody,
+            });
+        };
+        let admitted = self.provider.as_ref().is_some_and(|provider| {
+            provider.preflight_paired_prefill_new_window(batch)
+                && provider
+                    .paired_prefill_new_window_input(batch)
+                    .is_some_and(|input| {
+                        preflight_m1_all_terminal_paired_prefill_new_window_v1(
+                            self.engine,
+                            released,
+                            prior,
+                            next,
+                            batch,
+                            input,
+                        )
+                    })
+        });
+        if !admitted {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
+                custody,
+            });
+        }
+        let catalog = match self.runner.content_bound_program_catalog_v1() {
+            Ok(catalog) => catalog,
+            Err(_) => {
+                return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                    source: M1ServingPhysicalRunnerOperationErrorV1::NewWindowCatalog,
+                    custody,
+                });
+            }
+        };
+        if catalog.catalog_id() != released.current_released().queue().custody().catalog_id() {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::NewWindowCatalogMismatch,
+                custody,
+            });
+        }
+
+        // Commit: the provider input and released queue cross together. Every
+        // rejection below is terminal and the Engine is quarantined.
+        let Some(input) = self
+            .provider
+            .as_mut()
+            .and_then(|provider| provider.take_paired_prefill_new_window(batch))
+        else {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::NewWindowProviderCommit {
+                    custody: Box::new(custody),
+                },
+            ));
+        };
+        let M1ServingPhysicalRunnerQuiescentV1 {
+            adapter_identity,
+            state,
+            ..
+        } = custody;
+        let M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
+            released,
+            diagnostic_history,
+        } = state
+        else {
+            unreachable!("new-window state checked before commit")
+        };
+        let published = match submit_m1_all_terminal_paired_prefill_new_window_v1(
+            self.engine,
+            released,
+            *input,
+            self.runner,
+            catalog,
+            self.ring_bytes,
+            prior,
+            next,
+            batch,
+        ) {
+            Ok(published) => published,
+            Err(failure) => {
+                return Err(self.terminal(
+                    M1ServingPhysicalRunnerTerminalLowerCustodyV1::NewWindowPublication {
+                        failure,
+                        history: diagnostic_history,
+                    },
+                ));
+            }
+        };
+        if published.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+            || published.rollover_observation().is_none()
+        {
+            return Err(self.terminal(
+                M1ServingPhysicalRunnerTerminalLowerCustodyV1::NewWindowUnexpectedShape {
+                    published: Box::new(published),
+                    history: diagnostic_history,
+                },
+            ));
+        }
+        self.active_plan = Some(next);
+        self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Published {
+            epoch: batch.epoch(),
+        };
+        Ok(M1ServingPhysicalRunnerPublishedV1 {
+            adapter_identity,
+            epoch: batch.epoch(),
+            plan: next,
+            state: M1ServingPhysicalRunnerPublishedStateV1::Rearmed {
+                published,
+                semantic_evidence: M1ServingPreparedSemanticEvidenceV1::Direct,
+                diagnostic_history,
+            },
         })
     }
 
@@ -3158,6 +3336,52 @@ mod tests {
             },
         )
         .expect("test plan must be canonical")
+    }
+
+    #[test]
+    fn new_window_preflight_rejections_precede_dequeue_and_commit_is_terminal_only() {
+        let source = include_str!("m1_serving_physical_operations.rs");
+        let production = &source[..source
+            .find("#[cfg(test)]")
+            .expect("production/test source boundary remains present")];
+        let method_start = production
+            .rfind("    fn quiescent_new_window(")
+            .expect("concrete new-window operation remains present");
+        let method_end = production[method_start..]
+            .find("\n    fn read_published(")
+            .map(|offset| method_start + offset)
+            .expect("new-window operation remains bounded by readback");
+        let method = &production[method_start..method_end];
+        let borrowed_preflight = method
+            .find("preflight_paired_prefill_new_window(batch)")
+            .expect("provider preflight remains read-only");
+        let lower_preflight = method
+            .find("preflight_m1_all_terminal_paired_prefill_new_window_v1")
+            .expect("lower preflight remains read-only");
+        let catalog_preflight = method
+            .find("content_bound_program_catalog_v1()")
+            .expect("catalog revalidation remains read-only");
+        let catalog_identity = method
+            .find("M1ServingPhysicalRunnerOperationErrorV1::NewWindowCatalogMismatch")
+            .expect("catalog identity mismatch remains typed and retryable");
+        let commit = method
+            .find("// Commit:")
+            .expect("explicit new-window commit boundary remains present");
+        let dequeue = method
+            .find("take_paired_prefill_new_window(batch)")
+            .expect("provider dequeue remains explicit");
+        let publication = method
+            .find("submit_m1_all_terminal_paired_prefill_new_window_v1")
+            .expect("committed lower helper remains explicit");
+
+        assert!(borrowed_preflight < lower_preflight);
+        assert!(lower_preflight < catalog_preflight);
+        assert!(catalog_preflight < catalog_identity);
+        assert!(catalog_identity < commit);
+        assert!(commit < dequeue);
+        assert!(dequeue < publication);
+        assert!(method[..commit].contains("M1ServingPhysicalOperationFailureV1::Retryable"));
+        assert!(!method[commit..].contains("M1ServingPhysicalOperationFailureV1::Retryable"));
     }
 
     fn queued_s1_k4_test_input(

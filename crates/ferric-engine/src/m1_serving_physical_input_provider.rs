@@ -36,6 +36,8 @@ pub enum M1ServingQueuedGenerationPhaseV1 {
     SameShapeRearm,
     /// Finite-speculative rollover; retains its original public name.
     S1K4Rollover,
+    /// All-terminal finite-speculative to paired-prefill native rollover.
+    PairedPrefillNewWindow,
 }
 
 /// Read-only rejection of a bounded first-publication work binding.
@@ -305,6 +307,128 @@ impl M1ServingQueuedFiniteSpeculativeRolloverV1 {
 /// Source-compatible name for the original one-lane S1/K4 rollover owner.
 pub type M1ServingQueuedS1K4RolloverV1 = M1ServingQueuedFiniteSpeculativeRolloverV1;
 
+/// Fresh paired-prefill inputs for an all-terminal physical new window.
+///
+/// Model memory and the KV page ledger remain in the predecessor queue. This
+/// owner deliberately carries only validated request inputs and two independent
+/// workspace-plan copies; the detached-queue transaction mints fresh caches
+/// from the retained Ferric ledger after its irreversible commit boundary.
+#[must_use = "new-window inputs must remain paired with their exact generation binding"]
+#[derive(Debug)]
+pub struct M1ServingQueuedPairedPrefillNewWindowV1 {
+    binding: M1ServingQueuedGenerationBindingV1,
+    draft_prefill: ValidatedM1StepInputs,
+    target_prefill: ValidatedM1StepInputs,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+}
+
+impl M1ServingQueuedPairedPrefillNewWindowV1 {
+    pub const fn new(
+        binding: M1ServingQueuedGenerationBindingV1,
+        draft_prefill: ValidatedM1StepInputs,
+        target_prefill: ValidatedM1StepInputs,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            binding,
+            draft_prefill,
+            target_prefill,
+            preparation_plans,
+            recipe_plans,
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to new-window inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        &self.binding
+    }
+
+    pub(crate) const fn draft_prefill(&self) -> &ValidatedM1StepInputs {
+        &self.draft_prefill
+    }
+
+    pub(crate) const fn target_prefill(&self) -> &ValidatedM1StepInputs {
+        &self.target_prefill
+    }
+
+    #[must_use]
+    pub(crate) fn physical_inputs_match(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        let requests = self.binding.requests();
+        self.binding
+            .matches(batch.plan(), batch.requests(), batch.epoch())
+            && batch.plan().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+            && self.preparation_plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill
+            && self.recipe_plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill
+            && prefill_new_window_role_matches(
+                &self.draft_prefill,
+                batch.plan().draft(),
+                requests,
+                batch.epoch(),
+            )
+            && prefill_new_window_role_matches(
+                &self.target_prefill,
+                batch.plan().target(),
+                requests,
+                batch.epoch(),
+            )
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1ServingQueuedGenerationBindingV1,
+        ValidatedM1StepInputs,
+        ValidatedM1StepInputs,
+        M1FullStepWorkspacePlans,
+        M1FullStepWorkspacePlans,
+    ) {
+        (
+            self.binding,
+            self.draft_prefill,
+            self.target_prefill,
+            self.preparation_plans,
+            self.recipe_plans,
+        )
+    }
+}
+
+fn prefill_new_window_role_matches(
+    inputs: &ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    requests: &[RequestId],
+    epoch: CompletionEpoch,
+) -> bool {
+    let Ok(live) = usize::try_from(inputs.live_lane_count()) else {
+        return false;
+    };
+    live == requests.len()
+        && inputs.selection() == selection
+        && inputs
+            .lanes()
+            .iter()
+            .take(live)
+            .zip(requests)
+            .all(|(plan, request)| {
+                plan.is_some_and(|plan| {
+                    plan.request() == *request
+                        && plan.selection() == selection
+                        && plan.completion_epoch() == epoch
+                })
+            })
+        && inputs
+            .active_lengths()
+            .iter()
+            .take(live)
+            .all(|active| *active != 0)
+        && inputs
+            .context_lengths()
+            .iter()
+            .take(live)
+            .all(|context| *context == 0)
+}
+
 /// One move-only physical generation in exact serving order.
 #[must_use = "queued generation inputs must be consumed in serving order"]
 #[derive(Debug)]
@@ -313,6 +437,7 @@ pub enum M1ServingQueuedGenerationInputV1 {
     SameShapeRearm(Box<M1ServingQueuedSameShapeRearmV1>),
     /// Finite-speculative rollover; retains its original public variant name.
     S1K4Rollover(Box<M1ServingQueuedS1K4RolloverV1>),
+    PairedPrefillNewWindow(Box<M1ServingQueuedPairedPrefillNewWindowV1>),
 }
 
 impl M1ServingQueuedGenerationInputV1 {
@@ -336,12 +461,20 @@ impl M1ServingQueuedGenerationInputV1 {
         Self::S1K4Rollover(Box::new(input))
     }
 
+    /// Boxes one fresh paired-prefill new-window owner.
+    pub fn paired_prefill_new_window(input: M1ServingQueuedPairedPrefillNewWindowV1) -> Self {
+        Self::PairedPrefillNewWindow(Box::new(input))
+    }
+
     #[must_use]
     pub const fn phase(&self) -> M1ServingQueuedGenerationPhaseV1 {
         match self {
             Self::FirstPublication(_) => M1ServingQueuedGenerationPhaseV1::FirstPublication,
             Self::SameShapeRearm(_) => M1ServingQueuedGenerationPhaseV1::SameShapeRearm,
             Self::S1K4Rollover(_) => M1ServingQueuedGenerationPhaseV1::S1K4Rollover,
+            Self::PairedPrefillNewWindow(_) => {
+                M1ServingQueuedGenerationPhaseV1::PairedPrefillNewWindow
+            }
         }
     }
 
@@ -351,6 +484,7 @@ impl M1ServingQueuedGenerationInputV1 {
             Self::FirstPublication(input) => input.binding(),
             Self::SameShapeRearm(input) => input.binding(),
             Self::S1K4Rollover(input) => input.binding(),
+            Self::PairedPrefillNewWindow(input) => input.binding(),
         }
     }
 }
@@ -537,6 +671,37 @@ impl M1QueuedServingPhysicalInputProviderV1 {
         self.pending
             .push_back(M1ServingQueuedGenerationInputV1::SameShapeRearm(input));
         Ok(())
+    }
+
+    pub(crate) fn preflight_paired_prefill_new_window(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        self.paired_prefill_new_window_input(batch).is_some()
+    }
+
+    pub(crate) fn paired_prefill_new_window_input(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<&M1ServingQueuedPairedPrefillNewWindowV1> {
+        match self.pending.front() {
+            Some(M1ServingQueuedGenerationInputV1::PairedPrefillNewWindow(input))
+                if input.physical_inputs_match(batch) =>
+            {
+                Some(input)
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn take_paired_prefill_new_window(
+        &mut self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<Box<M1ServingQueuedPairedPrefillNewWindowV1>> {
+        if !self.preflight_paired_prefill_new_window(batch) {
+            return None;
+        }
+        match self.pending.pop_front() {
+            Some(M1ServingQueuedGenerationInputV1::PairedPrefillNewWindow(input)) => Some(input),
+            _ => unreachable!("new-window queue phase was preflighted before dequeue"),
+        }
     }
 
     #[must_use]
@@ -990,6 +1155,24 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
         true
     }
 
+    fn preflight_paired_prefill_new_window(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        M1QueuedServingPhysicalInputProviderV1::preflight_paired_prefill_new_window(self, batch)
+    }
+
+    fn paired_prefill_new_window_input(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<&M1ServingQueuedPairedPrefillNewWindowV1> {
+        M1QueuedServingPhysicalInputProviderV1::paired_prefill_new_window_input(self, batch)
+    }
+
+    fn take_paired_prefill_new_window(
+        &mut self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<Box<M1ServingQueuedPairedPrefillNewWindowV1>> {
+        M1QueuedServingPhysicalInputProviderV1::take_paired_prefill_new_window(self, batch)
+    }
+
     fn prepare_first_publication(
         &mut self,
         runner: &M1PhysicalRunnerV1,
@@ -1290,6 +1473,11 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
 
 #[cfg(test)]
 mod tests {
+    use ferric_build::{
+        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+        AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
+        M1StepWorkspacePlanOutcome,
+    };
     use ferric_spec::{
         completion::CompletionEpoch, validate_m1_step_inputs, Identity, M1StepInputCandidate,
         M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
@@ -1301,11 +1489,13 @@ mod tests {
         is_finite_rollover_source_plan, preflight_first_binding, preflight_prompt_row,
         preflight_prompt_rows, semantic_evidence, workspace_kind,
         M1QueuedServingPhysicalInputProviderV1, M1ServingFirstPublicationWorkMatchErrorV1,
-        M1ServingQueuedGenerationBindingV1,
+        M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
+        M1ServingQueuedGenerationPhaseV1, M1ServingQueuedPairedPrefillNewWindowV1,
     };
     use crate::{
-        M1FullStepWorkspaceInputKind, M1PhysicalFixedBatchShapeV1, M1ServingPlanV1,
-        M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
+        M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1PhysicalFixedBatchShapeV1,
+        M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingPreparedSemanticEvidenceV1,
+        M1ServingRegistryV1, M1StepDispatchIntent,
     };
 
     fn selection(
@@ -1365,6 +1555,72 @@ mod tests {
                 panic!("test prompt inputs rejected: {:?}", failure.error())
             }
         }
+    }
+
+    fn workspace_plan(
+        selection: Qwen3PlanSelection,
+        identity_byte: u8,
+    ) -> ferric_build::AddresslessM1StepWorkspacePlan {
+        let requirements = m1_step_workspace_requirements(selection)
+            .expect("canonical selection has workspace requirements");
+        let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+            selection,
+            DeclaredM1StepWorkspaceAllocation::new(
+                Identity::new([identity_byte; 32]),
+                requirements.allocation_byte_len(),
+                requirements.allocation_alignment(),
+            ),
+            requirements.ranges().to_vec().into_boxed_slice(),
+        ));
+        match plan_addressless_m1_step_workspace(selection, available) {
+            M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+            M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+        }
+    }
+
+    fn paired_prefill_batch(request: RequestId) -> M1ServingBatchPlanV1 {
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let mut registry = M1ServingRegistryV1::<8>::new().expect("construct test registry");
+        registry
+            .admit(request, plan)
+            .expect("admit paired-prefill request");
+        registry
+            .plan_next()
+            .expect("plan test roster")
+            .expect("paired-prefill roster is ready")
+    }
+
+    fn paired_prefill_new_window_input(
+        batch: &M1ServingBatchPlanV1,
+    ) -> M1ServingQueuedPairedPrefillNewWindowV1 {
+        let [request] = batch.requests() else {
+            panic!("test batch must contain one request")
+        };
+        let prompt = [11, 12, 13];
+        let preparation_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(batch.plan().draft(), 81),
+            workspace_plan(batch.plan().target(), 82),
+        );
+        let recipe_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(batch.plan().draft(), 81),
+            workspace_plan(batch.plan().target(), 82),
+        );
+        M1ServingQueuedPairedPrefillNewWindowV1::new(
+            M1ServingQueuedGenerationBindingV1::new(
+                batch.plan(),
+                vec![*request].into_boxed_slice(),
+                batch.epoch(),
+            ),
+            prefill_inputs(*request, &prompt, Qwen3ModelRole::Draft06B),
+            prefill_inputs(*request, &prompt, Qwen3ModelRole::Target8B),
+            preparation_plans,
+            recipe_plans,
+        )
     }
 
     #[test]
@@ -1589,5 +1845,39 @@ mod tests {
         assert_eq!(provider.pending_generation_count(), 0);
         assert_eq!(provider.next_generation_phase(), None);
         assert!(provider.into_pending_inputs().is_empty());
+    }
+
+    #[test]
+    fn rejected_new_window_preflight_leaves_exact_provider_entry_dequeueable() {
+        let request = RequestId::new(0, 1);
+        let substituted = RequestId::new(1, 1);
+        let batch = paired_prefill_batch(request);
+        let wrong_batch = paired_prefill_batch(substituted);
+        let input = paired_prefill_new_window_input(&batch);
+        let mut provider = M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![
+            M1ServingQueuedGenerationInputV1::paired_prefill_new_window(input),
+        ]);
+
+        assert!(!provider.preflight_paired_prefill_new_window(&wrong_batch));
+        assert!(provider
+            .paired_prefill_new_window_input(&wrong_batch)
+            .is_none());
+        assert!(provider
+            .take_paired_prefill_new_window(&wrong_batch)
+            .is_none());
+        assert_eq!(provider.pending_generation_count(), 1);
+        assert_eq!(
+            provider.next_generation_phase(),
+            Some(M1ServingQueuedGenerationPhaseV1::PairedPrefillNewWindow)
+        );
+
+        let retained = provider
+            .paired_prefill_new_window_input(&batch)
+            .expect("rejected borrowed preflight must leave exact input in place");
+        assert!(retained
+            .binding()
+            .matches(batch.plan(), batch.requests(), batch.epoch()));
+        assert!(provider.take_paired_prefill_new_window(&batch).is_some());
+        assert_eq!(provider.pending_generation_count(), 0);
     }
 }

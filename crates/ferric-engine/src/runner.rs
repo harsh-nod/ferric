@@ -460,6 +460,12 @@ impl M1PhysicalRunnerV1 {
         self.source.with_program_catalog(use_catalog)
     }
 
+    pub(crate) fn content_bound_program_catalog_v1(
+        &self,
+    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+        self.source.content_bound_program_catalog_v1()
+    }
+
     /// Derives the complete addressless physical recipe for one admitted step.
     ///
     /// Every rejection variant retains all linear structural inputs consumed up
