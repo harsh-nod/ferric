@@ -2,7 +2,7 @@
 
 `proofs/m1/evidence/validate-qualification-receipt.py` implements protocol
 `ferric.m1-validator.qualification-receipt.v1`. Its reviewed source SHA-256 is
-`cf2f043001815f06220dbf03a8131a3931c01b4c8b96681ed07e626374b36612`.
+`d1961fd1a8d1662445a7111d3d1cae69087093088d346c81d8af154765496751`.
 The production evidence-index checker owns the path, protocol, and source pin;
 an evidence index cannot select or substitute an executable.
 
