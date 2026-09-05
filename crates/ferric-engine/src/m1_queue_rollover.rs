@@ -524,6 +524,10 @@ impl M1ScheduledTargetDecodeQueueRolloverV1 {
 
     /// Destroys the detached predecessor while retaining all scheduled and KV
     /// custody. The legacy closure type is shape-generic despite its S1/K4 name.
+    ///
+    /// # Errors
+    ///
+    /// Returns lower release quarantine joined to every retained owner.
     pub fn destroy_queue_and_retain_round<const C: usize>(
         self,
         engine: &mut Engine<C>,
