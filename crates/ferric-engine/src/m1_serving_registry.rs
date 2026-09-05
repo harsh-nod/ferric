@@ -447,7 +447,7 @@ impl M1ServingNewWindowPublicationReservationV1 {
             quiescence: M1ServingQuiescenceV1::Completed(completion_epoch),
         } = entry.phase
         else {
-            debug_assert!(false, "new-window predecessor was preflighted as completed");
+            debug_assert!(false);
             return None;
         };
         Some(M1ServingCompletedWindowMemberV1 {
