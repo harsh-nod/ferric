@@ -215,29 +215,23 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Join the current stack and rerun the aggregate</h2>
+            <h2 id="next-title">Finish the current aggregate and runtime join</h2>
           </div>
           <p>
             Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c supplies reusable compiler,
             runtime, KFD, and generic verification transport. Compiler, runtime, KFD, and generic transport
-            work stays in fe2o3; Ferric owns all Qwen kernels, inference, and Ferric-specific policy. Public
-            fe2o3 commits b4f600a and ce44dc0 add checked component projection and LLVM 22 Worker compatibility;
-            1167b9c and 5f46dd2 add exact connected-path Worker V3 V2 admission and bounded service queue waits.
-            Ferric checkpoint 9431cb4 is public on feature branch origin/codex/fe2o3-current-main-repin-v1,
-            but is not on main or final and still pins historical fe2o3 b2cce9c. Local Ferric integration
-            5122228, policy 829eb98, selector e18eb0e, physical-new-window proof a18de34, and
-            variable-cardinality planner c3fe1f0 plus direct data-index c72c2a8 are unpublished, non-final
-            candidates. Exact policy v5 for 829eb98 on fe2o3 ce44dc0 terminated status 0 with all quality gates
-            passed over 656 files. Closure SHA-256 is d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714;
-            receipt SHA-256 is 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641.
-            That scoped local receipt does not qualify a future combined or 5f46dd2 tree and closes no M1 gate.
-            Ferric source contains GEMM reductions 720c9bc and SwiGLU checked indices ff2ca04. Historical local
-            aggregate reruns using public fe2o3 source progressed beyond SSA and storage, then stopped at the
-            b2cce9c DisjointBlockComponentIndex gap now implemented by public b4f600a; these were not published
-            Ferric results. No exact current 5f46dd2 aggregate rerun or HSACO exists. Planner c3fe1f0 and direct
-            data-index c72c2a8 do not establish runtime variable-cardinality wiring or transition atomicity.
-            No combined current qualification exists. A deployed protected
-            profile and service socket are also absent. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
+            work stays in fe2o3; Ferric owns all Qwen kernels, inference, and Ferric-specific policy. Local Ferric
+            integration 7f4a251 pins every fe2o3 dependency to exact public 5f46dd2 and includes catalog binding
+            5b23a36, descriptor order e0e79fe, bounded authenticated queue waits e3cfc62, and caller-pinned
+            connected-path admission. Scoped remote checks at c29c52c pass 565 engine tests with 0 failures and 5
+            environment-gated ignores, a 162-module/7,533-body source gate, 28 source-gate unit tests, and the bounded
+            hostile policy. Connected-path checks at 7f4a251 pass 82 adapter tests, 32 service tests, and both Clippy
+            gates with 3 intentional ignores. This is focused integration evidence, not a release qualification.
+            An exact aggregate compile has been executed and currently reaches Ferric prefill
+            overflow-proof work. Kernel implementation remains in progress and no aggregate HSACO was produced.
+            Connected-path deployment also remains in progress: no protected-verifier listener, supervisor, concrete checker, or signer
+            service exists. The integration is unpublished, non-final, and not release-qualified. A deployed protected
+            profile and service socket are absent. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
             endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>

@@ -14,8 +14,8 @@ const allowedStates = new Set([
 ]);
 const expectedCurrent = Object.freeze({
   siteRefreshBase: "0df27779047ccd8b9dadbd2973880e8d65559ba6",
-  integrationCommit: "9431cb4638401718b8085bcf258a390650c719ef",
-  integrationTree: "09c48165b19883aebbebd2e77b827794cd039164",
+  integrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
+  integrationTree: "ca09f1c032a91919f7dbdc2706872a557dcd9c0f",
   ferricCheckpointCommit: "9431cb4638401718b8085bcf258a390650c719ef",
   ferricCheckpointTree: "09c48165b19883aebbebd2e77b827794cd039164",
   ferricFeatureBranch: "origin/codex/fe2o3-current-main-repin-v1",
@@ -44,7 +44,7 @@ const expectedCurrent = Object.freeze({
   fe2o3ConnectedPathTransportCommit: "1167b9cfeb28d36ede1ca5ad5f2a71cb5a8719ee",
   fe2o3BoundedQueueWaitCommit: "5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
   fe2o3GuardedSubtractionCommit: "e745bc75c",
-  fe2o3CompilerCandidateStatus: "public-main-not-yet-consumed-by-public-ferric-checkpoint",
+  fe2o3CompilerCandidateStatus: "public-main-consumed-by-local-ferric-integration",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -55,14 +55,13 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
   engineeringAggregateAttemptOuterExitCode: 1,
-  engineeringAggregateAttemptBoundary:
-    "historical-disjoint-block-component-index-gap-fixed-upstream-no-current-rerun",
+  engineeringAggregateAttemptBoundary: "current-prefill-overflow-proof-work-before-hsaco",
   engineeringAggregateAttemptConnectCount: 0,
   engineeringAggregateAttemptOutputCount: 0,
   engineeringAggregateAttemptStatus:
-    "historical-local-attempt-using-public-b2-source-stopped-before-worker-upstream-gap-now-fixed-no-current-result",
-  followupProofFixStatus: "public-fe2o3-fix-available-ferric-repin-and-rerun-in-progress",
-  fe2o3CurrentnessStatus: "public-main-5f46dd2-public-ferric-checkpoint-still-pins-b2cce9c",
+    "exact-5f-aggregate-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
+  followupProofFixStatus: "ferric-prefill-overflow-proof-work-in-progress",
+  fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-7f4a251",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -101,9 +100,32 @@ const expectedCurrent = Object.freeze({
   supervisedR33WireCommit: "66b8547ab7ce1572d29557d2e9c16d58b2b6f41f",
   supervisedR33WireTree: "8e7348bcd1b99cffa488da44a77813e44bbb3bc7",
   supervisedR33WireStatus: "public-feature-branch-authority-free-no-serving",
-  localIntegrationCandidate: "51222286a76be0e5e85c90232d0451cd30bfa930",
+  localIntegrationCandidate: "7f4a251707d2b0d8811184533b1d8f805a745726",
   localIntegrationCandidateStatus:
-    "local-unpublished-non-final-focused-checks-only-no-combined-qualification",
+    "local-unpublished-non-final-latest-fe2-integration-no-release-qualification",
+  localBoundedQueueWaitCandidate: "9f3618bba902b6e5468ea017e1fdef826f89f130",
+  localBoundedQueueWaitCandidateStatus:
+    "local-focused-qualified-integrated-as-e3cfc62-in-7f4a251-stack",
+  catalogBindingIntegrationCommit: "5b23a36c04057850fa3382db05e2eff905f41213",
+  descriptorOrderIntegrationCommit: "e0e79fe9980a5a302a8b2bd18eef0f9e13161a3c",
+  boundedQueueWaitIntegrationCommit: "e3cfc62e14d0ac35a6b48e6e754e5165f8cb0b68",
+  combinedPolicyIntegrationCommit: "c29c52cf5e05e298bf9b52af204d0881e7fa3cdf",
+  connectedPathIntegrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
+  combinedEngineTestsPassed: 565,
+  combinedEngineTestsFailed: 0,
+  combinedEngineEnvGatedIgnored: 5,
+  combinedSourceGateModules: 162,
+  combinedSourceGateBodies: 7533,
+  combinedSourceGateTestsPassed: 28,
+  combinedSourceGateTestsFailed: 0,
+  boundedWaitHostilePolicyStatus: "pass",
+  connectedPathAdapterTestsPassed: 82,
+  connectedPathServiceTestsPassed: 32,
+  connectedPathIntentionalIgnores: 3,
+  connectedPathAdapterClippyStatus: "pass",
+  connectedPathServiceClippyStatus: "pass",
+  protectedDeploymentStatus:
+    "open-no-protected-verifier-listener-supervisor-concrete-checker-or-signer-service",
   localPolicyCandidate: "829eb98ba11c645958ef762a01da4c81c4bf795b",
   localPolicyCandidateStatus:
     "local-unpublished-non-final-v5-qualified-exact-829-on-ce44-only-no-combined-or-m1-authority",
@@ -132,7 +154,7 @@ const expectedCurrent = Object.freeze({
   priorAggregateStorageObserved: 3188438,
   priorAggregateStorageLimit: 2097152,
   aggregateRerunStatus:
-    "historical-local-rerun-using-public-b2-source-stopped-at-component-index-expansion-upstream-fix-now-public-no-current-result",
+    "exact-5f-compile-executed-reaches-ferric-prefill-overflow-proof-work-no-hsaco",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -336,6 +358,30 @@ assertCommit(
   "current.supervisedR33WireTree",
 );
 assertCommit(project.current.localIntegrationCandidate, "current.localIntegrationCandidate");
+assertCommit(
+  project.current.localBoundedQueueWaitCandidate,
+  "current.localBoundedQueueWaitCandidate",
+);
+assertCommit(
+  project.current.catalogBindingIntegrationCommit,
+  "current.catalogBindingIntegrationCommit",
+);
+assertCommit(
+  project.current.descriptorOrderIntegrationCommit,
+  "current.descriptorOrderIntegrationCommit",
+);
+assertCommit(
+  project.current.boundedQueueWaitIntegrationCommit,
+  "current.boundedQueueWaitIntegrationCommit",
+);
+assertCommit(
+  project.current.combinedPolicyIntegrationCommit,
+  "current.combinedPolicyIntegrationCommit",
+);
+assertCommit(
+  project.current.connectedPathIntegrationCommit,
+  "current.connectedPathIntegrationCommit",
+);
 assertCommit(project.current.localPolicyCandidate, "current.localPolicyCandidate");
 assertCommit(project.current.localSelectorCandidate, "current.localSelectorCandidate");
 assertCommit(
@@ -377,8 +423,8 @@ assert(
       expectedCurrent.fe2o3Llvm22WorkerSwitchCommit &&
     project.current.fe2o3LatestMain !== project.current.fe2o3CompilerQualificationBase &&
     project.current.fe2o3CompilerCandidateStatus ===
-      "public-main-not-yet-consumed-by-public-ferric-checkpoint",
-  "latest public fe2o3 main must remain distinct from the local Ferric policy qualification base",
+      "public-main-consumed-by-local-ferric-integration",
+  "latest public fe2o3 main must be consumed locally and remain distinct from the older policy base",
 );
 assertState(project.milestone.state, "milestone");
 
@@ -392,8 +438,8 @@ const expectedEnvelopeTerms = [
   "Pages refresh base",
   "Ferric implementation checkpoint",
   "fe2o3 public main",
-  "Local Ferric candidates",
-  "Local qualification",
+  "Local Ferric integration",
+  "Local validation",
   "Speculative executor",
   "Engineering aggregate loader",
   "Engineering aggregate output",
@@ -459,39 +505,35 @@ assert(
   "envelope must expose the durable Ferric and fe2o3 checkpoints without current authority",
 );
 assert(
-  envelope.get("Local Ferric candidates")?.includes(expectedCurrent.localIntegrationCandidate) &&
-    envelope.get("Local Ferric candidates")?.includes(expectedCurrent.localPolicyCandidate) &&
-    envelope.get("Local Ferric candidates")?.includes(expectedCurrent.localSelectorCandidate) &&
+  envelope.get("Local Ferric integration")?.includes(expectedCurrent.localIntegrationCandidate) &&
+    envelope.get("Local Ferric integration")?.includes(expectedCurrent.integrationTree) &&
     envelope
-      .get("Local Ferric candidates")
-      ?.includes(expectedCurrent.localPhysicalNewWindowProofCandidate) &&
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.localBoundedQueueWaitCandidate.slice(0, 7)) &&
     envelope
-      .get("Local Ferric candidates")
-      ?.includes(expectedCurrent.localVariableCardinalityPlannerCandidate) &&
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.catalogBindingIntegrationCommit.slice(0, 7)) &&
     envelope
-      .get("Local Ferric candidates")
-      ?.includes(expectedCurrent.localDirectDataIndexCandidate) &&
-    envelope.get("Local Ferric candidates")?.includes("local, unpublished, non-final") &&
-    envelope.get("Local Ferric candidates")?.includes("no current artifact, runtime, Qwen"),
-  "envelope must identify local Ferric candidates without public or runtime authority",
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.descriptorOrderIntegrationCommit.slice(0, 7)) &&
+    envelope
+      .get("Local Ferric integration")
+      ?.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
+    envelope.get("Local Ferric integration")?.includes("local, unpublished, non-final") &&
+    envelope.get("Local Ferric integration")?.includes("no current artifact, Qwen"),
+  "envelope must identify the local combined Ferric head without public or runtime authority",
 );
 assert(
-  envelope.get("Local qualification")?.includes("policy v5 terminal status 0") &&
-    envelope.get("Local qualification")?.includes(expectedCurrent.localPolicyCandidate.slice(0, 7)) &&
-    envelope.get("Local qualification")?.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
-    envelope.get("Local qualification")?.includes("all quality gates passed over 656 files") &&
-    envelope.get("Local qualification")?.includes(expectedCurrent.localPolicyClosureSha256) &&
-    envelope.get("Local qualification")?.includes(expectedCurrent.localPolicyReceiptSha256) &&
-    envelope.get("Local qualification")?.includes("does not qualify a future combined tree") &&
-    envelope.get("Local qualification")?.includes("latest public fe2o3 5f46dd2") &&
-    envelope.get("Local qualification")?.includes("closes no M1 gate") &&
-    envelope.get("Local qualification")?.includes(
-      expectedCurrent.localDirectDataIndexCandidate.slice(0, 7),
-    ) &&
-    envelope.get("Local qualification")?.includes(
-      "neither it nor direct data-index c72c2a8 establishes runtime variable-cardinality wiring or atomicity",
-    ),
-  "envelope must bind the exact scoped local qualification without combined or M1 authority",
+  envelope.get("Local validation")?.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    envelope.get("Local validation")?.includes("565 engine tests passed") &&
+    envelope.get("Local validation")?.includes("0 failed") &&
+    envelope.get("Local validation")?.includes("5 environment-gated ignored") &&
+    envelope.get("Local validation")?.includes("162 modules and 7,533 executable bodies") &&
+    envelope.get("Local validation")?.includes("28 passed and 0 failed") &&
+    envelope.get("Local validation")?.includes("bounded hostile policy PASS") &&
+    envelope.get("Local validation")?.includes("not a release qualification") &&
+    envelope.get("Local validation")?.includes("closed M1 gate"),
+  "envelope must bind exact combined validation evidence without release authority",
 );
 assert(
   envelope.get("Speculative executor")?.includes(
@@ -518,35 +560,21 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-    envelope.get("Engineering aggregate output")?.includes(
-      "one aggregate Worker V3 publication",
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes("12 K1-K7 entrypoints") &&
-    envelope.get("Engineering aggregate output")?.includes("440 exact profiles") &&
-    envelope.get("Engineering aggregate output")?.includes(
-      expectedCurrent.vectorGemmReductionCommit.slice(0, 7),
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes(
-      expectedCurrent.swigluCheckedBlockCommit.slice(0, 7),
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes(
-      "Historical local aggregate reruns using public fe2o3 source",
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes("not a published Ferric result") &&
-    envelope.get("Engineering aggregate output")?.includes(
-      expectedCurrent.fe2o3CheckedComponentProjectionCommit.slice(0, 7),
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes(
-      "now an ancestor of 5f46dd2",
-    ) &&
-    envelope.get("Engineering aggregate output")?.includes(
-      "No exact current 5f46dd2 aggregate rerun or HSACO",
-    ) &&
+    envelope
+      .get("Engineering aggregate output")
+      ?.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
+    envelope.get("Engineering aggregate output")?.includes("public fe2o3 5f46dd2") &&
+    envelope.get("Engineering aggregate output")?.includes("has been executed") &&
+    envelope
+      .get("Engineering aggregate output")
+      ?.includes("reaches Ferric prefill overflow-proof work") &&
+    envelope.get("Engineering aggregate output")?.includes("kernel work remains in progress") &&
+    envelope.get("Engineering aggregate output")?.includes("no aggregate Worker V3 HSACO") &&
     envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
     envelope.get("Engineering aggregate output")?.includes(
       "artifact authority, or execution authority",
     ),
-  "envelope must retain the current aggregate qualification and execution limits",
+  "envelope must expose the current aggregate compile boundary and execution limits",
 );
 assert(
   envelope.get("Aggregate device source")?.includes("12 Ferric-local Rust M1 kernel roots") &&
@@ -591,10 +619,13 @@ assert(
     envelope.get("Authenticated target rollover")?.includes(
       expectedCurrent.localIntegrationCandidate,
     ) &&
+    envelope
+      .get("Authenticated target rollover")
+      ?.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
     envelope.get("Authenticated target rollover")?.includes("exact-slot reincarnation") &&
     envelope.get("Authenticated target rollover")?.includes("unpublished, non-final") &&
-    envelope.get("Authenticated target rollover")?.includes("not combined-qualified") &&
-    envelope.get("Authenticated target rollover")?.includes("no Qwen, endpoint, or performance result"),
+    envelope.get("Authenticated target rollover")?.includes("release-qualified") &&
+    envelope.get("Authenticated target rollover")?.includes("evidence of Qwen"),
   "envelope must distinguish public rollover from the unpublished local engine candidate",
 );
 assert(
@@ -717,12 +748,13 @@ const producerReadiness = project.readiness.find(
   (item) => item.label === "fe2o3 engineering aggregate producer",
 );
 assert(
-  producerReadiness?.state === "integration" &&
+    producerReadiness?.state === "integration" &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
-    producerReadiness.detail.includes("Public Ferric feature-branch checkpoint 9431cb4") &&
-    producerReadiness.detail.includes("still consumes historical b2cce9c") &&
-    producerReadiness.detail.includes("not on main or final") &&
+    producerReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    producerReadiness.detail.includes("pins that exact revision") &&
+    producerReadiness.detail.includes("unpublished, non-final") &&
+    producerReadiness.detail.includes("without release qualification") &&
     producerReadiness.detail.includes("generic verification transport only") &&
     producerReadiness.detail.includes("Ferric owns model kernels, inference, and Ferric policy") &&
     producerReadiness.detail.includes(
@@ -731,18 +763,24 @@ assert(
   "fe2o3 producer must retain the current ownership, proof status, and downstream nonclaims",
 );
 const transportReadiness = project.readiness.find(
-  (item) => item.label === "Generic verifier transport and bounded queue waits",
+  (item) => item.label === "Ferric connected-path and bounded queue adoption",
 );
 assert(
-  transportReadiness?.state === "implemented" &&
+  transportReadiness?.state === "integration" &&
     transportReadiness.detail.includes(
       expectedCurrent.fe2o3ConnectedPathTransportCommit.slice(0, 7),
     ) &&
     transportReadiness.detail.includes(expectedCurrent.fe2o3BoundedQueueWaitCommit.slice(0, 7)) &&
-    transportReadiness.detail.includes("generic runtime capabilities only") &&
-    transportReadiness.detail.includes("has not yet published a protected deployment") &&
+    transportReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    transportReadiness.detail.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
+    transportReadiness.detail.includes("deployment remains in progress") &&
+    transportReadiness.detail.includes("caller-pinned client admission") &&
+    transportReadiness.detail.includes("accepted-endpoint service core") &&
+    transportReadiness.detail.includes(
+      "no protected-verifier listener, supervisor, concrete checker, or signer service",
+    ) &&
     transportReadiness.detail.includes("Qwen execution"),
-  "generic transport readiness must retain the repository and authority boundary",
+  "Ferric transport adoption must remain in progress without Qwen authority",
 );
 const plannerReadiness = project.readiness.find(
   (item) => item.label === "Variable-cardinality planner",
@@ -824,14 +862,14 @@ const qwenReadiness = project.readiness.find(
   (item) => item.label === "End-to-end Qwen through Ferric",
 );
 assert(
-  qwenReadiness?.state === "open" &&
+    qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("Real target and draft prepack inputs are verified") &&
-    qwenReadiness.detail.includes("generic checked component projection") &&
-    qwenReadiness.detail.includes("connected-path V2 transport") &&
-    qwenReadiness.detail.includes("bounded queue waits") &&
-    qwenReadiness.detail.includes("Ferric repin, aggregate rerun, protected deployment") &&
-    qwenReadiness.detail.includes("combined qualification remain in progress") &&
+    qwenReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    qwenReadiness.detail.includes("public fe2o3 5f46dd2") &&
+    qwenReadiness.detail.includes("prefill overflow-proof work") &&
+    qwenReadiness.detail.includes("connected-path deployment closure") &&
+    qwenReadiness.detail.includes("release qualification remain in progress") &&
     qwenReadiness.detail.includes("No aggregate HSACO") &&
     qwenReadiness.detail.includes("Qwen token") &&
     qwenReadiness.detail.includes("serving or HTTP endpoint") &&
@@ -1010,30 +1048,21 @@ const engineTeam = project.teams.find((team) => team.name === "Engine");
 const verificationTeam = project.teams.find((team) => team.name === "Verification");
 assert(
   integrationTeam.completed.includes(expectedCurrent.fe2o3LatestMain.slice(0, 7)) &&
-    integrationTeam.completed.includes(expectedCurrent.ferricCheckpointCommit.slice(0, 7)) &&
-    integrationTeam.completed.includes(expectedCurrent.ferricFeatureBranch) &&
     integrationTeam.completed.includes(
-      expectedCurrent.fe2o3CheckedComponentProjectionCommit.slice(0, 7),
+      expectedCurrent.catalogBindingIntegrationCommit.slice(0, 7),
     ) &&
     integrationTeam.completed.includes(
-      expectedCurrent.fe2o3ConnectedPathTransportCommit.slice(0, 7),
+      expectedCurrent.descriptorOrderIntegrationCommit.slice(0, 7),
     ) &&
+    integrationTeam.completed.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
     integrationTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    integrationTeam.current.includes(expectedCurrent.localPolicyCandidate.slice(0, 7)) &&
-    integrationTeam.current.includes(expectedCurrent.localSelectorCandidate.slice(0, 7)) &&
-    integrationTeam.current.includes(
-      expectedCurrent.localPhysicalNewWindowProofCandidate.slice(0, 7),
-    ) &&
-    integrationTeam.current.includes(
-      expectedCurrent.localVariableCardinalityPlannerCandidate.slice(0, 7),
-    ) &&
-    integrationTeam.current.includes(expectedCurrent.localDirectDataIndexCandidate.slice(0, 7)) &&
-    integrationTeam.current.includes("local unpublished/non-final") &&
-    integrationTeam.current.includes("receipt cover only exact 829eb98 on ce44dc0") &&
-    integrationTeam.current.includes("not a future combined or 5f46dd2 tree") &&
-    integrationTeam.current.includes("No combined current qualification") &&
-    integrationTeam.validation.includes("all newer Ferric candidates local, unpublished, non-final"),
-  "integration team must expose public upstream and public feature-branch Ferric checkpoints",
+    integrationTeam.current.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
+    integrationTeam.current.includes("local, unpublished/non-final") &&
+    integrationTeam.current.includes("565 engine tests") &&
+    integrationTeam.current.includes("82 adapter and 32 service tests") &&
+    integrationTeam.current.includes("No release qualification") &&
+    integrationTeam.validation.includes("7f4a251 local, unpublished, non-final"),
+  "integration team must expose the exact latest-fe2 and bounded-wait candidates",
 );
 assert(
   kernelTeam.status === "Making progress" &&
@@ -1042,10 +1071,11 @@ assert(
     kernelTeam.completed.includes(expectedCurrent.vectorGemmReductionCommit.slice(0, 7)) &&
     kernelTeam.completed.includes(expectedCurrent.swigluCheckedBlockCommit.slice(0, 7)) &&
     kernelTeam.completed.includes(expectedCurrent.fe2o3CheckedComponentProjectionCommit.slice(0, 7)) &&
-    kernelTeam.current.includes("first exact current aggregate rerun") &&
-    kernelTeam.current.includes("Historical local aggregate reruns using public source") &&
-    kernelTeam.current.includes("gap now fixed upstream") &&
-    kernelTeam.current.includes("not published Ferric results") &&
+    kernelTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    kernelTeam.current.includes("exact aggregate compile") &&
+    kernelTeam.current.includes("prefill overflow-proof work") &&
+    kernelTeam.current.includes("Kernel implementation remains in progress") &&
+    kernelTeam.current.includes("no aggregate HSACO") &&
     kernelTeam.blockedBy.includes("kernel team is making progress") &&
     kernelTeam.next.includes("without weakening authorization"),
   "kernel team must expose roster, artifact dependency, and ownership",
@@ -1056,38 +1086,31 @@ assert(
     engineTeam.completed.includes(expectedCurrent.healthyAllTerminalShutdownCommit.slice(0, 7)) &&
     engineTeam.completed.includes(expectedCurrent.supervisedR33WireCommit.slice(0, 7)) &&
     engineTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.localSelectorCandidate.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.localPhysicalNewWindowProofCandidate.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.localVariableCardinalityPlannerCandidate.slice(0, 7)) &&
-    engineTeam.current.includes(expectedCurrent.localDirectDataIndexCandidate.slice(0, 7)) &&
+    engineTeam.current.includes(expectedCurrent.boundedQueueWaitIntegrationCommit.slice(0, 7)) &&
     engineTeam.current.includes("Local unpublished/non-final") &&
-    engineTeam.current.includes("do not establish runtime variable-cardinality wiring or atomicity") &&
+    engineTeam.current.includes("Connected-path deployment remains in progress") &&
+    engineTeam.current.includes(
+      "protected-verifier listener, supervisor, concrete checker, and signer service are absent",
+    ) &&
     engineTeam.blockedBy.includes("engine team is making progress") &&
     engineTeam.blockedBy.includes("current aggregate HSACO") &&
-    engineTeam.next.includes("exercise protected transport with Ferric identities") &&
-    engineTeam.validation.includes("no combined qualification, hardware, serving, or comparison result"),
+    engineTeam.next.includes("Finish connected-path protected deployment") &&
+    engineTeam.validation.includes("no release qualification") &&
+    engineTeam.validation.includes("no release qualification, HSACO, hardware, serving, or comparison result"),
   "engine team must expose implemented runtime work and missing execution inputs",
 );
 assert(
     verificationTeam.completed.includes("756e813") &&
     verificationTeam.completed.includes("Draft06B=>1 same-source mutation") &&
     verificationTeam.completed.includes(expectedCurrent.daemonLifecycleProofCommit.slice(0, 7)) &&
-    verificationTeam.current.includes(expectedCurrent.localPolicyCandidate.slice(0, 7)) &&
-    verificationTeam.current.includes(
-      expectedCurrent.localPhysicalNewWindowProofCandidate.slice(0, 7),
-    ) &&
-    verificationTeam.current.includes(
-      expectedCurrent.localVariableCardinalityPlannerCandidate.slice(0, 7),
-    ) &&
-    verificationTeam.current.includes(expectedCurrent.localDirectDataIndexCandidate.slice(0, 7)) &&
-    verificationTeam.current.includes("Exact local policy v5") &&
-    verificationTeam.current.includes("status 0 with all quality gates passed over 656 files") &&
-    verificationTeam.current.includes(expectedCurrent.localPolicyClosureSha256.slice(0, 7)) &&
-    verificationTeam.current.includes(expectedCurrent.localPolicyReceiptSha256.slice(0, 7)) &&
-    verificationTeam.current.includes("does not qualify a future combined or 5f46dd2 tree") &&
-    verificationTeam.current.includes("prove runtime atomicity") &&
-    verificationTeam.validation.includes("policy v5 status 0 with all quality gates passed") &&
-    verificationTeam.validation.includes("future combined/5f46dd2 qualification open"),
+    verificationTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
+    verificationTeam.current.includes(expectedCurrent.combinedPolicyIntegrationCommit.slice(0, 7)) &&
+    verificationTeam.current.includes("162-module, 7,533-body source inventory") &&
+    verificationTeam.current.includes("Source-gate unit tests pass 28/28") &&
+    verificationTeam.current.includes("connected-path adapter and service tests pass") &&
+    verificationTeam.current.includes("No release receipt") &&
+    verificationTeam.validation.includes("7f4a251 connected-path tests and Clippy PASS") &&
+    verificationTeam.validation.includes("release qualification open"),
   "verification team must expose integrated proof work and the open final receipt",
 );
 
@@ -1119,6 +1142,15 @@ historicalPinEntries.forEach((item) => {
 assert(
   progressCommits.has(expectedCurrent.ferricCheckpointCommit),
   "recent progress must include the durable Ferric checkpoint",
+);
+assert(
+  progressCommits.has(expectedCurrent.localIntegrationCandidate) &&
+    progressCommits.has(expectedCurrent.localBoundedQueueWaitCandidate) &&
+    progressCommits.has(expectedCurrent.catalogBindingIntegrationCommit) &&
+    progressCommits.has(expectedCurrent.descriptorOrderIntegrationCommit) &&
+    progressCommits.has(expectedCurrent.boundedQueueWaitIntegrationCommit) &&
+    progressCommits.has(expectedCurrent.combinedPolicyIntegrationCommit),
+  "recent progress must include the latest-fe2 integration and its bounded component commits",
 );
 assert(
   progressCommits.has(expectedCurrent.implementationCommit),
@@ -1264,21 +1296,18 @@ for (const claim of [
   "Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
   "Compiler, runtime, KFD, and generic transport work stays in fe2o3",
   "Ferric owns all Qwen kernels, inference, and Ferric-specific policy",
-  "commits b4f600a and ce44dc0 add checked component projection and LLVM 22 Worker compatibility",
-  "1167b9c and 5f46dd2 add exact connected-path Worker V3 V2 admission and bounded service queue waits",
-  "Ferric checkpoint 9431cb4 is public on feature branch origin/codex/fe2o3-current-main-repin-v1, but is not on main or final",
-  "still pins historical fe2o3 b2cce9c",
-  "Local Ferric integration 5122228, policy 829eb98, selector e18eb0e, physical-new-window proof a18de34, and variable-cardinality planner c3fe1f0 plus direct data-index c72c2a8 are unpublished, non-final candidates",
-  "Exact policy v5 for 829eb98 on fe2o3 ce44dc0 terminated status 0 with all quality gates passed over 656 files",
-  "Closure SHA-256 is d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714",
-  "receipt SHA-256 is 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641",
-  "scoped local receipt does not qualify a future combined or 5f46dd2 tree and closes no M1 gate",
-  "Ferric source contains GEMM reductions 720c9bc and SwiGLU checked indices ff2ca04",
-  "Historical local aggregate reruns using public fe2o3 source progressed beyond SSA and storage",
-  "these were not published Ferric results",
-  "No exact current 5f46dd2 aggregate rerun or HSACO exists",
-  "do not establish runtime variable-cardinality wiring or transition atomicity",
-  "No combined current qualification exists",
+  "Local Ferric integration 7f4a251 pins every fe2o3 dependency to exact public 5f46dd2",
+  "catalog binding 5b23a36, descriptor order e0e79fe, bounded authenticated queue waits e3cfc62",
+  "caller-pinned connected-path admission",
+  "Scoped remote checks at c29c52c pass 565 engine tests with 0 failures and 5 environment-gated ignores",
+  "162-module/7,533-body source gate, 28 source-gate unit tests, and the bounded hostile policy",
+  "Connected-path checks at 7f4a251 pass 82 adapter tests, 32 service tests, and both Clippy gates with 3 intentional ignores",
+  "focused integration evidence, not a release qualification",
+  "An exact aggregate compile has been executed and currently reaches Ferric prefill overflow-proof work",
+  "Kernel implementation remains in progress and no aggregate HSACO was produced",
+  "Connected-path deployment also remains in progress",
+  "no protected-verifier listener, supervisor, concrete checker, or signer service exists",
+  "integration is unpublished, non-final, and not release-qualified",
   "deployed protected profile and service socket",
   "No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint",
   "All 33 M1 gates remain open",
@@ -1380,6 +1409,7 @@ assert(
     dataSource.includes(expectedCurrent.fe2o3ConnectedPathTransportCommit) &&
     dataSource.includes(expectedCurrent.fe2o3BoundedQueueWaitCommit) &&
     dataSource.includes(expectedCurrent.localIntegrationCandidate) &&
+    dataSource.includes(expectedCurrent.localBoundedQueueWaitCandidate) &&
     dataSource.includes(expectedCurrent.localPolicyCandidate) &&
     dataSource.includes(expectedCurrent.localSelectorCandidate) &&
     dataSource.includes(expectedCurrent.localPhysicalNewWindowProofCandidate) &&
@@ -1387,11 +1417,11 @@ assert(
     dataSource.includes(expectedCurrent.localDirectDataIndexCandidate) &&
     dataSource.includes(expectedCurrent.vectorGemmReductionCommit) &&
     dataSource.includes("local, unpublished, non-final") &&
-    dataSource.includes("policy v5 terminal status 0") &&
+    dataSource.includes("policy v5 for unpublished 829eb98 on ce44dc0") &&
     dataSource.includes("all quality gates passed over 656 files") &&
     dataSource.includes(expectedCurrent.localPolicyClosureSha256) &&
     dataSource.includes(expectedCurrent.localPolicyReceiptSha256) &&
-    dataSource.includes("does not qualify a future combined tree") &&
+    dataSource.includes("does not qualify a future combined or 5f46dd2 tree") &&
     dataSource.includes("closes no M1 gate") &&
     dataSource.includes("5/5 Rust arithmetic tests") &&
     dataSource.includes("1 function / 33 details / 0 errors") &&
@@ -1399,9 +1429,11 @@ assert(
     dataSource.includes("162 modules / 7,526 bodies") &&
     dataSource.includes("runtime variable-cardinality wiring") &&
     dataSource.includes("transition atomicity") &&
-    dataSource.includes("Historical local aggregate reruns using public fe2o3 source") &&
-    dataSource.includes("not a published Ferric result") &&
-    dataSource.includes("No exact current 5f46dd2 aggregate rerun or HSACO") &&
+    dataSource.includes("has been executed and currently reaches Ferric prefill overflow-proof work") &&
+    dataSource.includes("reaches Ferric prefill overflow-proof work") &&
+    dataSource.includes("Kernel implementation remains in progress") &&
+    dataSource.includes("Ferric connected-path deployment remains in progress") &&
+    dataSource.includes("no aggregate Worker V3 HSACO") &&
     dataSource.includes("integrates the independent, authority-free R33 daemon lifecycle proof at 3f5b498") &&
     dataSource.includes("authority-free supervised R33 wire foundation at 66b8547") &&
     dataSource.includes("Four exact positive rows verify") &&
