@@ -1640,7 +1640,7 @@ def prepare(ferric_argument: str, fe2o3_argument: str, output_argument: str) -> 
         )
     allocation_sha256 = digest_bytes(allocation_tsv(slots))
     expected_allocation = (
-        "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
+        "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
     )
     if allocation_sha256 != expected_allocation:
         fail(

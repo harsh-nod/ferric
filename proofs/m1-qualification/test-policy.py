@@ -794,7 +794,7 @@ def main() -> None:
     ]:
         fail("M1 binding slot IDs are not stable and sequential")
     expected_allocation = (
-        "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
+        "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
     )
     actual_allocation = planner.digest_bytes(planner.allocation_tsv(first))
     if actual_allocation != expected_allocation:
@@ -802,6 +802,51 @@ def main() -> None:
             "M1 binding allocation golden identity drifted "
             f"(expected={expected_allocation}, actual={actual_allocation})"
         )
+    model_bundle = [
+        slot
+        for slot in assurance
+        if slot["binding"]["obligation_id"] == "model_bundle_well_formed"
+    ]
+    model_bundle_topology = [
+        (
+            slot["binding"]["profile_id"],
+            slot["binding"]["evidence_kind"],
+            slot["binding"]["path_id"],
+            tuple(slot["foundation_selectors"]),
+        )
+        for slot in model_bundle
+    ]
+    if model_bundle_topology != [
+        (
+            "admission",
+            "negative-mutation",
+            "model-bundle-proof",
+            ("model-bundle-record-binding",),
+        ),
+        (
+            "admission",
+            "verus-theorem",
+            "model-bundle-proof",
+            ("model-bundle-composition",),
+        ),
+        (
+            "authentication",
+            "negative-mutation",
+            "weight-stream",
+            ("canonical-weight-role-byte",),
+        ),
+        ("admission", "artifact-identity", "bundle-auth", ()),
+        ("admission", "canonical-structure-check", "bundle-parser", ()),
+        ("authentication", "artifact-identity", "model-admission", ()),
+        (
+            "authentication",
+            "canonical-structure-check",
+            "tokenizer-admission",
+            (),
+        ),
+        ("authentication", "independent-validator", "bundle-auth", ()),
+    ]:
+        fail("model_bundle_well_formed allocation topology drifted")
     graph = [
         slot
         for slot in assurance
@@ -859,6 +904,7 @@ def main() -> None:
         "036a350d44c964bd96c44328087d541db7116452093ed9067987fa8497e57258"
     ):
         fail("M1 artifact-identity binding ID roster drifted")
+    identity_rows = []
     for slot in identity_slots:
         binding = slot["binding"]
         artifact_id = binding["artifact_id"]
@@ -880,6 +926,25 @@ def main() -> None:
             "path": f"artifacts/{artifact_id}.artifact-identity.json",
         }:
             fail(f"M1 artifact-identity producer command drifted: {binding['id']}")
+        identity_rows.append(
+            "|".join(
+                [
+                    binding["id"],
+                    binding["obligation_class"],
+                    binding["obligation_id"],
+                    binding["profile_id"],
+                    binding["path_id"],
+                    binding["source_identity_id"],
+                    artifact_id,
+                    f"artifacts/{artifact_id}.artifact-identity.json",
+                ]
+            )
+            + "\n"
+        )
+    if planner.digest_bytes("".join(identity_rows).encode("ascii")) != (
+        "ffe2b806bb3f87f61c93546704daea19020338a0c2e935c17dea3f25ab017445"
+    ):
+        fail("M1 artifact-identity allocation topology drifted")
 
     canonical_slots = [
         slot
@@ -1163,7 +1228,7 @@ def main() -> None:
             + "\n"
         )
     if planner.digest_bytes("".join(independent_rows).encode("ascii")) != (
-        "440500fce0f0aebc108454b5d6b4b0dac2b03738643ef092b6b0fa639019d620"
+        "9f498e51a3dd5b0ab3576f27dcd8d584512fa4dd29859f2fb4e9c0c91edacd9e"
     ):
         fail("M1 independent-validator allocation topology drifted")
 

@@ -131,7 +131,7 @@ TRUSTED_VALIDATORS = {
     "qualification-receipt": (
         "proofs/m1/evidence/validate-qualification-receipt.py",
         "ferric.m1-validator.qualification-receipt.v1",
-        "450c1283df88c7c36ba7a6b43627a5f4dfce26535bec21b0b9568bc336ecd7e0",
+        "2196a5006e03accecdf49d420c7e6884257d26544d08944d5437e15cc85e9ad6",
     ),
     "tcb-report": (
         "proofs/m1/evidence/validate-tcb-report.py",

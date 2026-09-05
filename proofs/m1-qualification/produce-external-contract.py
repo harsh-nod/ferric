@@ -54,7 +54,7 @@ EXTERNAL_CONTRACT_TSV_SHA256 = (
     "2b88b7e5fdac2bfaecff2f2eef8345b35b101d8185c24fa9fbb43ce1304caf99"
 )
 FERRIC_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
-ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
+ALLOCATION_SHA256 = "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
 TCB = (
     ("tcb.compiler", "Compiler"),
     ("tcb.hardware", "Hardware"),

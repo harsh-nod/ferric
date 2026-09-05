@@ -23,7 +23,7 @@ PLAN_NONCLAIM = (
     "This bundle allocates external M1 evidence work only. It is not an evidence "
     "index, qualification receipt, validation result, or M1 closure claim."
 )
-ALLOCATION_SHA256 = "948ad3023df7ad4b1313ed865b54464f63b6bad9406f1510c85e60f9db055bd6"
+ALLOCATION_SHA256 = "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
 INTAKE_FORMAT = "FERRIC-M1-QUALIFICATION-RUN-INTAKE-V1"
 INDEX_FORMAT = "ferric.m1-evidence-index.v1"
 REPORT_FORMAT = "FERRIC-M1-QUALIFICATION-RECEIPT-V1"
