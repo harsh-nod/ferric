@@ -129,12 +129,13 @@ pub fn qwen3_swiglu_bf16_f32_v1(
     }
 
     let workitem = thread::index_1d();
-    let base = workitem.get() * QWEN3_SWIGLU_ELEMENTS_PER_WORKITEM_V1;
     let Some(output_block) = workitem.checked_block::<1, 8>() else {
         fe2o3_device::trap();
     };
 
-    let index_0 = base;
+    let Some(index_0) = output_block.component_index(0) else {
+        fe2o3_device::trap();
+    };
     if index_0 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_0], up[index_0]);
         if !output.write_block(&output_block, 0, value) {
@@ -142,7 +143,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_1 = base + 1;
+    let Some(index_1) = output_block.component_index(1) else {
+        fe2o3_device::trap();
+    };
     if index_1 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_1], up[index_1]);
         if !output.write_block(&output_block, 1, value) {
@@ -150,7 +153,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_2 = base + 2;
+    let Some(index_2) = output_block.component_index(2) else {
+        fe2o3_device::trap();
+    };
     if index_2 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_2], up[index_2]);
         if !output.write_block(&output_block, 2, value) {
@@ -158,7 +163,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_3 = base + 3;
+    let Some(index_3) = output_block.component_index(3) else {
+        fe2o3_device::trap();
+    };
     if index_3 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_3], up[index_3]);
         if !output.write_block(&output_block, 3, value) {
@@ -166,7 +173,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_4 = base + 4;
+    let Some(index_4) = output_block.component_index(4) else {
+        fe2o3_device::trap();
+    };
     if index_4 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_4], up[index_4]);
         if !output.write_block(&output_block, 4, value) {
@@ -174,7 +183,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_5 = base + 5;
+    let Some(index_5) = output_block.component_index(5) else {
+        fe2o3_device::trap();
+    };
     if index_5 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_5], up[index_5]);
         if !output.write_block(&output_block, 5, value) {
@@ -182,7 +193,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_6 = base + 6;
+    let Some(index_6) = output_block.component_index(6) else {
+        fe2o3_device::trap();
+    };
     if index_6 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_6], up[index_6]);
         if !output.write_block(&output_block, 6, value) {
@@ -190,7 +203,9 @@ pub fn qwen3_swiglu_bf16_f32_v1(
         }
     }
 
-    let index_7 = base + 7;
+    let Some(index_7) = output_block.component_index(7) else {
+        fe2o3_device::trap();
+    };
     if index_7 < elements {
         let value = qwen3_swiglu_element_v1!(gate[index_7], up[index_7]);
         if !output.write_block(&output_block, 7, value) {
