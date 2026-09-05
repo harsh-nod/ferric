@@ -2605,6 +2605,7 @@ pub fn prepare_m1_long_lived_queue_rearm_v1<const C: usize>(
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1LongLivedQueueRearmSubmissionPhaseV1 {
     Preflight,
+    RequestReplacement,
     DraftWorkspaceReplacement,
     TargetWorkspaceReplacement,
     DirectDiagnosticChoiceReplacement,
@@ -11134,9 +11135,77 @@ pub fn submit_m1_finite_speculative_queue_rollover_v1<'a, const C: usize>(
 /// This check runs while both the released queue and provider input remain in
 /// their original owners. Success is the explicit commit permit: every later
 /// rejection is terminal and retains the consumed owners.
+fn m1_new_window_request_is_exact_successor_v1(
+    predecessor: RequestId,
+    replacement: RequestId,
+) -> bool {
+    predecessor.slot() == replacement.slot()
+        && predecessor.generation().checked_add(1) == Some(replacement.generation())
+}
+
+#[cfg(test)]
+fn m1_new_window_roster_is_exact_successor_v1(
+    predecessors: impl ExactSizeIterator<Item = RequestId>,
+    replacements: impl ExactSizeIterator<Item = RequestId>,
+) -> bool {
+    predecessors.len() == replacements.len()
+        && predecessors
+            .zip(replacements)
+            .all(|(predecessor, replacement)| {
+                m1_new_window_request_is_exact_successor_v1(predecessor, replacement)
+            })
+}
+
+fn m1_new_window_terminal_predecessor_set_matches_v1<I, J>(
+    current: I,
+    lineage: J,
+    replacements: &[RequestId],
+) -> bool
+where
+    I: Clone + ExactSizeIterator<Item = RequestId>,
+    J: Clone + ExactSizeIterator<Item = RequestId>,
+{
+    if replacements.is_empty()
+        || !current.clone().all(|predecessor| {
+            replacements.iter().copied().any(|replacement| {
+                m1_new_window_request_is_exact_successor_v1(predecessor, replacement)
+            })
+        })
+    {
+        return false;
+    }
+    replacements
+        .iter()
+        .copied()
+        .enumerate()
+        .all(|(lane, replacement)| {
+            let Some(predecessor_generation) = replacement.generation().checked_sub(1) else {
+                return false;
+            };
+            if predecessor_generation == 0
+                || replacements[..lane]
+                    .iter()
+                    .any(|prior| prior.slot() == replacement.slot())
+            {
+                return false;
+            }
+            let predecessor = RequestId::new(replacement.slot(), predecessor_generation);
+            let current_matches = current
+                .clone()
+                .filter(|member| *member == predecessor)
+                .count();
+            let lineage_matches = lineage
+                .clone()
+                .filter(|member| *member == predecessor)
+                .count();
+            current_matches + lineage_matches == 1
+        })
+}
+
 pub(crate) fn preflight_m1_all_terminal_paired_prefill_new_window_v1<const C: usize>(
     engine: &Engine<C>,
     released: &M1LongLivedQueueReleasedRoundV1,
+    runner: &LogicalRunnerDeclaration,
     prior: M1ServingPlanV1,
     next: M1ServingPlanV1,
     batch: &M1ServingBatchPlanV1,
@@ -11178,23 +11247,34 @@ pub(crate) fn preflight_m1_all_terminal_paired_prefill_new_window_v1<const C: us
             .members()
             .iter()
             .all(|member| matches!(member, M1ReleasedDeviceKvMemberV1::Terminal(_)))
-        && current.members().iter().all(|member| {
-            !batch
-                .requests()
+        && m1_new_window_terminal_predecessor_set_matches_v1(
+            current
+                .members()
                 .iter()
-                .any(|request| request.slot() == member.request().slot())
-        })
+                .map(M1ReleasedDeviceKvMemberV1::request),
+            released.terminal.iter().map(|member| member.request()),
+            batch.requests(),
+        )
         && engine.live_count() == batch.requests().len()
+        && batch.requests().iter().copied().all(|replacement| {
+            replacement
+                .generation()
+                .checked_sub(1)
+                .is_some_and(|generation| {
+                    generation != 0
+                        && engine.state(RequestId::new(replacement.slot(), generation))
+                            == Some(RequestState::Retiring)
+                })
+        })
         && batch
             .requests()
             .iter()
             .copied()
             .enumerate()
             .all(|(lane, request)| {
-                engine.state(request) == Some(RequestState::Ready)
-                    && batch.requests()[..lane]
-                        .iter()
-                        .all(|prior| prior.slot() != request.slot())
+                batch.requests()[..lane]
+                    .iter()
+                    .all(|prior| prior.slot() != request.slot())
             })
         && current
             .queue()
@@ -11217,6 +11297,7 @@ pub(crate) fn preflight_m1_all_terminal_paired_prefill_new_window_v1<const C: us
             )
             .is_ok()
         && input.physical_inputs_match(batch)
+        && input.logical_runner_plan_identities_match(runner)
 }
 
 struct M1NewWindowRetainedCustodyV1<T>(T);
@@ -11255,7 +11336,13 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
     batch: &M1ServingBatchPlanV1,
 ) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
     if !preflight_m1_all_terminal_paired_prefill_new_window_v1(
-        engine, &released, prior, next, batch, &input,
+        engine,
+        &released,
+        runner.logical_runner(),
+        prior,
+        next,
+        batch,
+        &input,
     ) || catalog.catalog_id() != released.current_released().queue().custody().catalog_id()
     {
         return Err(new_window_submission_failure(
@@ -11348,6 +11435,7 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
     let mut target_page_leases = Vec::new();
     let mut workspace_ranges = Vec::new();
     let mut terminal_lineage = Vec::new();
+    let mut replaced_lanes = Vec::new();
     if selected.try_reserve_exact(batch.requests().len()).is_err()
         || draft_reservations
             .try_reserve_exact(batch.requests().len())
@@ -11367,6 +11455,9 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
         || terminal_lineage
             .try_reserve_exact(terminal_lineage_capacity)
             .is_err()
+        || replaced_lanes
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
     {
         return Err(new_window_submission_failure(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
@@ -11385,9 +11476,11 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
                 target_page_leases,
                 workspace_ranges,
                 terminal_lineage,
+                replaced_lanes,
             ),
         ));
     }
+    replaced_lanes.resize(batch.requests().len(), false);
     for lane in 0..batch.requests().len() {
         let draft_pages = draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
         let target_pages = target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
@@ -11509,6 +11602,113 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
             ));
         }
     };
+
+    for replacement in 0..batch.requests().len() {
+        let reincarnated = engine.reincarnate_next_retiring();
+        let successor = match reincarnated {
+            Ok(successor) => successor,
+            reincarnated => {
+                return Err(new_window_submission_failure(
+                    M1LongLivedQueueRearmSubmissionPhaseV1::RequestReplacement,
+                    (
+                        queue,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        catalog,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        workspace_ranges,
+                        replacement,
+                        reincarnated,
+                    ),
+                ));
+            }
+        };
+        let Some(lane) = batch
+            .requests()
+            .iter()
+            .position(|requested| *requested == successor)
+        else {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::RequestReplacement,
+                (
+                    queue,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    workspace_ranges,
+                    replacement,
+                    successor,
+                ),
+            ));
+        };
+        if replaced_lanes[lane] {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::RequestReplacement,
+                (
+                    queue,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    workspace_ranges,
+                    replacement,
+                    successor,
+                    replaced_lanes,
+                ),
+            ));
+        }
+        let appended = engine.append_tentative(successor, 1);
+        if appended != Ok(()) {
+            return Err(new_window_submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::RequestReplacement,
+                (
+                    queue,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    catalog,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    workspace_ranges,
+                    lane,
+                    successor,
+                    appended,
+                ),
+            ));
+        }
+        replaced_lanes[lane] = true;
+    }
     let scheduled = match engine.dispatch_m1_exact_ready(batch.epoch(), batch.requests()) {
         Ok(scheduled) => scheduled,
         Err(error) => {
@@ -11560,8 +11760,11 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
 
     for lane in 0..batch.requests().len() {
         let request = batch.requests()[lane];
-        let mut cache = match ActiveDeviceKvCache::new(device, request, next.target(), next.draft())
-        {
+        let mut cache = match partitioned_memory.new_window_device_cache(
+            request,
+            next.target(),
+            next.draft(),
+        ) {
             Ok(cache) => cache,
             Err(error) => {
                 return Err(new_window_submission_failure(
@@ -12618,6 +12821,73 @@ mod tests {
         QueueObservation
     );
     new_window_committed_failure_test!(new_window_queue_submit_failure_is_closed, QueueSubmit);
+
+    #[test]
+    fn new_window_roster_requires_ordered_same_slot_exact_successors() {
+        let predecessors = [RequestId::new(2, 7), RequestId::new(5, 11)];
+        let replacements = [RequestId::new(2, 8), RequestId::new(5, 12)];
+        assert!(m1_new_window_roster_is_exact_successor_v1(
+            predecessors.into_iter(),
+            replacements.into_iter(),
+        ));
+
+        for hostile in [
+            [RequestId::new(3, 8), RequestId::new(5, 12)],
+            [RequestId::new(2, 7), RequestId::new(5, 12)],
+            [RequestId::new(2, 9), RequestId::new(5, 12)],
+            [RequestId::new(5, 12), RequestId::new(2, 8)],
+        ] {
+            assert!(!m1_new_window_roster_is_exact_successor_v1(
+                predecessors.into_iter(),
+                hostile.into_iter(),
+            ));
+        }
+        assert!(!m1_new_window_roster_is_exact_successor_v1(
+            predecessors.into_iter(),
+            [replacements[0]].into_iter(),
+        ));
+        assert!(!m1_new_window_request_is_exact_successor_v1(
+            RequestId::new(0, u32::MAX),
+            RequestId::new(0, 0),
+        ));
+    }
+
+    #[test]
+    fn new_window_predecessor_set_accepts_staggered_terminal_lineage() {
+        let current = [RequestId::new(5, 11)];
+        let prior_lineage = [RequestId::new(2, 7)];
+        let replacements = [RequestId::new(2, 8), RequestId::new(5, 12)];
+        assert!(m1_new_window_terminal_predecessor_set_matches_v1(
+            current.into_iter(),
+            prior_lineage.into_iter(),
+            &replacements,
+        ));
+        assert!(m1_new_window_terminal_predecessor_set_matches_v1(
+            prior_lineage.into_iter(),
+            current.into_iter(),
+            &replacements,
+        ));
+        assert!(m1_new_window_terminal_predecessor_set_matches_v1(
+            [RequestId::new(5, 12)].into_iter(),
+            [
+                RequestId::new(2, 7),
+                RequestId::new(5, 11),
+                RequestId::new(2, 8),
+            ]
+            .into_iter(),
+            &[RequestId::new(2, 9), RequestId::new(5, 13)],
+        ));
+        assert!(!m1_new_window_terminal_predecessor_set_matches_v1(
+            current.into_iter(),
+            [RequestId::new(3, 7)].into_iter(),
+            &replacements,
+        ));
+        assert!(!m1_new_window_terminal_predecessor_set_matches_v1(
+            current.into_iter(),
+            prior_lineage.into_iter(),
+            &[RequestId::new(2, 8), RequestId::new(2, 9)],
+        ));
+    }
 
     #[test]
     fn new_window_terminal_lineage_capacity_precedes_detach_and_fill_follows_submit() {

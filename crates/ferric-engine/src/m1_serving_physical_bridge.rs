@@ -182,6 +182,31 @@ pub trait M1ServingPhysicalOperationsV1 {
         Self::TerminalCustody,
         Self::Error,
     >;
+
+    /// Settles a speculative readback after registry and coordinator preflight.
+    ///
+    /// Implementations that must transition Engine members into retirement do
+    /// so here. Once that transition starts, any later rejection must be
+    /// terminal rather than returning apparently unchanged readback custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged readback only before physical mutation, or exhaustive
+    /// terminal custody after any retirement or settlement mutation.
+    fn settle_speculative_readback(
+        &mut self,
+        custody: Self::Readback,
+        permit: &M1SpeculativePreflightedRoundV1,
+        dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+    ) -> M1ServingPhysicalOperationResultV1<
+        Self::Quiescent,
+        Self::Readback,
+        Self::TerminalCustody,
+        Self::Error,
+    > {
+        let _ = permit;
+        self.settle_readback(custody, dispositions)
+    }
 }
 
 /// Exhaustive lower physical-operation failure custody.
@@ -957,37 +982,38 @@ impl<R> M1ServingPhysicalReadbackV1<R> {
             custody,
             batch,
         } = self;
-        let custody = match operations.settle_readback(custody, physical_dispositions) {
-            Ok(custody) => custody,
-            Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody }) => {
-                return Err(Box::new(M1ServingSpeculativeCompletionFailureV1 {
-                    error: M1ServingSpeculativeCompletionErrorV1::Operation(source),
-                    custody: M1ServingSpeculativeCompletionFailureCustodyV1::BeforeCommit {
-                        readback: M1ServingPhysicalReadbackV1 {
+        let custody =
+            match operations.settle_speculative_readback(custody, &permit, physical_dispositions) {
+                Ok(custody) => custody,
+                Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody }) => {
+                    return Err(Box::new(M1ServingSpeculativeCompletionFailureV1 {
+                        error: M1ServingSpeculativeCompletionErrorV1::Operation(source),
+                        custody: M1ServingSpeculativeCompletionFailureCustodyV1::BeforeCommit {
+                            readback: M1ServingPhysicalReadbackV1 {
+                                registry_identity,
+                                plan,
+                                epoch,
+                                custody,
+                                batch,
+                            },
+                            permit,
+                        },
+                    }));
+                }
+                Err(M1ServingPhysicalOperationFailureV1::Terminal { source, custody }) => {
+                    return Err(Box::new(M1ServingSpeculativeCompletionFailureV1 {
+                        error: M1ServingSpeculativeCompletionErrorV1::Operation(source),
+                        custody: M1ServingSpeculativeCompletionFailureCustodyV1::Terminal {
                             registry_identity,
                             plan,
                             epoch,
-                            custody,
                             batch,
+                            custody,
+                            permit,
                         },
-                        permit,
-                    },
-                }));
-            }
-            Err(M1ServingPhysicalOperationFailureV1::Terminal { source, custody }) => {
-                return Err(Box::new(M1ServingSpeculativeCompletionFailureV1 {
-                    error: M1ServingSpeculativeCompletionErrorV1::Operation(source),
-                    custody: M1ServingSpeculativeCompletionFailureCustodyV1::Terminal {
-                        registry_identity,
-                        plan,
-                        epoch,
-                        batch,
-                        custody,
-                        permit,
-                    },
-                }));
-            }
-        };
+                    }));
+                }
+            };
         let outcome = match coordinator.commit_preflighted_round(permit) {
             Ok(outcome) => outcome,
             Err(failure) => {
@@ -2041,6 +2067,34 @@ mod tests {
                 Ok(Custody(custody.value))
             }
         }
+
+        fn settle_speculative_readback(
+            &mut self,
+            custody: Self::Readback,
+            _: &M1SpeculativePreflightedRoundV1,
+            dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+        ) -> M1ServingPhysicalOperationResultV1<
+            Self::Quiescent,
+            Self::Readback,
+            Self::TerminalCustody,
+            Self::Error,
+        > {
+            self.calls.push("settle-speculative");
+            self.settled.push(dispositions);
+            if self.terminal {
+                Err(M1ServingPhysicalOperationFailureV1::Terminal {
+                    source: "settle-speculative",
+                    custody: Custody(custody.value),
+                })
+            } else if self.fail {
+                Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                    source: "settle-speculative",
+                    custody,
+                })
+            } else {
+                Ok(Custody(custody.value))
+            }
+        }
     }
 
     fn pair(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
@@ -2766,7 +2820,7 @@ mod tests {
         let (error, custody) = failure.into_parts();
         assert_eq!(
             error,
-            M1ServingSpeculativeCompletionErrorV1::Operation("settle")
+            M1ServingSpeculativeCompletionErrorV1::Operation("settle-speculative")
         );
         let M1ServingSpeculativeCompletionFailureCustodyV1::Terminal {
             plan: failed_plan,
@@ -2787,6 +2841,7 @@ mod tests {
         assert_eq!(permit.epoch(), epoch);
         assert_eq!(permit.members().len(), 1);
         assert_eq!(permit.members()[0].request(), request);
+        assert_eq!(operations.calls.last(), Some(&"settle-speculative"));
         assert_eq!(coordinator.next_round(), 0);
         assert_eq!(coordinator.last_epoch(), None);
         assert_eq!(

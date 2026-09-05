@@ -43,7 +43,7 @@ use crate::{
     M1ServingQueuedFiniteSpeculativeRolloverV1, M1ServingQueuedGenerationBindingV1,
     M1ServingQueuedPairedPrefillNewWindowV1, M1ServingQueuedS1K4RolloverV1,
     M1ServingQueuedSameShapeRearmV1, M1ServingRolloverReasonV1, M1SpeculativeMemberStatusV1,
-    M1_MAX_REARM_ROUND_HISTORY_V1,
+    M1SpeculativePreflightedRoundV1, M1_MAX_REARM_ROUND_HISTORY_V1,
 };
 
 /// Request-owned inputs prepared after the adapter issues the exact first dispatch.
@@ -817,6 +817,8 @@ pub enum M1ServingPhysicalRunnerOperationErrorV1 {
     DispositionCount,
     DispositionDrift,
     CompletionPreflightCapacity,
+    SpeculativeRetirementUnavailable,
+    SpeculativeRetirementCommit,
     CompletionRejected,
     CompletionPoisoned,
     PageReleaseRejected,
@@ -2424,6 +2426,7 @@ where
                         preflight_m1_all_terminal_paired_prefill_new_window_v1(
                             self.engine,
                             released,
+                            self.runner.logical_runner(),
                             prior,
                             next,
                             batch,
@@ -2937,6 +2940,118 @@ where
                     rejected.checked()
                 }
             },
+        }
+    }
+
+    fn settle_speculative_readback(
+        &mut self,
+        custody: Self::Readback,
+        permit: &M1SpeculativePreflightedRoundV1,
+        dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+    ) -> M1ServingPhysicalOperationResultV1<
+        Self::Quiescent,
+        Self::Readback,
+        Self::TerminalCustody,
+        Self::Error,
+    > {
+        let readback_epoch = custody.epoch();
+        let checked = self.checked_completion(&custody);
+        let diagnostic_history_len = match &custody.state {
+            M1ServingPhysicalRunnerReadbackStateV1::First {
+                diagnostic_history, ..
+            }
+            | M1ServingPhysicalRunnerReadbackStateV1::Rearmed {
+                diagnostic_history, ..
+            } => diagnostic_history.len(),
+        };
+        let preflight_matches = self.active_plan == Some(custody.plan())
+            && self.identity == custody.adapter_identity()
+            && self.phase
+                == M1ServingPhysicalRunnerAdapterPhaseV1::Readback {
+                    epoch: readback_epoch,
+                }
+            && checked.epoch() == readback_epoch
+            && permit.selection() == custody.plan().target()
+            && permit.epoch() == readback_epoch
+            && permit.members().len() == checked.records().len()
+            && permit.members().len() == dispositions.len()
+            && self.engine.pending_batch_member_count() == permit.members().len()
+            && prepare_diagnostic_binding(custody.plan(), readback_epoch, checked).is_ok()
+            && diagnostic_history_can_append(diagnostic_history_len)
+            && permit
+                .members()
+                .iter()
+                .enumerate()
+                .zip(checked.records())
+                .zip(&dispositions)
+                .all(|(((lane, member), record), disposition)| {
+                    let expected = match member.status() {
+                        M1SpeculativeMemberStatusV1::Active => {
+                            M1DeviceKvCompletionDispositionV1::Continue
+                        }
+                        M1SpeculativeMemberStatusV1::Completed(_)
+                        | M1SpeculativeMemberStatusV1::Cancelled(_) => {
+                            M1DeviceKvCompletionDispositionV1::Retire
+                        }
+                    };
+                    record.record().request == member.request()
+                        && member.physical_disposition() == expected
+                        && *disposition == expected
+                        && self.engine.pending_member(lane) == Some(member.request())
+                        && self.engine.state(member.request())
+                            == Some(ferric_spec::scheduling::RequestState::InFlight)
+                });
+        if !preflight_matches {
+            return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                source: M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementUnavailable,
+                custody,
+            });
+        }
+
+        let mut retired_any = false;
+        for member in permit.members() {
+            if member.physical_disposition() == M1DeviceKvCompletionDispositionV1::Retire {
+                retired_any = true;
+                if self.engine.retire(member.request()).is_err() {
+                    self.engine.quarantine_m1_queue_rearm_failure();
+                    self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
+                    return Err(M1ServingPhysicalOperationFailureV1::Terminal {
+                        source:
+                            M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementCommit,
+                        custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
+                            provider: self.provider.take(),
+                            plan: self.active_plan,
+                            lower: Box::new(
+                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedReadback(
+                                    Box::new(custody),
+                                ),
+                            ),
+                        },
+                    });
+                }
+            }
+        }
+
+        match self.settle_readback(custody, dispositions) {
+            Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody })
+                if retired_any =>
+            {
+                self.engine.quarantine_m1_queue_rearm_failure();
+                self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
+                Err(M1ServingPhysicalOperationFailureV1::Terminal {
+                    source,
+                    custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
+                        provider: self.provider.take(),
+                        plan: self.active_plan,
+                        lower: Box::new(
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedReadback(
+                                Box::new(custody),
+                            ),
+                        ),
+                    },
+                })
+            }
+            outcome => outcome,
         }
     }
 
@@ -5580,10 +5695,6 @@ mod tests {
                 )],
             )
             .expect("preflight actual second-round checked output");
-        operations
-            .engine
-            .retire(request)
-            .expect("mark the final Engine member retiring before atomic settlement");
         let committed = readback
             .commit_speculative(&mut registry, &mut coordinator, permit, &mut operations)
             .expect("atomically settle and commit the second speculative round");

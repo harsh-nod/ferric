@@ -1262,6 +1262,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             .revalidate_for_kv_partition()
             .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
         for (request, active_tokens) in requests.iter().copied().zip(active_lengths) {
+            self.new_window_page_generation_snapshot(request, role)?;
             let page_count = active_tokens.div_ceil(M1_KV_PAGE_TOKENS);
             for physical_index in 0..page_count {
                 let global_index = global_page_index(request, physical_index)?;
@@ -1294,6 +1295,36 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             }
         }
         Ok(())
+    }
+
+    fn new_window_page_generation_snapshot(
+        &self,
+        request: RequestId,
+        role: Qwen3ModelRole,
+    ) -> Result<[u32; M1_KV_PHYSICAL_PAGE_SLOTS], M1DeviceKvArenaLeaseErrorV1> {
+        new_window_page_generation_snapshot_from_ledger(self.page_ledger(role), request)
+    }
+
+    pub(crate) fn new_window_device_cache(
+        &self,
+        request: RequestId,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+    ) -> Result<ActiveDeviceKvCache, DeviceKvCacheError> {
+        let target_generations = self
+            .new_window_page_generation_snapshot(request, Qwen3ModelRole::Target8B)
+            .map_err(|_| DeviceKvCacheError::Physical(PhysicalKvError::PageGenerationMismatch))?;
+        let draft_generations = self
+            .new_window_page_generation_snapshot(request, Qwen3ModelRole::Draft06B)
+            .map_err(|_| DeviceKvCacheError::Physical(PhysicalKvError::PageGenerationMismatch))?;
+        ActiveDeviceKvCache::new_with_page_generations(
+            self.device,
+            request,
+            target_selection,
+            draft_selection,
+            &target_generations,
+            &draft_generations,
+        )
     }
 
     pub(crate) fn revalidate_page_return_authority(
@@ -3250,6 +3281,24 @@ fn global_page_index(
         .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
 }
 
+fn new_window_page_generation_snapshot_from_ledger(
+    ledger: &[M1KvPoolPageStateV1],
+    request: RequestId,
+) -> Result<[u32; M1_KV_PHYSICAL_PAGE_SLOTS], M1DeviceKvArenaLeaseErrorV1> {
+    let mut generations = [0; M1_KV_PHYSICAL_PAGE_SLOTS];
+    for physical_index in 0..M1_KV_PHYSICAL_PAGE_SLOTS {
+        let physical_index = u32::try_from(physical_index)
+            .map_err(|_| M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+        let global_index = global_page_index(request, physical_index)?;
+        let state = ledger
+            .get(global_index)
+            .copied()
+            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+        generations[physical_index as usize] = free_page_generation(state)?;
+    }
+    Ok(generations)
+}
+
 #[cfg(test)]
 impl DeviceKvPageLease {
     pub(crate) fn from_contracted_workspace_bridge_test_allocation(
@@ -4103,14 +4152,28 @@ struct RoleDeviceKvCache {
 impl RoleDeviceKvCache {
     fn new(request: RequestId, selection: Qwen3PlanSelection) -> Result<Self, DeviceKvCacheError> {
         let physical = PhysicalKvState::new(request, selection)?;
-        Ok(Self {
+        Ok(Self::from_physical(physical))
+    }
+
+    fn new_with_page_generations(
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        page_generations: &[u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> Result<Self, DeviceKvCacheError> {
+        let physical =
+            PhysicalKvState::new_with_page_generations(request, selection, *page_generations)?;
+        Ok(Self::from_physical(physical))
+    }
+
+    fn from_physical(physical: PhysicalKvState) -> Self {
+        Self {
             physical,
             arena_allocation_id: None,
             active_pages: Vec::with_capacity(M1_KV_PAGE_TABLE_ENTRIES),
             retired_pages: Vec::with_capacity(M1_KV_PAGE_TABLE_ENTRIES),
             pending: None,
             next_write_generation: 1,
-        })
+        }
     }
 
     const fn selection(&self) -> Qwen3PlanSelection {
@@ -4343,6 +4406,42 @@ impl ActiveDeviceKvCache {
         }
         let target = RoleDeviceKvCache::new(request, target_selection)?;
         let draft = RoleDeviceKvCache::new(request, draft_selection)?;
+        Ok(Self {
+            common: DeviceKvCacheCommon {
+                device,
+                request,
+                target,
+                draft,
+                target_qualification_reserve: None,
+            },
+        })
+    }
+
+    fn new_with_page_generations(
+        device: Gfx942DeviceBinding,
+        request: RequestId,
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+        target_generations: &[u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+        draft_generations: &[u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> Result<Self, DeviceKvCacheError> {
+        if target_selection.role != Qwen3ModelRole::Target8B
+            || draft_selection.role != Qwen3ModelRole::Draft06B
+            || target_selection.mode != draft_selection.mode
+            || target_selection.bucket != draft_selection.bucket
+        {
+            return Err(DeviceKvCacheError::PlanPairMismatch);
+        }
+        let target = RoleDeviceKvCache::new_with_page_generations(
+            request,
+            target_selection,
+            target_generations,
+        )?;
+        let draft = RoleDeviceKvCache::new_with_page_generations(
+            request,
+            draft_selection,
+            draft_generations,
+        )?;
         Ok(Self {
             common: DeviceKvCacheCommon {
                 device,
@@ -8522,6 +8621,85 @@ mod tests {
         );
         assert_eq!(cache.projection().target_active_pages, 0);
         assert_eq!(cache.projection().target.resident_tokens, 0);
+    }
+
+    #[test]
+    fn exact_pool_generation_snapshot_accepts_reused_page_lease() {
+        let reused_page_index = 7;
+        let reused_global_index = global_page_index(request(), reused_page_index).unwrap();
+        let mut draft_ledger = new_page_ledger(Qwen3ModelRole::Draft06B).unwrap();
+        draft_ledger[reused_global_index] = M1KvPoolPageStateV1::Leased {
+            request: request(),
+            generation: 1,
+        };
+        let reused = DeviceKvPageLease::from_contracted_gfx942_allocation(
+            device(),
+            identity(32),
+            request(),
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, reused_page_index, 1),
+        )
+        .unwrap();
+        let returned = preflight_page_return_identity(
+            device(),
+            identity(32),
+            Qwen3ModelRole::Draft06B,
+            Some(draft_ledger[reused_global_index]),
+            reused_global_index,
+            request(),
+            &reused,
+        )
+        .unwrap();
+        commit_page_return_state(&mut draft_ledger[reused_global_index], returned, reused);
+
+        let target_ledger = new_page_ledger(Qwen3ModelRole::Target8B).unwrap();
+        let target_generations =
+            new_window_page_generation_snapshot_from_ledger(&target_ledger, request()).unwrap();
+        let draft_generations =
+            new_window_page_generation_snapshot_from_ledger(&draft_ledger, request()).unwrap();
+        assert_eq!(target_generations, [1; M1_KV_PHYSICAL_PAGE_SLOTS]);
+        assert_eq!(draft_generations[0], 1);
+        assert_eq!(draft_generations[reused_page_index as usize], 2);
+        let mut cache = ActiveDeviceKvCache::new_with_page_generations(
+            device(),
+            request(),
+            selected(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            selected(
+                Qwen3ModelRole::Draft06B,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            ),
+            &target_generations,
+            &draft_generations,
+        )
+        .unwrap();
+        let reused = DeviceKvPageLease::from_contracted_gfx942_allocation(
+            device(),
+            identity(32),
+            request(),
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, reused_page_index, 2),
+        )
+        .unwrap();
+        let reservation = cache
+            .reserve_step_write(
+                request(),
+                Qwen3ModelRole::Draft06B,
+                0,
+                1,
+                CompletionEpoch::new(130),
+                vec![reused],
+            )
+            .expect("the exact reused generation must reserve its first write");
+        assert_eq!(
+            reservation.page_table()[0].page().index(),
+            reused_page_index
+        );
+        assert_eq!(reservation.page_table()[0].page().generation(), 2);
+        assert_eq!(cache.projection().draft_active_pages, 0);
+        assert_eq!(cache.projection().draft.resident_tokens, 0);
     }
 
     #[test]

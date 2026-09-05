@@ -304,6 +304,30 @@ impl PhysicalKvState {
             self.page_slots@[position] == PhysicalPageSlot::FREE
     }
 
+    pub closed spec fn initial_refinement_with_page_generations(
+        &self,
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        max_context_tokens: u32,
+        page_generations: [u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> bool {
+        &&& self.request == request
+        &&& self.selection == selection
+        &&& lifecycle_matches(self.lifecycle, PhysicalKvLifecycle::Active)
+        &&& self.max_context_tokens == max_context_tokens
+        &&& self.resident_tokens == 0
+        &&& self.committed_tokens == 0
+        &&& self.page_count == 0
+        &&& forall|position: int| 0 <= position < M1_KV_PAGE_TABLE_ENTRIES ==>
+            self.page_table@[position].is_none()
+        &&& forall|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+            self.page_slots@[position] == PhysicalPageSlot {
+                generation: page_generations@[position],
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            }
+    }
+
     /// Constructs the only public initial state for an exact admitted graph bucket.
     ///
     /// # Errors
@@ -360,6 +384,115 @@ impl PhysicalKvState {
         proof {
             reveal(kv_selection_valid);
             reveal(PhysicalKvState::initial_refinement);
+            reveal(lifecycle_matches);
+        }
+        Ok(state)
+    }
+
+    /// Constructs an empty state from an exact role-local pool generation snapshot.
+    ///
+    /// The snapshot changes only the generations of otherwise-free physical
+    /// slots. It grants no allocation or page-lease authority.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid selections, zero request generations, or any zero page
+    /// generation without constructing a partially seeded state.
+    pub fn new_with_page_generations(
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        page_generations: [u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> (result: Result<Self, PhysicalKvError>)
+        ensures match result {
+            Ok(state) => {
+                &&& request.generation_spec() > 0
+                &&& kv_selection_valid(selection)
+                &&& forall|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+                    page_generations@[position] > 0
+                &&& state.initial_refinement_with_page_generations(
+                    request,
+                    selection,
+                    selection.bucket.dimensions_spec(selection.role, selection.mode).unwrap().context_tokens,
+                    page_generations,
+                )
+            }
+            Err(PhysicalKvError::ZeroRequestGeneration) => request.generation_spec() == 0,
+            Err(PhysicalKvError::InvalidSelection) => {
+                request.generation_spec() > 0 && !kv_selection_valid(selection)
+            }
+            Err(PhysicalKvError::PageGenerationMismatch) => {
+                &&& request.generation_spec() > 0
+                &&& kv_selection_valid(selection)
+                &&& exists|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && page_generations@[position] == 0
+            }
+            Err(_) => false,
+        },
+    {
+        if request.generation() == 0 {
+            return Err(PhysicalKvError::ZeroRequestGeneration);
+        }
+        let Some(dimensions) = selection.bucket.dimensions(selection.role, selection.mode) else {
+            return Err(PhysicalKvError::InvalidSelection);
+        };
+        let mut position = 0usize;
+        while position < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                position <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int| 0 <= prior < position ==>
+                    page_generations@[prior] > 0,
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - position,
+        {
+            if page_generations[position] == 0 {
+                assert(exists|invalid: int| 0 <= invalid < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && page_generations@[invalid] == 0) by {
+                    assert(page_generations@[position as int] == 0);
+                }
+                return Err(PhysicalKvError::PageGenerationMismatch);
+            }
+            position += 1;
+        }
+        assert(forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+            page_generations@[index] > 0);
+
+        let page_table = vstd::array::array_fill_for_copy_types(None);
+        let mut page_slots = vstd::array::array_fill_for_copy_types(PhysicalPageSlot::FREE);
+        let mut position = 0usize;
+        while position < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                position <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                page_slots@.len() == M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int| 0 <= prior < position ==> page_slots@[prior]
+                    == (PhysicalPageSlot {
+                        generation: page_generations@[prior],
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }),
+                forall|later: int| position <= later < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+                    page_slots@[later] == PhysicalPageSlot::FREE,
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - position,
+        {
+            page_slots[position] = PhysicalPageSlot {
+                generation: page_generations[position],
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            };
+            position += 1;
+        }
+        let state = Self {
+            request,
+            selection,
+            lifecycle: PhysicalKvLifecycle::Active,
+            max_context_tokens: dimensions.context_tokens,
+            resident_tokens: 0,
+            committed_tokens: 0,
+            page_count: 0,
+            page_table,
+            page_slots,
+        };
+        proof {
+            reveal(kv_selection_valid);
+            reveal(PhysicalKvState::initial_refinement_with_page_generations);
             reveal(lifecycle_matches);
         }
         Ok(state)
@@ -2850,6 +2983,28 @@ mod tests {
         assert_eq!(
             PhysicalKvState::new(RequestId::new(3, 0), target_decode()),
             Err(PhysicalKvError::ZeroRequestGeneration)
+        );
+    }
+
+    #[test]
+    fn exact_page_generation_snapshot_seeds_only_empty_free_slots() {
+        let mut generations = [1; M1_KV_PHYSICAL_PAGE_SLOTS];
+        generations[0] = 2;
+        generations[511] = 19;
+        let state =
+            PhysicalKvState::new_with_page_generations(request(), target_decode(), generations)
+                .unwrap();
+        assert_eq!(state.page_generation(0), Some(2));
+        assert_eq!(state.page_generation(1), Some(1));
+        assert_eq!(state.page_generation(511), Some(19));
+        assert_eq!(state.page_count(), 0);
+        assert_eq!(state.logical_state().resident_tokens, 0);
+        assert_eq!(state.logical_state().committed_tokens, 0);
+
+        generations[37] = 0;
+        assert_eq!(
+            PhysicalKvState::new_with_page_generations(request(), target_decode(), generations,),
+            Err(PhysicalKvError::PageGenerationMismatch)
         );
     }
 

@@ -19,14 +19,15 @@ use ferric_spec::{
 use crate::{
     prepare_m1_finite_speculative_queue_rollover_v1, prepare_m1_long_lived_queue_rearm_v1,
     reserve_m1_finite_speculative_queue_rollover_kv_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
-    ActiveDeviceKvCache, Engine, M1FiniteSpeculativeQueueRolloverKvInputsV1,
-    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
-    M1LongLivedQueueRearmKvInputsV1, M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1,
-    M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1, M1ScheduledDispatchV1,
-    M1ScheduledFiniteSpeculativeQueueRolloverV1, M1ScheduledLongLivedQueueRearmV1,
-    M1ServingBatchPlanV1, M1ServingPhysicalInputProviderV1, M1ServingPlanV1,
-    M1ServingPreparedFiniteSpeculativeRolloverV1, M1ServingPreparedFirstPublicationV1,
-    M1ServingPreparedSameShapeRearmV1, M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
+    ActiveDeviceKvCache, Engine, LogicalRunnerDeclaration,
+    M1FiniteSpeculativeQueueRolloverKvInputsV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1PhysicalRunnerV1, M1ScheduledDispatchV1, M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    M1ScheduledLongLivedQueueRearmV1, M1ServingBatchPlanV1, M1ServingPhysicalInputProviderV1,
+    M1ServingPlanV1, M1ServingPreparedFiniteSpeculativeRolloverV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
+    M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
 };
 
 /// Exact operation for which one queued physical input is valid.
@@ -373,6 +374,28 @@ impl M1ServingQueuedPairedPrefillNewWindowV1 {
                 requests,
                 batch.epoch(),
             )
+            && paired_prefill_new_window_rows_match(&self.draft_prefill, &self.target_prefill)
+    }
+
+    pub(crate) fn logical_runner_plan_identities_match(
+        &self,
+        runner: &LogicalRunnerDeclaration,
+    ) -> bool {
+        [&self.draft_prefill, &self.target_prefill]
+            .into_iter()
+            .all(|inputs| {
+                let Ok(published) = runner.plan(inputs.selection()) else {
+                    return false;
+                };
+                let Ok(live) = usize::try_from(inputs.live_lane_count()) else {
+                    return false;
+                };
+                inputs
+                    .lanes()
+                    .iter()
+                    .take(live)
+                    .all(|plan| plan.is_some_and(|plan| plan.plan_id() == &published.plan_id))
+            })
     }
 
     pub(crate) fn into_parts(
@@ -392,6 +415,46 @@ impl M1ServingQueuedPairedPrefillNewWindowV1 {
             self.recipe_plans,
         )
     }
+}
+
+fn paired_prefill_new_window_rows_match(
+    draft: &ValidatedM1StepInputs,
+    target: &ValidatedM1StepInputs,
+) -> bool {
+    let Ok(live) = usize::try_from(draft.live_lane_count()) else {
+        return false;
+    };
+    if target.live_lane_count() as usize != live {
+        return false;
+    }
+    let draft_width = draft.dimensions().active_tokens as usize;
+    let target_width = target.dimensions().active_tokens as usize;
+    for lane in 0..live {
+        let active = draft.active_lengths()[lane];
+        if target.active_lengths()[lane] != active {
+            return false;
+        }
+        for column in 0..active as usize {
+            let Some(draft_index) = lane
+                .checked_mul(draft_width)
+                .and_then(|start| start.checked_add(column))
+            else {
+                return false;
+            };
+            let Some(target_index) = lane
+                .checked_mul(target_width)
+                .and_then(|start| start.checked_add(column))
+            else {
+                return false;
+            };
+            if draft.token_ids().get(draft_index) != target.token_ids().get(target_index)
+                || draft.position_ids().get(draft_index) != target.position_ids().get(target_index)
+            {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 fn prefill_new_window_role_matches(
@@ -1474,14 +1537,15 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
 #[cfg(test)]
 mod tests {
     use ferric_build::{
-        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
-        AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
-        M1StepWorkspacePlanOutcome,
+        generate_qwen3_gfx942_runner_declaration, m1_step_workspace_requirements,
+        plan_addressless_m1_step_workspace, publish_qwen3_gfx942_runner_declaration,
+        qwen3_runner_closure_test_fixture, AvailableM1StepWorkspace,
+        DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
     };
     use ferric_spec::{
         completion::CompletionEpoch, validate_m1_step_inputs, Identity, M1StepInputCandidate,
         M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-        Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs,
+        Qwen3PlanSelection, RequestId, StepPlan, TokenId, ValidatedM1StepInputs,
     };
 
     use super::{
@@ -1493,9 +1557,9 @@ mod tests {
         M1ServingQueuedGenerationPhaseV1, M1ServingQueuedPairedPrefillNewWindowV1,
     };
     use crate::{
-        M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1PhysicalFixedBatchShapeV1,
-        M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingPreparedSemanticEvidenceV1,
-        M1ServingRegistryV1, M1StepDispatchIntent,
+        LogicalRunnerDeclaration, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+        M1PhysicalFixedBatchShapeV1, M1ServingBatchPlanV1, M1ServingPlanV1,
+        M1ServingPreparedSemanticEvidenceV1, M1ServingRegistryV1, M1StepDispatchIntent,
     };
 
     fn selection(
@@ -1598,10 +1662,17 @@ mod tests {
     fn paired_prefill_new_window_input(
         batch: &M1ServingBatchPlanV1,
     ) -> M1ServingQueuedPairedPrefillNewWindowV1 {
+        paired_prefill_new_window_input_with_prompts(batch, &[11, 12, 13], &[11, 12, 13])
+    }
+
+    fn paired_prefill_new_window_input_with_prompts(
+        batch: &M1ServingBatchPlanV1,
+        draft_prompt: &[TokenId],
+        target_prompt: &[TokenId],
+    ) -> M1ServingQueuedPairedPrefillNewWindowV1 {
         let [request] = batch.requests() else {
             panic!("test batch must contain one request")
         };
-        let prompt = [11, 12, 13];
         let preparation_plans = M1FullStepWorkspacePlans::paired_prefill(
             workspace_plan(batch.plan().draft(), 81),
             workspace_plan(batch.plan().target(), 82),
@@ -1616,8 +1687,8 @@ mod tests {
                 vec![*request].into_boxed_slice(),
                 batch.epoch(),
             ),
-            prefill_inputs(*request, &prompt, Qwen3ModelRole::Draft06B),
-            prefill_inputs(*request, &prompt, Qwen3ModelRole::Target8B),
+            prefill_inputs(*request, draft_prompt, Qwen3ModelRole::Draft06B),
+            prefill_inputs(*request, target_prompt, Qwen3ModelRole::Target8B),
             preparation_plans,
             recipe_plans,
         )
@@ -1879,5 +1950,33 @@ mod tests {
             .matches(batch.plan(), batch.requests(), batch.epoch()));
         assert!(provider.take_paired_prefill_new_window(&batch).is_some());
         assert_eq!(provider.pending_generation_count(), 0);
+    }
+
+    #[test]
+    fn new_window_preflight_rejects_cross_role_prompt_drift() {
+        let request = RequestId::new(0, 1);
+        let batch = paired_prefill_batch(request);
+        let token_drift =
+            paired_prefill_new_window_input_with_prompts(&batch, &[11, 12, 13], &[11, 99, 13]);
+        assert!(!token_drift.physical_inputs_match(&batch));
+
+        let length_drift =
+            paired_prefill_new_window_input_with_prompts(&batch, &[11, 12, 13], &[11, 12]);
+        assert!(!length_drift.physical_inputs_match(&batch));
+    }
+
+    #[test]
+    fn new_window_preflight_rejects_foreign_runner_plan_identity() {
+        let request = RequestId::new(0, 1);
+        let batch = paired_prefill_batch(request);
+        let input = paired_prefill_new_window_input(&batch);
+        let generated =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture runner declaration");
+        let published = publish_qwen3_gfx942_runner_declaration(generated)
+            .expect("publish fixture runner declaration");
+        let runner = LogicalRunnerDeclaration::from_published(published);
+
+        assert!(!input.logical_runner_plan_identities_match(&runner));
     }
 }
