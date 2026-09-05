@@ -27,7 +27,7 @@ kernel is dispatched.
 This package is outside Ferric's host workspace and carries no artifact,
 publication, load, dispatch, numerical-qualification, whole-Qwen, or M1
 authority. The package pins exact reviewed fe2o3 revision
-`16da71edd823e0d5c16529bfbbedb4f9dd8e70c6`; that source pin grants none of
+`5c4759711775210d3094fd71ebc579fdd00c4db8`; that source pin grants none of
 those authorities. Exact attributed-source extraction, generated ABI
 reconciliation, artifact admission, KFD execution, numerical differential
 qualification, and MI300X performance evidence remain required.

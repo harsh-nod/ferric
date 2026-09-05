@@ -8,7 +8,7 @@ and projects the six source coordinates needed by Ferric's aggregate M1 intake:
 - compiler symbol-manifest SHA-256 and byte length.
 
 The decoder uses `fe2o3-runtime-protocol` and `fe2o3-compiler-ffi` typed APIs at
-revision `16da71edd823e0d5c16529bfbbedb4f9dd8e70c6`. It additionally requires LLVM
+revision `5c4759711775210d3094fd71ebc579fdd00c4db8`. It additionally requires LLVM
 text IR, `gfx942:xnack-`, code-object V6, exactly 12 aggregate kernel-entry
 symbols, and their 12 matching `.kd` descriptor symbols. Symbol-manifest
 matching proves exact sets; it does not claim compiler descriptor-table order.

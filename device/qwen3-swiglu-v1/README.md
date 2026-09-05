@@ -10,7 +10,7 @@ and eight contiguous output elements per workitem.
 
 The crate is intentionally outside Ferric's stable host workspace and pins the
 exact reviewed external fe2o3 revision
-`16da71edd823e0d5c16529bfbbedb4f9dd8e70c6`. That revision provides
+`5c4759711775210d3094fd71ebc579fdd00c4db8`. That revision provides
 the compiler-issued write-only device capability and its generated KFD output
 binding. The kernel's output has no readable element, reference, or pointer
 surface; it spells its eight owned components as eight constant checked
