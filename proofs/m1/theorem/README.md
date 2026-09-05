@@ -22,6 +22,11 @@ the separately named compiler-effect preservation and runtime-invocation premise
 The paired negative registry remains bound to actual implementation bodies. The two
 speculative wrappers cover publication-to-KV accepted-count agreement and
 immutable-preflight failure framing under distinct Open obligations.
+The exact-completion row proves only that the executable successor check equals
+its mathematical result for success, replay, skip, and exhausted epochs. A
+separate syntactic source guard pins that check inside immutable engine
+preflight; neither statement proves the full scheduler refinement or device
+completion authority.
 The lifetime row selects the production-facing terminal page-release theorem,
 which calls the executable Ferric release body and proves only exact quiescence,
 source physical-metadata retirement, and generation-safe release. It does not

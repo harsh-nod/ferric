@@ -175,6 +175,16 @@ EXPECTED_ROWS = (
         "batching_request_routing_theorem",
     ),
     (
+        "exact-completion-successor",
+        "exact-completion-successor",
+        "scheduler_refined",
+        "physical-runner",
+        "ferric-spec",
+        "crates/ferric-spec/src/completion.rs",
+        "completion",
+        "check_exact_next",
+    ),
+    (
         "graph-operator-order",
         "exact-graph-plan",
         "graph_refined",

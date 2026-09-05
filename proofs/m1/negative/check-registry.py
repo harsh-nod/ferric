@@ -52,6 +52,12 @@ EXPECTED = {
         "continuous_batching", "apply_continuous_batch_step",
         "stale-generation-rejection",
     ),
+    "exact-completion-successor": (
+        "exact-completion-successor", "scheduler_refined", "physical-runner",
+        "ferric-spec", "crates/ferric-spec/src/completion.rs",
+        "exact-completion-successor.py", "postcondition", "completion",
+        "check_exact_next", "exact-successor-replay-skip-rejection",
+    ),
     "graph-operator-order": (
         "exact-graph-plan", "graph_refined", "graph-proof", "ferric-spec",
         "crates/ferric-spec/src/graph.rs", "graph-operator-order.py",

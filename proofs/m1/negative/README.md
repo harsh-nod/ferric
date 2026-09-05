@@ -20,7 +20,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact twenty-three-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact twenty-four-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -31,6 +31,11 @@ publication on the KV rejection path. Both are ordinary executable-body edits,
 not contract, specification-relation, assertion-only, or proof-tool mutations.
 Their paired positive rows select dedicated query-bearing wrappers; negative
 rows continue to mutate these actual bodies rather than the wrappers.
+The exact-completion mutation changes only the executable non-successor branch
+from rejection to `Ok(observed)`. Pinned Verus must reject that replay/skip
+acceptance at `check_exact_next`'s equality postcondition. The live engine
+preflight association is separate syntactic placement evidence, not proof of
+engine state effects, external quiescence, or full scheduler refinement.
 The sampler mutation changes the executable argmax improvement test from `>`
 to `>=`, so a later token replaces the first token on a tie and violates the
 explicit lowest-token-ID invariant assertion used to prove the postcondition.
