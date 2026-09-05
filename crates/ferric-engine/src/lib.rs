@@ -183,10 +183,14 @@ pub use authenticated_queue_rearm::{
 pub use authenticated_queue_rollover::{
     bind_m1_authenticated_speculative_rollover_intent_v1,
     prepare_m1_authenticated_speculative_rollover_v1,
+    prepare_m1_authenticated_target_decode_rollover_v1,
+    run_m1_authenticated_target_decode_serving_v1,
     schedule_m1_authenticated_speculative_rollover_v1,
+    schedule_m1_authenticated_target_decode_rollover_v1,
     submit_m1_authenticated_speculative_rollover_v1,
     submit_m1_authenticated_target_decode_rollover_v1,
-    M1AuthenticatedPreparedSpeculativeRolloverV1, M1AuthenticatedScheduledSpeculativeRolloverV1,
+    M1AuthenticatedPreparedSpeculativeRolloverV1, M1AuthenticatedPreparedTargetDecodeRolloverV1,
+    M1AuthenticatedScheduledSpeculativeRolloverV1, M1AuthenticatedScheduledTargetDecodeRolloverV1,
     M1AuthenticatedSpeculativeRolloverIntentErrorV1,
     M1AuthenticatedSpeculativeRolloverIntentFailureV1,
     M1AuthenticatedSpeculativeRolloverIntentPreparedV1, M1AuthenticatedSpeculativeRolloverIntentV1,
@@ -200,7 +204,11 @@ pub use authenticated_queue_rollover::{
     M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
     M1AuthenticatedSpeculativeRolloverTeardownFailureV1,
     M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
+    M1AuthenticatedTargetDecodePrepareFailureV1, M1AuthenticatedTargetDecodePrepareStageV1,
     M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1,
+    M1AuthenticatedTargetDecodeScheduleErrorV1, M1AuthenticatedTargetDecodeScheduleFailureV1,
+    M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1,
+    M1AuthenticatedTargetDecodeServingFailureV1, M1AuthenticatedTargetDecodeServingInputsV1,
 };
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,

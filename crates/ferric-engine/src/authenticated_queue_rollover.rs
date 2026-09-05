@@ -14,7 +14,7 @@ use fe2o3_host::{
 use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanBucket, Qwen3PlanSelection,
+    Qwen3PlanBucket, Qwen3PlanSelection, ValidatedM1StepInputs,
 };
 
 use crate::authenticated_speculative_executor::{
@@ -27,7 +27,7 @@ use crate::m1_serving_registry::{
 };
 use crate::{
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
-    DeviceKvCacheProjection, Engine, LogicalRunnerDeclaration,
+    DeviceKvCacheProjection, DeviceKvPageLease, Engine, LogicalRunnerDeclaration,
     M1AuthenticatedPhysicalQueuePhaseCaseV1, M1AuthenticatedPhysicalQueueSessionV1,
     M1AuthenticatedPhysicalQueueSubmitFailureV1,
     M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
@@ -39,7 +39,7 @@ use crate::{
     M1PhysicalRunnerRecipeOutcomeV1, M1PreparedScheduledWorkspaceImagesV1,
     M1QueueRolloverObservationV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
     M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1, M1ServingRolloverReasonV1,
-    M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+    M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1, M1StepDispatchIntent,
     M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
     M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1, M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
@@ -2354,6 +2354,765 @@ where
     ))
 }
 
+/// Structural target-decode inputs retained until authenticated scheduling.
+///
+/// These values carry no selection, currentness, dispatch, KV, workspace, or
+/// queue authority. The authenticated bridge joins them to the live registry
+/// batch, released completion, Engine-issued dispatch, and reselected cache.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedTargetDecodeServingInputsV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedTargetDecodeServingInputsV1>();
+/// ```
+#[must_use = "target-decode serving inputs own linear page leases and workspace plans"]
+#[derive(Debug)]
+pub struct M1AuthenticatedTargetDecodeServingInputsV1 {
+    target: ValidatedM1StepInputs,
+    target_page_leases: Vec<DeviceKvPageLease>,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+}
+
+impl M1AuthenticatedTargetDecodeServingInputsV1 {
+    #[must_use = "target-decode serving inputs remain linear"]
+    pub const fn new(
+        target: ValidatedM1StepInputs,
+        target_page_leases: Vec<DeviceKvPageLease>,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            target,
+            target_page_leases,
+            preparation_plans,
+            recipe_plans,
+        }
+    }
+}
+
+/// Stable authenticated target-decode scheduling rejection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedTargetDecodeScheduleErrorV1 {
+    Action,
+    Transition,
+    EngineFaulted,
+    Epoch,
+    Roster,
+    QueueShape,
+    QueueSelection,
+    Workspace,
+    Output,
+    MemberCustody,
+    RequestNotReady,
+    Inputs,
+    Detach,
+    ExactDispatch,
+    CacheReselection,
+}
+
+/// Exact pre-detach target-decode owners retained for a safe retry.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1) {
+///     let _released = retry.into_released();
+/// }
+/// ```
+#[must_use = "pre-detach target-decode retry custody remains linear"]
+pub struct M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1 {
+    released: Box<M1AuthenticatedReleasedCompletedStepV1>,
+    inputs: Box<M1AuthenticatedTargetDecodeServingInputsV1>,
+}
+
+impl fmt::Debug for M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+impl M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1 {
+    /// Retries the unchanged released queue and structural inputs against a
+    /// caller-retained live registry batch.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach retry custody or terminal closure custody.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<
+        M1AuthenticatedScheduledTargetDecodeRolloverV1,
+        M1AuthenticatedTargetDecodeScheduleFailureV1,
+    > {
+        schedule_m1_authenticated_target_decode_rollover_v1(
+            engine,
+            *self.released,
+            batch,
+            *self.inputs,
+        )
+    }
+
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
+        true
+    }
+
+    /// Cancels retry authority, faults the Engine, and closes queue custody.
+    #[must_use = "cancelled target-decode custody remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        match self.released.destroy_queue_and_retain_step(engine) {
+            Ok(released) => released_disposition((released, self.inputs)),
+            Err(quarantined) => quarantined_disposition((quarantined, self.inputs)),
+        }
+    }
+}
+
+/// Pre-detach retry or terminal target-decode scheduling custody.
+#[must_use = "target-decode scheduling custody remains retained"]
+pub enum M1AuthenticatedTargetDecodeScheduleFailureV1 {
+    PreDetach {
+        error: M1AuthenticatedTargetDecodeScheduleErrorV1,
+        retry: Box<M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1>,
+    },
+    Terminal {
+        error: M1AuthenticatedTargetDecodeScheduleErrorV1,
+        disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedTargetDecodeScheduleFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedTargetDecodeScheduleErrorV1 {
+        match self {
+            Self::PreDetach { error, .. } | Self::Terminal { error, .. } => *error,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
+    }
+
+    #[must_use = "terminal disposition remains observed when present"]
+    pub const fn disposition(
+        &self,
+    ) -> Option<&crate::M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedTargetDecodeScheduleFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedTargetDecodeScheduleFailureV1")
+            .field("error", &self.error())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Detached authenticated predecessor, Engine dispatch, and reselected cache.
+#[must_use = "scheduled target-decode rollover must be prepared or torn down"]
+#[derive(Debug)]
+pub struct M1AuthenticatedScheduledTargetDecodeRolloverV1 {
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    reason: M1ServingRolloverReasonV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    scheduled: M1ScheduledDispatchV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    residue: M1AuthenticatedSpeculativeRolloverResidueV1,
+    inputs: M1AuthenticatedTargetDecodeServingInputsV1,
+}
+
+impl M1AuthenticatedScheduledTargetDecodeRolloverV1 {
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        &self.scheduled
+    }
+
+    #[must_use]
+    pub const fn next_plan(&self) -> M1ServingPlanV1 {
+        self.next
+    }
+
+    #[must_use]
+    pub fn selected_cache(&self) -> DeviceKvCacheProjection {
+        self.selected[0].projection()
+    }
+
+    /// Destroys the detached queue and preserves every scheduled owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns authenticated lower quarantine with all Ferric custody.
+    pub fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeRolloverTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativeRolloverTeardownFailureV1>,
+    > {
+        M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+            error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator,
+            queue: self.queue,
+            retained: Box::new((
+                self.prior,
+                self.next,
+                self.reason,
+                self.scheduled,
+                self.selected,
+                self.residue,
+                self.inputs,
+            )),
+        }
+        .destroy_queue_and_retain_custody(engine)
+    }
+}
+
+fn target_decode_serving_transition(
+    batch: &M1ServingBatchPlanV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1AuthenticatedTargetDecodeScheduleErrorV1,
+> {
+    let M1ServingQueueActionV1::QuiescentRollover {
+        prior,
+        next,
+        reason,
+    } = batch.action()
+    else {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Action);
+    };
+    if batch.plan() != next
+        || admit_m1_target_decode_rollover_transition_v1(prior, next)
+            .is_none_or(|admitted| admitted.reason() != reason)
+    {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Transition);
+    }
+    Ok((prior, next, reason))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1AuthenticatedTargetDecodeInputAssociationV1 {
+    selection: Qwen3PlanSelection,
+    live_lanes: u32,
+    lane_selection: Qwen3PlanSelection,
+    request: ferric_spec::RequestId,
+    epoch: CompletionEpoch,
+    anchor: ferric_spec::TokenId,
+    position: u32,
+    active: u32,
+    context: u32,
+    preparation_kind: M1FullStepWorkspaceInputKind,
+    preparation_selection: Qwen3PlanSelection,
+    recipe_kind: M1FullStepWorkspaceInputKind,
+    recipe_selection: Qwen3PlanSelection,
+}
+
+fn target_decode_input_association(
+    target: &ValidatedM1StepInputs,
+    preparation_plans: &M1FullStepWorkspacePlans,
+    recipe_plans: &M1FullStepWorkspacePlans,
+) -> Option<M1AuthenticatedTargetDecodeInputAssociationV1> {
+    let plan = target.lanes().first().and_then(Option::as_ref)?;
+    Some(M1AuthenticatedTargetDecodeInputAssociationV1 {
+        selection: target.selection(),
+        live_lanes: target.live_lane_count(),
+        lane_selection: plan.selection(),
+        request: plan.request(),
+        epoch: plan.completion_epoch(),
+        anchor: *target.token_ids().first()?,
+        position: *target.position_ids().first()?,
+        active: *target.active_lengths().first()?,
+        context: *target.context_lengths().first()?,
+        preparation_kind: preparation_plans.kind(),
+        preparation_selection: preparation_plans.target().selection(),
+        recipe_kind: recipe_plans.kind(),
+        recipe_selection: recipe_plans.target().selection(),
+    })
+}
+
+fn expected_target_decode_input_association(
+    next: M1ServingPlanV1,
+    request: ferric_spec::RequestId,
+    epoch: CompletionEpoch,
+    anchor: ferric_spec::TokenId,
+    committed: u32,
+) -> M1AuthenticatedTargetDecodeInputAssociationV1 {
+    M1AuthenticatedTargetDecodeInputAssociationV1 {
+        selection: next.target(),
+        live_lanes: 1,
+        lane_selection: next.target(),
+        request,
+        epoch,
+        anchor,
+        position: committed,
+        active: 1,
+        context: committed,
+        preparation_kind: M1FullStepWorkspaceInputKind::TargetOnly,
+        preparation_selection: next.target(),
+        recipe_kind: M1FullStepWorkspaceInputKind::TargetOnly,
+        recipe_selection: next.target(),
+    }
+}
+
+fn target_decode_input_association_matches(
+    actual: Option<M1AuthenticatedTargetDecodeInputAssociationV1>,
+    expected: M1AuthenticatedTargetDecodeInputAssociationV1,
+) -> bool {
+    actual == Some(expected)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn target_decode_inputs_match(
+    target: &ValidatedM1StepInputs,
+    preparation_plans: &M1FullStepWorkspacePlans,
+    recipe_plans: &M1FullStepWorkspacePlans,
+    next: M1ServingPlanV1,
+    request: ferric_spec::RequestId,
+    epoch: CompletionEpoch,
+    anchor: ferric_spec::TokenId,
+    committed: u32,
+) -> bool {
+    target_decode_input_association_matches(
+        target_decode_input_association(target, preparation_plans, recipe_plans),
+        expected_target_decode_input_association(next, request, epoch, anchor, committed),
+    )
+}
+
+fn target_decode_schedule_preflight<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    inputs: &M1AuthenticatedTargetDecodeServingInputsV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1AuthenticatedTargetDecodeScheduleErrorV1,
+> {
+    let (prior, next, reason) = target_decode_serving_transition(batch)?;
+    if engine.is_faulted() {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::EngineFaulted);
+    }
+    if released.checked().epoch().value().checked_add(1) != Some(batch.epoch().value()) {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Epoch);
+    }
+    let [request] = batch.requests() else {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Roster);
+    };
+    let [record] = released.checked().records() else {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Roster);
+    };
+    let [M1ReleasedDeviceKvMemberV1::Active(cache)] = released.members() else {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::MemberCustody);
+    };
+    if released.logical_accepted_counts() != [1]
+        || released.externally_published_counts() != [1]
+        || released.queue().shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+    {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::QueueShape);
+    }
+    let old = released.queue().custody();
+    if old.selection() != prior.target() || released.checked().selection() != prior.target() {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::QueueSelection);
+    }
+    if old.workspace_owners().kind() != M1FullStepWorkspaceInputKind::PairedPrefill
+        || old.retains_retired_rollover_custody()
+    {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Workspace);
+    }
+    if !old
+        .completion_output()
+        .can_retarget_exact_s1_prefill_to_decode(next.target())
+    {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Output);
+    }
+    let projection = cache.projection();
+    if record.record().request != *request
+        || record.record().emitted_token_count != 1
+        || projection.request != *request
+        || projection.target.committed_tokens == 0
+        || projection.target.resident_tokens != projection.target.committed_tokens
+    {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::MemberCustody);
+    }
+    cache
+        .preflight_quiescent_reselection(next.target(), next.draft_cache_selection())
+        .map_err(|_| M1AuthenticatedTargetDecodeScheduleErrorV1::CacheReselection)?;
+    if engine.state(*request) != Some(RequestState::Ready) {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::RequestNotReady);
+    }
+    if !target_decode_inputs_match(
+        &inputs.target,
+        &inputs.preparation_plans,
+        &inputs.recipe_plans,
+        next,
+        *request,
+        batch.epoch(),
+        record.record().emitted_tokens[0],
+        projection.target.committed_tokens,
+    ) {
+        return Err(M1AuthenticatedTargetDecodeScheduleErrorV1::Inputs);
+    }
+    Ok((prior, next, reason))
+}
+
+fn close_target_decode_schedule_detached<const C: usize>(
+    engine: &mut Engine<C>,
+    error: M1AuthenticatedTargetDecodeScheduleErrorV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedTargetDecodeScheduleFailureV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    let detached = M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+        error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator,
+        queue,
+        retained: Box::new((error, retained)),
+    };
+    let disposition = match detached.destroy_queue_and_retain_custody(engine) {
+        Ok(released) => released_disposition(released),
+        Err(quarantined) => quarantined_disposition(quarantined),
+    };
+    M1AuthenticatedTargetDecodeScheduleFailureV1::Terminal { error, disposition }
+}
+
+/// Authenticates, detaches, dispatches, and reselects one registry-selected
+/// S1/T128 prefill to S1/C8192 target-decode transition.
+///
+/// Every pure rejection returns an opaque retry owner. Detachment or later
+/// failure permanently faults the Engine and closes or quarantines the queue.
+///
+/// # Errors
+///
+/// Returns an opaque retry before detachment or terminal release/quarantine
+/// custody after detachment begins.
+pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    inputs: M1AuthenticatedTargetDecodeServingInputsV1,
+) -> Result<
+    M1AuthenticatedScheduledTargetDecodeRolloverV1,
+    M1AuthenticatedTargetDecodeScheduleFailureV1,
+> {
+    let (prior, next, reason) =
+        match target_decode_schedule_preflight(engine, &released, batch, &inputs) {
+            Ok(transition) => transition,
+            Err(error) if error == M1AuthenticatedTargetDecodeScheduleErrorV1::EngineFaulted => {
+                use crate::authenticated_speculative_executor::{
+                    quarantined_disposition, released_disposition,
+                };
+                let disposition = match released.destroy_queue_and_retain_step(engine) {
+                    Ok(released) => released_disposition((released, inputs)),
+                    Err(quarantined) => quarantined_disposition((quarantined, inputs)),
+                };
+                return Err(M1AuthenticatedTargetDecodeScheduleFailureV1::Terminal {
+                    error,
+                    disposition,
+                });
+            }
+            Err(error) => {
+                return Err(M1AuthenticatedTargetDecodeScheduleFailureV1::PreDetach {
+                    error,
+                    retry: Box::new(M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1 {
+                        released: Box::new(released),
+                        inputs: Box::new(inputs),
+                    }),
+                });
+            }
+        };
+    let (
+        queue,
+        checked,
+        mut members,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    ) = released.into_rearm_parts();
+    let residue = M1AuthenticatedSpeculativeRolloverResidueV1 {
+        checked,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+    };
+    let queue = match queue.detach() {
+        Ok(queue) => queue,
+        Err(source) => {
+            use crate::authenticated_speculative_executor::quarantined_disposition;
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedTargetDecodeScheduleFailureV1::Terminal {
+                error: M1AuthenticatedTargetDecodeScheduleErrorV1::Detach,
+                disposition: quarantined_disposition((source, members, residue, inputs)),
+            });
+        }
+    };
+    let scheduled = match engine.dispatch_m1_exact_ready(batch.epoch(), batch.requests()) {
+        Ok(scheduled) => scheduled,
+        Err(source) => {
+            return Err(close_target_decode_schedule_detached(
+                engine,
+                M1AuthenticatedTargetDecodeScheduleErrorV1::ExactDispatch,
+                queue,
+                (source, members, residue, inputs),
+            ));
+        }
+    };
+    let mut selected = match members.pop() {
+        Some(M1ReleasedDeviceKvMemberV1::Active(selected)) => selected,
+        member => {
+            return Err(close_target_decode_schedule_detached(
+                engine,
+                M1AuthenticatedTargetDecodeScheduleErrorV1::MemberCustody,
+                queue,
+                (member, members, scheduled, residue, inputs),
+            ));
+        }
+    };
+    if let Err(source) = selected.reselect_quiescent(next.target(), next.draft_cache_selection()) {
+        return Err(close_target_decode_schedule_detached(
+            engine,
+            M1AuthenticatedTargetDecodeScheduleErrorV1::CacheReselection,
+            queue,
+            (source, selected, scheduled, residue, inputs),
+        ));
+    }
+    Ok(M1AuthenticatedScheduledTargetDecodeRolloverV1 {
+        prior,
+        next,
+        reason,
+        queue,
+        scheduled,
+        selected: vec![selected],
+        residue,
+        inputs,
+    })
+}
+
+/// Target-decode preparation failure shares the authenticated terminal custody
+/// representation with speculative rollover preparation.
+pub type M1AuthenticatedTargetDecodePrepareFailureV1 =
+    M1AuthenticatedSpeculativeRolloverPrepareFailureV1;
+/// Target-decode preparation uses the common authenticated preparation stages.
+pub type M1AuthenticatedTargetDecodePrepareStageV1 =
+    M1AuthenticatedSpeculativeRolloverPrepareStageV1;
+
+/// Fully prepared authenticated target-decode rollover.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedPreparedTargetDecodeRolloverV1;
+/// fn extract_queue(prepared: M1AuthenticatedPreparedTargetDecodeRolloverV1) {
+///     let _queue = prepared.into_queue();
+/// }
+/// ```
+#[must_use = "prepared target-decode rollover must be submitted"]
+#[derive(Debug)]
+pub struct M1AuthenticatedPreparedTargetDecodeRolloverV1 {
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    reason: M1ServingRolloverReasonV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    residue: M1AuthenticatedSpeculativeRolloverResidueV1,
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+}
+
+impl M1AuthenticatedPreparedTargetDecodeRolloverV1 {
+    #[must_use]
+    pub const fn next_plan(&self) -> M1ServingPlanV1 {
+        self.next
+    }
+
+    #[must_use]
+    pub const fn next_epoch(&self) -> CompletionEpoch {
+        self.prepared.step().scheduled_dispatch().epoch()
+    }
+}
+
+/// Reserves target KV writes and prepares target-only workspace images after
+/// the authenticated queue is detached and the cache has been reselected.
+///
+/// # Errors
+///
+/// Returns only terminal clean-release or opaque quarantine custody after a
+/// recipe, KV reservation, table binding, or workspace preparation failure.
+pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledTargetDecodeRolloverV1,
+) -> Result<
+    M1AuthenticatedPreparedTargetDecodeRolloverV1,
+    Box<M1AuthenticatedTargetDecodePrepareFailureV1>,
+> {
+    let M1AuthenticatedScheduledTargetDecodeRolloverV1 {
+        prior,
+        next,
+        reason,
+        queue,
+        scheduled,
+        mut selected,
+        residue,
+        inputs,
+    } = scheduled;
+    let M1AuthenticatedTargetDecodeServingInputsV1 {
+        target,
+        target_page_leases,
+        preparation_plans,
+        recipe_plans,
+    } = inputs;
+    let recipe = match crate::runner::derive_physical_step_recipe(
+        queue.operations(),
+        M1StepDispatchIntent::TargetOnly(next.target()),
+        recipe_plans,
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(source) => {
+            return Err(close_pending_preparation_failure(
+                engine,
+                preparation_failure(
+                    M1AuthenticatedSpeculativeRolloverPrepareStageV1::Recipe,
+                    queue,
+                    (
+                        source,
+                        prior,
+                        next,
+                        reason,
+                        scheduled,
+                        selected,
+                        residue,
+                        target,
+                        preparation_plans,
+                    ),
+                ),
+            ));
+        }
+    };
+    let Some(cache) = selected.first_mut() else {
+        return Err(close_pending_preparation_failure(
+            engine,
+            preparation_failure(
+                M1AuthenticatedSpeculativeRolloverPrepareStageV1::Inputs,
+                queue,
+                (
+                    prior,
+                    next,
+                    reason,
+                    scheduled,
+                    selected,
+                    residue,
+                    target,
+                    target_page_leases,
+                    recipe,
+                    preparation_plans,
+                ),
+            ),
+        ));
+    };
+    let reservation = match cache.reserve_step_write(
+        cache.projection().request,
+        Qwen3ModelRole::Target8B,
+        target.context_lengths()[0],
+        target.active_lengths()[0],
+        scheduled.epoch(),
+        target_page_leases,
+    ) {
+        Ok(reservation) => reservation,
+        Err(source) => {
+            return Err(close_pending_preparation_failure(
+                engine,
+                preparation_failure(
+                    M1AuthenticatedSpeculativeRolloverPrepareStageV1::TargetReservation,
+                    queue,
+                    (
+                        source,
+                        prior,
+                        next,
+                        reason,
+                        scheduled,
+                        selected,
+                        residue,
+                        target,
+                        recipe,
+                        preparation_plans,
+                    ),
+                ),
+            ));
+        }
+    };
+    let target = match crate::bind_m1_kv_workspace_table_v1(target, vec![reservation]) {
+        Ok(target) => target,
+        Err(source) => {
+            return Err(close_pending_preparation_failure(
+                engine,
+                preparation_failure(
+                    M1AuthenticatedSpeculativeRolloverPrepareStageV1::TargetTable,
+                    queue,
+                    (
+                        source,
+                        prior,
+                        next,
+                        reason,
+                        scheduled,
+                        selected,
+                        residue,
+                        recipe,
+                        preparation_plans,
+                    ),
+                ),
+            ));
+        }
+    };
+    let prepared = match crate::prepare_m1_scheduled_workspace_images_v1(
+        scheduled,
+        queue.operations().runner(),
+        preparation_plans,
+        M1FullStepKvWorkspaceTablesV1::TargetOnly { target },
+    ) {
+        Ok(prepared) => prepared,
+        Err(source) => {
+            return Err(close_pending_preparation_failure(
+                engine,
+                preparation_failure(
+                    M1AuthenticatedSpeculativeRolloverPrepareStageV1::Workspace,
+                    queue,
+                    (source, prior, next, reason, selected, residue, recipe),
+                ),
+            ));
+        }
+    };
+    Ok(M1AuthenticatedPreparedTargetDecodeRolloverV1 {
+        prior,
+        next,
+        reason,
+        queue,
+        selected,
+        residue,
+        prepared,
+        recipe,
+    })
+}
+
 /// Terminal failure for the exact authenticated target-decode rollover.
 ///
 /// The underlying custody representation is shared with authenticated
@@ -2367,25 +3126,6 @@ where
 /// ```
 pub type M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 =
     M1AuthenticatedSpeculativeRolloverSubmissionFailureV1;
-
-fn close_target_decode_released<const C: usize>(
-    engine: &mut Engine<C>,
-    released: M1AuthenticatedReleasedCompletedStepV1,
-    retained: impl fmt::Debug + 'static,
-) -> M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 {
-    use crate::authenticated_speculative_executor::{
-        quarantined_disposition, released_disposition,
-    };
-
-    let disposition = match released.destroy_queue_and_retain_step(engine) {
-        Ok(released) => released_disposition((released, retained)),
-        Err(quarantined) => quarantined_disposition((quarantined, retained)),
-    };
-    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
-        stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
-        disposition,
-    }
-}
 
 fn close_target_decode_unbound<const C: usize>(
     engine: &mut Engine<C>,
@@ -2409,56 +3149,51 @@ fn close_target_decode_workspace_failure<const C: usize, const N: usize>(
 
 fn target_decode_submission_preflight<const C: usize>(
     engine: &Engine<C>,
-    released: &M1AuthenticatedReleasedCompletedStepV1,
-    batch: &M1ServingBatchPlanV1,
-    prepared: &M1PreparedScheduledWorkspaceImagesV1,
-    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    target: &M1AuthenticatedPreparedTargetDecodeRolloverV1,
 ) -> bool {
-    let M1ServingQueueActionV1::QuiescentRollover {
+    let M1AuthenticatedPreparedTargetDecodeRolloverV1 {
         prior,
         next,
         reason,
-    } = batch.action()
-    else {
+        queue,
+        selected,
+        residue,
+        prepared,
+        recipe,
+    } = target;
+    let Some(transition) = admit_m1_target_decode_rollover_transition_v1(*prior, *next) else {
         return false;
     };
-    let Some(transition) = admit_m1_target_decode_rollover_transition_v1(prior, next) else {
+    let [cache] = selected.as_slice() else {
+        return false;
+    };
+    let [record] = residue.checked.records() else {
         return false;
     };
     let scheduled = prepared.step().scheduled_dispatch();
-    let old = released.queue().custody();
-    let [record] = released.checked().records() else {
-        return false;
-    };
-    let [M1ReleasedDeviceKvMemberV1::Active(cache)] = released.members() else {
-        return false;
-    };
+    let old = queue.custody();
     let projection = cache.projection();
-    transition.reason() == reason
+    transition.reason() == *reason
         && !engine.is_faulted()
-        && batch.requests().len() == 1
-        && batch.requests()[0] == record.record().request
-        && batch.epoch() == scheduled.epoch()
-        && scheduled.member_count() == 1
-        && scheduled.member(0) == Some(batch.requests()[0])
-        && released.checked().epoch().value().checked_add(1) == Some(batch.epoch().value())
-        && released.queue().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && queue.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
         && old.selection() == prior.target()
-        && released.checked().selection() == prior.target()
+        && residue.checked.selection() == prior.target()
         && old.workspace_owners().kind() == M1FullStepWorkspaceInputKind::PairedPrefill
         && !old.retains_retired_rollover_custody()
         && old
             .completion_output()
             .can_retarget_exact_s1_prefill_to_decode(next.target())
         && record.record().emitted_token_count == 1
-        && released.logical_accepted_counts() == [1]
-        && released.externally_published_counts() == [1]
-        && projection.request == batch.requests()[0]
+        && residue.logical_accepted_counts.as_ref() == [1]
+        && residue.externally_published_counts.as_ref() == [1]
+        && residue.checked.epoch().value().checked_add(1) == Some(scheduled.epoch().value())
+        && scheduled.member_count() == 1
+        && scheduled.member(0) == Some(record.record().request)
+        && projection.request == record.record().request
         && projection.target.committed_tokens != 0
         && projection.target.resident_tokens == projection.target.committed_tokens
-        && cache
-            .preflight_quiescent_reselection(next.target(), next.draft_cache_selection())
-            .is_ok()
+        && projection.target_write_pending
+        && !projection.draft_write_pending
         && prepared.kind() == M1FullStepWorkspaceInputKind::TargetOnly
         && prepared.step().kv_reservations().target_selection() == next.target()
         && prepared
@@ -2486,14 +3221,36 @@ fn target_decode_submission_preflight<const C: usize>(
         && recipe.kernarg_recipe().images().len() == M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1
 }
 
+fn close_target_decode_detached_submission<const C: usize>(
+    engine: &mut Engine<C>,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+
+    let detached = M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+        error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator,
+        queue,
+        retained: Box::new(retained),
+    };
+    let disposition = match detached.destroy_queue_and_retain_custody(engine) {
+        Ok(released) => released_disposition(released),
+        Err(quarantined) => quarantined_disposition(quarantined),
+    };
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+        stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+        disposition,
+    }
+}
+
 /// Publishes the exact authenticated S1/T128 paired-prefill to S1/C8192
-/// target-decode rollover selected by a live serving-registry batch.
+/// target-decode rollover selected and prepared by the authenticated bridge.
 ///
-/// The caller supplies no selection or currentness authority. The successor is
-/// joined from the registry action, the Engine-issued dispatch retained by
-/// `prepared`, and the authenticated released queue. All checks occur before
-/// detachment. Every later failure closes or quarantines queue custody and
-/// permanently faults the Engine.
+/// The caller supplies no selection or currentness authority. The opaque input
+/// already joins the live registry transition, Engine-issued dispatch,
+/// authenticated predecessor, reselected KV cache, and prepared target work.
 ///
 /// # Errors
 ///
@@ -2507,88 +3264,30 @@ fn target_decode_submission_preflight<const C: usize>(
 #[allow(clippy::too_many_lines)]
 pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
-    released: M1AuthenticatedReleasedCompletedStepV1,
-    batch: &M1ServingBatchPlanV1,
-    prepared: M1PreparedScheduledWorkspaceImagesV1,
-    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    target: M1AuthenticatedPreparedTargetDecodeRolloverV1,
     ring_bytes: u32,
 ) -> Result<
     M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1,
 > {
-    if !target_decode_submission_preflight(engine, &released, batch, &prepared, &recipe) {
-        return Err(close_target_decode_released(
+    let preflight = target_decode_submission_preflight(engine, &target);
+    let M1AuthenticatedPreparedTargetDecodeRolloverV1 {
+        prior,
+        next,
+        reason,
+        queue,
+        selected,
+        residue,
+        prepared,
+        recipe,
+    } = target;
+    if !preflight {
+        return Err(close_target_decode_detached_submission(
             engine,
-            released,
-            (
-                batch.epoch(),
-                batch.action(),
-                batch.requests().to_vec(),
-                prepared,
-                recipe,
-            ),
+            queue,
+            (prior, next, reason, selected, residue, prepared, recipe),
         ));
     }
-    let M1ServingQueueActionV1::QuiescentRollover {
-        prior: _,
-        next,
-        reason: _,
-    } = batch.action()
-    else {
-        unreachable!("target rollover action was preflighted")
-    };
-    let (
-        queue,
-        checked,
-        mut members,
-        logical_accepted_counts,
-        externally_published_counts,
-        release_counts,
-        completed_members,
-        total_released,
-    ) = released.into_rearm_parts();
-    let queue = match queue.detach() {
-        Ok(queue) => queue,
-        Err(source) => {
-            use crate::authenticated_speculative_executor::quarantined_disposition;
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
-                stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
-                disposition: quarantined_disposition((source, members, checked, prepared, recipe)),
-            });
-        }
-    };
-    let M1ReleasedDeviceKvMemberV1::Active(mut selected) = members.pop().unwrap() else {
-        unreachable!("single active cache was preflighted")
-    };
-    if let Err(source) = selected.reselect_quiescent(next.target(), next.draft_cache_selection()) {
-        let detached = M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
-            error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::CacheReselection { lane: 0 },
-            queue,
-            retained: Box::new((source, selected, checked, prepared, recipe)),
-        };
-        let disposition = match detached.destroy_queue_and_retain_custody(engine) {
-            Ok(released) => {
-                crate::authenticated_speculative_executor::released_disposition(released)
-            }
-            Err(quarantined) => {
-                crate::authenticated_speculative_executor::quarantined_disposition(quarantined)
-            }
-        };
-        return Err(M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
-            stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
-            disposition,
-        });
-    }
-    let selected = vec![selected];
-    let residue = M1AuthenticatedSpeculativeRolloverResidueV1 {
-        checked,
-        logical_accepted_counts,
-        externally_published_counts,
-        release_counts,
-        completed_members,
-        total_released,
-    };
     let (old_shape, lower, witness, operations, custody) = queue.into_rearm_parts();
     let predecessor_observation = lower.observation();
     let predecessor_generation = lower.detached_dispatch_generation();
@@ -2960,6 +3659,42 @@ pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
             rollover,
         ),
     )
+}
+
+/// Failure phase for the authenticated target-decode serving bridge.
+#[must_use = "authenticated target-decode bridge custody remains retained"]
+#[derive(Debug)]
+pub enum M1AuthenticatedTargetDecodeServingFailureV1 {
+    Schedule(M1AuthenticatedTargetDecodeScheduleFailureV1),
+    Prepare(Box<M1AuthenticatedTargetDecodePrepareFailureV1>),
+    Submit(M1AuthenticatedTargetDecodeRolloverSubmissionFailureV1),
+}
+
+/// Runs the live registry-selected authenticated target-decode transition from
+/// released prefill custody through physical queue publication.
+///
+/// The registry batch is consumed only as a borrowed scheduler decision. It
+/// cannot supply selection or currentness authority; those are joined from the
+/// authenticated predecessor, Engine dispatch, and protected queue program.
+///
+/// # Errors
+///
+/// Returns exact pre-detach retry custody for pure scheduling rejection and
+/// terminal release/quarantine custody for every later failure.
+pub fn run_m1_authenticated_target_decode_serving_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    inputs: M1AuthenticatedTargetDecodeServingInputsV1,
+    ring_bytes: u32,
+) -> Result<M1AuthenticatedRearmedPublishedQueueV1, M1AuthenticatedTargetDecodeServingFailureV1> {
+    let scheduled =
+        schedule_m1_authenticated_target_decode_rollover_v1(engine, released, batch, inputs)
+            .map_err(M1AuthenticatedTargetDecodeServingFailureV1::Schedule)?;
+    let prepared = prepare_m1_authenticated_target_decode_rollover_v1(engine, scheduled)
+        .map_err(M1AuthenticatedTargetDecodeServingFailureV1::Prepare)?;
+    submit_m1_authenticated_target_decode_rollover_v1(engine, prepared, ring_bytes)
+        .map_err(M1AuthenticatedTargetDecodeServingFailureV1::Submit)
 }
 
 /// Replaces the authenticated paired-prefill queue with a prepared finite-
@@ -4030,6 +4765,67 @@ mod tests {
             }
             _ => panic!("terminal route must retain quarantine and inputs"),
         }
+    }
+
+    #[test]
+    fn target_decode_serving_association_rejects_every_authority_splice() {
+        let prior = serving_plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let next = serving_plan(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let batch = planned_rollover(prior, next, 1);
+        assert_eq!(
+            target_decode_serving_transition(&batch),
+            Ok((prior, next, M1ServingRolloverReasonV1::Mode))
+        );
+
+        let request = batch.requests()[0];
+        let exact = expected_target_decode_input_association(next, request, batch.epoch(), 42, 128);
+        let matches = |observed| target_decode_input_association_matches(Some(observed), exact);
+        assert!(matches(exact));
+        let mut hostile = exact;
+        let wrong_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS8C8192,
+        };
+
+        hostile.selection = wrong_selection;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.live_lanes = 2;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.lane_selection = wrong_selection;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.request = RequestId::new(0, 2);
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.epoch = CompletionEpoch::new(batch.epoch().value() + 1);
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.anchor = 41;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.position = 127;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.active = 2;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.context = 127;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.preparation_kind = M1FullStepWorkspaceInputKind::PairedPrefill;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.preparation_selection = wrong_selection;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.recipe_kind = M1FullStepWorkspaceInputKind::SpeculativeRound;
+        assert!(!matches(hostile));
+        hostile = exact;
+        hostile.recipe_selection = wrong_selection;
+        assert!(!matches(hostile));
     }
 
     #[test]
