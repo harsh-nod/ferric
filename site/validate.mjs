@@ -35,10 +35,10 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
-  fe2o3CompilerCandidateTree: "81a2ba4f856ac14268cd13aba2f1ce3eebfcc06c",
-  fe2o3CompilerQualificationBase: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
-  fe2o3LatestMain: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
+  fe2o3CompilerCandidate: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
+  fe2o3CompilerCandidateTree: "e28a3a8333c76ecd034b6599bde7f289dfe0f12e",
+  fe2o3CompilerQualificationBase: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
+  fe2o3LatestMain: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
   fe2o3GuardedSubtractionCommit: "e745bc75c",
   fe2o3CompilerCandidateStatus: "public-main-consumed-by-ferric-feature-branch",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
@@ -977,7 +977,7 @@ for (const claim of [
   assert(!claim.test(currentProjectData), `current Pages data overclaims open work: ${claim}`);
 }
 for (const claim of [
-  "Public fe2o3 main d8fa0835c64d6574c8589ac3e69e3c34b0350758",
+  "Public fe2o3 main b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
   "Compiler, runtime, and KFD work stays in fe2o3",
   "Ferric owns all Qwen kernels and inference",
   "Ferric checkpoints a2bb2dc and 4e18d1d are public on feature branch origin/codex/fe2o3-current-main-repin-v1, but are not on main or final",
