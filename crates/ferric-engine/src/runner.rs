@@ -21,8 +21,6 @@ use ferric_spec::{Identity, Qwen3PlanSelection, RequestId, StepPlan};
 
 use crate::m1_prepublication::build_m1_authenticated_prepublication_batch_v1;
 use crate::operation_kernel_plan::derive_canonical_operation_bindings;
-#[cfg(feature = "engineering-non-authoritative-execution")]
-use crate::M1EngineeringAggregateArtifactV1;
 use crate::{
     allocate_initialized_m1_model_memory_on_device_v1, allocate_m1_prepublication_workspaces_v1,
     bind_declared_operation_kernel_plan, bind_m1_partitioned_model_memory_kv_pool_v1,
@@ -41,17 +39,17 @@ use crate::{
     M1DeviceKvCompletionRosterV1, M1DeviceModelMemoryAllocationFailureV1,
     M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceCompositionFailure,
     M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspacePlans,
-    M1LongLivedQueueRearmSubmissionFailureV1, M1PhysicalBufferBindingErrorV1,
-    M1PhysicalDispatchRecipeErrorV1, M1PhysicalFixedBatchBuildErrorV1,
-    M1PhysicalProgramCatalogErrorV1, M1PhysicalPublishedQueueSessionV1,
-    M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueueCreateFailureV1,
-    M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1, M1PrepareFailureV1,
-    M1PreparedFiniteSpeculativeQueueRolloverV1, M1PreparedLongLivedQueueRearmV1,
-    M1PreparedS1K4QueueRolloverV1, M1PrepublicationAllocationFailureV1,
-    M1PrepublicationBatchBuildErrorKindV1, M1PrepublicationBatchBuildFailureV1,
-    M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1, M1ScheduledDispatchV1,
-    M1StepDispatchCompositionError, M1StepDispatchIntent, OperationKernelPlanError,
-    OperationKernelPlanFailure, OperationKernelPlanOutcome,
+    M1LongLivedQueueRearmSubmissionFailureV1, M1NonAuthoritativeProgramArtifactV1,
+    M1PhysicalBufferBindingErrorV1, M1PhysicalDispatchRecipeErrorV1,
+    M1PhysicalFixedBatchBuildErrorV1, M1PhysicalProgramCatalogErrorV1,
+    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueCreateFailureClassV1,
+    M1PhysicalQueueCreateFailureV1, M1PhysicalQueueOperationFailureV1, M1PhysicalQueueSessionV1,
+    M1PrepareFailureV1, M1PreparedFiniteSpeculativeQueueRolloverV1,
+    M1PreparedLongLivedQueueRearmV1, M1PreparedS1K4QueueRolloverV1,
+    M1PrepublicationAllocationFailureV1, M1PrepublicationBatchBuildErrorKindV1,
+    M1PrepublicationBatchBuildFailureV1, M1RearmedPublishedQueueV1, M1ReleasedCompletedStepV1,
+    M1ScheduledDispatchV1, M1StepDispatchCompositionError, M1StepDispatchIntent,
+    OperationKernelPlanError, OperationKernelPlanFailure, OperationKernelPlanOutcome,
 };
 
 /// Fail-closed logical declaration lookup error.
@@ -230,24 +228,21 @@ pub struct M1PhysicalRunnerV1 {
 #[derive(Debug)]
 enum M1StructuralProgramSourceV1 {
     Persisted(Box<AdmittedPersistedM1KernelArtifactsV1>),
-    #[cfg(feature = "engineering-non-authoritative-execution")]
-    Engineering(Box<M1EngineeringAggregateArtifactV1>),
+    NonAuthoritative(Box<M1NonAuthoritativeProgramArtifactV1>),
 }
 
 impl M1StructuralProgramSourceV1 {
     const fn admission_manifest_id(&self) -> Identity {
         match self {
             Self::Persisted(artifacts) => Identity::new(*artifacts.manifest().identity().sha256()),
-            #[cfg(feature = "engineering-non-authoritative-execution")]
-            Self::Engineering(artifact) => artifact.manifest_id(),
+            Self::NonAuthoritative(artifact) => artifact.observation_id(),
         }
     }
 
     const fn program_catalog_id(&self) -> Identity {
         match self {
             Self::Persisted(artifacts) => artifacts.program_catalog_id(),
-            #[cfg(feature = "engineering-non-authoritative-execution")]
-            Self::Engineering(artifact) => artifact.program_catalog_id(),
+            Self::NonAuthoritative(artifact) => artifact.program_catalog_id(),
         }
     }
 
@@ -259,8 +254,9 @@ impl M1StructuralProgramSourceV1 {
             Self::Persisted(artifacts) => {
                 artifacts.with_content_bound_program_catalog_v1(use_catalog)
             }
-            #[cfg(feature = "engineering-non-authoritative-execution")]
-            Self::Engineering(artifact) => artifact.with_structural_program_catalog_v1(use_catalog),
+            Self::NonAuthoritative(artifact) => {
+                artifact.with_structural_program_catalog_v1(use_catalog)
+            }
         }
     }
 
@@ -269,8 +265,7 @@ impl M1StructuralProgramSourceV1 {
     ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
         match self {
             Self::Persisted(artifacts) => artifacts.content_bound_program_catalog_v1(),
-            #[cfg(feature = "engineering-non-authoritative-execution")]
-            Self::Engineering(artifact) => artifact.content_bound_program_catalog_v1(),
+            Self::NonAuthoritative(artifact) => artifact.content_bound_program_catalog_v1(),
         }
     }
 }
@@ -910,22 +905,21 @@ pub fn bind_structural_m1_physical_runner_v1(
     }
 }
 
-/// Engineering aggregate to structural-runner binding failure.
+/// Authority-free aggregate to structural-runner binding failure.
 ///
 /// No failure variant constructs authenticated Worker V3 or physical-runner
 /// custody.
-#[cfg(feature = "engineering-non-authoritative-execution")]
-#[must_use = "engineering structural binding rejection retains every exact input"]
+#[must_use = "non-authoritative structural binding rejection retains every exact input"]
 #[derive(Debug)]
-pub enum M1EngineeringStructuralPhysicalRunnerBindFailureV1 {
+pub enum M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1 {
     /// The generated declaration asserted a different executable catalog.
     ExecutableCatalog {
-        /// Exact admitted engineering aggregate catalog identity.
+        /// Exact authority-free aggregate catalog identity.
         expected: Identity,
         /// Executable catalog asserted by the generated declaration.
         actual: Identity,
-        /// Unchanged engineering artifact owner.
-        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Unchanged authority-free artifact owner.
+        artifact: Box<M1NonAuthoritativeProgramArtifactV1>,
         /// Unchanged published declaration owner.
         publication: Box<PublishedRunnerDeclaration>,
     },
@@ -933,43 +927,40 @@ pub enum M1EngineeringStructuralPhysicalRunnerBindFailureV1 {
     Canonical {
         /// Exact structural derivation error.
         error: OperationKernelPlanError,
-        /// Unchanged engineering artifact owner.
-        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Unchanged authority-free artifact owner.
+        artifact: Box<M1NonAuthoritativeProgramArtifactV1>,
         /// Logical declaration owner derived from the publication.
         runner: Box<LogicalRunnerDeclaration>,
     },
     /// Final structural operation binding rejected the exact inputs.
     Structural {
-        /// Unchanged engineering artifact owner.
-        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Unchanged authority-free artifact owner.
+        artifact: Box<M1NonAuthoritativeProgramArtifactV1>,
         /// Structural binding failure retaining declaration and family facts.
         failure: Box<OperationKernelPlanFailure>,
     },
 }
 
-/// Binds one non-authoritative engineering aggregate to the legacy structural runner.
+/// Binds one authority-free aggregate to the legacy structural runner.
 ///
-/// Compilation of this API requires the explicit
-/// `engineering-non-authoritative-execution` feature. The returned runner is
-/// never an authenticated Worker V3 runner and cannot enter authenticated queue
-/// APIs. The engineering observation remains authority `none`; explicit caller
-/// invocation supplies consent to attempt a diagnostic load and execution.
+/// The returned runner is never an authenticated Worker V3 runner and cannot
+/// enter authenticated queue APIs. The input remains authority `none`; explicit
+/// caller invocation supplies consent to attempt diagnostic load and execution.
 ///
 /// # Errors
 ///
 /// Returns exact identity, canonical derivation, or structural binding failure
 /// with both move-only inputs retained.
-#[cfg(feature = "engineering-non-authoritative-execution")]
 #[doc(hidden)]
-pub fn bind_engineering_structural_m1_physical_runner_v1(
-    artifact: M1EngineeringAggregateArtifactV1,
+pub fn bind_non_authoritative_structural_m1_physical_runner_v1(
+    artifact: M1NonAuthoritativeProgramArtifactV1,
     publication: PublishedRunnerDeclaration,
-) -> Result<M1PhysicalRunnerV1, M1EngineeringStructuralPhysicalRunnerBindFailureV1> {
+) -> Result<M1PhysicalRunnerV1, M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1> {
     let expected = artifact.program_catalog_id();
     let actual = publication.executable_catalog_id();
-    if !engineering_executable_catalog_matches(expected, actual) {
+    if !non_authoritative_executable_catalog_matches(expected, actual) {
         return Err(
-            M1EngineeringStructuralPhysicalRunnerBindFailureV1::ExecutableCatalog {
+            M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::ExecutableCatalog {
                 expected,
                 actual,
                 artifact: Box::new(artifact),
@@ -978,12 +969,12 @@ pub fn bind_engineering_structural_m1_physical_runner_v1(
         );
     }
     let runner = LogicalRunnerDeclaration::from_published(publication);
-    let families = engineering_aggregate_family_artifacts(&artifact);
+    let families = non_authoritative_aggregate_family_artifacts(&artifact);
     let operations = match derive_canonical_operation_bindings(&runner, &families) {
         Ok(operations) => operations,
         Err(error) => {
             return Err(
-                M1EngineeringStructuralPhysicalRunnerBindFailureV1::Canonical {
+                M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Canonical {
                     error,
                     artifact: Box::new(artifact),
                     runner: Box::new(runner),
@@ -993,11 +984,11 @@ pub fn bind_engineering_structural_m1_physical_runner_v1(
     };
     match bind_declared_operation_kernel_plan(runner, families, operations) {
         OperationKernelPlanOutcome::Bound(operations) => Ok(M1PhysicalRunnerV1 {
-            source: M1StructuralProgramSourceV1::Engineering(Box::new(artifact)),
+            source: M1StructuralProgramSourceV1::NonAuthoritative(Box::new(artifact)),
             operations,
         }),
         OperationKernelPlanOutcome::Rejected(failure) => Err(
-            M1EngineeringStructuralPhysicalRunnerBindFailureV1::Structural {
+            M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Structural {
                 artifact: Box::new(artifact),
                 failure: Box::new(failure),
             },
@@ -1005,24 +996,21 @@ pub fn bind_engineering_structural_m1_physical_runner_v1(
     }
 }
 
-#[cfg(feature = "engineering-non-authoritative-execution")]
-fn engineering_aggregate_family_artifacts(
-    artifact: &M1EngineeringAggregateArtifactV1,
+fn non_authoritative_aggregate_family_artifacts(
+    artifact: &M1NonAuthoritativeProgramArtifactV1,
 ) -> Box<[DeclaredKernelFamilyArtifact]> {
-    engineering_aggregate_family_artifacts_from_ids(
+    non_authoritative_aggregate_family_artifacts_from_ids(
         artifact.compiler_handoff_id(),
         artifact.hsaco_id(),
         artifact.program_catalog_id(),
     )
 }
 
-#[cfg(feature = "engineering-non-authoritative-execution")]
-fn engineering_executable_catalog_matches(expected: Identity, actual: Identity) -> bool {
+fn non_authoritative_executable_catalog_matches(expected: Identity, actual: Identity) -> bool {
     expected.equals(&actual)
 }
 
-#[cfg(feature = "engineering-non-authoritative-execution")]
-fn engineering_aggregate_family_artifacts_from_ids(
+fn non_authoritative_aggregate_family_artifacts_from_ids(
     build_id: Identity,
     artifact_id: Identity,
     abi_layout_id: Identity,
@@ -1528,17 +1516,16 @@ mod tests {
     use ferric_spec::scheduling::RequestState;
     use std::cell::Cell;
 
-    #[cfg(feature = "engineering-non-authoritative-execution")]
     #[test]
-    fn engineering_family_facts_are_exactly_ordered_and_share_aggregate_identity() {
+    fn non_authoritative_family_facts_are_ordered_and_share_aggregate_identity() {
         use ferric_kernels::KernelFamily;
 
-        use super::engineering_aggregate_family_artifacts_from_ids;
+        use super::non_authoritative_aggregate_family_artifacts_from_ids;
 
         let build = Identity::new([81; 32]);
         let artifact = Identity::new([82; 32]);
         let abi = Identity::new([83; 32]);
-        let facts = engineering_aggregate_family_artifacts_from_ids(build, artifact, abi);
+        let facts = non_authoritative_aggregate_family_artifacts_from_ids(build, artifact, abi);
         assert_eq!(facts.len(), 7);
         assert_eq!(
             facts.iter().map(|fact| fact.family()).collect::<Vec<_>>(),
@@ -1559,14 +1546,13 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "engineering-non-authoritative-execution")]
     #[test]
-    fn engineering_executable_catalog_join_rejects_any_mismatch() {
-        use super::engineering_executable_catalog_matches;
+    fn non_authoritative_executable_catalog_join_rejects_any_mismatch() {
+        use super::non_authoritative_executable_catalog_matches;
 
         let exact = Identity::new([84; 32]);
-        assert!(engineering_executable_catalog_matches(exact, exact));
-        assert!(!engineering_executable_catalog_matches(
+        assert!(non_authoritative_executable_catalog_matches(exact, exact));
+        assert!(!non_authoritative_executable_catalog_matches(
             exact,
             Identity::new([85; 32])
         ));

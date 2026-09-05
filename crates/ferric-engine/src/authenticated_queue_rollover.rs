@@ -611,46 +611,6 @@ fn transition(
     Ok((prior, next, reason))
 }
 
-/// Constructs the logical serving transition used only by the ignored native
-/// authenticated rollover fixture.
-#[cfg(feature = "native-rollover-fixture")]
-#[doc(hidden)]
-pub fn build_m1_native_rollover_fixture_batch_v1(
-    prior: M1ServingPlanV1,
-    next: M1ServingPlanV1,
-    requests: &[ferric_spec::RequestId],
-) -> M1ServingBatchPlanV1 {
-    let mut registry = crate::M1ServingRegistryV1::<8>::new()
-        .expect("native rollover fixture registry construction must succeed");
-    for request in requests {
-        registry
-            .admit(*request, prior)
-            .expect("native rollover fixture admission must succeed");
-    }
-    let prefill = registry
-        .plan_next()
-        .expect("native rollover fixture prefill planning must succeed")
-        .expect("native rollover fixture prefill must be ready");
-    let epoch = prefill.epoch();
-    let reservation = registry
-        .reserve_publication(prefill)
-        .expect("native rollover fixture publication reservation must succeed");
-    let identity = reservation.registry_identity();
-    registry
-        .record_publication(reservation)
-        .expect("native rollover fixture publication recording must succeed");
-    let dispositions =
-        vec![crate::M1ServingCompletionDispositionV1::Continue(next); requests.len()];
-    registry
-        .preflight_completion_exact_for(identity, epoch, &dispositions)
-        .expect("native rollover fixture transition preflight must succeed");
-    registry.apply_preflighted_completion(epoch, &dispositions);
-    registry
-        .plan_next()
-        .expect("native rollover fixture rollover planning must succeed")
-        .expect("native rollover fixture rollover must be ready")
-}
-
 fn paired_prefill_plan(target: ferric_spec::Qwen3PlanSelection) -> Option<M1ServingPlanV1> {
     M1ServingPlanV1::new(
         target,

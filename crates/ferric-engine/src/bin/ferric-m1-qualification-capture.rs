@@ -2097,12 +2097,6 @@ fn run(arguments: Vec<OsString>) -> CaptureResult<()> {
     if arguments.first().and_then(|argument| argument.to_str()) == Some(m1_target_smoke::COMMAND) {
         return m1_target_smoke::run(&arguments[1..]);
     }
-    #[cfg(feature = "engineering-non-authoritative-execution")]
-    if arguments.first().and_then(|argument| argument.to_str())
-        == Some(m1_target_smoke::ENGINEERING_COMMAND)
-    {
-        return m1_target_smoke::run_engineering(&arguments[1..]);
-    }
     if arguments.len() != 10 {
         match arguments.first().and_then(|argument| argument.to_str()) {
             Some("generate-inputs") => return input_bundle::generate_inputs(&arguments[1..]),
@@ -9016,13 +9010,12 @@ mod tests {
         assert!(catalog.admission_record().is_some());
     }
 
-    #[cfg(feature = "native-rollover-fixture")]
     #[test]
     #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
         use ferric_engine::{
             bind_m1_authenticated_speculative_rollover_intent_v1,
-            build_m1_native_rollover_fixture_batch_v1, complete_m1_authenticated_physical_step_v1,
+            complete_m1_authenticated_physical_step_v1,
             prepare_m1_authenticated_speculative_rollover_v1,
             release_m1_authenticated_completed_step_kv_pages_v1,
             schedule_m1_authenticated_speculative_rollover_v1,
@@ -9030,9 +9023,164 @@ mod tests {
             M1AuthenticatedPhysicalQueueSessionV1,
             M1AuthenticatedSpeculativeRolloverMemberIntentV1, M1DeviceKvCompletionMemberV1,
             M1DeviceKvCompletionRosterV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
-            M1ServingPlanV1, M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+            M1ScheduledDispatchV1, M1ServingCompletionDispositionV1,
+            M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
+            M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
+            M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
             M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
         };
+
+        struct FixtureOperations {
+            engine: Engine<8>,
+        }
+
+        impl FixtureOperations {
+            fn new(requests: &[RequestId]) -> Self {
+                let mut engine = Engine::<8>::new(512, 256, 8_192)
+                    .expect("native rollover fixture Engine construction must succeed");
+                for expected in requests {
+                    let actual = engine
+                        .admit()
+                        .expect("native rollover fixture request admission must succeed");
+                    assert_eq!(actual, *expected);
+                    engine
+                        .append_tentative(actual, 1)
+                        .expect("native rollover fixture request must become dispatchable");
+                }
+                Self { engine }
+            }
+        }
+
+        impl M1ServingPhysicalOperationsV1 for FixtureOperations {
+            type Quiescent = ();
+            type Published = M1ScheduledDispatchV1;
+            type Readback = ();
+            type Error = &'static str;
+            type TerminalCustody = ();
+
+            fn scheduled_dispatch<'a>(
+                &self,
+                custody: &'a Self::Published,
+            ) -> &'a M1ScheduledDispatchV1 {
+                custody
+            }
+
+            fn fresh_launch(
+                &mut self,
+                batch: &ferric_engine::M1ServingBatchPlanV1,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Published,
+                (),
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                Ok(self
+                    .engine
+                    .dispatch_m1_exact_ready(batch.epoch(), batch.requests())
+                    .expect("native rollover fixture dispatch must match the registry batch"))
+            }
+
+            fn same_shape_rearm(
+                &mut self,
+                _custody: Self::Quiescent,
+                _batch: &ferric_engine::M1ServingBatchPlanV1,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Published,
+                Self::Quiescent,
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                unreachable!("native rollover fixture only models its first publication")
+            }
+
+            fn quiescent_rollover(
+                &mut self,
+                _custody: Self::Quiescent,
+                _prior: M1ServingPlanV1,
+                _next: M1ServingPlanV1,
+                _reason: ferric_engine::M1ServingRolloverReasonV1,
+                _batch: &ferric_engine::M1ServingBatchPlanV1,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Published,
+                Self::Quiescent,
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                unreachable!("native rollover fixture only models its first publication")
+            }
+
+            fn read_published(
+                &mut self,
+                _custody: Self::Published,
+                _epoch: ferric_spec::completion::CompletionEpoch,
+                _batch: &ferric_engine::M1ServingBatchPlanV1,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Readback,
+                Self::Published,
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                Ok(())
+            }
+
+            fn checked_completion<'a>(
+                &self,
+                _custody: &'a Self::Readback,
+            ) -> &'a ferric_engine::M1CheckedCompletionOutputV1 {
+                unreachable!("direct fixture completion does not request speculative readback")
+            }
+
+            fn settle_readback(
+                &mut self,
+                _custody: Self::Readback,
+                _dispositions: Vec<ferric_engine::M1DeviceKvCompletionDispositionV1>,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Quiescent,
+                Self::Readback,
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                Ok(())
+            }
+        }
+
+        fn build_rollover_fixture_batch(
+            prior: M1ServingPlanV1,
+            next: M1ServingPlanV1,
+            requests: &[RequestId],
+        ) -> ferric_engine::M1ServingBatchPlanV1 {
+            let mut registry = M1ServingRegistryV1::<8>::new()
+                .expect("native rollover fixture registry construction must succeed");
+            for request in requests {
+                registry
+                    .admit(*request, prior)
+                    .expect("native rollover fixture admission must succeed");
+            }
+            let prefill = registry
+                .plan_next()
+                .expect("native rollover fixture prefill planning must succeed")
+                .expect("native rollover fixture prefill must be ready");
+            let epoch = prefill.epoch();
+            let reservation = registry
+                .reserve_publication(prefill)
+                .expect("native rollover fixture publication reservation must succeed");
+            let mut operations = FixtureOperations::new(requests);
+            let published = M1ServingPhysicalQueueCustodyV1::Vacant
+                .publish(reservation, &mut registry, &mut operations)
+                .expect("native rollover fixture publication bridge must succeed");
+            let readback = published
+                .read_physical(epoch, &mut operations)
+                .expect("native rollover fixture readback bridge must succeed");
+            let dispositions =
+                vec![M1ServingCompletionDispositionV1::Continue(next); requests.len()];
+            let (_completed, _quiescent) = readback
+                .complete_exact(&mut registry, &dispositions, &mut operations)
+                .expect("native rollover fixture completion bridge must succeed");
+            registry
+                .plan_next()
+                .expect("native rollover fixture rollover planning must succeed")
+                .expect("native rollover fixture rollover must be ready")
+        }
 
         let required_path =
             |name: &str| std::env::var_os(name).map_or_else(|| panic!("set {name}"), PathBuf::from);
@@ -9371,7 +9519,7 @@ mod tests {
             }
         };
 
-        let rollover_batch = build_m1_native_rollover_fixture_batch_v1(prior, next, &[request]);
+        let rollover_batch = build_rollover_fixture_batch(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();
         let target_plan = logical_runner
             .bind_step_plan(request, rollover_epoch, target_speculative)

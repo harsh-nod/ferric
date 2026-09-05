@@ -21,8 +21,8 @@ const VERIFIER_DEV_TCB_PATH: &str = "proofs/source-gate/VERIFIER_DEV_DEPENDENCY_
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=ff21f24f5349d78583a2a832ba3aa37bf3e0846c";
-const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=ff21f24f5349d78583a2a832ba3aa37bf3e0846c#ff21f24f5349d78583a2a832ba3aa37bf3e0846c";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=4413b086482f2f4ad218f28e4485dc089d6cc020";
+const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=4413b086482f2f4ad218f28e4485dc089d6cc020#4413b086482f2f4ad218f28e4485dc089d6cc020";
 const PLIRON_SOURCE: &str =
     "git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487";
 const PLIRON_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487#5bdf861bf03e7f20242b25717fb653336d02e487";
@@ -147,8 +147,9 @@ const SHA2_0_11_CHECKSUM: &str = "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b
 const PROC_MACRO2_CHECKSUM: &str =
     "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9";
 const QUOTE_CHECKSUM: &str = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001";
+const RUSTIX_CHECKSUM: &str = "b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190";
 const SYN_CHECKSUM: &str = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297";
-const TOML_CHECKSUM: &str = "3aace63f4bbcdfc2c965b059de67119c89c4017a70d633be6c104910f67056f5";
+const TOML_CHECKSUM: &str = "12c0ba9680044b4ce98d391a62094047eada0d64860b80166c39f4a6b5640785";
 const SERDE_JSON_CHECKSUM: &str =
     "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14";
 const SOURCE_PIN_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1";
@@ -156,20 +157,28 @@ const SOURCE_PIN_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-sou
 const SOURCE_PIN_CRATE_NAME: &str = "ferric_qwen3_all_kernels_worker_v3_source_pin_v1";
 const VERIFIER_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-verifier-v1";
 const VERIFIER_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-verifier-v1";
+const NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME: &str =
+    "ferric-non-authoritative-program-source-v1";
 const DEVICE_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-device-v1";
 const DEVICE_RELATIVE_PATH: &str = "device/qwen3-all-kernels-v1";
 const VERIFIER_LOCK_RELATIVE_PATH: &str =
     "adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.lock";
 const VERIFIER_LOCK_ROOT_DEPENDENCIES: &[&str] = &[
     "ed25519-dalek",
+    "fe2o3-artifact-transaction",
+    "fe2o3-external-anchor-protocol",
     "fe2o3-host",
     "fe2o3-hsaco-finalize",
+    "fe2o3-runtime-protocol",
     "fe2o3-verifier",
+    "fe2o3-worker-v3-verification-client",
+    "fe2o3-worker-v3-verification-protocol",
     "ferric-qwen3-all-kernels-device-v1",
     "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
     "libc",
     "proc-macro2",
     "quote",
+    "rustix",
     "sha2 0.11.0",
     "syn 2.0.119",
     "toml",
@@ -227,8 +236,44 @@ const VERIFIER_NORMAL_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
         checksum: None,
     },
     ExpectedRuntimeDependency {
+        name: "fe2o3-runtime-protocol",
+        edge_name: "fe2o3_runtime_protocol",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
         name: "fe2o3-verifier",
         edge_name: "fe2o3_verifier",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: "fe2o3-worker-v3-verification-client",
+        edge_name: "fe2o3_worker_v3_verification_client",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: "fe2o3-worker-v3-verification-protocol",
+        edge_name: "fe2o3_worker_v3_verification_protocol",
         declared_source: Some(FE2O3_SOURCE),
         requirement: "=0.1.0",
         kind: None,
@@ -275,6 +320,18 @@ const VERIFIER_NORMAL_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
         checksum: Some(LIBC_CHECKSUM),
     },
     ExpectedRuntimeDependency {
+        name: "rustix",
+        edge_name: "rustix",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=1.1.4",
+        kind: None,
+        uses_default_features: true,
+        features: &["fs"],
+        relative_path: None,
+        resolved_version: "1.1.4",
+        checksum: Some(RUSTIX_CHECKSUM),
+    },
+    ExpectedRuntimeDependency {
         name: "sha2",
         edge_name: "sha2",
         declared_source: Some(CRATES_IO_SOURCE),
@@ -289,6 +346,30 @@ const VERIFIER_NORMAL_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
 ];
 
 const VERIFIER_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
+    ExpectedRuntimeDependency {
+        name: "fe2o3-artifact-transaction",
+        edge_name: "fe2o3_artifact_transaction",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: "fe2o3-external-anchor-protocol",
+        edge_name: "fe2o3_external_anchor_protocol",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "=0.1.0",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
     ExpectedRuntimeDependency {
         name: "proc-macro2",
         edge_name: "proc_macro2",
@@ -329,12 +410,12 @@ const VERIFIER_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
         name: "toml",
         edge_name: "toml",
         declared_source: Some(CRATES_IO_SOURCE),
-        requirement: "=1.1.4",
+        requirement: "=1.1.5",
         kind: Some("dev"),
         uses_default_features: true,
         features: &[],
         relative_path: None,
-        resolved_version: "1.1.4+spec-1.1.0",
+        resolved_version: "1.1.5+spec-1.1.0",
         checksum: Some(TOML_CHECKSUM),
     },
 ];
@@ -3497,6 +3578,13 @@ fn packages(
         {
             let dependency_name = string_field(dependency, "name")?;
             let is_dev = is_dev_dependency(dependency)?;
+            if dependency_name == NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME
+                && name != "ferric-engine"
+            {
+                return Err(format!(
+                    "package {name} cannot directly construct non-authoritative program source custody"
+                ));
+            }
             let requested_features = string_array(dependency, "features", "workspace feature")?;
             if requested_features
                 .iter()
@@ -3550,6 +3638,14 @@ fn packages(
                     ));
                 }
             }
+        }
+        if name == "ferric-engine"
+            && !dependencies.contains(NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME)
+        {
+            return Err(
+                "ferric-engine no longer retains the internal non-authoritative source boundary"
+                    .to_owned(),
+            );
         }
         result.push(Package {
             name,
@@ -3697,10 +3793,17 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                     list.tokens.to_string().as_str(),
                     "dead_code"
                         | "unused_imports"
+                        | "clippy :: boxed_local"
                         | "clippy :: cast_possible_truncation"
                         | "clippy :: large_enum_variant"
+                        | "clippy :: missing_fields_in_debug"
+                        | "clippy :: result_large_err"
+                        | "clippy :: result_large_err , clippy :: too_many_arguments"
                         | "clippy :: too_many_arguments"
                         | "clippy :: type_complexity"
+                        | "clippy :: unnecessary_box_returns"
+                        | "clippy :: boxed_local , clippy :: unnecessary_box_returns"
+                        | "clippy :: unnecessary_wraps"
                 ) {
                     return Err(format!("unsupported allow attribute: {}", list.tokens));
                 }
@@ -4555,6 +4658,34 @@ impl SourceWalker<'_> {
     ) -> GateResult<()> {
         for item in items {
             if cfg_test_item(item) {
+                if let Item::Mod(module) = item {
+                    if module.content.is_none() {
+                        let child_name = module.ident.to_string();
+                        let child_dir = module_dir.join(&child_name);
+                        let flat = module_dir.join(format!("{child_name}.rs"));
+                        let nested = child_dir.join("mod.rs");
+                        let flat_exists = flat.is_file();
+                        let nested_exists = nested.is_file();
+                        if flat_exists == nested_exists {
+                            return Err(format!(
+                                "test-only module {module_path}::{child_name} must resolve to exactly one source file"
+                            ));
+                        }
+                        let path = canonical(if flat_exists { &flat } else { &nested })?;
+                        if !path.starts_with(self.repo) || !path.starts_with(&self.source_root) {
+                            return Err(format!(
+                                "test-only module source escapes admitted root: {}",
+                                path.display()
+                            ));
+                        }
+                        if !self.visited.insert(path.clone()) {
+                            return Err(format!(
+                                "module source is included more than once: {}",
+                                path.display()
+                            ));
+                        }
+                    }
+                }
                 continue;
             }
             if self.package.name == "ferric-build" && cfg_test_fixture_item(item)? {
@@ -5467,20 +5598,20 @@ mod tests {
     fn verifier_declaration_rosters_are_exact_and_separate() {
         let repo = repo();
         let declarations = verifier_declarations(&repo);
-        assert_eq!(declarations.len(), 12);
+        assert_eq!(declarations.len(), 18);
         assert_eq!(
             declarations
                 .iter()
                 .filter(|dependency| dependency.get("kind") == Some(&Value::Null))
                 .count(),
-            8
+            12
         );
         assert_eq!(
             declarations
                 .iter()
                 .filter(|dependency| dependency.get("kind").and_then(Value::as_str) == Some("dev"))
                 .count(),
-            4
+            6
         );
         assert_eq!(
             validate_verifier_dependency_declarations(&repo, &declarations),
@@ -5511,7 +5642,7 @@ mod tests {
                 json!(repo.parent().expect("repo has parent").to_string_lossy()),
             ),
             (
-                4,
+                7,
                 "path",
                 json!(repo.parent().expect("repo has parent").to_string_lossy()),
             ),
@@ -5521,7 +5652,7 @@ mod tests {
             hostile.push(candidate);
         }
         let mut missing_path = exact.clone();
-        missing_path[4]
+        missing_path[7]
             .as_object_mut()
             .expect("declaration is an object")
             .remove("path");
@@ -5554,7 +5685,7 @@ mod tests {
         duplicate_normal.push(exact[0].clone());
         hostile.push(duplicate_normal);
         let mut duplicate_dev = exact.clone();
-        duplicate_dev.push(exact[8].clone());
+        duplicate_dev.push(exact[12].clone());
         hostile.push(duplicate_dev);
         let mut unexpected = exact.clone();
         unexpected.push(json!({
@@ -5571,10 +5702,10 @@ mod tests {
         }));
         hostile.push(unexpected);
         let mut build_dependency = exact.clone();
-        build_dependency[8]["kind"] = json!("build");
+        build_dependency[12]["kind"] = json!("build");
         hostile.push(build_dependency);
         let mut dev_to_normal = exact.clone();
-        dev_to_normal[8]["kind"] = Value::Null;
+        dev_to_normal[12]["kind"] = Value::Null;
         hostile.push(dev_to_normal);
         let mut normal_to_dev = exact.clone();
         normal_to_dev[0]["kind"] = json!("dev");
@@ -5593,16 +5724,16 @@ mod tests {
         // The root metadata invocation resolves this isolated adapter only as a
         // production dependency, so Cargo omits its dev edges from this node.
         let (production_packages, production_node) = resolved_fixture(&repo, false);
-        assert_eq!(production_node["deps"].as_array().unwrap().len(), 8);
+        assert_eq!(production_node["deps"].as_array().unwrap().len(), 12);
         assert_eq!(
             validate_resolved_fixture(&repo, &production_packages, &production_node, &checksums,),
             Ok(())
         );
 
         // A metadata invocation that includes dev edges is accepted only when
-        // Cargo exposes the complete separately reviewed four-edge dev roster.
+        // Cargo exposes the complete separately reviewed six-edge dev roster.
         let (all_packages, all_node) = resolved_fixture(&repo, true);
-        assert_eq!(all_node["deps"].as_array().unwrap().len(), 12);
+        assert_eq!(all_node["deps"].as_array().unwrap().len(), 18);
         assert_eq!(
             validate_resolved_fixture(&repo, &all_packages, &all_node, &checksums),
             Ok(())
@@ -5719,7 +5850,7 @@ mod tests {
             assert!(validate_resolved_fixture(&repo, &packages, &node, &checksums).is_err());
         }
 
-        for name in ["ed25519-dalek", "libc", "sha2"] {
+        for name in ["ed25519-dalek", "libc", "rustix", "sha2"] {
             let expected = VERIFIER_NORMAL_DEPENDENCIES
                 .iter()
                 .find(|dependency| dependency.name == name)
@@ -5752,7 +5883,7 @@ mod tests {
         assert!(validate_resolved_fixture(&repo, &packages, &partial, &checksums).is_err());
 
         let mut escalated = exact_node.clone();
-        escalated["deps"][8]["dep_kinds"][0]["kind"] = Value::Null;
+        escalated["deps"][12]["dep_kinds"][0]["kind"] = Value::Null;
         assert!(validate_resolved_fixture(&repo, &packages, &escalated, &checksums).is_err());
     }
 
@@ -6093,17 +6224,17 @@ mod tests {
     #[test]
     fn standalone_verifier_lock_rejects_root_dev_and_closure_drift() {
         let root_anchor =
-            " \"proc-macro2\",\n \"quote\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n";
+            " \"proc-macro2\",\n \"quote\",\n \"rustix\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n";
         let hostile = [
             replace_once(
                 VERIFIER_LOCK,
                 root_anchor,
-                " \"quote\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n",
+                " \"quote\",\n \"rustix\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n",
             ),
             replace_once(
                 VERIFIER_LOCK,
                 root_anchor,
-                " \"proc-macro2\",\n \"proc-macro2\",\n \"quote\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n",
+                " \"proc-macro2\",\n \"proc-macro2\",\n \"quote\",\n \"rustix\",\n \"sha2 0.11.0\",\n \"syn 2.0.119\",\n \"toml\",\n",
             ),
             replace_once(
                 VERIFIER_LOCK,
@@ -6365,16 +6496,32 @@ mod tests {
     }
 
     #[test]
-    fn exact_cfg_test_functions_are_release_absent_items() {
+    fn exact_cfg_test_items_are_release_absent() {
         let item = verus_syn::parse_str::<Item>("#[cfg(test)] fn unit_fixture() {}")
             .expect("exact cfg(test) function parses");
         assert!(cfg_test_item(&item));
 
-        let conditional = verus_syn::parse_str::<Item>(
-            "#[cfg(any(test, feature = \"test-fixtures\"))] fn conditional() {}",
+        let module = verus_syn::parse_str::<Item>("#[cfg(test)] mod unit_fixture;")
+            .expect("exact cfg(test) external module parses");
+        assert!(cfg_test_item(&module));
+
+        let documented_module = verus_syn::parse_str::<Item>(
+            "#[doc = \"test support\"] #[cfg(test)] mod documented_fixture;",
         )
-        .expect("conditional function parses");
+        .expect("documented cfg(test) external module parses");
+        assert!(cfg_test_item(&documented_module));
+
+        let conditional = verus_syn::parse_str::<Item>(
+            "#[cfg(any(test, feature = \"test-fixtures\"))] mod conditional;",
+        )
+        .expect("conditional external module parses");
         assert!(!cfg_test_item(&conditional));
+
+        let broader = verus_syn::parse_str::<Item>(
+            "#[cfg(test)] #[allow(dead_code)] mod broader;",
+        )
+        .expect("broader cfg(test) external module parses");
+        assert!(!cfg_test_item(&broader));
     }
 
     #[test]
@@ -6520,5 +6667,24 @@ mod tests {
             verus_syn::parse_file("#![expect(dead_code, reason = \"broader suppression\")]")
                 .expect("drifted lint expectation parses");
         assert!(validate_attributes(&drifted.attrs, false).is_err());
+    }
+
+    #[test]
+    fn exact_linear_custody_clippy_allowances_are_lint_only() {
+        for source in [
+            "#![allow(clippy::boxed_local)]",
+            "#![allow(clippy::unnecessary_box_returns)]",
+            "#![allow(clippy::boxed_local, clippy::unnecessary_box_returns)]",
+            "#![allow(clippy::missing_fields_in_debug)]",
+            "#![allow(clippy::result_large_err, clippy::too_many_arguments)]",
+            "#![allow(clippy::unnecessary_wraps)]",
+        ] {
+            let exact = verus_syn::parse_file(source).expect("exact Clippy allowance parses");
+            assert_eq!(validate_attributes(&exact.attrs, false), Ok(()));
+        }
+
+        let broader = verus_syn::parse_file("#![allow(clippy::all)]")
+            .expect("broader Clippy allowance parses");
+        assert!(validate_attributes(&broader.attrs, false).is_err());
     }
 }

@@ -2,31 +2,31 @@
   "authority": "binary-identity-prebinding-only",
   "binary": {
     "name": "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
-    "sha256": "5bd21ea2c9739756a3ce55729bb63ea1ee5f24c76f834f23ff514f2ad39dbcc0",
-    "size_bytes": 7622704
+    "sha256": "020e1efa3d2d94559f4bfbd138312a239a32ca458d4780a456ec14ab33d29f05",
+    "size_bytes": 8460888
   },
   "format": "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1",
   "nonclaim": "This source-controlled record pre-binds one executable identity to the exact adapter source closure. It is not a reproducible-build proof, compiler-origin attestation, semantic-correctness proof, or runtime authority.",
   "protocol": "ferric.m1-all-kernels-worker-v3-source-pin.v1",
-  "source_closure_sha256": "daaf12a48aedf14fa868f67842ad300222a4c703bc4d7913b8ba39c288318190",
+  "source_closure_sha256": "cf85171903531f7b651ce93c252e700b28953b4fe6909e4ecca89d5cc8c68196",
   "source_files": [
     {
-      "git_blob": "685d7f5dfab9f65cd92513278df6cabf9c4e4046",
+      "git_blob": "d71da53e46b67314d8848c14dfcb10e80842a593",
       "path": "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.lock",
-      "sha256": "52c20618bfa6ed3ac4027a9899edb8ca1884fe2069c7b5ab63a31900b8e434dd",
-      "size_bytes": 30603
+      "sha256": "680537efbc574a4f0907babee64a25db8de52b519f78942eab40a6f288e6e6df",
+      "size_bytes": 31465
     },
     {
-      "git_blob": "a1751d3420fb227e5012b9948280323d0dddb361",
+      "git_blob": "35af959c11d2461d329ff93d4704e69de2ebc9f4",
       "path": "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml",
-      "sha256": "905c203fdb87e58e0911c5c4246ae3475cd57203ff679de3bb91f58b87c0b5ae",
+      "sha256": "d0907b8c37c188413445eca94a169f055bfdc0f4d0cfe9c3cf9353e1ba4b7cf8",
       "size_bytes": 1004
     },
     {
-      "git_blob": "3ca1a6a2265e3f63425e34cb9e1553d48f6779fc",
+      "git_blob": "4c66fbd4d015b42e0d7bd89596d6e428d2430c0a",
       "path": "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/src/lib.rs",
-      "sha256": "3e2caa11690146ac371d17ea80842ad19446015ba804dfc303d2b0082b3ef3f4",
-      "size_bytes": 21725
+      "sha256": "605c6d4ba6468748a86279210ff2c6abc1299aab275157eec15eb252c66db6c7",
+      "size_bytes": 22568
     },
     {
       "git_blob": "032d2142d733101d56646828a4bb95418ffb26af",

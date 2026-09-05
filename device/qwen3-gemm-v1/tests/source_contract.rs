@@ -351,26 +351,88 @@ fn every_shared_matrix_and_embedding_read_uses_a_bounded_volatile_load() {
 
 #[test]
 fn source_pins_finite_divisors_and_a4_reduction_guards() {
-    for (extent, divisor) in [
-        ("1_024", "64"),
-        ("2_048", "128"),
-        ("3_072", "192"),
-        ("4_096", "256"),
-        ("12_288", "768"),
-        ("151_936", "9_496"),
+    for (extent_source, extent, divisor_source, divisor) in [
+        ("1_024", 1_024_usize, "64", 64_usize),
+        ("2_048", 2_048, "128", 128),
+        ("3_072", 3_072, "192", 192),
+        ("4_096", 4_096, "256", 256),
+        ("12_288", 12_288, "768", 768),
+        ("151_936", 151_936, "9_496", 9_496),
     ] {
-        let branch =
-            format!("n == {extent} {{\n        (tile_index / {divisor}, tile_index % {divisor})");
+        assert_eq!(divisor, extent.div_ceil(16));
+        let branch = format!(
+            "n == {extent_source} {{\n        (tile_index / {divisor_source}, tile_index % {divisor_source})"
+        );
         assert_eq!(
             SOURCE.matches(&branch).count(),
             2,
-            "missing finite {extent} divisor"
+            "missing finite {extent_source} divisor"
         );
     }
     assert!(SOURCE.contains("if k % 4 != 0"));
     assert!(SOURCE.contains("if reduction + 3 >= k"));
     assert_eq!(SOURCE.matches("output_index / 4_096").count(), 1);
     assert_eq!(SOURCE.matches("output_index / 1_024").count(), 1);
+}
+
+#[test]
+fn matrix_roots_authenticate_columns_before_arithmetic_and_b_reads() {
+    let kernels = kernels();
+    for matrix in &kernels[..2] {
+        let body = compact_tokens(&matrix.block);
+        let tile_guard = body
+            .find("iftile_column<tiles_per_row{}else{fe2o3_device::trap();}")
+            .expect("matrix authenticates the finite tile-column remainder");
+        let column = body
+            .find("letcolumn=tile_column*16+lane%16;")
+            .expect("matrix computes its lane column");
+        let column_guard = body
+            .find("ifcolumn<n{}else{fe2o3_device::trap();}")
+            .expect("matrix authenticates the exact B column");
+        let first_b_read = body
+            .find("volatile_load(b,")
+            .expect("matrix reads its B input");
+
+        assert!(tile_guard < column);
+        assert!(column < column_guard);
+        assert!(column_guard < first_b_read);
+        assert_eq!(
+            body.matches("iftile_column<tiles_per_row{}else{fe2o3_device::trap();}")
+                .count(),
+            1
+        );
+        assert_eq!(
+            body.matches("ifcolumn<n{}else{fe2o3_device::trap();}")
+                .count(),
+            1
+        );
+    }
+}
+
+fn checked_tile_column(n: usize, tile_column: usize, lane: usize) -> Option<usize> {
+    let tiles_per_row = n.checked_add(15)? / 16;
+    if tile_column >= tiles_per_row {
+        return None;
+    }
+    let column = tile_column.checked_mul(16)?.checked_add(lane % 16)?;
+    (column < n).then_some(column)
+}
+
+#[test]
+fn admitted_tile_column_endpoints_are_in_bounds_and_hostile_columns_fail_closed() {
+    for n in [1_024_usize, 2_048, 3_072, 4_096, 12_288, 151_936] {
+        let tiles_per_row = n.div_ceil(16);
+        for tile_column in [0, tiles_per_row - 1] {
+            for lane in [0, 63] {
+                let column = checked_tile_column(n, tile_column, lane)
+                    .expect("admitted endpoint maps to an in-bounds column");
+                assert_eq!(column, tile_column * 16 + lane % 16);
+                assert!(column < n);
+            }
+        }
+        assert_eq!(checked_tile_column(n, tiles_per_row, 0), None);
+        assert_eq!(checked_tile_column(n, usize::MAX, 63), None);
+    }
 }
 
 #[test]

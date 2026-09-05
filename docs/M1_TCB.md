@@ -101,8 +101,8 @@ normalization tables and runtime behavior remain `Contracted`. These theorems
 therefore do not claim full Hugging Face tokenizer equivalence.
 
 The resolved transitive packages are `onig_sys` 69.9.3, `bitflags` 2.13.1,
-`libc` 0.2.189, `once_cell` 1.21.4, `cc` 1.4.4, `find-msvc-tools` 0.1.11,
-`shlex` 2.0.1, `pkg-config` 0.3.34, and `smallvec` 1.15.2. The canonical
+`libc` 0.2.189, `once_cell` 1.21.4, `cc` 1.4.5, `find-msvc-tools` 0.1.12,
+`shlex` 2.0.1, `pkg-config` 0.3.34, and `smallvec` 1.16.0. The canonical
 manifest, rather than this prose list, is authoritative for checksums,
 features, target predicates, target kinds, build scripts, proc macros, and
 dependency edges.

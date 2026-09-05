@@ -12,6 +12,9 @@ fn exact_fourteen_profile_catalog_closes_shape_gqa_and_launch_arithmetic() {
         QWEN3_PAGED_DECODE_PROFILE_COUNT_V1
     );
     for (index, profile) in QWEN3_PAGED_DECODE_PROFILES_V1.iter().copied().enumerate() {
+        assert_ne!(profile.query_heads, 0);
+        assert_ne!(profile.active_tokens, 0);
+        assert_ne!(profile.gqa_group_size, 0);
         assert_eq!(
             profile.query_elements,
             profile.sequences

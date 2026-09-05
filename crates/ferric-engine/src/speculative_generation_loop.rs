@@ -982,42 +982,6 @@ impl M1SpeculativeGenerationLoopV1 {
             )
     }
 
-    #[cfg(test)]
-    pub(crate) fn commit_test_causal_round(
-        &mut self,
-        epoch: CompletionEpoch,
-    ) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGenerationLoopErrorV1> {
-        let roster = self.active_roster();
-        let binding = self.bind_round(self.next_round, epoch, &roster)?;
-        let observations: Vec<_> = roster
-            .iter()
-            .copied()
-            .map(|request| CheckedMemberObservationV1 {
-                request,
-                semantics: CheckedCompletionSemantics::Speculative {
-                    accepted_draft_tokens: 0,
-                    correction_or_bonus: 777,
-                },
-                emitted: M1SpeculativeTokenBlockV1::from_slice(&[777])
-                    .expect("one test token is a valid block"),
-            })
-            .collect();
-        let controls: Vec<_> = roster
-            .iter()
-            .copied()
-            .map(M1SpeculativeMemberControlV1::continuing)
-            .collect();
-        let preflighted = self.preflight_observed_round(
-            binding,
-            self.shape.selection(),
-            epoch,
-            &observations,
-            &controls,
-        )?;
-        self.commit_preflighted_round(preflighted)
-            .map_err(|failure| failure.into_parts().0)
-    }
-
     /// Creates one deterministic loop in caller-supplied scheduler order.
     ///
     /// # Errors
@@ -1422,6 +1386,44 @@ struct PreparedMemberV1 {
     member_index: usize,
     generated_tokens: u32,
     outcome: M1SpeculativeMemberRoundOutcomeV1,
+}
+
+#[cfg(test)]
+impl M1SpeculativeGenerationLoopV1 {
+    pub(crate) fn commit_test_causal_round(
+        &mut self,
+        epoch: CompletionEpoch,
+    ) -> Result<M1SpeculativeRoundOutcomeV1, M1SpeculativeGenerationLoopErrorV1> {
+        let roster = self.active_roster();
+        let binding = self.bind_round(self.next_round, epoch, &roster)?;
+        let observations: Vec<_> = roster
+            .iter()
+            .copied()
+            .map(|request| CheckedMemberObservationV1 {
+                request,
+                semantics: CheckedCompletionSemantics::Speculative {
+                    accepted_draft_tokens: 0,
+                    correction_or_bonus: 777,
+                },
+                emitted: M1SpeculativeTokenBlockV1::from_slice(&[777])
+                    .expect("one test token is a valid block"),
+            })
+            .collect();
+        let controls: Vec<_> = roster
+            .iter()
+            .copied()
+            .map(M1SpeculativeMemberControlV1::continuing)
+            .collect();
+        let preflighted = self.preflight_observed_round(
+            binding,
+            self.shape.selection(),
+            epoch,
+            &observations,
+            &controls,
+        )?;
+        self.commit_preflighted_round(preflighted)
+            .map_err(|failure| failure.into_parts().0)
+    }
 }
 
 fn validate_seed(

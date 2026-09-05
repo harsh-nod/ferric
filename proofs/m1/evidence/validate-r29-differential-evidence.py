@@ -1715,6 +1715,7 @@ def produce(intake: Path, output: Path) -> None:
     staging_fd = -1
     staging_identity: tuple[int, ...] | None = None
     staged_files: dict[str, tuple[int, ...]] = {}
+    staged_file_fds: dict[str, int] = {}
     try:
         try:
             os.stat(output.name, dir_fd=parent.fd, follow_symlinks=False)
@@ -1739,13 +1740,18 @@ def produce(intake: Path, output: Path) -> None:
         ):
             fail("r29 staging directory was substituted after creation")
         for name, raw in (("report.json", report), ("roster.json", roster)):
-            fd = os.open(
-                name,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
-                0o600,
-                dir_fd=staging_fd,
-            )
+            fd = -1
             try:
+                fd = os.open(
+                    name,
+                    os.O_WRONLY
+                    | os.O_CREAT
+                    | os.O_EXCL
+                    | os.O_NOFOLLOW
+                    | os.O_CLOEXEC,
+                    0o600,
+                    dir_fd=staging_fd,
+                )
                 offset = 0
                 while offset != len(raw):
                     written = os.write(fd, raw[offset:])
@@ -1754,8 +1760,11 @@ def produce(intake: Path, output: Path) -> None:
                     offset += written
                 os.fsync(fd)
                 staged_files[name] = file_snapshot(os.fstat(fd))
+                staged_file_fds[name] = fd
+                fd = -1
             finally:
-                os.close(fd)
+                if fd >= 0:
+                    os.close(fd)
         os.fsync(staging_fd)
         staged = os.fstat(staging_fd)
         named = os.stat(nonce, dir_fd=parent.fd, follow_symlinks=False)
@@ -1816,6 +1825,8 @@ def produce(intake: Path, output: Path) -> None:
                     pass
         if staging_fd >= 0:
             os.close(staging_fd)
+        for fd in staged_file_fds.values():
+            os.close(fd)
         parent.close()
 
 

@@ -292,6 +292,15 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
     } else {
         17
     };
+    if query_heads == 0 {
+        fe2o3_device::trap();
+    }
+    if active_tokens == 0 {
+        fe2o3_device::trap();
+    }
+    if gqa_group_size == 0 {
+        fe2o3_device::trap();
+    }
 
     let workitem = thread::index_1d();
     let global = workitem.get();

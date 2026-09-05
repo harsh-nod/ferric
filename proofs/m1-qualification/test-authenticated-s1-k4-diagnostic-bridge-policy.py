@@ -102,7 +102,7 @@ def main() -> None:
         fail("authenticated diagnostic evidence authority became public")
     require(
         readback,
-        "M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeK4Diagnostic",
+        "M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic",
         "specialized diagnostic semantic join",
     )
     require(
@@ -135,7 +135,7 @@ def main() -> None:
         "destroy_queue_and_retain_evidence",
         "closed semantic-failure teardown",
     )
-    specialized_join = readback.split("fn authenticated_speculative_k4_semantics", 1)[1].split(
+    specialized_join = readback.split("fn authenticated_speculative_semantics", 1)[1].split(
         "impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1", 1
     )[0]
     if "expectations:" in specialized_join:
@@ -145,12 +145,12 @@ def main() -> None:
 
     require(
         rearm,
-        "const fn diagnostic_capture_is_supported(direct: bool, speculative: bool) -> bool {\n    !direct && !speculative\n}",
+        "const fn diagnostic_capture_is_supported(direct: bool, _speculative: bool) -> bool {\n    !direct\n}",
         "authenticated rearm reset restriction",
     )
     require(
         rearm,
-        "generic_authenticated_rearm_rejects_diagnostic_capture_until_reset_exists",
+        "authenticated_rearm_rejects_direct_and_preserves_speculative_capture",
         "authenticated rearm hostile test",
     )
 

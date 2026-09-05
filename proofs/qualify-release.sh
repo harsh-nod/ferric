@@ -9,7 +9,7 @@ fail() {
     exit 1
 }
 
-for tool in awk cargo cat chmod cmp cp dirname grep mkdir mktemp python3 rm rustc sed sha256sum sort timeout tr uname; do
+for tool in awk cargo cat chmod cmp cp dirname grep mkdir mktemp mv python3 rm rustc sed sha256sum sort timeout tr uname; do
     command -v "$tool" >/dev/null 2>&1 || fail "$tool is required by the qualification gate"
 done
 
@@ -108,6 +108,7 @@ cp -a "$repo/crates" "$repo/proofs" "$source_snapshot/"
 cp -a "$repo/device" "$source_snapshot/"
 cp -a "$repo/docs" "$source_snapshot/"
 cp -a "$repo/generated" "$source_snapshot/"
+cp -a "$repo/services" "$source_snapshot/"
 mkdir -p "$source_snapshot/.github/workflows"
 cp -a "$repo/.github/workflows/verus.yml" "$source_snapshot/.github/workflows/"
 live_source_before="$scratch/live-source-before.records"
@@ -280,18 +281,22 @@ set +e
     printf 'FERRIC_QUALITY_GATE=fmt:BEGIN\n'
     cargo fmt --all -- --check
     for adapter in \
+        adapters/m1-engineering-execution-v1 \
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
-        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo fmt --manifest-path "$adapter/Cargo.toml" -- --check
     done
     printf 'FERRIC_QUALITY_GATE=fmt:PASS\n'
     printf 'FERRIC_QUALITY_GATE=clippy:BEGIN\n'
     cargo clippy --workspace --all-targets --locked --target-dir "$runtime_test_target" -- -D warnings
     for adapter in \
+        adapters/m1-engineering-execution-v1 \
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
-        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo clippy --manifest-path "$adapter/Cargo.toml" --all-targets \
             --locked --target-dir "$runtime_test_target" -- -D warnings
     done
@@ -303,9 +308,11 @@ set +e
     printf 'FERRIC_QUALITY_GATE=test-debug:BEGIN\n'
     cargo test --workspace --locked --target-dir "$runtime_test_target"
     for adapter in \
+        adapters/m1-engineering-execution-v1 \
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
-        adapters/qwen3-all-kernels-worker-v3-source-pin-v1; do
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo test --manifest-path "$adapter/Cargo.toml" --all-targets \
             --locked --target-dir "$runtime_test_target"
     done

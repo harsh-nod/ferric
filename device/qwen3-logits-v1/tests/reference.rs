@@ -35,6 +35,45 @@ fn lowest_id_argmax(logits: &[u16]) -> Option<u32> {
     Some(winner)
 }
 
+fn checked_draft_index(
+    candidate: usize,
+    speculative_k: usize,
+    sequences: usize,
+    sequence: usize,
+) -> Option<usize> {
+    if candidate >= speculative_k || sequence >= sequences {
+        return None;
+    }
+    candidate.checked_mul(sequences)?.checked_add(sequence)
+}
+
+fn checked_target_index(
+    sequence: usize,
+    sequences: usize,
+    active_tokens: usize,
+    candidate: usize,
+) -> Option<usize> {
+    if sequence >= sequences || candidate >= active_tokens {
+        return None;
+    }
+    sequence.checked_mul(active_tokens)?.checked_add(candidate)
+}
+
+fn checked_generation_byte(generation: u32, byte: usize) -> Option<u8> {
+    if !(4..8).contains(&byte) {
+        return None;
+    }
+    let generation_byte = byte.checked_sub(4)?;
+    if generation_byte >= 4 {
+        return None;
+    }
+    let shift = generation_byte.checked_mul(8)?;
+    if shift >= 32 {
+        return None;
+    }
+    Some((generation >> shift) as u8)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn compact_record(
     choices: &[u32],
@@ -84,6 +123,7 @@ fn compact_record_with_trace(
         if live == 0 {
             return Some([0; QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1]);
         }
+        let direct_offset = live - 1;
         if live > active_tokens
             || (speculative_k != 0 && live != active_tokens)
             || slot >= 32
@@ -96,10 +136,12 @@ fn compact_record_with_trace(
         let mut accepted = 0;
         if speculative_k != 0 {
             while accepted < speculative_k {
-                let draft_index = accepted.checked_mul(sequences)? + sequence;
+                let draft_index =
+                    checked_draft_index(accepted, speculative_k, sequences, sequence)?;
                 reads.push(CompactRead::Draft(draft_index));
                 let draft_token = *draft.get(draft_index)?;
-                let target_index = choice_base + accepted;
+                let target_index =
+                    checked_target_index(sequence, sequences, active_tokens, accepted)?;
                 reads.push(CompactRead::Choice(target_index));
                 let target_token = *choices.get(target_index)?;
                 if draft_token as usize >= QWEN3_LOGITS_VOCABULARY_V1
@@ -117,7 +159,7 @@ fn compact_record_with_trace(
             return None;
         }
         let correction_index = if speculative_k == 0 {
-            choice_base + live - 1
+            choice_base + direct_offset
         } else {
             choice_base + accepted
         };
@@ -136,6 +178,9 @@ fn compact_record_with_trace(
         record[49] = (accepted + 1) as u8;
         for token in 0..accepted {
             let offset = 52 + token * 4;
+            if offset < 52 || token >= speculative_k {
+                return None;
+            }
             record[offset..offset + 4]
                 .copy_from_slice(&draft[token * sequences + sequence].to_le_bytes());
         }
@@ -144,6 +189,84 @@ fn compact_record_with_trace(
         Some(record)
     })();
     (record, reads)
+}
+
+#[test]
+fn draft_index_requires_a_current_candidate_bound_for_every_admitted_profile() {
+    for (sequences, speculative_k) in [(1_usize, 4_usize), (8, 4), (1, 8), (1, 16)] {
+        for sequence in 0..sequences {
+            assert_eq!(
+                checked_draft_index(0, speculative_k, sequences, sequence),
+                Some(sequence)
+            );
+            assert_eq!(
+                checked_draft_index(speculative_k - 1, speculative_k, sequences, sequence),
+                Some(speculative_k * sequences - sequences + sequence)
+            );
+            assert_eq!(
+                checked_draft_index(speculative_k, speculative_k, sequences, sequence),
+                None
+            );
+            assert_eq!(
+                checked_draft_index(speculative_k + 1, speculative_k, sequences, sequence),
+                None
+            );
+        }
+        assert_eq!(
+            checked_draft_index(0, speculative_k, sequences, sequences),
+            None
+        );
+    }
+}
+
+#[test]
+fn target_index_requires_the_candidate_to_remain_inside_every_admitted_row() {
+    for (sequences, active_tokens, speculative_k) in [
+        (1_usize, 5_usize, 4_usize),
+        (8, 5, 4),
+        (1, 9, 8),
+        (1, 17, 16),
+    ] {
+        assert!(speculative_k < active_tokens);
+        for sequence in 0..sequences {
+            assert_eq!(
+                checked_target_index(sequence, sequences, active_tokens, 0),
+                Some(sequence * active_tokens)
+            );
+            assert_eq!(
+                checked_target_index(sequence, sequences, active_tokens, speculative_k - 1),
+                Some(sequence * active_tokens + speculative_k - 1)
+            );
+            assert_eq!(
+                checked_target_index(sequence, sequences, active_tokens, speculative_k),
+                Some(sequence * active_tokens + speculative_k)
+            );
+            assert_eq!(
+                checked_target_index(sequence, sequences, active_tokens, active_tokens),
+                None
+            );
+            assert_eq!(
+                checked_target_index(sequence, sequences, active_tokens, active_tokens + 1),
+                None
+            );
+        }
+        assert_eq!(
+            checked_target_index(sequences, sequences, active_tokens, 0),
+            None
+        );
+    }
+}
+
+#[test]
+fn generation_byte_shift_requires_exact_field_bounds() {
+    let generation = 0x8877_6655_u32;
+    assert_eq!(checked_generation_byte(generation, 4), Some(0x55));
+    assert_eq!(checked_generation_byte(generation, 5), Some(0x66));
+    assert_eq!(checked_generation_byte(generation, 6), Some(0x77));
+    assert_eq!(checked_generation_byte(generation, 7), Some(0x88));
+    assert_eq!(checked_generation_byte(generation, 3), None);
+    assert_eq!(checked_generation_byte(generation, 8), None);
+    assert_eq!(checked_generation_byte(generation, usize::MAX), None);
 }
 
 fn record_token(record: &[u8; QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1], token: usize) -> u32 {
@@ -406,6 +529,8 @@ fn accepted_bound_is_unreachable_for_every_admitted_compact_profile() {
                 let record = record.expect("every admitted direct profile stays below the bound");
                 assert_eq!(record[48], 0);
                 assert_eq!(record[49], 1);
+                assert!(0 < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
+                assert!(1 <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
                 let correction_index = sequence * active_tokens + active_tokens - 1;
                 assert_eq!(record_token(&record, 0), choices[correction_index]);
                 assert_eq!(reads, vec![CompactRead::Choice(correction_index)]);
@@ -447,9 +572,12 @@ fn accepted_bound_is_unreachable_for_every_admitted_compact_profile() {
                 let record = record
                     .expect("every admitted speculative outcome stays below the active width");
                 assert!(expected_accepted < active_tokens);
+                assert!(expected_accepted < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
+                assert!(expected_accepted + 1 <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
                 assert_eq!(record[48] as usize, expected_accepted);
                 assert_eq!(record[49] as usize, expected_accepted + 1);
                 for candidate in 0..expected_accepted {
+                    assert!(candidate < speculative_k);
                     assert_eq!(
                         record_token(&record, candidate),
                         draft[candidate * sequences + sequence]

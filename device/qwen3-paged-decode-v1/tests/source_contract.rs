@@ -195,6 +195,52 @@ fn profile_guards_pin_all_fourteen_lengths_and_shared_cache_extents() {
 }
 
 #[test]
+fn coordinate_divisors_are_authenticated_before_workitem_arithmetic() {
+    let body = compact_tokens(kernel().block);
+    let derivation = body
+        .find("letactive_tokens=")
+        .expect("active-token profile derivation is present");
+    let query_heads_guard = body
+        .find("ifquery_heads==0{fe2o3_device::trap();}")
+        .expect("query-head divisor is authenticated");
+    let active_tokens_guard = body
+        .find("ifactive_tokens==0{fe2o3_device::trap();}")
+        .expect("active-token divisor is authenticated");
+    let gqa_guard = body
+        .find("ifgqa_group_size==0{fe2o3_device::trap();}")
+        .expect("GQA divisor is authenticated");
+    let workitem = body
+        .find("letworkitem=thread::index_1d();")
+        .expect("workitem arithmetic follows profile authentication");
+
+    assert!(derivation < query_heads_guard);
+    assert!(query_heads_guard < active_tokens_guard);
+    assert!(active_tokens_guard < gqa_guard && gqa_guard < workitem);
+    for use_marker in [
+        "%query_heads",
+        "/query_heads",
+        "%active_tokens",
+        "/active_tokens",
+        "/gqa_group_size",
+    ] {
+        let divisor_use = body
+            .find(use_marker)
+            .unwrap_or_else(|| panic!("missing divisor use {use_marker}"));
+        assert!(
+            gqa_guard < divisor_use,
+            "guard follows divisor use {use_marker}"
+        );
+    }
+    for guard in [
+        "ifquery_heads==0{fe2o3_device::trap();}",
+        "ifactive_tokens==0{fe2o3_device::trap();}",
+        "ifgqa_group_size==0{fe2o3_device::trap();}",
+    ] {
+        assert_eq!(body.matches(guard).count(), 1, "guard count for {guard}");
+    }
+}
+
+#[test]
 fn coordinates_preserve_committed_causality_gqa_and_global_p16_mapping() {
     let body = compact_tokens(kernel().block);
     for marker in [

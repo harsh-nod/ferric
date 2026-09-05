@@ -192,9 +192,17 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     } else {
         fe2o3_device::trap();
     };
+    if tile_column < tiles_per_row {
+    } else {
+        fe2o3_device::trap();
+    }
     let lane = raw % 64;
     let row_base = tile_row * 16 + (lane / 16) * 4;
     let column = tile_column * 16 + lane % 16;
+    if column < n {
+    } else {
+        fe2o3_device::trap();
+    }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
@@ -349,9 +357,17 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     } else {
         fe2o3_device::trap();
     };
+    if tile_column < tiles_per_row {
+    } else {
+        fe2o3_device::trap();
+    }
     let lane = raw % 64;
     let row_base = tile_row * 16 + (lane / 16) * 4;
     let column = tile_column * 16 + lane % 16;
+    if column < n {
+    } else {
+        fe2o3_device::trap();
+    }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };

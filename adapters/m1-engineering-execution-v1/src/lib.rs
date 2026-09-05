@@ -1,11 +1,9 @@
 //! Non-authoritative admission of one fe2o3 engineering aggregate observation.
 //!
-//! This feature-gated admission API deliberately stops at an inert, lexically
-//! borrowed structural program catalog. It cannot construct authenticated
-//! Worker V3 custody or select a current publication. A separate, stronger
-//! engineering execution feature may privately retain that catalog in the
-//! legacy structural runner, but does not change this public admission
-//! contract. The private manifest decoder mirrors the current canonical
+//! This standalone admission API deliberately stops at an inert, lexically
+//! borrowed structural program catalog or an authority-free core owner. It
+//! cannot construct authenticated Worker V3 custody or select a current
+//! publication. The private manifest decoder mirrors the current canonical
 //! `EngineeringHsacoObservationV1` JSON schema. Any schema or canonical field
 //! order change fails closed until Ferric audits and updates this decoder.
 
@@ -16,25 +14,28 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
 
-use fe2o3_amdhsa_loader::{AdmittedProfile, LoadPlan, PlanError};
 use fe2o3_host::CompilerGeneratedKernelExpectationRosterV1;
+use ferric_build::PublishedRunnerDeclaration;
+use ferric_engine::{
+    ContentBoundM1ProgramCatalogV1, LogicalRunnerDeclaration, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1NonAuthoritativeProgramArtifactAdmissionFailureV1, M1NonAuthoritativeProgramArtifactErrorV1,
+    M1NonAuthoritativeProgramArtifactV1, M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1,
+    M1PhysicalProgramCatalogErrorV1, M1PhysicalRunnerV1, OperationKernelPlanError,
+    OperationKernelPlanFailure, admit_m1_non_authoritative_program_artifact_v1,
+    bind_non_authoritative_structural_m1_physical_runner_v1,
+};
+use ferric_non_authoritative_program_source_v1::M1NonAuthoritativeProgramSourceCapabilityV1;
 use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 use ferric_spec::Identity;
 use rustix::fd::OwnedFd;
-use rustix::fs::{fstat, openat2, Dir, FileType, Mode, OFlags, ResolveFlags, CWD};
+use rustix::fs::{CWD, Dir, FileType, Mode, OFlags, ResolveFlags, fstat, openat2};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-
-use crate::physical_program_catalog::{
-    bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1,
-    ContentBoundM1ProgramCatalogV1, M1PhysicalProgramCatalogErrorV1,
-    M1PhysicalProgramSourceContractV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
-};
 
 /// Exact manifest schema emitted by `cargo fe2o3 engineering hsaco`.
 ///
 /// The private decoder is frozen against fe2o3 commit
-/// `5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8` and rejects canonical-shape drift.
+/// `4413b086482f2f4ad218f28e4485dc089d6cc020` and rejects canonical-shape drift.
 pub const M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1: &str = "EngineeringHsacoObservationV1";
 /// Exact manifest filename in one fe2o3 engineering observation directory.
 pub const M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1: &str = "observation.json";
@@ -116,10 +117,8 @@ pub enum M1EngineeringAggregateArtifactOpenErrorV1 {
     MetadataKernelRoster,
     /// The canonical descriptor table differs from current Ferric aggregate markers.
     CurrentFerricDescriptorRoster,
-    /// The allocation-free generic loader rejected the exact HSACO.
-    Loader(PlanError),
-    /// Current Ferric physical symbols or dispatch ABIs do not close over the aggregate.
-    ProgramCatalog(Box<M1PhysicalProgramCatalogErrorV1>),
+    /// Ferric's authority-free engine admission rejected the exact retained source.
+    EngineAdmission(Box<M1EngineeringAggregateEngineAdmissionFailureV1>),
 }
 
 impl fmt::Display for M1EngineeringAggregateArtifactOpenErrorV1 {
@@ -136,9 +135,66 @@ impl Error for M1EngineeringAggregateArtifactOpenErrorV1 {
         match self {
             Self::StrictNoFollowUnavailable(source) | Self::Io { source, .. } => Some(source),
             Self::FinalizedHsaco(source) => Some(source.as_ref()),
-            Self::ProgramCatalog(source) => Some(source.as_ref()),
+            Self::EngineAdmission(source) => Some(source.as_ref()),
             _ => None,
         }
+    }
+}
+
+/// Engine admission rejection retaining the exact engineering source and lineage.
+#[must_use = "engine admission rejection retains the exact engineering source"]
+#[derive(Debug)]
+pub struct M1EngineeringAggregateEngineAdmissionFailureV1 {
+    failure: M1NonAuthoritativeProgramArtifactAdmissionFailureV1,
+}
+
+impl M1EngineeringAggregateEngineAdmissionFailureV1 {
+    /// Borrows the exact engine admission diagnostic.
+    #[must_use]
+    pub const fn diagnostic(&self) -> &M1NonAuthoritativeProgramArtifactErrorV1 {
+        self.failure.error()
+    }
+
+    /// SHA-256 identity of the adapter-validated canonical observation manifest.
+    #[must_use]
+    pub const fn observation_manifest_id(&self) -> Identity {
+        self.failure.source_capability().observation_manifest_id()
+    }
+
+    /// Independently checked canonical whole-HSACO descriptor identity.
+    #[must_use]
+    pub const fn canonical_descriptor_id(&self) -> Identity {
+        self.failure.source_capability().canonical_descriptor_id()
+    }
+
+    /// SHA-256 identity of the compiler handoff observed by fe2o3.
+    #[must_use]
+    pub const fn compiler_handoff_id(&self) -> Identity {
+        self.failure.source_capability().compiler_handoff_id()
+    }
+
+    /// Exact byte length of the compiler handoff observed by fe2o3.
+    #[must_use]
+    pub const fn compiler_handoff_len(&self) -> u64 {
+        self.failure.source_capability().compiler_handoff_len()
+    }
+
+    /// Borrows the unchanged aggregate HSACO bytes retained by the rejection.
+    #[must_use]
+    pub fn hsaco_bytes(&self) -> &[u8] {
+        self.failure.source_capability().hsaco_bytes()
+    }
+}
+
+impl fmt::Display for M1EngineeringAggregateEngineAdmissionFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.failure.fmt(formatter)
+    }
+}
+
+impl Error for M1EngineeringAggregateEngineAdmissionFailureV1 {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.failure)
     }
 }
 
@@ -149,9 +205,8 @@ impl Error for M1EngineeringAggregateArtifactOpenErrorV1 {
 /// Worker V3 owner exists.
 ///
 /// ```compile_fail
-/// use ferric_engine::{
-///     M1AuthenticatedWorkerV3ProgramSetV1, M1EngineeringAggregateArtifactV1,
-/// };
+/// use ferric_engine::M1AuthenticatedWorkerV3ProgramSetV1;
+/// use ferric_m1_engineering_execution_v1::M1EngineeringAggregateArtifactV1;
 /// fn cannot_authenticate(
 ///     value: M1EngineeringAggregateArtifactV1,
 /// ) -> M1AuthenticatedWorkerV3ProgramSetV1 {
@@ -160,7 +215,8 @@ impl Error for M1EngineeringAggregateArtifactOpenErrorV1 {
 /// ```
 ///
 /// ```compile_fail
-/// use ferric_engine::{M1EngineeringAggregateArtifactV1, M1AuthenticatedPhysicalRunnerV1};
+/// use ferric_engine::M1AuthenticatedPhysicalRunnerV1;
+/// use ferric_m1_engineering_execution_v1::M1EngineeringAggregateArtifactV1;
 /// fn cannot_become_runner(
 ///     value: M1EngineeringAggregateArtifactV1,
 /// ) -> M1AuthenticatedPhysicalRunnerV1 {
@@ -169,21 +225,13 @@ impl Error for M1EngineeringAggregateArtifactOpenErrorV1 {
 /// ```
 ///
 /// ```compile_fail
-/// use ferric_engine::M1EngineeringAggregateArtifactV1;
+/// use ferric_m1_engineering_execution_v1::M1EngineeringAggregateArtifactV1;
 /// fn require_clone<T: Clone>() {}
 /// require_clone::<M1EngineeringAggregateArtifactV1>();
 /// ```
 #[must_use = "engineering aggregate byte custody must remain scoped"]
 pub struct M1EngineeringAggregateArtifactV1 {
-    manifest_id: Identity,
-    hsaco_id: Identity,
-    compiler_handoff_id: Identity,
-    compiler_handoff_len: u64,
-    canonical_descriptor_id: Identity,
-    bytes: Box<[u8]>,
-    plan: LoadPlan,
-    source: M1PhysicalProgramSourceContractV1,
-    program_catalog_id: Identity,
+    structural: M1NonAuthoritativeProgramArtifactV1,
 }
 
 impl fmt::Debug for M1EngineeringAggregateArtifactV1 {
@@ -191,58 +239,48 @@ impl fmt::Debug for M1EngineeringAggregateArtifactV1 {
         formatter
             .debug_struct("M1EngineeringAggregateArtifactV1")
             .field("authority", &ENGINEERING_AUTHORITY_V1)
-            .field("manifest_id", &self.manifest_id)
-            .field("hsaco_id", &self.hsaco_id)
-            .field("program_catalog_id", &self.program_catalog_id)
+            .field("manifest_id", &self.manifest_id())
+            .field("hsaco_id", &self.structural.hsaco_id())
+            .field("program_catalog_id", &self.structural.program_catalog_id())
             .finish_non_exhaustive()
     }
 }
 
 impl M1EngineeringAggregateArtifactV1 {
-    pub(super) fn content_bound_program_catalog_v1(
-        &self,
-    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-        bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1(
-            &self.bytes,
-            self.plan,
-            self.source,
-        )
-    }
-
     /// SHA-256 identity of the exact canonical observation manifest bytes.
     #[must_use]
     pub const fn manifest_id(&self) -> Identity {
-        self.manifest_id
+        self.structural.observation_id()
     }
 
     /// SHA-256 identity of the exact finalized aggregate HSACO bytes.
     #[must_use]
     pub const fn hsaco_id(&self) -> Identity {
-        self.hsaco_id
+        self.structural.hsaco_id()
     }
 
     /// SHA-256 identity of the compiler handoff observed by fe2o3.
     #[must_use]
     pub const fn compiler_handoff_id(&self) -> Identity {
-        self.compiler_handoff_id
+        self.structural.compiler_handoff_id()
     }
 
     /// Exact byte length of the compiler handoff observed by fe2o3.
     #[must_use]
     pub const fn compiler_handoff_len(&self) -> u64 {
-        self.compiler_handoff_len
+        self.structural.compiler_handoff_len()
     }
 
     /// Independently verified canonical whole-HSACO descriptor digest.
     #[must_use]
     pub const fn canonical_descriptor_id(&self) -> Identity {
-        self.canonical_descriptor_id
+        self.structural.canonical_descriptor_id()
     }
 
     /// Ferric-domain-separated identity of all twelve current structural programs.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
-        self.program_catalog_id
+        self.structural.program_catalog_id()
     }
 
     /// Revalidates and lends the exact structural program catalog for one lexical use.
@@ -259,8 +297,8 @@ impl M1EngineeringAggregateArtifactV1 {
         &self,
         use_catalog: impl for<'catalog> FnOnce(ContentBoundM1ProgramCatalogV1<'catalog>) -> R,
     ) -> Result<R, M1PhysicalProgramCatalogErrorV1> {
-        let catalog = self.content_bound_program_catalog_v1()?;
-        Ok(use_catalog(catalog))
+        self.structural
+            .with_structural_program_catalog_v1(use_catalog)
     }
 
     /// The observation carries the literal fe2o3 authority value `none`.
@@ -292,6 +330,89 @@ impl M1EngineeringAggregateArtifactV1 {
     pub const fn grants_launch_authority(&self) -> bool {
         false
     }
+
+    fn from_structural(structural: M1NonAuthoritativeProgramArtifactV1) -> Self {
+        Self { structural }
+    }
+}
+
+/// Adapter-owned structural binding failure retaining full engineering lineage.
+#[must_use = "engineering structural binding rejection retains every exact input"]
+#[derive(Debug)]
+pub enum M1EngineeringStructuralPhysicalRunnerBindFailureV1 {
+    /// The generated declaration asserted a different executable catalog.
+    ExecutableCatalog {
+        /// Exact admitted engineering aggregate catalog identity.
+        expected: Identity,
+        /// Executable catalog asserted by the generated declaration.
+        actual: Identity,
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Unchanged published declaration owner.
+        publication: Box<PublishedRunnerDeclaration>,
+    },
+    /// Canonical operation derivation rejected the exact logical declaration.
+    Canonical {
+        /// Exact structural derivation error.
+        error: OperationKernelPlanError,
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Logical declaration owner derived from the publication.
+        runner: Box<LogicalRunnerDeclaration>,
+    },
+    /// Final structural operation binding rejected the exact inputs.
+    Structural {
+        /// Unchanged engineering artifact owner.
+        artifact: Box<M1EngineeringAggregateArtifactV1>,
+        /// Structural binding failure retaining declaration and family facts.
+        failure: Box<OperationKernelPlanFailure>,
+    },
+}
+
+/// Binds one admitted engineering aggregate to the structural diagnostic runner.
+///
+/// Calling this adapter-owned function is the explicit consent boundary for
+/// non-authoritative diagnostic GPU execution. It cannot construct an
+/// authenticated Worker V3 runner or select a protected publication.
+///
+/// # Errors
+///
+/// Returns exact identity, canonical derivation, or structural binding failure
+/// while reconstructing the full engineering artifact owner.
+pub fn bind_engineering_structural_m1_physical_runner_v1(
+    artifact: M1EngineeringAggregateArtifactV1,
+    publication: PublishedRunnerDeclaration,
+) -> Result<M1PhysicalRunnerV1, M1EngineeringStructuralPhysicalRunnerBindFailureV1> {
+    bind_non_authoritative_structural_m1_physical_runner_v1(artifact.structural, publication)
+        .map_err(|failure| match failure {
+            M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::ExecutableCatalog {
+                expected,
+                actual,
+                artifact,
+                publication,
+            } => M1EngineeringStructuralPhysicalRunnerBindFailureV1::ExecutableCatalog {
+                expected,
+                actual,
+                artifact: Box::new(M1EngineeringAggregateArtifactV1::from_structural(*artifact)),
+                publication,
+            },
+            M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Canonical {
+                error,
+                artifact,
+                runner,
+            } => M1EngineeringStructuralPhysicalRunnerBindFailureV1::Canonical {
+                error,
+                artifact: Box::new(M1EngineeringAggregateArtifactV1::from_structural(*artifact)),
+                runner,
+            },
+            M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Structural {
+                artifact,
+                failure,
+            } => M1EngineeringStructuralPhysicalRunnerBindFailureV1::Structural {
+                artifact: Box::new(M1EngineeringAggregateArtifactV1::from_structural(*artifact)),
+                failure,
+            },
+        })
 }
 
 /// Strictly reopens one fe2o3 engineering observation content directory.
@@ -363,37 +484,28 @@ pub fn reopen_m1_engineering_aggregate_artifact_v1(
     })?;
     validate_inspection(&manifest, &facts, &inspection)?;
 
-    let plan = {
-        let envelope =
-            fe2o3_amdhsa_loader::validate(&hsaco_bytes, AdmittedProfile::Gfx942XnackOffCov6)
-                .map_err(M1EngineeringAggregateArtifactOpenErrorV1::Loader)?;
-        *envelope.plan()
-    };
+    let source_capability =
+        M1NonAuthoritativeProgramSourceCapabilityV1::from_observed_engineering_parts_v1(
+            Identity::new(digest(&manifest_bytes)),
+            Identity::new(facts.canonical_descriptor_sha256),
+            Identity::new(facts.compiler_handoff.sha256),
+            facts.compiler_handoff.byte_len,
+            hsaco_bytes.into_boxed_slice(),
+        );
+    let structural = admit_m1_non_authoritative_program_artifact_v1(source_capability)
+        .map_err(engine_admission_error)?;
 
-    let source = M1PhysicalProgramSourceContractV1::new(
-        facts.compiler_handoff.sha256,
-        facts.compiler_handoff.byte_len,
-    );
-    let catalog = bind_content_bound_m1_program_catalog_from_engineering_aggregate_v1(
-        &hsaco_bytes,
-        plan,
-        source,
-    )
-    .map_err(|error| M1EngineeringAggregateArtifactOpenErrorV1::ProgramCatalog(Box::new(error)))?;
-    let program_catalog_id = catalog.catalog_id();
-    drop(catalog);
+    Ok(M1EngineeringAggregateArtifactV1::from_structural(
+        structural,
+    ))
+}
 
-    Ok(M1EngineeringAggregateArtifactV1 {
-        manifest_id: Identity::new(digest(&manifest_bytes)),
-        hsaco_id: Identity::new(facts.hsaco.sha256),
-        compiler_handoff_id: Identity::new(facts.compiler_handoff.sha256),
-        compiler_handoff_len: facts.compiler_handoff.byte_len,
-        canonical_descriptor_id: Identity::new(facts.canonical_descriptor_sha256),
-        bytes: hsaco_bytes.into_boxed_slice(),
-        plan,
-        source,
-        program_catalog_id,
-    })
+fn engine_admission_error(
+    failure: M1NonAuthoritativeProgramArtifactAdmissionFailureV1,
+) -> M1EngineeringAggregateArtifactOpenErrorV1 {
+    M1EngineeringAggregateArtifactOpenErrorV1::EngineAdmission(Box::new(
+        M1EngineeringAggregateEngineAdmissionFailureV1 { failure },
+    ))
 }
 
 #[derive(Clone, Copy)]
@@ -864,11 +976,7 @@ fn require(
     condition: bool,
     field: &'static str,
 ) -> Result<(), M1EngineeringAggregateArtifactOpenErrorV1> {
-    if condition {
-        Ok(())
-    } else {
-        policy(field)
-    }
+    if condition { Ok(()) } else { policy(field) }
 }
 
 fn policy<T>(field: &'static str) -> Result<T, M1EngineeringAggregateArtifactOpenErrorV1> {
@@ -1063,6 +1171,37 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use super::*;
+
+    #[test]
+    fn engine_admission_mapping_retains_exact_source_allocation_and_lineage() {
+        let bytes = vec![1_u8, 2, 3, 4].into_boxed_slice();
+        let pointer = bytes.as_ptr();
+        let source =
+            M1NonAuthoritativeProgramSourceCapabilityV1::from_observed_engineering_parts_v1(
+                Identity::new([1; 32]),
+                Identity::new([2; 32]),
+                Identity::new([3; 32]),
+                4,
+                bytes,
+            );
+        let failure = admit_m1_non_authoritative_program_artifact_v1(source)
+            .expect_err("non-object bytes must be rejected");
+
+        let error = engine_admission_error(failure);
+        let M1EngineeringAggregateArtifactOpenErrorV1::EngineAdmission(failure) = error else {
+            panic!("engine admission must retain its exact failure");
+        };
+        assert!(matches!(
+            failure.diagnostic(),
+            M1NonAuthoritativeProgramArtifactErrorV1::Loader(_)
+        ));
+        assert_eq!(failure.observation_manifest_id(), Identity::new([1; 32]));
+        assert_eq!(failure.canonical_descriptor_id(), Identity::new([2; 32]));
+        assert_eq!(failure.compiler_handoff_id(), Identity::new([3; 32]));
+        assert_eq!(failure.compiler_handoff_len(), 4);
+        assert_eq!(failure.hsaco_bytes().as_ptr(), pointer);
+        assert_eq!(failure.hsaco_bytes(), &[1, 2, 3, 4]);
+    }
 
     struct TestDirectory(PathBuf);
 
@@ -1713,17 +1852,19 @@ mod tests {
     }
 
     #[test]
-    fn public_admission_surface_remains_callback_only_and_non_authoritative() {
-        let source = include_str!("engineering_aggregate_artifact.rs");
+    fn public_surface_requires_explicit_adapter_owned_execution_consent() {
+        let source = include_str!("lib.rs");
         assert!(source.contains("pub fn with_structural_program_catalog_v1"));
-        assert!(source.contains("pub(super) fn content_bound_program_catalog_v1"));
         let direct_public_catalog = ["pub fn content_bound_program_", "catalog_v1"].concat();
         let engineering_runner_bind =
             ["bind_engineering_structural_", "m1_physical_runner_v1"].concat();
         let implicit_conversion = ["impl From<M1Engineering", "AggregateArtifactV1"].concat();
         assert!(!source.contains(&direct_public_catalog));
-        assert!(!source.contains(&engineering_runner_bind));
+        assert!(source.contains(&engineering_runner_bind));
         assert!(!source.contains(&implicit_conversion));
+        let public_structural_conversion = ["pub fn into_", "structural_artifact"].concat();
+        assert!(!source.contains(&public_structural_conversion));
+        assert!(source.contains("Calling this adapter-owned function is the explicit consent"));
     }
 
     #[test]

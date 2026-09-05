@@ -1,0 +1,17 @@
+[package]
+name = "ferric-non-authoritative-program-source-v1"
+description = "Internal move-only custody for Ferric engineering program observations"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+ferric-spec = { path = "../ferric-spec" }
+vstd.workspace = true
+
+[package.metadata.verus]
+verify = true
+
+[lints]
+workspace = true

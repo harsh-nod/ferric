@@ -16,6 +16,8 @@ pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_KERNEL_SYMBOL_V1: &str =
 pub const QWEN3_LOGITS_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 pub const QWEN3_LOGITS_ARGMAX_MAX_GRID_WORKGROUPS_V1: u32 = 2_048;
 pub const QWEN3_LOGITS_COMPACT_MAX_GRID_WORKGROUPS_V1: u32 = 32;
+const QWEN3_LOGITS_COMPACT_GRID_BOUND_EXCLUSIVE_V1: usize =
+    QWEN3_LOGITS_COMPACT_MAX_GRID_WORKGROUPS_V1 as usize + 1;
 pub const QWEN3_SPECULATIVE_TOKEN_ASSEMBLY_MAX_GRID_WORKGROUPS_V1: u32 = 8;
 pub const QWEN3_LOGITS_VOCABULARY_V1: usize = 151_936;
 pub const QWEN3_LOGITS_MAX_SPECULATIVE_K_V1: usize = 16;
@@ -356,6 +358,7 @@ pub fn ferric_qwen3_compact_completion_v1(
         }
         return;
     }
+    let direct_offset = live - 1;
 
     let slot = memory::volatile_load(request_slots, sequence);
     let generation = memory::volatile_load(request_generations, sequence);
@@ -384,7 +387,28 @@ pub fn ferric_qwen3_compact_completion_v1(
         _ => {
             while candidate < speculative_k_usize {
                 if matching_prefix {
-                    let draft_index = candidate * sequences + sequence;
+                    if candidate < speculative_k_usize {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if candidate < QWEN3_LOGITS_MAX_SPECULATIVE_K_V1 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if candidate < active_tokens {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if sequences < QWEN3_LOGITS_COMPACT_GRID_BOUND_EXCLUSIVE_V1 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if sequence < sequences {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    let draft_row = candidate * sequences;
+                    let draft_index = draft_row + sequence;
                     let target_index = choice_base + candidate;
                     let draft_token = memory::volatile_load(draft, draft_index);
                     let target_token = memory::volatile_load(choices, target_index);
@@ -394,6 +418,10 @@ pub fn ferric_qwen3_compact_completion_v1(
                         fe2o3_device::trap();
                     }
                     if draft_token == target_token {
+                        if accepted < QWEN3_LOGITS_MAX_SPECULATIVE_K_V1 {
+                        } else {
+                            fe2o3_device::trap();
+                        }
                         accepted += 1;
                     } else {
                         matching_prefix = false;
@@ -406,13 +434,20 @@ pub fn ferric_qwen3_compact_completion_v1(
     if accepted >= active_tokens {
         fe2o3_device::trap();
     }
+    if direct_offset >= active_tokens {
+        fe2o3_device::trap();
+    }
     let correction_index = if direct {
-        choice_base + live - 1
+        choice_base + direct_offset
     } else {
         choice_base + accepted
     };
     let correction = memory::volatile_load(choices, correction_index);
     if correction as usize >= QWEN3_LOGITS_VOCABULARY_V1 {
+        fe2o3_device::trap();
+    }
+    if accepted < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1 {
+    } else {
         fe2o3_device::trap();
     }
 
@@ -423,11 +458,63 @@ pub fn ferric_qwen3_compact_completion_v1(
             let value = if byte < 4 {
                 (slot >> (byte * 8)) as u8
             } else if byte < 8 {
-                (generation >> ((byte - 4) * 8)) as u8
+                if byte >= 4 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                let generation_byte = byte - 4;
+                if generation_byte < 4 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                if generation_byte == 0 {
+                    generation as u8
+                } else if generation_byte == 1 {
+                    (generation >> 8) as u8
+                } else if generation_byte == 2 {
+                    (generation >> 16) as u8
+                } else {
+                    (generation >> 24) as u8
+                }
             } else if byte < 16 {
-                (memory::volatile_load(completion_epochs, sequence) >> ((byte - 8) * 8)) as u8
+                if byte >= 8 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                let epoch_byte = byte - 8;
+                if epoch_byte < 8 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                let epoch_word = memory::volatile_load(completion_epochs, sequence);
+                if epoch_byte == 0 {
+                    epoch_word as u8
+                } else if epoch_byte == 1 {
+                    (epoch_word >> 8) as u8
+                } else if epoch_byte == 2 {
+                    (epoch_word >> 16) as u8
+                } else if epoch_byte == 3 {
+                    (epoch_word >> 24) as u8
+                } else if epoch_byte == 4 {
+                    (epoch_word >> 32) as u8
+                } else if epoch_byte == 5 {
+                    (epoch_word >> 40) as u8
+                } else if epoch_byte == 6 {
+                    (epoch_word >> 48) as u8
+                } else {
+                    (epoch_word >> 56) as u8
+                }
             } else if byte < 48 {
-                memory::volatile_load(plan_identities, plan_base + byte - 16)
+                if byte >= 16 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                let plan_offset = byte - 16;
+                if plan_offset < 32 {
+                } else {
+                    fe2o3_device::trap();
+                }
+                memory::volatile_load(plan_identities, plan_base + plan_offset)
             } else if byte == 48 {
                 accepted as u8
             } else if byte == 49 {
@@ -435,10 +522,32 @@ pub fn ferric_qwen3_compact_completion_v1(
             } else if byte < 52 {
                 0
             } else {
+                if byte >= 52 {
+                } else {
+                    fe2o3_device::trap();
+                }
                 let token_byte = byte - 52;
                 let token = token_byte / 4;
                 let token_value = if token < accepted {
-                    memory::volatile_load(draft, token * sequences + sequence)
+                    if token < speculative_k_usize {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if token < QWEN3_LOGITS_MAX_SPECULATIVE_K_V1 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if sequences < QWEN3_LOGITS_COMPACT_GRID_BOUND_EXCLUSIVE_V1 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    if sequence < sequences {
+                    } else {
+                        fe2o3_device::trap();
+                    }
+                    let token_draft_row = token * sequences;
+                    let token_draft_index = token_draft_row + sequence;
+                    memory::volatile_load(draft, token_draft_index)
                 } else if token == accepted {
                     correction
                 } else {

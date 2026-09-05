@@ -34,6 +34,9 @@ def source_paths(repo: Path) -> list[Path]:
         repo / "rust-toolchain.toml",
         repo / ".github/workflows/verus.yml",
     ]
+    for path in paths:
+        if path.is_symlink():
+            fail(f"source closure contains a symlink: {path}")
     for root in (
         repo / "adapters",
         repo / "benches",
@@ -42,7 +45,12 @@ def source_paths(repo: Path) -> list[Path]:
         repo / "proofs",
         repo / "docs",
         repo / "generated",
+        repo / "services",
     ):
+        if root.is_symlink():
+            fail(f"source closure contains a symlink: {root}")
+        if not root.is_dir():
+            fail(f"source closure root is not a directory: {root}")
         for path in root.rglob("*"):
             if path.is_symlink():
                 fail(f"source closure contains a symlink: {path}")
@@ -56,7 +64,7 @@ def source_paths(repo: Path) -> list[Path]:
                 fail(f"source closure contains a forbidden generated input: {path}")
             paths.append(path)
     paths = sorted(set(paths), key=lambda path: path.relative_to(repo).as_posix())
-    if any(not path.is_file() for path in paths):
+    if any(path.is_symlink() or not path.is_file() for path in paths):
         fail("source closure contains a missing file")
     return paths
 

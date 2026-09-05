@@ -538,39 +538,43 @@ fn authenticated_speculative_diagnostic_inputs(
     AuthenticatedSpeculativeDiagnosticInputsV1,
     M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
 > {
-    macro_rules! inputs {
-        ($case:expr) => {{
-            let Some(owner) = $case
-                .case
-                .custody()
-                .completion_output()
-                .speculative_diagnostic_choices()
-            else {
-                return Err(
-                    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled,
-                );
-            };
-            (
-                owner
-                    .retained_draft_read_ranges()
-                    .map_err(M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices)?,
-                owner.retained_target_range(),
-                $case.image.dispatch_generation(),
-                u32::try_from($case.case.scheduled_dispatch().member_count()).unwrap_or(u32::MAX),
-                owner.shape().draft_tokens(),
-            )
-        }};
-    }
-    Ok(match completion {
-        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => inputs!(case),
-        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => inputs!(case),
-        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => inputs!(case),
-        _ => {
-            return Err(
-                M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotSpeculativeShape,
-            );
+    match completion {
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => {
+            authenticated_speculative_diagnostic_case_inputs(case)
         }
-    })
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => {
+            authenticated_speculative_diagnostic_case_inputs(case)
+        }
+        M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => {
+            authenticated_speculative_diagnostic_case_inputs(case)
+        }
+        _ => Err(M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::NotSpeculativeShape),
+    }
+}
+
+fn authenticated_speculative_diagnostic_case_inputs<const N: usize>(
+    case: &M1AuthenticatedObservedCompletionCaseV1<N>,
+) -> Result<
+    AuthenticatedSpeculativeDiagnosticInputsV1,
+    M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1,
+> {
+    let Some(owner) = case
+        .case
+        .custody()
+        .completion_output()
+        .speculative_diagnostic_choices()
+    else {
+        return Err(M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::CaptureNotEnabled);
+    };
+    Ok((
+        owner
+            .retained_draft_read_ranges()
+            .map_err(M1AuthenticatedSpeculativeK4DiagnosticObservationErrorV1::Choices)?,
+        owner.retained_target_range(),
+        case.image.dispatch_generation(),
+        u32::try_from(case.case.scheduled_dispatch().member_count()).unwrap_or(u32::MAX),
+        owner.shape().draft_tokens(),
+    ))
 }
 
 fn authenticated_speculative_diagnostic_owner(

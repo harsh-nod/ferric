@@ -323,7 +323,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", "0" * 40
+    "4413b086482f2f4ad218f28e4485dc089d6cc020", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -482,7 +482,7 @@ write_hostile("target", local_target)
 local_fe2o3 = copy.deepcopy(metadata)
 device_dependency = dependency(local_fe2o3, device_aggregate, "fe2o3-device")
 device_dependency["source"] = device_dependency["source"].replace(
-    "ff21f24f5349d78583a2a832ba3aa37bf3e0846c", "0" * 40
+    "4413b086482f2f4ad218f28e4485dc089d6cc020", "0" * 40
 )
 write_hostile("fe2o3", local_fe2o3)
 
@@ -1242,6 +1242,61 @@ write_metadata "$orphan" "$scratch/orphan.metadata"
 expect_rejected parser-orphan-source 'contains unreachable Rust source' \
     invoke_source_gate --generate "$orphan" "$scratch/orphan.metadata" "$scratch/orphan.manifest"
 
+test_module_nested=$(new_copy cfg-test-external-module-nested)
+mkdir -p "$test_module_nested/crates/ferric-engine/src/authenticated_test_runtime"
+mv "$test_module_nested/crates/ferric-engine/src/authenticated_test_runtime.rs" \
+    "$test_module_nested/crates/ferric-engine/src/authenticated_test_runtime/mod.rs"
+write_metadata "$test_module_nested" "$scratch/test-module-nested.metadata"
+invoke_source_gate --generate "$test_module_nested" \
+    "$scratch/test-module-nested.metadata" "$scratch/test-module-nested.manifest"
+if grep -F 'authenticated_test_runtime' "$scratch/test-module-nested.manifest" >/dev/null; then
+    printf 'FAIL: nested cfg(test) external module entered the release manifest\n' >&2
+    exit 1
+fi
+
+test_module_missing=$(new_copy cfg-test-external-module-missing)
+rm "$test_module_missing/crates/ferric-engine/src/authenticated_test_runtime.rs"
+write_metadata "$test_module_missing" "$scratch/test-module-missing.metadata"
+expect_rejected parser-cfg-test-external-module-missing \
+    'test-only module ferric_engine::authenticated_test_runtime must resolve to exactly one source file' \
+    invoke_source_gate --generate "$test_module_missing" \
+    "$scratch/test-module-missing.metadata" "$scratch/test-module-missing.manifest"
+
+test_module_ambiguous=$(new_copy cfg-test-external-module-ambiguous)
+mkdir -p "$test_module_ambiguous/crates/ferric-engine/src/authenticated_test_runtime"
+cp "$test_module_ambiguous/crates/ferric-engine/src/authenticated_test_runtime.rs" \
+    "$test_module_ambiguous/crates/ferric-engine/src/authenticated_test_runtime/mod.rs"
+write_metadata "$test_module_ambiguous" "$scratch/test-module-ambiguous.metadata"
+expect_rejected parser-cfg-test-external-module-ambiguous \
+    'test-only module ferric_engine::authenticated_test_runtime must resolve to exactly one source file' \
+    invoke_source_gate --generate "$test_module_ambiguous" \
+    "$scratch/test-module-ambiguous.metadata" "$scratch/test-module-ambiguous.manifest"
+
+test_module_duplicate=$(new_copy cfg-test-external-module-duplicate)
+cat >>"$test_module_duplicate/crates/ferric-engine/src/lib.rs" <<'RS'
+
+#[cfg(test)]
+mod authenticated_test_runtime;
+RS
+write_metadata "$test_module_duplicate" "$scratch/test-module-duplicate.metadata"
+expect_rejected parser-cfg-test-external-module-duplicate \
+    'module source is included more than once' \
+    invoke_source_gate --generate "$test_module_duplicate" \
+    "$scratch/test-module-duplicate.metadata" "$scratch/test-module-duplicate.manifest"
+
+test_module_child=$(new_copy cfg-test-external-module-child)
+mkdir -p "$test_module_child/crates/ferric-engine/src/authenticated_test_runtime"
+cat >>"$test_module_child/crates/ferric-engine/src/authenticated_test_runtime.rs" <<'RS'
+
+mod nested_probe;
+RS
+printf 'pub fn nested_probe() {}\n' \
+    >"$test_module_child/crates/ferric-engine/src/authenticated_test_runtime/nested_probe.rs"
+write_metadata "$test_module_child" "$scratch/test-module-child.metadata"
+expect_rejected parser-cfg-test-external-module-child 'contains unreachable Rust source' \
+    invoke_source_gate --generate "$test_module_child" \
+    "$scratch/test-module-child.metadata" "$scratch/test-module-child.manifest"
+
 conditional=$(new_copy conditional-source)
 printf '\n#[cfg(any())]\npub fn conditionally_absent_probe() {}\n' \
     >>"$conditional/crates/ferric-spec/src/configuration.rs"
@@ -1348,5 +1403,129 @@ PY
 write_metadata "$optout" "$scratch/optout.metadata"
 expect_rejected dependency-opt-out 'first-party workspace package is not opted into strict Verus' \
     invoke_source_gate --generate "$optout" "$scratch/optout.metadata" "$scratch/optout.manifest"
+
+foreign_source_edge=$(new_copy non-authoritative-source-foreign-edge)
+python3 -I - "$foreign_source_edge/crates/ferric-build/Cargo.toml" \
+    "$foreign_source_edge/Cargo.lock" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+lock = Path(sys.argv[2])
+source = manifest.read_text(encoding="utf-8")
+needle = "[dependencies]\n"
+replacement = (
+    "[dependencies]\n"
+    "ferric-non-authoritative-program-source-v1 = "
+    "{ path = \"../ferric-non-authoritative-program-source-v1\" }\n"
+)
+if source.count(needle) != 1:
+    raise SystemExit("foreign source dependency manifest anchor drifted")
+manifest.write_text(source.replace(needle, replacement), encoding="utf-8")
+source = lock.read_text(encoding="utf-8")
+needle = 'name = "ferric-build"\nversion = "0.1.0"\ndependencies = [\n'
+replacement = needle + ' "ferric-non-authoritative-program-source-v1",\n'
+if source.count(needle) != 1:
+    raise SystemExit("foreign source dependency lock anchor drifted")
+lock.write_text(source.replace(needle, replacement), encoding="utf-8")
+PY
+write_metadata "$foreign_source_edge" "$scratch/foreign-source-edge.metadata"
+expect_rejected dependency-non-authoritative-source-foreign-edge \
+    'package ferric-build cannot directly construct non-authoritative program source custody' \
+    invoke_source_gate --generate "$foreign_source_edge" \
+    "$scratch/foreign-source-edge.metadata" "$scratch/foreign-source-edge.manifest"
+
+foreign_source_dev_edge=$(new_copy non-authoritative-source-foreign-dev-edge)
+python3 -I - "$foreign_source_dev_edge/crates/ferric-build/Cargo.toml" \
+    "$foreign_source_dev_edge/Cargo.lock" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+lock = Path(sys.argv[2])
+source = manifest.read_text(encoding="utf-8")
+needle = "\n[package.metadata.verus]\n"
+replacement = (
+    "\n[dev-dependencies]\n"
+    "ferric-non-authoritative-program-source-v1 = "
+    "{ path = \"../ferric-non-authoritative-program-source-v1\" }\n"
+    "\n[package.metadata.verus]\n"
+)
+if source.count(needle) != 1:
+    raise SystemExit("foreign source dev-dependency manifest anchor drifted")
+manifest.write_text(source.replace(needle, replacement), encoding="utf-8")
+source = lock.read_text(encoding="utf-8")
+needle = 'name = "ferric-build"\nversion = "0.1.0"\ndependencies = [\n'
+replacement = needle + ' "ferric-non-authoritative-program-source-v1",\n'
+if source.count(needle) != 1:
+    raise SystemExit("foreign source dev-dependency lock anchor drifted")
+lock.write_text(source.replace(needle, replacement), encoding="utf-8")
+PY
+write_metadata "$foreign_source_dev_edge" "$scratch/foreign-source-dev-edge.metadata"
+expect_rejected dependency-non-authoritative-source-foreign-dev-edge \
+    'package ferric-build cannot directly construct non-authoritative program source custody' \
+    invoke_source_gate --generate "$foreign_source_dev_edge" \
+    "$scratch/foreign-source-dev-edge.metadata" \
+    "$scratch/foreign-source-dev-edge.manifest"
+
+missing_engine_source_edge=$(new_copy non-authoritative-source-missing-engine-edge)
+python3 -I - "$missing_engine_source_edge/crates/ferric-engine/Cargo.toml" \
+    "$missing_engine_source_edge/Cargo.lock" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+lock = Path(sys.argv[2])
+dependency = (
+    "ferric-non-authoritative-program-source-v1 = "
+    "{ path = \"../ferric-non-authoritative-program-source-v1\" }\n"
+)
+source = manifest.read_text(encoding="utf-8")
+if source.count(dependency) != 1:
+    raise SystemExit("engine source dependency manifest anchor drifted")
+manifest.write_text(source.replace(dependency, ""), encoding="utf-8")
+source = lock.read_text(encoding="utf-8")
+dependency = ' "ferric-non-authoritative-program-source-v1",\n'
+engine_start = source.index('name = "ferric-engine"')
+engine_end = source.index("\n[[package]]", engine_start)
+engine = source[engine_start:engine_end]
+if engine.count(dependency) != 1:
+    raise SystemExit("engine source dependency lock anchor drifted")
+source = source[:engine_start] + engine.replace(dependency, "") + source[engine_end:]
+lock.write_text(source, encoding="utf-8")
+PY
+write_metadata "$missing_engine_source_edge" "$scratch/missing-engine-source-edge.metadata"
+expect_rejected dependency-non-authoritative-source-missing-engine-edge \
+    'ferric-engine no longer retains the internal non-authoritative source boundary' \
+    invoke_source_gate --generate "$missing_engine_source_edge" \
+    "$scratch/missing-engine-source-edge.metadata" \
+    "$scratch/missing-engine-source-edge.manifest"
+
+demoted_engine_source_edge=$(new_copy non-authoritative-source-demoted-engine-edge)
+python3 -I - "$demoted_engine_source_edge/crates/ferric-engine/Cargo.toml" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+source = manifest.read_text(encoding="utf-8")
+dependency = (
+    "ferric-non-authoritative-program-source-v1 = "
+    "{ path = \"../ferric-non-authoritative-program-source-v1\" }\n"
+)
+if source.count(dependency) != 1:
+    raise SystemExit("engine source dependency demotion anchor drifted")
+source = source.replace(dependency, "")
+needle = "\n[dev-dependencies]\n"
+if source.count(needle) != 1:
+    raise SystemExit("engine dev-dependency anchor drifted")
+replacement = needle + dependency
+manifest.write_text(source.replace(needle, replacement), encoding="utf-8")
+PY
+write_metadata "$demoted_engine_source_edge" "$scratch/demoted-engine-source-edge.metadata"
+expect_rejected dependency-non-authoritative-source-demoted-engine-edge \
+    'ferric-engine no longer retains the internal non-authoritative source boundary' \
+    invoke_source_gate --generate "$demoted_engine_source_edge" \
+    "$scratch/demoted-engine-source-edge.metadata" \
+    "$scratch/demoted-engine-source-edge.manifest"
 
 printf 'PASS: compiler-rooted admission rejects stale, unparsed, conditional, trust-expanded, and opted-out source\n'

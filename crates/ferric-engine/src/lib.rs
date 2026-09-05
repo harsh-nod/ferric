@@ -22,8 +22,6 @@ mod completion_output;
 mod completion_wire;
 mod device_cache;
 mod direct_diagnostic_choices;
-#[cfg(feature = "engineering-non-authoritative-hsaco")]
-mod engineering_aggregate_artifact;
 mod epoch;
 mod initialized_model_memory;
 mod initialized_step_workspaces;
@@ -40,7 +38,9 @@ mod m1_serving_physical_input_provider;
 mod m1_serving_physical_operations;
 mod m1_serving_registry;
 mod m1_swiglu_worker_v3_verifier;
+mod m1_target_smoke_execution;
 mod model_memory_allocations;
+mod non_authoritative_program_artifact;
 mod observed_completion;
 mod operation_dispatch_expansion;
 mod operation_kernel_plan;
@@ -180,9 +180,6 @@ pub use authenticated_queue_rearm::{
     M1AuthenticatedReservedLongLivedQueueRearmV1, M1AuthenticatedRetainedStepPlanErrorV1,
     M1AuthenticatedScheduledLongLivedQueueRearmV1,
 };
-#[cfg(feature = "native-rollover-fixture")]
-#[doc(hidden)]
-pub use authenticated_queue_rollover::build_m1_native_rollover_fixture_batch_v1;
 pub use authenticated_queue_rollover::{
     bind_m1_authenticated_speculative_rollover_intent_v1,
     prepare_m1_authenticated_speculative_rollover_v1,
@@ -290,13 +287,6 @@ pub use direct_diagnostic_choices::{
     M1DirectDiagnosticChoicesAllocationFailureV1, M1DirectDiagnosticChoicesErrorV1,
     M1DirectDiagnosticChoicesShapeV1, M1ObservedDirectDiagnosticChoicesV1,
     M1_DIRECT_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
-};
-#[cfg(feature = "engineering-non-authoritative-hsaco")]
-pub use engineering_aggregate_artifact::{
-    reopen_m1_engineering_aggregate_artifact_v1, M1EngineeringAggregateArtifactFileV1,
-    M1EngineeringAggregateArtifactOpenErrorV1, M1EngineeringAggregateArtifactV1,
-    M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1, M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1,
-    M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1,
 };
 pub use epoch::ExactCompletion;
 pub use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
@@ -501,10 +491,17 @@ pub use m1_swiglu_worker_v3_verifier::{
     M1SwiGluProtectedBuildIdentitiesV1, M1SwiGluProtectedVerifierRequestErrorV1,
     M1SwiGluProtectedVerifierRequestV1, M1SwiGluProtectedWorkerV3BuildFieldV1,
 };
+#[doc(hidden)]
+pub use m1_target_smoke_execution::{execute_m1_target_smoke_v1, M1TargetSmokeExecutionV1};
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
     ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,
     ModelMemoryDispatchRangeErrorV1, SelectedModelMemoryAllocationIdentitiesV1,
+};
+pub use non_authoritative_program_artifact::{
+    admit_m1_non_authoritative_program_artifact_v1,
+    M1NonAuthoritativeProgramArtifactAdmissionFailureV1, M1NonAuthoritativeProgramArtifactErrorV1,
+    M1NonAuthoritativeProgramArtifactV1,
 };
 pub use observed_completion::{
     M1ObservedCompletionImageErrorV1, M1ObservedCompletionImageV1, M1ObservedCompletionRecordV1,
@@ -635,15 +632,11 @@ pub use qualification_logits::{
     M1QualificationLogitsErrorV1, M1QualificationLogitsShapeV1,
     M1_QUALIFICATION_LOGITS_ALIGNMENT_V1, M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
 };
-#[cfg(feature = "engineering-non-authoritative-execution")]
 pub use runner::{
-    bind_engineering_structural_m1_physical_runner_v1,
-    M1EngineeringStructuralPhysicalRunnerBindFailureV1,
-};
-pub use runner::{
-    bind_m1_physical_runner_v1, bind_structural_m1_physical_runner_v1,
-    initialize_m1_physical_runner_memory_v1, LogicalRunnerDeclaration, LogicalRunnerError,
-    M1AuthenticatedPhysicalRunnerV1, M1PhysicalRunnerBindFailureV1,
+    bind_m1_physical_runner_v1, bind_non_authoritative_structural_m1_physical_runner_v1,
+    bind_structural_m1_physical_runner_v1, initialize_m1_physical_runner_memory_v1,
+    LogicalRunnerDeclaration, LogicalRunnerError, M1AuthenticatedPhysicalRunnerV1,
+    M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1, M1PhysicalRunnerBindFailureV1,
     M1PhysicalRunnerFiniteSpeculativeRolloverSubmissionFailureV1,
     M1PhysicalRunnerFirstCompletionOutcomeV1, M1PhysicalRunnerFirstPublicationDiagnosticV1,
     M1PhysicalRunnerFirstPublicationExhaustedV1, M1PhysicalRunnerFirstPublicationFailureV1,
