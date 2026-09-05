@@ -20,8 +20,12 @@ use std::process::ExitCode;
 type SmokeResult<T> = Result<T, String>;
 
 const STATUS: &str = "engineering-hardware-observation-non-evidence-non-qualification";
-const NONCLAIM: &str = "Raw-prompt target-only execution of a structurally admitted fe2o3 engineering aggregate whose authority is none. Reported choices are raw device observations, not verified model answers. This output authenticates no compiler process or Worker V3 publication, selects no current protected publication, establishes no numerical or hardware correctness, is not benchmark evidence, and closes no M1 requirement.";
+const NONCLAIM: &str = "Raw-prompt target-only execution of a structurally admitted fe2o3 engineering aggregate whose authority is none. Reported choices and timing are raw device observations, not verified model answers or benchmark evidence. Timing starts after artifact, model-memory, and tokenizer setup and is not comparable to R33 serving, vLLM, or SGLang measurements. This output authenticates no compiler process or Worker V3 publication, selects no current protected publication, establishes no numerical or hardware correctness, is not a qualification result, and closes no M1 requirement.";
+const SCHEMA: &str = "ferric.m1-engineering-target-smoke-observation.v2";
 const TARGET: &str = "gfx942:xnack-";
+const TIMING_BOUNDARY: &str = "target-smoke-controller-entry-to-completed-device-teardown";
+const TIMING_CLOCK: &str = "monotonic-raw-nanoseconds";
+const TIMING_SCOPE: &str = "single-process-single-request-target-smoke";
 
 #[derive(Clone, Copy)]
 struct EngineeringObservationFacts {
@@ -30,6 +34,24 @@ struct EngineeringObservationFacts {
     compiler_handoff: Identity,
     canonical_descriptor: Identity,
     program_catalog: Identity,
+}
+
+#[derive(Clone, Copy)]
+struct EngineeringTimingFacts {
+    duration: u64,
+    first_token_offset: u64,
+    terminal_offset: u64,
+}
+
+impl EngineeringTimingFacts {
+    fn from_execution(execution: &M1TargetSmokeExecutionV1) -> Self {
+        let timing = execution.timing();
+        Self {
+            duration: timing.duration_ns(),
+            first_token_offset: timing.first_generated_token_offset_ns(),
+            terminal_offset: timing.last_generated_token_offset_ns(),
+        }
+    }
 }
 
 fn main() -> ExitCode {
@@ -121,6 +143,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         &text,
         &text_bytes,
     );
+    validate_engineering_report_v2(&report)?;
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize smoke report: {error}"))?;
@@ -143,6 +166,7 @@ fn engineering_report(
         execution.prompt_observations(),
         execution.generated_tokens(),
         execution.termination(),
+        EngineeringTimingFacts::from_execution(execution),
         facts,
         runner_declaration,
         model_bundle,
@@ -157,6 +181,7 @@ fn engineering_report_from_parts(
     prompt_observations: &[u32],
     generated_tokens: &[u32],
     termination: &str,
+    timing: EngineeringTimingFacts,
     facts: EngineeringObservationFacts,
     runner_declaration: Identity,
     model_bundle: Identity,
@@ -166,9 +191,13 @@ fn engineering_report_from_parts(
     let target_choice_observation_count = prompt_observations
         .len()
         .saturating_add(generated_tokens.len());
+    let r33_tpot_eligible = generated_tokens.len() >= 2
+        && timing.first_token_offset > 0
+        && timing.terminal_offset > timing.first_token_offset;
     json!({
         "artifact_authority": "none",
         "authority": "none",
+        "benchmark_comparable": false,
         "canonical_descriptor_sha256": hex_bytes(facts.canonical_descriptor.as_bytes()),
         "compiler_handoff_sha256": hex_bytes(facts.compiler_handoff.as_bytes()),
         "compiler_origin_authenticated": false,
@@ -185,7 +214,7 @@ fn engineering_report_from_parts(
         "prompt_priming_choice_token_ids": prompt_observations,
         "prompt_token_count": prompt_tokens.len(),
         "prompt_token_ids": prompt_tokens,
-        "schema": "ferric.m1-engineering-target-smoke-observation.v1",
+        "schema": SCHEMA,
         "status": STATUS,
         "target": TARGET,
         "target_choice_observation_count": target_choice_observation_count,
@@ -193,8 +222,76 @@ fn engineering_report_from_parts(
         "text": text,
         "text_bytes_hex": hex_bytes(text_bytes),
         "text_utf8_policy": "lossy-replacement",
+        "timing": {
+            "clock": TIMING_CLOCK,
+            "duration_boundary": TIMING_BOUNDARY,
+            "duration_ns": timing.duration,
+            "r33_tpot_eligible": r33_tpot_eligible,
+            "request_events": [{
+                "arrival_offset_ns": 0,
+                "first_token_offset_ns": timing.first_token_offset,
+                "input_tokens": prompt_tokens.len(),
+                "output_tokens": generated_tokens.len(),
+                "request_ordinal": 0,
+                "terminal_offset_ns": timing.terminal_offset,
+            }],
+            "scope": TIMING_SCOPE,
+        },
         "worker_v3_authenticated": false,
     })
+}
+
+fn validate_engineering_report_v2(report: &Value) -> SmokeResult<()> {
+    let object = report
+        .as_object()
+        .ok_or_else(|| "engineering report is not an object".to_owned())?;
+    for (field, expected) in [
+        ("artifact_authority", json!("none")),
+        ("authority", json!("none")),
+        ("benchmark_comparable", json!(false)),
+        ("compiler_origin_authenticated", json!(false)),
+        ("current_publication_selected", json!(false)),
+        ("schema", json!(SCHEMA)),
+        ("status", json!(STATUS)),
+        ("worker_v3_authenticated", json!(false)),
+    ] {
+        if object.get(field) != Some(&expected) {
+            return Err(format!(
+                "engineering report {field} attempted an unsupported claim"
+            ));
+        }
+    }
+    if object.get("nonclaim") != Some(&json!(NONCLAIM)) {
+        return Err("engineering report nonclaim drifted".to_owned());
+    }
+    let timing = object
+        .get("timing")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "engineering report timing is missing".to_owned())?;
+    if timing.get("clock") != Some(&json!(TIMING_CLOCK))
+        || timing.get("duration_boundary") != Some(&json!(TIMING_BOUNDARY))
+        || timing.get("scope") != Some(&json!(TIMING_SCOPE))
+    {
+        return Err("engineering report timing boundary drifted".to_owned());
+    }
+    let event = timing
+        .get("request_events")
+        .and_then(Value::as_array)
+        .and_then(|events| <&[Value; 1]>::try_from(events.as_slice()).ok())
+        .and_then(|events| events[0].as_object())
+        .ok_or_else(|| "engineering report must contain one timing event".to_owned())?;
+    let first = event.get("first_token_offset_ns").and_then(Value::as_u64);
+    let terminal = event.get("terminal_offset_ns").and_then(Value::as_u64);
+    let output_tokens = event.get("output_tokens").and_then(Value::as_u64);
+    let eligible = matches!(
+        (output_tokens, first, terminal),
+        (Some(output_tokens), Some(first), Some(terminal))
+            if output_tokens >= 2 && first > 0 && terminal > first
+    );
+    if timing.get("r33_tpot_eligible").and_then(Value::as_bool) != Some(eligible) {
+        return Err("engineering report attempted to invent TPOT eligibility".to_owned());
+    }
+    Ok(())
 }
 
 fn hex_bytes(bytes: &[u8]) -> String {
@@ -226,6 +323,8 @@ mod tests {
         );
         assert!(NONCLAIM.contains("authority is none"));
         assert!(NONCLAIM.contains("not verified model answers"));
+        assert!(NONCLAIM.contains("not comparable to R33 serving"));
+        assert!(NONCLAIM.contains("not a qualification result"));
         assert!(NONCLAIM.contains("closes no M1 requirement"));
         for forbidden in ["qualified", "correct", "worker_v3_authority"] {
             assert!(!STATUS.contains(forbidden));
@@ -246,16 +345,23 @@ mod tests {
             &[20],
             &[30, 31],
             "max-new-tokens",
+            EngineeringTimingFacts {
+                duration: 100,
+                first_token_offset: 30,
+                terminal_offset: 80,
+            },
             facts,
             Identity::new([6; 32]),
             Identity::new([7; 32]),
             "ok",
             &[0x6f, 0x6b],
         );
+        validate_engineering_report_v2(&report).expect("canonical engineering report");
         let object = report.as_object().expect("report is an object");
-        assert_eq!(object.len(), 27);
+        assert_eq!(object.len(), 29);
         assert_eq!(report["artifact_authority"], json!("none"));
         assert_eq!(report["authority"], json!("none"));
+        assert_eq!(report["benchmark_comparable"], json!(false));
         assert_eq!(report["compiler_origin_authenticated"], json!(false));
         assert_eq!(report["current_publication_selected"], json!(false));
         assert_eq!(report["worker_v3_authenticated"], json!(false));
@@ -285,6 +391,107 @@ mod tests {
         assert_eq!(report["termination"], json!("max-new-tokens"));
         assert_eq!(report["text"], json!("ok"));
         assert_eq!(report["text_bytes_hex"], json!("6f6b"));
+        assert_eq!(report["schema"], json!(SCHEMA));
+        assert_eq!(report["timing"]["clock"], json!(TIMING_CLOCK));
+        assert_eq!(
+            report["timing"]["duration_boundary"],
+            json!(TIMING_BOUNDARY)
+        );
+        assert_eq!(report["timing"]["duration_ns"], json!(100));
+        assert_eq!(report["timing"]["r33_tpot_eligible"], json!(true));
+        assert_eq!(report["timing"]["scope"], json!(TIMING_SCOPE));
+        assert_eq!(
+            report["timing"]["request_events"],
+            json!([{
+                "arrival_offset_ns": 0,
+                "first_token_offset_ns": 30,
+                "input_tokens": 2,
+                "output_tokens": 2,
+                "request_ordinal": 0,
+                "terminal_offset_ns": 80,
+            }])
+        );
+        assert!(report["timing"].get("tpot_ns").is_none());
+    }
+
+    fn timing_report(generated_tokens: &[u32], timing: EngineeringTimingFacts) -> Value {
+        engineering_report_from_parts(
+            &[10, 11],
+            &[20],
+            generated_tokens,
+            "max-new-tokens",
+            timing,
+            EngineeringObservationFacts {
+                manifest: Identity::new([1; 32]),
+                hsaco: Identity::new([2; 32]),
+                compiler_handoff: Identity::new([3; 32]),
+                canonical_descriptor: Identity::new([4; 32]),
+                program_catalog: Identity::new([5; 32]),
+            },
+            Identity::new([6; 32]),
+            Identity::new([7; 32]),
+            "ok",
+            &[0x6f, 0x6b],
+        )
+    }
+
+    #[test]
+    fn zero_and_one_token_reports_do_not_invent_tpot() {
+        let zero = timing_report(
+            &[],
+            EngineeringTimingFacts {
+                duration: 100,
+                first_token_offset: 0,
+                terminal_offset: 0,
+            },
+        );
+        validate_engineering_report_v2(&zero).expect("zero-token schema remains explicit");
+        assert_eq!(zero["timing"]["r33_tpot_eligible"], json!(false));
+        assert!(zero["timing"].get("tpot_ns").is_none());
+
+        let one = timing_report(
+            &[30],
+            EngineeringTimingFacts {
+                duration: 100,
+                first_token_offset: 40,
+                terminal_offset: 40,
+            },
+        );
+        validate_engineering_report_v2(&one).expect("one-token schema remains explicit");
+        assert_eq!(one["timing"]["r33_tpot_eligible"], json!(false));
+        assert!(one["timing"].get("tpot_ns").is_none());
+    }
+
+    #[test]
+    fn engineering_report_rejects_hostile_authority_and_comparison_claims() {
+        let report = timing_report(
+            &[30],
+            EngineeringTimingFacts {
+                duration: 100,
+                first_token_offset: 40,
+                terminal_offset: 40,
+            },
+        );
+        for (field, hostile) in [
+            ("artifact_authority", json!("production")),
+            ("authority", json!("benchmark")),
+            ("benchmark_comparable", json!(true)),
+            ("compiler_origin_authenticated", json!(true)),
+            ("current_publication_selected", json!(true)),
+            ("status", json!("qualified")),
+            ("worker_v3_authenticated", json!(true)),
+        ] {
+            let mut mutated = report.clone();
+            mutated[field] = hostile;
+            assert!(
+                validate_engineering_report_v2(&mutated).is_err(),
+                "hostile {field} claim was accepted"
+            );
+        }
+
+        let mut invented_tpot = report.clone();
+        invented_tpot["timing"]["r33_tpot_eligible"] = json!(true);
+        assert!(validate_engineering_report_v2(&invented_tpot).is_err());
     }
 
     #[test]

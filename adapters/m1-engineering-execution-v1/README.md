@@ -14,7 +14,11 @@ or grant production load or launch authority.
 boundary. It accepts a canonical prepacked snapshot, engineering observation
 directory, identity closure, GPU unique ID, generation bound, and raw prompt.
 Its JSON output retains authority `none`, identifies every admitted artifact,
-and makes no correctness, benchmark, qualification, or M1-closure claim.
+and makes no correctness, benchmark, qualification, or M1-closure claim. The
+V2 observation also reports the target-smoke controller's monotonic-raw
+single-request timing with the production target-smoke field names. That timing
+starts after artifact, model-memory, and tokenizer setup and is explicitly not
+comparable to R33 serving, vLLM, or SGLang measurements.
 
 ## Bounded R33 lifecycle controller
 

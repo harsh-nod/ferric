@@ -124,12 +124,28 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
     assert!(CLI_SOURCE.contains("ferric-m1-engineering-target-smoke"));
     assert!(CLI_SOURCE.contains("bind_engineering_structural_m1_physical_runner_v1"));
     assert!(CLI_SOURCE.contains("OpenedKfd::open_default"));
+    for required in [
+        "ferric.m1-engineering-target-smoke-observation.v2",
+        "execution.timing()",
+        "\"benchmark_comparable\": false",
+        "\"clock\": TIMING_CLOCK",
+        "\"duration_boundary\": TIMING_BOUNDARY",
+        "\"r33_tpot_eligible\": r33_tpot_eligible",
+        "\"request_events\"",
+        "not comparable to R33 serving, vLLM, or SGLang measurements",
+    ] {
+        assert!(
+            CLI_SOURCE.contains(required),
+            "engineering CLI is missing timing/nonclaim marker {required}"
+        );
+    }
     assert!(BOOTSTRAP_SOURCE.contains("M1PartitionedModelMemoryKvPoolV1"));
     for source in [CLI_SOURCE, BOOTSTRAP_SOURCE] {
         for forbidden in [
             "WorkerV3VerifierV1",
             "AuthenticatedWorkerV3ExecutableV1",
             "acquire_m1_all_kernels_authenticated_worker_v3_programs_v1",
+            "\"benchmark_comparable\": true",
             "current_publication_selected\": true",
             "worker_v3_authenticated\": true",
         ] {
