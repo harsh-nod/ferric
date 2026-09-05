@@ -50,7 +50,7 @@ INDEPENDENT_ROSTER_SHA256 = (
     "1f462479589b1e4bf3e1138997109d297c25279c89fd9f2d5fd6ec53192f0305"
 )
 INDEPENDENT_TOPOLOGY_SHA256 = (
-    "e9ae479793ac9844bd7fc6ec64680f94273e1312f09f88bb6d608d357b38fa3c"
+    "d25f60aba5bda3c357faabe4ceb0819b4781232a8c6da8c1058743fbe3f1ec22"
 )
 PRODUCER_PATH = "proofs/m1-qualification/produce-independent-validator.py"
 PRODUCER_ROLE = "ferric-m1-independent-review-intake"

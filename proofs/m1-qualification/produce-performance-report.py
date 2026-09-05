@@ -36,10 +36,10 @@ PERFORMANCE_ROSTER_SHA256 = (
     "534b95746e961c13f470aca4be53fa4d35f54fa5c8efe6a79792a8c28fe7e645"
 )
 PERFORMANCE_TOPOLOGY_SHA256 = (
-    "20cefdf2a19b6a22dd3750047dec6ad26101df4b7c1ab152fab024a314d6fc8f"
+    "741cddd8ee56a598b8491e36d453abadcf400b57fe1d160b8fc76ca0fd3ddc9b"
 )
 PERFORMANCE_ARTIFACT_TOPOLOGY_SHA256 = (
-    "0901f56b657064ba46bacf72435e8756975257bda5a7485eb6db46d2e62f3812"
+    "b1848d5886bfb16471add365fdb6506d685f701d1e00ee34e69b46daeb915323"
 )
 PRODUCER_PATH = "proofs/m1-qualification/produce-performance-report.py"
 PRODUCER_ROLE = "ferric-m1-performance-intake-reporter"
