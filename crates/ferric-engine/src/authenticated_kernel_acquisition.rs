@@ -844,6 +844,12 @@ mod tests {
                 } => drop((failure, publication)),
                 M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Binding(failure) => match *failure
                 {
+                    M1PhysicalRunnerBindFailureV1::ExecutableCatalog {
+                        expected,
+                        actual,
+                        programs,
+                        publication,
+                    } => drop((expected, actual, programs, publication)),
                     M1PhysicalRunnerBindFailureV1::Canonical {
                         error,
                         programs,

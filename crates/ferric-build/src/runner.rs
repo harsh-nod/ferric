@@ -1118,8 +1118,13 @@ pub fn qwen3_runner_closure_test_fixture() -> PreliminaryIdentityClosure {
     qwen3_runner_closure_test_fixture_with_executable_catalog(Identity::new([39; 32]))
 }
 
+/// Builds the compact fixture with an explicit executable-catalog identity.
+///
+/// This is exposed only for cross-crate tests that must exercise the production catalog join.
 #[cfg(any(test, feature = "test-fixtures"))]
-pub(crate) fn qwen3_runner_closure_test_fixture_with_executable_catalog(
+#[doc(hidden)]
+#[must_use]
+pub fn qwen3_runner_closure_test_fixture_with_executable_catalog(
     executable_catalog: Identity,
 ) -> PreliminaryIdentityClosure {
     use crate::{

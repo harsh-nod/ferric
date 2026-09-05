@@ -116,9 +116,6 @@ pub use plan::{
     SequentialPlanCatalog, SequentialPlanError, SEQUENTIAL_PLAN_CATALOG_ENTRIES,
     SEQUENTIAL_PLAN_CATALOG_VERSION,
 };
-#[cfg(feature = "test-fixtures")]
-#[doc(hidden)]
-pub use runner::qwen3_runner_closure_test_fixture;
 pub use runner::{
     expected_qwen3_gfx942_runner_source_identity, generate_qwen3_gfx942_runner_declaration,
     publish_qwen3_gfx942_runner_declaration, render_qwen3_gfx942_runner_source,
@@ -126,6 +123,11 @@ pub use runner::{
     validate_qwen3_gfx942_runner_source_closure, GeneratedOperationDeclaration,
     GeneratedPlanDeclaration, GeneratedRunnerDeclaration, GeneratedRunnerError,
     PublishedRunnerDeclaration, GENERATED_RUNNER_DECLARATION_VERSION,
+};
+#[cfg(feature = "test-fixtures")]
+#[doc(hidden)]
+pub use runner::{
+    qwen3_runner_closure_test_fixture, qwen3_runner_closure_test_fixture_with_executable_catalog,
 };
 pub use safetensors::{
     authenticate_qwen3_draft_weights, authenticate_qwen3_target_weights, AuthenticatedWeightSet,

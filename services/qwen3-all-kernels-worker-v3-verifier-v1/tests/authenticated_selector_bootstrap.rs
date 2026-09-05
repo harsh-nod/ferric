@@ -113,8 +113,19 @@ fn exact_retained_publication_reaches_shared_bootstrap_with_test_verifier() {
         .expect("read the exact canonical aggregate V2 selector manifest");
     let selector = ferric_engine::decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
         .expect("decode the exact canonical aggregate V2 selector manifest");
+    let mut catalog_verifier =
+        WorkerV3ProtectedRosterVerifierAdapterV1::new(ExactSelectorFixtureProtectedVerifierV1);
+    let programs = ferric_engine::acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(
+        selector.clone(),
+        &mut catalog_verifier,
+    )
+    .expect("authenticate the exact retained publication for its program catalog");
+    let executable_catalog = programs.catalog_id();
+    drop(programs);
     let declaration = ferric_build::generate_qwen3_gfx942_runner_declaration(
-        ferric_build::qwen3_runner_closure_test_fixture(),
+        ferric_build::qwen3_runner_closure_test_fixture_with_executable_catalog(
+            executable_catalog,
+        ),
     )
     .expect("generate the exact M1 runner fixture");
     let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
@@ -131,4 +142,61 @@ fn exact_retained_publication_reaches_shared_bootstrap_with_test_verifier() {
     .expect("the exact retained publication must reach authenticated runner binding");
 
     assert_eq!(runner.operation_count(), expected_operation_count);
+}
+
+#[test]
+#[ignore = "requires FERRIC_M1_AUTHENTICATED_SELECTOR_BOOTSTRAP_V1_SELECTOR_MANIFEST to name an exact retained 12-kernel Worker V3 publication"]
+fn substituted_runner_catalog_is_rejected_with_every_owner_retained() {
+    let selector_manifest = std::env::var_os(SELECTOR_MANIFEST_ENV_V1)
+        .expect("set the exact retained-publication selector-manifest environment variable");
+    let selector_bytes = std::fs::read(selector_manifest)
+        .expect("read the exact canonical aggregate V2 selector manifest");
+    let selector = ferric_engine::decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
+        .expect("decode the exact canonical aggregate V2 selector manifest");
+    let mut catalog_verifier =
+        WorkerV3ProtectedRosterVerifierAdapterV1::new(ExactSelectorFixtureProtectedVerifierV1);
+    let programs = ferric_engine::acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(
+        selector.clone(),
+        &mut catalog_verifier,
+    )
+    .expect("authenticate the exact retained publication for its program catalog");
+    let expected = programs.catalog_id();
+    drop(programs);
+
+    let declaration = ferric_build::generate_qwen3_gfx942_runner_declaration(
+        ferric_build::qwen3_runner_closure_test_fixture(),
+    )
+    .expect("generate the substituted M1 runner fixture");
+    let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
+        .expect("publish the substituted M1 runner fixture");
+    let actual = publication.executable_catalog_id();
+    assert_ne!(actual, expected, "the hostile fixture must substitute the catalog");
+    let mut verifier =
+        WorkerV3ProtectedRosterVerifierAdapterV1::new(ExactSelectorFixtureProtectedVerifierV1);
+
+    let error = ferric_engine::bind_m1_authenticated_physical_runner_from_selector_v1(
+        selector,
+        &mut verifier,
+        publication,
+    )
+    .expect_err("a substituted runner catalog cannot receive authenticated program custody");
+    match error {
+        ferric_engine::M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Binding(failure) => {
+            match *failure {
+                ferric_engine::M1PhysicalRunnerBindFailureV1::ExecutableCatalog {
+                    expected: retained_expected,
+                    actual: retained_actual,
+                    programs,
+                    publication,
+                } => {
+                    assert_eq!(retained_expected, expected);
+                    assert_eq!(retained_actual, actual);
+                    assert_eq!(programs.catalog_id(), expected);
+                    assert_eq!(publication.executable_catalog_id(), actual);
+                }
+                other => panic!("unexpected binding failure: {other:?}"),
+            }
+        }
+        other => panic!("unexpected bootstrap failure: {other:?}"),
+    }
 }
