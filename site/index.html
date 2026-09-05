@@ -215,29 +215,29 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Rerun the aggregate and finish physical rebind</h2>
+            <h2 id="next-title">Join the current stack and rerun the aggregate</h2>
           </div>
           <p>
-            Public fe2o3 main b2cce9c271e85a97c35ce7a1ccffe17bb330f07c supplies reusable compiler,
-            runtime, and KFD support. Compiler, runtime, and KFD work stays in fe2o3; Ferric owns all Qwen
-            kernels and inference. Ferric checkpoint 9431cb4 is public on feature branch
-            origin/codex/fe2o3-current-main-repin-v1, but is not on main or final. Source includes 12
-            K1-K7 entrypoints across 440 profiles, a 545-packet target runner, physical KV custody,
-            same-shape decode rearm, and R33 V3 event-backed TTFT/TPOT records. Public commits ff2ca04 and
-            9eba943 add checked SwiGLU block indices and healthy all-terminal queue shutdown. The lower
-            physical model/KV rebind remains unavailable. The canonical Target8B=1 and Draft06B=2
-            weight-role byte has a positive Verus proof and rejected negative mutation. Real Qwen3-8B and
-            Qwen3-0.6B inputs are canonically prepacked. The latest aggregate rerun clears the prior base+6
-            diagnostic, then stops before Worker or link at the missing production expansion for
-            DisjointBlockComponentIndex in fe2o3. Private Ferric guarded/checked alternatives were rejected
-            and not published. Checkpoint 9431cb4 integrates the authority-free supervised R33 wire foundation
-            at 66b8547 and the service-independent R33 daemon lifecycle proof at 3f5b498. The proof covers
-            exactly 20 ordered measures, delivered versus abandoned responses, faulted exact-stop-only
-            recovery, and backend-free exact stop replay; four exact positive rows verify and two hostile
-            actual-body mutations reject. The source gate covers 160 modules / 7,473 executable bodies: 666
-            directly verified and 6,807 admitted unverified. This does not establish service conformance or
-            runtime authority. The aggregate Worker V3 HSACO is still absent, as are the protected execution
-            profile and service socket. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
+            Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c supplies reusable compiler,
+            runtime, KFD, and generic verification transport. Compiler, runtime, KFD, and generic transport
+            work stays in fe2o3; Ferric owns all Qwen kernels, inference, and Ferric-specific policy. Public
+            fe2o3 commits b4f600a and ce44dc0 add checked component projection and LLVM 22 Worker compatibility;
+            1167b9c and 5f46dd2 add exact connected-path Worker V3 V2 admission and bounded service queue waits.
+            Ferric checkpoint 9431cb4 is public on feature branch origin/codex/fe2o3-current-main-repin-v1,
+            but is not on main or final and still pins historical fe2o3 b2cce9c. Local Ferric integration
+            5122228, policy 829eb98, selector e18eb0e, physical-new-window proof a18de34, and
+            variable-cardinality planner c3fe1f0 plus direct data-index c72c2a8 are unpublished, non-final
+            candidates. Exact policy v5 for 829eb98 on fe2o3 ce44dc0 terminated status 0 with all quality gates
+            passed over 656 files. Closure SHA-256 is d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714;
+            receipt SHA-256 is 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641.
+            That scoped local receipt does not qualify a future combined or 5f46dd2 tree and closes no M1 gate.
+            Ferric source contains GEMM reductions 720c9bc and SwiGLU checked indices ff2ca04. Historical local
+            aggregate reruns using public fe2o3 source progressed beyond SSA and storage, then stopped at the
+            b2cce9c DisjointBlockComponentIndex gap now implemented by public b4f600a; these were not published
+            Ferric results. No exact current 5f46dd2 aggregate rerun or HSACO exists. Planner c3fe1f0 and direct
+            data-index c72c2a8 do not establish runtime variable-cardinality wiring or transition atomicity.
+            No combined current qualification exists. A deployed protected
+            profile and service socket are also absent. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
             endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>

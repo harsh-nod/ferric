@@ -3,7 +3,7 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "ed747c0d681c132435e3defc7482066f88bd69d9",
+    siteRefreshBase: "0df27779047ccd8b9dadbd2973880e8d65559ba6",
     integrationCommit: "9431cb4638401718b8085bcf258a390650c719ef",
     integrationTree: "09c48165b19883aebbebd2e77b827794cd039164",
     ferricCheckpointCommit: "9431cb4638401718b8085bcf258a390650c719ef",
@@ -25,12 +25,16 @@ window.FERRIC_PROJECT = Object.freeze({
     finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
     fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
     fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-    fe2o3CompilerCandidate: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
-    fe2o3CompilerCandidateTree: "e28a3a8333c76ecd034b6599bde7f289dfe0f12e",
-    fe2o3CompilerQualificationBase: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
-    fe2o3LatestMain: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
+    fe2o3CompilerCandidate: "5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
+    fe2o3CompilerCandidateTree: "52ec0a254d626102cbfa37b79a906722490cc9d8",
+    fe2o3CompilerQualificationBase: "ce44dc0342003d6325e18f0a83eb27a61601282c",
+    fe2o3LatestMain: "5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
+    fe2o3CheckedComponentProjectionCommit: "b4f600ae92288ccf1662ddff40d71fefba631777",
+    fe2o3Llvm22WorkerSwitchCommit: "ce44dc0342003d6325e18f0a83eb27a61601282c",
+    fe2o3ConnectedPathTransportCommit: "1167b9cfeb28d36ede1ca5ad5f2a71cb5a8719ee",
+    fe2o3BoundedQueueWaitCommit: "5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
     fe2o3GuardedSubtractionCommit: "e745bc75c",
-    fe2o3CompilerCandidateStatus: "public-main-consumed-by-ferric-feature-branch",
+    fe2o3CompilerCandidateStatus: "public-main-not-yet-consumed-by-public-ferric-checkpoint",
     productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
     productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
     productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -42,13 +46,13 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringAggregateHsacoStatus: "not-produced",
     engineeringAggregateAttemptOuterExitCode: 1,
     engineeringAggregateAttemptBoundary:
-      "disjoint-block-component-index-production-expansion-before-worker-or-link",
+      "historical-disjoint-block-component-index-gap-fixed-upstream-no-current-rerun",
     engineeringAggregateAttemptConnectCount: 0,
     engineeringAggregateAttemptOutputCount: 0,
     engineeringAggregateAttemptStatus:
-      "latest-post-ff2ca04-aggregate-stopped-before-worker-no-hsaco",
-    followupProofFixStatus: "generic-fe2o3-disjoint-block-component-index-production-expansion-gap-open",
-    fe2o3CurrentnessStatus: "public-main-b2cce9c-consumed-by-ferric-feature-branch",
+      "historical-local-attempt-using-public-b2-source-stopped-before-worker-upstream-gap-now-fixed-no-current-result",
+    followupProofFixStatus: "public-fe2o3-fix-available-ferric-repin-and-rerun-in-progress",
+    fe2o3CurrentnessStatus: "public-main-5f46dd2-public-ferric-checkpoint-still-pins-b2cce9c",
     fe2o3IsFiniteRemediationStatus: "independent-source-go",
     targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
     targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -87,6 +91,27 @@ window.FERRIC_PROJECT = Object.freeze({
     supervisedR33WireCommit: "66b8547ab7ce1572d29557d2e9c16d58b2b6f41f",
     supervisedR33WireTree: "8e7348bcd1b99cffa488da44a77813e44bbb3bc7",
     supervisedR33WireStatus: "public-feature-branch-authority-free-no-serving",
+    localIntegrationCandidate: "51222286a76be0e5e85c90232d0451cd30bfa930",
+    localIntegrationCandidateStatus:
+      "local-unpublished-non-final-focused-checks-only-no-combined-qualification",
+    localPolicyCandidate: "829eb98ba11c645958ef762a01da4c81c4bf795b",
+    localPolicyCandidateStatus:
+      "local-unpublished-non-final-v5-qualified-exact-829-on-ce44-only-no-combined-or-m1-authority",
+    localPolicyClosureSha256:
+      "d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714",
+    localPolicyReceiptSha256:
+      "2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641",
+    localSelectorCandidate: "e18eb0e06473fabc6dbfe4cef80b692e34b04a22",
+    localSelectorCandidateStatus: "local-unpublished-non-final-focused-checks-only",
+    localPhysicalNewWindowProofCandidate: "a18de34ac7ffb39d8eaa632e1deb07b3dd1df274",
+    localPhysicalNewWindowProofCandidateStatus:
+      "local-unpublished-non-final-focused-proof-and-tests-only",
+    localVariableCardinalityPlannerCandidate: "c3fe1f076e6ceded02633fa1e6c6973b5afb4d75",
+    variableCardinalityPlannerStatus:
+      "local-unpublished-non-final-focused-arithmetic-and-proof-gates-only-no-runtime-wiring-or-atomicity",
+    localDirectDataIndexCandidate: "c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046",
+    localDirectDataIndexCandidateStatus: "local-unpublished-non-final-focused-checks-only",
+    vectorGemmReductionCommit: "720c9bcf0e8522eb574f289c9e60a91c2f5e2be0",
     canonicalPrepackBundleIdentity:
       "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
     canonicalPrepackAdmissionIdentity:
@@ -96,7 +121,8 @@ window.FERRIC_PROJECT = Object.freeze({
     vectorGemmSsaWorkLimit: 67108864,
     priorAggregateStorageObserved: 3188438,
     priorAggregateStorageLimit: 2097152,
-    aggregateRerunStatus: "post-ff2ca04-rerun-stopped-at-component-index-production-expansion",
+    aggregateRerunStatus:
+      "historical-local-rerun-using-public-b2-source-stopped-at-component-index-expansion-upstream-fix-now-public-no-current-result",
     aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
     aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
     aggregateKernelCount: 12,
@@ -122,7 +148,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric checkpoint 9431cb4 is public on feature branch origin/codex/fe2o3-current-main-repin-v1, but is not on main or final. It consumes public fe2o3 main b2cce9c, derives SwiGLU indices from checked blocked components, adds healthy all-terminal queue shutdown, integrates the authority-free supervised R33 wire foundation at 66b8547, and integrates the executable R33 lifecycle refinement at 3f5b498. That proof covers start, ready, exactly 20 ordered measures, delivered versus abandoned responses, faulted exact-stop-only recovery, and backend-free exact stop replay; it does not prove service conformance or grant runtime authority. The current source gate covers 160 modules and 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. The latest aggregate rerun still stops before Worker or link at the missing production expansion for DisjointBlockComponentIndex in fe2o3. The lower physical model/KV rebind remains unavailable, and the protected execution profile/socket is absent. No aggregate HSACO, Qwen token, TTFT, TPOT, baseline, serving endpoint, or HTTP result exists. All 33 M1 gates remain open.",
+      "Public Ferric feature checkpoint 9431cb4 remains off main and non-final; it still pins historical fe2o3 b2cce9c. Public fe2o3 main is now 5f46dd2 and supplies the checked component projection, LLVM 22 Worker compatibility, generic connected-path Worker V3 V2 transport, and bounded service queue waits. Those are reusable compiler/runtime/KFD capabilities only. Local Ferric integration 5122228, policy 829eb98, selector e18eb0e, physical-new-window proof a18de34, variable-cardinality planner c3fe1f0, and direct data-index candidate c72c2a8 are unpublished and non-final. Exact policy v5 for 829eb98 on ce44dc0 passed all quality gates with a 656-file closure and scoped receipt; it does not qualify the future combined or 5f46dd2 tree and closes no M1 gate. No exact current 5f46dd2 aggregate rerun or HSACO, Qwen token, measured TTFT or TPOT, baseline, serving endpoint, or HTTP result exists. All 33 M1 gates remain open.",
   },
   envelope: [
     ["Target", "Qwen3-8B"],
@@ -131,14 +157,16 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 / FP32 accumulate"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Pages refresh base", "ed747c0d681c132435e3defc7482066f88bd69d9; exact public Pages source before this checkpoint update"],
+    ["Pages refresh base", "0df27779047ccd8b9dadbd2973880e8d65559ba6; exact public Pages source before this checkpoint update"],
     ["Ferric implementation checkpoint", "public feature branch origin/codex/fe2o3-current-main-repin-v1 contains 9431cb4638401718b8085bcf258a390650c719ef, tree 09c48165b19883aebbebd2e77b827794cd039164; it is not on Ferric main or final; all 33 M1 gates remain open"],
-    ["fe2o3 public main", "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c; tree e28a3a8333c76ecd034b6599bde7f289dfe0f12e; consumed by the Ferric feature branch; compiler, runtime, and KFD ownership remains in fe2o3; model kernels and inference remain in Ferric"],
+    ["fe2o3 public main", "5f46dd23cfa3cf58118a93ee2bf5e1252903366c; tree 52ec0a254d626102cbfa37b79a906722490cc9d8; not yet consumed by the public Ferric feature checkpoint; compiler, runtime, KFD, and generic verification transport ownership remains in fe2o3; model kernels, inference, and Ferric policy remain in Ferric"],
+    ["Local Ferric candidates", "integration 51222286a76be0e5e85c90232d0451cd30bfa930; policy 829eb98ba11c645958ef762a01da4c81c4bf795b; selector e18eb0e06473fabc6dbfe4cef80b692e34b04a22; physical-new-window proof a18de34ac7ffb39d8eaa632e1deb07b3dd1df274; variable-cardinality planner c3fe1f076e6ceded02633fa1e6c6973b5afb4d75; direct data-index c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046; all are local, unpublished, non-final, and provide no current artifact, runtime, Qwen, performance, or M1 authority"],
+    ["Local qualification", "policy v5 terminal status 0 for exact unpublished 829eb98 on fe2o3 ce44dc0342003d6325e18f0a83eb27a61601282c: all quality gates passed over 656 files; closure SHA-256 d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714; receipt SHA-256 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641. This scoped local receipt does not qualify a future combined tree or latest public fe2o3 5f46dd2 and closes no M1 gate. Planner c3fe1f0 passed focused arithmetic and proof gates only; neither it nor direct data-index c72c2a8 establishes runtime variable-cardinality wiring or atomicity"],
     ["Speculative executor", "0c2b73bfb8d4e62c100c42a125171c271c8850d8; tree 00c4b8a04aab2f52af0f43de8a26a7e9564c5568; independent review GO; integrated at 867f863e223d00e3b304d324e89146e27d2c5c28"],
     ["Engineering aggregate loader", "c9072b0de61a27be917020baf5eecb4b743734f0; tree c725eb6e3e6f470fa327f94289509fe910eb83ef; independent review GO; integrated at 99cf0d514feb7fccb916f066c645c3a1cf831a0c; observation-only and non-authoritative"],
-    ["Engineering aggregate output", "Ferric owns one aggregate Worker V3 publication over 12 K1-K7 entrypoints and 440 exact profiles. Public fe2o3 b2cce9c fixes repeated-slice projection, and public Ferric ff2ca04 replaces the prior base+6 additions with checked blocked-component indices. The latest aggregate rerun clears that diagnostic, then stops before Worker or link at the missing production expansion for DisjointBlockComponentIndex in fe2o3. Private Ferric guarded/checked alternatives were rejected and not published. No aggregate HSACO, hardware execution, Qwen serving, timing, baseline, artifact authority, or execution authority follows"],
+    ["Engineering aggregate output", "Ferric owns one aggregate Worker V3 publication over 12 K1-K7 entrypoints and 440 exact profiles. Ferric source includes GEMM reductions 720c9bc and SwiGLU checked indices ff2ca04. Historical local aggregate reruns using public fe2o3 source progressed beyond SSA and storage limits, then stopped before Worker or link at the DisjointBlockComponentIndex gap on b2cce9c; this is not a published Ferric result. Public fe2o3 b4f600a, now an ancestor of 5f46dd2, implements that generic projection. No exact current 5f46dd2 aggregate rerun or HSACO, hardware execution, Qwen serving, timing, baseline, artifact authority, or execution authority exists"],
     ["Canonical Qwen prepack", "real pinned Qwen3-8B target plus Qwen3-0.6B draft were canonically prepacked and reverified on mi300x; bundle 6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b; admission 6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16; this validates input packaging, not a protected artifact, GPU run, token, or serving result"],
-    ["Authenticated target rollover", "paired-prefill rollover is implemented at 047ee32f6d0bb1861adb211c9ced1f403a22514c. Public feature checkpoint 9431cb4 includes healthy all-terminal queue shutdown at 9eba94342a99f55a3d38294ae34341f37fe03767 and the supervised R33 wire foundation at 66b8547ab7ce1572d29557d2e9c16d58b2b6f41f. The lower physical model/KV rebind is still unavailable, and no Qwen, endpoint, or performance result follows"],
+    ["Authenticated target rollover", "paired-prefill rollover is public at 047ee32f6d0bb1861adb211c9ced1f403a22514c. Local integration candidate 51222286a76be0e5e85c90232d0451cd30bfa930 adds exact-slot reincarnation, new-window physical invariants, speculative-retirement preflight, timing, and an authenticated executable-catalog fail-closed join. That candidate is unpublished, non-final, and not combined-qualified; no Qwen, endpoint, or performance result follows"],
     ["R33 wire and lifecycle proof", "Public feature checkpoint 9431cb4 integrates the authority-free supervised wire foundation at 66b8547ab7ce1572d29557d2e9c16d58b2b6f41f and executable lifecycle proof at 3f5b4982fa08c4488ff13bb7db37bcbb0ab8368f, tree cb79327ebd365d396f388c7a55023c4557a2b0d8. Four exact positive rows prove the model; two hostile actual-body mutations are rejected. The model is independent of the service implementation and proves no adapter conformance, protected authority, GPU execution, or serving result"],
     ["Target-only engineering smoke", "Ferric source contains gfx942 binding, authenticated model-memory upload, physical KV partitioning, a 545-packet target batch, submit/wait/recycle/readback, token feedback, and monotonic-raw single-request timing. It has not executed with a current aggregate artifact and is not a continuous-serving or HTTP endpoint"],
     ["R33 V3 serving comparison", "Event-backed collector and record validation are on the public feature branch at a2bb2dc9f0087d4573d58b7c0f5b15aee3b3245b, not on main or final. They retain paired per-request work and recompute p50/p90/p99 E2E, TTFT, and TPOT with exact units; no Qwen measurement, vLLM/SGLang baseline, or comparison has run"],
@@ -151,7 +179,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Aggregate selection candidate", "owner-private and noncurrent; exact observational record, source, target, COV6, ordered 12-symbol roster, source-pin, envelope, and finalized-HSACO identities only"],
     ["Pending verifier projection", "private and reject-only; exact typed request plus 12 Option-preserving entry rows; retained as the first preflight step"],
     ["Aggregate verifier preflight", "authority-free and reject-only; after projection, exactly once reinspects the request's finalized-HSACO bytes, reacquires common multi-root custody, then cross-binds finalizer artifact, LLVM handoffs, gfx942:xnack-/COV6 target, the full 12-entry descriptor and physical roster, and exact workgroups; a passing preflight has the sole terminal result MissingProtectedVerificationReceipt"],
-    ["Strict proof release", "Retained release 7f516e0 passed its scoped full qualification. Public feature checkpoint 9431cb4 has a source gate covering 160 modules / 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. It retains the canonical Target8B=1 and Draft06B=2 weight-role proof first published at 756e813 and adds the authority-free R33 lifecycle proof at 3f5b498 with four proved rows and two rejected same-source mutations. A fresh full release receipt for 9431cb4 remains open, and these scoped checks do not close any M1 gate"],
+    ["Strict proof release", "Exact local policy v5 for unpublished 829eb98 on ce44dc0 passed all quality gates with closure SHA-256 d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714 and receipt SHA-256 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641 over 656 files. That receipt is scoped only to 829eb98 on ce44dc0; it does not qualify a future combined or 5f46dd2 tree and closes no M1 gate"],
     ["Protected acceptance", "CURRENT=None: the private current aggregate publication selection is None; the undeployed verifier-service foundation and locally integrated binder candidate do not create production runtime admission"],
     [
       "Historical protected artifact",
@@ -167,7 +195,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Ferric inference foundations",
       state: "implemented",
       detail:
-        "Authenticated model inputs, exact target and draft plans, generational scheduling, paged KV custody, cancellation, completion epochs, and finite speculative lifecycle paths exist in source. Public feature checkpoint 9431cb4 includes healthy all-terminal queue shutdown at 9eba943 and the authority-free supervised R33 wire foundation at 66b8547; it does not implement the lower physical model/KV rebind or provide a serving endpoint.",
+        "Authenticated model inputs, exact target and draft plans, generational scheduling, paged KV custody, cancellation, completion epochs, and finite speculative lifecycle paths exist in source. Public feature checkpoint 9431cb4 includes healthy all-terminal queue shutdown at 9eba943 and the authority-free supervised R33 wire foundation at 66b8547. Local integration candidate 5122228 adds exact-slot/new-window work but is unpublished, non-final, and not combined-qualified. No serving endpoint exists.",
     },
     {
       label: "Durable compiler receipt path",
@@ -182,10 +210,16 @@ window.FERRIC_PROJECT = Object.freeze({
         "Ferric source binds gfx942 through fe2o3 KFD, uploads authenticated model memory, partitions physical KV, constructs the 545-packet target batch, submits, waits, recycles signals, reads compact output, releases pages, and feeds observed tokens into subsequent target decode. Authenticated prefill-to-target-decode rollover is integrated at 047ee32. Missing aggregate and protected-service inputs prevent a Qwen run.",
     },
     {
+      label: "Variable-cardinality planner",
+      state: "integration",
+      detail:
+        "Local unpublished, non-final candidate c3fe1f076e6ceded02633fa1e6c6973b5afb4d75 plans reuse=min(old,new), retiring, and fresh slot counts. Focused gates passed 5/5 Rust arithmetic tests, direct Verus 1 function / 33 details / 0 errors, three rejected hostile formula mutations, and branch coverage of 162 modules / 7,526 bodies. Direct data-index candidate c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046 is also local, unpublished, and non-final. Neither implements runtime variable-cardinality wiring or proves transition atomicity.",
+    },
+    {
       label: "Aggregate 12-kernel source roster",
       state: "integration",
       detail:
-        "Commit 5514afe consolidates 12 Ferric-owned K1-K7 entrypoints into one selected device package over seven canonical local Rust source modules; the current catalog contains 440 exact profiles. Public fe2o3 b2cce9c fixes stable repeated-slice extent identity, and public Ferric ff2ca04 derives SwiGLU indices from checked blocked components. The latest rerun clears the prior base+6 diagnostic and stops at the missing production expansion for DisjointBlockComponentIndex in fe2o3 before Worker or link. No aggregate Worker V3 HSACO has been produced, admitted, or run.",
+        "Commit 5514afe consolidates 12 Ferric-owned K1-K7 entrypoints into one selected device package over seven canonical local Rust source modules; the catalog contains 440 exact profiles. Ferric source contains GEMM reductions at 720c9bc and SwiGLU checked indices at ff2ca04. Historical local aggregate reruns using public fe2o3 source progressed beyond SSA and storage, then stopped at the DisjointBlockComponentIndex gap on b2cce9c; this is not a published Ferric result. Public fe2o3 b4f600a, an ancestor of 5f46dd2, implements that projection. No exact current 5f46dd2 rerun has produced an aggregate Worker V3 HSACO, admission, or run.",
     },
     {
       label: "Generic Worker V3 roster admission",
@@ -209,7 +243,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Typed aggregate source-pin projection",
       state: "implemented",
       detail:
-        "The adapter strictly decodes one canonical receipt-bearing Worker V3 V2 envelope and admits only LLVM text IR, gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors. Public Ferric feature-branch checkpoint 9431cb4 consumes public fe2o3 main b2cce9c; the Ferric checkpoint is not on main or final, and the projection remains non-authoritative and grants no compiler-origin, verifier, publication, load, or launch authority.",
+        "The adapter strictly decodes one canonical receipt-bearing Worker V3 V2 envelope and admits only LLVM text IR, gfx942:xnack-, code-object V6, and exact sets of 12 kernel entries plus 12 matching descriptors. Public Ferric feature-branch checkpoint 9431cb4 consumes historical fe2o3 b2cce9c; latest public fe2o3 is 5f46dd2 and has not yet been consumed by a public Ferric repin. The projection remains non-authoritative and grants no compiler-origin, verifier, publication, load, or launch authority.",
     },
     {
       label: "Aggregate protected-build producer policy",
@@ -233,7 +267,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Proof coverage",
       state: "integration",
       detail:
-        "The retained 7f516e0 release remains the last full release receipt. Public checkpoint 9431cb4 has an exact source gate of 160 modules and 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. It retains the canonical Target8B=1 and Draft06B=2 proof first published at 756e813 and integrates the independent, authority-free R33 lifecycle model at 3f5b498. Four exact theorem rows prove the lifecycle model, while out-of-order measure and incorrectly advancing abandoned-response mutations are rejected. A fresh full receipt plus all 33 M1 closures remain open.",
+        "Public checkpoint 9431cb4 has an exact source gate of 160 modules and 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. Its authority-free R33 proof at 3f5b498 covers exactly 20 ordered measures; four exact positive rows verify, and two hostile actual-body mutations for out-of-order measure and abandoned response incorrectly advancing behavior reject. It is public inside checkpoint 9431cb4 but makes no service-conformance claim. Exact local policy v5 for unpublished 829eb98 on ce44dc0 passed all quality gates over a 656-file closure with receipt SHA-256 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641. Its scope does not include a future combined or 5f46dd2 tree. All 33 M1 closures remain open.",
     },
     {
       label: "Aggregate publication-selection candidate",
@@ -263,7 +297,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 engineering aggregate producer",
       state: "integration",
       detail:
-        "Public fe2o3 main is b2cce9c271e85a97c35ce7a1ccffe17bb330f07c (tree e28a3a8333c76ecd034b6599bde7f289dfe0f12e), and public Ferric feature-branch checkpoint 9431cb4 consumes that revision. The Ferric checkpoint is not on main or final. fe2o3 owns reusable compiler, runtime, and KFD work only; Ferric owns model kernels and inference. No Ferric artifact, runtime result, inference result, or correctness authority follows.",
+        "Public fe2o3 main is 5f46dd23cfa3cf58118a93ee2bf5e1252903366c (tree 52ec0a254d626102cbfa37b79a906722490cc9d8). Public Ferric feature-branch checkpoint 9431cb4 still consumes historical b2cce9c and is not on main or final; local repin candidates are unpublished. fe2o3 owns reusable compiler, runtime, KFD, and generic verification transport only; Ferric owns model kernels, inference, and Ferric policy. No Ferric artifact, runtime result, inference result, or correctness authority follows.",
+    },
+    {
+      label: "Generic verifier transport and bounded queue waits",
+      state: "implemented",
+      detail:
+        "Public fe2o3 commits 1167b9c and 5f46dd2 add exact connected-path Worker V3 V2 admission and bounded service/authenticated queue waits. These are generic runtime capabilities only. Ferric has not yet published a protected deployment, cross-UID service result, Qwen execution, or serving authority using them.",
     },
     {
       label: "Production speculative executor",
@@ -395,13 +435,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Non-null empty KFD transport",
       state: "implemented",
       detail:
-        "The corrected non-null empty-slice transport is retained in public fe2o3 main b2cce9c and consumed by public Ferric feature-branch checkpoint 9431cb4, which is not on main or final. No accepted aggregate artifact or authenticated full-Qwen run has exercised it through the production path.",
+        "The corrected non-null empty-slice transport is retained in public fe2o3 main 5f46dd2 and is already present in historical b2cce9c consumed by public Ferric feature checkpoint 9431cb4. No accepted aggregate artifact or authenticated full-Qwen run has exercised it through the production path.",
     },
     {
       label: "Generic volatile-load production support",
       state: "implemented",
       detail:
-        "Volatile-load support is retained in public fe2o3 main b2cce9c. This establishes source availability only, not an accepted aggregate artifact, GPU launch, numerical behavior, or Qwen execution.",
+        "Volatile-load support is retained in public fe2o3 main 5f46dd2. This establishes source availability only, not an accepted aggregate artifact, GPU launch, numerical behavior, or Qwen execution.",
     },
     {
       label: "Ordered Stage C artifact-set handoff",
@@ -437,7 +477,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "End-to-end Qwen through Ferric",
       state: "open",
       detail:
-        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Real target and draft prepack inputs are verified, and healthy all-terminal queue shutdown is public. The stable-slice and SwiGLU checked-index fixes are public. Their aggregate rerun clears the prior base+6 diagnostic, then stops at the missing production expansion for DisjointBlockComponentIndex in fe2o3 before Worker or link; the lower physical model/KV rebind is unavailable, and the protected profile/socket are absent. No aggregate HSACO, Qwen token, serving or HTTP endpoint, measured TTFT/TPOT, numerical result, or baseline result exists.",
+        "Ferric cannot yet run Qwen through the production path. Its private current aggregate publication selection remains None (CURRENT=None). Real target and draft prepack inputs are verified, and public fe2o3 now contains the generic checked component projection, LLVM 22 Worker compatibility, connected-path V2 transport, and bounded queue waits. Ferric repin, aggregate rerun, protected deployment, and combined qualification remain in progress. No aggregate HSACO, Qwen token, serving or HTTP endpoint, measured TTFT/TPOT, numerical result, or baseline result exists.",
     },
     {
       label: "vLLM and SGLang baseline comparison",
@@ -554,7 +594,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Engineering aggregate producer schema",
         detail:
-          "Public Ferric feature-branch checkpoint 9431cb4 requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation and consumes public fe2o3 main b2cce9c. It is not on main or final. Compiler, runtime, and KFD ownership remains upstream; no aggregate or execution authority follows.",
+          "Public Ferric feature-branch checkpoint 9431cb4 requires fe2o3-production-build-config-v2 with source-isa-summary-v1 observation and consumes historical fe2o3 b2cce9c. Latest public fe2o3 main is 5f46dd2, and the local repin is unpublished and non-final. Compiler, runtime, KFD, and generic transport ownership remains upstream; no aggregate or execution authority follows.",
       },
       {
         name: "R33 V3 serving comparison capture",
@@ -636,7 +676,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Complete KFD edge handling",
         detail:
-          "The public Ferric feature branch now consumes public fe2o3 main b2cce9c and includes authenticated target rollover plus healthy all-terminal shutdown, but is not main or final. Preserve fail-closed ownership while qualifying that combined path against the eventual accepted aggregate artifact.",
+          "The public Ferric feature branch consumes historical fe2o3 b2cce9c and includes authenticated target rollover plus healthy all-terminal shutdown, but is not main or final. Latest public fe2o3 is 5f46dd2; preserve fail-closed ownership while integrating and qualifying the unpublished repin against the eventual accepted aggregate artifact.",
       },
       {
         name: "Ordered Stage C and joint Stage D",
@@ -646,7 +686,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce and accept the aggregate artifact",
         detail:
-          "Public fe2o3 b2cce9c fixes stable repeated-slice extent identity, and public Ferric ff2ca04 derives SwiGLU indices from checked blocked components. The rerun now needs reusable fe2o3 production expansion for DisjointBlockComponentIndex, followed by structural inspection of any 12-entry Worker V3 output before acceptance. A current protected publication still needs independent compiler, finalizer, verifier, and rollback authority before an artifact can enter production runtime acceptance.",
+          "Public fe2o3 b4f600a supplies checked DisjointBlockComponentIndex projection, ce44dc0 adds LLVM 22 Worker compatibility, and 5f46dd2 is the latest public main. Ferric must publish an exact repin and rerun before structural inspection of any 12-entry Worker V3 output. A current protected publication still needs independent compiler, finalizer, verifier, and rollback authority before an artifact can enter production runtime acceptance.",
       },
       {
         name: "Authenticated fixed-batch KFD",
@@ -740,14 +780,14 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Making progress",
       completed:
-        "Public fe2o3 main is b2cce9c. Public Ferric feature branch origin/codex/fe2o3-current-main-repin-v1 is at 9431cb4, integrating ff2ca04 checked SwiGLU block indices, 9eba943 healthy all-terminal queue shutdown, the 66b8547 authority-free R33 wire foundation, and the 3f5b498 executable lifecycle proof.",
+        "Public fe2o3 main is 5f46dd2, including b4f600a checked component projection, ce44dc0 LLVM 22 Worker compatibility, 1167b9c generic connected-path Worker V3 V2 transport, and 5f46dd2 bounded queue waits. Public Ferric feature branch origin/codex/fe2o3-current-main-repin-v1 remains at 9431cb4 and still pins historical b2cce9c.",
       current:
-        "Coordinating the reusable fe2o3 DisjointBlockComponentIndex production-expansion fix exposed by the post-ff2ca04 aggregate rerun, the lower physical model/KV rebind, and a fresh full release receipt while keeping public feature checkpoint 9431cb4 off main and non-final.",
+        "Integrating local unpublished/non-final Ferric candidates 5122228, qualified-scope policy 829eb98, e18eb0e, a18de34, c3fe1f0, and c72c2a8. Policy v5 status 0 and its receipt cover only exact 829eb98 on ce44dc0, not a future combined or 5f46dd2 tree. No combined current qualification exists.",
       blockedBy:
         "No integration team is idle or blocked; production execution still depends on an aggregate HSACO and the absent protected execution profile plus service socket.",
       next:
-        "Implement and qualify the reusable fe2o3 production expansion, rerun the exact aggregate, continue the lower physical rebind, and produce a fresh full release receipt without claiming artifact or serving authority.",
-      validation: "fe2o3 b2cce9c public; Ferric 9431cb4 public on the feature branch, not on main or final",
+        "Finish the local stack, repin it to public fe2o3 5f46dd2, rerun exact remote qualification and the aggregate, then publish only after identities and receipts agree.",
+      validation: "fe2o3 5f46dd2 public; Ferric 9431cb4 public on the feature branch; all newer Ferric candidates local, unpublished, non-final",
     },
     {
       name: "Kernel",
@@ -755,14 +795,14 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Making progress",
       completed:
-        "Audited one aggregate source unit containing 12 K1-K7 entrypoints across 440 exact profiles; public ff2ca04 replaces SwiGLU offset additions with checked blocked-component indices.",
+        "Ferric retains one aggregate source unit containing 12 K1-K7 entrypoints across 440 exact profiles, GEMM reductions at 720c9bc, and SwiGLU checked indices at ff2ca04. Generic checked component projection is public in fe2o3 b4f600a, an ancestor of 5f46dd2.",
       current:
-        "The latest post-ff2ca04 aggregate rerun against b2cce9c clears the prior base+6 diagnostic, then stops before Worker or link at the missing production expansion for DisjointBlockComponentIndex in fe2o3.",
+        "Preparing the first exact current aggregate rerun on public fe2o3 5f46dd2. Historical local aggregate reruns using public source progressed beyond SSA and storage, then stopped at the b2cce9c DisjointBlockComponentIndex gap now fixed upstream; they were not published Ferric results and produced no HSACO.",
       blockedBy:
-        "The team is making progress; the reusable fe2o3 DisjointBlockComponentIndex production-expansion gap is open, and protected production publication awaits the absent profile and service socket.",
+        "The kernel team is making progress; source work is not blocked, while artifact execution depends on the combined repin/qualification and protected publication inputs.",
       next:
-        "Implement and qualify the reusable fe2o3 production expansion, rerun the exact aggregate, and structurally inspect any output without weakening authorization or accepting unverified authority.",
-      validation: "post-ff2ca04 rerun clears base+6 and stops at missing DisjointBlockComponentIndex production expansion; no HSACO",
+        "Rerun and structurally inspect the aggregate on 5f46dd2 without weakening authorization; keep all model kernels and inference-specific policy in Ferric.",
+      validation: "historical local b2cce9c-source aggregate stopped before Worker; b4f600a fix is public; no exact current 5f46dd2 rerun, HSACO, or GPU result",
     },
     {
       name: "Engine",
@@ -770,14 +810,14 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Making progress",
       completed:
-        "Integrated authenticated prefill-to-target-decode rollover at 047ee32, healthy all-terminal queue shutdown at 9eba943, and the authority-free supervised R33 wire foundation at 66b8547; R33 V3 event-backed E2E/TTFT/TPOT collection remains at a2bb2dc.",
+        "Public Ferric includes authenticated prefill-to-target-decode rollover at 047ee32, healthy all-terminal queue shutdown at 9eba943, the authority-free supervised R33 wire foundation at 66b8547, and event-backed comparison records at a2bb2dc.",
       current:
-        "Public checkpoint 9431cb4 includes supervised R33 wire commit 66b8547, but it has no protected runtime authority and is not a serving endpoint. The lower physical new-window model/KV rebind remains open, and no timing run is claimed.",
+        "Local unpublished/non-final integration 5122228 adds exact-slot reincarnation, new-window physical invariants, speculative-retirement preflight, event timing, and executable-catalog identity binding. Selector e18eb0e, proof candidate a18de34, planner c3fe1f0, and direct data-index candidate c72c2a8 remain separate local candidates. Their focused checks do not establish runtime variable-cardinality wiring or atomicity.",
       blockedBy:
-        "The engine team is making progress; Qwen execution still lacks an aggregate HSACO, protected profile/socket, and lower physical all-terminal model/KV rebind.",
+        "The engine team is making progress; Qwen execution still lacks a current aggregate HSACO, protected deployment, complete current qualification, and a joined production serving path.",
       next:
-        "Implement the lower model/KV rebind and connect real Ferric/vLLM/SGLang lifecycle adapters; HTTP serving remains later work.",
-      validation: "healthy all-terminal shutdown and authority-free wire foundation are public; lower rebind, hardware, and comparison runs remain pending",
+        "Join the selector/proof/cardinality work, exercise protected transport with Ferric identities, and qualify the production path; Qwen and baseline timing come only after a real run.",
+      validation: "local 5122228 focused remote tests and strict Clippy passed; no combined qualification, hardware, serving, or comparison result",
     },
     {
       name: "Verification",
@@ -787,37 +827,118 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Checkpoint 756e813 integrated the canonical weight-role byte theorem: Target8B=1 and Draft06B=2, with the Draft06B=>1 same-source mutation rejected by Verus. Public checkpoint 9431cb4 integrates the independent R33 daemon lifecycle proof at 3f5b498.",
       current:
-        "R33 daemon lifecycle proof 3f5b498 is public inside checkpoint 9431cb4: four exact positive rows verify and two hostile actual-body mutations reject. The proof is authority-free and makes no service-conformance claim.",
+        "Exact local policy v5 for unpublished 829eb98 on ce44dc0 terminated status 0 with all quality gates passed over 656 files; closure d52d2b2 and receipt 2ab2b3e bind that scope. Physical-new-window proof a18de34, planner c3fe1f0, and direct data-index c72c2a8 remain separate unpublished candidates. The policy receipt does not qualify a future combined or 5f46dd2 tree, prove runtime atomicity, or make a service-conformance claim.",
       blockedBy:
-        "No independent proof blocker; a fresh full release receipt for checkpoint 9431cb4 remains open.",
+        "The verification team is making progress with no proof-design blocker; combined exact-head integration, regenerated inventories, and qualification remain pending.",
       next:
-        "Produce a fresh full release receipt for the current feature head and continue closing the still-open M1 assurance properties.",
+        "Integrate the exact candidates, regenerate proof/source inventories, and produce a combined release receipt on the eventual 5f46dd2-based tree before any public completion claim.",
       validation:
-        "3f5b498 public and integrated; four exact positive rows verified; two hostile actual-body mutations rejected; fresh full receipt open",
+        "local 829eb98-on-ce44dc0 policy v5 status 0 with all quality gates passed; closure d52d2b2; receipt 2ab2b3e; future combined/5f46dd2 qualification open",
     },
   ],
   recentProgress: [
     {
-      commit: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
-      repository: "https://github.com/harsh-nod/fe2o3",
-      title: "Publish the current fe2o3 compiler/runtime base",
+      commit: "c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046",
+      title: "Stage the local direct data-index candidate",
+      state: "integration",
+      detail:
+        "The direct choice data ordinal is bound in local unpublished, non-final source. It remains separate from the current integration and policy receipt and provides no combined qualification, runtime variable-cardinality atomicity, Qwen, serving, or M1 authority.",
+    },
+    {
+      commit: "720c9bcf0e8522eb574f289c9e60a91c2f5e2be0",
+      title: "Retain Ferric GEMM aggregate reductions",
       state: "implemented",
       detail:
-        "Public fe2o3 main is b2cce9c, tree e28a3a8, and public Ferric feature-branch checkpoint 9431cb4 consumes it. The Ferric checkpoint is not on main or final. This upstream revision contains reusable compiler, runtime, and KFD support only; Ferric-specific model kernels and inference remain in Ferric.",
+        "Ferric source contains the GEMM reductions used by later historical local aggregate reruns. Those runs used public fe2o3 source and progressed beyond earlier SSA and storage limits, but they were not published Ferric results and produced no current aggregate HSACO or execution authority.",
+    },
+    {
+      commit: "c3fe1f076e6ceded02633fa1e6c6973b5afb4d75",
+      title: "Complete the local variable-cardinality planner",
+      state: "integration",
+      detail:
+        "Local unpublished, non-final planner source passed 5/5 Rust arithmetic tests, direct Verus 1 function / 33 details / 0 errors, three rejected hostile formula mutations, and branch coverage of 162 modules / 7,526 bodies. These focused gates cover cardinality formulas only; runtime variable-cardinality wiring and transition atomicity remain unimplemented and unproved.",
+    },
+    {
+      commit: "5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Publish bounded generic service queue waits",
+      state: "implemented",
+      detail:
+        "Public fe2o3 main is 5f46dd2, tree 52ec0a2. It adds bounded service and authenticated queue waits on top of the generic connected-path transport, checked component projection, and LLVM 22 Worker compatibility. Ferric has not yet published a repin or exercised these capabilities in protected Qwen execution.",
+    },
+    {
+      commit: "1167b9cfeb28d36ede1ca5ad5f2a71cb5a8719ee",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Publish connected-path Worker V3 V2 transport",
+      state: "implemented",
+      detail:
+        "Public fe2o3 adds exact connected-filesystem-path admission, peer and per-message credential checks, typed failure custody, and cross-process session coverage as generic runtime infrastructure. It does not deploy Ferric identities, policy, a protected service, or Qwen authority.",
+    },
+    {
+      commit: "ce44dc0342003d6325e18f0a83eb27a61601282c",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Publish LLVM 22 Worker compatibility",
+      state: "implemented",
+      detail:
+        "Public fe2o3 updates reusable Worker compiler handling for LLVM 22. This is generic compiler support; no Ferric aggregate output or runtime result follows.",
+    },
+    {
+      commit: "b4f600ae92288ccf1662ddff40d71fefba631777",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Publish checked disjoint component projection",
+      state: "implemented",
+      detail:
+        "Public fe2o3 now supplies the reusable checked DisjointBlockComponentIndex production projection exposed by Ferric's historical aggregate attempt. Ferric still needs an exact current repin and aggregate rerun; no HSACO follows from the upstream source change.",
+    },
+    {
+      commit: "51222286a76be0e5e85c90232d0451cd30bfa930",
+      title: "Integrate exact new-window identity checks locally",
+      state: "integration",
+      detail:
+        "Local unpublished, non-final Ferric integration adds exact-slot reincarnation, new-window physical invariants, speculative-retirement preflight, engineering timing, and authenticated executable-catalog binding. Focused remote tests and strict Clippy passed, but no combined current qualification, public checkpoint, hardware run, or serving result exists.",
+    },
+    {
+      commit: "829eb98ba11c645958ef762a01da4c81c4bf795b",
+      title: "Qualify the local policy repin candidate",
+      state: "qualified",
+      detail:
+        "Exact local policy v5 for unpublished 829eb98 on ce44dc0 terminated status 0 with all quality gates passed over 656 files. Closure SHA-256 is d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714; receipt SHA-256 is 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641. This qualification is scoped only to that exact local tree and base; it does not qualify a future combined or 5f46dd2 tree and closes no M1 gate.",
+    },
+    {
+      commit: "e18eb0e06473fabc6dbfe4cef80b692e34b04a22",
+      title: "Stage the local authenticated selector candidate",
+      state: "integration",
+      detail:
+        "Local unpublished, non-final source acquires the exact selector before binding and preserves typed custody on failure. Focused checks passed; it is not integrated with the current repin and grants no protected runtime or serving authority.",
+    },
+    {
+      commit: "a18de34ac7ffb39d8eaa632e1deb07b3dd1df274",
+      title: "Stage the local physical new-window proof candidate",
+      state: "integration",
+      detail:
+        "Local unpublished, non-final proof and inventory work covers physical new-window construction and related identities. Focused proof and test gates passed, but integration, regenerated inventories, and combined current qualification remain pending.",
+    },
+    {
+      commit: "b2cce9c271e85a97c35ce7a1ccffe17bb330f07c",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Historical Ferric-consumed fe2o3 compiler/runtime base",
+      state: "implemented",
+      detail:
+        "Public Ferric feature checkpoint 9431cb4 still consumes historical fe2o3 b2cce9c, tree e28a3a8. Public fe2o3 main has since advanced through b4f600a, ce44dc0, 1167b9c, and 5f46dd2. This upstream history contains reusable compiler/runtime/KFD work only; Ferric-specific model kernels, inference, and policy remain in Ferric.",
     },
     {
       commit: "9431cb4638401718b8085bcf258a390650c719ef",
       title: "Publish the verified Ferric feature checkpoint",
       state: "integration",
       detail:
-        "Public feature-branch checkpoint 9431cb4, tree 09c4816, consumes public fe2o3 b2cce9c and integrates ff2ca04 checked SwiGLU block indices, 9eba943 healthy all-terminal queue shutdown, 66b8547 authority-free R33 wire support, and the 3f5b498 lifecycle proof. Its source gate covers 160 modules and 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. It is not on main or final and creates no aggregate HSACO, GPU, Qwen, serving, or M1 result.",
+        "Public feature-branch checkpoint 9431cb4, tree 09c4816, consumes historical fe2o3 b2cce9c and integrates ff2ca04 checked SwiGLU block indices, 9eba943 healthy all-terminal queue shutdown, 66b8547 authority-free R33 wire support, and the 3f5b498 lifecycle proof. Its source gate covers 160 modules and 7,473 executable bodies: 666 directly verified and 6,807 admitted unverified. It is not on main or final and creates no aggregate HSACO, GPU, Qwen, serving, or M1 result.",
     },
     {
       commit: "ff2ca043600550ec72957ac99bae64251f2e4184",
       title: "Derive SwiGLU indices from checked block components",
       state: "implemented",
       detail:
-        "Ferric replaces the prior base-plus-offset additions with checked blocked-component indices and extends source-contract coverage. The latest rerun clears that diagnostic and exposes the missing fe2o3 production expansion for DisjointBlockComponentIndex; no artifact result exists.",
+        "Ferric replaces prior base-plus-offset additions with checked blocked-component indices and extends source-contract coverage. A historical local aggregate rerun using public b2cce9c source exposed the missing generic DisjointBlockComponentIndex projection now public in fe2o3 b4f600a. This was not a published Ferric result; no exact current 5f46dd2 aggregate rerun or artifact result exists.",
     },
     {
       commit: "9eba94342a99f55a3d38294ae34341f37fe03767",
@@ -866,7 +987,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Historical aggregate compiler-bound checkpoint",
       state: "open",
       detail:
-        "Earlier attempts reported vector-GEMM semantic-SSA and aggregate storage bounds. A later attempt against then-current public fe2o3 d8fa0835 stopped before Worker or link at repeated-slice semantic-to-ranked projection. Public fe2o3 b2cce9c and Ferric ff2ca04 supersede that diagnosis; the latest rerun reaches the missing fe2o3 production expansion for DisjointBlockComponentIndex and no aggregate Worker V3 HSACO is produced.",
+        "Historical local aggregate reruns using public fe2o3 source first reached vector-GEMM SSA and storage limits, then progressed through later source to the DisjointBlockComponentIndex projection gap on b2cce9c. These were not published Ferric results. Public fe2o3 b4f600a now supplies that generic fix, but no exact current 5f46dd2 aggregate rerun or Worker V3 HSACO exists.",
     },
     {
       commit: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
@@ -874,7 +995,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Historical compiler support checkpoint",
       state: "integration",
       detail:
-        "Earlier fe2o3 branch 80aaaf3 included then-current origin/main c58785c and reviewed guarded-subtraction support e745bc75c. Later candidates superseded it; at the previous checkpoint public fe2o3 main was d8fa0835, and current public main b2cce9c now supersedes that revision. This historical checkpoint creates no HSACO, hardware, serving, comparison, or M1 result.",
+        "Earlier fe2o3 branch 80aaaf3 included then-current origin/main c58785c and reviewed guarded-subtraction support e745bc75c. Later public heads d8fa0835 and b2cce9c superseded it; current public main is 5f46dd2. This historical checkpoint creates no HSACO, hardware, serving, comparison, or M1 result.",
     },
     {
       commit: "4796efd75ca62ae980e67110fa68c3a94a89a67c",
@@ -1548,9 +1669,13 @@ window.FERRIC_PROJECT = Object.freeze({
       "Worker ledger, repository lineage, host-descriptor lineage, and rollback admission",
       "Scheduling, paged KV, speculation, generated runner, and M1 qualification",
       "Public feature branch origin/codex/fe2o3-current-main-repin-v1 contains 9431cb4638401718b8085bcf258a390650c719ef, tree 09c48165b19883aebbebd2e77b827794cd039164; it is not on main or final and closes none of the 33 M1 gates",
+      "Local Ferric integration 51222286a76be0e5e85c90232d0451cd30bfa930, policy 829eb98ba11c645958ef762a01da4c81c4bf795b, selector e18eb0e06473fabc6dbfe4cef80b692e34b04a22, physical-new-window proof a18de34ac7ffb39d8eaa632e1deb07b3dd1df274, and variable-cardinality planner c3fe1f076e6ceded02633fa1e6c6973b5afb4d75 are unpublished, non-final candidates with no current or serving authority",
+      "Direct data-index candidate c72c2a8ffa47fcc1521ec7f1d2d02ae02f987046 is also local, unpublished, and non-final",
+      "Exact local policy v5 for 829eb98 on ce44dc0 passed all quality gates over a 656-file closure; closure d52d2b2954fa103bf67f5a9fc72eebb4b315bbc0e1226424480b6412999d8714 and receipt 2ab2b3e87a3d32e84d18b9fc1f840a05c6dac415a244ad19bf07e08f619e6641 bind only that scope, not a future combined or 5f46dd2 tree, and close no M1 gate",
+      "The local variable-cardinality planner passed focused arithmetic, direct Verus, hostile-formula, and branch-coverage gates; it does not implement runtime variable-cardinality wiring or prove transition atomicity",
       "One aggregate device package owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules with no prebuilt or vendor kernel dependency",
       "The aggregate catalog contains 12 K1-K7 entrypoints across 440 exact profiles and target S1 expands from 544 logical operations to 545 physical packets",
-      "The latest post-ff2ca04 aggregate rerun against public fe2o3 b2cce9c clears the prior base+6 diagnostic, then stops before Worker or link at the missing production expansion for DisjointBlockComponentIndex in fe2o3; no Worker V3 HSACO exists",
+      "A historical local post-ff2ca04 aggregate rerun using public fe2o3 b2cce9c source stopped before Worker or link at missing DisjointBlockComponentIndex production expansion; it was not a published Ferric result. Public fe2o3 b4f600a now supplies that generic checked projection, but no exact rerun against 5f46dd2 has produced a current Worker V3 HSACO",
       "Real Qwen3-8B target and Qwen3-0.6B draft prepack verification produced bundle identity 6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b and admission identity 6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16",
       "An internal move-only non-authoritative program-source capability carries exact observation, descriptor, compiler-handoff, HSACO-byte, allocation, and lineage custody into engine admission and returns it intact on failure",
       "The physical runner binds gfx942, uploads authenticated model memory, partitions physical KV, publishes target-only fixed batches, waits, recycles, reads back, releases pages, and supports same-shape decode rearm",
@@ -1558,7 +1683,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated Target8B PrefillS1T128 to DecodeS1C8192 rollover is implemented at 047ee32f6d0bb1861adb211c9ced1f403a22514c and retained in public feature checkpoint 9431cb4, not on main or final; it has not run with an accepted aggregate artifact",
       "Public feature checkpoint 9431cb4 has an exact source gate of 160 modules / 7,473 bodies: 666 directly verified and 6,807 admitted unverified; it retains the canonical Target8B=1 and Draft06B=2 weight-role byte proof and rejected same-source mutation first published at 756e813, integrates the authority-free R33 daemon proof at 3f5b498, and still needs a fresh full release receipt",
       "The aggregate compiler-generated roster and source gate use the exact current descriptor-table order",
-      "The typed source-pin adapter admits only the exact aggregate target, code-object version, entry set, and descriptor set; public Ferric feature-branch checkpoint 9431cb4 consumes public fe2o3 main b2cce9c, but is not on main or final and final Ferric qualification remains open",
+      "The typed source-pin adapter admits only the exact aggregate target, code-object version, entry set, and descriptor set; public Ferric feature-branch checkpoint 9431cb4 consumes historical fe2o3 b2cce9c, not current public main 5f46dd2, and final Ferric qualification remains open",
       "The aggregate producer holds committed device and adapter source identities, requires production config V2, and emits an observational, authority-free build record",
       "CI and release qualification require the aggregate producer-policy suite",
       "Authenticated R32 first-publication capture is partial-non-evidence, generation 1 only, and composes aggregate selector intake, protected verification, runner binding, KFD queue execution, ordered K4 choice readback, Engine completion, KV release, queue teardown, and V2 partial-capture publication",
@@ -1580,7 +1705,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "The protected execution profile and protected service socket are absent; earlier verifier foundations are not deployed authority",
       "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
       "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
-      "Public fe2o3 b2cce9c fixes stable repeated-slice extent identity and public Ferric ff2ca04 fixes SwiGLU checked indices; their rerun now stops at the missing fe2o3 production expansion for DisjointBlockComponentIndex, and no current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result exists",
+      "Public fe2o3 5f46dd2 includes generic checked component projection, LLVM 22 Worker compatibility, connected-path Worker V3 V2 transport, and bounded queue waits; Ferric has not published a current repin or protected deployment, and no current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result exists",
       "All 33 M1 roadmap gates and all 17 assurance properties remain Open until their required evidence closes them",
     ],
     fe2o3: [
@@ -1589,9 +1714,10 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic receipt-complete sealed verification and promotion boundary",
       "Typed KFD allocations, USERPTR/AQL queues, fixed-batch publication, completion, and dispatch",
       "Engineering producer schema commit 5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8, tree e089a7e95eb4c103e61e973321ed79a7b1233364, is pushed and frozen for Ferric's non-authoritative manifest consumer",
-      "Public origin/main is b2cce9c271e85a97c35ce7a1ccffe17bb330f07c, tree e28a3a8333c76ecd034b6599bde7f289dfe0f12e, and public Ferric feature-branch checkpoint 9431cb4 consumes it; the Ferric checkpoint is not on main or final",
-      "Stable repeated-slice extent identity is public in b2cce9c; the post-ff2ca04 Ferric aggregate rerun clears base+6 and stops at the missing production expansion for DisjointBlockComponentIndex, and no production Ferric aggregate is published",
-      "fe2o3 owns reusable compiler, runtime, and KFD work only; Ferric owns model kernels and inference",
+      "Public origin/main is 5f46dd23cfa3cf58118a93ee2bf5e1252903366c, tree 52ec0a254d626102cbfa37b79a906722490cc9d8; public Ferric feature checkpoint 9431cb4 still consumes historical b2cce9c and is not on main or final",
+      "Checked DisjointBlockComponentIndex projection is public at b4f600ae92288ccf1662ddff40d71fefba631777 and LLVM 22 Worker compatibility is public at ce44dc0342003d6325e18f0a83eb27a61601282c; Ferric has not published a current aggregate rerun",
+      "Exact connected-path Worker V3 V2 transport is public at 1167b9cfeb28d36ede1ca5ad5f2a71cb5a8719ee, and bounded service/authenticated queue waits are public at 5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
+      "fe2o3 owns reusable compiler, runtime, KFD, and generic verification transport work only; Ferric owns model kernels, inference, and Ferric-specific policy",
       "The engineering producer is reusable compiler source only, not protected aggregate acceptance, runtime admission, or Qwen authority",
       "GPU availability and baseline container access were not revalidated for this checkpoint; no comparison ran",
       "fe2o3 PR #246 merged at eca3bcaa after duplicated 40-minute Generic core runs and all gates passed",
@@ -1611,7 +1737,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
-      "Ferric uses current fe2o3 main for its reusable compiler/runtime target; Ferric still has no published production aggregate, accepted production artifact/source pin, or authenticated full-Qwen result",
+      "Local Ferric candidates are being repinned to current fe2o3 main; no current Ferric repin is public, and Ferric still has no published production aggregate, accepted production artifact/source pin, or authenticated full-Qwen result",
       "Ferric-specific inference and kernel ownership remain in Ferric and were not moved into fe2o3",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
