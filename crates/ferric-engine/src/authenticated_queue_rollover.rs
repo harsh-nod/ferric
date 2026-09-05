@@ -11,7 +11,11 @@ use fe2o3_host::{
     AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueRetainedRolloverFailureV1,
     AuthenticatedServiceQueueUnboundSessionV1,
 };
-use ferric_spec::{completion::CompletionEpoch, scheduling::RequestState};
+use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
+use ferric_spec::{
+    completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
+    Qwen3PlanBucket, Qwen3PlanSelection,
+};
 
 use crate::authenticated_speculative_executor::{
     speculative_validated_pair_matches_binding, upgrade_m1_authenticated_speculative_lineage_v1,
@@ -20,9 +24,10 @@ use crate::authenticated_speculative_executor::{
 };
 use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
 use crate::{
-    ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, DeviceKvCacheProjection, Engine,
-    LogicalRunnerDeclaration, M1AuthenticatedPhysicalQueuePhaseCaseV1,
-    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueSubmitFailureV1,
+    ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
+    DeviceKvCacheProjection, Engine, LogicalRunnerDeclaration,
+    M1AuthenticatedPhysicalQueuePhaseCaseV1, M1AuthenticatedPhysicalQueueSessionV1,
+    M1AuthenticatedPhysicalQueueSubmitFailureV1,
     M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     M1AuthenticatedPhysicalReadbackQueueOperationFailureV1, M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedReleasedCompletedStepV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
@@ -33,8 +38,9 @@ use crate::{
     M1QueueRolloverObservationV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
     M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1, M1ServingRolloverReasonV1,
     M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
 
 /// One request and immutable generation policy fixed before paired-prefill
@@ -1915,6 +1921,359 @@ fn close_workspace_failure<const C: usize, const N: usize>(
     }
 }
 
+type M1AuthenticatedPrefillDraftWorkspaceV1 =
+    BoundM1StepWorkspaceSubleases<M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
+type M1AuthenticatedOrdinaryTargetWorkspaceV1 =
+    BoundM1StepWorkspaceSubleases<M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1>;
+
+/// Exact detached workspace inputs for the dormant authenticated
+/// S1/T128-prefill to S1/C8192 target-decode transition.
+#[must_use = "target-decode transition inputs retain the detached queue and both old workspaces"]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1 {
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    old_draft: Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+    old_target: Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+    target_plan: Box<ferric_build::AddresslessM1StepWorkspacePlan>,
+    target_bytes: Box<[u8]>,
+}
+
+#[allow(dead_code)]
+impl M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1 {
+    pub(crate) fn new(
+        lower: AuthenticatedServiceQueueUnboundSessionV1,
+        old_draft: M1AuthenticatedPrefillDraftWorkspaceV1,
+        old_target: M1AuthenticatedOrdinaryTargetWorkspaceV1,
+        target_plan: ferric_build::AddresslessM1StepWorkspacePlan,
+        target_bytes: Box<[u8]>,
+    ) -> Self {
+        Self {
+            lower,
+            old_draft: Box::new(old_draft),
+            old_target: Box::new(old_target),
+            target_plan: Box::new(target_plan),
+            target_bytes,
+        }
+    }
+}
+
+/// Detached queue after removing the obsolete draft workspace and replacing
+/// the ordinary target workspace for exact target decode.
+///
+/// The retired draft witness remains attached so a later packet-publication
+/// owner cannot silently discard the allocation generation that was removed.
+#[must_use = "converted target-decode workspace custody must publish or close"]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedTargetDecodeWorkspaceTransitionV1 {
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    retired_draft: Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+    target: Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+    target_ranges: Box<[ServiceDeviceDispatchRangeV1; M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1]>,
+}
+
+#[allow(dead_code)]
+impl M1AuthenticatedTargetDecodeWorkspaceTransitionV1 {
+    #[must_use = "all converted workspace owners remain linear"]
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+        Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+        Box<[ServiceDeviceDispatchRangeV1; M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1]>,
+    ) {
+        (
+            self.lower,
+            self.retired_draft,
+            self.target,
+            self.target_ranges,
+        )
+    }
+}
+
+/// Stable stage for exact target-decode workspace conversion.
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1 {
+    Preflight,
+    WorkspaceContent,
+    DraftWorkspaceRemoval,
+    TargetWorkspaceReplacement,
+}
+
+/// Opaque post-mutation custody. No variant permits retry as the original
+/// paired-prefill allocation set after draft removal.
+#[must_use = "terminal target-decode workspace custody must remain retained"]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1 {
+    DraftRemovalQuarantined {
+        source: Box<fe2o3_service_host::ServiceQueueErrorV1>,
+        lower: Box<AuthenticatedQuarantinedServiceQueueV1>,
+        old_draft: Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+        old_target: Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+        target_plan: Box<ferric_build::AddresslessM1StepWorkspacePlan>,
+        target_bytes: Box<[u8]>,
+    },
+    TargetReplacement {
+        failure: Box<
+            crate::authenticated_queue_rearm::AuthenticatedWorkspaceReplacementFailureV1<
+                M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            >,
+        >,
+        retired_draft: Box<M1AuthenticatedPrefillDraftWorkspaceV1>,
+        old_target: Box<M1AuthenticatedOrdinaryTargetWorkspaceV1>,
+    },
+}
+
+/// Pre-mutation retry or terminal post-mutation target workspace conversion failure.
+#[must_use = "failed target-decode workspace conversion retains exact custody"]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1 {
+    Rejected {
+        stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1,
+        source: Option<Box<fe2o3_service_host::ServiceQueueErrorV1>>,
+        retry: Box<M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1>,
+    },
+    Terminal {
+        stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1,
+        custody: Box<M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1>,
+    },
+}
+
+#[allow(dead_code)]
+impl M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1 {
+    #[must_use]
+    pub(crate) const fn stage(&self) -> M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1 {
+        match self {
+            Self::Rejected { stage, .. } | Self::Terminal { stage, .. } => *stage,
+        }
+    }
+
+    #[must_use]
+    pub(crate) const fn is_pre_mutation_retry(&self) -> bool {
+        matches!(self, Self::Rejected { .. })
+    }
+}
+
+enum M1AuthenticatedTargetDecodeRemovalRouteV1<Q, E, T> {
+    Success(Q),
+    Rejected { source: E, queue: Q },
+    Quarantined { source: E, retained: T },
+}
+
+enum M1AuthenticatedTargetDecodeRemovalCustodyV1<Q, E, T, I> {
+    Success { queue: Q, inputs: I },
+    Rejected { source: E, queue: Q, inputs: I },
+    Quarantined { source: E, retained: T, inputs: I },
+}
+
+fn retain_target_decode_removal_inputs<Q, E, T, I>(
+    route: M1AuthenticatedTargetDecodeRemovalRouteV1<Q, E, T>,
+    inputs: I,
+) -> M1AuthenticatedTargetDecodeRemovalCustodyV1<Q, E, T, I> {
+    match route {
+        M1AuthenticatedTargetDecodeRemovalRouteV1::Success(queue) => {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Success { queue, inputs }
+        }
+        M1AuthenticatedTargetDecodeRemovalRouteV1::Rejected { source, queue } => {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Rejected {
+                source,
+                queue,
+                inputs,
+            }
+        }
+        M1AuthenticatedTargetDecodeRemovalRouteV1::Quarantined { source, retained } => {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Quarantined {
+                source,
+                retained,
+                inputs,
+            }
+        }
+    }
+}
+
+fn exact_target_decode_workspace_selections(
+    old_draft: Qwen3PlanSelection,
+    old_target: Qwen3PlanSelection,
+    target: Qwen3PlanSelection,
+) -> bool {
+    old_draft
+        == (Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        })
+        && old_target
+            == (Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            })
+        && target
+            == (Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+            })
+}
+
+/// Converts only the device-workspace allocation set for the exact dormant
+/// authenticated target-decode rollover.
+///
+/// All selection and image checks run before queue mutation. A generic removal
+/// rejection returns the original queue and all inputs for retry. Once removal
+/// succeeds, every later failure is terminal because the paired-prefill draft
+/// allocation is no longer present.
+#[allow(dead_code)]
+pub(crate) fn transition_m1_authenticated_target_decode_workspaces_v1(
+    inputs: M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1,
+) -> Result<
+    M1AuthenticatedTargetDecodeWorkspaceTransitionV1,
+    Box<M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1>,
+> {
+    if !exact_target_decode_workspace_selections(
+        inputs.old_draft.selection(),
+        inputs.old_target.selection(),
+        inputs.target_plan.selection(),
+    ) {
+        return Err(Box::new(
+            M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Rejected {
+                stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1::Preflight,
+                source: None,
+                retry: Box::new(inputs),
+            },
+        ));
+    }
+    let descriptor = match crate::authenticated_queue_rearm::descriptor(
+        M1InitializedWorkspaceSlotV1::TargetOnlyTarget,
+        &inputs.target_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(()) => {
+            return Err(Box::new(
+                M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Rejected {
+                    stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1::WorkspaceContent,
+                    source: None,
+                    retry: Box::new(inputs),
+                },
+            ));
+        }
+    };
+    let M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1 {
+        lower,
+        old_draft,
+        old_target,
+        target_plan,
+        target_bytes,
+    } = inputs;
+    let route = match lower.remove_partitioned_device_local::<
+        DeviceWorkspaceRoleV1,
+        M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    >(old_draft.replacement_subleases()) {
+        Ok(lower) => M1AuthenticatedTargetDecodeRemovalRouteV1::Success(lower),
+        Err(fe2o3_host::AuthenticatedServiceQueueDataUpdateFailureV1::Rejected {
+            error,
+            queue,
+        }) => M1AuthenticatedTargetDecodeRemovalRouteV1::Rejected {
+            source: error,
+            queue: *queue,
+        },
+        Err(fe2o3_host::AuthenticatedServiceQueueDataUpdateFailureV1::Quarantined {
+            error,
+            retained,
+        }) => M1AuthenticatedTargetDecodeRemovalRouteV1::Quarantined {
+            source: error,
+            retained,
+        },
+    };
+    let (lower, old_draft, old_target, target_plan, target_bytes) =
+        match retain_target_decode_removal_inputs(
+            route,
+            (old_draft, old_target, target_plan, target_bytes),
+        ) {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Success {
+                queue,
+                inputs: (old_draft, old_target, target_plan, target_bytes),
+            } => (queue, old_draft, old_target, target_plan, target_bytes),
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Rejected {
+                source,
+                queue,
+                inputs: (old_draft, old_target, target_plan, target_bytes),
+            } => {
+                return Err(Box::new(
+                    M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Rejected {
+                        stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1::DraftWorkspaceRemoval,
+                        source: Some(source),
+                        retry: Box::new(
+                            M1AuthenticatedTargetDecodeWorkspaceTransitionInputsV1 {
+                                lower: queue,
+                                old_draft,
+                                old_target,
+                                target_plan,
+                                target_bytes,
+                            },
+                        ),
+                    },
+                ));
+            }
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Quarantined {
+                source,
+                retained,
+                inputs: (old_draft, old_target, target_plan, target_bytes),
+            } => {
+                return Err(Box::new(
+                    M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Terminal {
+                        stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1::DraftWorkspaceRemoval,
+                        custody: Box::new(
+                            M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1::DraftRemovalQuarantined {
+                                source,
+                                lower: retained,
+                                old_draft,
+                                old_target,
+                                target_plan,
+                                target_bytes,
+                            },
+                        ),
+                    },
+                ));
+            }
+        };
+    let (lower, target, target_ranges) =
+        match crate::authenticated_queue_rearm::replace_authenticated_rollover_workspace(
+            lower,
+            &old_target,
+            *target_plan,
+            target_bytes,
+            descriptor,
+        ) {
+            Ok(replaced) => replaced,
+            Err(failure) => {
+                return Err(Box::new(
+                    M1AuthenticatedTargetDecodeWorkspaceTransitionFailureV1::Terminal {
+                        stage: M1AuthenticatedTargetDecodeWorkspaceTransitionStageV1::TargetWorkspaceReplacement,
+                        custody: Box::new(
+                            M1AuthenticatedTargetDecodeWorkspaceTerminalCustodyV1::TargetReplacement {
+                                failure,
+                                retired_draft: old_draft,
+                                old_target,
+                            },
+                        ),
+                    },
+                ));
+            }
+        };
+    Ok(M1AuthenticatedTargetDecodeWorkspaceTransitionV1 {
+        lower,
+        retired_draft: old_draft,
+        target: Box::new(target),
+        target_ranges: Box::new(target_ranges),
+    })
+}
+
 #[allow(clippy::result_large_err, clippy::too_many_arguments)]
 fn rollover_case<const N: usize, F>(
     lower: AuthenticatedServiceQueueUnboundSessionV1,
@@ -2897,6 +3256,139 @@ mod tests {
                 transition(&batch),
                 Ok((prior, next, M1ServingRolloverReasonV1::Mode))
             );
+        }
+    }
+
+    #[test]
+    fn target_decode_workspace_gate_is_exact_and_fail_closed() {
+        let draft_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        let target_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        let target_decode = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert!(exact_target_decode_workspace_selections(
+            draft_prefill,
+            target_prefill,
+            target_decode,
+        ));
+
+        for hostile_draft in [
+            target_prefill,
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Decode,
+                ..draft_prefill
+            },
+            Qwen3PlanSelection {
+                bucket: Qwen3PlanBucket::PrefillS1T512,
+                ..draft_prefill
+            },
+        ] {
+            assert!(!exact_target_decode_workspace_selections(
+                hostile_draft,
+                target_prefill,
+                target_decode,
+            ));
+        }
+        for hostile_target in [
+            draft_prefill,
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Decode,
+                ..target_prefill
+            },
+            Qwen3PlanSelection {
+                bucket: Qwen3PlanBucket::PrefillS8T128,
+                ..target_prefill
+            },
+        ] {
+            assert!(!exact_target_decode_workspace_selections(
+                draft_prefill,
+                hostile_target,
+                target_decode,
+            ));
+        }
+        for hostile_decode in [
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..target_decode
+            },
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Prefill,
+                ..target_decode
+            },
+            Qwen3PlanSelection {
+                bucket: Qwen3PlanBucket::DecodeS8C8192,
+                ..target_decode
+            },
+        ] {
+            assert!(!exact_target_decode_workspace_selections(
+                draft_prefill,
+                target_prefill,
+                hostile_decode,
+            ));
+        }
+    }
+
+    #[test]
+    fn target_decode_removal_router_retains_inputs_on_every_lower_outcome() {
+        let inputs = [3_u8, 5, 8];
+        match retain_target_decode_removal_inputs(
+            M1AuthenticatedTargetDecodeRemovalRouteV1::<u16, u32, u64>::Success(13),
+            inputs,
+        ) {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Success {
+                queue,
+                inputs: retained,
+            } => {
+                assert_eq!(queue, 13);
+                assert_eq!(retained, inputs);
+            }
+            _ => panic!("success route must retain conversion inputs"),
+        }
+        match retain_target_decode_removal_inputs(
+            M1AuthenticatedTargetDecodeRemovalRouteV1::<u16, u32, u64>::Rejected {
+                source: 21,
+                queue: 34,
+            },
+            inputs,
+        ) {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Rejected {
+                source,
+                queue,
+                inputs: retained,
+            } => {
+                assert_eq!(source, 21);
+                assert_eq!(queue, 34);
+                assert_eq!(retained, inputs);
+            }
+            _ => panic!("rejection route must retain the unchanged queue and inputs"),
+        }
+        match retain_target_decode_removal_inputs(
+            M1AuthenticatedTargetDecodeRemovalRouteV1::<u16, u32, u64>::Quarantined {
+                source: 55,
+                retained: 89,
+            },
+            inputs,
+        ) {
+            M1AuthenticatedTargetDecodeRemovalCustodyV1::Quarantined {
+                source,
+                retained,
+                inputs: retained_inputs,
+            } => {
+                assert_eq!(source, 55);
+                assert_eq!(retained, 89);
+                assert_eq!(retained_inputs, inputs);
+            }
+            _ => panic!("terminal route must retain quarantine and inputs"),
         }
     }
 
