@@ -51,12 +51,12 @@ const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
         4, 53, 9, 149, 204, 198, 78, 167, 240, 54, 180, 86,
     ],
     [
-        116, 179, 58, 0, 88, 33, 135, 199, 41, 152, 33, 215, 210, 21, 209, 98, 194, 38, 1, 140,
-        151, 142, 87, 52, 243, 103, 125, 170, 167, 230, 12, 248,
+        204, 254, 212, 102, 204, 223, 70, 52, 88, 206, 61, 181, 84, 81, 113, 154, 85, 42, 41,
+        75, 224, 99, 84, 57, 222, 115, 220, 232, 80, 133, 202, 117,
     ],
     [
-        253, 61, 165, 39, 26, 231, 194, 165, 55, 64, 37, 93, 248, 214, 106, 27, 157, 140, 179, 250,
-        59, 23, 36, 77, 210, 179, 35, 74, 198, 250, 6, 247,
+        92, 160, 161, 51, 71, 90, 95, 124, 156, 71, 75, 36, 148, 9, 204, 123, 188, 52, 92, 227,
+        46, 14, 57, 133, 56, 164, 44, 160, 189, 232, 117, 198,
     ],
 ];
 const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
@@ -1757,18 +1757,18 @@ fn roster_is_the_exact_twelve_entry_aggregate() {
             .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
             .collect::<Vec<_>>(),
         [
+            "qwen3_paged_kv_write_v1",
             "qwen3_swiglu_bf16_f32_v1",
             "qwen3_gqa_prefill_causal_bf16_f32_v1",
-            "ferric_qwen3_lowest_id_argmax_bf16_v1",
-            "qwen3_paged_kv_write_v1",
-            "qwen3_paged_gqa_decode_bf16_f32_v1",
-            "ferric_qwen3_speculative_token_assembly_v1",
-            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
-            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
             "ferric_qwen3_token_embedding_bf16_copy_v1",
-            "ferric_qwen3_compact_completion_v1",
+            "ferric_qwen3_speculative_token_assembly_v1",
             "qwen3_rope_v1",
             "qwen3_rmsnorm_v1",
+            "qwen3_paged_gqa_decode_bf16_f32_v1",
+            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
+            "ferric_qwen3_compact_completion_v1",
+            "ferric_qwen3_lowest_id_argmax_bf16_v1",
+            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
         ]
     );
 }
