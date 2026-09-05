@@ -28,9 +28,31 @@ use `CLOCK_MONOTONIC_RAW`; no delay or fabricated timing source is accepted.
 
 This is a bounded preadmitted window, not unrestricted continuous admission.
 It has no HTTP surface and is not by itself an R33 process adapter or benchmark
-result. The R33 action frontend must connect to an independently supervised
-service because the collector terminates every action process group. A stable
-20-window service still requires a typed transition that retires the current
-roster and re-leases queue-retained KV pages for the next roster without
-reloading model allocations; the current controller does not claim that
-transition exists.
+result.
+
+## R33 supervised-service foundation
+
+`ferric-m1-r33-adapter` is the short-lived collector frontend. It never starts
+or owns the service process. It loads a canonical held service plan and exact
+pretokenized 60-row workload, captures the collector's reserved environment,
+and performs one bounded canonical request/response exchange with an externally
+supervised Unix-domain service. The transport checks `SO_PEERCRED`, service-plan
+identity frozen in the collector environment, service, hardware slot, instance,
+action, and row bindings. Frames
+have fixed magic/version/kind/length fields, a SHA-256 payload identity, an
+8 MiB limit, exact canonical ASCII JSON, and exact EOF requirements. The daemon
+commits a response-visible transition only after the frontend validates the
+complete response and returns its digest-bound acknowledgement.
+
+The daemon-side coordinator enforces one `start`, one `ready`, exactly 20
+ordered preadmitted windows, and one `stop` per backend instance. The backend
+instance remains live across all action processes and windows. A backend error,
+timeout, or abandoned post-mutation response faults the instance; only its exact
+`stop` binding is then admitted. External supervision is intentionally outside
+collector authority because the collector kills every action process group.
+
+This foundation grants no compiler authentication, publication, load, queue,
+allocation, or launch authority. Its sealed backend is not yet joined to the
+authenticated target executor or the queue's new-window recycle transition, so
+it cannot truthfully serve hardware measurements yet. It also does not provide
+HTTP, unrestricted continuous batching, or late arrival.

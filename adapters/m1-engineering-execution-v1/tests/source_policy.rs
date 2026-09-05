@@ -3,6 +3,9 @@ const SOURCE: &str = include_str!("../src/lib.rs");
 const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-smoke.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
+const R33_SERVICE_SOURCE: &str = include_str!("../src/r33_service.rs");
+const R33_WIRE_SOURCE: &str = include_str!("../src/r33_wire.rs");
+const R33_ADAPTER_SOURCE: &str = include_str!("../src/bin/ferric-m1-r33-adapter.rs");
 const ROOT_MANIFEST: &str = include_str!("../../../Cargo.toml");
 const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.toml");
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
@@ -176,5 +179,55 @@ fn r33_lifecycle_is_bounded_real_clocked_and_bound_to_production_operations() {
             !R33_LIFECYCLE_SOURCE.contains(forbidden),
             "R33 lifecycle contains forbidden timing or HTTP marker {forbidden}"
         );
+    }
+}
+
+#[test]
+fn r33_service_is_supervised_bounded_and_authority_free() {
+    for required in [
+        "socket_peercred",
+        "expected_client_uid",
+        "expected_daemon_uid",
+        "service_plan_sha256",
+        "M1_R33_SERVICE_PLAN_SHA256_ENV_V1",
+        "response acknowledgement",
+        "M1_R33_WINDOWS_PER_START_V1",
+        "response_abandoned",
+        "only-exact-stop-admitted",
+        "HeldM1R33ServiceBundleV1",
+        "M1R33AuthorityFreeBackendV1",
+    ] {
+        assert!(
+            R33_SERVICE_SOURCE.contains(required),
+            "R33 supervised service is missing {required}"
+        );
+    }
+    for required in [
+        "FRAME_MAGIC_V1",
+        "Sha256::digest(&payload)",
+        "M1_R33_MAX_WIRE_PAYLOAD_BYTES_V1",
+        "NonCanonicalPayload",
+        "trailing bytes",
+    ] {
+        assert!(
+            R33_WIRE_SOURCE.contains(required),
+            "R33 wire is missing {required}"
+        );
+    }
+    assert!(R33_ADAPTER_SOURCE.contains("r33_service::adapter_main"));
+    for source in [R33_SERVICE_SOURCE, R33_WIRE_SOURCE, R33_ADAPTER_SOURCE] {
+        for forbidden in [
+            "WorkerV3VerifierV1",
+            "AuthenticatedWorkerV3ExecutableV1",
+            "acquire_m1_all_kernels_authenticated_worker_v3_programs_v1",
+            "TcpListener",
+            "axum::",
+            "hyper::",
+        ] {
+            assert!(
+                !source.contains(forbidden),
+                "R33 authority-free foundation contains forbidden marker {forbidden}"
+            );
+        }
     }
 }
