@@ -1381,7 +1381,7 @@ footer {
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   nav {
     display: grid;
     grid-template-columns: repeat(3, auto);
