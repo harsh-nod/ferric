@@ -39,6 +39,17 @@ The three kernel-safety wrappers directly call the exact executable Ferric
 resource, memory, and race validators. Those validators admit a bounded,
 caller-supplied complete modeled-effect certificate; they do not derive kernel
 effects or grant artifact, execution, GPU, numerical, or hardware authority.
+The physical-new-window row selects a finite, service-independent executable
+model for K4, K8, and K16 all-terminal predecessors. It proves that read-only
+admission includes one exact same-slot, previous-generation predecessor for
+each successor across current and historical terminal custody, independent of
+roster order. Admission rejection retains
+both opaque owners without quarantine, whereas provider-dequeue commit entry
+makes every later modeled failure terminal and quarantined; successful modeled
+publication requires paired-prefill shape and a rollover observation.
+Syntactic tests pin those model phases to exact production source and
+constructor ordering. They are not a refinement proof of the production
+runner, provider, queue/KFD behavior, or registry publication.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source

@@ -32,6 +32,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         str(REGISTRY),
         "proofs/m1/kernel_contracts.rs",
         "proofs/m1/model_bundle.rs",
+        "proofs/m1/physical_new_window.rs",
         "proofs/m1/kv_physical.rs",
         "proofs/m1/r33_daemon_lifecycle.rs",
         "proofs/m1/speculative_graph.rs",
@@ -123,8 +124,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 27:
-            fail("baseline theorem registry did not select exactly twenty-seven rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 28:
+            fail("baseline theorem registry did not select exactly twenty-eight rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (

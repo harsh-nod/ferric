@@ -600,7 +600,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 27 or not active:
+    if len(rows) != 32 or not active:
         fail("M1 negative registry baseline drifted")
     if tuple(row for row in rows if row[0].startswith("r33-daemon-")) != (
         EXPECTED_R33_ROWS

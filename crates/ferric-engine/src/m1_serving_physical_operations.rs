@@ -3512,8 +3512,7 @@ mod tests {
             ..CompletionLayout::PLAN_IDENTITY_OFFSET + CompletionLayout::PLAN_IDENTITY_BYTES]
             .copy_from_slice(plan_id.as_bytes());
         bytes[CompletionLayout::ACCEPTED_DRAFT_TOKENS_OFFSET] = 2;
-        bytes[CompletionLayout::EMITTED_TOKEN_COUNT_OFFSET] =
-            u8::try_from(emitted.len()).unwrap();
+        bytes[CompletionLayout::EMITTED_TOKEN_COUNT_OFFSET] = u8::try_from(emitted.len()).unwrap();
         for (index, token) in emitted.iter().enumerate() {
             let offset = CompletionLayout::token_offset(index).unwrap();
             bytes[offset..offset + 4].copy_from_slice(&token.to_le_bytes());

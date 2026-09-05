@@ -16,6 +16,7 @@ theorem=kv-terminal-page-lifetime|terminal-page-lifetime-release|lifetime_safe|k
 theorem=kv-write-prefix|logical-paged-kv|kv_refined|kv-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|kv_write_prefix_theorem
 theorem=model-bundle-composition|model-bundle-composition|model_bundle_well_formed|model-bundle-proof|ferric-m1-proof|proofs/m1/model_bundle.rs|model_bundle|model_bundle_well_formed_composition_theorem
 theorem=operator-declared-profile-effect|k1-k7-operator-composition|operator_refined|kernel-contract-proof|ferric-m1-proof|proofs/m1/kernel_contracts.rs|kernel_contracts|m1_ferric_operator_refinement_composition_theorem
+theorem=physical-new-window-commit-custody|physical-new-window-commit-custody|scheduler_refined|physical-runner|ferric-m1-proof|proofs/m1/physical_new_window.rs|physical_new_window|execute_m1_physical_new_window_transaction_v1
 theorem=publication-phase-transition|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|publication_phase_transition_theorem
 theorem=publication-plan-identity|step-plan-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|publication_plan_identity_theorem
 theorem=r33-daemon-dispatch-refinement|r33-daemon-lifecycle|resource_bounded|serving-bench|ferric-m1-proof|proofs/m1/r33_daemon_lifecycle.rs|r33_daemon_lifecycle|dispatch_m1_r33_daemon_action_v1

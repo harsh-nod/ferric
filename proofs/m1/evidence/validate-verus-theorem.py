@@ -315,6 +315,16 @@ EXPECTED_ROWS = (
         "m1_ferric_operator_refinement_composition_theorem",
     ),
     (
+        "physical-new-window-commit-custody",
+        "physical-new-window-commit-custody",
+        "scheduler_refined",
+        "physical-runner",
+        "ferric-m1-proof",
+        "proofs/m1/physical_new_window.rs",
+        "physical_new_window",
+        "execute_m1_physical_new_window_transaction_v1",
+    ),
+    (
         "publication-phase-transition",
         "step-plan-publication",
         "graph_refined",

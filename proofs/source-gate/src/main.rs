@@ -3805,6 +3805,7 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                         | "clippy :: missing_fields_in_debug"
                         | "clippy :: result_large_err"
                         | "clippy :: result_large_err , clippy :: too_many_arguments"
+                        | "clippy :: struct_excessive_bools"
                         | "clippy :: too_many_arguments"
                         | "clippy :: type_complexity"
                         | "clippy :: unnecessary_box_returns"
@@ -6676,13 +6677,14 @@ mod tests {
     }
 
     #[test]
-    fn exact_linear_custody_clippy_allowances_are_lint_only() {
+    fn exact_clippy_allowances_are_lint_only() {
         for source in [
             "#![allow(clippy::boxed_local)]",
             "#![allow(clippy::unnecessary_box_returns)]",
             "#![allow(clippy::boxed_local, clippy::unnecessary_box_returns)]",
             "#![allow(clippy::missing_fields_in_debug)]",
             "#![allow(clippy::result_large_err, clippy::too_many_arguments)]",
+            "#![allow(clippy::struct_excessive_bools)]",
             "#![allow(clippy::unnecessary_wraps)]",
         ] {
             let exact = verus_syn::parse_file(source).expect("exact Clippy allowance parses");

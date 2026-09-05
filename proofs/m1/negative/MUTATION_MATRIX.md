@@ -24,6 +24,9 @@ closure status.
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
 | `model-bundle-record-binding` | `auth::admission_records_equal` | mismatching retained and recomputed record bytes are rejected before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
 | `operator-declared-profile-effect` | `operation_kernel_plan::select_declared_operator_certificate` | the caller-supplied opaque operator profile identity field must be nonempty after the structural match | `operator_refined` / `kernel-contract-proof` |
+| `physical-new-window-predecessor-set` | `physical_new_window::check_m1_physical_new_window_precommit_v1` | each replacement has exactly one same-slot, previous-generation predecessor across current and historical terminal custody, independent of roster order | `scheduler_refined` / `physical-runner` |
+| `physical-new-window-retry-quarantine` | `physical_new_window::execute_m1_physical_new_window_transaction_v1` | read-only admission rejection retains both owners without quarantining the engine | `scheduler_refined` / `physical-runner` |
+| `physical-new-window-terminal-quarantine` | `physical_new_window::execute_m1_physical_new_window_transaction_v1` | physical-submission failure after commit is terminal and quarantines the engine | `scheduler_refined` / `physical-runner` |
 | `publication-phase-transition` | `step_plan_publication::publish_reserved_delta` | publication moves only from validated to published | `graph_refined` / `graph-proof` |
 | `publication-plan-identity` | `step_plan_publication::validate_step_plan` | publication authority binds the exact plan identity | `graph_refined` / `graph-proof` |
 | `sampler-lowest-id-publication` | `m1_completion::select_lowest_argmax` | equal scores retain the first, lowest token ID before speculative publication | `sampler_refined` / `speculation-proof` |

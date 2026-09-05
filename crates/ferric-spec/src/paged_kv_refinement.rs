@@ -435,9 +435,14 @@ impl PhysicalKvState {
         let Some(dimensions) = selection.bucket.dimensions(selection.role, selection.mode) else {
             return Err(PhysicalKvError::InvalidSelection);
         };
+        proof {
+            reveal(kv_selection_valid);
+        }
         let mut position = 0usize;
         while position < M1_KV_PHYSICAL_PAGE_SLOTS
             invariant
+                request.generation_spec() > 0,
+                kv_selection_valid(selection),
                 position <= M1_KV_PHYSICAL_PAGE_SLOTS,
                 forall|prior: int| 0 <= prior < position ==>
                     page_generations@[prior] > 0,
