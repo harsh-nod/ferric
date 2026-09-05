@@ -518,6 +518,139 @@ impl M1KvPoolPageStateV1 {
     const INITIAL: Self = Self::Free { generation: 1 };
 }
 
+#[derive(Debug, PartialEq, Eq)]
+struct M1AuthenticatedNewWindowLaneAdmissionV1 {
+    request: RequestId,
+    draft_active_tokens: u32,
+    target_active_tokens: u32,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct M1AuthenticatedNewWindowPlaneAdmissionV1 {
+    role: Qwen3ModelRole,
+    member_index: usize,
+    allocation_id: Identity,
+    offset_bytes: u64,
+    extent_bytes: u64,
+    alignment: u64,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct M1AuthenticatedNewWindowPageAdmissionV1 {
+    request: RequestId,
+    role: Qwen3ModelRole,
+    physical_index: u32,
+    global_index: usize,
+    generation: u32,
+    allocation_id: Identity,
+    binding_start: usize,
+    binding_end: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct M1AuthenticatedNewWindowPageBindingAdmissionV1 {
+    role: Qwen3ModelRole,
+    page_index: usize,
+    plane_member_index: usize,
+    allocation_id: Identity,
+    offset_bytes: u64,
+    extent_bytes: u64,
+    alignment: u64,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn authenticated_new_window_plane_admission_matches(
+    admission: &M1AuthenticatedNewWindowPlaneAdmissionV1,
+    role: Qwen3ModelRole,
+    member_index: usize,
+    allocation_id: Identity,
+    offset_bytes: u64,
+    extent_bytes: u64,
+    alignment: u64,
+) -> bool {
+    admission.role == role
+        && admission.member_index == member_index
+        && admission.allocation_id == allocation_id
+        && admission.offset_bytes == offset_bytes
+        && admission.extent_bytes == extent_bytes
+        && admission.alignment == alignment
+}
+
+#[allow(clippy::too_many_arguments)]
+fn authenticated_new_window_page_admission_matches(
+    admission: &M1AuthenticatedNewWindowPageAdmissionV1,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    physical_index: u32,
+    global_index: usize,
+    generation: u32,
+    allocation_id: Identity,
+    binding_start: usize,
+) -> bool {
+    admission.request == request
+        && admission.role == role
+        && admission.physical_index == physical_index
+        && admission.global_index == global_index
+        && admission.generation == generation
+        && admission.allocation_id == allocation_id
+        && admission.binding_start == binding_start
+}
+
+#[allow(clippy::too_many_arguments)]
+fn authenticated_new_window_page_binding_admission_matches(
+    admission: &M1AuthenticatedNewWindowPageBindingAdmissionV1,
+    role: Qwen3ModelRole,
+    page_index: usize,
+    plane_member_index: usize,
+    allocation_id: Identity,
+    offset_bytes: u64,
+    extent_bytes: u64,
+    alignment: u64,
+) -> bool {
+    admission.role == role
+        && admission.page_index == page_index
+        && admission.plane_member_index == plane_member_index
+        && admission.allocation_id == allocation_id
+        && admission.offset_bytes == offset_bytes
+        && admission.extent_bytes == extent_bytes
+        && admission.alignment == alignment
+}
+
+/// Move-only authorization for one exact authenticated new-window page set.
+///
+/// Construction validates both complete role rosters while the detached queue
+/// and page ledger are unchanged. The only consumer revalidates this complete
+/// receipt and commits every page in one allocation-free ledger transaction.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedNewWindowPageSetAdmissionV1 {
+    device: Gfx942DeviceBinding,
+    model_admission_record_id: Identity,
+    target_allocation_id: Identity,
+    draft_allocation_id: Identity,
+    queue_observation: fe2o3_kfd::ComputeAqlQueueObservationV1,
+    detached_dispatch_generation: u64,
+    target_plane_count: usize,
+    draft_plane_count: usize,
+    lanes: Box<[M1AuthenticatedNewWindowLaneAdmissionV1]>,
+    planes: Box<[M1AuthenticatedNewWindowPlaneAdmissionV1]>,
+    pages: Box<[M1AuthenticatedNewWindowPageAdmissionV1]>,
+    bindings: Box<[M1AuthenticatedNewWindowPageBindingAdmissionV1]>,
+    leases: Vec<DeviceKvPageLease>,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedNewWindowPageSetCommitFailureV1 {
+    error: M1DeviceKvArenaLeaseErrorV1,
+    admission: M1AuthenticatedNewWindowPageSetAdmissionV1,
+}
+
+impl M1AuthenticatedNewWindowPageSetCommitFailureV1 {
+    pub(crate) fn retains_exact_admission(&self) -> bool {
+        let _ = (&self.error, &self.admission);
+        true
+    }
+}
+
 /// Fail-closed model-memory KV partition or page-lease error.
 #[derive(Debug)]
 pub enum M1DeviceKvArenaLeaseErrorV1 {
@@ -536,6 +669,8 @@ pub enum M1DeviceKvArenaLeaseErrorV1 {
     },
     /// A zero or out-of-range generational request was supplied.
     RequestOutOfRange,
+    /// Two requests name the same continuous-batching slot.
+    DuplicateRequestSlot,
     /// The request-local physical page index exceeds the exact table bound.
     PageOutOfRange,
     /// The exact role/request/page slot is already leased.
@@ -565,6 +700,7 @@ impl std::error::Error for M1DeviceKvArenaLeaseErrorV1 {
             Self::PlaneGeometry { .. }
             | Self::HostLedgerAllocation { .. }
             | Self::RequestOutOfRange
+            | Self::DuplicateRequestSlot
             | Self::PageOutOfRange
             | Self::PageAlreadyLeased
             | Self::GenerationLedgerDrift
@@ -1243,6 +1379,442 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             request,
             page,
         })
+    }
+
+    /// Authenticates one complete ordered paired-prefill page set without
+    /// changing the page ledger. The returned token cannot be constructed or
+    /// decomposed outside this module and is bound to this queue generation,
+    /// device admission, model admission, role allocations, retained planes,
+    /// request roster, active lengths, page generations, and plan ranges.
+    pub(crate) fn admit_authenticated_new_window_page_set(
+        &self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        requests: &[RequestId],
+        draft_active_lengths: &[u32],
+        target_active_lengths: &[u32],
+    ) -> Result<M1AuthenticatedNewWindowPageSetAdmissionV1, M1DeviceKvArenaLeaseErrorV1> {
+        if requests.is_empty()
+            || draft_active_lengths.len() != requests.len()
+            || target_active_lengths.len() != requests.len()
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        validate_new_window_request_roster(requests)?;
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+
+        let total_pages = draft_active_lengths
+            .iter()
+            .chain(target_active_lengths)
+            .try_fold(0usize, |total, active_tokens| {
+                usize::try_from(active_tokens.div_ceil(M1_KV_PAGE_TOKENS))
+                    .ok()
+                    .and_then(|pages| total.checked_add(pages))
+            })
+            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+        let total_bindings = requests
+            .iter()
+            .enumerate()
+            .try_fold(0usize, |total, (lane, _)| {
+                let draft_pages =
+                    usize::try_from(draft_active_lengths[lane].div_ceil(M1_KV_PAGE_TOKENS)).ok()?;
+                let target_pages =
+                    usize::try_from(target_active_lengths[lane].div_ceil(M1_KV_PAGE_TOKENS))
+                        .ok()?;
+                total
+                    .checked_add(draft_pages.checked_mul(self.draft_planes.len())?)?
+                    .checked_add(target_pages.checked_mul(self.target_planes.len())?)
+            })
+            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+
+        let mut lanes = Vec::new();
+        let mut planes = Vec::new();
+        let mut pages = Vec::new();
+        let mut bindings = Vec::new();
+        let mut leases = Vec::new();
+        lanes.try_reserve_exact(requests.len()).map_err(|_| {
+            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                role: Qwen3ModelRole::Draft06B,
+            }
+        })?;
+        planes
+            .try_reserve_exact(self.target_planes.len() + self.draft_planes.len())
+            .map_err(|_| M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                role: Qwen3ModelRole::Draft06B,
+            })?;
+        pages.try_reserve_exact(total_pages).map_err(|_| {
+            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                role: Qwen3ModelRole::Draft06B,
+            }
+        })?;
+        bindings.try_reserve_exact(total_bindings).map_err(|_| {
+            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                role: Qwen3ModelRole::Draft06B,
+            }
+        })?;
+        leases.try_reserve_exact(total_pages).map_err(|_| {
+            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                role: Qwen3ModelRole::Draft06B,
+            }
+        })?;
+
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let member_count = self.plane_count(role);
+            for layer in 0..role.layers() {
+                for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                    let member_index = plane_member_index(role, component, layer)?;
+                    let (offset_bytes, extent_bytes, alignment) =
+                        self.new_window_plane_geometry(role, member_index)?;
+                    let plan_range = self
+                        .model_memory
+                        .plan()
+                        .kv_layer(role, component, layer)
+                        .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                    if member_index >= member_count
+                        || plan_range.allocation_id() != self.allocation_id(role)
+                        || plan_range.offset() != offset_bytes
+                        || plan_range.byte_len() != extent_bytes
+                        || alignment != QWEN3_KV_ARENA_ALIGNMENT_V1
+                    {
+                        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                    }
+                    planes.push(M1AuthenticatedNewWindowPlaneAdmissionV1 {
+                        role,
+                        member_index,
+                        allocation_id: self.allocation_id(role),
+                        offset_bytes,
+                        extent_bytes,
+                        alignment,
+                    });
+                }
+            }
+        }
+
+        for (lane, request) in requests.iter().copied().enumerate() {
+            lanes.push(M1AuthenticatedNewWindowLaneAdmissionV1 {
+                request,
+                draft_active_tokens: draft_active_lengths[lane],
+                target_active_tokens: target_active_lengths[lane],
+            });
+            for (role, active_tokens) in [
+                (Qwen3ModelRole::Draft06B, draft_active_lengths[lane]),
+                (Qwen3ModelRole::Target8B, target_active_lengths[lane]),
+            ] {
+                for physical_index in 0..active_tokens.div_ceil(M1_KV_PAGE_TOKENS) {
+                    let page_index = pages.len();
+                    let global_index = global_page_index(request, physical_index)?;
+                    let generation = free_page_generation(
+                        *self
+                            .page_ledger(role)
+                            .get(global_index)
+                            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?,
+                    )?;
+                    let page = PhysicalPageId::new(role, physical_index, generation);
+                    let binding_start = bindings.len();
+                    for layer in 0..role.layers() {
+                        for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                            let member_index = plane_member_index(role, component, layer)?;
+                            let plane = planes
+                                .iter()
+                                .find(|plane| {
+                                    plane.role == role && plane.member_index == member_index
+                                })
+                                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            let binding = self
+                                .model_memory
+                                .plan()
+                                .kv_request_page(request, page, component, layer)
+                                .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                            let relative_offset = u64::try_from(global_index)
+                                .ok()
+                                .and_then(|index| index.checked_mul(QWEN3_KV_PAGE_BYTES_V1))
+                                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            let expected_offset =
+                                plane
+                                    .offset_bytes
+                                    .checked_add(relative_offset)
+                                    .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            if usize::try_from(binding.global_page()) != Ok(global_index)
+                                || binding.request() != request
+                                || binding.page() != page
+                                || binding.component() != component
+                                || binding.layer() != layer
+                                || binding.range().allocation_id() != plane.allocation_id
+                                || binding.range().offset() != expected_offset
+                                || binding.range().byte_len() != QWEN3_KV_PAGE_BYTES_V1
+                                || relative_offset
+                                    .checked_add(QWEN3_KV_PAGE_BYTES_V1)
+                                    .is_none_or(|end| end > plane.extent_bytes)
+                            {
+                                return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                            }
+                            bindings.push(M1AuthenticatedNewWindowPageBindingAdmissionV1 {
+                                role,
+                                page_index,
+                                plane_member_index: member_index,
+                                allocation_id: binding.range().allocation_id(),
+                                offset_bytes: binding.range().offset(),
+                                extent_bytes: binding.range().byte_len(),
+                                alignment: QWEN3_KV_ARENA_ALIGNMENT_V1,
+                            });
+                        }
+                    }
+                    pages.push(M1AuthenticatedNewWindowPageAdmissionV1 {
+                        request,
+                        role,
+                        physical_index,
+                        global_index,
+                        generation,
+                        allocation_id: self.allocation_id(role),
+                        binding_start,
+                        binding_end: bindings.len(),
+                    });
+                }
+            }
+        }
+        if pages.len() != total_pages || bindings.len() != total_bindings {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+
+        Ok(M1AuthenticatedNewWindowPageSetAdmissionV1 {
+            device: self.device,
+            model_admission_record_id: self
+                .model_memory
+                .plan()
+                .weight_layout()
+                .admission()
+                .record()
+                .record_id(),
+            target_allocation_id: self.allocation_id(Qwen3ModelRole::Target8B),
+            draft_allocation_id: self.allocation_id(Qwen3ModelRole::Draft06B),
+            queue_observation: queue.observation(),
+            detached_dispatch_generation: queue.detached_dispatch_generation(),
+            target_plane_count: self.target_planes.len(),
+            draft_plane_count: self.draft_planes.len(),
+            lanes: lanes.into_boxed_slice(),
+            planes: planes.into_boxed_slice(),
+            pages: pages.into_boxed_slice(),
+            bindings: bindings.into_boxed_slice(),
+            leases,
+        })
+    }
+
+    /// Revalidates and atomically consumes one complete authenticated page-set
+    /// admission. No allocation or fallible model/queue operation occurs after
+    /// the first ledger write.
+    pub(crate) fn commit_authenticated_new_window_page_set(
+        &mut self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        mut admission: M1AuthenticatedNewWindowPageSetAdmissionV1,
+    ) -> Result<Vec<DeviceKvPageLease>, Box<M1AuthenticatedNewWindowPageSetCommitFailureV1>> {
+        if let Err(error) = self.revalidate_authenticated_new_window_page_set(queue, &admission) {
+            return Err(Box::new(M1AuthenticatedNewWindowPageSetCommitFailureV1 {
+                error,
+                admission,
+            }));
+        }
+        for page in &admission.pages {
+            self.page_ledger_mut(page.role)[page.global_index] = M1KvPoolPageStateV1::Leased {
+                request: page.request,
+                generation: page.generation,
+            };
+            admission.leases.push(DeviceKvPageLease {
+                device: admission.device,
+                allocation_id: page.allocation_id,
+                request: page.request,
+                page: PhysicalPageId::new(page.role, page.physical_index, page.generation),
+            });
+        }
+        debug_assert_eq!(admission.leases.len(), admission.pages.len());
+        Ok(admission.leases)
+    }
+
+    fn revalidate_authenticated_new_window_page_set(
+        &self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        admission: &M1AuthenticatedNewWindowPageSetAdmissionV1,
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        if admission.device != self.device
+            || admission.model_admission_record_id
+                != self
+                    .model_memory
+                    .plan()
+                    .weight_layout()
+                    .admission()
+                    .record()
+                    .record_id()
+            || admission.target_allocation_id != self.allocation_id(Qwen3ModelRole::Target8B)
+            || admission.draft_allocation_id != self.allocation_id(Qwen3ModelRole::Draft06B)
+            || admission.queue_observation != queue.observation()
+            || admission.detached_dispatch_generation != queue.detached_dispatch_generation()
+            || admission.target_plane_count != self.target_planes.len()
+            || admission.draft_plane_count != self.draft_planes.len()
+            || admission.leases.capacity() < admission.pages.len()
+            || !admission.leases.is_empty()
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::AllocationIdentityMismatch);
+        }
+
+        let mut plane_cursor = 0usize;
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            for layer in 0..role.layers() {
+                for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                    let member_index = plane_member_index(role, component, layer)?;
+                    let (offset_bytes, extent_bytes, alignment) =
+                        self.new_window_plane_geometry(role, member_index)?;
+                    let expected = admission
+                        .planes
+                        .get(plane_cursor)
+                        .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                    let plan_range = self
+                        .model_memory
+                        .plan()
+                        .kv_layer(role, component, layer)
+                        .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                    if !authenticated_new_window_plane_admission_matches(
+                        expected,
+                        role,
+                        member_index,
+                        self.allocation_id(role),
+                        offset_bytes,
+                        extent_bytes,
+                        alignment,
+                    ) || plan_range.allocation_id() != expected.allocation_id
+                        || plan_range.offset() != expected.offset_bytes
+                        || plan_range.byte_len() != expected.extent_bytes
+                        || expected.alignment != QWEN3_KV_ARENA_ALIGNMENT_V1
+                    {
+                        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                    }
+                    plane_cursor += 1;
+                }
+            }
+        }
+        if plane_cursor != admission.planes.len() {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry {
+                role: Qwen3ModelRole::Target8B,
+            });
+        }
+
+        let mut page_cursor = 0usize;
+        let mut binding_cursor = 0usize;
+        for lane in &admission.lanes {
+            for (role, active_tokens) in [
+                (Qwen3ModelRole::Draft06B, lane.draft_active_tokens),
+                (Qwen3ModelRole::Target8B, lane.target_active_tokens),
+            ] {
+                for physical_index in 0..active_tokens.div_ceil(M1_KV_PAGE_TOKENS) {
+                    let global_index = global_page_index(lane.request, physical_index)?;
+                    let generation = free_page_generation(
+                        *self
+                            .page_ledger(role)
+                            .get(global_index)
+                            .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?,
+                    )?;
+                    let expected = admission
+                        .pages
+                        .get(page_cursor)
+                        .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
+                    let page = PhysicalPageId::new(role, physical_index, generation);
+                    if !authenticated_new_window_page_admission_matches(
+                        expected,
+                        lane.request,
+                        role,
+                        physical_index,
+                        global_index,
+                        generation,
+                        self.allocation_id(role),
+                        binding_cursor,
+                    ) {
+                        return Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch);
+                    }
+                    for layer in 0..role.layers() {
+                        for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                            let member_index = plane_member_index(role, component, layer)?;
+                            let plane = admission
+                                .planes
+                                .iter()
+                                .find(|plane| {
+                                    plane.role == role && plane.member_index == member_index
+                                })
+                                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            let binding = self
+                                .model_memory
+                                .plan()
+                                .kv_request_page(lane.request, page, component, layer)
+                                .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                            let expected_binding = admission
+                                .bindings
+                                .get(binding_cursor)
+                                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            let relative_offset = u64::try_from(global_index)
+                                .ok()
+                                .and_then(|index| index.checked_mul(QWEN3_KV_PAGE_BYTES_V1))
+                                .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            let expected_offset =
+                                plane
+                                    .offset_bytes
+                                    .checked_add(relative_offset)
+                                    .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })?;
+                            if !authenticated_new_window_page_binding_admission_matches(
+                                expected_binding,
+                                role,
+                                page_cursor,
+                                member_index,
+                                binding.range().allocation_id(),
+                                binding.range().offset(),
+                                binding.range().byte_len(),
+                                QWEN3_KV_ARENA_ALIGNMENT_V1,
+                            ) || binding.range().allocation_id() != plane.allocation_id
+                                || binding.range().offset() != expected_offset
+                                || binding.range().byte_len() != QWEN3_KV_PAGE_BYTES_V1
+                                || relative_offset
+                                    .checked_add(QWEN3_KV_PAGE_BYTES_V1)
+                                    .is_none_or(|end| end > plane.extent_bytes)
+                            {
+                                return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                            }
+                            binding_cursor += 1;
+                        }
+                    }
+                    if expected.binding_end != binding_cursor {
+                        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                    }
+                    page_cursor += 1;
+                }
+            }
+        }
+        if page_cursor != admission.pages.len() || binding_cursor != admission.bindings.len() {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        Ok(())
+    }
+
+    fn new_window_plane_geometry(
+        &self,
+        role: Qwen3ModelRole,
+        member_index: usize,
+    ) -> Result<(u64, u64, u64), M1DeviceKvArenaLeaseErrorV1> {
+        let geometry = match role {
+            Qwen3ModelRole::Target8B => (
+                self.target_planes.offset_bytes(member_index),
+                self.target_planes.extent_bytes(member_index),
+                self.target_planes.alignment(member_index),
+            ),
+            Qwen3ModelRole::Draft06B => (
+                self.draft_planes.offset_bytes(member_index),
+                self.draft_planes.extent_bytes(member_index),
+                self.draft_planes.alignment(member_index),
+            ),
+        };
+        match geometry {
+            (Some(offset), Some(extent), Some(alignment)) => Ok((offset, extent, alignment)),
+            _ => Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role }),
+        }
     }
 
     /// Checks the complete fresh-roster page set without moving queue or ledger
@@ -3279,6 +3851,24 @@ fn global_page_index(
         .and_then(|base| base.checked_add(local_index))
         .filter(|index| *index < M1_GLOBAL_KV_PAGE_SLOTS_V1)
         .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+}
+
+fn validate_new_window_request_roster(
+    requests: &[RequestId],
+) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+    let mut seen = [false; M1_MAX_ACTIVE_SEQUENCES as usize];
+    for request in requests {
+        if request.generation() == 0 || request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
+            return Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange);
+        }
+        let slot = usize::try_from(request.slot())
+            .map_err(|_| M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)?;
+        if seen[slot] {
+            return Err(M1DeviceKvArenaLeaseErrorV1::DuplicateRequestSlot);
+        }
+        seen[slot] = true;
+    }
+    Ok(())
 }
 
 fn new_window_page_generation_snapshot_from_ledger(
@@ -6702,6 +7292,140 @@ mod tests {
         Identity::new([tag; 32])
     }
 
+    #[test]
+    fn authenticated_new_window_admission_rejects_role_generation_and_geometry_splices() {
+        let allocation = identity(41);
+        let request = RequestId::new(3, 7);
+        let exact_page = M1AuthenticatedNewWindowPageAdmissionV1 {
+            request,
+            role: Qwen3ModelRole::Target8B,
+            physical_index: 5,
+            global_index: 1_541,
+            generation: 9,
+            allocation_id: allocation,
+            binding_start: 80,
+            binding_end: 152,
+        };
+        assert!(authenticated_new_window_page_admission_matches(
+            &exact_page,
+            request,
+            Qwen3ModelRole::Target8B,
+            5,
+            1_541,
+            9,
+            allocation,
+            80,
+        ));
+        let mut hostile_page = exact_page;
+        hostile_page.role = Qwen3ModelRole::Draft06B;
+        assert!(!authenticated_new_window_page_admission_matches(
+            &hostile_page,
+            request,
+            Qwen3ModelRole::Target8B,
+            5,
+            1_541,
+            9,
+            allocation,
+            80,
+        ));
+        hostile_page.role = Qwen3ModelRole::Target8B;
+        hostile_page.generation = 10;
+        assert!(!authenticated_new_window_page_admission_matches(
+            &hostile_page,
+            request,
+            Qwen3ModelRole::Target8B,
+            5,
+            1_541,
+            9,
+            allocation,
+            80,
+        ));
+
+        let exact_plane = M1AuthenticatedNewWindowPlaneAdmissionV1 {
+            role: Qwen3ModelRole::Target8B,
+            member_index: 17,
+            allocation_id: allocation,
+            offset_bytes: 65_536,
+            extent_bytes: 131_072,
+            alignment: 4_096,
+        };
+        assert!(authenticated_new_window_plane_admission_matches(
+            &exact_plane,
+            Qwen3ModelRole::Target8B,
+            17,
+            allocation,
+            65_536,
+            131_072,
+            4_096,
+        ));
+        let mut hostile_plane = exact_plane;
+        hostile_plane.offset_bytes += 4_096;
+        assert!(!authenticated_new_window_plane_admission_matches(
+            &hostile_plane,
+            Qwen3ModelRole::Target8B,
+            17,
+            allocation,
+            65_536,
+            131_072,
+            4_096,
+        ));
+
+        let exact_binding = M1AuthenticatedNewWindowPageBindingAdmissionV1 {
+            role: Qwen3ModelRole::Target8B,
+            page_index: 5,
+            plane_member_index: 17,
+            allocation_id: allocation,
+            offset_bytes: 81_920,
+            extent_bytes: 16_384,
+            alignment: 4_096,
+        };
+        assert!(authenticated_new_window_page_binding_admission_matches(
+            &exact_binding,
+            Qwen3ModelRole::Target8B,
+            5,
+            17,
+            allocation,
+            81_920,
+            16_384,
+            4_096,
+        ));
+        let mut hostile_binding = exact_binding;
+        hostile_binding.extent_bytes += 1;
+        assert!(!authenticated_new_window_page_binding_admission_matches(
+            &hostile_binding,
+            Qwen3ModelRole::Target8B,
+            5,
+            17,
+            allocation,
+            81_920,
+            16_384,
+            4_096,
+        ));
+    }
+
+    #[test]
+    fn authenticated_new_window_admission_precedes_every_ledger_write() {
+        let source = include_str!("device_cache.rs");
+        let production = source.split("#[cfg(test)]\nmod tests").next().unwrap();
+        assert!(!production.contains("lease_preflighted_authenticated_new_window_page"));
+        assert!(production.contains("pub(crate) struct M1AuthenticatedNewWindowPageSetAdmissionV1"));
+
+        let commit_start = production
+            .find("pub(crate) fn commit_authenticated_new_window_page_set")
+            .unwrap();
+        let commit_end = production[commit_start..]
+            .find("\n    fn revalidate_authenticated_new_window_page_set")
+            .map(|offset| commit_start + offset)
+            .unwrap();
+        let commit = &production[commit_start..commit_end];
+        let revalidate = commit
+            .find("self.revalidate_authenticated_new_window_page_set")
+            .unwrap();
+        let first_ledger_write = commit.find("self.page_ledger_mut").unwrap();
+        assert!(revalidate < first_ledger_write);
+        assert!(!commit[first_ledger_write..].contains('?'));
+    }
+
     fn device() -> Gfx942DeviceBinding {
         bind_gfx942_device(identity(1), 7, GFX942_PROCESSOR, GFX942_TARGET_FEATURES).unwrap()
     }
@@ -6749,6 +7473,26 @@ mod tests {
         assert!(matches!(
             global_page_index(RequestId::new(0, 1), 512),
             Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+        ));
+    }
+
+    #[test]
+    fn new_window_request_roster_rejects_zero_out_of_range_and_duplicate_slots() {
+        assert!(matches!(
+            validate_new_window_request_roster(&[RequestId::new(0, 1), RequestId::new(1, 9),]),
+            Ok(())
+        ));
+        assert!(matches!(
+            validate_new_window_request_roster(&[RequestId::new(0, 0)]),
+            Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+        ));
+        assert!(matches!(
+            validate_new_window_request_roster(&[RequestId::new(M1_MAX_ACTIVE_SEQUENCES, 1)]),
+            Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+        ));
+        assert!(matches!(
+            validate_new_window_request_roster(&[RequestId::new(3, 7), RequestId::new(3, 8),]),
+            Err(M1DeviceKvArenaLeaseErrorV1::DuplicateRequestSlot)
         ));
     }
 

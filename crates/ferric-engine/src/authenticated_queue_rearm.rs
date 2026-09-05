@@ -50,12 +50,13 @@ use crate::{
     M1AuthenticatedPhysicalCompletedReadbackV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
     M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
     M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
-    M1AuthenticatedPhysicalRecycledQueueSessionV1, M1AuthenticatedReleasedCompletedStepV1,
-    M1CheckedCompletionOutputV1, M1CompletedKvPageReleaseCountsV1,
-    M1DeviceKvCompletionDispositionV1, M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
-    M1ExactDispatchErrorV1, M1FullStepKvReservationCustodyV1, M1FullStepKvWorkspaceTablesV1,
-    M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
-    M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
+    M1AuthenticatedPhysicalReadbackQueueSessionV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
+    M1AuthenticatedReleasedCompletedStepV1, M1CheckedCompletionOutputV1,
+    M1CompletedKvPageReleaseCountsV1, M1DeviceKvCompletionDispositionV1,
+    M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1, M1ExactDispatchErrorV1,
+    M1FullStepKvReservationCustodyV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
+    M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
     M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmKvReservationPhaseV1,
     M1LongLivedQueueRearmProgressPhaseV1, M1LongLivedQueueRearmScheduleErrorV1,
     M1LongLivedQueueRearmSchedulePhaseV1, M1ObservedCompletionImageV1,
@@ -72,6 +73,8 @@ use crate::{
 pub enum M1AuthenticatedLongLivedQueueRearmScheduleErrorV1 {
     /// The Engine was already permanently faulted before any input was consumed.
     EngineFaulted,
+    /// A paired-prefill new-window bridge must use its dedicated successor join.
+    PendingNewWindowBridge,
     /// Two available active cache owners claim the same request slot.
     DuplicateAvailableRequest { first_member: usize, member: usize },
     /// Existing shared same-shape scheduling diagnostic.
@@ -86,6 +89,26 @@ pub struct M1AuthenticatedLongLivedQueueReleasedRoundV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
+}
+
+/// Crate-private custody extracted only for the authenticated all-terminal
+/// new-window transition. Every field remains linear through detachment.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedNewWindowReleasedCustodyV1 {
+    pub(crate) queue: M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    pub(crate) checked: M1CheckedCompletionOutputV1,
+    pub(crate) members: Vec<M1ReleasedDeviceKvMemberV1>,
+    pub(crate) terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    pub(crate) logical_accepted_counts: Box<[u32]>,
+    pub(crate) externally_published_counts: Box<[u32]>,
+    pub(crate) release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+    pub(crate) completed_members: usize,
+    pub(crate) total_released: usize,
+    pub(crate) history: M1RearmRoundHistoryV1,
+    pub(crate) new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 /// Confirmed healthy shutdown of an all-terminal authenticated queue.
@@ -95,6 +118,8 @@ pub struct M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
     released: crate::M1AuthenticatedReleasedAllTerminalQueueShutdownSuccessV1,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 impl M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
@@ -174,6 +199,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             parked: Vec::new(),
             terminal: Vec::new(),
             history: M1RearmRoundHistoryV1::Empty,
+            new_window_bridge: None,
         }
     }
 
@@ -235,6 +261,101 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             .count()
     }
 
+    pub(crate) fn terminal_lineage_requests(
+        &self,
+    ) -> impl ExactSizeIterator<Item = RequestId> + Clone + '_ {
+        self.terminal.iter().map(|member| member.request())
+    }
+
+    pub(crate) const fn has_pending_new_window_bridge(&self) -> bool {
+        self.new_window_bridge.is_some()
+    }
+
+    pub(crate) fn pending_new_window_speculative_successor(
+        &self,
+    ) -> Option<crate::M1ServingPlanV1> {
+        self.parked
+            .is_empty()
+            .then(|| {
+                self.new_window_bridge
+                    .as_ref()
+                    .map(|bridge| bridge.speculative_successor)
+            })
+            .flatten()
+    }
+
+    pub(crate) fn into_authenticated_new_window_successor_custody(
+        self,
+    ) -> Result<
+        (
+            M1AuthenticatedReleasedCompletedStepV1,
+            Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+            M1RearmRoundHistoryV1,
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1,
+        ),
+        Box<Self>,
+    > {
+        if !self.parked.is_empty() || self.new_window_bridge.is_none() {
+            return Err(Box::new(self));
+        }
+        let Self {
+            released,
+            parked: _,
+            terminal,
+            history,
+            new_window_bridge,
+        } = self;
+        Ok((
+            released,
+            terminal,
+            history,
+            new_window_bridge.expect("bridge presence was checked"),
+        ))
+    }
+
+    pub(crate) fn try_reserve_new_window_terminal_lineage(
+        &mut self,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.terminal
+            .try_reserve_exact(self.released.members().len())
+    }
+
+    pub(crate) fn into_authenticated_new_window_custody(
+        self,
+    ) -> M1AuthenticatedNewWindowReleasedCustodyV1 {
+        let Self {
+            released,
+            parked,
+            terminal,
+            history,
+            new_window_bridge,
+        } = self;
+        debug_assert!(parked.is_empty());
+        let (
+            queue,
+            checked,
+            members,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+        ) = released.into_rearm_parts();
+        M1AuthenticatedNewWindowReleasedCustodyV1 {
+            queue,
+            checked,
+            members,
+            terminal,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+            new_window_bridge,
+        }
+    }
+
     /// Shuts down an all-terminal authenticated queue without faulting its Engine.
     ///
     /// Parked ownership is rejected before any queue or released-step owner is
@@ -268,12 +389,14 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             parked,
             terminal,
             history,
+            new_window_bridge,
         } = self;
         match released.shutdown_all_terminal_queue(engine) {
             Ok(released) => Ok(M1AuthenticatedLongLivedQueueAllTerminalShutdownSuccessV1 {
                 released,
                 terminal,
                 history,
+                new_window_bridge,
             }),
             Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Rejected(
                 rejection,
@@ -288,6 +411,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                                 parked,
                                 terminal,
                                 history,
+                                new_window_bridge,
                             }),
                         },
                     )),
@@ -302,6 +426,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                         parked,
                         terminal,
                         history,
+                        new_window_bridge,
                     },
                 )),
             ),
@@ -326,6 +451,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             parked,
             terminal,
             history,
+            new_window_bridge,
         } = self;
         match released.destroy_queue_and_retain_step(engine) {
             Ok(released) => Ok(M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
@@ -333,6 +459,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                 parked,
                 terminal,
                 history,
+                new_window_bridge,
             }),
             Err(released) => Err(Box::new(
                 M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
@@ -340,6 +467,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                     parked,
                     terminal,
                     history,
+                    new_window_bridge,
                 },
             )),
         }
@@ -399,6 +527,8 @@ pub struct M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 /// Terminal authenticated queue-release quarantine retaining released-round lineage.
@@ -409,6 +539,8 @@ pub struct M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
     history: M1RearmRoundHistoryV1,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 impl M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
@@ -907,6 +1039,12 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
             released_round,
         ));
     }
+    if released_round.has_pending_new_window_bridge() {
+        return Err(authenticated_schedule_rejection(
+            M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::PendingNewWindowBridge,
+            released_round,
+        ));
+    }
     if released_round.history.len() >= crate::M1_MAX_REARM_ROUND_HISTORY_V1 {
         return Err(authenticated_schedule_rejection(
             M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
@@ -980,7 +1118,9 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
         parked,
         terminal,
         history,
+        new_window_bridge,
     } = released_round;
+    debug_assert!(new_window_bridge.is_none());
     let additional_members = parked.len() + terminal.len();
     if released
         .try_reserve_rearm_members(additional_members)
@@ -995,6 +1135,7 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
                 parked,
                 terminal,
                 history,
+                new_window_bridge,
             },
         ));
     }
@@ -2121,6 +2262,8 @@ struct M1AuthenticatedRearmContinuationCustodyV1 {
     total_released: usize,
     history: M1RearmRoundHistoryV1,
     rollover: Option<crate::M1QueueRolloverObservationV1>,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 /// Published authenticated next generation on the same native queue.
@@ -2144,6 +2287,8 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
     pub(crate) const fn from_authenticated_rollover(
         queue: M1AuthenticatedPhysicalPublishedQueueSessionV1,
         selected: Vec<ActiveDeviceKvCache>,
+        terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+        history: M1RearmRoundHistoryV1,
         previous_epoch: CompletionEpoch,
         prior_checked: M1CheckedCompletionOutputV1,
         logical_accepted_counts: Box<[u32]>,
@@ -2160,7 +2305,7 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
             carry: M1AuthenticatedRearmContinuationCustodyV1 {
                 selected,
                 parked: Vec::new(),
-                terminal: Vec::new(),
+                terminal,
                 previous_epoch,
                 prior_checked,
                 logical_accepted_counts,
@@ -2168,8 +2313,50 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
                 release_counts,
                 completed_members,
                 total_released,
-                history: M1RearmRoundHistoryV1::Empty,
+                history,
                 rollover: Some(rollover),
+                new_window_bridge: None,
+            },
+            queue_observation,
+            device,
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn from_authenticated_new_window(
+        queue: M1AuthenticatedPhysicalPublishedQueueSessionV1,
+        selected: Vec<ActiveDeviceKvCache>,
+        terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+        previous_epoch: CompletionEpoch,
+        prior_checked: M1CheckedCompletionOutputV1,
+        logical_accepted_counts: Box<[u32]>,
+        externally_published_counts: Box<[u32]>,
+        release_counts: Box<[M1CompletedKvPageReleaseCountsV1]>,
+        completed_members: usize,
+        total_released: usize,
+        history: M1RearmRoundHistoryV1,
+        queue_observation: ComputeAqlQueueObservationV1,
+        device: Gfx942DeviceBinding,
+        rollover: crate::M1QueueRolloverObservationV1,
+        new_window_bridge:
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1,
+    ) -> Self {
+        Self {
+            queue,
+            carry: M1AuthenticatedRearmContinuationCustodyV1 {
+                selected,
+                parked: Vec::new(),
+                terminal,
+                previous_epoch,
+                prior_checked,
+                logical_accepted_counts,
+                externally_published_counts,
+                release_counts,
+                completed_members,
+                total_released,
+                history,
+                rollover: Some(rollover),
+                new_window_bridge: Some(new_window_bridge),
             },
             queue_observation,
             device,
@@ -3253,6 +3440,7 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
                 queue_observation,
                 device,
                 history,
+                new_window_bridge: carry.new_window_bridge,
             },
         })
     }
@@ -3577,6 +3765,8 @@ struct M1AuthenticatedRearmPriorRoundCustodyV1 {
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
     history: M1NonEmptyRearmRoundHistoryV1,
+    new_window_bridge:
+        Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
 }
 
 /// Authenticated completion outcome paired with all predecessor lineage.
@@ -3691,6 +3881,27 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
             });
         };
         release_authenticated_rearmed_round(completed, lineage)
+    }
+
+    pub(crate) fn destroy_queue_and_retain_any<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        retained: impl fmt::Debug + 'static,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+        let Self { outcome, lineage } = self;
+        match crate::m1_completed_step::close_m1_authenticated_completed_step_outcome_v1(
+            engine, outcome,
+        ) {
+            crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Released(released) => {
+                released_disposition((released, lineage, retained))
+            }
+            crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Quarantined(
+                quarantined,
+            ) => quarantined_disposition((quarantined, lineage, retained)),
+        }
     }
 }
 
@@ -3967,6 +4178,7 @@ fn release_authenticated_rearmed_round(
                 parked: lineage.parked,
                 terminal: lineage.terminal,
                 history: M1RearmRoundHistoryV1::NonEmpty(lineage.history),
+                new_window_bridge: lineage.new_window_bridge,
             },
         ),
         Err(source) => M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(Box::new(
@@ -4029,6 +4241,7 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
         total_released,
         history,
         rollover: None,
+        new_window_bridge: None,
     };
     let queue = match rearm_m1_authenticated_detached_queue_v1(
         queue,

@@ -69,6 +69,85 @@ pub(crate) struct M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
     identity: M1AuthenticatedSpeculativeLineageIdentityV1,
 }
 
+/// One completed speculative window retained as inert successor history.
+///
+/// The record is flat: prior records remain in the successor's separately
+/// bounded vector, and this coordinator can never be recovered as current
+/// authority.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+    generated: Box<[(RequestId, u32)]>,
+    completed_rounds: u64,
+    last_epoch: CompletionEpoch,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    physical_history: Option<crate::m1_queue_rearm::M1RearmRoundHistoryV1>,
+}
+
+impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
+    pub(crate) fn archive(
+        coordinator: M1SpeculativeGenerationLoopV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> (Vec<Self>, Self) {
+        let M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical,
+            coordinator_identity,
+            selection,
+            initial_seeds,
+            generated,
+            completed_rounds,
+            last_epoch,
+            prior_windows,
+        } = lineage;
+        let archived = Self {
+            coordinator,
+            logical,
+            coordinator_identity,
+            selection,
+            initial_seeds,
+            generated,
+            completed_rounds,
+            last_epoch,
+            queue_wait_timeout,
+            physical_history: None,
+        };
+        debug_assert!(archived.retains_exact_history());
+        (prior_windows, archived)
+    }
+
+    pub(crate) fn retains_exact_history(&self) -> bool {
+        let _ = (
+            &self.coordinator,
+            &self.logical,
+            self.coordinator_identity,
+            self.selection,
+            &self.initial_seeds,
+            &self.generated,
+            self.completed_rounds,
+            self.last_epoch,
+            self.queue_wait_timeout,
+            &self.physical_history,
+        );
+        true
+    }
+
+    pub(crate) fn attach_physical_history(
+        &mut self,
+        history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
+    ) -> Result<(), Box<crate::m1_queue_rearm::M1RearmRoundHistoryV1>> {
+        if self.physical_history.is_some() {
+            return Err(Box::new(history));
+        }
+        self.physical_history = Some(history);
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
     logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
@@ -78,6 +157,7 @@ pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
     generated: Box<[(RequestId, u32)]>,
     completed_rounds: u64,
     last_epoch: CompletionEpoch,
+    pub(crate) prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
 }
 
 /// Stable association rejection before any executor exists.
@@ -270,6 +350,7 @@ struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     epoch: CompletionEpoch,
     lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    prior_windows: Box<[M1AuthenticatedSpeculativeCompletedWindowHistoryV1]>,
 }
 
 /// Published first speculative generation plus its only logical continuation.
@@ -330,11 +411,12 @@ enum PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1 {
 }
 
 impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
-    pub(crate) const fn new(
+    pub(crate) fn new(
         published: crate::M1AuthenticatedRearmedPublishedQueueV1,
         coordinator: M1SpeculativeGenerationLoopV1,
         epoch: CompletionEpoch,
         lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+        prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
         queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Self {
         Self {
@@ -343,6 +425,7 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
                 coordinator,
                 epoch,
                 lineage,
+                prior_windows: prior_windows.into_boxed_slice(),
             },
             queue_wait_timeout,
         }
@@ -1659,7 +1742,7 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
             Box<M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1>,
         >,
-        Self,
+        Box<Self>,
     > {
         let Self {
             stage,
@@ -2060,31 +2143,31 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
-                Err(Self {
+                Err(Box::new(Self {
                     stage,
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(
                         retained,
                     ),
                     lineage,
-                })
+                }))
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained) => {
-                Err(Self {
+                Err(Box::new(Self {
                     stage,
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
                         retained,
                     ),
                     lineage,
-                })
+                }))
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(disposition) => {
-                Err(Self {
+                Err(Box::new(Self {
                     stage,
                     custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
                         disposition,
                     ),
                     lineage,
-                })
+                }))
             }
         }
     }
@@ -2188,7 +2271,7 @@ fn close_pending_round_failure<const C: usize>(
         Err(pending) => {
             let PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                 custody, lineage, ..
-            } = pending;
+            } = *pending;
             let (executor, inputs) = match custody {
                 M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained)
                 | M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
@@ -3393,6 +3476,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: epoch,
+            prior_windows: Vec::new(),
         };
         let prepared = match prepare_coordinator_round_core(
             engine,
@@ -3961,6 +4045,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: self.epoch,
+            prior_windows: self.prior_windows.into_vec(),
         };
         prepare_coordinator_round_core(
             engine,
@@ -4220,7 +4305,7 @@ fn terminal_quarantine<const C: usize>(
         M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
         Box<M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1>,
     >,
-    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1,
+    Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
 > {
     engine.quarantine_m1_queue_rearm_failure();
     Ok(Err(Box::new(
@@ -4260,6 +4345,49 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
     #[must_use]
     pub fn is_complete(&self) -> bool {
         self.active_count() == 0
+    }
+
+    /// Number of earlier completed speculative windows retained as flat records.
+    #[must_use]
+    pub fn prior_window_count(&self) -> usize {
+        self.lineage.prior_windows.len()
+    }
+
+    pub(crate) const fn new_window_released_round(
+        &self,
+    ) -> &M1AuthenticatedLongLivedQueueReleasedRoundV1 {
+        &self.released
+    }
+
+    pub(crate) fn into_completed_new_window_handoff(
+        self,
+    ) -> Result<M1AuthenticatedCompletedSpeculativeWindowHandoffV1, Box<Self>> {
+        if !self.is_complete() {
+            return Err(Box::new(self));
+        }
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        } = self;
+        Ok(M1AuthenticatedCompletedSpeculativeWindowHandoffV1 {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        })
+    }
+
+    pub(crate) fn from_completed_new_window_handoff(
+        handoff: M1AuthenticatedCompletedSpeculativeWindowHandoffV1,
+    ) -> Self {
+        Self {
+            coordinator: handoff.coordinator,
+            released: handoff.released,
+            lineage: handoff.lineage,
+            queue_wait_timeout: handoff.queue_wait_timeout,
+        }
     }
 
     /// Destroys the authenticated queue while retaining the final coordinator,
@@ -4550,6 +4678,18 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             queue_wait_timeout,
         )
     }
+}
+
+/// Crate-private completed-executor handoff for authenticated new-window work.
+///
+/// It exposes no raw queue, program, model-memory, or KV decomposition outside
+/// Ferric's authenticated transition implementation.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedCompletedSpeculativeWindowHandoffV1 {
+    pub(crate) coordinator: M1SpeculativeGenerationLoopV1,
+    pub(crate) released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    pub(crate) lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    pub(crate) queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 }
 
 #[cfg(test)]
@@ -5003,6 +5143,7 @@ mod tests {
             generated,
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(39),
+            prior_windows: Vec::new(),
         }
     }
 
@@ -5022,6 +5163,7 @@ mod tests {
                 coordinator,
                 epoch,
                 lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+                prior_windows: Vec::new().into_boxed_slice(),
             },
             M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
                 identity,
@@ -5698,6 +5840,7 @@ mod tests {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(7),
+            prior_windows: Vec::new(),
         };
         let _ = coordinator
             .commit_test_causal_round(CompletionEpoch::new(7))

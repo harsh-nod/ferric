@@ -14,7 +14,7 @@ use fe2o3_host::{
 use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanBucket, Qwen3PlanSelection, ValidatedM1StepInputs,
+    Qwen3PlanBucket, Qwen3PlanSelection, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS,
 };
 
 use crate::authenticated_speculative_executor::{
@@ -46,7 +46,8 @@ use crate::{
     M1InitializedWorkspaceSlotV1, M1PhysicalFixedBatchShapeV1, M1PhysicalQueueBatchCustodyV1,
     M1PhysicalRunnerRecipeOutcomeV1, M1PreparedScheduledWorkspaceImagesV1,
     M1QueueRolloverObservationV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
-    M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1, M1ServingRolloverReasonV1,
+    M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1,
+    M1ServingQueuedPairedPrefillNewWindowV1, M1ServingRolloverReasonV1,
     M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1, M1StepDispatchIntent,
     M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
@@ -193,6 +194,8 @@ pub(crate) struct M1AuthenticatedSpeculativeRolloverResidueV1 {
     pub(crate) release_counts: Box<[crate::M1CompletedKvPageReleaseCountsV1]>,
     pub(crate) completed_members: usize,
     pub(crate) total_released: usize,
+    pub(crate) terminal: Vec<crate::M1ReleasedTerminalDeviceKvMemberV1>,
+    pub(crate) history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
 }
 
 #[derive(Debug)]
@@ -200,6 +203,27 @@ pub(crate) struct M1AuthenticatedSpeculativeRolloverLogicalV1 {
     pub(crate) coordinator: M1SpeculativeGenerationLoopV1,
     pub(crate) epoch: CompletionEpoch,
     pub(crate) lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    pub(crate) prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    pub(crate) frozen_queue_wait_timeout: Option<crate::M1QueueWaitTimeoutV1>,
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativePriorWindowContinuationV1 {
+    terminal: Vec<crate::M1ReleasedTerminalDeviceKvMemberV1>,
+    history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
+    prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    frozen_queue_wait_timeout: Option<crate::M1QueueWaitTimeoutV1>,
+}
+
+impl M1AuthenticatedSpeculativePriorWindowContinuationV1 {
+    const fn initial() -> Self {
+        Self {
+            terminal: Vec::new(),
+            history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
+            prior_windows: Vec::new(),
+            frozen_queue_wait_timeout: None,
+        }
+    }
 }
 
 /// Rollover scheduling rejection before detachment or terminal failure after
@@ -277,6 +301,7 @@ pub struct M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
     inputs: Box<M1FiniteSpeculativeQueueRolloverKvInputsV1>,
     recipe_plans: M1FullStepWorkspacePlans,
     preparation_plans: M1FullStepWorkspacePlans,
+    prior_window_continuation: Box<M1AuthenticatedSpeculativePriorWindowContinuationV1>,
 }
 
 impl fmt::Debug for M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
@@ -303,7 +328,7 @@ impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
         M1AuthenticatedScheduledSpeculativeRolloverV1,
         M1AuthenticatedSpeculativeRolloverScheduleFailureV1,
     > {
-        schedule_m1_authenticated_speculative_rollover_v1(
+        schedule_m1_authenticated_speculative_rollover_pending_v1(
             engine,
             *self.released,
             batch,
@@ -312,7 +337,9 @@ impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
             *self.inputs,
             self.recipe_plans,
             self.preparation_plans,
+            *self.prior_window_continuation,
         )
+        .map_err(|failure| close_pending_schedule_failure(engine, failure))
     }
 
     #[must_use]
@@ -340,8 +367,16 @@ impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
             inputs,
             recipe_plans,
             preparation_plans,
+            prior_window_continuation,
         } = self;
-        let retained = (intent, coordinator, inputs, recipe_plans, preparation_plans);
+        let retained = (
+            intent,
+            coordinator,
+            inputs,
+            recipe_plans,
+            preparation_plans,
+            prior_window_continuation,
+        );
         match released.destroy_queue_and_retain_step(engine) {
             Ok(released) => released_disposition((released, retained)),
             Err(quarantined) => quarantined_disposition((quarantined, retained)),
@@ -360,6 +395,7 @@ enum PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
         inputs: Box<M1FiniteSpeculativeQueueRolloverKvInputsV1>,
         recipe_plans: M1FullStepWorkspacePlans,
         preparation_plans: M1FullStepWorkspacePlans,
+        prior_window_continuation: Box<M1AuthenticatedSpeculativePriorWindowContinuationV1>,
     },
     Detach {
         error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1,
@@ -481,10 +517,18 @@ fn close_pending_schedule_failure<const C: usize>(
             inputs,
             recipe_plans,
             preparation_plans,
+            prior_window_continuation,
         } => {
             if error == M1AuthenticatedSpeculativeRolloverScheduleErrorV1::EngineFaulted {
                 engine.quarantine_m1_queue_rearm_failure();
-                let logical = (intent, coordinator, inputs, recipe_plans, preparation_plans);
+                let logical = (
+                    intent,
+                    coordinator,
+                    inputs,
+                    recipe_plans,
+                    preparation_plans,
+                    prior_window_continuation,
+                );
                 let disposition = match released.destroy_queue_and_retain_step(engine) {
                     Ok(released) => released_disposition((released, logical)),
                     Err(quarantined) => quarantined_disposition((quarantined, logical)),
@@ -500,6 +544,7 @@ fn close_pending_schedule_failure<const C: usize>(
                         inputs,
                         recipe_plans,
                         preparation_plans,
+                        prior_window_continuation,
                     }),
                 }
             }
@@ -966,8 +1011,160 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         inputs,
         recipe_plans,
         preparation_plans,
+        M1AuthenticatedSpeculativePriorWindowContinuationV1::initial(),
     )
     .map_err(|failure| close_pending_schedule_failure(engine, failure))
+}
+
+/// Pure failure before the released paired-prefill bridge can enter rollover.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowSuccessorJoinErrorV1 {
+    MissingBridge,
+    Successor,
+}
+
+#[must_use = "the unchanged released round and successor inputs remain retryable"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1 {
+    released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    recipe_plans: M1FullStepWorkspacePlans,
+    preparation_plans: M1FullStepWorkspacePlans,
+}
+
+/// Exact bridge admission rejection or existing authenticated rollover failure.
+#[must_use = "successor join failure retains every authenticated owner"]
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1 {
+    PreJoin {
+        error: M1AuthenticatedSpeculativeNewWindowSuccessorJoinErrorV1,
+        retry: Box<M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1>,
+    },
+    Rollover(M1AuthenticatedSpeculativeRolloverScheduleFailureV1),
+}
+
+impl M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1 {
+    /// Retries without exposing the released queue, bridge, or logical owners.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed opaque join custody when the retained bridge still does
+    /// not match the batch, or an authenticated rollover failure after joining.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<
+        M1AuthenticatedScheduledSpeculativeRolloverV1,
+        M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1,
+    > {
+        schedule_m1_authenticated_speculative_new_window_successor_v1(
+            engine,
+            self.released,
+            batch,
+            self.coordinator,
+            self.inputs,
+            self.recipe_plans,
+            self.preparation_plans,
+        )
+    }
+
+    /// Abandons the join without exposing reusable queue or bridge authority.
+    #[must_use = "clean release or terminal quarantine remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        engine.quarantine_m1_queue_rearm_failure();
+        let retained = (
+            self.coordinator,
+            self.inputs,
+            self.recipe_plans,
+            self.preparation_plans,
+        );
+        match self.released.destroy_queue_and_retain_round(engine) {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
+}
+
+/// Consumes the released authenticated paired-prefill round into its exact
+/// fresh speculative successor. The successor coordinator is supplied only
+/// now, after its anchors and committed cursors can be derived from readback.
+/// The timeout frozen before paired-prefill publication cannot be replaced.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    batch: &M1ServingBatchPlanV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    recipe_plans: M1FullStepWorkspacePlans,
+    preparation_plans: M1FullStepWorkspacePlans,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeRolloverV1,
+    M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1,
+> {
+    let successor = released.pending_new_window_speculative_successor();
+    if successor.is_none() || successor != Some(batch.plan()) {
+        return Err(
+            M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1::PreJoin {
+                error: if successor.is_none() {
+                    M1AuthenticatedSpeculativeNewWindowSuccessorJoinErrorV1::MissingBridge
+                } else {
+                    M1AuthenticatedSpeculativeNewWindowSuccessorJoinErrorV1::Successor
+                },
+                retry: Box::new(M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1 {
+                    released,
+                    coordinator,
+                    inputs,
+                    recipe_plans,
+                    preparation_plans,
+                }),
+            },
+        );
+    }
+    let (released, terminal, history, bridge) = released
+        .into_authenticated_new_window_successor_custody()
+        .expect("bridge and empty parked custody were checked");
+    let M1AuthenticatedSpeculativeNewWindowBridgeV1 {
+        speculative_successor: _,
+        intent,
+        mut prior_windows,
+        next_queue_wait_timeout,
+    } = bridge;
+    prior_windows
+        .last_mut()
+        .expect("new-window bridge always archives its predecessor")
+        .attach_physical_history(history)
+        .expect("predecessor physical history is attached exactly once");
+    schedule_m1_authenticated_speculative_rollover_pending_v1(
+        engine,
+        released,
+        batch,
+        intent,
+        coordinator,
+        inputs,
+        recipe_plans,
+        preparation_plans,
+        M1AuthenticatedSpeculativePriorWindowContinuationV1 {
+            terminal,
+            history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
+            prior_windows,
+            frozen_queue_wait_timeout: Some(next_queue_wait_timeout),
+        },
+    )
+    .map_err(|failure| {
+        M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1::Rollover(
+            close_pending_schedule_failure(engine, failure),
+        )
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -980,6 +1177,7 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
     inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
     recipe_plans: M1FullStepWorkspacePlans,
     preparation_plans: M1FullStepWorkspacePlans,
+    prior_window_continuation: M1AuthenticatedSpeculativePriorWindowContinuationV1,
 ) -> Result<
     M1AuthenticatedScheduledSpeculativeRolloverV1,
     PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1,
@@ -997,6 +1195,7 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                         inputs: Box::new(inputs),
                         recipe_plans,
                         preparation_plans,
+                        prior_window_continuation: Box::new(prior_window_continuation),
                     },
                 );
             }
@@ -1017,6 +1216,7 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                     inputs: Box::new(inputs),
                     recipe_plans,
                     preparation_plans,
+                    prior_window_continuation: Box::new(prior_window_continuation),
                 },
             );
         }
@@ -1038,6 +1238,8 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         release_counts,
         completed_members,
         total_released,
+        terminal: prior_window_continuation.terminal,
+        history: prior_window_continuation.history,
     };
     let queue = match queue.detach() {
         Ok(queue) => queue,
@@ -1158,6 +1360,8 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             coordinator,
             epoch: binding.epoch(),
             lineage: logical_lineage,
+            prior_windows: prior_window_continuation.prior_windows,
+            frozen_queue_wait_timeout: prior_window_continuation.frozen_queue_wait_timeout,
         },
     })
 }
@@ -1765,6 +1969,13 @@ enum PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
             >,
         >,
     ),
+    NativePaired(
+        Box<
+            M1AuthenticatedSpeculativeNativeRolloverFailureV1<
+                { crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1 },
+            >,
+        >,
+    ),
     NativeTarget(
         Box<
             M1AuthenticatedSpeculativeNativeRolloverFailureV1<
@@ -1787,7 +1998,11 @@ impl PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     const fn stage(&self) -> M1AuthenticatedSpeculativeRolloverSubmissionStageV1 {
         match self {
             Self::Closed { stage, .. } | Self::Quarantined { stage, .. } => *stage,
-            Self::NativeK4(_) | Self::NativeK8(_) | Self::NativeK16(_) | Self::NativeTarget(_) => {
+            Self::NativeK4(_)
+            | Self::NativeK8(_)
+            | Self::NativeK16(_)
+            | Self::NativePaired(_)
+            | Self::NativeTarget(_) => {
                 M1AuthenticatedSpeculativeRolloverSubmissionStageV1::NativeRollover
             }
             Self::Observation { .. } => {
@@ -1830,6 +2045,9 @@ fn close_pending_submission_failure<const C: usize>(
             disposition_from_native_closure(source.close())
         }
         PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeK16(source) => {
+            disposition_from_native_closure(source.close())
+        }
+        PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativePaired(source) => {
             disposition_from_native_closure(source.close())
         }
         PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativeTarget(source) => {
@@ -2865,6 +3083,8 @@ pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         release_counts,
         completed_members,
         total_released,
+        terminal: Vec::new(),
+        history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
     };
     let queue = match queue.detach() {
         Ok(queue) => queue,
@@ -3684,11 +3904,15 @@ pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         release_counts,
         completed_members,
         total_released,
+        terminal,
+        history,
     } = residue;
     Ok(
         M1AuthenticatedRearmedPublishedQueueV1::from_authenticated_rollover(
             queue,
             selected,
+            terminal,
+            history,
             checked.epoch(),
             checked,
             logical_accepted_counts,
@@ -3762,6 +3986,3178 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
         queue_wait_timeout,
     )
     .map_err(|failure| close_pending_submission_failure(engine, failure))
+}
+
+/// Maximum total speculative windows admitted by one bounded M1 service run.
+///
+/// The current completed window counts toward this bound, so a history of 19
+/// predecessors rejects another transition rather than creating window 21.
+pub const M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1: usize = 20;
+
+/// Stable admission stage for authenticated all-terminal new-window work.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowScheduleErrorV1 {
+    ExecutorActive,
+    EngineFaulted,
+    Action,
+    Transition,
+    Epoch,
+    Queue,
+    TerminalRoster,
+    ReplacementRoster,
+    Input,
+    RolloverIntent,
+    WindowHistoryCapacity,
+    HostAllocation,
+    Detach,
+    RequestReplacement,
+    ExactDispatch,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeNewWindowRetryStateV1 {
+    Executor(crate::M1AuthenticatedSpeculativePhysicalExecutorV1),
+    Completed(crate::authenticated_speculative_executor::M1AuthenticatedCompletedSpeculativeWindowHandoffV1),
+}
+
+/// Opaque exact owners returned by pure new-window admission rejection.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1;
+/// fn decompose(value: M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+#[must_use = "the unchanged completed executor and successor inputs remain retryable"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1 {
+    state: M1AuthenticatedSpeculativeNewWindowRetryStateV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+/// Pure retry rejection or terminal post-detachment closure.
+#[must_use = "new-window failure retains all authenticated custody"]
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeNewWindowScheduleFailureV1 {
+    PreDetach {
+        error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1,
+        retry: Box<M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1>,
+    },
+    Terminal {
+        error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1,
+        disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedSpeculativeNewWindowScheduleFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeNewWindowScheduleErrorV1 {
+        match self {
+            Self::PreDetach { error, .. } | Self::Terminal { error, .. } => *error,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
+    }
+
+    #[must_use = "terminal release or quarantine remains retained when present"]
+    pub const fn disposition(
+        &self,
+    ) -> Option<&crate::M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativeNewWindowResidueV1 {
+    checked: crate::M1CheckedCompletionOutputV1,
+    members: Vec<M1ReleasedDeviceKvMemberV1>,
+    terminal: Vec<crate::M1ReleasedTerminalDeviceKvMemberV1>,
+    logical_accepted_counts: Box<[u32]>,
+    externally_published_counts: Box<[u32]>,
+    release_counts: Box<[crate::M1CompletedKvPageReleaseCountsV1]>,
+    completed_members: usize,
+    total_released: usize,
+    history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
+}
+
+/// Private continuation carried through normal authenticated paired-prefill
+/// completion into the only admitted speculative-successor join.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativeNewWindowBridgeV1 {
+    pub(crate) speculative_successor: M1ServingPlanV1,
+    pub(crate) intent: M1AuthenticatedSpeculativeRolloverIntentV1,
+    pub(crate) prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    pub(crate) next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+/// Detached authenticated predecessor and exact fresh paired-prefill request.
+#[must_use = "scheduled new-window custody must be prepared or explicitly closed"]
+#[derive(Debug)]
+pub struct M1AuthenticatedScheduledSpeculativeNewWindowV1 {
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    scheduled: M1ScheduledDispatchV1,
+    residue: M1AuthenticatedSpeculativeNewWindowResidueV1,
+    binding: crate::M1ServingQueuedGenerationBindingV1,
+    draft_prefill: ValidatedM1StepInputs,
+    target_prefill: ValidatedM1StepInputs,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+impl M1AuthenticatedScheduledSpeculativeNewWindowV1 {
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        &self.scheduled
+    }
+
+    #[must_use]
+    pub const fn next_plan(&self) -> M1ServingPlanV1 {
+        self.next
+    }
+
+    #[must_use]
+    pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
+        self.next_queue_wait_timeout
+    }
+
+    #[must_use]
+    pub fn prior_window_count(&self) -> usize {
+        self.prior_windows.len()
+    }
+}
+
+fn new_window_transition(
+    batch: &M1ServingBatchPlanV1,
+) -> Result<(M1ServingPlanV1, M1ServingPlanV1), M1AuthenticatedSpeculativeNewWindowScheduleErrorV1>
+{
+    let M1ServingQueueActionV1::QuiescentNewWindow { prior, next } = batch.action() else {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Action);
+    };
+    if next != batch.plan()
+        || !matches!(
+            prior.shape(),
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+        )
+        || next.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Transition);
+    }
+    Ok((prior, next))
+}
+
+fn new_window_request_is_exact_successor(
+    predecessor: ferric_spec::RequestId,
+    replacement: ferric_spec::RequestId,
+) -> bool {
+    predecessor.slot() == replacement.slot()
+        && predecessor.generation().checked_add(1) == Some(replacement.generation())
+}
+
+fn authenticated_new_window_terminal_predecessors_match<I, J>(
+    current: I,
+    lineage: J,
+    replacements: &[ferric_spec::RequestId],
+) -> bool
+where
+    I: Clone + ExactSizeIterator<Item = ferric_spec::RequestId>,
+    J: Clone + ExactSizeIterator<Item = ferric_spec::RequestId>,
+{
+    if replacements.is_empty()
+        || !current.clone().all(|predecessor| {
+            replacements
+                .iter()
+                .copied()
+                .any(|replacement| new_window_request_is_exact_successor(predecessor, replacement))
+        })
+    {
+        return false;
+    }
+    replacements
+        .iter()
+        .copied()
+        .enumerate()
+        .all(|(lane, replacement)| {
+            let Some(predecessor_generation) = replacement.generation().checked_sub(1) else {
+                return false;
+            };
+            if predecessor_generation == 0
+                || replacements[..lane]
+                    .iter()
+                    .any(|prior| prior.slot() == replacement.slot())
+            {
+                return false;
+            }
+            let predecessor =
+                ferric_spec::RequestId::new(replacement.slot(), predecessor_generation);
+            current
+                .clone()
+                .filter(|member| *member == predecessor)
+                .count()
+                + lineage
+                    .clone()
+                    .filter(|member| *member == predecessor)
+                    .count()
+                == 1
+        })
+}
+
+fn new_window_preflight<const C: usize>(
+    engine: &Engine<C>,
+    executor: &crate::M1AuthenticatedSpeculativePhysicalExecutorV1,
+    batch: &M1ServingBatchPlanV1,
+    input: &M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: &[M1AuthenticatedSpeculativeRolloverMemberIntentV1],
+) -> Result<(M1ServingPlanV1, M1ServingPlanV1), M1AuthenticatedSpeculativeNewWindowScheduleErrorV1>
+{
+    let (prior, next) = new_window_transition(batch)?;
+    if !executor.is_complete() {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::ExecutorActive);
+    }
+    if engine.is_faulted() {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::EngineFaulted);
+    }
+    if !authenticated_new_window_transition_within_limit(executor.prior_window_count()) {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::WindowHistoryCapacity);
+    }
+    let released = executor.new_window_released_round();
+    let current = released.current_released();
+    if current.queue().shape() != prior.shape()
+        || current.queue().custody().selection() != prior.target()
+        || executor.selection() != prior.target()
+        || released.parked_count() != 0
+        || released.has_pending_new_window_bridge()
+        || released.round_history_len() >= crate::M1_MAX_REARM_ROUND_HISTORY_V1
+        || released.speculative_lineage_witness().is_err()
+        || current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .finite_speculative_rollover_output_state()
+            != crate::M1FiniteSpeculativeRolloverOutputPortfolioStateV1::Activated
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Queue);
+    }
+    if current
+        .checked()
+        .epoch()
+        .value()
+        .checked_add(1)
+        .map(CompletionEpoch::new)
+        != Some(batch.epoch())
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Epoch);
+    }
+    if current.members().is_empty()
+        || current
+            .members()
+            .iter()
+            .any(|member| !matches!(member, M1ReleasedDeviceKvMemberV1::Terminal(_)))
+        || !authenticated_new_window_terminal_predecessors_match(
+            current
+                .members()
+                .iter()
+                .map(M1ReleasedDeviceKvMemberV1::request),
+            released.terminal_lineage_requests(),
+            batch.requests(),
+        )
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::TerminalRoster);
+    }
+    if engine.live_count() != batch.requests().len()
+        || batch
+            .requests()
+            .iter()
+            .copied()
+            .enumerate()
+            .any(|(lane, replacement)| {
+                batch.requests()[..lane]
+                    .iter()
+                    .any(|prior| prior.slot() == replacement.slot())
+                    || replacement
+                        .generation()
+                        .checked_sub(1)
+                        .is_none_or(|generation| {
+                            generation == 0
+                                || engine.state(ferric_spec::RequestId::new(
+                                    replacement.slot(),
+                                    generation,
+                                )) != Some(RequestState::Retiring)
+                        })
+            })
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::ReplacementRoster);
+    }
+    if speculative_successor != prior
+        || admit_m1_production_rollover_transition_v1(next, speculative_successor).is_none()
+        || member_intents.is_empty()
+        || member_intents.len() != batch.requests().len()
+        || member_intents
+            .iter()
+            .zip(batch.requests())
+            .any(|(member, request)| member.request() != *request)
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::RolloverIntent);
+    }
+    if !input.physical_inputs_match(batch)
+        || !input.logical_runner_plan_identities_match(current.queue().operations().runner())
+        || current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .preflight_new_window_pages(
+                batch.requests(),
+                Qwen3ModelRole::Draft06B,
+                input.draft_prefill().active_lengths(),
+            )
+            .is_err()
+        || current
+            .queue()
+            .custody()
+            .partitioned_memory()
+            .preflight_new_window_pages(
+                batch.requests(),
+                Qwen3ModelRole::Target8B,
+                input.target_prefill().active_lengths(),
+            )
+            .is_err()
+    {
+        return Err(M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Input);
+    }
+    Ok((prior, next))
+}
+
+fn authenticated_new_window_transition_within_limit(prior_window_count: usize) -> bool {
+    prior_window_count
+        .checked_add(1)
+        .is_some_and(|archived_windows| {
+            archived_windows < M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1
+        })
+}
+
+fn new_window_schedule_rejection(
+    error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1,
+    state: M1AuthenticatedSpeculativeNewWindowRetryStateV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+) -> M1AuthenticatedSpeculativeNewWindowScheduleFailureV1 {
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1::PreDetach {
+        error,
+        retry: Box::new(
+            M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1 {
+                state,
+                input,
+                speculative_successor,
+                member_intents,
+                ring_bytes,
+                next_queue_wait_timeout,
+            },
+        ),
+    }
+}
+
+fn close_new_window_detached<const C: usize>(
+    engine: &mut Engine<C>,
+    error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedSpeculativeNewWindowScheduleFailureV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+    engine.quarantine_m1_queue_rearm_failure();
+    let detached = M1AuthenticatedSpeculativeRolloverDetachedFailureV1 {
+        error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::ExactDispatch,
+        queue,
+        retained: Box::new(retained),
+    };
+    let disposition = match detached.destroy_queue_and_retain_custody(engine) {
+        Ok(released) => released_disposition(released),
+        Err(quarantined) => quarantined_disposition(quarantined),
+    };
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1::Terminal { error, disposition }
+}
+
+/// Consumes one completed authenticated speculative executor into an exact
+/// fresh paired-prefill schedule.
+///
+/// The next queue timeout is accepted here, before any publication-capable
+/// owner exists, and remains frozen through retry and eventual publication.
+///
+/// # Errors
+///
+/// Pure admission rejection retains every unchanged owner. Detach-or-later
+/// rejection destroys the queue or returns terminal quarantine and faults the
+/// Engine.
+///
+/// # Panics
+///
+/// Panics only if the completed executor changes state after the preceding
+/// pure preflight while it is held by this function.
+#[allow(clippy::too_many_arguments)]
+pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    executor: crate::M1AuthenticatedSpeculativePhysicalExecutorV1,
+    batch: &M1ServingBatchPlanV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeNewWindowV1,
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
+> {
+    let (prior, next) = match new_window_preflight(
+        engine,
+        &executor,
+        batch,
+        &input,
+        speculative_successor,
+        &member_intents,
+    ) {
+        Ok(transition) => transition,
+        Err(error) => {
+            return Err(new_window_schedule_rejection(
+                error,
+                M1AuthenticatedSpeculativeNewWindowRetryStateV1::Executor(executor),
+                input,
+                speculative_successor,
+                member_intents,
+                ring_bytes,
+                next_queue_wait_timeout,
+            ));
+        }
+    };
+    let mut handoff = executor
+        .into_completed_new_window_handoff()
+        .expect("completed executor was checked in pure preflight");
+    let mut replaced_lanes = Vec::new();
+    if handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
+        || handoff
+            .released
+            .try_reserve_new_window_terminal_lineage()
+            .is_err()
+        || replaced_lanes
+            .try_reserve_exact(batch.requests().len())
+            .is_err()
+    {
+        return Err(new_window_schedule_rejection(
+            M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::HostAllocation,
+            M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(handoff),
+            input,
+            speculative_successor,
+            member_intents,
+            ring_bytes,
+            next_queue_wait_timeout,
+        ));
+    }
+    replaced_lanes.resize(batch.requests().len(), false);
+    let (mut prior_windows, archived) =
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1::archive(
+            handoff.coordinator,
+            handoff.lineage,
+            handoff.queue_wait_timeout,
+        );
+    prior_windows.push(archived);
+    let released = handoff.released.into_authenticated_new_window_custody();
+    let crate::authenticated_queue_rearm::M1AuthenticatedNewWindowReleasedCustodyV1 {
+        queue,
+        checked,
+        members,
+        terminal,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+        history,
+        new_window_bridge,
+    } = released;
+    debug_assert!(new_window_bridge.is_none());
+    let residue = M1AuthenticatedSpeculativeNewWindowResidueV1 {
+        checked,
+        members,
+        terminal,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+        history,
+    };
+    let queue = match queue.detach() {
+        Ok(queue) => queue,
+        Err(source) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(
+                M1AuthenticatedSpeculativeNewWindowScheduleFailureV1::Terminal {
+                    error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Detach,
+                    disposition: crate::authenticated_speculative_executor::quarantined_disposition(
+                        (
+                            source,
+                            residue,
+                            input,
+                            speculative_successor,
+                            member_intents,
+                            prior_windows,
+                            ring_bytes,
+                            next_queue_wait_timeout,
+                        ),
+                    ),
+                },
+            );
+        }
+    };
+    let (binding, draft_prefill, target_prefill, preparation_plans, recipe_plans) =
+        input.into_parts();
+    for _ in 0..batch.requests().len() {
+        let successor = match engine.reincarnate_next_retiring() {
+            Ok(successor) => successor,
+            result => {
+                return Err(close_new_window_detached(
+                    engine,
+                    M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::RequestReplacement,
+                    queue,
+                    (
+                        result,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe_plans,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                    ),
+                ));
+            }
+        };
+        let Some(lane) = batch
+            .requests()
+            .iter()
+            .position(|replacement| *replacement == successor)
+        else {
+            return Err(close_new_window_detached(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::RequestReplacement,
+                queue,
+                (
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe_plans,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                ),
+            ));
+        };
+        if replaced_lanes[lane] || engine.append_tentative(successor, 1).is_err() {
+            return Err(close_new_window_detached(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::RequestReplacement,
+                queue,
+                (
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe_plans,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                ),
+            ));
+        }
+        replaced_lanes[lane] = true;
+    }
+    let scheduled = match engine.dispatch_m1_exact_ready(batch.epoch(), batch.requests()) {
+        Ok(scheduled) => scheduled,
+        Err(source) => {
+            return Err(close_new_window_detached(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::ExactDispatch,
+                queue,
+                (
+                    source,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe_plans,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                ),
+            ));
+        }
+    };
+    Ok(M1AuthenticatedScheduledSpeculativeNewWindowV1 {
+        prior,
+        next,
+        queue,
+        scheduled,
+        residue,
+        binding,
+        draft_prefill,
+        target_prefill,
+        preparation_plans,
+        recipe_plans,
+        speculative_successor,
+        member_intents,
+        prior_windows,
+        ring_bytes,
+        next_queue_wait_timeout,
+    })
+}
+
+impl M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1 {
+    /// Repeats admission without exposing the completed executor or inputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach custody on pure rejection, or a terminal
+    /// clean-release/quarantine disposition once detachment begins.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<
+        M1AuthenticatedScheduledSpeculativeNewWindowV1,
+        M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
+    > {
+        match self.state {
+            M1AuthenticatedSpeculativeNewWindowRetryStateV1::Executor(executor) => {
+                schedule_m1_authenticated_speculative_new_window_v1(
+                    engine,
+                    executor,
+                    batch,
+                    self.input,
+                    self.speculative_successor,
+                    self.member_intents,
+                    self.ring_bytes,
+                    self.next_queue_wait_timeout,
+                )
+            }
+            M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(mut handoff) => {
+                if handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
+                    || handoff
+                        .released
+                        .try_reserve_new_window_terminal_lineage()
+                        .is_err()
+                {
+                    return Err(new_window_schedule_rejection(
+                        M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::HostAllocation,
+                        M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(handoff),
+                        self.input,
+                        self.speculative_successor,
+                        self.member_intents,
+                        self.ring_bytes,
+                        self.next_queue_wait_timeout,
+                    ));
+                }
+                // Allocation retry is the only state that reaches this arm;
+                // rebuild the private executor solely to re-run pure admission.
+                let executor = crate::M1AuthenticatedSpeculativePhysicalExecutorV1::from_completed_new_window_handoff(handoff);
+                schedule_m1_authenticated_speculative_new_window_v1(
+                    engine,
+                    executor,
+                    batch,
+                    self.input,
+                    self.speculative_successor,
+                    self.member_intents,
+                    self.ring_bytes,
+                    self.next_queue_wait_timeout,
+                )
+            }
+        }
+    }
+
+    /// Abandons this retry without exposing the completed executor or queued
+    /// new-window inputs as independently reusable authority.
+    #[must_use = "clean release or terminal quarantine remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        engine.quarantine_m1_queue_rearm_failure();
+        let executor = match self.state {
+            M1AuthenticatedSpeculativeNewWindowRetryStateV1::Executor(executor) => executor,
+            M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(handoff) => {
+                crate::M1AuthenticatedSpeculativePhysicalExecutorV1::from_completed_new_window_handoff(
+                    handoff,
+                )
+            }
+        };
+        let retained = (
+            self.input,
+            self.speculative_successor,
+            self.member_intents,
+            self.ring_bytes,
+            self.next_queue_wait_timeout,
+        );
+        match executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
+}
+
+/// Recipe-checked authenticated paired-prefill new-window custody.
+#[must_use = "prepared new-window custody must be submitted or closed"]
+#[derive(Debug)]
+pub struct M1AuthenticatedPreparedSpeculativeNewWindowV1 {
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    scheduled: M1ScheduledDispatchV1,
+    residue: M1AuthenticatedSpeculativeNewWindowResidueV1,
+    binding: crate::M1ServingQueuedGenerationBindingV1,
+    draft_prefill: ValidatedM1StepInputs,
+    target_prefill: ValidatedM1StepInputs,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+/// Opaque paired-prefill publication carrying its exact frozen wait budget.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowPublishedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeNewWindowPublishedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowPublishedV1;
+/// fn bypass_frozen_wait(value: M1AuthenticatedSpeculativeNewWindowPublishedV1) {
+///     let _ = value.wait();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowPublishedV1;
+/// fn replace_frozen_timeout(value: M1AuthenticatedSpeculativeNewWindowPublishedV1) {
+///     let _ = value.wait_for(1);
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowPublishedV1;
+/// fn bypass_exact_settlement(value: M1AuthenticatedSpeculativeNewWindowPublishedV1) {
+///     let _ = value.complete(Vec::new());
+/// }
+/// ```
+#[must_use = "published new-window custody must complete with its frozen deadline"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowPublishedV1 {
+    published: M1AuthenticatedRearmedPublishedQueueV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+/// Exact paired-prefill member observation exposed without copied wire bytes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1AuthenticatedSpeculativeNewWindowObservedMemberV1 {
+    request: ferric_spec::RequestId,
+    emitted_token: ferric_spec::TokenId,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowObservedMemberV1 {
+    #[must_use]
+    pub const fn request(self) -> ferric_spec::RequestId {
+        self.request
+    }
+
+    #[must_use]
+    pub const fn emitted_token(self) -> ferric_spec::TokenId {
+        self.emitted_token
+    }
+}
+
+/// Ordered post-prefill disposition accepted by the exact new-window join.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowMemberDispositionV1 {
+    Continue,
+    Retire,
+}
+
+/// Stable stage-local observation failure class.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowObservationErrorV1 {
+    Wait,
+    Recycle,
+    Readback,
+    Selection,
+    MemberCount,
+    Member { lane: usize },
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1 {
+    Progress(Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>),
+    Readback(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
+    Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
+}
+
+/// Opaque observation failure retaining all authenticated queue custody.
+#[must_use = "new-window observation failure must be retried or closed"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1,
+    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeNewWindowObservationErrorV1 {
+        self.error
+    }
+
+    /// Retries only the unchanged completed-copy observation rejection.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same opaque failure when this phase is not retryable or the
+    /// exact retained readback fails observation again.
+    pub fn retry(
+        self,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowObservedV1,
+        M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
+    > {
+        match self.state {
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Readback(source) => {
+                match source.retry_observation() {
+                    Ok(observed) => authenticated_new_window_observed(observed),
+                    Err(source) => Err(Self {
+                        error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Readback,
+                        state:
+                            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Readback(
+                                source,
+                            ),
+                    }),
+                }
+            }
+            state => Err(Self {
+                error: self.error,
+                state,
+            }),
+        }
+    }
+
+    /// Abandons observation without releasing generic phase owners.
+    #[must_use = "clean release or terminal quarantine remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+        engine.quarantine_m1_queue_rearm_failure();
+        match self.state {
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(source) => {
+                quarantined_disposition((self.error, source))
+            }
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Readback(source) => {
+                match source.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => released_disposition((self.error, released)),
+                    Err(quarantined) => quarantined_disposition((self.error, quarantined)),
+                }
+            }
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Observed(observed) => {
+                match (*observed).check_completion(&[]) {
+                    Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
+                        Ok(released) => released_disposition((self.error, released)),
+                        Err(quarantined) => quarantined_disposition((self.error, quarantined)),
+                    },
+                    Err(source) => match source.destroy_queue_and_retain_custody(engine) {
+                        Ok(released) => released_disposition((self.error, released)),
+                        Err(quarantined) => quarantined_disposition((self.error, quarantined)),
+                    },
+                }
+            }
+        }
+    }
+}
+
+/// Structurally observed paired-prefill output with no public wire-image API.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowObservedV1;
+/// fn expose_wire_image(value: &M1AuthenticatedSpeculativeNewWindowObservedV1) {
+///     let _ = value.image();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowObservedV1;
+/// fn expose_raw_bytes(value: &M1AuthenticatedSpeculativeNewWindowObservedV1) {
+///     let _ = value.raw_bytes();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowObservedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeNewWindowObservedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+#[must_use = "observed new-window output must be settled or closed"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowObservedV1 {
+    observed: crate::M1AuthenticatedRearmedObservedCompletionOutputV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
+    #[must_use]
+    pub const fn member_count(&self) -> usize {
+        self.member_count
+    }
+
+    #[must_use]
+    pub const fn selection(&self) -> Qwen3PlanSelection {
+        self.selection
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    #[must_use]
+    pub fn member(
+        &self,
+        lane: usize,
+    ) -> Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1> {
+        self.members.get(lane).copied().flatten()
+    }
+
+    /// Derives exact direct-final-row semantics from the retained observation,
+    /// settles ordered KV custody, and releases the completed round.
+    ///
+    /// # Errors
+    ///
+    /// Returns opaque settlement custody on disposition, semantic, completion,
+    /// page-release, host-allocation, or released-roster rejection.
+    pub fn settle<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowReleasedV1,
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+    > {
+        settle_authenticated_speculative_new_window(engine, self, dispositions)
+    }
+}
+
+/// Stable settlement failure class without generic completion custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowSettlementErrorV1 {
+    DispositionCount { expected: usize, actual: usize },
+    HostAllocation,
+    SemanticJoin,
+    CompletionPreflight,
+    CompletionRejected,
+    PageRelease,
+    ReleasedRoster,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
+    Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
+    Join(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
+    CompletionPreflight(Box<crate::M1AuthenticatedRearmedCompletionPreflightFailureV1>),
+    Completion(Box<crate::M1AuthenticatedRearmedCompletionOutcomeV1>),
+    PageRelease(Box<crate::M1AuthenticatedRearmedRoundPageReleaseFailureV1>),
+    Released(Box<crate::M1AuthenticatedLongLivedQueueReleasedRoundV1>),
+}
+
+/// Opaque settlement failure retaining the exact observation and bridge.
+#[must_use = "new-window settlement failure must be retried or closed"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+    error: M1AuthenticatedSpeculativeNewWindowSettlementErrorV1,
+    state: M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeNewWindowSettlementErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub const fn retained_member_count(&self) -> usize {
+        self.member_count
+    }
+
+    /// Repeats only a phase that still owns unchanged retry authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed opaque settlement custody if the retained phase rejects
+    /// again or has no retry transition.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<M1AuthenticatedSpeculativeNewWindowReleasedV1, Self> {
+        retry_authenticated_speculative_new_window_settlement(engine, self)
+    }
+
+    /// Destroys or terminally retains every phase owner without exposing it.
+    #[must_use = "clean release or terminal quarantine remains retained"]
+    pub fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        close_authenticated_speculative_new_window_settlement(engine, self)
+    }
+}
+
+/// Immutable post-release member status used to construct a fresh coordinator.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1 {
+    Continuing,
+    Retired,
+}
+
+/// Exact post-prefill seed coordinates, with all live custody still opaque.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1AuthenticatedSpeculativeNewWindowReleasedMemberV1 {
+    request: ferric_spec::RequestId,
+    emitted_token: ferric_spec::TokenId,
+    target_committed_tokens: u32,
+    draft_committed_tokens: u32,
+    status: M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowReleasedMemberV1 {
+    #[must_use]
+    pub const fn request(self) -> ferric_spec::RequestId {
+        self.request
+    }
+
+    #[must_use]
+    pub const fn emitted_token(self) -> ferric_spec::TokenId {
+        self.emitted_token
+    }
+
+    #[must_use]
+    pub const fn target_committed_tokens(self) -> u32 {
+        self.target_committed_tokens
+    }
+
+    #[must_use]
+    pub const fn draft_committed_tokens(self) -> u32 {
+        self.draft_committed_tokens
+    }
+
+    #[must_use]
+    pub const fn status(self) -> M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1 {
+        self.status
+    }
+}
+
+/// Released paired-prefill round and sole public new-window successor owner.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowReleasedV1;
+/// fn expose_generic_queue(value: M1AuthenticatedSpeculativeNewWindowReleasedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeNewWindowReleasedV1;
+/// fn expose_generic_completion(value: &M1AuthenticatedSpeculativeNewWindowReleasedV1) {
+///     let _ = value.current_released();
+/// }
+/// ```
+#[must_use = "released new-window custody must enter its exact successor or close"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeNewWindowReleasedV1 {
+    released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowReleasedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+}
+
+impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {
+    #[must_use]
+    pub const fn member_count(&self) -> usize {
+        self.member_count
+    }
+
+    #[must_use]
+    pub const fn selection(&self) -> Qwen3PlanSelection {
+        self.selection
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    #[must_use]
+    pub fn member(
+        &self,
+        lane: usize,
+    ) -> Option<M1AuthenticatedSpeculativeNewWindowReleasedMemberV1> {
+        self.members.get(lane).copied().flatten()
+    }
+
+    /// Consumes this exact released bridge into its fresh speculative successor.
+    ///
+    /// # Errors
+    ///
+    /// Returns opaque join retry custody when the batch does not match the
+    /// bridge, or an authenticated rollover failure after joining.
+    #[allow(clippy::too_many_arguments)]
+    pub fn schedule_successor<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+        recipe_plans: M1FullStepWorkspacePlans,
+        preparation_plans: M1FullStepWorkspacePlans,
+    ) -> Result<
+        M1AuthenticatedScheduledSpeculativeRolloverV1,
+        M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1,
+    > {
+        schedule_m1_authenticated_speculative_new_window_successor_v1(
+            engine,
+            self.released,
+            batch,
+            coordinator,
+            inputs,
+            recipe_plans,
+            preparation_plans,
+        )
+    }
+}
+
+impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
+    #[must_use]
+    pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
+        self.queue_wait_timeout
+    }
+
+    /// Waits with the frozen deadline, recycles, and copies exactly once.
+    ///
+    /// # Errors
+    ///
+    /// Returns opaque observation custody on wait, recycle, copy, selection,
+    /// member-count, or lane-association rejection.
+    pub fn observe<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowObservedV1,
+        M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
+    > {
+        let completed = match self
+            .published
+            .wait_for(self.queue_wait_timeout.milliseconds(), engine)
+        {
+            Ok(completed) => completed,
+            Err(source) => {
+                return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Wait,
+                    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(
+                        source,
+                    ),
+                });
+            }
+        };
+        let recycled = match completed.recycle(engine) {
+            Ok(recycled) => recycled,
+            Err(source) => {
+                return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Recycle,
+                    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(
+                        source,
+                    ),
+                });
+            }
+        };
+        match recycled.observe_completion() {
+            Ok(observed) => authenticated_new_window_observed(observed),
+            Err(source) => Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Readback,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Readback(
+                    source,
+                ),
+            }),
+        }
+    }
+}
+
+fn authenticated_new_window_observed(
+    observed: crate::M1AuthenticatedRearmedObservedCompletionOutputV1,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowObservedV1,
+    M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
+> {
+    let member_count = observed.selected_requests().len();
+    let selection = observed.image().selection();
+    let epoch = observed.image().epoch();
+    let mut members = [None; ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
+    let error = if selection.role != Qwen3ModelRole::Target8B
+        || selection.mode != Qwen3ExecutionMode::Prefill
+    {
+        Some(M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Selection)
+    } else if member_count == 0
+        || member_count > members.len()
+        || observed.image().records().len() != member_count
+    {
+        Some(M1AuthenticatedSpeculativeNewWindowObservationErrorV1::MemberCount)
+    } else {
+        let mut error = None;
+        for (lane, (request, record)) in observed
+            .selected_requests()
+            .zip(observed.image().records())
+            .enumerate()
+        {
+            let raw = record.record();
+            let emitted = record.emitted_tokens();
+            if raw.request != request
+                || raw.epoch != epoch
+                || record.accepted_draft_tokens() != 0
+                || emitted.len() != 1
+            {
+                error =
+                    Some(M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Member { lane });
+                break;
+            }
+            members[lane] = Some(M1AuthenticatedSpeculativeNewWindowObservedMemberV1 {
+                request,
+                emitted_token: emitted[0],
+            });
+        }
+        error
+    };
+    if let Some(error) = error {
+        return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+            error,
+            state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Observed(
+                Box::new(observed),
+            ),
+        });
+    }
+    Ok(M1AuthenticatedSpeculativeNewWindowObservedV1 {
+        observed,
+        members: Box::new(members),
+        member_count,
+        selection,
+        epoch,
+    })
+}
+
+fn authenticated_new_window_expectations(
+    members: &[Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+         ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    member_count: usize,
+) -> [crate::CompletionWireSemanticExpectation<'static>;
+       ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize] {
+    let mut expectations = [crate::CompletionWireSemanticExpectation::DirectFinalRow { choice: 0 };
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
+    for (lane, expectation) in expectations.iter_mut().take(member_count).enumerate() {
+        *expectation = crate::CompletionWireSemanticExpectation::DirectFinalRow {
+            choice: members[lane]
+                .expect("validated new-window observation is complete")
+                .emitted_token,
+        };
+    }
+    expectations
+}
+
+fn new_window_settlement_failure(
+    error: M1AuthenticatedSpeculativeNewWindowSettlementErrorV1,
+    state: M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+) -> M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+        error,
+        state,
+        members,
+        member_count,
+        selection,
+        epoch,
+        dispositions,
+    }
+}
+
+fn settle_authenticated_speculative_new_window<const C: usize>(
+    engine: &mut Engine<C>,
+    observed: M1AuthenticatedSpeculativeNewWindowObservedV1,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    let M1AuthenticatedSpeculativeNewWindowObservedV1 {
+        observed,
+        members,
+        member_count,
+        selection,
+        epoch,
+    } = observed;
+    if dispositions.len() != member_count {
+        let actual = dispositions.len();
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::DispositionCount {
+                expected: member_count,
+                actual,
+            },
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
+                observed,
+            )),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    let mut physical_dispositions = Vec::new();
+    if physical_dispositions
+        .try_reserve_exact(member_count)
+        .is_err()
+    {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::HostAllocation,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
+                observed,
+            )),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    physical_dispositions.extend(dispositions.iter().map(|disposition| match disposition {
+        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue => {
+            crate::M1DeviceKvCompletionDispositionV1::Continue
+        }
+        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire => {
+            crate::M1DeviceKvCompletionDispositionV1::Retire
+        }
+    }));
+    let expectations = authenticated_new_window_expectations(&members, member_count);
+    let readback = match observed.check_completion(&expectations[..member_count]) {
+        Ok(readback) => readback,
+        Err(source) => {
+            return Err(new_window_settlement_failure(
+                M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::SemanticJoin,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Join(source),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ));
+        }
+    };
+    match readback.complete(engine, physical_dispositions) {
+        Ok(outcome) => finish_authenticated_speculative_new_window_completion(
+            outcome,
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ),
+        Err(source) => Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionPreflight,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
+                Box::new(source),
+            ),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        )),
+    }
+}
+
+fn finish_authenticated_speculative_new_window_completion(
+    outcome: crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    match outcome.release_completed() {
+        crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+            finish_authenticated_speculative_new_window_release(
+                released,
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            )
+        }
+        crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+            Err(new_window_settlement_failure(
+                M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::PageRelease,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::PageRelease(source),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ))
+        }
+        crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(outcome) => {
+            Err(new_window_settlement_failure(
+                M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionRejected,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Completion(Box::new(
+                    outcome,
+                )),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ))
+        }
+    }
+}
+
+fn finish_authenticated_speculative_new_window_release(
+    released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    observed_members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    let mut members = [None; ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
+    let current = released.current_released().members();
+    let mut valid = current.len() == member_count;
+    for lane in 0..member_count {
+        let Some(observed) = observed_members[lane] else {
+            valid = false;
+            break;
+        };
+        let Some(current) = current.get(lane) else {
+            valid = false;
+            break;
+        };
+        if current.request() != observed.request {
+            valid = false;
+            break;
+        }
+        let (target, draft, status) = match (current, dispositions[lane]) {
+            (
+                crate::M1ReleasedDeviceKvMemberV1::Active(cache),
+                M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue,
+            ) => {
+                let projection = cache.projection();
+                (
+                    projection.target.committed_tokens,
+                    projection.draft.committed_tokens,
+                    M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Continuing,
+                )
+            }
+            (
+                crate::M1ReleasedDeviceKvMemberV1::Terminal(terminal),
+                M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire,
+            ) => (
+                terminal.target().committed_tokens,
+                terminal.draft().committed_tokens,
+                M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Retired,
+            ),
+            _ => {
+                valid = false;
+                break;
+            }
+        };
+        members[lane] = Some(M1AuthenticatedSpeculativeNewWindowReleasedMemberV1 {
+            request: observed.request,
+            emitted_token: observed.emitted_token,
+            target_committed_tokens: target,
+            draft_committed_tokens: draft,
+            status,
+        });
+    }
+    if !valid {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::ReleasedRoster,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Released(Box::new(
+                released,
+            )),
+            observed_members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    Ok(M1AuthenticatedSpeculativeNewWindowReleasedV1 {
+        released,
+        members: Box::new(members),
+        member_count,
+        selection,
+        epoch,
+    })
+}
+
+fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
+    engine: &mut Engine<C>,
+    failure: M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    let M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+        error,
+        state,
+        members,
+        member_count,
+        selection,
+        epoch,
+        dispositions,
+    } = failure;
+    match state {
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(observed) => {
+            settle_authenticated_speculative_new_window(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowObservedV1 {
+                    observed: *observed,
+                    members,
+                    member_count,
+                    selection,
+                    epoch,
+                },
+                dispositions,
+            )
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Join(source) => {
+            match source.recover_observed_after_semantic_rejection() {
+                Ok(observed) => settle_authenticated_speculative_new_window(
+                    engine,
+                    M1AuthenticatedSpeculativeNewWindowObservedV1 {
+                        observed,
+                        members,
+                        member_count,
+                        selection,
+                        epoch,
+                    },
+                    dispositions,
+                ),
+                Err(source) => Err(new_window_settlement_failure(
+                    error,
+                    M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Join(source),
+                    members,
+                    member_count,
+                    selection,
+                    epoch,
+                    dispositions,
+                )),
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
+            source,
+        ) => match (*source).retry(engine) {
+            Ok(outcome) => finish_authenticated_speculative_new_window_completion(
+                outcome,
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ),
+            Err(source) => Err(new_window_settlement_failure(
+                M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionPreflight,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
+                    Box::new(source),
+                ),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            )),
+        },
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Completion(outcome) => {
+            match (*outcome).retry_rejected(engine) {
+                Ok(outcome) => finish_authenticated_speculative_new_window_completion(
+                    outcome,
+                    members,
+                    member_count,
+                    selection,
+                    epoch,
+                    dispositions,
+                ),
+                Err(outcome) => Err(new_window_settlement_failure(
+                    error,
+                    M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Completion(
+                        outcome,
+                    ),
+                    members,
+                    member_count,
+                    selection,
+                    epoch,
+                    dispositions,
+                )),
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::PageRelease(source) => {
+            match source.retry() {
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                    finish_authenticated_speculative_new_window_release(
+                        released,
+                        members,
+                        member_count,
+                        selection,
+                        epoch,
+                        dispositions,
+                    )
+                }
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+                    Err(new_window_settlement_failure(
+                        M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::PageRelease,
+                        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::PageRelease(
+                            source,
+                        ),
+                        members,
+                        member_count,
+                        selection,
+                        epoch,
+                        dispositions,
+                    ))
+                }
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(outcome) => {
+                    Err(new_window_settlement_failure(
+                        M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionRejected,
+                        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Completion(
+                            Box::new(outcome),
+                        ),
+                        members,
+                        member_count,
+                        selection,
+                        epoch,
+                        dispositions,
+                    ))
+                }
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Released(released) => {
+            Err(new_window_settlement_failure(
+                error,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Released(released),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ))
+        }
+    }
+}
+
+fn close_authenticated_speculative_new_window_settlement<const C: usize>(
+    engine: &mut Engine<C>,
+    failure: M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+    use crate::authenticated_speculative_executor::{
+        quarantined_disposition, released_disposition,
+    };
+    engine.quarantine_m1_queue_rearm_failure();
+    let M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
+        error,
+        state,
+        members,
+        member_count,
+        selection,
+        epoch,
+        dispositions,
+    } = failure;
+    let observed_expectations = matches!(
+        &state,
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(_)
+    )
+    .then(|| authenticated_new_window_expectations(&members, member_count));
+    let metadata = (error, members, member_count, selection, epoch, dispositions);
+    match state {
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(observed) => {
+            let expectations = observed_expectations
+                .expect("observed settlement state prepared exact expectations");
+            match (*observed).check_completion(&expectations[..member_count]) {
+                Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => released_disposition((metadata, released)),
+                    Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+                },
+                Err(source) => match source.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => released_disposition((metadata, released)),
+                    Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+                },
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Join(source) => {
+            match source.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((metadata, released)),
+                Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
+            source,
+        ) => match (*source).destroy_queue_and_retain_custody(engine) {
+            Ok(released) => released_disposition((metadata, released)),
+            Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+        },
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Completion(outcome) => {
+            (*outcome).destroy_queue_and_retain_any(engine, metadata)
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::PageRelease(source) => {
+            match source.destroy_queue_and_retain_round(engine) {
+                Ok(released) => released_disposition((metadata, released)),
+                Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Released(released) => {
+            match (*released).destroy_queue_and_retain_round(engine) {
+                Ok(released) => released_disposition((metadata, released)),
+                Err(quarantined) => quarantined_disposition((metadata, quarantined)),
+            }
+        }
+    }
+}
+
+impl M1AuthenticatedPreparedSpeculativeNewWindowV1 {
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        &self.scheduled
+    }
+
+    #[must_use]
+    pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
+        self.next_queue_wait_timeout
+    }
+}
+
+/// Derives the exact paired-prefill recipe from retained authenticated
+/// operations. This stage accepts no structural runner or catalog.
+///
+/// # Errors
+///
+/// Recipe rejection or mismatch closes or quarantines the already detached
+/// queue, faults the Engine, and retains every other owner in the disposition.
+pub fn prepare_m1_authenticated_speculative_new_window_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledSpeculativeNewWindowV1,
+) -> Result<
+    M1AuthenticatedPreparedSpeculativeNewWindowV1,
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
+> {
+    let M1AuthenticatedScheduledSpeculativeNewWindowV1 {
+        prior,
+        next,
+        queue,
+        scheduled,
+        residue,
+        binding,
+        draft_prefill,
+        target_prefill,
+        preparation_plans,
+        recipe_plans,
+        speculative_successor,
+        member_intents,
+        prior_windows,
+        ring_bytes,
+        next_queue_wait_timeout,
+    } = scheduled;
+    let recipe = match crate::runner::derive_physical_step_recipe(
+        queue.operations(),
+        M1StepDispatchIntent::PairedPrefill(next.target()),
+        recipe_plans,
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(source) => {
+            return Err(close_new_window_detached(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Input,
+                queue,
+                (
+                    (
+                        source,
+                        prior,
+                        next,
+                        scheduled,
+                        residue,
+                        binding,
+                        draft_prefill,
+                    ),
+                    (
+                        target_prefill,
+                        preparation_plans,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                    ),
+                ),
+            ));
+        }
+    };
+    if engine.is_faulted()
+        || recipe.workspace_composition().workspace_plans() != &preparation_plans
+        || recipe.requires_future_materialization()
+        || recipe.rows().len() != crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+        || recipe.kernarg_recipe().images().len() != crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+    {
+        return Err(close_new_window_detached(
+            engine,
+            M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Input,
+            queue,
+            (
+                (
+                    prior,
+                    next,
+                    scheduled,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                ),
+                (
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                ),
+            ),
+        ));
+    }
+    Ok(M1AuthenticatedPreparedSpeculativeNewWindowV1 {
+        prior,
+        next,
+        queue,
+        scheduled,
+        residue,
+        binding,
+        draft_prefill,
+        target_prefill,
+        preparation_plans,
+        recipe,
+        speculative_successor,
+        member_intents,
+        prior_windows,
+        ring_bytes,
+        next_queue_wait_timeout,
+    })
+}
+
+struct M1AuthenticatedNewWindowOpaqueCustodyV1<T>(T);
+
+impl<T> fmt::Debug for M1AuthenticatedNewWindowOpaqueCustodyV1<T> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedNewWindowOpaqueCustodyV1")
+            .finish_non_exhaustive()
+    }
+}
+
+fn close_new_window_prepared_detached<const C: usize, T: 'static>(
+    engine: &mut Engine<C>,
+    queue: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    retained: T,
+) -> M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+    let failure = close_new_window_detached(
+        engine,
+        M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::Input,
+        queue,
+        M1AuthenticatedNewWindowOpaqueCustodyV1(retained),
+    );
+    let M1AuthenticatedSpeculativeNewWindowScheduleFailureV1::Terminal { disposition, .. } =
+        failure
+    else {
+        unreachable!("detached closure is terminal")
+    };
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+        stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+        disposition,
+    }
+}
+
+fn close_new_window_unbound<const C: usize, T: 'static>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativeRolloverSubmissionStageV1,
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    retained: T,
+) -> M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
+    let pending = close_unbound(
+        engine,
+        stage,
+        lower,
+        M1AuthenticatedNewWindowOpaqueCustodyV1(retained),
+    );
+    close_pending_submission_failure(engine, pending)
+}
+
+/// Publishes the authenticated speculative-to-paired-prefill new window.
+///
+/// The exact speculative successor intent and queue timeout were frozen before
+/// this publication-capable stage. Every failure closes the detached/unbound
+/// queue or returns terminal quarantine and permanently faults the Engine.
+///
+/// # Errors
+///
+/// Returns a terminal authenticated rollover submission failure if any exact
+/// bind, reservation, admission, packet, rollover, or publication step fails.
+///
+/// # Panics
+///
+/// Panics only if the scheduled member roster changes after its exact
+/// preparation preflight while it is held by this function.
+#[allow(clippy::too_many_lines)]
+pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedSpeculativeNewWindowV1,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowPublishedV1,
+    M1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
+> {
+    let M1AuthenticatedPreparedSpeculativeNewWindowV1 {
+        prior,
+        next,
+        queue,
+        scheduled,
+        residue,
+        binding,
+        draft_prefill,
+        target_prefill,
+        preparation_plans,
+        recipe,
+        speculative_successor,
+        member_intents,
+        prior_windows,
+        ring_bytes,
+        next_queue_wait_timeout,
+    } = prepared;
+    let old = queue.custody();
+    if engine.is_faulted()
+        || !matches!(
+            queue.shape(),
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+        )
+        || queue.shape() != prior.shape()
+        || next.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+        || old.selection() != prior.target()
+        || old
+            .partitioned_memory()
+            .finite_speculative_rollover_output_state()
+            != crate::M1FiniteSpeculativeRolloverOutputPortfolioStateV1::Activated
+        || scheduled.member_count() == 0
+        || scheduled.member_count() != member_intents.len()
+        || draft_prefill.active_lengths().len() != scheduled.member_count()
+        || target_prefill.active_lengths().len() != scheduled.member_count()
+        || recipe.workspace_composition().workspace_plans() != &preparation_plans
+        || recipe.requires_future_materialization()
+        || recipe.rows().len() != crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+        || recipe.kernarg_recipe().images().len() != crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+    {
+        return Err(close_new_window_prepared_detached(
+            engine,
+            queue,
+            (
+                (
+                    prior,
+                    next,
+                    scheduled,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                ),
+                (
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                ),
+            ),
+        ));
+    }
+
+    let (old_shape, lower, witness, operations, custody) = queue.into_rearm_parts();
+    let predecessor_observation = lower.observation();
+    let predecessor_generation = lower.detached_dispatch_generation();
+    let device = custody.device();
+    let crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1 {
+        catalog_id,
+        selection: old_selection,
+        physical_recipe: old_physical_recipe,
+        workspace_composition: old_workspace_composition,
+        workspace_owners,
+        mut partitioned_memory,
+        completion_output: prior_output,
+        source_rows: old_source_rows,
+        bound_rows: old_bound_rows,
+        retired_rollover_custody,
+    } = custody.into_rearm_parts();
+    let retired_physical_metadata = (
+        old_shape,
+        old_selection,
+        old_physical_recipe,
+        old_workspace_composition,
+    );
+
+    let members = scheduled.member_count();
+    let mut selected = Vec::new();
+    let mut draft_reservations = Vec::new();
+    let mut target_reservations = Vec::new();
+    let mut draft_page_leases: Vec<Vec<DeviceKvPageLease>> = Vec::new();
+    let mut target_page_leases: Vec<Vec<DeviceKvPageLease>> = Vec::new();
+    if selected.try_reserve_exact(members).is_err()
+        || draft_reservations.try_reserve_exact(members).is_err()
+        || target_reservations.try_reserve_exact(members).is_err()
+        || draft_page_leases.try_reserve_exact(members).is_err()
+        || target_page_leases.try_reserve_exact(members).is_err()
+    {
+        return Err(close_new_window_unbound(
+            engine,
+            M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+            lower,
+            (
+                retired_physical_metadata,
+                witness,
+                operations,
+                catalog_id,
+                workspace_owners,
+                partitioned_memory,
+                prior_output,
+                old_source_rows,
+                old_bound_rows,
+                retired_rollover_custody,
+                residue,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                speculative_successor,
+                member_intents,
+                prior_windows,
+                ring_bytes,
+                next_queue_wait_timeout,
+            ),
+        ));
+    }
+    for lane in 0..members {
+        let draft_pages = draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let target_pages = target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
+        let mut draft = Vec::new();
+        let mut target = Vec::new();
+        if draft.try_reserve_exact(draft_pages as usize).is_err()
+            || target.try_reserve_exact(target_pages as usize).is_err()
+        {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    catalog_id,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                    draft,
+                    target,
+                ),
+            ));
+        }
+        draft_page_leases.push(draft);
+        target_page_leases.push(target);
+    }
+
+    let mut page_requests =
+        [ferric_spec::RequestId::new(u32::MAX, 0); ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
+    for (lane, request) in page_requests.iter_mut().take(members).enumerate() {
+        *request = scheduled
+            .member(lane)
+            .expect("the checked scheduled roster is complete");
+    }
+    let page_admission = match partitioned_memory.admit_authenticated_new_window_page_set(
+        &lower,
+        &page_requests[..members],
+        draft_prefill.active_lengths(),
+        target_prefill.active_lengths(),
+    ) {
+        Ok(admission) => admission,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    source,
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    catalog_id,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    target_prefill,
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_reservations,
+                    target_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                ),
+            ));
+        }
+    };
+    let page_leases =
+        match partitioned_memory.commit_authenticated_new_window_page_set(&lower, page_admission) {
+            Ok(leases) => leases,
+            Err(failure) => {
+                debug_assert!(failure.retains_exact_admission());
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        failure,
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        catalog_id,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                    ),
+                ));
+            }
+        };
+    let mut page_leases = page_leases.into_iter();
+
+    for lane in 0..members {
+        let request = scheduled
+            .member(lane)
+            .expect("scheduled roster length was checked");
+        let mut cache = match partitioned_memory.new_window_device_cache(
+            request,
+            next.target(),
+            next.draft(),
+        ) {
+            Ok(cache) => cache,
+            Err(source) => {
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        source,
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        catalog_id,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        page_leases,
+                    ),
+                ));
+            }
+        };
+        let mut draft_leases = core::mem::take(&mut draft_page_leases[lane]);
+        let mut target_leases = core::mem::take(&mut target_page_leases[lane]);
+        for _ in 0..draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS) {
+            draft_leases.push(
+                page_leases
+                    .next()
+                    .expect("the exact admitted draft-page roster is complete"),
+            );
+        }
+        for _ in 0..target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS) {
+            target_leases.push(
+                page_leases
+                    .next()
+                    .expect("the exact admitted target-page roster is complete"),
+            );
+        }
+        let draft = match cache.reserve_step_write(
+            request,
+            Qwen3ModelRole::Draft06B,
+            0,
+            draft_prefill.active_lengths()[lane],
+            scheduled.epoch(),
+            draft_leases,
+        ) {
+            Ok(reservation) => reservation,
+            Err(source) => {
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        source,
+                        cache,
+                        target_leases,
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        catalog_id,
+                        page_leases,
+                    ),
+                ));
+            }
+        };
+        let target = match cache.reserve_step_write(
+            request,
+            Qwen3ModelRole::Target8B,
+            0,
+            target_prefill.active_lengths()[lane],
+            scheduled.epoch(),
+            target_leases,
+        ) {
+            Ok(reservation) => reservation,
+            Err(source) => {
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        source,
+                        cache,
+                        draft,
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                        catalog_id,
+                        page_leases,
+                    ),
+                ));
+            }
+        };
+        selected.push(cache);
+        draft_reservations.push(draft);
+        target_reservations.push(target);
+    }
+    debug_assert!(page_leases.next().is_none());
+
+    let target = match crate::bind_m1_kv_workspace_table_v1(target_prefill, target_reservations) {
+        Ok(table) => table,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    source,
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    catalog_id,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    draft_prefill,
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_reservations,
+                    draft_page_leases,
+                    target_page_leases,
+                ),
+            ));
+        }
+    };
+    let draft = match crate::bind_m1_kv_workspace_table_v1(draft_prefill, draft_reservations) {
+        Ok(table) => table,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    source,
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    catalog_id,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    target,
+                    preparation_plans,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_page_leases,
+                    target_page_leases,
+                ),
+            ));
+        }
+    };
+    let prepared = match crate::prepare_m1_scheduled_workspace_images_v1(
+        scheduled,
+        operations.runner(),
+        preparation_plans,
+        M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target },
+    ) {
+        Ok(prepared) => prepared,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    source,
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    speculative_successor,
+                    member_intents,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_page_leases,
+                    target_page_leases,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let prepared = match bind_m1_authenticated_speculative_rollover_intent_v1(
+        prepared,
+        speculative_successor,
+        member_intents,
+    ) {
+        Ok(prepared) => prepared,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                lower,
+                (
+                    source,
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    workspace_owners,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    draft_page_leases,
+                    target_page_leases,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let (prepared, intent) = prepared.into_parts();
+    let (plans, images, step) = prepared.into_rearm_parts();
+    let (old_draft, old_target, draft_plan, target_plan, draft_bytes, target_bytes) =
+        match (workspace_owners, plans, images) {
+            (
+                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound {
+                    draft_decode,
+                    target_speculative,
+                },
+                M1FullStepWorkspacePlans::PairedPrefill { draft, target },
+                M1FullStepWorkspaceImagesV1::PairedPrefill {
+                    draft: draft_bytes,
+                    target: target_bytes,
+                },
+            ) => (
+                draft_decode,
+                target_speculative,
+                draft,
+                target,
+                draft_bytes,
+                target_bytes,
+            ),
+            (workspace_owners, plans, images) => {
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        recipe,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_page_leases,
+                        target_page_leases,
+                        plans,
+                        images,
+                        step,
+                        intent,
+                        catalog_id,
+                    ),
+                ));
+            }
+        };
+    let draft_descriptor = match crate::authenticated_queue_rearm::descriptor(
+        M1InitializedWorkspaceSlotV1::PairedPrefillDraft,
+        &draft_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(()) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::DraftWorkspace,
+                lower,
+                (
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    old_draft,
+                    old_target,
+                    draft_plan,
+                    target_plan,
+                    draft_bytes,
+                    target_bytes,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    step,
+                    intent,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let target_descriptor = match crate::authenticated_queue_rearm::descriptor(
+        M1InitializedWorkspaceSlotV1::PairedPrefillTarget,
+        &target_bytes,
+    ) {
+        Ok(descriptor) => descriptor,
+        Err(()) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::TargetWorkspace,
+                lower,
+                (
+                    retired_physical_metadata,
+                    witness,
+                    operations,
+                    old_draft,
+                    old_target,
+                    draft_plan,
+                    target_plan,
+                    draft_bytes,
+                    target_bytes,
+                    draft_descriptor,
+                    partitioned_memory,
+                    prior_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    step,
+                    intent,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let (lower, draft, draft_ranges) =
+        match crate::authenticated_queue_rearm::replace_authenticated_rollover_workspace(
+            lower,
+            &old_draft,
+            *draft_plan,
+            draft_bytes,
+            draft_descriptor,
+        ) {
+            Ok(value) => value,
+            Err(failure) => {
+                let pending = close_workspace_failure(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::DraftWorkspace,
+                    failure,
+                    M1AuthenticatedNewWindowOpaqueCustodyV1((
+                        witness,
+                        operations,
+                        old_target,
+                        target_plan,
+                        target_bytes,
+                        target_descriptor,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        recipe,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        step,
+                        intent,
+                        retired_physical_metadata,
+                        catalog_id,
+                    )),
+                );
+                return Err(close_pending_submission_failure(engine, pending));
+            }
+        };
+    let (lower, target, target_ranges) =
+        match crate::authenticated_queue_rearm::replace_authenticated_rollover_workspace(
+            lower,
+            &old_target,
+            *target_plan,
+            target_bytes,
+            target_descriptor,
+        ) {
+            Ok(value) => value,
+            Err(failure) => {
+                let pending = close_workspace_failure(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::TargetWorkspace,
+                    failure,
+                    M1AuthenticatedNewWindowOpaqueCustodyV1((
+                        witness,
+                        operations,
+                        draft,
+                        draft_ranges,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        recipe,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        step,
+                        intent,
+                        retired_physical_metadata,
+                        catalog_id,
+                    )),
+                );
+                return Err(close_pending_submission_failure(engine, pending));
+            }
+        };
+    let mut workspace_ranges = Vec::new();
+    if workspace_ranges
+        .try_reserve_exact(draft_ranges.len() + target_ranges.len())
+        .is_err()
+    {
+        return Err(close_new_window_unbound(
+            engine,
+            M1AuthenticatedSpeculativeRolloverSubmissionStageV1::BoundRows,
+            lower,
+            (
+                witness,
+                operations,
+                draft,
+                target,
+                draft_ranges,
+                target_ranges,
+                partitioned_memory,
+                prior_output,
+                old_source_rows,
+                old_bound_rows,
+                retired_rollover_custody,
+                residue,
+                binding,
+                recipe,
+                prior_windows,
+                ring_bytes,
+                next_queue_wait_timeout,
+                selected,
+                step,
+                intent,
+                retired_physical_metadata,
+                catalog_id,
+            ),
+        ));
+    }
+    crate::m1_queue_rearm::append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Draft,
+        &draft,
+        draft_ranges,
+    );
+    crate::m1_queue_rearm::append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Target,
+        &target,
+        target_ranges,
+    );
+    let completion_output = match partitioned_memory
+        .rotate_finite_speculative_output_for_new_window(
+            next.target(),
+            prior.target(),
+            prior_output,
+        ) {
+        Ok(output) => output,
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::OutputActivation,
+                lower,
+                (
+                    source,
+                    witness,
+                    operations,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    step,
+                    intent,
+                    retired_physical_metadata,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let capture = match crate::m1_queue_rearm::retained_host_capture_ranges(&completion_output) {
+        Ok(capture) => capture,
+        Err(()) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::BoundRows,
+                lower,
+                (
+                    witness,
+                    operations,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    completion_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    step,
+                    intent,
+                    retired_physical_metadata,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let bound_rows = match crate::m1_queue_rearm::build_rollover_bound_rows(
+        recipe.rows(),
+        &old_source_rows,
+        &old_bound_rows,
+        recipe.workspace_composition(),
+        &workspace_ranges,
+        &capture,
+    ) {
+        Ok(rows) => rows,
+        Err(()) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::BoundRows,
+                lower,
+                (
+                    witness,
+                    operations,
+                    draft,
+                    target,
+                    workspace_ranges,
+                    partitioned_memory,
+                    completion_output,
+                    old_source_rows,
+                    old_bound_rows,
+                    retired_rollover_custody,
+                    residue,
+                    binding,
+                    recipe,
+                    prior_windows,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    selected,
+                    step,
+                    intent,
+                    retired_physical_metadata,
+                    catalog_id,
+                ),
+            ));
+        }
+    };
+    let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(
+        crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1 {
+            catalog_id,
+            selection: next.target(),
+            physical_recipe: retired_physical_metadata.2,
+            workspace_composition: retired_physical_metadata.3,
+            workspace_owners: M1FullStepWorkspaceSubleaseOwners::paired_prefill(draft, target),
+            partitioned_memory,
+            completion_output,
+            source_rows: old_source_rows,
+            bound_rows: old_bound_rows,
+            retired_rollover_custody,
+        },
+    );
+    let batch = match crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
+        &witness,
+        &operations,
+        recipe,
+        bound_rows,
+        custody,
+    ) {
+        Ok(crate::physical_fixed_batch::M1AuthenticatedQueuePacketBatchV1::PairedPrefill(
+            batch,
+        )) => batch,
+        Ok(batch) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::PacketLowering,
+                lower,
+                (
+                    batch,
+                    witness,
+                    operations,
+                    step,
+                    selected,
+                    residue,
+                    binding,
+                    intent,
+                    prior_windows,
+                    next_queue_wait_timeout,
+                    retired_physical_metadata.0,
+                    retired_physical_metadata.1,
+                ),
+            ));
+        }
+        Err(source) => {
+            return Err(close_new_window_unbound(
+                engine,
+                M1AuthenticatedSpeculativeRolloverSubmissionStageV1::PacketLowering,
+                lower,
+                (
+                    source,
+                    witness,
+                    operations,
+                    step,
+                    selected,
+                    residue,
+                    binding,
+                    intent,
+                    prior_windows,
+                    next_queue_wait_timeout,
+                    retired_physical_metadata.0,
+                    retired_physical_metadata.1,
+                ),
+            ));
+        }
+    };
+    let (queue, rollover) = match rollover_case(
+        lower,
+        ring_bytes,
+        *batch,
+        witness,
+        operations,
+        step,
+        predecessor_generation,
+        |case| M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill(Box::new(case)),
+    ) {
+        Ok(value) => value,
+        Err(mut source) => {
+            source.retained = Box::new((
+                source.retained,
+                selected,
+                residue,
+                binding,
+                intent,
+                prior_windows,
+                next_queue_wait_timeout,
+            ));
+            return Err(close_pending_submission_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::NativePaired(
+                    Box::new(source),
+                ),
+            ));
+        }
+    };
+    if rollover.previous_dispatch_generation() != predecessor_generation
+        || predecessor_generation
+            .checked_add(1)
+            .is_none_or(|generation| rollover.replacement_dispatch_generation() != generation)
+    {
+        return Err(close_pending_submission_failure(
+            engine,
+            PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Observation {
+                queue: Box::new(queue),
+                retained: Box::new((
+                    selected,
+                    residue,
+                    binding,
+                    intent,
+                    prior_windows,
+                    next_queue_wait_timeout,
+                    rollover,
+                )),
+            },
+        ));
+    }
+    let queue = match queue.submit() {
+        Ok(queue) => queue,
+        Err(source) => {
+            return Err(close_pending_submission_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1::Submit {
+                    source: Box::new(source),
+                    retained: Box::new((
+                        selected,
+                        residue,
+                        binding,
+                        intent,
+                        prior_windows,
+                        next_queue_wait_timeout,
+                        rollover,
+                    )),
+                },
+            ));
+        }
+    };
+    let M1AuthenticatedSpeculativeNewWindowResidueV1 {
+        checked,
+        members,
+        mut terminal,
+        logical_accepted_counts,
+        externally_published_counts,
+        release_counts,
+        completed_members,
+        total_released,
+        history,
+    } = residue;
+    debug_assert!(terminal.capacity() >= terminal.len() + members.len());
+    for member in members {
+        terminal.push(match member {
+            M1ReleasedDeviceKvMemberV1::Terminal(terminal) => terminal,
+            M1ReleasedDeviceKvMemberV1::Active(_) => {
+                unreachable!("all-terminal new-window preflight rejected active custody")
+            }
+        });
+    }
+    let previous_epoch = checked.epoch();
+    let bridge = M1AuthenticatedSpeculativeNewWindowBridgeV1 {
+        speculative_successor,
+        intent,
+        prior_windows,
+        next_queue_wait_timeout,
+    };
+    Ok(M1AuthenticatedSpeculativeNewWindowPublishedV1 {
+        published: M1AuthenticatedRearmedPublishedQueueV1::from_authenticated_new_window(
+            queue,
+            selected,
+            terminal,
+            previous_epoch,
+            checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+            predecessor_observation,
+            device,
+            rollover,
+            bridge,
+        ),
+        queue_wait_timeout: next_queue_wait_timeout,
+    })
 }
 
 fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
@@ -4351,11 +7747,15 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         release_counts,
         completed_members,
         total_released,
+        terminal,
+        history,
     } = residue;
     let previous_epoch = checked.epoch();
     let published = M1AuthenticatedRearmedPublishedQueueV1::from_authenticated_rollover(
         queue,
         selected,
+        terminal,
+        history,
         previous_epoch,
         checked,
         logical_accepted_counts,
@@ -4372,7 +7772,10 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         logical.coordinator,
         logical.epoch,
         logical.lineage,
-        queue_wait_timeout,
+        logical.prior_windows,
+        logical
+            .frozen_queue_wait_timeout
+            .unwrap_or(queue_wait_timeout),
     ))
 }
 
@@ -4412,6 +7815,108 @@ mod tests {
             },
         )
         .unwrap()
+    }
+
+    #[test]
+    fn authenticated_new_window_limit_counts_the_current_window() {
+        assert_eq!(M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1, 20);
+        assert!(authenticated_new_window_transition_within_limit(18));
+        assert!(!authenticated_new_window_transition_within_limit(19));
+        assert!(!authenticated_new_window_transition_within_limit(
+            usize::MAX
+        ));
+    }
+
+    #[test]
+    fn authenticated_new_window_surface_keeps_generic_queue_authority_private() {
+        let source = include_str!("authenticated_queue_rollover.rs");
+        let production = source.split("#[cfg(test)]").next().unwrap();
+
+        let published_start = production
+            .find("impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {")
+            .unwrap();
+        let published_end = production[published_start..]
+            .find("\nfn authenticated_new_window_observed(")
+            .map(|offset| published_start + offset)
+            .unwrap();
+        let published = &production[published_start..published_end];
+        assert!(published.contains("pub fn observe<const C: usize>("));
+        assert!(!published.contains("pub fn wait("));
+        assert!(!published.contains("pub fn wait_for("));
+        assert!(!published.contains("pub fn complete("));
+        assert!(!published.contains("into_parts"));
+
+        let observed_start = production
+            .find("impl M1AuthenticatedSpeculativeNewWindowObservedV1 {")
+            .unwrap();
+        let observed_end = production[observed_start..]
+            .find("\n/// Stable settlement failure class")
+            .map(|offset| observed_start + offset)
+            .unwrap();
+        let observed = &production[observed_start..observed_end];
+        assert!(observed.contains("pub fn settle<const C: usize>("));
+        assert!(!observed.contains("CompletionWireSemanticExpectation"));
+        assert!(!observed.contains("pub fn image("));
+        assert!(!observed.contains("pub fn raw_bytes("));
+        assert!(!observed.contains("into_parts"));
+
+        let released_start = production
+            .find("impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {")
+            .unwrap();
+        let released_end = production[released_start..]
+            .find("\nimpl M1AuthenticatedSpeculativeNewWindowPublishedV1 {")
+            .map(|offset| released_start + offset)
+            .unwrap();
+        let released = &production[released_start..released_end];
+        assert!(released.contains("pub fn schedule_successor<const C: usize>("));
+        assert!(!released.contains("into_parts"));
+        assert!(!released.contains("current_released"));
+
+        assert!(production.contains(
+            "pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1"
+        ));
+        assert!(!production
+            .contains("pub fn schedule_m1_authenticated_speculative_new_window_successor_v1"));
+    }
+
+    #[test]
+    fn authenticated_new_window_detach_retains_complete_residue() {
+        let source = include_str!("authenticated_queue_rollover.rs");
+        let schedule_start = source
+            .find("pub fn schedule_m1_authenticated_speculative_new_window_v1")
+            .unwrap();
+        let schedule_end = source[schedule_start..]
+            .find("\nimpl M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1")
+            .map(|offset| schedule_start + offset)
+            .unwrap();
+        let schedule = &source[schedule_start..schedule_end];
+        let residue = schedule
+            .find("let residue = M1AuthenticatedSpeculativeNewWindowResidueV1 {")
+            .unwrap();
+        let detach = schedule.find("let queue = match queue.detach() {").unwrap();
+        assert!(residue < detach);
+        let detach_failure = &schedule[detach..schedule.find("let (binding,").unwrap()];
+        let source_owner = detach_failure.find("source,").unwrap();
+        let residue_owner = detach_failure[source_owner..].find("residue,").unwrap();
+        assert!(residue_owner > 0);
+    }
+
+    #[test]
+    fn authenticated_new_window_archives_then_resets_active_history() {
+        let source = include_str!("authenticated_queue_rollover.rs");
+        let join_start = source
+            .find("pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1")
+            .unwrap();
+        let join_end = source[join_start..]
+            .find("\nfn schedule_m1_authenticated_speculative_rollover_pending_v1")
+            .map(|offset| join_start + offset)
+            .unwrap();
+        let join = &source[join_start..join_end];
+        let archive = join.find(".attach_physical_history(history)").unwrap();
+        let reset = join
+            .find("history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty")
+            .unwrap();
+        assert!(archive < reset);
     }
 
     fn planned_rollover(

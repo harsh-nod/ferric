@@ -2313,6 +2313,18 @@ pub enum M1AuthenticatedPhysicalReadbackQueueSessionV1 {
 }
 
 impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
+    /// Read-only retained operation declaration for authenticated transition
+    /// preflight. This exposes no mutable or program authority.
+    pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
+        match self {
+            Self::TargetOnly(case) => &case.operations,
+            Self::PairedPrefill(case) => &case.operations,
+            Self::SpeculativeK4(case) => &case.operations,
+            Self::SpeculativeK8(case) => &case.operations,
+            Self::SpeculativeK16(case) => &case.operations,
+        }
+    }
+
     /// Exact former publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
