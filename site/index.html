@@ -60,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-04">Updated 2026-09-04</time>
+              <time data-updated datetime="2026-09-05">Updated 2026-09-05</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -215,22 +215,25 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Bring the aggregate within its compiler bound</h2>
+            <h2 id="next-title">Land the compiler correction and physical rebind</h2>
           </div>
           <p>
-            Public fe2o3 main 16da71edd823e0d5c16529bfbbedb4f9dd8e70c6 supplies reusable compiler,
+            Public fe2o3 main d8fa0835c64d6574c8589ac3e69e3c34b0350758 supplies reusable compiler,
             runtime, and KFD support. Compiler, runtime, and KFD work stays in fe2o3; Ferric owns all Qwen
-            kernels and inference. Ferric checkpoints a2bb2dc and 4e18d1d are public on feature branch
-            origin/codex/fe2o3-current-main-repin-v1, but are not on main or final. Source includes 12
-            K1-K7 entrypoints across 440 profiles, a 545-packet target runner,
-            physical KV custody, same-shape decode rearm, authenticated target rollover, and R33 V3
-            event-backed TTFT/TPOT records. Real Qwen3-8B and Qwen3-0.6B inputs are canonically prepacked,
-            but the last sequential compiler limits differ: isolated vector-GEMM semantic SSA reached
-            94,192,887 against 67,108,864, while the earlier aggregate-only result reached 3,188,438 storage
-            words against the 2,097,152 limit. The aggregate has not been rerun after current GEMM reductions.
-            The aggregate Worker V3 HSACO is still absent, as are the protected execution profile and service socket. No
-            Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang
-            comparison exists. All 33 M1 gates remain open.
+            kernels and inference. Ferric checkpoint 756e813 is public on feature branch
+            origin/codex/fe2o3-current-main-repin-v1, but is not on main or final. Source includes 12
+            K1-K7 entrypoints across 440 profiles, a 545-packet target runner, physical KV custody,
+            same-shape decode rearm, and R33 V3 event-backed TTFT/TPOT records. The all-terminal
+            new-window control-plane publication, restore, and scheduler-authority transaction is public;
+            the lower physical model/KV rebind remains unavailable and returns retryable
+            RolloverUnavailable. The canonical Target8B=1 and Draft06B=2 weight-role byte has a positive
+            Verus proof and rejected negative mutation. Real Qwen3-8B and Qwen3-0.6B inputs are
+            canonically prepacked. The latest aggregate attempt stopped before Worker or link at
+            repeated-slice semantic-to-ranked projection; its reusable fe2o3 fix and the R33 daemon/wire
+            foundation are in progress and not public. The aggregate Worker V3 HSACO is still absent, as
+            are the protected execution profile and service socket. No Qwen run, generated token, measured
+            TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates
+            remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

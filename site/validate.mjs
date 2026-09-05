@@ -13,11 +13,11 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "6a23892c2f426952d1846b37f348dcd057f152da",
-  integrationCommit: "4e18d1d25f38b3ad0cd1d416906f7537a21f804e",
-  integrationTree: "80cfa92ada0c4a6deac417dd70c0d1b91ca7fe22",
-  ferricCheckpointCommit: "4e18d1d25f38b3ad0cd1d416906f7537a21f804e",
-  ferricCheckpointTree: "80cfa92ada0c4a6deac417dd70c0d1b91ca7fe22",
+  siteRefreshBase: "6fc3d2f4fa5aa0859a363ac607d1145247af6b14",
+  integrationCommit: "756e81369efc9fd0fcfed50c4605c0377a4a119b",
+  integrationTree: "09510ffd61284dd03e8574ddc6a0310cd3bca832",
+  ferricCheckpointCommit: "756e81369efc9fd0fcfed50c4605c0377a4a119b",
+  ferricCheckpointTree: "09510ffd61284dd03e8574ddc6a0310cd3bca832",
   ferricFeatureBranch: "origin/codex/fe2o3-current-main-repin-v1",
   ferricCheckpointStatus: "public-feature-branch-not-main-not-final-all-m1-gates-open",
   aggregateBuildConfigFormat: "fe2o3-production-build-config-v2",
@@ -35,10 +35,10 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "16da71edd823e0d5c16529bfbbedb4f9dd8e70c6",
-  fe2o3CompilerCandidateTree: "81a2ba4f856ac14268cd13aba2f1ce3eebfcc06c",
-  fe2o3CompilerQualificationBase: "16da71edd823e0d5c16529bfbbedb4f9dd8e70c6",
-  fe2o3LatestMain: "16da71edd823e0d5c16529bfbbedb4f9dd8e70c6",
+  fe2o3CompilerCandidate: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
+  fe2o3CompilerCandidateTree: "462305af35405cd4d29031a98e2a4f6a7400da37",
+  fe2o3CompilerQualificationBase: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
+  fe2o3LatestMain: "d8fa0835c64d6574c8589ac3e69e3c34b0350758",
   fe2o3GuardedSubtractionCommit: "e745bc75c",
   fe2o3CompilerCandidateStatus: "public-main-consumed-by-ferric-feature-branch",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
@@ -52,12 +52,12 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateHsacoStatus: "not-produced",
   engineeringAggregateAttemptOuterExitCode: 1,
   engineeringAggregateAttemptBoundary:
-    "sequential-vector-gemm-ssa-and-prior-aggregate-storage-bounds",
+    "semantic-to-ranked-repeated-slice-projection-before-worker-or-link",
   engineeringAggregateAttemptConnectCount: 0,
   engineeringAggregateAttemptOutputCount: 0,
-  engineeringAggregateAttemptStatus: "vector-gemm-reduced-aggregate-rerun-pending-no-hsaco",
-  followupProofFixStatus: "sequential-compiler-bound-repair-active",
-  fe2o3CurrentnessStatus: "public-main-16da71ed-consumed-by-ferric-feature-branch",
+  engineeringAggregateAttemptStatus: "latest-d8fa-aggregate-stopped-before-worker-no-hsaco",
+  followupProofFixStatus: "repeated-slice-projection-fix-in-progress-not-public",
+  fe2o3CurrentnessStatus: "public-main-d8fa0835-consumed-by-ferric-feature-branch",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -81,8 +81,9 @@ const expectedCurrent = Object.freeze({
   verifierBinderStatus: "qualified-go-local-integration",
   authenticatedTargetRolloverCommit: "047ee32f6d0bb1861adb211c9ced1f403a22514c",
   authenticatedTargetRolloverStatus: "implemented-integrated-not-run",
-  authenticatedTargetServingBridgeCommit: "4e18d1d25f38b3ad0cd1d416906f7537a21f804e",
-  authenticatedTargetServingBridgeStatus: "public-feature-branch-not-main-not-final-not-run-no-http",
+  authenticatedTargetServingBridgeCommit: "f8f8ce60e23a1331a83606029fca2d0958bd3157",
+  authenticatedTargetServingBridgeStatus:
+    "new-window-control-transaction-public-lower-physical-rebind-unavailable",
   canonicalPrepackBundleIdentity:
     "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
   canonicalPrepackAdmissionIdentity:
@@ -106,8 +107,8 @@ const expectedCurrent = Object.freeze({
   proofPackages: 8,
   actualBodyHostileMutations: 37,
   sourceQualityPassMarkers: 13,
-  sourceGateModules: 158,
-  sourceGateBodies: 7332,
+  sourceGateModules: 159,
+  sourceGateBodies: 7429,
   sourceClosureFiles: 603,
   openM1Gates: 33,
   openAssuranceProperties: 17,
@@ -387,13 +388,13 @@ assert(
     envelope.get("Engineering aggregate output")?.includes("12 K1-K7 entrypoints") &&
     envelope.get("Engineering aggregate output")?.includes("440 exact profiles") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "isolated vector-GEMM semantic SSA at 94,192,887 over 67,108,864",
+      "latest clean aggregate attempt against public fe2o3 d8fa0835",
     ) &&
     envelope.get("Engineering aggregate output")?.includes(
-      "aggregate-only result of 3,188,438 storage words over the 2,097,152 limit",
+      "repeated-slice semantic-to-ranked projection",
     ) &&
     envelope.get("Engineering aggregate output")?.includes(
-      "aggregate has not been rerun after current GEMM reductions",
+      "reusable fe2o3 correction is in progress and is not public",
     ) &&
     envelope.get("Engineering aggregate output")?.includes("No aggregate HSACO") &&
     envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
@@ -445,10 +446,11 @@ assert(
     envelope.get("Authenticated target rollover")?.includes(
       expectedCurrent.authenticatedTargetServingBridgeCommit,
     ) &&
-    envelope.get("Authenticated target rollover")?.includes("public feature-branch checkpoint") &&
-    envelope.get("Authenticated target rollover")?.includes("not on main or final") &&
-    envelope.get("Authenticated target rollover")?.includes("has not run"),
-  "envelope must expose implemented target rollover without a run claim",
+    envelope.get("Authenticated target rollover")?.includes("scheduler-authority check") &&
+    envelope.get("Authenticated target rollover")?.includes("predecessor restore") &&
+    envelope.get("Authenticated target rollover")?.includes("lower physical model/KV rebind") &&
+    envelope.get("Authenticated target rollover")?.includes("retryable RolloverUnavailable"),
+  "envelope must distinguish new-window control publication from the absent physical rebind",
 );
 assert(
   envelope.get("R33 V3 serving comparison")?.includes(
@@ -559,8 +561,8 @@ assert(
   producerReadiness?.state === "integration" &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidate) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
-    producerReadiness.detail.includes("public Ferric feature-branch checkpoint 4e18d1d") &&
-    producerReadiness.detail.includes("a2bb2dc repin") &&
+    producerReadiness.detail.includes("public Ferric feature-branch checkpoint 756e813") &&
+    producerReadiness.detail.includes("consumes that revision") &&
     producerReadiness.detail.includes("not on main or final") &&
     producerReadiness.detail.includes("compiler, runtime, and KFD work only") &&
     producerReadiness.detail.includes("Ferric owns model kernels and inference") &&
@@ -635,11 +637,11 @@ assert(
   qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("Real target and draft prepack inputs are verified") &&
-    qwenReadiness.detail.includes("authenticated target rollover is implemented") &&
-    qwenReadiness.detail.includes("isolated vector-GEMM attempt exceeded the semantic-SSA bound") &&
-    qwenReadiness.detail.includes("aggregate-only attempt exceeded its storage bound") &&
-    qwenReadiness.detail.includes("aggregate has not been rerun after current GEMM reductions") &&
-    qwenReadiness.detail.includes("protected profile/socket are also absent") &&
+    qwenReadiness.detail.includes("new-window control transaction is implemented") &&
+    qwenReadiness.detail.includes("lower physical model/KV rebind is unavailable") &&
+    qwenReadiness.detail.includes("retryable RolloverUnavailable") &&
+    qwenReadiness.detail.includes("latest aggregate attempt stopped at repeated-slice projection") &&
+    qwenReadiness.detail.includes("protected profile/socket are absent") &&
     qwenReadiness.detail.includes("No aggregate HSACO") &&
     qwenReadiness.detail.includes("Qwen token") &&
     qwenReadiness.detail.includes("serving or HTTP endpoint") &&
@@ -700,6 +702,17 @@ assert(
     r33CaptureCapability.detail.includes("has not run against Qwen or any baseline") &&
     r33CaptureCapability.detail.includes("no performance or M1 result"),
   "R33 V3 capability must retain event-backed metrics and no-run claims",
+);
+const proofLedgerCapability = project.capabilities.experimental.find(
+  (item) => item.name === "Qualified proof ledger",
+);
+assert(
+  proofLedgerCapability?.detail.includes("checkpoint 756e813") &&
+    proofLedgerCapability.detail.includes("159 modules and 7,429 executable bodies") &&
+    proofLedgerCapability.detail.includes("canonical weight-role proof") &&
+    proofLedgerCapability.detail.includes("negative mutation evidence") &&
+    !proofLedgerCapability.detail.includes("checkpoint a2bb2dc has an exact source-gate inventory"),
+  "proof ledger must bind the 159-module / 7,429-body inventory to checkpoint 756e813",
 );
 
 assertCommit(project.latestObservation.commit, "latestObservation.commit");
@@ -799,43 +812,44 @@ const engineTeam = project.teams.find((team) => team.name === "Engine");
 const verificationTeam = project.teams.find((team) => team.name === "Verification");
 assert(
   integrationTeam.completed.includes(expectedCurrent.fe2o3LatestMain.slice(0, 8)) &&
-    integrationTeam.completed.includes(expectedCurrent.servingComparisonR33V3IntegrationCommit.slice(0, 7)) &&
+    integrationTeam.completed.includes(expectedCurrent.authenticatedTargetServingBridgeCommit.slice(0, 7)) &&
     integrationTeam.completed.includes(expectedCurrent.ferricCheckpointCommit.slice(0, 7)) &&
     integrationTeam.completed.includes(expectedCurrent.ferricFeatureBranch) &&
-    integrationTeam.current.includes("public feature-branch checkpoints") &&
-    integrationTeam.current.includes("off main and non-final") &&
+    integrationTeam.current.includes("unpublished repeated-slice compiler fix") &&
+    integrationTeam.current.includes("R33 daemon/wire") &&
+    integrationTeam.current.includes("lower physical new-window rebind") &&
     integrationTeam.validation.includes("public on the feature branch, not on main or final"),
   "integration team must expose public upstream and public feature-branch Ferric checkpoints",
 );
 assert(
   kernelTeam.status === "Making progress" &&
-  kernelTeam.completed.includes("12 K1-K7 entrypoints") &&
+    kernelTeam.completed.includes("12 K1-K7 entrypoints") &&
     kernelTeam.completed.includes("440 exact profiles") &&
-    kernelTeam.current.includes("vector-GEMM semantic SSA was 94,192,887 versus 67,108,864") &&
-    kernelTeam.current.includes("aggregate-only result was 3,188,438 storage words versus the 2,097,152 limit") &&
-    kernelTeam.current.includes("aggregate rerun follows current GEMM reductions") &&
-    kernelTeam.blockedBy.includes("Worker V3 HSACO") &&
-    kernelTeam.blockedBy.includes("protected production publication") &&
-    kernelTeam.next.includes("without weakening the production policy"),
+    kernelTeam.current.includes("repeated-slice bounds projection defect") &&
+    kernelTeam.current.includes("reusable fe2o3 correction is in progress") &&
+    kernelTeam.current.includes("Ferric kernel source remains unchanged") &&
+    kernelTeam.blockedBy.includes("team is making progress") &&
+    kernelTeam.next.includes("without weakening slice authorization"),
   "kernel team must expose roster, artifact dependency, and ownership",
 );
 assert(
   engineTeam.completed.includes(expectedCurrent.authenticatedTargetRolloverCommit.slice(0, 7)) &&
     engineTeam.completed.includes(expectedCurrent.servingComparisonR33V3IntegrationCommit.slice(0, 7)) &&
     engineTeam.completed.includes(expectedCurrent.authenticatedTargetServingBridgeCommit.slice(0, 7)) &&
-    engineTeam.current.includes("no endpoint or timing run") &&
-    engineTeam.blockedBy.includes("No aggregate HSACO") &&
-    engineTeam.blockedBy.includes("protected profile/socket") &&
-    engineTeam.next.includes("R33 V3") &&
+    engineTeam.current.includes("R33 daemon/wire adapter") &&
+    engineTeam.current.includes("retryable RolloverUnavailable") &&
+    engineTeam.blockedBy.includes("engine team is making progress") &&
+    engineTeam.blockedBy.includes("lower physical all-terminal model/KV rebind") &&
+    engineTeam.next.includes("lower model/KV rebind") &&
     engineTeam.next.includes("HTTP serving remains later work"),
   "engine team must expose implemented runtime work and missing execution inputs",
 );
 assert(
-    verificationTeam.completed.includes("df79604") &&
-    verificationTeam.completed.includes("same-source mutation") &&
-    verificationTeam.current.includes("4e18d1d 35-body source-gate refresh") &&
-    verificationTeam.current.includes("phase-custody proof") &&
-    verificationTeam.validation.includes("158 modules / 7,332 bodies") &&
+    verificationTeam.completed.includes("756e813") &&
+    verificationTeam.completed.includes("Draft06B=>1 same-source mutation") &&
+    verificationTeam.current.includes("159-module / 7,429-body source gate") &&
+    verificationTeam.current.includes("constructor-to-physical-batch refinement") &&
+    verificationTeam.validation.includes("source gate 159 modules / 7,429 bodies") &&
     verificationTeam.validation.includes("final receipt open"),
   "verification team must expose integrated proof work and the open final receipt",
 );
@@ -977,19 +991,20 @@ for (const claim of [
   assert(!claim.test(currentProjectData), `current Pages data overclaims open work: ${claim}`);
 }
 for (const claim of [
-  "Public fe2o3 main 16da71edd823e0d5c16529bfbbedb4f9dd8e70c6",
+  "Public fe2o3 main d8fa0835c64d6574c8589ac3e69e3c34b0350758",
   "Compiler, runtime, and KFD work stays in fe2o3",
   "Ferric owns all Qwen kernels and inference",
-  "Ferric checkpoints a2bb2dc and 4e18d1d are public on feature branch origin/codex/fe2o3-current-main-repin-v1, but are not on main or final",
+  "Ferric checkpoint 756e813 is public on feature branch origin/codex/fe2o3-current-main-repin-v1, but is not on main or final",
   "12 K1-K7 entrypoints across 440 profiles",
   "545-packet target runner",
   "same-shape decode rearm",
-  "authenticated target rollover",
   "R33 V3 event-backed TTFT/TPOT records",
+  "new-window control-plane publication, restore, and scheduler-authority transaction is public",
+  "lower physical model/KV rebind remains unavailable and returns retryable RolloverUnavailable",
+  "Target8B=1 and Draft06B=2 weight-role byte has a positive Verus proof and rejected negative mutation",
   "Real Qwen3-8B and Qwen3-0.6B inputs are canonically prepacked",
-  "isolated vector-GEMM semantic SSA reached 94,192,887 against 67,108,864",
-  "aggregate-only result reached 3,188,438 storage words against the 2,097,152 limit",
-  "aggregate has not been rerun after current GEMM reductions",
+  "latest aggregate attempt stopped before Worker or link at repeated-slice semantic-to-ranked projection",
+  "reusable fe2o3 fix and the R33 daemon/wire foundation are in progress and not public",
   "aggregate Worker V3 HSACO is still absent",
   "protected execution profile and service socket",
   "No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint",
@@ -1075,11 +1090,15 @@ assert(
     dataSource.includes(expectedCurrent.fe2o3LatestMain) &&
     dataSource.includes("internal move-only non-authoritative program-source capability") &&
     dataSource.includes("The physical runner binds gfx942") &&
-    dataSource.includes("158 modules and 7,332 executable bodies") &&
-    dataSource.includes("Target-publication proof work is integrated at df79604") &&
-    dataSource.includes("isolated vector-GEMM semantic compile reported 94,192,887 SSA work against 67,108,864") &&
-    dataSource.includes("aggregate-only attempt reported 3,188,438 storage words against the 2,097,152 limit") &&
-    dataSource.includes("aggregate has not been rerun after current GEMM reductions") &&
+    dataSource.includes("159 modules and 7,429 executable bodies") &&
+    dataSource.includes("Public feature-branch checkpoint 756e813 has an exact source-gate inventory") &&
+    dataSource.includes("canonical Target8B=1 and Draft06B=2 weight-role byte") &&
+    dataSource.includes("rejected same-source mutation") &&
+    dataSource.includes("repeated-slice semantic-to-ranked projection") &&
+    dataSource.includes("reusable upstream correction is in progress and not public") &&
+    dataSource.includes("lower physical model/KV rebind remains unavailable") &&
+    dataSource.includes("retryable RolloverUnavailable") &&
+    dataSource.includes("daemon/wire foundation is in progress and not public") &&
     dataSource.includes("No aggregate HSACO, Qwen token, serving or HTTP endpoint") &&
     dataSource.includes("received independent GO") &&
     dataSource.includes("protected execution profile and protected service socket are absent") &&
