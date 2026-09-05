@@ -34,12 +34,12 @@ const expectedCurrent = Object.freeze({
   finalizedHsacoReinspectionCommit: "749324c9e287aaec688c8733c88becddc539b12e",
   fe2o3EngineeringSchemaCommit: "5099cf38c7bee0aa513a8cf9d5ce4efb56a0ffa8",
   fe2o3EngineeringSchemaTree: "e089a7e95eb4c103e61e973321ed79a7b1233364",
-  fe2o3CompilerCandidate: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
-  fe2o3CompilerCandidateTree: "3cfb4de14376272e1c22459e6bd926c403413c93",
-  fe2o3CompilerQualificationBase: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
-  fe2o3LatestMain: "c58785c1cefe210fa5a9b08c6465e3a5215ef50f",
+  fe2o3CompilerCandidate: "ab96e097be6654a1711b737d3ee740f6b449db48",
+  fe2o3CompilerCandidateTree: "9a9cdde977fdb48892e64cd2148378cc1c3102d1",
+  fe2o3CompilerQualificationBase: "4413b086482f2f4ad218f28e4485dc089d6cc020",
+  fe2o3LatestMain: "4413b086482f2f4ad218f28e4485dc089d6cc020",
   fe2o3GuardedSubtractionCommit: "e745bc75c",
-  fe2o3CompilerCandidateStatus: "reviewed-includes-current-main-exact-aggregate-open",
+  fe2o3CompilerCandidateStatus: "rebased-candidate-generic-running-verus-rocm-pending-not-main",
   productionSpeculativeExecutorCandidate: "0c2b73bfb8d4e62c100c42a125171c271c8850d8",
   productionSpeculativeExecutorTree: "00c4b8a04aab2f52af0f43de8a26a7e9564c5568",
   productionSpeculativeExecutorIntegrationCommit: "867f863e223d00e3b304d324e89146e27d2c5c28",
@@ -56,7 +56,7 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateAttemptOutputCount: 0,
   engineeringAggregateAttemptStatus: "remote-exact-current-source-incomplete-no-hsaco",
   followupProofFixStatus: "reviewed-guarded-subtraction-support-exact-aggregate-open",
-  fe2o3CurrentnessStatus: "candidate-includes-current-origin-main",
+  fe2o3CurrentnessStatus: "candidate-rebased-on-current-origin-main-not-published",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -319,7 +319,7 @@ assert(
       expectedCurrent.fe2o3CompilerQualificationBase,
     ) &&
     envelope.get("fe2o3 engineering producer")?.includes(expectedCurrent.fe2o3LatestMain) &&
-    envelope.get("fe2o3 engineering producer")?.includes("includes origin/main") &&
+    envelope.get("fe2o3 engineering producer")?.includes("includes current origin/main") &&
     envelope.get("fe2o3 engineering producer")?.includes(
       expectedCurrent.fe2o3GuardedSubtractionCommit,
     ) &&
@@ -357,16 +357,20 @@ assert(
 );
 assert(
   envelope.get("Engineering aggregate output")?.includes(
-    "Remote exact aggregate qualification",
+    "one aggregate Worker V3 publication",
   ) &&
-    envelope.get("Engineering aggregate output")?.includes("remains incomplete") &&
-    envelope.get("Engineering aggregate output")?.includes("zero aggregate outputs") &&
-    envelope.get("Engineering aggregate output")?.includes("no HSACO") &&
-    envelope.get("Engineering aggregate output")?.includes("No aggregate hardware execution") &&
+    envelope.get("Engineering aggregate output")?.includes("12 K1-K7 entrypoints") &&
+    envelope.get("Engineering aggregate output")?.includes("440 exact profiles") &&
+    envelope.get("Engineering aggregate output")?.includes(
+      "current aggregate HSACO has not been produced",
+    ) &&
+    envelope.get("Engineering aggregate output")?.includes("No current aggregate hardware execution") &&
     envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
+    envelope.get("Engineering aggregate output")?.includes("TTFT") &&
+    envelope.get("Engineering aggregate output")?.includes("TPOT") &&
     envelope.get("Engineering aggregate output")?.includes("vLLM/SGLang comparison") &&
     envelope.get("Engineering aggregate output")?.includes(
-      "artifact, or execution authority",
+      "artifact authority, or execution authority",
     ),
   "envelope must retain the current aggregate qualification and execution limits",
 );
@@ -386,26 +390,15 @@ assert(
   "aggregate build producer must require production config V2 observation",
 );
 assert(
-  envelope.get("Target-only engineering smoke")?.includes(
-    expectedCurrent.targetEngineeringSmokeCandidate,
-  ) &&
-    envelope.get("Target-only engineering smoke")?.includes(
-      expectedCurrent.targetEngineeringSmokeTree,
-    ) &&
-    envelope.get("Target-only engineering smoke")?.includes(
-      expectedCurrent.targetEngineeringSmokeIntegrationCommit,
-    ) &&
-    envelope.get("Target-only engineering smoke")?.includes("independent source-integration GO") &&
-    envelope.get("Target-only engineering smoke")?.includes("documentation-only correction") &&
-    envelope.get("Target-only engineering smoke")?.includes("511 engine library tests") &&
-    envelope.get("Target-only engineering smoke")?.includes("84 capture tests") &&
-    envelope.get("Target-only engineering smoke")?.includes("145 doctests") &&
-    envelope.get("Target-only engineering smoke")?.includes("all-target strict clippy") &&
-    envelope.get("Target-only engineering smoke")?.includes("exact locked final pin") &&
-    envelope.get("Target-only engineering smoke")?.includes("live hardware remain open") &&
-    envelope.get("Target-only engineering smoke")?.includes("not executed") &&
-    envelope.get("Target-only engineering smoke")?.includes("no Qwen token"),
-  "envelope must retain exact target-smoke integration, matrix, and execution limits",
+  envelope.get("Target-only engineering smoke")?.includes("gfx942 device binding") &&
+    envelope.get("Target-only engineering smoke")?.includes("physical KV partitioning") &&
+    envelope.get("Target-only engineering smoke")?.includes("545-packet target-only batch") &&
+    envelope.get("Target-only engineering smoke")?.includes("same-shape decode rearm") &&
+    envelope.get("Target-only engineering smoke")?.includes("8,192 fixed-trace decode rounds") &&
+    envelope.get("Target-only engineering smoke")?.includes("honest Qwen token") &&
+    envelope.get("Target-only engineering smoke")?.includes("TTFT") &&
+    envelope.get("Target-only engineering smoke")?.includes("TPOT"),
+  "envelope must expose the physical target runner without claiming execution or timing",
 );
 assert(
   envelope.get("R33 V2 serving comparison")?.includes(
@@ -521,13 +514,15 @@ assert(
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3CompilerQualificationBase) &&
     producerReadiness.detail.includes(expectedCurrent.fe2o3LatestMain) &&
-    producerReadiness.detail.includes(expectedCurrent.fe2o3GuardedSubtractionCommit) &&
-    producerReadiness.detail.includes("includes origin/main") &&
-    producerReadiness.detail.includes("Remote exact aggregate qualification remains incomplete") &&
-    producerReadiness.detail.includes("zero aggregate outputs and no HSACO") &&
+    producerReadiness.detail.includes("rebased on current origin/main") &&
+    producerReadiness.detail.includes("generic exact-SHA gate is running") &&
+    producerReadiness.detail.includes("Verus and ROCm pending") &&
+    producerReadiness.detail.includes("not on main") &&
     producerReadiness.detail.includes("compiler, runtime, and KFD work only") &&
     producerReadiness.detail.includes("Ferric owns model kernels and inference") &&
-    producerReadiness.detail.includes("No artifact, runtime, inference, or correctness authority"),
+    producerReadiness.detail.includes(
+      "No Ferric artifact, runtime result, inference result, or correctness authority",
+    ),
   "fe2o3 producer must retain the current ownership, proof status, and downstream nonclaims",
 );
 const executorReadiness = project.readiness.find(
@@ -551,8 +546,9 @@ assert(
     engineeringLoaderReadiness.detail.includes(expectedCurrent.engineeringAggregateLoaderTree) &&
     engineeringLoaderReadiness.detail.includes(expectedCurrent.engineeringAggregateLoaderIntegrationCommit) &&
     engineeringLoaderReadiness.detail.includes("independent review GO") &&
+    engineeringLoaderReadiness.detail.includes("internal move-only program-source capability") &&
     engineeringLoaderReadiness.detail.includes("cannot create Worker V3") &&
-    engineeringLoaderReadiness.detail.includes("no real aggregate HSACO"),
+    engineeringLoaderReadiness.detail.includes("no production aggregate HSACO"),
   "engineering loader must retain exact integration, nonauthority, and unused-output status",
 );
 const targetSmokeReadiness = project.readiness.find(
@@ -565,10 +561,10 @@ assert(
     targetSmokeReadiness.detail.includes(expectedCurrent.targetEngineeringSmokeIntegrationCommit) &&
     targetSmokeReadiness.detail.includes("independent source-integration GO") &&
     targetSmokeReadiness.detail.includes("documentation-only correction") &&
-    targetSmokeReadiness.detail.includes("511 engine library tests") &&
-    targetSmokeReadiness.detail.includes("84 capture tests") &&
-    targetSmokeReadiness.detail.includes("145 doctests") &&
-    targetSmokeReadiness.detail.includes("all-target strict clippy") &&
+    targetSmokeReadiness.detail.includes("shared engine controller") &&
+    targetSmokeReadiness.detail.includes("standalone adapter owns engineering compilation") &&
+    targetSmokeReadiness.detail.includes("delayed KFD open") &&
+    targetSmokeReadiness.detail.includes("first-token CLI report") &&
     targetSmokeReadiness.detail.includes("Exact locked final pinning") &&
     targetSmokeReadiness.detail.includes("live hardware execution remain open") &&
     targetSmokeReadiness.detail.includes("has not executed") &&
@@ -597,12 +593,10 @@ assert(
     qwenReadiness?.state === "open" &&
     qwenReadiness.detail.includes("CURRENT=None") &&
     qwenReadiness.detail.includes("canonical prepack result remains a non-final probe") &&
-    qwenReadiness.detail.includes("Durable checkpoint 5c5ddef") &&
-    qwenReadiness.detail.includes("aggregate production build config V2") &&
-    qwenReadiness.detail.includes("remote exact aggregate qualification remains incomplete") &&
-    qwenReadiness.detail.includes("source integration is not execution authority") &&
+    qwenReadiness.detail.includes("compiler pin, internal non-authoritative capability") &&
+    qwenReadiness.detail.includes("source integration, not execution authority") &&
     qwenReadiness.detail.includes(
-      "no current aggregate or engineering HSACO, Qwen token, aggregate hardware execution, numerical, performance, or baseline result exists",
+      "no production aggregate publication, serving endpoint, current Qwen token, aggregate hardware execution, numerical, performance, or baseline result exists",
     ),
   "Qwen, numerical, and performance authority must remain open",
 );
@@ -732,6 +726,56 @@ project.validation.transitions.forEach(([prior, next, state], index) => {
   assert(!transitionKeys.has(key), `duplicate transition ${prior} -> ${next}`);
   transitionKeys.add(key);
 });
+
+assert(Array.isArray(project.teams) && project.teams.length === 4, "teams must contain four rows");
+const expectedTeams = new Set(["Integration", "Kernel", "Engine", "Verification"]);
+project.teams.forEach((team, index) => {
+  assert(expectedTeams.delete(team.name), `teams[${index}] has an unexpected or duplicate name`);
+  assertState(team.state, `teams[${index}]`);
+  for (const key of ["scope", "status", "completed", "current", "blockedBy", "next", "validation"]) {
+    assert(
+      typeof team[key] === "string" && team[key].length > 0,
+      `teams[${index}].${key} must be a non-empty string`,
+    );
+  }
+  assert(team.status === "Making progress", `teams[${index}] must report active progress`);
+});
+assert(expectedTeams.size === 0, "teams must cover Integration, Kernel, Engine, and Verification");
+const integrationTeam = project.teams.find((team) => team.name === "Integration");
+const kernelTeam = project.teams.find((team) => team.name === "Kernel");
+const engineTeam = project.teams.find((team) => team.name === "Engine");
+const verificationTeam = project.teams.find((team) => team.name === "Verification");
+assert(
+  integrationTeam.completed.includes(expectedCurrent.fe2o3LatestMain.slice(0, 8)) &&
+    integrationTeam.completed.includes(expectedCurrent.fe2o3CompilerCandidate.slice(0, 8)) &&
+    integrationTeam.current.includes("generic qualification") &&
+    integrationTeam.current.includes("Verus and ROCm follow"),
+  "integration team must expose the exact candidate and remaining gates",
+);
+assert(
+  kernelTeam.completed.includes("12 K1-K7 entrypoints") &&
+    kernelTeam.completed.includes("440 exact profiles") &&
+    kernelTeam.blockedBy.includes("Worker V3 HSACO") &&
+    kernelTeam.next.includes("without moving Ferric-specific kernel code into fe2o3"),
+  "kernel team must expose roster, artifact dependency, and ownership",
+);
+assert(
+  engineTeam.completed.includes("545-packet batches") &&
+    engineTeam.completed.includes("d6c225f4") &&
+    engineTeam.completed.includes("deliberately dormant") &&
+    engineTeam.blockedBy.includes("partition-removal wrapper in fe2o3") &&
+    engineTeam.next.includes("TTFT") &&
+    engineTeam.next.includes("TPOT"),
+  "engine team must expose physical runtime progress and token-loop dependencies",
+);
+assert(
+  verificationTeam.completed.includes("462 verified and 0 errors") &&
+    verificationTeam.completed.includes("same-source mutation rejection") &&
+    verificationTeam.completed.includes("ba2b2149") &&
+    verificationTeam.current.includes("proofs/VERIFIED_MODULES") &&
+    verificationTeam.validation.includes("integration pending"),
+  "verification team must expose exact branch proof results and pending combined-tree integration",
+);
 
 const progressCommits = new Set();
 project.recentProgress.forEach((item, index) => {
@@ -863,28 +907,25 @@ for (const claim of forbiddenCurrentDependencyClaims) {
 for (const claim of [
   /fe2o3-production-build-config-v1/i,
   /exact aggregate qualification (?:is )?(?:complete|qualified|green)/i,
-  /(?:current|qualified|available) aggregate HSACO/i,
+  /(?:current|qualified|available) aggregate HSACO (?:is )?(?:ready|accepted|published|available)/i,
   /Qwen serving (?:is )?(?:ready|complete|running)/i,
   /vLLM\/SGLang comparison (?:is )?(?:complete|passed|green)/i,
 ]) {
   assert(!claim.test(currentProjectData), `current Pages data overclaims open work: ${claim}`);
 }
 for (const claim of [
-  "Durable Ferric checkpoint 5c5ddef requires fe2o3 production build config V2",
-  "source-isa-summary-v1 observation",
-  "Ferric owns 12 local Rust kernel roots across seven modules",
-  "no prebuilt or vendor kernel dependency",
-  "fe2o3 branch 80aaaf3 includes origin/main c58785c",
-  "reviewed guarded-subtraction support e745bc75c",
-  "compiler, runtime, and KFD work stays in fe2o3",
-  "model kernels and inference stay in Ferric",
-  "Remote exact aggregate qualification remains incomplete",
-  "grants no correctness or execution authority",
-  "publication selection remains None",
-  "CURRENT=None",
-  "No aggregate HSACO has been produced or executed on hardware",
-  "no current Qwen serving, numerical, performance, or vLLM/SGLang comparison result exists",
-  "All 33 M1 gates and all 17 assurance properties remain Open",
+  "fe2o3 candidate ab96e097be6654a1711b737d3ee740f6b449db48 is rebased on current origin/main",
+  "but it is not on main",
+  "generic exact-SHA gate is running",
+  "with Verus and ROCm pending",
+  "Compiler, runtime, and KFD work stays in fe2o3",
+  "Ferric owns all Qwen kernels and inference",
+  "12 K1-K7 entrypoints across 440 profiles",
+  "545-packet target runner",
+  "same-shape decode rearm",
+  "aggregate Worker V3 HSACO is still absent",
+  "d6c225f4 implements the exact target transition and scheduler as dormant source",
+  "No honest Qwen token, TTFT, TPOT, serving result, or vLLM/SGLang comparison exists",
 ]) {
   assert(normalizedHtml.includes(claim), `index.html is missing current claim: ${claim}`);
 }
@@ -957,25 +998,29 @@ assert(
     dataSource.includes("fe2o3-production-build-config-v2") &&
     dataSource.includes("source-isa-summary-v1") &&
     dataSource.includes("reviewed guarded-subtraction support") &&
-    dataSource.includes("Remote exact aggregate qualification") &&
-    dataSource.includes("zero aggregate outputs") &&
-    dataSource.includes("no HSACO") &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidate) &&
+    dataSource.includes(expectedCurrent.fe2o3CompilerCandidateTree) &&
+    dataSource.includes(expectedCurrent.fe2o3LatestMain) &&
+    dataSource.includes("internal move-only non-authoritative program-source capability") &&
+    dataSource.includes("The physical runner binds gfx942") &&
+    dataSource.includes("standalone adapter owns engineering compilation") &&
+    dataSource.includes("151 modules and 6,916 executable bodies") &&
+    dataSource.includes("462 verified and 0 errors") &&
+    dataSource.includes("combined-tree ledger regeneration") &&
+    dataSource.includes("current aggregate Worker V3 HSACO has not been produced") &&
+    dataSource.includes("honest Qwen token, TTFT, TPOT") &&
     dataSource.includes("received independent GO") &&
     dataSource.includes("independent source-integration GO") &&
     dataSource.includes("documentation-only correction") &&
-    dataSource.includes("511 engine library tests") &&
-    dataSource.includes("84 capture tests") &&
-    dataSource.includes("145 doctests") &&
-    dataSource.includes("all-target strict clippy") &&
-    dataSource.includes("exact locked final pinning and live hardware execution remain open") &&
-    dataSource.includes("smoke has not executed") &&
+    dataSource.includes("Exact locked final pinning and live hardware execution remain open") &&
+    dataSource.includes("diagnostic has not executed") &&
     dataSource.includes("GPU availability and baseline container access were not revalidated") &&
     dataSource.includes("No baseline server was launched") &&
     dataSource.includes("passed 28 tests and 6 doctests") &&
     dataSource.includes("independent review returned GO with no P0, P1, or P2 findings") &&
     dataSource.includes("not public main or deployed authority") &&
     dataSource.includes("not deployed") &&
-    dataSource.includes("no current aggregate or engineering HSACO, Qwen token") &&
+    dataSource.includes("no current aggregate Worker V3 HSACO, honest Qwen token") &&
     dataSource.includes("All 33 M1 roadmap gates and all 17 assurance properties remain Open"),
   "Pages data must retain service, executor, loader, compiler, baseline, Qwen, selection, and all-open claims",
 );
@@ -984,6 +1029,7 @@ for (const target of [
   "data-capabilities",
   "data-validation",
   "data-transitions",
+  "data-teams",
   "data-boundaries",
   "data-observation",
   "data-progress",
