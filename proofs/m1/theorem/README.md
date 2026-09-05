@@ -50,6 +50,11 @@ publication requires paired-prefill shape and a rollover observation.
 Syntactic tests pin those model phases to exact production source and
 constructor ordering. They are not a refinement proof of the production
 runner, provider, queue/KFD behavior, or registry publication.
+The physical-new-window cardinality row proves the independent executable
+planner returns reuse equal to the smaller old/new count, reclaim equal to the
+remaining predecessor count, and admissions equal to the remaining successor
+count after rejecting empty or over-capacity windows. It grants no scheduler,
+KV, queue, device, or runtime-transition authority.
 
 `run-same-source.sh` accepts a clean committed Ferric worktree and the exact
 pinned Verus release. It records the source commit, tree, complete M1 source

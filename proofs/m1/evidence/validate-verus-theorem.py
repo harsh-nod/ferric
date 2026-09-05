@@ -315,6 +315,16 @@ EXPECTED_ROWS = (
         "m1_ferric_operator_refinement_composition_theorem",
     ),
     (
+        "physical-new-window-cardinality",
+        "physical-new-window-cardinality",
+        "scheduler_refined",
+        "physical-runner",
+        "ferric-spec",
+        "crates/ferric-spec/src/m1_new_window_cardinality.rs",
+        "m1_new_window_cardinality",
+        "plan_m1_new_window_cardinality_v1",
+    ),
+    (
         "physical-new-window-commit-custody",
         "physical-new-window-commit-custody",
         "scheduler_refined",

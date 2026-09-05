@@ -9,7 +9,7 @@ composition, canonical manifest commitment authentication, exact kernel
 catalog processor/target-feature conformance, the Ferric declaration
 structure-and-presence selector, and caller-supplied finite K1-K7 resource,
 initialized-range, and same-phase access certificates, plus the bounded
-physical-new-window commit/custody model.
+physical-new-window commit/custody model and pure variable-cardinality planner.
 
 Each row binds one unique body mutation and contract clause to:
 
@@ -21,7 +21,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact twenty-nine-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact thirty-three-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -81,7 +81,7 @@ the source-level structural match and identity-presence boundary; it does not
 authenticate canonical identity bytes or the production resolver and grants no
 compiler, runtime, ABI, load, launch, GPU, numerical, or hardware authority.
 
-The three physical-new-window mutations alter only selected executable model
+The three physical-new-window commit/custody mutations alter only selected executable model
 bodies. One incorrectly quarantines a read-only rejection, one admits a roster
 without checking the same-slot previous-generation predecessor set across
 current and historical terminal custody, and one incorrectly leaves the engine
@@ -89,6 +89,11 @@ healthy after a committed physical-submission failure. Each must violate an
 exact model postcondition under pinned Verus. Source-policy tests separately
 pin the modeled boundaries to production source order; these rows do not prove
 that the runner, provider, queue/KFD, or registry refines the model.
+
+The three cardinality mutations replace one of the executable reuse, reclaim,
+or admission formulas. Pinned Verus must reject each change against the exact
+mathematical planner result. This proves only pure bounded count arithmetic;
+it does not prove runtime slot selection, mutation order, or failure custody.
 
 Run the structural policy directly:
 

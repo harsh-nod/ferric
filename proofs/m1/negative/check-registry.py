@@ -150,6 +150,22 @@ EXPECTED = {
         "operation_kernel_plan", "select_declared_operator_certificate",
         "profile-identity-presence",
     ),
+    "physical-new-window-admit-count": (
+        "physical-new-window-cardinality", "scheduler_refined",
+        "physical-runner", "ferric-spec",
+        "crates/ferric-spec/src/m1_new_window_cardinality.rs",
+        "physical-new-window-admit-count.py", "postcondition",
+        "m1_new_window_cardinality", "plan_m1_new_window_cardinality_v1",
+        "admit-successor-difference",
+    ),
+    "physical-new-window-reclaim-count": (
+        "physical-new-window-cardinality", "scheduler_refined",
+        "physical-runner", "ferric-spec",
+        "crates/ferric-spec/src/m1_new_window_cardinality.rs",
+        "physical-new-window-reclaim-count.py", "postcondition",
+        "m1_new_window_cardinality", "plan_m1_new_window_cardinality_v1",
+        "reclaim-predecessor-difference",
+    ),
     "physical-new-window-predecessor-set": (
         "physical-new-window-commit-custody", "scheduler_refined",
         "physical-runner", "ferric-m1-proof",
@@ -165,6 +181,14 @@ EXPECTED = {
         "physical-new-window-retry-quarantine.py", "postcondition",
         "physical_new_window", "execute_m1_physical_new_window_transaction_v1",
         "precommit-retry-not-quarantined",
+    ),
+    "physical-new-window-reuse-count": (
+        "physical-new-window-cardinality", "scheduler_refined",
+        "physical-runner", "ferric-spec",
+        "crates/ferric-spec/src/m1_new_window_cardinality.rs",
+        "physical-new-window-reuse-count.py", "postcondition",
+        "m1_new_window_cardinality", "plan_m1_new_window_cardinality_v1",
+        "reuse-minimum-cardinality",
     ),
     "physical-new-window-terminal-quarantine": (
         "physical-new-window-commit-custody", "scheduler_refined",

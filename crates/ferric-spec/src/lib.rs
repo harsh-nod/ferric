@@ -15,6 +15,7 @@ mod graph;
 mod identity;
 mod m1_completion;
 pub mod m1_foundation_theorems;
+pub mod m1_new_window_cardinality;
 mod m1_qualification_context;
 mod m1_step_inputs;
 pub mod paged_kv_refinement;
@@ -49,6 +50,10 @@ pub use identity::{Identity, RequestId};
 pub use m1_completion::{
     select_lowest_argmax, validate_compact_completion, CompactCompletionError,
     CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+};
+pub use m1_new_window_cardinality::{
+    plan_m1_new_window_cardinality_v1, M1NewWindowCardinalityPlanErrorV1,
+    M1NewWindowCardinalityPlanV1,
 };
 pub use m1_qualification_context::{
     m1_qualification_context_plan, m1_qualification_context_plan_identity,
