@@ -85,6 +85,48 @@ SUMMARY_KEYS = (
 )
 TCB_IDS = ("tcb.compiler", "tcb.hardware", "tcb.runtime")
 TCB_KINDS = ("Compiler", "Hardware", "Runtime")
+EXPECTED_R33_ROWS = (
+    (
+        "r33-daemon-dispatch-refinement",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33_daemon_lifecycle",
+        "dispatch_m1_r33_daemon_action_v1",
+    ),
+    (
+        "r33-daemon-fault-stop-replay",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33_daemon_lifecycle",
+        "m1_r33_daemon_fault_stop_replay_theorem",
+    ),
+    (
+        "r33-daemon-response-refinement",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33_daemon_lifecycle",
+        "resolve_m1_r33_daemon_response_v1",
+    ),
+    (
+        "r33-daemon-successful-lifecycle",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33_daemon_lifecycle",
+        "m1_r33_daemon_successful_lifecycle_theorem",
+    ),
+)
 FixtureMutation = Callable[[Path, dict[str, Any], tuple[str, ...]], None]
 
 
@@ -617,8 +659,12 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 23 or not active:
+    if len(rows) != 27 or not active:
         fail("M1 positive-theorem registry baseline drifted")
+    if tuple(row for row in rows if row[0].startswith("r33-daemon-")) != (
+        EXPECTED_R33_ROWS
+    ):
+        fail("M1 R33 positive-theorem registry rows drifted")
     row = next(selected for selected in rows if selected[0] == "batching-publish-once")
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
         root = Path(scratch)
