@@ -128,6 +128,12 @@ pub enum M1DirectDiagnosticChoicesErrorV1 {
         expected: u64,
         actual: u64,
     },
+    /// A copied range came from another addressless dispatch-data ordinal.
+    ReadbackDataIndex {
+        lane: usize,
+        expected: usize,
+        actual: usize,
+    },
     /// A copied range began at another allocation offset.
     ReadbackOffset {
         lane: usize,
@@ -167,6 +173,7 @@ pub struct BoundM1DirectDiagnosticChoicesV1 {
     shape: M1DirectDiagnosticChoicesShapeV1,
     key: ChoiceAllocationKeyV1,
     range: ServiceHostDispatchRangeV1,
+    data_index: usize,
 }
 
 impl BoundM1DirectDiagnosticChoicesV1 {
@@ -391,6 +398,7 @@ fn allocate(
     let requested = usize::try_from(shape.extent_bytes)
         .map_err(|_| M1DirectDiagnosticChoicesErrorV1::Overflow)?;
     let initialized = initial_image(requested)?;
+    let data_index = allocations.allocation_count();
     let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
     validate_key(key, shape.extent_bytes)?;
     let typed = allocations.range(
@@ -400,7 +408,12 @@ fn allocate(
         M1_DIRECT_DIAGNOSTIC_CHOICE_ALIGNMENT_V1,
     )?;
     let range = allocations.host_dispatch_range(typed)?;
-    Ok(BoundM1DirectDiagnosticChoicesV1 { shape, key, range })
+    Ok(BoundM1DirectDiagnosticChoicesV1 {
+        shape,
+        key,
+        range,
+        data_index,
+    })
 }
 
 fn initial_image(requested_bytes: usize) -> Result<Box<[u8]>, M1DirectDiagnosticChoicesErrorV1> {
@@ -483,11 +496,18 @@ pub(crate) fn observe_m1_direct_diagnostic_choices_v1(
         };
         if let Err(error) = validate_readback_coordinates(
             lane,
-            dispatch_generation,
-            expected.offset_bytes(),
-            readback.dispatch_generation(),
-            readback.offset_bytes(),
-            u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
+            (
+                dispatch_generation,
+                owner.data_index,
+                expected.offset_bytes(),
+                TOKEN_BYTES,
+            ),
+            (
+                readback.dispatch_generation(),
+                readback.data_index(),
+                readback.offset_bytes(),
+                u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
+            ),
         ) {
             return Err((error, readbacks));
         }
@@ -528,17 +548,23 @@ pub(crate) fn observe_m1_direct_diagnostic_choices_v1(
 
 fn validate_readback_coordinates(
     lane: usize,
-    expected_generation: u64,
-    expected_offset: u64,
-    actual_generation: u64,
-    actual_offset: u64,
-    actual_extent: u64,
+    expected: (u64, usize, u64, u64),
+    actual: (u64, usize, u64, u64),
 ) -> Result<(), M1DirectDiagnosticChoicesErrorV1> {
+    let (expected_generation, expected_data_index, expected_offset, expected_extent) = expected;
+    let (actual_generation, actual_data_index, actual_offset, actual_extent) = actual;
     if actual_generation != expected_generation {
         return Err(M1DirectDiagnosticChoicesErrorV1::DispatchGeneration {
             lane,
             expected: expected_generation,
             actual: actual_generation,
+        });
+    }
+    if actual_data_index != expected_data_index {
+        return Err(M1DirectDiagnosticChoicesErrorV1::ReadbackDataIndex {
+            lane,
+            expected: expected_data_index,
+            actual: actual_data_index,
         });
     }
     if actual_offset != expected_offset {
@@ -548,10 +574,10 @@ fn validate_readback_coordinates(
             actual: actual_offset,
         });
     }
-    if actual_extent != TOKEN_BYTES {
+    if actual_extent != expected_extent {
         return Err(M1DirectDiagnosticChoicesErrorV1::ReadbackExtent {
             lane,
-            expected: TOKEN_BYTES,
+            expected: expected_extent,
             actual: actual_extent,
         });
     }
@@ -695,18 +721,22 @@ mod tests {
     }
 
     #[test]
-    fn readback_generation_offset_and_extent_are_exact() {
-        assert!(validate_readback_coordinates(0, 7, 128, 7, 128, 4).is_ok());
+    fn readback_generation_data_index_offset_and_extent_are_exact() {
+        assert!(validate_readback_coordinates(0, (7, 31, 128, 4), (7, 31, 128, 4)).is_ok());
         assert!(matches!(
-            validate_readback_coordinates(0, 7, 128, 8, 128, 4),
+            validate_readback_coordinates(0, (7, 31, 128, 4), (8, 31, 128, 4)),
             Err(M1DirectDiagnosticChoicesErrorV1::DispatchGeneration { .. })
         ));
         assert!(matches!(
-            validate_readback_coordinates(0, 7, 128, 7, 132, 4),
+            validate_readback_coordinates(0, (7, 31, 128, 4), (7, 32, 128, 4)),
+            Err(M1DirectDiagnosticChoicesErrorV1::ReadbackDataIndex { .. })
+        ));
+        assert!(matches!(
+            validate_readback_coordinates(0, (7, 31, 128, 4), (7, 31, 132, 4)),
             Err(M1DirectDiagnosticChoicesErrorV1::ReadbackOffset { .. })
         ));
         assert!(matches!(
-            validate_readback_coordinates(0, 7, 128, 7, 128, 8),
+            validate_readback_coordinates(0, (7, 31, 128, 4), (7, 31, 128, 8)),
             Err(M1DirectDiagnosticChoicesErrorV1::ReadbackExtent { .. })
         ));
     }

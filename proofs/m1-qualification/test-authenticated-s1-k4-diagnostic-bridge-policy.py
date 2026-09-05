@@ -24,10 +24,12 @@ def main() -> None:
     root = Path(sys.argv[1] if len(sys.argv) == 2 else ".").resolve()
     readback_path = root / "crates/ferric-engine/src/authenticated_physical_readback.rs"
     choices_path = root / "crates/ferric-engine/src/speculative_diagnostic_choices.rs"
+    direct_choices_path = root / "crates/ferric-engine/src/direct_diagnostic_choices.rs"
     rearm_path = root / "crates/ferric-engine/src/authenticated_queue_rearm.rs"
     queue_path = root / "crates/ferric-engine/src/authenticated_physical_queue.rs"
     readback = readback_path.read_text(encoding="utf-8")
     choices = choices_path.read_text(encoding="utf-8")
+    direct_choices = direct_choices_path.read_text(encoding="utf-8")
     rearm = rearm_path.read_text(encoding="utf-8")
     queue = queue_path.read_text(encoding="utf-8")
 
@@ -90,6 +92,47 @@ def main() -> None:
         choices,
         "validate_readback_coordinates((31, 7, 64, 16), (31, 8, 64, 16))",
         "hostile data-index test",
+    )
+    require(direct_choices, "data_index: usize", "retained direct-choice data ordinal")
+    require(
+        direct_choices,
+        "let data_index = allocations.allocation_count();",
+        "direct-choice data ordinal derivation",
+    )
+    require(
+        direct_choices,
+        "ReadbackDataIndex {",
+        "direct-choice data-index rejection",
+    )
+    require(
+        direct_choices,
+        "readback.data_index()",
+        "completed direct-choice data-index check",
+    )
+    require(
+        direct_choices,
+        "readback_generation_data_index_offset_and_extent_are_exact",
+        "hostile direct-choice data-index test",
+    )
+    direct_validation = direct_choices.split("fn validate_readback_coordinates(", 1)[1].split(
+        "#[cfg(test)]", 1
+    )[0]
+    data_index_check = require(
+        direct_validation,
+        "if actual_data_index != expected_data_index {",
+        "direct-choice data-index inequality",
+    )
+    offset_check = require(
+        direct_validation,
+        "if actual_offset != expected_offset {",
+        "direct-choice offset inequality",
+    )
+    if data_index_check > offset_check:
+        fail("direct-choice data index is not rejected before offset validation")
+    require(
+        direct_choices,
+        "validate_readback_coordinates(0, (7, 31, 128, 4), (7, 32, 128, 4))",
+        "hostile direct-choice data-index mutation anchor",
     )
 
     require(readback, '"partial-non-evidence"', "explicit authority demotion")
