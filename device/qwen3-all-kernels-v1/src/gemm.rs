@@ -736,10 +736,7 @@ mod tests {
         const TARGET_ROWS: &[usize] = &[1, 5, 8, 9, 17, 32, 40, 128, 512, 1_024, 2_048];
         const DRAFT_ROWS: &[usize] = &[1, 4, 8, 16, 32, 128, 512, 1_024, 2_048];
 
-        for (shapes, row_counts) in [
-            (TARGET_SHAPES, TARGET_ROWS),
-            (DRAFT_SHAPES, DRAFT_ROWS),
-        ] {
+        for (shapes, row_counts) in [(TARGET_SHAPES, TARGET_ROWS), (DRAFT_SHAPES, DRAFT_ROWS)] {
             for &(n, k) in shapes {
                 for &m in row_counts {
                     let row = m - 1;
