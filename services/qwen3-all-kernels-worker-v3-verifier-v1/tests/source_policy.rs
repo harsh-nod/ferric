@@ -8,10 +8,13 @@ fn connected_path_service_policy(service: &str, library: &str, readme: &str) -> 
     let production = service.split("#[cfg(test)]").next().unwrap_or(service);
     let unnamed_marker = "pub fn run_ferric_protected_verifier_session_v2";
     let accepted_marker = "pub fn run_ferric_protected_verifier_accepted_session_v2";
+    let accepted_until_marker =
+        "pub(crate) fn run_ferric_protected_verifier_accepted_session_until_v2";
     let parameters_marker = "fn service_admission_parameters_v2";
     let core_marker = "fn run_ferric_protected_verifier_post_begin_v2";
     if production.matches(unnamed_marker).count() != 1
         || production.matches(accepted_marker).count() != 1
+        || production.matches(accepted_until_marker).count() != 1
         || production.matches(parameters_marker).count() != 1
         || production.matches(core_marker).count() != 1
         || production
@@ -21,7 +24,7 @@ fn connected_path_service_policy(service: &str, library: &str, readme: &str) -> 
         || production
             .matches("run_ferric_protected_verifier_post_begin_v2(begin, deadline, config)")
             .count()
-            != 2
+            != 3
     {
         return false;
     }
@@ -31,17 +34,25 @@ fn connected_path_service_policy(service: &str, library: &str, readme: &str) -> 
     let Some(accepted_at) = production.find(accepted_marker) else {
         return false;
     };
+    let Some(accepted_until_at) = production.find(accepted_until_marker) else {
+        return false;
+    };
     let Some(parameters_at) = production.find(parameters_marker) else {
         return false;
     };
     let Some(core_at) = production.find(core_marker) else {
         return false;
     };
-    if !(unnamed_at < accepted_at && accepted_at < parameters_at && parameters_at < core_at) {
+    if !(unnamed_at < accepted_at
+        && accepted_at < accepted_until_at
+        && accepted_until_at < parameters_at
+        && parameters_at < core_at)
+    {
         return false;
     }
     let unnamed = &production[unnamed_at..accepted_at];
-    let accepted = &production[accepted_at..parameters_at];
+    let accepted = &production[accepted_at..accepted_until_at];
+    let accepted_until = &production[accepted_until_at..parameters_at];
     let core = &production[core_at..];
     if !unnamed.contains("begin_worker_v3_verification_session_until_v2(")
         || unnamed.contains("begin_worker_v3_verification_accepted_session_until_v2(")
@@ -49,6 +60,10 @@ fn connected_path_service_policy(service: &str, library: &str, readme: &str) -> 
         || !accepted.contains("begin_worker_v3_verification_accepted_session_until_v2(")
         || accepted.contains("control: OwnedFd")
         || accepted.contains("begin_worker_v3_verification_session_until_v2(")
+        || !accepted_until.contains("deadline: AbsoluteSessionDeadlineV1")
+        || !accepted_until.contains("begin_worker_v3_verification_accepted_session_until_v2(")
+        || accepted_until.contains("service_admission_parameters_v2(config)?")
+        || accepted_until.contains("AbsoluteSessionDeadlineV1::after(")
         || core.contains("begin_worker_v3_verification_session_until_v2(")
         || core.contains("begin_worker_v3_verification_accepted_session_until_v2(")
     {

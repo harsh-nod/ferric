@@ -48,7 +48,7 @@ const _: [(); REQUIRED_ROSTER_ENTRIES] = [(); M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_
 pub struct AbsoluteSessionDeadlineV1(Instant);
 
 impl AbsoluteSessionDeadlineV1 {
-    fn after(timeout: Duration) -> Option<Self> {
+    pub(crate) fn after(timeout: Duration) -> Option<Self> {
         Instant::now().checked_add(timeout).map(Self)
     }
 
@@ -107,6 +107,18 @@ impl ServiceCallerPolicyV1 {
 
     fn matches_caller(self, caller: WorkerV3VerificationCallerV1) -> bool {
         caller.pid() == self.pid && caller.uid() == self.uid && caller.gid() == self.gid
+    }
+
+    pub(crate) const fn pid(self) -> u32 {
+        self.pid
+    }
+
+    pub(crate) const fn uid(self) -> u32 {
+        self.uid
+    }
+
+    pub(crate) const fn gid(self) -> u32 {
+        self.gid
     }
 }
 
@@ -509,6 +521,14 @@ where
     pub const fn grants_authority(&self) -> bool {
         false
     }
+
+    pub(crate) const fn caller_policy(&self) -> ServiceCallerPolicyV1 {
+        self.caller
+    }
+
+    pub(crate) const fn timeout(&self) -> Duration {
+        self.timeout
+    }
 }
 
 /// Configuration rejection before any connection is admitted.
@@ -739,6 +759,31 @@ where
     run_ferric_protected_verifier_post_begin_v2(begin, deadline, config)
 }
 
+pub(crate) fn run_ferric_protected_verifier_accepted_session_until_v2<C, K, S>(
+    endpoint: WorkerV3VerificationAcceptedServiceEndpointV2,
+    deadline: AbsoluteSessionDeadlineV1,
+    config: &mut FerricProtectedVerifierServiceConfigV1<C, K, S>,
+) -> Result<FerricProtectedVerifierServiceOutcomeV1, FerricProtectedVerifierServiceFailureV1>
+where
+    C: ProtectedCompilerCurrentRecordProviderV1,
+    K: IndependentCheckerProviderV1,
+    S: ProtectedReceiptSignerProviderV1,
+{
+    let resolvers = service_admission_resolvers_v2(config)?;
+    let mut policy_resolver = resolvers;
+    let mut measurement_resolver = resolvers;
+    let begin = begin_worker_v3_verification_accepted_session_until_v2(
+        endpoint,
+        deadline.instant(),
+        &mut policy_resolver,
+        &mut measurement_resolver,
+        &mut config.replay_guard,
+        &mut config.reservations,
+    )
+    .map_err(FerricProtectedVerifierServiceFailureV1::Begin)?;
+    run_ferric_protected_verifier_post_begin_v2(begin, deadline, config)
+}
+
 fn service_admission_parameters_v2<C, K, S>(
     config: &FerricProtectedVerifierServiceConfigV1<C, K, S>,
 ) -> Result<
@@ -747,6 +792,12 @@ fn service_admission_parameters_v2<C, K, S>(
 > {
     let deadline = AbsoluteSessionDeadlineV1::after(config.timeout)
         .ok_or(FerricProtectedVerifierServiceFailureV1::DeadlineOverflow)?;
+    Ok((deadline, service_admission_resolvers_v2(config)?))
+}
+
+fn service_admission_resolvers_v2<C, K, S>(
+    config: &FerricProtectedVerifierServiceConfigV1<C, K, S>,
+) -> Result<AdmissionResolversV1, FerricProtectedVerifierServiceFailureV1> {
     let policy =
         WorkerV3VerificationPolicyIdentityV1::new(*config.trust_policy.identity().as_bytes())
             .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
@@ -754,14 +805,11 @@ fn service_admission_parameters_v2<C, K, S>(
         config.trust_policy.verifier_measurement_sha256(),
     )
     .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
-    Ok((
-        deadline,
-        AdmissionResolversV1 {
-            caller: config.caller,
-            policy,
-            measurement,
-        },
-    ))
+    Ok(AdmissionResolversV1 {
+        caller: config.caller,
+        policy,
+        measurement,
+    })
 }
 
 fn run_ferric_protected_verifier_post_begin_v2<C, K, S>(

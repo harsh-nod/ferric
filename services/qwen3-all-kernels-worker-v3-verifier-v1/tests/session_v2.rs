@@ -3,13 +3,13 @@
 use std::fs::File;
 use std::io::Write;
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{PermissionsExt, symlink};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use ed25519_dalek::{Signer, SigningKey};
 use fe2o3_compiler_execution_protocol::{
@@ -40,7 +40,8 @@ use fe2o3_worker_v3_verification_service::{
 };
 use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::{
     AuthenticatedCompilerCurrentRecordV1, DurableReplayGuardV1, DurableReservationProviderV2,
-    EntropyObjectIdentityV1, FerricProtectedVerifierServiceConfigErrorV1,
+    EntropyObjectIdentityV1, FerricProtectedVerifierListenerFailureReasonV2,
+    FerricProtectedVerifierListenerFailureV2, FerricProtectedVerifierServiceConfigErrorV1,
     FerricProtectedVerifierServiceConfigV1, FerricProtectedVerifierServiceFailureV1,
     FerricProtectedVerifierServiceOutcomeV1, IndependentCheckerInputV1,
     IndependentCheckerProviderV1, IndependentCheckerVerifiedClaimsV1, LedgerObjectIdentityV1,
@@ -49,7 +50,8 @@ use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::{
     ProtectedLedgerKindV1, ProtectedLedgerReplacementAuthorizationV1,
     ProtectedLedgerStorageCapabilityV1, ProtectedPolicyRevocationV1, ProtectedReceiptSignerInputV1,
     ProtectedReceiptSignerProviderV1, ServiceApplicationRejectionV1, ServiceCallerPolicyV1,
-    run_ferric_protected_verifier_accepted_session_v2, run_ferric_protected_verifier_session_v2,
+    run_ferric_protected_verifier_accepted_session_v2,
+    run_ferric_protected_verifier_listener_session_v2, run_ferric_protected_verifier_session_v2,
 };
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
     M1AllKernelsProtectedReceiptRequestClaimsV1, M1AllKernelsProtectedReceiptSourcePinV1,
@@ -474,6 +476,13 @@ fn prepared_path_listener() -> (tempfile::TempDir, PathBuf, OwnedFd) {
     (root, path, listener)
 }
 
+fn private_listener_root() -> tempfile::TempDir {
+    tempfile::Builder::new()
+        .permissions(std::fs::Permissions::from_mode(0o700))
+        .tempdir()
+        .unwrap()
+}
+
 fn ledger_identity(file: &impl AsFd) -> LedgerObjectIdentityV1 {
     let stat = rustix::fs::fstat(file).unwrap();
     LedgerObjectIdentityV1::new(
@@ -805,20 +814,331 @@ fn full_v2_connected_path_session_returns_a_valid_ed25519_signed_ferric_response
 }
 
 #[test]
+fn one_shot_listener_serves_one_exact_credentialed_path_session_at_mode_0600() {
+    let request = request();
+    let root = private_listener_root();
+    let path = root.path().join("ferric-listener.sock");
+    let child = spawn_connected_path_client(&path);
+    let child_pid = child.id();
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config_for_caller(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_secs(5),
+        child_pid,
+    )
+    .unwrap();
+    let outcome = run_ferric_protected_verifier_listener_session_v2(&path, &mut config).unwrap();
+    assert!(matches!(
+        outcome,
+        FerricProtectedVerifierServiceOutcomeV1::Completed(_)
+    ));
+    assert!(!path.exists());
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "one-shot listener client failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn listener_rejects_wrong_pid_and_returns_the_exact_accepted_endpoint() {
+    let request = request();
+    let root = private_listener_root();
+    let path = root.path().join("wrong-pid.sock");
+    let child = spawn_connected_path_client(&path);
+    let wrong_pid = child.id().checked_add(1).unwrap();
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config_for_caller(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_secs(5),
+        wrong_pid,
+    )
+    .unwrap();
+    let failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &path,
+        &mut config,
+    ));
+    assert_eq!(
+        failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::PeerIdentityMismatch
+    );
+    let observed = failure
+        .observed_peer_credentials()
+        .expect("identity rejection must report admitted kernel credentials");
+    assert_eq!(observed.pid(), child.id());
+    assert_eq!(observed.uid(), rustix::process::geteuid().as_raw());
+    assert_eq!(observed.gid(), rustix::process::getegid().as_raw());
+    let accepted = failure
+        .into_accepted_endpoint()
+        .expect("credential rejection must return accepted custody");
+    assert_eq!(
+        rustix::net::sockopt::socket_type(&accepted).unwrap(),
+        SocketType::SEQPACKET
+    );
+    drop(accepted);
+    assert!(!path.exists());
+    let output = child.wait_with_output().unwrap();
+    assert!(!output.status.success());
+}
+
+#[test]
+fn listener_deadline_is_bounded_and_cleans_only_its_owned_socket() {
+    let request = request();
+    let root = private_listener_root();
+    let path = root.path().join("deadline.sock");
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config_for_caller(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_millis(25),
+        std::process::id(),
+    )
+    .unwrap();
+    let started = Instant::now();
+    let failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &path,
+        &mut config,
+    ));
+    assert_eq!(
+        failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::DeadlineExpired,
+        "{failure:?}"
+    );
+    assert!(started.elapsed() < Duration::from_secs(2));
+    assert!(!path.exists());
+}
+
+#[test]
+fn listener_rejects_stale_nodes_and_symlinked_parents_without_removing_them() {
+    let request = request();
+    let root = private_listener_root();
+    let stale = root.path().join("stale.sock");
+    std::fs::write(&stale, b"retained-stale-node").unwrap();
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_secs(1),
+    )
+    .unwrap();
+    let stale_failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &stale,
+        &mut config,
+    ));
+    assert_eq!(
+        stale_failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::PathAlreadyExists
+    );
+    assert_eq!(std::fs::read(&stale).unwrap(), b"retained-stale-node");
+
+    let stale_link = root.path().join("stale-link.sock");
+    symlink(&stale, &stale_link).unwrap();
+    let link_failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &stale_link,
+        &mut config,
+    ));
+    assert_eq!(
+        link_failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::PathAlreadyExists
+    );
+    assert_eq!(std::fs::read_link(&stale_link).unwrap(), stale);
+
+    let real_parent = root.path().join("real-parent");
+    let linked_parent = root.path().join("linked-parent");
+    std::fs::create_dir(&real_parent).unwrap();
+    symlink(&real_parent, &linked_parent).unwrap();
+    let through_link = linked_parent.join("verifier.sock");
+    let parent_failure = expect_listener_failure(
+        run_ferric_protected_verifier_listener_session_v2(&through_link, &mut config),
+    );
+    assert_eq!(
+        parent_failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::ParentAdmission
+    );
+    assert!(!real_parent.join("verifier.sock").exists());
+}
+
+#[test]
+fn listener_cleanup_refuses_to_remove_a_substituted_path_node() {
+    let request = request();
+    let root = private_listener_root();
+    let path = root.path().join("substituted.sock");
+    let substitute_path = path.clone();
+    let substitute = thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            match std::fs::symlink_metadata(&substitute_path) {
+                Ok(_) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    assert!(
+                        Instant::now() < deadline,
+                        "listener path was never published"
+                    );
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(error) => panic!("inspect listener path: {error}"),
+            }
+        }
+        std::fs::remove_file(&substitute_path).unwrap();
+        std::fs::write(&substitute_path, b"substitute-must-survive").unwrap();
+    });
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_millis(50),
+    )
+    .unwrap();
+    let failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &path,
+        &mut config,
+    ));
+    substitute.join().unwrap();
+    assert_eq!(
+        failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::PathIdentityChanged
+    );
+    assert_eq!(std::fs::read(&path).unwrap(), b"substitute-must-survive");
+}
+
+#[test]
+fn listener_cleanup_uses_the_retained_parent_when_the_ambient_parent_is_replaced() {
+    let request = request();
+    let root = private_listener_root();
+    let parent = root.path().join("service-private");
+    let moved_parent = root.path().join("service-private-moved");
+    std::fs::create_dir(&parent).unwrap();
+    std::fs::set_permissions(&parent, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let path = parent.join("parent-substituted.sock");
+    let swap_path = path.clone();
+    let swap_parent = parent.clone();
+    let swap_moved = moved_parent.clone();
+    let substitute = thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            match std::fs::symlink_metadata(&swap_path) {
+                Ok(_) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    assert!(
+                        Instant::now() < deadline,
+                        "listener path was never published"
+                    );
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(error) => panic!("inspect listener path: {error}"),
+            }
+        }
+        std::fs::rename(&swap_parent, &swap_moved).unwrap();
+        std::fs::create_dir(&swap_parent).unwrap();
+        std::fs::set_permissions(&swap_parent, std::fs::Permissions::from_mode(0o700)).unwrap();
+        std::fs::write(&swap_path, b"new-parent-substitute").unwrap();
+    });
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_millis(50),
+    )
+    .unwrap();
+    let failure = expect_listener_failure(run_ferric_protected_verifier_listener_session_v2(
+        &path,
+        &mut config,
+    ));
+    substitute.join().unwrap();
+    assert_eq!(
+        failure.reason(),
+        FerricProtectedVerifierListenerFailureReasonV2::PathIdentityChanged
+    );
+    assert_eq!(std::fs::read(&path).unwrap(), b"new-parent-substitute");
+    assert!(!moved_parent.join("parent-substituted.sock").exists());
+}
+
+fn spawn_connected_path_client(path: &std::path::Path) -> std::process::Child {
+    Command::new(std::env::current_exe().unwrap())
+        .arg("--exact")
+        .arg("connected_path_client_helper")
+        .arg("--ignored")
+        .env("FERRIC_CONNECTED_PATH_CLIENT", path)
+        .env("FERRIC_EXPECT_SOCKET_MODE", "0600")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap()
+}
+
+fn expect_listener_failure(
+    result: Result<
+        FerricProtectedVerifierServiceOutcomeV1,
+        FerricProtectedVerifierListenerFailureV2,
+    >,
+) -> FerricProtectedVerifierListenerFailureV2 {
+    match result {
+        Err(failure) => failure,
+        Ok(_) => panic!("hostile listener input unexpectedly reached a terminal outcome"),
+    }
+}
+
+#[test]
 #[ignore = "subprocess helper for the connected-path Ferric session test"]
 fn connected_path_client_helper() {
     let Some(path) = std::env::var_os("FERRIC_CONNECTED_PATH_CLIENT") else {
         return;
     };
     let path = PathBuf::from(path);
-    let client = socket_with(
-        AddressFamily::UNIX,
-        SocketType::SEQPACKET,
-        SocketFlags::CLOEXEC | SocketFlags::NONBLOCK,
-        None,
-    )
-    .unwrap();
-    connect(&client, &SocketAddrUnix::new(&path).unwrap()).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let client = loop {
+        let client = socket_with(
+            AddressFamily::UNIX,
+            SocketType::SEQPACKET,
+            SocketFlags::CLOEXEC | SocketFlags::NONBLOCK,
+            None,
+        )
+        .unwrap();
+        match connect(&client, &SocketAddrUnix::new(&path).unwrap()) {
+            Ok(()) => break client,
+            Err(rustix::io::Errno::NOENT | rustix::io::Errno::CONNREFUSED) => {
+                assert!(
+                    Instant::now() < deadline,
+                    "listener did not become reachable"
+                );
+                thread::sleep(Duration::from_millis(1));
+            }
+            Err(error) => panic!("connect to listener: {error}"),
+        }
+    };
+    if std::env::var_os("FERRIC_EXPECT_SOCKET_MODE").is_some() {
+        let metadata = std::fs::symlink_metadata(&path).unwrap();
+        assert_eq!(metadata.permissions().mode() & 0o7777, 0o600);
+    }
+    thread::sleep(Duration::from_millis(25));
     let request = request();
     let begin =
         WorkerV3VerificationClientV2::admit_connected_path(client, &path, Duration::from_secs(5))

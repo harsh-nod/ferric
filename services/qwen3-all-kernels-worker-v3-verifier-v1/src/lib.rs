@@ -1,16 +1,17 @@
 //! Ferric-owned aggregate Qwen3 protected-verifier service foundation.
 //!
 //! This crate joins durable replay exclusion, service-owned current-record
-//! challenges, fe2o3's V2 unnamed and separately admitted connected-path
-//! session transports, independent protected providers, and Ferric's existing
-//! V1 signed receipt schema. It intentionally provides no listener, connector,
-//! concrete production checker, or signer and therefore does not close the
-//! protected-service deployment gate by itself.
+//! challenges, fe2o3's V2 unnamed and connected-path session transports, one
+//! bounded single-session pathname listener, independent protected providers,
+//! and Ferric's existing V1 signed receipt schema. It intentionally provides no
+//! process launcher, connector, concrete production checker, or signer and
+//! therefore does not close the protected-service deployment gate by itself.
 
 #![deny(missing_docs)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod durable;
+mod listener;
 mod service;
 
 pub use durable::{
@@ -19,6 +20,10 @@ pub use durable::{
     ProtectedLedgerExternalHeadV1, ProtectedLedgerHeadStoreFailureV1, ProtectedLedgerHeadStoreV1,
     ProtectedLedgerKindV1, ProtectedLedgerReplacementAuthorizationV1,
     ProtectedLedgerStorageCapabilityV1, ProtectedPolicyRevocationV1,
+};
+pub use listener::{
+    FerricProtectedVerifierListenerFailureReasonV2, FerricProtectedVerifierListenerFailureV2,
+    FerricProtectedVerifierPeerCredentialsV2, run_ferric_protected_verifier_listener_session_v2,
 };
 pub use service::{
     AbsoluteSessionDeadlineV1, AuthenticatedCompilerCurrentRecordV1,
