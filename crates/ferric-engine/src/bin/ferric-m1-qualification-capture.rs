@@ -9109,6 +9109,21 @@ mod tests {
                 unreachable!("native rollover fixture only models its first publication")
             }
 
+            fn quiescent_new_window(
+                &mut self,
+                _custody: Self::Quiescent,
+                _prior: M1ServingPlanV1,
+                _next: M1ServingPlanV1,
+                _batch: &ferric_engine::M1ServingBatchPlanV1,
+            ) -> M1ServingPhysicalOperationResultV1<
+                Self::Published,
+                Self::Quiescent,
+                Self::TerminalCustody,
+                Self::Error,
+            > {
+                unreachable!("native rollover fixture only models its first publication")
+            }
+
             fn read_published(
                 &mut self,
                 _custody: Self::Published,

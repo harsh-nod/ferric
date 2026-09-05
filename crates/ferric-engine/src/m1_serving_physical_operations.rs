@@ -2327,6 +2327,26 @@ where
         })
     }
 
+    fn quiescent_new_window(
+        &mut self,
+        custody: Self::Quiescent,
+        _prior: M1ServingPlanV1,
+        _next: M1ServingPlanV1,
+        _batch: &M1ServingBatchPlanV1,
+    ) -> M1ServingPhysicalOperationResultV1<
+        Self::Published,
+        Self::Quiescent,
+        Self::TerminalCustody,
+        Self::Error,
+    > {
+        // The registry/bridge transaction is complete, but the concrete lower
+        // transition must retain and rebind all-terminal model/KV custody first.
+        Err(M1ServingPhysicalOperationFailureV1::Retryable {
+            source: M1ServingPhysicalRunnerOperationErrorV1::RolloverUnavailable,
+            custody,
+        })
+    }
+
     fn read_published(
         &mut self,
         custody: Self::Published,

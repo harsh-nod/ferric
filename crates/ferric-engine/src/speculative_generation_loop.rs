@@ -1838,6 +1838,23 @@ mod tests {
             })
         }
 
+        fn quiescent_new_window(
+            &mut self,
+            _: PhysicalCustody,
+            _: M1ServingPlanV1,
+            _: M1ServingPlanV1,
+            _: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PhysicalPublishedCustody,
+            M1ServingPhysicalOperationFailureV1<
+                PhysicalCustody,
+                Self::TerminalCustody,
+                Self::Error,
+            >,
+        > {
+            unreachable!()
+        }
+
         fn read_published(
             &mut self,
             custody: PhysicalPublishedCustody,

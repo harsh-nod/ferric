@@ -430,6 +430,10 @@ pub struct M1ServingNewWindowPublicationReservationV1 {
 }
 
 impl M1ServingNewWindowPublicationReservationV1 {
+    pub(crate) const fn registry_identity(&self) -> M1ServingRegistryIdentityV1 {
+        self.publication.registry_identity()
+    }
+
     #[must_use]
     pub const fn prior_plan(&self) -> M1ServingPlanV1 {
         self.prior

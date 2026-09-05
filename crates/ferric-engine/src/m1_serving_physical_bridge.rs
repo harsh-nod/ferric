@@ -10,7 +10,10 @@ use core::fmt;
 
 use ferric_spec::completion::CompletionEpoch;
 
-use crate::m1_serving_registry::M1ServingRegistryIdentityV1;
+use crate::m1_serving_registry::{
+    M1ServingNewWindowPublicationFailureV1, M1ServingNewWindowPublicationReservationV1,
+    M1ServingRegistryIdentityV1,
+};
 use crate::{
     M1CheckedCompletionOutputV1, M1DeviceKvCompletionDispositionV1, M1ScheduledDispatchV1,
     M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
@@ -105,6 +108,30 @@ pub trait M1ServingPhysicalOperationsV1 {
         Self::Error,
     >;
 
+    /// Rebinds one all-terminal bounded window to its exact fresh paired-prefill roster.
+    ///
+    /// This is separate from ordinary rollover because the registry transaction
+    /// retains the complete predecessor roster until physical publication is
+    /// validated. A retryable rejection must return the unchanged prior queue;
+    /// irreversible progress must return exhaustive terminal custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged quiescent owner before irreversible progress, or
+    /// exhaustive terminal custody afterward.
+    fn quiescent_new_window(
+        &mut self,
+        custody: Self::Quiescent,
+        prior: M1ServingPlanV1,
+        next: M1ServingPlanV1,
+        batch: &M1ServingBatchPlanV1,
+    ) -> M1ServingPhysicalOperationResultV1<
+        Self::Published,
+        Self::Quiescent,
+        Self::TerminalCustody,
+        Self::Error,
+    >;
+
     /// Waits for exact physical completion, recycles the published queue, and
     /// checks its readback without settling device KV or Engine state.
     ///
@@ -172,6 +199,12 @@ pub type M1ServingPhysicalOperationResultV1<S, Q, T, E> =
 /// Result of routing one registry action through its physical operation.
 pub type M1ServingPhysicalPublishResultV1<Q, P, T, E> =
     Result<M1ServingPhysicalPublishedV1<P>, Box<M1ServingPhysicalBridgeFailureV1<Q, P, T, E>>>;
+
+/// Result of publishing one all-terminal replacement window.
+pub type M1ServingPhysicalNewWindowPublishResultV1<Q, P, T, E> = Result<
+    M1ServingPhysicalPublishedV1<P>,
+    Box<M1ServingPhysicalNewWindowBridgeFailureV1<Q, P, T, E>>,
+>;
 
 type M1ServingPhysicalRouteResultV1<Q, P, T, E> =
     Result<M1ServingPhysicalRawPublishedV1<P>, M1ServingPhysicalRouteFailureV1<Q, T, E>>;
@@ -282,6 +315,96 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
         }
     }
 
+    /// Publishes one exact all-terminal replacement window while retaining the
+    /// predecessor registry roster until physical scheduler authority matches.
+    ///
+    /// # Errors
+    ///
+    /// Returns the complete new-window transaction with retryable queue custody,
+    /// already-published custody, or terminal lower custody according to the
+    /// last physical phase reached.
+    pub fn publish_new_window<const C: usize, O>(
+        self,
+        reservation: M1ServingNewWindowPublicationReservationV1,
+        registry: &mut M1ServingRegistryV1<C>,
+        operations: &mut O,
+    ) -> M1ServingPhysicalNewWindowPublishResultV1<Q, O::Published, O::TerminalCustody, O::Error>
+    where
+        O: M1ServingPhysicalOperationsV1<Quiescent = Q>,
+    {
+        if let Err(error) = registry.preflight_new_window_publication(&reservation) {
+            return Err(Box::new(M1ServingPhysicalNewWindowBridgeFailureV1 {
+                error: M1ServingPhysicalBridgeErrorV1::Registry(error),
+                custody: M1ServingPhysicalNewWindowFailureCustodyV1::Retryable(
+                    M1ServingPhysicalRetryableNewWindowPublicationV1 {
+                        custody: self,
+                        reservation,
+                    },
+                ),
+            }));
+        }
+        let registry_identity = reservation.registry_identity();
+        let batch = reservation.physical_batch();
+        let raw = match self.route_batch(batch, registry_identity, operations) {
+            Ok(raw) => raw,
+            Err(failure) => {
+                let (error, custody, batch) = failure.into_parts();
+                let custody = match custody {
+                    M1ServingPhysicalRouteFailureCustodyV1::Retryable(custody) => {
+                        M1ServingPhysicalNewWindowFailureCustodyV1::Retryable(
+                            M1ServingPhysicalRetryableNewWindowPublicationV1 {
+                                custody,
+                                reservation,
+                            },
+                        )
+                    }
+                    M1ServingPhysicalRouteFailureCustodyV1::Terminal(custody) => {
+                        M1ServingPhysicalNewWindowFailureCustodyV1::Terminal(
+                            M1ServingPhysicalTerminalNewWindowPublicationV1 {
+                                reservation,
+                                batch,
+                                custody,
+                            },
+                        )
+                    }
+                };
+                return Err(Box::new(M1ServingPhysicalNewWindowBridgeFailureV1 {
+                    error,
+                    custody,
+                }));
+            }
+        };
+
+        if let Err(error) = validate_scheduled_dispatch_for_batch(
+            operations.scheduled_dispatch(&raw.custody),
+            raw.epoch,
+            raw.batch.requests(),
+        ) {
+            return Err(Box::new(M1ServingPhysicalNewWindowBridgeFailureV1 {
+                error,
+                custody: M1ServingPhysicalNewWindowFailureCustodyV1::UnmatchedPublished(
+                    M1ServingPhysicalUnmatchedNewWindowPublishedV1 { raw, reservation },
+                ),
+            }));
+        }
+
+        match registry.record_new_window_publication(reservation) {
+            Ok(()) => Ok(raw.activate()),
+            Err(failure) => {
+                let error = failure.error();
+                Err(Box::new(M1ServingPhysicalNewWindowBridgeFailureV1 {
+                    error: M1ServingPhysicalBridgeErrorV1::Registry(error),
+                    custody: M1ServingPhysicalNewWindowFailureCustodyV1::UnrecordedPublished(
+                        M1ServingPhysicalUnrecordedNewWindowPublishedV1 {
+                            raw,
+                            reservation: failure.into_reservation(),
+                        },
+                    ),
+                }))
+            }
+        }
+    }
+
     fn route_batch<O>(
         self,
         batch: M1ServingBatchPlanV1,
@@ -315,6 +438,17 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
                 },
             ) if plan == prior && declared_next == next => operations
                 .quiescent_rollover(custody, prior, declared_next, reason, &batch)
+                .map_err(|failure| {
+                    map_operation_failure(failure, |custody| Self::Quiescent { plan, custody })
+                }),
+            (
+                Self::Quiescent { plan, custody },
+                M1ServingQueueActionV1::QuiescentNewWindow {
+                    prior,
+                    next: declared_next,
+                },
+            ) if plan == prior && declared_next == next => operations
+                .quiescent_new_window(custody, prior, declared_next, &batch)
                 .map_err(|failure| {
                     map_operation_failure(failure, |custody| Self::Quiescent { plan, custody })
                 }),
@@ -356,19 +490,27 @@ fn validate_scheduled_dispatch<E>(
     scheduled: &M1ScheduledDispatchV1,
     reservation: &M1ServingPublicationReservationV1,
 ) -> Result<(), M1ServingPhysicalBridgeErrorV1<E>> {
-    if scheduled.epoch() != reservation.epoch() {
+    validate_scheduled_dispatch_for_batch(scheduled, reservation.epoch(), reservation.requests())
+}
+
+fn validate_scheduled_dispatch_for_batch<E>(
+    scheduled: &M1ScheduledDispatchV1,
+    expected_epoch: CompletionEpoch,
+    expected_requests: &[ferric_spec::RequestId],
+) -> Result<(), M1ServingPhysicalBridgeErrorV1<E>> {
+    if scheduled.epoch() != expected_epoch {
         return Err(M1ServingPhysicalBridgeErrorV1::ScheduledEpoch {
-            expected: reservation.epoch(),
+            expected: expected_epoch,
             actual: scheduled.epoch(),
         });
     }
-    if scheduled.member_count() != reservation.requests().len() {
+    if scheduled.member_count() != expected_requests.len() {
         return Err(M1ServingPhysicalBridgeErrorV1::ScheduledMemberCount {
-            expected: reservation.requests().len(),
+            expected: expected_requests.len(),
             actual: scheduled.member_count(),
         });
     }
-    for (lane, expected) in reservation.requests().iter().copied().enumerate() {
+    for (lane, expected) in expected_requests.iter().copied().enumerate() {
         let actual = scheduled.member(lane);
         if actual != Some(expected) {
             return Err(M1ServingPhysicalBridgeErrorV1::ScheduledMember {
@@ -1255,6 +1397,204 @@ pub struct M1ServingPhysicalBridgeFailureV1<Q, P, T, E> {
     custody: M1ServingPhysicalFailureCustodyV1<Q, P, T>,
 }
 
+/// Failed all-terminal physical publication retaining both registry rosters.
+#[must_use = "failed new-window publication retains registry and physical custody"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalNewWindowBridgeFailureV1<Q, P, T, E> {
+    error: M1ServingPhysicalBridgeErrorV1<E>,
+    custody: M1ServingPhysicalNewWindowFailureCustodyV1<Q, P, T>,
+}
+
+/// Exhaustive all-terminal publication-join failure custody.
+#[must_use = "new-window failure custody must remain retained"]
+#[derive(Debug)]
+pub enum M1ServingPhysicalNewWindowFailureCustodyV1<Q, P, T> {
+    Retryable(M1ServingPhysicalRetryableNewWindowPublicationV1<Q>),
+    UnmatchedPublished(M1ServingPhysicalUnmatchedNewWindowPublishedV1<P>),
+    UnrecordedPublished(M1ServingPhysicalUnrecordedNewWindowPublishedV1<P>),
+    Terminal(M1ServingPhysicalTerminalNewWindowPublicationV1<T>),
+}
+
+impl<Q, P, T, E> M1ServingPhysicalNewWindowBridgeFailureV1<Q, P, T, E> {
+    #[must_use]
+    pub const fn error(&self) -> &M1ServingPhysicalBridgeErrorV1<E> {
+        &self.error
+    }
+
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1ServingPhysicalBridgeErrorV1<E>,
+        M1ServingPhysicalNewWindowFailureCustodyV1<Q, P, T>,
+    ) {
+        (self.error, self.custody)
+    }
+}
+
+/// Pre-publication owner for a retry or exact predecessor restoration.
+#[must_use = "retryable new-window custody must be retried or restored"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalRetryableNewWindowPublicationV1<Q> {
+    custody: M1ServingPhysicalQueueCustodyV1<Q>,
+    reservation: M1ServingNewWindowPublicationReservationV1,
+}
+
+impl<Q> M1ServingPhysicalRetryableNewWindowPublicationV1<Q> {
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1ServingPhysicalQueueCustodyV1<Q>,
+        M1ServingNewWindowPublicationReservationV1,
+    ) {
+        (self.custody, self.reservation)
+    }
+
+    /// Restores the exact completed predecessor roster before physical progress.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged queue and complete registry failure when the
+    /// registry no longer recognizes the transaction.
+    pub fn restore<const C: usize>(
+        self,
+        registry: &mut M1ServingRegistryV1<C>,
+    ) -> Result<
+        (
+            M1ServingPhysicalQueueCustodyV1<Q>,
+            crate::M1ServingRestoredNewWindowV1,
+        ),
+        M1ServingPhysicalNewWindowRestoreFailureV1<Q>,
+    > {
+        match registry.restore_completed_window_replacement(self.reservation) {
+            Ok(restored) => Ok((self.custody, restored)),
+            Err(failure) => Err(M1ServingPhysicalNewWindowRestoreFailureV1 {
+                custody: self.custody,
+                failure,
+            }),
+        }
+    }
+}
+
+/// Failed predecessor restoration retaining physical and registry custody.
+#[must_use]
+#[derive(Debug)]
+pub struct M1ServingPhysicalNewWindowRestoreFailureV1<Q> {
+    custody: M1ServingPhysicalQueueCustodyV1<Q>,
+    failure: Box<M1ServingNewWindowPublicationFailureV1>,
+}
+
+impl<Q> M1ServingPhysicalNewWindowRestoreFailureV1<Q> {
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1ServingPhysicalQueueCustodyV1<Q>,
+        M1ServingNewWindowPublicationFailureV1,
+    ) {
+        (self.custody, *self.failure)
+    }
+}
+
+/// Published new-window custody whose scheduler authority did not match.
+#[must_use = "mismatched new-window publication must remain quarantined"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalUnmatchedNewWindowPublishedV1<P> {
+    raw: M1ServingPhysicalRawPublishedV1<P>,
+    reservation: M1ServingNewWindowPublicationReservationV1,
+}
+
+impl<P> M1ServingPhysicalUnmatchedNewWindowPublishedV1<P> {
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.raw.epoch
+    }
+
+    pub const fn reservation(&self) -> &M1ServingNewWindowPublicationReservationV1 {
+        &self.reservation
+    }
+}
+
+/// Published new-window custody whose defensive registry record failed.
+#[must_use = "unrecorded new-window publication must retry its registry record"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalUnrecordedNewWindowPublishedV1<P> {
+    raw: M1ServingPhysicalRawPublishedV1<P>,
+    reservation: M1ServingNewWindowPublicationReservationV1,
+}
+
+impl<P> M1ServingPhysicalUnrecordedNewWindowPublishedV1<P> {
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.raw.epoch
+    }
+
+    /// Retries only the defensive new-window registry record.
+    ///
+    /// # Errors
+    ///
+    /// Returns the unchanged published owner when the exact registry still rejects it.
+    pub fn retry_record<const C: usize>(
+        self,
+        registry: &mut M1ServingRegistryV1<C>,
+    ) -> Result<
+        M1ServingPhysicalPublishedV1<P>,
+        Box<M1ServingPhysicalNewWindowRecordRetryFailureV1<P>>,
+    > {
+        match registry.record_new_window_publication(self.reservation) {
+            Ok(()) => Ok(self.raw.activate()),
+            Err(failure) => Err(Box::new(M1ServingPhysicalNewWindowRecordRetryFailureV1 {
+                error: failure.error(),
+                published: Self {
+                    raw: self.raw,
+                    reservation: failure.into_reservation(),
+                },
+            })),
+        }
+    }
+}
+
+/// Failed new-window registry-record retry retaining published custody.
+#[must_use]
+#[derive(Debug)]
+pub struct M1ServingPhysicalNewWindowRecordRetryFailureV1<P> {
+    error: M1ServingRegistryErrorV1,
+    published: M1ServingPhysicalUnrecordedNewWindowPublishedV1<P>,
+}
+
+impl<P> M1ServingPhysicalNewWindowRecordRetryFailureV1<P> {
+    #[must_use]
+    pub const fn error(&self) -> M1ServingRegistryErrorV1 {
+        self.error
+    }
+
+    pub fn into_published(self) -> M1ServingPhysicalUnrecordedNewWindowPublishedV1<P> {
+        self.published
+    }
+}
+
+/// Terminal lower quarantine retaining both completed and successor rosters.
+#[must_use = "terminal new-window custody and reservation must remain retained"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalTerminalNewWindowPublicationV1<T> {
+    reservation: M1ServingNewWindowPublicationReservationV1,
+    batch: M1ServingBatchPlanV1,
+    custody: T,
+}
+
+impl<T> M1ServingPhysicalTerminalNewWindowPublicationV1<T> {
+    pub const fn reservation(&self) -> &M1ServingNewWindowPublicationReservationV1 {
+        &self.reservation
+    }
+
+    pub const fn batch(&self) -> &M1ServingBatchPlanV1 {
+        &self.batch
+    }
+
+    #[must_use]
+    pub const fn lower_custody(&self) -> &T {
+        &self.custody
+    }
+}
+
 /// Exhaustive publication-join failure custody.
 #[must_use = "physical failure custody must remain retained"]
 #[derive(Debug)]
@@ -1613,6 +1953,32 @@ mod tests {
                 })
             } else {
                 Ok(self.published(custody.0 + 10, batch))
+            }
+        }
+
+        fn quiescent_new_window(
+            &mut self,
+            custody: Custody,
+            _: M1ServingPlanV1,
+            _: M1ServingPlanV1,
+            batch: &M1ServingBatchPlanV1,
+        ) -> Result<
+            PublishedCustody,
+            M1ServingPhysicalOperationFailureV1<Custody, Self::TerminalCustody, Self::Error>,
+        > {
+            self.calls.push("new-window");
+            if self.terminal {
+                Err(M1ServingPhysicalOperationFailureV1::Terminal {
+                    source: "new-window",
+                    custody,
+                })
+            } else if self.fail {
+                Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                    source: "new-window",
+                    custody,
+                })
+            } else {
+                Ok(self.published(custody.0 + 100, batch))
             }
         }
 
@@ -2034,6 +2400,98 @@ mod tests {
                 plan: released_plan,
                 custody: Custody(1),
             } if released_plan == plan
+        ));
+    }
+
+    #[test]
+    fn all_terminal_new_window_commits_only_after_exact_physical_publication() {
+        let plan = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let (mut registry, reservation, requests) = fresh_context(plan, 1);
+        let epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let readback = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(epoch, &mut operations)
+            .unwrap();
+        let (_, queue) = readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Retire],
+                &mut operations,
+            )
+            .unwrap();
+
+        let next = RequestId::new(requests[0].slot(), requests[0].generation() + 1);
+        let reservation = registry
+            .reserve_completed_window_replacement(plan, vec![next].into_boxed_slice())
+            .unwrap();
+        let next_epoch = reservation.epoch();
+        let published = queue
+            .publish_new_window(reservation, &mut registry, &mut operations)
+            .unwrap();
+
+        assert_eq!(published.epoch(), next_epoch);
+        assert_eq!(registry.phase(requests[0]), None);
+        assert_eq!(
+            registry.phase(next),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch: next_epoch })
+        );
+        assert_eq!(operations.calls, ["fresh", "read", "settle", "new-window"]);
+    }
+
+    #[test]
+    fn retryable_new_window_failure_restores_exact_completed_predecessor() {
+        let plan = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let (mut registry, reservation, requests) = fresh_context(plan, 1);
+        let epoch = reservation.epoch();
+        let mut operations = Operations::default();
+        let readback = M1ServingPhysicalQueueCustodyV1::Vacant
+            .publish(reservation, &mut registry, &mut operations)
+            .unwrap()
+            .read_physical(epoch, &mut operations)
+            .unwrap();
+        let (_, queue) = readback
+            .complete_exact(
+                &mut registry,
+                &[M1ServingCompletionDispositionV1::Retire],
+                &mut operations,
+            )
+            .unwrap();
+        let next = RequestId::new(requests[0].slot(), requests[0].generation() + 1);
+        let reservation = registry
+            .reserve_completed_window_replacement(plan, vec![next].into_boxed_slice())
+            .unwrap();
+        operations.fail = true;
+
+        let failure = queue
+            .publish_new_window(reservation, &mut registry, &mut operations)
+            .unwrap_err();
+        let (error, custody) = failure.into_parts();
+        assert!(matches!(
+            error,
+            M1ServingPhysicalBridgeErrorV1::Operation("new-window")
+        ));
+        let M1ServingPhysicalNewWindowFailureCustodyV1::Retryable(retryable) = custody else {
+            panic!("retryable new-window rejection lost predecessor custody");
+        };
+        let (queue, restored) = retryable.restore(&mut registry).unwrap();
+
+        assert_eq!(restored.plan(), plan);
+        assert_eq!(restored.into_requests().as_ref(), &[next]);
+        assert_eq!(registry.phase(next), None);
+        assert_eq!(
+            registry.phase(requests[0]),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: crate::M1ServingQuiescenceV1::Completed(epoch),
+            })
+        );
+        assert!(matches!(
+            queue,
+            M1ServingPhysicalQueueCustodyV1::Quiescent {
+                plan: restored_plan,
+                custody: Custody(1),
+            } if restored_plan == plan
         ));
     }
 
