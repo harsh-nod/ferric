@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import shutil
@@ -141,6 +142,29 @@ def digest_bytes(value: bytes) -> str:
 
 def digest_file(path: Path) -> str:
     return digest_bytes(path.read_bytes())
+
+
+def load_module(path: Path, name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        fail(f"cannot load {path}")
+    sys.dont_write_bytecode = True
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def audit_checker_pin(repo: Path, validator: Path) -> None:
+    checker = load_module(
+        repo / "proofs/check-m1-evidence-index.py", "ferric_m1_evidence_checker"
+    )
+    expected = (
+        "proofs/m1/evidence/validate-verus-theorem.py",
+        PROTOCOL,
+        digest_file(validator),
+    )
+    if checker.TRUSTED_VALIDATORS.get("verus-theorem") != expected:
+        fail("checker-owned Verus-theorem path, protocol, or source pin drifted")
 
 
 def canonical_digest(value: dict[str, Any]) -> str:
@@ -658,8 +682,10 @@ def main() -> None:
     if len(sys.argv) not in (2, 3):
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
+    validator = repo / "proofs/m1/evidence/validate-verus-theorem.py"
+    audit_checker_pin(repo, validator)
     active, rows = registry(repo)
-    if len(rows) != 33 or not active:
+    if len(rows) != 29 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     if tuple(row for row in rows if row[0].startswith("r33-daemon-")) != (
         EXPECTED_R33_ROWS
