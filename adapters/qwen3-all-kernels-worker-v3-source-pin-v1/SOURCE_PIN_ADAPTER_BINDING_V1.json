@@ -2,24 +2,24 @@
   "authority": "binary-identity-prebinding-only",
   "binary": {
     "name": "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
-    "sha256": "bea9896318679a8f43afd50a9b23d0cd0a7a434da17b45336e8b20182f5cad45",
-    "size_bytes": 8461296
+    "sha256": "fa473cf6ef12612e8bb6028a5a0cc411ac3b5817f560c0e1b1cf3f435544e86a",
+    "size_bytes": 8461960
   },
   "format": "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1",
   "nonclaim": "This source-controlled record pre-binds one executable identity to the exact adapter source closure. It is not a reproducible-build proof, compiler-origin attestation, semantic-correctness proof, or runtime authority.",
   "protocol": "ferric.m1-all-kernels-worker-v3-source-pin.v1",
-  "source_closure_sha256": "f125d87abd7b597b043ebeea3fb06dc8365c2cf9e621c698890778b8b43cba55",
+  "source_closure_sha256": "d5c92f31d7c762c42f454d905fdb5d7967286fde4fb30670db5922b423ddc8d9",
   "source_files": [
     {
-      "git_blob": "1fa0369521305c10cd55f51622e572837a0c2e98",
+      "git_blob": "5655735539ceeeccc6f4f9e4dc1a835dc14bed42",
       "path": "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.lock",
-      "sha256": "305f39e147fd8ac87b7f87f2e47471f2a367a54ca5616bd899fc8b48d95ddf9b",
+      "sha256": "23d7ca6074c2233958abb5d30c2af74c5c6600bb91f628e8f778113e2de21689",
       "size_bytes": 31465
     },
     {
-      "git_blob": "1cfe2642787a2d1471708d10415eb5bea18448f3",
+      "git_blob": "cbfc5a8c825b66746ad014bec2e62562fae95806",
       "path": "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml",
-      "sha256": "c2490026b9d1ea8c0b0e712fe7672003c7feea5a7910d29ea2e81c30d9ffaa98",
+      "sha256": "7b654a9cee86f200a24325f4c878a3dc91c86d3ea00185753527fe9d4f14d0b2",
       "size_bytes": 1004
     },
     {
