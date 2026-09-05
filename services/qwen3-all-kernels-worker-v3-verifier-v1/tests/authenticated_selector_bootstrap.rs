@@ -123,9 +123,7 @@ fn exact_retained_publication_reaches_shared_bootstrap_with_test_verifier() {
     let executable_catalog = programs.catalog_id();
     drop(programs);
     let declaration = ferric_build::generate_qwen3_gfx942_runner_declaration(
-        ferric_build::qwen3_runner_closure_test_fixture_with_executable_catalog(
-            executable_catalog,
-        ),
+        ferric_build::qwen3_runner_closure_test_fixture_with_executable_catalog(executable_catalog),
     )
     .expect("generate the exact M1 runner fixture");
     let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
@@ -170,7 +168,10 @@ fn substituted_runner_catalog_is_rejected_with_every_owner_retained() {
     let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
         .expect("publish the substituted M1 runner fixture");
     let actual = publication.executable_catalog_id();
-    assert_ne!(actual, expected, "the hostile fixture must substitute the catalog");
+    assert_ne!(
+        actual, expected,
+        "the hostile fixture must substitute the catalog"
+    );
     let mut verifier =
         WorkerV3ProtectedRosterVerifierAdapterV1::new(ExactSelectorFixtureProtectedVerifierV1);
 

@@ -10,6 +10,6 @@ fn main() {
     // replaces it with the compiler-derived binding for managed builds.
     println!(
         "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={}",
-        "3b14402e7f09146d90b557ac5c86dbdf4a161f68b3dfd4d11cc406316bf550c5"
+        "20e91b96be7e5f4e1c04e34fe665b081ebf3800535d8b05ab8c3f2323f67ec24"
     );
 }
