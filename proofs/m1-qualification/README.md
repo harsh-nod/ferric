@@ -354,8 +354,59 @@ python3 -I \
   proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
 ```
 
-For the aggregate all-kernels output, validate the observational build record
-and produce a noncurrent, owner-private selection candidate with:
+The aggregate 12-kernel production build is prepared and launched by one
+Ferric-owned, fail-closed entrypoint. Start from exact clean Ferric and fe2o3
+worktrees, an owner-private output directory, and a measured Worker V3 linker
+whose directory also contains `fe2o3-llvm-build-id.txt` and
+`fe2o3-worker-build-id.txt`:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py \
+  prepare-config FERRIC_SOURCE_REPO WORKER NEW_PRODUCTION_CONFIG
+```
+
+This publishes compact canonical `fe2o3-production-build-config-v2` bytes for
+the single aggregate compilation unit, `source-isa-summary-v1`, COV6, O2,
+debug stripping, per-stage verification, no providers, fixed execution limits,
+and the exact measured Worker V3 identity. It prints the config SHA-256 and the
+independently computed fe2o3 transitive V2 config identity.
+
+Run the protected build from a new owner-private target path with:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py \
+  build FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO PRODUCTION_CONFIG NEW_TARGET_DIR \
+  CARGO_FE2O3 CARGO CARGO_BINDING_TRAMPOLINE RUSTC \
+  RUSTC_RUNTIME_TREE_SHA256 CODEGEN_BACKEND
+```
+
+The command admits only public fe2o3 main revision
+`16da71edd823e0d5c16529bfbbedb4f9dd8e70c6`, verifies both aggregate Cargo
+pins and the lockfile, reconstructs the exact protected-release environment,
+and invokes `cargo-fe2o3 authority release build --locked`. It fails before
+spawning Cargo unless the fixed root-owned compiler client profile at
+`/etc/fe2o3/compiler-execution/client-profile-v1` and the protected supervisor
+socket at `/run/fe2o3/compiler-execution-supervisor.sock` are present. Missing
+infrastructure is a deployment blocker; it must not be substituted with a
+local or unprotected compiler path.
+
+After the successful build, produce the observational receipt and noncurrent,
+owner-private selection candidate with:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py \
+  produce-candidate FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO PRODUCTION_CONFIG \
+  TARGET_DIR/fe2o3 CARGO_FE2O3 RUSTC_WRAPPER CODEGEN_BACKEND \
+  SOURCE_PIN_ADAPTER NEW_OBSERVATIONAL_RECORD NEW_SELECTION_CANDIDATE
+```
+
+The orchestration delegates to the existing strict aggregate build-record
+producer, validator, and publication-selection producer. It publishes neither
+output by replacement and prints both byte identities on success. Validate the
+observational build record independently with:
 
 ```text
 python3 -I -B \
@@ -366,7 +417,41 @@ python3 -I -B \
   FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO OBSERVATIONAL_BUILD_RECORD NEW_CANDIDATE
 python3 -I -B \
   proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
+python3 -I -B \
+  proofs/m1-qualification/test-protected-worker-v3-all-kernels-release-policy.py
 ```
+
+When the protected compiler service is unavailable, the same entrypoint can
+produce an explicitly non-authoritative engineering HSACO without contacting
+that service. First prepare a disposable, canonical `cargo vendor` tree for
+the exact public fe2o3 checkout. This installs only the reviewed
+`fe2o3-device` manifest and its required workspace overlay into that disposable
+tree:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py \
+  prepare-engineering-vendor FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO CARGO_VENDOR
+```
+
+Then run the authority-free engineering build with:
+
+```text
+python3 -I -B \
+  proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py \
+  engineering-hsaco FERRIC_SOURCE_REPO FE2O3_SOURCE_REPO \
+  OWNER_PRIVATE_PARENT/fe2o3-engineering-v1 CARGO_FE2O3 RUSTC_EXTRACTOR \
+  EXTRACTOR_BACKEND WORKER CARGO RUSTC CLANG LLD LLD_ARGV_PROXY CARGO_VENDOR
+```
+
+The fixed command selects `ferric_qwen3_all_kernels_device_v1`,
+`gfx942:xnack-`, COV6, no providers, the exact public fe2o3 Git source, and the
+aggregate manifest in the clean Ferric worktree. It admits only an observation
+whose HSACO metadata names the exact 12-kernel set and whose publication,
+load, and launch grants are all false. This path is useful for descriptive
+inspection and development smoke tests only. It produces no protected Worker
+V3 receipt or publication authority and cannot substitute for the protected
+build above.
 
 The candidate resolves every claimed device, adapter, and adapter-binding row
 through the clean Git object bytes, then binds the record bytes and exact

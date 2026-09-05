@@ -353,6 +353,8 @@ set +e
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
         proofs/m1-qualification/test-protected-worker-v3-all-kernels-build-producer-policy.py
     PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-protected-worker-v3-all-kernels-release-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
         proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
     printf 'FERRIC_QUALITY_GATE=worker-v3-producer-policy:PASS\n'
 ) >"$runtime_tests" 2>&1

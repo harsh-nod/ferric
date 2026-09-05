@@ -201,10 +201,10 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
                             "name": dependency,
                             "repository": planner.FE2O3_REPOSITORY,
                             "revision": fe2o3_commit,
-                            "scope": "dependencies",
+                            "scope": scope,
                             "version": "=0.1.0",
                         }
-                        for dependency in sorted(dependencies)
+                        for scope, dependency in sorted(dependencies)
                     ],
                     "direct_count": len(dependencies),
                     "manifest": f"{adapter_relative}/Cargo.toml",
@@ -258,10 +258,10 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
                             "version": version,
                         }
                         for name, version in sorted(
-                            planner.FE2O3_RESOLVED_PACKAGES
+                            planner.FE2O3_DEVICE_RESOLVED_PACKAGES
                         )
                     ],
-                    "resolved_count": len(planner.FE2O3_RESOLVED_PACKAGES),
+                    "resolved_count": len(planner.FE2O3_DEVICE_RESOLVED_PACKAGES),
                 }
                 for package_name, relative_path in planner.FE2O3_DEVICE_WORKSPACES
             ],
@@ -432,7 +432,7 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
                 adapter_missing_case / adapter_relative / "Cargo.toml"
             )
             missing_source = adapter_missing_manifest.read_text(encoding="utf-8")
-            dependency_prefix = f"{adapter_dependencies[0]} = "
+            dependency_prefix = f"{adapter_dependencies[0][1]} = "
             matching_lines = [
                 line for line in missing_source.splitlines(keepends=True)
                 if line.startswith(dependency_prefix)
@@ -460,7 +460,7 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
                 adapter_alias_manifest,
                 "[dependencies]\n",
                 "[dependencies]\n"
-                f"shadow-fe2o3 = {{ package = \"{adapter_dependencies[0]}\", "
+                f"shadow-fe2o3 = {{ package = \"{adapter_dependencies[0][1]}\", "
                 "git = \"https://evil.invalid/fe2o3.git\", rev = \""
                 + "0" * 40
                 + "\", version = \"=0.1.0\" }\n",
@@ -695,24 +695,39 @@ def main() -> None:
         "fe2o3-kernel-analysis",
         "fe2o3-kernel-descriptor",
         "fe2o3-kernel-ir",
+        "fe2o3-kernel-opt",
         "fe2o3-llvm-handoff",
         "fe2o3-llvm-text",
         "fe2o3-lower-mir-kernel",
         "fe2o3-mir-model",
         "fe2o3-pliron",
         "fe2o3-pliron-owner-core",
+        "fe2o3-process-identity",
         "fe2o3-proof-contracts",
         "fe2o3-runtime-protocol",
         "fe2o3-rustc-invocation",
         "fe2o3-source-isa-observation",
+        "fe2o3-target-spec",
         "reserved-fe2o3-symbols",
     }
     if (
-        len(expected_source_pin_names) != 30
+        len(expected_source_pin_names) != 33
         or set(planner.FE2O3_SOURCE_PIN_RESOLVED_PACKAGES)
         != {(name, "0.1.0") for name in expected_source_pin_names}
     ):
         fail("M1 planner source-pin adapter closure drifted")
+    expected_device_names = {
+        name for name, _ in planner.FE2O3_RESOLVED_PACKAGES
+    } - {
+        "fe2o3-worker-v3-verification-client",
+        "fe2o3-worker-v3-verification-protocol",
+    }
+    if (
+        len(expected_device_names) != 53
+        or planner.FE2O3_DEVICE_RESOLVED_PACKAGES
+        != tuple((name, "0.1.0") for name in sorted(expected_device_names))
+    ):
+        fail("M1 planner device closure drifted")
     if planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES != (
         ("ferric-qwen3-all-kernels-device-v1", "device/qwen3-all-kernels-v1"),
     ):
@@ -725,19 +740,31 @@ def main() -> None:
         (
             "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
             "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
-            ("fe2o3-host", "fe2o3-hsaco-finalize", "fe2o3-verifier"),
+            (
+                ("dependencies", "fe2o3-host"),
+                ("dependencies", "fe2o3-hsaco-finalize"),
+                ("dependencies", "fe2o3-runtime-protocol"),
+                ("dependencies", "fe2o3-verifier"),
+                ("dependencies", "fe2o3-worker-v3-verification-client"),
+                ("dependencies", "fe2o3-worker-v3-verification-protocol"),
+                ("dev-dependencies", "fe2o3-artifact-transaction"),
+                ("dev-dependencies", "fe2o3-external-anchor-protocol"),
+            ),
             planner.FE2O3_RESOLVED_PACKAGES,
         ),
         (
             "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
             "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
-            ("fe2o3-compiler-ffi", "fe2o3-runtime-protocol"),
+            (
+                ("dependencies", "fe2o3-compiler-ffi"),
+                ("dependencies", "fe2o3-runtime-protocol"),
+            ),
             planner.FE2O3_SOURCE_PIN_RESOLVED_PACKAGES,
         ),
         (
             "ferric-qwen3-swiglu-worker-v3-envelope-v2",
             "adapters/qwen3-swiglu-worker-v3-envelope-v2",
-            ("fe2o3-runtime-protocol",),
+            (("dependencies", "fe2o3-runtime-protocol"),),
             planner.FE2O3_RESOLVED_PACKAGES,
         ),
     ):

@@ -161,6 +161,18 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     if m == 0 || n == 0 || k == 0 {
         fe2o3_device::trap();
     }
+    if m < 2_049 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if n < 151_937 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if k < 12_289 {
+    } else {
+        fe2o3_device::trap();
+    }
     if a.len() != m * k || b.len() != k * n || c.len() != m * n {
         fe2o3_device::trap();
     }
@@ -196,8 +208,20 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     } else {
         fe2o3_device::trap();
     }
+    if tile_row < 128 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if tile_column < 9_496 {
+    } else {
+        fe2o3_device::trap();
+    }
     let lane = raw % 64;
     let row_base = tile_row * 16 + (lane / 16) * 4;
+    if row_base < 2_045 {
+    } else {
+        fe2o3_device::trap();
+    }
     let column = tile_column * 16 + lane % 16;
     if column < n {
     } else {
@@ -208,9 +232,9 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     };
     let beta_one = beta_bits == 1_065_353_216;
     let row_0 = row_base;
-    let row_1 = row_base + 1;
-    let row_2 = row_base + 2;
-    let row_3 = row_base + 3;
+    let row_1 = row_0 + 1;
+    let row_2 = row_1 + 1;
+    let row_3 = row_2 + 1;
     let active_0 = row_0 < m && column < n;
     let active_1 = row_1 < m && column < n;
     let active_2 = row_2 < m && column < n;
@@ -221,21 +245,26 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     let mut accumulator_3 = 0.0_f32;
     let mut reduction = 0_usize;
     while reduction < k {
-        let right = Bf16::from_bits(memory::volatile_load(b, reduction * n + column)).to_f32();
+        let right_index = reduction * n + column;
+        let right = Bf16::from_bits(memory::volatile_load(b, right_index)).to_f32();
         if active_0 {
-            let left = Bf16::from_bits(memory::volatile_load(a, row_0 * k + reduction)).to_f32();
+            let left_index = row_0 * k + reduction;
+            let left = Bf16::from_bits(memory::volatile_load(a, left_index)).to_f32();
             accumulator_0 = accumulator_0 + left * right;
         }
         if active_1 {
-            let left = Bf16::from_bits(memory::volatile_load(a, row_1 * k + reduction)).to_f32();
+            let left_index = row_1 * k + reduction;
+            let left = Bf16::from_bits(memory::volatile_load(a, left_index)).to_f32();
             accumulator_1 = accumulator_1 + left * right;
         }
         if active_2 {
-            let left = Bf16::from_bits(memory::volatile_load(a, row_2 * k + reduction)).to_f32();
+            let left_index = row_2 * k + reduction;
+            let left = Bf16::from_bits(memory::volatile_load(a, left_index)).to_f32();
             accumulator_2 = accumulator_2 + left * right;
         }
         if active_3 {
-            let left = Bf16::from_bits(memory::volatile_load(a, row_3 * k + reduction)).to_f32();
+            let left_index = row_3 * k + reduction;
+            let left = Bf16::from_bits(memory::volatile_load(a, left_index)).to_f32();
             accumulator_3 = accumulator_3 + left * right;
         }
         reduction += 1;
@@ -317,10 +346,23 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     if !profile_is_admitted {
         fe2o3_device::trap();
     }
+    let reduction_bound = k as u64;
     let m = m as usize;
     let n = n as usize;
     let k = k as usize;
     if m == 0 || n == 0 || k == 0 {
+        fe2o3_device::trap();
+    }
+    if m < 2_049 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if n < 151_937 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if k < 12_289 {
+    } else {
         fe2o3_device::trap();
     }
     if a.len() != m * k || b.len() != k * n || c.len() != m * n {
@@ -361,8 +403,20 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     } else {
         fe2o3_device::trap();
     }
+    if tile_row < 128 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if tile_column < 9_496 {
+    } else {
+        fe2o3_device::trap();
+    }
     let lane = raw % 64;
     let row_base = tile_row * 16 + (lane / 16) * 4;
+    if row_base < 2_045 {
+    } else {
+        fe2o3_device::trap();
+    }
     let column = tile_column * 16 + lane % 16;
     if column < n {
     } else {
@@ -373,9 +427,9 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     };
     let beta_one = beta_bits == 1_065_353_216;
     let row_0 = row_base;
-    let row_1 = row_base + 1;
-    let row_2 = row_base + 2;
-    let row_3 = row_base + 3;
+    let row_1 = row_0 + 1;
+    let row_2 = row_1 + 1;
+    let row_3 = row_2 + 1;
     let active_0 = row_0 < m && column < n;
     let active_1 = row_1 < m && column < n;
     let active_2 = row_2 < m && column < n;
@@ -384,71 +438,77 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     let mut accumulator_1 = 0.0_f32;
     let mut accumulator_2 = 0.0_f32;
     let mut accumulator_3 = 0.0_f32;
-    let mut reduction = 0_usize;
-    while reduction < k {
+    let mut reduction_wide = 0_u64;
+    while reduction_wide < reduction_bound {
+        let reduction = reduction_wide as usize;
         if reduction + 3 >= k {
             fe2o3_device::trap();
         }
-        let right_0 = Bf16::from_bits(memory::volatile_load(b, reduction * n + column)).to_f32();
-        let right_1 =
-            Bf16::from_bits(memory::volatile_load(b, (reduction + 1) * n + column)).to_f32();
-        let right_2 =
-            Bf16::from_bits(memory::volatile_load(b, (reduction + 2) * n + column)).to_f32();
-        let right_3 =
-            Bf16::from_bits(memory::volatile_load(b, (reduction + 3) * n + column)).to_f32();
+        let right_index_0 = reduction * n + column;
+        let right_0 = Bf16::from_bits(memory::volatile_load(b, right_index_0)).to_f32();
+        let right_index_1 = right_index_0 + n;
+        let right_1 = Bf16::from_bits(memory::volatile_load(b, right_index_1)).to_f32();
+        let right_index_2 = right_index_1 + n;
+        let right_2 = Bf16::from_bits(memory::volatile_load(b, right_index_2)).to_f32();
+        let right_index_3 = right_index_2 + n;
+        let right_3 = Bf16::from_bits(memory::volatile_load(b, right_index_3)).to_f32();
         if active_0 {
-            let left_0 = Bf16::from_bits(memory::volatile_load(a, row_0 * k + reduction)).to_f32();
-            let left_1 =
-                Bf16::from_bits(memory::volatile_load(a, row_0 * k + reduction + 1)).to_f32();
-            let left_2 =
-                Bf16::from_bits(memory::volatile_load(a, row_0 * k + reduction + 2)).to_f32();
-            let left_3 =
-                Bf16::from_bits(memory::volatile_load(a, row_0 * k + reduction + 3)).to_f32();
+            let left_index_0 = row_0 * k + reduction;
+            let left_0 = Bf16::from_bits(memory::volatile_load(a, left_index_0)).to_f32();
+            let left_index_1 = left_index_0 + 1;
+            let left_1 = Bf16::from_bits(memory::volatile_load(a, left_index_1)).to_f32();
+            let left_index_2 = left_index_1 + 1;
+            let left_2 = Bf16::from_bits(memory::volatile_load(a, left_index_2)).to_f32();
+            let left_index_3 = left_index_2 + 1;
+            let left_3 = Bf16::from_bits(memory::volatile_load(a, left_index_3)).to_f32();
             accumulator_0 = accumulator_0 + left_0 * right_0;
             accumulator_0 = accumulator_0 + left_1 * right_1;
             accumulator_0 = accumulator_0 + left_2 * right_2;
             accumulator_0 = accumulator_0 + left_3 * right_3;
         }
         if active_1 {
-            let left_0 = Bf16::from_bits(memory::volatile_load(a, row_1 * k + reduction)).to_f32();
-            let left_1 =
-                Bf16::from_bits(memory::volatile_load(a, row_1 * k + reduction + 1)).to_f32();
-            let left_2 =
-                Bf16::from_bits(memory::volatile_load(a, row_1 * k + reduction + 2)).to_f32();
-            let left_3 =
-                Bf16::from_bits(memory::volatile_load(a, row_1 * k + reduction + 3)).to_f32();
+            let left_index_0 = row_1 * k + reduction;
+            let left_0 = Bf16::from_bits(memory::volatile_load(a, left_index_0)).to_f32();
+            let left_index_1 = left_index_0 + 1;
+            let left_1 = Bf16::from_bits(memory::volatile_load(a, left_index_1)).to_f32();
+            let left_index_2 = left_index_1 + 1;
+            let left_2 = Bf16::from_bits(memory::volatile_load(a, left_index_2)).to_f32();
+            let left_index_3 = left_index_2 + 1;
+            let left_3 = Bf16::from_bits(memory::volatile_load(a, left_index_3)).to_f32();
             accumulator_1 = accumulator_1 + left_0 * right_0;
             accumulator_1 = accumulator_1 + left_1 * right_1;
             accumulator_1 = accumulator_1 + left_2 * right_2;
             accumulator_1 = accumulator_1 + left_3 * right_3;
         }
         if active_2 {
-            let left_0 = Bf16::from_bits(memory::volatile_load(a, row_2 * k + reduction)).to_f32();
-            let left_1 =
-                Bf16::from_bits(memory::volatile_load(a, row_2 * k + reduction + 1)).to_f32();
-            let left_2 =
-                Bf16::from_bits(memory::volatile_load(a, row_2 * k + reduction + 2)).to_f32();
-            let left_3 =
-                Bf16::from_bits(memory::volatile_load(a, row_2 * k + reduction + 3)).to_f32();
+            let left_index_0 = row_2 * k + reduction;
+            let left_0 = Bf16::from_bits(memory::volatile_load(a, left_index_0)).to_f32();
+            let left_index_1 = left_index_0 + 1;
+            let left_1 = Bf16::from_bits(memory::volatile_load(a, left_index_1)).to_f32();
+            let left_index_2 = left_index_1 + 1;
+            let left_2 = Bf16::from_bits(memory::volatile_load(a, left_index_2)).to_f32();
+            let left_index_3 = left_index_2 + 1;
+            let left_3 = Bf16::from_bits(memory::volatile_load(a, left_index_3)).to_f32();
             accumulator_2 = accumulator_2 + left_0 * right_0;
             accumulator_2 = accumulator_2 + left_1 * right_1;
             accumulator_2 = accumulator_2 + left_2 * right_2;
             accumulator_2 = accumulator_2 + left_3 * right_3;
         }
         if active_3 {
-            let left_0 = Bf16::from_bits(memory::volatile_load(a, row_3 * k + reduction)).to_f32();
-            let left_1 =
-                Bf16::from_bits(memory::volatile_load(a, row_3 * k + reduction + 1)).to_f32();
-            let left_2 =
-                Bf16::from_bits(memory::volatile_load(a, row_3 * k + reduction + 2)).to_f32();
-            let left_3 =
-                Bf16::from_bits(memory::volatile_load(a, row_3 * k + reduction + 3)).to_f32();
+            let left_index_0 = row_3 * k + reduction;
+            let left_0 = Bf16::from_bits(memory::volatile_load(a, left_index_0)).to_f32();
+            let left_index_1 = left_index_0 + 1;
+            let left_1 = Bf16::from_bits(memory::volatile_load(a, left_index_1)).to_f32();
+            let left_index_2 = left_index_1 + 1;
+            let left_2 = Bf16::from_bits(memory::volatile_load(a, left_index_2)).to_f32();
+            let left_index_3 = left_index_2 + 1;
+            let left_3 = Bf16::from_bits(memory::volatile_load(a, left_index_3)).to_f32();
             accumulator_3 = accumulator_3 + left_0 * right_0;
             accumulator_3 = accumulator_3 + left_1 * right_1;
             accumulator_3 = accumulator_3 + left_2 * right_2;
             accumulator_3 = accumulator_3 + left_3 * right_3;
         }
-        reduction += 4;
+        reduction_wide += 4;
     }
     if active_0 {
         let Some(output) = c.get_tiled_2d_mut(&tile, 0, m, n, n) else {
@@ -634,5 +694,101 @@ mod tests {
         assert_eq!((2_048_usize * 4_096).div_ceil(64), 131_072);
         assert_eq!(QWEN3_GEMM_MAX_GRID_WORKGROUPS_V1, 1_215_488);
         assert_eq!(QWEN3_TOKEN_EMBEDDING_MAX_GRID_WORKGROUPS_V1, 131_072);
+    }
+
+    #[test]
+    fn sequential_matrix_indices_preserve_axis_specific_offsets() {
+        for row in [0_usize, 3, 127] {
+            for stride in [1_usize, 16, 4_096] {
+                for column in [0_usize, 5, 31] {
+                    let mut row_offset_index = row * stride + column;
+                    let mut column_offset_index = row * stride + column;
+                    for offset in 0..4 {
+                        assert_eq!(row_offset_index, (row + offset) * stride + column);
+                        assert_eq!(column_offset_index, row * stride + column + offset);
+                        if offset < 3 {
+                            row_offset_index += stride;
+                            column_offset_index += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sequential_matrix_indices_equal_checked_arithmetic_for_every_admitted_profile_maximum() {
+        const TARGET_SHAPES: &[(usize, usize)] = &[
+            (4_096, 4_096),
+            (1_024, 4_096),
+            (12_288, 4_096),
+            (4_096, 12_288),
+            (151_936, 4_096),
+        ];
+        const DRAFT_SHAPES: &[(usize, usize)] = &[
+            (2_048, 1_024),
+            (1_024, 1_024),
+            (1_024, 2_048),
+            (3_072, 1_024),
+            (1_024, 3_072),
+            (151_936, 1_024),
+        ];
+        const TARGET_ROWS: &[usize] = &[1, 5, 8, 9, 17, 32, 40, 128, 512, 1_024, 2_048];
+        const DRAFT_ROWS: &[usize] = &[1, 4, 8, 16, 32, 128, 512, 1_024, 2_048];
+
+        for (shapes, row_counts) in [
+            (TARGET_SHAPES, TARGET_ROWS),
+            (DRAFT_SHAPES, DRAFT_ROWS),
+        ] {
+            for &(n, k) in shapes {
+                for &m in row_counts {
+                    let row = m - 1;
+                    let column = n - 1;
+                    let reduction = k - 4;
+                    let reference_reduction = k - 1;
+                    assert!(row <= 2_047);
+                    assert!(n <= 151_936);
+                    assert!(k <= 12_288);
+                    assert!(column <= 151_935);
+                    assert!(reference_reduction <= 12_287);
+
+                    let checked_reference_b = reference_reduction
+                        .checked_mul(n)
+                        .and_then(|value| value.checked_add(column))
+                        .expect("admitted reference B index must fit usize");
+                    let checked_reference_a = row
+                        .checked_mul(k)
+                        .and_then(|value| value.checked_add(reference_reduction))
+                        .expect("admitted reference A index must fit usize");
+                    assert_eq!(reference_reduction * n + column, checked_reference_b);
+                    assert_eq!(row * k + reference_reduction, checked_reference_a);
+                    assert!(checked_reference_b < k * n);
+                    assert!(checked_reference_a < m * k);
+
+                    let mut sequential_b = reduction * n + column;
+                    let mut sequential_a = row * k + reduction;
+                    for offset in 0..4 {
+                        let checked_b = reduction
+                            .checked_add(offset)
+                            .and_then(|value| value.checked_mul(n))
+                            .and_then(|value| value.checked_add(column))
+                            .expect("admitted B index must fit usize");
+                        let checked_a = row
+                            .checked_mul(k)
+                            .and_then(|value| value.checked_add(reduction))
+                            .and_then(|value| value.checked_add(offset))
+                            .expect("admitted A index must fit usize");
+                        assert_eq!(sequential_b, checked_b);
+                        assert_eq!(sequential_a, checked_a);
+                        assert!(checked_b < k * n);
+                        assert!(checked_a < m * k);
+                        if offset < 3 {
+                            sequential_b += n;
+                            sequential_a += 1;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

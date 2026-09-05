@@ -61,14 +61,11 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-compiler-execution-protocol", "0.1.0"),
     ("fe2o3-compiler-ffi", "0.1.0"),
     ("fe2o3-compiler-lineage", "0.1.0"),
-    ("fe2o3-completion", "0.1.0"),
     ("fe2o3-contracts", "0.1.0"),
-    ("fe2o3-core", "0.1.0"),
     ("fe2o3-device", "0.1.0"),
     ("fe2o3-drm-uapi", "0.1.0"),
     ("fe2o3-external-anchor-protocol", "0.1.0"),
     ("fe2o3-functional-proof", "0.1.0"),
-    ("fe2o3-hip-sys", "0.1.0"),
     ("fe2o3-host", "0.1.0"),
     ("fe2o3-host-api", "0.1.0"),
     ("fe2o3-hsaco", "0.1.0"),
@@ -76,6 +73,7 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-kernel-analysis", "0.1.0"),
     ("fe2o3-kernel-descriptor", "0.1.0"),
     ("fe2o3-kernel-ir", "0.1.0"),
+    ("fe2o3-kernel-opt", "0.1.0"),
     ("fe2o3-kfd", "0.1.0"),
     ("fe2o3-kfd-uapi", "0.1.0"),
     ("fe2o3-llvm-handoff", "0.1.0"),
@@ -85,6 +83,8 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-mir-model", "0.1.0"),
     ("fe2o3-pliron", "0.1.0"),
     ("fe2o3-pliron-owner-core", "0.1.0"),
+    ("fe2o3-process-identity", "0.1.0"),
+    ("fe2o3-profiler-protocol", "0.1.0"),
     ("fe2o3-proof-contracts", "0.1.0"),
     ("fe2o3-runtime", "0.1.0"),
     ("fe2o3-runtime-model", "0.1.0"),
@@ -94,10 +94,22 @@ FE2O3_RESOLVED_PACKAGES = (
     ("fe2o3-service-host", "0.1.0"),
     ("fe2o3-service-model", "0.1.0"),
     ("fe2o3-source-isa-observation", "0.1.0"),
+    ("fe2o3-target-spec", "0.1.0"),
     ("fe2o3-verifier", "0.1.0"),
+    ("fe2o3-worker-v3-verification-client", "0.1.0"),
+    ("fe2o3-worker-v3-verification-protocol", "0.1.0"),
     ("reserved-fe2o3-symbols", "0.1.0"),
 )
 FE2O3_PACKAGE_NAMES = frozenset(name for name, _ in FE2O3_RESOLVED_PACKAGES)
+FE2O3_DEVICE_RESOLVED_PACKAGES = tuple(
+    identity
+    for identity in FE2O3_RESOLVED_PACKAGES
+    if identity[0]
+    not in {
+        "fe2o3-worker-v3-verification-client",
+        "fe2o3-worker-v3-verification-protocol",
+    }
+)
 FE2O3_SOURCE_PIN_PACKAGE_NAMES = frozenset(
     {
         "dialect-amdgcn",
@@ -119,16 +131,19 @@ FE2O3_SOURCE_PIN_PACKAGE_NAMES = frozenset(
         "fe2o3-kernel-analysis",
         "fe2o3-kernel-descriptor",
         "fe2o3-kernel-ir",
+        "fe2o3-kernel-opt",
         "fe2o3-llvm-handoff",
         "fe2o3-llvm-text",
         "fe2o3-lower-mir-kernel",
         "fe2o3-mir-model",
         "fe2o3-pliron",
         "fe2o3-pliron-owner-core",
+        "fe2o3-process-identity",
         "fe2o3-proof-contracts",
         "fe2o3-runtime-protocol",
         "fe2o3-rustc-invocation",
         "fe2o3-source-isa-observation",
+        "fe2o3-target-spec",
         "reserved-fe2o3-symbols",
     }
 )
@@ -179,19 +194,31 @@ FE2O3_ADAPTER_WORKSPACES = (
     (
         "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
         "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
-        ("fe2o3-host", "fe2o3-hsaco-finalize", "fe2o3-verifier"),
+        (
+            ("dependencies", "fe2o3-host"),
+            ("dependencies", "fe2o3-hsaco-finalize"),
+            ("dependencies", "fe2o3-runtime-protocol"),
+            ("dependencies", "fe2o3-verifier"),
+            ("dependencies", "fe2o3-worker-v3-verification-client"),
+            ("dependencies", "fe2o3-worker-v3-verification-protocol"),
+            ("dev-dependencies", "fe2o3-artifact-transaction"),
+            ("dev-dependencies", "fe2o3-external-anchor-protocol"),
+        ),
         FE2O3_RESOLVED_PACKAGES,
     ),
     (
         "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
         "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
-        ("fe2o3-compiler-ffi", "fe2o3-runtime-protocol"),
+        (
+            ("dependencies", "fe2o3-compiler-ffi"),
+            ("dependencies", "fe2o3-runtime-protocol"),
+        ),
         FE2O3_SOURCE_PIN_RESOLVED_PACKAGES,
     ),
     (
         "ferric-qwen3-swiglu-worker-v3-envelope-v2",
         "adapters/qwen3-swiglu-worker-v3-envelope-v2",
-        ("fe2o3-runtime-protocol",),
+        (("dependencies", "fe2o3-runtime-protocol"),),
         FE2O3_RESOLVED_PACKAGES,
     ),
 )
@@ -467,7 +494,7 @@ def validate_fe2o3_topology(ferric: Path, workspace: JsonObject) -> list[JsonObj
 def validate_fe2o3_device_workspaces(
     ferric: Path, fe2o3_commit: str
 ) -> list[JsonObject]:
-    expected_resolved = set(FE2O3_RESOLVED_PACKAGES)
+    expected_resolved = set(FE2O3_DEVICE_RESOLVED_PACKAGES)
     expected_source = f"git+{FE2O3_REPOSITORY}?rev={fe2o3_commit}#{fe2o3_commit}"
     expected_edges = {
         ("dependencies", "fe2o3-device"),
@@ -593,8 +620,8 @@ def validate_fe2o3_adapter_workspaces(
     ferric: Path, fe2o3_commit: str
 ) -> list[JsonObject]:
     if (
-        len(FE2O3_SOURCE_PIN_PACKAGE_NAMES) != 30
-        or len(FE2O3_SOURCE_PIN_RESOLVED_PACKAGES) != 30
+        len(FE2O3_SOURCE_PIN_PACKAGE_NAMES) != 33
+        or len(FE2O3_SOURCE_PIN_RESOLVED_PACKAGES) != 33
         or {name for name, _ in FE2O3_SOURCE_PIN_RESOLVED_PACKAGES}
         != FE2O3_SOURCE_PIN_PACKAGE_NAMES
     ):
@@ -604,7 +631,7 @@ def validate_fe2o3_adapter_workspaces(
     for (
         package_name,
         relative_path,
-        dependency_names,
+        dependency_edges,
         resolved_packages,
     ) in FE2O3_ADAPTER_WORKSPACES:
         expected_resolved = set(resolved_packages)
@@ -639,9 +666,7 @@ def validate_fe2o3_adapter_workspaces(
                     )
                 dependency_tables.append((f"target:{target}:{scope}", table))
 
-        expected_edges = {
-            ("dependencies", dependency_name) for dependency_name in dependency_names
-        }
+        expected_edges = set(dependency_edges)
         direct: list[JsonObject] = []
         actual_edges: set[tuple[str, str]] = set()
         for scope, table in dependency_tables:
