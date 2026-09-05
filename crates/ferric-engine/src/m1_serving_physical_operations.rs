@@ -1807,6 +1807,53 @@ fn validate_custody_guard(
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1SpeculativeEngineRetirementErrorV1 {
+    Preflight,
+    Commit,
+}
+
+fn retire_preflighted_speculative_engine_members<const C: usize>(
+    engine: &mut Engine<C>,
+    permit: &M1SpeculativePreflightedRoundV1,
+    dispositions: &[M1DeviceKvCompletionDispositionV1],
+) -> Result<bool, M1SpeculativeEngineRetirementErrorV1> {
+    if permit.members().len() != dispositions.len()
+        || engine.pending_batch_member_count() != permit.members().len()
+        || !permit.members().iter().enumerate().zip(dispositions).all(
+            |((lane, member), disposition)| {
+                let expected = match member.status() {
+                    M1SpeculativeMemberStatusV1::Active => {
+                        M1DeviceKvCompletionDispositionV1::Continue
+                    }
+                    M1SpeculativeMemberStatusV1::Completed(_)
+                    | M1SpeculativeMemberStatusV1::Cancelled(_) => {
+                        M1DeviceKvCompletionDispositionV1::Retire
+                    }
+                };
+                member.physical_disposition() == expected
+                    && *disposition == expected
+                    && engine.pending_member(lane) == Some(member.request())
+                    && engine.state(member.request())
+                        == Some(ferric_spec::scheduling::RequestState::InFlight)
+            },
+        )
+    {
+        return Err(M1SpeculativeEngineRetirementErrorV1::Preflight);
+    }
+
+    let mut retired_any = false;
+    for member in permit.members() {
+        if member.physical_disposition() == M1DeviceKvCompletionDispositionV1::Retire {
+            if engine.retire(member.request()).is_err() {
+                return Err(M1SpeculativeEngineRetirementErrorV1::Commit);
+            }
+            retired_any = true;
+        }
+    }
+    Ok(retired_any)
+}
+
 impl<'a, const C: usize, P> M1ServingPhysicalOperationsV1
     for M1ServingPhysicalRunnerOperationsV1<'a, C, P>
 where
@@ -2974,33 +3021,13 @@ where
             && permit.selection() == custody.plan().target()
             && permit.epoch() == readback_epoch
             && permit.members().len() == checked.records().len()
-            && permit.members().len() == dispositions.len()
-            && self.engine.pending_batch_member_count() == permit.members().len()
             && prepare_diagnostic_binding(custody.plan(), readback_epoch, checked).is_ok()
             && diagnostic_history_can_append(diagnostic_history_len)
             && permit
                 .members()
                 .iter()
-                .enumerate()
                 .zip(checked.records())
-                .zip(&dispositions)
-                .all(|(((lane, member), record), disposition)| {
-                    let expected = match member.status() {
-                        M1SpeculativeMemberStatusV1::Active => {
-                            M1DeviceKvCompletionDispositionV1::Continue
-                        }
-                        M1SpeculativeMemberStatusV1::Completed(_)
-                        | M1SpeculativeMemberStatusV1::Cancelled(_) => {
-                            M1DeviceKvCompletionDispositionV1::Retire
-                        }
-                    };
-                    record.record().request == member.request()
-                        && member.physical_disposition() == expected
-                        && *disposition == expected
-                        && self.engine.pending_member(lane) == Some(member.request())
-                        && self.engine.state(member.request())
-                            == Some(ferric_spec::scheduling::RequestState::InFlight)
-                });
+                .all(|(member, record)| record.record().request == member.request());
         if !preflight_matches {
             return Err(M1ServingPhysicalOperationFailureV1::Retryable {
                 source: M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementUnavailable,
@@ -3008,29 +3035,34 @@ where
             });
         }
 
-        let mut retired_any = false;
-        for member in permit.members() {
-            if member.physical_disposition() == M1DeviceKvCompletionDispositionV1::Retire {
-                retired_any = true;
-                if self.engine.retire(member.request()).is_err() {
+        let retired_any =
+            match retire_preflighted_speculative_engine_members(self.engine, permit, &dispositions)
+            {
+                Ok(retired_any) => retired_any,
+                Err(M1SpeculativeEngineRetirementErrorV1::Preflight) => {
+                    return Err(M1ServingPhysicalOperationFailureV1::Retryable {
+                    source:
+                        M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementUnavailable,
+                    custody,
+                });
+                }
+                Err(M1SpeculativeEngineRetirementErrorV1::Commit) => {
                     self.engine.quarantine_m1_queue_rearm_failure();
                     self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
                     return Err(M1ServingPhysicalOperationFailureV1::Terminal {
-                        source:
-                            M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementCommit,
-                        custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
-                            provider: self.provider.take(),
-                            plan: self.active_plan,
-                            lower: Box::new(
-                                M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedReadback(
-                                    Box::new(custody),
-                                ),
+                    source: M1ServingPhysicalRunnerOperationErrorV1::SpeculativeRetirementCommit,
+                    custody: M1ServingPhysicalRunnerTerminalCustodyV1 {
+                        provider: self.provider.take(),
+                        plan: self.active_plan,
+                        lower: Box::new(
+                            M1ServingPhysicalRunnerTerminalLowerCustodyV1::AdapterSealedReadback(
+                                Box::new(custody),
                             ),
-                        },
-                    });
+                        ),
+                    },
+                });
                 }
-            }
-        }
+            };
 
         match self.settle_readback(custody, dispositions) {
             Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody })
@@ -3415,7 +3447,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection};
+    use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
+    use ferric_spec::{
+        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection, StepPlan, TokenId,
+    };
+
+    use crate::{
+        completed_readback_join::check_m1_completed_output_v1, m1_completion_output_shape_v1,
+        CompletionWireExpectation, CompletionWireSemanticExpectation, M1ObservedCompletionImageV1,
+    };
 
     fn validate_s1_k4_rollover_anchor(
         input: &M1ServingQueuedS1K4RolloverV1,
@@ -3451,6 +3491,143 @@ mod tests {
             },
         )
         .expect("test plan must be canonical")
+    }
+
+    fn encode_speculative_retirement_completion(
+        request: RequestId,
+        epoch: CompletionEpoch,
+        plan_id: Identity,
+    ) -> Box<[u8]> {
+        let emitted: [TokenId; 3] = [3, 4, 9];
+        let mut bytes = vec![0; CompletionLayout::RECORD_BYTES_USIZE];
+        bytes[CompletionLayout::REQUEST_SLOT_OFFSET..CompletionLayout::REQUEST_SLOT_OFFSET + 4]
+            .copy_from_slice(&request.slot().to_le_bytes());
+        bytes[CompletionLayout::REQUEST_GENERATION_OFFSET
+            ..CompletionLayout::REQUEST_GENERATION_OFFSET + 4]
+            .copy_from_slice(&request.generation().to_le_bytes());
+        bytes[CompletionLayout::COMPLETION_EPOCH_OFFSET
+            ..CompletionLayout::COMPLETION_EPOCH_OFFSET + 8]
+            .copy_from_slice(&epoch.value().to_le_bytes());
+        bytes[CompletionLayout::PLAN_IDENTITY_OFFSET
+            ..CompletionLayout::PLAN_IDENTITY_OFFSET + CompletionLayout::PLAN_IDENTITY_BYTES]
+            .copy_from_slice(plan_id.as_bytes());
+        bytes[CompletionLayout::ACCEPTED_DRAFT_TOKENS_OFFSET] = 2;
+        bytes[CompletionLayout::EMITTED_TOKEN_COUNT_OFFSET] =
+            u8::try_from(emitted.len()).unwrap();
+        for (index, token) in emitted.iter().enumerate() {
+            let offset = CompletionLayout::token_offset(index).unwrap();
+            bytes[offset..offset + 4].copy_from_slice(&token.to_le_bytes());
+        }
+        bytes.into_boxed_slice()
+    }
+
+    fn speculative_retirement_fixture(
+        cancel: bool,
+    ) -> (Engine<1>, RequestId, M1SpeculativePreflightedRoundV1) {
+        let epoch = CompletionEpoch::new(1);
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        };
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let _scheduled = engine.dispatch_m1_exact_ready(epoch, &[request]).unwrap();
+
+        let plan_id = Identity::new([71; 32]);
+        let scheduled = M1ScheduledDispatchV1::for_test(epoch, &[request]);
+        let plan = StepPlan::new(request, epoch, plan_id, selection);
+        let expectations = [CompletionWireExpectation::new(
+            &plan,
+            CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: &[3, 4, 5, 6],
+                target_choices: &[3, 4, 9, 7, 8],
+            },
+        )];
+        let observed = M1ObservedCompletionImageV1::from_bytes_for_test(
+            m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            19,
+            5,
+            384,
+            encode_speculative_retirement_completion(request, epoch, plan_id),
+        )
+        .unwrap();
+        let checked =
+            check_m1_completed_output_v1(&observed, selection, &scheduled, &expectations).unwrap();
+        let seed = crate::M1SpeculativeMemberSeedV1::new(
+            request,
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[]).unwrap(),
+        );
+        let coordinator = crate::M1SpeculativeGenerationLoopV1::new(selection, &[seed]).unwrap();
+        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+        let controls = if cancel {
+            [crate::M1SpeculativeMemberControlV1::cancelling(
+                request,
+                crate::M1SpeculativeCancellationReasonV1::ServerShutdown,
+            )]
+        } else {
+            [crate::M1SpeculativeMemberControlV1::continuing(request)]
+        };
+        let permit = coordinator
+            .preflight_checked_round(binding, &checked, &controls)
+            .unwrap();
+        (engine, request, permit)
+    }
+
+    #[test]
+    fn speculative_engine_retirement_transitions_terminal_and_preserves_active() {
+        let (mut terminal_engine, terminal_request, terminal_permit) =
+            speculative_retirement_fixture(true);
+        assert_eq!(
+            retire_preflighted_speculative_engine_members(
+                &mut terminal_engine,
+                &terminal_permit,
+                &[M1DeviceKvCompletionDispositionV1::Retire],
+            ),
+            Ok(true)
+        );
+        assert_eq!(
+            terminal_engine.state(terminal_request),
+            Some(ferric_spec::scheduling::RequestState::Retiring)
+        );
+
+        let (mut active_engine, active_request, active_permit) =
+            speculative_retirement_fixture(false);
+        assert_eq!(
+            retire_preflighted_speculative_engine_members(
+                &mut active_engine,
+                &active_permit,
+                &[M1DeviceKvCompletionDispositionV1::Continue],
+            ),
+            Ok(false)
+        );
+        assert_eq!(
+            active_engine.state(active_request),
+            Some(ferric_spec::scheduling::RequestState::InFlight)
+        );
+    }
+
+    #[test]
+    fn speculative_engine_retirement_mismatch_is_nonmutating() {
+        let (mut engine, request, permit) = speculative_retirement_fixture(true);
+        assert_eq!(
+            retire_preflighted_speculative_engine_members(
+                &mut engine,
+                &permit,
+                &[M1DeviceKvCompletionDispositionV1::Continue],
+            ),
+            Err(M1SpeculativeEngineRetirementErrorV1::Preflight)
+        );
+        assert_eq!(
+            engine.state(request),
+            Some(ferric_spec::scheduling::RequestState::InFlight)
+        );
     }
 
     #[test]
