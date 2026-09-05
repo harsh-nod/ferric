@@ -34,6 +34,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
         "proofs/m1/model_bundle.rs",
         "proofs/m1/kv_physical.rs",
         "proofs/m1/speculative_graph.rs",
+        "crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs",
         "crates/ferric-spec/src/continuous_batching.rs",
         "crates/ferric-spec/src/graph.rs",
         "crates/ferric-spec/src/m1_foundation_theorems.rs",
@@ -119,8 +120,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 20:
-            fail("baseline theorem registry did not select exactly twenty rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 21:
+            fail("baseline theorem registry did not select exactly twenty-one rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (
@@ -144,7 +145,9 @@ def main() -> None:
                 lambda fixture: mutate_registry(
                     fixture,
                     lambda lines: lines.append(
-                        lines[1].replace("batching-publish-once", "unknown-row")
+                        lines[registry_row(lines, "batching-publish-once")].replace(
+                            "batching-publish-once", "unknown-row"
+                        )
                     ),
                 ),
             ),

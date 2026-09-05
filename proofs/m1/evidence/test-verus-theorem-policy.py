@@ -617,7 +617,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 20 or not active:
+    if len(rows) != 21 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = rows[0]
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:
@@ -1148,8 +1148,11 @@ def main() -> None:
 
         incomplete_root = root / "incomplete-property-product"
         incomplete_root.mkdir()
+        incomplete_row = next(
+            selected for selected in rows if selected[0] == "graph-operator-order"
+        )
         _, incomplete_context = build_run(
-            repo, incomplete_root, rows[2], source_identity
+            repo, incomplete_root, incomplete_row, source_identity
         )
         incomplete = invoke(repo, incomplete_context)
         if (

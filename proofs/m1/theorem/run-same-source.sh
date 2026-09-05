@@ -183,7 +183,7 @@ awk -F '|' '{ print $5 }' "$selected" | LC_ALL=C sort -u >"$selected_packages"
 }
 while IFS= read -r package; do
     case "$package" in
-        ferric-build|ferric-m1-proof|ferric-spec) ;;
+        ferric-build|ferric-engine|ferric-m1-proof|ferric-spec) ;;
         *)
             printf 'FAIL: unsupported M1 theorem package: %s\n' "$package" >&2
             exit 1
@@ -214,7 +214,7 @@ while IFS='|' read -r name foundation property path_id package source module fun
         exit 1
     }
     case "$package" in
-        ferric-build|ferric-m1-proof|ferric-spec) ;;
+        ferric-build|ferric-engine|ferric-m1-proof|ferric-spec) ;;
         *)
             printf 'FAIL: unsupported M1 theorem package: %s\n' "$package" >&2
             exit 1

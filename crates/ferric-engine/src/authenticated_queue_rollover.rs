@@ -22,6 +22,14 @@ use crate::authenticated_speculative_executor::{
     M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
     M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
 };
+use crate::authenticated_target_rollover_phase_custody::{
+    advance_m1_authenticated_target_rollover_prepared_custody_v1,
+    advance_m1_authenticated_target_rollover_reselected_custody_v1,
+    begin_m1_authenticated_target_rollover_scheduled_custody_v1,
+    establish_m1_authenticated_target_rollover_submit_entry_custody_v1,
+    M1AuthenticatedTargetRolloverPreparedCustodyV1,
+    M1AuthenticatedTargetRolloverReselectedCustodyV1,
+};
 use crate::m1_serving_registry::{
     admit_m1_production_rollover_transition_v1, admit_m1_target_decode_rollover_transition_v1,
 };
@@ -2539,6 +2547,7 @@ pub struct M1AuthenticatedScheduledTargetDecodeRolloverV1 {
     selected: Vec<ActiveDeviceKvCache>,
     residue: M1AuthenticatedSpeculativeRolloverResidueV1,
     inputs: M1AuthenticatedTargetDecodeServingInputsV1,
+    phase_custody: M1AuthenticatedTargetRolloverReselectedCustodyV1,
 }
 
 impl M1AuthenticatedScheduledTargetDecodeRolloverV1 {
@@ -2879,6 +2888,7 @@ pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
             ));
         }
     };
+    let phase_custody = begin_m1_authenticated_target_rollover_scheduled_custody_v1();
     let mut selected = match members.pop() {
         Some(M1ReleasedDeviceKvMemberV1::Active(selected)) => selected,
         member => {
@@ -2886,7 +2896,7 @@ pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                 engine,
                 M1AuthenticatedTargetDecodeScheduleErrorV1::MemberCustody,
                 queue,
-                (member, members, scheduled, residue, inputs),
+                (member, members, scheduled, residue, inputs, phase_custody),
             ));
         }
     };
@@ -2895,9 +2905,11 @@ pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
             engine,
             M1AuthenticatedTargetDecodeScheduleErrorV1::CacheReselection,
             queue,
-            (source, selected, scheduled, residue, inputs),
+            (source, selected, scheduled, residue, inputs, phase_custody),
         ));
     }
+    let phase_custody =
+        advance_m1_authenticated_target_rollover_reselected_custody_v1(phase_custody);
     Ok(M1AuthenticatedScheduledTargetDecodeRolloverV1 {
         prior,
         next,
@@ -2907,6 +2919,7 @@ pub fn schedule_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         selected: vec![selected],
         residue,
         inputs,
+        phase_custody,
     })
 }
 
@@ -2937,6 +2950,7 @@ pub struct M1AuthenticatedPreparedTargetDecodeRolloverV1 {
     residue: M1AuthenticatedSpeculativeRolloverResidueV1,
     prepared: M1PreparedScheduledWorkspaceImagesV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
+    phase_custody: M1AuthenticatedTargetRolloverPreparedCustodyV1,
 }
 
 impl M1AuthenticatedPreparedTargetDecodeRolloverV1 {
@@ -2974,6 +2988,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         mut selected,
         residue,
         inputs,
+        phase_custody,
     } = scheduled;
     let M1AuthenticatedTargetDecodeServingInputsV1 {
         target,
@@ -3003,6 +3018,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                         residue,
                         target,
                         preparation_plans,
+                        phase_custody,
                     ),
                 ),
             ));
@@ -3025,6 +3041,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                     target_page_leases,
                     recipe,
                     preparation_plans,
+                    phase_custody,
                 ),
             ),
         ));
@@ -3055,6 +3072,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                         target,
                         recipe,
                         preparation_plans,
+                        phase_custody,
                     ),
                 ),
             ));
@@ -3078,6 +3096,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                         residue,
                         recipe,
                         preparation_plans,
+                        phase_custody,
                     ),
                 ),
             ));
@@ -3096,11 +3115,21 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
                 preparation_failure(
                     M1AuthenticatedSpeculativeRolloverPrepareStageV1::Workspace,
                     queue,
-                    (source, prior, next, reason, selected, residue, recipe),
+                    (
+                        source,
+                        prior,
+                        next,
+                        reason,
+                        selected,
+                        residue,
+                        recipe,
+                        phase_custody,
+                    ),
                 ),
             ));
         }
     };
+    let phase_custody = advance_m1_authenticated_target_rollover_prepared_custody_v1(phase_custody);
     Ok(M1AuthenticatedPreparedTargetDecodeRolloverV1 {
         prior,
         next,
@@ -3110,6 +3139,7 @@ pub fn prepare_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         residue,
         prepared,
         recipe,
+        phase_custody,
     })
 }
 
@@ -3160,6 +3190,7 @@ fn target_decode_submission_preflight<const C: usize>(
         residue,
         prepared,
         recipe,
+        phase_custody: _,
     } = target;
     let Some(transition) = admit_m1_target_decode_rollover_transition_v1(*prior, *next) else {
         return false;
@@ -3261,7 +3292,6 @@ fn close_target_decode_detached_submission<const C: usize>(
 ///
 /// Panics only if a move-only owner changes its already-preflighted enum shape
 /// while being consumed in the same call.
-#[allow(clippy::too_many_lines)]
 pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
     target: M1AuthenticatedPreparedTargetDecodeRolloverV1,
@@ -3280,14 +3310,26 @@ pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         residue,
         prepared,
         recipe,
+        phase_custody,
     } = target;
     if !preflight {
         return Err(close_target_decode_detached_submission(
             engine,
             queue,
-            (prior, next, reason, selected, residue, prepared, recipe),
+            (
+                prior,
+                next,
+                reason,
+                selected,
+                residue,
+                prepared,
+                recipe,
+                phase_custody,
+            ),
         ));
     }
+    let _submit_entry_custody =
+        establish_m1_authenticated_target_rollover_submit_entry_custody_v1(phase_custody);
     let (old_shape, lower, witness, operations, custody) = queue.into_rearm_parts();
     let predecessor_observation = lower.observation();
     let predecessor_generation = lower.detached_dispatch_generation();

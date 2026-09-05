@@ -29,6 +29,15 @@ EXPECTED = {
         "validate_manifest_commitment_verified",
         "canonical-manifest-digest-binding",
     ),
+    "authenticated-target-rollover-phase-custody": (
+        "authenticated-target-rollover-phase-custody",
+        "scheduler_refined", "physical-runner", "ferric-engine",
+        "crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs",
+        "authenticated-target-rollover-phase-custody.py", "postcondition",
+        "authenticated_target_rollover_phase_custody",
+        "establish_m1_authenticated_target_rollover_submit_entry_custody_v1",
+        "exact-submit-entry-phase-custody",
+    ),
     "batching-publish-once": (
         "continuous-batching", "scheduler_refined", "batching-proof",
         "ferric-spec", "crates/ferric-spec/src/continuous_batching.rs",

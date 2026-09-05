@@ -53,6 +53,7 @@ def copy_fixture(repo: Path, destination: Path) -> None:
     )
     for relative in (
         "crates/ferric-build/src/auth.rs",
+        "crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs",
         "crates/ferric-engine/src/operation_kernel_plan.rs",
         "crates/ferric-kernels/src/validation.rs",
         "crates/ferric-kernels/src/m1_kernel_safety.rs",
@@ -201,8 +202,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 22:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 22")
+        if len(rows) != 23:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 23")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []

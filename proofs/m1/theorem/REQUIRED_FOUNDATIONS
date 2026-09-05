@@ -1,4 +1,5 @@
 format=FERRIC-M1-POSITIVE-THEOREMS-V1
+theorem=authenticated-target-rollover-phase-custody|authenticated-target-rollover-phase-custody|scheduler_refined|physical-runner|ferric-engine|crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs|authenticated_target_rollover_phase_custody|establish_m1_authenticated_target_rollover_submit_entry_custody_v1
 theorem=batching-publish-once|continuous-batching|scheduler_refined|batching-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|batching_publish_once_theorem
 theorem=batching-request-routing|continuous-batching|scheduler_refined|scheduler-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|batching_request_routing_theorem
 theorem=graph-operator-order|exact-graph-plan|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|graph_operator_order_theorem

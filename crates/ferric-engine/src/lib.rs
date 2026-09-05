@@ -12,6 +12,7 @@ mod authenticated_physical_readback;
 mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
 mod authenticated_speculative_executor;
+mod authenticated_target_rollover_phase_custody;
 #[cfg(test)]
 mod authenticated_test_runtime;
 mod bound_step_workspaces;

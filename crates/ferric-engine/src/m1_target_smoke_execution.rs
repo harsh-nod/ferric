@@ -71,17 +71,17 @@ struct SmokeTokenLoop {
 
 #[derive(Debug)]
 struct SmokeTimer {
-    first_generated_token_offset_ns: Option<u64>,
-    last_generated_token_offset_ns: Option<u64>,
-    started_ns: u128,
+    first_generated_offset: Option<u64>,
+    last_generated_offset: Option<u64>,
+    start_timestamp: u128,
 }
 
 impl SmokeTimer {
     fn start() -> SmokeResult<Self> {
         Ok(Self {
-            first_generated_token_offset_ns: None,
-            last_generated_token_offset_ns: None,
-            started_ns: monotonic_raw_ns()?,
+            first_generated_offset: None,
+            last_generated_offset: None,
+            start_timestamp: monotonic_raw_ns()?,
         })
     }
 
@@ -89,22 +89,21 @@ impl SmokeTimer {
         if tokens.generated.is_empty() {
             return;
         }
-        let offset = elapsed_ns(self.started_ns)
+        let offset = elapsed_ns(self.start_timestamp)
             .unwrap_or_else(|error| fail_stop("smoke generated-token timing", error));
-        if tokens.generated.len() == 1 && self.first_generated_token_offset_ns.is_none() {
-            self.first_generated_token_offset_ns = Some(offset);
+        if tokens.generated.len() == 1 && self.first_generated_offset.is_none() {
+            self.first_generated_offset = Some(offset);
         }
-        self.last_generated_token_offset_ns = Some(offset);
+        self.last_generated_offset = Some(offset);
     }
 
     fn finish(self) -> SmokeResult<M1TargetSmokeTimingV1> {
-        let first_generated_token_offset_ns =
-            self.first_generated_token_offset_ns.ok_or_else(|| {
-                "smoke execution completed without a first generated token".to_owned()
-            })?;
-        let duration_ns = elapsed_ns(self.started_ns)?;
+        let first_generated_token_offset_ns = self.first_generated_offset.ok_or_else(|| {
+            "smoke execution completed without a first generated token".to_owned()
+        })?;
+        let duration_ns = elapsed_ns(self.start_timestamp)?;
         let last_generated_token_offset_ns = self
-            .last_generated_token_offset_ns
+            .last_generated_offset
             .ok_or_else(|| "smoke execution completed without a last generated token".to_owned())?;
         if last_generated_token_offset_ns < first_generated_token_offset_ns
             || duration_ns < last_generated_token_offset_ns
@@ -112,9 +111,9 @@ impl SmokeTimer {
             return Err("smoke generated-token timing order is invalid".to_owned());
         }
         Ok(M1TargetSmokeTimingV1 {
-            duration_ns,
-            first_generated_token_offset_ns,
-            last_generated_token_offset_ns,
+            duration: duration_ns,
+            first_generated_offset: first_generated_token_offset_ns,
+            last_generated_offset: last_generated_token_offset_ns,
         })
     }
 }
@@ -200,28 +199,28 @@ pub struct M1TargetSmokeExecutionV1 {
 /// Monotonic-raw timing for the single request executed by target smoke.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1TargetSmokeTimingV1 {
-    duration_ns: u64,
-    first_generated_token_offset_ns: u64,
-    last_generated_token_offset_ns: u64,
+    duration: u64,
+    first_generated_offset: u64,
+    last_generated_offset: u64,
 }
 
 impl M1TargetSmokeTimingV1 {
     /// Controller-entry to completed device teardown in nanoseconds.
     #[must_use]
     pub const fn duration_ns(self) -> u64 {
-        self.duration_ns
+        self.duration
     }
 
     /// Controller-entry to the first structurally observed generated token.
     #[must_use]
     pub const fn first_generated_token_offset_ns(self) -> u64 {
-        self.first_generated_token_offset_ns
+        self.first_generated_offset
     }
 
     /// Controller-entry to the last structurally observed generated token.
     #[must_use]
     pub const fn last_generated_token_offset_ns(self) -> u64 {
-        self.last_generated_token_offset_ns
+        self.last_generated_offset
     }
 }
 

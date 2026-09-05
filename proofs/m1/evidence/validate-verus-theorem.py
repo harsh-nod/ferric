@@ -145,6 +145,16 @@ PLATFORM_KEYS = {"arch", "os"}
 DETAIL_KEYS = {"failed_proof_notes", "obligation_proof_notes"}
 EXPECTED_ROWS = (
     (
+        "authenticated-target-rollover-phase-custody",
+        "authenticated-target-rollover-phase-custody",
+        "scheduler_refined",
+        "physical-runner",
+        "ferric-engine",
+        "crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs",
+        "authenticated_target_rollover_phase_custody",
+        "establish_m1_authenticated_target_rollover_submit_entry_custody_v1",
+    ),
+    (
         "batching-publish-once",
         "continuous-batching",
         "scheduler_refined",

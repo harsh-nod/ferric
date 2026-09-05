@@ -19,6 +19,15 @@ SAFE_TARGET = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)*\Z
 # These are existing direct-Verus foundations associated with still-Open M1
 # paths. Registry membership does not implement or discharge those paths.
 EXPECTED = {
+    "authenticated-target-rollover-phase-custody": (
+        "authenticated-target-rollover-phase-custody",
+        "scheduler_refined",
+        "physical-runner",
+        "ferric-engine",
+        "crates/ferric-engine/src/authenticated_target_rollover_phase_custody.rs",
+        "authenticated_target_rollover_phase_custody",
+        "establish_m1_authenticated_target_rollover_submit_entry_custody_v1",
+    ),
     "batching-publish-once": (
         "continuous-batching",
         "scheduler_refined",
