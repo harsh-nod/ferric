@@ -30,6 +30,7 @@ SUPERVISOR_SOCKET = Path("/run/fe2o3/compiler-execution-supervisor.sock")
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 WORKER_BUILD_ID = re.compile(r"fe2o3-worker-v1-sha256-[0-9a-f]{64}\Z")
 MAX_WORKER_BYTES = 512 * 1024 * 1024
+MAX_TOOL_BYTES = 1024 * 1024 * 1024
 MAX_CONFIG_BYTES = 1024 * 1024
 KERNELS = (
     "ferric_qwen3_lowest_id_argmax_bf16_v1",
@@ -397,14 +398,14 @@ def validate_protected_infrastructure(profile: Path, socket: Path) -> None:
 
 
 def executable(path: Path, description: str) -> str:
-    _, metadata = held_regular(path, description, 512 * 1024 * 1024)
+    _, metadata = held_regular(path, description, MAX_TOOL_BYTES)
     if metadata.st_mode & 0o111 == 0:
         fail(f"{description} is not executable")
     return str(path)
 
 
 def digest_file(path: Path, description: str) -> str:
-    data, _ = held_regular(path, description, 512 * 1024 * 1024)
+    data, _ = held_regular(path, description, MAX_TOOL_BYTES)
     return sha256(data)
 
 

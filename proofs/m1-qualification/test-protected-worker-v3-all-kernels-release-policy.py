@@ -178,11 +178,19 @@ def main() -> None:
         '"--cargo-git-source"',
         'f"https://github.com/harsh-nod/fe2o3.git@{FE2O3_REVISION}"',
         'f"https://github.com/harsh-nod/pliron.git@{PLIRON_REVISION}"',
+        "MAX_TOOL_BYTES = 1024 * 1024 * 1024",
     ]:
         if required not in source:
             fail(f"aggregate release producer lost required policy: {required}")
+    if source.count("held_regular(path, description, MAX_TOOL_BYTES)") != 2:
+        fail("aggregate release producer does not apply the exact tool-size bound")
 
     module = load(producer)
+    if (
+        module.MAX_WORKER_BYTES != 512 * 1024 * 1024
+        or module.MAX_TOOL_BYTES != 1024 * 1024 * 1024
+    ):
+        fail("aggregate release producer size bounds drifted")
     with tempfile.TemporaryDirectory(prefix="ferric-aggregate-release-") as raw_root:
         root = Path(raw_root)
         os.chmod(root, 0o700)
