@@ -215,25 +215,30 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Land the compiler correction and physical rebind</h2>
+            <h2 id="next-title">Rerun the aggregate and finish physical rebind</h2>
           </div>
           <p>
-            Public fe2o3 main d8fa0835c64d6574c8589ac3e69e3c34b0350758 supplies reusable compiler,
+            Public fe2o3 main b2cce9c271e85a97c35ce7a1ccffe17bb330f07c supplies reusable compiler,
             runtime, and KFD support. Compiler, runtime, and KFD work stays in fe2o3; Ferric owns all Qwen
-            kernels and inference. Ferric checkpoint 756e813 is public on feature branch
+            kernels and inference. Ferric checkpoint 9431cb4 is public on feature branch
             origin/codex/fe2o3-current-main-repin-v1, but is not on main or final. Source includes 12
             K1-K7 entrypoints across 440 profiles, a 545-packet target runner, physical KV custody,
-            same-shape decode rearm, and R33 V3 event-backed TTFT/TPOT records. The all-terminal
-            new-window control-plane publication, restore, and scheduler-authority transaction is public;
-            the lower physical model/KV rebind remains unavailable and returns retryable
-            RolloverUnavailable. The canonical Target8B=1 and Draft06B=2 weight-role byte has a positive
-            Verus proof and rejected negative mutation. Real Qwen3-8B and Qwen3-0.6B inputs are
-            canonically prepacked. The latest aggregate attempt stopped before Worker or link at
-            repeated-slice semantic-to-ranked projection; its reusable fe2o3 fix and the R33 daemon/wire
-            foundation are in progress and not public. The aggregate Worker V3 HSACO is still absent, as
-            are the protected execution profile and service socket. No Qwen run, generated token, measured
-            TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates
-            remain open.
+            same-shape decode rearm, and R33 V3 event-backed TTFT/TPOT records. Public commits ff2ca04 and
+            9eba943 add checked SwiGLU block indices and healthy all-terminal queue shutdown. The lower
+            physical model/KV rebind remains unavailable. The canonical Target8B=1 and Draft06B=2
+            weight-role byte has a positive Verus proof and rejected negative mutation. Real Qwen3-8B and
+            Qwen3-0.6B inputs are canonically prepacked. The latest aggregate rerun clears the prior base+6
+            diagnostic, then stops before Worker or link at the missing production expansion for
+            DisjointBlockComponentIndex in fe2o3. Private Ferric guarded/checked alternatives were rejected
+            and not published. Checkpoint 9431cb4 integrates the authority-free supervised R33 wire foundation
+            at 66b8547 and the service-independent R33 daemon lifecycle proof at 3f5b498. The proof covers
+            exactly 20 ordered measures, delivered versus abandoned responses, faulted exact-stop-only
+            recovery, and backend-free exact stop replay; four exact positive rows verify and two hostile
+            actual-body mutations reject. The source gate covers 160 modules / 7,473 executable bodies: 666
+            directly verified and 6,807 admitted unverified. This does not establish service conformance or
+            runtime authority. The aggregate Worker V3 HSACO is still absent, as are the protected execution
+            profile and service socket. No Qwen run, generated token, measured TTFT or TPOT, serving or HTTP
+            endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
