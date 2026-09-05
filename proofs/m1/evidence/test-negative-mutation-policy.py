@@ -51,6 +51,34 @@ RESULT_KEYS = (
 )
 TCB_IDS = ("tcb.compiler", "tcb.hardware", "tcb.runtime")
 TCB_KINDS = ("Compiler", "Hardware", "Runtime")
+EXPECTED_R33_ROWS = (
+    (
+        "r33-daemon-measure-order",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33-daemon-measure-order.py",
+        "postcondition",
+        "r33_daemon_lifecycle",
+        "dispatch_m1_r33_daemon_action_v1",
+        "exact-next-measure-window",
+    ),
+    (
+        "r33-daemon-response-abandonment",
+        "r33-daemon-lifecycle",
+        "resource_bounded",
+        "serving-bench",
+        "ferric-m1-proof",
+        "proofs/m1/r33_daemon_lifecycle.rs",
+        "r33-daemon-response-abandonment.py",
+        "postcondition",
+        "r33_daemon_lifecycle",
+        "resolve_m1_r33_daemon_response_v1",
+        "abandoned-response-does-not-advance",
+    ),
+)
 FixtureMutation = Callable[[Path, dict[str, Any], tuple[str, ...]], None]
 
 
@@ -572,8 +600,12 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 25 or not active:
+    if len(rows) != 27 or not active:
         fail("M1 negative registry baseline drifted")
+    if tuple(row for row in rows if row[0].startswith("r33-daemon-")) != (
+        EXPECTED_R33_ROWS
+    ):
+        fail("M1 R33 negative registry rows drifted")
     artifact_row = rows[0]
     if artifact_row[0] != "artifact-manifest-commitment-digest":
         fail("M1 negative registry first-row identity drifted")
