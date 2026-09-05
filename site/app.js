@@ -159,6 +159,33 @@
   document.querySelector("[data-transition-limitation]").textContent =
     project.validation.limitation;
 
+  const teams = document.querySelector("[data-teams]");
+  project.teams.forEach((team) => {
+    const article = element("article", "team-item");
+    const heading = element("div", "team-heading");
+    const identity = element("div", "team-identity");
+    identity.append(
+      element("div", "team-scope-label", team.scope),
+      element("h3", "", team.name),
+    );
+    const state = element("div", "team-state");
+    state.append(stateTag(team.state), element("strong", "", team.status));
+    heading.append(identity, state);
+
+    const facts = element("dl", "team-facts");
+    [
+      ["Completed", team.completed],
+      ["In progress", team.current],
+      ["Dependencies", team.blockedBy],
+      ["Next", team.next],
+      ["Validation", team.validation],
+    ].forEach(([label, value]) => {
+      facts.append(element("dt", "", label), element("dd", "", value));
+    });
+    article.append(heading, facts);
+    teams.append(article);
+  });
+
   const boundaries = document.querySelector("[data-boundaries]");
   [
     ["ferric", "Ferric owns"],

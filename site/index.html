@@ -26,6 +26,7 @@
           <a href="#capabilities">Capabilities</a>
           <a href="#validation">Validation</a>
           <a href="#architecture">Architecture</a>
+          <a href="#teams">Teams</a>
           <a href="#progress">Progress</a>
           <a href="#evidence">Evidence</a>
         </nav>
@@ -59,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-02">Updated 2026-09-02</time>
+              <time data-updated datetime="2026-09-04">Updated 2026-09-04</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -156,6 +157,22 @@
         </div>
       </section>
 
+      <section class="band teams-band" id="teams" aria-labelledby="teams-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Parallel execution</div>
+              <h2 id="teams-title">M1 team ledger</h2>
+            </div>
+            <p>
+              Each team reports completed work, its active task, concrete dependencies, the next
+              deliverable, and the latest validation boundary.
+            </p>
+          </div>
+          <div class="team-grid" data-teams></div>
+        </div>
+      </section>
+
       <section class="band progress-band" id="progress" aria-labelledby="progress-title">
         <div class="shell">
           <div class="section-heading">
@@ -198,30 +215,22 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Emit the first aggregate HSACO</h2>
+            <h2 id="next-title">Bring the aggregate within its compiler bound</h2>
           </div>
           <p>
-            Ferric integration e70ab68 contains speculative executor 0c2b73b, engineering aggregate
-            loader c9072b0, target-only engineering smoke 951d48a, and the reviewed Pages layout
-            remediation; all source components received independent review GO for their stated scope.
-            The loader and smoke remain non-authoritative. fe2o3 engineering producer schema 5099cf3
-            is frozen. Pushed candidate 466f88c02 is 68 commits ahead and 0 behind origin/main 712c98f;
-            its exact MI300X matrix is green, its narrow is_finite/fabs remediations received independent
-            source GO, and it is not the exact locked final Ferric pin. Aggregate run 7 launched, passed
-            the exact core::f32::is_finite -> f32::abs -> fabs chain, and terminated with exit 1 because
-            MemoryVolatileLoad lacks a production semantic expansion. The narrow fe2o3 compiler
-            remediation is in progress. No handoff, worker invocation, HSACO, manifest, hardware
-            execution, or Qwen token resulted. The smoke merged at 36fb8e9 with a documentation-only
-            correction. Its earlier ephemeral 41abaa0c repin passed 511 engine library tests, 84 capture
-            tests, 145 doctests, and all-target strict clippy on mi300x; exact locked final pinning and
-            live hardware execution remain open, and the smoke has not executed. A read-only baseline
-            audit found the mi300x
-            host ready, but Docker access is denied and neither vLLM nor SGLang is installed, so the
-            comparison has not run. Ferric-specific inference and kernel ownership remain in Ferric;
-            reusable compiler and runtime work remains in fe2o3. The private current aggregate
-            publication selection remains None (CURRENT=None). No authenticated current-source Qwen,
-            hardware, numerical, or performance run exists. All 33 M1 roadmap gates and all 17 assurance
-            properties remain Open.
+            Public fe2o3 main 16da71edd823e0d5c16529bfbbedb4f9dd8e70c6 supplies reusable compiler,
+            runtime, and KFD support. Compiler, runtime, and KFD work stays in fe2o3; Ferric owns all Qwen
+            kernels and inference. Ferric checkpoints a2bb2dc and 4e18d1d are public on feature branch
+            origin/codex/fe2o3-current-main-repin-v1, but are not on main or final. Source includes 12
+            K1-K7 entrypoints across 440 profiles, a 545-packet target runner,
+            physical KV custody, same-shape decode rearm, authenticated target rollover, and R33 V3
+            event-backed TTFT/TPOT records. Real Qwen3-8B and Qwen3-0.6B inputs are canonically prepacked,
+            but the last sequential compiler limits differ: isolated vector-GEMM semantic SSA reached
+            94,192,887 against 67,108,864, while the earlier aggregate-only result reached 3,188,438 storage
+            words against the 2,097,152 limit. The aggregate has not been rerun after current GEMM reductions.
+            The aggregate Worker V3 HSACO is still absent, as are the protected execution profile and service socket. No
+            Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang
+            comparison exists. All 33 M1 gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
