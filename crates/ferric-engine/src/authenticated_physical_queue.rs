@@ -11,7 +11,7 @@ use fe2o3_host::{
     AuthenticatedServiceQueueSubmitFailureV1, AuthenticatedServiceQueueUnboundSessionV1,
     AuthenticatedServiceRecycledQueueSessionV1, AuthenticatedWorkerV3ProgramMaterializationErrorV1,
 };
-use fe2o3_kfd::ComputeAqlQueueObservationV1;
+use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942TimeoutExecutionObservationV1};
 use fe2o3_service_host::ServiceQueueErrorV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Identity;
@@ -616,11 +616,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 #[cfg(test)]
 mod tests {
     use super::{
-        close_without_authority_core, M1AuthenticatedPhysicalQueueClosureV1,
+        close_without_authority_core, M1AuthenticatedPhysicalCompletedQueueSessionV1,
+        M1AuthenticatedPhysicalPublishedQueueSessionV1, M1AuthenticatedPhysicalQueueClosureV1,
+        M1AuthenticatedPhysicalQueueOperationFailureV1,
         M1AuthenticatedUnsubmittedQueueCloseEffectV1,
     };
     use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use crate::Engine;
+    use fe2o3_kfd::Gfx942TimeoutExecutionObservationV1;
 
     #[derive(Debug)]
     struct ModelUnsubmittedQueueV1 {
@@ -660,6 +663,25 @@ mod tests {
                 clean
             );
         }
+    }
+
+    #[test]
+    fn bounded_wait_surface_consumes_publication_and_borrows_timeout_observation() {
+        type WaitFor = fn(
+            M1AuthenticatedPhysicalPublishedQueueSessionV1,
+            u32,
+        ) -> Result<
+            M1AuthenticatedPhysicalCompletedQueueSessionV1,
+            Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+        >;
+        type TimeoutObservation = for<'a> fn(
+            &'a M1AuthenticatedPhysicalQueueOperationFailureV1,
+        )
+            -> Option<&'a Gfx942TimeoutExecutionObservationV1>;
+
+        let _: WaitFor = M1AuthenticatedPhysicalPublishedQueueSessionV1::wait_for;
+        let _: TimeoutObservation =
+            M1AuthenticatedPhysicalQueueOperationFailureV1::timeout_observation;
     }
 }
 
@@ -1134,6 +1156,12 @@ impl M1AuthenticatedPhysicalQueueOperationFailureV1 {
         self.completion_progress_wait.as_deref()
     }
 
+    /// Addressless terminal state captured by an upstream deadline timeout.
+    #[must_use]
+    pub fn timeout_observation(&self) -> Option<&Gfx942TimeoutExecutionObservationV1> {
+        self.lower.timeout_observation()
+    }
+
     /// Exact Ferric allocation and model-memory custody.
     #[must_use = "Ferric queue custody remains retained"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
@@ -1427,6 +1455,43 @@ fn wait_variant<const N: usize>(
     wait_case(case, shape).map(completed_variant)
 }
 
+fn wait_for_case<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
+    >,
+    shape: M1PhysicalFixedBatchShapeV1,
+    timeout_ms: u32,
+) -> Result<
+    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+    Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+> {
+    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    match lower.wait_for(timeout_ms) {
+        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
+            lower, witness, operations, custody, step,
+        ))),
+        Err(lower) => Err(operation_failure(
+            shape, lower, witness, operations, custody, step, None,
+        )),
+    }
+}
+
+fn wait_for_variant<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
+    >,
+    shape: M1PhysicalFixedBatchShapeV1,
+    timeout_ms: u32,
+    completed_variant: fn(
+        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+    ) -> M1AuthenticatedPhysicalCompletedQueueSessionV1,
+) -> Result<
+    M1AuthenticatedPhysicalCompletedQueueSessionV1,
+    Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+> {
+    wait_for_case(case, shape, timeout_ms).map(completed_variant)
+}
+
 impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
     /// Waits under Ferric's bounded monotonic completion-progress policy.
     ///
@@ -1464,6 +1529,57 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
             Self::SpeculativeK16(case) => wait_variant(
                 case,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK16,
+            ),
+        }
+    }
+
+    /// Waits until fe2o3 KFD's monotonic relative millisecond deadline.
+    ///
+    /// This path preserves the exact authenticated program, queue, allocation,
+    /// model-memory, and scheduler owners. A timeout or any other lower failure
+    /// returns terminal quarantine custody and may carry a redacted timeout
+    /// observation through [`M1AuthenticatedPhysicalQueueOperationFailureV1`].
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal lower quarantine custody after the bounded wait fails.
+    pub fn wait_for(
+        self,
+        timeout_ms: u32,
+    ) -> Result<
+        M1AuthenticatedPhysicalCompletedQueueSessionV1,
+        Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::TargetOnly,
+                timeout_ms,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::TargetOnly,
+            ),
+            Self::PairedPrefill(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::PairedPrefill,
+                timeout_ms,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::PairedPrefill,
+            ),
+            Self::SpeculativeK4(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                timeout_ms,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK4,
+            ),
+            Self::SpeculativeK8(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                timeout_ms,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK8,
+            ),
+            Self::SpeculativeK16(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                timeout_ms,
                 M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK16,
             ),
         }

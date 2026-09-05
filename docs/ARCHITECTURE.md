@@ -130,6 +130,16 @@ current state
   -> atomically apply StateDelta
 ```
 
+The authenticated physical queue exposes two distinct bounded completion APIs.
+The existing observation-budget path retains Ferric's monotonic progress
+diagnostic. `wait_for(timeout_ms)` instead delegates the exact published owner to
+fe2o3's KFD-backed monotonic millisecond deadline; success returns completed
+custody, while timeout or another lower failure returns opaque queue, program,
+allocation, model-memory, and scheduler custody plus any addressless timeout
+observation. The rearm wrapper also permanently faults its paired `Engine` on
+that terminal failure. This deadline facade is not yet selected by broader
+serving or qualification call sites.
+
 Cancellation changes logical request state but cannot release storage. Storage
 is retired only after the last referencing device epoch is quiescent.
 

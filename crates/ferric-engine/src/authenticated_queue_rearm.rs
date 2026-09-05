@@ -17,7 +17,10 @@ use fe2o3_host::{
     AuthenticatedServiceQueueRetainedBindFailureV1, AuthenticatedServiceQueueSessionV1,
     AuthenticatedServiceQueueUnboundSessionV1,
 };
-use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1};
+use fe2o3_kfd::{
+    ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1,
+    Gfx942TimeoutExecutionObservationV1,
+};
 use fe2o3_service_host::{DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceDeviceDispatchRangeV1};
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
@@ -2284,6 +2287,47 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
             }
         }
     }
+
+    /// Waits for this exact authenticated generation until fe2o3 KFD's
+    /// monotonic relative millisecond deadline.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated queue-operation custody paired with all
+    /// continuation owners after permanently faulting `engine`.
+    pub fn wait_for<const C: usize>(
+        self,
+        timeout_ms: u32,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedRearmedCompletedQueueV1,
+        Box<M1AuthenticatedRearmedQueueProgressFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match queue.wait_for(timeout_ms) {
+            Ok(queue) => Ok(M1AuthenticatedRearmedCompletedQueueV1 {
+                queue,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                Err(Box::new(M1AuthenticatedRearmedQueueProgressFailureV1 {
+                    phase: M1LongLivedQueueRearmProgressPhaseV1::QueueWait,
+                    source,
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        }
+    }
 }
 
 /// Terminal authenticated queue-operation failure retaining continuation custody.
@@ -2305,6 +2349,12 @@ impl M1AuthenticatedRearmedQueueProgressFailureV1 {
 
     pub const fn source(&self) -> &M1AuthenticatedPhysicalQueueOperationFailureV1 {
         &self.source
+    }
+
+    /// Addressless terminal state captured by an upstream deadline timeout.
+    #[must_use]
+    pub fn timeout_observation(&self) -> Option<&Gfx942TimeoutExecutionObservationV1> {
+        self.source.timeout_observation()
     }
 
     #[must_use]
@@ -5539,5 +5589,25 @@ mod tests {
             assert!(!debug.contains("clean release"));
             assert!(!debug.contains("terminal custody"));
         }
+    }
+
+    #[test]
+    fn bounded_rearm_wait_surface_requires_the_scheduler_engine() {
+        type WaitFor = fn(
+            M1AuthenticatedRearmedPublishedQueueV1,
+            u32,
+            &mut Engine<1>,
+        ) -> Result<
+            M1AuthenticatedRearmedCompletedQueueV1,
+            Box<M1AuthenticatedRearmedQueueProgressFailureV1>,
+        >;
+        type TimeoutObservation = for<'a> fn(
+            &'a M1AuthenticatedRearmedQueueProgressFailureV1,
+        )
+            -> Option<&'a Gfx942TimeoutExecutionObservationV1>;
+
+        let _: WaitFor = M1AuthenticatedRearmedPublishedQueueV1::wait_for::<1>;
+        let _: TimeoutObservation =
+            M1AuthenticatedRearmedQueueProgressFailureV1::timeout_observation;
     }
 }
