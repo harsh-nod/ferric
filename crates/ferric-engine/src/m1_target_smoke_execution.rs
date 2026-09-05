@@ -13,6 +13,7 @@ use ferric_spec::{
     Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, StepPlan,
     ValidatedM1StepInputs, M1_KV_PAGE_TOKENS, M1_QUALIFICATION_TOKENS_PER_LANE, QWEN3_IM_END_TOKEN,
 };
+use rustix::time::{clock_gettime, ClockId};
 use sha2::{Digest, Sha256};
 
 use crate::{
@@ -66,6 +67,56 @@ struct SmokeTokenLoop {
     prompt_observations: Vec<u32>,
     generated: Vec<u32>,
     max_new_tokens: usize,
+}
+
+#[derive(Debug)]
+struct SmokeTimer {
+    first_generated_token_offset_ns: Option<u64>,
+    last_generated_token_offset_ns: Option<u64>,
+    started_ns: u128,
+}
+
+impl SmokeTimer {
+    fn start() -> SmokeResult<Self> {
+        Ok(Self {
+            first_generated_token_offset_ns: None,
+            last_generated_token_offset_ns: None,
+            started_ns: monotonic_raw_ns()?,
+        })
+    }
+
+    fn observe_generated(&mut self, tokens: &SmokeTokenLoop) {
+        if tokens.generated.is_empty() {
+            return;
+        }
+        let offset = elapsed_ns(self.started_ns)
+            .unwrap_or_else(|error| fail_stop("smoke generated-token timing", error));
+        if tokens.generated.len() == 1 && self.first_generated_token_offset_ns.is_none() {
+            self.first_generated_token_offset_ns = Some(offset);
+        }
+        self.last_generated_token_offset_ns = Some(offset);
+    }
+
+    fn finish(self) -> SmokeResult<M1TargetSmokeTimingV1> {
+        let first_generated_token_offset_ns =
+            self.first_generated_token_offset_ns.ok_or_else(|| {
+                "smoke execution completed without a first generated token".to_owned()
+            })?;
+        let duration_ns = elapsed_ns(self.started_ns)?;
+        let last_generated_token_offset_ns = self
+            .last_generated_token_offset_ns
+            .ok_or_else(|| "smoke execution completed without a last generated token".to_owned())?;
+        if last_generated_token_offset_ns < first_generated_token_offset_ns
+            || duration_ns < last_generated_token_offset_ns
+        {
+            return Err("smoke generated-token timing order is invalid".to_owned());
+        }
+        Ok(M1TargetSmokeTimingV1 {
+            duration_ns,
+            first_generated_token_offset_ns,
+            last_generated_token_offset_ns,
+        })
+    }
 }
 
 impl SmokeTokenLoop {
@@ -143,6 +194,35 @@ pub struct M1TargetSmokeExecutionV1 {
     generated_tokens: Vec<u32>,
     prompt_observations: Vec<u32>,
     stop_reason: StopReason,
+    timing: M1TargetSmokeTimingV1,
+}
+
+/// Monotonic-raw timing for the single request executed by target smoke.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1TargetSmokeTimingV1 {
+    duration_ns: u64,
+    first_generated_token_offset_ns: u64,
+    last_generated_token_offset_ns: u64,
+}
+
+impl M1TargetSmokeTimingV1 {
+    /// Controller-entry to completed device teardown in nanoseconds.
+    #[must_use]
+    pub const fn duration_ns(self) -> u64 {
+        self.duration_ns
+    }
+
+    /// Controller-entry to the first structurally observed generated token.
+    #[must_use]
+    pub const fn first_generated_token_offset_ns(self) -> u64 {
+        self.first_generated_token_offset_ns
+    }
+
+    /// Controller-entry to the last structurally observed generated token.
+    #[must_use]
+    pub const fn last_generated_token_offset_ns(self) -> u64 {
+        self.last_generated_token_offset_ns
+    }
 }
 
 impl M1TargetSmokeExecutionV1 {
@@ -168,6 +248,12 @@ impl M1TargetSmokeExecutionV1 {
     #[must_use]
     pub const fn termination(&self) -> &'static str {
         self.stop_reason.as_str()
+    }
+
+    /// Timing for this single target-smoke request.
+    #[must_use]
+    pub const fn timing(&self) -> M1TargetSmokeTimingV1 {
+        self.timing
     }
 }
 
@@ -225,13 +311,15 @@ pub fn execute_m1_target_smoke_v1(
     max_new_tokens: usize,
 ) -> SmokeResult<M1TargetSmokeExecutionV1> {
     let tokens = SmokeTokenLoop::new(prompt_tokens, max_new_tokens)?;
-    Ok(execute_smoke(runner, memory, tokens))
+    let timing = SmokeTimer::start()?;
+    Ok(execute_smoke(runner, memory, tokens, timing))
 }
 
 fn execute_smoke(
     runner: &M1PhysicalRunnerV1,
     mut memory: crate::M1PartitionedModelMemoryKvPoolV1,
     mut tokens: SmokeTokenLoop,
+    mut timing: SmokeTimer,
 ) -> M1TargetSmokeExecutionV1 {
     let selection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Target8B,
@@ -406,6 +494,7 @@ fn execute_smoke(
         ),
     };
     let action = tokens.observe(emitted);
+    timing.observe_generated(&tokens);
     let semantic = [CompletionWireSemanticExpectation::DirectFinalRow { choice: emitted }];
     let readback = match observed.check_completion(&semantic) {
         Ok(readback) => readback,
@@ -432,7 +521,7 @@ fn execute_smoke(
     let (released, mut unused_page_leases) = release_first(completed, leases);
     if let ObservationAction::Stop(reason) = action {
         ReleasedRound::First(Box::new(released)).teardown(&mut engine, unused_page_leases);
-        return finish_execution(tokens, reason);
+        return finish_execution(tokens, reason, timing);
     }
     let mut released = ReleasedRound::First(Box::new(released));
 
@@ -534,6 +623,7 @@ fn execute_smoke(
             ),
         };
         let action = tokens.observe(emitted);
+        timing.observe_generated(&tokens);
         let semantic = [CompletionWireSemanticExpectation::DirectFinalRow { choice: emitted }];
         let readback = match observed.check_completion(&semantic) {
             Ok(readback) => readback,
@@ -571,7 +661,7 @@ fn execute_smoke(
         };
         if let ObservationAction::Stop(reason) = action {
             released.teardown(&mut engine, unused_page_leases);
-            return finish_execution(tokens, reason);
+            return finish_execution(tokens, reason, timing);
         }
     }
 }
@@ -793,13 +883,40 @@ fn smoke_workspace_identity(tokens: &SmokeTokenLoop) -> [u8; 32] {
     .as_bytes()
 }
 
-fn finish_execution(tokens: SmokeTokenLoop, stop_reason: StopReason) -> M1TargetSmokeExecutionV1 {
+fn finish_execution(
+    tokens: SmokeTokenLoop,
+    stop_reason: StopReason,
+    timing: SmokeTimer,
+) -> M1TargetSmokeExecutionV1 {
+    let timing = timing
+        .finish()
+        .unwrap_or_else(|error| fail_stop("smoke terminal timing", error));
     M1TargetSmokeExecutionV1 {
         prompt_tokens: tokens.prompt,
         generated_tokens: tokens.generated,
         prompt_observations: tokens.prompt_observations,
         stop_reason,
+        timing,
     }
+}
+
+fn monotonic_raw_ns() -> SmokeResult<u128> {
+    let timestamp = clock_gettime(ClockId::MonotonicRaw);
+    let seconds = u128::try_from(timestamp.tv_sec)
+        .map_err(|_| "monotonic-raw clock returned negative seconds".to_owned())?;
+    let nanoseconds = u128::try_from(timestamp.tv_nsec)
+        .map_err(|_| "monotonic-raw clock returned negative nanoseconds".to_owned())?;
+    seconds
+        .checked_mul(1_000_000_000)
+        .and_then(|value| value.checked_add(nanoseconds))
+        .ok_or_else(|| "monotonic-raw nanosecond conversion overflowed".to_owned())
+}
+
+fn elapsed_ns(started_ns: u128) -> SmokeResult<u64> {
+    let elapsed = monotonic_raw_ns()?
+        .checked_sub(started_ns)
+        .ok_or_else(|| "monotonic-raw clock moved backwards".to_owned())?;
+    u64::try_from(elapsed).map_err(|_| "smoke timing duration does not fit u64".to_owned())
 }
 
 fn bind_step_plan(
@@ -1028,14 +1145,25 @@ mod tests {
     #[test]
     fn completed_observation_retains_prompt_choices_and_termination() {
         let mut state = SmokeTokenLoop::new(vec![10], 1).unwrap();
+        let mut timing = SmokeTimer::start().unwrap();
         assert_eq!(
             state.observe(20),
             ObservationAction::Stop(StopReason::MaxNewTokens)
         );
-        let observation = finish_execution(state, StopReason::MaxNewTokens);
+        timing.observe_generated(&state);
+        let observation = finish_execution(state, StopReason::MaxNewTokens, timing);
         assert_eq!(observation.prompt_tokens(), &[10]);
         assert!(observation.prompt_observations().is_empty());
         assert_eq!(observation.generated_tokens(), &[20]);
         assert_eq!(observation.termination(), "max-new-tokens");
+        assert!(observation.timing().duration_ns() > 0);
+        assert_eq!(
+            observation.timing().first_generated_token_offset_ns(),
+            observation.timing().last_generated_token_offset_ns()
+        );
+        assert!(
+            observation.timing().last_generated_token_offset_ns()
+                <= observation.timing().duration_ns()
+        );
     }
 }

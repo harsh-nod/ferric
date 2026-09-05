@@ -4,7 +4,7 @@ runtime-tcb=root=ferric-build|onig|=6.5.3|registry+https://github.com/rust-lang/
 runtime-tcb=root=ferric-build|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 runtime-tcb=root=ferric-build|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 runtime-tcb=root=ferric-build|unicode-normalization-alignments|=0.1.12|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12
-runtime-tcb=root=ferric-engine|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
+runtime-tcb=root=ferric-engine|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs,time|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 runtime-tcb=root=ferric-engine|serde_json|=1.0.151|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151
 runtime-tcb=root=ferric-engine|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 runtime-tcb=root=ferric-m1-benchmarks|num-bigint|=0.4.8|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#num-bigint@0.4.8
@@ -77,7 +77,7 @@ runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#onig_
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#pkg-config@0.3.34|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|default,proc-macro,span-locations
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|default,proc-macro
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,event,fs,mm,net,param,pipe,process,rand,std,thread
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,event,fs,mm,net,param,pipe,process,rand,std,thread,time
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde@1.0.229|alloc,default,derive,serde_derive,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_core@1.0.229|alloc,result,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|default
@@ -911,7 +911,7 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::expect_u64
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::kill_process_group_if_present
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::main_for_arguments
-unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::nearest_rank_p99
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::nearest_rank
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::parse_canonical_runner_output
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::positive_u64
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::require_collector_protocol
@@ -926,6 +926,8 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::stop_active
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::terminate_subprocess
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::terminate_with_error
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::timing_percentiles
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::unsigned_u64
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::valid_environment_name
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::validate_adapters
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::validate_arguments
@@ -939,6 +941,8 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_collector.rs|ferric_m1_serving::m1_r33_serving_collector::validate_work
 module=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::Inputs::revalidate
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::PercentileSamples::push
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::PercentileSamples::with_capacity
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::Rational::as_json
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::Rational::new
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::RecordPublication::Drop::drop
@@ -960,7 +964,9 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_s
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::gcd
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::main_for_arguments
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::median
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::median_timing
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::name_has_identity
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::nearest_rank
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::paired_bootstrap_interval
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::positive_u64
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::publish_collected_observations
@@ -977,6 +983,7 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_s
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::same_path
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::same_publication_snapshot
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::sha_value
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::timing_percentiles
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::unsigned_u64
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::valid_record_file
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate
@@ -986,8 +993,10 @@ unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_s
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_plan
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_policy
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_policy_for_collection
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_request_timings
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_roster
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_row
+unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::validate_submitted_percentiles
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::write_new
 unverified=ferric-m1-benchmarks|benches/m1/m1_r33_serving_records.rs|ferric_m1_serving::m1_r33_serving_records::write_new_with_hook
 module=ferric-m1-benchmarks|benches/m1/serving.rs|ferric_m1_serving
@@ -5000,9 +5009,16 @@ unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|f
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeExecutionV1::prompt_observations
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeExecutionV1::prompt_tokens
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeExecutionV1::termination
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeExecutionV1::timing
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeTimingV1::duration_ns
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeTimingV1::first_generated_token_offset_ns
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::M1TargetSmokeTimingV1::last_generated_token_offset_ns
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::OpaqueCustody::Debug::fmt
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::ReleasedRound::schedule
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::ReleasedRound::teardown
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTimer::finish
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTimer::observe_generated
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTimer::start
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTokenLoop::context_ordinal
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTokenLoop::maximum_dispatches
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::SmokeTokenLoop::new
@@ -5015,12 +5031,14 @@ unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|f
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::bucket_name
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::complete_first
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::domain_identity
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::elapsed_ns
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::execute_m1_target_smoke_v1
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::execute_smoke
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::fail_stop
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::fail_stop_opaque
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::finish_execution
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::hash_field
+unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::monotonic_raw_ns
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::observed_token
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::prepare_scheduled_workspaces_with_retries
 unverified=ferric-engine|crates/ferric-engine/src/m1_target_smoke_execution.rs|ferric_engine::m1_target_smoke_execution::publish_first_step_with_retries

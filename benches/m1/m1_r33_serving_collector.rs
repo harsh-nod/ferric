@@ -2,8 +2,8 @@
 //!
 //! One externally frozen adapter controls all three engines. The collector
 //! fixes lifecycle and measurement command identities, rotates three hardware
-//! slots across starts, recomputes per-window p99 from raw request latencies,
-//! and delegates final observation-schema validation to the V2 checker.
+//! slots across starts, recomputes per-window timing percentiles from raw
+//! request events, and delegates final observation validation to the V3 checker.
 
 use crate::m1_r33_serving_records;
 use ferric_m1_benchmarks::{
@@ -29,13 +29,13 @@ use std::time::{Duration, Instant};
 
 pub(super) const COMMAND: &str = "collect-comparison-observations";
 
-const COMMAND_PLAN_FORMAT: &str = "FERRIC-M1-R33-SERVING-COLLECTOR-PLAN-V1";
-const COMMAND_PLAN_AUTHORITY: &str = "external-pre-execution-r33-serving-collector-plan-only";
-const COMMAND_PLAN_NONCLAIM: &str = "This plan freezes one R33 V2 collection invocation over three externally assigned exclusive gfx942 hardware slots and external Ferric, vLLM, and SGLang lifecycle adapters. Adapter reports are observations, not independently validated facts. The collector does not validate tuning fairness, server freshness, slot exclusivity, hardware identity, model answers, numerical or hardware correctness, performance qualification, or independent reproduction, and it does not close m1.r33 or M1.";
-const RESULT_FORMAT: &str = "FERRIC-M1-R33-SERVING-ADAPTER-RESULT-V1";
+const COMMAND_PLAN_FORMAT: &str = "FERRIC-M1-R33-SERVING-COLLECTOR-PLAN-V2";
+const COMMAND_PLAN_AUTHORITY: &str = "external-pre-execution-r33-serving-collector-plan-v2-only";
+const COMMAND_PLAN_NONCLAIM: &str = "This plan freezes one R33 V3 comparison collection over three externally assigned exclusive gfx942 hardware slots and external Ferric, vLLM, and SGLang lifecycle adapters. Measure adapters must return ordered per-request arrival, first-token, terminal, and token-work events; adapter reports remain observations, not independently validated facts. The collector does not validate tuning fairness, server freshness, slot exclusivity, hardware identity, model answers, numerical or hardware correctness, performance qualification, or independent reproduction, and it does not close m1.r33 or M1.";
+const RESULT_FORMAT: &str = "FERRIC-M1-R33-SERVING-ADAPTER-RESULT-V2";
 const RESULT_AUTHORITY: &str = "external-r33-serving-adapter-report-only";
 const PROTOCOL_AUTHORITY: &str = "ferric-m1-r33-serving-collector-protocol-only";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R33-SERVING-COLLECTOR-PROTOCOL-V1";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R33-SERVING-COLLECTOR-PROTOCOL-V2";
 const TARGET: &str = "gfx942:xnack-";
 const ENGINES: &[&str] = &["ferric", "vllm", "sglang"];
 const ACTIONS: &[&str] = &["start", "ready", "measure", "stop"];
@@ -48,9 +48,9 @@ const MAX_RUNNER_OUTPUT_BYTES: usize = 8 * 1024 * 1024;
 const MAX_REQUESTS_PER_WINDOW: usize = 100_000;
 const CLOCK: &str = "monotonic-raw-nanoseconds";
 const DURATION_BOUNDARY: &str = "declared-window-start-to-declared-window-end";
-const LATENCY_POPULATION: &str = "successful-request-arrival-to-terminal-event";
+const TIMING_BOUNDARIES: &str = "request-arrival-to-first-output-token-observed-to-terminal-event";
 const COLLECTOR_PROTOCOL_SHA256: &str =
-    "5aeda7af439625c464d711be8ec7868b924b4541210aa8e38c15b136d56529ec";
+    "43975ba0b3dbaf5b5d880f70f879dcc26d47e8c89372790fee383a141199fe03";
 
 const COMMAND_PLAN_KEYS: &[&str] = &[
     "adapters",
@@ -119,10 +119,18 @@ const MEASUREMENT_KEYS: &[&str] = &[
     "failed_requests",
     "input_tokens",
     "output_tokens",
-    "request_latency_population",
-    "successful_request_end_to_end_latencies_ns",
+    "request_events",
+    "request_timing_boundaries",
     "successful_requests",
     "total_tokens",
+];
+const REQUEST_EVENT_KEYS: &[&str] = &[
+    "arrival_offset_ns",
+    "first_token_offset_ns",
+    "input_tokens",
+    "output_tokens",
+    "request_ordinal",
+    "terminal_offset_ns",
 ];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1127,8 +1135,8 @@ fn validate_measurement_result(value: &Value, context: &RunContext<'_>) -> Bench
     )?;
     expect_string(
         reported,
-        "request_latency_population",
-        LATENCY_POPULATION,
+        "request_timing_boundaries",
+        TIMING_BOUNDARIES,
         "R33 measurement report",
     )?;
     let duration_ns = positive_u64(&reported["duration_ns"], "R33 measurement duration")?;
@@ -1154,53 +1162,118 @@ fn validate_measurement_result(value: &Value, context: &RunContext<'_>) -> Bench
             row.id, context.engine
         ));
     }
-    let latency_values = reported["successful_request_end_to_end_latencies_ns"]
+    let event_values = reported["request_events"]
         .as_array()
-        .ok_or_else(|| "R33 successful-request latency population must be an array".to_owned())?;
-    if latency_values.len() != usize::try_from(work.successful_requests).unwrap_or(usize::MAX) {
+        .ok_or_else(|| "R33 successful-request event population must be an array".to_owned())?;
+    if event_values.len() != usize::try_from(work.successful_requests).unwrap_or(usize::MAX) {
         return Err(format!(
-            "R33 successful-request latency population differs from the request count: {}/{}",
+            "R33 successful-request event population differs from the request count: {}/{}",
             row.id, context.engine
         ));
     }
-    let mut latencies = Vec::with_capacity(latency_values.len());
-    for latency in latency_values {
-        let latency = positive_u64(latency, "R33 successful-request end-to-end latency")?;
-        if latency > duration_ns {
+    let mut end_to_end = Vec::with_capacity(event_values.len());
+    let mut ttft = Vec::with_capacity(event_values.len());
+    let mut tpot = Vec::with_capacity(event_values.len());
+    let mut checked_input_tokens = 0_u64;
+    let mut checked_output_tokens = 0_u64;
+    for (ordinal, event) in event_values.iter().enumerate() {
+        let event = exact_object(event, REQUEST_EVENT_KEYS, "R33 request timing event")?;
+        expect_u64(
+            event,
+            "request_ordinal",
+            u64::try_from(ordinal)
+                .map_err(|_| "R33 request ordinal does not fit u64".to_owned())?,
+            "R33 request timing event",
+        )?;
+        let arrival = unsigned_u64(&event["arrival_offset_ns"], "R33 request arrival offset")?;
+        let first = positive_u64(
+            &event["first_token_offset_ns"],
+            "R33 request first-token offset",
+        )?;
+        let terminal = positive_u64(&event["terminal_offset_ns"], "R33 request terminal offset")?;
+        if !(arrival < first && first < terminal && terminal <= duration_ns) {
             return Err(format!(
-                "R33 successful-request latency exceeds its window duration: {}/{}",
-                row.id, context.engine
+                "R33 request timing order or window bound is invalid: {}/{}/{}",
+                row.id, context.engine, ordinal
             ));
         }
-        latencies.push(latency);
+        let request_input = positive_u64(&event["input_tokens"], "R33 request input tokens")?;
+        let request_output = positive_u64(&event["output_tokens"], "R33 request output tokens")?;
+        if request_output < 2 {
+            return Err(format!(
+                "R33 request has fewer than two output tokens required for TPOT: {}/{}/{}",
+                row.id, context.engine, ordinal
+            ));
+        }
+        checked_input_tokens = checked_input_tokens
+            .checked_add(request_input)
+            .ok_or_else(|| "R33 per-request input-token sum overflowed".to_owned())?;
+        checked_output_tokens = checked_output_tokens
+            .checked_add(request_output)
+            .ok_or_else(|| "R33 per-request output-token sum overflowed".to_owned())?;
+        end_to_end.push(terminal - arrival);
+        ttft.push(first - arrival);
+        let per_token = (terminal - first) / (request_output - 1);
+        if per_token == 0 {
+            return Err(format!(
+                "R33 request TPOT rounded to zero: {}/{}/{}",
+                row.id, context.engine, ordinal
+            ));
+        }
+        tpot.push(per_token);
     }
-    let p99 = nearest_rank_p99(&mut latencies)?;
+    if checked_input_tokens != work.input_tokens || checked_output_tokens != work.output_tokens {
+        return Err(format!(
+            "R33 per-request token sums differ from measured window work: {}/{}",
+            row.id, context.engine
+        ));
+    }
+    let end_to_end = timing_percentiles(&mut end_to_end, "end-to-end")?;
+    let ttft = timing_percentiles(&mut ttft, "TTFT")?;
+    let tpot = timing_percentiles(&mut tpot, "TPOT")?;
     Ok(json!({
         "duration_ns": duration_ns,
         "failed_requests": 0,
         "input_tokens": work.input_tokens,
         "output_tokens": work.output_tokens,
-        "p99_end_to_end_latency_ns": p99,
+        "p50_end_to_end_latency_ns": end_to_end[0],
+        "p50_tpot_ns_per_output_token": tpot[0],
+        "p50_ttft_ns": ttft[0],
+        "p90_end_to_end_latency_ns": end_to_end[1],
+        "p90_tpot_ns_per_output_token": tpot[1],
+        "p90_ttft_ns": ttft[1],
+        "p99_end_to_end_latency_ns": end_to_end[2],
+        "p99_tpot_ns_per_output_token": tpot[2],
+        "p99_ttft_ns": ttft[2],
+        "request_events": event_values,
         "successful_requests": work.successful_requests,
         "total_tokens": work.total_tokens,
     }))
 }
 
-fn nearest_rank_p99(values: &mut [u64]) -> BenchResult<u64> {
+fn timing_percentiles(values: &mut [u64], description: &str) -> BenchResult<[u64; 3]> {
     if values.is_empty() {
-        return Err("R33 p99 latency population is empty".to_owned());
+        return Err(format!("R33 {description} timing population is empty"));
     }
     values.sort_unstable();
+    Ok([
+        nearest_rank(values, 50, description)?,
+        nearest_rank(values, 90, description)?,
+        nearest_rank(values, 99, description)?,
+    ])
+}
+
+fn nearest_rank(values: &[u64], percentile: usize, description: &str) -> BenchResult<u64> {
     let rank = values
         .len()
-        .checked_mul(99)
+        .checked_mul(percentile)
         .and_then(|value| value.checked_add(99))
-        .ok_or_else(|| "R33 p99 nearest-rank calculation overflowed".to_owned())?
+        .ok_or_else(|| format!("R33 {description} nearest-rank calculation overflowed"))?
         / 100;
     values
         .get(rank - 1)
         .copied()
-        .ok_or_else(|| "R33 p99 nearest rank is outside the population".to_owned())
+        .ok_or_else(|| format!("R33 {description} nearest rank is outside the population"))
 }
 
 fn revalidate_inputs(
@@ -1555,6 +1628,12 @@ fn positive_u64(value: &Value, description: &str) -> BenchResult<u64> {
     Ok(value)
 }
 
+fn unsigned_u64(value: &Value, description: &str) -> BenchResult<u64> {
+    value
+        .as_u64()
+        .ok_or_else(|| format!("{description} must be an unsigned integer"))
+}
+
 fn safe_string<'a>(value: &'a Value, description: &str) -> BenchResult<&'a str> {
     let value = value
         .as_str()
@@ -1592,9 +1671,9 @@ mod tests {
     use std::os::unix::fs::PermissionsExt;
     use std::sync::atomic::{AtomicU64, Ordering};
 
-    const COMPARISON_NONCLAIM: &str = "This V2 record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster, requires equal successful-request, input-token, and output-token work in every aligned window, and recomputes integer input, output, and total-token throughputs, exact medians, the fastest-baseline selection by total-token throughput, and a deterministic paired-percentile-bootstrap 95% confidence interval from externally collected counters. It enforces a 0.95 lower confidence bound but, because raw request events are not present in this schema, does not recompute the externally supplied nearest-rank p99 successful-request arrival-to-terminal latency. It also does not validate the external plan, versions, sources, tuning choices, budget, SLO, collector arithmetic, observation truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
+    const COMPARISON_NONCLAIM: &str = "This V3 record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster, retains an ordered event for every successful request, requires identical per-request input/output work across engines in each aligned window, and recomputes end-to-end latency, TTFT, TPOT, token throughputs, nearest-rank percentiles, exact medians, fastest-baseline selection, and a deterministic paired-percentile-bootstrap 95% throughput interval. TPOT is floor((terminal-first-token)/(output-tokens-1)) nanoseconds per output token and therefore requires at least two output tokens per request. The record enforces declared p99 timing SLOs and a 0.95 throughput lower confidence bound. It does not validate the external plan, versions, sources, tuning choices, budget, SLO choice, event truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
     const COMPARISON_PROTOCOL_SHA256: &str =
-        "bf7842a996dfedfd1534ee63f1755f0ad4849b09e3bc7da8d5fec9c37f584bc1";
+        "2f6a720b2512623332e26f77d4bbaeb42b289ab946dcbf0a56a3e3eca2aca662";
     const PLAN_KEYS: &[&str] = &[
         "arrival_trace_sha256",
         "benchmark_executable_sha256",
@@ -1694,20 +1773,43 @@ if action == "measure":
     total_tokens = int(os.environ["FERRIC_M1_R33_EXPECTED_TOTAL_TOKENS"])
     if fault == "work" and engine == "ferric" and row_id == "start-0.warmup-00":
         output_tokens += 1
-    latencies = list(range(1, successful + 1))
-    if fault == "latency-population" and engine == "ferric" and row_id == "start-0.warmup-00":
-        latencies.pop()
-    if fault == "latency-bound" and engine == "ferric" and row_id == "start-0.warmup-00":
-        latencies[-1] = 2000
+    engine_offset = ["ferric", "vllm", "sglang"].index(engine)
+    events = []
+    for request_ordinal in range(successful):
+        arrival = request_ordinal * 100
+        first = arrival + 10 + engine_offset
+        terminal = first + 20 + engine_offset
+        events.append({
+            "arrival_offset_ns": arrival,
+            "first_token_offset_ns": first,
+            "input_tokens": input_tokens // successful,
+            "output_tokens": output_tokens // successful,
+            "request_ordinal": request_ordinal,
+            "terminal_offset_ns": terminal,
+        })
+    if fault == "event-population" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events.pop()
+    if fault == "timing-bound" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["terminal_offset_ns"] = 2000
+    if fault == "timing-order" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["first_token_offset_ns"] = events[-1]["terminal_offset_ns"]
+    if fault == "event-work" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["input_tokens"] += 1
+    if fault == "single-output" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["output_tokens"] = 1
+    if fault == "event-extra" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["submitted_ttft_ns"] = 1
+    if fault == "event-ordinal" and engine == "ferric" and row_id == "start-0.warmup-00":
+        events[-1]["request_ordinal"] = 0
     reported = {
         "clock": "monotonic-raw-nanoseconds",
         "duration_boundary": "declared-window-start-to-declared-window-end",
-        "duration_ns": 1000 + ["ferric", "vllm", "sglang"].index(engine),
+        "duration_ns": 1000 + engine_offset,
         "failed_requests": 0,
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
-        "request_latency_population": "successful-request-arrival-to-terminal-event",
-        "successful_request_end_to_end_latencies_ns": latencies,
+        "request_events": events,
+        "request_timing_boundaries": "request-arrival-to-first-output-token-observed-to-terminal-event",
         "successful_requests": successful,
         "total_tokens": total_tokens,
     }
@@ -1731,7 +1833,7 @@ value = {
     "command_sha256": os.environ["FERRIC_M1_R33_COMMAND_SHA256"],
     "engine": engine,
     "engine_order": os.environ["FERRIC_M1_R33_ENGINE_ORDER"].split(","),
-    "format": "FERRIC-M1-R33-SERVING-ADAPTER-RESULT-V1",
+    "format": "FERRIC-M1-R33-SERVING-ADAPTER-RESULT-V2",
     "implementation": json.loads(os.environ["FERRIC_M1_R33_IMPLEMENTATION_JSON"]),
     "policy_sha256": os.environ["FERRIC_M1_R33_POLICY_SHA256"],
     "reported": reported,
@@ -1796,13 +1898,15 @@ print(json.dumps(value, indent=2, sort_keys=True))
             Value::String(document_digest(&server_start_roster(&hardware_slots))),
         );
         let policy = json!({
-            "authority": "external-pre-observation-serving-comparison-policy-v2-only",
+            "authority": "external-pre-observation-serving-comparison-policy-v3-only",
             "engine_order": ENGINES,
-            "format": "FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V2",
+            "format": "FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V3",
             "implementations": implementations,
             "nonclaim": COMPARISON_NONCLAIM,
             "obligation_id": "m1.r33",
             "p99_end_to_end_slo_ns": 1_000_000,
+            "p99_tpot_slo_ns_per_output_token": 1_000_000,
+            "p99_ttft_slo_ns": 1_000_000,
             "plan": plan,
             "protocol_sha256": COMPARISON_PROTOCOL_SHA256,
             "sample_roster": {
@@ -1859,9 +1963,9 @@ print(json.dumps(value, indent=2, sort_keys=True))
                     window_roster.push(json!({
                         "expected_work": {
                             "input_tokens": 8,
-                            "output_tokens": 4,
+                            "output_tokens": 8,
                             "successful_requests": 4,
-                            "total_tokens": 12,
+                            "total_tokens": 16,
                         },
                         "id": format!("start-{server_start}.{phase}-{window:02}"),
                         "ordinal": ordinal,
@@ -1907,7 +2011,7 @@ print(json.dumps(value, indent=2, sort_keys=True))
     }
 
     #[test]
-    fn full_lifecycle_produces_exact_v2_observations() {
+    fn full_lifecycle_produces_exact_v3_timing_observations() {
         let temporary = Temporary::new();
         let (policy, command_plan, log) = fixtures(&temporary.0, "");
         let (policy_path, command_plan_path) = write_inputs(&temporary.0, &policy, &command_plan);
@@ -1929,6 +2033,21 @@ print(json.dumps(value, indent=2, sort_keys=True))
         );
         assert_eq!(
             observations["rows"][0]["values"]["ferric"]["p99_end_to_end_latency_ns"],
+            30
+        );
+        assert_eq!(
+            observations["rows"][0]["values"]["ferric"]["p99_ttft_ns"],
+            10
+        );
+        assert_eq!(
+            observations["rows"][0]["values"]["ferric"]["p99_tpot_ns_per_output_token"],
+            20
+        );
+        assert_eq!(
+            observations["rows"][0]["values"]["ferric"]["request_events"]
+                .as_array()
+                .unwrap()
+                .len(),
             4
         );
         let lines = fs::read_to_string(log).unwrap();
@@ -2059,8 +2178,13 @@ print(json.dumps(value, indent=2, sort_keys=True))
         for (fault, expected) in [
             ("binding", "command_sha256 drifted"),
             ("stderr", "wrote stderr despite success"),
-            ("latency-population", "latency population differs"),
-            ("latency-bound", "latency exceeds its window duration"),
+            ("event-population", "event population differs"),
+            ("timing-bound", "timing order or window bound is invalid"),
+            ("timing-order", "timing order or window bound is invalid"),
+            ("event-work", "per-request token sums differ"),
+            ("single-output", "fewer than two output tokens"),
+            ("event-extra", "request timing event fields drifted"),
+            ("event-ordinal", "request_ordinal drifted"),
             (
                 "duplicate-instance",
                 "server-instance identities must be unique",
@@ -2106,11 +2230,17 @@ print(json.dumps(value, indent=2, sort_keys=True))
     }
 
     #[test]
-    fn nearest_rank_p99_uses_ceil_rank() {
+    fn timing_percentiles_use_nearest_rank_ceil() {
         let mut one_to_one_hundred = (1..=100).collect::<Vec<_>>();
-        assert_eq!(nearest_rank_p99(&mut one_to_one_hundred).unwrap(), 99);
+        assert_eq!(
+            timing_percentiles(&mut one_to_one_hundred, "test").unwrap(),
+            [50, 90, 99]
+        );
         let mut crossed = vec![5, 1, 100, 2];
-        assert_eq!(nearest_rank_p99(&mut crossed).unwrap(), 100);
-        assert!(nearest_rank_p99(&mut []).is_err());
+        assert_eq!(
+            timing_percentiles(&mut crossed, "test").unwrap(),
+            [2, 100, 100]
+        );
+        assert!(timing_percentiles(&mut [], "test").is_err());
     }
 }

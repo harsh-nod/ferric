@@ -565,7 +565,7 @@ fresh server launch or server saturation, is not continuous serving, has no
 measured vLLM/SGLang comparison or independent validator, and cannot close
 `m1.r33`. Existing `describe`, `plan`, and `validate` commands are unchanged.
 
-The complete V2 serving collector runs separately frozen lifecycle and
+The complete V3 comparison collector runs separately frozen lifecycle and
 measurement adapters for all three engines:
 
 ```text
@@ -574,8 +574,8 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-serving -- \
 ```
 
 `COMMAND-PLAN` is canonical
-`FERRIC-M1-R33-SERVING-COLLECTOR-PLAN-V1` with `pre-execution` status. It
-repeats the exact V2 policy identity and plan, binds one policy-named benchmark
+`FERRIC-M1-R33-SERVING-COLLECTOR-PLAN-V2` with `pre-execution` status. It
+repeats the exact V3 policy identity and plan, binds one policy-named benchmark
 executable by canonical absolute path and byte SHA-256, clears the inherited
 environment, and freezes its replacement environment. Each Ferric, vLLM, and
 SGLang adapter repeats the policy implementation, a canonical working
@@ -602,16 +602,21 @@ rejected. An adapter that fails before returning such an identity owns its own
 transactional cleanup.
 
 Measurement results carry the positive monotonic-raw duration from declared
-window start to declared window end, token/request counters, and one positive
-monotonic-raw arrival-to-terminal latency for every successful request. The
-collector requires zero failures and exact equality to each row's
-pre-execution work tuple, then recomputes p99 as nearest-rank
-`ceil(0.99 * N)`. It never accepts a submitted percentile. It constructs the
-exact `FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V2` document, passes that
-document through the existing V2 structural validator, and publishes through
-the same descriptor-held no-replace path. Nonzero exit, stderr, timeout,
-oversized output, noncanonical JSON, identity drift, roster drift, inconsistent
-work, or teardown failure aborts without publishing.
+window start to declared window end, token/request counters, and one ordered
+event per successful request. Every exact-key event identifies its request
+ordinal, input/output work, and window-relative arrival, first-output-token,
+and terminal offsets. The collector requires `arrival < first < terminal <=
+duration`, at least two output tokens per request, exact event-to-window token
+sums, zero failures, and exact equality to each row's pre-execution work tuple.
+It recomputes nearest-rank p50, p90, and p99 end-to-end latency, TTFT, and TPOT,
+where TPOT is `floor((terminal - first) / (output_tokens - 1))` nanoseconds per
+output token after the first. It never accepts submitted percentiles. It
+retains the events in the exact
+`FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V3` document, passes that
+document through the V3 validator, and publishes through the same
+descriptor-held no-replace path. Nonzero exit, stderr, timeout, oversized
+output, noncanonical JSON, identity drift, roster drift, inconsistent work, or
+teardown failure aborts without publishing.
 
 Real use requires three concurrently exclusive MI300X-class slots and
 externally implemented server adapters; Ferric supplies no launcher or default
@@ -632,7 +637,7 @@ cargo run --locked -p ferric-m1-benchmarks --bin ferric-m1-serving -- \
 ```
 
 `POLICY` is canonical
-`FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V2` and has `pre-observation`
+`FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V3` and has `pre-observation`
 status. It freezes the exact benchmark executable and plan, generated plan,
 schedule, workload, arrival trace, output limits, environment, Ferric and
 fe2o3 source closures, model, tokenizer, and weights. Its ordered Ferric,
@@ -642,50 +647,45 @@ All three tuning-budget identities must be byte-equal. That equality binds one
 external declaration; it does not establish that the underlying tuning work or
 opportunity was equal. The fe2o3 source closure is likewise an opaque external
 input identity only and grants no compiler-correctness authority or ownership
-of serving code. The external policy also supplies one positive common p99
-end-to-end SLO; Ferric supplies no default version, tuning choice, budget, or
-SLO.
+of serving code. The external policy also supplies positive common p99
+end-to-end, TTFT, and TPOT SLOs; Ferric supplies no default version, tuning
+choice, budget, or SLO.
 
 `OBSERVATIONS` is canonical
-`FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V2`. It repeats the exact policy
+`FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V3`. It repeats the exact policy
 SHA-256, plan binding, implementation roster, and engine order. Its row roster
 is fixed and complete: three ascending server starts, each with ten ordered
 warmup windows followed by ten ordered recorded windows. Every row carries a
 cyclic Ferric/vLLM/SGLang execution order, passed status, an empty fault roster,
-and positive duration, successful-request, input-token, output-token,
-total-token, and p99 end-to-end latency counters for all three engines. Failed
-requests must be zero. Checked input-plus-output arithmetic must equal the
-declared total, and successful requests, input tokens, output tokens, and total
-tokens must be exactly equal across the three engines in every aligned window.
-Any missing, duplicated, reordered, unequal-work, arithmetically inconsistent,
-failed, faulted, identity-substituted, or extra summary field fails closed.
-V1 protocol, policy, observation, and record declarations are rejected rather
-than reinterpreted as V2.
+and event-backed p50/p90/p99 end-to-end, TTFT, and TPOT counters for all three
+engines. Failed requests must be zero. Checked input-plus-output arithmetic and
+event token sums must equal the declared totals. Successful request counts and
+aggregate token work must match across engines, and every aligned request
+ordinal must carry identical input/output work. Any missing, duplicated,
+reordered, unequal-work, arithmetically inconsistent, failed, faulted,
+identity-substituted, or extra field fails closed. V1 and V2 declarations are
+rejected rather than reinterpreted as V3.
 
 The checker separately derives integer input-, output-, and total-tokens-per-
 second samples as `floor(tokens * 1_000_000_000 / duration_ns)` and reports
 exact rational medians for all three. Baseline selection, the Ferric ratio, and
 the competitiveness gate use total-token throughput only. The checker selects
 the baseline with the larger median total-token throughput (vLLM on an exact
-tie), checks every engine's median p99 end-to-end latency against the common
-SLO, and computes the floored Ferric-to-fastest-baseline PPM ratio. It then
+tie), checks every engine's median p99 end-to-end, TTFT, and TPOT summaries
+against their common SLOs, and computes the floored
+Ferric-to-fastest-baseline PPM ratio. It then
 performs 10,000 paired percentile-bootstrap resamples over the 30 aligned
-recorded-window total-token-throughput pairs. SplitMix64 is seeded by a V2
+recorded-window total-token-throughput pairs. SplitMix64 is seeded by a V3
 domain-separated SHA-256 binding of the exact policy and observation
 identities; the 250th and 9,750th nearest-rank estimates form the deterministic
 95% interval. The record fails closed unless its lower bound is at least
 950,000 PPM.
 
-Every supplied `p99_end_to_end_latency_ns` declares the partial protocol's
-`monotonic-raw-nanoseconds` clock,
-`successful-request-arrival-to-terminal-event` population, and
-`nearest-rank-p50-p90-p99-over-the-declared-latency-population` method. V2 does
-not contain raw request events, so the checker cannot recompute or validate
-that declaration. It only checks a positive per-window counter and exact
-median-versus-SLO arithmetic, and the output records this input-trusted limit.
-`OUTPUT-RECORD` is created without replacement and carries all exact raw rows,
-policy bindings, input SHA-256 identities, separate recomputed throughput
-summaries, explicit latency semantics, bootstrap seed identity, and confidence
+The checker revalidates every retained event and independently recomputes all
+nine per-window timing percentiles. `OUTPUT-RECORD` is created without
+replacement and carries all exact raw rows and request events, policy bindings,
+input SHA-256 identities, separate recomputed timing and throughput summaries,
+explicit timing units and boundaries, bootstrap seed identity, and confidence
 interval; submitted summaries are not in the input schema and cannot act as
 authority.
 Publication uses an exclusive one-link sibling staging file retained by file
@@ -694,10 +694,10 @@ descriptor, rereads and hashes its exact bytes, renames with
 the final pathname twice. Concurrent staging or published-name substitution
 therefore fails instead of returning success for a different record.
 
-The V2 output remains `PARTIAL_NON_EVIDENCE`. It authenticates declared bytes
+The V3 output remains `PARTIAL_NON_EVIDENCE`. It authenticates declared bytes
 and recomputes the stated arithmetic but does not validate external plan or
-policy choices, collector aggregation (including p99), server freshness,
-observation truth, hardware or numerical correctness, independent
+policy choices, request-event truth, server freshness, hardware or numerical
+correctness, independent
 reproduction, or qualification. Real externally collected inputs and the
 independent performance/evidence validators are still required, and `m1.r33`
 remains `Open`.
@@ -845,7 +845,14 @@ interface. Generation stops at the Qwen3
 `<|im_end|>` token, the requested new-token limit, or the C8192 context bound.
 Its single JSON result includes every directly published prompt-priming choice,
 the generated token IDs, decoded text, exact decoded-byte hex, an explicit
-lossy-replacement UTF-8 display policy, and the fixed
+lossy-replacement UTF-8 display policy, and one monotonic-raw request timing
+event from controller entry through the first and last structurally observed
+generated-token offsets. The enclosing duration extends through completed
+device teardown. This event is sufficient for a
+one-request external measurement adapter to consume when
+`r33_tpot_eligible` is true, but it excludes artifact, model-memory, and
+tokenizer setup and does not claim continuous serving, HTTP behavior, or
+concurrency. The report retains the fixed
 `smoke-non-evidence-non-qualification` status. It writes no evidence bundle and
 makes no qualification, numerical-correctness, hardware-correctness, or M1
 closure claim.

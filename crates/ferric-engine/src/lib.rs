@@ -497,7 +497,9 @@ pub use m1_swiglu_worker_v3_verifier::{
     M1SwiGluProtectedVerifierRequestV1, M1SwiGluProtectedWorkerV3BuildFieldV1,
 };
 #[doc(hidden)]
-pub use m1_target_smoke_execution::{execute_m1_target_smoke_v1, M1TargetSmokeExecutionV1};
+pub use m1_target_smoke_execution::{
+    execute_m1_target_smoke_v1, M1TargetSmokeExecutionV1, M1TargetSmokeTimingV1,
+};
 pub use model_memory_allocations::{
     bind_addressless_model_memory_allocations_v1, BoundModelMemoryAllocationsV1,
     ModelMemoryAllocationBindingErrorV1, ModelMemoryAllocationBindingFailureV1,

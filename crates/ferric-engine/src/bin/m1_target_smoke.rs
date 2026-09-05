@@ -23,7 +23,10 @@ pub(super) const COMMAND: &str = "run-target-smoke";
 
 const STATUS: &str = "smoke-non-evidence-non-qualification";
 const AUTHORITY: &str = "ferric-target-only-smoke-only";
-const NONCLAIM: &str = "Raw-prompt target-only text smoke only. Every prompt-priming and generation choice is reported as a non-evidence diagnostic and settled from the same inert physical K7 observation. This output is not evidence, is not a qualification result, does not establish numerical or hardware correctness, and closes no M1 requirement.";
+const NONCLAIM: &str = "Raw-prompt target-only text smoke only. Every prompt-priming and generation choice is reported as a non-evidence diagnostic and settled from the same inert physical K7 observation. The single-request monotonic-raw timing begins at target-smoke controller entry after artifact, model-memory, and tokenizer setup; it is not a continuous-serving, HTTP, concurrency, or cold-start measurement. This output is not evidence, is not a qualification result, does not establish numerical or hardware correctness, and closes no M1 requirement.";
+const REPORT_FORMAT: &str = "FERRIC-M1-TARGET-SMOKE-REPORT-V2";
+const TIMING_CLOCK: &str = "monotonic-raw-nanoseconds";
+const TIMING_BOUNDARY: &str = "target-smoke-controller-entry-to-completed-device-teardown";
 const TARGET: &str = "gfx942:xnack-";
 
 pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
@@ -113,11 +116,16 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         .prompt_observations()
         .len()
         .saturating_add(execution.generated_tokens().len());
+    let timing = execution.timing();
+    let tpot_eligible = execution.generated_tokens().len() >= 2
+        && timing.first_generated_token_offset_ns() > 0
+        && timing.last_generated_token_offset_ns() > timing.first_generated_token_offset_ns();
     let report = json!({
         "authority": AUTHORITY,
         "direct_published_token_count": direct_published_token_count,
         "generated_token_count": execution.generated_tokens().len(),
         "generated_token_ids": execution.generated_tokens(),
+        "format": REPORT_FORMAT,
         "nonclaim": NONCLAIM,
         "prompt_priming_published_choice_token_ids": execution.prompt_observations(),
         "status": STATUS,
@@ -126,9 +134,24 @@ pub(super) fn run(arguments: &[OsString]) -> CaptureResult<()> {
         "text": text,
         "text_bytes_hex": hex_bytes(&text_bytes),
         "text_utf8_policy": "lossy-replacement",
+        "timing": {
+            "clock": TIMING_CLOCK,
+            "duration_boundary": TIMING_BOUNDARY,
+            "duration_ns": timing.duration_ns(),
+            "r33_tpot_eligible": tpot_eligible,
+            "request_events": [{
+                "arrival_offset_ns": 0,
+                "first_token_offset_ns": timing.first_generated_token_offset_ns(),
+                "input_tokens": execution.prompt_tokens().len(),
+                "output_tokens": execution.generated_tokens().len(),
+                "request_ordinal": 0,
+                "terminal_offset_ns": timing.last_generated_token_offset_ns(),
+            }],
+            "scope": "single-process-single-request-target-smoke",
+        },
     });
     let mut stdout = std::io::stdout().lock();
-    serde_json::to_writer(&mut stdout, &report)
+    serde_json::to_writer_pretty(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize smoke report: {error}"))?;
     stdout
         .write_all(b"\n")
@@ -154,6 +177,8 @@ mod tests {
         assert!(NONCLAIM.contains("not a qualification result"));
         assert!(NONCLAIM.contains("closes no M1 requirement"));
         assert!(NONCLAIM.contains("Every prompt-priming and generation choice is reported"));
+        assert!(NONCLAIM.contains("not a continuous-serving"));
+        assert_eq!(REPORT_FORMAT, "FERRIC-M1-TARGET-SMOKE-REPORT-V2");
     }
 
     #[test]

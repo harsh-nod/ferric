@@ -1,7 +1,7 @@
 //! Exact post-observation record construction for one M1 serving comparison.
 //!
 //! This checker recomputes arithmetic over externally collected raw window
-//! counters. It authenticates declarations and byte identities, not the truth
+//! events. It authenticates declarations and byte identities, not the truth
 //! of a measurement or the hardware that allegedly produced it.
 
 use ferric_m1_benchmarks::{
@@ -23,14 +23,14 @@ use std::process::ExitCode;
 
 pub(super) const COMMAND: &str = "validate-comparison-observations";
 
-const POLICY_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V2";
-const OBSERVATIONS_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V2";
-const RECORD_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-RECORD-V2";
-const POLICY_AUTHORITY: &str = "external-pre-observation-serving-comparison-policy-v2-only";
-const OBSERVATIONS_AUTHORITY: &str = "externally-collected-serving-window-counters-v2-only";
-const RECORD_AUTHORITY: &str = "ferric-checked-serving-comparison-v2-structure-and-arithmetic-only";
-const PROTOCOL_AUTHORITY: &str = "ferric-m1-r33-serving-comparison-protocol-v2-only";
-const PROTOCOL_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-PROTOCOL-V2";
+const POLICY_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V3";
+const OBSERVATIONS_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V3";
+const RECORD_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-RECORD-V3";
+const POLICY_AUTHORITY: &str = "external-pre-observation-serving-comparison-policy-v3-only";
+const OBSERVATIONS_AUTHORITY: &str = "externally-collected-serving-request-events-v3-only";
+const RECORD_AUTHORITY: &str = "ferric-checked-serving-comparison-v3-structure-and-arithmetic-only";
+const PROTOCOL_AUTHORITY: &str = "ferric-m1-r33-serving-comparison-protocol-v3-only";
+const PROTOCOL_FORMAT: &str = "FERRIC-M1-R33-SERVING-COMPARISON-PROTOCOL-V3";
 const STATUS: &str = "PARTIAL_NON_EVIDENCE";
 const TARGET: &str = "gfx942:xnack-";
 const WARMUPS_PER_START: usize = 10;
@@ -44,14 +44,12 @@ const COMPETITIVENESS_GATE_PPM: u64 = 950_000;
 const RATE_SCALE: u128 = 1_000_000_000;
 const PPM_SCALE: u128 = 1_000_000;
 const ENGINES: &[&str] = &["ferric", "vllm", "sglang"];
-const PROTOCOL_SHA256: &str = "bf7842a996dfedfd1534ee63f1755f0ad4849b09e3bc7da8d5fec9c37f584bc1";
-const NONCLAIM: &str = "This V2 record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster, requires equal successful-request, input-token, and output-token work in every aligned window, and recomputes integer input, output, and total-token throughputs, exact medians, the fastest-baseline selection by total-token throughput, and a deterministic paired-percentile-bootstrap 95% confidence interval from externally collected counters. It enforces a 0.95 lower confidence bound but, because raw request events are not present in this schema, does not recompute the externally supplied nearest-rank p99 successful-request arrival-to-terminal latency. It also does not validate the external plan, versions, sources, tuning choices, budget, SLO, collector arithmetic, observation truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
-const LATENCY_CLOCK: &str = "monotonic-raw-nanoseconds";
-const LATENCY_POPULATION: &str = "successful-request-arrival-to-terminal-event";
-const LATENCY_PERCENTILE_METHOD: &str =
-    "nearest-rank-p50-p90-p99-over-the-declared-latency-population";
-const LATENCY_SOURCE: &str =
-    "externally-supplied-window-counter-not-recomputed-without-raw-request-events";
+const PROTOCOL_SHA256: &str = "2f6a720b2512623332e26f77d4bbaeb42b289ab946dcbf0a56a3e3eca2aca662";
+const NONCLAIM: &str = "This V3 record checks one exact externally frozen Ferric, tuned vLLM, and tuned SGLang comparison roster, retains an ordered event for every successful request, requires identical per-request input/output work across engines in each aligned window, and recomputes end-to-end latency, TTFT, TPOT, token throughputs, nearest-rank percentiles, exact medians, fastest-baseline selection, and a deterministic paired-percentile-bootstrap 95% throughput interval. TPOT is floor((terminal-first-token)/(output-tokens-1)) nanoseconds per output token and therefore requires at least two output tokens per request. The record enforces declared p99 timing SLOs and a 0.95 throughput lower confidence bound. It does not validate the external plan, versions, sources, tuning choices, budget, SLO choice, event truth, server freshness, hardware behavior, numerical correctness, or independent reproduction; it is not qualification evidence and does not close m1.r33 or M1.";
+const TIMING_CLOCK: &str = "monotonic-raw-nanoseconds";
+const TIMING_BOUNDARIES: &str = "request-arrival-to-first-output-token-observed-to-terminal-event";
+const TIMING_PERCENTILE_METHOD: &str = "nearest-rank-ceil-percent-times-population";
+const TIMING_SOURCE: &str = "record-recomputed-from-retained-per-request-events";
 
 const POLICY_KEYS: &[&str] = &[
     "authority",
@@ -61,6 +59,8 @@ const POLICY_KEYS: &[&str] = &[
     "nonclaim",
     "obligation_id",
     "p99_end_to_end_slo_ns",
+    "p99_tpot_slo_ns_per_output_token",
+    "p99_ttft_slo_ns",
     "plan",
     "protocol_sha256",
     "sample_roster",
@@ -128,9 +128,26 @@ const VALUE_KEYS: &[&str] = &[
     "failed_requests",
     "input_tokens",
     "output_tokens",
+    "p50_end_to_end_latency_ns",
+    "p50_tpot_ns_per_output_token",
+    "p50_ttft_ns",
+    "p90_end_to_end_latency_ns",
+    "p90_tpot_ns_per_output_token",
+    "p90_ttft_ns",
     "p99_end_to_end_latency_ns",
+    "p99_tpot_ns_per_output_token",
+    "p99_ttft_ns",
+    "request_events",
     "successful_requests",
     "total_tokens",
+];
+const REQUEST_EVENT_KEYS: &[&str] = &[
+    "arrival_offset_ns",
+    "first_token_offset_ns",
+    "input_tokens",
+    "output_tokens",
+    "request_ordinal",
+    "terminal_offset_ns",
 ];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -185,10 +202,48 @@ impl Inputs {
 
 #[derive(Debug)]
 struct EngineSamples {
-    latency: Vec<u64>,
+    end_to_end: PercentileSamples,
     input_throughput: Vec<u64>,
     output_throughput: Vec<u64>,
+    tpot: PercentileSamples,
     total_throughput: Vec<u64>,
+    ttft: PercentileSamples,
+}
+
+#[derive(Debug)]
+struct PercentileSamples {
+    p50: Vec<u64>,
+    p90: Vec<u64>,
+    p99: Vec<u64>,
+}
+
+impl PercentileSamples {
+    fn with_capacity(capacity: usize) -> Self {
+        Self {
+            p50: Vec::with_capacity(capacity),
+            p90: Vec::with_capacity(capacity),
+            p99: Vec::with_capacity(capacity),
+        }
+    }
+
+    fn push(&mut self, percentiles: TimingPercentiles) {
+        self.p50.push(percentiles.p50);
+        self.p90.push(percentiles.p90);
+        self.p99.push(percentiles.p99);
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct TimingPercentiles {
+    p50: u64,
+    p90: u64,
+    p99: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RequestWork {
+    input_tokens: u64,
+    output_tokens: u64,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -333,14 +388,20 @@ fn validate_policy(policy: &Value) -> BenchResult<()> {
     )?;
     expect_string(object, "target", TARGET, "serving comparison policy")?;
     validate_engine_order(field(object, "engine_order", "serving comparison policy")?)?;
-    let slo = positive_u64(
-        field(object, "p99_end_to_end_slo_ns", "serving comparison policy")?,
-        "p99 end-to-end SLO",
-    )?;
-    if slo == u64::MAX {
-        return Err(
-            "serving comparison p99 end-to-end SLO is outside the admitted bound".to_owned(),
-        );
+    for (key, description) in [
+        ("p99_end_to_end_slo_ns", "p99 end-to-end SLO"),
+        ("p99_ttft_slo_ns", "p99 TTFT SLO"),
+        ("p99_tpot_slo_ns_per_output_token", "p99 TPOT SLO"),
+    ] {
+        let slo = positive_u64(
+            field(object, key, "serving comparison policy")?,
+            description,
+        )?;
+        if slo == u64::MAX {
+            return Err(format!(
+                "serving comparison {description} is outside the admitted bound"
+            ));
+        }
     }
     validate_plan(field(object, "plan", "serving comparison policy")?)?;
     validate_implementations(field(
@@ -550,13 +611,16 @@ fn validate_observations(
     if rows.len() != SERVER_STARTS * per_start {
         return Err("serving comparison row roster is incomplete".to_owned());
     }
+    let sample_capacity = SERVER_STARTS * RECORDED_PER_START;
     let mut samples = ENGINES
         .iter()
         .map(|_| EngineSamples {
-            latency: Vec::with_capacity(SERVER_STARTS * RECORDED_PER_START),
-            input_throughput: Vec::with_capacity(SERVER_STARTS * RECORDED_PER_START),
-            output_throughput: Vec::with_capacity(SERVER_STARTS * RECORDED_PER_START),
-            total_throughput: Vec::with_capacity(SERVER_STARTS * RECORDED_PER_START),
+            end_to_end: PercentileSamples::with_capacity(sample_capacity),
+            input_throughput: Vec::with_capacity(sample_capacity),
+            output_throughput: Vec::with_capacity(sample_capacity),
+            tpot: PercentileSamples::with_capacity(sample_capacity),
+            total_throughput: Vec::with_capacity(sample_capacity),
+            ttft: PercentileSamples::with_capacity(sample_capacity),
         })
         .collect::<Vec<_>>();
     let mut unique = BTreeSet::new();
@@ -630,6 +694,7 @@ fn validate_row(
         "serving comparison row values",
     )?;
     let mut expected_work: Option<WindowWork> = None;
+    let mut expected_request_work: Option<Vec<RequestWork>> = None;
     for (index, engine) in ENGINES.iter().enumerate() {
         let metrics = exact_object(
             field(values, engine, "serving comparison row values")?,
@@ -663,14 +728,6 @@ fn validate_row(
                 "serving comparison window counters",
             )?,
             "serving comparison output tokens",
-        )?;
-        let latency = positive_u64(
-            field(
-                metrics,
-                "p99_end_to_end_latency_ns",
-                "serving comparison window counters",
-            )?,
-            "serving comparison p99 end-to-end latency",
         )?;
         let successful_requests = positive_u64(
             field(
@@ -733,17 +790,214 @@ fn validate_row(
         } else {
             expected_work = Some(work);
         }
+        let (end_to_end, ttft, tpot, request_work) = validate_request_timings(
+            metrics,
+            duration,
+            successful_requests,
+            input_tokens,
+            output_tokens,
+            &expected_id,
+            engine,
+        )?;
+        if let Some(expected) = &expected_request_work {
+            if request_work != *expected {
+                return Err(format!(
+                    "serving comparison per-request input/output work differs across engines: {expected_id}/{engine}"
+                ));
+            }
+        } else {
+            expected_request_work = Some(request_work);
+        }
         let input_throughput = rate(input_tokens, duration)?;
         let output_throughput = rate(output_tokens, duration)?;
         let total_throughput = rate(total_tokens, duration)?;
         if phase == "recorded" {
-            samples[index].latency.push(latency);
+            samples[index].end_to_end.push(end_to_end);
             samples[index].input_throughput.push(input_throughput);
             samples[index].output_throughput.push(output_throughput);
+            samples[index].tpot.push(tpot);
             samples[index].total_throughput.push(total_throughput);
+            samples[index].ttft.push(ttft);
         }
     }
     Ok(())
+}
+
+fn validate_request_timings(
+    metrics: &Map<String, Value>,
+    duration_ns: u64,
+    successful_requests: u64,
+    input_tokens: u64,
+    output_tokens: u64,
+    row_id: &str,
+    engine: &str,
+) -> BenchResult<(
+    TimingPercentiles,
+    TimingPercentiles,
+    TimingPercentiles,
+    Vec<RequestWork>,
+)> {
+    let events = field(
+        metrics,
+        "request_events",
+        "serving comparison window counters",
+    )?
+    .as_array()
+    .ok_or_else(|| "serving comparison request events must be an array".to_owned())?;
+    if events.len() != usize::try_from(successful_requests).unwrap_or(usize::MAX) {
+        return Err(format!(
+            "serving comparison request-event population differs from successful requests: {row_id}/{engine}"
+        ));
+    }
+    let mut end_to_end = Vec::with_capacity(events.len());
+    let mut ttft = Vec::with_capacity(events.len());
+    let mut tpot = Vec::with_capacity(events.len());
+    let mut request_work = Vec::with_capacity(events.len());
+    let mut checked_input_tokens = 0_u64;
+    let mut checked_output_tokens = 0_u64;
+    for (ordinal, event) in events.iter().enumerate() {
+        let event = exact_object(
+            event,
+            REQUEST_EVENT_KEYS,
+            "serving comparison request event",
+        )?;
+        expect_u64(
+            event,
+            "request_ordinal",
+            u64::try_from(ordinal)
+                .map_err(|_| "serving comparison request ordinal does not fit u64".to_owned())?,
+            "serving comparison request event",
+        )?;
+        let arrival = unsigned_u64(
+            field(
+                event,
+                "arrival_offset_ns",
+                "serving comparison request event",
+            )?,
+            "serving comparison request arrival offset",
+        )?;
+        let first = positive_u64(
+            field(
+                event,
+                "first_token_offset_ns",
+                "serving comparison request event",
+            )?,
+            "serving comparison first-token offset",
+        )?;
+        let terminal = positive_u64(
+            field(
+                event,
+                "terminal_offset_ns",
+                "serving comparison request event",
+            )?,
+            "serving comparison terminal offset",
+        )?;
+        if !(arrival < first && first < terminal && terminal <= duration_ns) {
+            return Err(format!(
+                "serving comparison request timing order or window bound is invalid: {row_id}/{engine}/{ordinal}"
+            ));
+        }
+        let request_input = positive_u64(
+            field(event, "input_tokens", "serving comparison request event")?,
+            "serving comparison request input tokens",
+        )?;
+        let request_output = positive_u64(
+            field(event, "output_tokens", "serving comparison request event")?,
+            "serving comparison request output tokens",
+        )?;
+        if request_output < 2 {
+            return Err(format!(
+                "serving comparison request has fewer than two output tokens required for TPOT: {row_id}/{engine}/{ordinal}"
+            ));
+        }
+        checked_input_tokens =
+            checked_input_tokens
+                .checked_add(request_input)
+                .ok_or_else(|| {
+                    "serving comparison per-request input-token sum overflowed".to_owned()
+                })?;
+        checked_output_tokens = checked_output_tokens
+            .checked_add(request_output)
+            .ok_or_else(|| {
+                "serving comparison per-request output-token sum overflowed".to_owned()
+            })?;
+        let end_to_end_ns = terminal - arrival;
+        let ttft_ns = first - arrival;
+        let tpot_ns = (terminal - first) / (request_output - 1);
+        if tpot_ns == 0 {
+            return Err(format!(
+                "serving comparison request TPOT rounded to zero: {row_id}/{engine}/{ordinal}"
+            ));
+        }
+        end_to_end.push(end_to_end_ns);
+        ttft.push(ttft_ns);
+        tpot.push(tpot_ns);
+        request_work.push(RequestWork {
+            input_tokens: request_input,
+            output_tokens: request_output,
+        });
+    }
+    if checked_input_tokens != input_tokens || checked_output_tokens != output_tokens {
+        return Err(format!(
+            "serving comparison per-request token sums differ from window work: {row_id}/{engine}"
+        ));
+    }
+    let end_to_end = timing_percentiles(&mut end_to_end, "end-to-end")?;
+    let ttft = timing_percentiles(&mut ttft, "TTFT")?;
+    let tpot = timing_percentiles(&mut tpot, "TPOT")?;
+    validate_submitted_percentiles(metrics, "end_to_end_latency_ns", end_to_end)?;
+    validate_submitted_percentiles(metrics, "ttft_ns", ttft)?;
+    validate_submitted_percentiles(metrics, "tpot_ns_per_output_token", tpot)?;
+    Ok((end_to_end, ttft, tpot, request_work))
+}
+
+fn validate_submitted_percentiles(
+    metrics: &Map<String, Value>,
+    suffix: &str,
+    expected: TimingPercentiles,
+) -> BenchResult<()> {
+    for (percentile, value) in [
+        ("p50", expected.p50),
+        ("p90", expected.p90),
+        ("p99", expected.p99),
+    ] {
+        let key = format!("{percentile}_{suffix}");
+        expect_u64(
+            metrics,
+            &key,
+            value,
+            "serving comparison recomputed timing percentile",
+        )?;
+    }
+    Ok(())
+}
+
+fn timing_percentiles(values: &mut [u64], description: &str) -> BenchResult<TimingPercentiles> {
+    if values.is_empty() {
+        return Err(format!(
+            "serving comparison {description} population is empty"
+        ));
+    }
+    values.sort_unstable();
+    Ok(TimingPercentiles {
+        p50: nearest_rank(values, 50, description)?,
+        p90: nearest_rank(values, 90, description)?,
+        p99: nearest_rank(values, 99, description)?,
+    })
+}
+
+fn nearest_rank(values: &[u64], percentile: usize, description: &str) -> BenchResult<u64> {
+    let rank = values
+        .len()
+        .checked_mul(percentile)
+        .and_then(|value| value.checked_add(99))
+        .ok_or_else(|| {
+            format!("serving comparison {description} nearest-rank calculation overflowed")
+        })?
+        / 100;
+    values.get(rank - 1).copied().ok_or_else(|| {
+        format!("serving comparison {description} nearest rank is outside the population")
+    })
 }
 
 fn build_record(
@@ -755,13 +1009,29 @@ fn build_record(
     let policy_object = policy
         .as_object()
         .ok_or_else(|| "serving comparison policy must be an object".to_owned())?;
-    let slo = positive_u64(
+    let end_to_end_slo = positive_u64(
         field(
             policy_object,
             "p99_end_to_end_slo_ns",
             "serving comparison policy",
         )?,
         "serving comparison p99 end-to-end SLO",
+    )?;
+    let ttft_slo = positive_u64(
+        field(
+            policy_object,
+            "p99_ttft_slo_ns",
+            "serving comparison policy",
+        )?,
+        "serving comparison p99 TTFT SLO",
+    )?;
+    let tpot_slo = positive_u64(
+        field(
+            policy_object,
+            "p99_tpot_slo_ns_per_output_token",
+            "serving comparison policy",
+        )?,
+        "serving comparison p99 TPOT SLO",
     )?;
     let mut summaries = Vec::with_capacity(ENGINES.len());
     let mut total_throughput_medians = Vec::with_capacity(ENGINES.len());
@@ -771,17 +1041,33 @@ fn build_record(
         let output_throughput = median(&mut sample.output_throughput)?;
         let mut total_throughput_for_median = sample.total_throughput.clone();
         let total_throughput = median(&mut total_throughput_for_median)?;
-        let latency = median(&mut sample.latency)?;
-        if latency.numerator > u128::from(slo) * latency.denominator {
-            return Err(format!(
-                "serving comparison median p99 end-to-end latency exceeds the declared SLO: {engine}"
-            ));
+        let end_to_end = median_timing(&mut sample.end_to_end)?;
+        let ttft = median_timing(&mut sample.ttft)?;
+        let tpot = median_timing(&mut sample.tpot)?;
+        for (metric, value, slo) in [
+            ("end-to-end latency", &end_to_end.2, end_to_end_slo),
+            ("TTFT", &ttft.2, ttft_slo),
+            ("TPOT", &tpot.2, tpot_slo),
+        ] {
+            if value.numerator > u128::from(slo) * value.denominator {
+                return Err(format!(
+                    "serving comparison median p99 {metric} exceeds the declared SLO: {engine}"
+                ));
+            }
         }
         summaries.push(json!({
             "id": engine,
             "median_input_tokens_per_second": input_throughput.as_json(),
+            "median_p50_end_to_end_latency_ns": end_to_end.0.as_json(),
+            "median_p50_tpot_ns_per_output_token": tpot.0.as_json(),
+            "median_p50_ttft_ns": ttft.0.as_json(),
+            "median_p90_end_to_end_latency_ns": end_to_end.1.as_json(),
+            "median_p90_tpot_ns_per_output_token": tpot.1.as_json(),
+            "median_p90_ttft_ns": ttft.1.as_json(),
+            "median_p99_end_to_end_latency_ns": end_to_end.2.as_json(),
+            "median_p99_tpot_ns_per_output_token": tpot.2.as_json(),
+            "median_p99_ttft_ns": ttft.2.as_json(),
             "median_output_tokens_per_second": output_throughput.as_json(),
-            "median_p99_end_to_end_latency_ns": latency.as_json(),
             "median_total_tokens_per_second": total_throughput.as_json(),
             "recorded_windows": SERVER_STARTS * RECORDED_PER_START,
         }));
@@ -818,7 +1104,9 @@ fn build_record(
         "bindings": {
             "engine_order": field(policy_object, "engine_order", "serving comparison policy")?,
             "implementations": field(policy_object, "implementations", "serving comparison policy")?,
-            "p99_end_to_end_slo_ns": slo,
+            "p99_end_to_end_slo_ns": end_to_end_slo,
+            "p99_tpot_slo_ns_per_output_token": tpot_slo,
+            "p99_ttft_slo_ns": ttft_slo,
             "plan": field(policy_object, "plan", "serving comparison policy")?,
             "protocol_sha256": PROTOCOL_SHA256,
         },
@@ -827,19 +1115,22 @@ fn build_record(
         "fastest_baseline": ENGINES[fastest_baseline_index],
         "ferric_to_fastest_baseline_ratio_ppm": ratio_ppm,
         "format": RECORD_FORMAT,
-        "latency_semantics": {
-            "clock": LATENCY_CLOCK,
-            "percentile_method": LATENCY_PERCENTILE_METHOD,
-            "population": LATENCY_POPULATION,
-            "source": LATENCY_SOURCE,
-            "unit": "nanoseconds",
+        "timing_semantics": {
+            "clock": TIMING_CLOCK,
+            "end_to_end_unit": "nanoseconds",
+            "event_boundaries": TIMING_BOUNDARIES,
+            "percentile_method": TIMING_PERCENTILE_METHOD,
+            "source": TIMING_SOURCE,
+            "tpot_arithmetic": "floor((terminal_offset_ns-first_token_offset_ns)/(output_tokens-1))",
+            "tpot_unit": "nanoseconds-per-output-token-after-first",
+            "ttft_unit": "nanoseconds",
         },
         "nonclaim": NONCLAIM,
         "obligation_id": "m1.r33",
         "observations_sha256": sha256_identity(&inputs.observations_bytes),
         "policy_sha256": sha256_identity(&inputs.policy_bytes),
         "paired_bootstrap_95_percent": {
-            "algorithm": "paired-percentile-bootstrap-splitmix64-v2",
+            "algorithm": "paired-percentile-bootstrap-splitmix64-v3",
             "confidence_level_ppm": BOOTSTRAP_CONFIDENCE_PPM,
             "gate_lower_bound_ppm": COMPETITIVENESS_GATE_PPM,
             "lower_bound_ppm": bootstrap.lower_ppm,
@@ -855,6 +1146,14 @@ fn build_record(
         "target": TARGET,
         "warmup_windows_per_engine": SERVER_STARTS * WARMUPS_PER_START,
     }))
+}
+
+fn median_timing(samples: &mut PercentileSamples) -> BenchResult<(Rational, Rational, Rational)> {
+    Ok((
+        median(&mut samples.p50)?,
+        median(&mut samples.p90)?,
+        median(&mut samples.p99)?,
+    ))
 }
 
 fn median(values: &mut [u64]) -> BenchResult<Rational> {
@@ -921,7 +1220,7 @@ fn paired_bootstrap_interval(
         return Err("serving bootstrap percentile ranks are invalid".to_owned());
     }
     let seed_material =
-        format!("ferric-m1-r33-paired-bootstrap-v2|{policy_sha256}|{observations_sha256}");
+        format!("ferric-m1-r33-paired-bootstrap-v3|{policy_sha256}|{observations_sha256}");
     let seed_sha256 = sha256_identity(seed_material.as_bytes());
     let seed = u64::from_str_radix(&seed_sha256[..16], 16)
         .map_err(|_| "serving bootstrap seed digest is invalid".to_owned())?;
@@ -1499,6 +1798,41 @@ mod tests {
         })
     }
 
+    fn metrics(duration_ns: u64, ttft_ns: u64, tpot_ns: u64) -> Value {
+        let events = (0..4_u64)
+            .map(|request_ordinal| {
+                let arrival = request_ordinal * 100;
+                json!({
+                    "arrival_offset_ns": arrival,
+                    "first_token_offset_ns": arrival + ttft_ns,
+                    "input_tokens": 2,
+                    "output_tokens": 2,
+                    "request_ordinal": request_ordinal,
+                    "terminal_offset_ns": arrival + ttft_ns + tpot_ns,
+                })
+            })
+            .collect::<Vec<_>>();
+        let end_to_end = ttft_ns + tpot_ns;
+        json!({
+            "duration_ns": duration_ns,
+            "failed_requests": 0,
+            "input_tokens": 8,
+            "output_tokens": 8,
+            "p50_end_to_end_latency_ns": end_to_end,
+            "p50_tpot_ns_per_output_token": tpot_ns,
+            "p50_ttft_ns": ttft_ns,
+            "p90_end_to_end_latency_ns": end_to_end,
+            "p90_tpot_ns_per_output_token": tpot_ns,
+            "p90_ttft_ns": ttft_ns,
+            "p99_end_to_end_latency_ns": end_to_end,
+            "p99_tpot_ns_per_output_token": tpot_ns,
+            "p99_ttft_ns": ttft_ns,
+            "request_events": events,
+            "successful_requests": 4,
+            "total_tokens": 16,
+        })
+    }
+
     fn policy() -> Value {
         json!({
             "authority": POLICY_AUTHORITY,
@@ -1508,6 +1842,8 @@ mod tests {
             "nonclaim": NONCLAIM,
             "obligation_id": "m1.r33",
             "p99_end_to_end_slo_ns": 1_000_000,
+            "p99_tpot_slo_ns_per_output_token": 1_000_000,
+            "p99_ttft_slo_ns": 1_000_000,
             "plan": PLAN_KEYS.iter().map(|key| ((*key).to_owned(), Value::String(digest(key)))).collect::<Map<_, _>>(),
             "protocol_sha256": PROTOCOL_SHA256,
             "sample_roster": {
@@ -1541,9 +1877,9 @@ mod tests {
                         "server_start": start,
                         "status": "passed",
                         "values": {
-                            "ferric": {"duration_ns": 1000, "failed_requests": 0, "input_tokens": 8, "output_tokens": 4, "p99_end_to_end_latency_ns": 100, "successful_requests": 4, "total_tokens": 12},
-                            "vllm": {"duration_ns": 1000, "failed_requests": 0, "input_tokens": 8, "output_tokens": 4, "p99_end_to_end_latency_ns": 110, "successful_requests": 4, "total_tokens": 12},
-                            "sglang": {"duration_ns": 1000, "failed_requests": 0, "input_tokens": 8, "output_tokens": 4, "p99_end_to_end_latency_ns": 120, "successful_requests": 4, "total_tokens": 12},
+                            "ferric": metrics(1000, 10, 20),
+                            "vllm": metrics(1000, 12, 24),
+                            "sglang": metrics(1000, 14, 26),
                         },
                         "window": window,
                     }));
@@ -1606,20 +1942,28 @@ mod tests {
         );
         assert_eq!(
             record["engine_summaries"][0]["median_output_tokens_per_second"]["numerator"],
-            "4000000"
+            "8000000"
         );
         assert_eq!(
             record["engine_summaries"][0]["median_total_tokens_per_second"]["numerator"],
-            "12000000"
+            "16000000"
         );
         assert_eq!(
-            record["latency_semantics"]["percentile_method"],
-            LATENCY_PERCENTILE_METHOD
+            record["engine_summaries"][0]["median_p99_ttft_ns"]["numerator"],
+            "10"
         );
-        assert_eq!(record["latency_semantics"]["source"], LATENCY_SOURCE);
+        assert_eq!(
+            record["engine_summaries"][0]["median_p99_tpot_ns_per_output_token"]["numerator"],
+            "20"
+        );
+        assert_eq!(
+            record["timing_semantics"]["percentile_method"],
+            TIMING_PERCENTILE_METHOD
+        );
+        assert_eq!(record["timing_semantics"]["source"], TIMING_SOURCE);
         assert_eq!(
             record["paired_bootstrap_95_percent"]["algorithm"],
-            "paired-percentile-bootstrap-splitmix64-v2"
+            "paired-percentile-bootstrap-splitmix64-v3"
         );
         assert_eq!(
             record["paired_bootstrap_95_percent"]["metric"],
@@ -1682,15 +2026,15 @@ mod tests {
 
         let mut input = observations(&policy);
         input["rows"][0]["values"]["vllm"]["input_tokens"] = json!(9);
-        input["rows"][0]["values"]["vllm"]["total_tokens"] = json!(13);
+        input["rows"][0]["values"]["vllm"]["total_tokens"] = json!(17);
         let error =
             validate_observations(&input, &policy, input["policy_sha256"].as_str().unwrap())
                 .unwrap_err();
         assert!(error.contains("input-token work differs"));
 
         let mut output = observations(&policy);
-        output["rows"][0]["values"]["sglang"]["output_tokens"] = json!(5);
-        output["rows"][0]["values"]["sglang"]["total_tokens"] = json!(13);
+        output["rows"][0]["values"]["sglang"]["output_tokens"] = json!(9);
+        output["rows"][0]["values"]["sglang"]["total_tokens"] = json!(17);
         let error =
             validate_observations(&output, &policy, output["policy_sha256"].as_str().unwrap())
                 .unwrap_err();
@@ -1702,7 +2046,7 @@ mod tests {
         let policy = policy();
 
         let mut inconsistent = observations(&policy);
-        inconsistent["rows"][0]["values"]["sglang"]["total_tokens"] = json!(13);
+        inconsistent["rows"][0]["values"]["sglang"]["total_tokens"] = json!(17);
         let error = validate_observations(
             &inconsistent,
             &policy,
@@ -1725,12 +2069,75 @@ mod tests {
     }
 
     #[test]
-    fn v1_schema_and_noncanonical_bytes_are_not_reinterpreted() {
+    fn request_timing_and_pairing_mutations_fail_closed() {
+        let policy = policy();
+        for (mutation, expected) in [
+            ("extra-field", "request event fields drifted"),
+            ("nonmonotonic", "timing order or window bound is invalid"),
+            ("single-output", "fewer than two output tokens"),
+            ("event-sum", "per-request token sums differ"),
+            ("percentile", "p99_ttft_ns drifted"),
+            ("paired-work", "per-request input/output work differs"),
+            ("ordinal", "request_ordinal drifted"),
+        ] {
+            let mut candidate = observations(&policy);
+            match mutation {
+                "extra-field" => {
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][0]
+                        ["submitted_ttft_ns"] = json!(10);
+                }
+                "nonmonotonic" => {
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][0]
+                        ["first_token_offset_ns"] = json!(30);
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][0]
+                        ["terminal_offset_ns"] = json!(30);
+                }
+                "single-output" => {
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][0]
+                        ["output_tokens"] = json!(1);
+                }
+                "event-sum" => {
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][0]["input_tokens"] =
+                        json!(3);
+                }
+                "percentile" => {
+                    candidate["rows"][0]["values"]["ferric"]["p99_ttft_ns"] = json!(11);
+                }
+                "paired-work" => {
+                    candidate["rows"][0]["values"]["vllm"]["request_events"][0]["input_tokens"] =
+                        json!(3);
+                    candidate["rows"][0]["values"]["vllm"]["request_events"][1]["input_tokens"] =
+                        json!(1);
+                }
+                "ordinal" => {
+                    candidate["rows"][0]["values"]["ferric"]["request_events"][1]
+                        ["request_ordinal"] = json!(0);
+                }
+                _ => unreachable!(),
+            }
+            let error = validate_observations(
+                &candidate,
+                &policy,
+                candidate["policy_sha256"].as_str().unwrap(),
+            )
+            .unwrap_err();
+            assert!(error.contains(expected), "{mutation}: {error}");
+        }
+    }
+
+    #[test]
+    fn older_schemas_and_noncanonical_bytes_are_not_reinterpreted() {
         let policy = policy();
 
         let mut v1_policy = policy.clone();
         v1_policy["format"] = json!("FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V1");
         assert!(validate_policy(&v1_policy)
+            .unwrap_err()
+            .contains("format drifted"));
+
+        let mut v2_policy = policy.clone();
+        v2_policy["format"] = json!("FERRIC-M1-R33-SERVING-COMPARISON-POLICY-V2");
+        assert!(validate_policy(&v2_policy)
             .unwrap_err()
             .contains("format drifted"));
 
@@ -1740,6 +2147,16 @@ mod tests {
             &v1_observations,
             &policy,
             v1_observations["policy_sha256"].as_str().unwrap(),
+        )
+        .unwrap_err();
+        assert!(error.contains("format drifted"));
+
+        let mut v2_observations = observations(&policy);
+        v2_observations["format"] = json!("FERRIC-M1-R33-SERVING-COMPARISON-OBSERVATIONS-V2");
+        let error = validate_observations(
+            &v2_observations,
+            &policy,
+            v2_observations["policy_sha256"].as_str().unwrap(),
         )
         .unwrap_err();
         assert!(error.contains("format drifted"));
@@ -1821,11 +2238,6 @@ mod tests {
             if row["phase"] != "recorded" {
                 continue;
             }
-            for &engine in ENGINES {
-                row["values"][engine]["input_tokens"] = json!(68);
-                row["values"][engine]["output_tokens"] = json!(34);
-                row["values"][engine]["total_tokens"] = json!(102);
-            }
             let ferric_duration = if recorded.is_multiple_of(2) {
                 1_020
             } else {
@@ -1839,8 +2251,8 @@ mod tests {
             row["values"]["ferric"]["duration_ns"] = json!(ferric_duration);
             row["values"]["vllm"]["duration_ns"] = json!(vllm_duration);
             row["values"]["sglang"]["duration_ns"] = json!(1_030);
-            ferric_samples.push(rate(102, ferric_duration).unwrap());
-            vllm_samples.push(rate(102, vllm_duration).unwrap());
+            ferric_samples.push(rate(16, ferric_duration).unwrap());
+            vllm_samples.push(rate(16, vllm_duration).unwrap());
             recorded += 1;
         }
         assert_eq!(recorded, SERVER_STARTS * RECORDED_PER_START);
