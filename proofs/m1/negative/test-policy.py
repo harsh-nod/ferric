@@ -201,8 +201,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 21:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 21")
+        if len(rows) != 22:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 22")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []

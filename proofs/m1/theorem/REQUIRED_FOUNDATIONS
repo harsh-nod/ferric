@@ -18,3 +18,4 @@ theorem=publication-plan-identity|step-plan-publication|graph_refined|graph-proo
 theorem=sampler-lowest-id-publication|deterministic-sampler-composition|sampler_refined|speculation-proof|ferric-m1-proof|proofs/m1/speculative_graph.rs|speculative_graph|m1_deterministic_sampler_refinement_theorem
 theorem=speculative-accepted-count-binding|speculative-step-composition|rollback_refined|speculation-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|speculative_accepted_count_binding_theorem
 theorem=speculative-atomic-failure-frame|speculative-step-composition|request_isolated|isolation-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|speculative_atomic_failure_frame_theorem
+theorem=target-direct-publication|direct-target-publication|graph_refined|graph-proof|ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|m1_foundation_theorems|target_direct_publication_theorem

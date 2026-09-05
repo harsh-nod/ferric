@@ -172,6 +172,13 @@ EXPECTED = {
         "validation", "validate_kernel_catalog_input",
         "exact-processor-target-rejection",
     ),
+    "target-direct-publication": (
+        "direct-target-publication", "graph_refined", "graph-proof",
+        "ferric-spec", "crates/ferric-spec/src/step_plan_publication.rs",
+        "target-direct-publication.py", "assertion",
+        "step_plan_publication", "validate_direct_publication",
+        "zero-draft-single-token-publication",
+    ),
 }
 
 

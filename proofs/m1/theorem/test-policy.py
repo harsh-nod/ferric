@@ -119,8 +119,8 @@ def main() -> None:
         result = run_checker(baseline, active)
         if result.returncode != 0:
             fail(f"baseline theorem registry failed\n{result.stdout}")
-        if len(active.read_text(encoding="ascii").splitlines()) != 19:
-            fail("baseline theorem registry did not select exactly nineteen rows")
+        if len(active.read_text(encoding="ascii").splitlines()) != 20:
+            fail("baseline theorem registry did not select exactly twenty rows")
 
         cases: list[tuple[str, str, FixtureMutation]] = [
             (

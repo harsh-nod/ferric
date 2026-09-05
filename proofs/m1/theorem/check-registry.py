@@ -190,6 +190,15 @@ EXPECTED = {
         "m1_foundation_theorems",
         "speculative_atomic_failure_frame_theorem",
     ),
+    "target-direct-publication": (
+        "direct-target-publication",
+        "graph_refined",
+        "graph-proof",
+        "ferric-spec",
+        "crates/ferric-spec/src/m1_foundation_theorems.rs",
+        "m1_foundation_theorems",
+        "target_direct_publication_theorem",
+    ),
 }
 
 

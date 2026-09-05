@@ -7627,6 +7627,7 @@ verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spe
 verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::publication_plan_identity_theorem
 verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::speculative_accepted_count_binding_theorem
 verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::speculative_atomic_failure_frame_theorem
+verified=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems::target_direct_publication_theorem
 module=ferric-spec|crates/ferric-spec/src/m1_qualification_context.rs|ferric_spec::m1_qualification_context
 verified=ferric-spec|crates/ferric-spec/src/m1_qualification_context.rs|ferric_spec::m1_qualification_context::M1QualificationCompactChoiceDisposition::matches
 verified=ferric-spec|crates/ferric-spec/src/m1_qualification_context.rs|ferric_spec::m1_qualification_context::M1QualificationContextPlan::validate

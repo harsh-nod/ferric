@@ -21,8 +21,8 @@ use crate::speculative_step_composition::{
     settle_and_publish_speculative_step, AtomicSpeculativeStepError, AtomicSpeculativeStepOutcome,
 };
 use crate::step_plan_publication::{
-    publish_reserved_delta, validate_step_plan, ReservedStateDelta, SpeculativeTokenInputs,
-    StepPlan, StepPublication, StepPublicationError,
+    publish_reserved_delta, validate_direct_publication, validate_step_plan, ReservedStateDelta,
+    SpeculativeTokenInputs, StepPlan, StepPublication, StepPublicationError,
 };
 use crate::{
     Identity, IsolatedRequestKv, IsolatedSpeculativeKvExpectation, Qwen3ModelRole,
@@ -352,6 +352,113 @@ pub fn publication_plan_identity_theorem(
         assert(crate::step_plan_publication::target_publication_role(expected_selection.role));
     }
     result
+}
+
+/// Validates and publishes exactly one direct target token.
+///
+/// This theorem composes the executable direct-completion validator with the
+/// one-shot publication transition. It establishes source-level logical
+/// publication only; the compact record remains an untrusted device result
+/// until the validator accepts its exact request, epoch, plan, and token data.
+///
+/// # Errors
+///
+/// Returns the exact fail-closed validation or publication error. Rejection
+/// preserves the complete unpublished input.
+pub fn target_direct_publication_theorem(
+    publication: &mut StepPublication,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: &Identity,
+    expected_selection: Qwen3PlanSelection,
+) -> (result: Result<ReservedStateDelta, StepPublicationError>)
+    ensures
+        result.is_ok() == crate::step_plan_publication::direct_publication_is_valid(
+            old(publication),
+            expected_request,
+            expected_epoch,
+            *expected_plan_id,
+            expected_selection,
+        ),
+        match result {
+            Ok(delta) => {
+                &&& crate::step_plan_publication::publication_phase_matches(
+                    final(publication).phase_spec(),
+                    crate::step_plan_publication::PublicationPhase::Published,
+                )
+                &&& crate::step_plan_publication::target_publication_role(
+                    expected_selection.role,
+                )
+                &&& crate::step_plan_publication::direct_publication_mode(
+                    expected_selection.mode,
+                )
+                &&& delta == old(publication).delta_spec()
+                &&& delta == final(publication).delta_spec()
+                &&& delta.compact_completion_spec().accepted_draft_tokens == 0
+                &&& delta.compact_completion_spec().emitted_token_count == 1
+                &&& delta.compact_completion_spec().emitted_tokens[0]
+                    < crate::QWEN3_VOCABULARY_SIZE
+            },
+            Err(_) => *final(publication) == *old(publication),
+        },
+{
+    let ghost entry = *publication;
+    assert(entry == *old(publication));
+    let validation = validate_direct_publication(
+        publication,
+        expected_request,
+        expected_epoch,
+        expected_plan_id,
+        expected_selection,
+    );
+    if let Err(error) = validation {
+        assert(*publication == entry);
+        return Err(error);
+    }
+    assert(crate::step_plan_publication::direct_publication_is_valid(
+        &entry,
+        expected_request,
+        expected_epoch,
+        *expected_plan_id,
+        expected_selection,
+    ));
+    let ghost validated = *publication;
+    proof {
+        crate::step_plan_publication::direct_publication_validation_properties(
+            &entry,
+            &validated,
+            expected_request,
+            expected_epoch,
+            *expected_plan_id,
+            expected_selection,
+        );
+    }
+    let published = publish_reserved_delta(publication);
+    assert(published.is_ok());
+    let delta = match published {
+        Ok(delta) => delta,
+        Err(error) => {
+            assert(false);
+            return Err(error);
+        },
+    };
+    assert(crate::step_plan_publication::publication_transition(
+        &validated,
+        publication,
+    ));
+    proof {
+        crate::step_plan_publication::publication_transition_reaches_published(
+            &validated,
+            publication,
+        );
+    }
+    assert(delta == publication.delta_spec());
+    assert(delta == entry.delta_spec());
+    assert(delta.compact_completion_spec().accepted_draft_tokens == 0);
+    assert(delta.compact_completion_spec().emitted_token_count == 1);
+    assert(delta.compact_completion_spec().emitted_tokens[0]
+        < crate::QWEN3_VOCABULARY_SIZE);
+    Ok(delta)
 }
 
 /// Success binds KV settlement to the exact publication-derived accepted count.

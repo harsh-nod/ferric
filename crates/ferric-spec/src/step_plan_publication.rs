@@ -394,9 +394,12 @@ pub(crate) proof fn publication_transition_reaches_published(
     after: &StepPublication,
 )
     requires publication_transition(before, after),
-    ensures publication_phase_matches(after.phase_spec(), PublicationPhase::Published),
+    ensures
+        publication_phase_matches(after.phase_spec(), PublicationPhase::Published),
+        after.delta_spec() == before.delta_spec(),
 {
     reveal(publication_transition);
+    reveal(publication_payload_preserved);
     reveal(StepPublication::phase_spec);
 }
 
@@ -457,6 +460,47 @@ pub closed spec fn direct_publication_is_valid(
             publication.plan.plan_id,
             0,
         )
+}
+
+/// Exposes the exact logical effect retained by direct validation.
+pub proof fn direct_publication_validation_properties(
+    entry: &StepPublication,
+    validated: &StepPublication,
+    expected_request: RequestId,
+    expected_epoch: CompletionEpoch,
+    expected_plan_id: Identity,
+    expected_selection: Qwen3PlanSelection,
+)
+    requires
+        direct_publication_is_valid(
+            entry,
+            expected_request,
+            expected_epoch,
+            expected_plan_id,
+            expected_selection,
+        ),
+        validation_transition(entry, validated),
+    ensures
+        target_publication_role(expected_selection.role),
+        direct_publication_mode(expected_selection.mode),
+        publication_phase_matches(validated.phase_spec(), PublicationPhase::Validated),
+        validated.delta_spec() == entry.delta_spec(),
+        validated.delta_spec().compact_completion_spec().accepted_draft_tokens == 0,
+        validated.delta_spec().compact_completion_spec().emitted_token_count == 1,
+        validated.delta_spec().compact_completion_spec().emitted_tokens[0]
+            < crate::QWEN3_VOCABULARY_SIZE,
+{
+    let record = entry.delta_spec().compact_completion_spec();
+    reveal(direct_publication_is_valid);
+    reveal(step_plan_matches);
+    reveal(validation_transition);
+    reveal(publication_payload_preserved);
+    reveal(crate::m1_completion::compact_completion_matches);
+    reveal(crate::m1_completion::compact_completion_header_matches);
+    reveal(crate::m1_completion::compact_completion_live_tokens_match);
+    crate::m1_completion::compact_completion_emitted_view(&record);
+    assert(record.emitted_spec()[0] < crate::QWEN3_VOCABULARY_SIZE);
+    assert(record.emitted_tokens@[0] == record.emitted_tokens[0]);
 }
 
 /// Exact speculative validation relation composed with target verification.
