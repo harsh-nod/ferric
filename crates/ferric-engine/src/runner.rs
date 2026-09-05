@@ -1550,6 +1550,145 @@ mod tests {
     use ferric_spec::scheduling::RequestState;
     use std::cell::Cell;
 
+    const RUNNER_SOURCE: &str = include_str!("runner.rs");
+
+    fn authenticated_catalog_bind_source(source: &str) -> Option<&str> {
+        let start = source.find("pub fn bind_m1_physical_runner_v1(")?;
+        let tail = &source[start..];
+        let end = tail.find("\n/// Structural-only raw-artifact binding failure.")?;
+        Some(&tail[..end])
+    }
+
+    fn authenticated_catalog_bind_source_policy(source: &str) -> bool {
+        let Some(binding) = authenticated_catalog_bind_source(source) else {
+            return false;
+        };
+        let required_in_order = [
+            "let expected = programs.catalog_id();",
+            "let actual = publication.executable_catalog_id();",
+            "if !expected.equals(&actual) {",
+            "return Err(M1PhysicalRunnerBindFailureV1::ExecutableCatalog {\n            expected,\n            actual,\n            programs: Box::new(programs),\n            publication: Box::new(publication),\n        });",
+            "let runner = LogicalRunnerDeclaration::from_published(publication);",
+            "let families = programs.family_artifacts().to_vec().into_boxed_slice();",
+            "derive_canonical_operation_bindings(&runner, &families)",
+            "bind_declared_operation_kernel_plan(runner, families, operations)",
+            "Ok(M1AuthenticatedPhysicalRunnerV1 {\n            programs,\n            operations,\n        })",
+        ];
+        let mut cursor = 0;
+        for required in required_in_order {
+            if binding.matches(required).count() != 1 {
+                return false;
+            }
+            let Some(offset) = binding[cursor..].find(required) else {
+                return false;
+            };
+            cursor += offset + required.len();
+        }
+        if binding
+            .matches("LogicalRunnerDeclaration::from_published(publication)")
+            .count()
+            != 1
+        {
+            return false;
+        }
+        [
+            "M1NonAuthoritative",
+            "bind_structural_m1_physical_runner_v1",
+            "bind_non_authoritative_structural_m1_physical_runner_v1",
+        ]
+        .iter()
+        .all(|forbidden| !binding.contains(forbidden))
+    }
+
+    fn mutate_authenticated_catalog_bind(source: &str, old: &str, new: &str) -> String {
+        let exact = authenticated_catalog_bind_source(source).expect("authenticated bind source");
+        assert_eq!(
+            exact.matches(old).count(),
+            1,
+            "mutation anchor must occur exactly once: {old}"
+        );
+        let changed = exact.replacen(old, new, 1);
+        assert_ne!(changed, exact);
+        source.replacen(exact, &changed, 1)
+    }
+
+    #[test]
+    fn authenticated_catalog_bind_source_policy_requires_exact_join_before_consumption() {
+        assert!(authenticated_catalog_bind_source_policy(RUNNER_SOURCE));
+        let binding =
+            authenticated_catalog_bind_source(RUNNER_SOURCE).expect("authenticated bind source");
+        assert!(!binding.contains("M1NonAuthoritative"));
+        assert!(!binding.contains("bind_structural_m1_physical_runner_v1"));
+    }
+
+    #[test]
+    fn authenticated_catalog_bind_source_policy_rejects_hostile_mutations() {
+        for (case, hostile) in [
+            (
+                "expected catalog substitution",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "let expected = programs.catalog_id();",
+                "let expected = publication.executable_catalog_id();",
+                ),
+            ),
+            (
+                "actual catalog substitution",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "let actual = publication.executable_catalog_id();",
+                "let actual = programs.catalog_id();",
+                ),
+            ),
+            (
+                "inverted catalog join",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "if !expected.equals(&actual) {",
+                "if expected.equals(&actual) {",
+                ),
+            ),
+            (
+                "disabled catalog join",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "if !expected.equals(&actual) {",
+                "if false && !expected.equals(&actual) {",
+                ),
+            ),
+            (
+                "swapped catalog diagnostic",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "            expected,\n            actual,",
+                "            expected: actual,\n            actual: expected,",
+                ),
+            ),
+            (
+                "publication consumed before catalog join",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "let expected = programs.catalog_id();",
+                "let _consumed = LogicalRunnerDeclaration::from_published(publication);\n    let expected = programs.catalog_id();",
+                ),
+            ),
+            (
+                "non-authoritative binding substitution",
+                mutate_authenticated_catalog_bind(
+                RUNNER_SOURCE,
+                "bind_declared_operation_kernel_plan(runner, families, operations)",
+                "bind_non_authoritative_structural_m1_physical_runner_v1(\n        runner, families, operations,\n    )",
+                ),
+            ),
+        ] {
+            assert_ne!(hostile, RUNNER_SOURCE);
+            assert!(
+                !authenticated_catalog_bind_source_policy(&hostile),
+                "source policy accepted hostile mutation: {case}"
+            );
+        }
+    }
+
     #[test]
     fn non_authoritative_family_facts_are_ordered_and_share_aggregate_identity() {
         use ferric_kernels::KernelFamily;

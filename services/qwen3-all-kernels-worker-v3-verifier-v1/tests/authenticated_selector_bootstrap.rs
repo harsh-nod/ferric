@@ -128,6 +128,11 @@ fn exact_retained_publication_reaches_shared_bootstrap_with_test_verifier() {
     .expect("generate the exact M1 runner fixture");
     let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
         .expect("publish the exact M1 runner fixture");
+    assert_eq!(publication.executable_catalog_id(), executable_catalog);
+    let expected_source_id = publication.source_id();
+    let expected_plan_catalog_id = publication.plan_catalog_id();
+    let expected_kernel_catalog_id = publication.kernel_catalog_id();
+    let expected_declaration_id = publication.declaration_id();
     let expected_operation_count = publication.operations().len();
     let mut verifier =
         WorkerV3ProtectedRosterVerifierAdapterV1::new(ExactSelectorFixtureProtectedVerifierV1);
@@ -139,7 +144,27 @@ fn exact_retained_publication_reaches_shared_bootstrap_with_test_verifier() {
     )
     .expect("the exact retained publication must reach authenticated runner binding");
 
+    assert_eq!(runner.program_catalog_id(), executable_catalog);
+    assert_eq!(runner.declaration_id(), expected_declaration_id);
+    assert_eq!(runner.kernel_catalog_id(), expected_kernel_catalog_id);
     assert_eq!(runner.operation_count(), expected_operation_count);
+    assert_eq!(runner.logical_runner().source_id(), expected_source_id);
+    assert_eq!(
+        runner.logical_runner().plan_catalog_id(),
+        expected_plan_catalog_id
+    );
+    assert_eq!(
+        runner.logical_runner().kernel_catalog_id(),
+        expected_kernel_catalog_id
+    );
+    assert_eq!(
+        runner.logical_runner().declaration_id(),
+        expected_declaration_id
+    );
+    assert_eq!(
+        runner.logical_runner().operation_count(),
+        expected_operation_count
+    );
 }
 
 #[test]
@@ -168,6 +193,9 @@ fn substituted_runner_catalog_is_rejected_with_every_owner_retained() {
     let publication = ferric_build::publish_qwen3_gfx942_runner_declaration(declaration)
         .expect("publish the substituted M1 runner fixture");
     let actual = publication.executable_catalog_id();
+    let expected_source_id = publication.source_id();
+    let expected_kernel_catalog_id = publication.kernel_catalog_id();
+    let expected_declaration_id = publication.declaration_id();
     assert_ne!(
         actual, expected,
         "the hostile fixture must substitute the catalog"
@@ -194,6 +222,9 @@ fn substituted_runner_catalog_is_rejected_with_every_owner_retained() {
                     assert_eq!(retained_actual, actual);
                     assert_eq!(programs.catalog_id(), expected);
                     assert_eq!(publication.executable_catalog_id(), actual);
+                    assert_eq!(publication.source_id(), expected_source_id);
+                    assert_eq!(publication.kernel_catalog_id(), expected_kernel_catalog_id);
+                    assert_eq!(publication.declaration_id(), expected_declaration_id);
                 }
                 other => panic!("unexpected binding failure: {other:?}"),
             }
