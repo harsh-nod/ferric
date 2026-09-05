@@ -928,7 +928,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Adopt bounded generic service queue waits",
       state: "integration",
       detail:
-        "Public fe2o3 main is 5f46dd2, tree 52ec0a2, and provides bounded service and authenticated queue waits. Ferric adoption remains in progress through separate candidate 9f3618b; protected Qwen execution has not run.",
+        "Public fe2o3 main is 5f46dd2, tree 52ec0a2, and provides bounded service and authenticated queue waits. Focused candidate 9f3618b is integrated as e3cfc62 in local stack 7f4a251; protected Qwen execution has not run.",
     },
     {
       commit: "1167b9cfeb28d36ede1ca5ad5f2a71cb5a8719ee",
@@ -952,7 +952,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Publish checked disjoint component projection",
       state: "implemented",
       detail:
-        "Public fe2o3 now supplies the reusable checked DisjointBlockComponentIndex production projection exposed by Ferric's historical aggregate attempt. Ferric still needs an exact current repin and aggregate rerun; no HSACO follows from the upstream source change.",
+        "Public fe2o3 now supplies the reusable checked DisjointBlockComponentIndex production projection exposed by Ferric's historical aggregate attempt. Local Ferric integration 7f4a251 pins that current source, and the exact compile reaches prefill overflow-proof work; no HSACO follows.",
     },
     {
       commit: "51222286a76be0e5e85c90232d0451cd30bfa930",
@@ -1002,7 +1002,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Derive SwiGLU indices from checked block components",
       state: "implemented",
       detail:
-        "Ferric replaces prior base-plus-offset additions with checked blocked-component indices and extends source-contract coverage. A historical local aggregate rerun using public b2cce9c source exposed the missing generic DisjointBlockComponentIndex projection now public in fe2o3 b4f600a. This was not a published Ferric result; no exact current 5f46dd2 aggregate rerun or artifact result exists.",
+        "Ferric replaces prior base-plus-offset additions with checked blocked-component indices and extends source-contract coverage. A historical local aggregate rerun using public b2cce9c source exposed the missing generic DisjointBlockComponentIndex projection now public in fe2o3 b4f600a. The latest exact 5f46dd2 compile reaches Ferric prefill overflow-proof work and has produced no artifact.",
     },
     {
       commit: "9eba94342a99f55a3d38294ae34341f37fe03767",
@@ -1051,7 +1051,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Historical aggregate compiler-bound checkpoint",
       state: "open",
       detail:
-        "Historical local aggregate reruns using public fe2o3 source first reached vector-GEMM SSA and storage limits, then progressed through later source to the DisjointBlockComponentIndex projection gap on b2cce9c. These were not published Ferric results. Public fe2o3 b4f600a now supplies that generic fix, but no exact current 5f46dd2 aggregate rerun or Worker V3 HSACO exists.",
+        "Historical local aggregate reruns using public fe2o3 source first reached vector-GEMM SSA and storage limits, then progressed through later source to the DisjointBlockComponentIndex projection gap on b2cce9c. These were not published Ferric results. Public fe2o3 b4f600a supplies that generic fix; the latest exact 5f46dd2 compile reaches Ferric prefill overflow-proof work and produces no Worker V3 HSACO.",
     },
     {
       commit: "80aaaf3d9699d5861705386c4d1ffdb518fe5236",
@@ -1739,7 +1739,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "The local variable-cardinality planner passed focused arithmetic, direct Verus, hostile-formula, and branch-coverage gates; it does not implement runtime variable-cardinality wiring or prove transition atomicity",
       "One aggregate device package owns all 12 Ferric-local Rust M1 kernel roots across seven canonical source modules with no prebuilt or vendor kernel dependency",
       "The aggregate catalog contains 12 K1-K7 entrypoints across 440 exact profiles and target S1 expands from 544 logical operations to 545 physical packets",
-      "A historical local post-ff2ca04 aggregate rerun using public fe2o3 b2cce9c source stopped before Worker or link at missing DisjointBlockComponentIndex production expansion; it was not a published Ferric result. Public fe2o3 b4f600a now supplies that generic checked projection, but no exact rerun against 5f46dd2 has produced a current Worker V3 HSACO",
+      "A historical local post-ff2ca04 aggregate rerun using public fe2o3 b2cce9c source stopped before Worker or link at missing DisjointBlockComponentIndex production expansion; it was not a published Ferric result. Public fe2o3 b4f600a now supplies that generic checked projection; the latest exact 5f46dd2 compile reaches Ferric prefill overflow-proof work and has produced no current Worker V3 HSACO",
       "Real Qwen3-8B target and Qwen3-0.6B draft prepack verification produced bundle identity 6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b and admission identity 6a396e95e715d1be16bbc27b8c762a9308e40e5355c5bd89b9fc28fb06a1dd16",
       "An internal move-only non-authoritative program-source capability carries exact observation, descriptor, compiler-handoff, HSACO-byte, allocation, and lineage custody into engine admission and returns it intact on failure",
       "The physical runner binds gfx942, uploads authenticated model memory, partitions physical KV, publishes target-only fixed batches, waits, recycles, reads back, releases pages, and supports same-shape decode rearm",
@@ -1769,7 +1769,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "The protected execution profile and protected service socket are absent; earlier verifier foundations are not deployed authority",
       "Verifier binder candidate 6846d9282f858c80dd2b0b4abfe247dc89e9d8f8, tree 4690d8c9e502de18a947d6def2f8c09d4f153ea1, passed its exact-archive mi300x matrix and independent review returned GO with no P0/P1/P2",
       "The binder candidate is integrated locally at ed708de7fc906926091be29ff118af95ee50a42b but is not public main or deployed authority",
-      "Public fe2o3 5f46dd2 includes generic checked component projection, LLVM 22 Worker compatibility, connected-path Worker V3 V2 transport, and bounded queue waits; Ferric has not published a current repin or protected deployment, and no current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result exists",
+      "Public fe2o3 5f46dd2 includes generic checked component projection, LLVM 22 Worker compatibility, connected-path Worker V3 V2 transport, and bounded queue waits; local Ferric integration 7f4a251 consumes it but is unpublished and has no protected deployment, current aggregate HSACO, target-smoke result, Qwen token, serving or HTTP endpoint, numerical, performance, or baseline result",
       "All 33 M1 roadmap gates and all 17 assurance properties remain Open until their required evidence closes them",
     ],
     fe2o3: [
@@ -1801,7 +1801,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Stage D's raw-tuple API was rejected and awaits opaque-owner provenance rework",
       "Lower-MIR candidate 2c3140d7 is audit-only and must be reimplemented under whole-module current KIR replay",
       "Exact multi-root KIR/LLVM/HSACO lowering merged through PR #20 at d32d8a11, and reviewed external source trust merged through PR #21 at 17396690",
-      "Local Ferric candidates are being repinned to current fe2o3 main; no current Ferric repin is public, and Ferric still has no published production aggregate, accepted production artifact/source pin, or authenticated full-Qwen result",
+      "Local Ferric integration 7f4a251 consumes current fe2o3 main but is not public; Ferric still has no published production aggregate, accepted production artifact/source pin, or authenticated full-Qwen result",
       "Ferric-specific inference and kernel ownership remain in Ferric and were not moved into fe2o3",
       "Deployment identities and Ferric-specific inference authority are intentionally not defined upstream",
     ],
