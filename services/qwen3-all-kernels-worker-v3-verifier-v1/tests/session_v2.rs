@@ -4,6 +4,8 @@ use std::fs::File;
 use std::io::Write;
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 use std::os::unix::fs::PermissionsExt;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -33,7 +35,9 @@ use fe2o3_worker_v3_verification_protocol::{
     WorkerV3VerificationPolicyIdentityV1, WorkerV3VerificationRequestV1,
     WorkerV3VerificationRosterIdentityV1, WorkerV3VerificationTerminalDispositionV2,
 };
-use fe2o3_worker_v3_verification_service::prepare_worker_v3_verification_receiver_v1;
+use fe2o3_worker_v3_verification_service::{
+    WorkerV3VerificationAcceptedServiceEndpointV2, prepare_worker_v3_verification_receiver_v1,
+};
 use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::{
     AuthenticatedCompilerCurrentRecordV1, DurableReplayGuardV1, DurableReservationProviderV2,
     EntropyObjectIdentityV1, FerricProtectedVerifierServiceConfigErrorV1,
@@ -45,7 +49,7 @@ use ferric_qwen3_all_kernels_worker_v3_verifier_service_v1::{
     ProtectedLedgerKindV1, ProtectedLedgerReplacementAuthorizationV1,
     ProtectedLedgerStorageCapabilityV1, ProtectedPolicyRevocationV1, ProtectedReceiptSignerInputV1,
     ProtectedReceiptSignerProviderV1, ServiceApplicationRejectionV1, ServiceCallerPolicyV1,
-    run_ferric_protected_verifier_session_v2,
+    run_ferric_protected_verifier_accepted_session_v2, run_ferric_protected_verifier_session_v2,
 };
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
     M1AllKernelsProtectedReceiptRequestClaimsV1, M1AllKernelsProtectedReceiptSourcePinV1,
@@ -56,7 +60,10 @@ use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_service::
     M1AllKernelsProtectedVerifierServiceResponseV1,
 };
 use rustix::fs::{MemfdFlags, Mode, OFlags, SealFlags};
-use rustix::net::{AddressFamily, SocketFlags, SocketType, socketpair};
+use rustix::net::{
+    AddressFamily, SocketAddrUnix, SocketFlags, SocketType, accept_with, bind, connect, listen,
+    socket_with, socketpair,
+};
 use sha2::{Digest, Sha256};
 
 const ENVELOPE: &[u8] = include_bytes!("fixtures/valid-envelope-v2.bin");
@@ -450,6 +457,23 @@ fn snapshots(request: &WorkerV3VerificationRequestV1) -> WorkerV3VerificationPay
     .unwrap()
 }
 
+fn prepared_path_listener() -> (tempfile::TempDir, PathBuf, OwnedFd) {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("ferric-verifier.sock");
+    let address = SocketAddrUnix::new(&path).unwrap();
+    let listener = socket_with(
+        AddressFamily::UNIX,
+        SocketType::SEQPACKET,
+        SocketFlags::CLOEXEC,
+        None,
+    )
+    .unwrap();
+    bind(&listener, &address).unwrap();
+    prepare_worker_v3_verification_receiver_v1(&listener).unwrap();
+    listen(&listener, 1).unwrap();
+    (root, path, listener)
+}
+
 fn ledger_identity(file: &impl AsFd) -> LedgerObjectIdentityV1 {
     let stat = rustix::fs::fstat(file).unwrap();
     LedgerObjectIdentityV1::new(
@@ -553,6 +577,38 @@ fn initial_config(
     ),
     FerricProtectedVerifierServiceConfigErrorV1,
 > {
+    initial_config_for_caller(
+        request,
+        trust,
+        ledger_policy,
+        signing_seed,
+        signer_delay,
+        signer_overrun,
+        sign_wrong_message,
+        timeout,
+        std::process::id(),
+    )
+}
+
+fn initial_config_for_caller(
+    request: &WorkerV3VerificationRequestV1,
+    trust: M1AllKernelsProtectedVerifierTrustPolicyV1,
+    ledger_policy: WorkerV3VerificationPolicyIdentityV1,
+    signing_seed: u8,
+    signer_delay: Duration,
+    signer_overrun: bool,
+    sign_wrong_message: bool,
+    timeout: Duration,
+    caller_pid: u32,
+) -> Result<
+    (
+        TestServiceConfig,
+        tempfile::NamedTempFile,
+        tempfile::NamedTempFile,
+        Arc<AtomicBool>,
+    ),
+    FerricProtectedVerifierServiceConfigErrorV1,
+> {
     let replay_file = tempfile::NamedTempFile::new().unwrap();
     let reservation_file = tempfile::NamedTempFile::new().unwrap();
     std::fs::set_permissions(replay_file.path(), std::fs::Permissions::from_mode(0o600)).unwrap();
@@ -581,7 +637,7 @@ fn initial_config(
     )
     .unwrap();
     let caller = ServiceCallerPolicyV1::new(
-        std::process::id(),
+        caller_pid,
         rustix::process::getuid().as_raw(),
         rustix::process::getgid().as_raw(),
         *request.roster_identity().as_bytes(),
@@ -702,6 +758,96 @@ fn full_v2_socket_session_returns_a_valid_ed25519_signed_ferric_response() {
         correlated_request.expected_current_rollback_anchor()
     );
     assert!(!response.grants_authority());
+}
+
+#[test]
+fn full_v2_connected_path_session_returns_a_valid_ed25519_signed_ferric_response() {
+    let request = request();
+    let (_root, path, listener) = prepared_path_listener();
+    let child = Command::new(std::env::current_exe().unwrap())
+        .arg("--exact")
+        .arg("connected_path_client_helper")
+        .arg("--ignored")
+        .env("FERRIC_CONNECTED_PATH_CLIENT", &path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let child_pid = child.id();
+    let (mut config, _replay_file, _reservation_file, _signer_called) = initial_config_for_caller(
+        &request,
+        trust_policy(),
+        request.policy_identity(),
+        0x91,
+        Duration::ZERO,
+        false,
+        false,
+        Duration::from_secs(5),
+        child_pid,
+    )
+    .unwrap();
+    let accepted = accept_with(&listener, SocketFlags::CLOEXEC | SocketFlags::NONBLOCK).unwrap();
+    assert!(rustix::net::sockopt::socket_passcred(&accepted).unwrap());
+    let endpoint = WorkerV3VerificationAcceptedServiceEndpointV2::admit(accepted, &path).unwrap();
+    assert_eq!(endpoint.caller().pid(), child_pid);
+    let outcome = run_ferric_protected_verifier_accepted_session_v2(endpoint, &mut config).unwrap();
+    assert!(matches!(
+        outcome,
+        FerricProtectedVerifierServiceOutcomeV1::Completed(_)
+    ));
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "connected-path client failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+#[ignore = "subprocess helper for the connected-path Ferric session test"]
+fn connected_path_client_helper() {
+    let Some(path) = std::env::var_os("FERRIC_CONNECTED_PATH_CLIENT") else {
+        return;
+    };
+    let path = PathBuf::from(path);
+    let client = socket_with(
+        AddressFamily::UNIX,
+        SocketType::SEQPACKET,
+        SocketFlags::CLOEXEC | SocketFlags::NONBLOCK,
+        None,
+    )
+    .unwrap();
+    connect(&client, &SocketAddrUnix::new(&path).unwrap()).unwrap();
+    let request = request();
+    let begin =
+        WorkerV3VerificationClientV2::admit_connected_path(client, &path, Duration::from_secs(5))
+            .unwrap()
+            .begin(request.clone(), snapshots(&request))
+            .unwrap();
+    let ClientBeginOutcomeV2::Reserved(begin) = begin else {
+        panic!("valid connected-path Begin was rejected");
+    };
+    let (challenge, pending) = begin.into_parts();
+    let (verification, attestation) =
+        CurrentFixture::from_envelope().records(challenge.into_bytes());
+    let terminal = pending
+        .submit_current_record(
+            *verification.canonical_bytes(),
+            *attestation.canonical_bytes(),
+        )
+        .unwrap();
+    assert_eq!(
+        terminal.disposition(),
+        WorkerV3VerificationTerminalDispositionV2::ApplicationResponse
+    );
+    let response = M1AllKernelsProtectedVerifierServiceResponseV1::decode(
+        terminal.application_response_bytes(),
+    )
+    .unwrap();
+    trust_policy()
+        .authenticate_canonical(response.receipt().encode_canonical())
+        .unwrap();
 }
 
 #[test]

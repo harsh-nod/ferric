@@ -1,9 +1,10 @@
 //! Ferric-owned aggregate Qwen3 protected-verifier service foundation.
 //!
 //! This crate joins durable replay exclusion, service-owned current-record
-//! challenges, fe2o3's V2 session transport, independent protected providers,
-//! and Ferric's existing V1 signed receipt schema. It intentionally provides
-//! no concrete production checker or signer and therefore does not close the
+//! challenges, fe2o3's V2 unnamed and separately admitted connected-path
+//! session transports, independent protected providers, and Ferric's existing
+//! V1 signed receipt schema. It intentionally provides no listener, connector,
+//! concrete production checker, or signer and therefore does not close the
 //! protected-service deployment gate by itself.
 
 #![deny(missing_docs)]
@@ -26,5 +27,6 @@ pub use service::{
     IndependentCheckerInputV1, IndependentCheckerProviderV1, IndependentCheckerVerifiedClaimsV1,
     ProtectedCompilerCurrentRecordInputV1, ProtectedCompilerCurrentRecordProviderV1,
     ProtectedProviderClaimErrorV1, ProtectedReceiptSignerInputV1, ProtectedReceiptSignerProviderV1,
-    ServiceApplicationRejectionV1, ServiceCallerPolicyV1, run_ferric_protected_verifier_session_v2,
+    ServiceApplicationRejectionV1, ServiceCallerPolicyV1,
+    run_ferric_protected_verifier_accepted_session_v2, run_ferric_protected_verifier_session_v2,
 };

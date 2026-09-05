@@ -17,11 +17,13 @@ use fe2o3_worker_v3_verification_protocol::{
 use fe2o3_worker_v3_verification_service::{
     CompletedWorkerV3VerificationSessionV2, PendingRejectedWorkerV3VerificationTerminalSessionV2,
     PendingWorkerV3VerificationTerminalSessionV2, RejectedWorkerV3VerificationBeginV2,
-    RetainedWorkerV3VerificationPayloadV1, WorkerV3VerificationBeginOutcomeV2,
-    WorkerV3VerificationCallerV1, WorkerV3VerificationCurrentRecordOutcomeV2,
-    WorkerV3VerificationMeasurementResolverV1, WorkerV3VerificationPolicyResolverV1,
-    WorkerV3VerificationRejectedSendFailureV2, WorkerV3VerificationServiceErrorV2,
-    WorkerV3VerificationTerminalSendFailureV2, begin_worker_v3_verification_session_until_v2,
+    RetainedWorkerV3VerificationPayloadV1, WorkerV3VerificationAcceptedServiceEndpointV2,
+    WorkerV3VerificationBeginOutcomeV2, WorkerV3VerificationCallerV1,
+    WorkerV3VerificationCurrentRecordOutcomeV2, WorkerV3VerificationMeasurementResolverV1,
+    WorkerV3VerificationPolicyResolverV1, WorkerV3VerificationRejectedSendFailureV2,
+    WorkerV3VerificationServiceErrorV2, WorkerV3VerificationTerminalSendFailureV2,
+    begin_worker_v3_verification_accepted_session_until_v2,
+    begin_worker_v3_verification_session_until_v2,
 };
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::M1_ALL_KERNELS_ROSTER_ENTRY_COUNT_V1;
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
@@ -688,20 +690,7 @@ where
     K: IndependentCheckerProviderV1,
     S: ProtectedReceiptSignerProviderV1,
 {
-    let deadline = AbsoluteSessionDeadlineV1::after(config.timeout)
-        .ok_or(FerricProtectedVerifierServiceFailureV1::DeadlineOverflow)?;
-    let policy =
-        WorkerV3VerificationPolicyIdentityV1::new(*config.trust_policy.identity().as_bytes())
-            .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
-    let measurement = WorkerV3VerificationMeasurementIdentityV1::new(
-        config.trust_policy.verifier_measurement_sha256(),
-    )
-    .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
-    let resolvers = AdmissionResolversV1 {
-        caller: config.caller,
-        policy,
-        measurement,
-    };
+    let (deadline, resolvers) = service_admission_parameters_v2(config)?;
     let mut policy_resolver = resolvers;
     let mut measurement_resolver = resolvers;
     let begin = begin_worker_v3_verification_session_until_v2(
@@ -713,6 +702,78 @@ where
         &mut config.reservations,
     )
     .map_err(FerricProtectedVerifierServiceFailureV1::Begin)?;
+    run_ferric_protected_verifier_post_begin_v2(begin, deadline, config)
+}
+
+/// Runs one complete V2 connection from a separately admitted pathname service endpoint.
+///
+/// The caller retains responsibility for listener creation, `accept`, pathname policy, and
+/// construction of the fe2o3 accepted-endpoint capability. This function performs no endpoint
+/// discovery or supervisor work. It uses the same caller policy, absolute deadline, replay state,
+/// challenge reservation, application checks, and terminal-custody core as the unnamed entrypoint.
+///
+/// # Errors
+///
+/// Returns a custody-preserving transport failure or an unrecoverable Begin failure.
+pub fn run_ferric_protected_verifier_accepted_session_v2<C, K, S>(
+    endpoint: WorkerV3VerificationAcceptedServiceEndpointV2,
+    config: &mut FerricProtectedVerifierServiceConfigV1<C, K, S>,
+) -> Result<FerricProtectedVerifierServiceOutcomeV1, FerricProtectedVerifierServiceFailureV1>
+where
+    C: ProtectedCompilerCurrentRecordProviderV1,
+    K: IndependentCheckerProviderV1,
+    S: ProtectedReceiptSignerProviderV1,
+{
+    let (deadline, resolvers) = service_admission_parameters_v2(config)?;
+    let mut policy_resolver = resolvers;
+    let mut measurement_resolver = resolvers;
+    let begin = begin_worker_v3_verification_accepted_session_until_v2(
+        endpoint,
+        deadline.instant(),
+        &mut policy_resolver,
+        &mut measurement_resolver,
+        &mut config.replay_guard,
+        &mut config.reservations,
+    )
+    .map_err(FerricProtectedVerifierServiceFailureV1::Begin)?;
+    run_ferric_protected_verifier_post_begin_v2(begin, deadline, config)
+}
+
+fn service_admission_parameters_v2<C, K, S>(
+    config: &FerricProtectedVerifierServiceConfigV1<C, K, S>,
+) -> Result<
+    (AbsoluteSessionDeadlineV1, AdmissionResolversV1),
+    FerricProtectedVerifierServiceFailureV1,
+> {
+    let deadline = AbsoluteSessionDeadlineV1::after(config.timeout)
+        .ok_or(FerricProtectedVerifierServiceFailureV1::DeadlineOverflow)?;
+    let policy =
+        WorkerV3VerificationPolicyIdentityV1::new(*config.trust_policy.identity().as_bytes())
+            .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
+    let measurement = WorkerV3VerificationMeasurementIdentityV1::new(
+        config.trust_policy.verifier_measurement_sha256(),
+    )
+    .map_err(|_| FerricProtectedVerifierServiceFailureV1::InvalidPinnedProtocolIdentity)?;
+    Ok((
+        deadline,
+        AdmissionResolversV1 {
+            caller: config.caller,
+            policy,
+            measurement,
+        },
+    ))
+}
+
+fn run_ferric_protected_verifier_post_begin_v2<C, K, S>(
+    begin: WorkerV3VerificationBeginOutcomeV2,
+    deadline: AbsoluteSessionDeadlineV1,
+    config: &mut FerricProtectedVerifierServiceConfigV1<C, K, S>,
+) -> Result<FerricProtectedVerifierServiceOutcomeV1, FerricProtectedVerifierServiceFailureV1>
+where
+    C: ProtectedCompilerCurrentRecordProviderV1,
+    K: IndependentCheckerProviderV1,
+    S: ProtectedReceiptSignerProviderV1,
+{
     let pending = match begin {
         WorkerV3VerificationBeginOutcomeV2::Reserved(pending) => pending,
         WorkerV3VerificationBeginOutcomeV2::Rejected(rejected) => {

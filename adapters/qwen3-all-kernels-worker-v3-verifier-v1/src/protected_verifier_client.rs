@@ -1,13 +1,15 @@
 //! One-shot bounded client for the aggregate protected-verifier service.
 //!
-//! The client admits only a connected unnamed Unix `SOCK_SEQPACKET` peer with
-//! caller-pinned, dedicated service credentials. One absolute monotonic
-//! deadline covers the entire exchange. The client authenticates the returned
-//! receipt under the caller-provisioned trust policy after exact packet
-//! correlation and closes the peer on every terminal path. Consuming one
-//! client prevents reuse of that local session object, not replay across new
-//! sessions: global freshness requires service-side atomic challenge
-//! consumption and protected live current-ledger validation.
+//! The client admits either a connected unnamed Unix `SOCK_SEQPACKET` peer or
+//! an already-connected endpoint whose service pathname is caller-pinned. Both
+//! variants require dedicated service credentials, and neither discovers or
+//! creates a socket. One absolute monotonic deadline covers the entire
+//! exchange. The client authenticates the returned receipt under the
+//! caller-provisioned trust policy after exact packet correlation and closes
+//! the peer on every terminal path. Consuming one client prevents reuse of that
+//! local session object, not replay across new sessions: global freshness
+//! requires service-side atomic challenge consumption and protected live
+//! current-ledger validation.
 
 #![allow(
     clippy::must_use_candidate,
@@ -19,6 +21,7 @@ use std::error::Error;
 use std::io;
 use std::mem;
 use std::os::fd::{AsRawFd, OwnedFd};
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use fe2o3_runtime_protocol::{
@@ -27,9 +30,9 @@ use fe2o3_runtime_protocol::{
 };
 use fe2o3_worker_v3_verification_client::{
     PendingWorkerV3VerificationClientV2, WorkerV3VerificationBeginOutcomeV2,
-    WorkerV3VerificationClientErrorV1, WorkerV3VerificationClientErrorV2,
-    WorkerV3VerificationClientV2, WorkerV3VerificationCurrentRecordChallengeV2,
-    WorkerV3VerificationPayloadSnapshotsV1,
+    WorkerV3VerificationClientAdmissionFailureV2, WorkerV3VerificationClientErrorV1,
+    WorkerV3VerificationClientErrorV2, WorkerV3VerificationClientV2,
+    WorkerV3VerificationCurrentRecordChallengeV2, WorkerV3VerificationPayloadSnapshotsV1,
 };
 use fe2o3_worker_v3_verification_protocol::{
     WorkerV3VerificationFreshChallengeV1, WorkerV3VerificationProtocolErrorV1,
@@ -232,6 +235,121 @@ impl Error for M1AllKernelsProtectedVerifierClientAdmissionFailureV1 {
     }
 }
 
+enum M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2 {
+    Peer {
+        error: M1AllKernelsProtectedVerifierClientErrorV1,
+        peer: OwnedFd,
+    },
+    Transport(WorkerV3VerificationClientAdmissionFailureV2),
+}
+
+/// Ownership-retaining failure from Ferric V2 connected-path admission.
+///
+/// Ferric credential rejection and fe2o3 pathname rejection both return the
+/// exact caller-owned endpoint without sending protocol bytes.
+pub struct M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2 {
+    source: M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2,
+}
+
+impl M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2 {
+    fn peer(error: M1AllKernelsProtectedVerifierClientErrorV1, peer: OwnedFd) -> Self {
+        Self {
+            source: M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer {
+                error,
+                peer,
+            },
+        }
+    }
+
+    fn transport(failure: WorkerV3VerificationClientAdmissionFailureV2) -> Self {
+        Self {
+            source: M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure),
+        }
+    }
+
+    /// Returns a Ferric credential-admission error, when that boundary rejected the endpoint.
+    pub const fn peer_admission_error(
+        &self,
+    ) -> Option<&M1AllKernelsProtectedVerifierClientErrorV1> {
+        match &self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { error, .. } => {
+                Some(error)
+            }
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(_) => None,
+        }
+    }
+
+    /// Returns a fe2o3 pathname-admission error, when that boundary rejected the endpoint.
+    pub fn transport_admission_error(&self) -> Option<&WorkerV3VerificationClientErrorV2> {
+        match &self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { .. } => None,
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure) => {
+                Some(failure.source_error())
+            }
+        }
+    }
+
+    /// Returns ownership of the exact rejected endpoint.
+    pub fn into_peer(self) -> OwnedFd {
+        match self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { peer, .. } => peer,
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure) => {
+                failure.into_peer()
+            }
+        }
+    }
+}
+
+impl fmt::Debug for M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut debug =
+            formatter.debug_struct("M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2");
+        match &self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { error, .. } => {
+                debug.field("peer_admission", error);
+            }
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure) => {
+                debug.field("transport_admission", failure);
+            }
+        }
+        debug
+            .field("endpoint_retained", &true)
+            .finish_non_exhaustive()
+    }
+}
+
+impl fmt::Display for M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { error, .. } => {
+                write!(
+                    formatter,
+                    "protected-verifier connected-path peer admission failed: {error}"
+                )
+            }
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure) => {
+                write!(
+                    formatter,
+                    "protected-verifier connected-path transport admission failed: {failure}"
+                )
+            }
+        }
+    }
+}
+
+impl Error for M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2 {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Peer { error, .. } => {
+                Some(error)
+            }
+            M1AllKernelsProtectedVerifierConnectedPathAdmissionSourceV2::Transport(failure) => {
+                Some(failure)
+            }
+        }
+    }
+}
+
 /// One owned, bounded connection to an externally supervised protected verifier.
 ///
 /// The value is deliberately move-only and does not expose its descriptor. A
@@ -374,6 +492,73 @@ impl M1AllKernelsProtectedVerifierClientV2 {
         timeout: Duration,
     ) -> Result<Self, M1AllKernelsProtectedVerifierClientErrorV2> {
         Self::admit_inner::<true>(peer, expected_service, timeout)
+    }
+
+    /// Admits one already-connected pathname endpoint under dedicated non-root credentials.
+    ///
+    /// Ferric first pins the service UID, GID, and connection-time PID under the same policy as
+    /// unnamed admission. It then transfers the unchanged descriptor and absolute deadline to
+    /// fe2o3, which requires an unnamed client endpoint connected to exactly
+    /// `expected_service_path` and enforces kernel-stamped response-credential continuity.
+    /// This function does not discover, create, or connect a socket.
+    ///
+    /// # Errors
+    ///
+    /// Returns an ownership-retaining failure for timeout, credential, descriptor, or exact-path
+    /// rejection. No protocol bytes have been sent when this value is returned.
+    pub fn admit_connected_path(
+        peer: OwnedFd,
+        expected_service_path: &Path,
+        expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+        timeout: Duration,
+    ) -> Result<Self, M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2> {
+        Self::admit_connected_path_inner::<true>(
+            peer,
+            expected_service_path,
+            expected_service,
+            timeout,
+        )
+    }
+
+    fn admit_connected_path_inner<const REQUIRE_DISTINCT_UID: bool>(
+        peer: OwnedFd,
+        expected_service_path: &Path,
+        expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+        timeout: Duration,
+    ) -> Result<Self, M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2> {
+        let deadline = match deadline_after(timeout) {
+            Ok(deadline) => deadline,
+            Err(error) => {
+                return Err(
+                    M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2::peer(error, peer),
+                );
+            }
+        };
+        let peer_pid = match admit_common_credentials::<REQUIRE_DISTINCT_UID>(
+            &peer,
+            expected_service,
+            deadline,
+        ) {
+            Ok(peer_pid) => peer_pid,
+            Err(error) => {
+                return Err(
+                    M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2::peer(error, peer),
+                );
+            }
+        };
+        let inner = WorkerV3VerificationClientV2::admit_connected_path_until(
+            peer,
+            expected_service_path,
+            deadline,
+        )
+        .map_err(M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2::transport)?;
+        debug_assert_eq!(inner.deadline(), deadline);
+        Ok(Self {
+            inner,
+            expected_service,
+            peer_pid,
+            deadline,
+        })
     }
 
     fn admit_inner<const REQUIRE_DISTINCT_UID: bool>(
@@ -754,14 +939,30 @@ fn admit_peer<const REQUIRE_DISTINCT_UID: bool>(
     expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
     timeout: Duration,
 ) -> Result<(u32, Instant), M1AllKernelsProtectedVerifierClientErrorV1> {
+    let deadline = deadline_after(timeout)?;
+    set_close_on_exec(peer)?;
+    validate_seqpacket_peer(peer)?;
+    let peer_pid =
+        admit_common_credentials::<REQUIRE_DISTINCT_UID>(peer, expected_service, deadline)?;
+    Ok((peer_pid, deadline))
+}
+
+fn deadline_after(
+    timeout: Duration,
+) -> Result<Instant, M1AllKernelsProtectedVerifierClientErrorV1> {
     if timeout.is_zero() {
         return Err(M1AllKernelsProtectedVerifierClientErrorV1::InvalidTimeout);
     }
-    let deadline = Instant::now()
+    Instant::now()
         .checked_add(timeout)
-        .ok_or(M1AllKernelsProtectedVerifierClientErrorV1::DeadlineOverflow)?;
-    set_close_on_exec(peer)?;
-    validate_seqpacket_peer(peer)?;
+        .ok_or(M1AllKernelsProtectedVerifierClientErrorV1::DeadlineOverflow)
+}
+
+fn admit_common_credentials<const REQUIRE_DISTINCT_UID: bool>(
+    peer: &OwnedFd,
+    expected_service: M1AllKernelsProtectedVerifierServiceIdentityV1,
+    deadline: Instant,
+) -> Result<u32, M1AllKernelsProtectedVerifierClientErrorV1> {
     let credentials = peer_credentials(peer)?;
     if credentials.uid != expected_service.uid || credentials.gid != expected_service.gid {
         return Err(M1AllKernelsProtectedVerifierClientErrorV1::PeerCredentialsMismatch);
@@ -772,7 +973,7 @@ fn admit_peer<const REQUIRE_DISTINCT_UID: bool>(
         return Err(M1AllKernelsProtectedVerifierClientErrorV1::ClientAndServiceUidMatch);
     }
     require_deadline(deadline)?;
-    Ok((credentials.pid, deadline))
+    Ok(credentials.pid)
 }
 
 fn set_close_on_exec(peer: &OwnedFd) -> Result<(), M1AllKernelsProtectedVerifierClientErrorV1> {
@@ -1277,7 +1478,9 @@ mod tests {
     };
     use rustix::fs::{MemfdFlags, OFlags, SealFlags};
     use rustix::net::{
-        RecvAncillaryBuffer, RecvAncillaryMessage, RecvFlags, ReturnFlags, SendFlags,
+        AddressFamily, RecvAncillaryBuffer, RecvAncillaryMessage, RecvFlags, ReturnFlags,
+        SendFlags, SocketAddrUnix, SocketFlags, SocketType, accept_with, bind, connect, listen,
+        socket_with,
     };
     use sha2::{Digest, Sha256};
     use std::fs::File;
@@ -1285,7 +1488,9 @@ mod tests {
     use std::mem::MaybeUninit;
     use std::os::fd::{FromRawFd, IntoRawFd};
     use std::os::unix::net::UnixStream;
+    use std::path::PathBuf;
     use std::ptr;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::thread;
 
     const SUBJECT_IDENTITY_DOMAIN: &[u8] = b"FE2O3/INERT-COMPILER-EXECUTION-SUBJECT/V1\0";
@@ -1650,6 +1855,43 @@ mod tests {
         let uid = unsafe { libc::geteuid() };
         let gid = unsafe { libc::getegid() };
         M1AllKernelsProtectedVerifierServiceIdentityV1 { uid, gid }
+    }
+
+    struct TestSocketPath(PathBuf);
+
+    impl Drop for TestSocketPath {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
+    fn connected_path_pair() -> (TestSocketPath, PathBuf, OwnedFd, OwnedFd) {
+        static NEXT_PATH: AtomicU64 = AtomicU64::new(0);
+        let path = std::env::temp_dir().join(format!(
+            "ferric-v2-client-{}-{}.sock",
+            std::process::id(),
+            NEXT_PATH.fetch_add(1, Ordering::Relaxed)
+        ));
+        let guard = TestSocketPath(path.clone());
+        let listener = socket_with(
+            AddressFamily::UNIX,
+            SocketType::SEQPACKET,
+            SocketFlags::CLOEXEC,
+            None,
+        )
+        .unwrap();
+        bind(&listener, &SocketAddrUnix::new(&path).unwrap()).unwrap();
+        listen(&listener, 1).unwrap();
+        let client = socket_with(
+            AddressFamily::UNIX,
+            SocketType::SEQPACKET,
+            SocketFlags::CLOEXEC | SocketFlags::NONBLOCK,
+            None,
+        )
+        .unwrap();
+        connect(&client, &SocketAddrUnix::new(&path).unwrap()).unwrap();
+        let service = accept_with(&listener, SocketFlags::CLOEXEC | SocketFlags::NONBLOCK).unwrap();
+        (guard, path, client, service)
     }
 
     fn assert_v2_snapshot_rejected(
@@ -2151,6 +2393,58 @@ mod tests {
     fn v2_exchange_preserves_phase_order_exact_payloads_and_authenticates_receipt() {
         let authenticated = run_v2_terminal_case(V2TerminalCase::Valid).unwrap();
         assert!(!authenticated.grants_verifier_authority());
+    }
+
+    #[test]
+    fn v2_connected_path_admission_shares_credentials_and_retains_rejected_endpoints() {
+        let (_guard, path, client, _service) = connected_path_pair();
+        let admitted = M1AllKernelsProtectedVerifierClientV2::admit_connected_path_inner::<false>(
+            client,
+            &path,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap();
+        assert_eq!(admitted.expected_service, current_service_identity());
+        assert_ne!(admitted.peer_pid, 0);
+        assert!(!admitted.grants_authority());
+
+        let (_guard, path, client, _service) = connected_path_pair();
+        let original = client.as_raw_fd();
+        let failure = M1AllKernelsProtectedVerifierClientV2::admit_connected_path(
+            client,
+            &path,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            failure.peer_admission_error(),
+            Some(M1AllKernelsProtectedVerifierClientErrorV1::ClientAndServiceUidMatch)
+        ));
+        assert!(failure.transport_admission_error().is_none());
+        let retained = failure.into_peer();
+        assert_eq!(retained.as_raw_fd(), original);
+        rustix::io::fcntl_getfd(&retained).unwrap();
+
+        let (_guard, path, client, _service) = connected_path_pair();
+        let wrong_path = path.with_file_name("ferric-v2-wrong-service.sock");
+        let original = client.as_raw_fd();
+        let failure = M1AllKernelsProtectedVerifierClientV2::admit_connected_path_inner::<false>(
+            client,
+            &wrong_path,
+            current_service_identity(),
+            Duration::from_secs(2),
+        )
+        .unwrap_err();
+        assert!(failure.peer_admission_error().is_none());
+        assert!(matches!(
+            failure.transport_admission_error(),
+            Some(WorkerV3VerificationClientErrorV2::InvalidConnectedPathPeer)
+        ));
+        let retained = failure.into_peer();
+        assert_eq!(retained.as_raw_fd(), original);
+        rustix::io::fcntl_getfd(&retained).unwrap();
     }
 
     #[test]

@@ -20,6 +20,8 @@ The foundation provides:
 - explicit protected current-record, independent checker, and external signer
   provider contracts;
 - exact 12-entry request/result joins and a terminal Ferric V1 response payload;
+- a connected-path entrypoint consuming only fe2o3's separately admitted
+  accepted-endpoint capability;
 - stage-specific rejection and terminal-send custody.
 
 The ledger's SHA chain detects corruption; it does not prevent rollback. That
@@ -34,6 +36,14 @@ policy/kind-domain-separated ledgers, and permanent retention of the old heads.
 The unsafe global head-store contract explicitly forbids resetting or reusing a
 same-policy namespace.
 
+The unnamed and accepted-path entrypoints share one post-Begin application
+core. The accepted-path entrypoint does not create, bind, listen on, discover,
+or accept a socket; a supervisor remains responsible for those operations and
+for constructing fe2o3's ownership-bearing accepted-endpoint capability. Both
+paths use the same caller credential policy, absolute deadline, replay and
+reservation state, provider checks, response construction, and terminal
+custody.
+
 This is **service foundation, not deployment closure**. Production still needs
 reviewed measured processes implementing the current-record authenticator,
 theorem checker, signer, and protected antirollback head store, plus a supervisor
@@ -41,5 +51,5 @@ that supplies only preopened descriptors and pins their identities. Every
 synchronous provider IPC must impose deadline-aware transport cancellation; if
 a provider returns after the outer deadline the service rejects, while a hung
 in-process call cannot be cancelled by this foundation. The service never
-accepts an ambient path, environment variable, default endpoint, or raw private
-key.
+accepts an ambient path, environment variable, default endpoint, raw accepted
+descriptor, or raw private key.

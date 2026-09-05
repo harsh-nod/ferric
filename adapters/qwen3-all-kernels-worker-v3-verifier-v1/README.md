@@ -79,13 +79,19 @@ reassociate it with the still-borrowed handoff. The service request combines tha
 the typed request, bound compiler owner, caller policy identity, exact artifact,
 and all 12 ordered host lineage/marker/generated-host rows.
 
-The owned client requires an already connected unnamed Unix `SOCK_SEQPACKET`
-peer and pins dedicated non-root credentials before transferring the descriptor
-to fe2o3's authority-free V2 transport. Ferric computes one absolute monotonic
-deadline during peer admission and passes that exact `Instant` to
-`WorkerV3VerificationClientV2::admit_until`; it never restarts the caller's
-relative timeout. That same deadline governs every generic phase and Ferric's
-final application-response authentication. The transport rejects ancillary data and ambiguous framing, and correlates
+The owned client accepts either an already connected unnamed Unix
+`SOCK_SEQPACKET` peer or an already-connected unnamed client endpoint whose
+service pathname is explicitly supplied by the caller. Both entrypoints pin
+dedicated non-root credentials (UID/GID) and the connection-time PID before
+transferring the descriptor to fe2o3's authority-free V2 transport. The
+pathname entrypoint performs no discovery, socket creation, or `connect`; it
+uses fe2o3's exact peer-path validation and kernel-stamped response-credential
+continuity. Both admission failures retain the exact caller-owned endpoint.
+Ferric computes one absolute monotonic deadline during peer admission and
+passes that exact `Instant` to `WorkerV3VerificationClientV2::admit_until` or
+`WorkerV3VerificationClientV2::admit_connected_path_until`; it never restarts
+the caller's relative timeout. That same deadline governs every generic phase
+and Ferric's final application-response authentication. The transport rejects ancillary data and ambiguous framing, and correlates
 every phase to the exact Begin request, service challenge, and reservation. The
 Ferric terminal then requires an application response of exactly 3,768 bytes
 and authenticates its Ed25519 signature and distinct verifier/checker
