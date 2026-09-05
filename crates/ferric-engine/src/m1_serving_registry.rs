@@ -191,6 +191,15 @@ pub enum M1ServingQueueActionV1 {
         next: M1ServingPlanV1,
         reason: M1ServingRolloverReasonV1,
     },
+    /// Every member of one bounded serving window retired, and the exact
+    /// retained queue must be rebound to a fresh paired-prefill roster.
+    ///
+    /// This is not a continuous-batching or late-arrival transition. It is
+    /// available only through the all-terminal window reservation below.
+    QuiescentNewWindow {
+        prior: M1ServingPlanV1,
+        next: M1ServingPlanV1,
+    },
 }
 
 /// Queue disposition when no physical generation is currently in flight.
@@ -261,6 +270,16 @@ pub enum M1ServingRegistryErrorV1 {
     PublicationReservationRequired,
     PublicationReservationMismatch,
     PublicationReservationExhausted,
+    NewWindowPredecessorRequired,
+    NewWindowPredecessorNotCompleted { index: usize },
+    NewWindowPredecessorPlanMismatch { index: usize },
+    NewWindowPredecessorEpochMismatch { index: usize },
+    NewWindowRosterEmpty,
+    NewWindowRosterExceedsPlan,
+    NewWindowRosterCountMismatch,
+    NewWindowRequestSlotMismatch { index: usize },
+    NewWindowRequestGenerationMismatch { index: usize },
+    HostAllocation,
     RegistryIdentityExhausted,
     RegistryIdentityMismatch,
 }
@@ -365,6 +384,172 @@ impl M1ServingPublicationReservationV1 {
 pub struct M1ServingPublicationFailureV1 {
     error: M1ServingRegistryErrorV1,
     reservation: M1ServingPublicationReservationV1,
+}
+
+/// Copy-only registry evidence for one member removed by a new-window
+/// reservation.
+///
+/// This value grants no Engine, queue, cache, page, or allocation authority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1ServingCompletedWindowMemberV1 {
+    request: RequestId,
+    plan: M1ServingPlanV1,
+    completion_epoch: CompletionEpoch,
+}
+
+impl M1ServingCompletedWindowMemberV1 {
+    #[must_use]
+    pub const fn request(self) -> RequestId {
+        self.request
+    }
+
+    #[must_use]
+    pub const fn plan(self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(self) -> CompletionEpoch {
+        self.completion_epoch
+    }
+}
+
+/// Move-only registry transaction for replacing one all-terminal bounded
+/// window with one fresh paired-prefill roster.
+///
+/// The predecessor records remain here rather than being reconstructed from
+/// public projections. Until this owner is committed or restored, the
+/// registry's ordinary reservation exclusion prevents every conflicting
+/// mutation.
+#[must_use = "the all-terminal window reservation must be published, restored, or retained by terminal custody"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingNewWindowPublicationReservationV1 {
+    prior: M1ServingPlanV1,
+    predecessors: Vec<M1ServingEntryV1>,
+    publication: M1ServingPublicationReservationV1,
+}
+
+impl M1ServingNewWindowPublicationReservationV1 {
+    #[must_use]
+    pub const fn prior_plan(&self) -> M1ServingPlanV1 {
+        self.prior
+    }
+
+    #[must_use]
+    pub fn predecessor_count(&self) -> usize {
+        self.predecessors.len()
+    }
+
+    #[must_use]
+    pub fn predecessor(&self, index: usize) -> Option<M1ServingCompletedWindowMemberV1> {
+        let entry = self.predecessors.get(index)?;
+        let M1ServingRequestPhaseV1::Retired {
+            quiescence: M1ServingQuiescenceV1::Completed(completion_epoch),
+        } = entry.phase
+        else {
+            debug_assert!(false, "new-window predecessor was preflighted as completed");
+            return None;
+        };
+        Some(M1ServingCompletedWindowMemberV1 {
+            request: entry.request,
+            plan: entry.plan,
+            completion_epoch,
+        })
+    }
+
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.publication.plan()
+    }
+
+    #[must_use]
+    pub fn requests(&self) -> &[RequestId] {
+        self.publication.requests()
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.publication.epoch()
+    }
+
+    #[must_use]
+    pub const fn action(&self) -> M1ServingQueueActionV1 {
+        self.publication.action()
+    }
+
+    /// Produces the immutable descriptor used for pre-publication physical
+    /// checks while this transaction retains both registry rosters.
+    pub fn physical_batch(&self) -> M1ServingBatchPlanV1 {
+        self.publication.physical_batch()
+    }
+}
+
+/// Rejected new-window reservation with the caller's proposed roster intact.
+#[must_use = "the rejected fresh roster remains owned by the caller"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingNewWindowReservationFailureV1 {
+    error: M1ServingRegistryErrorV1,
+    plan: M1ServingPlanV1,
+    requests: Box<[RequestId]>,
+}
+
+impl M1ServingNewWindowReservationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1ServingRegistryErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    #[must_use = "the rejected fresh roster remains linear caller input"]
+    pub fn into_requests(self) -> Box<[RequestId]> {
+        self.requests
+    }
+}
+
+/// Failed commit or restoration with the complete two-roster transaction
+/// retained.
+#[must_use = "the exact new-window reservation remains live"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingNewWindowPublicationFailureV1 {
+    error: M1ServingRegistryErrorV1,
+    reservation: M1ServingNewWindowPublicationReservationV1,
+}
+
+impl M1ServingNewWindowPublicationFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1ServingRegistryErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the exact new-window reservation remains live"]
+    pub fn into_reservation(self) -> M1ServingNewWindowPublicationReservationV1 {
+        self.reservation
+    }
+}
+
+/// Fresh roster recovered when an all-terminal window replacement is aborted
+/// before any physical side effect.
+#[must_use = "the restored fresh roster remains caller-owned"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingRestoredNewWindowV1 {
+    plan: M1ServingPlanV1,
+    requests: Box<[RequestId]>,
+}
+
+impl M1ServingRestoredNewWindowV1 {
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    #[must_use = "the restored fresh roster remains caller-owned"]
+    pub fn into_requests(self) -> Box<[RequestId]> {
+        self.requests
+    }
 }
 
 impl M1ServingPublicationFailureV1 {
@@ -678,6 +863,249 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         })
     }
 
+    /// Atomically replaces every completed record from one bounded window with
+    /// one exact next-generation paired-prefill roster and freezes its
+    /// publication.
+    ///
+    /// This transition is deliberately narrower than admission while a queue
+    /// is active: every existing registry entry must be `Retired` from a
+    /// completed physical generation. The replacement must retain the same
+    /// slots in the same lane order and advance each generation exactly once,
+    /// and the complete roster must fit one paired-prefill batch. The removed
+    /// entries move into the returned token before any physical detachment.
+    /// Restoring that token reinstalls the exact entries, including order,
+    /// plans, phases, and quiescence.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a live reservation or batch, absent queue binding, any
+    /// non-completed predecessor, invalid or duplicate fresh request, a
+    /// non-prefill or mismatched roster, exhausted identities/epochs, or host
+    /// allocation failure without changing the registry. The proposed roster
+    /// is returned intact.
+    pub fn reserve_completed_window_replacement(
+        &mut self,
+        plan: M1ServingPlanV1,
+        requests: Box<[RequestId]>,
+    ) -> Result<M1ServingNewWindowPublicationReservationV1, M1ServingNewWindowReservationFailureV1>
+    {
+        let reject = |error, requests| {
+            Err(M1ServingNewWindowReservationFailureV1 {
+                error,
+                plan,
+                requests,
+            })
+        };
+
+        if let Err(error) = self.reject_live_reservation() {
+            return reject(error, requests);
+        }
+        if self.in_flight.is_some() {
+            return reject(M1ServingRegistryErrorV1::BatchAlreadyInFlight, requests);
+        }
+        let Some(prior) = self.bound_plan else {
+            return reject(M1ServingRegistryErrorV1::QueuePlanMismatch, requests);
+        };
+        if self.entries.is_empty() {
+            return reject(
+                M1ServingRegistryErrorV1::NewWindowPredecessorRequired,
+                requests,
+            );
+        }
+        for (index, entry) in self.entries.iter().enumerate() {
+            if entry.plan != prior {
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index },
+                    requests,
+                );
+            }
+            let M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(epoch),
+            } = entry.phase
+            else {
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index },
+                    requests,
+                );
+            };
+            if epoch != CompletionEpoch::new(self.completed_epoch)
+                || entry.last_quiescence != Some(epoch)
+            {
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index },
+                    requests,
+                );
+            }
+        }
+        if plan.mode() != Qwen3ExecutionMode::Prefill {
+            return reject(M1ServingRegistryErrorV1::AdmissionRequiresPrefill, requests);
+        }
+        if requests.is_empty() {
+            return reject(M1ServingRegistryErrorV1::NewWindowRosterEmpty, requests);
+        }
+        if requests.len() > C || requests.len() > plan.sequence_capacity() {
+            return reject(
+                M1ServingRegistryErrorV1::NewWindowRosterExceedsPlan,
+                requests,
+            );
+        }
+        if requests.len() != self.entries.len() {
+            return reject(
+                M1ServingRegistryErrorV1::NewWindowRosterCountMismatch,
+                requests,
+            );
+        }
+        for (index, (request, predecessor)) in requests
+            .iter()
+            .copied()
+            .zip(self.entries.iter())
+            .enumerate()
+        {
+            if request.generation() == 0 {
+                return reject(M1ServingRegistryErrorV1::InvalidRequest, requests);
+            }
+            if request.slot() != predecessor.request.slot() {
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowRequestSlotMismatch { index },
+                    requests,
+                );
+            }
+            let exact_next = predecessor.request.generation().checked_add(1);
+            if exact_next != Some(request.generation()) {
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowRequestGenerationMismatch { index },
+                    requests,
+                );
+            }
+        }
+        if self.submitted_epoch != self.completed_epoch {
+            return reject(M1ServingRegistryErrorV1::CompletionEpochMismatch, requests);
+        }
+        let Some(next_epoch) = self.submitted_epoch.checked_add(1) else {
+            return reject(M1ServingRegistryErrorV1::CompletionEpochMismatch, requests);
+        };
+        let Some(following_id) = self.next_reservation_id.checked_add(1) else {
+            return reject(
+                M1ServingRegistryErrorV1::PublicationReservationExhausted,
+                requests,
+            );
+        };
+
+        let mut next_entries = Vec::new();
+        if next_entries.try_reserve_exact(requests.len()).is_err() {
+            return reject(M1ServingRegistryErrorV1::HostAllocation, requests);
+        }
+        next_entries.extend(requests.iter().copied().map(|request| M1ServingEntryV1 {
+            request,
+            plan,
+            phase: M1ServingRequestPhaseV1::Ready,
+            last_quiescence: None,
+        }));
+        let mut retained_requests = Vec::new();
+        if retained_requests.try_reserve_exact(requests.len()).is_err() {
+            return reject(M1ServingRegistryErrorV1::HostAllocation, requests);
+        }
+        retained_requests.extend(requests.iter().copied());
+
+        let id = self.next_reservation_id;
+        let action = M1ServingQueueActionV1::QuiescentNewWindow { prior, next: plan };
+        let publication = M1ServingPublicationReservationV1 {
+            registry_identity: self.identity,
+            id,
+            batch: M1ServingBatchPlanV1 {
+                plan,
+                requests,
+                epoch: CompletionEpoch::new(next_epoch),
+                action,
+            },
+        };
+        self.reservation = Some(M1ServingReservedBatchV1 {
+            id,
+            batch: M1ServingBatchPlanV1 {
+                plan,
+                requests: retained_requests.into_boxed_slice(),
+                epoch: CompletionEpoch::new(next_epoch),
+                action,
+            },
+        });
+        self.next_reservation_id = following_id;
+        let predecessors = core::mem::replace(&mut self.entries, next_entries);
+        Ok(M1ServingNewWindowPublicationReservationV1 {
+            prior,
+            predecessors,
+            publication,
+        })
+    }
+
+    /// Restores an all-terminal predecessor roster before physical detachment.
+    ///
+    /// # Errors
+    ///
+    /// A cross-registry, stale, or substituted transaction is returned intact
+    /// and the live registry remains unchanged. A successful restoration does
+    /// not rewind the consumed reservation identity; a retry receives a fresh
+    /// identity so the aborted capability cannot be replayed.
+    pub fn restore_completed_window_replacement(
+        &mut self,
+        reservation: M1ServingNewWindowPublicationReservationV1,
+    ) -> Result<M1ServingRestoredNewWindowV1, Box<M1ServingNewWindowPublicationFailureV1>> {
+        if let Err(error) = self.validate_new_window_reservation(&reservation) {
+            return Err(Box::new(M1ServingNewWindowPublicationFailureV1 {
+                error,
+                reservation,
+            }));
+        }
+        let M1ServingNewWindowPublicationReservationV1 {
+            prior: _,
+            predecessors,
+            publication,
+        } = reservation;
+        let plan = publication.plan();
+        let requests = publication.batch.requests;
+        self.reservation = None;
+        self.entries = predecessors;
+        Ok(M1ServingRestoredNewWindowV1 { plan, requests })
+    }
+
+    #[allow(dead_code)] // Consumed by the pending physical new-window bridge.
+    pub(crate) fn preflight_new_window_publication(
+        &self,
+        reservation: &M1ServingNewWindowPublicationReservationV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.validate_new_window_reservation(reservation)
+    }
+
+    #[allow(dead_code)] // Consumed by the pending physical new-window bridge.
+    pub(crate) fn record_new_window_publication(
+        &mut self,
+        reservation: M1ServingNewWindowPublicationReservationV1,
+    ) -> Result<(), Box<M1ServingNewWindowPublicationFailureV1>> {
+        if let Err(error) = self.validate_new_window_reservation(&reservation) {
+            return Err(Box::new(M1ServingNewWindowPublicationFailureV1 {
+                error,
+                reservation,
+            }));
+        }
+        let M1ServingNewWindowPublicationReservationV1 {
+            prior: _,
+            predecessors: _,
+            publication,
+        } = reservation;
+        let batch = publication.batch;
+        for entry in &mut self.entries {
+            entry.phase = M1ServingRequestPhaseV1::InFlight { epoch: batch.epoch };
+        }
+        self.reservation = None;
+        self.submitted_epoch = batch.epoch.value();
+        self.bound_plan = Some(batch.plan);
+        self.in_flight = Some(M1ServingInFlightBatchV1 {
+            plan: batch.plan,
+            requests: batch.requests,
+            epoch: batch.epoch,
+        });
+        Ok(())
+    }
+
     /// Consumes the matching pre-dispatch reservation without advancing the
     /// completion epoch or changing any request, plan, or queue state.
     ///
@@ -929,6 +1357,74 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             if entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != reservation.batch.plan
             {
                 return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_new_window_reservation(
+        &self,
+        reservation: &M1ServingNewWindowPublicationReservationV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.validate_reservation(&reservation.publication)?;
+        let plan = reservation.publication.plan();
+        if self.bound_plan != Some(reservation.prior)
+            || reservation.publication.action()
+                != (M1ServingQueueActionV1::QuiescentNewWindow {
+                    prior: reservation.prior,
+                    next: plan,
+                })
+            || reservation.predecessors.is_empty()
+            || reservation.predecessors.len() != self.entries.len()
+            || self.entries.len() != reservation.publication.requests().len()
+            || self.entries.is_empty()
+            || self.entries.len() > C
+            || self.entries.len() > plan.sequence_capacity()
+            || plan.mode() != Qwen3ExecutionMode::Prefill
+        {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+        }
+        for (index, entry) in reservation.predecessors.iter().enumerate() {
+            if entry.plan != reservation.prior {
+                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index });
+            }
+            let M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(epoch),
+            } = entry.phase
+            else {
+                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index });
+            };
+            if epoch != CompletionEpoch::new(self.completed_epoch)
+                || entry.last_quiescence != Some(epoch)
+            {
+                return Err(M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index });
+            }
+        }
+        for (lane, (entry, request)) in self
+            .entries
+            .iter()
+            .zip(reservation.publication.requests())
+            .enumerate()
+        {
+            if entry.request != *request
+                || entry.plan != plan
+                || entry.phase != M1ServingRequestPhaseV1::Ready
+                || entry.last_quiescence.is_some()
+            {
+                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
+            }
+            if request.generation() == 0 {
+                return Err(M1ServingRegistryErrorV1::InvalidRequest);
+            }
+            let predecessor = &reservation.predecessors[lane];
+            if request.slot() != predecessor.request.slot() {
+                return Err(M1ServingRegistryErrorV1::NewWindowRequestSlotMismatch { index: lane });
+            }
+            let exact_next = predecessor.request.generation().checked_add(1);
+            if exact_next != Some(request.generation()) {
+                return Err(
+                    M1ServingRegistryErrorV1::NewWindowRequestGenerationMismatch { index: lane },
+                );
             }
         }
         Ok(())
@@ -1893,5 +2389,405 @@ mod tests {
             M1ServingRegistryErrorV1::BatchAlreadyInFlight
         );
         let _replay = failure.into_reservation();
+    }
+
+    #[test]
+    fn completed_window_reservation_restores_exact_predecessor_records() {
+        let first = RequestId::new(0, 1);
+        let second = RequestId::new(1, 1);
+        let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+        registry.admit(first, prefill_s8()).unwrap();
+        registry.admit(second, prefill_s8()).unwrap();
+        let completed_epoch = registry.plan_next().unwrap().unwrap().epoch();
+        publish_and_complete(
+            &mut registry,
+            &[
+                M1ServingCompletionDispositionV1::Retire,
+                M1ServingCompletionDispositionV1::Retire,
+            ],
+        );
+
+        let next_first = RequestId::new(0, 2);
+        let next_second = RequestId::new(1, 2);
+        let reservation = registry
+            .reserve_completed_window_replacement(
+                prefill_s8(),
+                vec![next_first, next_second].into_boxed_slice(),
+            )
+            .unwrap();
+        let first_reservation_id = reservation.publication.id;
+        assert_eq!(reservation.prior_plan(), prefill_s8());
+        assert_eq!(reservation.predecessor_count(), 2);
+        assert_eq!(
+            reservation.predecessor(0),
+            Some(M1ServingCompletedWindowMemberV1 {
+                request: first,
+                plan: prefill_s8(),
+                completion_epoch: completed_epoch,
+            })
+        );
+        assert_eq!(
+            reservation.predecessor(1),
+            Some(M1ServingCompletedWindowMemberV1 {
+                request: second,
+                plan: prefill_s8(),
+                completion_epoch: completed_epoch,
+            })
+        );
+        assert_eq!(reservation.requests(), [next_first, next_second]);
+        assert_eq!(reservation.epoch(), CompletionEpoch::new(2));
+        assert_eq!(
+            reservation.action(),
+            M1ServingQueueActionV1::QuiescentNewWindow {
+                prior: prefill_s8(),
+                next: prefill_s8(),
+            }
+        );
+        assert_eq!(registry.phase(first), None);
+        assert_eq!(registry.phase(second), None);
+        assert_eq!(
+            registry.phase(next_first),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(
+            registry.phase(next_second),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(
+            registry.admit(RequestId::new(2, 1), prefill_s8()),
+            Err(M1ServingRegistryErrorV1::PublicationReservationActive)
+        );
+
+        let restored = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap();
+        assert_eq!(restored.plan(), prefill_s8());
+        assert_eq!(restored.into_requests().as_ref(), [next_first, next_second]);
+        assert!(!registry.has_publication_reservation());
+        assert_eq!(
+            registry.phase(first),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(completed_epoch),
+            })
+        );
+        assert_eq!(
+            registry.phase(second),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(completed_epoch),
+            })
+        );
+        assert_eq!(registry.phase(next_first), None);
+        assert_eq!(registry.phase(next_second), None);
+        assert_eq!(registry.bound_plan(), Some(prefill_s8()));
+        assert_eq!(registry.plan_next().unwrap(), None);
+
+        let retry = registry
+            .reserve_completed_window_replacement(
+                prefill_s8(),
+                vec![next_first, next_second].into_boxed_slice(),
+            )
+            .unwrap();
+        assert_eq!(retry.publication.id, first_reservation_id + 1);
+        let _ = registry
+            .restore_completed_window_replacement(retry)
+            .unwrap();
+    }
+
+    #[test]
+    fn completed_window_publication_drops_old_records_only_after_exact_commit() {
+        let prior = RequestId::new(0, 1);
+        let next = RequestId::new(0, 2);
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(prior, prefill_s1()).unwrap();
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+        let reservation = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap();
+        let epoch = reservation.epoch();
+        registry
+            .preflight_new_window_publication(&reservation)
+            .unwrap();
+        registry.record_new_window_publication(reservation).unwrap();
+
+        assert_eq!(registry.phase(prior), None);
+        assert_eq!(
+            registry.phase(next),
+            Some(M1ServingRequestPhaseV1::InFlight { epoch })
+        );
+        assert_eq!(registry.bound_plan(), Some(prefill_s1()));
+        assert!(registry.has_in_flight_batch());
+        complete_exact(
+            &mut registry,
+            epoch,
+            &[M1ServingCompletionDispositionV1::Retire],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn completed_window_reservation_rejects_nonterminal_and_hostile_new_rosters() {
+        let prior = RequestId::new(0, 1);
+        let mut registry = M1ServingRegistryV1::<2>::new().unwrap();
+        registry.admit(prior, prefill_s1()).unwrap();
+        let failure = registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 2)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(failure.error(), M1ServingRegistryErrorV1::QueuePlanMismatch);
+        let _ = failure.into_requests();
+
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+        let never_submitted = RequestId::new(1, 1);
+        registry.admit(never_submitted, prefill_s1()).unwrap();
+        registry.cancel(never_submitted).unwrap();
+        let failure = registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 2)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorNotCompleted { index: 1 }
+        );
+        let _ = failure.into_requests();
+        registry.remove_retired(never_submitted).unwrap();
+
+        for (plan, proposed, error) in [
+            (
+                prefill_s1(),
+                Vec::new(),
+                M1ServingRegistryErrorV1::NewWindowRosterEmpty,
+            ),
+            (
+                prefill_s1(),
+                vec![RequestId::new(0, 0)],
+                M1ServingRegistryErrorV1::InvalidRequest,
+            ),
+            (
+                prefill_s1(),
+                vec![RequestId::new(0, 2), RequestId::new(1, 2)],
+                M1ServingRegistryErrorV1::NewWindowRosterExceedsPlan,
+            ),
+            (
+                decode_s1(),
+                vec![RequestId::new(0, 2)],
+                M1ServingRegistryErrorV1::AdmissionRequiresPrefill,
+            ),
+        ] {
+            let failure = registry
+                .reserve_completed_window_replacement(plan, proposed.into_boxed_slice())
+                .unwrap_err();
+            assert_eq!(failure.error(), error);
+            let _ = failure.into_requests();
+            assert_eq!(
+                registry.phase(prior),
+                Some(M1ServingRequestPhaseV1::Retired {
+                    quiescence: M1ServingQuiescenceV1::Completed(CompletionEpoch::new(1)),
+                })
+            );
+            assert!(!registry.has_publication_reservation());
+        }
+
+        let mut wide_registry = M1ServingRegistryV1::<8>::new().unwrap();
+        wide_registry.admit(prior, prefill_s8()).unwrap();
+        publish_and_complete(
+            &mut wide_registry,
+            &[M1ServingCompletionDispositionV1::Retire],
+        );
+        let failure = wide_registry
+            .reserve_completed_window_replacement(
+                prefill_s8(),
+                vec![RequestId::new(1, 2), RequestId::new(1, 3)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowRosterCountMismatch
+        );
+        let _ = failure.into_requests();
+    }
+
+    #[test]
+    fn completed_window_transaction_rejects_cross_registry_and_action_substitution() {
+        let prior = RequestId::new(0, 1);
+        let next = RequestId::new(0, 2);
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(prior, prefill_s1()).unwrap();
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+        let reservation = registry
+            .reserve_completed_window_replacement(prefill_s1(), vec![next].into_boxed_slice())
+            .unwrap();
+
+        let mut other = M1ServingRegistryV1::<1>::new().unwrap();
+        let failure = other
+            .restore_completed_window_replacement(reservation)
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::RegistryIdentityMismatch
+        );
+        let mut reservation = (*failure).into_reservation();
+        reservation.publication.batch.action = M1ServingQueueActionV1::FreshLaunch;
+        let failure = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        let mut reservation = (*failure).into_reservation();
+        reservation.publication.batch.action = M1ServingQueueActionV1::QuiescentNewWindow {
+            prior: prefill_s1(),
+            next: prefill_s1(),
+        };
+        let restored = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap();
+        assert_eq!(restored.into_requests().as_ref(), [next]);
+        assert_eq!(
+            registry.phase(prior),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(CompletionEpoch::new(1)),
+            })
+        );
+    }
+
+    #[test]
+    fn completed_window_predecessor_plan_epoch_and_request_generation_are_exact() {
+        let prior = RequestId::new(0, 2);
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(prior, prefill_s1()).unwrap();
+        publish_and_complete(&mut registry, &[M1ServingCompletionDispositionV1::Retire]);
+
+        registry.entries[0].plan = decode_s1();
+        let failure = registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 3)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorPlanMismatch { index: 0 }
+        );
+        let _ = failure.into_requests();
+        registry.entries[0].plan = prefill_s1();
+
+        registry.entries[0].phase = M1ServingRequestPhaseV1::Retired {
+            quiescence: M1ServingQuiescenceV1::Completed(CompletionEpoch::new(2)),
+        };
+        registry.entries[0].last_quiescence = Some(CompletionEpoch::new(2));
+        let failure = registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 3)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowPredecessorEpochMismatch { index: 0 }
+        );
+        let _ = failure.into_requests();
+        registry.entries[0].phase = M1ServingRequestPhaseV1::Retired {
+            quiescence: M1ServingQuiescenceV1::Completed(CompletionEpoch::new(1)),
+        };
+        registry.entries[0].last_quiescence = Some(CompletionEpoch::new(1));
+
+        for generation in [1, 2, 4] {
+            let failure = registry
+                .reserve_completed_window_replacement(
+                    prefill_s1(),
+                    vec![RequestId::new(0, generation)].into_boxed_slice(),
+                )
+                .unwrap_err();
+            assert_eq!(
+                failure.error(),
+                M1ServingRegistryErrorV1::NewWindowRequestGenerationMismatch { index: 0 }
+            );
+            let _ = failure.into_requests();
+            assert!(!registry.has_publication_reservation());
+        }
+
+        let reservation = registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 3)].into_boxed_slice(),
+            )
+            .unwrap();
+        let restored = registry
+            .restore_completed_window_replacement(reservation)
+            .unwrap();
+        assert_eq!(restored.into_requests().as_ref(), [RequestId::new(0, 3)]);
+    }
+
+    #[test]
+    fn completed_window_roster_slots_order_and_generation_overflow_are_exact() {
+        let first = RequestId::new(3, 7);
+        let second = RequestId::new(9, 11);
+        let mut registry = M1ServingRegistryV1::<8>::new().unwrap();
+        registry.admit(first, prefill_s8()).unwrap();
+        registry.admit(second, prefill_s8()).unwrap();
+        publish_and_complete(
+            &mut registry,
+            &[
+                M1ServingCompletionDispositionV1::Retire,
+                M1ServingCompletionDispositionV1::Retire,
+            ],
+        );
+
+        for (proposed, error) in [
+            (
+                vec![RequestId::new(3, 8)],
+                M1ServingRegistryErrorV1::NewWindowRosterCountMismatch,
+            ),
+            (
+                vec![RequestId::new(9, 12), RequestId::new(3, 8)],
+                M1ServingRegistryErrorV1::NewWindowRequestSlotMismatch { index: 0 },
+            ),
+            (
+                vec![RequestId::new(3, 8), RequestId::new(12, 1)],
+                M1ServingRegistryErrorV1::NewWindowRequestSlotMismatch { index: 1 },
+            ),
+        ] {
+            let failure = registry
+                .reserve_completed_window_replacement(prefill_s8(), proposed.into_boxed_slice())
+                .unwrap_err();
+            assert_eq!(failure.error(), error);
+            let _ = failure.into_requests();
+            assert!(!registry.has_publication_reservation());
+        }
+
+        let exact = registry
+            .reserve_completed_window_replacement(
+                prefill_s8(),
+                vec![RequestId::new(3, 8), RequestId::new(9, 12)].into_boxed_slice(),
+            )
+            .unwrap();
+        let _ = registry
+            .restore_completed_window_replacement(exact)
+            .unwrap();
+
+        let maximum = RequestId::new(0, u32::MAX);
+        let mut overflow_registry = M1ServingRegistryV1::<1>::new().unwrap();
+        overflow_registry.admit(maximum, prefill_s1()).unwrap();
+        publish_and_complete(
+            &mut overflow_registry,
+            &[M1ServingCompletionDispositionV1::Retire],
+        );
+        let failure = overflow_registry
+            .reserve_completed_window_replacement(
+                prefill_s1(),
+                vec![RequestId::new(0, 1)].into_boxed_slice(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::NewWindowRequestGenerationMismatch { index: 0 }
+        );
+        let _ = failure.into_requests();
+        assert!(!overflow_registry.has_publication_reservation());
     }
 }

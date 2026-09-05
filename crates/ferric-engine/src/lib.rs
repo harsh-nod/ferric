@@ -493,10 +493,12 @@ pub use m1_serving_physical_operations::{
     M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
-    M1ServingBatchPlanV1, M1ServingCompletionDispositionV1, M1ServingPlanV1,
-    M1ServingPublicationFailureV1, M1ServingPublicationReservationV1, M1ServingQueueActionV1,
-    M1ServingQuiescenceV1, M1ServingQuiescentQueueActionV1, M1ServingRegistryErrorV1,
-    M1ServingRegistryIdentityV1, M1ServingRegistryV1, M1ServingRequestPhaseV1,
+    M1ServingBatchPlanV1, M1ServingCompletedWindowMemberV1, M1ServingCompletionDispositionV1,
+    M1ServingNewWindowPublicationFailureV1, M1ServingNewWindowPublicationReservationV1,
+    M1ServingNewWindowReservationFailureV1, M1ServingPlanV1, M1ServingPublicationFailureV1,
+    M1ServingPublicationReservationV1, M1ServingQueueActionV1, M1ServingQuiescenceV1,
+    M1ServingQuiescentQueueActionV1, M1ServingRegistryErrorV1, M1ServingRegistryIdentityV1,
+    M1ServingRegistryV1, M1ServingRequestPhaseV1, M1ServingRestoredNewWindowV1,
     M1ServingRolloverReasonV1,
 };
 pub use m1_swiglu_worker_v3_verifier::{
