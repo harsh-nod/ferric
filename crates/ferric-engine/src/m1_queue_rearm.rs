@@ -3817,6 +3817,44 @@ impl M1RearmedPublishedQueueV1 {
             }
         }
     }
+
+    /// Waits for the exact rearmed generation under both Ferric progress and
+    /// monotonic wall-clock bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal queue quarantine paired with all continuation custody
+    /// after permanently faulting `engine`.
+    pub fn wait_for<const C: usize>(
+        self,
+        timeout_ms: u32,
+        engine: &mut Engine<C>,
+    ) -> Result<M1RearmedCompletedQueueV1, Box<M1RearmedQueueProgressFailureV1>> {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        match queue.wait_for(timeout_ms) {
+            Ok(queue) => Ok(M1RearmedCompletedQueueV1 {
+                queue,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                Err(Box::new(M1RearmedQueueProgressFailureV1 {
+                    phase: M1LongLivedQueueRearmProgressPhaseV1::QueueWait,
+                    source,
+                    carry,
+                    queue_observation,
+                    device,
+                }))
+            }
+        }
+    }
 }
 
 /// Runtime phase for a rearmed queue continuation failure.
@@ -3845,6 +3883,12 @@ impl M1RearmedQueueProgressFailureV1 {
 
     pub const fn source(&self) -> &crate::M1PhysicalQueueOperationFailureV1 {
         &self.source
+    }
+
+    /// Redacted KFD timeout snapshot when the wall deadline terminalized wait.
+    #[must_use]
+    pub fn timeout_observation(&self) -> Option<&fe2o3_kfd::Gfx942TimeoutExecutionObservationV1> {
+        self.source.timeout_execution_observation()
     }
 
     #[must_use]

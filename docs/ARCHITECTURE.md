@@ -130,15 +130,22 @@ current state
   -> atomically apply StateDelta
 ```
 
-The authenticated physical queue exposes two distinct bounded completion APIs.
-The existing observation-budget path retains Ferric's monotonic progress
-diagnostic. `wait_for(timeout_ms)` instead delegates the exact published owner to
-fe2o3's KFD-backed monotonic millisecond deadline; success returns completed
-custody, while timeout or another lower failure returns opaque queue, program,
-allocation, model-memory, and scheduler custody plus any addressless timeout
-observation. The rearm wrapper also permanently faults its paired `Engine` on
-that terminal failure. This deadline facade is not yet selected by broader
-serving or qualification call sites.
+The physical queue exposes a legacy observation-budget wait and a production
+`wait_for(timeout_ms)` path. The production path enforces both Ferric's
+completion-progress/stalled-scan policy and one absolute monotonic wall-clock
+deadline. If either bound is reached, Ferric consumes the exact published owner
+through fe2o3's KFD-backed `wait_for(0)` terminalizer. A queue that completes in
+that final race returns completed custody; otherwise the failure retains queue,
+program, allocation, model-memory, and scheduler custody plus the addressless
+timeout observation and Ferric progress diagnostic. Rearmed failures also
+permanently fault their paired `Engine`.
+
+The concrete serving adapter and authenticated speculative bootstrap/rearm
+paths retain an opaque nonzero timeout before publication and select this
+combined wait. Bootstrap retry, repeated executor, and rollover-published
+custody preserve the same timeout, so it cannot be substituted after
+publication. This is a runtime ownership and liveness contract, not evidence
+that Qwen hardware execution or serving performance has been qualified.
 
 Cancellation changes logical request state but cannot release storage. Storage
 is retired only after the last referencing device epoch is quiescent.

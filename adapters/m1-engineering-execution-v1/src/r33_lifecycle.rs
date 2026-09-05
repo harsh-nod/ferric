@@ -10,7 +10,7 @@
 
 use ferric_engine::{
     Engine, EngineError, M1CheckedCompletionOutputV1, M1PhysicalRunnerV1,
-    M1QueuedServingPhysicalInputProviderV1, M1ServingBatchPlanV1,
+    M1QueuedServingPhysicalInputProviderV1, M1QueueWaitTimeoutV1, M1ServingBatchPlanV1,
     M1ServingFirstPublicationWorkMatchErrorV1, M1ServingPhysicalReadbackV1,
     M1ServingPhysicalRunnerOperationErrorV1, M1ServingPhysicalRunnerOperationsCreateErrorV1,
     M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerReadbackV1, M1ServingPlanV1,
@@ -533,6 +533,7 @@ impl<const C: usize> M1R33AdmittedWindowV1<C> {
         engine: &'a mut Engine<C>,
         provider: M1QueuedServingPhysicalInputProviderV1,
         ring_bytes: u32,
+        queue_wait_timeout: M1QueueWaitTimeoutV1,
     ) -> Result<M1R33PhysicalWindowV1<'a, C>, Box<M1R33PhysicalWindowBindFailureV1<C>>> {
         let mut requests = Vec::new();
         let mut prompt_tokens = Vec::new();
@@ -562,7 +563,13 @@ impl<const C: usize> M1R33AdmittedWindowV1<C> {
                 source: M1R33PhysicalWindowBindErrorV1::FirstPublicationWork(source),
             }));
         }
-        match M1ServingPhysicalRunnerOperationsV1::new(runner, engine, provider, ring_bytes) {
+        match M1ServingPhysicalRunnerOperationsV1::new(
+            runner,
+            engine,
+            provider,
+            ring_bytes,
+            queue_wait_timeout,
+        ) {
             Ok(operations) => Ok(M1R33PhysicalWindowV1 {
                 window: self,
                 operations,

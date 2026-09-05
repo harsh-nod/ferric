@@ -9605,6 +9605,8 @@ mod tests {
             &mut engine,
             prepared,
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            ferric_engine::M1QueueWaitTimeoutV1::new(1_000)
+                .expect("qualification wait timeout is nonzero"),
         ) {
             Ok(published) => published,
             Err(failure) => {

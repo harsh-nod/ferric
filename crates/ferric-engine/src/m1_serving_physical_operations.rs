@@ -1137,6 +1137,7 @@ pub struct M1ServingPhysicalRunnerOperationsV1<'a, const C: usize, P> {
     engine: &'a mut Engine<C>,
     provider: Option<P>,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     identity: M1ServingPhysicalRunnerAdapterIdentityV1,
     phase: M1ServingPhysicalRunnerAdapterPhaseV1,
     active_plan: Option<M1ServingPlanV1>,
@@ -1154,6 +1155,7 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
         engine: &'a mut Engine<C>,
         provider: P,
         ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Result<Self, M1ServingPhysicalRunnerOperationsCreateErrorV1> {
         let identity = M1ServingPhysicalRunnerAdapterIdentityV1::fresh()
             .ok_or(M1ServingPhysicalRunnerOperationsCreateErrorV1::AdapterIdentityExhausted)?;
@@ -1162,6 +1164,7 @@ impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
             engine,
             provider: Some(provider),
             ring_bytes,
+            queue_wait_timeout,
             identity,
             phase: M1ServingPhysicalRunnerAdapterPhaseV1::InitialReady,
             active_plan: None,
@@ -2654,7 +2657,7 @@ where
                         },
                     });
                 }
-                let completed = match published.wait() {
+                let completed = match published.wait_for(self.queue_wait_timeout.milliseconds()) {
                     Ok(completed) => completed,
                     Err(failure) => {
                         return Err(self.terminal(
@@ -2850,18 +2853,19 @@ where
                         },
                     });
                 }
-                let completed = match published.wait(self.engine) {
-                    Ok(completed) => completed,
-                    Err(failure) => {
-                        return Err(self.terminal(
+                let completed =
+                    match published.wait_for(self.queue_wait_timeout.milliseconds(), self.engine) {
+                        Ok(completed) => completed,
+                        Err(failure) => {
+                            return Err(self.terminal(
                             M1ServingPhysicalRunnerTerminalLowerCustodyV1::RearmedQueueProgress {
                                 failure,
                                 semantic_evidence,
                                 history: diagnostic_history,
                             },
                         ));
-                    }
-                };
+                        }
+                    };
                 let recycled = match completed.recycle(self.engine) {
                     Ok(recycled) => recycled,
                     Err(failure) => {
@@ -5636,9 +5640,14 @@ mod tests {
 
         let rollover_epoch = CompletionEpoch::new(2);
         let provider = M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![first]);
-        let mut operations =
-            M1ServingPhysicalRunnerOperationsV1::new(&runner, &mut engine, provider, 1 << 20)
-                .expect("construct queued physical serving adapter");
+        let mut operations = M1ServingPhysicalRunnerOperationsV1::new(
+            &runner,
+            &mut engine,
+            provider,
+            1 << 20,
+            crate::M1QueueWaitTimeoutV1::new(1_000).unwrap(),
+        )
+        .expect("construct queued physical serving adapter");
         let physical = M1ServingPhysicalQueueCustodyV1::Vacant;
 
         let prefill_batch = registry

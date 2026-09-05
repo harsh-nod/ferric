@@ -4,6 +4,7 @@
 //! retains the exact generated operation plan, authenticated program witness,
 //! allocation/KV custody, and scheduler authority that produced the batch.
 
+use core::num::NonZeroU32;
 use fe2o3_host::{
     AuthenticatedServiceCompletedQueueSessionV1, AuthenticatedServicePublishedQueueSessionV1,
     AuthenticatedServiceQueueCreateFailureV1, AuthenticatedServiceQueueOperationFailureV1,
@@ -13,6 +14,7 @@ use fe2o3_host::{
 };
 use fe2o3_kfd::{ComputeAqlQueueObservationV1, Gfx942TimeoutExecutionObservationV1};
 use fe2o3_service_host::ServiceQueueErrorV1;
+
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::Identity;
 
@@ -21,7 +23,8 @@ use crate::physical_fixed_batch::{
     M1AuthenticatedPhysicalPacketBatchCaseV1, M1AuthenticatedPhysicalPacketBatchV1,
 };
 use crate::physical_queue_lifecycle::{
-    wait_with_completion_progress_policy, CompletionProgressPollV1, CompletionProgressWaitFailureV1,
+    wait_with_completion_progress_deadline_policy, wait_with_completion_progress_policy,
+    CompletionProgressPollV1, CompletionProgressWaitFailureV1,
 };
 use crate::{
     DeclaredOperationKernelPlan, Engine, Gfx942DeviceBinding, M1AuthenticatedPhysicalRunnerV1,
@@ -33,6 +36,30 @@ use crate::{
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
+
+/// Nonzero wall-clock budget for one production authenticated queue wait.
+///
+/// The field is private so production entry points cannot silently request the
+/// immediate zero-deadline terminalizer reserved for queue-custody closure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1QueueWaitTimeoutV1(NonZeroU32);
+
+impl M1QueueWaitTimeoutV1 {
+    /// Constructs a production queue wait budget in milliseconds.
+    #[must_use]
+    pub const fn new(milliseconds: u32) -> Option<Self> {
+        match NonZeroU32::new(milliseconds) {
+            Some(milliseconds) => Some(Self(milliseconds)),
+            None => None,
+        }
+    }
+
+    /// Returns the exact millisecond budget passed to the bounded wait policy.
+    #[must_use]
+    pub const fn milliseconds(self) -> u32 {
+        self.0.get()
+    }
+}
 
 /// One authenticated lower typestate paired with all Ferric authority.
 #[must_use = "authenticated lower queue and Ferric custody must remain paired"]
@@ -619,7 +646,7 @@ mod tests {
         close_without_authority_core, M1AuthenticatedPhysicalCompletedQueueSessionV1,
         M1AuthenticatedPhysicalPublishedQueueSessionV1, M1AuthenticatedPhysicalQueueClosureV1,
         M1AuthenticatedPhysicalQueueOperationFailureV1,
-        M1AuthenticatedUnsubmittedQueueCloseEffectV1,
+        M1AuthenticatedUnsubmittedQueueCloseEffectV1, M1QueueWaitTimeoutV1,
     };
     use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use crate::Engine;
@@ -682,6 +709,13 @@ mod tests {
         let _: WaitFor = M1AuthenticatedPhysicalPublishedQueueSessionV1::wait_for;
         let _: TimeoutObservation =
             M1AuthenticatedPhysicalQueueOperationFailureV1::timeout_observation;
+    }
+
+    #[test]
+    fn production_queue_wait_timeout_rejects_zero_and_preserves_nonzero_milliseconds() {
+        assert_eq!(M1QueueWaitTimeoutV1::new(0), None);
+        let timeout = M1QueueWaitTimeoutV1::new(17).expect("nonzero timeout is admitted");
+        assert_eq!(timeout.milliseconds(), 17);
     }
 }
 
@@ -1466,13 +1500,51 @@ fn wait_for_case<const N: usize>(
     Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
 > {
     let (lower, witness, operations, custody, step) = (*case).into_parts();
-    match lower.wait_for(timeout_ms) {
+    let completed = wait_with_completion_progress_deadline_policy::<N, _, _, _>(
+        lower,
+        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+        timeout_ms,
+        |published| {
+            published.poll_with_progress().map(|outcome| match outcome {
+                AuthenticatedServiceQueuePollWithProgressV1::Pending { session, progress } => {
+                    CompletionProgressPollV1::Pending {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
+                }
+                AuthenticatedServiceQueuePollWithProgressV1::Ready { session, progress } => {
+                    CompletionProgressPollV1::Ready {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
+                }
+            })
+        },
+        || {
+            std::thread::sleep(std::time::Duration::from_micros(
+                M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1,
+            ));
+        },
+        |published| published.wait_for(0),
+    );
+    match completed {
         Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
             lower, witness, operations, custody, step,
         ))),
-        Err(lower) => Err(operation_failure(
+        Err(CompletionProgressWaitFailureV1::Lower(lower)) => Err(operation_failure(
             shape, lower, witness, operations, custody, step, None,
         )),
+        Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => {
+            Err(operation_failure(
+                shape,
+                lower,
+                witness,
+                operations,
+                custody,
+                step,
+                Some(diagnostic),
+            ))
+        }
     }
 }
 
@@ -1534,7 +1606,8 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
         }
     }
 
-    /// Waits until fe2o3 KFD's monotonic relative millisecond deadline.
+    /// Waits under both Ferric's completion-progress policy and a monotonic
+    /// relative millisecond deadline.
     ///
     /// This path preserves the exact authenticated program, queue, allocation,
     /// model-memory, and scheduler owners. A timeout or any other lower failure
@@ -1543,7 +1616,9 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
     ///
     /// # Errors
     ///
-    /// Returns terminal lower quarantine custody after the bounded wait fails.
+    /// Returns terminal lower quarantine custody after either bounded policy
+    /// fails. Terminalization consumes the exact lower owner through fe2o3
+    /// KFD's zero-duration `wait_for` path and retains its timeout observation.
     pub fn wait_for(
         self,
         timeout_ms: u32,

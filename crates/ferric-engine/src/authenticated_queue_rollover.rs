@@ -3750,18 +3750,25 @@ pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(
     engine: &mut Engine<C>,
     prepared: M1AuthenticatedPreparedSpeculativeRolloverV1,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     crate::M1AuthenticatedSpeculativeRolloverPublishedV1,
     M1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
 > {
-    submit_m1_authenticated_speculative_rollover_pending_v1(engine, prepared, ring_bytes)
-        .map_err(|failure| close_pending_submission_failure(engine, failure))
+    submit_m1_authenticated_speculative_rollover_pending_v1(
+        engine,
+        prepared,
+        ring_bytes,
+        queue_wait_timeout,
+    )
+    .map_err(|failure| close_pending_submission_failure(engine, failure))
 }
 
 fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
     engine: &mut Engine<C>,
     prepared: M1AuthenticatedPreparedSpeculativeRolloverV1,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     crate::M1AuthenticatedSpeculativeRolloverPublishedV1,
     PendingM1AuthenticatedSpeculativeRolloverSubmissionFailureV1,
@@ -4365,6 +4372,7 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         logical.coordinator,
         logical.epoch,
         logical.lineage,
+        queue_wait_timeout,
     ))
 }
 

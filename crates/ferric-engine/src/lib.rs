@@ -97,7 +97,7 @@ pub use authenticated_physical_queue::{
     M1AuthenticatedPhysicalQueueSubmitFailureV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
     M1EngineQuarantinedAuthenticatedPhysicalQueueCreateFailureV1,
     M1EngineQuarantinedAuthenticatedPhysicalQueueOperationFailureV1,
-    M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1,
+    M1EngineQuarantinedAuthenticatedPhysicalQueueSubmitFailureV1, M1QueueWaitTimeoutV1,
 };
 pub use authenticated_physical_readback::{
     M1AuthenticatedCompletedReadbackJoinFailureV1,

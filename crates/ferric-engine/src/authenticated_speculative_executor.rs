@@ -101,6 +101,7 @@ pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
     coordinator: M1SpeculativeGenerationLoopV1,
     released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 }
 
 /// Clean queue teardown retaining the final logical coordinator state.
@@ -284,6 +285,7 @@ struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
 pub struct M1AuthenticatedSpeculativeRolloverPublishedV1 {
     published: crate::M1AuthenticatedRearmedPublishedQueueV1,
     continuation: M1AuthenticatedSpeculativeRolloverContinuationV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 }
 
 /// Terminal first-round rollover failure without reusable queue authority.
@@ -333,6 +335,7 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         coordinator: M1SpeculativeGenerationLoopV1,
         epoch: CompletionEpoch,
         lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Self {
         Self {
             published,
@@ -341,6 +344,7 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
                 epoch,
                 lineage,
             },
+            queue_wait_timeout,
         }
     }
 
@@ -362,17 +366,19 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         let Self {
             published,
             continuation,
+            queue_wait_timeout,
         } = self;
         let (diagnostic, (continuation, controls)) =
             complete_round_core::<M1NativeRearmedQueueEffectsV1, _, C>(
                 engine,
                 published,
                 (continuation, controls),
+                queue_wait_timeout,
             )
             .map_err(|(stage, disposition)| {
                 M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
             })?;
-        continuation.complete_rollover_round(engine, diagnostic, controls)
+        continuation.complete_rollover_round(engine, diagnostic, queue_wait_timeout, controls)
     }
 }
 
@@ -487,6 +493,7 @@ enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
         runner: M1AuthenticatedPhysicalRunnerV1,
         recipe: AddresslessM1PhysicalBufferRecipeV1,
         ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     },
     Prepublication {
@@ -497,6 +504,7 @@ enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
         recipe: AddresslessM1PhysicalBufferRecipeV1,
         completion: crate::BoundM1CompletionOutputV1,
         ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     },
     QueueCreate {
@@ -504,6 +512,7 @@ enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
         continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
         prepublication: M1AuthenticatedPrepublicationBatchV1,
         ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     },
 }
@@ -731,7 +740,10 @@ trait M1InitialQueueEffectsV1 {
         engine: &mut Engine<C>,
         failure: Self::SubmitFailure,
     ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
-    fn wait(published: Self::Published) -> Result<Self::Completed, Self::WaitFailure>;
+    fn wait(
+        published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::WaitFailure>;
     fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure>;
     fn observe(recycled: Self::Recycled) -> Result<Self::Observed, Self::ObservationFailure>;
     fn close_observation_failure<const C: usize>(
@@ -782,8 +794,11 @@ impl M1InitialQueueEffectsV1 for M1NativeInitialQueueEffectsV1 {
         failure.close_without_authority(engine)
     }
 
-    fn wait(published: Self::Published) -> Result<Self::Completed, Self::WaitFailure> {
-        published.wait()
+    fn wait(
+        published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::WaitFailure> {
+        published.wait_for(timeout.milliseconds())
     }
 
     fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure> {
@@ -839,6 +854,7 @@ fn execute_initial_round_core<A, L, const C: usize>(
     engine: &mut Engine<C>,
     prepared: A::Prepared,
     logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     (A::Diagnostic, L),
     (
@@ -860,7 +876,7 @@ where
             ));
         }
     };
-    let completed = match A::wait(published) {
+    let completed = match A::wait(published, timeout) {
         Ok(completed) => completed,
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -932,6 +948,7 @@ trait M1RearmedQueueEffectsV1 {
     fn wait<const C: usize>(
         engine: &mut Engine<C>,
         published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Result<Self::Completed, Self::ProgressFailure>;
     fn recycle<const C: usize>(
         engine: &mut Engine<C>,
@@ -983,8 +1000,9 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
     fn wait<const C: usize>(
         engine: &mut Engine<C>,
         published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Result<Self::Completed, Self::ProgressFailure> {
-        published.wait(engine)
+        published.wait_for(timeout.milliseconds(), engine)
     }
 
     fn recycle<const C: usize>(
@@ -1013,6 +1031,7 @@ fn complete_round_core<A, L, const C: usize>(
     engine: &mut Engine<C>,
     published: A::Published,
     logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     (A::Diagnostic, L),
     (
@@ -1024,7 +1043,7 @@ where
     A: M1RearmedQueueEffectsV1,
     L: fmt::Debug + 'static,
 {
-    let completed = match A::wait(engine, published) {
+    let completed = match A::wait(engine, published, timeout) {
         Ok(completed) => completed,
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -1061,6 +1080,7 @@ fn execute_round_core<A, L, const C: usize>(
     engine: &mut Engine<C>,
     prepared: A::Prepared,
     logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     (A::Diagnostic, L),
     (
@@ -1083,7 +1103,7 @@ where
             ));
         }
     };
-    complete_round_core::<A, _, C>(engine, published, logical)
+    complete_round_core::<A, _, C>(engine, published, logical, timeout)
 }
 
 trait M1SpeculativeRoundObservationV1: fmt::Debug {
@@ -2896,6 +2916,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
         runner: M1AuthenticatedPhysicalRunnerV1,
         recipe: AddresslessM1PhysicalBufferRecipeV1,
         ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -2908,6 +2929,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
             runner,
             recipe,
             ring_bytes,
+            queue_wait_timeout,
             controls,
         )
     }
@@ -2935,6 +2957,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                 runner,
                 recipe,
                 ring_bytes,
+                queue_wait_timeout,
                 controls,
             } => {
                 drop(diagnostic);
@@ -2945,6 +2968,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                     runner,
                     recipe,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 )
             }
@@ -2956,6 +2980,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                 recipe,
                 completion,
                 ring_bytes,
+                queue_wait_timeout,
                 controls,
             } => {
                 drop(diagnostic);
@@ -2967,6 +2992,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                     recipe,
                     completion,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 )
             }
@@ -2975,6 +3001,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                 continuation,
                 prepublication,
                 ring_bytes,
+                queue_wait_timeout,
                 controls,
             } => {
                 drop(diagnostic);
@@ -2983,6 +3010,7 @@ impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
                     continuation,
                     prepublication,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 )
             }
@@ -3004,6 +3032,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
     runner: M1AuthenticatedPhysicalRunnerV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -3019,6 +3048,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                 runner,
                 recipe,
                 ring_bytes,
+                queue_wait_timeout,
                 controls,
             ),
         ));
@@ -3044,6 +3074,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                             runner,
                             recipe,
                             ring_bytes,
+                            queue_wait_timeout,
                             controls,
                         },
                     ));
@@ -3052,7 +3083,15 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                     return Err(bootstrap_terminal_failure(
                         engine,
                         M1AuthenticatedSpeculativeBootstrapRoundStageV1::WorkspaceAllocation,
-                        (failure, continuation, runner, recipe, ring_bytes, controls),
+                        (
+                            failure,
+                            continuation,
+                            runner,
+                            recipe,
+                            ring_bytes,
+                            queue_wait_timeout,
+                            controls,
+                        ),
                     ));
                 }
             },
@@ -3071,6 +3110,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                     runner,
                     recipe,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 ),
             ));
@@ -3089,6 +3129,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
                     runner,
                     recipe,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 ),
             ));
@@ -3102,6 +3143,7 @@ fn execute_bootstrap_from_allocation<const C: usize>(
         recipe,
         completion,
         ring_bytes,
+        queue_wait_timeout,
         controls,
     )
 }
@@ -3115,6 +3157,7 @@ fn execute_bootstrap_from_prepublication<const C: usize>(
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     completion: crate::BoundM1CompletionOutputV1,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -3131,6 +3174,7 @@ fn execute_bootstrap_from_prepublication<const C: usize>(
                 recipe,
                 completion,
                 ring_bytes,
+                queue_wait_timeout,
                 controls,
             ),
         ));
@@ -3149,12 +3193,20 @@ fn execute_bootstrap_from_prepublication<const C: usize>(
                     recipe,
                     completion,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 },
             ));
         }
     };
-    execute_bootstrap_from_queue_create(engine, continuation, prepublication, ring_bytes, controls)
+    execute_bootstrap_from_queue_create(
+        engine,
+        continuation,
+        prepublication,
+        ring_bytes,
+        queue_wait_timeout,
+        controls,
+    )
 }
 
 fn execute_bootstrap_from_queue_create<const C: usize>(
@@ -3162,6 +3214,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
     continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
     prepublication: M1AuthenticatedPrepublicationBatchV1,
     ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -3171,7 +3224,13 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
         return Err(bootstrap_terminal_failure(
             engine,
             M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
-            (continuation, prepublication, ring_bytes, controls),
+            (
+                continuation,
+                prepublication,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            ),
         ));
     }
     let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(ring_bytes, prepublication) {
@@ -3187,6 +3246,7 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
                     continuation,
                     prepublication: *prepublication,
                     ring_bytes,
+                    queue_wait_timeout,
                     controls,
                 },
             ));
@@ -3195,17 +3255,19 @@ fn execute_bootstrap_from_queue_create<const C: usize>(
             return Err(bootstrap_terminal_failure(
                 engine,
                 M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueCreate,
-                (terminal, continuation, controls),
+                (terminal, continuation, queue_wait_timeout, controls),
             ));
         }
     };
-    let (diagnostic, (continuation, controls)) = execute_initial_round_core::<
-        M1NativeInitialQueueEffectsV1,
-        _,
-        C,
-    >(engine, queue, (continuation, controls))
-    .map_err(|(stage, disposition)| bootstrap_terminal_disposition(stage, disposition))?;
-    continuation.complete_initial_round(engine, diagnostic, controls)
+    let (diagnostic, (continuation, controls)) =
+        execute_initial_round_core::<M1NativeInitialQueueEffectsV1, _, C>(
+            engine,
+            queue,
+            (continuation, controls),
+            queue_wait_timeout,
+        )
+        .map_err(|(stage, disposition)| bootstrap_terminal_disposition(stage, disposition))?;
+    continuation.complete_initial_round(engine, diagnostic, queue_wait_timeout, controls)
 }
 
 #[allow(clippy::unnecessary_box_returns)]
@@ -3236,12 +3298,13 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
         self,
         engine: &mut Engine<C>,
         diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
     > {
-        self.complete_initial_round_pending(engine, diagnostic, controls)
+        self.complete_initial_round_pending(engine, diagnostic, queue_wait_timeout, controls)
             .map_err(|failure| close_pending_bootstrap_failure(engine, failure))
     }
 
@@ -3249,6 +3312,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
         self,
         engine: &mut Engine<C>,
         diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -3520,6 +3584,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 coordinator,
                 released,
                 lineage,
+                queue_wait_timeout,
             },
             outcome,
             choices,
@@ -3534,6 +3599,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
@@ -3541,7 +3607,7 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     let prepared =
         prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
             .map_err(map_rearmed_coordinator_preparation_failure)?;
-    complete_authenticated_rearmed_speculative_round_prepared(engine, prepared)
+    complete_authenticated_rearmed_speculative_round_prepared(engine, prepared, queue_wait_timeout)
 }
 
 #[allow(clippy::unnecessary_box_returns)]
@@ -3604,6 +3670,7 @@ fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
     prepared: M1PreparedCoordinatorRoundCoreV1<
         crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
     >,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
@@ -3709,6 +3776,7 @@ fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
                     coordinator,
                     released,
                     lineage,
+                    queue_wait_timeout,
                 },
                 outcome,
                 choices,
@@ -3765,6 +3833,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
         self,
         engine: &mut Engine<C>,
         diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
@@ -3791,14 +3860,17 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
                 };
                 close_pending_rollover_failure(engine, pending)
             })?;
-        complete_authenticated_rearmed_speculative_round_prepared(engine, prepared).map_err(
-            |failure| {
-                close_pending_rollover_failure(
-                    engine,
-                    PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(failure),
-                )
-            },
+        complete_authenticated_rearmed_speculative_round_prepared(
+            engine,
+            prepared,
+            queue_wait_timeout,
         )
+        .map_err(|failure| {
+            close_pending_rollover_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(failure),
+            )
+        })
     }
 
     fn complete_rollover_round_pending<D, const C: usize>(
@@ -4164,6 +4236,12 @@ fn terminal_quarantine<const C: usize>(
 }
 
 impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
+    /// Returns the wall-clock budget retained for every queue generation.
+    #[must_use]
+    pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
+        self.queue_wait_timeout
+    }
+
     #[must_use]
     pub const fn selection(&self) -> Qwen3PlanSelection {
         self.coordinator.shape().selection()
@@ -4201,6 +4279,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             coordinator,
             released,
             lineage,
+            queue_wait_timeout: _,
         } = self;
         match released.destroy_queue_and_retain_round(engine) {
             Ok(released) => Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
@@ -4286,6 +4365,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             coordinator,
             released,
             lineage,
+            queue_wait_timeout,
         } = this;
         let epoch = match released
             .current_released()
@@ -4303,6 +4383,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         coordinator,
                         released,
                         lineage,
+                        queue_wait_timeout,
                     },
                     inputs,
                 ));
@@ -4318,6 +4399,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         coordinator,
                         released,
                         lineage,
+                        queue_wait_timeout,
                     },
                     inputs,
                 ));
@@ -4330,6 +4412,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     coordinator,
                     released,
                     lineage,
+                    queue_wait_timeout,
                 },
                 inputs,
             ));
@@ -4350,6 +4433,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         coordinator,
                         released,
                         lineage,
+                        queue_wait_timeout,
                     },
                     M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
                         kv,
@@ -4445,6 +4529,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 engine,
                 (prepared, recipe),
                 (coordinator, binding, controls, lineage),
+                queue_wait_timeout,
             )
             .map_err(|(stage, disposition)| {
                 Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
@@ -4462,6 +4547,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             diagnostic,
             controls,
             lineage,
+            queue_wait_timeout,
         )
     }
 }
@@ -4474,6 +4560,10 @@ mod tests {
         validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan,
     };
+
+    fn model_queue_wait_timeout() -> crate::M1QueueWaitTimeoutV1 {
+        crate::M1QueueWaitTimeoutV1::new(1_000).expect("model wait timeout is nonzero")
+    }
 
     use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
     use crate::authenticated_test_runtime::{
@@ -4541,7 +4631,10 @@ mod tests {
             close_model_submit_failure(failure)
         }
 
-        fn wait(published: Self::Published) -> Result<Self::Completed, Self::WaitFailure> {
+        fn wait(
+            published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
+        ) -> Result<Self::Completed, Self::WaitFailure> {
             published.wait()
         }
 
@@ -4616,6 +4709,7 @@ mod tests {
         fn wait<const C: usize>(
             _engine: &mut Engine<C>,
             published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
         ) -> Result<Self::Completed, Self::ProgressFailure> {
             published.wait()
         }
@@ -4742,6 +4836,7 @@ mod tests {
         fn wait<const C: usize>(
             _engine: &mut Engine<C>,
             published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
         ) -> Result<Self::Completed, Self::ProgressFailure> {
             let ModelRolloverPublishedQueueV1 {
                 queue,
@@ -5109,6 +5204,7 @@ mod tests {
                     &mut engine,
                     ModelPreparedQueueV1::new(queue.clone()),
                     (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = prepare_coordinator_round_core(
@@ -5144,6 +5240,7 @@ mod tests {
                     &mut engine,
                     ModelPreparedQueueV1::new(queue.clone()),
                     (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = prepare_coordinator_round_core(
@@ -5187,6 +5284,7 @@ mod tests {
                         checked_epoch: rollover_epoch,
                     },
                     (continuation, rollover_controls),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = continuation
@@ -5249,6 +5347,7 @@ mod tests {
                         checked_epoch: epoch,
                     },
                     (continuation, controls),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = continuation
@@ -5289,6 +5388,7 @@ mod tests {
                 &mut engine,
                 ModelPreparedQueueV1::new(queue.clone()),
                 "retained logical",
+                model_queue_wait_timeout(),
             )
             .unwrap_err();
             assert!(engine.is_faulted());
@@ -5314,6 +5414,7 @@ mod tests {
                     &mut engine,
                     ModelPreparedQueueV1::new(queue.clone()),
                     "retained bootstrap",
+                    model_queue_wait_timeout(),
                 )
                 .unwrap_err();
             assert_eq!(
@@ -5341,6 +5442,7 @@ mod tests {
             &mut engine,
             ModelPreparedQueueV1::new(queue.clone()),
             "published logical custody",
+            model_queue_wait_timeout(),
         )
         .unwrap_err();
         assert_eq!(stage, M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait);
@@ -5387,6 +5489,7 @@ mod tests {
                     &mut engine,
                     ModelPreparedQueueV1::new(queue.clone()),
                     (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = prepare_coordinator_round_core(
@@ -5424,6 +5527,7 @@ mod tests {
                     &mut engine,
                     ModelPreparedQueueV1::new(queue.clone()),
                     (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
                 )
                 .unwrap();
             let prepared = prepare_coordinator_round_core(

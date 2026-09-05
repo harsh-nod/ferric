@@ -129,6 +129,8 @@ pub enum M1CompletionProgressWaitTerminalReasonV1 {
     ConsecutiveScansWithoutProgress,
     /// The checked whole-policy scan bound was exhausted.
     TotalScanBoundReached,
+    /// The configured monotonic wall-clock deadline was reached.
+    WallClockDeadlineReached,
     /// The whole-policy scan bound could not be represented.
     TotalScanBoundOverflow,
 }
@@ -5533,6 +5535,17 @@ fn completion_progress_diagnostic(
     }
 }
 
+fn terminalize_completion_progress_policy<P, C, E>(
+    pending: P,
+    diagnostic: M1CompletionProgressWaitDiagnosticV1,
+    terminalize: impl FnOnce(P) -> Result<C, E>,
+) -> Result<C, CompletionProgressWaitFailureV1<E>> {
+    match terminalize(pending) {
+        Ok(completed) => Ok(completed),
+        Err(lower) => Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }),
+    }
+}
+
 fn validate_completion_progress_observation(
     progress: M1CompletionProgressObservationV1,
     expected_packet_count: u16,
@@ -5570,20 +5583,20 @@ fn validate_completion_progress_observation(
     Ok(())
 }
 
-pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
+fn wait_with_completion_progress_policy_core<const N: usize, P, C, E>(
     pending: P,
     maximum_consecutive_stalled_scans: u32,
     mut poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,
     mut pace_pending_scan: impl FnMut(),
-    terminalize: impl FnOnce(P) -> E,
+    mut wall_clock_deadline_reached: impl FnMut() -> bool,
+    terminalize: impl FnOnce(P) -> Result<C, E>,
 ) -> Result<C, CompletionProgressWaitFailureV1<E>> {
     let expected_packet_count = match u16::try_from(N) {
         Ok(packet_count) => packet_count,
         Err(_) => {
-            let lower = terminalize(pending);
-            return Err(CompletionProgressWaitFailureV1::Policy {
-                lower,
-                diagnostic: completion_progress_diagnostic(
+            return terminalize_completion_progress_policy(
+                pending,
+                completion_progress_diagnostic(
                     M1CompletionProgressWaitTerminalReasonV1::PacketCountNotRepresentable,
                     0,
                     0,
@@ -5591,17 +5604,17 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                     0,
                     None,
                 ),
-            });
+                terminalize,
+            );
         }
     };
     let total_scan_bound =
         match checked_completion_progress_total_scan_bound(N, maximum_consecutive_stalled_scans) {
             Some(bound) => bound,
             None => {
-                let lower = terminalize(pending);
-                return Err(CompletionProgressWaitFailureV1::Policy {
-                    lower,
-                    diagnostic: completion_progress_diagnostic(
+                return terminalize_completion_progress_policy(
+                    pending,
+                    completion_progress_diagnostic(
                         M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundOverflow,
                         0,
                         0,
@@ -5609,14 +5622,14 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                         0,
                         None,
                     ),
-                });
+                    terminalize,
+                );
             }
         };
     if total_scan_bound == 0 {
-        let lower = terminalize(pending);
-        return Err(CompletionProgressWaitFailureV1::Policy {
-            lower,
-            diagnostic: completion_progress_diagnostic(
+        return terminalize_completion_progress_policy(
+            pending,
+            completion_progress_diagnostic(
                 M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundReached,
                 0,
                 0,
@@ -5624,14 +5637,30 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                 0,
                 None,
             ),
-        });
+            terminalize,
+        );
     }
 
     let mut pending = pending;
     let mut scans_performed = 0_u32;
     let mut consecutive_scans_without_progress = 0_u32;
     let mut completed_count_high_water = 0_u16;
+    let mut last_observation = None;
     loop {
+        if wall_clock_deadline_reached() {
+            return terminalize_completion_progress_policy(
+                pending,
+                completion_progress_diagnostic(
+                    M1CompletionProgressWaitTerminalReasonV1::WallClockDeadlineReached,
+                    scans_performed,
+                    consecutive_scans_without_progress,
+                    Some(total_scan_bound),
+                    completed_count_high_water,
+                    last_observation,
+                ),
+                terminalize,
+            );
+        }
         let outcome = poll(pending).map_err(CompletionProgressWaitFailureV1::Lower)?;
         scans_performed = scans_performed
             .checked_add(1)
@@ -5660,10 +5689,9 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
             false,
             completed_count_high_water,
         ) {
-            let lower = terminalize(next);
-            return Err(CompletionProgressWaitFailureV1::Policy {
-                lower,
-                diagnostic: completion_progress_diagnostic(
+            return terminalize_completion_progress_policy(
+                next,
+                completion_progress_diagnostic(
                     reason,
                     scans_performed,
                     consecutive_scans_without_progress,
@@ -5671,8 +5699,10 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                     completed_count_high_water,
                     Some(progress),
                 ),
-            });
+                terminalize,
+            );
         }
+        last_observation = Some(progress);
         pending = next;
         if progress.completed_count > completed_count_high_water {
             completed_count_high_water = progress.completed_count;
@@ -5687,14 +5717,15 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
             Some(M1CompletionProgressWaitTerminalReasonV1::ConsecutiveScansWithoutProgress)
         } else if scans_performed >= total_scan_bound {
             Some(M1CompletionProgressWaitTerminalReasonV1::TotalScanBoundReached)
+        } else if wall_clock_deadline_reached() {
+            Some(M1CompletionProgressWaitTerminalReasonV1::WallClockDeadlineReached)
         } else {
             None
         };
         if let Some(reason) = reason {
-            let lower = terminalize(pending);
-            return Err(CompletionProgressWaitFailureV1::Policy {
-                lower,
-                diagnostic: completion_progress_diagnostic(
+            return terminalize_completion_progress_policy(
+                pending,
+                completion_progress_diagnostic(
                     reason,
                     scans_performed,
                     consecutive_scans_without_progress,
@@ -5702,10 +5733,48 @@ pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
                     completed_count_high_water,
                     Some(progress),
                 ),
-            });
+                terminalize,
+            );
         }
         pace_pending_scan();
     }
+}
+
+pub(crate) fn wait_with_completion_progress_policy<const N: usize, P, C, E>(
+    pending: P,
+    maximum_consecutive_stalled_scans: u32,
+    poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,
+    pace_pending_scan: impl FnMut(),
+    terminalize: impl FnOnce(P) -> E,
+) -> Result<C, CompletionProgressWaitFailureV1<E>> {
+    wait_with_completion_progress_policy_core::<N, _, _, _>(
+        pending,
+        maximum_consecutive_stalled_scans,
+        poll,
+        pace_pending_scan,
+        || false,
+        |pending| Err(terminalize(pending)),
+    )
+}
+
+pub(crate) fn wait_with_completion_progress_deadline_policy<const N: usize, P, C, E>(
+    pending: P,
+    maximum_consecutive_stalled_scans: u32,
+    timeout_ms: u32,
+    poll: impl FnMut(P) -> Result<CompletionProgressPollV1<P, C>, E>,
+    pace_pending_scan: impl FnMut(),
+    terminalize: impl FnOnce(P) -> Result<C, E>,
+) -> Result<C, CompletionProgressWaitFailureV1<E>> {
+    let started = std::time::Instant::now();
+    let timeout = std::time::Duration::from_millis(u64::from(timeout_ms));
+    wait_with_completion_progress_policy_core::<N, _, _, _>(
+        pending,
+        maximum_consecutive_stalled_scans,
+        poll,
+        pace_pending_scan,
+        || started.elapsed() >= timeout,
+        terminalize,
+    )
 }
 
 fn wait_case<const N: usize>(
@@ -5744,6 +5813,55 @@ fn wait_case<const N: usize>(
             Ok(_) => unreachable!("a zero-scan lower wait cannot complete a published batch"),
             Err(lower) => lower,
         },
+    );
+    match completed {
+        Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
+            lower, custody, step,
+        ))),
+        Err(CompletionProgressWaitFailureV1::Lower(lower)) => {
+            Err(operation_failure(shape, step, lower, custody))
+        }
+        Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => Err(
+            operation_failure_with_completion_progress(shape, step, lower, custody, diagnostic),
+        ),
+    }
+}
+
+fn wait_for_case<const N: usize>(
+    case: Box<M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<N>>>,
+    shape: M1PhysicalFixedBatchShapeV1,
+    timeout_ms: u32,
+) -> Result<
+    Box<M1PhysicalQueuePhaseCaseV1<ServiceCompletedQueueSessionV1<N>>>,
+    M1PhysicalQueueOperationFailureV1,
+> {
+    let (lower, custody, step) = (*case).into_parts();
+    let completed = wait_with_completion_progress_deadline_policy::<N, _, _, _>(
+        lower,
+        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+        timeout_ms,
+        |published| {
+            published.poll_with_progress().map(|outcome| match outcome {
+                ServiceQueuePollWithProgressV1::Pending { session, progress } => {
+                    CompletionProgressPollV1::Pending {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
+                }
+                ServiceQueuePollWithProgressV1::Ready { session, progress } => {
+                    CompletionProgressPollV1::Ready {
+                        session,
+                        progress: M1CompletionProgressObservationV1::from_service(progress),
+                    }
+                }
+            })
+        },
+        || {
+            std::thread::sleep(std::time::Duration::from_micros(
+                M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1,
+            ));
+        },
+        |published| published.wait_for(0),
     );
     match completed {
         Ok(lower) => Ok(Box::new(M1PhysicalQueuePhaseCaseV1::new(
@@ -5977,6 +6095,44 @@ impl M1PhysicalPublishedQueueSessionV1 {
                 wait_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
                     .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK16)
             }
+        }
+    }
+
+    /// Waits under both Ferric's completion-progress policy and a monotonic
+    /// relative millisecond deadline.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal generic quarantine paired with exact Ferric custody.
+    /// A policy terminal condition consumes the published lower owner through
+    /// the race-aware KFD `wait_for(0)` path.
+    pub fn wait_for(
+        self,
+        timeout_ms: u32,
+    ) -> Result<M1PhysicalCompletedQueueSessionV1, M1PhysicalQueueOperationFailureV1> {
+        match self {
+            Self::TargetOnly(case) => {
+                wait_for_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly, timeout_ms)
+                    .map(M1PhysicalCompletedQueueSessionV1::TargetOnly)
+            }
+            Self::PairedPrefill(case) => {
+                wait_for_case(case, M1PhysicalFixedBatchShapeV1::PairedPrefill, timeout_ms)
+                    .map(M1PhysicalCompletedQueueSessionV1::PairedPrefill)
+            }
+            Self::SpeculativeK4(case) => {
+                wait_for_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK4, timeout_ms)
+                    .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK4)
+            }
+            Self::SpeculativeK8(case) => {
+                wait_for_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK8, timeout_ms)
+                    .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK8)
+            }
+            Self::SpeculativeK16(case) => wait_for_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                timeout_ms,
+            )
+            .map(M1PhysicalCompletedQueueSessionV1::SpeculativeK16),
         }
     }
 }
@@ -7212,12 +7368,13 @@ mod tests {
         checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
         read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
         validate_generic_observed_semantics, wait_with_completion_progress_policy,
-        CompletionProgressPollV1, CompletionProgressWaitFailureV1,
-        CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
-        M1CompletionEvidenceJoinAuthorityV1, M1CompletionProgressObservationV1,
-        M1CompletionProgressWaitDiagnosticV1, M1CompletionProgressWaitTerminalReasonV1,
-        M1DiagnosticChoiceCopyCustodyV1, M1DiagnosticChoiceReadBackendV1,
-        M1PhysicalFixedBatchShapeV1, M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
+        wait_with_completion_progress_policy_core, CompletionProgressPollV1,
+        CompletionProgressWaitFailureV1, CompletionWireSemanticExpectation,
+        M1CompletedOutputCheckErrorV1, M1CompletionEvidenceJoinAuthorityV1,
+        M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
+        M1CompletionProgressWaitTerminalReasonV1, M1DiagnosticChoiceCopyCustodyV1,
+        M1DiagnosticChoiceReadBackendV1, M1PhysicalFixedBatchShapeV1,
+        M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
         M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
     };
     use crate::Engine;
@@ -7453,6 +7610,98 @@ mod tests {
         assert_eq!(diagnostic.consecutive_scans_without_progress(), 3);
         assert_eq!(diagnostic.completed_count_high_water(), 0);
         assert_eq!(diagnostic.last_observation(), Some(progress));
+    }
+
+    #[test]
+    fn bounded_progress_stall_wins_before_a_later_wall_deadline() {
+        let progress = pending_progress::<2>(0, 0);
+        let events = [progress, progress];
+        let cursor = Cell::new(0_usize);
+        let deadline_checks = Cell::new(0_u32);
+        let result: Result<u32, CompletionProgressWaitFailureV1<MockPollFailureV1>> =
+            wait_with_completion_progress_policy_core::<2, _, _, _>(
+                0_u32,
+                2,
+                |owner| {
+                    let index = cursor.get();
+                    cursor.set(index + 1);
+                    Ok(CompletionProgressPollV1::Pending {
+                        session: owner + 1,
+                        progress: events[index],
+                    })
+                },
+                || {},
+                || {
+                    deadline_checks.set(deadline_checks.get() + 1);
+                    false
+                },
+                |owner| Err(MockPollFailureV1::Terminalized(owner)),
+            );
+        let Err(CompletionProgressWaitFailureV1::Policy { diagnostic, .. }) = result else {
+            panic!("combined wait must retain the progress-stall terminal condition");
+        };
+        assert_eq!(cursor.get(), 2);
+        assert_eq!(
+            diagnostic.reason(),
+            M1CompletionProgressWaitTerminalReasonV1::ConsecutiveScansWithoutProgress
+        );
+    }
+
+    #[test]
+    fn bounded_wall_deadline_terminates_despite_changing_progress() {
+        let events = [pending_progress::<3>(0, 0), pending_progress::<3>(1, 1)];
+        let cursor = Cell::new(0_usize);
+        let deadline_checks = Cell::new(0_u32);
+        let result: Result<u32, CompletionProgressWaitFailureV1<MockPollFailureV1>> =
+            wait_with_completion_progress_policy_core::<3, _, _, _>(
+                0_u32,
+                100,
+                |owner| {
+                    let index = cursor.get();
+                    cursor.set(index + 1);
+                    Ok(CompletionProgressPollV1::Pending {
+                        session: owner + 1,
+                        progress: events[index],
+                    })
+                },
+                || {},
+                || {
+                    let next = deadline_checks.get() + 1;
+                    deadline_checks.set(next);
+                    next >= 4
+                },
+                |owner| Err(MockPollFailureV1::Terminalized(owner)),
+            );
+        let Err(CompletionProgressWaitFailureV1::Policy { diagnostic, .. }) = result else {
+            panic!("changing progress must not extend the absolute wall deadline");
+        };
+        assert_eq!(cursor.get(), 2);
+        assert_eq!(diagnostic.completed_count_high_water(), 1);
+        assert_eq!(
+            diagnostic.reason(),
+            M1CompletionProgressWaitTerminalReasonV1::WallClockDeadlineReached
+        );
+    }
+
+    #[test]
+    fn deadline_terminalizer_completion_race_returns_completed_custody() {
+        let polled = Cell::new(false);
+        let result = wait_with_completion_progress_policy_core::<1, _, _, MockPollFailureV1>(
+            7_u32,
+            3,
+            |_owner| {
+                polled.set(true);
+                unreachable!("an already-expired deadline cannot start another progress scan")
+            },
+            || {},
+            || true,
+            |owner| Ok(owner + 1),
+        );
+        let Ok(completed) = result else {
+            panic!("deadline terminalizer completion must win the race");
+        };
+        assert_eq!(completed, 8);
+        assert!(!polled.get());
     }
 
     #[test]
