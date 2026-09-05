@@ -30,7 +30,7 @@ PLAN_NONCLAIM = (
     "This bundle allocates external M1 evidence work only. It is not an evidence "
     "index, qualification receipt, validation result, or M1 closure claim."
 )
-ALLOCATION_SHA256 = "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
+ALLOCATION_SHA256 = "c4d88d1997e2809507c6b5ceddbfaf0ba54f9252c49fe30edf90743f5c9c0608"
 COMPLETION_FORMAT = "FERRIC-M1-EVIDENCE-WORK-COMPLETION-V1"
 COMPLETION_AUTHORITY = "authenticated-qualification-work-completion"
 TARGET = "gfx942:xnack-"

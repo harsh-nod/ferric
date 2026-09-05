@@ -56,7 +56,7 @@ HARDWARE_TEST_TSV_SHA256 = (
     "b860743335a8be9deb576f82b17612c0a009b6caf7adad86b5f34d6500f1e480"
 )
 FERRIC_BASE_COMMIT = "c5a86fd56c1c817664593df25c04bbed30e84971"
-ALLOCATION_SHA256 = "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
+ALLOCATION_SHA256 = "c4d88d1997e2809507c6b5ceddbfaf0ba54f9252c49fe30edf90743f5c9c0608"
 TCB = (
     ("tcb.compiler", "Compiler"),
     ("tcb.hardware", "Hardware"),

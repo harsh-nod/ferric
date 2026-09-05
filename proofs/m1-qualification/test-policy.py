@@ -794,7 +794,7 @@ def main() -> None:
     ]:
         fail("M1 binding slot IDs are not stable and sequential")
     expected_allocation = (
-        "c7b605cfe2b553c7e18eded057a735beea040626d28ee5a66f8cdec0b8e70df7"
+        "c4d88d1997e2809507c6b5ceddbfaf0ba54f9252c49fe30edf90743f5c9c0608"
     )
     actual_allocation = planner.digest_bytes(planner.allocation_tsv(first))
     if actual_allocation != expected_allocation:
@@ -802,6 +802,98 @@ def main() -> None:
             "M1 binding allocation golden identity drifted "
             f"(expected={expected_allocation}, actual={actual_allocation})"
         )
+    post_r33_resource_bounded = [
+        (
+            ordinal,
+            first[ordinal]["binding"]["obligation_class"],
+            first[ordinal]["binding"]["obligation_id"],
+            first[ordinal]["binding"]["profile_id"],
+            first[ordinal]["binding"]["evidence_kind"],
+            first[ordinal]["binding"]["path_id"],
+            tuple(first[ordinal]["foundation_selectors"]),
+        )
+        for ordinal in (263, 264, 267, 268, 283, 284)
+    ]
+    if post_r33_resource_bounded != [
+        (
+            263,
+            "Assurance",
+            "resource_bounded",
+            "composition",
+            "negative-mutation",
+            "serving-bench",
+            ("r33-daemon-measure-order", "r33-daemon-response-abandonment"),
+        ),
+        (
+            264,
+            "Assurance",
+            "resource_bounded",
+            "composition",
+            "verus-theorem",
+            "serving-bench",
+            (
+                "r33-daemon-dispatch-refinement",
+                "r33-daemon-fault-stop-replay",
+                "r33-daemon-response-refinement",
+                "r33-daemon-successful-lifecycle",
+            ),
+        ),
+        (
+            267,
+            "Assurance",
+            "resource_bounded",
+            "runtime",
+            "negative-mutation",
+            "serving-bench",
+            ("r33-daemon-measure-order", "r33-daemon-response-abandonment"),
+        ),
+        (
+            268,
+            "Assurance",
+            "resource_bounded",
+            "runtime",
+            "verus-theorem",
+            "serving-bench",
+            (
+                "r33-daemon-dispatch-refinement",
+                "r33-daemon-fault-stop-replay",
+                "r33-daemon-response-refinement",
+                "r33-daemon-successful-lifecycle",
+            ),
+        ),
+        (
+            283,
+            "Assurance",
+            "resource_bounded",
+            "runtime",
+            "independent-validator",
+            "serving-bench",
+            (),
+        ),
+        (
+            284,
+            "Assurance",
+            "resource_bounded",
+            "runtime",
+            "performance-gate",
+            "weight-stream",
+            (),
+        ),
+    ]:
+        fail("post-R33 resource_bounded allocation topology drifted")
+    hostile_allocation = copy.deepcopy(first)
+    hostile_allocation[263]["binding"]["path_id"] = "kernel-schedule-catalog"
+    if planner.digest_bytes(planner.allocation_tsv(hostile_allocation)) == expected_allocation:
+        fail("M1 allocation golden accepted a hostile post-R33 path substitution")
+    r33_serving_performance = first[167]["binding"]
+    if (
+        r33_serving_performance["obligation_class"],
+        r33_serving_performance["obligation_id"],
+        r33_serving_performance["profile_id"],
+        r33_serving_performance["evidence_kind"],
+        r33_serving_performance["path_id"],
+    ) != ("Roadmap", "m1.r33", "qualification", "performance-gate", "serving-bench"):
+        fail("M1 R33 serving performance allocation drifted")
     model_bundle = [
         slot
         for slot in assurance
@@ -1228,7 +1320,7 @@ def main() -> None:
             + "\n"
         )
     if planner.digest_bytes("".join(independent_rows).encode("ascii")) != (
-        "9f498e51a3dd5b0ab3576f27dcd8d584512fa4dd29859f2fb4e9c0c91edacd9e"
+        "8413d0228d8945cac6c25fbed9fcd3bbe7d9378a783729606e733a486546db12"
     ):
         fail("M1 independent-validator allocation topology drifted")
 
@@ -1284,7 +1376,7 @@ def main() -> None:
             + "\n"
         )
     if planner.digest_bytes("".join(performance_rows).encode("ascii")) != (
-        "0901f56b657064ba46bacf72435e8756975257bda5a7485eb6db46d2e62f3812"
+        "b1848d5886bfb16471add365fdb6506d685f701d1e00ee34e69b46daeb915323"
     ):
         fail("M1 performance-gate allocation topology drifted")
 
