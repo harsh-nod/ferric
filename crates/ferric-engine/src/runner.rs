@@ -796,6 +796,17 @@ pub(crate) fn derive_physical_step_recipe(
 /// Production binding failure retaining authenticated programs and publication.
 #[must_use = "runner binding rejection retains every exact input"]
 pub enum M1PhysicalRunnerBindFailureV1 {
+    /// The generated declaration asserted a different executable catalog.
+    ExecutableCatalog {
+        /// Exact authenticated Worker V3 program catalog identity.
+        expected: Identity,
+        /// Executable catalog asserted by the generated declaration.
+        actual: Identity,
+        /// Unchanged authenticated program owner.
+        programs: Box<crate::M1AuthenticatedWorkerV3ProgramSetV1>,
+        /// Unchanged published declaration owner.
+        publication: Box<PublishedRunnerDeclaration>,
+    },
     /// Canonical operation derivation rejected before consuming the publication.
     Canonical {
         error: OperationKernelPlanError,
@@ -812,6 +823,13 @@ pub enum M1PhysicalRunnerBindFailureV1 {
 impl fmt::Debug for M1PhysicalRunnerBindFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::ExecutableCatalog {
+                expected, actual, ..
+            } => formatter
+                .debug_struct("ExecutableCatalog")
+                .field("expected", expected)
+                .field("actual", actual)
+                .finish_non_exhaustive(),
             Self::Canonical { error, .. } => {
                 formatter.debug_tuple("Canonical").field(error).finish()
             }
@@ -835,6 +853,16 @@ pub fn bind_m1_physical_runner_v1(
     programs: crate::M1AuthenticatedWorkerV3ProgramSetV1,
     publication: PublishedRunnerDeclaration,
 ) -> Result<M1AuthenticatedPhysicalRunnerV1, M1PhysicalRunnerBindFailureV1> {
+    let expected = programs.catalog_id();
+    let actual = publication.executable_catalog_id();
+    if !expected.equals(&actual) {
+        return Err(M1PhysicalRunnerBindFailureV1::ExecutableCatalog {
+            expected,
+            actual,
+            programs: Box::new(programs),
+            publication: Box::new(publication),
+        });
+    }
     let runner = LogicalRunnerDeclaration::from_published(publication);
     let families = programs.family_artifacts().to_vec().into_boxed_slice();
     let operations = match derive_canonical_operation_bindings(&runner, &families) {
