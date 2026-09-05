@@ -90,7 +90,7 @@ runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#onig_
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#pkg-config@0.3.34|none
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.107|default,proc-macro,span-locations
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#quote@1.0.47|default,proc-macro
-runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,event,fs,mm,net,param,pipe,process,std,thread
+runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4|alloc,default,event,fs,mm,net,param,pipe,process,rand,std,thread
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde@1.0.229|alloc,default,derive,serde_derive,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_core@1.0.229|alloc,result,std
 runtime-tcb=features=registry+https://github.com/rust-lang/crates.io-index#serde_derive@1.0.229|default
