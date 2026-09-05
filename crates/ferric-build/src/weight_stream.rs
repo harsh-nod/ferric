@@ -2045,7 +2045,7 @@ const fn map_manifest_build_error(error: ManifestBuildError) -> WeightStreamErro
     }
 }
 
-#[cfg(feature = "test-fixtures")]
+#[cfg(any(test, feature = "test-fixtures"))]
 pub(crate) mod test_fixtures {
     use super::{
         finish_prepacked, parse_header, PrepackedWeightSet, WeightSection, WeightTransform,
@@ -2174,6 +2174,7 @@ pub(crate) mod tests {
     };
     use std::io::{self, Cursor, Read, Write};
 
+    const WEIGHT_STREAM_SOURCE: &str = include_str!("weight_stream.rs");
     const HEADER: &[u8] = b"{}";
     const TARGET_HEADERS: [&[u8]; 5] = [
         include_bytes!("fixtures/safetensors/qwen3-8b-00001.header.json"),
@@ -2183,6 +2184,56 @@ pub(crate) mod tests {
         include_bytes!("fixtures/safetensors/qwen3-8b-00005.header.json"),
     ];
     const DRAFT_HEADER: &[u8] = include_bytes!("fixtures/safetensors/qwen3-06b.header.json");
+
+    fn unique_source_offset(source: &str, needle: &str) -> usize {
+        let mut matches = source.match_indices(needle);
+        let Some((offset, _)) = matches.next() else {
+            panic!("source-policy anchor is absent: {needle}");
+        };
+        assert!(
+            matches.next().is_none(),
+            "source-policy anchor is not unique: {needle}"
+        );
+        offset
+    }
+
+    /// Syntactic placement guard only; this is not independent proof evidence.
+    #[test]
+    fn source_policy_pins_role_byte_in_section_and_manifest_header() {
+        let tests_marker = ["#[cfg(test)]", "pub(crate) mod tests {"].join("\n");
+        let tests_start = unique_source_offset(WEIGHT_STREAM_SOURCE, &tests_marker);
+        let production = &WEIGHT_STREAM_SOURCE[..tests_start];
+        let role_code = unique_source_offset(production, "const fn role_code(");
+        let section_start = unique_source_offset(production, "fn append_manifest_section(");
+        let section_end = unique_source_offset(production, "fn append_manifest_sections(");
+        let header_start = unique_source_offset(production, "fn encode_manifest_record_verified(");
+        let header_end = unique_source_offset(production, "fn build_weight_manifest_verified(");
+        let section = &production[section_start..section_end];
+        let header = &production[header_start..header_end];
+
+        let tensor_name = unique_source_offset(
+            section,
+            "append_length_prefixed_bytes(record, tensor_name.as_bytes())",
+        );
+        let section_role = unique_source_offset(section, "record.push(role_code(section.role));");
+        let section_dtype =
+            unique_source_offset(section, "record.push(dtype_code(section.dtype));");
+        let version = unique_source_offset(
+            header,
+            "append_u32(&mut record, PREPACKED_WEIGHT_MANIFEST_VERSION);",
+        );
+        let header_role = unique_source_offset(header, "record.push(role_code(role));");
+        let weights =
+            unique_source_offset(header, "append_bytes(&mut record, &descriptor.weights_id);");
+
+        assert!(role_code < section_start);
+        assert!(role_code < header_start);
+        assert!(tensor_name < section_role);
+        assert!(section_role < section_dtype);
+        assert!(version < header_role);
+        assert!(header_role < weights);
+    }
+
     const TENSOR_BYTES: u64 = 2_048;
     const TOTAL_BYTES: u64 = TENSOR_BYTES * 2;
 

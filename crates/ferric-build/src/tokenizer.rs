@@ -643,7 +643,7 @@ fn unexpected(path: &str) -> TokenizerError {
     TokenizerError::UnexpectedValue(path.to_owned())
 }
 
-#[cfg(feature = "test-fixtures")]
+#[cfg(any(test, feature = "test-fixtures"))]
 pub(crate) mod test_fixtures {
     use super::{
         parse_tokenizer_json, AuthenticatedTokenizer, AuthenticatedTokenizerSeal,

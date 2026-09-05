@@ -10,6 +10,7 @@ closure status.
 | `artifact-manifest-commitment-digest` | `auth::validate_manifest_commitment_verified` | the canonical manifest digest must exactly match the retained aggregate identity | `artifact_authenticated` / `bundle-auth` |
 | `batching-publish-once` | `continuous_batching::apply_continuous_publish_step` | first publication succeeds; repeated publication is rejected | `scheduler_refined` / `batching-proof` |
 | `batching-request-routing` | `continuous_batching::apply_continuous_batch_step` | stale generations are rejected without state change | `scheduler_refined` / `scheduler-proof` |
+| `canonical-weight-role-byte` | `weight_stream::role_code` | target and draft retain distinct exact bytes in manifest headers and section records | `model_bundle_well_formed` / `weight-stream` |
 | `exact-completion-successor` | `completion::check_exact_next` | only the exact successor epoch succeeds; replay, skip, and exhaustion reject | `scheduler_refined` / `physical-runner` |
 | `graph-operator-order` | `graph::expected_step` | every layer uses the exact operator order | `graph_refined` / `graph-proof` |
 | `graph-role-step-count` | `graph::plan_step_count` | target and draft retain their exact distinct counts | `graph_refined` / `graph-proof` |

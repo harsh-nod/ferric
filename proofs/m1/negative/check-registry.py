@@ -52,6 +52,13 @@ EXPECTED = {
         "continuous_batching", "apply_continuous_batch_step",
         "stale-generation-rejection",
     ),
+    "canonical-weight-role-byte": (
+        "canonical-weight-role-byte", "model_bundle_well_formed",
+        "weight-stream", "ferric-build",
+        "crates/ferric-build/src/weight_stream.rs",
+        "canonical-weight-role-byte.py", "postcondition", "weight_stream",
+        "role_code", "exact-draft-role-byte",
+    ),
     "exact-completion-successor": (
         "exact-completion-successor", "scheduler_refined", "physical-runner",
         "ferric-spec", "crates/ferric-spec/src/completion.rs",

@@ -27,6 +27,10 @@ its mathematical result for success, replay, skip, and exhausted epochs. A
 separate syntactic source guard pins that check inside immutable engine
 preflight; neither statement proves the full scheduler refinement or device
 completion authority.
+The canonical weight-role row proves only that the executable target/draft
+role byte equals its two-arm specification. Its manifest-header and section
+call sites are pinned separately by a syntactic test; this does not prove full
+bundle well-formedness, digest authentication, or weight layout.
 The lifetime row selects the production-facing terminal page-release theorem,
 which calls the executable Ferric release body and proves only exact quiescence,
 source physical-metadata retirement, and generation-safe release. It does not

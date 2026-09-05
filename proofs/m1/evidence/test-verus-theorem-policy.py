@@ -617,7 +617,7 @@ def main() -> None:
         fail(f"usage: {sys.argv[0]} REPO [REAL_RESULT]")
     repo = Path(sys.argv[1]).resolve(strict=True)
     active, rows = registry(repo)
-    if len(rows) != 22 or not active:
+    if len(rows) != 23 or not active:
         fail("M1 positive-theorem registry baseline drifted")
     row = next(selected for selected in rows if selected[0] == "batching-publish-once")
     with tempfile.TemporaryDirectory(prefix="ferric-m1-theorem-policy.") as scratch:

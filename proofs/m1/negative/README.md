@@ -20,7 +20,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact twenty-four-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact twenty-five-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -36,6 +36,11 @@ from rejection to `Ok(observed)`. Pinned Verus must reject that replay/skip
 acceptance at `check_exact_next`'s equality postcondition. The live engine
 preflight association is separate syntactic placement evidence, not proof of
 engine state effects, external quiescence, or full scheduler refinement.
+The canonical weight-role mutation aliases the executable draft role byte to
+the target role byte. Pinned Verus must reject the changed match arm at
+`role_code`'s equality postcondition. The two encoder call sites are separate
+syntactic placement checks, not proof of full bundle well-formedness, digest
+authentication, parser behavior, or weight layout.
 The sampler mutation changes the executable argmax improvement test from `>`
 to `>=`, so a later token replaces the first token on a tie and violates the
 explicit lowest-token-ID invariant assertion used to prove the postcondition.

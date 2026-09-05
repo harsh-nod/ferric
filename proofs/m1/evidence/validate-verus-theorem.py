@@ -175,6 +175,16 @@ EXPECTED_ROWS = (
         "batching_request_routing_theorem",
     ),
     (
+        "canonical-weight-role-byte",
+        "canonical-weight-role-byte",
+        "model_bundle_well_formed",
+        "weight-stream",
+        "ferric-build",
+        "crates/ferric-build/src/weight_stream.rs",
+        "weight_stream",
+        "role_code",
+    ),
+    (
         "exact-completion-successor",
         "exact-completion-successor",
         "scheduler_refined",
