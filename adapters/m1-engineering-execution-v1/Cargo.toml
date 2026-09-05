@@ -15,10 +15,10 @@ path = "src/bin/ferric-m1-engineering-target-smoke.rs"
 [workspace]
 
 [dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5c4759711775210d3094fd71ebc579fdd00c4db8", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5c4759711775210d3094fd71ebc579fdd00c4db8", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5c4759711775210d3094fd71ebc579fdd00c4db8", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5c4759711775210d3094fd71ebc579fdd00c4db8", version = "=0.1.0" }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d8fa0835c64d6574c8589ac3e69e3c34b0350758", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d8fa0835c64d6574c8589ac3e69e3c34b0350758", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d8fa0835c64d6574c8589ac3e69e3c34b0350758", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d8fa0835c64d6574c8589ac3e69e3c34b0350758", version = "=0.1.0" }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
