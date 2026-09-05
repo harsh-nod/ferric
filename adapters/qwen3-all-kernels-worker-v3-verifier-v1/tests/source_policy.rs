@@ -1757,18 +1757,18 @@ fn roster_is_the_exact_twelve_entry_aggregate() {
             .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
             .collect::<Vec<_>>(),
         [
-            "qwen3_paged_kv_write_v1",
-            "qwen3_swiglu_bf16_f32_v1",
-            "qwen3_gqa_prefill_causal_bf16_f32_v1",
-            "ferric_qwen3_token_embedding_bf16_copy_v1",
-            "ferric_qwen3_speculative_token_assembly_v1",
-            "qwen3_rope_v1",
-            "qwen3_rmsnorm_v1",
-            "qwen3_paged_gqa_decode_bf16_f32_v1",
-            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
-            "ferric_qwen3_compact_completion_v1",
-            "ferric_qwen3_lowest_id_argmax_bf16_v1",
             "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
+            "qwen3_swiglu_bf16_f32_v1",
+            "qwen3_rope_v1",
+            "ferric_qwen3_speculative_token_assembly_v1",
+            "ferric_qwen3_token_embedding_bf16_copy_v1",
+            "qwen3_paged_gqa_decode_bf16_f32_v1",
+            "qwen3_gqa_prefill_causal_bf16_f32_v1",
+            "qwen3_paged_kv_write_v1",
+            "ferric_qwen3_compact_completion_v1",
+            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
+            "ferric_qwen3_lowest_id_argmax_bf16_v1",
+            "qwen3_rmsnorm_v1",
         ]
     );
 }
