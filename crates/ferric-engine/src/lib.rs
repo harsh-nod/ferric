@@ -419,7 +419,7 @@ pub use m1_queue_rollover::{
     prepare_m1_finite_speculative_queue_rollover_v1, prepare_m1_s1_k4_queue_rollover_v1,
     reserve_m1_finite_speculative_queue_rollover_kv_v1, reserve_m1_s1_k4_queue_rollover_kv_v1,
     schedule_m1_finite_speculative_queue_rollover_v1, schedule_m1_s1_k4_queue_rollover_exact_v1,
-    M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    schedule_m1_target_decode_queue_rollover_v1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
     M1FiniteSpeculativeQueueRolloverKvReservationFailureV1,
     M1FiniteSpeculativeQueueRolloverKvReservationPhaseV1,
     M1FiniteSpeculativeQueueRolloverPrepareFailureV1, M1FiniteSpeculativeQueueRolloverResidueV1,
@@ -436,6 +436,8 @@ pub use m1_queue_rollover::{
     M1S1K4QueueRolloverScheduleFailureCustodyV1, M1S1K4QueueRolloverScheduleFailureV1,
     M1ScheduledFiniteSpeculativeQueueRolloverV1, M1ScheduledS1K4QueueRolloverTeardownFailureV1,
     M1ScheduledS1K4QueueRolloverTeardownSuccessV1, M1ScheduledS1K4QueueRolloverV1,
+    M1ScheduledTargetDecodeQueueRolloverTeardownFailureV1,
+    M1ScheduledTargetDecodeQueueRolloverTeardownSuccessV1, M1ScheduledTargetDecodeQueueRolloverV1,
 };
 pub use m1_serving_physical_bridge::{
     M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalAbortFailureV1,

@@ -8,10 +8,13 @@ use core::fmt;
 
 use fe2o3_service_host::{ServiceQueueReleaseFailureV1, ServiceQueueReleaseObservationV1};
 use ferric_spec::{
-    completion::CompletionEpoch, scheduling::RequestState, Qwen3PlanBucket, ValidatedM1StepInputs,
+    completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanBucket,
+    ValidatedM1StepInputs,
 };
 
-use crate::m1_serving_registry::admit_m1_production_rollover_transition_v1;
+use crate::m1_serving_registry::{
+    admit_m1_production_rollover_transition_v1, admit_m1_target_decode_rollover_transition_v1,
+};
 use crate::{
     ActiveDeviceKvCache, DeviceKvCacheError, DeviceKvCacheProjection, DeviceKvPageLease, Engine,
     LogicalRunnerDeclaration, M1CheckedCompletionOutputV1, M1CompletedKvPageReleaseCountsV1,
@@ -468,6 +471,76 @@ impl M1ScheduledS1K4QueueRolloverV1 {
         )
     }
 }
+
+/// Detached exact S1 prefill queue, S1/C8192 decode dispatch, and reselected
+/// live target KV cache.
+///
+/// This distinct owner prevents the target-only transition from entering the
+/// finite-speculative KV reservation and workspace paths.
+#[must_use = "scheduled target decode rollover must be prepared or torn down"]
+#[derive(Debug)]
+pub struct M1ScheduledTargetDecodeQueueRolloverV1 {
+    inner: M1ScheduledS1K4QueueRolloverV1,
+}
+
+impl M1ScheduledTargetDecodeQueueRolloverV1 {
+    #[must_use]
+    pub const fn prior_plan(&self) -> M1ServingPlanV1 {
+        self.inner.prior_plan()
+    }
+
+    #[must_use]
+    pub const fn next_plan(&self) -> M1ServingPlanV1 {
+        self.inner.next_plan()
+    }
+
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.inner.scheduled_dispatch()
+    }
+
+    #[must_use]
+    pub fn selected_cache(&self) -> DeviceKvCacheProjection {
+        self.inner.selected_cache()
+    }
+
+    /// Exact token emitted by the completed prefill generation.
+    #[must_use]
+    pub fn prefill_emitted_token(&self) -> ferric_spec::TokenId {
+        let record = self.inner.residue().checked().records()[0].record();
+        debug_assert_eq!(record.emitted_token_count, 1);
+        record.emitted_tokens[0]
+    }
+
+    /// Committed target context carried across the quiescent reselection.
+    #[must_use]
+    pub fn committed_target_tokens(&self) -> u32 {
+        self.inner.selected_cache().target.committed_tokens
+    }
+
+    #[must_use]
+    pub const fn predecessor_dispatch_generation(&self) -> u64 {
+        self.inner.predecessor_dispatch_generation()
+    }
+
+    /// Destroys the detached predecessor while retaining all scheduled and KV
+    /// custody. The legacy closure type is shape-generic despite its S1/K4 name.
+    pub fn destroy_queue_and_retain_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1ScheduledTargetDecodeQueueRolloverTeardownSuccessV1,
+        Box<M1ScheduledTargetDecodeQueueRolloverTeardownFailureV1>,
+    > {
+        self.inner.destroy_queue_and_retain_round(engine)
+    }
+}
+
+/// Teardown custody for a scheduled target-decode transition.
+pub type M1ScheduledTargetDecodeQueueRolloverTeardownSuccessV1 =
+    M1ScheduledS1K4QueueRolloverTeardownSuccessV1;
+/// Terminal teardown custody for a scheduled target-decode transition.
+pub type M1ScheduledTargetDecodeQueueRolloverTeardownFailureV1 =
+    M1ScheduledS1K4QueueRolloverTeardownFailureV1;
 
 #[derive(Debug)]
 struct M1ScheduledS1K4QueueRolloverTeardownCustodyV1 {
@@ -1252,6 +1325,24 @@ fn finite_speculative_transition(
     Ok((prior, next, reason))
 }
 
+fn target_decode_transition(
+    batch: &M1ServingBatchPlanV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1S1K4QueueRolloverScheduleErrorV1,
+> {
+    let M1ServingQueueActionV1::QuiescentRollover {
+        prior,
+        next,
+        reason,
+    } = batch.action()
+    else {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::Action);
+    };
+    validate_target_decode_transition(prior, next, reason)?;
+    Ok((prior, next, reason))
+}
+
 fn validate_s1_k4_transition(
     prior: M1ServingPlanV1,
     next: M1ServingPlanV1,
@@ -1273,7 +1364,12 @@ fn validate_finite_speculative_transition(
     next: M1ServingPlanV1,
     reason: M1ServingRolloverReasonV1,
 ) -> Result<(), M1S1K4QueueRolloverScheduleErrorV1> {
-    if admit_m1_production_rollover_transition_v1(prior, next)
+    if !matches!(
+        next.shape(),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+    ) || admit_m1_production_rollover_transition_v1(prior, next)
         .is_none_or(|transition| transition.reason() != reason)
     {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition);
@@ -1281,15 +1377,39 @@ fn validate_finite_speculative_transition(
     Ok(())
 }
 
-fn preflight_released<const C: usize>(
+fn validate_target_decode_transition(
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+    reason: M1ServingRolloverReasonV1,
+) -> Result<(), M1S1K4QueueRolloverScheduleErrorV1> {
+    let exact = prior.mode() == Qwen3ExecutionMode::Prefill
+        && prior.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && prior.target().bucket == Qwen3PlanBucket::PrefillS1T128
+        && prior.sequence_capacity() == 1
+        && next.mode() == Qwen3ExecutionMode::Decode
+        && next.shape() == M1PhysicalFixedBatchShapeV1::TargetOnly
+        && next.target().bucket == Qwen3PlanBucket::DecodeS1C8192
+        && next.draft().bucket == Qwen3PlanBucket::DecodeS1C8192
+        && next.sequence_capacity() == 1;
+    if !exact
+        || admit_m1_target_decode_rollover_transition_v1(prior, next)
+            .is_none_or(|transition| transition.reason() != reason)
+    {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition);
+    }
+    Ok(())
+}
+
+fn preflight_released_common<const C: usize>(
     engine: &Engine<C>,
     released: &M1ReleasedCompletedStepV1,
     batch: &M1ServingBatchPlanV1,
+    plans: (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    require_speculative_output_reserve: bool,
 ) -> Result<
     (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
     M1S1K4QueueRolloverScheduleErrorV1,
 > {
-    let plans = finite_speculative_transition(batch)?;
     let (prior, next, _) = plans;
     let Some(expected_epoch) = exact_next_epoch(released.checked().epoch()) else {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::EpochExhausted);
@@ -1312,13 +1432,15 @@ fn preflight_released<const C: usize>(
     {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::QueueSelection);
     }
-    let reserve_state = queue_custody
-        .partitioned_memory()
-        .finite_speculative_rollover_output_state();
-    if reserve_state != M1S1K4RolloverOutputPortfolioStateV1::Reserved {
-        return Err(M1S1K4QueueRolloverScheduleErrorV1::OutputReserve(
-            reserve_state,
-        ));
+    if require_speculative_output_reserve {
+        let reserve_state = queue_custody
+            .partitioned_memory()
+            .finite_speculative_rollover_output_state();
+        if reserve_state != M1S1K4RolloverOutputPortfolioStateV1::Reserved {
+            return Err(M1S1K4QueueRolloverScheduleErrorV1::OutputReserve(
+                reserve_state,
+            ));
+        }
     }
     if released.members().len() != batch.requests().len() {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
@@ -1344,6 +1466,61 @@ fn preflight_released<const C: usize>(
     }
     if engine.is_faulted() {
         return Err(M1S1K4QueueRolloverScheduleErrorV1::EngineFaulted);
+    }
+    Ok(plans)
+}
+
+fn preflight_finite_speculative_released<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1ReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1S1K4QueueRolloverScheduleErrorV1,
+> {
+    preflight_released_common(
+        engine,
+        released,
+        batch,
+        finite_speculative_transition(batch)?,
+        true,
+    )
+}
+
+fn preflight_target_decode_released<const C: usize>(
+    engine: &Engine<C>,
+    released: &M1ReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<
+    (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+    M1S1K4QueueRolloverScheduleErrorV1,
+> {
+    let plans = preflight_released_common(
+        engine,
+        released,
+        batch,
+        target_decode_transition(batch)?,
+        false,
+    )?;
+    let [record] = released.checked().records() else {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
+    };
+    let wire = record.record();
+    let [member] = released.members() else {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
+    };
+    let M1ReleasedDeviceKvMemberV1::Active(cache) = member else {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
+    };
+    let projection = cache.projection();
+    if wire.request != batch.requests()[0]
+        || wire.emitted_token_count != 1
+        || released.logical_accepted_counts() != [1]
+        || released.externally_published_counts() != [1]
+        || projection.target.committed_tokens == 0
+        || projection.target.resident_tokens != projection.target.committed_tokens
+    {
+        return Err(M1S1K4QueueRolloverScheduleErrorV1::MemberCustody);
     }
     Ok(plans)
 }
@@ -1385,10 +1562,20 @@ pub fn schedule_m1_finite_speculative_queue_rollover_v1<const C: usize>(
     released: M1ReleasedCompletedStepV1,
     batch: &M1ServingBatchPlanV1,
 ) -> Result<M1ScheduledS1K4QueueRolloverV1, Box<M1S1K4QueueRolloverScheduleFailureV1>> {
-    let (prior, next, reason) = match preflight_released(engine, &released, batch) {
+    let plans = match preflight_finite_speculative_released(engine, &released, batch) {
         Ok(plans) => plans,
         Err(error) => return Err(Box::new(released_failure(error, released))),
     };
+    schedule_preflighted_queue_rollover(engine, released, batch, plans)
+}
+
+fn schedule_preflighted_queue_rollover<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1ReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    plans: (M1ServingPlanV1, M1ServingPlanV1, M1ServingRolloverReasonV1),
+) -> Result<M1ScheduledS1K4QueueRolloverV1, Box<M1S1K4QueueRolloverScheduleFailureV1>> {
+    let (prior, next, reason) = plans;
     let (
         queue,
         checked,
@@ -1483,6 +1670,32 @@ pub fn schedule_m1_finite_speculative_queue_rollover_v1<const C: usize>(
         selected,
         residue,
     })
+}
+
+/// Detaches one exact completed S1/T128 paired-prefill queue, dispatches the
+/// exact S1/C8192 target-decode successor, and reselects its live KV cache.
+///
+/// The released prefill must contain exactly one externally published token
+/// and a nonempty, fully resident committed target context. Every other
+/// prefill bucket, successor bucket, shape, role, roster, or epoch is rejected
+/// before detachment with the original released owner intact.
+///
+/// # Errors
+///
+/// Pure validation rejection returns the intact released owner. A detach,
+/// exact-dispatch, or cache-reselection failure quarantines the Engine and
+/// retains all phase-local custody in the returned failure.
+pub fn schedule_m1_target_decode_queue_rollover_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    released: M1ReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<M1ScheduledTargetDecodeQueueRolloverV1, Box<M1S1K4QueueRolloverScheduleFailureV1>> {
+    let plans = match preflight_target_decode_released(engine, &released, batch) {
+        Ok(plans) => plans,
+        Err(error) => return Err(Box::new(released_failure(error, released))),
+    };
+    schedule_preflighted_queue_rollover(engine, released, batch, plans)
+        .map(|inner| M1ScheduledTargetDecodeQueueRolloverV1 { inner })
 }
 
 /// Exact-gated source-compatible S1/K4 rollover scheduler.
@@ -1660,6 +1873,48 @@ mod tests {
         let decode_prior = plan(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
         assert!(matches!(
             validate_s1_k4_transition(decode_prior, next, M1ServingRolloverReasonV1::Mode),
+            Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+        ));
+    }
+
+    #[test]
+    fn target_decode_transition_predicate_accepts_only_s1_t128_into_s1_c8192() {
+        let prior = plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let next = plan(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        assert!(
+            validate_target_decode_transition(prior, next, M1ServingRolloverReasonV1::Mode,)
+                .is_ok()
+        );
+        assert!(matches!(
+            validate_finite_speculative_transition(prior, next, M1ServingRolloverReasonV1::Mode,),
+            Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+        ));
+
+        for rejected_prior in [
+            plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T512),
+            plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T2048),
+            plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128),
+        ] {
+            assert!(matches!(
+                validate_target_decode_transition(
+                    rejected_prior,
+                    next,
+                    M1ServingRolloverReasonV1::Mode,
+                ),
+                Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+            ));
+        }
+
+        let speculative = plan(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        assert!(matches!(
+            validate_target_decode_transition(prior, speculative, M1ServingRolloverReasonV1::Mode,),
+            Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
+        ));
+        assert!(matches!(
+            validate_target_decode_transition(prior, next, M1ServingRolloverReasonV1::Shape),
             Err(M1S1K4QueueRolloverScheduleErrorV1::UnsupportedTransition)
         ));
     }

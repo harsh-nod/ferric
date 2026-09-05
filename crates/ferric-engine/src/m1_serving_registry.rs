@@ -1014,6 +1014,30 @@ pub(crate) fn admit_m1_production_rollover_transition_v1(
     })
 }
 
+/// Recognizes the exact target-only transition owned by the dormant scheduler.
+///
+/// The live serving registry intentionally does not admit this transition until
+/// its physical quiescent-rollover route can be activated atomically.
+pub(crate) fn admit_m1_target_decode_rollover_transition_v1(
+    prior: M1ServingPlanV1,
+    next: M1ServingPlanV1,
+) -> Option<M1ServingProductionRolloverTransitionV1> {
+    let admitted = prior.mode() == Qwen3ExecutionMode::Prefill
+        && prior.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && prior.target().bucket == Qwen3PlanBucket::PrefillS1T128
+        && prior.sequence_capacity() == 1
+        && next.mode() == Qwen3ExecutionMode::Decode
+        && next.shape() == M1PhysicalFixedBatchShapeV1::TargetOnly
+        && next.target().bucket == Qwen3PlanBucket::DecodeS1C8192
+        && next.draft().bucket == Qwen3PlanBucket::DecodeS1C8192
+        && next.sequence_capacity() == 1;
+    admitted.then_some(M1ServingProductionRolloverTransitionV1 {
+        prior,
+        next,
+        reason: M1ServingRolloverReasonV1::Mode,
+    })
+}
+
 fn classify_queue_action(
     prior: Option<M1ServingPlanV1>,
     next: M1ServingPlanV1,
@@ -1154,6 +1178,10 @@ mod tests {
         )
     }
 
+    fn expected_target_decode_rollover(prior: M1ServingPlanV1, next: M1ServingPlanV1) -> bool {
+        prior == prefill_s1() && next == decode_s1()
+    }
+
     fn publish_and_complete<const C: usize>(
         registry: &mut M1ServingRegistryV1<C>,
         dispositions: &[M1ServingCompletionDispositionV1],
@@ -1282,10 +1310,22 @@ mod tests {
         for prior in plans {
             for next in plans {
                 let expected = expected_production_rollover(prior, next);
+                let target_expected = expected_target_decode_rollover(prior, next);
                 let transition = admit_m1_production_rollover_transition_v1(prior, next);
                 assert_eq!(transition.is_some(), expected, "{prior:?} -> {next:?}");
                 if let Some(transition) = transition {
                     admitted += 1;
+                    assert_eq!(transition.prior(), prior);
+                    assert_eq!(transition.next(), next);
+                    assert_eq!(transition.reason(), M1ServingRolloverReasonV1::Mode);
+                }
+                let target_transition = admit_m1_target_decode_rollover_transition_v1(prior, next);
+                assert_eq!(
+                    target_transition.is_some(),
+                    target_expected,
+                    "{prior:?} -> {next:?}"
+                );
+                if let Some(transition) = target_transition {
                     assert_eq!(transition.prior(), prior);
                     assert_eq!(transition.next(), next);
                     assert_eq!(transition.reason(), M1ServingRolloverReasonV1::Mode);
