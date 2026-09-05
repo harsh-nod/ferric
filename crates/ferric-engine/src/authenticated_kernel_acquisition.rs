@@ -12,12 +12,13 @@ use fe2o3_host::{
     WorkerV3RosterVerificationAuthenticationErrorV1,
 };
 use fe2o3_runtime_protocol::{recover_worker_v3_load_envelope_v2, WorkerV3LoadEnvelopeErrorV2};
-use ferric_build::M1KernelArtifactFamilyV1;
+use ferric_build::{M1KernelArtifactFamilyV1, PublishedRunnerDeclaration};
 use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
 
 use crate::{
-    admit_m1_authenticated_worker_v3_programs_v1, M1AuthenticatedProgramSetIntakeFailureV1,
-    M1AuthenticatedWorkerV3ProgramSetV1,
+    admit_m1_authenticated_worker_v3_programs_v1, bind_m1_physical_runner_v1,
+    M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedProgramSetIntakeFailureV1,
+    M1AuthenticatedWorkerV3ProgramSetV1, M1PhysicalRunnerBindFailureV1,
 };
 
 /// Exact durable publication selected for the aggregate M1 compiler unit.
@@ -375,6 +376,22 @@ pub enum M1AuthenticatedWorkerV3AcquisitionFailureV1<E> {
     Authentication(Box<M1WorkerV3AuthenticationFailureV1<E>>),
 }
 
+/// Failure to bootstrap one authenticated physical runner from explicit held inputs.
+#[must_use = "bootstrap failure retains the generated publication or authenticated bind residue"]
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum M1AuthenticatedPhysicalRunnerBootstrapFailureV1<E> {
+    /// Authenticated acquisition rejected and the unconsumed publication remains available.
+    Acquisition {
+        /// Exact acquisition failure retaining selector and available Worker V3 custody.
+        failure: Box<M1AuthenticatedWorkerV3AcquisitionFailureV1<E>>,
+        /// Generated publication not consumed because acquisition failed first.
+        publication: Box<PublishedRunnerDeclaration>,
+    },
+    /// Physical runner binding rejected and retained all consumed inputs in its typed residue.
+    Binding(Box<M1PhysicalRunnerBindFailureV1>),
+}
+
 impl<E: fmt::Display> fmt::Display for M1AuthenticatedWorkerV3AcquisitionFailureV1<E> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -510,6 +527,41 @@ where
     })
 }
 
+/// Authenticates one held aggregate selector and binds its programs to one generated publication.
+///
+/// This shared bootstrap accepts only already-held typed inputs and a caller-configured protected
+/// verifier. It performs no selector discovery, default-verifier construction, artifact fallback,
+/// KFD open, executable load, or kernel launch.
+///
+/// # Errors
+///
+/// Returns the exact acquisition failure with the unconsumed publication, or the physical binding
+/// failure whose typed residue retains the authenticated programs and generated declaration.
+pub fn bind_m1_authenticated_physical_runner_from_selector_v1<B, E>(
+    selector: M1WorkerV3ArtifactSelectorV1,
+    verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>,
+    publication: PublishedRunnerDeclaration,
+) -> Result<M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedPhysicalRunnerBootstrapFailureV1<E>>
+where
+    B: WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1, Error = E>,
+{
+    let programs =
+        match acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(selector, verifier) {
+            Ok(programs) => programs,
+            Err(failure) => {
+                return Err(
+                    M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Acquisition {
+                        failure: Box::new(failure),
+                        publication: Box::new(publication),
+                    },
+                );
+            }
+        };
+    bind_m1_physical_runner_v1(programs, publication).map_err(|failure| {
+        M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Binding(Box::new(failure))
+    })
+}
+
 /// Compatibility-only legacy end-to-end entry point.
 ///
 /// This always rejects the seven-selector container before protected authentication.
@@ -537,6 +589,12 @@ mod tests {
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    use ferric_build::{
+        generate_qwen3_gfx942_runner_declaration, publish_qwen3_gfx942_runner_declaration,
+        qwen3_runner_closure_test_fixture,
+    };
+    use ferric_qwen3_all_kernels_worker_v3_verifier_v1::M1AllKernelsProtectedVerifierV1;
+
     use super::*;
 
     const DIRECT_ATTEMPT: &str = concat!(
@@ -544,6 +602,12 @@ mod tests {
         "00000000000000000000000000000000:",
         "0000000000000000000000000000000000000000000000000000000000000000"
     );
+    const SUBSTITUTE_ATTEMPT: &str = concat!(
+        "2:",
+        "11111111111111111111111111111111:",
+        "2222222222222222222222222222222222222222222222222222222222222222"
+    );
+    const ACQUISITION_SOURCE: &str = include_str!("authenticated_kernel_acquisition.rs");
 
     struct TestDirectory(PathBuf);
 
@@ -570,6 +634,59 @@ mod tests {
 
     fn attempt() -> BuildAttempt {
         BuildAttempt::from_env_value(DIRECT_ATTEMPT).expect("canonical direct attempt")
+    }
+
+    fn substitute_attempt() -> BuildAttempt {
+        BuildAttempt::from_env_value(SUBSTITUTE_ATTEMPT).expect("canonical substitute attempt")
+    }
+
+    fn publication() -> PublishedRunnerDeclaration {
+        let declaration =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture declaration");
+        publish_qwen3_gfx942_runner_declaration(declaration).expect("publish fixture declaration")
+    }
+
+    fn bootstrap_source(source: &str) -> Option<&str> {
+        let start = source.find("pub fn bind_m1_authenticated_physical_runner_from_selector_v1")?;
+        let tail = &source[start..];
+        let end = tail.find("\n/// Compatibility-only legacy end-to-end entry point.")?;
+        Some(&tail[..end])
+    }
+
+    fn bootstrap_source_policy(source: &str) -> bool {
+        let Some(source) = bootstrap_source(source) else {
+            return false;
+        };
+        let acquire = "acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(";
+        let bind = "bind_m1_physical_runner_v1(programs, publication)";
+        source.matches(acquire).count() == 1
+            && source.matches(bind).count() == 1
+            && source.find(acquire) < source.find(bind)
+            && source.contains("selector: M1WorkerV3ArtifactSelectorV1")
+            && source.contains("verifier: &mut WorkerV3ProtectedRosterVerifierAdapterV1<B>")
+            && source.contains("publication: PublishedRunnerDeclaration")
+            && [
+                "M1WorkerV3ArtifactSelectorsV1",
+                "acquire_m1_authenticated_worker_v3_programs_v1(",
+                "recover_m1_",
+                "decode_m1_",
+                "M1AllKernelsProtectedVerifierV1",
+                "std::env",
+                "PathBuf",
+                "OpenedKfd",
+                "load_kernel",
+                "launch",
+            ]
+            .iter()
+            .all(|forbidden| !source.contains(forbidden))
+    }
+
+    fn mutate_bootstrap(source: &str, old: &str, new: &str) -> String {
+        let exact = bootstrap_source(source).expect("bootstrap source");
+        let changed = exact.replacen(old, new, 1);
+        assert_ne!(changed, exact);
+        source.replacen(exact, &changed, 1)
     }
 
     fn legacy_selectors(root: &Path) -> M1WorkerV3ArtifactSelectorsV1 {
@@ -653,5 +770,135 @@ mod tests {
                 second: M1KernelArtifactFamilyV1::RopeKv,
             }
         );
+    }
+
+    #[test]
+    fn bootstrap_missing_selector_retains_exact_selector_and_publication() {
+        let directory = TestDirectory::new("bootstrap-missing-selector");
+        let selector = M1WorkerV3ArtifactSelectorV1::new(directory.0.clone(), attempt());
+        let publication = publication();
+        let source_id = publication.source_id();
+        let mut verifier =
+            WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
+        let error = bind_m1_authenticated_physical_runner_from_selector_v1(
+            selector.clone(),
+            &mut verifier,
+            publication,
+        )
+        .expect_err("missing exact selector cannot bootstrap authority");
+        match error {
+            M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Acquisition {
+                failure,
+                publication,
+            } => {
+                assert_eq!(publication.source_id(), source_id);
+                match *failure {
+                    M1AuthenticatedWorkerV3AcquisitionFailureV1::RosterAcquisition(failure) => {
+                        assert_eq!(failure.selector(), Some(&selector));
+                    }
+                    other => panic!("unexpected acquisition failure: {other:?}"),
+                }
+            }
+            other => panic!("unexpected bootstrap failure: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bootstrap_substituted_attempt_does_not_fall_back_to_an_ambient_attempt() {
+        let directory = TestDirectory::new("bootstrap-attempt-substitution");
+        let selected = M1WorkerV3ArtifactSelectorV1::new(directory.0.clone(), substitute_attempt());
+        let mut verifier =
+            WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
+        let error = bind_m1_authenticated_physical_runner_from_selector_v1(
+            selected.clone(),
+            &mut verifier,
+            publication(),
+        )
+        .expect_err("a substituted attempt cannot be promoted through path fallback");
+        match error {
+            M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Acquisition { failure, .. } => {
+                match *failure {
+                    M1AuthenticatedWorkerV3AcquisitionFailureV1::RosterAcquisition(failure) => {
+                        assert_eq!(failure.selector(), Some(&selected));
+                        assert_eq!(
+                            failure
+                                .selector()
+                                .map(M1WorkerV3ArtifactSelectorV1::attempt),
+                            Some(substitute_attempt())
+                        );
+                    }
+                    other => panic!("unexpected acquisition failure: {other:?}"),
+                }
+            }
+            other => panic!("unexpected bootstrap failure: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bootstrap_failure_variants_expose_every_owned_residue() {
+        fn consume(error: M1AuthenticatedPhysicalRunnerBootstrapFailureV1<()>) {
+            match error {
+                M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Acquisition {
+                    failure,
+                    publication,
+                } => drop((failure, publication)),
+                M1AuthenticatedPhysicalRunnerBootstrapFailureV1::Binding(failure) => match *failure
+                {
+                    M1PhysicalRunnerBindFailureV1::Canonical {
+                        error,
+                        programs,
+                        runner,
+                    } => drop((error, programs, runner)),
+                    M1PhysicalRunnerBindFailureV1::Structural { programs, failure } => {
+                        drop((programs, failure));
+                    }
+                },
+            }
+        }
+
+        let _: fn(M1AuthenticatedPhysicalRunnerBootstrapFailureV1<()>) = consume;
+    }
+
+    #[test]
+    fn bootstrap_source_policy_allows_only_authenticated_acquire_then_bind() {
+        assert!(bootstrap_source_policy(ACQUISITION_SOURCE));
+        let bootstrap = bootstrap_source(ACQUISITION_SOURCE).expect("bootstrap source");
+        assert!(bootstrap.contains("M1AuthenticatedPhysicalRunnerV1"));
+        assert!(!bootstrap.contains("M1WorkerV3ArtifactSelectorsV1"));
+        assert!(!bootstrap.contains("M1NonAuthoritative"));
+    }
+
+    #[test]
+    fn bootstrap_source_policy_rejects_legacy_path_default_and_substitution_claims() {
+        for hostile in [
+            mutate_bootstrap(
+                ACQUISITION_SOURCE,
+                "selector: M1WorkerV3ArtifactSelectorV1",
+                "selector: M1WorkerV3ArtifactSelectorsV1",
+            ),
+            mutate_bootstrap(
+                ACQUISITION_SOURCE,
+                "match acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(",
+                "match acquire_m1_authenticated_worker_v3_programs_v1(",
+            ),
+            mutate_bootstrap(
+                ACQUISITION_SOURCE,
+                "    let programs =",
+                "    let _ambient = std::env::var(\"FERRIC_WORKER_V3_ROOT\");\n    let programs =",
+            ),
+            mutate_bootstrap(
+                ACQUISITION_SOURCE,
+                "    let programs =",
+                "    let _default = M1AllKernelsProtectedVerifierV1::new();\n    let programs =",
+            ),
+            mutate_bootstrap(
+                ACQUISITION_SOURCE,
+                "bind_m1_physical_runner_v1(programs, publication)",
+                "bind_non_authoritative_structural_m1_physical_runner_v1(programs, publication)",
+            ),
+        ] {
+            assert_ne!(hostile, ACQUISITION_SOURCE);
+            assert!(!bootstrap_source_policy(&hostile));
+        }
     }
 }

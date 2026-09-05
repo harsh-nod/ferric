@@ -72,12 +72,13 @@ pub use authenticated_kernel_acquisition::{
     acquire_m1_all_kernels_authenticated_worker_v3_programs_v1,
     acquire_m1_authenticated_worker_v3_programs_v1,
     authenticate_m1_all_kernels_worker_v3_roster_v1, authenticate_m1_worker_v3_rosters_v1,
+    bind_m1_authenticated_physical_runner_from_selector_v1,
     recover_m1_all_kernels_worker_v3_roster_v1, recover_m1_worker_v3_rosters_v1,
-    M1AuthenticatedWorkerV3AcquisitionFailureV1, M1RecoveredWorkerV3RosterV1,
-    M1RecoveredWorkerV3RostersV1, M1WorkerV3ArtifactSelectorV1, M1WorkerV3ArtifactSelectorsErrorV1,
-    M1WorkerV3ArtifactSelectorsV1, M1WorkerV3AuthenticationFailureV1,
-    M1WorkerV3AuthenticationStageV1, M1WorkerV3RosterAcquisitionFailureV1,
-    M1WorkerV3RosterAcquisitionStageV1,
+    M1AuthenticatedPhysicalRunnerBootstrapFailureV1, M1AuthenticatedWorkerV3AcquisitionFailureV1,
+    M1RecoveredWorkerV3RosterV1, M1RecoveredWorkerV3RostersV1, M1WorkerV3ArtifactSelectorV1,
+    M1WorkerV3ArtifactSelectorsErrorV1, M1WorkerV3ArtifactSelectorsV1,
+    M1WorkerV3AuthenticationFailureV1, M1WorkerV3AuthenticationStageV1,
+    M1WorkerV3RosterAcquisitionFailureV1, M1WorkerV3RosterAcquisitionStageV1,
 };
 pub use authenticated_kernel_programs::{
     admit_m1_authenticated_worker_v3_programs_v1, require_m1_authenticated_roster_acquisition_v1,
