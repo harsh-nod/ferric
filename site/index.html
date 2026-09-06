@@ -60,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-05">Updated 2026-09-05</time>
+              <time data-updated datetime="2026-09-06">Updated 2026-09-06</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -215,22 +215,46 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Finish the executor and produce the exact artifact</h2>
+            <h2 id="next-title">Produce the exact artifact and run the staged smoke</h2>
           </div>
           <p>
-            Ferric integration candidate 78c720551c4b9809ae7e75ba639959ae0d968b1d includes the authenticated R33
-            backend and S1/T128 bootstrap, bounded waits, the exact fe2o3 repin, the formal bootstrap model, and
-            authenticated direct readback. Strict Verus reports 81 verified and 0 errors; proof tests pass 26/26 and
-            source-gate tests pass 28/28. The latest scoped inventory diagnostic identifies 23 unadmitted bootstrap
-            runtime bodies; combined regeneration remains pending after direct-readback and active kernel/executor
-            integration, so no current whole-tree closure total is claimed. Public fe2o3 main
-            dd802ce4fc5f759a49cb655ed530af664fe4bc61 supplies the consuming WaveLane accessor, generic exact carrier,
-            reusable compiler, runtime, and KFD. Ferric retains every model kernel and inference policy. Focused kernel
-            v27 source-contract tests are green, but exact compilation produced no HSACO: the public compiler admits
-            the exact source closure and then exhausts its explicit deterministic scalar-reachability work bound.
-            Diagnostic-only measurement is running, with no production fix, derived artifact identity, or hardware
-            execution. The production paired-prefill executor is in progress. No Qwen token, TTFT, TPOT, serving
-            endpoint, HTTP service, or vLLM/SGLang baseline exists, and all 33 M1 exit gates remain open.
+            Ferric integration candidate 1dc659beda81d37d746cb05a16d35fd7788e29ef includes the authenticated
+            paired-prefill executor, authority-free engineering identity derivation, and bounded live-source logical
+            radix reuse. Integrated engine gates report 597 passed with 5 hardware-dependent ignores and 164
+            doctests; the radix slice's pinned Verus run reports 608 verified and 0 errors. Radix deliberately remains
+            NoMatch for S1/T128 at the current logical width of 256, and it makes no persistent device-KV or speed
+            claim. Exact aggregate compilation on the prior fe2o3 pin cleared paged-decode capacity plus Rope/KV
+            division, remainder, and page-table arithmetic. v35 then exceeded projected-CFG capacity; v36 eagerly
+            evaluated only 30 pure profile-classifier equalities while preserving the same clauses and guards, but it
+            did not clear the bound. The v37 Ferric-local refactor replaced the KV writer's
+            Blocked&lt;64,256&gt; output witness with an address-equivalent RowStriped2D&lt;64,256&gt; witness and collapsed
+            16 token-page copies into one 16-component write sequence, reducing 512 to 32 guarded writes. Its 27/27
+            focused checks passed and exact compilation cleared the 1,024-block ranked-CFG gate without an intended
+            ABI, address, or launch change. The compiler then rejected 77 ranked function arguments against the limit
+            of 64. v38's nested 16-component loop reduces extent operands and guarded writes; exact compilation cleared
+            both ranked block and argument checks before
+            target-neutral lowering rejected one compiler-intrinsic borrow crossing the new component loop. v39 is
+            implemented with a fresh row-striped witness inside each component iteration after loads and before writes;
+            its focused and address-equivalence matrix is green 27/27. Clean DCO source
+            5ecad80658f27909fa2477d6f73e47e9f95407ae completes Ferric's 54-file repin to public fe2o3 main
+            3d10825df93a86644cc5a5b006cadd45f71afb91; its TCB gates are also green 28/28. Pinned-nightly vendor v7
+            clears sysroot closure and reaches genuine kernel lowering. Exact v9 rejected function 6 local 48/type 63.
+            Immediate-branch DCO fb991b83e2a0f9d1cf4f11058c51b372ee96acff, tree
+            75e19bab4346ab1bf1d4f1ea82e5ecd8c3cce911, passes focused v44 27/27, but exact v10 rejected local
+            201/type 63 with status 1 and no outputs. The sole focused v45 failure was a source-contract substring false
+            positive: component+=1 matched inside row_component+=1. Flattened single-loop DCO
+            aad3b3aae05a261ac011b3318b786790c1f08320, tree 9bc5e0677041d8d9a4c776de50de1a7ef5cc4242,
+            passes corrected focused v46 27/27. Exact v11 cleared the retained-borrow class, then failed closed because
+            the uniform induction bound is not an exact total unsigned index expression. Canonical-bound DCO
+            96df9a33eaf0ef0d97c176e5aaa870ff336747c5 plus format-only DCO
+            42e959710d830c6394413ff861c41dcbf61fd54d, tree 2af4b8672051740b26e2d8c0c81c0238a52f2114,
+            passes cargo fmt and focused v50 27/27. Exact v13 still rejects the kv_elements/64 bound because it is not
+            an exact total unsigned index expression; the result has status 1 and no output or HSACO. The engineering
+            smoke binary and canonical Qwen
+            snapshot are staged, but no HSACO,
+            hardware execution, or token exists. The production protected receipt and verifier service are undeployed.
+            Symmetric memory and MTP are deferred. No TTFT, TPOT, serving endpoint, HTTP service, or vLLM/SGLang
+            baseline exists, and all 33 M1 exit gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
