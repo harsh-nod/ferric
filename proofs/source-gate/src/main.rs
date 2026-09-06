@@ -3807,6 +3807,7 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                         | "clippy :: result_large_err , clippy :: too_many_arguments"
                         | "clippy :: struct_excessive_bools"
                         | "clippy :: too_many_arguments"
+                        | "clippy :: too_many_lines"
                         | "clippy :: type_complexity"
                         | "clippy :: unnecessary_box_returns"
                         | "clippy :: boxed_local , clippy :: unnecessary_box_returns"
@@ -6685,6 +6686,7 @@ mod tests {
             "#![allow(clippy::missing_fields_in_debug)]",
             "#![allow(clippy::result_large_err, clippy::too_many_arguments)]",
             "#![allow(clippy::struct_excessive_bools)]",
+            "#![allow(clippy::too_many_lines)]",
             "#![allow(clippy::unnecessary_wraps)]",
         ] {
             let exact = verus_syn::parse_file(source).expect("exact Clippy allowance parses");

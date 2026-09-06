@@ -34,6 +34,40 @@ pub struct M1PhysicalNewWindowCustodyV1 {
     pub queued_prefill_input: u64,
 }
 
+/// Pure accounting state at an authenticated completed-window boundary.
+///
+/// Each prior window contributes exactly one inert logical archive record.
+/// `active_rounds` belongs only to the completed current window and is reset
+/// when its successor becomes current.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1AuthenticatedNewWindowHistoryV1 {
+    pub prior_windows: u64,
+    pub inert_archive_records: u64,
+    pub active_rounds: u64,
+    pub current_terminal_lineage_retained: bool,
+}
+
+/// Caller-selected finite action at the pure authenticated history boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedNewWindowHistoryActionV1 {
+    Retry,
+    Advance,
+}
+
+/// Pure authenticated history outcome. These variants carry no runtime owner.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedNewWindowHistoryOutcomeV1 {
+    Rejected(M1AuthenticatedNewWindowHistoryV1),
+    Retained(M1AuthenticatedNewWindowHistoryV1),
+    Successor {
+        history: M1AuthenticatedNewWindowHistoryV1,
+        total_windows: u64,
+    },
+}
+
+/// Maximum total windows in the authenticated finite-history model.
+pub const M1_AUTHENTICATED_NEW_WINDOW_TOTAL_LIMIT_V1: u64 = 20;
+
 /// Explicit finite state for each admission or post-commit condition.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1PhysicalNewWindowConditionV1 {
@@ -117,6 +151,149 @@ pub open spec fn m1_physical_new_window_condition_satisfied_v1(
     match condition {
         M1PhysicalNewWindowConditionV1::Rejected => false,
         M1PhysicalNewWindowConditionV1::Satisfied => true,
+    }
+}
+
+/// Exact pre-state for archiving one authenticated completed current window.
+pub open spec fn m1_authenticated_new_window_history_exact_v1(
+    history: M1AuthenticatedNewWindowHistoryV1,
+) -> bool {
+    history.prior_windows == history.inert_archive_records
+        && history.current_terminal_lineage_retained
+}
+
+/// Production-aligned total-window admission boundary.
+///
+/// Eighteen prior records admit a successor with 19 prior records and one
+/// active window. Nineteen prior records reject the would-be 21st total window.
+pub open spec fn m1_authenticated_new_window_history_can_advance_v1(
+    history: M1AuthenticatedNewWindowHistoryV1,
+) -> bool {
+    m1_authenticated_new_window_history_exact_v1(history)
+        && history.prior_windows < M1_AUTHENTICATED_NEW_WINDOW_TOTAL_LIMIT_V1 - 1
+}
+
+/// Checks the flat-history invariant and exact total-window capacity.
+#[must_use]
+pub fn check_m1_authenticated_new_window_history_transition_v1(
+    history: M1AuthenticatedNewWindowHistoryV1,
+) -> (admitted: bool)
+    ensures admitted == m1_authenticated_new_window_history_can_advance_v1(history),
+{
+    if history.prior_windows != history.inert_archive_records
+        || !history.current_terminal_lineage_retained
+    {
+        return false;
+    }
+    let Some(archived_windows) = history.prior_windows.checked_add(1) else {
+        return false;
+    };
+    archived_windows < M1_AUTHENTICATED_NEW_WINDOW_TOTAL_LIMIT_V1
+}
+
+/// Mathematical authenticated history transition.
+pub open spec fn m1_authenticated_new_window_history_transition_spec_v1(
+    history: M1AuthenticatedNewWindowHistoryV1,
+    action: M1AuthenticatedNewWindowHistoryActionV1,
+) -> M1AuthenticatedNewWindowHistoryOutcomeV1 {
+    if !m1_authenticated_new_window_history_can_advance_v1(history) {
+        M1AuthenticatedNewWindowHistoryOutcomeV1::Rejected(history)
+    } else {
+        match action {
+            M1AuthenticatedNewWindowHistoryActionV1::Retry => {
+                M1AuthenticatedNewWindowHistoryOutcomeV1::Retained(history)
+            },
+            M1AuthenticatedNewWindowHistoryActionV1::Advance => {
+                M1AuthenticatedNewWindowHistoryOutcomeV1::Successor {
+                    history: M1AuthenticatedNewWindowHistoryV1 {
+                        prior_windows: (history.prior_windows + 1) as u64,
+                        inert_archive_records: (history.inert_archive_records + 1) as u64,
+                        active_rounds: 0,
+                        current_terminal_lineage_retained: false,
+                    },
+                    total_windows: (history.prior_windows + 2) as u64,
+                }
+            },
+        }
+    }
+}
+
+pub open spec fn m1_authenticated_new_window_retry_is_exact_v1(
+    outcome: M1AuthenticatedNewWindowHistoryOutcomeV1,
+    source: M1AuthenticatedNewWindowHistoryV1,
+) -> bool {
+    match outcome {
+        M1AuthenticatedNewWindowHistoryOutcomeV1::Rejected(retained)
+        | M1AuthenticatedNewWindowHistoryOutcomeV1::Retained(retained) => {
+            retained == source
+        },
+        M1AuthenticatedNewWindowHistoryOutcomeV1::Successor { .. } => true,
+    }
+}
+
+pub open spec fn m1_authenticated_new_window_successor_history_exact_v1(
+    outcome: M1AuthenticatedNewWindowHistoryOutcomeV1,
+    source: M1AuthenticatedNewWindowHistoryV1,
+) -> bool {
+    match outcome {
+        M1AuthenticatedNewWindowHistoryOutcomeV1::Successor {
+            history,
+            total_windows,
+        } => {
+            history.prior_windows == source.prior_windows + 1
+                && history.inert_archive_records == source.inert_archive_records + 1
+                && history.active_rounds == 0
+                && !history.current_terminal_lineage_retained
+                && total_windows == history.prior_windows + 1
+                && total_windows <= M1_AUTHENTICATED_NEW_WINDOW_TOTAL_LIMIT_V1
+        },
+        _ => true,
+    }
+}
+
+/// Executes and proves the pure authenticated history/cap transition.
+///
+/// The caller chooses `Retry` or `Advance`; this theorem therefore establishes
+/// finite safety and exact accounting, not liveness. It proves no `Instant`,
+/// allocation, KFD, queue, readback, device-memory, or engine-fault behavior.
+/// It also proves neither terminal-member cardinality nor payload preservation,
+/// and neither production pre-detach nor successor-join retry-owner preservation.
+#[must_use]
+pub fn advance_m1_authenticated_new_window_history_v1(
+    history: M1AuthenticatedNewWindowHistoryV1,
+    action: M1AuthenticatedNewWindowHistoryActionV1,
+) -> (outcome: M1AuthenticatedNewWindowHistoryOutcomeV1)
+    ensures
+        outcome == m1_authenticated_new_window_history_transition_spec_v1(history, action),
+        m1_authenticated_new_window_retry_is_exact_v1(outcome, history),
+        m1_authenticated_new_window_successor_history_exact_v1(outcome, history),
+{
+    if !check_m1_authenticated_new_window_history_transition_v1(history) {
+        return M1AuthenticatedNewWindowHistoryOutcomeV1::Rejected(history);
+    }
+    match action {
+        M1AuthenticatedNewWindowHistoryActionV1::Retry => {
+            M1AuthenticatedNewWindowHistoryOutcomeV1::Retained(history)
+        },
+        M1AuthenticatedNewWindowHistoryActionV1::Advance => {
+            let archived_windows = match history.prior_windows.checked_add(1) {
+                Some(value) => value,
+                None => return M1AuthenticatedNewWindowHistoryOutcomeV1::Rejected(history),
+            };
+            let total_windows = match archived_windows.checked_add(1) {
+                Some(value) => value,
+                None => return M1AuthenticatedNewWindowHistoryOutcomeV1::Rejected(history),
+            };
+            M1AuthenticatedNewWindowHistoryOutcomeV1::Successor {
+                history: M1AuthenticatedNewWindowHistoryV1 {
+                    prior_windows: archived_windows,
+                    inert_archive_records: archived_windows,
+                    active_rounds: 0,
+                    current_terminal_lineage_retained: false,
+                },
+                total_windows,
+            }
+        },
     }
 }
 
@@ -403,6 +580,8 @@ pub fn execute_m1_physical_new_window_transaction_v1(
 
 #[cfg(test)]
 mod source_policy_tests {
+    use super::*;
+
     const MODEL_SOURCE: &str = include_str!("physical_new_window.rs");
     const OPERATIONS_SOURCE: &str =
         include_str!("../../crates/ferric-engine/src/m1_serving_physical_operations.rs");
@@ -416,6 +595,10 @@ mod source_policy_tests {
         include_str!("../../crates/ferric-engine/src/device_cache.rs");
     const PAGED_KV_SOURCE: &str =
         include_str!("../../crates/ferric-spec/src/paged_kv_refinement.rs");
+    const AUTHENTICATED_ROLLOVER_SOURCE: &str =
+        include_str!("../../crates/ferric-engine/src/authenticated_queue_rollover.rs");
+    const AUTHENTICATED_EXECUTOR_SOURCE: &str =
+        include_str!("../../crates/ferric-engine/src/authenticated_speculative_executor.rs");
 
     fn unique_offset(source: &str, needle: &str) -> usize {
         let mut matches = source.match_indices(needle);
@@ -940,5 +1123,147 @@ mod source_policy_tests {
         let pop = unique_offset(take_source, "self.pending.pop_front()");
         assert!(lookup < take);
         assert!(recheck < pop);
+    }
+
+    fn authenticated_history(prior_windows: u64) -> M1AuthenticatedNewWindowHistoryV1 {
+        M1AuthenticatedNewWindowHistoryV1 {
+            prior_windows,
+            inert_archive_records: prior_windows,
+            active_rounds: 7,
+            current_terminal_lineage_retained: true,
+        }
+    }
+
+    #[test]
+    fn authenticated_history_admits_18_and_rejects_19() {
+        assert!(check_m1_authenticated_new_window_history_transition_v1(
+            authenticated_history(18),
+        ));
+        assert!(!check_m1_authenticated_new_window_history_transition_v1(
+            authenticated_history(19),
+        ));
+        assert_eq!(M1_AUTHENTICATED_NEW_WINDOW_TOTAL_LIMIT_V1, 20);
+    }
+
+    #[test]
+    fn authenticated_history_rejects_archive_mismatch_and_missing_lineage() {
+        let mut archive_mismatch = authenticated_history(18);
+        archive_mismatch.inert_archive_records = 17;
+        assert!(!check_m1_authenticated_new_window_history_transition_v1(
+            archive_mismatch,
+        ));
+
+        let mut missing_current_lineage = authenticated_history(18);
+        missing_current_lineage.current_terminal_lineage_retained = false;
+        assert!(!check_m1_authenticated_new_window_history_transition_v1(
+            missing_current_lineage,
+        ));
+    }
+
+    #[test]
+    fn authenticated_retry_and_successor_accounting_are_exact() {
+        let source = authenticated_history(18);
+        assert_eq!(
+            advance_m1_authenticated_new_window_history_v1(
+                source,
+                M1AuthenticatedNewWindowHistoryActionV1::Retry,
+            ),
+            M1AuthenticatedNewWindowHistoryOutcomeV1::Retained(source),
+        );
+
+        let M1AuthenticatedNewWindowHistoryOutcomeV1::Successor {
+            history,
+            total_windows,
+        } = advance_m1_authenticated_new_window_history_v1(
+            source,
+            M1AuthenticatedNewWindowHistoryActionV1::Advance,
+        )
+        else {
+            panic!("an admitted authenticated history must advance");
+        };
+        assert_eq!(history.prior_windows, 19);
+        assert_eq!(history.inert_archive_records, 19);
+        assert_ne!(
+            history.prior_windows, 20,
+            "archive must increment exactly once"
+        );
+        assert_eq!(history.active_rounds, 0);
+        assert!(!history.current_terminal_lineage_retained);
+        assert_eq!(total_windows, 20);
+    }
+
+    #[test]
+    fn authenticated_production_history_cap_and_reset_are_pinned() {
+        let cap = unique_offset(
+            AUTHENTICATED_ROLLOVER_SOURCE,
+            "pub const M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1: usize = 20;",
+        );
+        let admission = unique_offset(
+            AUTHENTICATED_ROLLOVER_SOURCE,
+            "archived_windows < M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1",
+        );
+        let archive = unique_offset(
+            AUTHENTICATED_ROLLOVER_SOURCE,
+            "M1AuthenticatedSpeculativeCompletedWindowHistoryV1::archive(",
+        );
+        let append = unique_offset(
+            AUTHENTICATED_ROLLOVER_SOURCE,
+            "prior_windows.push(archived);",
+        );
+        let join_start = AUTHENTICATED_ROLLOVER_SOURCE
+            .find("pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1")
+            .expect("authenticated successor join is absent");
+        let join_end = AUTHENTICATED_ROLLOVER_SOURCE[join_start..]
+            .find("\nfn schedule_m1_authenticated_speculative_rollover_pending_v1")
+            .map(|offset| join_start + offset)
+            .expect("authenticated successor join end is absent");
+        let join = &AUTHENTICATED_ROLLOVER_SOURCE[join_start..join_end];
+        let attach = unique_offset(join, ".attach_physical_history(history)");
+        let reset = unique_offset(
+            join,
+            "history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,",
+        );
+        assert!(cap < admission);
+        assert!(admission < archive);
+        assert!(archive < append);
+        assert!(attach < reset);
+
+        let record = unique_offset(
+            AUTHENTICATED_EXECUTOR_SOURCE,
+            "pub(crate) struct M1AuthenticatedSpeculativeCompletedWindowHistoryV1",
+        );
+        let archive_impl = unique_offset(
+            AUTHENTICATED_EXECUTOR_SOURCE,
+            "    pub(crate) fn archive(\n",
+        );
+        let initially_unattached =
+            unique_offset(AUTHENTICATED_EXECUTOR_SOURCE, "physical_history: None,");
+        assert!(record < archive_impl);
+        assert!(archive_impl < initially_unattached);
+    }
+
+    #[test]
+    fn authenticated_history_proof_keeps_runtime_effects_as_nonclaims() {
+        for excluded in [
+            "not liveness",
+            "`Instant`",
+            "allocation",
+            "KFD",
+            "queue",
+            "readback",
+            "device-memory",
+            "engine-fault",
+            "terminal-member cardinality",
+            "payload preservation",
+            "pre-detach",
+            "successor-join retry-owner preservation",
+        ] {
+            assert!(
+                MODEL_SOURCE.contains(excluded),
+                "missing nonclaim: {excluded}"
+            );
+        }
+        assert!(MODEL_SOURCE.contains("do not prove that the"));
+        assert!(MODEL_SOURCE.contains("production implementation refines the model"));
     }
 }
