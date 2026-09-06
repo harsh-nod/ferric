@@ -2,9 +2,11 @@
 //!
 //! This boundary copies the exact completed K7 output once while retaining
 //! authenticated program history, then joins the inert image to scheduler and
-//! KV authority without exposing a raw queue. One explicitly demoted,
-//! first-publication-only S1/K4 path may additionally copy the four draft rows
-//! and one target matrix needed by the existing Ferric diagnostic semantics.
+//! KV authority without exposing a raw queue. Direct queues may copy final-row
+//! target choices to authorize their semantic join, while one explicitly
+//! demoted, first-publication-only S1/K4 path may copy the four draft rows and
+//! one target matrix needed by the existing Ferric diagnostic semantics. These
+//! diagnostic copies do not by themselves claim serving or R33 evidence.
 
 use core::fmt;
 
@@ -22,9 +24,11 @@ use ferric_spec::{completion::CompletionEpoch, Identity, M1_MAX_ACTIVE_SEQUENCES
 
 use crate::authenticated_kernel_programs::M1AuthenticatedProgramCatalogWitnessV1;
 use crate::completed_readback_join::check_m1_completed_output_v1;
+use crate::direct_diagnostic_choices::observe_m1_direct_diagnostic_choices_v1;
 use crate::observed_completion::{
     observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
 };
+use crate::physical_queue_lifecycle::prepare_m1_direct_diagnostic_ranges_v1;
 use crate::speculative_diagnostic_choices::{
     m1_speculative_diagnostic_is_s1_k4_selection_v1, observe_m1_speculative_diagnostic_choices_v1,
 };
@@ -34,7 +38,8 @@ use crate::{
     Engine, ExactCompletion, Gfx942DeviceBinding, M1AuthenticatedPhysicalQueuePhaseCaseV1,
     M1AuthenticatedPhysicalRecycledQueueSessionV1, M1CheckedCompletionOutputV1,
     M1CompletedOutputCheckErrorV1, M1CompletionObservationErrorV1,
-    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageV1,
+    M1DirectDiagnosticObservationErrorV1, M1FullStepKvReservationCustodyV1,
+    M1ObservedCompletionImageV1, M1ObservedDirectDiagnosticChoicesV1,
     M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalQueueBatchCustodyV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
     M1SpeculativeDiagnosticChoicesErrorV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
@@ -190,6 +195,145 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
             Self::SpeculativeK8(case) => case.case.kernel_catalog_id(),
             Self::SpeculativeK16(case) => case.case.kernel_catalog_id(),
         }
+    }
+
+    /// Copies each live direct lane's independently retained final-row target choice.
+    ///
+    /// Target active lengths and copy ranges are derived only from queue-retained
+    /// KV and direct-capture custody. This admits `TargetOnly` and
+    /// `PairedPrefill` and grants no caller-supplied token authority.
+    ///
+    /// # Errors
+    ///
+    /// Rejects another shape, absent capture, lane/range drift, a completed-copy
+    /// failure, or invalid copied choice evidence. Failure exposes no observation
+    /// retry, including when no scalar copy completed.
+    pub fn observe_direct_diagnostic_choices(
+        mut self,
+    ) -> Result<
+        M1AuthenticatedObservedDirectDiagnosticOutputV1,
+        Box<M1AuthenticatedDirectDiagnosticObservationFailureV1>,
+    > {
+        let mut active_lengths = [0_u32; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let mut ranges = [None; M1_MAX_ACTIVE_SEQUENCES as usize];
+        let prepared = match &self {
+            Self::TargetOnly(case) => prepare_authenticated_direct_diagnostic_ranges(
+                case,
+                &mut active_lengths,
+                &mut ranges,
+            ),
+            Self::PairedPrefill(case) => prepare_authenticated_direct_diagnostic_ranges(
+                case,
+                &mut active_lengths,
+                &mut ranges,
+            ),
+            _ => {
+                return Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                        M1DirectDiagnosticObservationErrorV1::NotDirectShape,
+                        self,
+                        Box::new([]),
+                    ),
+                ));
+            }
+        };
+        let (live, generation) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                return Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                        error,
+                        self,
+                        Box::new([]),
+                    ),
+                ));
+            }
+        };
+        let mut readbacks = Vec::new();
+        if readbacks.try_reserve_exact(live).is_err() {
+            return Err(Box::new(
+                M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                    M1DirectDiagnosticObservationErrorV1::HostAllocation,
+                    self,
+                    Box::new([]),
+                ),
+            ));
+        }
+        for (lane, range) in ranges.iter().copied().take(live).enumerate() {
+            let Some(range) = range else {
+                return Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                        M1DirectDiagnosticObservationErrorV1::PreparedRangeMissing { lane },
+                        self,
+                        readbacks.into_boxed_slice(),
+                    ),
+                ));
+            };
+            let Some(result) = read_authenticated_direct_choice(&mut self, range) else {
+                return Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                        M1DirectDiagnosticObservationErrorV1::NotDirectShape,
+                        self,
+                        readbacks.into_boxed_slice(),
+                    ),
+                ));
+            };
+            match result {
+                Ok(readback) => readbacks.push(readback),
+                Err(source) => {
+                    return Err(Box::new(
+                        M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                            M1DirectDiagnosticObservationErrorV1::Queue { lane, source },
+                            self,
+                            readbacks.into_boxed_slice(),
+                        ),
+                    ));
+                }
+            }
+        }
+        let owner = match &self {
+            Self::TargetOnly(case) => case
+                .case
+                .custody()
+                .completion_output()
+                .direct_diagnostic_choices(),
+            Self::PairedPrefill(case) => case
+                .case
+                .custody()
+                .completion_output()
+                .direct_diagnostic_choices(),
+            _ => None,
+        };
+        let Some(owner) = owner else {
+            return Err(Box::new(
+                M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                    M1DirectDiagnosticObservationErrorV1::CaptureNotEnabled,
+                    self,
+                    readbacks.into_boxed_slice(),
+                ),
+            ));
+        };
+        let choices = match observe_m1_direct_diagnostic_choices_v1(
+            owner,
+            generation,
+            &active_lengths[..live],
+            readbacks,
+        ) {
+            Ok(choices) => choices,
+            Err((error, partial_choices)) => {
+                return Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationFailureV1::new(
+                        M1DirectDiagnosticObservationErrorV1::Choices(error),
+                        self,
+                        partial_choices.into_boxed_slice(),
+                    ),
+                ));
+            }
+        };
+        Ok(M1AuthenticatedObservedDirectDiagnosticOutputV1 {
+            completion: self,
+            choices,
+        })
     }
 
     /// Copies the exact four draft rows and one target matrix for the
@@ -524,6 +668,43 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
     }
 }
 
+fn prepare_authenticated_direct_diagnostic_ranges<const N: usize>(
+    case: &M1AuthenticatedObservedCompletionCaseV1<N>,
+    active_lengths: &mut [u32; M1_MAX_ACTIVE_SEQUENCES as usize],
+    ranges: &mut [Option<ServiceHostDispatchRangeV1>; M1_MAX_ACTIVE_SEQUENCES as usize],
+) -> Result<(usize, u64), M1DirectDiagnosticObservationErrorV1> {
+    prepare_m1_direct_diagnostic_ranges_v1(
+        case.case
+            .custody()
+            .completion_output()
+            .direct_diagnostic_choices(),
+        case.case.step().target_active_lengths(),
+        case.case.scheduled_dispatch().member_count(),
+        case.image.dispatch_generation(),
+        active_lengths,
+        ranges,
+    )
+}
+
+fn read_authenticated_direct_choice(
+    completion: &mut M1AuthenticatedObservedCompletionOutputV1,
+    range: ServiceHostDispatchRangeV1,
+) -> Option<Result<ServiceCompletedReadbackV1, ServiceQueueErrorV1>> {
+    match completion {
+        M1AuthenticatedObservedCompletionOutputV1::TargetOnly(case) => {
+            let (lower, _custody, _step) = case.case.observation_parts();
+            let request = lower.completed_read_request(range);
+            Some(lower.read_completed(request))
+        }
+        M1AuthenticatedObservedCompletionOutputV1::PairedPrefill(case) => {
+            let (lower, _custody, _step) = case.case.observation_parts();
+            let request = lower.completed_read_request(range);
+            Some(lower.read_completed(request))
+        }
+        _ => None,
+    }
+}
+
 type AuthenticatedSpeculativeDiagnosticInputsV1 = (
     [Option<ServiceHostDispatchRangeV1>; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
     ServiceHostDispatchRangeV1,
@@ -636,6 +817,199 @@ fn read_authenticated_speculative_k4_choice(
     let (lower, _custody, _step) = case.case.observation_parts();
     let request = lower.completed_read_request(range);
     lower.read_completed(request)
+}
+
+/// Compact K7 observation paired with authenticated direct-choice custody.
+///
+/// ```compile_fail
+/// use ferric_engine::{
+///     CompletionWireSemanticExpectation, M1AuthenticatedObservedDirectDiagnosticOutputV1,
+/// };
+/// fn inject_choice(observed: M1AuthenticatedObservedDirectDiagnosticOutputV1) {
+///     let caller = [CompletionWireSemanticExpectation::DirectFinalRow { choice: 7 }];
+///     let _ = observed.check_completion(&caller);
+/// }
+/// ```
+#[must_use = "authenticated direct observation must be checked or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedObservedDirectDiagnosticOutputV1 {
+    completion: M1AuthenticatedObservedCompletionOutputV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedObservedDirectDiagnosticOutputV1 {
+    /// Structurally observed compact image from the same queue generation.
+    #[must_use = "the compact image remains paired with authenticated custody"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        self.completion.image()
+    }
+
+    /// Independently copied final-row choices in scheduler lane order.
+    #[must_use = "the exact direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Exact authenticated program-catalog identity retained by the queue.
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.completion.program_catalog_id()
+    }
+}
+
+/// Failure retaining authenticated compact/queue/program custody and every
+/// successfully copied direct-choice scalar.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedDirectDiagnosticObservationFailureV1;
+/// fn retry_copy(failure: M1AuthenticatedDirectDiagnosticObservationFailureV1) {
+///     let _ = failure.retry();
+/// }
+/// ```
+#[must_use = "authenticated direct observation failure must be torn down or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticObservationFailureV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    completion: Box<M1AuthenticatedObservedCompletionOutputV1>,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+}
+
+impl M1AuthenticatedDirectDiagnosticObservationFailureV1 {
+    fn new(
+        error: M1DirectDiagnosticObservationErrorV1,
+        completion: M1AuthenticatedObservedCompletionOutputV1,
+        partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    ) -> Self {
+        Self {
+            error,
+            completion: Box::new(completion),
+            partial_choices,
+        }
+    }
+
+    /// Exact shape, attachment, range, copy, or choice rejection.
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    /// Number of completed scalar copies retained before rejection.
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    /// Unchanged compact image and authenticated queue/program custody.
+    #[must_use = "authenticated compact and queue custody remain retained"]
+    pub const fn compact(&self) -> &M1AuthenticatedObservedCompletionOutputV1 {
+        &self.completion
+    }
+
+    /// Faults the logical Engine, destroys the queue, and retains all copied evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated release quarantine paired with the compact
+    /// image and every completed scalar copy.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedDirectDiagnosticObservationTeardownSuccessV1,
+        Box<M1AuthenticatedDirectDiagnosticObservationTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            error,
+            completion,
+            partial_choices,
+        } = self;
+        match release_authenticated_observed_output(*completion) {
+            Ok((queue_release, compact)) => Ok(
+                M1AuthenticatedDirectDiagnosticObservationTeardownSuccessV1 {
+                    error,
+                    compact,
+                    partial_choices,
+                    queue_release,
+                },
+            ),
+            Err(failure) => {
+                let (source, compact) = *failure;
+                Err(Box::new(
+                    M1AuthenticatedDirectDiagnosticObservationTeardownFailureV1 {
+                        error,
+                        compact,
+                        partial_choices,
+                        source,
+                    },
+                ))
+            }
+        }
+    }
+}
+
+/// Clean authenticated teardown after direct-choice observation rejection.
+#[must_use = "direct evidence and authenticated queue release remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticObservationTeardownSuccessV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticObservationTeardownSuccessV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use = "the compact image remains retained"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use = "authenticated program release remains retained"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+}
+
+/// Terminal authenticated release quarantine after direct-choice observation rejection.
+#[must_use = "direct evidence and authenticated release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticObservationTeardownFailureV1 {
+    error: M1DirectDiagnosticObservationErrorV1,
+    compact: M1ObservedCompletionImageV1,
+    partial_choices: Box<[ServiceCompletedReadbackV1]>,
+    source: M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticObservationTeardownFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1DirectDiagnosticObservationErrorV1 {
+        &self.error
+    }
+
+    #[must_use]
+    pub const fn copied_choice_ranges(&self) -> usize {
+        self.partial_choices.len()
+    }
+
+    #[must_use = "the compact image remains retained"]
+    pub const fn compact(&self) -> &M1ObservedCompletionImageV1 {
+        &self.compact
+    }
+
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
 }
 
 /// First-publication authenticated S1/K4 diagnostic observation rejection.
@@ -2511,6 +2885,7 @@ type CheckObservedCaseResultV1<const N: usize> = Result<
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum M1AuthenticatedCompletionEvidenceJoinAuthorityV1 {
     Generic,
+    DirectDiagnostic,
     SpeculativeDiagnostic,
 }
 
@@ -2521,7 +2896,12 @@ fn validate_generic_observed_semantics(
     speculative_diagnostic_capture_enabled: bool,
     semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> Result<(), M1CompletedOutputCheckErrorV1> {
-    if direct_diagnostic_capture_enabled {
+    if direct_diagnostic_capture_enabled
+        != matches!(
+            authority,
+            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::DirectDiagnostic
+        )
+    {
         return Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence);
     }
     if speculative_diagnostic_capture_enabled
@@ -2855,6 +3235,360 @@ impl M1AuthenticatedObservedCompletionOutputV1 {
                 expectations,
             ),
         }
+    }
+}
+
+fn authenticated_direct_semantics(
+    choices: &M1ObservedDirectDiagnosticChoicesV1,
+) -> Result<
+    (
+        [CompletionWireSemanticExpectation<'static>; M1_MAX_ACTIVE_SEQUENCES as usize],
+        usize,
+    ),
+    M1CompletedOutputCheckErrorV1,
+> {
+    let mut semantics = [CompletionWireSemanticExpectation::DirectFinalRow { choice: 0 };
+        M1_MAX_ACTIVE_SEQUENCES as usize];
+    let live = choices.choices().len();
+    if live > semantics.len() {
+        return Err(M1CompletedOutputCheckErrorV1::ExpectationCount {
+            expected: semantics.len(),
+            actual: live,
+        });
+    }
+    for (semantic, choice) in semantics.iter_mut().zip(choices.choices()) {
+        *semantic = CompletionWireSemanticExpectation::DirectFinalRow { choice: *choice };
+    }
+    Ok((semantics, live))
+}
+
+fn check_authenticated_direct_diagnostic(
+    completion: M1AuthenticatedObservedCompletionOutputV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+) -> Result<
+    M1AuthenticatedDirectDiagnosticCompletedReadbackV1,
+    Box<M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1>,
+> {
+    let (semantics, live) = match authenticated_direct_semantics(&choices) {
+        Ok(semantics) => semantics,
+        Err(error) => {
+            return Err(Box::new(
+                M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 {
+                    failure: M1AuthenticatedCompletedReadbackJoinFailureV1 {
+                        error,
+                        observed: Box::new(completion),
+                    },
+                    choices,
+                },
+            ));
+        }
+    };
+    let joined = match completion {
+        M1AuthenticatedObservedCompletionOutputV1::TargetOnly(case) => join_observed_output_case(
+            case,
+            M1AuthenticatedObservedCompletionOutputV1::TargetOnly,
+            M1AuthenticatedPhysicalReadbackQueueSessionV1::TargetOnly,
+            M1AuthenticatedCompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+            &semantics[..live],
+        ),
+        M1AuthenticatedObservedCompletionOutputV1::PairedPrefill(case) => {
+            join_observed_output_case(
+                case,
+                M1AuthenticatedObservedCompletionOutputV1::PairedPrefill,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::PairedPrefill,
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+                &semantics[..live],
+            )
+        }
+        completion => {
+            return Err(Box::new(
+                M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 {
+                    failure: M1AuthenticatedCompletedReadbackJoinFailureV1 {
+                        error:
+                            M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence,
+                        observed: Box::new(completion),
+                    },
+                    choices,
+                },
+            ));
+        }
+    };
+    match joined {
+        Ok(completed) => {
+            Ok(M1AuthenticatedDirectDiagnosticCompletedReadbackV1 { completed, choices })
+        }
+        Err(failure) => Err(Box::new(
+            M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 { failure, choices },
+        )),
+    }
+}
+
+impl M1AuthenticatedObservedDirectDiagnosticOutputV1 {
+    /// Joins compact completion to independently copied direct choices.
+    ///
+    /// This private-authority route is the only authenticated join that admits
+    /// a direct diagnostic attachment. It derives every token semantic from the
+    /// retained completed copies and accepts no caller-supplied values.
+    ///
+    /// # Errors
+    ///
+    /// Returns unchanged compact and choice custody on roster, epoch, plan,
+    /// wire, request, or direct-token rejection.
+    pub fn check_completion(
+        self,
+    ) -> Result<
+        M1AuthenticatedDirectDiagnosticCompletedReadbackV1,
+        Box<M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1>,
+    > {
+        check_authenticated_direct_diagnostic(self.completion, self.choices)
+    }
+}
+
+/// Positive authenticated direct join retaining exact copied choice evidence.
+#[must_use = "authenticated completed readback and direct choices remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticCompletedReadbackV1 {
+    completed: M1AuthenticatedPhysicalCompletedReadbackV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+/// Clean fail-closed release of a joined direct diagnostic that cannot complete.
+#[must_use = "authenticated direct evidence and program release remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticCompletedTeardownSuccessV1 {
+    queue_release: AuthenticatedServiceQueueReleaseV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticCompletedTeardownSuccessV1 {
+    #[must_use = "released authenticated programs remain explicitly owned"]
+    pub const fn queue_release(&self) -> &AuthenticatedServiceQueueReleaseV1 {
+        &self.queue_release
+    }
+
+    #[must_use = "checked completion remains retained"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    #[must_use = "direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion.epoch()
+    }
+
+    #[must_use = "pending KV reservations remain retained"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.kv
+    }
+}
+
+/// Terminal release quarantine for a joined direct diagnostic that cannot complete.
+#[must_use = "authenticated direct evidence and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticCompletedTeardownFailureV1 {
+    source: M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1,
+    checked: M1CheckedCompletionOutputV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticCompletedTeardownFailureV1 {
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn source(&self) -> &M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1 {
+        &self.source
+    }
+
+    #[must_use = "checked completion remains retained"]
+    pub const fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+        &self.checked
+    }
+
+    #[must_use = "direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.completion.epoch()
+    }
+
+    #[must_use = "pending KV reservations remain retained"]
+    pub const fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+        &self.kv
+    }
+}
+
+impl M1AuthenticatedDirectDiagnosticCompletedReadbackV1 {
+    #[must_use = "authenticated completed readback authority remains retained"]
+    pub const fn completed(&self) -> &M1AuthenticatedPhysicalCompletedReadbackV1 {
+        &self.completed
+    }
+
+    #[must_use = "exact direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Faults the Engine and destroys the queue while retaining checked compact,
+    /// completion, KV, and direct-choice custody.
+    ///
+    /// # Errors
+    ///
+    /// Returns terminal authenticated lower release quarantine paired with all
+    /// post-join Ferric owners when queue destruction fails.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedDirectDiagnosticCompletedTeardownSuccessV1,
+        Box<M1AuthenticatedDirectDiagnosticCompletedTeardownFailureV1>,
+    > {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { completed, choices } = self;
+        let (queue, checked, completion, kv) = completed.into_parts();
+        match queue.destroy_and_release() {
+            Ok(queue_release) => Ok(M1AuthenticatedDirectDiagnosticCompletedTeardownSuccessV1 {
+                queue_release,
+                checked,
+                completion,
+                kv,
+                choices,
+            }),
+            Err(source) => Err(Box::new(
+                M1AuthenticatedDirectDiagnosticCompletedTeardownFailureV1 {
+                    source: *source,
+                    checked,
+                    completion,
+                    kv,
+                    choices,
+                },
+            )),
+        }
+    }
+
+    /// Separates authenticated completion authority and inert direct choices once.
+    #[must_use = "authenticated completion and direct choices remain retained"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalCompletedReadbackV1,
+        M1ObservedDirectDiagnosticChoicesV1,
+    ) {
+        (self.completed, self.choices)
+    }
+}
+
+/// Semantic rejection retaining authenticated compact/queue/program custody and choices.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1;
+/// fn extract_generic(failure: M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1) {
+///     let _ = failure.into_parts();
+/// }
+/// ```
+#[must_use = "authenticated direct join failure must be retried, torn down, or retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 {
+    failure: M1AuthenticatedCompletedReadbackJoinFailureV1,
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> &M1CompletedOutputCheckErrorV1 {
+        self.failure.error()
+    }
+
+    #[must_use = "the same copied direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    /// Rechecks the same compact image and direct choices without another read.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same closed failure owner if the immutable join still rejects.
+    pub fn retry(self) -> Result<M1AuthenticatedDirectDiagnosticCompletedReadbackV1, Box<Self>> {
+        let Self { failure, choices } = self;
+        match check_authenticated_direct_diagnostic(*failure.observed, choices) {
+            Ok(completed) => Ok(completed),
+            Err(failure) => Err(failure),
+        }
+    }
+
+    /// Faults the Engine and tears down while retaining both evidence owners.
+    ///
+    /// # Errors
+    ///
+    /// Returns authenticated release quarantine paired with the compact image,
+    /// join diagnostic, and exact direct choices.
+    pub fn destroy_queue_and_retain_evidence<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedDirectDiagnosticSemanticTeardownSuccessV1,
+        Box<M1AuthenticatedDirectDiagnosticSemanticTeardownFailureV1>,
+    > {
+        let Self { failure, choices } = self;
+        match failure.destroy_queue_and_retain_evidence(engine) {
+            Ok(teardown) => {
+                Ok(M1AuthenticatedDirectDiagnosticSemanticTeardownSuccessV1 { choices, teardown })
+            }
+            Err(teardown) => Err(Box::new(
+                M1AuthenticatedDirectDiagnosticSemanticTeardownFailureV1 { choices, teardown },
+            )),
+        }
+    }
+}
+
+/// Clean teardown retaining authenticated direct semantic rejection and choices.
+#[must_use = "authenticated direct teardown and choice custody remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticSemanticTeardownSuccessV1 {
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+    teardown: M1AuthenticatedReadbackTeardownSuccessV1,
+}
+
+impl M1AuthenticatedDirectDiagnosticSemanticTeardownSuccessV1 {
+    #[must_use = "exact direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use = "authenticated program release remains retained"]
+    pub const fn teardown(&self) -> &M1AuthenticatedReadbackTeardownSuccessV1 {
+        &self.teardown
+    }
+}
+
+/// Terminal teardown retaining authenticated release quarantine and direct choices.
+#[must_use = "authenticated direct teardown quarantine remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedDirectDiagnosticSemanticTeardownFailureV1 {
+    choices: M1ObservedDirectDiagnosticChoicesV1,
+    teardown: Box<M1AuthenticatedReadbackTeardownFailureV1>,
+}
+
+impl M1AuthenticatedDirectDiagnosticSemanticTeardownFailureV1 {
+    #[must_use = "exact direct choices remain retained"]
+    pub const fn choices(&self) -> &M1ObservedDirectDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use = "authenticated release quarantine remains retained"]
+    pub const fn teardown(&self) -> &M1AuthenticatedReadbackTeardownFailureV1 {
+        &self.teardown
     }
 }
 
@@ -3279,11 +4013,15 @@ impl M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
 #[cfg(test)]
 mod tests {
     use super::{
-        is_authenticated_s1_k4_first_dispatch_generation, validate_generic_observed_semantics,
-        M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
+        authenticated_direct_semantics, is_authenticated_s1_k4_first_dispatch_generation,
+        validate_generic_observed_semantics, M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
         M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
     };
-    use crate::M1CompletedOutputCheckErrorV1;
+    use crate::{
+        CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
+        M1ObservedDirectDiagnosticChoicesV1,
+    };
+    use ferric_spec::M1_MAX_ACTIVE_SEQUENCES;
 
     #[test]
     fn generic_readback_denies_diagnostic_capture_routes() {
@@ -3319,6 +4057,63 @@ mod tests {
             &[]
         )
         .is_ok());
+    }
+
+    #[test]
+    fn private_direct_authority_requires_exactly_one_direct_attachment() {
+        let authority = M1AuthenticatedCompletionEvidenceJoinAuthorityV1::DirectDiagnostic;
+        assert!(validate_generic_observed_semantics(authority, false, true, false, &[]).is_ok());
+        assert!(matches!(
+            validate_generic_observed_semantics(authority, false, false, false, &[]),
+            Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(matches!(
+            validate_generic_observed_semantics(authority, false, true, true, &[]),
+            Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
+        ));
+        assert!(matches!(
+            validate_generic_observed_semantics(
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                false,
+                true,
+                true,
+                &[]
+            ),
+            Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
+        ));
+    }
+
+    #[test]
+    fn direct_semantics_are_derived_only_from_retained_choice_order() {
+        let choices = M1ObservedDirectDiagnosticChoicesV1::for_serving_history_test(
+            vec![17, 23].into_boxed_slice(),
+        );
+        let (semantics, live) =
+            authenticated_direct_semantics(&choices).expect("bounded test choices are admitted");
+        assert_eq!(live, 2);
+        assert!(matches!(
+            semantics[0],
+            CompletionWireSemanticExpectation::DirectFinalRow { choice: 17 }
+        ));
+        assert!(matches!(
+            semantics[1],
+            CompletionWireSemanticExpectation::DirectFinalRow { choice: 23 }
+        ));
+    }
+
+    #[test]
+    fn oversized_direct_choice_custody_fails_before_semantic_slice() {
+        let actual = M1_MAX_ACTIVE_SEQUENCES as usize + 1;
+        let choices = M1ObservedDirectDiagnosticChoicesV1::for_serving_history_test(
+            vec![7; actual].into_boxed_slice(),
+        );
+        assert!(matches!(
+            authenticated_direct_semantics(&choices),
+            Err(M1CompletedOutputCheckErrorV1::ExpectationCount {
+                expected,
+                actual: rejected,
+            }) if expected == M1_MAX_ACTIVE_SEQUENCES as usize && rejected == actual
+        ));
     }
 
     #[test]

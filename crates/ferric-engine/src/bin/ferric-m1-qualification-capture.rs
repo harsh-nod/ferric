@@ -9022,11 +9022,11 @@ mod tests {
             submit_m1_authenticated_speculative_rollover_v1, M1AuthenticatedCompletedStepOutcomeV1,
             M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
             M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
-            M1FiniteSpeculativeQueueRolloverKvInputsV1, M1ScheduledDispatchV1,
-            M1ServingCompletionDispositionV1, M1ServingPhysicalOperationResultV1,
-            M1ServingPhysicalOperationsV1, M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1,
-            M1ServingRegistryV1, M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1,
-            M1SpeculativeMemberSeedV1,
+            M1FiniteSpeculativeQueueRolloverKvInputsV1, M1QueueWaitTimeoutV1,
+            M1ScheduledDispatchV1, M1ServingCompletionDispositionV1,
+            M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
+            M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
+            M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
         };
 
         struct FixtureOperations {
@@ -9206,11 +9206,6 @@ mod tests {
             .expect("set FERRIC_M1_GPU_UNIQUE_ID")
             .parse::<u64>()
             .expect("FERRIC_M1_GPU_UNIQUE_ID must be decimal");
-        let expected_prefill_token = std::env::var("FERRIC_M1_ROLLOVER_PREFILL_TOKEN")
-            .expect("set FERRIC_M1_ROLLOVER_PREFILL_TOKEN from the admitted aggregate")
-            .parse::<u32>()
-            .expect("FERRIC_M1_ROLLOVER_PREFILL_TOKEN must be decimal");
-
         let selector_bytes = read_r32_selector_manifest(&selector_path)
             .expect("read exact aggregate V2 selector manifest");
         let selector = decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
@@ -9370,6 +9365,8 @@ mod tests {
         ) = prepared.into_parts();
         assert_eq!(prompt_tokens.as_ref(), &[1; 128]);
         assert_eq!(policy.max_output_tokens(), 32);
+        let queue_wait_timeout =
+            M1QueueWaitTimeoutV1::new(1_000).expect("construct nonzero prefill wait timeout");
         let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
             prepublication,
@@ -9387,7 +9384,7 @@ mod tests {
                 panic!("authenticated paired-prefill submission failed closed: {quarantine:?}")
             }
         };
-        let completed = match published.wait() {
+        let completed = match published.wait_for(queue_wait_timeout.milliseconds()) {
             Ok(completed) => completed,
             Err(failure) => {
                 let quarantine = (*failure).quarantine_engine(&mut engine);
@@ -9411,20 +9408,27 @@ mod tests {
                 }
             },
         };
-        let expectations = [CompletionWireSemanticExpectation::DirectFinalRow {
-            choice: expected_prefill_token,
-        }];
-        let readback = match observed.check_completion(&expectations) {
-            Ok(readback) => readback,
-            Err(failure) => match failure.retry(&expectations) {
-                Ok(readback) => readback,
-                Err(failure) => {
-                    let teardown = failure.destroy_queue_and_retain_evidence(&mut engine);
-                    panic!("paired-prefill semantics failed after bounded retry: {teardown:?}")
-                }
-            },
+        let direct = match observed.observe_direct_diagnostic_choices() {
+            Ok(direct) => direct,
+            Err(failure) => {
+                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                panic!("paired-prefill direct choice observation failed closed: {teardown:?}")
+            }
         };
-        let anchor = expected_prefill_token;
+        let direct = match direct.check_completion() {
+            Ok(direct) => direct,
+            Err(failure) => {
+                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
+                panic!("paired-prefill direct semantics failed closed: {teardown:?}")
+            }
+        };
+        let [anchor] = direct.choices().choices() else {
+            let actual = direct.choices().choices().len();
+            let teardown = direct.destroy_queue_and_retain_evidence(&mut engine);
+            panic!("paired-prefill returned {actual} direct choices and closed: {teardown:?}")
+        };
+        let anchor = *anchor;
+        let (readback, _direct_choices) = direct.into_parts();
         let roster =
             M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
                 cache,

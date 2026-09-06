@@ -40,19 +40,19 @@ use crate::speculative_diagnostic_choices::{
 };
 use crate::{
     preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
-    CompletionWireExpectation, CompletionWireSemanticExpectation, Engine, ExactCompletion,
-    Gfx942DeviceBinding, M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1,
-    M1CompletionCanaryErrorV1, M1DirectDiagnosticChoicesErrorV1, M1FullStepKvReservationCustodyV1,
-    M1ObservedCompletionImageErrorV1, M1ObservedCompletionImageV1,
-    M1ObservedDirectDiagnosticChoicesV1, M1ObservedQualificationLogitsV1,
-    M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalDispatchRecipeRowV1,
-    M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
-    M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
-    M1PrepublicationStepCustodyV1, M1QualificationLogitsErrorV1, M1ScheduledDispatchV1,
-    M1SpeculativeDiagnosticChoicesErrorV1, M1ValidatedQualificationContextStepV1,
-    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    BoundM1DirectDiagnosticChoicesV1, CompletionWireExpectation, CompletionWireSemanticExpectation,
+    Engine, ExactCompletion, Gfx942DeviceBinding, M1CheckedCompletionOutputV1,
+    M1CompletedOutputCheckErrorV1, M1CompletionCanaryErrorV1, M1DirectDiagnosticChoicesErrorV1,
+    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
+    M1ObservedCompletionImageV1, M1ObservedDirectDiagnosticChoicesV1,
+    M1ObservedQualificationLogitsV1, M1ObservedSpeculativeDiagnosticChoicesV1,
+    M1PhysicalDispatchRecipeRowV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
+    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1,
+    M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1, M1QualificationLogitsErrorV1,
+    M1ScheduledDispatchV1, M1SpeculativeDiagnosticChoicesErrorV1,
+    M1ValidatedQualificationContextStepV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Stable identity of Ferric's M1 completion-progress liveness policy.
@@ -1852,17 +1852,31 @@ fn prepare_direct_diagnostic_ranges<const N: usize>(
     active_lengths: &mut [u32; M1_MAX_ACTIVE_SEQUENCES as usize],
     ranges: &mut [Option<ServiceHostDispatchRangeV1>; M1_MAX_ACTIVE_SEQUENCES as usize],
 ) -> Result<(usize, u64), M1DirectDiagnosticObservationErrorV1> {
-    let Some(owner) = case
-        .case
-        .custody
-        .completion_output()
-        .direct_diagnostic_choices()
-    else {
+    prepare_m1_direct_diagnostic_ranges_v1(
+        case.case
+            .custody
+            .completion_output()
+            .direct_diagnostic_choices(),
+        case.case.step.target_active_lengths(),
+        case.case.step.scheduled_dispatch().member_count(),
+        case.image.dispatch_generation(),
+        active_lengths,
+        ranges,
+    )
+}
+
+pub(crate) fn prepare_m1_direct_diagnostic_ranges_v1(
+    owner: Option<&BoundM1DirectDiagnosticChoicesV1>,
+    active: impl ExactSizeIterator<Item = u32>,
+    expected: usize,
+    dispatch_generation: u64,
+    active_lengths: &mut [u32; M1_MAX_ACTIVE_SEQUENCES as usize],
+    ranges: &mut [Option<ServiceHostDispatchRangeV1>; M1_MAX_ACTIVE_SEQUENCES as usize],
+) -> Result<(usize, u64), M1DirectDiagnosticObservationErrorV1> {
+    let Some(owner) = owner else {
         return Err(M1DirectDiagnosticObservationErrorV1::CaptureNotEnabled);
     };
-    let active = case.case.step.target_active_lengths();
     let live = active.len();
-    let expected = case.case.step.scheduled_dispatch().member_count();
     if live != expected || live > active_lengths.len() {
         return Err(M1DirectDiagnosticObservationErrorV1::LiveLaneCount {
             capacity: active_lengths.len(),
@@ -1878,7 +1892,7 @@ fn prepare_direct_diagnostic_ranges<const N: usize>(
                 .map_err(M1DirectDiagnosticObservationErrorV1::Choices)?,
         );
     }
-    Ok((live, case.image.dispatch_generation()))
+    Ok((live, dispatch_generation))
 }
 
 /// One exact recycled queue generation paired with a rejected completed copy.

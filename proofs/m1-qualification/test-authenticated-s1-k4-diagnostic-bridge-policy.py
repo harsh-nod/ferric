@@ -20,18 +20,28 @@ def require(source: str, needle: str, label: str) -> int:
     return position
 
 
+def reject_panicking_production(source: str, label: str) -> None:
+    for token in [".expect(", "expect!", "panic!", "unreachable!", "todo!"]:
+        if token in source:
+            fail(f"{label} contains forbidden production token {token}")
+
+
 def main() -> None:
     root = Path(sys.argv[1] if len(sys.argv) == 2 else ".").resolve()
     readback_path = root / "crates/ferric-engine/src/authenticated_physical_readback.rs"
     choices_path = root / "crates/ferric-engine/src/speculative_diagnostic_choices.rs"
     direct_choices_path = root / "crates/ferric-engine/src/direct_diagnostic_choices.rs"
+    lifecycle_path = root / "crates/ferric-engine/src/physical_queue_lifecycle.rs"
     rearm_path = root / "crates/ferric-engine/src/authenticated_queue_rearm.rs"
     queue_path = root / "crates/ferric-engine/src/authenticated_physical_queue.rs"
+    fixture_path = root / "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs"
     readback = readback_path.read_text(encoding="utf-8")
     choices = choices_path.read_text(encoding="utf-8")
     direct_choices = direct_choices_path.read_text(encoding="utf-8")
+    lifecycle = lifecycle_path.read_text(encoding="utf-8")
     rearm = rearm_path.read_text(encoding="utf-8")
     queue = queue_path.read_text(encoding="utf-8")
+    fixture = fixture_path.read_text(encoding="utf-8")
 
     if readback.count("pub fn observe_speculative_k4_diagnostic_choices(") != 1:
         fail("authenticated S1/K4 observation entry point is absent or duplicated")
@@ -150,6 +160,11 @@ def main() -> None:
     )
     require(
         readback,
+        "M1AuthenticatedCompletionEvidenceJoinAuthorityV1::DirectDiagnostic",
+        "specialized direct semantic join",
+    )
+    require(
+        readback,
         "M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic",
         "unchanged generic semantic join",
     )
@@ -186,6 +201,124 @@ def main() -> None:
     require(specialized_join, "choices.draft_choices_for_lane", "draft-choice-only semantics")
     require(specialized_join, "choices.target_choices_for_lane", "target-choice-only semantics")
 
+    if readback.count("pub fn observe_direct_diagnostic_choices(") != 1:
+        fail("authenticated direct observation entry point is absent or duplicated")
+    direct_observe = require(
+        readback,
+        "pub fn observe_direct_diagnostic_choices(",
+        "authenticated direct observation transition",
+    )
+    if impl_position > direct_observe:
+        fail("direct observation is not owned by authenticated compact custody")
+    if "observe_direct_diagnostic_choices" in rearm or "observe_direct_diagnostic_choices" in queue:
+        fail("direct observation leaked onto queue/rearm typestates")
+    require(
+        lifecycle,
+        "pub(crate) fn prepare_m1_direct_diagnostic_ranges_v1(",
+        "shared direct range preparation policy",
+    )
+    require(
+        readback,
+        "prepare_m1_direct_diagnostic_ranges_v1(",
+        "authenticated reuse of direct range policy",
+    )
+    require(
+        readback,
+        "case.case.step().target_active_lengths()",
+        "queue-retained direct active lengths",
+    )
+    direct_observation_failure_impl = readback.split(
+        "impl M1AuthenticatedDirectDiagnosticObservationFailureV1 {", 1
+    )[1].split(
+        "pub struct M1AuthenticatedDirectDiagnosticObservationTeardownSuccessV1", 1
+    )[0]
+    if "pub fn retry" in direct_observation_failure_impl or "pub fn into_parts" in direct_observation_failure_impl:
+        fail("direct observation failure exposes retry or compact-owner recovery")
+    require(
+        direct_observation_failure_impl,
+        "destroy_queue_and_retain_evidence",
+        "closed direct observation-failure teardown",
+    )
+    direct_semantic_failure_impl = readback.split(
+        "impl M1AuthenticatedDirectDiagnosticCompletedReadbackJoinFailureV1 {", 1
+    )[1].split(
+        "pub struct M1AuthenticatedDirectDiagnosticSemanticTeardownSuccessV1", 1
+    )[0]
+    if "pub fn into_parts" in direct_semantic_failure_impl or "expectations:" in direct_semantic_failure_impl:
+        fail("direct semantic failure exposes generic authority or caller semantics")
+    require(direct_semantic_failure_impl, "pub fn retry(self)", "no-argument direct retry")
+    require(
+        direct_semantic_failure_impl,
+        "destroy_queue_and_retain_evidence",
+        "closed direct semantic-failure teardown",
+    )
+    direct_join = readback.split("fn authenticated_direct_semantics", 1)[1].split(
+        "fn authenticated_speculative_semantics", 1
+    )[0]
+    if "expectations:" in direct_join:
+        fail("specialized direct join accepts caller-supplied semantics")
+    require(direct_join, "choices.choices()", "direct-choice-only semantics")
+    require(
+        direct_join,
+        "if live > semantics.len()",
+        "typed direct choice-capacity rejection",
+    )
+    if "debug_assert" in direct_join:
+        fail("direct semantic capacity relies on a debug-only assertion")
+    require(
+        readback,
+        "fn private_direct_authority_requires_exactly_one_direct_attachment()",
+        "exact direct attachment regression",
+    )
+    require(
+        readback,
+        "fn generic_readback_denies_diagnostic_capture_routes()",
+        "generic direct-attachment rejection regression",
+    )
+    require(
+        readback,
+        "fn oversized_direct_choice_custody_fails_before_semantic_slice()",
+        "hostile oversized-choice regression",
+    )
+
+    direct_observation = readback[direct_observe:observe_position]
+    direct_helpers = readback.split(
+        "fn prepare_authenticated_direct_diagnostic_ranges", 1
+    )[1].split("type AuthenticatedSpeculativeDiagnosticInputsV1", 1)[0]
+    direct_custody = readback.split(
+        "pub struct M1AuthenticatedObservedDirectDiagnosticOutputV1", 1
+    )[1].split("/// First-publication authenticated S1/K4", 1)[0]
+    shared_ranges = lifecycle.split(
+        "pub(crate) fn prepare_m1_direct_diagnostic_ranges_v1(", 1
+    )[1].split("/// One exact recycled queue generation", 1)[0]
+    for label, production in [
+        ("authenticated direct observation", direct_observation),
+        ("authenticated direct helpers", direct_helpers),
+        ("authenticated direct custody", direct_custody),
+        ("authenticated direct semantic join", direct_join),
+        ("shared direct range preparation", shared_ranges),
+    ]:
+        reject_panicking_production(production, label)
+
+    if "FERRIC_M1_ROLLOVER_PREFILL_TOKEN" in fixture:
+        fail("MI300X rollover fixture still accepts an external prefill-token oracle")
+    require(
+        fixture,
+        "published.wait_for(queue_wait_timeout.milliseconds())",
+        "bounded prefill wait",
+    )
+    require(
+        fixture,
+        "observed.observe_direct_diagnostic_choices()",
+        "authenticated direct prefill observation",
+    )
+    require(fixture, "direct.check_completion()", "evidence-authorized direct join")
+    require(
+        fixture,
+        "let [anchor] = direct.choices().choices() else",
+        "checked direct-choice anchor derivation",
+    )
+
     require(
         rearm,
         "const fn diagnostic_capture_is_supported(direct: bool, _speculative: bool) -> bool {\n    !direct\n}",
@@ -199,7 +332,8 @@ def main() -> None:
 
     print(
         "PASS: authenticated first-publication S1/K4 diagnostic bridge remains "
-        "bounded, one-copy, data-index checked, partial-non-evidence, and excluded from rearm"
+        "bounded, one-copy, data-index checked, direct-join authenticated, "
+        "partial-non-evidence, and excluded from rearm"
     )
 
 
