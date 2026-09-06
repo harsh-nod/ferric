@@ -1,9 +1,10 @@
 use ferric_qwen3_paged_decode_device_v1::{
     QWEN3_PAGED_DECODE_ATTENTION_SCALE_BITS_V1, QWEN3_PAGED_DECODE_ATTENTION_SCALE_V1,
     QWEN3_PAGED_DECODE_CACHE_ELEMENTS_V1, QWEN3_PAGED_DECODE_CACHE_HEAD_CAPACITY_V1,
-    QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1, QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1,
-    QWEN3_PAGED_DECODE_KV_HEADS_V1, QWEN3_PAGED_DECODE_MAX_GRID_WORKGROUPS_V1,
-    QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1, QWEN3_PAGED_DECODE_PAGE_TOKENS_V1,
+    QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1, QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1,
+    QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1, QWEN3_PAGED_DECODE_KV_HEADS_V1,
+    QWEN3_PAGED_DECODE_MAX_GRID_WORKGROUPS_V1, QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1,
+    QWEN3_PAGED_DECODE_PAGE_TOKENS_V1,
 };
 use syn::{Expr, FnArg, Item, ItemFn, Meta, Stmt};
 
@@ -179,6 +180,21 @@ fn all_immutable_kernel_reads_are_bounded_volatile_loads() {
 fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
     let kernel = kernel();
     let body = compact_tokens(&kernel.block);
+    let committed_load = body
+        .find("letcommitted_tokens=memory::volatile_load(committed,sequence)asusize")
+        .unwrap();
+    let committed_guard = body
+        .find("ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}")
+        .unwrap();
+    let active_capacity = body
+        .find("letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens")
+        .unwrap();
+    let active_capacity_guard = body
+        .find("ifactive_tokens>active_capacity{fe2o3_device::trap();}")
+        .unwrap();
+    let query_position = body
+        .find("letquery_position=committed_tokens+query_token")
+        .unwrap();
     let key_limit_guard = body
         .find("ifquery_position<8_192{}else{fe2o3_device::trap();}")
         .unwrap();
@@ -224,6 +240,11 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
         );
         prior = position;
     }
+    assert!(committed_load < committed_guard);
+    assert!(committed_guard < active_capacity);
+    assert!(active_capacity < active_capacity_guard);
+    assert!(active_capacity_guard < query_position);
+    assert!(query_position < key_limit_guard);
     assert!(key_limit_guard < key_limit);
     assert!(key_limit < query_vector_guard);
     assert!(query_vector_guard < query_base);
@@ -321,6 +342,9 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
         "letkey_limit=query_position+1",
         "whilekey_token<8_192{",
         "ifkey_token<key_limit{",
+        "ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}",
+        "letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens",
+        "ifactive_tokens>active_capacity{fe2o3_device::trap();}",
     ] {
         assert_eq!(
             body.matches(marker).count(),
@@ -492,6 +516,17 @@ fn guarded_key_limit(query_position: usize) -> Option<usize> {
     }
 }
 
+fn guarded_active_capacity(committed_tokens: usize, active_tokens: usize) -> Option<usize> {
+    if committed_tokens >= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
+        return None;
+    }
+    let active_capacity = QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens;
+    if active_tokens > active_capacity {
+        return None;
+    }
+    Some(active_capacity)
+}
+
 fn modeled_key_tokens(query_position: usize) -> Option<Vec<usize>> {
     let key_limit = guarded_key_limit(query_position)?;
     let mut key_token = 0;
@@ -641,6 +676,23 @@ fn guarded_coordinate_models_accept_endpoints_and_reject_hostile_overflow() {
     assert_eq!(guarded_key_limit(8_191), Some(8_192));
     assert_eq!(guarded_key_limit(8_192), None);
     assert_eq!(guarded_key_limit(usize::MAX), None);
+    assert_eq!(
+        guarded_active_capacity(0, QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1),
+        Some(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1)
+    );
+    assert_eq!(
+        guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - 1, 1),
+        Some(1)
+    );
+    assert_eq!(
+        guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - 1, 2),
+        None
+    );
+    assert_eq!(
+        guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1, 0),
+        None
+    );
+    assert_eq!(guarded_active_capacity(usize::MAX, 0), None);
     assert_eq!(modeled_key_tokens(0), Some(vec![0]));
     let full = modeled_key_tokens(8_191).unwrap();
     assert_eq!(full.len(), 8_192);
@@ -767,7 +819,9 @@ fn coordinates_preserve_committed_causality_gqa_and_global_p16_mapping() {
         "letsequence=position/active_tokens",
         "letkv_head=query_head/gqa_group_size",
         "letcommitted_tokens=memory::volatile_load(committed,sequence)asusize",
-        "active_tokens>QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens",
+        "ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}",
+        "letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens",
+        "ifactive_tokens>active_capacity{fe2o3_device::trap();}",
         "letquery_position=committed_tokens+query_token",
         "whilekey_token<8_192",
         "ifkey_token<key_limit",

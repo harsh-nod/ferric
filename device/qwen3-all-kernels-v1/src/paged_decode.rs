@@ -328,9 +328,11 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
     }
 
     let committed_tokens = memory::volatile_load(committed, sequence) as usize;
-    if committed_tokens >= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1
-        || active_tokens > QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens
-    {
+    if committed_tokens >= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
+        fe2o3_device::trap();
+    }
+    let active_capacity = QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens;
+    if active_tokens > active_capacity {
         fe2o3_device::trap();
     }
     let query_position = committed_tokens + query_token;
