@@ -1112,6 +1112,17 @@ mod tests {
         DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
     };
     use ferric_spec::Identity;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    #[derive(Debug)]
+    struct DropWitness(Rc<Cell<bool>>);
+
+    impl Drop for DropWitness {
+        fn drop(&mut self) {
+            self.0.set(true);
+        }
+    }
 
     fn plan(selection: Qwen3PlanSelection, byte: u8) -> AddresslessM1StepWorkspacePlan {
         let requirements = m1_step_workspace_requirements(selection).unwrap();
@@ -1230,5 +1241,40 @@ mod tests {
         let (_, _, preparation, recipe) = failure.into_parts();
         assert_eq!(preparation.kind(), M1FullStepWorkspaceInputKind::TargetOnly);
         assert_eq!(recipe.kind(), M1FullStepWorkspaceInputKind::PairedPrefill);
+    }
+
+    #[test]
+    fn phase_local_failure_quarantines_engine_and_retains_lower_custody() {
+        let dropped = Rc::new(Cell::new(false));
+        let failure = terminal_failure(
+            Engine::<1>::new(512, 256, M1_MAX_CONTEXT_TOKENS).unwrap(),
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::WorkspaceAllocation,
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::LowerRejected,
+            DropWitness(Rc::clone(&dropped)),
+        );
+        assert_eq!(
+            failure.phase(),
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::WorkspaceAllocation
+        );
+        assert_eq!(
+            failure.error(),
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::LowerRejected
+        );
+        assert!(failure.engine_quarantined());
+        assert!(!dropped.get());
+
+        let (engine, phase, error, retained) = (*failure).into_parts();
+        assert!(engine.is_faulted());
+        assert_eq!(
+            phase,
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::WorkspaceAllocation
+        );
+        assert_eq!(
+            error,
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::LowerRejected
+        );
+        assert!(!dropped.get());
+        drop(retained);
+        assert!(dropped.get());
     }
 }

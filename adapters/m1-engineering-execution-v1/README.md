@@ -73,13 +73,19 @@ measurement callback. An exact `start` constructs a fresh 32-slot Ferric
 retained through `Faulted`, and only a matching, in-budget `stop` drops it and
 enters `Stopped`.
 
-This ownership join is intentionally not serving-complete. The next required
-slice is an authenticated window bootstrap which consumes the active runner,
-partitioned model/KV pool, fresh Engine scheduling result, exact pretokenized
-window inputs, two equal workspace-plan owners, KV reservations, physical
-recipe, ring size, and deadline-bounded queue wait, and returns authenticated
-executor custody plus checked completion events. Until that constructor exists,
-`measure` returns `authenticated-window-bootstrap-unavailable` before any queue
-effect or clock observation and transitions the exact instance to `Faulted`.
-It never routes through the structural physical runner and never constructs a
-measurement report.
+This ownership join is intentionally not serving-complete. The opt-in
+`new_with_s1_t128_prefill_bootstrap` constructor binds one exact canonical
+S1/T128 row, consumes the active authenticated runner, initialized model/KV
+pool, fresh Engine, pretokenized prompt, and paired workspace plans, and reaches
+authenticated prepublication. It retains the queue-ready batch plus successor
+KV pages and rollover intent, then returns
+`authenticated-window-execution-unavailable` and transitions the exact instance
+to `Faulted`. The default constructor still returns
+`authenticated-window-bootstrap-unavailable`.
+
+The next required slice must consume that prepublication owner through
+authenticated queue creation, submission, a deadline-bounded wait, checked
+direct completion, Engine/KV settlement, and prefill-page release. The current
+backend performs none of those effects, never routes through the structural
+physical runner, observes no clock or token, and never constructs a measurement
+report.

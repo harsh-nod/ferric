@@ -12,6 +12,8 @@ const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
 const ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_prefill_bootstrap.rs");
+const ENGINE_QUALIFICATION_CAPTURE_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs");
 const CORE_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/non_authoritative_program_artifact.rs");
 const CAPABILITY_SOURCE: &str =
@@ -283,6 +285,10 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         ".create(",
         ".submit(",
         ".wait(",
+        ".wait_for(",
+        ".recycle(",
+        ".observe_completion(",
+        ".check_completion(",
         "std::time::Instant",
         "duration_ns:",
         "request_events:",
@@ -307,7 +313,10 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
 fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
     let engine_production = ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE
         .split_once("#[cfg(test)]")
-        .map_or(ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE, |(source, _)| source);
+        .map_or(
+            ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE,
+            |(source, _)| source,
+        );
     let backend_production = R33_PRODUCTION_BACKEND_SOURCE
         .split_once("#[cfg(test)]")
         .map_or(R33_PRODUCTION_BACKEND_SOURCE, |(source, _)| source);
@@ -349,6 +358,10 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
         ".create(",
         ".submit(",
         ".wait(",
+        ".wait_for(",
+        ".recycle(",
+        ".observe_completion(",
+        ".check_completion(",
         "ClockId",
         "duration_ns",
         "M1R33MeasurementReportV1",
@@ -358,17 +371,39 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
             "authenticated prefill bootstrap contains forbidden execution marker {forbidden}"
         );
     }
+    let allowed_engine_calls = [
+        ("self.engine.is_faulted()", 2),
+        ("engine.into_m1_capture_quarantine()", 1),
+        ("engine.is_faulted()", 3),
+        ("engine.live_count()", 1),
+        ("engine.completed_epoch()", 1),
+        ("engine.admit()", 1),
+        ("engine.append_tentative(request, 1)", 1),
+        ("engine.dispatch_m1_ready()", 1),
+    ];
+    for (call, expected) in allowed_engine_calls {
+        assert_eq!(
+            engine_production.matches(call).count(),
+            expected,
+            "authenticated prefill bootstrap Engine call allowlist drifted at {call}"
+        );
+    }
+    assert!(
+        ENGINE_QUALIFICATION_CAPTURE_SOURCE
+            .contains("fn admitted_mi300x_runs_public_authenticated_rollover_executor()")
+    );
+    assert!(
+        ENGINE_QUALIFICATION_CAPTURE_SOURCE
+            .contains("prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(")
+    );
     for forbidden in [".expect(", "panic!(", "unreachable!(", "todo!("] {
         assert!(
             !engine_production.contains(forbidden),
             "authenticated prefill production seam contains {forbidden}"
         );
-        let r33_join = backend_production
-            .split_once("pub enum M1R33AuthenticatedS1T128BootstrapBindingErrorV1")
-            .map_or(backend_production, |(_, source)| source);
         assert!(
-            !r33_join.contains(forbidden),
-            "R33 authenticated bootstrap join contains {forbidden}"
+            !backend_production.contains(forbidden),
+            "R33 authenticated backend production contains {forbidden}"
         );
     }
 }

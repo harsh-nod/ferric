@@ -13,10 +13,9 @@
 use core::fmt;
 
 use ferric_engine::{
-    prepare_m1_authenticated_s1_t128_prefill_prepublication_v1, Engine,
-    M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
-    M1AuthenticatedS1T128PrefillBootstrapInputV1,
-    M1AuthenticatedS1T128PrefillPrepublicationV1, M1PartitionedModelMemoryKvPoolV1,
+    Engine, M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputV1, M1AuthenticatedS1T128PrefillPrepublicationV1,
+    M1PartitionedModelMemoryKvPoolV1, prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
 };
 use ferric_spec::{M1_MAX_ACTIVE_SEQUENCES, M1_MAX_CONTEXT_TOKENS, M1_MAX_KV_PAGE_TOKENS};
 
@@ -89,6 +88,9 @@ enum FaultedCustodyV1<R, M, E> {
 }
 
 enum BackendStateV1<R, M, E> {
+    /// Internal move sentinel. If unwinding interrupts a transition, later
+    /// operations observe a closed terminal state rather than panicking.
+    Transitioning,
     Dormant {
         runner: R,
         model_memory: M,
@@ -111,14 +113,16 @@ impl<R, M, E> BackendStateV1<R, M, E> {
         match self {
             Self::Dormant { .. } => M1R33AuthenticatedProductionBackendPhaseV1::Dormant,
             Self::Active { .. } => M1R33AuthenticatedProductionBackendPhaseV1::Active,
-            Self::Faulted { .. } => M1R33AuthenticatedProductionBackendPhaseV1::Faulted,
+            Self::Transitioning | Self::Faulted { .. } => {
+                M1R33AuthenticatedProductionBackendPhaseV1::Faulted
+            }
             Self::Stopped { .. } => M1R33AuthenticatedProductionBackendPhaseV1::Stopped,
         }
     }
 
     const fn binding(&self) -> Option<&InstanceBindingV1> {
         match self {
-            Self::Dormant { .. } => None,
+            Self::Transitioning | Self::Dormant { .. } => None,
             Self::Active { binding, .. }
             | Self::Faulted { binding, .. }
             | Self::Stopped { binding } => Some(binding),
@@ -127,23 +131,21 @@ impl<R, M, E> BackendStateV1<R, M, E> {
 }
 
 struct BackendStateMachineV1<R, M, E> {
-    state: Option<BackendStateV1<R, M, E>>,
+    state: BackendStateV1<R, M, E>,
 }
 
 impl<R, M, E> BackendStateMachineV1<R, M, E> {
     const fn new(runner: R, model_memory: M) -> Self {
         Self {
-            state: Some(BackendStateV1::Dormant {
+            state: BackendStateV1::Dormant {
                 runner,
                 model_memory,
-            }),
+            },
         }
     }
 
     fn state(&self) -> &BackendStateV1<R, M, E> {
-        self.state
-            .as_ref()
-            .expect("R33 backend state is restored before every return")
+        &self.state
     }
 
     fn phase(&self) -> M1R33AuthenticatedProductionBackendPhaseV1 {
@@ -170,26 +172,32 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
         match self.state() {
             BackendStateV1::Dormant { .. } => {}
             BackendStateV1::Stopped { .. } => return Err(fault(FAULT_STOPPED)),
-            BackendStateV1::Active { .. } | BackendStateV1::Faulted { .. } => {
+            BackendStateV1::Transitioning
+            | BackendStateV1::Active { .. }
+            | BackendStateV1::Faulted { .. } => {
                 return Err(fault(FAULT_NOT_ACTIVE));
             }
         }
-        let Some(BackendStateV1::Dormant {
-            runner,
-            model_memory,
-        }) = self.state.take()
-        else {
-            return Err(fault(FAULT_NOT_ACTIVE));
+        let state = core::mem::replace(&mut self.state, BackendStateV1::Transitioning);
+        let (runner, model_memory) = match state {
+            BackendStateV1::Dormant {
+                runner,
+                model_memory,
+            } => (runner, model_memory),
+            state => {
+                self.state = state;
+                return Err(fault(FAULT_NOT_ACTIVE));
+            }
         };
         let binding = InstanceBindingV1::new(instance_sha256, server_start);
         if deadline_expired || !workload_valid {
-            self.state = Some(BackendStateV1::Faulted {
+            self.state = BackendStateV1::Faulted {
                 binding,
                 custody: FaultedCustodyV1::Prepublication {
                     _runner: runner,
                     _model_memory: model_memory,
                 },
-            });
+            };
             return Err(fault(if deadline_expired {
                 FAULT_DEADLINE_EXPIRED
             } else {
@@ -197,23 +205,23 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
             }));
         }
         if let Ok(engine) = build_engine() {
-            self.state = Some(BackendStateV1::Active {
+            self.state = BackendStateV1::Active {
                 binding,
                 custody: ActiveCustodyV1 {
                     runner,
                     model_memory,
                     engine,
                 },
-            });
+            };
             Ok(())
         } else {
-            self.state = Some(BackendStateV1::Faulted {
+            self.state = BackendStateV1::Faulted {
                 binding,
                 custody: FaultedCustodyV1::Prepublication {
                     _runner: runner,
                     _model_memory: model_memory,
                 },
-            });
+            };
             Err(fault(FAULT_ENGINE_CONSTRUCTION))
         }
     }
@@ -236,13 +244,18 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
         if healthy(&custody.engine) {
             return Ok(());
         }
-        let Some(BackendStateV1::Active { binding, custody }) = self.state.take() else {
-            return Err(fault(FAULT_NOT_ACTIVE));
+        let state = core::mem::replace(&mut self.state, BackendStateV1::Transitioning);
+        let (binding, custody) = match state {
+            BackendStateV1::Active { binding, custody } => (binding, custody),
+            state => {
+                self.state = state;
+                return Err(fault(FAULT_NOT_ACTIVE));
+            }
         };
-        self.state = Some(BackendStateV1::Faulted {
+        self.state = BackendStateV1::Faulted {
             binding,
             custody: FaultedCustodyV1::Active(custody),
-        });
+        };
         Err(fault(FAULT_UNHEALTHY_ENGINE))
     }
 
@@ -276,13 +289,18 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
         if !binding.matches(instance_sha256) || binding.server_start != server_start {
             return Err(fault(FAULT_IDENTITY));
         }
-        let Some(BackendStateV1::Active { binding, custody }) = self.state.take() else {
-            return Err(fault(FAULT_NOT_ACTIVE));
+        let state = core::mem::replace(&mut self.state, BackendStateV1::Transitioning);
+        let (binding, custody) = match state {
+            BackendStateV1::Active { binding, custody } => (binding, custody),
+            state => {
+                self.state = state;
+                return Err(fault(FAULT_NOT_ACTIVE));
+            }
         };
-        self.state = Some(BackendStateV1::Faulted {
+        self.state = BackendStateV1::Faulted {
             binding,
             custody: FaultedCustodyV1::Active(custody),
-        });
+        };
         Err(fault(code))
     }
 
@@ -303,9 +321,7 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
         if matches!(self.state(), BackendStateV1::Stopped { .. }) {
             return Ok(());
         }
-        let Some(state) = self.state.take() else {
-            return Err(fault(FAULT_NOT_ACTIVE));
-        };
+        let state = core::mem::replace(&mut self.state, BackendStateV1::Transitioning);
         let (binding, custody) = match state {
             BackendStateV1::Active { binding, custody } => {
                 (binding, FaultedCustodyV1::Active(custody))
@@ -315,19 +331,20 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
                 runner,
                 model_memory,
             } => {
-                self.state = Some(BackendStateV1::Dormant {
+                self.state = BackendStateV1::Dormant {
                     runner,
                     model_memory,
-                });
+                };
                 return Err(fault(FAULT_NOT_ACTIVE));
             }
             BackendStateV1::Stopped { binding } => {
-                self.state = Some(BackendStateV1::Stopped { binding });
+                self.state = BackendStateV1::Stopped { binding };
                 return Ok(());
             }
+            BackendStateV1::Transitioning => return Err(fault(FAULT_NOT_ACTIVE)),
         };
         drop(custody);
-        self.state = Some(BackendStateV1::Stopped { binding });
+        self.state = BackendStateV1::Stopped { binding };
         Ok(())
     }
 }
@@ -335,7 +352,8 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
 fn fault_for_inactive<R, M, E>(state: &BackendStateV1<R, M, E>) -> M1R33BackendFaultV1 {
     match state {
         BackendStateV1::Stopped { .. } => fault(FAULT_STOPPED),
-        BackendStateV1::Dormant { .. }
+        BackendStateV1::Transitioning
+        | BackendStateV1::Dormant { .. }
         | BackendStateV1::Active { .. }
         | BackendStateV1::Faulted { .. } => fault(FAULT_NOT_ACTIVE),
     }
@@ -412,17 +430,19 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
         window: &M1R33WorkloadWindowV1,
         input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
     ) -> Result<Self, M1R33AuthenticatedS1T128BootstrapBindingFailureV1> {
-        let reject = |error, input| M1R33AuthenticatedS1T128BootstrapBindingFailureV1 {
-            error,
-            input,
-        };
+        let reject =
+            |error, input| M1R33AuthenticatedS1T128BootstrapBindingFailureV1 { error, input };
         if window.validate().is_err() {
             return Err(reject(
                 M1R33AuthenticatedS1T128BootstrapBindingErrorV1::InvalidWindow,
                 input,
             ));
         }
-        let Some(request) = window.requests.first().filter(|_| window.requests.len() == 1) else {
+        let Some(request) = window
+            .requests
+            .first()
+            .filter(|_| window.requests.len() == 1)
+        else {
             return Err(reject(
                 M1R33AuthenticatedS1T128BootstrapBindingErrorV1::UnsupportedRoster,
                 input,
@@ -434,8 +454,7 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
                 input,
             ));
         }
-        if u64::from(input.maximum_successor_output_tokens())
-            .checked_add(1)
+        if u64::from(input.maximum_successor_output_tokens()).checked_add(1)
             != Some(request.expected_output_tokens)
         {
             return Err(reject(
@@ -453,7 +472,11 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
     }
 
     fn matches(&self, window: &M1R33WorkloadWindowV1) -> bool {
-        let Some(request) = window.requests.first().filter(|_| window.requests.len() == 1) else {
+        let Some(request) = window
+            .requests
+            .first()
+            .filter(|_| window.requests.len() == 1)
+        else {
             return false;
         };
         window.validate().is_ok()
@@ -463,8 +486,7 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
             && window.row.window == self.window
             && request.request_ordinal == 0
             && request.prompt_tokens == self.input.prompt_tokens()
-            && u64::from(self.input.maximum_successor_output_tokens())
-                .checked_add(1)
+            && u64::from(self.input.maximum_successor_output_tokens()).checked_add(1)
                 == Some(request.expected_output_tokens)
     }
 }
@@ -478,13 +500,10 @@ enum M1R33AuthenticatedRunnerCustodyV1 {
         bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
     },
     Prepared {
-        _custody: Box<
-            M1AuthenticatedS1T128PrefillPrepublicationV1<M1_R33_ENGINE_CAPACITY_V1>,
-        >,
+        _custody: Box<M1AuthenticatedS1T128PrefillPrepublicationV1<M1_R33_ENGINE_CAPACITY_V1>>,
     },
     Rejected {
-        _custody:
-            Box<M1AuthenticatedS1T128PrefillBootstrapFailureV1<M1_R33_ENGINE_CAPACITY_V1>>,
+        _custody: Box<M1AuthenticatedS1T128PrefillBootstrapFailureV1<M1_R33_ENGINE_CAPACITY_V1>>,
     },
 }
 
@@ -629,9 +648,9 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         }
         match &custody.runner {
             M1R33AuthenticatedRunnerCustodyV1::MissingBootstrap { .. } => {
-                let result = self
-                    .state
-                    .reject_measure(instance_sha256, window.row.server_start, false);
+                let result =
+                    self.state
+                        .reject_measure(instance_sha256, window.row.server_start, false);
                 return match result {
                     Err(error) => Err(error),
                     Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
@@ -640,14 +659,12 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
             M1R33AuthenticatedRunnerCustodyV1::Pending { bootstrap, .. }
                 if !bootstrap.matches(window) =>
             {
-                let result = self
-                    .state
-                    .reject_measure_with(
-                        instance_sha256,
-                        window.row.server_start,
-                        false,
-                        FAULT_BOOTSTRAP_BINDING,
-                    );
+                let result = self.state.reject_measure_with(
+                    instance_sha256,
+                    window.row.server_start,
+                    false,
+                    FAULT_BOOTSTRAP_BINDING,
+                );
                 return match result {
                     Err(error) => Err(error),
                     Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
@@ -659,8 +676,13 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 return Err(fault(FAULT_NOT_ACTIVE));
             }
         }
-        let Some(BackendStateV1::Active { binding, custody }) = self.state.state.take() else {
-            return Err(fault(FAULT_NOT_ACTIVE));
+        let state = core::mem::replace(&mut self.state.state, BackendStateV1::Transitioning);
+        let (binding, custody) = match state {
+            BackendStateV1::Active { binding, custody } => (binding, custody),
+            state => {
+                self.state.state = state;
+                return Err(fault(FAULT_NOT_ACTIVE));
+            }
         };
         let ActiveCustodyV1 {
             runner,
@@ -674,14 +696,14 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 M1R33EngineCustodyV1::Fresh(engine),
             ) => (runner, bootstrap, *memory, *engine),
             (runner, memory, engine) => {
-                self.state.state = Some(BackendStateV1::Faulted {
+                self.state.state = BackendStateV1::Faulted {
                     binding,
                     custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
                         runner,
                         model_memory: memory,
                         engine,
                     }),
-                });
+                };
                 return Err(fault(FAULT_BOOTSTRAP_REJECTED));
             }
         };
@@ -697,20 +719,18 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 FAULT_EXECUTION_UNAVAILABLE,
             ),
             Err(rejected) => (
-                M1R33AuthenticatedRunnerCustodyV1::Rejected {
-                    _custody: rejected,
-                },
+                M1R33AuthenticatedRunnerCustodyV1::Rejected { _custody: rejected },
                 FAULT_BOOTSTRAP_REJECTED,
             ),
         };
-        self.state.state = Some(BackendStateV1::Faulted {
+        self.state.state = BackendStateV1::Faulted {
             binding,
             custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
                 runner,
                 model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
                 engine: M1R33EngineCustodyV1::Joined,
             }),
-        });
+        };
         Err(fault(code))
     }
 
@@ -728,13 +748,14 @@ mod tests {
     use super::*;
     use crate::r33_wire::{M1R33CollectorRowV1, M1R33WorkV1, M1R33WorkloadRequestV1};
     use ferric_build::{
-        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
         AddresslessM1StepWorkspacePlan, AvailableM1StepWorkspace,
-        DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
-        M1StepWorkspacePlanOutcome,
+        DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
     };
     use ferric_engine::M1FullStepWorkspacePlans;
-    use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
+    use ferric_spec::{
+        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+    };
     use std::cell::Cell;
     use std::rc::Rc;
 
@@ -1083,6 +1104,27 @@ mod tests {
         assert_eq!(backend.bound_instance_sha256(), Some(INSTANCE));
         assert_eq!(drops.get(), 0);
         backend.stop(INSTANCE, false).unwrap();
+        assert_eq!(drops.get(), 2);
+    }
+
+    #[test]
+    fn interrupted_transition_is_closed_without_a_second_panic() {
+        let (mut backend, drops) = backend();
+        let unwind = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _ = backend.start(INSTANCE, 0, true, false, || -> Result<usize, ()> {
+                panic!("injected engine construction unwind")
+            });
+        }));
+        assert!(unwind.is_err());
+        assert_eq!(
+            backend.phase(),
+            M1R33AuthenticatedProductionBackendPhaseV1::Faulted
+        );
+        assert_eq!(backend.bound_instance_sha256(), None);
+        assert_eq!(
+            backend.stop(INSTANCE, false).unwrap_err().code(),
+            FAULT_NOT_ACTIVE
+        );
         assert_eq!(drops.get(), 2);
     }
 }

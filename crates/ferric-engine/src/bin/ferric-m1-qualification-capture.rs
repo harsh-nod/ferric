@@ -9014,20 +9014,19 @@ mod tests {
     #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
         use ferric_engine::{
-            bind_m1_authenticated_speculative_rollover_intent_v1,
             complete_m1_authenticated_physical_step_v1,
+            prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
             prepare_m1_authenticated_speculative_rollover_v1,
             release_m1_authenticated_completed_step_kv_pages_v1,
             schedule_m1_authenticated_speculative_rollover_v1,
             submit_m1_authenticated_speculative_rollover_v1, M1AuthenticatedCompletedStepOutcomeV1,
-            M1AuthenticatedPhysicalQueueSessionV1,
-            M1AuthenticatedSpeculativeRolloverMemberIntentV1, M1DeviceKvCompletionMemberV1,
-            M1DeviceKvCompletionRosterV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
-            M1ScheduledDispatchV1, M1ServingCompletionDispositionV1,
-            M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
-            M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
-            M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
-            M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+            M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
+            M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
+            M1FiniteSpeculativeQueueRolloverKvInputsV1, M1ScheduledDispatchV1,
+            M1ServingCompletionDispositionV1, M1ServingPhysicalOperationResultV1,
+            M1ServingPhysicalOperationsV1, M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1,
+            M1ServingRegistryV1, M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1,
+            M1SpeculativeMemberSeedV1,
         };
 
         struct FixtureOperations {
@@ -9279,7 +9278,7 @@ mod tests {
             .expect("admit pinned KFD UAPI")
             .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
             .expect("bind exact gfx942:xnack- device");
-        let mut memory = initialize_m1_physical_runner_memory_v1(
+        let memory = initialize_m1_physical_runner_memory_v1(
             checked,
             memory_plan,
             target_weights,
@@ -9324,23 +9323,6 @@ mod tests {
             workspace(target_speculative, 104),
         );
 
-        let mut engine = Engine::<1>::new(512, 256, 8_192).expect("construct one-lane Engine");
-        let request = engine.admit().expect("admit one request");
-        engine
-            .append_tentative(request, 1)
-            .expect("append paired-prefill completion span");
-        let scheduled = engine
-            .dispatch_m1_ready()
-            .expect("dispatch paired prefill")
-            .expect("paired prefill is ready");
-        let target_plan = runner
-            .logical_runner()
-            .bind_step_plan(request, scheduled.epoch(), target_prefill)
-            .expect("bind target prefill plan");
-        let draft_plan = runner
-            .logical_runner()
-            .bind_step_plan(request, scheduled.epoch(), draft_prefill)
-            .expect("bind draft prefill plan");
         let validated = |plan: StepPlan,
                          tokens: Vec<u32>,
                          positions: Vec<u32>,
@@ -9361,94 +9343,33 @@ mod tests {
                 }
             }
         };
-        let target_inputs = validated(target_plan, vec![1; 128], (0..128).collect(), 128, 0);
-        let draft_inputs = validated(draft_plan, vec![1; 128], (0..128).collect(), 128, 0);
-        let mut cache =
-            ActiveDeviceKvCache::new(memory.device(), request, target_prefill, draft_prefill)
-                .expect("construct paired-prefill KV cache");
-        let target_pages = (0..8)
-            .map(|page| {
-                memory
-                    .lease_page(request, Qwen3ModelRole::Target8B, page)
-                    .expect("lease target prefill page")
-            })
-            .collect();
-        let draft_pages = (0..8)
-            .map(|page| {
-                memory
-                    .lease_page(request, Qwen3ModelRole::Draft06B, page)
-                    .expect("lease draft prefill page")
-            })
-            .collect();
-        let target_pending = cache
-            .reserve_step_write(
-                request,
-                Qwen3ModelRole::Target8B,
-                0,
-                128,
-                scheduled.epoch(),
-                target_pages,
-            )
-            .expect("reserve target prefill write");
-        let draft_pending = cache
-            .reserve_step_write(
-                request,
-                Qwen3ModelRole::Draft06B,
-                0,
-                128,
-                scheduled.epoch(),
-                draft_pages,
-            )
-            .expect("reserve draft prefill write");
-        let target_table = bind_m1_kv_workspace_table_v1(target_inputs, vec![target_pending])
-            .expect("bind target prefill table");
-        let draft_table = bind_m1_kv_workspace_table_v1(draft_inputs, vec![draft_pending])
-            .expect("bind draft prefill table");
-        let target_rollover_page = memory
-            .lease_page(request, Qwen3ModelRole::Target8B, 8)
-            .expect("lease target rollover page");
-        let draft_rollover_page = memory
-            .lease_page(request, Qwen3ModelRole::Draft06B, 8)
-            .expect("lease draft rollover page");
-        let tables = M1FullStepKvWorkspaceTablesV1::PairedPrefill {
-            draft: draft_table,
-            target: target_table,
-        };
-        let recipe = match runner.derive_step_recipe(
-            M1StepDispatchIntent::PairedPrefill(target_prefill),
+        let input = M1AuthenticatedS1T128PrefillBootstrapInputV1::new(
+            vec![1; 128],
+            32,
+            prefill_preparation_plans,
             prefill_recipe_plans,
-        ) {
-            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
-                panic!("derive paired-prefill recipe: {failure:?}")
-            }
-        };
-        let prepared = runner
-            .prepare_scheduled_workspaces(scheduled, prefill_preparation_plans, tables)
-            .expect("prepare paired-prefill workspaces");
-        let policy = M1SpeculativeGenerationPolicyV1::new(32, &[])
-            .expect("construct continuing speculative policy");
-        let intent_prepared = bind_m1_authenticated_speculative_rollover_intent_v1(
-            prepared,
-            next,
-            vec![M1AuthenticatedSpeculativeRolloverMemberIntentV1::new(
-                request, policy,
-            )],
         )
-        .expect("bind physical/logical rollover intent halves");
-        let (prepared, intent) = intent_prepared.into_parts();
-        let mut allocated = runner
-            .allocate_scheduled_workspaces(memory, prepared)
-            .expect("allocate paired-prefill workspaces");
-        allocated
-            .reserve_finite_speculative_rollover_outputs()
-            .expect("reserve finite rollover output portfolio");
-        let completion = allocated
-            .allocate_completion_output(target_prefill)
-            .expect("allocate paired-prefill completion");
-        let prepublication = runner
-            .prepare_first_step(allocated, recipe, completion)
-            .expect("prepare authenticated paired-prefill publication");
+        .expect("construct exact authenticated prefill bootstrap input");
+        let prepared = prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(
+            Engine::<1>::new(512, 256, 8_192).expect("construct one-lane Engine"),
+            runner,
+            memory,
+            input,
+        )
+        .expect("prepare authenticated paired-prefill bootstrap");
+        let (
+            mut engine,
+            prepublication,
+            cache,
+            draft_rollover_page,
+            target_rollover_page,
+            intent,
+            request,
+            prompt_tokens,
+            policy,
+        ) = prepared.into_parts();
+        assert_eq!(prompt_tokens.as_ref(), &[1; 128]);
+        assert_eq!(policy.max_output_tokens(), 32);
         let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
             M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
             prepublication,
