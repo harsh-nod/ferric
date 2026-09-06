@@ -3,7 +3,7 @@
 This standalone package owns Ferric's fail-closed V2 service orchestration for
 the 12-entry Qwen3 aggregate roster. It is deliberately outside the legacy
 Ferric workspace and uses fe2o3's multi-phase Worker V3 transport at commit
-`5f46dd23cfa3cf58118a93ee2bf5e1252903366c`.
+`dd802ce4fc5f759a49cb655ed530af664fe4bc61`.
 
 The foundation provides:
 
