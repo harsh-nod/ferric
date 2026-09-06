@@ -3,6 +3,7 @@ const SOURCE: &str = include_str!("../src/lib.rs");
 const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-smoke.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
+const R33_PRODUCTION_BACKEND_SOURCE: &str = include_str!("../src/r33_production_backend.rs");
 const R33_SERVICE_SOURCE: &str = include_str!("../src/r33_service.rs");
 const R33_WIRE_SOURCE: &str = include_str!("../src/r33_wire.rs");
 const R33_ADAPTER_SOURCE: &str = include_str!("../src/bin/ferric-m1-r33-adapter.rs");
@@ -246,4 +247,48 @@ fn r33_service_is_supervised_bounded_and_authority_free() {
             );
         }
     }
+}
+
+#[test]
+fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
+    for required in [
+        "M1AuthenticatedPhysicalRunnerV1",
+        "M1PartitionedModelMemoryKvPoolV1",
+        "BackendStateV1",
+        "Dormant",
+        "Active",
+        "Faulted",
+        "Stopped",
+        "M1R33EngineV1::new",
+        "authenticated-window-bootstrap-unavailable",
+        "drop(custody)",
+    ] {
+        assert!(
+            R33_PRODUCTION_BACKEND_SOURCE.contains(required),
+            "R33 authenticated ownership backend is missing {required}"
+        );
+    }
+    for forbidden in [
+        "M1PhysicalRunnerV1",
+        "M1QueuedServingPhysicalInputProviderV1",
+        "execute_m1_target_smoke_v1",
+        "M1EngineeringAggregateArtifactV1",
+        "bind_engineering_structural_m1_physical_runner_v1",
+        "duration_ns:",
+        "request_events:",
+        "TcpListener",
+        "axum::",
+        "hyper::",
+    ] {
+        assert!(
+            !R33_PRODUCTION_BACKEND_SOURCE.contains(forbidden),
+            "R33 authenticated ownership backend contains forbidden marker {forbidden}"
+        );
+    }
+    assert_eq!(
+        R33_PRODUCTION_BACKEND_SOURCE
+            .matches("M1R33MeasurementReportV1")
+            .count(),
+        2
+    );
 }

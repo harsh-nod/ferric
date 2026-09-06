@@ -9,8 +9,8 @@
 //! the executable boundary.
 
 use ferric_engine::{
-    Engine, EngineError, M1CheckedCompletionOutputV1, M1PhysicalRunnerV1,
-    M1QueuedServingPhysicalInputProviderV1, M1QueueWaitTimeoutV1, M1ServingBatchPlanV1,
+    Engine, EngineError, M1CheckedCompletionOutputV1, M1PhysicalRunnerV1, M1QueueWaitTimeoutV1,
+    M1QueuedServingPhysicalInputProviderV1, M1ServingBatchPlanV1,
     M1ServingFirstPublicationWorkMatchErrorV1, M1ServingPhysicalReadbackV1,
     M1ServingPhysicalRunnerOperationErrorV1, M1ServingPhysicalRunnerOperationsCreateErrorV1,
     M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerReadbackV1, M1ServingPlanV1,

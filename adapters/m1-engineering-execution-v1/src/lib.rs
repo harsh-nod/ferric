@@ -8,6 +8,7 @@
 //! order change fails closed until Ferric audits and updates this decoder.
 
 pub mod r33_lifecycle;
+pub mod r33_production_backend;
 pub mod r33_service;
 pub mod r33_wire;
 

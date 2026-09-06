@@ -60,3 +60,26 @@ allocation, or launch authority. Its sealed backend is not yet joined to the
 authenticated target executor or the queue's new-window recycle transition, so
 it cannot truthfully serve hardware measurements yet. It also does not provide
 HTTP, unrestricted continuous batching, or late arrival.
+
+## Authenticated production ownership join
+
+`M1R33AuthenticatedProductionBackendV1` is the fail-closed daemon-side owner
+for capabilities prepared outside the authority-free collector transport. Its
+constructor consumes an already-authenticated `M1AuthenticatedPhysicalRunnerV1`
+and an already-initialized `M1PartitionedModelMemoryKvPoolV1`; it accepts no
+artifact path, engineering aggregate, verifier callback, raw KFD handle, or
+measurement callback. An exact `start` constructs a fresh 32-slot Ferric
+`Engine` and moves the owners from `Dormant` to `Active`. The exact owner set is
+retained through `Faulted`, and only a matching, in-budget `stop` drops it and
+enters `Stopped`.
+
+This ownership join is intentionally not serving-complete. The next required
+slice is an authenticated window bootstrap which consumes the active runner,
+partitioned model/KV pool, fresh Engine scheduling result, exact pretokenized
+window inputs, two equal workspace-plan owners, KV reservations, physical
+recipe, ring size, and deadline-bounded queue wait, and returns authenticated
+executor custody plus checked completion events. Until that constructor exists,
+`measure` returns `authenticated-window-bootstrap-unavailable` before any queue
+effect or clock observation and transitions the exact instance to `Faulted`.
+It never routes through the structural physical runner and never constructs a
+measurement report.

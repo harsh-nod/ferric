@@ -147,7 +147,7 @@ pub struct M1R33WorkloadWindowV1 {
 }
 
 impl M1R33WorkloadWindowV1 {
-    fn validate(&self) -> Result<(), M1R33ServiceErrorV1> {
+    pub(crate) fn validate(&self) -> Result<(), M1R33ServiceErrorV1> {
         self.row.validate()?;
         if self.requests.is_empty()
             || self.requests.len() > M1_R33_MAX_REQUESTS_PER_WINDOW_V1
@@ -188,7 +188,7 @@ pub struct M1R33WorkloadDocumentV1 {
 }
 
 impl M1R33WorkloadDocumentV1 {
-    fn validate(&self) -> Result<(), M1R33ServiceErrorV1> {
+    pub(crate) fn validate(&self) -> Result<(), M1R33ServiceErrorV1> {
         if self.authority != M1_R33_SERVICE_AUTHORITY_V1
             || self.format != M1_R33_WORKLOAD_FORMAT_V1
             || self.target != M1_R33_TARGET_V1
@@ -649,14 +649,15 @@ pub fn exchange_with_supervised_service_v1(
     Ok(response)
 }
 
-mod sealed {
+pub(crate) mod sealed {
     pub trait Sealed {}
 }
 
-/// Sealed authority-free boundary for a future physical serving join.
+/// Sealed boundary between the authority-free service and a backend owner.
 ///
-/// No value in this interface grants authenticated artifact, load,
-/// queue-allocation, or launch custody.
+/// No value in this interface grants authenticated artifact, load, queue, or
+/// launch custody. An implementation may retain capabilities accepted by its
+/// own constructor; the collector transport cannot construct or replace them.
 pub trait M1R33AuthorityFreeBackendV1: sealed::Sealed {
     /// Creates one backend instance without changing its service identity.
     ///
@@ -727,6 +728,12 @@ pub struct M1R33BackendFaultV1 {
 impl M1R33BackendFaultV1 {
     pub(crate) const fn new(code: &'static str) -> Self {
         Self { code }
+    }
+
+    /// Stable machine-readable backend fault code.
+    #[must_use]
+    pub const fn code(self) -> &'static str {
+        self.code
     }
 }
 
