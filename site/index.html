@@ -215,36 +215,22 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Finish the current aggregate and runtime join</h2>
+            <h2 id="next-title">Finish the executor and produce the exact artifact</h2>
           </div>
           <p>
-            Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c supplies reusable compiler,
-            runtime, KFD, and generic verification transport. Compiler, runtime, KFD, and generic transport
-            work stays in fe2o3; Ferric owns all Qwen kernels, inference, and Ferric-specific policy. Local Ferric
-            integration 30af5c2 pins every fe2o3 dependency to exact public 5f46dd2 and includes the protected
-            one-shot verifier listener at 64ab4fc, production-wide bounded queue waits, and reviewed authenticated
-            speculative new windows from 3e4f5d6. Listener remote checks
-            pass 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict
-            Clippy. Engine checks pass a warning-free library check, 576 library tests with 5 intentional ignores,
-            158 doctests, all-target strict Clippy, targeted 25/25, capture 13/13, hostile 28/28, source policy 6/6,
-            and rollover 12/12; independent token/history/API source reviews GO. Combined formal inventory
-            regeneration first failed closed on unsupported #[allow(clippy::too_many_lines)]. After narrow
-            closed-allowlist synchronization, the source gate passes 28/28 and canonical regeneration reports
-            exactly 6,951 discovered, 6,854 admitted, 97 unadmitted, and 0 stale; runtime, Instant, and KFD bodies
-            remain explicitly unverified. This is focused integration evidence, not release qualification. Focused
-            kernel v20 is fully green: prefill 4/4 profiles, 8/8 reference, 19/19 source contracts; paged-decode 4/4
-            profiles, 9/9 reference, 12/12 source contracts. All four frozen SHAs remain intact. Exact v20 produced no
-            HSACO because its two k.len() evaluations lowered to distinct semantic values. The active v21 change binds
-            immutable cache_len = k.len() once and uses that same SSA local in the unchanged guard and subtraction,
-            mirrored and contract-pinned. Unexpected external
-            proof-shape edits were preserved and the current stable snapshot was frozen without implying correctness;
-            no aggregate HSACO was produced. The integrated new-window path uses a
-            private move-only whole-page-set token, inert predecessor physical history and reset active history, and
-            an opaque frozen-timeout Published-&gt;Observed-&gt;Released surface. Protected deployment remains open because
-            no supervisor, concrete checker, signer, deployed protected profile, or production R33 backend exists.
-            The integration is unpublished, non-final, and not release-qualified. No Qwen run, generated token,
-            measured TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang comparison exists. All 33 M1 gates
-            remain open.
+            Ferric integration candidate 78c720551c4b9809ae7e75ba639959ae0d968b1d includes the authenticated R33
+            backend and S1/T128 bootstrap, bounded waits, the exact fe2o3 repin, the formal bootstrap model, and
+            authenticated direct readback. Strict Verus reports 81 verified and 0 errors; proof tests pass 26/26 and
+            source-gate tests pass 28/28. The latest scoped inventory diagnostic identifies 23 unadmitted bootstrap
+            runtime bodies; combined regeneration remains pending after direct-readback and active kernel/executor
+            integration, so no current whole-tree closure total is claimed. Public fe2o3 main
+            dd802ce4fc5f759a49cb655ed530af664fe4bc61 supplies the consuming WaveLane accessor, generic exact carrier,
+            reusable compiler, runtime, and KFD. Ferric retains every model kernel and inference policy. Focused kernel
+            v27 source-contract tests are green, but exact compilation produced no HSACO: the public compiler admits
+            the exact source closure and then exhausts its explicit deterministic scalar-reachability work bound.
+            Diagnostic-only measurement is running, with no production fix, derived artifact identity, or hardware
+            execution. The production paired-prefill executor is in progress. No Qwen token, TTFT, TPOT, serving
+            endpoint, HTTP service, or vLLM/SGLang baseline exists, and all 33 M1 exit gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

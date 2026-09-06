@@ -203,13 +203,18 @@
   const observationHeader = element("div", "observation-heading");
   const observationTitle = element("div", "");
   observationTitle.append(
-    element("div", "observation-label", "Latest hardware attempt"),
+    element("div", "observation-label", "Latest exact-compile attempt"),
     element("h3", "", project.latestObservation.title),
   );
   observationHeader.append(observationTitle, stateTag(project.latestObservation.state));
   const observationFacts = element("dl", "observation-facts");
   const observationEntries = [
-    ["Source", commitLink(project.latestObservation.commit)],
+    [
+      "Source",
+      project.latestObservation.commit
+        ? commitLink(project.latestObservation.commit)
+        : project.latestObservation.sourceStatus,
+    ],
     ["Environment", project.latestObservation.environment],
     ["Result", project.latestObservation.result],
     ["ELF Build ID", project.latestObservation.buildId],
