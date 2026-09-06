@@ -136,7 +136,7 @@ fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective()
         "normalized_bf16.len()==elements",
         "pure_mode&&residual_bf16.len()==0&&fused_residual_bf16.len()==0",
         "fused_mode&&residual_bf16.len()==elements&&fused_residual_bf16.len()==elements",
-        "epsilon.to_bits()!=QWEN3_RMSNORM_EPSILON_BITS_V1",
+        "epsilon!=QWEN3_RMSNORM_EPSILON_V1",
         "thread::grid_dim_x()==rows",
         "thread::grid_dim_y()==1",
         "thread::grid_dim_z()==1",
@@ -152,6 +152,25 @@ fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective()
         .unwrap();
     assert!(validation_trap < first_serial_load);
     assert!(validation_trap < collective);
+}
+
+#[test]
+fn epsilon_constant_preserves_exact_bits_without_a_kernel_runtime_conversion() {
+    assert_eq!(
+        ferric_qwen3_rmsnorm_device_v1::QWEN3_RMSNORM_EPSILON_V1.to_bits(),
+        ferric_qwen3_rmsnorm_device_v1::QWEN3_RMSNORM_EPSILON_BITS_V1,
+    );
+
+    let source =
+        compact_tokens(&syn::parse_file(SOURCE).expect("device source parses as ordinary Rust"));
+    let definition =
+        "pubconstQWEN3_RMSNORM_EPSILON_V1:f32=f32::from_bits(QWEN3_RMSNORM_EPSILON_BITS_V1)";
+    assert_eq!(source.matches(definition).count(), 1);
+
+    let body = compact_tokens(&kernel().block);
+    assert_eq!(body.matches("epsilon!=QWEN3_RMSNORM_EPSILON_V1").count(), 1);
+    assert_eq!(body.matches("epsilon.to_bits()").count(), 0);
+    assert_eq!(body.matches("f32::from_bits(").count(), 0);
 }
 
 #[test]

@@ -27,10 +27,15 @@ pub const QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1: usize = 512;
 pub const QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1: usize = 16_384;
 /// Exact BF16 elements in each global K/V cache allocation.
 pub const QWEN3_PAGED_DECODE_CACHE_ELEMENTS_V1: usize = 268_435_456;
+/// Exact number of addressable cache heads in the fixed K/V allocation.
+pub const QWEN3_PAGED_DECODE_CACHE_HEAD_CAPACITY_V1: usize = 2_097_152;
 /// Exact maximum committed-plus-active context length.
 pub const QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1: usize = 8_192;
 /// Exact FP32 bits for `1 / sqrt(128)`.
 pub const QWEN3_PAGED_DECODE_ATTENTION_SCALE_BITS_V1: u32 = 0x3db5_04f3;
+/// Exact FP32 value for `1 / sqrt(128)`.
+pub const QWEN3_PAGED_DECODE_ATTENTION_SCALE_V1: f32 =
+    f32::from_bits(QWEN3_PAGED_DECODE_ATTENTION_SCALE_BITS_V1);
 /// Exact explicit kernarg bytes for six pointer-plus-`usize` slice records.
 pub const QWEN3_PAGED_DECODE_EXPLICIT_KERNARG_BYTES_V1: usize = 96;
 /// Number of closed target/draft role-and-bucket profiles.
@@ -329,10 +334,31 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
         fe2o3_device::trap();
     }
     let query_position = committed_tokens + query_token;
+    if query_position < 8_192 {
+    } else {
+        fe2o3_device::trap();
+    }
+    let key_limit = query_position + 1;
+    if vector < 1_280 {
+    } else {
+        fe2o3_device::trap();
+    }
     let query_base = vector * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1;
+    if local < 64 {
+    } else {
+        fe2o3_device::trap();
+    }
     let column_0 = local * 2;
+    if column_0 < 128 {
+    } else {
+        fe2o3_device::trap();
+    }
     let column_1 = column_0 + 1;
-    let scale = f32::from_bits(QWEN3_PAGED_DECODE_ATTENTION_SCALE_BITS_V1);
+    if column_1 < 128 {
+    } else {
+        fe2o3_device::trap();
+    }
+    let scale = QWEN3_PAGED_DECODE_ATTENTION_SCALE_V1;
     let math = Math::current();
     let mut key_token = 0;
     let mut running_max = 0.0_f32;
@@ -340,90 +366,145 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
     let mut numerator_0 = 0.0_f32;
     let mut numerator_1 = 0.0_f32;
 
-    while key_token <= query_position {
-        let logical_page = key_token / QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
-        let token_in_page = key_token % QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
-        let page_table_index = sequence * QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1 + logical_page;
-        if logical_page >= QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1
-            || page_table_index >= pages.len()
-        {
-            fe2o3_device::trap();
-        }
-        let physical_page = memory::volatile_load(pages, page_table_index) as usize;
-        if physical_page >= QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1 {
-            fe2o3_device::trap();
-        }
-
-        let cache_base = ((physical_page * QWEN3_PAGED_DECODE_PAGE_TOKENS_V1 + token_in_page)
-            * QWEN3_PAGED_DECODE_KV_HEADS_V1
-            + kv_head)
-            * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1;
-        if cache_base + QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 > k.len() {
-            fe2o3_device::trap();
-        }
-
-        let mut feature = 0;
-        let mut dot = 0.0_f32;
-        while feature < QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 {
-            let query_value = Bf16::from_bits(memory::volatile_load(q, query_base + feature));
-            let key_value = Bf16::from_bits(memory::volatile_load(k, cache_base + feature));
-            if !query_value.is_finite() || !key_value.is_finite() {
-                fe2o3_device::trap();
-            }
-            let product = query_value.to_f32() * key_value.to_f32();
-            let next_dot = dot + product;
-            if !(product >= f32::MIN && product <= f32::MAX)
-                || !(next_dot >= f32::MIN && next_dot <= f32::MAX)
-            {
-                fe2o3_device::trap();
-            }
-            dot = next_dot;
-            feature += 1;
-        }
-
-        let score = dot * scale;
-        if !(score >= f32::MIN && score <= f32::MAX) {
-            fe2o3_device::trap();
-        }
-        let value_0 = Bf16::from_bits(memory::volatile_load(v, cache_base + column_0));
-        let value_1 = Bf16::from_bits(memory::volatile_load(v, cache_base + column_1));
-        if !value_0.is_finite() || !value_1.is_finite() {
-            fe2o3_device::trap();
-        }
-        let value_0 = value_0.to_f32();
-        let value_1 = value_1.to_f32();
-
-        if key_token == 0 {
-            running_max = score;
-            running_sum = 1.0;
-            numerator_0 = value_0;
-            numerator_1 = value_1;
-        } else {
-            let next_max = if score > running_max {
-                score
+    // Hardware qualification must measure the fixed-cap scalar tail required by this uniform loop.
+    while key_token < 8_192 {
+        if key_token < key_limit {
+            let logical_page = key_token / QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
+            let token_in_page = key_token % QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
+            if logical_page < QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1 {
             } else {
-                running_max
-            };
-            let previous_weight = math.exp_f32(running_max - next_max);
-            let current_weight = math.exp_f32(score - next_max);
-            let next_sum = running_sum * previous_weight + current_weight;
-            let next_numerator_0 = numerator_0 * previous_weight + value_0 * current_weight;
-            let next_numerator_1 = numerator_1 * previous_weight + value_1 * current_weight;
-            if !(previous_weight >= f32::MIN && previous_weight <= f32::MAX)
-                || !(current_weight >= f32::MIN && current_weight <= f32::MAX)
-                || !(next_sum >= f32::MIN && next_sum <= f32::MAX)
-                || next_sum <= 0.0
-                || !(next_numerator_0 >= f32::MIN && next_numerator_0 <= f32::MAX)
-                || !(next_numerator_1 >= f32::MIN && next_numerator_1 <= f32::MAX)
-            {
                 fe2o3_device::trap();
             }
-            running_max = next_max;
-            running_sum = next_sum;
-            numerator_0 = next_numerator_0;
-            numerator_1 = next_numerator_1;
+            if sequence < 32 {
+            } else {
+                fe2o3_device::trap();
+            }
+            let page_table_base = sequence * QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1;
+            if logical_page <= usize::MAX - page_table_base {
+            } else {
+                fe2o3_device::trap();
+            }
+            let page_table_index = page_table_base + logical_page;
+            if page_table_index < pages.len() {
+            } else {
+                fe2o3_device::trap();
+            }
+            let physical_page = memory::volatile_load(pages, page_table_index) as usize;
+            if physical_page >= QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1 {
+                fe2o3_device::trap();
+            }
+
+            if physical_page <= usize::MAX / QWEN3_PAGED_DECODE_PAGE_TOKENS_V1 {
+            } else {
+                fe2o3_device::trap();
+            }
+            let page_token_base = physical_page * QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
+            if token_in_page <= usize::MAX - page_token_base {
+            } else {
+                fe2o3_device::trap();
+            }
+            let page_token = page_token_base + token_in_page;
+            if page_token <= usize::MAX / QWEN3_PAGED_DECODE_KV_HEADS_V1 {
+            } else {
+                fe2o3_device::trap();
+            }
+            let cache_head_base = page_token * QWEN3_PAGED_DECODE_KV_HEADS_V1;
+            if kv_head <= usize::MAX - cache_head_base {
+            } else {
+                fe2o3_device::trap();
+            }
+            let cache_head = cache_head_base + kv_head;
+            if cache_head <= usize::MAX / QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 {
+            } else {
+                fe2o3_device::trap();
+            }
+            if cache_head < 2_097_152 {
+            } else {
+                fe2o3_device::trap();
+            }
+            let cache_base = cache_head * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1;
+            let cache_len = k.len();
+            let cache_remaining = if cache_base <= cache_len {
+                cache_len - cache_base
+            } else {
+                fe2o3_device::trap();
+            };
+            if QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 <= cache_remaining {
+            } else {
+                fe2o3_device::trap();
+            }
+
+            let mut feature = 0;
+            let mut dot = 0.0_f32;
+            while feature < QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 {
+                let query_index = query_base + feature;
+                let query_value = Bf16::from_bits(memory::volatile_load(q, query_index));
+                let key_index = cache_base + feature;
+                let key_value = Bf16::from_bits(memory::volatile_load(k, key_index));
+                if !query_value.is_finite() || !key_value.is_finite() {
+                    fe2o3_device::trap();
+                }
+                let product = query_value.to_f32() * key_value.to_f32();
+                let next_dot = dot + product;
+                if !(product >= f32::MIN && product <= f32::MAX)
+                    || !(next_dot >= f32::MIN && next_dot <= f32::MAX)
+                {
+                    fe2o3_device::trap();
+                }
+                dot = next_dot;
+                feature += 1;
+            }
+
+            let score = dot * scale;
+            if !(score >= f32::MIN && score <= f32::MAX) {
+                fe2o3_device::trap();
+            }
+            let value_index_0 = cache_base + column_0;
+            let value_0 = Bf16::from_bits(memory::volatile_load(v, value_index_0));
+            let value_index_1 = cache_base + column_1;
+            let value_1 = Bf16::from_bits(memory::volatile_load(v, value_index_1));
+            if !value_0.is_finite() || !value_1.is_finite() {
+                fe2o3_device::trap();
+            }
+            let value_0 = value_0.to_f32();
+            let value_1 = value_1.to_f32();
+
+            if key_token == 0 {
+                running_max = score;
+                running_sum = 1.0;
+                numerator_0 = value_0;
+                numerator_1 = value_1;
+            } else {
+                let next_max = if score > running_max {
+                    score
+                } else {
+                    running_max
+                };
+                let previous_weight = math.exp_f32(running_max - next_max);
+                let current_weight = math.exp_f32(score - next_max);
+                let next_sum = running_sum * previous_weight + current_weight;
+                let next_numerator_0 = numerator_0 * previous_weight + value_0 * current_weight;
+                let next_numerator_1 = numerator_1 * previous_weight + value_1 * current_weight;
+                if !(previous_weight >= f32::MIN && previous_weight <= f32::MAX)
+                    || !(current_weight >= f32::MIN && current_weight <= f32::MAX)
+                    || !(next_sum >= f32::MIN && next_sum <= f32::MAX)
+                    || next_sum <= 0.0
+                    || !(next_numerator_0 >= f32::MIN && next_numerator_0 <= f32::MAX)
+                    || !(next_numerator_1 >= f32::MIN && next_numerator_1 <= f32::MAX)
+                {
+                    fe2o3_device::trap();
+                }
+                running_max = next_max;
+                running_sum = next_sum;
+                numerator_0 = next_numerator_0;
+                numerator_1 = next_numerator_1;
+            }
         }
-        key_token += 1;
+        if key_token < 8_192 {
+            key_token += 1;
+        } else {
+            fe2o3_device::trap();
+        }
     }
 
     let output_0 = numerator_0 / running_sum;

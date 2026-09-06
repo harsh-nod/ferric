@@ -27,6 +27,8 @@ pub const QWEN3_RMSNORM_MAX_GRID_WORKGROUPS_V1: u32 = 65_536;
 pub const QWEN3_RMSNORM_MAX_GRID_WORKITEMS_V1: u32 = 4_194_304;
 /// Exact Qwen3 epsilon bit pattern.
 pub const QWEN3_RMSNORM_EPSILON_BITS_V1: u32 = 1e-6_f32.to_bits();
+/// Exact Qwen3 epsilon value evaluated from the authenticated bit pattern.
+pub const QWEN3_RMSNORM_EPSILON_V1: f32 = f32::from_bits(QWEN3_RMSNORM_EPSILON_BITS_V1);
 /// Exact pure RMSNorm behavior tag.
 pub const QWEN3_RMSNORM_BEHAVIOR_PURE_V1: u32 = 0;
 /// Exact residual-fused RMSNorm behavior tag.
@@ -405,7 +407,7 @@ pub fn qwen3_rmsnorm_v1(
     if !shape_valid
         || !required_lengths
         || !auxiliary_lengths
-        || epsilon.to_bits() != QWEN3_RMSNORM_EPSILON_BITS_V1
+        || epsilon != QWEN3_RMSNORM_EPSILON_V1
         || !exact_grid
     {
         fe2o3_device::trap();
