@@ -5598,6 +5598,12 @@ fn request_key(request: RequestId) -> (key: RequestKey)
 }
 
 impl KvPool {
+    pub(crate) fn page_tokens(&self) -> (page_tokens: u32)
+        ensures page_tokens == self.page_tokens_spec(),
+    {
+        self.page_tokens
+    }
+
     /// Creates an empty pool within build-generated bounds.
     ///
     /// # Errors

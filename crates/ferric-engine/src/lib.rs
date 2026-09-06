@@ -58,6 +58,7 @@ mod physical_program_catalog;
 mod physical_queue_lifecycle;
 mod physical_step;
 mod qualification_logits;
+mod radix_prefix;
 mod runner;
 mod scheduler;
 mod speculative_diagnostic_choices;
@@ -712,6 +713,13 @@ pub use qualification_logits::{
     M1QualificationFinalLogitsErrorV1, M1QualificationLogitsAllocationFailureV1,
     M1QualificationLogitsErrorV1, M1QualificationLogitsShapeV1,
     M1_QUALIFICATION_LOGITS_ALIGNMENT_V1, M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
+};
+pub use radix_prefix::{
+    register_m1_authenticated_prefill_radix_source_v1, share_m1_radix_prefix_from_live_source_v1,
+    M1AuthenticatedRadixPrefixRegistrationErrorV1, M1AuthenticatedRadixPrefixRegistrationFailureV1,
+    M1AuthenticatedRadixPrefixSourceV1, M1RadixPrefixIndexErrorV1, M1RadixPrefixIndexV1,
+    M1RadixPrefixLimitV1, M1RadixPrefixLimitsErrorV1, M1RadixPrefixLimitsV1, M1RadixPrefixMatchV1,
+    M1RadixPrefixShareErrorV1, M1RadixPrefixShareOutcomeV1,
 };
 pub use runner::{
     bind_m1_physical_runner_v1, bind_non_authoritative_structural_m1_physical_runner_v1,

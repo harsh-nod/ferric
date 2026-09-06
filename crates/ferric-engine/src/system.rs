@@ -143,6 +143,10 @@ impl<const C: usize> Engine<C> {
         self.faulted
     }
 
+    pub closed spec fn page_tokens_spec(&self) -> u32 {
+        self.kv.page_tokens_spec()
+    }
+
     pub closed spec fn queue_rearm_quarantine_refines(&self, before: &Self) -> bool {
         &&& self.scheduler == before.scheduler
         &&& self.kv == before.kv
@@ -1216,6 +1220,15 @@ impl<const C: usize> Engine<C> {
         ensures epoch == self.completed_epoch_spec(),
     {
         self.scheduler.completed_epoch()
+    }
+
+    /// Exact logical page width used by this Engine's KV pool.
+    #[must_use]
+    pub fn page_tokens(&self) -> (page_tokens: u32)
+        requires self.well_formed(),
+        ensures page_tokens == self.page_tokens_spec(),
+    {
+        self.kv.page_tokens()
     }
 
     pub(crate) fn pending_batch_member_count(&self) -> (count: usize)
