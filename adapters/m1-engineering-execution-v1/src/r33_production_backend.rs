@@ -5,15 +5,19 @@
 //! capabilities from engineering artifacts. `start` creates and binds the real
 //! Ferric Engine, while `stop` deterministically drops unpublished ownership.
 //!
-//! The authenticated workload-to-bootstrap join is not implemented yet. In
-//! particular, the existing R33 physical-window bridge accepts the structural
-//! runner and is not a valid production substitute. `measure` therefore faults
-//! before queue creation, physical input consumption, or clock observation and
-//! cannot produce a measurement report.
+//! The opt-in S1/T128 constructor can join one exact canonical R33 row through
+//! authenticated paired-prefill prepublication. The default constructor and
+//! every unsupported row remain fail-closed. Queue execution, completion
+//! observation, timing, and measurement reports are still unavailable.
 
 use core::fmt;
 
-use ferric_engine::{Engine, M1AuthenticatedPhysicalRunnerV1, M1PartitionedModelMemoryKvPoolV1};
+use ferric_engine::{
+    prepare_m1_authenticated_s1_t128_prefill_prepublication_v1, Engine,
+    M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputV1,
+    M1AuthenticatedS1T128PrefillPrepublicationV1, M1PartitionedModelMemoryKvPoolV1,
+};
 use ferric_spec::{M1_MAX_ACTIVE_SEQUENCES, M1_MAX_CONTEXT_TOKENS, M1_MAX_KV_PAGE_TOKENS};
 
 use crate::r33_service::{
@@ -32,6 +36,9 @@ const FAULT_DEADLINE_EXPIRED: &str = "backend-deadline-expired";
 const FAULT_ENGINE_CONSTRUCTION: &str = "engine-construction-failed";
 const FAULT_IDENTITY: &str = "backend-instance-mismatch";
 const FAULT_MISSING_BOOTSTRAP: &str = "authenticated-window-bootstrap-unavailable";
+const FAULT_BOOTSTRAP_BINDING: &str = "authenticated-window-bootstrap-binding-rejected";
+const FAULT_BOOTSTRAP_REJECTED: &str = "authenticated-window-bootstrap-rejected";
+const FAULT_EXECUTION_UNAVAILABLE: &str = "authenticated-window-execution-unavailable";
 const FAULT_NOT_ACTIVE: &str = "backend-not-active";
 const FAULT_STOPPED: &str = "backend-stopped";
 const FAULT_UNHEALTHY_ENGINE: &str = "backend-engine-not-ready";
@@ -71,8 +78,8 @@ impl InstanceBindingV1 {
 }
 
 struct ActiveCustodyV1<R, M, E> {
-    _runner: R,
-    _model_memory: M,
+    runner: R,
+    model_memory: M,
     engine: E,
 }
 
@@ -193,8 +200,8 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
             self.state = Some(BackendStateV1::Active {
                 binding,
                 custody: ActiveCustodyV1 {
-                    _runner: runner,
-                    _model_memory: model_memory,
+                    runner,
+                    model_memory,
                     engine,
                 },
             });
@@ -245,6 +252,21 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
         server_start: u64,
         deadline_expired: bool,
     ) -> Result<(), M1R33BackendFaultV1> {
+        self.reject_measure_with(
+            instance_sha256,
+            server_start,
+            deadline_expired,
+            FAULT_MISSING_BOOTSTRAP,
+        )
+    }
+
+    fn reject_measure_with(
+        &mut self,
+        instance_sha256: &str,
+        server_start: u64,
+        deadline_expired: bool,
+        code: &'static str,
+    ) -> Result<(), M1R33BackendFaultV1> {
         if deadline_expired {
             return Err(fault(FAULT_DEADLINE_EXPIRED));
         }
@@ -261,7 +283,7 @@ impl<R, M, E> BackendStateMachineV1<R, M, E> {
             binding,
             custody: FaultedCustodyV1::Active(custody),
         });
-        Err(fault(FAULT_MISSING_BOOTSTRAP))
+        Err(fault(code))
     }
 
     fn stop(
@@ -330,6 +352,152 @@ fn valid_sha256(value: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
+/// Stable rejection while binding one canonical R33 row to S1/T128 inputs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1R33AuthenticatedS1T128BootstrapBindingErrorV1 {
+    InvalidWindow,
+    UnsupportedRoster,
+    PretokenizedRoster,
+    OutputPolicy,
+}
+
+/// Binding rejection retaining the exact authenticated bootstrap input.
+#[must_use = "rejected authenticated bootstrap input remains linearly owned"]
+#[derive(Debug)]
+pub struct M1R33AuthenticatedS1T128BootstrapBindingFailureV1 {
+    error: M1R33AuthenticatedS1T128BootstrapBindingErrorV1,
+    input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
+}
+
+impl M1R33AuthenticatedS1T128BootstrapBindingFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1R33AuthenticatedS1T128BootstrapBindingErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the rejected authenticated bootstrap input remains linear"]
+    pub fn into_input(self) -> M1AuthenticatedS1T128PrefillBootstrapInputV1 {
+        self.input
+    }
+}
+
+/// One exact canonical R33 row joined to authenticated S1/T128 bootstrap inputs.
+///
+/// Construction copies only immutable row identity. The move-only engine input
+/// remains the sole workspace-plan owner and is rechecked against the borrowed
+/// canonical row immediately before Engine admission.
+#[must_use = "R33 row identity and authenticated bootstrap input remain joined"]
+#[derive(Debug)]
+pub struct M1R33AuthenticatedS1T128BootstrapBindingV1 {
+    row_id: Box<str>,
+    row_ordinal: u64,
+    server_start: u64,
+    window: u64,
+    input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
+}
+
+impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
+    /// Binds exactly one 128-token R33 request and its successor output limit.
+    ///
+    /// R33 counts the direct paired-prefill token in `expected_output_tokens`;
+    /// the engine input counts only later speculative publications. Therefore
+    /// this join requires `expected_output_tokens == successor_limit + 1`.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an invalid window, any roster other than one ordinal-zero
+    /// request, a prompt mismatch, or an output-limit mismatch. The returned
+    /// failure retains the unchanged move-only bootstrap input.
+    pub fn bind(
+        window: &M1R33WorkloadWindowV1,
+        input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
+    ) -> Result<Self, M1R33AuthenticatedS1T128BootstrapBindingFailureV1> {
+        let reject = |error, input| M1R33AuthenticatedS1T128BootstrapBindingFailureV1 {
+            error,
+            input,
+        };
+        if window.validate().is_err() {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::InvalidWindow,
+                input,
+            ));
+        }
+        let Some(request) = window.requests.first().filter(|_| window.requests.len() == 1) else {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::UnsupportedRoster,
+                input,
+            ));
+        };
+        if request.request_ordinal != 0 || request.prompt_tokens != input.prompt_tokens() {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::PretokenizedRoster,
+                input,
+            ));
+        }
+        if u64::from(input.maximum_successor_output_tokens())
+            .checked_add(1)
+            != Some(request.expected_output_tokens)
+        {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::OutputPolicy,
+                input,
+            ));
+        }
+        Ok(Self {
+            row_id: window.row.id.clone().into_boxed_str(),
+            row_ordinal: window.row.ordinal,
+            server_start: window.row.server_start,
+            window: window.row.window,
+            input,
+        })
+    }
+
+    fn matches(&self, window: &M1R33WorkloadWindowV1) -> bool {
+        let Some(request) = window.requests.first().filter(|_| window.requests.len() == 1) else {
+            return false;
+        };
+        window.validate().is_ok()
+            && window.row.id == self.row_id.as_ref()
+            && window.row.ordinal == self.row_ordinal
+            && window.row.server_start == self.server_start
+            && window.row.window == self.window
+            && request.request_ordinal == 0
+            && request.prompt_tokens == self.input.prompt_tokens()
+            && u64::from(self.input.maximum_successor_output_tokens())
+                .checked_add(1)
+                == Some(request.expected_output_tokens)
+    }
+}
+
+enum M1R33AuthenticatedRunnerCustodyV1 {
+    MissingBootstrap {
+        _runner: M1AuthenticatedPhysicalRunnerV1,
+    },
+    Pending {
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
+    },
+    Prepared {
+        _custody: Box<
+            M1AuthenticatedS1T128PrefillPrepublicationV1<M1_R33_ENGINE_CAPACITY_V1>,
+        >,
+    },
+    Rejected {
+        _custody:
+            Box<M1AuthenticatedS1T128PrefillBootstrapFailureV1<M1_R33_ENGINE_CAPACITY_V1>>,
+    },
+}
+
+enum M1R33AuthenticatedMemoryCustodyV1 {
+    Initialized(Box<M1PartitionedModelMemoryKvPoolV1>),
+    Joined,
+}
+
+enum M1R33EngineCustodyV1 {
+    Fresh(Box<M1R33EngineV1>),
+    Joined,
+}
+
 /// Authenticated, initialized ownership for one fail-closed R33 instance.
 ///
 /// This is not a serving-complete backend. The constructor requires production
@@ -339,9 +507,9 @@ fn valid_sha256(value: &str) -> bool {
 #[must_use = "authenticated runner and initialized model memory remain linearly owned"]
 pub struct M1R33AuthenticatedProductionBackendV1 {
     state: BackendStateMachineV1<
-        M1AuthenticatedPhysicalRunnerV1,
-        M1PartitionedModelMemoryKvPoolV1,
-        M1R33EngineV1,
+        M1R33AuthenticatedRunnerCustodyV1,
+        M1R33AuthenticatedMemoryCustodyV1,
+        M1R33EngineCustodyV1,
     >,
 }
 
@@ -357,12 +525,33 @@ impl fmt::Debug for M1R33AuthenticatedProductionBackendV1 {
 
 impl M1R33AuthenticatedProductionBackendV1 {
     /// Consumes already-authenticated program and initialized physical-memory owners.
-    pub const fn new(
+    pub fn new(
         runner: M1AuthenticatedPhysicalRunnerV1,
         model_memory: M1PartitionedModelMemoryKvPoolV1,
     ) -> Self {
         Self {
-            state: BackendStateMachineV1::new(runner, model_memory),
+            state: BackendStateMachineV1::new(
+                M1R33AuthenticatedRunnerCustodyV1::MissingBootstrap { _runner: runner },
+                M1R33AuthenticatedMemoryCustodyV1::Initialized(Box::new(model_memory)),
+            ),
+        }
+    }
+
+    /// Consumes authenticated physical owners and one exact canonical first-window input.
+    ///
+    /// This enables only paired-prefill prepublication. Queue execution,
+    /// completion observation, publication accounting, timing, and reports
+    /// remain unavailable and fail closed.
+    pub fn new_with_s1_t128_prefill_bootstrap(
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        model_memory: M1PartitionedModelMemoryKvPoolV1,
+        bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
+    ) -> Self {
+        Self {
+            state: BackendStateMachineV1::new(
+                M1R33AuthenticatedRunnerCustodyV1::Pending { runner, bootstrap },
+                M1R33AuthenticatedMemoryCustodyV1::Initialized(Box::new(model_memory)),
+            ),
         }
     }
 
@@ -400,6 +589,7 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                     M1_R33_ENGINE_PAGE_TOKENS_V1,
                     M1_MAX_CONTEXT_TOKENS,
                 )
+                .map(|engine| M1R33EngineCustodyV1::Fresh(Box::new(engine)))
             },
         )
     }
@@ -411,7 +601,11 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
     ) -> Result<(), M1R33BackendFaultV1> {
         self.state
             .ready(instance_sha256, deadline.expired(), |engine| {
-                !engine.is_faulted() && engine.live_count() == 0
+                matches!(
+                    engine,
+                    M1R33EngineCustodyV1::Fresh(engine)
+                        if !engine.is_faulted() && engine.live_count() == 0
+                )
             })
     }
 
@@ -424,9 +618,100 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         if window.validate().is_err() {
             return Err(fault(FAULT_WINDOW));
         }
-        self.state
-            .reject_measure(instance_sha256, window.row.server_start, deadline.expired())?;
-        unreachable!("the missing authenticated bootstrap always rejects measurement")
+        if deadline.expired() {
+            return Err(fault(FAULT_DEADLINE_EXPIRED));
+        }
+        let BackendStateV1::Active { binding, custody } = self.state.state() else {
+            return Err(fault_for_inactive(self.state.state()));
+        };
+        if !binding.matches(instance_sha256) || binding.server_start != window.row.server_start {
+            return Err(fault(FAULT_IDENTITY));
+        }
+        match &custody.runner {
+            M1R33AuthenticatedRunnerCustodyV1::MissingBootstrap { .. } => {
+                let result = self
+                    .state
+                    .reject_measure(instance_sha256, window.row.server_start, false);
+                return match result {
+                    Err(error) => Err(error),
+                    Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
+                };
+            }
+            M1R33AuthenticatedRunnerCustodyV1::Pending { bootstrap, .. }
+                if !bootstrap.matches(window) =>
+            {
+                let result = self
+                    .state
+                    .reject_measure_with(
+                        instance_sha256,
+                        window.row.server_start,
+                        false,
+                        FAULT_BOOTSTRAP_BINDING,
+                    );
+                return match result {
+                    Err(error) => Err(error),
+                    Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
+                };
+            }
+            M1R33AuthenticatedRunnerCustodyV1::Pending { .. } => {}
+            M1R33AuthenticatedRunnerCustodyV1::Prepared { .. }
+            | M1R33AuthenticatedRunnerCustodyV1::Rejected { .. } => {
+                return Err(fault(FAULT_NOT_ACTIVE));
+            }
+        }
+        let Some(BackendStateV1::Active { binding, custody }) = self.state.state.take() else {
+            return Err(fault(FAULT_NOT_ACTIVE));
+        };
+        let ActiveCustodyV1 {
+            runner,
+            model_memory,
+            engine,
+        } = custody;
+        let (runner, bootstrap, memory, engine) = match (runner, model_memory, engine) {
+            (
+                M1R33AuthenticatedRunnerCustodyV1::Pending { runner, bootstrap },
+                M1R33AuthenticatedMemoryCustodyV1::Initialized(memory),
+                M1R33EngineCustodyV1::Fresh(engine),
+            ) => (runner, bootstrap, *memory, *engine),
+            (runner, memory, engine) => {
+                self.state.state = Some(BackendStateV1::Faulted {
+                    binding,
+                    custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                        runner,
+                        model_memory: memory,
+                        engine,
+                    }),
+                });
+                return Err(fault(FAULT_BOOTSTRAP_REJECTED));
+            }
+        };
+        let M1R33AuthenticatedS1T128BootstrapBindingV1 { input, .. } = bootstrap;
+        let result = prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(
+            engine, runner, memory, input,
+        );
+        let (runner, code) = match result {
+            Ok(prepared) => (
+                M1R33AuthenticatedRunnerCustodyV1::Prepared {
+                    _custody: Box::new(prepared),
+                },
+                FAULT_EXECUTION_UNAVAILABLE,
+            ),
+            Err(rejected) => (
+                M1R33AuthenticatedRunnerCustodyV1::Rejected {
+                    _custody: rejected,
+                },
+                FAULT_BOOTSTRAP_REJECTED,
+            ),
+        };
+        self.state.state = Some(BackendStateV1::Faulted {
+            binding,
+            custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                runner,
+                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                engine: M1R33EngineCustodyV1::Joined,
+            }),
+        });
+        Err(fault(code))
     }
 
     fn stop(
@@ -441,11 +726,31 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::r33_wire::{M1R33CollectorRowV1, M1R33WorkV1, M1R33WorkloadRequestV1};
+    use ferric_build::{
+        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+        AddresslessM1StepWorkspacePlan, AvailableM1StepWorkspace,
+        DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
+        M1StepWorkspacePlanOutcome,
+    };
+    use ferric_engine::M1FullStepWorkspacePlans;
+    use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
     use std::cell::Cell;
     use std::rc::Rc;
 
     const INSTANCE: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const WRONG_INSTANCE: &str = "1123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    const TARGET_PREFILL: Qwen3PlanSelection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Prefill,
+        bucket: Qwen3PlanBucket::PrefillS1T128,
+    };
+    const DRAFT_PREFILL: Qwen3PlanSelection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        mode: Qwen3ExecutionMode::Prefill,
+        bucket: Qwen3PlanBucket::PrefillS1T128,
+    };
 
     #[derive(Debug)]
     struct DropWitness(Rc<Cell<usize>>);
@@ -468,6 +773,118 @@ mod tests {
             ),
             drops,
         )
+    }
+
+    fn workspace_plan(
+        selection: Qwen3PlanSelection,
+        identity_byte: u8,
+    ) -> AddresslessM1StepWorkspacePlan {
+        let requirements = m1_step_workspace_requirements(selection).unwrap();
+        let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+            selection,
+            DeclaredM1StepWorkspaceAllocation::new(
+                Identity::new([identity_byte; 32]),
+                requirements.allocation_byte_len(),
+                requirements.allocation_alignment(),
+            ),
+            requirements.ranges().to_vec().into_boxed_slice(),
+        ));
+        match plan_addressless_m1_step_workspace(selection, available) {
+            M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+            M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+        }
+    }
+
+    fn bootstrap_input(
+        prompt: Vec<u32>,
+        successor_output: u32,
+    ) -> M1AuthenticatedS1T128PrefillBootstrapInputV1 {
+        let plans = || {
+            M1FullStepWorkspacePlans::paired_prefill(
+                workspace_plan(DRAFT_PREFILL, 1),
+                workspace_plan(TARGET_PREFILL, 2),
+            )
+        };
+        M1AuthenticatedS1T128PrefillBootstrapInputV1::new(
+            prompt,
+            successor_output,
+            plans(),
+            plans(),
+        )
+        .unwrap()
+    }
+
+    fn r33_window(prompt: Vec<u32>, expected_output: u64) -> M1R33WorkloadWindowV1 {
+        let input_tokens = prompt.len() as u64;
+        M1R33WorkloadWindowV1 {
+            requests: vec![M1R33WorkloadRequestV1 {
+                expected_output_tokens: expected_output,
+                prompt_tokens: prompt,
+                request_ordinal: 0,
+            }],
+            row: M1R33CollectorRowV1 {
+                expected_work: M1R33WorkV1 {
+                    input_tokens,
+                    output_tokens: expected_output,
+                    successful_requests: 1,
+                    total_tokens: input_tokens + expected_output,
+                },
+                id: "start-0.warmup-00".to_owned(),
+                ordinal: 0,
+                phase: "warmup".to_owned(),
+                server_start: 0,
+                window: 0,
+            },
+        }
+    }
+
+    #[test]
+    fn bootstrap_binding_pins_exact_row_prompt_and_output_identity() {
+        let window = r33_window(vec![1; 128], 33);
+        let binding = M1R33AuthenticatedS1T128BootstrapBindingV1::bind(
+            &window,
+            bootstrap_input(vec![1; 128], 32),
+        )
+        .unwrap();
+        assert!(binding.matches(&window));
+
+        let mut wrong_row = window.clone();
+        wrong_row.row.id.push_str("-other");
+        assert!(!binding.matches(&wrong_row));
+        let mut wrong_prompt = window.clone();
+        wrong_prompt.requests[0].prompt_tokens[127] = 2;
+        assert!(!binding.matches(&wrong_prompt));
+        let mut wrong_output = window.clone();
+        wrong_output.requests[0].expected_output_tokens = 34;
+        wrong_output.row.expected_work.output_tokens = 34;
+        wrong_output.row.expected_work.total_tokens = 162;
+        assert!(!binding.matches(&wrong_output));
+    }
+
+    #[test]
+    fn bootstrap_binding_rejections_retain_move_only_input() {
+        let window = r33_window(vec![1; 128], 33);
+        let failure = M1R33AuthenticatedS1T128BootstrapBindingV1::bind(
+            &window,
+            bootstrap_input(vec![2; 128], 32),
+        )
+        .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1R33AuthenticatedS1T128BootstrapBindingErrorV1::PretokenizedRoster
+        );
+        assert_eq!(failure.into_input().prompt_tokens(), [2; 128]);
+
+        let failure = M1R33AuthenticatedS1T128BootstrapBindingV1::bind(
+            &window,
+            bootstrap_input(vec![1; 128], 31),
+        )
+        .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1R33AuthenticatedS1T128BootstrapBindingErrorV1::OutputPolicy
+        );
+        assert_eq!(failure.into_input().maximum_successor_output_tokens(), 31);
     }
 
     #[test]
@@ -580,6 +997,13 @@ mod tests {
                 .unwrap_err()
                 .code(),
             FAULT_IDENTITY
+        );
+        assert_eq!(
+            backend
+                .reject_measure(INSTANCE, 3, true)
+                .unwrap_err()
+                .code(),
+            FAULT_DEADLINE_EXPIRED
         );
         assert_eq!(
             backend.phase(),

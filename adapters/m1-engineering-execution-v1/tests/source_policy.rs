@@ -10,6 +10,8 @@ const R33_ADAPTER_SOURCE: &str = include_str!("../src/bin/ferric-m1-r33-adapter.
 const ROOT_MANIFEST: &str = include_str!("../../../Cargo.toml");
 const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.toml");
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
+const ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/authenticated_prefill_bootstrap.rs");
 const CORE_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/non_authoritative_program_artifact.rs");
 const CAPABILITY_SOURCE: &str =
@@ -261,6 +263,9 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         "Stopped",
         "M1R33EngineV1::new",
         "authenticated-window-bootstrap-unavailable",
+        "new_with_s1_t128_prefill_bootstrap",
+        "authenticated-window-execution-unavailable",
+        "prepare_m1_authenticated_s1_t128_prefill_prepublication_v1",
         "drop(custody)",
     ] {
         assert!(
@@ -274,6 +279,11 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         "execute_m1_target_smoke_v1",
         "M1EngineeringAggregateArtifactV1",
         "bind_engineering_structural_m1_physical_runner_v1",
+        "M1AuthenticatedPhysicalQueueSessionV1",
+        ".create(",
+        ".submit(",
+        ".wait(",
+        "std::time::Instant",
         "duration_ns:",
         "request_events:",
         "TcpListener",
@@ -291,4 +301,74 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
             .count(),
         2
     );
+}
+
+#[test]
+fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
+    let engine_production = ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE
+        .split_once("#[cfg(test)]")
+        .map_or(ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE, |(source, _)| source);
+    let backend_production = R33_PRODUCTION_BACKEND_SOURCE
+        .split_once("#[cfg(test)]")
+        .map_or(R33_PRODUCTION_BACKEND_SOURCE, |(source, _)| source);
+    for required in [
+        "M1AuthenticatedPhysicalRunnerV1",
+        "M1PartitionedModelMemoryKvPoolV1",
+        "M1CaptureQuarantinedEngineV1",
+        "const PREFILL_WIDTH: usize = 128;",
+        "PrefillS1T128",
+        "SpeculativeS1K4C8192",
+        "prompt_tokens.len() != PREFILL_WIDTH",
+        "engine.admit()",
+        "engine.append_tentative(request, 1)",
+        "engine.dispatch_m1_ready()",
+        "bind_m1_kv_workspace_table_v1",
+        "reserve_step_write",
+        "reserve_finite_speculative_rollover_outputs",
+        "bind_m1_authenticated_speculative_rollover_intent_v1",
+        "prepare_first_step",
+        "into_m1_capture_quarantine",
+    ] {
+        assert!(
+            ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE.contains(required),
+            "authenticated prefill bootstrap is missing {required}"
+        );
+    }
+    assert_eq!(
+        R33_PRODUCTION_BACKEND_SOURCE
+            .matches("authenticated-window-execution-unavailable")
+            .count(),
+        1,
+        "R33 bootstrap must expose one stable no-execution fault"
+    );
+    for forbidden in [
+        "M1PhysicalRunnerV1",
+        "M1QueuedServingPhysicalInputProviderV1",
+        "M1EngineeringAggregateArtifactV1",
+        "M1AuthenticatedPhysicalQueueSessionV1",
+        ".create(",
+        ".submit(",
+        ".wait(",
+        "ClockId",
+        "duration_ns",
+        "M1R33MeasurementReportV1",
+    ] {
+        assert!(
+            !ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE.contains(forbidden),
+            "authenticated prefill bootstrap contains forbidden execution marker {forbidden}"
+        );
+    }
+    for forbidden in [".expect(", "panic!(", "unreachable!(", "todo!("] {
+        assert!(
+            !engine_production.contains(forbidden),
+            "authenticated prefill production seam contains {forbidden}"
+        );
+        let r33_join = backend_production
+            .split_once("pub enum M1R33AuthenticatedS1T128BootstrapBindingErrorV1")
+            .map_or(backend_production, |(_, source)| source);
+        assert!(
+            !r33_join.contains(forbidden),
+            "R33 authenticated bootstrap join contains {forbidden}"
+        );
+    }
 }

@@ -9,6 +9,7 @@ mod authenticated_kernel_acquisition;
 mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
+mod authenticated_prefill_bootstrap;
 mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
 mod authenticated_speculative_executor;
@@ -133,6 +134,14 @@ pub use authenticated_physical_readback::{
     M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1,
     M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownSuccessV1,
     M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1, M1_AUTHENTICATED_SPECULATIVE_DIAGNOSTIC_STATUS_V1,
+};
+pub use authenticated_prefill_bootstrap::{
+    prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
+    M1AuthenticatedS1T128PrefillBootstrapErrorV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputErrorV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputFailureV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputV1, M1AuthenticatedS1T128PrefillBootstrapPhaseV1,
+    M1AuthenticatedS1T128PrefillPrepublicationV1,
 };
 pub use authenticated_queue_rearm::{
     prepare_m1_authenticated_long_lived_queue_rearm_v1,
