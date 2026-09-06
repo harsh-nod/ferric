@@ -39,6 +39,7 @@ jobs:
       - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py
       - run: python3 -I -B proofs/m1-qualification/test-authenticated-bounded-queue-wait-policy.py .
       - run: python3 -I -B proofs/m1-qualification/test-authenticated-s1-k4-diagnostic-bridge-policy.py .
+      - run: python3 -I -B proofs/m1-qualification/test-authenticated-prefill-executor-policy.py .
       - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
       - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-all-kernels-build-producer-policy.py
       - run: python3 -I -B proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py

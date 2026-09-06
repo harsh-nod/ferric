@@ -9014,14 +9014,12 @@ mod tests {
     #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
         use ferric_engine::{
-            complete_m1_authenticated_physical_step_v1,
+            execute_m1_authenticated_s1_t128_paired_prefill_v1,
             prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
             prepare_m1_authenticated_speculative_rollover_v1,
-            release_m1_authenticated_completed_step_kv_pages_v1,
             schedule_m1_authenticated_speculative_rollover_v1,
-            submit_m1_authenticated_speculative_rollover_v1, M1AuthenticatedCompletedStepOutcomeV1,
-            M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
-            M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
+            submit_m1_authenticated_speculative_rollover_v1,
+            M1AuthenticatedS1T128PrefillBootstrapInputV1,
             M1FiniteSpeculativeQueueRolloverKvInputsV1, M1QueueWaitTimeoutV1,
             M1ScheduledDispatchV1, M1ServingCompletionDispositionV1,
             M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
@@ -9352,112 +9350,41 @@ mod tests {
             input,
         )
         .expect("prepare authenticated paired-prefill bootstrap");
+        assert_eq!(prepared.prompt_tokens(), &[1; 128]);
+        assert_eq!(prepared.maximum_successor_output_tokens(), 32);
+        let queue_wait_timeout =
+            M1QueueWaitTimeoutV1::new(1_000).expect("construct nonzero prefill wait timeout");
+        let executed = match execute_m1_authenticated_s1_t128_paired_prefill_v1(
+            prepared,
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            queue_wait_timeout,
+        ) {
+            Ok(executed) => executed,
+            Err(failure) => {
+                assert!(failure.engine_quarantined());
+                panic!("authenticated paired-prefill execution failed closed: {failure:?}")
+            }
+        };
         let (
             mut engine,
-            prepublication,
-            cache,
+            released,
+            first_token,
+            direct_choices,
             draft_rollover_page,
             target_rollover_page,
             intent,
             request,
             prompt_tokens,
             policy,
-        ) = prepared.into_parts();
+            diagnostic_ring_bytes,
+            retained_queue_wait_timeout,
+        ) = executed.into_parts();
         assert_eq!(prompt_tokens.as_ref(), &[1; 128]);
         assert_eq!(policy.max_output_tokens(), 32);
-        let queue_wait_timeout =
-            M1QueueWaitTimeoutV1::new(1_000).expect("construct nonzero prefill wait timeout");
-        let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(
-            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
-            prepublication,
-        ) {
-            Ok(queue) => queue,
-            Err(failure) => {
-                let quarantine = failure.quarantine_engine(&mut engine);
-                panic!("authenticated paired-prefill queue creation failed closed: {quarantine:?}")
-            }
-        };
-        let published = match queue.submit() {
-            Ok(published) => published,
-            Err(failure) => {
-                let quarantine = failure.quarantine_engine(&mut engine);
-                panic!("authenticated paired-prefill submission failed closed: {quarantine:?}")
-            }
-        };
-        let completed = match published.wait_for(queue_wait_timeout.milliseconds()) {
-            Ok(completed) => completed,
-            Err(failure) => {
-                let quarantine = (*failure).quarantine_engine(&mut engine);
-                panic!("authenticated paired-prefill wait failed closed: {quarantine:?}")
-            }
-        };
-        let recycled = match completed.recycle() {
-            Ok(recycled) => recycled,
-            Err(failure) => {
-                let quarantine = (*failure).quarantine_engine(&mut engine);
-                panic!("authenticated paired-prefill recycle failed closed: {quarantine:?}")
-            }
-        };
-        let observed = match recycled.observe_completion() {
-            Ok(observed) => observed,
-            Err(failure) => match failure.retry() {
-                Ok(observed) => observed,
-                Err(failure) => {
-                    let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
-                    panic!("paired-prefill observation failed after bounded retry: {teardown:?}")
-                }
-            },
-        };
-        let direct = match observed.observe_direct_diagnostic_choices() {
-            Ok(direct) => direct,
-            Err(failure) => {
-                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
-                panic!("paired-prefill direct choice observation failed closed: {teardown:?}")
-            }
-        };
-        let direct = match direct.check_completion() {
-            Ok(direct) => direct,
-            Err(failure) => {
-                let teardown = (*failure).destroy_queue_and_retain_evidence(&mut engine);
-                panic!("paired-prefill direct semantics failed closed: {teardown:?}")
-            }
-        };
-        let [anchor] = direct.choices().choices() else {
-            let actual = direct.choices().choices().len();
-            let teardown = direct.destroy_queue_and_retain_evidence(&mut engine);
-            panic!("paired-prefill returned {actual} direct choices and closed: {teardown:?}")
-        };
-        let anchor = *anchor;
-        let (readback, _direct_choices) = direct.into_parts();
-        let roster =
-            M1DeviceKvCompletionRosterV1::new(vec![M1DeviceKvCompletionMemberV1::continuing(
-                cache,
-            )]);
-        let completed =
-            match complete_m1_authenticated_physical_step_v1(&mut engine, readback, roster) {
-                M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) => completed,
-                M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) => {
-                    let teardown = rejected.destroy_queue_and_retain_rejection(&mut engine);
-                    panic!("paired-prefill completion rejected and closed: {teardown:?}")
-                }
-                M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poisoned) => {
-                    panic!("paired-prefill completion entered terminal poison: {poisoned:?}")
-                }
-            };
-        let released = match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
-            Ok(released) => released,
-            Err(failure) => {
-                let (_, completed) = (*failure).into_parts();
-                match release_m1_authenticated_completed_step_kv_pages_v1(completed) {
-                    Ok(released) => released,
-                    Err(failure) => {
-                        let (_, completed) = (*failure).into_parts();
-                        let teardown = completed.destroy_queue_and_retain_completion(&mut engine);
-                        panic!("paired-prefill page release failed and closed: {teardown:?}")
-                    }
-                }
-            }
-        };
+        assert_eq!(direct_choices.choices(), &[first_token]);
+        assert_eq!(diagnostic_ring_bytes, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1);
+        assert_eq!(retained_queue_wait_timeout, queue_wait_timeout);
+        let anchor = first_token;
 
         let rollover_batch = build_rollover_fixture_batch(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();

@@ -10,6 +10,7 @@ mod authenticated_kernel_programs;
 mod authenticated_physical_queue;
 mod authenticated_physical_readback;
 mod authenticated_prefill_bootstrap;
+mod authenticated_prefill_executor;
 mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
 mod authenticated_speculative_executor;
@@ -152,6 +153,11 @@ pub use authenticated_prefill_bootstrap::{
     M1AuthenticatedS1T128PrefillBootstrapInputFailureV1,
     M1AuthenticatedS1T128PrefillBootstrapInputV1, M1AuthenticatedS1T128PrefillBootstrapPhaseV1,
     M1AuthenticatedS1T128PrefillPrepublicationV1,
+};
+pub use authenticated_prefill_executor::{
+    execute_m1_authenticated_s1_t128_paired_prefill_v1,
+    M1AuthenticatedS1T128PrefillExecutionErrorV1, M1AuthenticatedS1T128PrefillExecutionFailureV1,
+    M1AuthenticatedS1T128PrefillExecutionStageV1, M1AuthenticatedS1T128PrefillExecutionSuccessV1,
 };
 pub use authenticated_queue_rearm::{
     prepare_m1_authenticated_long_lived_queue_rearm_v1,

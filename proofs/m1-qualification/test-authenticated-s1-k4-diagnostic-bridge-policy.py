@@ -34,6 +34,7 @@ def main() -> None:
     lifecycle_path = root / "crates/ferric-engine/src/physical_queue_lifecycle.rs"
     rearm_path = root / "crates/ferric-engine/src/authenticated_queue_rearm.rs"
     queue_path = root / "crates/ferric-engine/src/authenticated_physical_queue.rs"
+    prefill_executor_path = root / "crates/ferric-engine/src/authenticated_prefill_executor.rs"
     fixture_path = root / "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs"
     readback = readback_path.read_text(encoding="utf-8")
     choices = choices_path.read_text(encoding="utf-8")
@@ -41,6 +42,7 @@ def main() -> None:
     lifecycle = lifecycle_path.read_text(encoding="utf-8")
     rearm = rearm_path.read_text(encoding="utf-8")
     queue = queue_path.read_text(encoding="utf-8")
+    prefill_executor = prefill_executor_path.read_text(encoding="utf-8")
     fixture = fixture_path.read_text(encoding="utf-8")
 
     if readback.count("pub fn observe_speculative_k4_diagnostic_choices(") != 1:
@@ -303,21 +305,31 @@ def main() -> None:
     if "FERRIC_M1_ROLLOVER_PREFILL_TOKEN" in fixture:
         fail("MI300X rollover fixture still accepts an external prefill-token oracle")
     require(
-        fixture,
+        prefill_executor,
         "published.wait_for(queue_wait_timeout.milliseconds())",
         "bounded prefill wait",
     )
     require(
-        fixture,
+        prefill_executor,
         "observed.observe_direct_diagnostic_choices()",
         "authenticated direct prefill observation",
     )
-    require(fixture, "direct.check_completion()", "evidence-authorized direct join")
+    require(prefill_executor, "direct.check_completion()", "evidence-authorized direct join")
     require(
-        fixture,
-        "let [anchor] = direct.choices().choices() else",
+        prefill_executor,
+        "let [choice] = choices.choices() else",
         "checked direct-choice anchor derivation",
     )
+    fixture_execution = fixture.split(
+        "fn admitted_mi300x_runs_public_authenticated_rollover_executor()", 1
+    )[1].split("#[test]", 1)[0]
+    require(
+        fixture_execution,
+        "execute_m1_authenticated_s1_t128_paired_prefill_v1(",
+        "MI300X production prefill executor",
+    )
+    if "observed.observe_direct_diagnostic_choices()" in fixture_execution:
+        fail("MI300X fixture duplicates authenticated direct observation")
 
     require(
         rearm,
