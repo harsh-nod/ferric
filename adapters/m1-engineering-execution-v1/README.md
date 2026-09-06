@@ -20,6 +20,17 @@ single-request timing with the production target-smoke field names. That timing
 starts after artifact, model-memory, and tokenizer setup and is explicitly not
 comparable to R33 serving, vLLM, or SGLang measurements.
 
+For a direct authority-free smoke, the identity-closure argument may be the
+reserved literal `@derive-engineering-identities-v1`. That mode derives inert,
+nonzero preliminary runner inputs from the exact admitted engineering
+observation, model admission, prepacked manifests, deployment bundle, and plan
+catalog. Its V3 report records
+`identity_input_mode=derived-engineering-observation-model-plan-v1`. These
+derived identities authenticate no source, compiler, proof, ABI, validator,
+TCB, or protocol and cannot replace a protected receipt or qualification
+closure. A file path still selects the existing external-closure mode and its
+unchanged V2 report shape.
+
 ## Bounded R33 lifecycle controller
 
 The library also exposes an additive, in-process controller for one R33

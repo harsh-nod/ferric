@@ -27,10 +27,28 @@ use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::{Component, Path, PathBuf};
 
+use super::{EngineeringIdentityInputV1, EngineeringObservationFacts};
+
 type SmokeResult<T> = Result<T, String>;
 
 const CLOSURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CLOSURE-V1";
 const MAX_DOCUMENT_BYTES: u64 = 8 * 1_024 * 1_024;
+const DERIVED_ENGINEERING_IDENTITY_DOMAIN_V1: &[u8] =
+    b"ferric.m1.engineering-derived-external-identity.v1";
+const DERIVED_ENGINEERING_COMPONENT_LABELS_V1: [&[u8]; 12] = [
+    b"ferric-source-observation",
+    b"fe2o3-source-observation",
+    b"compiler-observation",
+    b"compiler-configuration-observation",
+    b"target-contract-observation",
+    b"kernel-proof-set-observation",
+    b"kernel-abi-catalog-observation",
+    b"runtime-contract-observation",
+    b"runtime-abi-observation",
+    b"validator-roster-observation",
+    b"protocol-observation",
+    b"tcb-report-observation",
+];
 
 #[derive(Clone, Copy)]
 struct SnapshotFileV1 {
@@ -101,6 +119,15 @@ struct ClosureIdentities {
     validator_registry: Identity,
 }
 
+#[derive(Clone, Copy)]
+struct EngineeringModelPlanCoordinatesV1 {
+    admission_record: Identity,
+    model_bundle: Identity,
+    target_prepacked: Identity,
+    draft_prepacked: Identity,
+    plan_catalog: Identity,
+}
+
 pub(crate) struct SmokeBootstrapV1 {
     pub(crate) publication: PublishedRunnerDeclaration,
     memory_plan: ferric_build::AddresslessModelMemoryPlan,
@@ -112,11 +139,14 @@ pub(crate) struct SmokeBootstrapV1 {
 
 pub(crate) fn prepare(
     prepacked_root: &Path,
-    closure_path: &Path,
+    identity_input: &EngineeringIdentityInputV1,
     prompt: &str,
-    executable_catalog_id: Identity,
+    observation: EngineeringObservationFacts,
 ) -> SmokeResult<SmokeBootstrapV1> {
-    let closure = load_closure(closure_path)?;
+    let external_file = match identity_input {
+        EngineeringIdentityInputV1::ExternalFile(path) => Some(load_closure(path)?),
+        EngineeringIdentityInputV1::DerivedEngineeringV1 => None,
+    };
     let snapshot = SecureDirectory::open(prepacked_root, "prepacked snapshot root")?;
     let model = load_model_inputs(&snapshot)?;
     let tokenizer =
@@ -133,7 +163,10 @@ pub(crate) fn prepare(
     let runner_admission = model.authenticate()?;
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
-    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let external = match external_file {
+        Some(closure) => complete_closure(&closure, &plan_catalog, observation.program_catalog)?,
+        None => derive_engineering_external_identity_inputs_v1(&plan_catalog, observation)?,
+    };
     let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
         .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
     let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
@@ -151,6 +184,84 @@ pub(crate) fn prepare(
         tokenizer,
         prompt_tokens,
     })
+}
+
+fn derive_engineering_external_identity_inputs_v1(
+    catalog: &ferric_build::SequentialPlanCatalog,
+    observation: EngineeringObservationFacts,
+) -> SmokeResult<ExternalIdentityClosureInputs> {
+    let admission_record = catalog
+        .admission_record()
+        .ok_or_else(|| "engineering model plan has no admission record".to_owned())?
+        .record_id();
+    let model = EngineeringModelPlanCoordinatesV1 {
+        admission_record,
+        model_bundle: catalog.deployment().bundle_id,
+        target_prepacked: Identity::new(catalog.prepacked().target_manifest().aggregate_id()),
+        draft_prepacked: Identity::new(catalog.prepacked().draft_manifest().aggregate_id()),
+        plan_catalog: catalog.catalog_id(),
+    };
+    let component = |label| derive_engineering_component_identity_v1(label, observation, model);
+    let [
+        ferric_source,
+        fe2o3_source,
+        compiler,
+        compiler_configuration,
+        target_contract,
+        kernel_proof_set,
+        kernel_abi_catalog,
+        runtime_contract,
+        runtime_abi,
+        validator_registry,
+        protocol,
+        tcb_report,
+    ] = DERIVED_ENGINEERING_COMPONENT_LABELS_V1;
+    let mut external = ExternalIdentityClosureInputs {
+        ferric_source: component(ferric_source),
+        fe2o3_source: component(fe2o3_source),
+        compiler: component(compiler),
+        compiler_configuration: component(compiler_configuration),
+        target_contract: component(target_contract),
+        kernel_catalog: domain_identity(
+            b"ferric.m1.engineering-pending-kernel-catalog.v1",
+            &[catalog.catalog_id().as_bytes()],
+        ),
+        kernel_proof_set: component(kernel_proof_set),
+        kernel_abi_catalog: component(kernel_abi_catalog),
+        executable_catalog: observation.program_catalog,
+        runtime_contract: component(runtime_contract),
+        runtime_abi: component(runtime_abi),
+        generated_runner: expected_qwen3_gfx942_runner_source_identity(),
+        validator_registry: component(validator_registry),
+        qualification_protocol: component(protocol),
+        tcb_report: component(tcb_report),
+    };
+    external.kernel_catalog = expected_preliminary_kernel_catalog_identity(catalog, &external)
+        .map_err(|error| format!("cannot derive engineering kernel catalog identity: {error:?}"))?;
+    Ok(external)
+}
+
+fn derive_engineering_component_identity_v1(
+    component: &[u8],
+    observation: EngineeringObservationFacts,
+    model: EngineeringModelPlanCoordinatesV1,
+) -> Identity {
+    domain_identity(
+        DERIVED_ENGINEERING_IDENTITY_DOMAIN_V1,
+        &[
+            component,
+            observation.manifest.as_bytes(),
+            observation.hsaco.as_bytes(),
+            observation.compiler_handoff.as_bytes(),
+            observation.canonical_descriptor.as_bytes(),
+            observation.program_catalog.as_bytes(),
+            model.admission_record.as_bytes(),
+            model.model_bundle.as_bytes(),
+            model.target_prepacked.as_bytes(),
+            model.draft_prepacked.as_bytes(),
+            model.plan_catalog.as_bytes(),
+        ],
+    )
 }
 
 impl SmokeBootstrapV1 {
@@ -795,4 +906,89 @@ fn domain_identity(domain: &[u8], fields: &[&[u8]]) -> Identity {
 fn hash_field(hasher: &mut Sha256, field: &[u8]) {
     hasher.update(u64::try_from(field.len()).unwrap_or(u64::MAX).to_le_bytes());
     hasher.update(field);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn identity(byte: u8) -> Identity {
+        Identity::new([byte; 32])
+    }
+
+    fn observation() -> EngineeringObservationFacts {
+        EngineeringObservationFacts {
+            manifest: identity(1),
+            hsaco: identity(2),
+            compiler_handoff: identity(3),
+            canonical_descriptor: identity(4),
+            program_catalog: identity(5),
+        }
+    }
+
+    fn model() -> EngineeringModelPlanCoordinatesV1 {
+        EngineeringModelPlanCoordinatesV1 {
+            admission_record: identity(6),
+            model_bundle: identity(7),
+            target_prepacked: identity(8),
+            draft_prepacked: identity(9),
+            plan_catalog: identity(10),
+        }
+    }
+
+    #[test]
+    fn derived_engineering_components_are_deterministic_nonzero_and_distinct() {
+        let observation = observation();
+        let model = model();
+        let first = DERIVED_ENGINEERING_COMPONENT_LABELS_V1
+            .map(|label| derive_engineering_component_identity_v1(label, observation, model));
+        let second = DERIVED_ENGINEERING_COMPONENT_LABELS_V1
+            .map(|label| derive_engineering_component_identity_v1(label, observation, model));
+        assert_eq!(first, second);
+        assert!(first.iter().all(Identity::is_present));
+        assert_eq!(
+            first
+                .iter()
+                .map(|identity| *identity.as_bytes())
+                .collect::<BTreeSet<_>>()
+                .len(),
+            DERIVED_ENGINEERING_COMPONENT_LABELS_V1.len()
+        );
+        assert!(first.iter().all(|identity| {
+            *identity != observation.program_catalog
+                && *identity != expected_qwen3_gfx942_runner_source_identity()
+        }));
+    }
+
+    #[test]
+    fn every_admitted_observation_and_model_plan_coordinate_rekeys_derivation() {
+        let observation = observation();
+        let model = model();
+        let label = DERIVED_ENGINEERING_COMPONENT_LABELS_V1[0];
+        let expected = derive_engineering_component_identity_v1(label, observation, model);
+
+        for coordinate in 0..10 {
+            let mut changed_observation = observation;
+            let mut changed_model = model;
+            let replacement = identity(32 + coordinate);
+            match coordinate {
+                0 => changed_observation.manifest = replacement,
+                1 => changed_observation.hsaco = replacement,
+                2 => changed_observation.compiler_handoff = replacement,
+                3 => changed_observation.canonical_descriptor = replacement,
+                4 => changed_observation.program_catalog = replacement,
+                5 => changed_model.admission_record = replacement,
+                6 => changed_model.model_bundle = replacement,
+                7 => changed_model.target_prepacked = replacement,
+                8 => changed_model.draft_prepacked = replacement,
+                9 => changed_model.plan_catalog = replacement,
+                _ => return,
+            }
+            assert_ne!(
+                derive_engineering_component_identity_v1(label, changed_observation, changed_model),
+                expected,
+                "coordinate {coordinate} did not rekey the derived identity"
+            );
+        }
+    }
 }

@@ -131,6 +131,9 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
     assert!(CLI_SOURCE.contains("OpenedKfd::open_default"));
     for required in [
         "ferric.m1-engineering-target-smoke-observation.v2",
+        "ferric.m1-engineering-target-smoke-observation.v3",
+        "@derive-engineering-identities-v1",
+        "derived-engineering-observation-model-plan-v1",
         "execution.timing()",
         "\"benchmark_comparable\": false",
         "\"clock\": TIMING_CLOCK",
@@ -160,6 +163,61 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
             );
         }
     }
+}
+
+#[test]
+fn derived_engineering_identity_mode_is_coordinate_bound_and_authority_free() {
+    let derived = BOOTSTRAP_SOURCE
+        .split_once("fn derive_engineering_external_identity_inputs_v1")
+        .map(|(_, tail)| tail)
+        .and_then(|tail| {
+            tail.split_once("impl SmokeBootstrapV1")
+                .map(|(body, _)| body)
+        })
+        .expect("derived engineering identity implementation is a bounded source block");
+    assert!(BOOTSTRAP_SOURCE.contains("ferric.m1.engineering-derived-external-identity.v1"));
+    for required in [
+        "DERIVED_ENGINEERING_COMPONENT_LABELS_V1",
+        "observation.manifest.as_bytes()",
+        "observation.hsaco.as_bytes()",
+        "observation.compiler_handoff.as_bytes()",
+        "observation.canonical_descriptor.as_bytes()",
+        "observation.program_catalog.as_bytes()",
+        "model.admission_record.as_bytes()",
+        "model.model_bundle.as_bytes()",
+        "model.target_prepacked.as_bytes()",
+        "model.draft_prepacked.as_bytes()",
+        "model.plan_catalog.as_bytes()",
+        "expected_preliminary_kernel_catalog_identity",
+        "expected_qwen3_gfx942_runner_source_identity",
+    ] {
+        assert!(
+            derived.contains(required),
+            "derived engineering identity block is missing {required}"
+        );
+    }
+    assert_eq!(derived.matches("qualification_protocol").count(), 1);
+    let unavoidable_field_removed = derived.replace("qualification_protocol", "");
+    for forbidden in [
+        "load_closure(",
+        "OpenedKfd",
+        "WorkerV3",
+        "protected",
+        "current",
+        "qualification",
+        "grants_load_authority",
+        "grants_launch_authority",
+        "bind_engineering_structural_m1_physical_runner_v1",
+    ] {
+        assert!(
+            !unavoidable_field_removed.contains(forbidden),
+            "derived engineering identity block contains forbidden authority marker {forbidden}"
+        );
+    }
+    assert!(CLI_SOURCE.contains("\"authority\": \"none\""));
+    assert!(CLI_SOURCE.contains("\"compiler_origin_authenticated\": false"));
+    assert!(CLI_SOURCE.contains("\"current_publication_selected\": false"));
+    assert!(CLI_SOURCE.contains("\"worker_v3_authenticated\": false"));
 }
 
 #[test]

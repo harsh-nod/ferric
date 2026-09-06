@@ -12,16 +12,51 @@ use ferric_m1_engineering_execution_v1::{
 };
 use ferric_spec::{Identity, M1_QUALIFICATION_TOKENS_PER_LANE};
 use serde_json::{Value, json};
-use std::ffi::OsString;
+use std::collections::BTreeSet;
+use std::ffi::{OsStr, OsString};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 type SmokeResult<T> = Result<T, String>;
 
 const STATUS: &str = "engineering-hardware-observation-non-evidence-non-qualification";
 const NONCLAIM: &str = "Raw-prompt target-only execution of a structurally admitted fe2o3 engineering aggregate whose authority is none. Reported choices and timing are raw device observations, not verified model answers or benchmark evidence. Timing starts after artifact, model-memory, and tokenizer setup and is not comparable to R33 serving, vLLM, or SGLang measurements. This output authenticates no compiler process or Worker V3 publication, selects no current protected publication, establishes no numerical or hardware correctness, is not a qualification result, and closes no M1 requirement.";
-const SCHEMA: &str = "ferric.m1-engineering-target-smoke-observation.v2";
+const EXTERNAL_FILE_SCHEMA: &str = "ferric.m1-engineering-target-smoke-observation.v2";
+const DERIVED_ENGINEERING_SCHEMA: &str = "ferric.m1-engineering-target-smoke-observation.v3";
+const DERIVED_ENGINEERING_IDENTITY_INPUT: &str = "@derive-engineering-identities-v1";
+const DERIVED_ENGINEERING_IDENTITY_MODE: &str = "derived-engineering-observation-model-plan-v1";
+const EXTERNAL_FILE_REPORT_FIELDS: [&str; 29] = [
+    "artifact_authority",
+    "authority",
+    "benchmark_comparable",
+    "canonical_descriptor_sha256",
+    "compiler_handoff_sha256",
+    "compiler_origin_authenticated",
+    "current_publication_selected",
+    "generated_runner_declaration_sha256",
+    "generated_token_count",
+    "generated_token_ids",
+    "hardware_completion_observed",
+    "hsaco_sha256",
+    "model_bundle_sha256",
+    "nonclaim",
+    "observation_manifest_sha256",
+    "program_catalog_sha256",
+    "prompt_priming_choice_token_ids",
+    "prompt_token_count",
+    "prompt_token_ids",
+    "schema",
+    "status",
+    "target",
+    "target_choice_observation_count",
+    "termination",
+    "text",
+    "text_bytes_hex",
+    "text_utf8_policy",
+    "timing",
+    "worker_v3_authenticated",
+];
 const TARGET: &str = "gfx942:xnack-";
 const TIMING_BOUNDARY: &str = "target-smoke-controller-entry-to-completed-device-teardown";
 const TIMING_CLOCK: &str = "monotonic-raw-nanoseconds";
@@ -41,6 +76,35 @@ struct EngineeringTimingFacts {
     duration: u64,
     first_token_offset: u64,
     terminal_offset: u64,
+}
+
+enum EngineeringIdentityInputV1 {
+    ExternalFile(PathBuf),
+    DerivedEngineeringV1,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum EngineeringIdentityReportModeV1 {
+    ExternalFile,
+    DerivedEngineeringV1,
+}
+
+impl EngineeringIdentityInputV1 {
+    const fn report_mode(&self) -> EngineeringIdentityReportModeV1 {
+        match self {
+            Self::ExternalFile(_) => EngineeringIdentityReportModeV1::ExternalFile,
+            Self::DerivedEngineeringV1 => EngineeringIdentityReportModeV1::DerivedEngineeringV1,
+        }
+    }
+}
+
+impl EngineeringIdentityReportModeV1 {
+    const fn schema(self) -> &'static str {
+        match self {
+            Self::ExternalFile => EXTERNAL_FILE_SCHEMA,
+            Self::DerivedEngineeringV1 => DERIVED_ENGINEERING_SCHEMA,
+        }
+    }
 }
 
 impl EngineeringTimingFacts {
@@ -69,14 +133,15 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
     let [
         prepacked_root,
         observation_root,
-        closure_path,
+        identity_input,
         gpu_unique_id,
         max_new_tokens,
         prompt,
     ] = arguments
     else {
-        return Err("usage: ferric-m1-engineering-target-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY CLOSURE GPU-UNIQUE-ID MAX-NEW-TOKENS RAW-PROMPT".to_owned());
+        return Err("usage: ferric-m1-engineering-target-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY EXTERNAL-CLOSURE-OR-@derive-engineering-identities-v1 GPU-UNIQUE-ID MAX-NEW-TOKENS RAW-PROMPT".to_owned());
     };
+    let identity_input = parse_engineering_identity_input(identity_input);
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -103,12 +168,8 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         canonical_descriptor: artifact.canonical_descriptor_id(),
         program_catalog: artifact.program_catalog_id(),
     };
-    let bootstrap = smoke_bootstrap::prepare(
-        Path::new(prepacked_root),
-        Path::new(closure_path),
-        prompt,
-        facts.program_catalog,
-    )?;
+    let bootstrap =
+        smoke_bootstrap::prepare(Path::new(prepacked_root), &identity_input, prompt, facts)?;
     let bound = bootstrap.bind(|publication| {
         bind_engineering_structural_m1_physical_runner_v1(artifact, publication)
             .map_err(|error| format!("cannot bind engineering physical runner: {error:?}"))
@@ -140,10 +201,11 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         facts,
         initialized.runner.declaration_id(),
         initialized.runner.logical_runner().bundle_id(),
+        identity_input.report_mode(),
         &text,
         &text_bytes,
     );
-    validate_engineering_report_v2(&report)?;
+    validate_engineering_report(&report)?;
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize smoke report: {error}"))?;
@@ -153,11 +215,20 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
     Ok(())
 }
 
+fn parse_engineering_identity_input(value: &OsStr) -> EngineeringIdentityInputV1 {
+    if value == OsStr::new(DERIVED_ENGINEERING_IDENTITY_INPUT) {
+        EngineeringIdentityInputV1::DerivedEngineeringV1
+    } else {
+        EngineeringIdentityInputV1::ExternalFile(PathBuf::from(value))
+    }
+}
+
 fn engineering_report(
     execution: &M1TargetSmokeExecutionV1,
     facts: EngineeringObservationFacts,
     runner_declaration: Identity,
     model_bundle: Identity,
+    identity_mode: EngineeringIdentityReportModeV1,
     text: &str,
     text_bytes: &[u8],
 ) -> Value {
@@ -170,6 +241,7 @@ fn engineering_report(
         facts,
         runner_declaration,
         model_bundle,
+        identity_mode,
         text,
         text_bytes,
     )
@@ -185,6 +257,7 @@ fn engineering_report_from_parts(
     facts: EngineeringObservationFacts,
     runner_declaration: Identity,
     model_bundle: Identity,
+    identity_mode: EngineeringIdentityReportModeV1,
     text: &str,
     text_bytes: &[u8],
 ) -> Value {
@@ -194,7 +267,7 @@ fn engineering_report_from_parts(
     let r33_tpot_eligible = generated_tokens.len() >= 2
         && timing.first_token_offset > 0
         && timing.terminal_offset > timing.first_token_offset;
-    json!({
+    let mut report = json!({
         "artifact_authority": "none",
         "authority": "none",
         "benchmark_comparable": false,
@@ -214,7 +287,7 @@ fn engineering_report_from_parts(
         "prompt_priming_choice_token_ids": prompt_observations,
         "prompt_token_count": prompt_tokens.len(),
         "prompt_token_ids": prompt_tokens,
-        "schema": SCHEMA,
+        "schema": identity_mode.schema(),
         "status": STATUS,
         "target": TARGET,
         "target_choice_observation_count": target_choice_observation_count,
@@ -238,10 +311,14 @@ fn engineering_report_from_parts(
             "scope": TIMING_SCOPE,
         },
         "worker_v3_authenticated": false,
-    })
+    });
+    if identity_mode == EngineeringIdentityReportModeV1::DerivedEngineeringV1 {
+        report["identity_input_mode"] = json!(DERIVED_ENGINEERING_IDENTITY_MODE);
+    }
+    report
 }
 
-fn validate_engineering_report_v2(report: &Value) -> SmokeResult<()> {
+fn validate_engineering_report(report: &Value) -> SmokeResult<()> {
     let object = report
         .as_object()
         .ok_or_else(|| "engineering report is not an object".to_owned())?;
@@ -251,7 +328,6 @@ fn validate_engineering_report_v2(report: &Value) -> SmokeResult<()> {
         ("benchmark_comparable", json!(false)),
         ("compiler_origin_authenticated", json!(false)),
         ("current_publication_selected", json!(false)),
-        ("schema", json!(SCHEMA)),
         ("status", json!(STATUS)),
         ("worker_v3_authenticated", json!(false)),
     ] {
@@ -260,6 +336,22 @@ fn validate_engineering_report_v2(report: &Value) -> SmokeResult<()> {
                 "engineering report {field} attempted an unsupported claim"
             ));
         }
+    }
+    let mut expected_fields = EXTERNAL_FILE_REPORT_FIELDS
+        .into_iter()
+        .collect::<BTreeSet<_>>();
+    match object.get("schema").and_then(Value::as_str) {
+        Some(EXTERNAL_FILE_SCHEMA) => {}
+        Some(DERIVED_ENGINEERING_SCHEMA)
+            if object.get("identity_input_mode")
+                == Some(&json!(DERIVED_ENGINEERING_IDENTITY_MODE)) =>
+        {
+            expected_fields.insert("identity_input_mode");
+        }
+        _ => return Err("engineering report identity-input provenance drifted".to_owned()),
+    }
+    if object.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected_fields {
+        return Err("engineering report field roster drifted".to_owned());
     }
     if object.get("nonclaim") != Some(&json!(NONCLAIM)) {
         return Err("engineering report nonclaim drifted".to_owned());
@@ -313,6 +405,20 @@ mod tests {
         let error = run(&[]).unwrap_err();
         assert!(error.starts_with("usage: ferric-m1-engineering-target-smoke"));
         assert!(error.contains("ENGINEERING-OBSERVATION-DIRECTORY"));
+        assert!(error.contains(DERIVED_ENGINEERING_IDENTITY_INPUT));
+    }
+
+    #[test]
+    fn reserved_identity_input_is_explicit_and_external_paths_remain_compatible() {
+        assert!(matches!(
+            parse_engineering_identity_input(OsStr::new(DERIVED_ENGINEERING_IDENTITY_INPUT)),
+            EngineeringIdentityInputV1::DerivedEngineeringV1
+        ));
+        let external = parse_engineering_identity_input(OsStr::new("closure.json"));
+        assert!(matches!(
+            external,
+            EngineeringIdentityInputV1::ExternalFile(path) if path == Path::new("closure.json")
+        ));
     }
 
     #[test]
@@ -353,10 +459,11 @@ mod tests {
             facts,
             Identity::new([6; 32]),
             Identity::new([7; 32]),
+            EngineeringIdentityReportModeV1::ExternalFile,
             "ok",
             &[0x6f, 0x6b],
         );
-        validate_engineering_report_v2(&report).expect("canonical engineering report");
+        validate_engineering_report(&report).expect("canonical engineering report");
         let object = report.as_object().expect("report is an object");
         assert_eq!(object.len(), 29);
         assert_eq!(report["artifact_authority"], json!("none"));
@@ -391,7 +498,8 @@ mod tests {
         assert_eq!(report["termination"], json!("max-new-tokens"));
         assert_eq!(report["text"], json!("ok"));
         assert_eq!(report["text_bytes_hex"], json!("6f6b"));
-        assert_eq!(report["schema"], json!(SCHEMA));
+        assert_eq!(report["schema"], json!(EXTERNAL_FILE_SCHEMA));
+        assert!(report.get("identity_input_mode").is_none());
         assert_eq!(report["timing"]["clock"], json!(TIMING_CLOCK));
         assert_eq!(
             report["timing"]["duration_boundary"],
@@ -415,6 +523,18 @@ mod tests {
     }
 
     fn timing_report(generated_tokens: &[u32], timing: EngineeringTimingFacts) -> Value {
+        timing_report_with_mode(
+            generated_tokens,
+            timing,
+            EngineeringIdentityReportModeV1::ExternalFile,
+        )
+    }
+
+    fn timing_report_with_mode(
+        generated_tokens: &[u32],
+        timing: EngineeringTimingFacts,
+        identity_mode: EngineeringIdentityReportModeV1,
+    ) -> Value {
         engineering_report_from_parts(
             &[10, 11],
             &[20],
@@ -430,6 +550,7 @@ mod tests {
             },
             Identity::new([6; 32]),
             Identity::new([7; 32]),
+            identity_mode,
             "ok",
             &[0x6f, 0x6b],
         )
@@ -445,7 +566,7 @@ mod tests {
                 terminal_offset: 0,
             },
         );
-        validate_engineering_report_v2(&zero).expect("zero-token schema remains explicit");
+        validate_engineering_report(&zero).expect("zero-token schema remains explicit");
         assert_eq!(zero["timing"]["r33_tpot_eligible"], json!(false));
         assert!(zero["timing"].get("tpot_ns").is_none());
 
@@ -457,7 +578,7 @@ mod tests {
                 terminal_offset: 40,
             },
         );
-        validate_engineering_report_v2(&one).expect("one-token schema remains explicit");
+        validate_engineering_report(&one).expect("one-token schema remains explicit");
         assert_eq!(one["timing"]["r33_tpot_eligible"], json!(false));
         assert!(one["timing"].get("tpot_ns").is_none());
     }
@@ -484,14 +605,51 @@ mod tests {
             let mut mutated = report.clone();
             mutated[field] = hostile;
             assert!(
-                validate_engineering_report_v2(&mutated).is_err(),
+                validate_engineering_report(&mutated).is_err(),
                 "hostile {field} claim was accepted"
             );
         }
 
         let mut invented_tpot = report.clone();
         invented_tpot["timing"]["r33_tpot_eligible"] = json!(true);
-        assert!(validate_engineering_report_v2(&invented_tpot).is_err());
+        assert!(validate_engineering_report(&invented_tpot).is_err());
+    }
+
+    #[test]
+    fn derived_identity_report_is_v3_and_rejects_provenance_substitution() {
+        let mut report = timing_report_with_mode(
+            &[30],
+            EngineeringTimingFacts {
+                duration: 100,
+                first_token_offset: 40,
+                terminal_offset: 40,
+            },
+            EngineeringIdentityReportModeV1::DerivedEngineeringV1,
+        );
+        validate_engineering_report(&report).expect("derived engineering report is explicit");
+        assert_eq!(report.as_object().map(serde_json::Map::len), Some(30));
+        assert_eq!(report["schema"], json!(DERIVED_ENGINEERING_SCHEMA));
+        assert_eq!(
+            report["identity_input_mode"],
+            json!(DERIVED_ENGINEERING_IDENTITY_MODE)
+        );
+
+        for hostile in [
+            "authenticated",
+            "externally-qualified",
+            "protected-publication",
+            "current-publication",
+        ] {
+            report["identity_input_mode"] = json!(hostile);
+            assert!(validate_engineering_report(&report).is_err());
+        }
+        report["identity_input_mode"] = json!(DERIVED_ENGINEERING_IDENTITY_MODE);
+        report["schema"] = json!(EXTERNAL_FILE_SCHEMA);
+        assert!(validate_engineering_report(&report).is_err());
+
+        report["schema"] = json!(DERIVED_ENGINEERING_SCHEMA);
+        report["unexpected"] = json!(false);
+        assert!(validate_engineering_report(&report).is_err());
     }
 
     #[test]
@@ -503,7 +661,7 @@ mod tests {
         let arguments = [
             required("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT"),
             required("FERRIC_M1_ENGINEERING_AGGREGATE_OBSERVATION_DIRECTORY"),
-            required("FERRIC_M1_QUALIFICATION_CLOSURE"),
+            OsString::from(DERIVED_ENGINEERING_IDENTITY_INPUT),
             required("FERRIC_M1_GPU_UNIQUE_ID"),
             OsString::from("1"),
             required("FERRIC_M1_ENGINEERING_SMOKE_PROMPT"),
