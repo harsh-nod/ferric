@@ -178,6 +178,7 @@ fn wave_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
     let body = compact_tokens(&kernel().block);
     for marker in [
         "WaveLane::<Wave64>::current()",
+        "letlane_index=lane.into_lane_id()asusize",
         "Gfx942Collectives::current()",
         "iflane_index==0",
         "letmutcolumn=0_usize",
@@ -213,6 +214,14 @@ fn wave_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
     assert_eq!(body.matches("whilecomponent<64").count(), 1);
     assert_eq!(body.matches("component+=1").count(), 1);
     assert_eq!(body.matches("write_row_striped_2d(").count(), 2);
+    let lane_current = "letlane=WaveLane::<Wave64>::current()";
+    let lane_consumed = "letlane_index=lane.into_lane_id()asusize";
+    let collectives_current = "letcollectives=Gfx942Collectives::current()";
+    assert_eq!(body.matches(lane_current).count(), 1);
+    assert_eq!(body.matches(lane_consumed).count(), 1);
+    assert_eq!(body.matches("lane.get()").count(), 0);
+    assert!(body.find(lane_current).unwrap() < body.find(lane_consumed).unwrap());
+    assert!(body.find(lane_consumed).unwrap() < body.find(collectives_current).unwrap());
 }
 
 #[test]

@@ -415,7 +415,7 @@ pub fn qwen3_rmsnorm_v1(
 
     let row = thread::block_idx_x() as usize;
     let lane = WaveLane::<Wave64>::current();
-    let lane_index = lane.get() as usize;
+    let lane_index = lane.into_lane_id() as usize;
     let collectives = Gfx942Collectives::current();
     let row_base = row * width as usize;
     let mut local_sum = 0.0_f32;
