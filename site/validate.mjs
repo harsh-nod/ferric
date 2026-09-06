@@ -13,9 +13,9 @@ const allowedStates = new Set([
   "open",
 ]);
 const expectedCurrent = Object.freeze({
-  siteRefreshBase: "87ebd925f3d331bf2e5cff17c64a69d9ddc4ebcc",
-  integrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
-  integrationTree: "a7266c25cb10cc2976babc13ba119c2fb70a227f",
+  siteRefreshBase: "09678a2d013287da4c36ece506166e1baa94b96f",
+  integrationCommit: "30af5c2012850afa525539a7e50f8a3b92497f50",
+  integrationTree: "841865566065230e28856ecf835475180a36d87e",
   ferricCheckpointCommit: "9431cb4638401718b8085bcf258a390650c719ef",
   ferricCheckpointTree: "09c48165b19883aebbebd2e77b827794cd039164",
   ferricFeatureBranch: "origin/codex/fe2o3-current-main-repin-v1",
@@ -55,13 +55,13 @@ const expectedCurrent = Object.freeze({
   engineeringAggregateLoaderStatus: "independent-go-integrated",
   engineeringAggregateHsacoStatus: "not-produced",
   engineeringAggregateAttemptOuterExitCode: 1,
-  engineeringAggregateAttemptBoundary: "v9-prefill-loop-tail-key-token-increment-before-hsaco",
+  engineeringAggregateAttemptBoundary: "v20-prefill-cache-length-semantic-value-mismatch-before-hsaco",
   engineeringAggregateAttemptConnectCount: 0,
   engineeringAggregateAttemptOutputCount: 0,
   engineeringAggregateAttemptStatus:
-    "exact-5f-aggregate-v9-passed-address-value-proofs-stopped-at-prefill-key-token-increment-no-hsaco",
-  followupProofFixStatus: "authenticated-bounds-audited-v10-explicit-2048-8192-increment-guards-active",
-  fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-1e7695d",
+    "exact-5f-aggregate-v20-stopped-at-prefill-distinct-cache-length-semantic-values-no-hsaco",
+  followupProofFixStatus: "focused-v20-pass-v21-single-cache-length-ssa-local-fix-active",
+  fe2o3CurrentnessStatus: "public-main-5f46dd2-consumed-by-local-integration-30af5c2",
   fe2o3IsFiniteRemediationStatus: "independent-source-go",
   targetEngineeringSmokeCandidate: "951d48ac119089a62546cb6f96f324feaad013af",
   targetEngineeringSmokeTree: "ffad404f1bce2ee8c55d94b226d9d54dcd8fc62c",
@@ -101,12 +101,12 @@ const expectedCurrent = Object.freeze({
   supervisedR33WireCommit: "66b8547ab7ce1572d29557d2e9c16d58b2b6f41f",
   supervisedR33WireTree: "8e7348bcd1b99cffa488da44a77813e44bbb3bc7",
   supervisedR33WireStatus: "public-feature-branch-authority-free-no-serving",
-  localIntegrationCandidate: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
+  localIntegrationCandidate: "30af5c2012850afa525539a7e50f8a3b92497f50",
   localIntegrationCandidateStatus:
     "local-unpublished-non-final-latest-fe2-integration-no-release-qualification",
   localBoundedQueueWaitCandidate: "9f3618bba902b6e5468ea017e1fdef826f89f130",
   localBoundedQueueWaitCandidateStatus:
-    "local-focused-qualified-integrated-as-e3cfc62-in-1e7695d-stack",
+    "local-focused-qualified-integrated-as-e3cfc62-in-30af5c2-stack",
   catalogBindingIntegrationCommit: "5b23a36c04057850fa3382db05e2eff905f41213",
   descriptorOrderIntegrationCommit: "e0e79fe9980a5a302a8b2bd18eef0f9e13161a3c",
   boundedQueueWaitIntegrationCommit: "e3cfc62e14d0ac35a6b48e6e754e5165f8cb0b68",
@@ -114,9 +114,9 @@ const expectedCurrent = Object.freeze({
   connectedPathIntegrationCommit: "7f4a251707d2b0d8811184533b1d8f805a745726",
   protectedVerifierListenerIntegrationCommit: "64ab4fc98ecc64e78b4591197a47674f27bc992e",
   boundedProductionQueueWaitIntegrationCommit: "1e7695d9517a9711389a907c1ebbc2a6bc76249a",
-  combinedEngineTestsPassed: 569,
+  combinedEngineTestsPassed: 576,
   combinedEngineTestsFailed: 0,
-  combinedEngineEnvGatedIgnored: 2,
+  combinedEngineEnvGatedIgnored: 5,
   boundedWaitHarnessTestsPassed: 11,
   boundedWaitPacketTestsPassed: 2,
   boundedWaitQualificationTestsPassed: 75,
@@ -137,10 +137,28 @@ const expectedCurrent = Object.freeze({
   connectedPathAdapterClippyStatus: "pass",
   connectedPathServiceClippyStatus: "pass",
   protectedListenerSourceGateTestsPassed: 28,
-  combinedSourceInventoryUnadmitted: 10,
+  combinedSourceInventoryDiscovered: 6951,
+  combinedSourceInventoryAdmitted: 6854,
+  combinedSourceInventoryUnadmitted: 97,
   combinedSourceInventoryStale: 0,
-  combinedFormalRegenerationStatus: "pending",
-  authenticatedNewWindowJoinStatus: "active-local-work-in-progress",
+  combinedFormalRegenerationStatus:
+    "canonical-current-inventory-regenerated-source-gate-28-pass-runtime-instant-kfd-explicitly-unverified",
+  kernelFocusedV19LogSha256:
+    "ec13dc73ca35d705268567e72a3caa1c1c0deedac8947297b150424eab139ad3",
+  kernelExactV19FailureLogSha256:
+    "751a189b8db108cd3c8c52ce0e39a7fde28ccd20415890832dfbc6024cb99365",
+  kernelExactV19StatusSha256:
+    "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+  kernelFocusedV20LogSha256:
+    "389630423eb58c7de402fbc772c0643a604e7734162f1b7909e220b11e13144d",
+  kernelFocusedV20StatusSha256:
+    "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  kernelExactV20FailureLogSha256:
+    "3ebf0b9e5d73758c114b14a48c66fbf0abf7b6febb9344ee5fd87047768b9c18",
+  kernelExactV20ExitStatus: 1,
+  authenticatedNewWindowJoinCandidate: "3e4f5d60db5b69a6335e08b1e44066b9f2a86cd2",
+  authenticatedNewWindowJoinStatus:
+    "dco-candidate-integrated-at-30af5c2-full-post-export-gates-green-independent-reviews-go",
   protectedDeploymentStatus:
     "open-one-shot-listener-integrated-no-supervisor-concrete-checker-signer-or-production-r33-backend",
   localPolicyCandidate: "829eb98ba11c645958ef762a01da4c81c4bf795b",
@@ -171,7 +189,7 @@ const expectedCurrent = Object.freeze({
   priorAggregateStorageObserved: 3188438,
   priorAggregateStorageLimit: 2097152,
   aggregateRerunStatus:
-    "exact-5f-v9-stopped-at-prefill-key-token-increment-v10-guard-gates-active-no-hsaco",
+    "focused-v20-pass-exact-v20-stopped-at-distinct-cache-length-values-v21-active-no-hsaco",
   aggregateSourceCommit: "5514afe176a090aa3f1da9e5354799bb4ca5a8b3",
   aggregateProducerCommit: "e57c42523050922ad76538150df691cc5ab975a7",
   aggregateKernelCount: 12,
@@ -376,6 +394,10 @@ assertCommit(
 );
 assertCommit(project.current.localIntegrationCandidate, "current.localIntegrationCandidate");
 assertCommit(
+  project.current.authenticatedNewWindowJoinCandidate,
+  "current.authenticatedNewWindowJoinCandidate",
+);
+assertCommit(
   project.current.localBoundedQueueWaitCandidate,
   "current.localBoundedQueueWaitCandidate",
 );
@@ -424,8 +446,15 @@ assertCommit(
 assertCommit(project.current.vectorGemmReductionCommit, "current.vectorGemmReductionCommit");
 assert(
   /^[0-9a-f]{64}$/.test(project.current.localPolicyClosureSha256) &&
-    /^[0-9a-f]{64}$/.test(project.current.localPolicyReceiptSha256),
-  "local policy qualification identities must be lowercase SHA-256 digests",
+    /^[0-9a-f]{64}$/.test(project.current.localPolicyReceiptSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelFocusedV19LogSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelExactV19FailureLogSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelExactV19StatusSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelFocusedV20LogSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelFocusedV20StatusSha256) &&
+    /^[0-9a-f]{64}$/.test(project.current.kernelExactV20FailureLogSha256) &&
+    project.current.kernelExactV20ExitStatus === 1,
+  "local policy and focused-kernel identities must be lowercase SHA-256 digests",
 );
 assert(
   /^[0-9a-f]{64}$/.test(project.current.canonicalPrepackBundleIdentity) &&
@@ -553,15 +582,27 @@ assert(
 );
 assert(
   envelope.get("Local validation")?.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    envelope.get("Local validation")?.includes("569 engine library tests passed") &&
+    envelope.get("Local validation")?.includes("576 library tests passed with 5 intentional ignores") &&
+    envelope.get("Local validation")?.includes("158 doctests") &&
+    envelope.get("Local validation")?.includes("all-target strict Clippy PASS") &&
+    envelope.get("Local validation")?.includes("25 targeted tests") &&
+    envelope.get("Local validation")?.includes("13 capture tests") &&
+    envelope.get("Local validation")?.includes("28 hostile tests") &&
+    envelope.get("Local validation")?.includes("6 source-policy tests") &&
+    envelope.get("Local validation")?.includes("12 rollover tests") &&
+    envelope.get("Local validation")?.includes("token, history, and API source reviews returned GO") &&
     envelope.get("Local validation")?.includes("11 harness tests") &&
     envelope.get("Local validation")?.includes("75 qualification tests with 2 intentional ignores") &&
     envelope.get("Local validation")?.includes("148 doctests") &&
     envelope.get("Local validation")?.includes("46 service tests with 3 intentional ignores") &&
     envelope.get("Local validation")?.includes("88 adapter tests") &&
     envelope.get("Local validation")?.includes("28 source-gate tests") &&
-    envelope.get("Local validation")?.includes("10 unadmitted and 0 stale") &&
-    envelope.get("Local validation")?.includes("pending formal regeneration") &&
+    envelope.get("Local validation")?.includes("failed closed on unsupported #[allow(clippy::too_many_lines)]") &&
+    envelope.get("Local validation")?.includes("narrow closed-allowlist synchronization") &&
+    envelope.get("Local validation")?.includes("source gate passes 28/28") &&
+    envelope.get("Local validation")?.includes("6,951 discovered versus 6,854 admitted") &&
+    envelope.get("Local validation")?.includes("97 unadmitted, and 0 stale") &&
+    envelope.get("Local validation")?.includes("Runtime, Instant, and KFD bodies remain explicitly unverified") &&
     envelope.get("Local validation")?.includes("not a release qualification") &&
     envelope.get("Local validation")?.includes("closed M1 gate"),
   "envelope must bind exact combined validation evidence without release authority",
@@ -591,11 +632,21 @@ assert(
   "envelope must expose the exact engineering loader, independent GO, and nonauthority",
 );
 assert(
-    envelope.get("Engineering aggregate output")?.includes("public fe2o3 5f46dd2") &&
-    envelope.get("Engineering aggregate output")?.includes("v9") &&
-    envelope.get("Engineering aggregate output")?.includes("passed all new address and value proofs") &&
-    envelope.get("Engineering aggregate output")?.includes("prefill loop-tail key_token increment") &&
-    envelope.get("Engineering aggregate output")?.includes("v10 focused gates are active") &&
+  envelope.get("Engineering aggregate output")?.includes("public fe2o3 5f46dd2") &&
+    envelope.get("Engineering aggregate output")?.includes("Focused kernel v20 is fully green") &&
+    envelope.get("Engineering aggregate output")?.includes("prefill profiles 4/4") &&
+    envelope.get("Engineering aggregate output")?.includes("paged-decode profiles 4/4") &&
+    envelope.get("Engineering aggregate output")?.includes(expectedCurrent.kernelFocusedV20LogSha256) &&
+    envelope.get("Engineering aggregate output")?.includes(expectedCurrent.kernelFocusedV20StatusSha256) &&
+    envelope.get("Engineering aggregate output")?.includes("All four frozen SHAs remain intact") &&
+    envelope.get("Engineering aggregate output")?.includes("Exact v20 produced no HSACO") &&
+    envelope.get("Engineering aggregate output")?.includes("two k.len() evaluations lowered to distinct semantic values") &&
+    envelope.get("Engineering aggregate output")?.includes(expectedCurrent.kernelExactV20FailureLogSha256) &&
+    envelope.get("Engineering aggregate output")?.includes("exit status 1") &&
+    envelope.get("Engineering aggregate output")?.includes("active v21 change") &&
+    envelope.get("Engineering aggregate output")?.includes("immutable cache_len = k.len() once") &&
+    envelope.get("Engineering aggregate output")?.includes("external proof-shape edits were preserved") &&
+    envelope.get("Engineering aggregate output")?.includes("neither fact implies correctness") &&
     envelope.get("Engineering aggregate output")?.includes("kernel work remains in progress") &&
     envelope.get("Engineering aggregate output")?.includes("No aggregate Worker V3 HSACO") &&
     envelope.get("Engineering aggregate output")?.includes("Qwen serving") &&
@@ -647,6 +698,9 @@ assert(
     envelope.get("Authenticated target rollover")?.includes(
       expectedCurrent.localIntegrationCandidate,
     ) &&
+    envelope.get("Authenticated target rollover")?.includes(
+      expectedCurrent.authenticatedNewWindowJoinCandidate,
+    ) &&
     envelope
       .get("Authenticated target rollover")
       ?.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit.slice(0, 7)) &&
@@ -654,8 +708,21 @@ assert(
       .get("Authenticated target rollover")
       ?.includes(expectedCurrent.boundedProductionQueueWaitIntegrationCommit.slice(0, 7)) &&
     envelope.get("Authenticated target rollover")?.includes("exact-slot reincarnation") &&
-    envelope.get("Authenticated target rollover")?.includes("authenticated new-window join is active") &&
-    envelope.get("Authenticated target rollover")?.includes("unpublished, non-final") &&
+    envelope.get("Authenticated target rollover")?.includes("integrated locally") &&
+    envelope.get("Authenticated target rollover")?.includes("exact all-terminal speculative execution") &&
+    envelope.get("Authenticated target rollover")?.includes("private move-only whole-page-set token") &&
+    envelope.get("Authenticated target rollover")?.includes("archives predecessor physical history inertly") &&
+    envelope.get("Authenticated target rollover")?.includes("resetting active history") &&
+    envelope.get("Authenticated target rollover")?.includes("Published->Observed->Released") &&
+    envelope.get("Authenticated target rollover")?.includes("576 passed with 5 ignored") &&
+    envelope.get("Authenticated target rollover")?.includes("158 doctests") &&
+    envelope.get("Authenticated target rollover")?.includes("targeted 25/25") &&
+    envelope.get("Authenticated target rollover")?.includes("capture 13/13") &&
+    envelope.get("Authenticated target rollover")?.includes("hostile 28/28") &&
+    envelope.get("Authenticated target rollover")?.includes("source policy 6/6") &&
+    envelope.get("Authenticated target rollover")?.includes("rollover 12/12") &&
+    envelope.get("Authenticated target rollover")?.includes("token, history, and API source reviews returned GO") &&
+    envelope.get("Authenticated target rollover")?.includes("local integration is unpublished, non-final") &&
     envelope.get("Authenticated target rollover")?.includes("release-qualified") &&
     envelope.get("Authenticated target rollover")?.includes("evidence of Qwen"),
   "envelope must distinguish public rollover from the unpublished local engine candidate",
@@ -934,12 +1001,12 @@ assert(
     qwenReadiness.detail.includes("Real target and draft prepack inputs are verified") &&
     qwenReadiness.detail.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
     qwenReadiness.detail.includes("public fe2o3 5f46dd2") &&
-    qwenReadiness.detail.includes("v9 passed all new address and value proofs") &&
-    qwenReadiness.detail.includes("prefill loop-tail key_token increment") &&
-    qwenReadiness.detail.includes("v10 focused guard gates are active") &&
+    qwenReadiness.detail.includes("Focused kernel v20 is fully green") &&
+    qwenReadiness.detail.includes("exact v20 produced no HSACO") &&
+    qwenReadiness.detail.includes("v21's single-SSA-local fix is active") &&
     qwenReadiness.detail.includes("production R33 backend") &&
-    qwenReadiness.detail.includes("authenticated new-window join") &&
-    qwenReadiness.detail.includes("combined formal regeneration") &&
+    qwenReadiness.detail.includes("authenticated new-window join integrated") &&
+    qwenReadiness.detail.includes("narrow pure theorem work") &&
     qwenReadiness.detail.includes("release qualification remain in progress") &&
     qwenReadiness.detail.includes("No aggregate HSACO") &&
     qwenReadiness.detail.includes("Qwen token") &&
@@ -1135,10 +1202,12 @@ assert(
     integrationTeam.current.includes("local, unpublished/non-final") &&
     integrationTeam.current.includes("46 service tests with 3 ignores") &&
     integrationTeam.current.includes("88 adapter tests") &&
-    integrationTeam.current.includes("569 library tests") &&
-    integrationTeam.current.includes("75 qualification with 2 ignores") &&
+    integrationTeam.current.includes("576 library tests with 5 ignores") &&
+    integrationTeam.current.includes("158 doctests") &&
+    integrationTeam.current.includes("targeted 25/25") &&
+    integrationTeam.current.includes("hostile 28/28") &&
     integrationTeam.current.includes("No release qualification") &&
-    integrationTeam.validation.includes("1e7695d local, unpublished, non-final") &&
+    integrationTeam.validation.includes("30af5c2 local, unpublished, non-final") &&
     integrationTeam.blockedBy.includes("No active team is idle or blocked") &&
     integrationTeam.blockedBy.includes("production R33 backend"),
   "integration team must expose the exact latest-fe2 and bounded-wait candidates",
@@ -1151,9 +1220,19 @@ assert(
     kernelTeam.completed.includes(expectedCurrent.swigluCheckedBlockCommit.slice(0, 7)) &&
     kernelTeam.completed.includes(expectedCurrent.fe2o3CheckedComponentProjectionCommit.slice(0, 7)) &&
     kernelTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    kernelTeam.current.includes("v9 passed all new address and value proofs") &&
-    kernelTeam.current.includes("prefill loop-tail key_token increment") &&
-    kernelTeam.current.includes("v10 focused gates are active") &&
+    kernelTeam.current.includes("focused v20 is fully green") &&
+    kernelTeam.current.includes("prefill 4/4 profiles") &&
+    kernelTeam.current.includes("paged-decode 4/4 profiles") &&
+    kernelTeam.current.includes(expectedCurrent.kernelFocusedV20LogSha256) &&
+    kernelTeam.current.includes(expectedCurrent.kernelFocusedV20StatusSha256) &&
+    kernelTeam.current.includes("All four frozen SHAs remain intact") &&
+    kernelTeam.current.includes("Exact v20 produced no HSACO") &&
+    kernelTeam.current.includes("distinct semantic values") &&
+    kernelTeam.current.includes(expectedCurrent.kernelExactV20FailureLogSha256) &&
+    kernelTeam.current.includes("exit status 1") &&
+    kernelTeam.current.includes("V21 binds immutable cache_len once") &&
+    kernelTeam.current.includes("external proof-shape edits were preserved") &&
+    kernelTeam.current.includes("without implying correctness") &&
     kernelTeam.current.includes("Kernel implementation remains in progress") &&
     kernelTeam.current.includes("no aggregate HSACO") &&
     kernelTeam.blockedBy.includes("kernel team is making progress") &&
@@ -1171,14 +1250,21 @@ assert(
     ) &&
     engineTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
     engineTeam.current.includes("Local unpublished/non-final") &&
-    engineTeam.current.includes("authenticated new-window join is active") &&
+    engineTeam.completed.includes(expectedCurrent.authenticatedNewWindowJoinCandidate.slice(0, 7)) &&
+    engineTeam.current.includes("Local unpublished/non-final") &&
+    engineTeam.current.includes("all-terminal speculative->paired-prefill->fresh speculative window") &&
+    engineTeam.current.includes("private move-only whole-page-set token") &&
+    engineTeam.current.includes("inert predecessor physical history and reset active history") &&
+    engineTeam.current.includes("Published->Observed->Released") &&
     engineTeam.current.includes("Protected deployment remains in progress") &&
     engineTeam.current.includes("supervisor, concrete checker, signer") &&
     engineTeam.current.includes("production R33 backend") &&
     engineTeam.blockedBy.includes("engine team is making progress") &&
     engineTeam.blockedBy.includes("current aggregate HSACO") &&
-    engineTeam.next.includes("Finish the authenticated new-window join") &&
+    engineTeam.next.includes("Implement and qualify the production R33 backend") &&
     engineTeam.validation.includes("no release qualification") &&
+    engineTeam.validation.includes("576 passed / 5 ignored") &&
+    engineTeam.validation.includes("token/history/API source-review GOs") &&
     engineTeam.validation.includes("no release qualification, HSACO, hardware, serving, or comparison result"),
   "engine team must expose implemented runtime work and missing execution inputs",
 );
@@ -1187,13 +1273,16 @@ assert(
     verificationTeam.completed.includes("Draft06B=>1 same-source mutation") &&
     verificationTeam.completed.includes(expectedCurrent.daemonLifecycleProofCommit.slice(0, 7)) &&
     verificationTeam.current.includes(expectedCurrent.localIntegrationCandidate.slice(0, 7)) &&
-    verificationTeam.current.includes("expected 10 unadmitted and 0 stale") &&
-    verificationTeam.current.includes("Combined formal regeneration is pending") &&
-    verificationTeam.current.includes("listener source gate passes 28/28") &&
-    verificationTeam.current.includes("listener and bounded-wait scoped gates pass strict Clippy") &&
+    verificationTeam.current.includes("initially failed closed") &&
+    verificationTeam.current.includes("#[allow(clippy::too_many_lines)]") &&
+    verificationTeam.current.includes("source gate passes 28/28") &&
+    verificationTeam.current.includes("6,951 discovered versus 6,854 admitted") &&
+    verificationTeam.current.includes("97 unadmitted and 0 stale") &&
+    verificationTeam.current.includes("Runtime, Instant, and KFD bodies remain explicitly unverified") &&
+    verificationTeam.current.includes("token, history, and API source reviews returned GO") &&
     verificationTeam.current.includes("No release receipt") &&
-    verificationTeam.validation.includes("1e7695d source inventory observed") &&
-    verificationTeam.validation.includes("10 unadmitted / 0 stale") &&
+    verificationTeam.validation.includes("30af5c2 source gate 28/28") &&
+    verificationTeam.validation.includes("6,951 discovered / 6,854 admitted / 97 unadmitted / 0 stale") &&
     verificationTeam.validation.includes("release qualification open"),
   "verification team must expose integrated proof work and the open final receipt",
 );
@@ -1382,17 +1471,28 @@ for (const claim of [
   "Public fe2o3 main 5f46dd23cfa3cf58118a93ee2bf5e1252903366c",
   "Compiler, runtime, KFD, and generic transport work stays in fe2o3",
   "Ferric owns all Qwen kernels, inference, and Ferric-specific policy",
-  "integration 1e7695d pins every fe2o3 dependency to exact public 5f46dd2",
+  "integration 30af5c2 pins every fe2o3 dependency to exact public 5f46dd2",
   "protected one-shot verifier listener at 64ab4fc",
   "production-wide bounded queue waits",
   "Listener remote checks pass 46 service tests with 3 intentional ignores, 88 adapter tests, 28 source-gate tests, and strict Clippy",
-  "Engine checks pass 569 library tests, 11 harness tests, 2 packet tests, 75 qualification tests",
-  "expected 10 unadmitted and 0 stale entries before combined formal regeneration",
+  "Engine checks pass a warning-free library check, 576 library tests with 5 intentional ignores",
+  "targeted 25/25, capture 13/13, hostile 28/28, source policy 6/6",
+  "Combined formal inventory regeneration first failed closed on unsupported #[allow(clippy::too_many_lines)]",
+  "source gate passes 28/28 and canonical regeneration reports exactly 6,951 discovered, 6,854 admitted, 97 unadmitted, and 0 stale",
+  "runtime, Instant, and KFD bodies remain explicitly unverified",
   "focused integration evidence, not release qualification",
-  "v9 passed all new address and value proofs, then stopped at the prefill loop-tail key_token increment",
-  "v10 focused gates are active with explicit &lt; 2048 and &lt; 8192 increment guards",
+  "Focused kernel v20 is fully green",
+  "prefill 4/4 profiles, 8/8 reference, 19/19 source contracts",
+  "paged-decode 4/4 profiles, 9/9 reference, 12/12 source contracts",
+  "All four frozen SHAs remain intact. Exact v20 produced no HSACO",
+  "two k.len() evaluations lowered to distinct semantic values",
+  "active v21 change binds immutable cache_len = k.len() once",
+  "Unexpected external proof-shape edits were preserved and the current stable snapshot was frozen",
   "no aggregate HSACO was produced",
-  "authenticated new-window join is active",
+  "private move-only whole-page-set token",
+  "inert predecessor physical history and reset active history",
+  "opaque frozen-timeout Published-&gt;Observed-&gt;Released surface",
+  "independent token/history/API source reviews GO",
   "no supervisor, concrete checker, signer",
   "production R33 backend exists",
   "integration is unpublished, non-final, and not release-qualified",
@@ -1516,14 +1616,33 @@ assert(
     dataSource.includes("162 modules / 7,526 bodies") &&
     dataSource.includes("runtime variable-cardinality wiring") &&
     dataSource.includes("transition atomicity") &&
-    dataSource.includes("prefill loop-tail key_token increment") &&
-    dataSource.includes("v10 focused gates are active") &&
+    dataSource.includes("Focused kernel v20 is fully green") &&
+    dataSource.includes("exact v20 produced no HSACO") &&
+    dataSource.includes(expectedCurrent.kernelFocusedV19LogSha256) &&
+    dataSource.includes(expectedCurrent.kernelExactV19FailureLogSha256) &&
+    dataSource.includes(expectedCurrent.kernelExactV19StatusSha256) &&
+    dataSource.includes(expectedCurrent.kernelFocusedV20LogSha256) &&
+    dataSource.includes(expectedCurrent.kernelFocusedV20StatusSha256) &&
+    dataSource.includes(expectedCurrent.kernelExactV20FailureLogSha256) &&
+    dataSource.includes("external proof-shape edits were preserved") &&
+    dataSource.includes("without implying correctness") &&
     dataSource.includes("Kernel implementation remains in progress") &&
     dataSource.includes(expectedCurrent.protectedVerifierListenerIntegrationCommit) &&
     dataSource.includes(expectedCurrent.boundedProductionQueueWaitIntegrationCommit) &&
-    dataSource.includes("10 unadmitted and 0 stale") &&
-    dataSource.includes("Combined formal regeneration is pending") &&
-    dataSource.includes("authenticated new-window join is active") &&
+    dataSource.includes("failed closed on unsupported #[allow(clippy::too_many_lines)]") &&
+    dataSource.includes("6,951 discovered") &&
+    dataSource.includes("6,854 admitted") &&
+    dataSource.includes("97 unadmitted") &&
+    dataSource.includes("0 stale") &&
+    dataSource.includes("Runtime, Instant, and KFD bodies remain explicitly unverified") &&
+    dataSource.includes("private move-only whole-page-set token") &&
+    dataSource.includes("predecessor physical history inertly") &&
+    dataSource.includes("reset active history") &&
+    dataSource.includes("Published->Observed->Released") &&
+    dataSource.includes("576 passed") &&
+    dataSource.includes("5 ignored") &&
+    dataSource.includes("token, history, and API source reviews returned GO") &&
+    dataSource.includes(expectedCurrent.authenticatedNewWindowJoinCandidate) &&
     dataSource.includes("no aggregate Worker V3 HSACO") &&
     dataSource.includes("integrates the independent, authority-free R33 daemon lifecycle proof at 3f5b498") &&
     dataSource.includes("authority-free supervised R33 wire foundation at 66b8547") &&
@@ -1531,7 +1650,7 @@ assert(
     dataSource.includes("out-of-order measure") &&
     dataSource.includes("abandoned response incorrectly advancing") &&
     dataSource.includes("service-conformance claim") &&
-    dataSource.includes("lower physical model/KV rebind remains unavailable") &&
+    dataSource.includes("reviewed lower physical model/KV rebind") &&
     dataSource.includes("No aggregate HSACO, Qwen token, serving or HTTP endpoint") &&
     dataSource.includes("received independent GO") &&
     dataSource.includes("production R33 backend") &&
