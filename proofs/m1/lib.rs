@@ -2,6 +2,7 @@
 
 //! M1-specific cross-crate and cross-module composition theorems.
 
+pub mod authenticated_prefill_bootstrap;
 pub mod batching;
 pub mod graph;
 pub mod isolation;
