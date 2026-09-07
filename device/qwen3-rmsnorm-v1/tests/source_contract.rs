@@ -122,7 +122,7 @@ fn attribute_pins_wave64_grid_and_serial_reduction_bound() {
 }
 
 #[test]
-fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective() {
+fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_serial_fold() {
     let body = compact_tokens(&kernel().block);
     for marker in [
         "behavior==QWEN3_RMSNORM_BEHAVIOR_PURE_V1",
@@ -147,11 +147,7 @@ fn kernel_authenticates_shape_lengths_epsilon_and_exact_grid_before_collective()
     let first_serial_load = body
         .find("memory::volatile_load(input_bf16,index)")
         .unwrap();
-    let collective = body
-        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
-        .unwrap();
     assert!(validation_trap < first_serial_load);
-    assert!(validation_trap < collective);
 }
 
 #[test]
@@ -174,20 +170,18 @@ fn epsilon_constant_preserves_exact_bits_without_a_kernel_runtime_conversion() {
 }
 
 #[test]
-fn wave_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
+fn serial_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
     let body = compact_tokens(&kernel().block);
     for marker in [
         "WaveLane::<Wave64>::current()",
         "letlane_index=lane.into_lane_id()asusize",
-        "Gfx942Collectives::current()",
-        "iflane_index==0",
+        "letmutsum=0.0_f32",
         "letmutcolumn=0_usize",
         "whilecolumn<widthasusize",
         "letsquare=normalized_input*normalized_input",
-        "letnext_sum=local_sum+square",
-        "local_sum=next_sum",
+        "letnext_sum=sum+square",
+        "sum=next_sum",
         "column+=1",
-        "letsum=collectives.subgroup_reduce_sum_f32::<64>(local_sum)",
         "letmean_square=sum/widthasf32",
         "letstabilized=mean_square+epsilon",
         "letdenominator=Math::current().sqrt_f32(stabilized)",
@@ -205,23 +199,19 @@ fn wave_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
     ] {
         assert!(body.contains(marker), "missing numerical marker {marker}");
     }
-    assert_eq!(
-        body.matches("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
-            .count(),
-        1
-    );
+    assert_eq!(body.matches("Gfx942Collectives").count(), 0);
+    assert_eq!(body.matches("subgroup_reduce_sum_f32").count(), 0);
+    assert_eq!(body.matches("iflane_index==0").count(), 0);
     assert_eq!(body.matches("whilecolumn<widthasusize").count(), 1);
     assert_eq!(body.matches("whilecomponent<64").count(), 1);
     assert_eq!(body.matches("component+=1").count(), 1);
     assert_eq!(body.matches("write_row_striped_2d(").count(), 2);
     let lane_current = "letlane=WaveLane::<Wave64>::current()";
     let lane_consumed = "letlane_index=lane.into_lane_id()asusize";
-    let collectives_current = "letcollectives=Gfx942Collectives::current()";
     assert_eq!(body.matches(lane_current).count(), 1);
     assert_eq!(body.matches(lane_consumed).count(), 1);
     assert_eq!(body.matches("lane.get()").count(), 0);
     assert!(body.find(lane_current).unwrap() < body.find(lane_consumed).unwrap());
-    assert!(body.find(lane_consumed).unwrap() < body.find(collectives_current).unwrap());
 }
 
 #[test]
@@ -251,18 +241,20 @@ fn numerical_path_traps_nonfinite_inputs_intermediates_and_bf16_outputs() {
 }
 
 #[test]
-fn lane_varying_accumulation_has_no_exit_before_the_collective() {
+fn replicated_serial_accumulation_has_uniform_control_and_no_collective() {
     let body = compact_tokens(&kernel().block);
-    let lane_zero = body.find("iflane_index==0").unwrap();
-    let collective = body
-        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
+    let serial_loop = body.find("letmutcolumn=0_usize").unwrap();
+    let finite_check = body
+        .find("if!sum.is_finite(){fe2o3_device::trap();}")
         .unwrap();
-    let accumulation = &body[lane_zero..collective];
+    let accumulation = &body[serial_loop..finite_check];
     assert_eq!(accumulation.matches("fe2o3_device::trap()").count(), 0);
     assert_eq!(accumulation.matches("return").count(), 0);
     assert_eq!(accumulation.matches("break").count(), 0);
     assert_eq!(accumulation.matches("continue").count(), 0);
-    assert!(body[collective..].contains("if!sum.is_finite(){fe2o3_device::trap();}"));
+    assert_eq!(body.matches("iflane_index==0").count(), 0);
+    assert_eq!(body.matches("Gfx942Collectives").count(), 0);
+    assert_eq!(body.matches("subgroup_reduce_sum_f32").count(), 0);
 }
 
 #[test]
@@ -282,13 +274,9 @@ fn every_shared_observation_uses_the_bounded_volatile_terminal() {
             "shared-memory or reduction custody regressed through {forbidden}"
         );
     }
-    let lane_zero = body.find("iflane_index==0").unwrap();
     let serial_loop = body.find("whilecolumn<widthasusize").unwrap();
-    let collective = body
-        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
-        .unwrap();
     let write_loop = body.find("whilecomponent<64").unwrap();
-    assert!(lane_zero < serial_loop && serial_loop < collective && collective < write_loop);
+    assert!(serial_loop < write_loop);
 }
 
 #[test]

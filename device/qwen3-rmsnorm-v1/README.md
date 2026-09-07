@@ -10,14 +10,13 @@ kernarg bytes; a 64-workitem workgroup; one workgroup per row; the exact
 numerical contracts from `crates/ferric-qwen-kernels`.
 
 The output capabilities are compiler-issued write-only row stripes. Each wave
-lane owns columns `lane + component * 64`. Lane zero forms the FP32 sum as the
-same ascending serial left fold as Ferric's authoritative direct kernel, then
-the convergent wave64 primitive distributes that sum before applying
-`sqrt(mean + epsilon)`.
+lane owns columns `lane + component * 64`. Every lane forms the same FP32 sum
+as the ascending serial left fold in Ferric's authoritative direct kernel,
+then applies `sqrt(mean + epsilon)` without a convergent wave operation.
 Pure mode requires empty residual and fused-output slices. Fused mode adds BF16
 input and residual in FP32, stores the fused value narrowed to BF16, and uses
 the full FP32 sum for normalization. The source also checks that the physical
-grid has exactly `rows` workgroups before any collective or memory access.
+grid has exactly `rows` workgroups before any memory access.
 Every observed BF16 value, FP32 intermediate, and round-to-nearest-even BF16
 result must remain finite or the kernel traps before publishing that result.
 

@@ -7,8 +7,8 @@
 //! artifact, launch, KFD dispatch, numerical-qualification, or M1 authority.
 
 use fe2o3_device::{
-    Bf16, Gfx942Collectives, Index1D, Math, RowStriped2D, Wave64, WaveLane, WriteOnlyDisjointSlice,
-    kernel, memory, thread,
+    Bf16, Index1D, Math, RowStriped2D, Wave64, WaveLane, WriteOnlyDisjointSlice, kernel, memory,
+    thread,
 };
 
 /// Exact exported kernel symbol retained from the direct-LLVM implementation.
@@ -416,29 +416,25 @@ pub fn qwen3_rmsnorm_v1(
     let row = thread::block_idx_x() as usize;
     let lane = WaveLane::<Wave64>::current();
     let lane_index = lane.into_lane_id() as usize;
-    let collectives = Gfx942Collectives::current();
     let row_base = row * width as usize;
-    let mut local_sum = 0.0_f32;
-    if lane_index == 0 {
-        let mut column = 0_usize;
-        while column < width as usize {
-            let index = row_base + column;
-            let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
-            let input_value = input.to_f32();
-            let normalized_input = if fused_mode {
-                let residual = Bf16::from_bits(memory::volatile_load(residual_bf16, index));
-                let fused = input_value + residual.to_f32();
-                fused
-            } else {
-                input_value
-            };
-            let square = normalized_input * normalized_input;
-            let next_sum = local_sum + square;
-            local_sum = next_sum;
-            column += 1;
-        }
+    let mut sum = 0.0_f32;
+    let mut column = 0_usize;
+    while column < width as usize {
+        let index = row_base + column;
+        let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
+        let input_value = input.to_f32();
+        let normalized_input = if fused_mode {
+            let residual = Bf16::from_bits(memory::volatile_load(residual_bf16, index));
+            let fused = input_value + residual.to_f32();
+            fused
+        } else {
+            input_value
+        };
+        let square = normalized_input * normalized_input;
+        let next_sum = sum + square;
+        sum = next_sum;
+        column += 1;
     }
-    let sum = collectives.subgroup_reduce_sum_f32::<64>(local_sum);
     if !sum.is_finite() {
         fe2o3_device::trap();
     }

@@ -23,6 +23,10 @@ fn serial_square_sum(input: &[u16]) -> f32 {
     })
 }
 
+fn replicated_serial_square_sums(input: &[u16]) -> [f32; 64] {
+    core::array::from_fn(|_| serial_square_sum(input))
+}
+
 fn legacy_xor_square_sum(input: &[u16]) -> f32 {
     let mut lanes = [0.0_f32; 64];
     for (lane, sum) in lanes.iter_mut().enumerate() {
@@ -61,6 +65,11 @@ fn reassociation_sensitive_row_pins_authoritative_serial_fp32_order() {
     ];
     assert_eq!(serial_square_sum(&input).to_bits(), 0x49be_1c17);
     assert_eq!(legacy_xor_square_sum(&input).to_bits(), 0x49be_1c1a);
+    assert!(
+        replicated_serial_square_sums(&input)
+            .iter()
+            .all(|sum| sum.to_bits() == 0x49be_1c17)
+    );
     assert_ne!(
         serial_square_sum(&input).to_bits(),
         legacy_xor_square_sum(&input).to_bits()
