@@ -87,7 +87,7 @@ const requiredClaims = [
   "MTP",
   "No hardware execution",
   "Progressing, no team blocker",
-  "Public fe2o3 main",
+  "public fe2o3",
   "All 33 M1 exit gates remain open",
   "No Qwen token",
   "TTFT",
