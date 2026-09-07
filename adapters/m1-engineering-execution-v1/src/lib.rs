@@ -9,6 +9,8 @@
 
 pub mod r33_lifecycle;
 pub mod r33_production_backend;
+#[allow(dead_code)] // Reviewed custody shell awaits its concrete daemon join.
+pub(crate) mod r33_resident_session;
 pub mod r33_service;
 pub mod r33_wire;
 

@@ -14,6 +14,10 @@ path = "src/bin/ferric-m1-engineering-target-smoke.rs"
 name = "ferric-m1-r33-adapter"
 path = "src/bin/ferric-m1-r33-adapter.rs"
 
+[[bin]]
+name = "ferric-r33-custody-vault-abort-probe"
+path = "src/bin/ferric-r33-custody-vault-abort-probe.rs"
+
 # This non-authoritative engineering tool is intentionally outside Ferric's
 # verified production workspace and runtime dependency closure.
 [workspace]
@@ -43,3 +47,8 @@ unsafe_code = "forbid"
 all = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
 too_many_lines = "allow"
+
+[profile.release]
+# Applies to every standalone R33 release target, including the supervised
+# daemon when its concrete entry point is wired to this reviewed shell.
+panic = "abort"

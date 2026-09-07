@@ -4,9 +4,13 @@ const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-s
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
 const R33_PRODUCTION_BACKEND_SOURCE: &str = include_str!("../src/r33_production_backend.rs");
+const R33_RESIDENT_SESSION_SOURCE: &str = include_str!("../src/r33_resident_session.rs");
+const R33_RESIDENT_VAULT_SOURCE: &str = include_str!("../src/r33_resident_session/vault.rs");
 const R33_SERVICE_SOURCE: &str = include_str!("../src/r33_service.rs");
 const R33_WIRE_SOURCE: &str = include_str!("../src/r33_wire.rs");
 const R33_ADAPTER_SOURCE: &str = include_str!("../src/bin/ferric-m1-r33-adapter.rs");
+const R33_VAULT_ABORT_PROBE_SOURCE: &str =
+    include_str!("../src/bin/ferric-r33-custody-vault-abort-probe.rs");
 const ROOT_MANIFEST: &str = include_str!("../../../Cargo.toml");
 const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.toml");
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
@@ -354,6 +358,57 @@ fn r33_service_is_supervised_bounded_and_authority_free() {
             );
         }
     }
+}
+
+#[test]
+fn r33_resident_custody_vault_is_private_held_and_abort_on_unwind() {
+    let production_session_source = R33_RESIDENT_SESSION_SOURCE
+        .split("#[cfg(test)]")
+        .next()
+        .unwrap();
+    assert!(SOURCE.contains("pub(crate) mod r33_resident_session;"));
+    for required in [
+        "HeldM1R33ServiceBundleV1",
+        "M1R33OutstandingWindowV1<'_",
+        "session: &'a mut M1R33ResidentSessionV1",
+        "vault::ExecutionCapability<'_",
+        "bundle.revalidate()",
+        "expected_start + sequence as u64",
+        "quarantine_input",
+        "cancel_bound",
+    ] {
+        assert!(
+            R33_RESIDENT_SESSION_SOURCE.contains(required),
+            "R33 resident shell is missing {required}"
+        );
+    }
+    for required in [
+        "ManuallyDrop<C>",
+        "ManuallyDrop<I>",
+        "struct ExecutionCapability",
+        "std::process::abort()",
+        "run_external_abort_probe_v1",
+        "core::mem::forget(custody)",
+        "core::mem::forget(input)",
+    ] {
+        assert!(
+            R33_RESIDENT_VAULT_SOURCE.contains(required),
+            "R33 private custody vault is missing {required}"
+        );
+    }
+    assert!(!production_session_source.contains("FnOnce"));
+    assert!(!production_session_source.contains("AtomicU64"));
+    assert!(R33_VAULT_ABORT_PROBE_SOURCE.contains("run_external_abort_probe_v1"));
+    assert!(MANIFEST.contains("name = \"ferric-r33-custody-vault-abort-probe\""));
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    assert_eq!(
+        manifest
+            .get("profile")
+            .and_then(|profile| profile.get("release"))
+            .and_then(|release| release.get("panic"))
+            .and_then(toml::Value::as_str),
+        Some("abort")
+    );
 }
 
 #[test]
