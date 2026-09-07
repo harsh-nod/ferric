@@ -4813,6 +4813,11 @@ pub(crate) struct M1AuthenticatedCompletedSpeculativeWindowHandoffV1 {
 mod tests {
     use super::*;
     use core::convert::Infallible;
+    use ferric_build::{
+        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+        AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
+        M1StepWorkspacePlanOutcome,
+    };
     use ferric_spec::{
         validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan,
@@ -5869,6 +5874,56 @@ mod tests {
                 panic!("structural test input rejected: {:?}", failure.error())
             }
         }
+    }
+
+    #[test]
+    fn authenticated_tail_round_inputs_select_post_detach_page_materialization() {
+        let request = RequestId::new(0, 1);
+        let epoch = CompletionEpoch::new(3);
+        let target = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let draft = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        let draft_inputs = validated_role_inputs(draft, &[request], epoch, &[71], &[129], None);
+        let target_inputs = validated_role_inputs(target, &[request], epoch, &[71], &[129], None);
+        let workspace = |selection, identity_byte| {
+            let requirements = m1_step_workspace_requirements(selection)
+                .expect("exact speculative workspace requirements exist");
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([identity_byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => {
+                    panic!("exact speculative workspace plan rejected")
+                }
+            }
+        };
+        let inputs = M1AuthenticatedSpeculativePhysicalRoundInputsV1::with_authenticated_tail_pages(
+            draft_inputs,
+            target_inputs,
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(draft, 31),
+                workspace(target, 32),
+            ),
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(draft, 31),
+                workspace(target, 32),
+            ),
+            vec![M1SpeculativeMemberControlV1::continuing(request)],
+        );
+        assert!(matches!(
+            inputs.kv,
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+        ));
     }
 
     #[allow(clippy::too_many_arguments)]

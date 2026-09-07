@@ -9016,15 +9016,14 @@ mod tests {
         use ferric_engine::{
             execute_m1_authenticated_s1_t128_paired_prefill_v1,
             prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
-            prepare_m1_authenticated_speculative_rollover_v1,
-            schedule_m1_authenticated_speculative_rollover_v1,
-            submit_m1_authenticated_speculative_rollover_v1,
-            M1AuthenticatedS1T128PrefillBootstrapInputV1,
-            M1FiniteSpeculativeQueueRolloverKvInputsV1, M1QueueWaitTimeoutV1,
+            reconcile_m1_authenticated_s1_t128_prefill_registry_v1,
+            M1AuthenticatedPrefillRegistryFirstRoundClosureV1,
+            M1AuthenticatedPrefillRegistryFirstRoundInputsV1,
+            M1AuthenticatedS1T128PrefillBootstrapInputV1, M1QueueWaitTimeoutV1,
             M1ScheduledDispatchV1, M1ServingCompletionDispositionV1,
             M1ServingPhysicalOperationResultV1, M1ServingPhysicalOperationsV1,
             M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1, M1ServingRegistryV1,
-            M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+            M1SpeculativeMemberControlV1,
         };
 
         struct FixtureOperations {
@@ -9344,12 +9343,13 @@ mod tests {
         )
         .expect("construct exact authenticated prefill bootstrap input");
         let prepared = prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(
-            Engine::<1>::new(512, 256, 8_192).expect("construct one-lane Engine"),
+            Engine::<8>::new(512, 256, 8_192).expect("construct capacity-eight Engine"),
             runner,
             memory,
             input,
         )
         .expect("prepare authenticated paired-prefill bootstrap");
+        assert_eq!(prepared.engine().live_count(), 1);
         assert_eq!(prepared.prompt_tokens(), &[1; 128]);
         assert_eq!(prepared.maximum_successor_output_tokens(), 32);
         let queue_wait_timeout =
@@ -9365,30 +9365,15 @@ mod tests {
                 panic!("authenticated paired-prefill execution failed closed: {failure:?}")
             }
         };
-        let (
-            mut engine,
-            released,
-            first_token,
-            direct_choices,
-            draft_rollover_page,
-            mut target_rollover_pages,
-            intent,
-            request,
-            prompt_tokens,
-            policy,
-            diagnostic_ring_bytes,
-            retained_queue_wait_timeout,
-        ) = executed.into_parts();
-        assert_eq!(prompt_tokens.as_ref(), &[1; 128]);
-        assert_eq!(policy.max_output_tokens(), 32);
-        assert_eq!(direct_choices.choices(), &[first_token]);
-        assert_eq!(diagnostic_ring_bytes, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1);
-        assert_eq!(retained_queue_wait_timeout, queue_wait_timeout);
-        let anchor = first_token;
-        let target_rollover_page = target_rollover_pages.remove(0);
-
+        assert_eq!(executed.engine().live_count(), 1);
+        let request = executed.request();
+        let anchor = executed.first_token();
         let rollover_batch = build_rollover_fixture_batch(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();
+        assert_eq!(
+            rollover_epoch,
+            ferric_spec::completion::CompletionEpoch::new(2)
+        );
         let target_plan = logical_runner
             .bind_step_plan(request, rollover_epoch, target_speculative)
             .expect("bind target speculative plan");
@@ -9403,98 +9388,56 @@ mod tests {
             128,
         );
         let draft_inputs = validated(draft_plan, vec![anchor], vec![128], 1, 128);
-        let rollover_inputs = M1FiniteSpeculativeQueueRolloverKvInputsV1::new(
+        let rollover_inputs = M1AuthenticatedPrefillRegistryFirstRoundInputsV1::new(
             draft_inputs,
             target_inputs,
-            vec![draft_rollover_page],
-            vec![target_rollover_page],
-        );
-        let seed = M1SpeculativeMemberSeedV1::new(request, anchor, 128, 128, policy);
-        let coordinator = M1SpeculativeGenerationLoopV1::new(target_speculative, &[seed])
-            .expect("construct rollover coordinator");
-        let scheduled = match schedule_m1_authenticated_speculative_rollover_v1(
-            &mut engine,
-            released,
-            &rollover_batch,
-            intent,
-            coordinator,
-            rollover_inputs,
             rollover_recipe_plans,
             rollover_preparation_plans,
-        ) {
+        );
+        let reconciled = reconcile_m1_authenticated_s1_t128_prefill_registry_v1(
+            M1ServingRegistryV1::<8>::new().expect("construct capacity-eight registry"),
+            executed,
+        )
+        .expect("reconcile real S1 prefill into a wide-capacity registry");
+        assert_eq!(reconciled.request(), request);
+        assert_eq!(reconciled.successor_epoch(), rollover_epoch);
+        let scheduled = match reconciled.schedule_first_speculative_round(rollover_inputs) {
             Ok(scheduled) => scheduled,
-            Err(
-                ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::PreDetach {
-                    error,
-                    retry,
-                },
-            ) => {
-                let disposition = retry.cancel_and_close(&mut engine);
-                assert!(engine.is_faulted());
-                panic!(
-                    "public rollover schedule rejected before detach ({error:?}): {disposition:?}"
-                )
-            }
-            Err(ferric_engine::M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
-                error,
-                disposition,
-            }) => {
-                assert!(engine.is_faulted());
-                panic!("public rollover schedule failed after detach ({error:?}): {disposition:?}")
-            }
+            Err(failure) => panic!("integrated rollover schedule failed closed: {failure:?}"),
         };
-        let prepared = match prepare_m1_authenticated_speculative_rollover_v1(
-            &mut engine,
-            scheduled,
-            &logical_runner,
-        ) {
+        assert_eq!(scheduled.request(), request);
+        assert_eq!(scheduled.epoch(), rollover_epoch);
+        let prepared = match scheduled.prepare(&logical_runner) {
             Ok(prepared) => prepared,
-            Err(failure) => {
-                assert!(engine.is_faulted());
-                panic!("public rollover preparation failed closed: {failure:?}")
-            }
+            Err(failure) => panic!("integrated rollover preparation failed closed: {failure:?}"),
         };
-        let published = match submit_m1_authenticated_speculative_rollover_v1(
-            &mut engine,
-            prepared,
-            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
-            ferric_engine::M1QueueWaitTimeoutV1::new(1_000)
-                .expect("qualification wait timeout is nonzero"),
-        ) {
+        let published = match prepared.publish() {
             Ok(published) => published,
-            Err(failure) => {
-                assert!(engine.is_faulted());
-                panic!("public rollover submission failed closed: {failure:?}")
+            Err(failure) => panic!("integrated rollover publication failed closed: {failure:?}"),
+        };
+        let completed = match published
+            .complete_round(vec![M1SpeculativeMemberControlV1::continuing(request)])
+        {
+            Ok(completed) => completed,
+            Err(failure) => panic!("integrated rollover completion failed closed: {failure:?}"),
+        };
+        assert_eq!(completed.request(), request);
+        assert_eq!(completed.first_token(), anchor);
+        assert_eq!(completed.outcome().completed_round(), 0);
+        assert_eq!(completed.outcome().completed_epoch(), rollover_epoch);
+        let closed = completed.close();
+        match &closed {
+            M1AuthenticatedPrefillRegistryFirstRoundClosureV1::QueueReleasedStateRetained(
+                witness,
+            ) => {
+                assert_eq!(witness.request(), request);
+                assert_eq!(witness.outcome().completed_epoch(), rollover_epoch);
+            }
+            M1AuthenticatedPrefillRegistryFirstRoundClosureV1::Quarantined(witness) => {
+                panic!("integrated rollover queue teardown quarantined: {witness:?}")
             }
         };
-        let success = match published.complete_round(
-            &mut engine,
-            vec![M1SpeculativeMemberControlV1::continuing(request)],
-        ) {
-            Ok(success) => success,
-            Err(failure) => {
-                assert!(engine.is_faulted());
-                panic!("public rollover completion failed closed: {failure:?}")
-            }
-        };
-        assert_eq!(success.outcome().completed_round(), 0);
-        assert!(!engine.is_faulted());
-        let (executor, outcome, choices) = success.into_parts();
-        let closed = match executor.destroy_queue_and_retain_state(&mut engine) {
-            Ok(closed) => closed,
-            Err(quarantined) => {
-                assert!(engine.is_faulted());
-                panic!("authenticated rollover queue teardown quarantined: {quarantined:?}")
-            }
-        };
-        assert!(engine.is_faulted());
-        drop((
-            closed,
-            outcome,
-            choices,
-            logical_runner,
-            target_rollover_pages,
-        ));
+        drop((closed, logical_runner));
     }
 
     #[test]

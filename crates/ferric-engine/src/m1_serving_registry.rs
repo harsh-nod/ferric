@@ -1675,9 +1675,6 @@ fn validate_authenticated_prefill_registry_reconciliation_v1<const C: usize>(
     M1AuthenticatedPrefillRegistryReconciliationV1,
     M1AuthenticatedPrefillRegistryReconciliationErrorV1,
 > {
-    if C != 1 {
-        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
-    }
     if !registry.is_fresh_for_authenticated_prefill_reconciliation() {
         return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RegistryNotFresh);
     }
@@ -3598,8 +3595,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn authenticated_prefill_install_matches_ordinary_completed_publication_frontier() {
+    fn assert_authenticated_prefill_frontier_matches_ordinary<const C: usize>() {
         let request = RequestId::new(0, 1);
         let prefill = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let successor = pair(
@@ -3608,7 +3604,7 @@ mod tests {
         );
         let epoch = CompletionEpoch::new(1);
 
-        let mut ordinary = M1ServingRegistryV1::<1>::new().unwrap();
+        let mut ordinary = M1ServingRegistryV1::<C>::new().unwrap();
         ordinary.admit(request, prefill).unwrap();
         let first = ordinary.plan_next().unwrap().unwrap();
         let first_reservation = ordinary.reserve_publication(first).unwrap();
@@ -3624,7 +3620,7 @@ mod tests {
             &[M1ServingCompletionDispositionV1::Continue(successor)],
         );
 
-        let mut reconciled = M1ServingRegistryV1::<1>::new().unwrap();
+        let mut reconciled = M1ServingRegistryV1::<C>::new().unwrap();
         reconciled
             .install_authenticated_prefill_reconciliation(
                 M1AuthenticatedPrefillRegistryReconciliationV1 {
@@ -3645,6 +3641,13 @@ mod tests {
         let reconciled_reservation = reconciled.reserve_publication(reconciled_next).unwrap();
         assert_eq!(ordinary_reservation.id, 2);
         assert_eq!(reconciled_reservation.id, ordinary_reservation.id);
+    }
+
+    #[test]
+    fn authenticated_s1_prefill_frontier_is_independent_of_registry_capacity() {
+        assert_authenticated_prefill_frontier_matches_ordinary::<1>();
+        assert_authenticated_prefill_frontier_matches_ordinary::<8>();
+        assert_authenticated_prefill_frontier_matches_ordinary::<32>();
     }
 
     #[test]
@@ -3757,6 +3760,7 @@ mod tests {
         }
         assert!(body.contains("validate_authenticated_prefill_registry_reconciliation_v1"));
         assert!(body.contains("install_authenticated_prefill_reconciliation"));
+        assert!(!body.contains("C != 1"));
 
         let registry_bodies = [
             "fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result",
@@ -3793,7 +3797,7 @@ mod tests {
             1,
             "registry intent join helper omitted or duplicated"
         );
-        let typed = reconcile_m1_authenticated_s1_t128_prefill_registry_v1::<1>;
+        let typed = reconcile_m1_authenticated_s1_t128_prefill_registry_v1::<8>;
         assert_eq!(core::mem::size_of_val(&typed), 0);
     }
 }
