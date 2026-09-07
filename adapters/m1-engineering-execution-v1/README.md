@@ -67,10 +67,9 @@ timeout, or abandoned post-mutation response faults the instance; only its exact
 collector authority because the collector kills every action process group.
 
 This foundation grants no compiler authentication, publication, load, queue,
-allocation, or launch authority. Its sealed backend is not yet joined to the
-authenticated target executor or the queue's new-window recycle transition, so
-it cannot truthfully serve hardware measurements yet. It also does not provide
-HTTP, unrestricted continuous batching, or late arrival.
+allocation, or launch authority. Those capabilities must be supplied by a
+separate protected owner. It also does not provide HTTP, unrestricted
+continuous batching, or late arrival.
 
 ## Authenticated production ownership join
 
@@ -84,7 +83,7 @@ measurement callback. An exact `start` constructs a fresh 32-slot Ferric
 retained through `Faulted`, and only a matching, in-budget `stop` drops it and
 enters `Stopped`.
 
-This ownership join is intentionally not serving-complete. The opt-in
+This ownership join is intentionally not serving-complete. The legacy
 `new_with_s1_t128_prefill_bootstrap` constructor binds one exact canonical
 S1/T128 row, consumes the active authenticated runner, initialized model/KV
 pool, fresh Engine, pretokenized prompt, and paired workspace plans, and reaches
@@ -94,9 +93,15 @@ KV pages and rollover intent, then returns
 to `Faulted`. The default constructor still returns
 `authenticated-window-bootstrap-unavailable`.
 
-The next required slice must consume that prepublication owner through
-authenticated queue creation, submission, a deadline-bounded wait, checked
-direct completion, Engine/KV settlement, and prefill-page release. The current
-backend performs none of those effects, never routes through the structural
-physical runner, observes no clock or token, and never constructs a measurement
-report.
+The opt-in `new_with_s1_t128_target_window` constructor additionally requires
+all target-only workspace plans and queue bounds up front. It executes exactly
+one bound row through the authenticated queue, derives tokens only from checked
+device completions, settles Engine, registry, KV-page, and queue custody, and
+constructs one report from `CLOCK_MONOTONIC_RAW` offsets measured from the
+accepted `measure` boundary. Success retains terminal execution custody and
+enters `Faulted`; a second window is rejected. It therefore cannot satisfy the
+required 20-window R33 run and is not a qualification result.
+
+Neither authenticated constructor routes through the structural physical
+runner. The legacy constructor observes no clock or token and never constructs
+a measurement report.

@@ -9371,7 +9371,7 @@ mod tests {
             first_token,
             direct_choices,
             draft_rollover_page,
-            target_rollover_page,
+            mut target_rollover_pages,
             intent,
             request,
             prompt_tokens,
@@ -9385,6 +9385,7 @@ mod tests {
         assert_eq!(diagnostic_ring_bytes, M1_PACKET_DIAGNOSTIC_RING_BYTES_V1);
         assert_eq!(retained_queue_wait_timeout, queue_wait_timeout);
         let anchor = first_token;
+        let target_rollover_page = target_rollover_pages.remove(0);
 
         let rollover_batch = build_rollover_fixture_batch(prior, next, &[request]);
         let rollover_epoch = rollover_batch.epoch();
@@ -9487,7 +9488,13 @@ mod tests {
             }
         };
         assert!(engine.is_faulted());
-        drop((closed, outcome, choices, logical_runner));
+        drop((
+            closed,
+            outcome,
+            choices,
+            logical_runner,
+            target_rollover_pages,
+        ));
     }
 
     #[test]

@@ -15,6 +15,7 @@ mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
 mod authenticated_speculative_executor;
 mod authenticated_target_rollover_phase_custody;
+mod authenticated_target_window_executor;
 #[cfg(test)]
 mod authenticated_test_runtime;
 mod bound_step_workspaces;
@@ -282,6 +283,13 @@ pub use authenticated_speculative_executor::{
     M1AuthenticatedSpeculativeRolloverPublishedV1,
     M1AuthenticatedSpeculativeRolloverRoundFailureV1,
     M1AuthenticatedSpeculativeTerminalQuarantineV1,
+};
+pub use authenticated_target_window_executor::{
+    execute_m1_authenticated_s1_t128_target_window_v1, M1AuthenticatedTargetWindowBoundsV1,
+    M1AuthenticatedTargetWindowClockStartV1, M1AuthenticatedTargetWindowExecutionErrorV1,
+    M1AuthenticatedTargetWindowExecutionFailureV1, M1AuthenticatedTargetWindowExecutionStageV1,
+    M1AuthenticatedTargetWindowExecutionSuccessV1, M1AuthenticatedTargetWindowInputErrorV1,
+    M1AuthenticatedTargetWindowRoundPlansV1, M1AuthenticatedTargetWindowTimingV1,
 };
 pub use bound_step_workspaces::{
     BoundM1FullStepWorkspaceSubleases, M1FullStepWorkspaceDispatchRangeError,

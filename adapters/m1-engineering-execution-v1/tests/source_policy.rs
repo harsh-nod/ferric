@@ -12,6 +12,8 @@ const ENGINE_MANIFEST: &str = include_str!("../../../crates/ferric-engine/Cargo.
 const ENGINE_LIB: &str = include_str!("../../../crates/ferric-engine/src/lib.rs");
 const ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_prefill_bootstrap.rs");
+const ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/authenticated_target_window_executor.rs");
 const ENGINE_QUALIFICATION_CAPTURE_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs");
 const CORE_SOURCE: &str =
@@ -324,8 +326,16 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         "M1R33EngineV1::new",
         "authenticated-window-bootstrap-unavailable",
         "new_with_s1_t128_prefill_bootstrap",
+        "new_with_s1_t128_target_window",
         "authenticated-window-execution-unavailable",
+        "authenticated-window-execution-rejected",
         "prepare_m1_authenticated_s1_t128_prefill_prepublication_v1",
+        "M1AuthenticatedTargetWindowClockStartV1::capture()",
+        "execute_m1_authenticated_s1_t128_target_window_v1",
+        "timing.first_token_offset_ns()",
+        "timing.terminal_token_offset_ns()",
+        "report.validate_against",
+        "M1_R33_AUTHENTICATED_TARGET_WINDOWS_PER_INSTANCE_V1: usize = 1",
         "drop(custody)",
     ] {
         assert!(
@@ -348,8 +358,6 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         ".observe_completion(",
         ".check_completion(",
         "std::time::Instant",
-        "duration_ns:",
-        "request_events:",
         "TcpListener",
         "axum::",
         "hyper::",
@@ -359,12 +367,58 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
             "R33 authenticated ownership backend contains forbidden marker {forbidden}"
         );
     }
-    assert_eq!(
-        R33_PRODUCTION_BACKEND_SOURCE
-            .matches("M1R33MeasurementReportV1")
-            .count(),
-        2
+}
+
+#[test]
+fn authenticated_target_window_has_real_timing_and_checked_token_causality() {
+    let production = ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE
+        .split_once("#[cfg(test)]")
+        .map_or(ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE, |(source, _)| {
+            source
+        });
+    for required in [
+        "ClockId::MonotonicRaw",
+        "M1AuthenticatedTargetWindowClockStartV1",
+        "execute_m1_authenticated_s1_t128_paired_prefill_v1",
+        "observed.check_completion(&semantic)",
+        "tokens.push(emitted)",
+        "registry.preflight_publication",
+        "registry.record_publication",
+        "registry.preflight_completion_exact_for",
+        "registry.apply_preflighted_completion",
+        "released.shutdown_all_terminal_queue",
+        "registry.remove_retired(request)",
+    ] {
+        assert!(
+            production.contains(required),
+            "authenticated target window is missing {required}"
+        );
+    }
+    let adapter_clock = R33_PRODUCTION_BACKEND_SOURCE
+        .find("M1AuthenticatedTargetWindowClockStartV1::capture()")
+        .unwrap();
+    let adapter_bootstrap = R33_PRODUCTION_BACKEND_SOURCE
+        .find("prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(")
+        .unwrap();
+    assert!(
+        adapter_clock < adapter_bootstrap,
+        "request-arrival clock must precede authenticated bootstrap"
     );
+    for forbidden in [
+        "std::time::Instant",
+        "SystemTime",
+        "execute_m1_target_smoke_v1",
+        "M1PhysicalRunnerV1",
+        ".expect(",
+        "panic!(",
+        "unreachable!(",
+        "todo!(",
+    ] {
+        assert!(
+            !production.contains(forbidden),
+            "authenticated target window contains forbidden marker {forbidden}"
+        );
+    }
 }
 
 #[test]

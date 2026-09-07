@@ -50,7 +50,7 @@ pub enum M1AuthenticatedS1T128PrefillExecutionErrorV1 {
 #[derive(Debug)]
 struct M1AuthenticatedS1T128PrefillSuccessorCustodyV1 {
     draft_rollover_page: DeviceKvPageLease,
-    target_rollover_page: DeviceKvPageLease,
+    target_rollover_pages: Vec<DeviceKvPageLease>,
     rollover_intent: M1AuthenticatedSpeculativeRolloverIntentV1,
     request: RequestId,
     prompt_tokens: Box<[TokenId]>,
@@ -233,8 +233,14 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {
     }
 
     #[must_use = "target rollover page custody remains retained"]
-    pub const fn target_rollover_page(&self) -> &DeviceKvPageLease {
-        &self.successor.target_rollover_page
+    pub fn target_rollover_page(&self) -> Option<&DeviceKvPageLease> {
+        self.successor.target_rollover_pages.first()
+    }
+
+    /// Exact target page tail preleased before model memory entered queue custody.
+    #[must_use = "target rollover page custody remains retained"]
+    pub fn target_rollover_pages(&self) -> &[DeviceKvPageLease] {
+        &self.successor.target_rollover_pages
     }
 
     #[must_use = "authenticated rollover intent remains retained"]
@@ -265,7 +271,7 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {
         TokenId,
         M1ObservedDirectDiagnosticChoicesV1,
         DeviceKvPageLease,
-        DeviceKvPageLease,
+        Vec<DeviceKvPageLease>,
         M1AuthenticatedSpeculativeRolloverIntentV1,
         RequestId,
         Box<[TokenId]>,
@@ -281,7 +287,7 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {
             successor:
                 M1AuthenticatedS1T128PrefillSuccessorCustodyV1 {
                     draft_rollover_page,
-                    target_rollover_page,
+                    target_rollover_pages,
                     rollover_intent,
                     request,
                     prompt_tokens,
@@ -296,7 +302,7 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {
             first_token,
             direct_choices,
             draft_rollover_page,
-            target_rollover_page,
+            target_rollover_pages,
             rollover_intent,
             request,
             prompt_tokens,
@@ -333,7 +339,7 @@ pub fn execute_m1_authenticated_s1_t128_paired_prefill_v1<const C: usize>(
         prepublication,
         cache,
         draft_rollover_page,
-        target_rollover_page,
+        target_rollover_pages,
         rollover_intent,
         request,
         prompt_tokens,
@@ -341,7 +347,7 @@ pub fn execute_m1_authenticated_s1_t128_paired_prefill_v1<const C: usize>(
     ) = prepared.into_parts();
     let successor = M1AuthenticatedS1T128PrefillSuccessorCustodyV1 {
         draft_rollover_page,
-        target_rollover_page,
+        target_rollover_pages,
         rollover_intent,
         request,
         prompt_tokens,

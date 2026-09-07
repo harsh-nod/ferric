@@ -350,7 +350,7 @@ pub struct M1AuthenticatedS1T128PrefillPrepublicationV1<const C: usize> {
     prepublication: M1AuthenticatedPrepublicationBatchV1,
     cache: ActiveDeviceKvCache,
     draft_rollover_page: DeviceKvPageLease,
-    target_rollover_page: DeviceKvPageLease,
+    target_rollover_pages: Vec<DeviceKvPageLease>,
     rollover_intent: M1AuthenticatedSpeculativeRolloverIntentV1,
     request: RequestId,
     prompt_tokens: Box<[TokenId]>,
@@ -386,6 +386,12 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillPrepublicationV1<C> {
         self.policy.max_output_tokens()
     }
 
+    /// Exact target page tail preleased before physical queue custody begins.
+    #[must_use = "target rollover page custody remains retained"]
+    pub fn target_rollover_pages(&self) -> &[DeviceKvPageLease] {
+        &self.target_rollover_pages
+    }
+
     pub const fn prepublication(&self) -> &M1AuthenticatedPrepublicationBatchV1 {
         &self.prepublication
     }
@@ -406,7 +412,7 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillPrepublicationV1<C> {
         M1AuthenticatedPrepublicationBatchV1,
         ActiveDeviceKvCache,
         DeviceKvPageLease,
-        DeviceKvPageLease,
+        Vec<DeviceKvPageLease>,
         M1AuthenticatedSpeculativeRolloverIntentV1,
         RequestId,
         Box<[TokenId]>,
@@ -417,7 +423,7 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillPrepublicationV1<C> {
             self.prepublication,
             self.cache,
             self.draft_rollover_page,
-            self.target_rollover_page,
+            self.target_rollover_pages,
             self.rollover_intent,
             self.request,
             self.prompt_tokens,
@@ -836,9 +842,36 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    let target_rollover_page =
-        match memory.lease_page(request, Qwen3ModelRole::Target8B, page_count) {
-            Ok(page) => page,
+    let successor_target_page_count = active_tokens
+        .checked_add(policy.max_output_tokens())
+        .map(|tokens| tokens.div_ceil(M1_KV_PAGE_TOKENS))
+        .unwrap_or(u32::MAX);
+    let mut target_rollover_pages = Vec::new();
+    if target_rollover_pages
+        .try_reserve_exact(successor_target_page_count.saturating_sub(page_count) as usize)
+        .is_err()
+    {
+        return Err(terminal_failure(
+            engine,
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::RolloverPageLease,
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::LowerRejected,
+            (
+                runner,
+                memory,
+                cache,
+                prompt_tokens,
+                policy,
+                preparation_plans,
+                recipe_plans,
+                scheduled,
+                target_table,
+                draft_table,
+            ),
+        ));
+    }
+    for page_index in page_count..successor_target_page_count {
+        match memory.lease_page(request, Qwen3ModelRole::Target8B, page_index) {
+            Ok(page) => target_rollover_pages.push(page),
             Err(error) => {
                 return Err(terminal_failure(
                     engine,
@@ -855,11 +888,13 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                         scheduled,
                         target_table,
                         draft_table,
+                        target_rollover_pages,
                         error,
                     ),
                 ));
             }
-        };
+        }
+    }
     let draft_rollover_page = match memory.lease_page(request, Qwen3ModelRole::Draft06B, page_count)
     {
         Ok(page) => page,
@@ -879,7 +914,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     scheduled,
                     target_table,
                     draft_table,
-                    target_rollover_page,
+                    target_rollover_pages,
                     error,
                 ),
             ));
@@ -905,7 +940,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     scheduled,
                     target_table,
                     draft_table,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     error,
                 ),
@@ -930,7 +965,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     error,
                 ),
@@ -951,7 +986,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     prepared,
                     error,
@@ -979,7 +1014,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     error,
                 ),
@@ -1000,7 +1035,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     rollover_intent,
                     error,
@@ -1020,7 +1055,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                 prompt_tokens,
                 policy,
                 recipe,
-                target_rollover_page,
+                target_rollover_pages,
                 draft_rollover_page,
                 rollover_intent,
                 error,
@@ -1041,7 +1076,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     rollover_intent,
                     error,
@@ -1063,7 +1098,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     prompt_tokens,
                     policy,
                     recipe,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     rollover_intent,
                     error,
@@ -1082,7 +1117,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     cache,
                     prompt_tokens,
                     policy,
-                    target_rollover_page,
+                    target_rollover_pages,
                     draft_rollover_page,
                     rollover_intent,
                     error,
@@ -1095,7 +1130,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
         prepublication,
         cache,
         draft_rollover_page,
-        target_rollover_page,
+        target_rollover_pages,
         rollover_intent,
         request,
         prompt_tokens,
