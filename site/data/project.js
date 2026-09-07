@@ -3,9 +3,11 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "f98f2704e7c0d5eac324ca90c28bf6fb5c1f5cc5",
-    integrationCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-    integrationTree: "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
+    siteRefreshBase: "37ad8bd28e28eae1883bc8c74a19e6b2a466a29d",
+    integrationCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+    integrationTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
+    integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+    integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
     priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
     priorValidatedIntegrationTree: "f331a34c08394d4fc599880ac342baa51140eca3",
     residentTailCommit: "886a0d38480887e05cc4c4dde858ff56ad155ca4",
@@ -50,18 +52,31 @@ window.FERRIC_PROJECT = Object.freeze({
     workerV3FullQualificationReceiptEmitted: false,
     workerV3FullQualificationBaseCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
     workerV3CurrentIntegrationFmtGreen: true,
-    combinedQualificationAttempt: 5,
+    combinedAttempt5SourceCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
+    combinedAttempt5SourceTree: "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
+    combinedAttempt5StrictProofPackagesPassed: 10,
+    combinedAttempt5SameSourceNegativeProofsGreen: true,
+    combinedAttempt5FullNegativePropertyPolicyGreen: true,
+    combinedAttempt5ReceiptEmitted: false,
+    combinedAttempt5NestedFmtDiffs: 4,
+    combinedQualificationAttempt: 6,
     combinedQualificationState: "running",
     combinedQualificationRunning: true,
     combinedPreflightGreen: true,
-    combinedPreflightLogSha256: "0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5",
+    combinedPreflightLogSha256: "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
     combinedPreflightCuratedAdmissions: 7229,
-    r33TwentyWindowActive: true,
+    r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+    r33TwentyWindowTree: "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
+    r33TwentyWindowImplemented: true,
+    r33TwentyWindowReviewState: "under-review",
+    r33TwentyWindowReviewHasProbableHoldItems: true,
+    r33TwentyWindowActive: false,
     r33TwentyWindowIntegrated: false,
     r33TwentyWindowValidationReported: false,
     signerIpcCommit: "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
     signerIpcTree: "969611f506286f250d027d619e25d04728312419",
     signerIpcIntegrated: false,
+    signerIpcReviewDisposition: "integrate",
     signerIpcServiceTestsPassed: 58,
     signerIpcServiceTestsIgnored: 3,
     signerIpcAdapterTestsPassed: 88,
@@ -232,20 +247,20 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Current integration e3dc8d6, tree 4db7406, includes the independently accepted Worker V3 c492 series as commits 61a40ca, 2abcc47, 57973da, 7747409, and e3dc8d6. Full qualification #4 passed all 10 strict proof packages and both negative suites, but emitted no qualification receipt because its obsolete ea6ef07 base failed the later formatting step; formatting is green on the current integration. Combined exact qualification #5 is running from clean committed e3dc8d6 source; its preflight is green at 33/33 source-gate tests, 7,229 exact curated admissions, and 170 modules / 7,922 bodies, log SHA 0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5. No full result or receipt is claimed. Prior combined evidence at e5d23e1 remains 711 engine target tests with 7 hardware ignores, 171 doctests, and 93 adapter tests with 2 hardware ignores. Authority is none, no serving or benchmark claim exists, and all 33 M1 gates remain open.",
+      "Current integration 1addeb3, tree 8282645, adds only a DCO formatting correction atop independently accepted Worker V3 integration e3dc8d6, tree 4db7406. Combined qualification #5 passed all 10 strict proof packages, every same-source negative proof, and the full negative/property policy suite, but emitted no receipt because the later nested standalone m1-engineering-execution formatting check found four diffs. Exact combined qualification #6 is now running from clean committed 1addeb3 source. Its preflight passes root plus all six standalone formatting manifests, 33/33 source-gate tests, 7,229 exact curated admissions, five exact TCB inventories, and 170 modules / 7,922 bodies; preflight log SHA ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188. No #6 result or receipt is claimed. Authority is none, no serving or benchmark claim exists, and all 33 M1 gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Current integration e3dc8d6 includes the signed bridge, reviewed reduced-roster harness, resident continuation, generic exact-successor provider, and independently accepted Worker V3 series. Combined exact qualification #5 is running from clean committed source after a green 33/33 source-gate preflight covering 7,922 bodies in 170 modules; no full result or receipt is claimed. The 711 engine target checks, 171 doctests, and 93 adapter checks remain prior combined evidence at e5d23e1, not current-head qualification results.",
+        "Current integration 1addeb3 contains the signed bridge, reviewed reduced-roster harness, resident continuation, generic exact-successor provider, independently accepted Worker V3 series, and only the four-line nested formatting correction required after run #5. Run #5 completed all strict proof and negative/property policy suites but emitted no receipt. Exact combined qualification #6 is running after a green preflight over 7,922 bodies in 170 modules; no #6 result or receipt is claimed.",
     },
     {
       label: "R33 lifecycle",
       state: "integration",
       detail:
-        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Prior remote checks report adapter 68 passed / 2 ignored, zero failures; log SHA f712b18cd848291f524c86ba92065134adfc89e595d27d7dfa5b4ff4fdcde910. An active 20-window R33 slice remains unintegrated, with no new validation or qualification claim. Authority is none.",
+        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Prior remote checks report adapter 68 passed / 2 ignored, zero failures; log SHA f712b18cd848291f524c86ba92065134adfc89e595d27d7dfa5b4ff4fdcde910. Candidate a996613, tree 9f5b2fa, implements bounded authenticated 20-window residency but remains unintegrated and under independent review, which has identified probable lifecycle/custody HOLD items. No candidate validation or qualification result is claimed. Authority is none.",
     },
     {
       label: "Successor KV custody",
@@ -269,19 +284,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 authority integration",
       state: "integration",
       detail:
-        "Worker candidate c492c31, tree 9cc283b, was independently ACCEPTED and integrated as 61a40ca, 2abcc47, 57973da, 7747409, and e3dc8d6. Full qualification #4 passed all 10 strict proof packages and both negative suites, including exact hostile dependency-decoy rejection, but emitted no qualification receipt because obsolete base ea6ef07 failed a later formatting step. Current integration formatting is green. Combined exact qualification #5 is running from clean committed source; no result or receipt is claimed, authority remains none, and all 33 M1 gates remain open.",
+        "Worker candidate c492c31, tree 9cc283b, was independently ACCEPTED and integrated through e3dc8d6. Combined qualification #5 on that source passed all 10 strict proof packages, every same-source negative proof, and the full negative/property policy suite, then stopped without a receipt when the nested m1-engineering-execution formatting check found four diffs. DCO commit 1addeb3 fixes only those diffs. Exact combined qualification #6 is running from clean 1addeb3 source; no #6 result or receipt is claimed, authority remains none, and all 33 M1 gates remain open.",
     },
     {
       label: "Generic serving provider integration",
       state: "integration",
       detail:
-        "Commit b30e7a6 binds one exact finite successor before allocation or dequeue, validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor, and preserves fail-closed custody. Independent review accepted it and current integration e3dc8d6 carries it atop the resident series. Arbitrary cross-shape switching and hardware qualification are not claimed.",
+        "Commit b30e7a6 binds one exact finite successor before allocation or dequeue, validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor, and preserves fail-closed custody. Independent review accepted it and current integration 1addeb3 carries it atop the resident series. Arbitrary cross-shape switching and hardware qualification are not claimed.",
     },
     {
       label: "Protected signer IPC slice",
       state: "open",
       detail:
-        "Unintegrated DCO commit f657c5f, tree 969611f, implements the bounded preopened SOCK_SEQPACKET signer client. Latest remote checks pass 58 service tests with 3 hardware ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874 bodies in 168 modules; log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. It adds no deployed signer, protected infrastructure, hardware qualification, receipt, or authority.",
+        "Unintegrated DCO commit f657c5f, tree 969611f, implements the bounded preopened SOCK_SEQPACKET signer client and is independently ACCEPTED. Remote checks pass 58 service tests with 3 ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874 bodies in 168 modules; log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. It adds no deployed signer, protected infrastructure, hardware qualification, receipt, or authority.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -305,7 +320,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "Current integration e3dc8d6 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
+        "Current integration 1addeb3 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
     },
     {
       label: "Qwen execution and serving",
@@ -321,11 +336,11 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0; tree 4db7406eec1c1b53a2872bf711835a4ef74fa0b5; independently accepted Worker V3 series integrated atop resident and generic-provider work; not public implementation main, a release, serving, or qualification"],
+    ["Ferric integration candidate", "1addeb33664bce3f8e634c47e2fec09bb3d7cf42; tree 82826452040f8cb587df1bd88b9fb0f18668fd8e; adds only a DCO nested-formatting correction atop independently accepted Worker V3 integration e3dc8d6; exact qualification #6 is running, not complete"],
     ["Resident continuation integration", "commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and exact-roster fix 68091859ce0710dc26cfb839d580e40ea0839253; integrated after no-blocker review; no resident hardware qualification"],
-    ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current e3dc8d6; hardware-unqualified"],
-    ["Worker V3 integration", "candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5, tree 9cc283baae4026257f18d0d4b6e9779abf98382d, independently ACCEPTED and integrated as 61a40cad79b31124044fca198155492e6b151ef4, 2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c, 57973da0c3d362446361d1db026c19040bd20bdb, 7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0; qualification #4 passed strict packages and both negative suites but emitted no receipt; exact combined #5 is running from clean committed source with no result claimed"],
-    ["Unintegrated next slices", "active 20-window R33 work has no new validation claim; signer IPC f657c5f1ae4cdbf8039ed55933b4f0e3385b47de, tree 969611f506286f250d027d619e25d04728312419, has scoped remote tests only; neither slice grants authority"],
+    ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current 1addeb3; hardware-unqualified"],
+    ["Worker V3 integration", "candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5, tree 9cc283baae4026257f18d0d4b6e9779abf98382d, independently ACCEPTED and integrated through e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0; combined #5 passed all 10 strict packages, every same-source negative proof, and full negative/property policy before four nested formatting diffs stopped receipt emission; DCO fix 1addeb3 is now under exact combined run #6"],
+    ["Unintegrated next slices", "R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271, tree 9f5b2fa6284b029ab216466fa9bd91b001f7c792, implements bounded authenticated 20-window residency but independent review has probable lifecycle/custody HOLD items; signer IPC f657c5f1ae4cdbf8039ed55933b4f0e3385b47de, tree 969611f506286f250d027d619e25d04728312419, is independently ACCEPTED; neither is integrated or grants authority"],
     ["Speculative hardware source", "commit f18ffe2566112cb8b9518562afe2c8919577c907; tree 04d09e03af9a8257d211382a6f7c91909dda7df6; one authority-free S1/K4 diagnostic round completed; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended"],
     ["Successor KV bridge", "136a6d2ff92597c91caad3d0e33baede74cd4c9a; tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; authenticated page-less successor leasing after detach; no speculative hardware claim"],
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
@@ -389,7 +404,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated R33 backend lifecycle",
         detail:
-          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window with a real monotonic clock and checked-token causality, then fail-closes and rejects a second window. An active 20-window R33 slice is unintegrated and carries no new validation claim; qualification evidence remains absent.",
+          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window. Candidate a996613 implements bounded authenticated residency across 20 windows but remains unintegrated; independent review has identified probable lifecycle/custody HOLD items. No candidate validation or qualification evidence is claimed.",
       },
       {
         name: "Resident first-round continuation",
@@ -409,14 +424,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 evidence collector integration",
         detail:
-          "The independently ACCEPTED c492 series is integrated through e3dc8d6 and correlates the protected service request and receipt, artifact lineage, compiler pin, and current-token evidence without enlarging authority. Full qualification #4 passed all 10 strict proof packages and both negative suites but emitted no receipt because obsolete base ea6ef07 failed later formatting. Current integration formatting is green; combined exact qualification #5 is running from clean committed source with no result or receipt claimed; authority is none.",
+          "The independently ACCEPTED c492 series is integrated through e3dc8d6 and correlates protected service evidence without enlarging authority. Combined #5 passed all 10 strict proof packages, every same-source negative proof, and full negative/property policy, then emitted no receipt because a nested formatting check found four diffs. DCO commit 1addeb3 fixes only those diffs; exact combined #6 is running with no result or receipt claimed. Authority is none.",
       },
     ],
     roadmap: [
       {
         name: "Run the speculative target/draft path",
         detail:
-          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and remains integrated through current head e3dc8d6 after attempt 2 exposed the 20-versus-16 queue limit. Resident continuation and exact-successor generic provider paths are integrated; preserve custody across later rounds and run them under protected authority before making a serving or qualification claim.",
+          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and remains integrated through current head 1addeb3 after attempt 2 exposed the 20-versus-16 queue limit. Resident continuation and exact-successor generic provider paths are integrated; preserve custody across later rounds and run them under protected authority before making a serving or qualification claim.",
       },
       {
         name: "Extend the authenticated R33 run",
@@ -457,15 +472,15 @@ window.FERRIC_PROJECT = Object.freeze({
       source: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
       result: "PASS: 711 engine target tests + 171 doctests + 93 adapter tests + 28 source-gate tests; 7 engine and 2 adapter hardware ignores",
       detail:
-        "Exact combined remote validation at prior head e5d23e1 passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and 28/28 source-gate tests. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Current head e3dc8d6 includes Worker V3; its combined exact qualification #5 is running from clean committed source with no result or receipt claimed. These checks do not grant hardware qualification, serving, benchmark, or production authority.",
+        "Exact combined remote validation at prior head e5d23e1 passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and 28/28 source-gate tests. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Run #5 at e3dc8d6 completed every strict proof and negative/property policy suite but emitted no receipt after four nested formatting diffs. Exact combined #6 is running at current head 1addeb3. These checks do not grant hardware qualification, serving, benchmark, or production authority.",
     },
     proof: {
       title: "Current combined preflight admission",
       state: "integration",
-      source: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-      result: "PASS: compiler-rooted source gate covers 7,922 bodies across 170 modules; 33/33 source-gate tests green",
+      source: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+      result: "PASS: all formatting manifests, 33/33 source-gate tests, 7,229 admissions, five TCBs, and 7,922 bodies across 170 modules",
       detail:
-        "Current preflight at e3dc8d6, tree 4db7406, passes 33/33 source-gate tests; VERIFIED_MODULES and four generated TCB inventories are byte-identical, 7,229 curated admissions match the generated identity set, and compiler-rooted coverage is 7,922 executable bodies across 170 modules. Preflight log SHA 0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5. Full qualification #5 remains running with no result or receipt. Earlier strict Verus 81 verified / 0 errors and radix Verus 608 verified and 0 errors remain scoped proofs; no runtime refinement or effect proof is claimed.",
+        "Run #6 preflight at 1addeb3, tree 8282645, passes root plus all six standalone formatting manifests and 33/33 source-gate tests; VERIFIED_MODULES and five generated TCB inventories are exact, 7,229 curated admissions match, and compiler-rooted coverage is 7,922 executable bodies across 170 modules. Preflight log SHA ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188. Exact combined qualification #6 is running with no result or receipt. Earlier Verus totals remain scoped proofs; no runtime refinement or effect proof is claimed.",
     },
     hardware: {
       title: "Reduced-roster S1/K4 speculative round completes",
@@ -488,7 +503,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised the resident continuation or generic exact-successor provider under hardware authority. Worker V3 is independently accepted and integrated; qualification #4 passed its 10 strict packages and both negative suites but emitted no receipt after obsolete base ea6ef07 failed later formatting. Combined exact qualification #5 is running from clean committed source; no result or receipt is claimed. Integrated R33 supports one 128-output window; the active 20-window slice and signer IPC slice remain unintegrated. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
+      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised resident continuation under hardware authority. Combined #5 passed all strict proof and negative/property policy suites but emitted no receipt after four nested formatting diffs; exact combined #6 is running after the DCO-only fix. Integrated R33 supports one window; 20-window candidate a996 is unintegrated and under review. Signer IPC f657 is independently accepted but unintegrated. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
   },
   teams: [
     {
@@ -497,13 +512,13 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Current integration e3dc8d6 joins signed successor-KV bridge 136a6d2, independently reviewed reduced-roster speculative commit f18ffe2, the resident tail-page/registry/first-round/exact-bootstrap series, independently accepted generic provider b30e7a6, and the independently accepted Worker V3 c492 series.",
+        "Current integration 1addeb3 joins signed successor-KV bridge 136a6d2, independently reviewed reduced-roster speculative commit f18ffe2, the resident series, independently accepted generic provider b30e7a6, independently accepted Worker V3 c492, and only the DCO formatting fix found after run #5.",
       current:
-        "Full qualification #4 passed all 10 strict Worker proof packages and both negative suites, but emitted no receipt because obsolete base ea6ef07 failed later formatting; current integration formatting is green. Combined exact qualification #5 is running from clean committed source with no result or receipt claimed. The 711 engine target, 171 doctest, 93 adapter, and 28/28 source-gate totals remain prior evidence from e5d23e1.",
+        "Combined #5 passed all 10 strict proof packages, every same-source negative proof, and full negative/property policy, but emitted no receipt because four nested standalone formatting diffs remained. DCO commit 1addeb3 fixes only those diffs. Exact combined #6 is running from clean committed source after its full preflight passed; no #6 result or receipt is claimed.",
       blockedBy:
         "No team-local blocker. M1 still depends on a receipt-bearing qualification of the exact combined head, the 20-window R33 lifecycle, protected artifact admission, and matched baselines.",
       next:
-        "Complete and review combined exact qualification #5, then extend authenticated execution beyond one speculative round.",
+        "Complete and review combined exact qualification #6, then review and integrate the 20-window R33 candidate and protected signer IPC.",
       validation:
         "Prior integration e5d23e1: 711 engine target checks and 171 doctests pass; 93 adapter checks pass; engine and adapter hardware ignores are 7 and 2; source gate passes 28/28 at 168 modules and 7,874 bodies. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Worker c492 is accepted and integrated; qualification #4 passed all strict packages and both negative suites but produced no receipt.",
     },
@@ -531,13 +546,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Integration e3dc8d6 preserves exact K draft growth and fail-closed successor custody through the first S1/K4 speculative round; its bootstrap presents 11 allocations against KFD's maximum of 16. Independently accepted generic provider b30e7a6 binds exact S1/K4, S1/K8, S1/K16, or S8/K4 successor output before allocation. Neither integrated path has hardware qualification, and no resident daemon or serving endpoint exists.",
+        "Integration 1addeb3 preserves exact K draft growth and fail-closed successor custody through the first S1/K4 speculative round; its bootstrap presents 11 allocations against KFD's maximum of 16. Candidate a996 implements bounded authenticated residency across the required 20 windows but remains unintegrated and under independent review. No resident daemon or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. The 11-allocation harness clears attempt 2's pre-publication capacity failure. Comparable execution still depends on reviewed integration, protected runtime admission, repeated controlled runs, and the required 20-window R33 path.",
       next:
         "Carry authenticated custody beyond the first round and across all 20 required windows, then qualify the integrated resident and generic provider paths under protected authority.",
       validation:
-        "Prior e5d23e1 exact combined validation passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and all 28 source-gate tests. Current e3dc8d6 combined qualification #5 is running with no result or receipt claimed. No resident or generic-provider hardware qualification was run.",
+        "Prior e5d23e1 exact combined validation passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and all 28 source-gate tests. Combined #5 completed its proof and negative/property suites but emitted no receipt; exact combined #6 is running at 1addeb3 with no result claimed. No resident or generic-provider hardware qualification was run.",
     },
     {
       name: "Formal verification",
@@ -547,13 +562,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "Current preflight at e3dc8d6 covers 7,922 compiler-rooted executable bodies across 170 modules and passes 33/33 source-gate tests with 7,229 curated admission identities exact. Worker V3 candidate c492 was independently accepted and integrated; qualification #4 passed all 10 strict packages and both negative suites, including exact decoy rejection, but the obsolete ea6 base later failed formatting and no receipt was emitted. Combined exact qualification #5 is running from clean committed source with no full result or receipt claimed. This is not proof closure or production authority.",
+        "Combined #5 at e3dc8d6 passed all 10 strict packages, every same-source negative proof, and the full negative/property policy suite before four nested formatting diffs stopped receipt emission. Run #6 preflight at 1addeb3 covers 7,922 compiler-rooted bodies across 170 modules, passes 33/33 source-gate tests, and binds 7,229 admissions plus five exact TCBs. Run #6 is live with no full result or receipt claimed. This is not proof closure or production authority.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
         "Regenerate and audit exact body identities, then rerun the full formal and hostile-policy matrix on the settled combined head.",
       validation:
-        "Current combined preflight passes all 33 source-gate tests at 170 modules and 7,922 bodies. Combined exact qualification #5 is still running, and no qualification receipt exists. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
+        "Current #6 preflight passes root and all six standalone formatting manifests plus all 33 source-gate tests at 170 modules and 7,922 bodies. Exact combined qualification #6 is running, and no qualification receipt exists. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
     },
   ],
   boundaries: {
@@ -569,9 +584,9 @@ window.FERRIC_PROJECT = Object.freeze({
       "Integrated generic provider b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; exact finite-successor roster independently accepted at 11 for S1/K4, S1/K8, S1/K16, and S8/K4; hardware-unqualified",
       "Speculative smoke orchestration and its exact S1/K4 allocation roster",
       "Worker V3 protected-evidence collection and authority policy; candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5 was independently accepted and integrated as 61a40cad79b31124044fca198155492e6b151ef4, 2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c, 57973da0c3d362446361d1db026c19040bd20bdb, 7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-      "Active 20-window R33 work and signer IPC f657c5f1ae4cdbf8039ed55933b4f0e3385b47de are unintegrated and grant no authority",
+      "Implemented 20-window R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 is unintegrated and has probable lifecycle/custody HOLD items under independent review; signer IPC f657c5f1ae4cdbf8039ed55933b4f0e3385b47de is independently accepted; both grant no authority",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current source integration e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0, tree 4db7406eec1c1b53a2872bf711835a4ef74fa0b5, contains signed successor-KV bridge 136a6d2, reviewed reduced-roster speculative harness f18ffe2, independently reviewed resident series, independently accepted generic provider b30e7a6, and the independently accepted Worker V3 series; combined exact qualification #5 is running from clean committed source with no result or receipt claimed",
+      "Current source integration 1addeb33664bce3f8e634c47e2fec09bb3d7cf42, tree 82826452040f8cb587df1bd88b9fb0f18668fd8e, adds only a DCO formatting correction atop the accepted Worker V3 integration; exact combined qualification #6 is running from clean committed source with no result or receipt claimed",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
@@ -600,18 +615,32 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+      title: "Fixed the final nested formatting gate",
+      state: "integration",
+      detail:
+        "Tree 82826452040f8cb587df1bd88b9fb0f18668fd8e changes only four nested m1-engineering-execution formatting diffs found after combined run #5 completed every strict proof and negative/property policy suite without emitting a receipt. Exact combined run #6 is live from this clean DCO source. Its preflight passes all formatting manifests, 33/33 source-gate tests, 7,229 admissions, five exact TCBs, and 170 modules / 7,922 bodies; log SHA ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188. No #6 result or receipt is claimed.",
+    },
+    {
+      commit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+      title: "Implemented the unintegrated 20-window R33 candidate",
+      state: "open",
+      detail:
+        "Tree 9f5b2fa6284b029ab216466fa9bd91b001f7c792 implements bounded authenticated R33 residency across the required 20-window lifecycle. It remains unintegrated, and independent review has identified probable lifecycle/custody HOLD items. No validation, hardware, qualification, serving, or authority result is claimed.",
+    },
+    {
       commit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
       title: "Integrated the independently accepted Worker V3 series",
       state: "integration",
       detail:
-        "Tree 4db7406eec1c1b53a2872bf711835a4ef74fa0b5 integrates candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5 as commits 61a40cad79b31124044fca198155492e6b151ef4, 2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c, 57973da0c3d362446361d1db026c19040bd20bdb, 7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0 after independent ACCEPT. Full qualification #4 passed all 10 strict proof packages and both negative suites but emitted no qualification receipt because obsolete ea6ef07 later failed formatting; current integration formatting is green. Combined exact qualification #5 is running from clean committed source with no result or receipt claimed. Authority none.",
+        "Tree 4db7406eec1c1b53a2872bf711835a4ef74fa0b5 integrates candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5 after independent ACCEPT. Combined qualification #5 passed all 10 strict proof packages, every same-source negative proof, and the full negative/property policy suite. It emitted no qualification receipt because a later nested m1-engineering-execution formatting check found four diffs. Authority none.",
     },
     {
       commit: "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
-      title: "Validated the unintegrated protected signer IPC slice",
+      title: "Accepted the unintegrated protected signer IPC slice",
       state: "open",
       detail:
-        "Tree 969611f506286f250d027d619e25d04728312419 passes 58 service tests with 3 hardware ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874 bodies in 168 modules on mi300x. Log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. The slice remains unintegrated and supplies no signer deployment, hardware qualification, receipt, or authority.",
+        "Tree 969611f506286f250d027d619e25d04728312419 passes 58 service tests with 3 ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874 bodies in 168 modules on mi300x. Independent review ACCEPTED it. Log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. The slice remains unintegrated and supplies no signer deployment, hardware qualification, receipt, or authority.",
     },
     {
       commit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -888,7 +917,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Current integration e3dc8d6, tree 4db7406, includes the independently accepted Worker V3 c492 series. Qualification #4 passed all 10 strict packages and both negative suites but emitted no receipt because obsolete ea6ef07 failed later formatting; current integration formatting is green. Combined exact qualification #5 is running from clean committed source with no result or receipt claimed. Prior e5d23e1 combined validation remains 711 engine target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and 28/28 source-gate tests over 168 modules and 7,874 bodies; aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. The active 20-window R33 work and remotely tested signer IPC f657c5f remain unintegrated. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
+      "Current integration 1addeb3, tree 8282645, adds only a DCO formatting correction atop independently accepted Worker V3 integration e3dc8d6. Combined #5 passed all 10 strict packages, every same-source negative proof, and full negative/property policy but emitted no receipt because four nested formatting diffs remained. Exact combined #6 is running from clean 1addeb3 after a complete green preflight; no result or receipt is claimed. R33 candidate a996 implements 20-window residency but has probable lifecycle/custody HOLD items under review; signer IPC f657 is independently accepted; both remain unintegrated. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

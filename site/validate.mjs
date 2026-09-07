@@ -78,9 +78,11 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "f98f2704e7c0d5eac324ca90c28bf6fb5c1f5cc5",
-  integrationCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-  integrationTree: "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
+  siteRefreshBase: "37ad8bd28e28eae1883bc8c74a19e6b2a466a29d",
+  integrationCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+  integrationTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
+  integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+  integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
   priorValidatedIntegrationTree: "f331a34c08394d4fc599880ac342baa51140eca3",
   residentTailCommit: "886a0d38480887e05cc4c4dde858ff56ad155ca4",
@@ -125,18 +127,31 @@ const expectedCurrent = {
   workerV3FullQualificationReceiptEmitted: false,
   workerV3FullQualificationBaseCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
   workerV3CurrentIntegrationFmtGreen: true,
-  combinedQualificationAttempt: 5,
+  combinedAttempt5SourceCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
+  combinedAttempt5SourceTree: "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
+  combinedAttempt5StrictProofPackagesPassed: 10,
+  combinedAttempt5SameSourceNegativeProofsGreen: true,
+  combinedAttempt5FullNegativePropertyPolicyGreen: true,
+  combinedAttempt5ReceiptEmitted: false,
+  combinedAttempt5NestedFmtDiffs: 4,
+  combinedQualificationAttempt: 6,
   combinedQualificationState: "running",
   combinedQualificationRunning: true,
   combinedPreflightGreen: true,
-  combinedPreflightLogSha256: "0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5",
+  combinedPreflightLogSha256: "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
   combinedPreflightCuratedAdmissions: 7229,
-  r33TwentyWindowActive: true,
+  r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+  r33TwentyWindowTree: "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
+  r33TwentyWindowImplemented: true,
+  r33TwentyWindowReviewState: "under-review",
+  r33TwentyWindowReviewHasProbableHoldItems: true,
+  r33TwentyWindowActive: false,
   r33TwentyWindowIntegrated: false,
   r33TwentyWindowValidationReported: false,
   signerIpcCommit: "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
   signerIpcTree: "969611f506286f250d027d619e25d04728312419",
   signerIpcIntegrated: false,
+  signerIpcReviewDisposition: "integrate",
   signerIpcServiceTestsPassed: 58,
   signerIpcServiceTestsIgnored: 3,
   signerIpcAdapterTestsPassed: 88,
@@ -313,6 +328,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "integrationFormattingFixCommit",
+  "integrationFormattingFixTree",
   "priorValidatedIntegrationCommit",
   "priorValidatedIntegrationTree",
   "residentTailCommit",
@@ -334,6 +351,10 @@ for (const key of [
   "workerV3IntegratedDependencyCommit",
   "workerV3IntegratedTailCommit",
   "workerV3FullQualificationBaseCommit",
+  "combinedAttempt5SourceCommit",
+  "combinedAttempt5SourceTree",
+  "r33TwentyWindowCommit",
+  "r33TwentyWindowTree",
   "signerIpcCommit",
   "signerIpcTree",
   "successorKvBridgeCommit",
@@ -486,16 +507,25 @@ assert(project.current.workerV3FullNegativeReleaseGateComplete === true, "Worker
 assert(project.current.workerV3BothNegativeSuitesGreen === true, "Worker V3 negative suites must remain green");
 assert(project.current.workerV3FullQualificationReceiptEmitted === false, "Worker V3 qualification #4 must not claim a receipt");
 assert(project.current.workerV3CurrentIntegrationFmtGreen === true, "current integration formatting must remain green");
-assert(project.current.combinedQualificationAttempt === 5, "combined qualification attempt drifted");
+assert(project.current.combinedAttempt5StrictProofPackagesPassed === 10, "combined #5 strict proof count drifted");
+assert(project.current.combinedAttempt5SameSourceNegativeProofsGreen === true, "combined #5 same-source negative proofs must remain green");
+assert(project.current.combinedAttempt5FullNegativePropertyPolicyGreen === true, "combined #5 negative/property policy must remain green");
+assert(project.current.combinedAttempt5ReceiptEmitted === false, "combined #5 must not claim a receipt");
+assert(project.current.combinedAttempt5NestedFmtDiffs === 4, "combined #5 nested formatting diff count drifted");
+assert(project.current.combinedQualificationAttempt === 6, "combined qualification attempt drifted");
 assert(project.current.combinedQualificationState === "running", "combined qualification state drifted");
-assert(project.current.combinedQualificationRunning === true, "combined qualification #5 must remain running");
+assert(project.current.combinedQualificationRunning === true, "combined qualification #6 must remain running");
 assert(project.current.combinedPreflightGreen === true, "combined qualification preflight must remain green");
 assertSha256(project.current.combinedPreflightLogSha256, "current.combinedPreflightLogSha256");
 assert(project.current.combinedPreflightCuratedAdmissions === 7229, "combined preflight admission count drifted");
-assert(project.current.r33TwentyWindowActive === true, "20-window R33 work must remain active");
+assert(project.current.r33TwentyWindowImplemented === true, "20-window R33 candidate must remain implemented");
+assert(project.current.r33TwentyWindowReviewState === "under-review", "20-window R33 review state drifted");
+assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === true, "20-window R33 probable HOLD items must remain explicit");
+assert(project.current.r33TwentyWindowActive === false, "20-window R33 implementation work must not remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
 assert(project.current.signerIpcIntegrated === false, "signer IPC slice must remain unintegrated");
+assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
 assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
 assert(project.current.signerIpcServiceTestsIgnored === 3, "signer IPC ignored test count drifted");
 assert(project.current.signerIpcAdapterTestsPassed === 88, "signer IPC adapter test count drifted");
@@ -664,7 +694,9 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "f98f2704e7c0d5eac324ca90c28bf6fb5c1f5cc5",
+  "37ad8bd28e28eae1883bc8c74a19e6b2a466a29d",
+  "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
+  "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
   "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
   "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -688,6 +720,8 @@ const missingSnapshotClaims = [
   "57973da0c3d362446361d1db026c19040bd20bdb",
   "7747409db8b4f3013456d99b5e418bc12bc72494",
   "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+  "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+  "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
   "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
   "969611f506286f250d027d619e25d04728312419",
   "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
@@ -880,18 +914,21 @@ const missingSnapshotClaims = [
   "171 doctests",
   "93 adapter",
   "all 10 strict proof packages",
-  "exact hostile dependency-decoy rejection",
-  "Full qualification #4",
-  "both negative suites",
+  "every same-source negative proof",
+  "full negative/property policy",
+  "four nested formatting diffs",
   "no qualification receipt",
-  "current integration formatting is green",
-  "combined exact qualification #5",
+  "Combined qualification #5",
+  "combined qualification #6",
   "running from clean committed",
+  "root plus all six standalone formatting manifests",
+  "five exact TCB",
   "7,229",
   "7,922",
   "170 modules",
-  "0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5",
-  "active 20-window R33",
+  "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
+  "probable lifecycle/custody HOLD items",
+  "independently ACCEPTED",
   "58 service tests",
   "88 adapter tests",
   "Physical device-KV prefix reuse is M2",

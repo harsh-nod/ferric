@@ -219,23 +219,19 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0, tree
-            4db7406eec1c1b53a2872bf711835a4ef74fa0b5, carries the independently accepted Worker V3
-            candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5, tree
-            9cc283baae4026257f18d0d4b6e9779abf98382d, as integration commits
-            61a40cad79b31124044fca198155492e6b151ef4,
-            2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c,
-            57973da0c3d362446361d1db026c19040bd20bdb,
-            7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d6. Full qualification #4 passed all
-            10 strict proof packages and both negative suites, including exact hostile dependency-decoy
-            rejection. It emitted no qualification receipt because obsolete base
-            ea6ef07c7b13d31c84b14d2ad06f19f8d1220665 failed the later formatting step; current
-            integration formatting is green. Combined exact qualification #5 is running from clean
-            committed e3dc8d6 source. Its preflight is green: formatting, 33/33 source-gate tests,
-            byte-identical VERIFIED_MODULES and four generated TCB inventories, 7,229 exact curated
-            admission identities, and 170 modules / 7,922 bodies. Preflight log SHA
-            0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5. No full
-            result or receipt is claimed. Authority is none and all 33 M1 exit gates remain open.
+            Current integration 1addeb33664bce3f8e634c47e2fec09bb3d7cf42, tree
+            82826452040f8cb587df1bd88b9fb0f18668fd8e, adds only a DCO formatting correction atop
+            independently accepted Worker V3 integration e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0,
+            tree 4db7406eec1c1b53a2872bf711835a4ef74fa0b5.
+            Combined qualification #5 passed all 10 strict proof packages, every same-source negative
+            proof, and the full negative/property policy suite. It emitted no qualification receipt because
+            the later nested standalone m1-engineering-execution formatting check found four diffs. Exact
+            combined qualification #6 is now running from clean committed 1addeb3 source. Its preflight
+            passes root plus all six standalone formatting manifests, 33/33 source-gate tests,
+            byte-exact VERIFIED_MODULES and five generated TCB inventories, 7,229 exact curated admission
+            identities, and 170 modules / 7,922 bodies. Preflight log SHA
+            ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188. No #6 result or
+            receipt is claimed. Authority is none and all 33 M1 exit gates remain open.
 
             Prior combined remote validation at e5d23e19973a01000129aaf2ec705b8993bd21c3,
             tree f331a34c08394d4fc599880ac342baa51140eca3, passes 711 engine target tests with 7
@@ -246,11 +242,15 @@
             generic provider and resident bootstrap each retain an exact 11-allocation portfolio against
             KFD's maximum of 16; neither path has hardware qualification.
 
-            An active 20-window R33 slice remains unintegrated with no new validation claim. Unintegrated
-            signer IPC commit f657c5f1ae4cdbf8039ed55933b4f0e3385b47de, tree
+            R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271, tree
+            9f5b2fa6284b029ab216466fa9bd91b001f7c792, implements bounded authenticated 20-window
+            residency but remains unintegrated; independent review has identified probable
+            lifecycle/custody HOLD items. No candidate validation or qualification result is claimed.
+            Unintegrated signer IPC commit
+            f657c5f1ae4cdbf8039ed55933b4f0e3385b47de, tree
             969611f506286f250d027d619e25d04728312419, passes its latest remote 58 service tests with 3
-            hardware ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874
-            bodies in 168 modules; log SHA
+            ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874 bodies in
+            168 modules. Independent review ACCEPTED it; log SHA
             0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. It provides no
             deployed signer, protected infrastructure, receipt, hardware qualification, or authority.
 
@@ -266,7 +266,7 @@
             262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Authority is none,
             benchmark_comparable=false and authenticated_AB=false. Independent review found no blocker;
             integration ea6ef07 changed only proof-inventory ordering; the result remains present in current
-            integration e3dc8d6.
+            integration 1addeb3.
 
             Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
             e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses public fe2o3
@@ -279,8 +279,9 @@
 
             Neither hardware observation is serving, authenticated A/B, comparable TTFT/TPOT, a
             vLLM/SGLang comparison, or qualification. Physical device-KV radix prefix reuse is M2;
-            symmetric memory and MTP remain deferred. The R33 executor still supports one window, not
-            one window, not the required 20; its active successor remains unintegrated. No serving endpoint,
+            symmetric memory and MTP remain deferred. The integrated R33 executor still supports one
+            window, not the required 20; candidate a996 implements 20-window residency but is unintegrated
+            with probable lifecycle/custody HOLD items under review. No serving endpoint,
             authenticated A/B, comparable TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification
             receipt, or production authority exists.
           </p>
