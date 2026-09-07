@@ -548,6 +548,21 @@ impl M1AllocatedScheduledStepV1 {
         self.partitioned_memory.reserve_s1_k4_rollover_output()
     }
 
+    /// Preallocates the inactive output for one exact finite-speculative successor.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a selection outside the admitted finite-speculative catalog,
+    /// repeated reservation, or the exact host allocation failure while this
+    /// allocated step retains the model/allocation pool.
+    pub fn reserve_finite_speculative_rollover_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<(), crate::device_cache::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.partitioned_memory
+            .reserve_finite_speculative_rollover_output(selection)
+    }
+
     /// Preallocates inactive outputs for every finite speculative successor.
     ///
     /// This catalog must be complete before first queue construction because

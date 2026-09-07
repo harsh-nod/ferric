@@ -5624,12 +5624,13 @@ mod tests {
             workspace_plan(prefill.target(), 91),
         );
         let first = M1ServingQueuedGenerationInputV1::first_publication(
-            M1ServingQueuedFirstPublicationV1::new(
+            M1ServingQueuedFirstPublicationV1::new_with_finite_speculative_successor(
                 M1ServingQueuedGenerationBindingV1::new(
                     prefill,
                     vec![request].into_boxed_slice(),
                     prefill_epoch,
                 ),
+                speculative,
                 memory,
                 prefill_tables,
                 prefill_preparation_plans,

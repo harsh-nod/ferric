@@ -1031,6 +1031,8 @@ impl M1S1K4RolloverOutputPortfolioV1 {
 pub enum M1S1K4RolloverOutputReserveErrorV1 {
     /// This pool already retains a reserve or an activated predecessor output.
     AlreadyReserved(M1S1K4RolloverOutputPortfolioStateV1),
+    /// The requested output is not in the admitted finite-speculative catalog.
+    UnsupportedSelection(Qwen3PlanSelection),
     /// The compact S1/K4 output allocation failed.
     Completion(M1CompletionOutputErrorV1),
     /// Independent S1/K4 choice capture failed and retains the compact output.
@@ -1057,7 +1059,7 @@ impl std::error::Error for M1S1K4RolloverOutputReserveErrorV1 {
         match self {
             Self::Completion(source) => Some(source),
             Self::Diagnostic(source) => Some(source.error()),
-            Self::AlreadyReserved(_) => None,
+            Self::AlreadyReserved(_) | Self::UnsupportedSelection(_) => None,
         }
     }
 }
@@ -1205,7 +1207,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
     }
 
     /// Activates one exact preallocated finite-speculative output while
-    /// retaining every unused catalog member and the replaced direct output.
+    /// retaining every unused bound-portfolio member and the replaced direct output.
     ///
     /// # Errors
     ///
@@ -2160,6 +2162,12 @@ fn preflight_finite_speculative_output_rotation<T>(
     if !finite_speculative_rollover_reserve_projection_is_valid(prior, prior_speculative) {
         return Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift);
     }
+    if unused.is_empty() {
+        if retained_capacity < 1 {
+            return Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCapacityDrift);
+        }
+        return Ok(0);
+    }
     if unused.len() != M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.len() - 1 {
         return Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCountDrift);
     }
@@ -2317,6 +2325,19 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         &mut self,
     ) -> Result<(), M1S1K4RolloverOutputReserveErrorV1> {
         self.reserve_finite_speculative_rollover_output_catalog(&[M1_S1_K4_TARGET_SELECTION_V1])
+    }
+
+    /// Preallocates one exact inactive finite-speculative successor output.
+    pub(crate) fn reserve_finite_speculative_rollover_output(
+        &mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<(), M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        if !M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1.contains(&selection) {
+            return Err(M1S1K4RolloverOutputReserveErrorV1::UnsupportedSelection(
+                selection,
+            ));
+        }
+        self.reserve_finite_speculative_rollover_output_catalog(&[selection])
     }
 
     /// Preallocates outputs and independent diagnostic choices for every
@@ -7147,6 +7168,38 @@ mod tests {
                     |projection| *projection,
                 ),
                 Ok(reserve_index)
+            );
+        }
+    }
+
+    #[test]
+    fn finite_output_rotation_accepts_every_exact_singleton_portfolio() {
+        for prior_selection in M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1 {
+            let next_prefill = prefill_for_finite_speculative(prior_selection);
+            let unused = Vec::<M1CompletionOutputBindingProjectionV1>::with_capacity(1);
+            assert_eq!(
+                preflight_finite_speculative_output_rotation(
+                    next_prefill,
+                    prior_selection,
+                    output_projection(next_prefill, DirectDiagnostic),
+                    output_projection(prior_selection, SpeculativeDiagnostic),
+                    &unused,
+                    unused.capacity(),
+                    |projection| *projection,
+                ),
+                Ok(0)
+            );
+            assert_eq!(
+                preflight_finite_speculative_output_rotation(
+                    next_prefill,
+                    prior_selection,
+                    output_projection(next_prefill, DirectDiagnostic),
+                    output_projection(prior_selection, SpeculativeDiagnostic),
+                    &unused,
+                    0,
+                    |projection| *projection,
+                ),
+                Err(M1FiniteSpeculativeOutputRotationErrorV1::ReserveCapacityDrift)
             );
         }
     }

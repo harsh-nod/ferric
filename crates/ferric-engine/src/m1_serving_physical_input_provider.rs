@@ -11,9 +11,10 @@
 use core::fmt;
 use std::collections::{TryReserveError, VecDeque};
 
+use fe2o3_kfd::GFX942_MAX_FIXED_DISPATCH_DATA_V1;
 use ferric_spec::{
-    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, RequestId, TokenId,
-    ValidatedM1StepInputs,
+    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection,
+    RequestId, TokenId, ValidatedM1StepInputs,
 };
 
 use crate::{
@@ -29,6 +30,15 @@ use crate::{
     M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
     M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
 };
+
+const M1_MODEL_ALLOCATION_COUNT_V1: usize = 4;
+const M1_PAIRED_WORKSPACE_ALLOCATION_COUNT_V1: usize = 2;
+const M1_TARGET_ONLY_WORKSPACE_ALLOCATION_COUNT_V1: usize = 1;
+const M1_SPECULATIVE_WORKSPACE_ALLOCATION_COUNT_V1: usize = 2;
+const M1_COMPACT_OUTPUT_ALLOCATION_COUNT_V1: usize = 1;
+const M1_DIRECT_DIAGNOSTIC_ALLOCATION_COUNT_V1: usize = 1;
+const M1_SPECULATIVE_DIAGNOSTIC_ALLOCATION_COUNT_V1: usize = 2;
+const M1_EXACT_SUCCESSOR_OUTPUT_ALLOCATION_COUNT_V1: usize = 3;
 
 /// Exact operation for which one queued physical input is valid.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -111,6 +121,7 @@ impl M1ServingQueuedGenerationBindingV1 {
 #[derive(Debug)]
 pub struct M1ServingQueuedFirstPublicationV1 {
     binding: M1ServingQueuedGenerationBindingV1,
+    finite_speculative_successor: Option<M1ServingPlanV1>,
     memory: M1PartitionedModelMemoryKvPoolV1,
     tables: M1FullStepKvWorkspaceTablesV1,
     preparation_plans: M1FullStepWorkspacePlans,
@@ -132,6 +143,31 @@ impl M1ServingQueuedFirstPublicationV1 {
     ) -> Self {
         Self {
             binding,
+            finite_speculative_successor: None,
+            memory,
+            tables,
+            preparation_plans,
+            recipe_plans,
+            selected,
+        }
+    }
+
+    /// Joins first-publication owners to one exact future finite successor.
+    ///
+    /// The provider validates the complete predecessor/successor transition
+    /// before dequeueing this owner or allocating any workspace or output.
+    pub const fn new_with_finite_speculative_successor(
+        binding: M1ServingQueuedGenerationBindingV1,
+        finite_speculative_successor: M1ServingPlanV1,
+        memory: M1PartitionedModelMemoryKvPoolV1,
+        tables: M1FullStepKvWorkspaceTablesV1,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+        selected: Vec<ActiveDeviceKvCache>,
+    ) -> Self {
+        Self {
+            binding,
+            finite_speculative_successor: Some(finite_speculative_successor),
             memory,
             tables,
             preparation_plans,
@@ -582,8 +618,10 @@ pub enum M1ServingPhysicalInputPreparationPhaseV1 {
     FirstWorkspacePreparation,
     FirstWorkspaceAllocation,
     S1K4OutputReservation,
+    FiniteSpeculativeOutputReservation,
     CompletionOutputAllocation,
     SemanticEvidenceAllocation,
+    PrepublicationAllocationRoster,
     SameShapeKvReservation,
     SameShapeWorkspacePreparation,
     S1K4KvReservation,
@@ -605,6 +643,14 @@ pub enum M1ServingPhysicalInputPreparationErrorV1 {
     SelectedRosterMismatch,
     DeviceMismatch,
     UnsupportedPlanShape,
+    FiniteSpeculativeSuccessorUnbound,
+    FiniteSpeculativeSuccessorBindingMismatch,
+    UnexpectedFiniteSpeculativeSuccessorBinding,
+    FixedDispatchDataRosterMismatch {
+        expected: usize,
+        actual: usize,
+        maximum: usize,
+    },
     LowerRejected,
 }
 
@@ -1004,7 +1050,7 @@ fn exact_batch_binding_matches(
 fn first_physical_preflight(
     input: &M1ServingQueuedFirstPublicationV1,
     batch: &M1ServingBatchPlanV1,
-) -> Result<(), M1ServingPhysicalInputPreparationErrorV1> {
+) -> Result<Option<Qwen3PlanSelection>, M1ServingPhysicalInputPreparationErrorV1> {
     let expected_kind = workspace_kind(batch.plan());
     if input.tables.kind() != expected_kind
         || input.preparation_plans.kind() != expected_kind
@@ -1029,7 +1075,65 @@ fn first_physical_preflight(
     {
         return Err(M1ServingPhysicalInputPreparationErrorV1::DeviceMismatch);
     }
-    Ok(())
+    exact_finite_speculative_successor(batch.plan(), input.finite_speculative_successor)
+}
+
+fn exact_finite_speculative_successor(
+    predecessor: M1ServingPlanV1,
+    successor: Option<M1ServingPlanV1>,
+) -> Result<Option<Qwen3PlanSelection>, M1ServingPhysicalInputPreparationErrorV1> {
+    match (is_finite_rollover_source_plan(predecessor), successor) {
+        (false, None) => Ok(None),
+        (true, None) => {
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorUnbound)
+        }
+        (true, Some(successor))
+            if is_admitted_finite_speculative_plan(successor)
+                && crate::m1_serving_registry::admit_m1_production_rollover_transition_v1(
+                    predecessor,
+                    successor,
+                )
+                .is_some() =>
+        {
+            Ok(Some(successor.target()))
+        }
+        (true, Some(_)) => {
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorBindingMismatch)
+        }
+        (false, Some(_)) => Err(
+            M1ServingPhysicalInputPreparationErrorV1::UnexpectedFiniteSpeculativeSuccessorBinding,
+        ),
+    }
+}
+
+fn expected_first_publication_allocation_count(
+    plan: M1ServingPlanV1,
+    finite_speculative_successor: Option<Qwen3PlanSelection>,
+) -> usize {
+    let workspace_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => M1_PAIRED_WORKSPACE_ALLOCATION_COUNT_V1,
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1_TARGET_ONLY_WORKSPACE_ALLOCATION_COUNT_V1,
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1_SPECULATIVE_WORKSPACE_ALLOCATION_COUNT_V1
+        }
+    };
+    let diagnostic_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            M1_DIRECT_DIAGNOSTIC_ALLOCATION_COUNT_V1
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1_SPECULATIVE_DIAGNOSTIC_ALLOCATION_COUNT_V1
+        }
+    };
+    M1_MODEL_ALLOCATION_COUNT_V1
+        + workspace_allocations
+        + M1_COMPACT_OUTPUT_ALLOCATION_COUNT_V1
+        + diagnostic_allocations
+        + finite_speculative_successor.map_or(0, |_| M1_EXACT_SUCCESSOR_OUTPUT_ALLOCATION_COUNT_V1)
 }
 
 fn continuation_physical_preflight(
@@ -1271,13 +1375,16 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
         let M1ServingQueuedGenerationInputV1::FirstPublication(front) = front else {
             unreachable!("phase checked above")
         };
-        if let Err(error) = first_physical_preflight(front, batch) {
-            return Err(preparation_failure(
-                M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
-                error,
-                scheduled,
-            ));
-        }
+        let finite_speculative_successor = match first_physical_preflight(front, batch) {
+            Ok(successor) => successor,
+            Err(error) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+                    error,
+                    scheduled,
+                ));
+            }
+        };
 
         let Some(M1ServingQueuedGenerationInputV1::FirstPublication(input)) =
             self.pending.pop_front()
@@ -1286,6 +1393,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
         };
         let M1ServingQueuedFirstPublicationV1 {
             binding,
+            finite_speculative_successor: bound_finite_speculative_successor,
             memory,
             tables,
             preparation_plans,
@@ -1301,6 +1409,7 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                     M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
                     (
                         binding,
+                        bound_finite_speculative_successor,
                         memory,
                         tables,
                         preparation_plans,
@@ -1318,7 +1427,14 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                     return Err(preparation_failure(
                         M1ServingPhysicalInputPreparationPhaseV1::FirstWorkspacePreparation,
                         M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                        (binding, memory, selected, recipe, failure),
+                        (
+                            binding,
+                            bound_finite_speculative_successor,
+                            memory,
+                            selected,
+                            recipe,
+                            failure,
+                        ),
                     ));
                 }
             };
@@ -1328,16 +1444,29 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                 return Err(preparation_failure(
                     M1ServingPhysicalInputPreparationPhaseV1::FirstWorkspaceAllocation,
                     M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, selected, recipe, failure),
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
                 ));
             }
         };
-        if is_finite_rollover_source_plan(binding.plan()) {
-            if let Err(failure) = allocated.reserve_finite_speculative_rollover_outputs() {
+        if let Some(successor) = finite_speculative_successor {
+            if let Err(failure) = allocated.reserve_finite_speculative_rollover_output(successor) {
                 return Err(preparation_failure(
-                    M1ServingPhysicalInputPreparationPhaseV1::S1K4OutputReservation,
+                    M1ServingPhysicalInputPreparationPhaseV1::FiniteSpeculativeOutputReservation,
                     M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, allocated, selected, recipe, failure),
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        allocated,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
                 ));
             }
         }
@@ -1348,7 +1477,14 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                 return Err(preparation_failure(
                     M1ServingPhysicalInputPreparationPhaseV1::CompletionOutputAllocation,
                     M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                    (binding, allocated, selected, recipe, failure),
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        allocated,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
                 ));
             }
         };
@@ -1361,7 +1497,14 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                         return Err(preparation_failure(
                             M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
                             M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                            (binding, allocated, selected, recipe, failure),
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
                         ));
                     }
                 }
@@ -1379,7 +1522,14 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                         return Err(preparation_failure(
                             M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
                             M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                            (binding, allocated, selected, recipe, failure),
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
                         ));
                     }
                 }
@@ -1391,12 +1541,42 @@ impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
                         return Err(preparation_failure(
                             M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
                             M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
-                            (binding, allocated, selected, recipe, failure),
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
                         ));
                     }
                 }
             }
         };
+        let actual = allocated.partitioned_memory().retained_allocation_count();
+        let expected = expected_first_publication_allocation_count(
+            binding.plan(),
+            finite_speculative_successor,
+        );
+        if actual != expected || actual > GFX942_MAX_FIXED_DISPATCH_DATA_V1 {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::PrepublicationAllocationRoster,
+                M1ServingPhysicalInputPreparationErrorV1::FixedDispatchDataRosterMismatch {
+                    expected,
+                    actual,
+                    maximum: GFX942_MAX_FIXED_DISPATCH_DATA_V1,
+                },
+                (
+                    binding,
+                    bound_finite_speculative_successor,
+                    allocated,
+                    selected,
+                    recipe,
+                    completion_output,
+                ),
+            ));
+        }
         Ok(M1ServingPreparedFirstPublicationV1::new(
             allocated,
             recipe,
@@ -1549,12 +1729,14 @@ mod tests {
     };
 
     use super::{
-        dispatch_intent, is_admitted_finite_speculative_plan, is_exact_s1_k4_plan,
-        is_finite_rollover_source_plan, preflight_first_binding, preflight_prompt_row,
-        preflight_prompt_rows, semantic_evidence, workspace_kind,
+        dispatch_intent, exact_finite_speculative_successor,
+        expected_first_publication_allocation_count, is_admitted_finite_speculative_plan,
+        is_exact_s1_k4_plan, is_finite_rollover_source_plan, preflight_first_binding,
+        preflight_prompt_row, preflight_prompt_rows, semantic_evidence, workspace_kind,
         M1QueuedServingPhysicalInputProviderV1, M1ServingFirstPublicationWorkMatchErrorV1,
-        M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
-        M1ServingQueuedGenerationPhaseV1, M1ServingQueuedPairedPrefillNewWindowV1,
+        M1ServingPhysicalInputPreparationErrorV1, M1ServingQueuedGenerationBindingV1,
+        M1ServingQueuedGenerationInputV1, M1ServingQueuedGenerationPhaseV1,
+        M1ServingQueuedPairedPrefillNewWindowV1, GFX942_MAX_FIXED_DISPATCH_DATA_V1,
     };
     use crate::{
         LogicalRunnerDeclaration, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
@@ -1907,6 +2089,157 @@ mod tests {
             );
         }
         assert!(!is_admitted_finite_speculative_plan(direct));
+    }
+
+    #[test]
+    fn exact_finite_successor_binding_accepts_only_admitted_predecessor_pairs() {
+        let paired_s1 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        let finite = [
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+        ];
+
+        for successor in &finite[..3] {
+            assert_eq!(
+                exact_finite_speculative_successor(paired_s1, Some(*successor)),
+                Ok(Some(successor.target()))
+            );
+        }
+        assert_eq!(
+            exact_finite_speculative_successor(paired_s8, Some(finite[3])),
+            Ok(Some(finite[3].target()))
+        );
+        for (predecessor, successor) in [(paired_s1, finite[3]), (paired_s8, finite[0])] {
+            assert_eq!(
+                exact_finite_speculative_successor(predecessor, Some(successor)),
+                Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorBindingMismatch)
+            );
+        }
+        assert_eq!(
+            exact_finite_speculative_successor(paired_s1, None),
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorUnbound)
+        );
+        assert_eq!(
+            exact_finite_speculative_successor(finite[0], Some(finite[0])),
+            Err(M1ServingPhysicalInputPreparationErrorV1::UnexpectedFiniteSpeculativeSuccessorBinding)
+        );
+        assert_eq!(
+            exact_finite_speculative_successor(finite[0], None),
+            Ok(None)
+        );
+    }
+
+    #[test]
+    fn admitted_first_publication_allocation_rosters_are_exact_and_bounded() {
+        let paired_s1 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        let long_prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        let direct = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let finite = [
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+        ];
+
+        for (predecessor, successor) in [
+            (paired_s1, finite[0]),
+            (paired_s1, finite[1]),
+            (paired_s1, finite[2]),
+            (paired_s8, finite[3]),
+        ] {
+            assert_eq!(
+                expected_first_publication_allocation_count(predecessor, Some(successor.target())),
+                11
+            );
+        }
+        assert_eq!(
+            expected_first_publication_allocation_count(long_prefill, None),
+            8
+        );
+        assert_eq!(expected_first_publication_allocation_count(direct, None), 7);
+        for speculative in finite {
+            assert_eq!(
+                expected_first_publication_allocation_count(speculative, None),
+                9
+            );
+        }
+        for count in [7, 8, 9, 11] {
+            assert!(count <= GFX942_MAX_FIXED_DISPATCH_DATA_V1);
+        }
     }
 
     #[test]
