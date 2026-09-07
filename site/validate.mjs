@@ -78,9 +78,11 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "36e37c1d6e62c70845fd3ca874375485b3b2f98d",
-  integrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
-  integrationTree: "f331a34c08394d4fc599880ac342baa51140eca3",
+  siteRefreshBase: "f98f2704e7c0d5eac324ca90c28bf6fb5c1f5cc5",
+  integrationCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
+  integrationTree: "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
+  priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
+  priorValidatedIntegrationTree: "f331a34c08394d4fc599880ac342baa51140eca3",
   residentTailCommit: "886a0d38480887e05cc4c4dde858ff56ad155ca4",
   residentReconcileCommit: "c94c69f3a5cfd763c45747e943caf57e215d1a79",
   residentFirstRoundCommit: "de490d6ca68bb6ebab993774c008fd8553a1895b",
@@ -102,18 +104,45 @@ const expectedCurrent = {
   workerV3SourcePinCommit: "181cc2ab2d1fc781513e0ef557c5838c71e1a83b",
   workerV3CollectorCommit: "2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b",
   workerV3ProofCommit: "caf83e690d47b131f26a31111b4978d2ba13d133",
-  workerV3CandidateCommit: "0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa",
-  workerV3CandidateTree: "2083c4c38e1115d098a708e7b82255d2bf767cb5",
-  workerV3CandidateIntegrated: false,
-  workerV3ReviewDisposition: "hold",
+  workerV3CandidateCommit: "c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5",
+  workerV3CandidateTree: "9cc283baae4026257f18d0d4b6e9779abf98382d",
+  workerV3CandidateIntegrated: true,
+  workerV3ReviewDisposition: "integrate",
+  workerV3IntegratedSourcePinCommit: "61a40cad79b31124044fca198155492e6b151ef4",
+  workerV3IntegratedCollectorCommit: "2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c",
+  workerV3IntegratedProofCommit: "57973da0c3d362446361d1db026c19040bd20bdb",
+  workerV3IntegratedDependencyCommit: "7747409db8b4f3013456d99b5e418bc12bc72494",
+  workerV3IntegratedTailCommit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
   workerV3StrictProofPackagesPassed: 10,
   workerV3SameSourceNegativeProofsGreen: true,
-  workerV3FullQualificationAttempt: 3,
+  workerV3FullQualificationAttempt: 4,
   workerV3GeneratedSha2RuntimeTcbRowCommitted: true,
   workerV3FocusedSourceGateTestsPassed: 33,
   workerV3ExactDecoyRejectionGreen: true,
   workerV3FocusedValidationLogSha256: "ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49",
-  workerV3FullNegativeReleaseGateComplete: false,
+  workerV3FullNegativeReleaseGateComplete: true,
+  workerV3BothNegativeSuitesGreen: true,
+  workerV3FullQualificationReceiptEmitted: false,
+  workerV3FullQualificationBaseCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+  workerV3CurrentIntegrationFmtGreen: true,
+  combinedQualificationAttempt: 5,
+  combinedQualificationState: "running",
+  combinedQualificationRunning: true,
+  combinedPreflightGreen: true,
+  combinedPreflightLogSha256: "0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5",
+  combinedPreflightCuratedAdmissions: 7229,
+  r33TwentyWindowActive: true,
+  r33TwentyWindowIntegrated: false,
+  r33TwentyWindowValidationReported: false,
+  signerIpcCommit: "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
+  signerIpcTree: "969611f506286f250d027d619e25d04728312419",
+  signerIpcIntegrated: false,
+  signerIpcServiceTestsPassed: 58,
+  signerIpcServiceTestsIgnored: 3,
+  signerIpcAdapterTestsPassed: 88,
+  signerIpcSourceGateTestsPassed: 28,
+  signerIpcValidationLogSha256: "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
+  signerIpcHardwareQualified: false,
   successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
   successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -143,10 +172,10 @@ const expectedCurrent = {
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
-  sourceGateTestsPassed: 28,
+  sourceGateTestsPassed: 33,
   successorKvPendingVerusBodies: 16,
-  admissionBodiesTotal: 7874,
-  admissionModules: 168,
+  admissionBodiesTotal: 7922,
+  admissionModules: 170,
   admissionSourceGatesGreen: true,
   admissionTcbGatesGreen: true,
   combinedInventoryCurrent: true,
@@ -284,6 +313,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "priorValidatedIntegrationCommit",
+  "priorValidatedIntegrationTree",
   "residentTailCommit",
   "residentReconcileCommit",
   "residentFirstRoundCommit",
@@ -297,6 +328,14 @@ for (const key of [
   "workerV3ProofCommit",
   "workerV3CandidateCommit",
   "workerV3CandidateTree",
+  "workerV3IntegratedSourcePinCommit",
+  "workerV3IntegratedCollectorCommit",
+  "workerV3IntegratedProofCommit",
+  "workerV3IntegratedDependencyCommit",
+  "workerV3IntegratedTailCommit",
+  "workerV3FullQualificationBaseCommit",
+  "signerIpcCommit",
+  "signerIpcTree",
   "successorKvBridgeCommit",
   "successorKvBridgeTree",
   "engineeringSmokeRuntimeCommit",
@@ -324,11 +363,11 @@ for (const key of [
   assertCommit(project.current[key], `current.${key}`);
 }
 assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
-assert(project.current.admissionBodiesTotal === 7874, "admission body total drifted");
-assert(project.current.admissionModules === 168, "admission module count drifted");
+assert(project.current.admissionBodiesTotal === 7922, "admission body total drifted");
+assert(project.current.admissionModules === 170, "admission module count drifted");
 assert(project.current.admissionSourceGatesGreen === true, "source admission gates must remain green");
 assert(project.current.admissionTcbGatesGreen === true, "TCB admission gates must remain green");
-assert(project.current.combinedInventoryCurrent === true, "current admission inventory must remain explicit");
+assert(project.current.combinedInventoryCurrent === true, "current-head combined inventory must remain explicit");
 assert(project.current.integrationEngineTestsPassed === 711, "integration engine total drifted");
 assert(project.current.integrationEngineHardwareIgnored === 7, "integration engine hardware-ignore count drifted");
 assert(project.current.integrationEngineDoctestsPassed === 171, "integration doctest total drifted");
@@ -434,16 +473,35 @@ assert(project.current.genericProviderCandidateIntegrated === true, "accepted ge
 assert(project.current.genericProviderReviewDisposition === "integrate", "generic provider review disposition drifted");
 assert(project.current.genericProviderExactAllocationCount === 11, "generic provider allocation roster drifted");
 assert(project.current.genericProviderHardwareQualified === false, "generic provider must remain hardware-unqualified");
-assert(project.current.workerV3CandidateIntegrated === false, "Worker V3 candidate must remain unintegrated");
-assert(project.current.workerV3ReviewDisposition === "hold", "Worker V3 review disposition drifted");
+assert(project.current.workerV3CandidateIntegrated === true, "accepted Worker V3 candidate must remain integrated");
+assert(project.current.workerV3ReviewDisposition === "integrate", "Worker V3 review disposition drifted");
 assert(project.current.workerV3StrictProofPackagesPassed === 10, "Worker V3 strict proof package count drifted");
 assert(project.current.workerV3SameSourceNegativeProofsGreen === true, "Worker V3 same-source negative proofs must remain green");
-assert(project.current.workerV3FullQualificationAttempt === 3, "Worker V3 qualification attempt drifted");
+assert(project.current.workerV3FullQualificationAttempt === 4, "Worker V3 qualification attempt drifted");
 assert(project.current.workerV3GeneratedSha2RuntimeTcbRowCommitted === true, "Worker V3 generated sha2 runtime TCB row must remain committed");
 assert(project.current.workerV3FocusedSourceGateTestsPassed === 33, "Worker V3 focused source-gate count drifted");
 assert(project.current.workerV3ExactDecoyRejectionGreen === true, "Worker V3 exact decoy rejection must remain green");
 assertSha256(project.current.workerV3FocusedValidationLogSha256, "current.workerV3FocusedValidationLogSha256");
-assert(project.current.workerV3FullNegativeReleaseGateComplete === false, "Worker V3 full negative/release gate must remain incomplete");
+assert(project.current.workerV3FullNegativeReleaseGateComplete === true, "Worker V3 full negative/release gate must remain complete");
+assert(project.current.workerV3BothNegativeSuitesGreen === true, "Worker V3 negative suites must remain green");
+assert(project.current.workerV3FullQualificationReceiptEmitted === false, "Worker V3 qualification #4 must not claim a receipt");
+assert(project.current.workerV3CurrentIntegrationFmtGreen === true, "current integration formatting must remain green");
+assert(project.current.combinedQualificationAttempt === 5, "combined qualification attempt drifted");
+assert(project.current.combinedQualificationState === "running", "combined qualification state drifted");
+assert(project.current.combinedQualificationRunning === true, "combined qualification #5 must remain running");
+assert(project.current.combinedPreflightGreen === true, "combined qualification preflight must remain green");
+assertSha256(project.current.combinedPreflightLogSha256, "current.combinedPreflightLogSha256");
+assert(project.current.combinedPreflightCuratedAdmissions === 7229, "combined preflight admission count drifted");
+assert(project.current.r33TwentyWindowActive === true, "20-window R33 work must remain active");
+assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
+assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
+assert(project.current.signerIpcIntegrated === false, "signer IPC slice must remain unintegrated");
+assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
+assert(project.current.signerIpcServiceTestsIgnored === 3, "signer IPC ignored test count drifted");
+assert(project.current.signerIpcAdapterTestsPassed === 88, "signer IPC adapter test count drifted");
+assert(project.current.signerIpcSourceGateTestsPassed === 28, "signer IPC source-gate count drifted");
+assertSha256(project.current.signerIpcValidationLogSha256, "current.signerIpcValidationLogSha256");
+assert(project.current.signerIpcHardwareQualified === false, "signer IPC must remain hardware-unqualified");
 assertSha256(project.current.speculativeAttempt2SourceSha256, "current.speculativeAttempt2SourceSha256");
 assertSha256(project.current.speculativeAttempt2BinarySha256, "current.speculativeAttempt2BinarySha256");
 assertSha256(project.current.speculativeAttempt2StderrSha256, "current.speculativeAttempt2StderrSha256");
@@ -606,7 +664,9 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "36e37c1d6e62c70845fd3ca874375485b3b2f98d",
+  "f98f2704e7c0d5eac324ca90c28bf6fb5c1f5cc5",
+  "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
+  "4db7406eec1c1b53a2872bf711835a4ef74fa0b5",
   "e5d23e19973a01000129aaf2ec705b8993bd21c3",
   "f331a34c08394d4fc599880ac342baa51140eca3",
   "b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee",
@@ -621,8 +681,16 @@ const missingSnapshotClaims = [
   "181cc2ab2d1fc781513e0ef557c5838c71e1a83b",
   "2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b",
   "caf83e690d47b131f26a31111b4978d2ba13d133",
-  "0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa",
-  "2083c4c38e1115d098a708e7b82255d2bf767cb5",
+  "c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5",
+  "9cc283baae4026257f18d0d4b6e9779abf98382d",
+  "61a40cad79b31124044fca198155492e6b151ef4",
+  "2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c",
+  "57973da0c3d362446361d1db026c19040bd20bdb",
+  "7747409db8b4f3013456d99b5e418bc12bc72494",
+  "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+  "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
+  "969611f506286f250d027d619e25d04728312419",
+  "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
   "ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49",
   "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
   "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
@@ -812,12 +880,20 @@ const missingSnapshotClaims = [
   "171 doctests",
   "93 adapter",
   "all 10 strict proof packages",
-  "all same-source negative proofs",
-  "local runtime owner resolve edge drifted",
-  "unexpected promotion resolved dependency: source_pin_decoy",
-  "focused source gate 33/33",
-  "exact decoy rejection",
-  "full qualification #3",
+  "exact hostile dependency-decoy rejection",
+  "Full qualification #4",
+  "both negative suites",
+  "no qualification receipt",
+  "current integration formatting is green",
+  "combined exact qualification #5",
+  "running from clean committed",
+  "7,229",
+  "7,922",
+  "170 modules",
+  "0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5",
+  "active 20-window R33",
+  "58 service tests",
+  "88 adapter tests",
   "Physical device-KV prefix reuse is M2",
   "Authority is none",
   "608 verified and 0 errors",

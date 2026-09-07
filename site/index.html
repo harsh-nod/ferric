@@ -219,35 +219,43 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration e5d23e19973a01000129aaf2ec705b8993bd21c3, tree
-            f331a34c08394d4fc599880ac342baa51140eca3, carries independently accepted generic provider
-            b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9 atop reviewed resident head
-            68091859ce0710dc26cfb839d580e40ea0839253. The resident fixed S1/T128 bootstrap reserves
-            only its exact S1/K4 successor portfolio; the generic provider binds one exact admitted
-            S1/K4, S1/K8, S1/K16, or S8/K4 successor before allocation. Each roster is 11 queue-visible
-            allocations against KFD's maximum of 16. Exact combined remote validation passes 711 engine
-            target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores,
-            and all 28 source-gate tests. Compiler-rooted admission covers 7,874 bodies across 168 modules;
-            evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee.
-            This is host and source validation. Neither integrated path has hardware qualification;
-            arbitrary cross-shape switching, a resident daemon, serving, and production authority are not
-            claimed.
+            Current integration e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0, tree
+            4db7406eec1c1b53a2872bf711835a4ef74fa0b5, carries the independently accepted Worker V3
+            candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5, tree
+            9cc283baae4026257f18d0d4b6e9779abf98382d, as integration commits
+            61a40cad79b31124044fca198155492e6b151ef4,
+            2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c,
+            57973da0c3d362446361d1db026c19040bd20bdb,
+            7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d6. Full qualification #4 passed all
+            10 strict proof packages and both negative suites, including exact hostile dependency-decoy
+            rejection. It emitted no qualification receipt because obsolete base
+            ea6ef07c7b13d31c84b14d2ad06f19f8d1220665 failed the later formatting step; current
+            integration formatting is green. Combined exact qualification #5 is running from clean
+            committed e3dc8d6 source. Its preflight is green: formatting, 33/33 source-gate tests,
+            byte-identical VERIFIED_MODULES and four generated TCB inventories, 7,229 exact curated
+            admission identities, and 170 modules / 7,922 bodies. Preflight log SHA
+            0f4dd5ff5e493c83fd465fda9da5e2c5ad555cfc6d078014ba3f1bb16699dfb5. No full
+            result or receipt is claimed. Authority is none and all 33 M1 exit gates remain open.
 
-            Rebased Worker V3 commits 181cc2ab2d1fc781513e0ef557c5838c71e1a83b,
-            2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b, and
-            caf83e690d47b131f26a31111b4978d2ba13d133 are substantively repaired. All 10 strict proof
-            packages and all same-source negative proofs pass. Full qualification #2 failed dependency
-            hostile-fixture policy because the fixture expected “local runtime owner resolve edge drifted”
-            while the checker rejected earlier with “unexpected promotion resolved dependency:
-            source_pin_decoy”. DCO repair 0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa, tree
-            2083c4c38e1115d098a708e7b82255d2bf767cb5, commits the corrected diagnostic and exact
-            generated sha2 runtime TCB row. Focused source gate 33/33 and exact decoy rejection pass;
-            log SHA ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49.
-            The Worker remains on HOLD and unintegrated while full qualification #3 runs from clean
-            committed source and until final review. Authority is none.
+            Prior combined remote validation at e5d23e19973a01000129aaf2ec705b8993bd21c3,
+            tree f331a34c08394d4fc599880ac342baa51140eca3, passes 711 engine target tests with 7
+            hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and all 28
+            source-gate tests. Compiler-rooted admission covers 7,874 bodies across 168 modules; evidence
+            aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee.
+            These are prior-head host and source results, not current-head qualification evidence. The
+            generic provider and resident bootstrap each retain an exact 11-allocation portfolio against
+            KFD's maximum of 16; neither path has hardware qualification.
+
+            An active 20-window R33 slice remains unintegrated with no new validation claim. Unintegrated
+            signer IPC commit f657c5f1ae4cdbf8039ed55933b4f0e3385b47de, tree
+            969611f506286f250d027d619e25d04728312419, passes its latest remote 58 service tests with 3
+            hardware ignores, 88 adapter tests, both clippy gates, and 28/28 source-gate tests over 7,874
+            bodies in 168 modules; log SHA
+            0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. It provides no
+            deployed signer, protected infrastructure, receipt, hardware qualification, or authority.
 
             Attempt 2 failed before queue publication because 20 queue-visible allocations exceeded
-            fe2o3's maximum of 16. Unintegrated DCO commit
+            fe2o3's maximum of 16. DCO commit
             f18ffe2566112cb8b9518562afe2c8919577c907, tree
             04d09e03af9a8257d211382a6f7c91909dda7df6, reduced the roster to 11 and completed paired
             prefill plus one S1/K4 round on gfx942. It accepted zero draft tokens and published target
@@ -258,7 +266,7 @@
             262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Authority is none,
             benchmark_comparable=false and authenticated_AB=false. Independent review found no blocker;
             integration ea6ef07 changed only proof-inventory ordering; the result remains present in current
-            integration e5d23e1.
+            integration e3dc8d6.
 
             Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
             e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses public fe2o3
@@ -272,7 +280,9 @@
             Neither hardware observation is serving, authenticated A/B, comparable TTFT/TPOT, a
             vLLM/SGLang comparison, or qualification. Physical device-KV radix prefix reuse is M2;
             symmetric memory and MTP remain deferred. The R33 executor still supports one window, not
-            the required 20, and all 33 M1 exit gates remain open.
+            one window, not the required 20; its active successor remains unintegrated. No serving endpoint,
+            authenticated A/B, comparable TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification
+            receipt, or production authority exists.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
