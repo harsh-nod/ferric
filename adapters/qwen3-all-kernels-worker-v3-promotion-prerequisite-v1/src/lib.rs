@@ -440,8 +440,8 @@ impl M1AllKernelsPromotionRequestEvidenceV1 {
 /// external evidence owners. It is intentionally not `Clone` or serializable.
 /// Even while held, it is not a production promotion or `CURRENT` authority.
 pub struct M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
-    _recovered: RecoveredWorkerV3LoadEnvelopeV2,
-    _current_publication: DurableCurrentLinkPublicationTokenV1,
+    recovered: RecoveredWorkerV3LoadEnvelopeV2,
+    current_publication: DurableCurrentLinkPublicationTokenV1,
     _protected_receipt: M1AllKernelsAuthenticatedProtectedVerifierReceiptV1,
     _compiler_current: VerifiedCompilerExecutionCurrentRecordV3,
     request_evidence: M1AllKernelsPromotionRequestEvidenceV1,
@@ -589,7 +589,7 @@ impl M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
         M1AllKernelsWorkerV3SealedPromotionHandoffV1,
         M1AllKernelsPromotionPrerequisiteErrorV1,
     > {
-        revalidate_retained_current_publication(&self._recovered, &self._current_publication)?;
+        revalidate_retained_current_publication(&self.recovered, &self.current_publication)?;
         Ok(M1AllKernelsWorkerV3SealedPromotionHandoffV1 { owner: self })
     }
 }
@@ -606,6 +606,9 @@ impl M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
 ///
 /// Fails closed if authentication, exact V2 recovery, source/artifact binding,
 /// compiler-current verification, or any cross-record coordinate differs.
+// The order is security-relevant: every authenticated owner and coordinate is retained until the
+// final proof gate and move-only owner construction.
+#[allow(clippy::too_many_lines)]
 pub fn collect_m1_all_kernels_promotion_prerequisite_v1(
     directory: &RetainedDurableDirectoryV1,
     attempt: BuildAttempt,
@@ -753,8 +756,8 @@ pub fn collect_m1_all_kernels_promotion_prerequisite_v1(
         return Err(M1AllKernelsPromotionPrerequisiteErrorV1::RefinementRejected);
     }
     Ok(M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
-        _recovered: recovered,
-        _current_publication: current_publication,
+        recovered,
+        current_publication,
         _protected_receipt: protected_receipt,
         _compiler_current: compiler_current,
         request_evidence,
@@ -786,6 +789,8 @@ fn revalidate_retained_current_publication(
     Ok(())
 }
 
+// Each Boolean corresponds one-to-one with an independently authenticated compiler claim.
+#[allow(clippy::struct_excessive_bools)]
 struct M1CompilerClaimMatchesV1 {
     subject: bool,
     carriage: bool,
@@ -806,6 +811,8 @@ struct M1CompilerClaimMatchesV1 {
     external_rollback_verification: bool,
 }
 
+// Constructing and rejecting the complete coordinate set together prevents partial validation.
+#[allow(clippy::too_many_lines)]
 fn validate_compiler_claims(
     claims: &M1AllKernelsProtectedReceiptCompilerClaimsV1,
     wire: &fe2o3_runtime_protocol::WorkerV3LoadEnvelopeWireV2,

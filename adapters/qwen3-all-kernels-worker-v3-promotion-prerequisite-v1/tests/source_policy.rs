@@ -189,7 +189,7 @@ fn hostile_request_or_stale_publication_cannot_produce_a_prerequisite() {
     assert!(token_acquisition < token_binding);
     assert!(token_binding < locked_revalidation);
     assert!(SOURCE.contains("DurableLink(Box<DurableLinkPublicationError>)"));
-    assert!(SOURCE.contains("_current_publication: DurableCurrentLinkPublicationTokenV1"));
+    assert!(SOURCE.contains("current_publication: DurableCurrentLinkPublicationTokenV1"));
 }
 
 #[test]

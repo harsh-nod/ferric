@@ -12,6 +12,8 @@ use vstd::prelude::*;
 verus! {
 
 /// Exact ordered all-12 entry correlation observed by the collector.
+// Each Boolean is an independent ordered roster coordinate in the refinement theorem.
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct M1AllKernelsOrderedEntryRefinementV1 {
     pub(super) entry_00: bool,
     pub(super) entry_01: bool,
@@ -62,6 +64,8 @@ impl M1AllKernelsOrderedEntryRefinementV1 {
 }
 
 /// Every independently checked coordinate needed for collector success.
+// Keeping the coordinates explicit makes omission visible in the proof conjunction.
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct M1AllKernelsCollectorRefinementV1 {
     pub(super) protected_receipt_authenticated: bool,
     pub(super) protected_service_request: bool,
@@ -129,6 +133,8 @@ impl M1AllKernelsCollectorRefinementV1 {
 }
 
 /// Authority-free projection returned by the executable refinement gate.
+// These independent negative-authority facts are the theorem's public result coordinates.
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct M1AllKernelsCollectorRefinementOutcomeV1 {
     pub(super) accepted: bool,
     pub(super) is_current: bool,
