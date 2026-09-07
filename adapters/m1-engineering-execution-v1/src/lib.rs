@@ -908,25 +908,58 @@ fn validate_inspection(
     }
 
     let descriptors = inspection.descriptor_table().kernels();
-    let expected = M1AllKernelsWorkerV3RosterV1::ENTRIES;
-    if descriptors.len() != M1_PHYSICAL_PROGRAM_COUNT_V1
-        || descriptors.len() != expected.len()
-        || descriptors
-            .iter()
-            .zip(expected)
-            .any(|(descriptor, expected)| {
-                *descriptor.kernel_id().as_bytes() != expected.kernel_binding_id()
-                    || descriptor.logical_name().as_str() != expected.logical_name()
-                    || descriptor.entry_name().as_str() != expected.export_name()
-                    || !descriptor_symbol_matches(
-                        descriptor.descriptor_symbol().as_str(),
-                        expected.export_name(),
-                    )
-            })
-    {
+    let descriptor_coordinates = descriptors
+        .iter()
+        .map(|descriptor| {
+            (
+                descriptor.logical_name().as_str(),
+                descriptor.entry_name().as_str(),
+                descriptor.descriptor_symbol().as_str(),
+            )
+        })
+        .collect::<Vec<_>>();
+    if !current_ferric_descriptor_roster_matches(&descriptor_coordinates) {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::CurrentFerricDescriptorRoster);
     }
     Ok(())
+}
+
+fn current_ferric_descriptor_roster_matches(actual: &[(&str, &str, &str)]) -> bool {
+    let expected = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+    if actual.len() != M1_PHYSICAL_PROGRAM_COUNT_V1 || actual.len() != expected.len() {
+        return false;
+    }
+
+    // The finalizer has already checked unique compiler-derived KernelIds, their
+    // canonical order, and the descriptor digest. Direct host marker builds use
+    // a documented fallback crate-binding namespace, so their IDs and order are
+    // not comparable to an exact compiler observation. Match the exact semantic
+    // coordinates as a bijective set instead.
+    if actual
+        .iter()
+        .enumerate()
+        .any(|(index, left)| actual.iter().skip(index + 1).any(|right| left.0 == right.0))
+        || expected.iter().enumerate().any(|(index, left)| {
+            expected
+                .iter()
+                .skip(index + 1)
+                .any(|right| left.logical_name() == right.logical_name())
+        })
+    {
+        return false;
+    }
+
+    actual
+        .iter()
+        .all(|(logical_name, entry_name, descriptor_symbol)| {
+            expected
+                .iter()
+                .find(|entry| entry.logical_name() == *logical_name)
+                .is_some_and(|entry| {
+                    *entry_name == entry.export_name()
+                        && descriptor_symbol_matches(descriptor_symbol, entry.export_name())
+                })
+        })
 }
 
 fn descriptor_symbol_matches(actual: &str, entry: &str) -> bool {
@@ -1870,6 +1903,43 @@ mod tests {
         let public_structural_conversion = ["pub fn into_", "structural_artifact"].concat();
         assert!(!source.contains(&public_structural_conversion));
         assert!(source.contains("Calling this adapter-owned function is the explicit consent"));
+    }
+
+    #[test]
+    fn descriptor_roster_accepts_compiler_id_order_and_rejects_hostile_coordinates() {
+        let expected = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+        let symbols = expected
+            .iter()
+            .map(|entry| format!("{}.kd", entry.export_name()))
+            .collect::<Vec<_>>();
+        let mut actual = expected
+            .iter()
+            .zip(&symbols)
+            .map(|(entry, symbol)| (entry.logical_name(), entry.export_name(), symbol.as_str()))
+            .collect::<Vec<_>>();
+
+        assert!(current_ferric_descriptor_roster_matches(&actual));
+        actual.rotate_left(5);
+        assert!(
+            current_ferric_descriptor_roster_matches(&actual),
+            "compiler-derived KernelId order is independent of fallback host marker order"
+        );
+
+        let original = actual[0];
+        actual[0].0 = actual[1].0;
+        assert!(!current_ferric_descriptor_roster_matches(&actual));
+        actual[0] = original;
+
+        actual[0].1 = "hostile_entry_substitution";
+        assert!(!current_ferric_descriptor_roster_matches(&actual));
+        actual[0] = original;
+
+        actual[0].2 = "hostile_descriptor_symbol.kd";
+        assert!(!current_ferric_descriptor_roster_matches(&actual));
+        actual[0] = original;
+
+        actual.pop();
+        assert!(!current_ferric_descriptor_roster_matches(&actual));
     }
 
     #[test]
