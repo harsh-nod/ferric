@@ -324,16 +324,15 @@ pub fn ferric_qwen3_compact_completion_v1(
     if sequence >= sequences {
         fe2o3_device::trap();
     }
-    let Some(record_row) = invocation.checked_row_striped_2d::<64, 2>() else {
-        fe2o3_device::trap();
-    };
-
     let live = memory::volatile_load(active_lengths, sequence) as usize;
     let direct = speculative_k == 0;
     if live > active_tokens || (!direct && live != 0 && live != active_tokens) {
         fe2o3_device::trap();
     }
     if live == 0 {
+        let Some(record_row) = thread::index_1d().checked_row_striped_2d::<64, 2>() else {
+            fe2o3_device::trap();
+        };
         if !records.write_row_striped_2d(
             &record_row,
             0,
@@ -344,17 +343,20 @@ pub fn ferric_qwen3_compact_completion_v1(
         ) {
             fe2o3_device::trap();
         }
-        if lane < QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1 - 64
-            && !records.write_row_striped_2d(
+        if lane < QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1 - 64 {
+            let Some(record_row) = thread::index_1d().checked_row_striped_2d::<64, 2>() else {
+                fe2o3_device::trap();
+            };
+            if !records.write_row_striped_2d(
                 &record_row,
                 1,
                 sequences,
                 QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1,
                 QWEN3_LOGITS_COMPACT_RECORD_BYTES_V1,
                 0,
-            )
-        {
-            fe2o3_device::trap();
+            ) {
+                fe2o3_device::trap();
+            }
         }
         return;
     }
@@ -556,6 +558,9 @@ pub fn ferric_qwen3_compact_completion_v1(
                 (token_value >> ((token_byte % 4) * 8)) as u8
             };
 
+            let Some(record_row) = thread::index_1d().checked_row_striped_2d::<64, 2>() else {
+                fe2o3_device::trap();
+            };
             if !records.write_row_striped_2d(
                 &record_row,
                 component,

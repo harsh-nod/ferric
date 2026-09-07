@@ -328,34 +328,39 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
     }
 
     let committed_tokens = memory::volatile_load(committed, sequence) as usize;
-    if committed_tokens >= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
-        fe2o3_device::trap();
-    }
-    let active_capacity = QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens;
+    let active_capacity = if committed_tokens <= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
+        QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens
+    } else {
+        fe2o3_device::trap()
+    };
     if active_tokens > active_capacity {
         fe2o3_device::trap();
     }
-    let query_position = committed_tokens + query_token;
-    if query_position < 8_192 {
+    let query_position = if query_token < active_capacity {
+        committed_tokens + query_token
     } else {
-        fe2o3_device::trap();
-    }
-    let key_limit = query_position + 1;
-    if vector < 1_280 {
+        fe2o3_device::trap()
+    };
+    let key_limit = if query_position < 8_192 {
+        query_position + 1
     } else {
-        fe2o3_device::trap();
-    }
-    let query_base = vector * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1;
-    if local < 64 {
+        fe2o3_device::trap()
+    };
+    let query_base = if vector < 1_280 {
+        vector * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1
     } else {
-        fe2o3_device::trap();
-    }
-    let column_0 = local * 2;
-    if column_0 < 128 {
+        fe2o3_device::trap()
+    };
+    let column_0 = if local < 64 {
+        local * 2
     } else {
-        fe2o3_device::trap();
-    }
-    let column_1 = column_0 + 1;
+        fe2o3_device::trap()
+    };
+    let column_1 = if column_0 < 128 {
+        column_0 + 1
+    } else {
+        fe2o3_device::trap()
+    };
     if column_1 < 128 {
     } else {
         fe2o3_device::trap();
@@ -377,16 +382,16 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
             } else {
                 fe2o3_device::trap();
             }
-            if sequence < 32 {
+            let page_table_base = if sequence < 32 {
+                sequence * QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1
             } else {
-                fe2o3_device::trap();
-            }
-            let page_table_base = sequence * QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1;
-            if logical_page <= usize::MAX - page_table_base {
+                fe2o3_device::trap()
+            };
+            let page_table_index = if logical_page <= usize::MAX - page_table_base {
+                page_table_base + logical_page
             } else {
-                fe2o3_device::trap();
-            }
-            let page_table_index = page_table_base + logical_page;
+                fe2o3_device::trap()
+            };
             if page_table_index < pages.len() {
             } else {
                 fe2o3_device::trap();
@@ -396,35 +401,36 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
                 fe2o3_device::trap();
             }
 
-            if physical_page <= usize::MAX / QWEN3_PAGED_DECODE_PAGE_TOKENS_V1 {
+            let page_token_base = if physical_page <= usize::MAX / QWEN3_PAGED_DECODE_PAGE_TOKENS_V1
+            {
+                physical_page * QWEN3_PAGED_DECODE_PAGE_TOKENS_V1
             } else {
-                fe2o3_device::trap();
-            }
-            let page_token_base = physical_page * QWEN3_PAGED_DECODE_PAGE_TOKENS_V1;
-            if token_in_page <= usize::MAX - page_token_base {
+                fe2o3_device::trap()
+            };
+            let page_token = if token_in_page <= usize::MAX - page_token_base {
+                page_token_base + token_in_page
             } else {
-                fe2o3_device::trap();
-            }
-            let page_token = page_token_base + token_in_page;
-            if page_token <= usize::MAX / QWEN3_PAGED_DECODE_KV_HEADS_V1 {
+                fe2o3_device::trap()
+            };
+            let cache_head_base = if page_token <= usize::MAX / QWEN3_PAGED_DECODE_KV_HEADS_V1 {
+                page_token * QWEN3_PAGED_DECODE_KV_HEADS_V1
             } else {
-                fe2o3_device::trap();
-            }
-            let cache_head_base = page_token * QWEN3_PAGED_DECODE_KV_HEADS_V1;
-            if kv_head <= usize::MAX - cache_head_base {
+                fe2o3_device::trap()
+            };
+            let cache_head = if kv_head <= usize::MAX - cache_head_base {
+                cache_head_base + kv_head
             } else {
-                fe2o3_device::trap();
-            }
-            let cache_head = cache_head_base + kv_head;
+                fe2o3_device::trap()
+            };
             if cache_head <= usize::MAX / QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1 {
             } else {
                 fe2o3_device::trap();
             }
-            if cache_head < 2_097_152 {
+            let cache_base = if cache_head < 2_097_152 {
+                cache_head * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1
             } else {
-                fe2o3_device::trap();
-            }
-            let cache_base = cache_head * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1;
+                fe2o3_device::trap()
+            };
             let cache_len = k.len();
             let cache_remaining = if cache_base <= cache_len {
                 cache_len - cache_base

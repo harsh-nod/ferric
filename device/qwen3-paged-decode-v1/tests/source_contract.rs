@@ -183,36 +183,27 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
     let committed_load = body
         .find("letcommitted_tokens=memory::volatile_load(committed,sequence)asusize")
         .unwrap();
-    let committed_guard = body
-        .find("ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}")
-        .unwrap();
     let active_capacity = body
-        .find("letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens")
+        .find("letactive_capacity=ifcommitted_tokens<=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens}else{fe2o3_device::trap()}")
         .unwrap();
     let active_capacity_guard = body
         .find("ifactive_tokens>active_capacity{fe2o3_device::trap();}")
         .unwrap();
     let query_position = body
-        .find("letquery_position=committed_tokens+query_token")
+        .find("letquery_position=ifquery_token<active_capacity{committed_tokens+query_token}else{fe2o3_device::trap()}")
         .unwrap();
-    let key_limit_guard = body
-        .find("ifquery_position<8_192{}else{fe2o3_device::trap();}")
-        .unwrap();
-    let key_limit = body.find("letkey_limit=query_position+1").unwrap();
-    let query_vector_guard = body
-        .find("ifvector<1_280{}else{fe2o3_device::trap();}")
+    let key_limit = body
+        .find("letkey_limit=ifquery_position<8_192{query_position+1}else{fe2o3_device::trap()}")
         .unwrap();
     let query_base = body
-        .find("letquery_base=vector*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1")
+        .find("letquery_base=ifvector<1_280{vector*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1}else{fe2o3_device::trap()}")
         .unwrap();
-    let local_guard = body
-        .find("iflocal<64{}else{fe2o3_device::trap();}")
+    let column_0 = body
+        .find("letcolumn_0=iflocal<64{local*2}else{fe2o3_device::trap()}")
         .unwrap();
-    let column_0 = body.find("letcolumn_0=local*2").unwrap();
-    let column_0_guard = body
-        .find("ifcolumn_0<128{}else{fe2o3_device::trap();}")
+    let column_1 = body
+        .find("letcolumn_1=ifcolumn_0<128{column_0+1}else{fe2o3_device::trap()}")
         .unwrap();
-    let column_1 = body.find("letcolumn_1=column_0+1").unwrap();
     let column_1_guard = body
         .find("ifcolumn_1<128{}else{fe2o3_device::trap();}")
         .unwrap();
@@ -223,10 +214,8 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
         .unwrap();
     let markers = [
         "iflogical_page<QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1{}else{fe2o3_device::trap();}",
-        "ifsequence<32{}else{fe2o3_device::trap();}",
-        "letpage_table_base=sequence*QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1",
-        "iflogical_page<=usize::MAX-page_table_base{}else{fe2o3_device::trap();}",
-        "letpage_table_index=page_table_base+logical_page",
+        "letpage_table_base=ifsequence<32{sequence*QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1}else{fe2o3_device::trap()}",
+        "letpage_table_index=iflogical_page<=usize::MAX-page_table_base{page_table_base+logical_page}else{fe2o3_device::trap()}",
         "ifpage_table_index<pages.len(){}else{fe2o3_device::trap();}",
     ];
     let mut prior = 0;
@@ -240,18 +229,13 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
         );
         prior = position;
     }
-    assert!(committed_load < committed_guard);
-    assert!(committed_guard < active_capacity);
+    assert!(committed_load < active_capacity);
     assert!(active_capacity < active_capacity_guard);
     assert!(active_capacity_guard < query_position);
-    assert!(query_position < key_limit_guard);
-    assert!(key_limit_guard < key_limit);
-    assert!(key_limit < query_vector_guard);
-    assert!(query_vector_guard < query_base);
-    assert!(query_base < local_guard);
-    assert!(local_guard < column_0);
-    assert!(column_0 < column_0_guard);
-    assert!(column_0_guard < column_1);
+    assert!(query_position < key_limit);
+    assert!(key_limit < query_base);
+    assert!(query_base < column_0);
+    assert!(column_0 < column_1);
     assert!(column_1 < column_1_guard);
     assert!(column_1_guard < key_loop);
     assert!(key_loop < key_limit_effect_guard);
@@ -264,17 +248,12 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
     let cache_len_marker = "letcache_len=k.len()";
     let cache_remaining_marker = "letcache_remaining=ifcache_base<=cache_len{cache_len-cache_base}else{fe2o3_device::trap();}";
     let cache_markers = [
-        "ifphysical_page<=usize::MAX/QWEN3_PAGED_DECODE_PAGE_TOKENS_V1{}else{fe2o3_device::trap();}",
-        "letpage_token_base=physical_page*QWEN3_PAGED_DECODE_PAGE_TOKENS_V1",
-        "iftoken_in_page<=usize::MAX-page_token_base{}else{fe2o3_device::trap();}",
-        "letpage_token=page_token_base+token_in_page",
-        "ifpage_token<=usize::MAX/QWEN3_PAGED_DECODE_KV_HEADS_V1{}else{fe2o3_device::trap();}",
-        "letcache_head_base=page_token*QWEN3_PAGED_DECODE_KV_HEADS_V1",
-        "ifkv_head<=usize::MAX-cache_head_base{}else{fe2o3_device::trap();}",
-        "letcache_head=cache_head_base+kv_head",
+        "letpage_token_base=ifphysical_page<=usize::MAX/QWEN3_PAGED_DECODE_PAGE_TOKENS_V1{physical_page*QWEN3_PAGED_DECODE_PAGE_TOKENS_V1}else{fe2o3_device::trap()}",
+        "letpage_token=iftoken_in_page<=usize::MAX-page_token_base{page_token_base+token_in_page}else{fe2o3_device::trap()}",
+        "letcache_head_base=ifpage_token<=usize::MAX/QWEN3_PAGED_DECODE_KV_HEADS_V1{page_token*QWEN3_PAGED_DECODE_KV_HEADS_V1}else{fe2o3_device::trap()}",
+        "letcache_head=ifkv_head<=usize::MAX-cache_head_base{cache_head_base+kv_head}else{fe2o3_device::trap()}",
         "ifcache_head<=usize::MAX/QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1{}else{fe2o3_device::trap();}",
-        "ifcache_head<2_097_152{}else{fe2o3_device::trap();}",
-        "letcache_base=cache_head*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1",
+        "letcache_base=ifcache_head<2_097_152{cache_head*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1}else{fe2o3_device::trap()}",
         cache_len_marker,
         cache_remaining_marker,
         "ifQWEN3_PAGED_DECODE_HEAD_DIMENSION_V1<=cache_remaining{}else{fe2o3_device::trap();}",
@@ -317,15 +296,15 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
     assert!(key_token_increment_guard < first_store);
     for marker in [
         "iflogical_page<QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1{}else{fe2o3_device::trap();}",
-        "ifsequence<32{}else{fe2o3_device::trap();}",
-        "iflogical_page<=usize::MAX-page_table_base{}else{fe2o3_device::trap();}",
+        "letpage_table_base=ifsequence<32{sequence*QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1}else{fe2o3_device::trap()}",
+        "letpage_table_index=iflogical_page<=usize::MAX-page_table_base{page_table_base+logical_page}else{fe2o3_device::trap()}",
         "ifpage_table_index<pages.len(){}else{fe2o3_device::trap();}",
-        "ifphysical_page<=usize::MAX/QWEN3_PAGED_DECODE_PAGE_TOKENS_V1{}else{fe2o3_device::trap();}",
-        "iftoken_in_page<=usize::MAX-page_token_base{}else{fe2o3_device::trap();}",
-        "ifpage_token<=usize::MAX/QWEN3_PAGED_DECODE_KV_HEADS_V1{}else{fe2o3_device::trap();}",
-        "ifkv_head<=usize::MAX-cache_head_base{}else{fe2o3_device::trap();}",
+        "letpage_token_base=ifphysical_page<=usize::MAX/QWEN3_PAGED_DECODE_PAGE_TOKENS_V1{physical_page*QWEN3_PAGED_DECODE_PAGE_TOKENS_V1}else{fe2o3_device::trap()}",
+        "letpage_token=iftoken_in_page<=usize::MAX-page_token_base{page_token_base+token_in_page}else{fe2o3_device::trap()}",
+        "letcache_head_base=ifpage_token<=usize::MAX/QWEN3_PAGED_DECODE_KV_HEADS_V1{page_token*QWEN3_PAGED_DECODE_KV_HEADS_V1}else{fe2o3_device::trap()}",
+        "letcache_head=ifkv_head<=usize::MAX-cache_head_base{cache_head_base+kv_head}else{fe2o3_device::trap()}",
         "ifcache_head<=usize::MAX/QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1{}else{fe2o3_device::trap();}",
-        "ifcache_head<2_097_152{}else{fe2o3_device::trap();}",
+        "letcache_base=ifcache_head<2_097_152{cache_head*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1}else{fe2o3_device::trap()}",
         cache_len_marker,
         cache_remaining_marker,
         "ifQWEN3_PAGED_DECODE_HEAD_DIMENSION_V1<=cache_remaining{}else{fe2o3_device::trap();}",
@@ -333,17 +312,16 @@ fn page_and_cache_arithmetic_is_guarded_before_every_dependent_read_or_store() {
         "letvalue_index_0=cache_base+column_0",
         "letvalue_index_1=cache_base+column_1",
         "ifkey_token<8_192{key_token+=1;}else{fe2o3_device::trap();}",
-        "ifvector<1_280{}else{fe2o3_device::trap();}",
-        "iflocal<64{}else{fe2o3_device::trap();}",
-        "ifcolumn_0<128{}else{fe2o3_device::trap();}",
+        "letquery_base=ifvector<1_280{vector*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1}else{fe2o3_device::trap()}",
+        "letcolumn_0=iflocal<64{local*2}else{fe2o3_device::trap()}",
+        "letcolumn_1=ifcolumn_0<128{column_0+1}else{fe2o3_device::trap()}",
         "ifcolumn_1<128{}else{fe2o3_device::trap();}",
         "letquery_index=query_base+feature",
-        "ifquery_position<8_192{}else{fe2o3_device::trap();}",
-        "letkey_limit=query_position+1",
+        "letquery_position=ifquery_token<active_capacity{committed_tokens+query_token}else{fe2o3_device::trap()}",
+        "letkey_limit=ifquery_position<8_192{query_position+1}else{fe2o3_device::trap()}",
         "whilekey_token<8_192{",
         "ifkey_token<key_limit{",
-        "ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}",
-        "letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens",
+        "letactive_capacity=ifcommitted_tokens<=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens}else{fe2o3_device::trap()}",
         "ifactive_tokens>active_capacity{fe2o3_device::trap();}",
     ] {
         assert_eq!(
@@ -517,7 +495,11 @@ fn guarded_key_limit(query_position: usize) -> Option<usize> {
 }
 
 fn guarded_active_capacity(committed_tokens: usize, active_tokens: usize) -> Option<usize> {
-    if committed_tokens >= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
+    if active_tokens == 0 {
+        return None;
+    }
+    if committed_tokens <= QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 {
+    } else {
         return None;
     }
     let active_capacity = QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - committed_tokens;
@@ -525,6 +507,19 @@ fn guarded_active_capacity(committed_tokens: usize, active_tokens: usize) -> Opt
         return None;
     }
     Some(active_capacity)
+}
+
+fn guarded_query_position(
+    committed_tokens: usize,
+    active_tokens: usize,
+    query_token: usize,
+) -> Option<usize> {
+    let active_capacity = guarded_active_capacity(committed_tokens, active_tokens)?;
+    if query_token < active_capacity {
+        Some(committed_tokens + query_token)
+    } else {
+        None
+    }
 }
 
 fn modeled_key_tokens(query_position: usize) -> Option<Vec<usize>> {
@@ -576,6 +571,7 @@ fn geometry_query_feature_index(vector: usize, feature: usize) -> Option<usize> 
 
 #[test]
 fn guarded_coordinate_models_accept_endpoints_and_reject_hostile_overflow() {
+    assert_eq!(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1, 8_192);
     assert_eq!(
         QWEN3_PAGED_DECODE_CACHE_HEAD_CAPACITY_V1 * QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1,
         QWEN3_PAGED_DECODE_CACHE_ELEMENTS_V1
@@ -689,10 +685,26 @@ fn guarded_coordinate_models_accept_endpoints_and_reject_hostile_overflow() {
         None
     );
     assert_eq!(
+        guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1 - 1, 0),
+        None
+    );
+    assert_eq!(
         guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1, 0),
         None
     );
-    assert_eq!(guarded_active_capacity(usize::MAX, 0), None);
+    assert_eq!(
+        guarded_active_capacity(QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1, 1),
+        None
+    );
+    assert_eq!(guarded_active_capacity(usize::MAX, 1), None);
+    assert_eq!(
+        guarded_query_position(0, QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1, 8_191),
+        Some(8_191)
+    );
+    assert_eq!(guarded_query_position(8_191, 1, 0), Some(8_191));
+    assert_eq!(guarded_query_position(8_191, 1, 1), None);
+    assert_eq!(guarded_query_position(8_192, 0, 0), None);
+    assert_eq!(guarded_query_position(usize::MAX, 0, usize::MAX), None);
     assert_eq!(modeled_key_tokens(0), Some(vec![0]));
     let full = modeled_key_tokens(8_191).unwrap();
     assert_eq!(full.len(), 8_192);
@@ -819,23 +831,21 @@ fn coordinates_preserve_committed_causality_gqa_and_global_p16_mapping() {
         "letsequence=position/active_tokens",
         "letkv_head=query_head/gqa_group_size",
         "letcommitted_tokens=memory::volatile_load(committed,sequence)asusize",
-        "ifcommitted_tokens>=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{fe2o3_device::trap();}",
-        "letactive_capacity=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens",
+        "letactive_capacity=ifcommitted_tokens<=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens}else{fe2o3_device::trap()}",
         "ifactive_tokens>active_capacity{fe2o3_device::trap();}",
-        "letquery_position=committed_tokens+query_token",
+        "letquery_position=ifquery_token<active_capacity{committed_tokens+query_token}else{fe2o3_device::trap()}",
         "whilekey_token<8_192",
         "ifkey_token<key_limit",
-        "letpage_table_base=sequence*QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1",
-        "letpage_table_index=page_table_base+logical_page",
+        "letpage_table_base=ifsequence<32{sequence*QWEN3_PAGED_DECODE_PAGE_TABLE_ENTRIES_V1}else{fe2o3_device::trap()}",
+        "letpage_table_index=iflogical_page<=usize::MAX-page_table_base{page_table_base+logical_page}else{fe2o3_device::trap()}",
         "letphysical_page=memory::volatile_load(pages,page_table_index)asusize",
         "ifphysical_page>=QWEN3_PAGED_DECODE_CACHE_POOL_PAGES_V1",
-        "letpage_token_base=physical_page*QWEN3_PAGED_DECODE_PAGE_TOKENS_V1",
-        "letpage_token=page_token_base+token_in_page",
-        "letcache_head_base=page_token*QWEN3_PAGED_DECODE_KV_HEADS_V1",
-        "letcache_head=cache_head_base+kv_head",
+        "letpage_token_base=ifphysical_page<=usize::MAX/QWEN3_PAGED_DECODE_PAGE_TOKENS_V1{physical_page*QWEN3_PAGED_DECODE_PAGE_TOKENS_V1}else{fe2o3_device::trap()}",
+        "letpage_token=iftoken_in_page<=usize::MAX-page_token_base{page_token_base+token_in_page}else{fe2o3_device::trap()}",
+        "letcache_head_base=ifpage_token<=usize::MAX/QWEN3_PAGED_DECODE_KV_HEADS_V1{page_token*QWEN3_PAGED_DECODE_KV_HEADS_V1}else{fe2o3_device::trap()}",
+        "letcache_head=ifkv_head<=usize::MAX-cache_head_base{cache_head_base+kv_head}else{fe2o3_device::trap()}",
         "ifcache_head<=usize::MAX/QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1{}else{fe2o3_device::trap();}",
-        "ifcache_head<2_097_152{}else{fe2o3_device::trap();}",
-        "letcache_base=cache_head*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1",
+        "letcache_base=ifcache_head<2_097_152{cache_head*QWEN3_PAGED_DECODE_HEAD_DIMENSION_V1}else{fe2o3_device::trap()}",
     ] {
         assert!(body.contains(marker), "missing coordinate marker {marker}");
     }

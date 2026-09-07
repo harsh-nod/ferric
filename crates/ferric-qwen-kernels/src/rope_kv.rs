@@ -1257,7 +1257,7 @@ fn rope_kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnost
 }
 
 fn kv_kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnosticV1> {
-    let mut parameters = Vec::with_capacity(15);
+    let mut parameters = Vec::with_capacity(16);
     for (name, scalar, write) in [
         ("rotated_key_bf16", ScalarTypeV1::Bf16, false),
         ("value_bf16", ScalarTypeV1::Bf16, false),
@@ -1282,7 +1282,12 @@ fn kv_kernel_parameters_v1() -> Result<Vec<KernelParameterV1>, HandoffDiagnostic
             vec![],
         )?);
     }
-    for name in ["active_tokens", "sequences", "context_tokens"] {
+    for name in [
+        "active_tokens",
+        "sequences",
+        "context_tokens",
+        "row_components",
+    ] {
         parameters.push(KernelParameterV1::new(
             name,
             KernelValueTypeV1::Scalar(ScalarTypeV1::I32),
@@ -2150,6 +2155,7 @@ struct KvValues {
     active_tokens: ValueIdV2,
     sequences: ValueIdV2,
     context: ValueIdV2,
+    row_components: ValueIdV2,
 }
 
 impl KvValues {
@@ -2170,6 +2176,7 @@ impl KvValues {
             active_tokens: ValueIdV2::new(13),
             sequences: ValueIdV2::new(14),
             context: ValueIdV2::new(15),
+            row_components: ValueIdV2::new(16),
         }
     }
 }
@@ -2243,7 +2250,7 @@ fn build_kv_kernel_function(
     evidence: EvidenceV2,
 ) -> Result<FunctionV2, PrepareQwen3RopeKvKernelErrorV1> {
     let values = KvValues::fixed();
-    let mut builder = TypedFunctionBuilder::new(evidence.clone(), 16);
+    let mut builder = TypedFunctionBuilder::new(evidence.clone(), 17);
     let i32_type = ValueTypeV2::Scalar(ScalarTypeV1::I32);
     let i64_type = ValueTypeV2::Scalar(ScalarTypeV1::I64);
     let known_bucket = known_bucket_geometry(
@@ -2309,7 +2316,21 @@ fn build_kv_kernel_function(
         ),
     ];
     let lengths = all(&mut builder, &lengths);
-    let geometry = builder.and(known_bucket, lengths);
+    let components_per_row = builder.constant(ScalarTypeV1::I64, 16);
+    let expected_row_components = builder.integer(
+        IntegerBinaryOperationV2::Multiply,
+        base_rows,
+        components_per_row,
+        ScalarTypeV1::I64,
+    );
+    let row_components64 =
+        builder.cast(CastOperationV2::ZeroExtend, values.row_components, i64_type);
+    let row_components_match = builder.compare(
+        ComparePredicateV2::IntegerEqual,
+        row_components64,
+        expected_row_components,
+    );
+    let geometry = all(&mut builder, &[known_bucket, lengths, row_components_match]);
     trap_unless(&mut builder, geometry);
 
     let lane = builder.instruction(
@@ -2567,6 +2588,7 @@ fn build_kv_kernel_function(
         parameter(13, i32_type, "active_tokens", vec![])?,
         parameter(14, i32_type, "sequences", vec![])?,
         parameter(15, i32_type, "context_tokens", vec![])?,
+        parameter(16, i32_type, "row_components", vec![])?,
     ];
     FunctionV2::new(
         FunctionIdV2::new(1),
@@ -3327,7 +3349,7 @@ fn exact_rope_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
 }
 
 fn exact_kv_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
-    if arguments.len() != 15 {
+    if arguments.len() != 16 {
         return false;
     }
     let accepted_types = [
@@ -3368,6 +3390,12 @@ fn exact_kv_explicit_arguments(arguments: &[ExplicitArgument]) -> bool {
             &arguments[14],
             "context_tokens",
             104,
+            ExplicitValueType::U32,
+        )
+        && exact_scalar_argument(
+            &arguments[15],
+            "row_components",
+            108,
             ExplicitValueType::U32,
         )
 }

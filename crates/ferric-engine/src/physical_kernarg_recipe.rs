@@ -1072,6 +1072,11 @@ fn encode_rope_kv(
             image.finish(row)
         }
         rope_kv::Qwen3RopeKvOperationV1::PagedKvWrite => {
+            let row_components = u32::try_from(profile.kv_elements() / 64).map_err(|_| {
+                M1PhysicalKernargRecipeErrorV1::ArithmeticOverflow {
+                    dispatch_index: row.dispatch_index,
+                }
+            })?;
             let page_indices = u64::from(sequences)
                 .checked_mul(u64::from(rope_kv::QWEN3_KV_PAGE_TABLE_ENTRIES_V1))
                 .ok_or(M1PhysicalKernargRecipeErrorV1::ArithmeticOverflow {
@@ -1098,6 +1103,7 @@ fn encode_rope_kv(
             image.write_u32(96, active_tokens)?;
             image.write_u32(100, sequences)?;
             image.write_u32(104, profile.context_tokens())?;
+            image.write_u32(108, row_components)?;
             image.finish(row)
         }
     }
@@ -1575,6 +1581,17 @@ mod tests {
         assert_eq!(read_u32(compact.bytes(), 128), 1);
         assert_eq!(read_u32(compact.bytes(), 132), 5);
         assert_eq!(read_u32(compact.bytes(), 136), 4);
+
+        let kv_writes = recipe
+            .images()
+            .iter()
+            .filter(|image| image.program() == M1PhysicalProgramV1::PagedKvWrite)
+            .collect::<Vec<_>>();
+        assert!(!kv_writes.is_empty());
+        for kv_write in kv_writes {
+            let rows = read_u32(kv_write.bytes(), 96) * read_u32(kv_write.bytes(), 100);
+            assert_eq!(read_u32(kv_write.bytes(), 108), rows * 16);
+        }
 
         let s8 = derive_m1_physical_kernarg_recipe_v1(physical_recipe(
             M1StepDispatchIntent::SpeculativeRound(target(

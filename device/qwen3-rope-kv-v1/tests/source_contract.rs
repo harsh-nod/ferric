@@ -1,6 +1,5 @@
 use quote::ToTokens as _;
-use syn::visit::{self, Visit as _};
-use syn::{Expr, ExprMethodCall, FnArg, Item, ItemFn, Lit, Pat};
+use syn::{FnArg, Item, ItemFn, Pat};
 
 const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/rope_kv.rs");
 
@@ -46,34 +45,6 @@ fn argument_name(argument: &FnArg) -> String {
     pattern.ident.to_string()
 }
 
-#[derive(Default)]
-struct WriteBlockComponents {
-    components: Vec<usize>,
-    non_literal_components: usize,
-}
-
-impl<'ast> syn::visit::Visit<'ast> for WriteBlockComponents {
-    fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
-        if call.method == "write_block" {
-            let component = call
-                .args
-                .iter()
-                .nth(1)
-                .expect("write_block has a component operand");
-            match component {
-                Expr::Lit(literal) => match &literal.lit {
-                    Lit::Int(value) => self
-                        .components
-                        .push(value.base10_parse().expect("component literal fits usize")),
-                    _ => self.non_literal_components += 1,
-                },
-                _ => self.non_literal_components += 1,
-            }
-        }
-        visit::visit_expr_method_call(self, call);
-    }
-}
-
 #[test]
 fn source_has_exact_two_root_roster_and_no_escape_hatch() {
     let kernels = kernels();
@@ -105,7 +76,7 @@ fn source_has_exact_two_root_roster_and_no_escape_hatch() {
 
 #[test]
 fn immutable_inputs_use_the_exact_volatile_load_custody() {
-    assert_eq!(SOURCE.matches("memory::volatile_load").count(), 41);
+    assert_eq!(SOURCE.matches("memory::volatile_load").count(), 11);
     for input in [
         "query_bf16",
         "key_bf16",
@@ -123,29 +94,18 @@ fn immutable_inputs_use_the_exact_volatile_load_custody() {
         );
     }
 
-    for component in 0..16 {
-        let key_load = format!("memory::volatile_load(rotated_key_bf16, input_index_{component})");
-        let value_load = format!("memory::volatile_load(value_bf16, input_index_{component})");
-        assert_eq!(SOURCE.matches(&key_load).count(), 1);
-        assert_eq!(SOURCE.matches(&value_load).count(), 1);
-        let value_component = format!("value_component_{component}");
-        assert_eq!(
-            SOURCE
-                .split(|character: char| {
-                    !(character.is_ascii_alphanumeric() || character == '_')
-                })
-                .filter(|token| *token == value_component.as_str())
-                .count(),
-            17,
-            "value component must be loaded once and reused by all page slots"
-        );
-    }
+    let key_load = "memory::volatile_load(rotated_key_bf16, input_index)";
+    let value_load = "memory::volatile_load(value_bf16, input_index)";
+    assert_eq!(SOURCE.matches(key_load).count(), 1);
+    assert_eq!(SOURCE.matches(value_load).count(), 1);
+    assert_eq!(SOURCE.matches("let key_component =").count(), 1);
+    assert_eq!(SOURCE.matches("let value_component =").count(), 1);
 
     let owner_guard = SOURCE
         .find("if physical_page == owned_physical_page")
         .expect("physical-page owner guard is present");
     let first_payload_load = SOURCE
-        .find("memory::volatile_load(rotated_key_bf16, input_index_0)")
+        .find(key_load)
         .expect("first owned-row payload load is present");
     assert!(owner_guard < first_payload_load);
 }
@@ -176,7 +136,7 @@ fn attributes_pin_wave64_flat_grid_and_exact_loop_bounds() {
     assert!(rope.contains("max_grid = [2048 , 1 , 1]"));
     assert!(kv.contains("max_grid = [16384 , 1 , 1]"));
     assert!(rope.contains("loop_bounds (32 , 8)"));
-    assert!(kv.contains("loop_bounds (2048)"));
+    assert!(kv.contains("loop_bounds (32768)"));
 }
 
 #[test]
@@ -230,17 +190,220 @@ fn paged_kv_active_token_guard_dominates_division_and_remainder() {
         .expect("paged-KV root is present");
     let guard = "ifactive_tokens==0{fe2o3_device::trap();}";
     let guard_position = kv.find(guard).expect("active-token guard is present");
-    let division = kv
-        .find("letsequence=row/active_tokens;")
-        .expect("active-token division is present");
-    let remainder = kv
-        .find("letlocal_token=row%active_tokens;")
-        .expect("active-token remainder is present");
-    assert!(guard_position < division);
-    assert!(guard_position < remainder);
+    let coordinate_marker = "let(sequence,local_token)=ifactive_tokens!=0{(row/active_tokens,row%active_tokens)}else{fe2o3_device::trap()}";
+    let coordinates = kv
+        .find(coordinate_marker)
+        .expect("guarded active-token coordinates are present");
+    let first_effect = kv
+        .find("memory::volatile_load(logical_starts,sequence)")
+        .expect("first dependent read is present");
+    assert!(guard_position < coordinates);
+    assert!(coordinates < first_effect);
     assert_eq!(kv.matches(guard).count(), 1);
+    assert_eq!(kv.matches(coordinate_marker).count(), 1);
+    assert_eq!(kv.matches("active_tokens!=0").count(), 1);
     assert_eq!(kv.matches("/active_tokens").count(), 1);
     assert_eq!(kv.matches("%active_tokens").count(), 1);
+}
+
+fn guarded_paged_kv_row_coordinates(row: usize, active_tokens: usize) -> Option<(usize, usize)> {
+    if active_tokens == 0 {
+        return None;
+    }
+    let (sequence, local_token) = if active_tokens != 0 {
+        (row / active_tokens, row % active_tokens)
+    } else {
+        return None;
+    };
+    Some((sequence, local_token))
+}
+
+#[test]
+fn paged_kv_row_coordinate_model_rejects_zero_and_preserves_endpoints() {
+    assert_eq!(guarded_paged_kv_row_coordinates(0, 0), None);
+    assert_eq!(guarded_paged_kv_row_coordinates(usize::MAX, 0), None);
+    assert_eq!(guarded_paged_kv_row_coordinates(0, 1), Some((0, 0)));
+    assert_eq!(
+        guarded_paged_kv_row_coordinates(usize::MAX, 1),
+        Some((usize::MAX, 0))
+    );
+    assert_eq!(
+        guarded_paged_kv_row_coordinates(usize::MAX, usize::MAX),
+        Some((1, 0))
+    );
+}
+
+#[test]
+fn paged_kv_page_table_arithmetic_is_guarded_in_exact_order() {
+    let compact = SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    let (_, kv) = compact
+        .split_once("pubfnqwen3_paged_kv_write_v1(")
+        .expect("paged-KV root is present");
+    let logical_page_guard =
+        "iflogical_page>=QWEN3_KV_PAGE_TABLE_ENTRIES_V1asusize{fe2o3_device::trap();}";
+    let table_base = "lettable_base=ifsequence<32{sequence*QWEN3_KV_PAGE_TABLE_ENTRIES_V1asusize}else{fe2o3_device::trap()};";
+    let table_index = "lettable_index=iflogical_page<=usize::MAX-table_base{table_base+logical_page}else{fe2o3_device::trap()};";
+    let page_load = "memory::volatile_load(page_indices,table_index)";
+
+    let logical_page_guard_position = kv
+        .find(logical_page_guard)
+        .expect("logical-page guard is present");
+    let table_base_position = kv.find(table_base).expect("guarded table base is present");
+    let table_index_position = kv
+        .find(table_index)
+        .expect("guarded table index is present");
+    let page_load_position = kv.find(page_load).expect("page-table load is present");
+    assert!(logical_page_guard_position < table_base_position);
+    assert!(table_base_position < table_index_position);
+    assert!(table_index_position < page_load_position);
+    assert_eq!(kv.matches(logical_page_guard).count(), 1);
+    assert_eq!(kv.matches(table_base).count(), 1);
+    assert_eq!(kv.matches(table_index).count(), 1);
+    assert_eq!(kv.matches(page_load).count(), 1);
+}
+
+fn guarded_paged_kv_table_index(sequence: usize, logical_page: usize) -> Option<usize> {
+    const PAGE_TABLE_ENTRIES: usize = 512;
+
+    if logical_page >= PAGE_TABLE_ENTRIES {
+        return None;
+    }
+    let table_base = if sequence < 32 {
+        sequence * PAGE_TABLE_ENTRIES
+    } else {
+        return None;
+    };
+    let table_index = if logical_page <= usize::MAX - table_base {
+        table_base + logical_page
+    } else {
+        return None;
+    };
+    Some(table_index)
+}
+
+#[test]
+fn paged_kv_page_table_model_preserves_endpoints_and_rejects_hostile_inputs() {
+    assert_eq!(guarded_paged_kv_table_index(0, 0), Some(0));
+    assert_eq!(guarded_paged_kv_table_index(31, 511), Some(16_383));
+    assert_eq!(guarded_paged_kv_table_index(32, 0), None);
+    assert_eq!(guarded_paged_kv_table_index(usize::MAX, 0), None);
+    assert_eq!(guarded_paged_kv_table_index(0, 512), None);
+    assert_eq!(guarded_paged_kv_table_index(0, usize::MAX), None);
+}
+
+fn eager_paged_kv_profile_is_admitted(
+    active_tokens: u32,
+    sequences: u32,
+    context_tokens: u32,
+) -> bool {
+    let common = (((active_tokens == 128) & ((sequences == 1) | (sequences == 8)))
+        & (context_tokens == 128))
+        | (((active_tokens == 512) & (sequences == 1)) & (context_tokens == 512))
+        | (((active_tokens == 2_048) & (sequences == 1)) & (context_tokens == 2_048))
+        | (((active_tokens == 1) & (((sequences == 1) | (sequences == 8)) | (sequences == 32)))
+            & (context_tokens == 8_192));
+    let target = (context_tokens == 8_192)
+        & ((((active_tokens == 5) & ((sequences == 1) | (sequences == 8)))
+            | ((active_tokens == 9) & (sequences == 1)))
+            | ((active_tokens == 17) & (sequences == 1)));
+    let draft = (context_tokens == 8_192)
+        & ((((active_tokens == 4) & ((sequences == 1) | (sequences == 8)))
+            | ((active_tokens == 8) & (sequences == 1)))
+            | ((active_tokens == 16) & (sequences == 1)));
+    (common | target) | draft
+}
+
+#[test]
+fn paged_kv_profile_classifier_is_eager_and_exactly_equivalent() {
+    use ferric_qwen3_rope_kv_device_v1::qwen3_paged_kv_write_profile_is_admitted_v1;
+
+    let compact = SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    let (_, kv) = compact
+        .split_once("pubfnqwen3_paged_kv_write_v1(")
+        .expect("paged-KV root is present");
+    let profile_start = kv
+        .find("letcommon_profile_is_admitted=")
+        .expect("paged-KV profile classifier is present");
+    let profile_end = kv
+        .find("letactive_tokens=active_tokensasusize;")
+        .expect("paged-KV profile classifier precedes scalar conversion");
+    let profile = &kv[profile_start..profile_end];
+    assert!(!profile.contains("&&"));
+    assert!(!profile.contains("||"));
+    assert_eq!(profile.matches('&').count(), 16);
+    assert_eq!(profile.matches('|').count(), 14);
+    assert_eq!(
+        profile
+            .matches("if!profile_is_admitted{fe2o3_device::trap();}")
+            .count(),
+        1
+    );
+
+    let active_tokens = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        15,
+        16,
+        17,
+        18,
+        127,
+        128,
+        129,
+        511,
+        512,
+        513,
+        2_047,
+        2_048,
+        2_049,
+        u32::MAX,
+    ];
+    let sequences = [0, 1, 2, 7, 8, 9, 31, 32, 33, u32::MAX];
+    let context_tokens = [
+        0,
+        127,
+        128,
+        129,
+        511,
+        512,
+        513,
+        2_047,
+        2_048,
+        2_049,
+        8_191,
+        8_192,
+        8_193,
+        u32::MAX,
+    ];
+    for active_tokens in active_tokens {
+        for sequences in sequences {
+            for context_tokens in context_tokens {
+                assert_eq!(
+                    eager_paged_kv_profile_is_admitted(active_tokens, sequences, context_tokens,),
+                    qwen3_paged_kv_write_profile_is_admitted_v1(
+                        active_tokens,
+                        sequences,
+                        context_tokens,
+                    ),
+                    "classifier mismatch for ({active_tokens}, {sequences}, {context_tokens})"
+                );
+            }
+        }
+    }
 }
 
 #[test]
@@ -286,7 +449,7 @@ fn source_signatures_match_the_exact_host_abis() {
     }
 
     let kv = &kernels[1];
-    assert_eq!(kv.sig.inputs.len(), 9);
+    assert_eq!(kv.sig.inputs.len(), 10);
     assert_eq!(
         kv.sig.inputs.iter().map(argument_name).collect::<Vec<_>>(),
         [
@@ -299,6 +462,7 @@ fn source_signatures_match_the_exact_host_abis() {
             "active_tokens",
             "sequences",
             "context_tokens",
+            "row_components",
         ]
     );
     assert_eq!(compact_type(&kv.sig.inputs[0]), "&[u16]");
@@ -307,11 +471,11 @@ fn source_signatures_match_the_exact_host_abis() {
     assert_eq!(compact_type(&kv.sig.inputs[3]), "&[u32]");
     assert_eq!(
         compact_type(&kv.sig.inputs[4]),
-        "WriteOnlyDisjointSlice<u16,Blocked<Index1D,64,256>>"
+        "WriteOnlyDisjointSlice<u16,RowStriped2D<Index1D,64,256>>"
     );
     assert_eq!(
         compact_type(&kv.sig.inputs[5]),
-        "WriteOnlyDisjointSlice<u16,Blocked<Index1D,64,256>>"
+        "WriteOnlyDisjointSlice<u16,RowStriped2D<Index1D,64,256>>"
     );
     for scalar in kv.sig.inputs.iter().skip(6) {
         assert_eq!(compact_type(scalar), "u32");
@@ -382,6 +546,7 @@ fn generated_kfd_adapters_preserve_effects_and_constructor_order() {
         2_048,
         1,
         2_048,
+        32_768,
     );
 }
 
@@ -413,40 +578,197 @@ fn rope_row_stripes_are_injective_and_cover_each_output_row() {
     }
 }
 
+fn guarded_cache_component(token_in_page: usize, component: usize) -> Option<usize> {
+    let cache_component_base = if token_in_page < 16 {
+        token_in_page * 16
+    } else {
+        return None;
+    };
+    if component >= 16 || component > usize::MAX - cache_component_base {
+        return None;
+    }
+    Some(cache_component_base + component)
+}
+
+fn guarded_cache_components(token_in_page: usize) -> Option<[usize; 16]> {
+    let mut components = [0_usize; 16];
+    let mut component = 0_usize;
+    while component < components.len() {
+        components[component] = guarded_cache_component(token_in_page, component)?;
+        component += 1;
+    }
+    Some(components)
+}
+
+fn guarded_input_index(input_base: usize, component: usize, lane: usize) -> Option<usize> {
+    let input_component_offset = if component < 16 {
+        component * 64
+    } else {
+        return None;
+    };
+    if input_component_offset > usize::MAX - input_base {
+        return None;
+    }
+    let input_component_base = input_base + input_component_offset;
+    if lane > usize::MAX - input_component_base {
+        return None;
+    }
+    Some(input_component_base + lane)
+}
+
+fn blocked_cache_address(physical_page: usize, component: usize, lane: usize) -> usize {
+    physical_page * (64 * 256) + component * 64 + lane
+}
+
+fn row_striped_cache_address(physical_page: usize, component: usize, lane: usize) -> usize {
+    physical_page * 16_384 + component * 64 + lane
+}
+
 #[test]
-fn paged_cache_uses_only_literal_static_blocked_write_sites() {
-    let kernels = kernels();
-    let mut visitor = WriteBlockComponents::default();
-    visitor.visit_item_fn(&kernels[1]);
-    assert_eq!(visitor.non_literal_components, 0);
-    assert_eq!(visitor.components.len(), 512);
-    for component in 0..256 {
+fn paged_cache_flattens_row_components_and_branches_on_each_write() {
+    let compact: String = SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect();
+    let kv = compact
+        .split_once("pubfnqwen3_paged_kv_write_v1(")
+        .expect("paged-KV root is present")
+        .1;
+    let flattened_extent = "letrow_components=row_componentsasusize;";
+    let flattened_bound = "ifrow_components>32_768{fe2o3_device::trap();}";
+    let flattened_geometry =
+        "ifrow_components%16!=0||row_components/16!=rows{fe2o3_device::trap();}";
+    let flattened_header = "letmutrow_component=0_usize;whilerow_component<row_components{";
+    let flattened_coordinates = "letrow=row_component/16;letcomponent=row_component%16;";
+    let owner = "ifphysical_page==owned_physical_page{";
+    let token_base =
+        "letcache_component_base=iftoken_in_page<16{token_in_page*16}else{fe2o3_device::trap()};";
+    let input_offset =
+        "letinput_component_offset=ifcomponent<16{component*64}else{fe2o3_device::trap()};";
+    let input_base = "letinput_component_base=ifinput_component_offset<=usize::MAX-input_base{input_base+input_component_offset}else{fe2o3_device::trap()};";
+    let input_index = "letinput_index=iflane<=usize::MAX-input_component_base{input_component_base+lane}else{fe2o3_device::trap()};";
+    let cache_component = "letcache_component=ifcomponent<=usize::MAX-cache_component_base{cache_component_base+component}else{fe2o3_device::trap()};";
+    let key_load = "letkey_component=memory::volatile_load(rotated_key_bf16,input_index);";
+    let value_load = "letvalue_component=memory::volatile_load(value_bf16,input_index);";
+    let key_write_block = "{letSome(key_cache_stripe)=thread::index_1d().checked_row_striped_2d::<64,256>()else{fe2o3_device::trap();};if!key_cache_bf16.write_row_striped_2d(&key_cache_stripe,cache_component,QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1asusize,16_384,16_384,key_component,){fe2o3_device::trap();}}";
+    let value_write_block = "{letSome(value_cache_stripe)=thread::index_1d().checked_row_striped_2d::<64,256>()else{fe2o3_device::trap();};if!value_cache_bf16.write_row_striped_2d(&value_cache_stripe,cache_component,QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1asusize,16_384,16_384,value_component,){fe2o3_device::trap();}}";
+    let flattened_latch = "ifrow_component<32_768{row_component+=1;}else{fe2o3_device::trap();}";
+    let markers = [
+        flattened_extent,
+        flattened_bound,
+        flattened_geometry,
+        flattened_header,
+        flattened_coordinates,
+        owner,
+        token_base,
+        input_offset,
+        input_base,
+        input_index,
+        cache_component,
+        key_load,
+        value_load,
+        key_write_block,
+        value_write_block,
+        flattened_latch,
+    ];
+    let mut prior = 0_usize;
+    for marker in markers {
+        let position = kv
+            .find(marker)
+            .unwrap_or_else(|| panic!("missing paged-KV marker {marker}"));
+        assert!(prior <= position, "marker is out of order: {marker}");
         assert_eq!(
-            visitor
-                .components
-                .iter()
-                .filter(|candidate| **candidate == component)
-                .count(),
-            2,
-            "key and value must each have one literal store for component {component}"
-        );
-    }
-    assert_eq!(SOURCE.matches("if token_in_page == ").count(), 16);
-    for token_in_page in 0..16 {
-        assert_eq!(
-            SOURCE
-                .matches(&format!("if token_in_page == {token_in_page} {{"))
-                .count(),
+            kv.matches(marker).count(),
             1,
-            "each physical-page token slot must have one static store case"
+            "marker is duplicated: {marker}"
         );
+        prior = position;
     }
-    assert!(SOURCE.contains("page_lane_index.checked_block::<64, 256>()"));
+    assert!(
+        kv.contains(&format!("{key_write_block}{value_write_block}")),
+        "the key write must branch immediately before the value write"
+    );
+
+    assert_eq!(kv.matches(".write_block(").count(), 0);
+    assert_eq!(kv.matches(".write_row_striped_2d(").count(), 2);
+    assert_eq!(
+        kv.matches("QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1asusize,16_384,16_384,")
+            .count(),
+        2
+    );
+    assert_eq!(
+        kv.matches("thread::index_1d().checked_row_striped_2d::<64,256>()")
+            .count(),
+        2
+    );
+    let flattened_loop = kv
+        .find(flattened_header)
+        .expect("flattened row-component loop is present");
+    let key_write_position = kv
+        .find(key_write_block)
+        .expect("immediate key-cache write block is present");
+    let value_write_position = kv
+        .find(value_write_block)
+        .expect("immediate value-cache write block is present");
+    assert!(flattened_loop < key_write_position);
+    assert!(key_write_position < value_write_position);
+    assert!(!kv[..flattened_loop].contains("checked_row_striped_2d::<64,256>()"));
+    assert!(!kv.contains("component_written"));
+    assert_eq!(kv.matches("whilerow_component<row_components{").count(), 1);
+    assert!(!kv.contains("letmutcomponent=0_usize;"));
+    assert!(!kv.contains("whilecomponent<16{"));
+    assert!(!kv.contains("ifcomponent<16{component+=1;"));
+    assert!(!kv.contains("whilerow<rows{"));
+    assert!(!kv.contains("qwen3_paged_kv_write_component_v1!"));
+    assert!(!kv.contains("cache_component_0"));
+    assert!(!kv.contains("input_index_0"));
+    assert!(!kv.contains("iftoken_in_page=="));
     assert!(!SOURCE.contains("grid_leader"));
     assert!(!SOURCE.contains("write_exclusive"));
     assert!(!SOURCE.contains("get_mut_at"));
     assert!(!SOURCE.contains("key_cache_bf16["));
     assert!(!SOURCE.contains("value_cache_bf16["));
+}
+#[test]
+fn row_striped_cache_mapping_preserves_every_component_address() {
+    assert_eq!(64 * 256, 16_384);
+    assert_eq!(guarded_cache_components(16), None);
+    assert_eq!(guarded_cache_components(usize::MAX), None);
+    assert_eq!(guarded_cache_component(0, 0), Some(0));
+    assert_eq!(guarded_cache_component(15, 15), Some(255));
+    assert_eq!(guarded_cache_component(16, 0), None);
+    assert_eq!(guarded_cache_component(usize::MAX, 0), None);
+    assert_eq!(guarded_cache_component(0, 16), None);
+    assert_eq!(guarded_cache_component(0, usize::MAX), None);
+    assert_eq!(guarded_input_index(0, 0, 0), Some(0));
+    assert_eq!(guarded_input_index(2_047 * 1_024, 15, 63), Some(2_097_151));
+    assert_eq!(guarded_input_index(0, 16, 0), None);
+    assert_eq!(guarded_input_index(0, usize::MAX, 0), None);
+    assert_eq!(guarded_input_index(usize::MAX, 1, 0), None);
+    assert_eq!(guarded_input_index(usize::MAX, 0, 1), None);
+    for token_in_page in 0..16 {
+        let components = guarded_cache_components(token_in_page)
+            .expect("each authenticated page token has sixteen components");
+        assert_eq!(components[0], token_in_page * 16);
+        assert_eq!(components[15], token_in_page * 16 + 15);
+        for physical_page in [0, 1, 8_191, 16_383] {
+            for lane in 0..64 {
+                for component in components {
+                    assert_eq!(
+                        row_striped_cache_address(physical_page, component, lane),
+                        blocked_cache_address(physical_page, component, lane),
+                    );
+                }
+            }
+        }
+    }
+    let first = guarded_cache_components(0).expect("first token is admitted");
+    let last = guarded_cache_components(15).expect("last token is admitted");
+    assert_eq!(first, core::array::from_fn(|component| component));
+    assert_eq!(last[0], 240);
+    assert_eq!(last[15], 255);
+    assert_eq!(row_striped_cache_address(0, 0, 0), 0);
+    assert_eq!(row_striped_cache_address(16_383, 255, 63), 268_435_455);
 }
 
 #[test]
