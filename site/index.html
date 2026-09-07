@@ -44,8 +44,8 @@
             <h1 id="overview-title">Ferric</h1>
             <p class="lede">
               A Rust inference engine building an authority-bound path from authenticated model
-              inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. End-to-end Qwen
-              execution remains open.
+              inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. One
+              authority-free Qwen hardware token is now observed; serving and qualification remain open.
             </p>
             <div class="milestone-line">
               <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
@@ -60,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-06">Updated 2026-09-06</time>
+              <time data-updated datetime="2026-09-07">Updated 2026-09-07</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -215,11 +215,11 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Bind the exact descriptor roster</h2>
+            <h2 id="next-title">Remove cold-start duplication</h2>
           </div>
           <p>
-            Ferric integration candidate 28b925a1c4de75aa4ea35175a9f76d6071f4ca86, tree
-            5a6d77564d96e9fdcdc2c124f42b37215988dae9, repins to public fe2o3
+            Ferric integration candidate f1519652a789d9b27cc49a545072d4027d545b0b, tree
+            7562c788ce52aa01e276dc7df9a3be34a0843a87, uses public fe2o3
             1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree
             553334d69d51c4ccffea383cd72cf9105df74130. Exact v76 exits status 0 after a 415,660-byte
             Kernel IR V9 handoff containing 26 GuardedStore operations and exact replay into a 103,616-byte HSACO
@@ -227,18 +227,17 @@
             31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; HSACO SHA
             c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA
             6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA
-            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none and publication,
-            load, and launch grants are false. The first smoke stops at CurrentFerricDescriptorRoster before KFD;
-            GPU and VRAM state are unchanged. Remote all-target checks remain engine 689 passed / 7 ignored and
-            adapter 67 passed / 2 ignored, zero failures. Engine log SHA
-            ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f; adapter log SHA
-            d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a. These are non-hardware checks, not token
-            or performance evidence. The R33
-            executor uses CLOCK_MONOTONIC_RAW and checked-token causality, then enters Faulted and rejects a second
-            window; it is not the required 20-window qualification. No hardware execution, Qwen token,
-            TTFT, TPOT, serving endpoint, vLLM baseline, or SGLang baseline exists. Docker is inaccessible to this
-            account, so no baseline launch was attempted. The production protected receipt/verifier service is
-            undeployed, symmetric memory and MTP remain deferred, and all 33 M1 exit gates remain open.
+            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Integration f151965
+            admitted this artifact and completed one authority-free hardware smoke on gfx942: prompt token 9707
+            produced token 94364, decoded as "spent", with process status 0. The post-setup execution duration was
+            4.826879082 seconds and the first-token offset was 3.322079162 seconds. Cold process wall was 26:50.92,
+            dominated more than 99% by repeated model authentication and copying. Therefore benchmark_comparable=false
+            and r33_tpot_eligible=false; these values are not TTFT or TPOT claims. Smoke stdout SHA
+            b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea; stderr SHA
+            1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b. Authority remains none. No production
+            publication, serving endpoint, vLLM/SGLang comparison, or qualification exists. The R33 executor still
+            supports only one window, not the required 20. Symmetric memory and MTP remain deferred, and all 33 M1
+            exit gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

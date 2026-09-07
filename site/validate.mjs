@@ -79,8 +79,8 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-  integrationCommit: "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
-  integrationTree: "5a6d77564d96e9fdcdc2c124f42b37215988dae9",
+  integrationCommit: "f1519652a789d9b27cc49a545072d4027d545b0b",
+  integrationTree: "7562c788ce52aa01e276dc7df9a3be34a0843a87",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
   r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -127,16 +127,28 @@ const expectedCurrent = {
   exactCompilerPublicationGrant: false,
   exactCompilerLoadGrant: false,
   exactCompilerLaunchGrant: false,
-  engineeringSmokeStop: "CurrentFerricDescriptorRoster",
-  engineeringSmokeReachedKfd: false,
-  engineeringSmokeGpuStateChanged: false,
-  engineeringSmokeVramStateChanged: false,
-  r33AdapterTestsPassed: 67,
+  engineeringSmokeStop: "Completed",
+  engineeringSmokeReachedKfd: true,
+  engineeringSmokeGpuStateChanged: true,
+  engineeringSmokeVramStateChanged: true,
+  engineeringSmokeProcessStatus: 0,
+  engineeringSmokePromptTokenId: 9707,
+  engineeringSmokeGeneratedTokenId: 94364,
+  engineeringSmokeGeneratedText: "spent",
+  engineeringSmokePostSetupSeconds: 4.826879082,
+  engineeringSmokeFirstTokenOffsetSeconds: 3.322079162,
+  engineeringSmokeColdWallSeconds: 1610.92,
+  engineeringSmokeStdoutSha256: "b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea",
+  engineeringSmokeStderrSha256: "1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b",
+  hardwareCompletionObserved: true,
+  benchmarkComparable: false,
+  r33TpotEligible: false,
+  r33AdapterTestsPassed: 68,
   r33AdapterHardwareIgnored: 2,
-  integratedEngineTestsPassed: 689,
+  integratedEngineTestsPassed: 857,
   integratedEngineHardwareIgnored: 7,
-  engineValidationLogSha256: "ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f",
-  adapterValidationLogSha256: "d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a",
+  engineValidationLogSha256: "1d48f1a140d9f51dc7363dffa3bfbf2741e81ea97f9e9f125d9122ed247c356a",
+  adapterValidationLogSha256: "f712b18cd848291f524c86ba92065134adfc89e595d27d7dfa5b4ff4fdcde910",
   remoteTestFailures: 0,
   r33ExecutableWindows: 1,
   r33RequiredWindows: 20,
@@ -148,7 +160,7 @@ const expectedCurrent = {
   canonicalQwenSnapshotVerified: true,
   radixPrefixIntegrated: true,
   currentAggregateHsaco: true,
-  qwenTokenObserved: false,
+  qwenTokenObserved: true,
   servingEndpointAvailable: false,
   baselineRunsAvailable: false,
   dockerAccessible: false,
@@ -192,7 +204,7 @@ assert(project.current.engineeringSmokeBinaryStaged === true, "engineering smoke
 assert(project.current.canonicalQwenSnapshotVerified === true, "canonical Qwen snapshot status drifted");
 assert(project.current.radixPrefixIntegrated === true, "integrated radix status drifted");
 assert(project.current.currentAggregateHsaco === true, "authority-free exact HSACO must remain explicit");
-assert(project.current.qwenTokenObserved === false, "site must not claim a Qwen token");
+assert(project.current.qwenTokenObserved === true, "site must retain the diagnostic Qwen token observation");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
 assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
 assert(project.current.dockerAccessible === false, "Docker must remain inaccessible for this checkpoint");
@@ -223,13 +235,28 @@ for (const grant of [
 ]) {
   assert(project.current[grant] === false, `${grant} must remain false`);
 }
+assert(project.current.engineeringSmokeStop === "Completed", "engineering smoke completion drifted");
+assert(project.current.engineeringSmokeReachedKfd === true, "engineering smoke must retain KFD execution");
+assert(project.current.engineeringSmokeGpuStateChanged === true, "hardware smoke GPU state must remain observed");
+assert(project.current.engineeringSmokeVramStateChanged === true, "hardware smoke VRAM state must remain observed");
+assert(project.current.engineeringSmokeProcessStatus === 0, "hardware smoke process must retain status 0");
+assert(project.current.hardwareCompletionObserved === true, "hardware completion must remain observed");
+assert(project.current.engineeringSmokePromptTokenId === 9707, "prompt token drifted");
+assert(project.current.engineeringSmokeGeneratedTokenId === 94364, "generated token drifted");
+assert(project.current.engineeringSmokeGeneratedText === "spent", "generated text drifted");
 assert(
-  project.current.engineeringSmokeStop === "CurrentFerricDescriptorRoster",
-  "engineering smoke stop drifted",
+  project.current.engineeringSmokePostSetupSeconds === 4.826879082,
+  "post-setup execution duration drifted",
 );
-assert(project.current.engineeringSmokeReachedKfd === false, "engineering smoke must remain pre-KFD");
-assert(project.current.engineeringSmokeGpuStateChanged === false, "smoke must not claim GPU state changes");
-assert(project.current.engineeringSmokeVramStateChanged === false, "smoke must not claim VRAM state changes");
+assert(
+  project.current.engineeringSmokeFirstTokenOffsetSeconds === 3.322079162,
+  "first-token offset drifted",
+);
+assert(project.current.engineeringSmokeColdWallSeconds === 1610.92, "cold wall duration drifted");
+assertSha256(project.current.engineeringSmokeStdoutSha256, "current.engineeringSmokeStdoutSha256");
+assertSha256(project.current.engineeringSmokeStderrSha256, "current.engineeringSmokeStderrSha256");
+assert(project.current.benchmarkComparable === false, "diagnostic smoke must not become benchmark-comparable");
+assert(project.current.r33TpotEligible === false, "one-token smoke must not become R33 TPOT-eligible");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -300,9 +327,12 @@ assertExactKeys(
   "latestObservation",
 );
 assertState(project.latestObservation.state, "latestObservation.state");
-assert(project.latestObservation.state === "integration", "authority-free exact artifact is an integration observation");
-assert(!("commit" in project.latestObservation), "exact v76 uses a source status rather than a publication binding");
-assert(project.latestObservation.generatedTokenIds.length === 0, "no Qwen token has been observed");
+assert(project.latestObservation.state === "observed", "hardware token must remain an observed checkpoint");
+assert(!("commit" in project.latestObservation), "hardware smoke uses source status rather than a publication binding");
+assert(
+  JSON.stringify(project.latestObservation.generatedTokenIds) === "[94364]",
+  "latest observation must retain exactly the diagnostic token",
+);
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
 project.recentProgress.forEach((item, index) => {
@@ -322,6 +352,9 @@ project.evidence.gates.forEach((entry, index) => {
   if (entry[0] === "Authority-free aggregate HSACO") {
     assert(entry[1] === "1", "authority-free aggregate HSACO count drifted");
     assert(entry[2] === "integration", "authority-free aggregate HSACO state drifted");
+  } else if (entry[0] === "Authority-free diagnostic Qwen tokens") {
+    assert(entry[1] === "1", "diagnostic Qwen token count drifted");
+    assert(entry[2] === "observed", "diagnostic Qwen token state drifted");
   } else {
     assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
   }
@@ -334,8 +367,9 @@ project.evidence.legend.forEach((entry, index) => {
 const snapshot = JSON.stringify(project);
 for (const claim of [
   "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "f1519652a789d9b27cc49a545072d4027d545b0b",
+  "7562c788ce52aa01e276dc7df9a3be34a0843a87",
   "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
-  "5a6d77564d96e9fdcdc2c124f42b37215988dae9",
   "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
   "553334d69d51c4ccffea383cd72cf9105df74130",
   "629465f1a85a1af331a4e285062991f7ab59a5ce",
@@ -393,7 +427,7 @@ for (const claim of [
   "no outputs",
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
   "Exact v76",
-  "Status 0",
+  "Process status 0",
   "415,660-byte Kernel IR V9 handoff",
   "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   "both prior outlined-helper geometry gaps",
@@ -406,26 +440,37 @@ for (const claim of [
   "all 12 kernels",
   "exact replay",
   "publication, load, and launch grants are false",
-  "CurrentFerricDescriptorRoster",
-  "before KFD",
-  "GPU and VRAM state are unchanged",
+  "Prompt token 9707",
+  "token 94364",
+  "spent",
+  "hardware completion",
+  "process status 0",
+  "4.826879082 seconds",
+  "3.322079162 seconds",
+  "26:50.92",
+  "more than 99%",
+  "repeated model authentication and copying",
+  "benchmark_comparable=false",
+  "r33_tpot_eligible=false",
+  "b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea",
+  "1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b",
   "native AMDGPU LLVM worker",
   "SIGABRT",
   "empty output manifest",
   "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
-  "engine 689 passed / 7 ignored",
-  "adapter 67 passed / 2 ignored",
+  "engine 857 passed / 7 ignored",
+  "adapter 68 passed / 2 ignored",
   "zero failures",
   "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
   "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
-  "ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f",
-  "d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a",
+  "1d48f1a140d9f51dc7363dffa3bfbf2741e81ea97f9e9f125d9122ed247c356a",
+  "f712b18cd848291f524c86ba92065134adfc89e595d27d7dfa5b4ff4fdcde910",
   "non-hardware validation",
   "exactly one 128-output window",
   "CLOCK_MONOTONIC_RAW",
   "checked-token causality",
   "required 20-window qualification",
-  "authority is none",
+  "Authority is none",
   "Docker is inaccessible to this account",
   "no baseline launch was attempted",
   "608 verified and 0 errors",
@@ -449,13 +494,12 @@ for (const claim of [
   "repin",
   "retained-borrow locals 178 and 40",
   "AMDGPU LLVM lowering",
-  "smoke binary",
   "verified Qwen snapshot",
   "protected receipt/verifier service is undeployed",
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
-  "No Qwen token",
+  "one authority-free diagnostic token",
   "TTFT",
   "TPOT",
   "vLLM baseline",
@@ -508,6 +552,11 @@ for (const staleOrForbidden of [
   "Blocked on fe2o3 private-slot lowering",
   "General fe2o3 private-slot lowering is required",
   "sole current terminal blocker: function 6",
+  "CurrentFerricDescriptorRoster",
+  "before KFD",
+  "GPU and VRAM state are unchanged",
+  "No Qwen token",
+  "No hardware execution",
 ]) {
   assert(!snapshot.includes(staleOrForbidden), `stale or forbidden claim remains: ${staleOrForbidden}`);
 }

@@ -869,6 +869,7 @@ h3 {
 .authority-note {
   margin: 18px 0 0;
   padding: 12px 14px;
+  overflow-wrap: anywhere;
   background: var(--amber-soft);
   color: #62450f;
   font-size: 12px;
