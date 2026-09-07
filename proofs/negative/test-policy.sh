@@ -1093,7 +1093,7 @@ expect_rejected dependency-promotion-owner-edge \
     invoke_source_gate --generate "$repo" "$scratch/promotion-owner-edge.metadata" \
     "$scratch/promotion-owner-edge.manifest"
 expect_rejected dependency-promotion-expected-path \
-    'path dependency identity drifted' \
+    'promotion dependency declaration drifted: ferric-qwen3-all-kernels-worker-v3-source-pin-v1' \
     invoke_source_gate --generate "$repo" "$scratch/promotion-expected-path.metadata" \
     "$scratch/promotion-expected-path.manifest"
 
