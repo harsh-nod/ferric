@@ -17,7 +17,7 @@ from types import ModuleType, SimpleNamespace
 from typing import NoReturn
 
 
-REVISION = "3d10825df93a86644cc5a5b006cadd45f71afb91"
+REVISION = "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6"
 WORKER_BYTES = b"synthetic Worker V3 linker\n"
 WORKER_ID = "fe2o3-worker-v1-sha256-" + hashlib.sha256(b"worker build").hexdigest()
 
@@ -120,10 +120,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3d10825df93a86644cc5a5b006cadd45f71afb91", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3d10825df93a86644cc5a5b006cadd45f71afb91", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6", version = "=0.1.0" }
 """,
         encoding="ascii",
     )
@@ -164,7 +164,7 @@ def main() -> None:
     )
     source = producer.read_text(encoding="ascii")
     for required in [
-        'FE2O3_REVISION = "3d10825df93a86644cc5a5b006cadd45f71afb91"',
+        'FE2O3_REVISION = "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6"',
         '"FE2O3_PRODUCTION_BUILD_CONFIG_V2": str(arguments.config)',
         '"FE2O3_TARGET": "gfx942"',
         '"authority",\n        "release",\n        "build",\n        "--locked"',
