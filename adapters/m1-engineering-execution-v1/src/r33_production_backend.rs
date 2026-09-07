@@ -372,7 +372,7 @@ const fn fault(code: &'static str) -> M1R33BackendFaultV1 {
     M1R33BackendFaultV1::new(code)
 }
 
-fn valid_sha256(value: &str) -> bool {
+pub(crate) fn valid_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
