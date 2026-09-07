@@ -33,7 +33,9 @@ const TARGET: &[u8] = b"gfx942:xnack-";
 const CODE_OBJECT_VERSION: u16 = 6;
 const MAGIC: [u8; 8] = *b"FRW3PR1\0";
 const VERSION: u16 = 1;
-const SIGNING_DOMAIN: &[u8] = b"FERRIC/M1/ALL-KERNELS/PROTECTED-VERIFIER/RECEIPT-SIGNATURE/V1\0";
+/// Exact domain prefix included in every aggregate protected-receipt signing message.
+pub const M1_ALL_KERNELS_PROTECTED_RECEIPT_SIGNING_DOMAIN_V1: &[u8] =
+    b"FERRIC/M1/ALL-KERNELS/PROTECTED-VERIFIER/RECEIPT-SIGNATURE/V1\0";
 const RECEIPT_IDENTITY_DOMAIN: &[u8] =
     b"FERRIC/M1/ALL-KERNELS/PROTECTED-VERIFIER/RECEIPT-IDENTITY/V1\0";
 const POLICY_IDENTITY_DOMAIN: &[u8] = b"FERRIC/M1/ALL-KERNELS/PROTECTED-VERIFIER/TRUST-POLICY/V1\0";
@@ -43,6 +45,10 @@ pub const M1_ALL_KERNELS_PROTECTED_RECEIPT_BYTES_V1: usize = UNSIGNED_BYTES + SI
 
 /// Exact canonical unsigned aggregate protected-receipt byte length.
 pub const M1_ALL_KERNELS_PROTECTED_RECEIPT_UNSIGNED_BYTES_V1: usize = UNSIGNED_BYTES;
+
+/// Exact domain-separated aggregate protected-receipt signing-message length.
+pub const M1_ALL_KERNELS_PROTECTED_RECEIPT_SIGNING_BYTES_V1: usize =
+    M1_ALL_KERNELS_PROTECTED_RECEIPT_SIGNING_DOMAIN_V1.len() + UNSIGNED_BYTES;
 
 /// Field containing an invalid all-zero identity.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1035,8 +1041,8 @@ impl M1AllKernelsUnsignedProtectedVerifierReceiptV1 {
     /// Returns the exact domain-separated signing message.
     #[must_use]
     pub fn signing_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(SIGNING_DOMAIN.len() + UNSIGNED_BYTES);
-        bytes.extend_from_slice(SIGNING_DOMAIN);
+        let mut bytes = Vec::with_capacity(M1_ALL_KERNELS_PROTECTED_RECEIPT_SIGNING_BYTES_V1);
+        bytes.extend_from_slice(M1_ALL_KERNELS_PROTECTED_RECEIPT_SIGNING_DOMAIN_V1);
         bytes.extend_from_slice(&self.canonical_bytes);
         bytes
     }

@@ -13,6 +13,7 @@
 mod durable;
 mod listener;
 mod service;
+mod signer_ipc;
 
 pub use durable::{
     DurableLedgerErrorV1, DurableReplayGuardV1, DurableReservationProviderV2,
@@ -34,4 +35,14 @@ pub use service::{
     ProtectedProviderClaimErrorV1, ProtectedReceiptSignerInputV1, ProtectedReceiptSignerProviderV1,
     ServiceApplicationRejectionV1, ServiceCallerPolicyV1,
     run_ferric_protected_verifier_accepted_session_v2, run_ferric_protected_verifier_session_v2,
+};
+pub use signer_ipc::{
+    PREOPENED_PROTECTED_RECEIPT_SIGNER_REQUEST_BYTES_V1,
+    PREOPENED_PROTECTED_RECEIPT_SIGNER_RESPONSE_BYTES_V1, PreopenedProtectedReceiptSignerClientV1,
+    ProtectedReceiptSignerClientAdmissionErrorV1, ProtectedReceiptSignerClientAdmissionFailureV1,
+    ProtectedReceiptSignerClientErrorV1, ProtectedReceiptSignerEndpointIdentityErrorV1,
+    ProtectedReceiptSignerEndpointIdentityV1, ProtectedReceiptSignerPeerIdentityErrorV1,
+    ProtectedReceiptSignerPeerIdentityV1, ProtectedReceiptSignerProtocolErrorV1,
+    ProtectedReceiptSignerRequestV1, ProtectedReceiptSignerResponseStatusV1,
+    ProtectedReceiptSignerResponseV1,
 };

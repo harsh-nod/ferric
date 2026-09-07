@@ -35,8 +35,8 @@ const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
         166, 34, 240, 146, 44, 208, 0, 198, 168, 185, 180, 106, 177,
     ],
     [
-        195, 119, 11, 143, 50, 4, 217, 48, 95, 184, 90, 183, 252, 155, 177, 118, 152, 33, 3, 19,
-        20, 99, 98, 151, 180, 221, 112, 70, 109, 36, 46, 208,
+        3, 183, 151, 37, 209, 203, 185, 118, 212, 80, 179, 89, 193, 101, 144, 227, 187, 114, 139,
+        61, 152, 165, 116, 226, 181, 161, 125, 114, 243, 14, 202, 100,
     ],
     [
         199, 154, 198, 74, 196, 28, 234, 0, 45, 167, 160, 76, 43, 158, 127, 182, 116, 53, 191, 54,
@@ -155,8 +155,8 @@ const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
 ];
 const REVIEWED_SIBLING_AST_FINGERPRINTS: [[u8; 32]; 4] = [
     [
-        132, 181, 173, 71, 182, 250, 154, 170, 178, 236, 34, 188, 5, 43, 199, 29, 94, 45, 143, 138,
-        213, 42, 98, 16, 254, 251, 110, 231, 51, 232, 170, 12,
+        207, 41, 78, 251, 234, 52, 208, 113, 99, 199, 199, 46, 200, 76, 82, 87, 207, 4, 168, 207,
+        93, 47, 222, 253, 81, 40, 136, 156, 31, 144, 42, 209,
     ],
     [
         224, 227, 235, 160, 20, 153, 171, 206, 221, 70, 42, 243, 126, 77, 141, 77, 46, 115, 94,
@@ -1855,10 +1855,12 @@ fn configured_binder_orders_all_one_shot_transitions_before_promotion() {
 
 #[test]
 fn sibling_modules_are_exact_and_cannot_expose_authority() {
-    assert!(sibling_production_policy(
-        RECEIPT_SOURCE,
+    let receipt = production_file(RECEIPT_SOURCE).expect("receipt production source parses");
+    assert!(sibling_file_has_no_escape(&receipt));
+    assert_eq!(
+        token_fingerprint(&receipt),
         REVIEWED_SIBLING_AST_FINGERPRINTS[0]
-    ));
+    );
     assert!(sibling_production_policy(
         CLIENT_SOURCE,
         REVIEWED_SIBLING_AST_FINGERPRINTS[1]

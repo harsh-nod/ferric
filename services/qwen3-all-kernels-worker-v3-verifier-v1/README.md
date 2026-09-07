@@ -19,6 +19,9 @@ The foundation provides:
 - canonical V2 envelope and compiler-current-record association;
 - explicit protected current-record, independent checker, and external signer
   provider contracts;
+- a descriptor-only protected-signer client for one supervisor-preopened,
+  connected `SOCK_SEQPACKET` endpoint with pinned object identity, exact peer
+  PID/UID/GID, provider identity, and public key;
 - exact 12-entry request/result joins and a terminal Ferric V1 response payload;
 - a connected-path entrypoint consuming only fe2o3's separately admitted
   accepted-endpoint capability;
@@ -62,12 +65,25 @@ launcher that supplies only preopened descriptors and pins their identities.
 Every synchronous provider IPC must impose deadline-aware transport
 cancellation; if a provider returns after the outer deadline the service
 rejects, while a hung in-process call cannot be cancelled by this foundation.
+The concrete signer client uses only the service's supplied absolute deadline
+and fixed-size canonical packets. It binds the complete receipt signing input,
+policy, provider, public key, request identity, response status, and signature;
+rejects ancillary data and packet truncation; and permanently drops its
+endpoint after every post-send ambiguous outcome. A correlated explicit signer
+rejection leaves the synchronized channel available. Production admission
+requires a separately provisioned signer UID distinct from the verifier UID;
+the same-UID client and development signing key exist only below `cfg(test)`.
 The one-shot listener accepts only its explicit caller-owned path; the service
 does not discover an environment variable or default endpoint and never accepts
 a raw private key. Credential or endpoint-admission rejection retains the exact
 accepted descriptor. After successful endpoint admission, failures provide
 exactly the existing fe2o3/Ferric terminal custody and do not claim general
 post-Begin descriptor recovery.
+
+This client does not implement or provision the external signer process, store
+a private key, authenticate a compiler current record, run an independent
+checker, maintain an antirollback head, or launch a protected deployment. Its
+descriptor checks and wire protocol grant no production authority.
 
 The private `0700` directory excludes different-UID path mutation. Like any
 pathname API, it cannot exclude a concurrent rename by another thread or

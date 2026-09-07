@@ -376,6 +376,7 @@ pub unsafe trait IndependentCheckerProviderV1 {
 }
 
 /// Bounded signing request sent to the external signing provider.
+#[derive(Clone, Copy)]
 pub struct ProtectedReceiptSignerInputV1<'a> {
     signing_bytes: &'a [u8],
     policy_identity: [u8; 32],
@@ -383,6 +384,18 @@ pub struct ProtectedReceiptSignerInputV1<'a> {
 }
 
 impl ProtectedReceiptSignerInputV1<'_> {
+    pub(crate) const fn new(
+        signing_bytes: &[u8],
+        policy_identity: [u8; 32],
+        deadline: AbsoluteSessionDeadlineV1,
+    ) -> ProtectedReceiptSignerInputV1<'_> {
+        ProtectedReceiptSignerInputV1 {
+            signing_bytes,
+            policy_identity,
+            deadline,
+        }
+    }
+
     /// Returns the exact domain-separated unsigned receipt bytes.
     pub const fn signing_bytes(&self) -> &[u8] {
         self.signing_bytes
@@ -1172,11 +1185,11 @@ fn request_receipt_signature<S: ProtectedReceiptSignerProviderV1>(
     if provider_identity != expected_provider_identity || verifying_key != expected_verifying_key {
         return Err(ServiceApplicationRejectionV1::SignerRejected);
     }
-    let signature = signer.sign_receipt(ProtectedReceiptSignerInputV1 {
+    let signature = signer.sign_receipt(ProtectedReceiptSignerInputV1::new(
         signing_bytes,
         policy_identity,
         deadline,
-    });
+    ));
     deadline.require_live()?;
     signature.map_err(|_| ServiceApplicationRejectionV1::SignerRejected)
 }
