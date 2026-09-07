@@ -216,35 +216,35 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Integrate the one-round path</h2>
+            <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration ea6ef07c7b13d31c84b14d2ad06f19f8d1220665, tree
-            34a2bf774ecd9072d4116423a7d512fdda882345, retains signed successor-KV bridge
-            136a6d2ff92597c91caad3d0e33baede74cd4c9a, tree
-            c9684e25b4fbd6737ce73307c3cdc21bde1b221e. Its independent no-blocker review and exact
-            remote suite remain valid: 608 lib, 11 harness, 2 packet, 75 qualification, 2 preflight,
-            and 164 doctests pass, with 7 hardware ignores and zero failures. Engine log SHA
-            7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c; status SHA
-            9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa. Current source admission
-            records 7,817 bodies across 167 modules: 690 verified and 7,127 explicitly unverified;
-            the full source gate is green. Exact broad validation also passes the workspace all-target
-            check, 698 engine checks with 7 hardware ignores, 95 adapter checks with 2 hardware ignores,
-            and strict speculative-binary clippy with five existing resident lint allowances. Static log SHA
-            79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b; source-gate log SHA
-            6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1.
+            Current integration e5d23e19973a01000129aaf2ec705b8993bd21c3, tree
+            f331a34c08394d4fc599880ac342baa51140eca3, carries independently accepted generic provider
+            b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9 atop reviewed resident head
+            68091859ce0710dc26cfb839d580e40ea0839253. The resident fixed S1/T128 bootstrap reserves
+            only its exact S1/K4 successor portfolio; the generic provider binds one exact admitted
+            S1/K4, S1/K8, S1/K16, or S8/K4 successor before allocation. Each roster is 11 queue-visible
+            allocations against KFD's maximum of 16. Exact combined remote validation passes 711 engine
+            target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores,
+            and all 28 source-gate tests. Compiler-rooted admission covers 7,874 bodies across 168 modules;
+            evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee.
+            This is host and source validation. Neither integrated path has hardware qualification;
+            arbitrary cross-shape switching, a resident daemon, serving, and production authority are not
+            claimed.
 
-            Unintegrated resident commits 6fcf568014818b4c5664bea72206f5d07dca050b,
-            55285c95446f40984892e4857d417b6412c89534, and
-            2880334d3a359b37394cec5528609cec90248a40, tree
-            6609ce9375f4611a17fd7ff07c52adf18f33eb4c, extend custody through tail-page materialization,
-            registry reconciliation, and the first speculative round. Their remote suite passes 617 lib,
-            11 harness, 2 packet, 75 qualification, 2 preflight, and 171 doctests, with 7 hardware
-            ignores and zero failures. Independent review nevertheless holds this resident candidate because
-            authenticated_prefill_bootstrap still reserves all finite outputs, presenting 20 queue-visible
-            allocations against KFD's maximum of 16. Worker V3 candidate
-            fa80651bec5c96004aaff921a8433ac04979d1a5 is held from integration with review disposition
-            do-not-integrate. There is no resident daemon or production authority.
+            Rebased Worker V3 commits 181cc2ab2d1fc781513e0ef557c5838c71e1a83b,
+            2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b, and
+            caf83e690d47b131f26a31111b4978d2ba13d133 are substantively repaired. All 10 strict proof
+            packages and all same-source negative proofs pass. Full qualification #2 failed dependency
+            hostile-fixture policy because the fixture expected “local runtime owner resolve edge drifted”
+            while the checker rejected earlier with “unexpected promotion resolved dependency:
+            source_pin_decoy”. DCO repair 0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa, tree
+            2083c4c38e1115d098a708e7b82255d2bf767cb5, commits the corrected diagnostic and exact
+            generated sha2 runtime TCB row. Focused source gate 33/33 and exact decoy rejection pass;
+            log SHA ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49.
+            The Worker remains on HOLD and unintegrated while full qualification #3 runs from clean
+            committed source and until final review. Authority is none.
 
             Attempt 2 failed before queue publication because 20 queue-visible allocations exceeded
             fe2o3's maximum of 16. Unintegrated DCO commit
@@ -257,7 +257,8 @@
             94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef; release binary SHA
             262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Authority is none,
             benchmark_comparable=false and authenticated_AB=false. Independent review found no blocker;
-            integration ea6ef07 changes only proof-inventory ordering.
+            integration ea6ef07 changed only proof-inventory ordering; the result remains present in current
+            integration e5d23e1.
 
             Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
             e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses public fe2o3

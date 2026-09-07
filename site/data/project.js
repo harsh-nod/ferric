@@ -3,33 +3,42 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "11e408970ddce28cacb491086d81852ddf07713f",
-    integrationCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
-    integrationTree: "34a2bf774ecd9072d4116423a7d512fdda882345",
-    residentTailCommit: "6fcf568014818b4c5664bea72206f5d07dca050b",
-    residentReconcileCommit: "55285c95446f40984892e4857d417b6412c89534",
-    residentFirstRoundCommit: "2880334d3a359b37394cec5528609cec90248a40",
-    residentFirstRoundTree: "6609ce9375f4611a17fd7ff07c52adf18f33eb4c",
-    residentCandidateIntegrated: false,
+    siteRefreshBase: "36e37c1d6e62c70845fd3ca874375485b3b2f98d",
+    integrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
+    integrationTree: "f331a34c08394d4fc599880ac342baa51140eca3",
+    residentTailCommit: "886a0d38480887e05cc4c4dde858ff56ad155ca4",
+    residentReconcileCommit: "c94c69f3a5cfd763c45747e943caf57e215d1a79",
+    residentFirstRoundCommit: "de490d6ca68bb6ebab993774c008fd8553a1895b",
+    residentFirstRoundTree: "66bed06aeb97987327846567c690a6a22cbd3db3",
+    residentRosterCommit: "68091859ce0710dc26cfb839d580e40ea0839253",
+    residentRosterTree: "4a4ea1e7db1d651085b74180d38a5bdab30456f7",
+    residentCandidateIntegrated: true,
     residentCandidateReviewComplete: true,
-    residentCandidateReviewDisposition: "hold",
-    residentCandidatePhysicalRunnable: false,
-    residentCandidateEngineTestsPassed: 878,
-    residentCandidateHardwareIgnored: 7,
-    residentCandidateEngineLibTestsPassed: 617,
-    residentCandidateEngineHarnessTestsPassed: 11,
-    residentCandidateEnginePacketTestsPassed: 2,
-    residentCandidateEngineQualificationTestsPassed: 75,
-    residentCandidateEnginePreflightTestsPassed: 2,
-    residentCandidateEngineDoctestsPassed: 171,
+    residentCandidateReviewDisposition: "integrate",
+    residentHardwareQualified: false,
     residentCandidateAdmissionModules: 168,
-    residentCandidateAdmissionBodies: 7868,
-    residentCandidateNewPendingVerusBodies: 29,
-    aggregateSourcePinAdapterCommit: "c8e0a18c4561e6e9f470321276dbc5142834ce61",
-    workerV3CandidateCommit: "fa80651bec5c96004aaff921a8433ac04979d1a5",
-    workerV3CandidateTree: "e399f2b82966a34c63ddd358a646db522e2af4a3",
+    residentCandidateAdmissionBodies: 7869,
+    genericProviderCandidateCommit: "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9",
+    genericProviderCandidateTree: "57bb4f66a396f1426b10726273f8c9c5f56cc0e1",
+    genericProviderCandidateIntegrated: true,
+    genericProviderReviewDisposition: "integrate",
+    genericProviderExactAllocationCount: 11,
+    genericProviderHardwareQualified: false,
+    workerV3SourcePinCommit: "181cc2ab2d1fc781513e0ef557c5838c71e1a83b",
+    workerV3CollectorCommit: "2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b",
+    workerV3ProofCommit: "caf83e690d47b131f26a31111b4978d2ba13d133",
+    workerV3CandidateCommit: "0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa",
+    workerV3CandidateTree: "2083c4c38e1115d098a708e7b82255d2bf767cb5",
     workerV3CandidateIntegrated: false,
-    workerV3ReviewDisposition: "do-not-integrate",
+    workerV3ReviewDisposition: "hold",
+    workerV3StrictProofPackagesPassed: 10,
+    workerV3SameSourceNegativeProofsGreen: true,
+    workerV3FullQualificationAttempt: 3,
+    workerV3GeneratedSha2RuntimeTcbRowCommitted: true,
+    workerV3FocusedSourceGateTestsPassed: 33,
+    workerV3ExactDecoyRejectionGreen: true,
+    workerV3FocusedValidationLogSha256: "ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49",
+    workerV3FullNegativeReleaseGateComplete: false,
     successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
     successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
     engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -61,31 +70,17 @@ window.FERRIC_PROJECT = Object.freeze({
     proofTestsPassed: 26,
     sourceGateTestsPassed: 28,
     successorKvPendingVerusBodies: 16,
-    admissionRows: 7127,
-    admissionBodiesTotal: 7817,
-    admissionVerifiedBodies: 690,
-    admissionUnverifiedBodies: 7127,
-    admissionModules: 167,
+    admissionBodiesTotal: 7874,
+    admissionModules: 168,
     admissionSourceGatesGreen: true,
     admissionTcbGatesGreen: true,
     combinedInventoryCurrent: true,
-    verifiedInventorySha256: "55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb",
-    unverifiedInventorySha256: "86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7",
-    integrationFormatGreen: true,
-    integrationWorkspaceAllTargetsCheckGreen: true,
-    integrationEngineTestsPassed: 698,
+    integrationEngineTestsPassed: 711,
     integrationEngineHardwareIgnored: 7,
-    integrationEngineLibTestsPassed: 608,
-    integrationEngineHarnessTestsPassed: 11,
-    integrationEnginePacketTestsPassed: 2,
-    integrationEngineQualificationTestsPassed: 75,
-    integrationEnginePreflightTestsPassed: 2,
-    integrationAdapterTestsPassed: 95,
+    integrationEngineDoctestsPassed: 171,
+    integrationAdapterTestsPassed: 93,
     integrationAdapterHardwareIgnored: 2,
-    integrationSpeculativeClippyGreen: true,
-    integrationResidentLintAllowances: 5,
-    integrationStaticValidationLogSha256: "79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b",
-    integrationSourceGateLogSha256: "6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1",
+    integrationEvidenceAggregateSha256: "b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee",
     focusedRmsnormTestsPassed: 21,
     focusedRmsnormLogShaPrefix: "4d2bcd1",
     exactCompilerAttempt: "v77",
@@ -208,14 +203,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Current integration ea6ef07 includes the reviewed 11-allocation engineering harness. Its original f18ffe2 hardware source completed paired prefill and one S1/K4 speculative round on one gfx942, publishing target correction token 3681 after accepting zero draft tokens. Resident candidate 2880334 is on review hold because its bootstrap still reserves 20 allocations against KFD's maximum of 16; Worker V3 candidate fa80651 is also held. No resident daemon, serving endpoint, production authority, authenticated A/B, comparable TTFT/TPOT, or vLLM/SGLang comparison exists, and all 33 M1 gates remain open.",
+      "Current integration e5d23e1 includes the independently reviewed resident series and generic provider exact-successor binding. The combined provider validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor; neither path has hardware qualification. Exact combined remote validation passes 711 engine target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and all 28 source-gate tests across 7,874 bodies in 168 modules; evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Rebased Worker V3 series remains on HOLD while clean committed-source full qualification #3 runs and until final review. No resident daemon, serving endpoint, production authority, authenticated A/B, comparable TTFT/TPOT, or vLLM/SGLang comparison exists, and all 33 M1 gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Current integration ea6ef07 includes signed bridge 136a6d2 and the reviewed reduced-roster speculative harness. Remote validation passes formatting, the workspace all-target check, 698 engine tests with 7 hardware ignores, 95 adapter tests with 2 hardware ignores, the source gate, and strict speculative-binary clippy with five existing resident lint allowances. This remains an engineering integration, not a resident daemon or hardware-serving result.",
+        "Current integration e5d23e1 includes signed bridge 136a6d2, the reviewed reduced-roster speculative harness, the resident continuation series, and the independently accepted generic exact-successor provider. Exact combined remote validation passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and all 28 source-gate tests; compiler-rooted admission covers 7,874 bodies across 168 modules. This remains an engineering integration, not a resident daemon or hardware-serving result.",
     },
     {
       label: "R33 lifecycle",
@@ -230,10 +225,10 @@ window.FERRIC_PROJECT = Object.freeze({
         "After predecessor detach, the authenticated bridge can reserve page-less successor KV writes for the exact K draft extension while retaining fail-closed custody. It passed an independent no-blocker review, and the exact remote engine suite passed 862 checks with 7 hardware ignores. The later speculative harness does not exercise this resident continuation path.",
     },
     {
-      label: "Resident continuation candidate",
-      state: "implemented",
+      label: "Resident continuation integration",
+      state: "integration",
       detail:
-        "Unintegrated commits 6fcf568, 55285c9, and 2880334 authenticate speculative tail-page materialization, reconcile the prefill registry, and expose a move-only first-round continuation path. Its 878 remote host checks pass: 617 lib, 11 harness, 2 packet, 75 qualification, 2 preflight, and 171 doctests, with 7 hardware ignores. Independent review nevertheless placed the candidate on hold: authenticated_prefill_bootstrap still reserves all finite outputs, producing 20 queue-visible allocations against KFD's maximum of 16. It is not physically runnable, the public integration head, a resident daemon, or serving.",
+        "Rebased commits 886a0d3, c94c69f, and de490d6 authenticate speculative tail-page materialization, reconcile the prefill registry, and expose a move-only first-round continuation path. Commit 6809185 binds its fixed S1/T128 bootstrap to the exact S1/K4 successor portfolio, reducing that prepublication roster to 11 allocations against KFD's maximum of 16. Independent review found no blocker and the series is integrated. No resident hardware qualification, daemon, serving endpoint, or production authority follows from the host validation.",
     },
     {
       label: "Paired speculative hardware",
@@ -245,7 +240,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 authority candidate",
       state: "open",
       detail:
-        "Commit c8e0a18's aggregate source-pin adapter passed independent review, but the two-commit series ending at fa80651 is held from integration. Review found zero directly verified proof rows, an incomplete exact dependency roster, no committed collector behavior harness despite documentation claims, and no supported consume-plus-locked-current-revalidate handoff. Production authority remains none.",
+        "Rebased commits 181cc2a, 2c77895, and caf83e6 substantively repair the aggregate source pin, promotion-prerequisite collector, exact dependency roster, behavior harness, and proof bindings. All 10 strict proof packages and all same-source negative proofs are green. Full qualification #2 failed in dependency hostile-fixture policy: the fixture expected `local runtime owner resolve edge drifted`, but the checker deterministically rejected earlier with `unexpected promotion resolved dependency: source_pin_decoy`. DCO repair 0924d91, tree 2083c4c, commits the corrected diagnostic and exact generated sha2 runtime TCB row; focused source gate 33/33 and exact decoy rejection pass, log SHA ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49. Clean committed-source full qualification #3 and final review remain pending. The unintegrated series stays on HOLD and production authority is none.",
+    },
+    {
+      label: "Generic serving provider integration",
+      state: "integration",
+      detail:
+        "Commit b30e7a6 binds one exact finite successor before allocation or dequeue, validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor, and preserves fail-closed custody. Independent review accepted it and integration e5d23e1 carries it atop the resident series. Arbitrary cross-shape switching and hardware qualification are not claimed.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -269,7 +270,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "Current integration ea6ef07 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
+        "Current integration e5d23e1 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
     },
     {
       label: "Qwen execution and serving",
@@ -285,9 +286,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665; tree 34a2bf774ecd9072d4116423a7d512fdda882345; reviewed reduced-roster speculative harness and current source admission; not public implementation main, a release, serving, or qualification"],
-    ["Resident continuation candidate", "unintegrated commits 6fcf568014818b4c5664bea72206f5d07dca050b, 55285c95446f40984892e4857d417b6412c89534, and 2880334d3a359b37394cec5528609cec90248a40; review hold because bootstrap's 20-allocation roster exceeds KFD maximum 16"],
-    ["Worker V3 candidate", "source-pin adapter c8e0a18c4561e6e9f470321276dbc5142834ce61 passed independent review; candidate fa80651bec5c96004aaff921a8433ac04979d1a5, tree e399f2b82966a34c63ddd358a646db522e2af4a3, is unintegrated with review disposition do-not-integrate"],
+    ["Ferric integration candidate", "e5d23e19973a01000129aaf2ec705b8993bd21c3; tree f331a34c08394d4fc599880ac342baa51140eca3; independently accepted generic provider integrated atop reviewed resident series; not public implementation main, a release, serving, or qualification"],
+    ["Resident continuation integration", "commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and exact-roster fix 68091859ce0710dc26cfb839d580e40ea0839253; integrated after no-blocker review; no resident hardware qualification"],
+    ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and integrated at e5d23e19973a01000129aaf2ec705b8993bd21c3; hardware-unqualified"],
+    ["Worker V3 candidate", "rebased commits 181cc2ab2d1fc781513e0ef557c5838c71e1a83b, 2c778951bd09ae3d3c96cdc5a0258e57fcc18e9b, caf83e690d47b131f26a31111b4978d2ba13d133, and DCO repair 0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa, tree 2083c4c38e1115d098a708e7b82255d2bf767cb5; all 10 strict proof packages and all same-source negative proofs green; focused source gate 33/33 and exact decoy rejection pass; unintegrated HOLD while clean committed-source full qualification #3 runs and pending final review"],
     ["Speculative hardware source", "commit f18ffe2566112cb8b9518562afe2c8919577c907; tree 04d09e03af9a8257d211382a6f7c91909dda7df6; one authority-free S1/K4 diagnostic round completed; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended"],
     ["Successor KV bridge", "136a6d2ff92597c91caad3d0e33baede74cd4c9a; tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; authenticated page-less successor leasing after detach; no speculative hardware claim"],
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
@@ -354,9 +356,9 @@ window.FERRIC_PROJECT = Object.freeze({
           "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. c1b9590 executes exactly one 128-output window with a real monotonic clock and checked-token causality, then fail-closes and rejects a second window. The required 20-window path and qualification evidence remain absent.",
       },
       {
-        name: "Resident first-round continuation candidate",
+        name: "Resident first-round continuation",
         detail:
-          "Unintegrated resident commits add authenticated tail-page materialization, registry reconciliation, and a public move-only transition from paired prefill into the first speculative round. Remote host checks are green, but review holds the candidate because its bootstrap retains the known 20-allocation roster. Physical integration, later rounds, daemon residency, and serving remain open.",
+          "Integrated resident commits add authenticated tail-page materialization, registry reconciliation, and a public move-only transition from paired prefill into the first speculative round. The exact S1/K4 bootstrap roster is 11 allocations against KFD's maximum of 16, and independent review found no blocker. Hardware qualification, later rounds, daemon residency, and serving remain open.",
       },
       {
         name: "Pure lifecycle proofs",
@@ -371,14 +373,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 evidence collector candidate",
         detail:
-          "The unintegrated candidate correlates the protected service request and receipt, artifact lineage, compiler pin, and current-token evidence without enlarging authority. Independent review nevertheless holds the series from integration until proof rows, the exact dependency roster, the committed behavior harness, and the locked-current consumption handoff are complete.",
+          "The unintegrated candidate correlates the protected service request and receipt, artifact lineage, compiler pin, and current-token evidence without enlarging authority. DCO tip 0924d91 passes all 10 strict proof packages, all same-source negative proofs, focused source gate 33/33, and exact decoy rejection. It remains on HOLD while clean committed-source full qualification #3 runs and until final review; authority is none.",
       },
     ],
     roadmap: [
       {
         name: "Run the speculative target/draft path",
         detail:
-          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and is integrated at ea6ef07 after attempt 2 exposed the 20-versus-16 queue limit. Preserve custody across later rounds and run it under protected authority before making a serving or qualification claim.",
+          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and remains integrated through current head e5d23e1 after attempt 2 exposed the 20-versus-16 queue limit. Resident continuation and exact-successor generic provider paths are integrated; preserve custody across later rounds and run them under protected authority before making a serving or qualification claim.",
       },
       {
         name: "Extend the authenticated R33 run",
@@ -414,20 +416,20 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Reviewed reduced-roster integration",
+      title: "Reviewed resident integration",
       state: "integration",
-      source: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
-      result: "PASS: fmt + workspace all-target check + 698 engine tests + 95 adapter tests + strict speculative clippy; zero failures",
+      source: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
+      result: "PASS: 711 engine target tests + 171 doctests + 93 adapter tests + 28 source-gate tests; 7 engine and 2 adapter hardware ignores",
       detail:
-        "Exact ea6ef07 validation passes 608 lib, 11 harness, 2 packet, 75 qualification, and 2 preflight tests for 698 engine checks, with 7 hardware ignores and zero failures. Adapter checks pass 95 with 2 hardware ignores and zero failures. Formatting, workspace all-target check, and strict speculative-binary clippy also pass; the clippy command carries five existing resident lint allowances. Static validation log SHA 79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b. These host checks do not grant serving, benchmark, or production authority.",
+        "Exact combined remote validation at e5d23e1 passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and 28/28 source-gate tests. Independently accepted generic provider b30e7a6 entered this head atop the reviewed resident series. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. These checks do not grant hardware qualification, serving, benchmark, or production authority.",
     },
     proof: {
       title: "Current source admission and verified models",
       state: "integration",
-      source: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
-      result: "PASS: 7,817 bodies across 167 modules; 690 verified / 7,127 unverified; source gate green",
+      source: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
+      result: "PASS: compiler-rooted source gate covers 7,874 bodies across 168 modules; 28/28 source-gate tests green",
       detail:
-        "Admission commit ea6ef07, tree 34a2bf774ecd9072d4116423a7d512fdda882345, records 7,127 unverified rows: 7,817 bodies total, 690 verified and 7,127 explicitly unverified across 167 modules. The full source gate passes; log SHA 6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1. VERIFIED inventory SHA 55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb; UNVERIFIED inventory SHA 86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7. Earlier strict Verus 81 verified / 0 errors and radix Verus 608 verified and 0 errors results remain scoped proofs; no runtime refinement or effect proof is claimed.",
+        "Admission commit e5d23e1, tree f331a34c08394d4fc599880ac342baa51140eca3, covers 7,874 executable bodies across 168 modules and passes all 28 source-gate tests. Earlier strict Verus 81 verified / 0 errors and radix Verus 608 verified and 0 errors results remain scoped proofs; no runtime refinement or effect proof is claimed.",
     },
     hardware: {
       title: "Reduced-roster S1/K4 speculative round completes",
@@ -450,7 +452,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised the held resident continuation candidate or Worker V3 authority. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Neither the target-only four-token result nor the one-round speculative result is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, or qualification.",
+      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised the newly integrated resident continuation or generic exact-successor provider under hardware authority. Worker V3 0924d91 remains on HOLD after qualification #2's dependency hostile-fixture diagnostic mismatch; its DCO diagnostic/sha2-TCB repair passes focused source gate 33/33 and exact decoy rejection, while clean committed-source full qualification #3 and final review remain pending. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Neither hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, or qualification.",
   },
   teams: [
     {
@@ -459,15 +461,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Current integration ea6ef07 joins signed successor-KV bridge 136a6d2 with independently reviewed reduced-roster speculative commit f18ffe2. The original hardware source completed one authority-free S1/K4 round; integration amends only proof-inventory ordering.",
+        "Current integration e5d23e1 joins signed successor-KV bridge 136a6d2, independently reviewed reduced-roster speculative commit f18ffe2, the resident tail-page/registry/first-round/exact-bootstrap series, and independently accepted generic provider b30e7a6.",
       current:
-        "Resident commits 6fcf568, 55285c9, and 2880334 pass remote host checks but are on review hold for the known 20-versus-16 physical allocation blocker. Worker V3 candidate fa80651 is held from integration. Full source admission for ea6ef07 passes at 167 modules and 7,817 bodies.",
+        "Exact combined validation at e5d23e1 passes 711 engine target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and 28/28 source-gate tests over 7,874 bodies in 168 modules. Worker V3 0924d91 remains on HOLD while clean committed-source full qualification #3 runs and until final review.",
       blockedBy:
-        "No team-local blocker. M1 still depends on repairing the resident bootstrap roster, a corrected Worker V3 authority path, the 20-window R33 lifecycle, protected artifact admission, and matched baselines.",
+        "No team-local blocker. M1 still depends on full qualification #3 and final review of the Worker V3 authority path, the 20-window R33 lifecycle, protected artifact admission, and matched baselines.",
       next:
-        "Apply the proven 11-allocation discipline to the resident bootstrap, re-review corrected resident and Worker V3 candidates, then extend beyond one speculative round.",
+        "Complete Worker V3 full qualification #3 from clean committed source and final review; extend authenticated execution beyond one speculative round.",
       validation:
-        "Integration ea6ef07: 698 engine and 95 adapter checks pass, source gate passes at 167 modules / 7,817 bodies / 7,127 unverified rows. Static log SHA 79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b; source-gate log SHA 6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1. Resident 2880334: hold. Worker fa80651: do-not-integrate.",
+        "Integration e5d23e1: 711 engine target checks and 171 doctests pass; 93 adapter checks pass; engine and adapter hardware ignores are 7 and 2; source gate passes 28/28 at 168 modules and 7,874 bodies. Resident and generic reviews: accepted and integrated. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Worker 0924d91: focused source gate 33/33 and exact decoy rejection green; HOLD, full qualification not yet green.",
     },
     {
       name: "Kernels",
@@ -491,15 +493,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, and page-less successor KV leasing after detach are integrated.",
+        "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Bridge 136a6d2 preserves exact K draft growth and fail-closed successor custody without resident predecessor pages. Unintegrated commits 6fcf568, 55285c9, and 2880334 extend that custody through tail materialization, registry reconciliation, and first-round continuation, but review holds them because bootstrap still presents 20 allocations against KFD's maximum of 16. No resident daemon or serving endpoint exists.",
+        "Integration e5d23e1 preserves exact K draft growth and fail-closed successor custody through the first S1/K4 speculative round; its bootstrap presents 11 allocations against KFD's maximum of 16. Independently accepted generic provider b30e7a6 binds exact S1/K4, S1/K8, S1/K16, or S8/K4 successor output before allocation. Neither integrated path has hardware qualification, and no resident daemon or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. The 11-allocation harness clears attempt 2's pre-publication capacity failure. Comparable execution still depends on reviewed integration, protected runtime admission, repeated controlled runs, and the required 20-window R33 path.",
       next:
-        "Extend the independently reviewed 11-allocation S1/K4 path, repair the resident bootstrap roster, then carry authenticated custody beyond the first round and across all 20 required windows.",
+        "Carry authenticated custody beyond the first round and across all 20 required windows, then qualify the integrated resident and generic provider paths under protected authority.",
       validation:
-        "Current ea6ef07 all-target engine suite passes 608 lib, 11 harness, 2 packet, 75 qualification, and 2 preflight checks; 7 hardware tests are ignored and zero fail. Adapter validation passes 95 with 2 hardware ignores. The separate resident candidate has green host checks, but independent review holds its physical path.",
+        "Current e5d23e1 exact combined validation passes 711 engine target checks with 7 hardware ignores, 171 doctests, 93 adapter checks with 2 hardware ignores, and all 28 source-gate tests. Independent review accepted both resident and generic provider series. No resident or generic-provider hardware qualification was run.",
     },
     {
       name: "Formal verification",
@@ -509,13 +511,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "Current integration ea6ef07 has 7,817 bodies across 167 modules: 690 verified and 7,127 explicitly unverified. The held resident candidate expands its separate inventory to 7,868 bodies across 168 modules with 29 new pending-Verus bodies; this is source accounting, not proof closure.",
+        "Current integration e5d23e1 has 7,874 compiler-rooted executable bodies across 168 modules. Worker V3's 10 strict proof packages and same-source negative proofs are green; DCO repair 0924d91 clears focused source gate 33/33 and exact decoy rejection after qualification #2's dependency hostile-fixture diagnostic failure. Full qualification #3 and final review remain pending; this is not proof closure or production authority.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
         "Regenerate and audit exact body identities, then rerun the full formal and hostile-policy matrix on the settled combined head.",
       validation:
-        "Current integrated admission has 7,127 unverified rows and no hidden closure claim; exact VERIFIED and UNVERIFIED inventory hashes are recorded. The resident candidate's separate source gate is green at 168 modules and 7,868 bodies, including 29 new pending-Verus bodies. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
+        "Current integrated admission passes all 28 source-gate tests at 168 modules and 7,874 bodies. Worker V3 full qualification remains not green until clean committed-source qualification #3 and final review pass. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
     },
   ],
   boundaries: {
@@ -527,11 +529,12 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Authenticated page-less successor KV leasing after detach with exact K draft growth and fail-closed custody",
-      "Unintegrated resident candidate 6fcf568014818b4c5664bea72206f5d07dca050b, 55285c95446f40984892e4857d417b6412c89534, and 2880334d3a359b37394cec5528609cec90248a40; review hold on its 20-allocation bootstrap roster",
+      "Integrated resident commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and 68091859ce0710dc26cfb839d580e40ea0839253; independent review found no blocker; exact S1/K4 bootstrap roster is 11",
+      "Integrated generic provider b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; exact finite-successor roster independently accepted at 11 for S1/K4, S1/K8, S1/K16, and S8/K4; hardware-unqualified",
       "Speculative smoke orchestration and its exact S1/K4 allocation roster",
-      "Worker V3 protected-evidence collection and authority policy; candidate fa80651bec5c96004aaff921a8433ac04979d1a5 is held from integration",
+      "Worker V3 protected-evidence collection and authority policy; rebased series ending 0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa is held from integration while clean committed-source qualification #3 runs and pending final review",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current source-admission integration ea6ef07c7b13d31c84b14d2ad06f19f8d1220665, tree 34a2bf774ecd9072d4116423a7d512fdda882345, contains signed successor-KV bridge 136a6d2 and reviewed reduced-roster speculative harness f18ffe2",
+      "Current source-admission integration e5d23e19973a01000129aaf2ec705b8993bd21c3, tree f331a34c08394d4fc599880ac342baa51140eca3, contains signed successor-KV bridge 136a6d2, reviewed reduced-roster speculative harness f18ffe2, independently reviewed resident series, and independently accepted generic provider b30e7a6",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
@@ -560,11 +563,11 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      commit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
-      title: "Integrated the reviewed reduced-roster harness",
+      commit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
+      title: "Integrated the accepted generic provider atop resident",
       state: "integration",
       detail:
-        "Tree 34a2bf774ecd9072d4116423a7d512fdda882345 integrates reviewed hardware source f18ffe2 while amending only proof-inventory ordering. Full remote source admission passes at 167 modules and 7,817 bodies: 690 verified and 7,127 explicitly unverified. This does not enlarge the authority-free one-round hardware observation into serving or qualification.",
+        "Tree f331a34c08394d4fc599880ac342baa51140eca3 integrates independently accepted generic provider b30e7a6 atop reviewed resident head 6809185. Exact combined remote validation passes 711 engine target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and 28/28 source-gate tests over 7,874 bodies across 168 modules. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. This does not enlarge the earlier authority-free one-round observation into serving, a benchmark, or qualification.",
     },
     {
       commit: "f18ffe2566112cb8b9518562afe2c8919577c907",
@@ -574,11 +577,11 @@ window.FERRIC_PROJECT = Object.freeze({
         "DCO commit f18ffe2, tree 04d09e03af9a8257d211382a6f7c91909dda7df6, reduced its queue-visible roster from 20 to 11 and completed paired prefill plus one S1/K4 round on one gfx942 with status 0. All four draft choices were rejected; verification correction ID 3681 (\" previous\") was published. Source archive SHA 94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef; release binary SHA 262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Independent review found no blocker; integration ea6ef07 changes only proof-inventory ordering. Authority none; benchmark_comparable=false; authenticated_AB=false; no serving or qualification claim follows.",
     },
     {
-      commit: "fa80651bec5c96004aaff921a8433ac04979d1a5",
-      title: "Held the Worker V3 candidate from integration",
+      commit: "0924d91ee02c76b8c07c0e6e3460f54bcaebe6fa",
+      title: "Held the repaired Worker V3 candidate for full requalification",
       state: "open",
       detail:
-        "Independent review accepted c8e0a18's source-pin adapter but assigned do-not-integrate to the series ending at fa80651, tree e399f2b82966a34c63ddd358a646db522e2af4a3. Blocking findings are zero directly verified proof rows, an incomplete exact dependency roster, a missing committed collector behavior harness, and no supported consume-plus-locked-current-revalidate handoff. Correlations, redaction, and nonclaims were otherwise sound; production authority remains none.",
+        "Rebased commits 181cc2a, 2c77895, and caf83e6 substantively repair the source pin, collector, dependency roster, behavior harness, and proof bindings. All 10 strict proof packages and all same-source negative proofs are green. Full qualification #2 then failed dependency hostile-fixture policy because the fixture expected `local runtime owner resolve edge drifted` while the checker rejected earlier with `unexpected promotion resolved dependency: source_pin_decoy`. DCO repair 0924d91, tree 2083c4c38e1115d098a708e7b82255d2bf767cb5, commits the corrected diagnostic and generated sha2 runtime TCB row; focused source gate 33/33 and exact decoy rejection pass, log SHA ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49. Full qualification #3 is running from clean committed source. HOLD/unintegrated; authority none until #3 and final review.",
     },
     {
       commit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
@@ -588,11 +591,11 @@ window.FERRIC_PROJECT = Object.freeze({
         "An uncommitted harness based on 1d8bf9a ran for 1424.71 seconds and exited status 134 before queue publication. Static postmortem confirmed 20 queue-visible allocations against fe2o3's maximum of 16: 4 model, 2 paired workspaces, 12 all-finite successor outputs, 1 active compact output, and 1 direct choice. Source SHA 03135d7bc7d0a72c3011094358843e31ec036e0b7caabc97719bc234aa995580; binary SHA 6269e836cc6cc94bafe74c2f826bbe419c0c79f6374d63f6531ce6188cfe0437; stderr SHA 73902eec259f77cc422e277a44d6ffe5d8c0c1155bb596f244193b3b85e68eee. This is negative evidence, not speculative hardware completion.",
     },
     {
-      commit: "2880334d3a359b37394cec5528609cec90248a40",
-      title: "Prepared resident first-round continuation",
-      state: "implemented",
+      commit: "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9",
+      title: "Accepted the exact-successor generic provider",
+      state: "integration",
       detail:
-        "Unintegrated candidate tree 6609ce9375f4611a17fd7ff07c52adf18f33eb4c advances reconciled paired-prefill custody through a move-only first speculative round. Together with 6fcf568 and 55285c9, remote host checks pass and source admission accounts for 168 modules, 7,868 bodies, and 29 new pending-Verus bodies. Independent review holds it because bootstrap still reserves a non-runnable 20-allocation roster; this is not a daemon, serving, or hardware result.",
+        "Candidate tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1 binds the admitted finite successor before allocation or dequeue, reserves only that successor's output, and validates an exact roster of 11 for S1/K4, S1/K8, S1/K16, and S8/K4. Independent review accepted it and integration e5d23e1 carries it atop resident head 6809185. Arbitrary cross-shape switching, hardware qualification, serving, and authority are not claimed.",
     },
     {
       commit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
@@ -841,7 +844,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Current integration ea6ef07 contains the independently reviewed reduced-roster harness. Hardware source f18ffe2 completed paired prefill and one authority-free S1/K4 round, publishing target correction token 3681 after accepting zero draft tokens. Resident candidate 2880334 has green remote host/source checks but is on review hold because its bootstrap still presents 20 allocations against KFD's maximum of 16. Worker fa80651 is also held. The earlier exact v77 result remains four target-only Qwen tokens. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
+      "Current integration e5d23e1 contains the independently reviewed resident series and independently accepted generic exact-successor provider. Exact combined remote validation passes 711 engine target tests with 7 hardware ignores, 171 doctests, 93 adapter tests with 2 hardware ignores, and 28/28 source-gate tests across 168 modules and 7,874 bodies; evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Neither newly integrated path has hardware qualification. Worker 0924d91 has 10 strict proof packages and all same-source negative proofs green; its DCO diagnostic/sha2-TCB repair passes focused source gate 33/33 and exact decoy rejection. It remains on HOLD/unintegrated while full qualification #3 runs from clean committed source and until final review. Hardware source f18ffe2 remains the one authority-free S1/K4 diagnostic round. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

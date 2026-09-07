@@ -240,6 +240,7 @@ h3 {
 .milestone-summary {
   max-width: 670px;
   margin: 14px 0 0 20px;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 14px;
 }
@@ -969,6 +970,7 @@ h3 {
 
 .evidence-summary {
   max-width: 520px;
+  overflow-wrap: anywhere;
   color: var(--ink-soft);
   font-size: 17px;
 }
