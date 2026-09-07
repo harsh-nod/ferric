@@ -390,7 +390,10 @@ impl<'a> ContentBoundM1ProgramCatalogV1<'a> {
 pub fn bind_content_bound_m1_program_catalog_v1(
     artifacts: InspectedM1KernelArtifacts<'_>,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-    bind_content_bound_catalog_from_source(|program| artifacts.bytes_plan_and_source(program))
+    bind_content_bound_catalog_from_source(
+        |program| artifacts.bytes_plan_and_source(program),
+        M1PhysicalProgramAbiNamesV1::LegacySemantic,
+    )
 }
 
 pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
@@ -398,14 +401,17 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
     plans: &[LoadPlan; 7],
     sources: &[M1PhysicalProgramSourceContractV1; 7],
 ) -> Result<ContentBoundM1ProgramCatalogV1<'bytes>, M1PhysicalProgramCatalogErrorV1> {
-    bind_content_bound_catalog_from_source(|program| {
-        let family = program.family();
-        (
-            bytes[family_index(family)],
-            plans[family_index(family)],
-            sources[family_index(family)],
-        )
-    })
+    bind_content_bound_catalog_from_source(
+        |program| {
+            let family = program.family();
+            (
+                bytes[family_index(family)],
+                plans[family_index(family)],
+                sources[family_index(family)],
+            )
+        },
+        M1PhysicalProgramAbiNamesV1::LegacySemantic,
+    )
 }
 
 pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
@@ -413,17 +419,27 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
     plan: LoadPlan,
     source: M1PhysicalProgramSourceContractV1,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-    bind_content_bound_catalog_from_source(|_| (bytes, plan, source))
+    bind_content_bound_catalog_from_source(
+        |_| (bytes, plan, source),
+        M1PhysicalProgramAbiNamesV1::CompilerAggregatePositional,
+    )
+}
+
+#[derive(Clone, Copy)]
+enum M1PhysicalProgramAbiNamesV1 {
+    LegacySemantic,
+    CompilerAggregatePositional,
 }
 
 fn bind_content_bound_catalog_from_source<'a>(
     mut source: impl FnMut(
         M1PhysicalProgramV1,
     ) -> (&'a [u8], LoadPlan, M1PhysicalProgramSourceContractV1),
+    abi_names: M1PhysicalProgramAbiNamesV1,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'a>, M1PhysicalProgramCatalogErrorV1> {
     let programs = M1PhysicalProgramV1::ALL.map(|program| {
         let (bytes, retained_plan, source_contract) = source(program);
-        bind_program(bytes, retained_plan, source_contract, program)
+        bind_program(bytes, retained_plan, source_contract, program, abi_names)
     });
     let programs = collect_programs(programs)?;
     let catalog_id = program_catalog_identity(&programs);
@@ -438,6 +454,7 @@ fn bind_program(
     retained_plan: LoadPlan,
     source_contract: M1PhysicalProgramSourceContractV1,
     program: M1PhysicalProgramV1,
+    abi_names: M1PhysicalProgramAbiNamesV1,
 ) -> Result<ValidatedKernelEnvelope<'_>, M1PhysicalProgramCatalogErrorV1> {
     let envelope = fe2o3_amdhsa_loader::validate(bytes, AdmittedProfile::Gfx942XnackOffCov6)
         .map_err(|error| M1PhysicalProgramCatalogErrorV1::Loader { program, error })?;
@@ -449,12 +466,52 @@ fn bind_program(
     let envelope = envelope
         .bind_kernel(program.kernel_symbol())
         .map_err(|error| M1PhysicalProgramCatalogErrorV1::KernelClosure { program, error })?;
+    let compiler_aggregate_abi;
+    let dispatch_abi = match abi_names {
+        M1PhysicalProgramAbiNamesV1::LegacySemantic => program_dispatch_abi(program),
+        M1PhysicalProgramAbiNamesV1::CompilerAggregatePositional => {
+            compiler_aggregate_abi = compiler_aggregate_dispatch_abi(program);
+            &compiler_aggregate_abi
+        }
+    };
     envelope
         .reconcile_dispatch_abi(
             program_source_contract_identity(program, source_contract),
-            program_dispatch_abi(program),
+            dispatch_abi,
         )
         .map_err(|error| M1PhysicalProgramCatalogErrorV1::DispatchAbi { program, error })
+}
+
+const COMPILER_AGGREGATE_GLOBAL_ARGUMENT_NAMES_V1: [&str; 8] = [
+    "arg0.data",
+    "arg1.data",
+    "arg2.data",
+    "arg3.data",
+    "arg4.data",
+    "arg5.data",
+    "arg6.data",
+    "arg7.data",
+];
+
+fn compiler_aggregate_dispatch_abi(
+    program: M1PhysicalProgramV1,
+) -> Vec<KernelGlobalBufferAbiV1<'static>> {
+    program_dispatch_abi(program)
+        .iter()
+        .enumerate()
+        .map(|(position, row)| {
+            KernelGlobalBufferAbiV1::new(
+                row.explicit_argument_index(),
+                COMPILER_AGGREGATE_GLOBAL_ARGUMENT_NAMES_V1
+                    .get(position)
+                    .copied()
+                    .unwrap_or(""),
+                row.offset(),
+                row.pointee_alignment(),
+                row.access(),
+            )
+        })
+        .collect()
 }
 
 fn program_dispatch_abi(
@@ -551,9 +608,73 @@ mod tests {
     use std::collections::HashSet;
 
     use super::{
-        program_dispatch_abi, program_source_contract_identity, M1PhysicalProgramSourceContractV1,
-        M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+        compiler_aggregate_dispatch_abi, program_dispatch_abi, program_source_contract_identity,
+        M1PhysicalProgramSourceContractV1, M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
     };
+
+    const PHYSICAL_PROGRAM_CATALOG_SOURCE: &str = include_str!("physical_program_catalog.rs");
+
+    fn compiler_aggregate_projection_source(source: &str) -> Option<&str> {
+        let start = source.find("const COMPILER_AGGREGATE_GLOBAL_ARGUMENT_NAMES_V1:")?;
+        let tail = &source[start..];
+        let end = tail.find("\nfn program_dispatch_abi(")?;
+        Some(&tail[..end])
+    }
+
+    fn source_between<'a>(source: &'a str, start: &str, end: &str) -> Option<&'a str> {
+        let start = source.find(start)?;
+        let tail = &source[start..];
+        let end = tail.find(end)?;
+        Some(&tail[..end])
+    }
+
+    fn compiler_aggregate_projection_source_policy(source: &str) -> bool {
+        let Some(projection) = compiler_aggregate_projection_source(source) else {
+            return false;
+        };
+        let required_in_order = [
+            "\"arg0.data\"",
+            "\"arg1.data\"",
+            "\"arg2.data\"",
+            "\"arg3.data\"",
+            "\"arg4.data\"",
+            "\"arg5.data\"",
+            "\"arg6.data\"",
+            "\"arg7.data\"",
+            ".enumerate()",
+            "KernelGlobalBufferAbiV1::new(",
+            "row.explicit_argument_index(),",
+            "COMPILER_AGGREGATE_GLOBAL_ARGUMENT_NAMES_V1\n                    .get(position)",
+            ".unwrap_or(\"\")",
+            "row.offset(),",
+            "row.pointee_alignment(),",
+            "row.access(),",
+        ];
+        let mut cursor = 0;
+        for required in required_in_order {
+            if projection.matches(required).count() != 1 {
+                return false;
+            }
+            let Some(offset) = projection[cursor..].find(required) else {
+                return false;
+            };
+            cursor += offset + required.len();
+        }
+        true
+    }
+
+    fn mutate_compiler_aggregate_projection(source: &str, old: &str, new: &str) -> String {
+        let projection =
+            compiler_aggregate_projection_source(source).expect("compiler aggregate projection");
+        assert_eq!(
+            projection.matches(old).count(),
+            1,
+            "mutation anchor must occur exactly once: {old}"
+        );
+        let changed = projection.replacen(old, new, 1);
+        assert_ne!(changed, projection);
+        source.replacen(projection, &changed, 1)
+    }
 
     #[test]
     fn stable_program_order_is_complete_unique_and_symbol_bound() {
@@ -581,11 +702,119 @@ mod tests {
                     (row.explicit_argument_index() as u64 / 2) * 16
                 );
                 assert!(!row.name().is_empty());
+                assert!(!row.name().starts_with("arg"));
                 assert!(row.pointee_alignment().is_power_of_two());
             }
             total += roster.len();
         }
         assert_eq!(total, 54);
+    }
+
+    #[test]
+    fn compiler_aggregate_projects_all_twelve_programs_to_positional_names_only() {
+        let mut total = 0usize;
+        for program in M1PhysicalProgramV1::ALL {
+            let semantic = program_dispatch_abi(program);
+            let positional = compiler_aggregate_dispatch_abi(program);
+            assert_eq!(positional.len(), semantic.len());
+            for (position, (actual, source)) in positional.iter().zip(semantic).enumerate() {
+                assert_eq!(actual.name(), format!("arg{position}.data"));
+                assert_ne!(actual.name(), source.name());
+                assert_eq!(
+                    actual.explicit_argument_index(),
+                    source.explicit_argument_index()
+                );
+                assert_eq!(actual.explicit_argument_index(), position * 2);
+                assert_eq!(actual.offset(), source.offset());
+                assert_eq!(actual.offset(), (position as u64) * 16);
+                assert_eq!(actual.pointee_alignment(), source.pointee_alignment());
+                assert_eq!(actual.access(), source.access());
+            }
+            total += positional.len();
+        }
+        assert_eq!(total, 54);
+    }
+
+    #[test]
+    fn compiler_aggregate_projection_keeps_name_and_coordinates_bound_together() {
+        for program in M1PhysicalProgramV1::ALL {
+            for (position, row) in compiler_aggregate_dispatch_abi(program).iter().enumerate() {
+                let expected_name = format!("arg{position}.data");
+                assert_eq!(row.name(), expected_name);
+                assert_ne!(row.name(), format!("arg{}.data", position + 1));
+                assert_eq!(row.explicit_argument_index(), position * 2);
+                assert_ne!(row.explicit_argument_index(), position * 2 + 1);
+                assert_eq!(row.offset(), (position as u64) * 16);
+                assert_ne!(row.offset(), (position as u64) * 16 + 8);
+            }
+        }
+    }
+
+    #[test]
+    fn only_uniform_compiler_aggregate_binding_uses_positional_names() {
+        let legacy = source_between(
+            PHYSICAL_PROGRAM_CATALOG_SOURCE,
+            "pub fn bind_content_bound_m1_program_catalog_v1(",
+            "\npub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1",
+        )
+        .expect("legacy artifact binder");
+        let persisted = source_between(
+            PHYSICAL_PROGRAM_CATALOG_SOURCE,
+            "pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1",
+            "\npub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_v1",
+        )
+        .expect("persisted artifact binder");
+        let aggregate = source_between(
+            PHYSICAL_PROGRAM_CATALOG_SOURCE,
+            "pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_v1",
+            "\n#[derive(Clone, Copy)]",
+        )
+        .expect("uniform compiler aggregate binder");
+
+        for semantic in [legacy, persisted] {
+            assert!(semantic.contains("M1PhysicalProgramAbiNamesV1::LegacySemantic"));
+            assert!(!semantic.contains("M1PhysicalProgramAbiNamesV1::CompilerAggregatePositional"));
+        }
+        assert!(aggregate.contains("M1PhysicalProgramAbiNamesV1::CompilerAggregatePositional"));
+        assert!(!aggregate.contains("M1PhysicalProgramAbiNamesV1::LegacySemantic"));
+    }
+
+    #[test]
+    fn compiler_aggregate_projection_source_policy_rejects_name_and_coordinate_drift() {
+        assert!(compiler_aggregate_projection_source_policy(
+            PHYSICAL_PROGRAM_CATALOG_SOURCE
+        ));
+        for (case, hostile) in [
+            (
+                "name drift",
+                mutate_compiler_aggregate_projection(
+                    PHYSICAL_PROGRAM_CATALOG_SOURCE,
+                    "\"arg0.data\"",
+                    "\"arg8.data\"",
+                ),
+            ),
+            (
+                "argument index drift",
+                mutate_compiler_aggregate_projection(
+                    PHYSICAL_PROGRAM_CATALOG_SOURCE,
+                    "row.explicit_argument_index(),",
+                    "row.explicit_argument_index() + 1,",
+                ),
+            ),
+            (
+                "offset drift",
+                mutate_compiler_aggregate_projection(
+                    PHYSICAL_PROGRAM_CATALOG_SOURCE,
+                    "row.offset(),",
+                    "row.offset() + 8,",
+                ),
+            ),
+        ] {
+            assert!(
+                !compiler_aggregate_projection_source_policy(&hostile),
+                "source policy accepted hostile mutation: {case}"
+            );
+        }
     }
 
     #[test]
