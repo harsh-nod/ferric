@@ -3,9 +3,33 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-    integrationCommit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
-    integrationTree: "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
+    siteRefreshBase: "11e408970ddce28cacb491086d81852ddf07713f",
+    integrationCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+    integrationTree: "34a2bf774ecd9072d4116423a7d512fdda882345",
+    residentTailCommit: "6fcf568014818b4c5664bea72206f5d07dca050b",
+    residentReconcileCommit: "55285c95446f40984892e4857d417b6412c89534",
+    residentFirstRoundCommit: "2880334d3a359b37394cec5528609cec90248a40",
+    residentFirstRoundTree: "6609ce9375f4611a17fd7ff07c52adf18f33eb4c",
+    residentCandidateIntegrated: false,
+    residentCandidateReviewComplete: true,
+    residentCandidateReviewDisposition: "hold",
+    residentCandidatePhysicalRunnable: false,
+    residentCandidateEngineTestsPassed: 878,
+    residentCandidateHardwareIgnored: 7,
+    residentCandidateEngineLibTestsPassed: 617,
+    residentCandidateEngineHarnessTestsPassed: 11,
+    residentCandidateEnginePacketTestsPassed: 2,
+    residentCandidateEngineQualificationTestsPassed: 75,
+    residentCandidateEnginePreflightTestsPassed: 2,
+    residentCandidateEngineDoctestsPassed: 171,
+    residentCandidateAdmissionModules: 168,
+    residentCandidateAdmissionBodies: 7868,
+    residentCandidateNewPendingVerusBodies: 29,
+    aggregateSourcePinAdapterCommit: "c8e0a18c4561e6e9f470321276dbc5142834ce61",
+    workerV3CandidateCommit: "fa80651bec5c96004aaff921a8433ac04979d1a5",
+    workerV3CandidateTree: "e399f2b82966a34c63ddd358a646db522e2af4a3",
+    workerV3CandidateIntegrated: false,
+    workerV3ReviewDisposition: "do-not-integrate",
     successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
     successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
     engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -37,14 +61,31 @@ window.FERRIC_PROJECT = Object.freeze({
     proofTestsPassed: 26,
     sourceGateTestsPassed: 28,
     successorKvPendingVerusBodies: 16,
-    admissionRows: 7126,
-    admissionBodiesTotal: 7816,
+    admissionRows: 7127,
+    admissionBodiesTotal: 7817,
     admissionVerifiedBodies: 690,
-    admissionUnverifiedBodies: 7126,
+    admissionUnverifiedBodies: 7127,
     admissionModules: 167,
     admissionSourceGatesGreen: true,
     admissionTcbGatesGreen: true,
     combinedInventoryCurrent: true,
+    verifiedInventorySha256: "55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb",
+    unverifiedInventorySha256: "86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7",
+    integrationFormatGreen: true,
+    integrationWorkspaceAllTargetsCheckGreen: true,
+    integrationEngineTestsPassed: 698,
+    integrationEngineHardwareIgnored: 7,
+    integrationEngineLibTestsPassed: 608,
+    integrationEngineHarnessTestsPassed: 11,
+    integrationEnginePacketTestsPassed: 2,
+    integrationEngineQualificationTestsPassed: 75,
+    integrationEnginePreflightTestsPassed: 2,
+    integrationAdapterTestsPassed: 95,
+    integrationAdapterHardwareIgnored: 2,
+    integrationSpeculativeClippyGreen: true,
+    integrationResidentLintAllowances: 5,
+    integrationStaticValidationLogSha256: "79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b",
+    integrationSourceGateLogSha256: "6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1",
     focusedRmsnormTestsPassed: 21,
     focusedRmsnormLogShaPrefix: "4d2bcd1",
     exactCompilerAttempt: "v77",
@@ -86,6 +127,46 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringSmokeSummarySha256: "3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe",
     engineeringSmokeTargetOnly: true,
     engineeringSmokeSpeculative: false,
+    speculativeAttempt2BaseCommit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
+    speculativeAttempt2SourceSha256: "03135d7bc7d0a72c3011094358843e31ec036e0b7caabc97719bc234aa995580",
+    speculativeAttempt2BinarySha256: "6269e836cc6cc94bafe74c2f826bbe419c0c79f6374d63f6531ce6188cfe0437",
+    speculativeAttempt2StderrSha256: "73902eec259f77cc422e277a44d6ffe5d8c0c1155bb596f244193b3b85e68eee",
+    speculativeAttempt2ElapsedSeconds: 1424.71,
+    speculativeAttempt2Status: 134,
+    speculativeAttempt2AllocationCount: 20,
+    speculativeQueueAllocationMaximum: 16,
+    speculativeAttempt2ReachedPublication: false,
+    speculativeAttempt3SourceSha256: "94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef",
+    speculativeAttempt3Commit: "f18ffe2566112cb8b9518562afe2c8919577c907",
+    speculativeAttempt3Tree: "04d09e03af9a8257d211382a6f7c91909dda7df6",
+    speculativeAttempt3BinarySha256: "262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a",
+    speculativeAttempt3Integrated: true,
+    speculativeAttempt3ReviewComplete: true,
+    speculativeAttempt3ReviewDisposition: "integrate",
+    speculativeAttempt3Status: 0,
+    speculativeAttempt3WallSeconds: 1478.66,
+    speculativeAttempt3AllocationCount: 11,
+    speculativeAttempt3PrefillNanoseconds: 4509687305,
+    speculativeAttempt3RoundNanoseconds: 9557095343,
+    speculativeAttempt3TotalNanoseconds: 14066782648,
+    speculativeAttempt3FirstTokenId: 69761,
+    speculativeAttempt3DraftChoices: [77903, 77903, 148549, 148549],
+    speculativeAttempt3TargetChoices: [3681, 149508, 101547, 123907, 115413],
+    speculativeAttempt3AcceptedDraftTokens: 0,
+    speculativeAttempt3PublishedTokenIds: [3681],
+    speculativeAttempt3PublishedText: " previous",
+    speculativeAttempt3TargetCommitEnd: 129,
+    speculativeAttempt3TargetRollback: 4,
+    speculativeAttempt3DraftCommitEnd: 129,
+    speculativeAttempt3DraftRollback: 3,
+    speculativeAttempt3StdoutSha256: "0814fa033dd72587503324fc95efee7b529d171556b43015d0de66e5eacd0ce6",
+    speculativeAttempt3StderrSha256: "f0403470b2eeac6ae04793da1f9bee359cfbcb5e74c75870ec4aeffab0710ef2",
+    speculativeAttempt3StatusSha256: "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    speculativeAttempt3TimeSha256: "116698fd6c2f05f6f88b46cbb55de2d04ebaa8c9817abf42851f0f3a52c52319",
+    speculativeHardwareCompleted: true,
+    speculativeAuthenticatedAb: false,
+    speculativeBenchmarkComparable: false,
+    speculativeServingAvailable: false,
     hardwareCompletionObserved: true,
     benchmarkComparable: false,
     r33TpotEligible: false,
@@ -127,14 +208,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Current integration 1d8bf9a adds authenticated page-less successor KV leasing after detach with exact K draft growth and fail-closed custody. Signed bridge 136a6d2 passed independent no-blocker review and an exact remote engine suite; the current source admission records 7,816 bodies across 167 modules, with 690 verified and 7,126 explicitly unverified. The earlier exact v77 run remains four target-only Qwen tokens on one gfx942. No speculative hardware execution, resident daemon, serving endpoint, production authority, or vLLM/SGLang comparison exists, and all 33 M1 gates remain open.",
+      "Current integration ea6ef07 includes the reviewed 11-allocation engineering harness. Its original f18ffe2 hardware source completed paired prefill and one S1/K4 speculative round on one gfx942, publishing target correction token 3681 after accepting zero draft tokens. Resident candidate 2880334 is on review hold because its bootstrap still reserves 20 allocations against KFD's maximum of 16; Worker V3 candidate fa80651 is also held. No resident daemon, serving endpoint, production authority, authenticated A/B, comparable TTFT/TPOT, or vLLM/SGLang comparison exists, and all 33 M1 gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Current integration 1d8bf9a includes signed bridge 136a6d2 for authenticated page-less successor KV leasing after detach. The bridge preserves exact K draft growth, rejects malformed lease rosters, and fail-closes custody. This is an integrated engine transition, not a resident daemon or hardware-serving result.",
+        "Current integration ea6ef07 includes signed bridge 136a6d2 and the reviewed reduced-roster speculative harness. Remote validation passes formatting, the workspace all-target check, 698 engine tests with 7 hardware ignores, 95 adapter tests with 2 hardware ignores, the source gate, and strict speculative-binary clippy with five existing resident lint allowances. This remains an engineering integration, not a resident daemon or hardware-serving result.",
     },
     {
       label: "R33 lifecycle",
@@ -146,13 +227,31 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Successor KV custody",
       state: "integration",
       detail:
-        "After predecessor detach, the authenticated bridge can reserve page-less successor KV writes for the exact K draft extension while retaining fail-closed custody. Independent review reported no blocker, and the exact remote engine suite passed 862 checks with 7 hardware ignores. No speculative hardware execution has used this path yet.",
+        "After predecessor detach, the authenticated bridge can reserve page-less successor KV writes for the exact K draft extension while retaining fail-closed custody. It passed an independent no-blocker review, and the exact remote engine suite passed 862 checks with 7 hardware ignores. The later speculative harness does not exercise this resident continuation path.",
+    },
+    {
+      label: "Resident continuation candidate",
+      state: "implemented",
+      detail:
+        "Unintegrated commits 6fcf568, 55285c9, and 2880334 authenticate speculative tail-page materialization, reconcile the prefill registry, and expose a move-only first-round continuation path. Its 878 remote host checks pass: 617 lib, 11 harness, 2 packet, 75 qualification, 2 preflight, and 171 doctests, with 7 hardware ignores. Independent review nevertheless placed the candidate on hold: authenticated_prefill_bootstrap still reserves all finite outputs, producing 20 queue-visible allocations against KFD's maximum of 16. It is not physically runnable, the public integration head, a resident daemon, or serving.",
+    },
+    {
+      label: "Paired speculative hardware",
+      state: "observed",
+      detail:
+        "Attempt 2 failed before publication at 20 allocations versus fe2o3's maximum of 16. Commit f18ffe2 reduced the exact S1/K4 roster to 11, completed paired prefill plus one speculative round with status 0, accepted zero draft tokens, and published target correction token 3681 (\" previous\"). Independent review found no blocker; integration ea6ef07 changes only proof-inventory ordering. This authority-free diagnostic is not serving, a benchmark, authenticated A/B, or qualification.",
+    },
+    {
+      label: "Worker V3 authority candidate",
+      state: "open",
+      detail:
+        "Commit c8e0a18's aggregate source-pin adapter passed independent review, but the two-commit series ending at fa80651 is held from integration. Review found zero directly verified proof rows, an incomplete exact dependency roster, no committed collector behavior harness despite documentation claims, and no supported consume-plus-locked-current-revalidate handoff. Production authority remains none.",
     },
     {
       label: "Engineering Qwen smoke path",
       state: "observed",
       detail:
-        "Runtime source 254b89a completes four target-only tokens through KFD on gfx942 with hardware completion and process status 0. The internal TTFT, three inter-token gaps, terminal offset, and execution duration are diagnostic only: benchmark_comparable=false and r33_tpot_eligible=false.",
+        "Runtime source 254b89a completes four target-only tokens through KFD on gfx942 with hardware completion and process status 0. Internal TTFT is 4.227489904 seconds; terminal offset is 15.429140005 seconds; the derived three-gap average is 3.733883367 seconds/token; execution duration is 17.076646692 seconds. Cold wall is 1445.15 seconds, 10.15 seconds above the earlier one-token run; different output length and uncontrolled cold variance establish neither speedup nor regression. benchmark_comparable=false and r33_tpot_eligible=false; this is not speculative serving.",
     },
     {
       label: "Formal bootstrap model",
@@ -170,13 +269,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "Current integration 1d8bf9a retains bounded live-source reuse of logical committed prefixes through generational Engine custody. The exact engine suite passes 862 checks with 7 hardware ignores and zero failures. The earlier four-token run is target-only and does not exercise or validate speculative prefix reuse or successor leasing.",
+        "Current integration ea6ef07 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
     },
     {
       label: "Qwen execution and serving",
-      state: "open",
+      state: "observed",
       detail:
-        "The exact v77 smoke observes four target-only Qwen tokens on gfx942, not speculative serving. Its 1445.15-second cold wall is about 10.15 seconds above the prior 1435.18-second one-token run, but the workload now emits four tokens and cold variance was uncontrolled. It establishes neither speedup nor regression. The protected receipt/verifier service is undeployed; no endpoint, comparable metric, baseline, production authority, or qualification evidence exists.",
+        "Exact v77 observes four target-only Qwen tokens, and the later reduced-roster harness observes one speculative verification correction on gfx942. Attempt 3's 1478.66-second cold wall, 4.509687305-second paired prefill, and 9.557095343-second speculative round are diagnostic only. The protected receipt/verifier service is undeployed; no endpoint, comparable metric, baseline, authenticated A/B, production authority, or qualification evidence exists.",
     },
   ],
   envelope: [
@@ -186,7 +285,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8; tree 44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5; current source admission for the signed successor-KV bridge; not public implementation main, a release, serving, or qualification"],
+    ["Ferric integration candidate", "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665; tree 34a2bf774ecd9072d4116423a7d512fdda882345; reviewed reduced-roster speculative harness and current source admission; not public implementation main, a release, serving, or qualification"],
+    ["Resident continuation candidate", "unintegrated commits 6fcf568014818b4c5664bea72206f5d07dca050b, 55285c95446f40984892e4857d417b6412c89534, and 2880334d3a359b37394cec5528609cec90248a40; review hold because bootstrap's 20-allocation roster exceeds KFD maximum 16"],
+    ["Worker V3 candidate", "source-pin adapter c8e0a18c4561e6e9f470321276dbc5142834ce61 passed independent review; candidate fa80651bec5c96004aaff921a8433ac04979d1a5, tree e399f2b82966a34c63ddd358a646db522e2af4a3, is unintegrated with review disposition do-not-integrate"],
+    ["Speculative hardware source", "commit f18ffe2566112cb8b9518562afe2c8919577c907; tree 04d09e03af9a8257d211382a6f7c91909dda7df6; one authority-free S1/K4 diagnostic round completed; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended"],
     ["Successor KV bridge", "136a6d2ff92597c91caad3d0e33baede74cd4c9a; tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; authenticated page-less successor leasing after detach; no speculative hardware claim"],
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
@@ -222,7 +324,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated paired-prefill execution",
         detail:
-          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits tokens, settles device KV, and releases prefill pages. Runtime source 254b89a completed four target-only tokens on gfx942; speculative target/draft execution remains open.",
+          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits tokens, settles device KV, and releases prefill pages. An unintegrated engineering harness has completed paired prefill and one S1/K4 target/draft round on gfx942 with an 11-allocation roster; production authority and serving remain open.",
       },
       {
         name: "Authenticated one-window target execution",
@@ -252,6 +354,11 @@ window.FERRIC_PROJECT = Object.freeze({
           "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. c1b9590 executes exactly one 128-output window with a real monotonic clock and checked-token causality, then fail-closes and rejects a second window. The required 20-window path and qualification evidence remain absent.",
       },
       {
+        name: "Resident first-round continuation candidate",
+        detail:
+          "Unintegrated resident commits add authenticated tail-page materialization, registry reconciliation, and a public move-only transition from paired prefill into the first speculative round. Remote host checks are green, but review holds the candidate because its bootstrap retains the known 20-allocation roster. Physical integration, later rounds, daemon residency, and serving remain open.",
+      },
+      {
         name: "Pure lifecycle proofs",
         detail:
           "Separate Verus models cover the finite window cap and exact S1/T128 prepublication lifecycle. They do not prove Rust refinement, liveness, timing, KFD, allocation, device memory, queue publication, or serving.",
@@ -259,14 +366,19 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Event-backed comparison schema",
         detail:
-          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. Exact v77 records four-token internal offsets, but the run is target-only, benchmark_comparable=false, and r33_tpot_eligible=false. vLLM and SGLang baselines are absent.",
+          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. Exact v77 records four-token target-only offsets; attempt 3 records paired-prefill and one-round durations. Both remain diagnostic: benchmark_comparable=false, authenticated_AB=false, and r33_tpot_eligible=false. vLLM and SGLang baselines are absent.",
+      },
+      {
+        name: "Worker V3 evidence collector candidate",
+        detail:
+          "The unintegrated candidate correlates the protected service request and receipt, artifact lineage, compiler pin, and current-token evidence without enlarging authority. Independent review nevertheless holds the series from integration until proof rows, the exact dependency roster, the committed behavior harness, and the locked-current consumption handoff are complete.",
       },
     ],
     roadmap: [
       {
         name: "Run the speculative target/draft path",
         detail:
-          "The successor-KV bridge is integrated in source, but the exact v77 result remains target-only. Exercise authenticated draft/target execution through the new lease path on hardware before making a speculative-inference or serving claim.",
+          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and is integrated at ea6ef07 after attempt 2 exposed the 20-versus-16 queue limit. Preserve custody across later rounds and run it under protected authority before making a serving or qualification claim.",
       },
       {
         name: "Extend the authenticated R33 run",
@@ -291,7 +403,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Extend prefix caching after first execution",
         detail:
-          "The integrated radix slice covers live logical page sharing. Persistent device-KV prefix caching, symmetric memory, and MTP remain deferred and do not delay the initial single-GPU smoke.",
+          "The integrated radix slice covers live-source logical page sharing only. Physical device-KV prefix reuse is M2; persistent caching, symmetric memory, and MTP remain deferred and do not delay the initial single-GPU smoke.",
       },
       {
         name: "Close M1 evidence",
@@ -302,28 +414,28 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Authenticated successor KV leasing",
+      title: "Reviewed reduced-roster integration",
       state: "integration",
-      source: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
-      result: "PASS: 608 lib + 11 harness + 2 packet + 75 qualification + 2 preflight + 164 doctests; 7 hardware ignores; zero failures",
+      source: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+      result: "PASS: fmt + workspace all-target check + 698 engine tests + 95 adapter tests + strict speculative clippy; zero failures",
       detail:
-        "Signed bridge 136a6d2, tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e, passed independent no-blocker review and the exact remote engine suite. It adds authenticated page-less successor KV leasing after detach with exact K draft growth and fail-closed custody. Engine log SHA 7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa. These non-hardware checks do not enlarge the earlier v77 observation.",
+        "Exact ea6ef07 validation passes 608 lib, 11 harness, 2 packet, 75 qualification, and 2 preflight tests for 698 engine checks, with 7 hardware ignores and zero failures. Adapter checks pass 95 with 2 hardware ignores and zero failures. Formatting, workspace all-target check, and strict speculative-binary clippy also pass; the clippy command carries five existing resident lint allowances. Static validation log SHA 79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b. These host checks do not grant serving, benchmark, or production authority.",
     },
     proof: {
       title: "Current source admission and verified models",
       state: "integration",
-      source: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
-      result: "PASS: 7,816 bodies across 167 modules; 690 verified / 7,126 unverified; source and TCB gates green",
+      source: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+      result: "PASS: 7,817 bodies across 167 modules; 690 verified / 7,127 unverified; source gate green",
       detail:
-        "Admission commit 1d8bf9a, tree 44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5, records 16 successor-KV bodies as pending-verus. Its current inventory has 7,126 unverified admission rows: 7,816 bodies total, 690 verified and 7,126 explicitly unverified across 167 modules. All source and TCB gates are green. Earlier strict Verus 81 verified / 0 errors and radix Verus 608 verified and 0 errors results remain scoped proofs; no runtime refinement or effect proof is claimed.",
+        "Admission commit ea6ef07, tree 34a2bf774ecd9072d4116423a7d512fdda882345, records 7,127 unverified rows: 7,817 bodies total, 690 verified and 7,127 explicitly unverified across 167 modules. The full source gate passes; log SHA 6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1. VERIFIED inventory SHA 55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb; UNVERIFIED inventory SHA 86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7. Earlier strict Verus 81 verified / 0 errors and radix Verus 608 verified and 0 errors results remain scoped proofs; no runtime refinement or effect proof is claimed.",
     },
     hardware: {
-      title: "Exact v77 completes four target-only Qwen tokens",
+      title: "Reduced-roster S1/K4 speculative round completes",
       state: "observed",
-      sourceStatus: "Runtime source 254b89a, tree e31a988; current integration 1d8bf9a is later source-only progress and does not enlarge this observation",
-      result: "PASS: IDs 94364, 43619, 101691, 33159; text \"spent_cm谊tered\"; hardware completion; status 0",
+      sourceStatus: "Hardware source f18ffe2566112cb8b9518562afe2c8919577c907, tree 04d09e03af9a8257d211382a6f7c91909dda7df6; source archive SHA 94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended",
+      result: "PASS: paired prefill + one S1/K4 round; accepted 0; published correction ID 3681 (\" previous\"); status 0",
       detail:
-        "Runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses exact v77 from public fe2o3 cf6faec. Prompt token 9707 produces four target-only tokens. Internal TTFT is 4.227489904 seconds; terminal offset 15.429140005 seconds; derived three-gap average 3.733883367 seconds/token; execution duration 17.076646692 seconds. Cold wall is 1445.15 seconds, about 10.15 seconds above the prior 1435.18-second one-token run; different output length and uncontrolled cold variance establish neither speedup nor regression. Recovery exact log SHA 85073cf74d25ad06854b1874c0199b309c0636615a2e2f89b7d9b04d08b5dee6; artifact gate SHA 13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49; adapter SHA 1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83. Stdout SHA efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402; empty stderr SHA e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; time SHA 13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa; summary SHA 3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe. Target-only, benchmark_comparable=false, r33_tpot_eligible=false, authority none; no serving or baselines.",
+        "On one gfx942, an exact 11-allocation preflight cleared fe2o3's maximum of 16. Paired prefill took 4,509,687,305 ns; the S1/K4 round took 9,557,095,343 ns; combined internal duration was 14,066,782,648 ns; cold wall was 1478.66 seconds. Draft choices [77903, 77903, 148549, 148549] were all rejected against target choices [3681, 149508, 101547, 123907, 115413]. Verification published correction ID 3681, decoded as \" previous\"; target and draft both ended at commit 129 with rollback counts 4 and 3. Stdout SHA 0814fa033dd72587503324fc95efee7b529d171556b43015d0de66e5eacd0ce6; stderr SHA f0403470b2eeac6ae04793da1f9bee359cfbcb5e74c75870ec4aeffab0710ef2; time SHA 116698fd6c2f05f6f88b46cbb55de2d04ebaa8c9817abf42851f0f3a52c52319; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa. Authority and artifact grants remain none; benchmark_comparable=false and authenticated_AB=false. This is one diagnostic round, not serving, comparable TTFT/TPOT, a baseline comparison, or qualification.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -338,7 +450,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "Current integration 1d8bf9a adds the source-admitted successor-KV transition after the exact v77 hardware binary. No speculative hardware run has exercised it. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. The four-token result remains target-only, not speculative serving, a benchmark, comparable TTFT/TPOT, or qualification.",
+      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised the held resident continuation candidate or Worker V3 authority. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Neither the target-only four-token result nor the one-round speculative result is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, or qualification.",
   },
   teams: [
     {
@@ -347,15 +459,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Current integration 1d8bf9a admits signed bridge 136a6d2 for authenticated page-less successor KV leasing after detach. Independent review found no blocker, and the exact remote engine suite passed 862 checks with 7 hardware ignores and zero failures.",
+        "Current integration ea6ef07 joins signed successor-KV bridge 136a6d2 with independently reviewed reduced-roster speculative commit f18ffe2. The original hardware source completed one authority-free S1/K4 round; integration amends only proof-inventory ordering.",
       current:
-        "The integrated bridge has not run in speculative hardware execution. The prior v77 four-token target-only observation and all of its non-comparable timing constraints remain unchanged.",
+        "Resident commits 6fcf568, 55285c9, and 2880334 pass remote host checks but are on review hold for the known 20-versus-16 physical allocation blocker. Worker V3 candidate fa80651 is held from integration. Full source admission for ea6ef07 passes at 167 modules and 7,817 bodies.",
       blockedBy:
-        "No team-local blocker. M1 still depends on removing startup duplication, extending the authenticated R33 path, deploying protected artifact admission, and running matched baselines.",
+        "No team-local blocker. M1 still depends on repairing the resident bootstrap roster, a corrected Worker V3 authority path, the 20-window R33 lifecycle, protected artifact admission, and matched baselines.",
       next:
-        "Integrate authenticated target/draft speculative execution, then collect controlled repeated runs before any performance comparison.",
+        "Apply the proven 11-allocation discipline to the resident bootstrap, re-review corrected resident and Worker V3 candidates, then extend beyond one speculative round.",
       validation:
-        "Bridge tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; engine suite log SHA 7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa.",
+        "Integration ea6ef07: 698 engine and 95 adapter checks pass, source gate passes at 167 modules / 7,817 bodies / 7,127 unverified rows. Static log SHA 79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b; source-gate log SHA 6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1. Resident 2880334: hold. Worker fa80651: do-not-integrate.",
     },
     {
       name: "Kernels",
@@ -381,13 +493,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, and page-less successor KV leasing after detach are integrated.",
       current:
-        "Bridge 136a6d2 preserves exact K draft growth and fail-closed successor custody without resident predecessor pages. It has passed the exact host suite but not speculative hardware execution. No resident daemon or serving endpoint exists.",
+        "Bridge 136a6d2 preserves exact K draft growth and fail-closed successor custody without resident predecessor pages. Unintegrated commits 6fcf568, 55285c9, and 2880334 extend that custody through tail materialization, registry reconciliation, and first-round continuation, but review holds them because bootstrap still presents 20 allocations against KFD's maximum of 16. No resident daemon or serving endpoint exists.",
       blockedBy:
-        "No team-local blocker. Comparable execution depends on removing repeated startup authentication/copying and protected runtime admission; the required 20-window R33 path remains absent.",
+        "No team-local blocker. The 11-allocation harness clears attempt 2's pre-publication capacity failure. Comparable execution still depends on reviewed integration, protected runtime admission, repeated controlled runs, and the required 20-window R33 path.",
       next:
-        "Extend authenticated custody across all 20 required windows after the exact artifact and first diagnostic execution are available.",
+        "Extend the independently reviewed 11-allocation S1/K4 path, repair the resident bootstrap roster, then carry authenticated custody beyond the first round and across all 20 required windows.",
       validation:
-        "Exact host suite: 608 lib, 11 harness, 2 packet, 75 qualification, 2 preflight, and 164 doctests passed; 7 hardware tests ignored; zero failures. Independent review reported no blocker.",
+        "Current ea6ef07 all-target engine suite passes 608 lib, 11 harness, 2 packet, 75 qualification, and 2 preflight checks; 7 hardware tests are ignored and zero fail. Adapter validation passes 95 with 2 hardware ignores. The separate resident candidate has green host checks, but independent review holds its physical path.",
     },
     {
       name: "Formal verification",
@@ -397,13 +509,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "Admission commit 1d8bf9a adds 16 pending-verus successor-KV bodies. The current inventory is 7,816 bodies across 167 modules: 690 verified and 7,126 explicitly unverified.",
+        "Current integration ea6ef07 has 7,817 bodies across 167 modules: 690 verified and 7,127 explicitly unverified. The held resident candidate expands its separate inventory to 7,868 bodies across 168 modules with 29 new pending-Verus bodies; this is source accounting, not proof closure.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
         "Regenerate and audit exact body identities, then rerun the full formal and hostile-policy matrix on the settled combined head.",
       validation:
-        "Current admission inventory has 7,126 unverified rows and no hidden closure claim. The runtime bridge is covered by source admission and host tests, not a Verus refinement proof.",
+        "Current integrated admission has 7,127 unverified rows and no hidden closure claim; exact VERIFIED and UNVERIFIED inventory hashes are recorded. The resident candidate's separate source gate is green at 168 modules and 7,868 bodies, including 29 new pending-Verus bodies. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
     },
   ],
   boundaries: {
@@ -415,8 +527,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Authenticated page-less successor KV leasing after detach with exact K draft growth and fail-closed custody",
+      "Unintegrated resident candidate 6fcf568014818b4c5664bea72206f5d07dca050b, 55285c95446f40984892e4857d417b6412c89534, and 2880334d3a359b37394cec5528609cec90248a40; review hold on its 20-allocation bootstrap roster",
+      "Speculative smoke orchestration and its exact S1/K4 allocation roster",
+      "Worker V3 protected-evidence collection and authority policy; candidate fa80651bec5c96004aaff921a8433ac04979d1a5 is held from integration",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current source-admission integration 1d8bf9a5a6391bf817eb05d3288f956f691cf5b8, tree 44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5, contains signed successor-KV bridge 136a6d2",
+      "Current source-admission integration ea6ef07c7b13d31c84b14d2ad06f19f8d1220665, tree 34a2bf774ecd9072d4116423a7d512fdda882345, contains signed successor-KV bridge 136a6d2 and reviewed reduced-roster speculative harness f18ffe2",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
@@ -427,22 +542,58 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic protected verification transport",
       "Public main cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree 6d115af5cd5285b84b7629834393d6eee6a37045, is the current reusable compiler/runtime input",
       "Exact Ferric v77 uses that public main and emits the complete authority-free aggregate with exact replay",
+      "fe2o3's generic service queue currently admits at most 16 queue-visible allocations; Ferric attempt 2 presented 20 and failed closed before publication",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Exact v77 completes four target-only Qwen tokens",
+    title: "Reduced-roster S1/K4 speculative round completes",
     state: "observed",
-    sourceStatus: "Runtime 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; current integration 1d8bf9a is later source-only progress and does not enlarge this observation",
-    environment: "mi300x, one gfx942, exact v77 aggregate built with public fe2o3 cf6faec, tree 6d115af",
+    sourceStatus: "Hardware source f18ffe2566112cb8b9518562afe2c8919577c907, tree 04d09e03af9a8257d211382a6f7c91909dda7df6; source archive SHA 94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended",
+    environment: "mi300x, one gfx942, exact v77 aggregate built with public fe2o3 cf6faec, 11 queue-visible allocations against maximum 16",
     result:
-      "Process status 0. Prompt token 9707 produced IDs 94364, 43619, 101691, and 33159, decoded as \"spent_cm谊tered\", after hardware completion. Internal TTFT: 4.227489904 seconds; terminal offset: 15.429140005 seconds; derived three-gap average: 3.733883367 seconds/token; execution duration: 17.076646692 seconds. This was target-only, not speculative.",
-    buildId: "SHA-256 3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d",
-    generatedTokenIds: [94364, 43619, 101691, 33159],
+      "Process status 0. Paired prefill completed in 4.509687305 seconds and one S1/K4 round completed in 9.557095343 seconds. All four draft choices were rejected; verification published target correction ID 3681, decoded as \" previous\". Combined internal duration: 14.066782648 seconds; cold wall: 1478.66 seconds.",
+    buildId: "Release binary SHA-256 262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a; source archive SHA-256 94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef",
+    generatedTokenIds: [3681],
     authority:
-      "Authority: none. benchmark_comparable=false and r33_tpot_eligible=false. This target-only diagnostic is not speculative serving, production publication, comparable TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402; empty stderr SHA e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; time SHA 13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944; summary SHA 3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe.",
+      "Authority: none. benchmark_comparable=false, authenticated_AB=false, and r33_tpot_eligible=false. This integrated one-round diagnostic is not serving, production publication, comparable TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA 0814fa033dd72587503324fc95efee7b529d171556b43015d0de66e5eacd0ce6; stderr SHA f0403470b2eeac6ae04793da1f9bee359cfbcb5e74c75870ec4aeffab0710ef2; time SHA 116698fd6c2f05f6f88b46cbb55de2d04ebaa8c9817abf42851f0f3a52c52319; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa.",
   },
   recentProgress: [
+    {
+      commit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+      title: "Integrated the reviewed reduced-roster harness",
+      state: "integration",
+      detail:
+        "Tree 34a2bf774ecd9072d4116423a7d512fdda882345 integrates reviewed hardware source f18ffe2 while amending only proof-inventory ordering. Full remote source admission passes at 167 modules and 7,817 bodies: 690 verified and 7,127 explicitly unverified. This does not enlarge the authority-free one-round hardware observation into serving or qualification.",
+    },
+    {
+      commit: "f18ffe2566112cb8b9518562afe2c8919577c907",
+      title: "Completed one reduced-roster speculative round",
+      state: "observed",
+      detail:
+        "DCO commit f18ffe2, tree 04d09e03af9a8257d211382a6f7c91909dda7df6, reduced its queue-visible roster from 20 to 11 and completed paired prefill plus one S1/K4 round on one gfx942 with status 0. All four draft choices were rejected; verification correction ID 3681 (\" previous\") was published. Source archive SHA 94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef; release binary SHA 262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Independent review found no blocker; integration ea6ef07 changes only proof-inventory ordering. Authority none; benchmark_comparable=false; authenticated_AB=false; no serving or qualification claim follows.",
+    },
+    {
+      commit: "fa80651bec5c96004aaff921a8433ac04979d1a5",
+      title: "Held the Worker V3 candidate from integration",
+      state: "open",
+      detail:
+        "Independent review accepted c8e0a18's source-pin adapter but assigned do-not-integrate to the series ending at fa80651, tree e399f2b82966a34c63ddd358a646db522e2af4a3. Blocking findings are zero directly verified proof rows, an incomplete exact dependency roster, a missing committed collector behavior harness, and no supported consume-plus-locked-current-revalidate handoff. Correlations, redaction, and nonclaims were otherwise sound; production authority remains none.",
+    },
+    {
+      commit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
+      title: "Identified the speculative queue-allocation failure",
+      state: "open",
+      detail:
+        "An uncommitted harness based on 1d8bf9a ran for 1424.71 seconds and exited status 134 before queue publication. Static postmortem confirmed 20 queue-visible allocations against fe2o3's maximum of 16: 4 model, 2 paired workspaces, 12 all-finite successor outputs, 1 active compact output, and 1 direct choice. Source SHA 03135d7bc7d0a72c3011094358843e31ec036e0b7caabc97719bc234aa995580; binary SHA 6269e836cc6cc94bafe74c2f826bbe419c0c79f6374d63f6531ce6188cfe0437; stderr SHA 73902eec259f77cc422e277a44d6ffe5d8c0c1155bb596f244193b3b85e68eee. This is negative evidence, not speculative hardware completion.",
+    },
+    {
+      commit: "2880334d3a359b37394cec5528609cec90248a40",
+      title: "Prepared resident first-round continuation",
+      state: "implemented",
+      detail:
+        "Unintegrated candidate tree 6609ce9375f4611a17fd7ff07c52adf18f33eb4c advances reconciled paired-prefill custody through a move-only first speculative round. Together with 6fcf568 and 55285c9, remote host checks pass and source admission accounts for 168 modules, 7,868 bodies, and 29 new pending-Verus bodies. Independent review holds it because bootstrap still reserves a non-runnable 20-allocation roster; this is not a daemon, serving, or hardware result.",
+    },
     {
       commit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
       title: "Admitted the successor-KV bridge source",
@@ -455,7 +606,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Authenticated page-less successor KV leasing",
       state: "integration",
       detail:
-        "Signed bridge tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e leases exact successor KV writes after detach with exact K draft growth and fail-closed custody. Independent review reported no blocker. The exact remote engine suite passed 862 checks with 7 hardware ignores and zero failures; no speculative hardware run or serving claim follows.",
+        "Signed bridge tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e leases exact successor KV writes after detach with exact K draft growth and fail-closed custody. Independent review reported no blocker. The exact remote engine suite passed 862 checks with 7 hardware ignores and zero failures. Later commit f18ffe2 completes a separate diagnostic speculative harness, not this resident bridge path or serving.",
     },
     {
       commit: "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
@@ -690,7 +841,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Current integration 1d8bf9a admits signed bridge 136a6d2 for authenticated page-less successor KV leasing after detach with exact K draft growth and fail-closed custody. Independent review found no blocker; the exact remote engine suite passed 862 checks with 7 hardware ignores. Current admission records 7,816 bodies across 167 modules: 690 verified, 7,126 explicitly unverified, including 16 new pending-verus bodies. The earlier exact v77 four-token run remains target-only and non-comparable. Authority is none; no resident daemon, speculative hardware execution, serving, baseline, or qualification exists, and all 33 M1 exit gates remain open.",
+      "Current integration ea6ef07 contains the independently reviewed reduced-roster harness. Hardware source f18ffe2 completed paired prefill and one authority-free S1/K4 round, publishing target correction token 3681 after accepting zero draft tokens. Resident candidate 2880334 has green remote host/source checks but is on review hold because its bootstrap still presents 20 allocations against KFD's maximum of 16. Worker fa80651 is also held. The earlier exact v77 result remains four target-only Qwen tokens. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],
@@ -700,7 +851,8 @@ window.FERRIC_PROJECT = Object.freeze({
     gates: [
       ["M1 exit gates", "33 / 33", "open"],
       ["Authority-free aggregate HSACO", "1", "integration"],
-      ["Authority-free diagnostic Qwen tokens", "4", "observed"],
+      ["Authority-free target-only diagnostic Qwen tokens", "4", "observed"],
+      ["Authority-free speculative diagnostic Qwen tokens", "1", "observed"],
       ["Authenticated Qwen tokens", "0", "open"],
       ["TTFT / TPOT measurements", "0", "open"],
       ["vLLM / SGLang baselines", "0", "open"],

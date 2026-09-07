@@ -78,9 +78,33 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-  integrationCommit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
-  integrationTree: "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
+  siteRefreshBase: "11e408970ddce28cacb491086d81852ddf07713f",
+  integrationCommit: "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+  integrationTree: "34a2bf774ecd9072d4116423a7d512fdda882345",
+  residentTailCommit: "6fcf568014818b4c5664bea72206f5d07dca050b",
+  residentReconcileCommit: "55285c95446f40984892e4857d417b6412c89534",
+  residentFirstRoundCommit: "2880334d3a359b37394cec5528609cec90248a40",
+  residentFirstRoundTree: "6609ce9375f4611a17fd7ff07c52adf18f33eb4c",
+  residentCandidateIntegrated: false,
+  residentCandidateReviewComplete: true,
+  residentCandidateReviewDisposition: "hold",
+  residentCandidatePhysicalRunnable: false,
+  residentCandidateEngineTestsPassed: 878,
+  residentCandidateHardwareIgnored: 7,
+  residentCandidateEngineLibTestsPassed: 617,
+  residentCandidateEngineHarnessTestsPassed: 11,
+  residentCandidateEnginePacketTestsPassed: 2,
+  residentCandidateEngineQualificationTestsPassed: 75,
+  residentCandidateEnginePreflightTestsPassed: 2,
+  residentCandidateEngineDoctestsPassed: 171,
+  residentCandidateAdmissionModules: 168,
+  residentCandidateAdmissionBodies: 7868,
+  residentCandidateNewPendingVerusBodies: 29,
+  aggregateSourcePinAdapterCommit: "c8e0a18c4561e6e9f470321276dbc5142834ce61",
+  workerV3CandidateCommit: "fa80651bec5c96004aaff921a8433ac04979d1a5",
+  workerV3CandidateTree: "e399f2b82966a34c63ddd358a646db522e2af4a3",
+  workerV3CandidateIntegrated: false,
+  workerV3ReviewDisposition: "do-not-integrate",
   successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
   successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -112,14 +136,31 @@ const expectedCurrent = {
   proofTestsPassed: 26,
   sourceGateTestsPassed: 28,
   successorKvPendingVerusBodies: 16,
-  admissionRows: 7126,
-  admissionBodiesTotal: 7816,
+  admissionRows: 7127,
+  admissionBodiesTotal: 7817,
   admissionVerifiedBodies: 690,
-  admissionUnverifiedBodies: 7126,
+  admissionUnverifiedBodies: 7127,
   admissionModules: 167,
   admissionSourceGatesGreen: true,
   admissionTcbGatesGreen: true,
   combinedInventoryCurrent: true,
+  verifiedInventorySha256: "55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb",
+  unverifiedInventorySha256: "86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7",
+  integrationFormatGreen: true,
+  integrationWorkspaceAllTargetsCheckGreen: true,
+  integrationEngineTestsPassed: 698,
+  integrationEngineHardwareIgnored: 7,
+  integrationEngineLibTestsPassed: 608,
+  integrationEngineHarnessTestsPassed: 11,
+  integrationEnginePacketTestsPassed: 2,
+  integrationEngineQualificationTestsPassed: 75,
+  integrationEnginePreflightTestsPassed: 2,
+  integrationAdapterTestsPassed: 95,
+  integrationAdapterHardwareIgnored: 2,
+  integrationSpeculativeClippyGreen: true,
+  integrationResidentLintAllowances: 5,
+  integrationStaticValidationLogSha256: "79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b",
+  integrationSourceGateLogSha256: "6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1",
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
   exactCompilerAttempt: "v77",
@@ -161,6 +202,46 @@ const expectedCurrent = {
   engineeringSmokeSummarySha256: "3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe",
   engineeringSmokeTargetOnly: true,
   engineeringSmokeSpeculative: false,
+  speculativeAttempt2BaseCommit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
+  speculativeAttempt2SourceSha256: "03135d7bc7d0a72c3011094358843e31ec036e0b7caabc97719bc234aa995580",
+  speculativeAttempt2BinarySha256: "6269e836cc6cc94bafe74c2f826bbe419c0c79f6374d63f6531ce6188cfe0437",
+  speculativeAttempt2StderrSha256: "73902eec259f77cc422e277a44d6ffe5d8c0c1155bb596f244193b3b85e68eee",
+  speculativeAttempt2ElapsedSeconds: 1424.71,
+  speculativeAttempt2Status: 134,
+  speculativeAttempt2AllocationCount: 20,
+  speculativeQueueAllocationMaximum: 16,
+  speculativeAttempt2ReachedPublication: false,
+  speculativeAttempt3SourceSha256: "94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef",
+  speculativeAttempt3Commit: "f18ffe2566112cb8b9518562afe2c8919577c907",
+  speculativeAttempt3Tree: "04d09e03af9a8257d211382a6f7c91909dda7df6",
+  speculativeAttempt3BinarySha256: "262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a",
+  speculativeAttempt3Integrated: true,
+  speculativeAttempt3ReviewComplete: true,
+  speculativeAttempt3ReviewDisposition: "integrate",
+  speculativeAttempt3Status: 0,
+  speculativeAttempt3WallSeconds: 1478.66,
+  speculativeAttempt3AllocationCount: 11,
+  speculativeAttempt3PrefillNanoseconds: 4509687305,
+  speculativeAttempt3RoundNanoseconds: 9557095343,
+  speculativeAttempt3TotalNanoseconds: 14066782648,
+  speculativeAttempt3FirstTokenId: 69761,
+  speculativeAttempt3DraftChoices: [77903, 77903, 148549, 148549],
+  speculativeAttempt3TargetChoices: [3681, 149508, 101547, 123907, 115413],
+  speculativeAttempt3AcceptedDraftTokens: 0,
+  speculativeAttempt3PublishedTokenIds: [3681],
+  speculativeAttempt3PublishedText: " previous",
+  speculativeAttempt3TargetCommitEnd: 129,
+  speculativeAttempt3TargetRollback: 4,
+  speculativeAttempt3DraftCommitEnd: 129,
+  speculativeAttempt3DraftRollback: 3,
+  speculativeAttempt3StdoutSha256: "0814fa033dd72587503324fc95efee7b529d171556b43015d0de66e5eacd0ce6",
+  speculativeAttempt3StderrSha256: "f0403470b2eeac6ae04793da1f9bee359cfbcb5e74c75870ec4aeffab0710ef2",
+  speculativeAttempt3StatusSha256: "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  speculativeAttempt3TimeSha256: "116698fd6c2f05f6f88b46cbb55de2d04ebaa8c9817abf42851f0f3a52c52319",
+  speculativeHardwareCompleted: true,
+  speculativeAuthenticatedAb: false,
+  speculativeBenchmarkComparable: false,
+  speculativeServingAvailable: false,
   hardwareCompletionObserved: true,
   benchmarkComparable: false,
   r33TpotEligible: false,
@@ -208,6 +289,13 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "residentTailCommit",
+  "residentReconcileCommit",
+  "residentFirstRoundCommit",
+  "residentFirstRoundTree",
+  "aggregateSourcePinAdapterCommit",
+  "workerV3CandidateCommit",
+  "workerV3CandidateTree",
   "successorKvBridgeCommit",
   "successorKvBridgeTree",
   "engineeringSmokeRuntimeCommit",
@@ -228,14 +316,17 @@ for (const key of [
   "fe2o3V71Tree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
+  "speculativeAttempt2BaseCommit",
+  "speculativeAttempt3Commit",
+  "speculativeAttempt3Tree",
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
 assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
-assert(project.current.admissionRows === 7126, "unverified admission row count drifted");
-assert(project.current.admissionBodiesTotal === 7816, "admission body total drifted");
+assert(project.current.admissionRows === 7127, "unverified admission row count drifted");
+assert(project.current.admissionBodiesTotal === 7817, "admission body total drifted");
 assert(project.current.admissionVerifiedBodies === 690, "verified admission body count drifted");
-assert(project.current.admissionUnverifiedBodies === 7126, "unverified admission body count drifted");
+assert(project.current.admissionUnverifiedBodies === 7127, "unverified admission body count drifted");
 assert(project.current.admissionModules === 167, "admission module count drifted");
 assert(
   project.current.admissionVerifiedBodies + project.current.admissionUnverifiedBodies ===
@@ -245,6 +336,27 @@ assert(
 assert(project.current.admissionSourceGatesGreen === true, "source admission gates must remain green");
 assert(project.current.admissionTcbGatesGreen === true, "TCB admission gates must remain green");
 assert(project.current.combinedInventoryCurrent === true, "current admission inventory must remain explicit");
+assertSha256(project.current.verifiedInventorySha256, "current.verifiedInventorySha256");
+assertSha256(project.current.unverifiedInventorySha256, "current.unverifiedInventorySha256");
+assert(project.current.integrationFormatGreen === true, "integration format gate must remain green");
+assert(project.current.integrationWorkspaceAllTargetsCheckGreen === true, "workspace all-target check must remain green");
+assert(project.current.integrationEngineTestsPassed === 698, "integration engine total drifted");
+assert(project.current.integrationEngineHardwareIgnored === 7, "integration engine hardware-ignore count drifted");
+assert(
+  project.current.integrationEngineLibTestsPassed +
+    project.current.integrationEngineHarnessTestsPassed +
+    project.current.integrationEnginePacketTestsPassed +
+    project.current.integrationEngineQualificationTestsPassed +
+    project.current.integrationEnginePreflightTestsPassed ===
+    project.current.integrationEngineTestsPassed,
+  "integration engine categories must equal the current total",
+);
+assert(project.current.integrationAdapterTestsPassed === 95, "integration adapter total drifted");
+assert(project.current.integrationAdapterHardwareIgnored === 2, "integration adapter hardware-ignore count drifted");
+assert(project.current.integrationSpeculativeClippyGreen === true, "speculative clippy gate must remain green");
+assert(project.current.integrationResidentLintAllowances === 5, "resident lint allowance count drifted");
+assertSha256(project.current.integrationStaticValidationLogSha256, "current.integrationStaticValidationLogSha256");
+assertSha256(project.current.integrationSourceGateLogSha256, "current.integrationSourceGateLogSha256");
 assert(project.current.formalErrors === 0, "strict Verus errors must remain zero");
 assert(project.current.openM1Gates === 33, "all 33 M1 exit gates remain open");
 assert(project.current.engineeringSmokeBinaryStaged === true, "engineering smoke binary must remain explicit");
@@ -334,6 +446,71 @@ assertSha256(project.current.engineeringSmokeStatusSha256, "current.engineeringS
 assertSha256(project.current.engineeringSmokeSummarySha256, "current.engineeringSmokeSummarySha256");
 assert(project.current.engineeringSmokeTargetOnly === true, "four-token smoke must remain target-only");
 assert(project.current.engineeringSmokeSpeculative === false, "site must not claim speculative execution");
+assert(project.current.residentCandidateIntegrated === false, "resident candidate must remain unintegrated");
+assert(project.current.residentCandidateReviewComplete === true, "resident review must remain complete");
+assert(project.current.residentCandidateReviewDisposition === "hold", "resident review disposition drifted");
+assert(project.current.residentCandidatePhysicalRunnable === false, "held resident candidate must not be marked runnable");
+assert(project.current.residentCandidateEngineTestsPassed === 878, "resident host total drifted");
+assert(project.current.residentCandidateHardwareIgnored === 7, "resident hardware-ignore count drifted");
+assert(
+  project.current.residentCandidateEngineLibTestsPassed +
+    project.current.residentCandidateEngineHarnessTestsPassed +
+    project.current.residentCandidateEnginePacketTestsPassed +
+    project.current.residentCandidateEngineQualificationTestsPassed +
+    project.current.residentCandidateEnginePreflightTestsPassed +
+    project.current.residentCandidateEngineDoctestsPassed ===
+    project.current.residentCandidateEngineTestsPassed,
+  "resident suite category counts must equal the candidate total",
+);
+assert(project.current.residentCandidateAdmissionModules === 168, "resident admission module count drifted");
+assert(project.current.residentCandidateAdmissionBodies === 7868, "resident admission body count drifted");
+assert(project.current.residentCandidateNewPendingVerusBodies === 29, "resident pending-Verus count drifted");
+assert(project.current.workerV3CandidateIntegrated === false, "Worker V3 candidate must remain unintegrated");
+assert(project.current.workerV3ReviewDisposition === "do-not-integrate", "Worker V3 review disposition drifted");
+assertSha256(project.current.speculativeAttempt2SourceSha256, "current.speculativeAttempt2SourceSha256");
+assertSha256(project.current.speculativeAttempt2BinarySha256, "current.speculativeAttempt2BinarySha256");
+assertSha256(project.current.speculativeAttempt2StderrSha256, "current.speculativeAttempt2StderrSha256");
+assert(project.current.speculativeAttempt2ElapsedSeconds === 1424.71, "attempt 2 elapsed time drifted");
+assert(project.current.speculativeAttempt2Status === 134, "attempt 2 status drifted");
+assert(project.current.speculativeAttempt2AllocationCount === 20, "attempt 2 allocation count drifted");
+assert(project.current.speculativeQueueAllocationMaximum === 16, "service allocation maximum drifted");
+assert(project.current.speculativeAttempt2ReachedPublication === false, "attempt 2 must remain pre-publication");
+assertSha256(project.current.speculativeAttempt3SourceSha256, "current.speculativeAttempt3SourceSha256");
+assertSha256(project.current.speculativeAttempt3BinarySha256, "current.speculativeAttempt3BinarySha256");
+assertSha256(project.current.speculativeAttempt3StdoutSha256, "current.speculativeAttempt3StdoutSha256");
+assertSha256(project.current.speculativeAttempt3StderrSha256, "current.speculativeAttempt3StderrSha256");
+assertSha256(project.current.speculativeAttempt3StatusSha256, "current.speculativeAttempt3StatusSha256");
+assertSha256(project.current.speculativeAttempt3TimeSha256, "current.speculativeAttempt3TimeSha256");
+assert(project.current.speculativeAttempt3Status === 0, "attempt 3 status drifted");
+assert(project.current.speculativeAttempt3WallSeconds === 1478.66, "attempt 3 wall time drifted");
+assert(project.current.speculativeAttempt3AllocationCount === 11, "attempt 3 allocation count drifted");
+assert(project.current.speculativeAttempt3AllocationCount <= project.current.speculativeQueueAllocationMaximum, "attempt 3 roster must fit the service maximum");
+assert(project.current.speculativeAttempt3PrefillNanoseconds === 4509687305, "attempt 3 prefill duration drifted");
+assert(project.current.speculativeAttempt3RoundNanoseconds === 9557095343, "attempt 3 round duration drifted");
+assert(project.current.speculativeAttempt3TotalNanoseconds === 14066782648, "attempt 3 total duration drifted");
+assert(
+  project.current.speculativeAttempt3PrefillNanoseconds +
+    project.current.speculativeAttempt3RoundNanoseconds ===
+    project.current.speculativeAttempt3TotalNanoseconds,
+  "attempt 3 total must equal prefill plus speculative round",
+);
+assert(project.current.speculativeAttempt3FirstTokenId === 69761, "attempt 3 first token drifted");
+assert(JSON.stringify(project.current.speculativeAttempt3DraftChoices) === "[77903,77903,148549,148549]", "attempt 3 draft choices drifted");
+assert(JSON.stringify(project.current.speculativeAttempt3TargetChoices) === "[3681,149508,101547,123907,115413]", "attempt 3 target choices drifted");
+assert(project.current.speculativeAttempt3AcceptedDraftTokens === 0, "attempt 3 accepted count drifted");
+assert(JSON.stringify(project.current.speculativeAttempt3PublishedTokenIds) === "[3681]", "attempt 3 published tokens drifted");
+assert(project.current.speculativeAttempt3PublishedText === " previous", "attempt 3 text drifted");
+assert(project.current.speculativeAttempt3TargetCommitEnd === 129, "attempt 3 target commit drifted");
+assert(project.current.speculativeAttempt3TargetRollback === 4, "attempt 3 target rollback drifted");
+assert(project.current.speculativeAttempt3DraftCommitEnd === 129, "attempt 3 draft commit drifted");
+assert(project.current.speculativeAttempt3DraftRollback === 3, "attempt 3 draft rollback drifted");
+assert(project.current.speculativeHardwareCompleted === true, "attempt 3 hardware completion must remain observed");
+assert(project.current.speculativeAttempt3Integrated === true, "attempt 3 must remain integrated");
+assert(project.current.speculativeAttempt3ReviewComplete === true, "attempt 3 independent review must remain complete");
+assert(project.current.speculativeAttempt3ReviewDisposition === "integrate", "attempt 3 review disposition drifted");
+assert(project.current.speculativeAuthenticatedAb === false, "site must not claim authenticated A/B");
+assert(project.current.speculativeBenchmarkComparable === false, "attempt 3 must remain non-comparable");
+assert(project.current.speculativeServingAvailable === false, "attempt 3 must not become serving");
 assert(
   project.current.integrationTree !== project.current.engineeringSmokeRuntimeTree,
   "current source-only integration must remain distinct from the exact v77 hardware runtime tree",
@@ -413,8 +590,8 @@ assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "observed", "hardware token must remain an observed checkpoint");
 assert(!("commit" in project.latestObservation), "hardware smoke uses source status rather than a publication binding");
 assert(
-  JSON.stringify(project.latestObservation.generatedTokenIds) === "[94364,43619,101691,33159]",
-  "latest observation must retain the exact four-token sequence",
+  JSON.stringify(project.latestObservation.generatedTokenIds) === "[3681]",
+  "latest observation must retain the exact speculative correction token",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -435,9 +612,12 @@ project.evidence.gates.forEach((entry, index) => {
   if (entry[0] === "Authority-free aggregate HSACO") {
     assert(entry[1] === "1", "authority-free aggregate HSACO count drifted");
     assert(entry[2] === "integration", "authority-free aggregate HSACO state drifted");
-  } else if (entry[0] === "Authority-free diagnostic Qwen tokens") {
+  } else if (entry[0] === "Authority-free target-only diagnostic Qwen tokens") {
     assert(entry[1] === "4", "diagnostic Qwen token count drifted");
     assert(entry[2] === "observed", "diagnostic Qwen token state drifted");
+  } else if (entry[0] === "Authority-free speculative diagnostic Qwen tokens") {
+    assert(entry[1] === "1", "speculative Qwen token count drifted");
+    assert(entry[2] === "observed", "speculative Qwen token state drifted");
   } else {
     assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
   }
@@ -449,9 +629,20 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "11e408970ddce28cacb491086d81852ddf07713f",
   "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
   "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
+  "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
+  "34a2bf774ecd9072d4116423a7d512fdda882345",
+  "6fcf568014818b4c5664bea72206f5d07dca050b",
+  "55285c95446f40984892e4857d417b6412c89534",
+  "2880334d3a359b37394cec5528609cec90248a40",
+  "6609ce9375f4611a17fd7ff07c52adf18f33eb4c",
+  "c8e0a18c4561e6e9f470321276dbc5142834ce61",
+  "fa80651bec5c96004aaff921a8433ac04979d1a5",
+  "e399f2b82966a34c63ddd358a646db522e2af4a3",
+  "f18ffe2566112cb8b9518562afe2c8919577c907",
+  "04d09e03af9a8257d211382a6f7c91909dda7df6",
   "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
   "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
@@ -504,8 +695,8 @@ const missingSnapshotClaims = [
   "42e959710d830c6394413ff861c41dcbf61fd54d",
   "2af4b8672051740b26e2d8c0c81c0238a52f2114",
   "16 pending-verus",
-  "7,126 unverified",
-  "7,816 bodies",
+  "7,127 unverified",
+  "7,817 bodies",
   "690 verified",
   "167 modules",
   "source and TCB gates are green",
@@ -604,8 +795,62 @@ const missingSnapshotClaims = [
   "exact K draft growth",
   "fail-closed custody",
   "independent no-blocker review",
-  "no resident daemon",
-  "No speculative hardware",
+  "resident daemon",
+  "20 queue-visible allocations",
+  "maximum of 16",
+  "4 model",
+  "2 paired workspaces",
+  "12 all-finite successor outputs",
+  "1 active compact output",
+  "1 direct choice",
+  "03135d7bc7d0a72c3011094358843e31ec036e0b7caabc97719bc234aa995580",
+  "6269e836cc6cc94bafe74c2f826bbe419c0c79f6374d63f6531ce6188cfe0437",
+  "73902eec259f77cc422e277a44d6ffe5d8c0c1155bb596f244193b3b85e68eee",
+  "94a3d9396f3ba83e909e41e691939c35ed38d6697f43bc1dfc0a34dc812dbeef",
+  "262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a",
+  "0814fa033dd72587503324fc95efee7b529d171556b43015d0de66e5eacd0ce6",
+  "f0403470b2eeac6ae04793da1f9bee359cfbcb5e74c75870ec4aeffab0710ef2",
+  "116698fd6c2f05f6f88b46cbb55de2d04ebaa8c9817abf42851f0f3a52c52319",
+  "1424.71 seconds",
+  "status 134",
+  "before queue publication",
+  "11 queue-visible allocations",
+  "paired prefill plus one S1/K4 round",
+  "zero draft tokens",
+  "correction ID 3681",
+  "4,509,687,305 ns",
+  "9,557,095,343 ns",
+  "14,066,782,648 ns",
+  "1478.66 seconds",
+  "[77903, 77903, 148549, 148549]",
+  "[3681, 149508, 101547, 123907, 115413]",
+  "commit 129",
+  "rollback counts 4 and 3",
+  "authenticated_AB=false",
+  "878 remote host checks",
+  "617 lib",
+  "171 doctests",
+  "7,868 bodies",
+  "168 modules",
+  "29 new pending-Verus bodies",
+  "review hold",
+  "authenticated_prefill_bootstrap",
+  "physically runnable",
+  "independently reviewed",
+  "proof-inventory ordering",
+  "55178ef806598eab581c2adde510b5d966a051c196dbe377b35cb54964da0beb",
+  "86f0d6a2f7589460c94ac015881c4159697b352c7f46233dbeeb7d4c506ae6c7",
+  "698 engine",
+  "95 adapter",
+  "five existing resident lint allowances",
+  "79e2f087e4cc8a316e9dc1c92dedea76b23682d99c1013247398bf27e5c8561b",
+  "6d2904ab368fdec3a845ee04189e84fe20f1b2446115903198102441bd9e1bb1",
+  "do-not-integrate",
+  "zero directly verified proof rows",
+  "incomplete exact dependency roster",
+  "missing committed collector behavior harness",
+  "consume-plus-locked-current-revalidate handoff",
+  "Physical device-KV prefix reuse is M2",
   "Authority is none",
   "608 verified and 0 errors",
   "S1/T128",
@@ -691,7 +936,8 @@ for (const staleOrForbidden of [
   "GPU and VRAM state are unchanged",
   "No Qwen token",
   "No hardware execution",
-  "Worker V3",
+  "provisionally-integratable",
+  "final audit pending",
 ]) {
   assert(!snapshot.includes(staleOrForbidden), `stale or forbidden claim remains: ${staleOrForbidden}`);
 }
