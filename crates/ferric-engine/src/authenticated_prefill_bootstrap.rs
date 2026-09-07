@@ -9,6 +9,7 @@
 
 use core::fmt;
 
+use fe2o3_kfd::GFX942_MAX_FIXED_DISPATCH_DATA_V1;
 use ferric_spec::{
     completion::CompletionEpoch, validate_m1_step_inputs, M1StepInputCandidate,
     M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
@@ -27,6 +28,9 @@ use crate::{
 };
 
 const PREFILL_WIDTH: usize = 128;
+// Four model allocations, two paired workspaces, three S1/K4 successor
+// outputs, one active compact output, and one direct-choice capture.
+const EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS: usize = 11;
 
 const TARGET_PREFILL: Qwen3PlanSelection = Qwen3PlanSelection {
     role: Qwen3ModelRole::Target8B,
@@ -265,6 +269,7 @@ pub enum M1AuthenticatedS1T128PrefillBootstrapPhaseV1 {
     RolloverOutputReservation,
     CompletionOutputAllocation,
     DiagnosticCapture,
+    PrepublicationAllocationRoster,
     AuthenticatedPrepublication,
 }
 
@@ -273,6 +278,11 @@ pub enum M1AuthenticatedS1T128PrefillBootstrapPhaseV1 {
 pub enum M1AuthenticatedS1T128PrefillBootstrapErrorV1 {
     FreshEngineRequired,
     ScheduledRosterMismatch,
+    FixedDispatchDataRosterMismatch {
+        expected: usize,
+        actual: usize,
+        maximum: usize,
+    },
     LowerRejected,
 }
 
@@ -1043,7 +1053,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    if let Err(error) = allocated.reserve_finite_speculative_rollover_outputs() {
+    if let Err(error) = allocated.reserve_s1_k4_rollover_output() {
         return Err(terminal_failure(
             engine,
             M1AuthenticatedS1T128PrefillBootstrapPhaseV1::RolloverOutputReservation,
@@ -1106,6 +1116,33 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
+    let prepublication_allocation_count =
+        allocated.partitioned_memory().retained_allocation_count();
+    if prepublication_allocation_count != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS
+        || prepublication_allocation_count > GFX942_MAX_FIXED_DISPATCH_DATA_V1
+    {
+        return Err(terminal_failure(
+            engine,
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::PrepublicationAllocationRoster,
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::FixedDispatchDataRosterMismatch {
+                expected: EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS,
+                actual: prepublication_allocation_count,
+                maximum: GFX942_MAX_FIXED_DISPATCH_DATA_V1,
+            },
+            (
+                runner,
+                allocated,
+                cache,
+                prompt_tokens,
+                policy,
+                recipe,
+                target_rollover_pages,
+                draft_rollover_page,
+                rollover_intent,
+                completion,
+            ),
+        ));
+    }
     let prepublication = match runner.prepare_first_step(allocated, recipe, completion) {
         Ok(prepublication) => prepublication,
         Err(error) => {
@@ -1201,6 +1238,27 @@ mod tests {
         .unwrap();
         assert_eq!(input.prompt_tokens(), [1; 128]);
         assert_eq!(input.maximum_successor_output_tokens(), 32);
+    }
+
+    #[test]
+    fn fixed_s1_k4_prepublication_allocation_roster_fits_kfd_limit() {
+        let model_memory = 4;
+        let paired_workspaces = 2;
+        let s1_k4_successor_output = 3;
+        let active_compact_output = 1;
+        let direct_choice_capture = 1;
+        assert_eq!(
+            EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS,
+            model_memory
+                + paired_workspaces
+                + s1_k4_successor_output
+                + active_compact_output
+                + direct_choice_capture
+        );
+        assert_eq!(EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS, 11);
+        const {
+            assert!(EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS <= GFX942_MAX_FIXED_DISPATCH_DATA_V1);
+        }
     }
 
     #[test]

@@ -600,7 +600,13 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
         "engine.dispatch_m1_ready()",
         "bind_m1_kv_workspace_table_v1",
         "reserve_step_write",
-        "reserve_finite_speculative_rollover_outputs",
+        "reserve_s1_k4_rollover_output",
+        "const EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS: usize = 11;",
+        "GFX942_MAX_FIXED_DISPATCH_DATA_V1",
+        ".retained_allocation_count()",
+        "prepublication_allocation_count != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS",
+        "prepublication_allocation_count > GFX942_MAX_FIXED_DISPATCH_DATA_V1",
+        "FixedDispatchDataRosterMismatch",
         "bind_m1_authenticated_speculative_rollover_intent_v1",
         "prepare_first_step",
         "into_m1_capture_quarantine",
@@ -610,6 +616,11 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
             "authenticated prefill bootstrap is missing {required}"
         );
     }
+    assert!(
+        !ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE
+            .contains("reserve_finite_speculative_rollover_outputs"),
+        "fixed S1/K4 bootstrap must not reserve every speculative output shape"
+    );
     assert_eq!(
         R33_PRODUCTION_BACKEND_SOURCE
             .matches("authenticated-window-execution-unavailable")
