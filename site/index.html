@@ -215,30 +215,27 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Remove serial KFD setup work</h2>
+            <h2 id="next-title">Run the speculative target/draft path</h2>
           </div>
           <p>
-            Current inventory-only integration 1dd3411af96a22f0ed86289b874b57fa28670ef9, tree
-            55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e, follows optimized runtime source
-            6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree
-            6af2244bf51cb1215747ed80309c89b61e3329bc. The runtime uses public fe2o3
-            1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree
-            553334d69d51c4ccffea383cd72cf9105df74130. Exact v76 exits status 0 after a 415,660-byte
+            Current integration 0f22443df20fefef8875cdbd53c55fa5803ec1ce rejects and reverts the unsafe
+            resident prerequisite, returning to tree e31a988bb8b74557381a4a04f0cb765cafb7cf72. Exact runtime source
+            254b89aa3a6e4e751c3ad81db84073a5fb26b52d has that same tree and uses public fe2o3
+            cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree
+            6d115af5cd5285b84b7629834393d6eee6a37045. Exact v77 exits status 0 after a 415,541-byte
             Kernel IR V9 handoff containing 26 GuardedStore operations and exact replay into a 103,616-byte HSACO
             containing all 12 kernels. Handoff SHA
-            31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; HSACO SHA
-            c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA
-            6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA
-            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Runtime source 6239bdb
-            overlaps two independent admissions and repeats the authority-free gfx942 smoke: prompt token 9707
-            produces token 94364, decoded as "spent", with process status 0. Cold wall improves from 26:50.92 to
-            23:55.18, saving 175.74 seconds / 10.91%. Post-setup duration is 5.002135558 seconds and first-token
-            offset is 3.414468641 seconds. Remaining repeated serial KFD hashes/copy/readback are engineering
-            attribution, not token compute. benchmark_comparable=false and r33_tpot_eligible=false; these values
-            are not TTFT or TPOT claims. Smoke stdout SHA
-            76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA
-            adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. Authority remains none. No production
-            publication, serving endpoint, vLLM/SGLang comparison, or qualification exists. The R33 executor still
+            3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84; HSACO SHA
+            3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d; manifest SHA
+            1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120; canonical descriptor SHA
+            f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2. Prompt token 9707 produces four
+            target-only IDs: 94364, 43619, 101691, and 33159, decoded as "spent_cm谊tered", with process status 0.
+            Internal TTFT is 4.227489904 seconds; terminal offset is 15.429140005 seconds; the derived three-gap
+            average is 3.733883367 seconds/token; execution duration is 17.076646692 seconds. Cold wall is
+            1445.15 seconds, about 10.15 seconds above the prior 1435.18-second one-token run. Different output
+            length and uncontrolled cold variance establish neither speedup nor regression. benchmark_comparable=false
+            and r33_tpot_eligible=false. Authority remains none. This is target-only, not speculative serving.
+            No production publication, serving endpoint, vLLM/SGLang comparison, or qualification exists. The R33 executor still
             supports only one window, not the required 20. Symmetric memory and MTP remain deferred, and all 33 M1
             exit gates remain open.
           </p>

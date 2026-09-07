@@ -79,10 +79,10 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-  integrationCommit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
-  integrationTree: "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
-  engineeringSmokeRuntimeCommit: "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
-  engineeringSmokeRuntimeTree: "6af2244bf51cb1215747ed80309c89b61e3329bc",
+  integrationCommit: "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
+  integrationTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
+  engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
+  engineeringSmokeRuntimeTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
   r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -103,8 +103,8 @@ const expectedCurrent = {
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-  fe2o3LatestMain: "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
-  fe2o3LatestTree: "553334d69d51c4ccffea383cd72cf9105df74130",
+  fe2o3LatestMain: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
+  fe2o3LatestTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -113,19 +113,22 @@ const expectedCurrent = {
   combinedInventoryCurrent: false,
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
-  exactCompilerAttempt: "v76",
-  exactCompilerLogSha256: "338edfa1bfa3d7c8346a1b0eec2b64911b91eea149676d27a701651988198a65",
+  exactCompilerAttempt: "v77",
+  exactCompilerLogSha256: "85073cf74d25ad06854b1874c0199b309c0636615a2e2f89b7d9b04d08b5dee6",
+  exactArtifactGateLogSha256: "13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49",
+  exactAdapterLogSha256: "1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83",
   exactCompilerExitStatus: 0,
   exactCompilerOutputs: 2,
-  exactCompilerHandoffBytes: 415660,
-  exactCompilerHandoffSha256: "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
+  exactCompilerHandoffBytes: 415541,
+  exactCompilerHandoffSha256: "3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84",
   exactCompilerGuardedStores: 26,
   exactCompilerHsacoBytes: 103616,
-  exactCompilerHsacoSha256: "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
-  exactCompilerManifestSha256: "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
-  exactCompilerDescriptorSha256: "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+  exactCompilerHsacoSha256: "3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d",
+  exactCompilerManifestSha256: "1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120",
+  exactCompilerDescriptorSha256: "f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2",
   exactCompilerKernelCount: 12,
   exactCompilerReplayExact: true,
+  exactCompilerAdmissionGreen: true,
   exactCompilerPublicationGrant: false,
   exactCompilerLoadGrant: false,
   exactCompilerLaunchGrant: false,
@@ -135,18 +138,20 @@ const expectedCurrent = {
   engineeringSmokeVramStateChanged: true,
   engineeringSmokeProcessStatus: 0,
   engineeringSmokePromptTokenId: 9707,
-  engineeringSmokeGeneratedTokenId: 94364,
-  engineeringSmokeGeneratedText: "spent",
-  engineeringSmokePostSetupSeconds: 5.002135558,
-  engineeringSmokeFirstTokenOffsetSeconds: 3.414468641,
-  engineeringSmokeColdWallSeconds: 1435.18,
-  engineeringSmokeColdBaselineSeconds: 1610.92,
-  engineeringSmokeColdImprovementSeconds: 175.74,
-  engineeringSmokeColdImprovementPercent: 10.91,
-  engineeringSmokeOverlappedAdmissions: 2,
-  engineeringSmokeBottleneck: "repeated serial KFD hashes/copy/readback",
-  engineeringSmokeStdoutSha256: "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
-  engineeringSmokeStderrSha256: "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
+  engineeringSmokeGeneratedTokenIds: [94364, 43619, 101691, 33159],
+  engineeringSmokeGeneratedText: "spent_cm谊tered",
+  engineeringSmokeExecutionDurationSeconds: 17.076646692,
+  engineeringSmokeInternalTtftSeconds: 4.227489904,
+  engineeringSmokeTerminalOffsetSeconds: 15.429140005,
+  engineeringSmokeDerivedGapAverageSecondsPerToken: 3.733883367,
+  engineeringSmokeColdWallSeconds: 1445.15,
+  engineeringSmokeStdoutSha256: "efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402",
+  engineeringSmokeStderrSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  engineeringSmokeTimeSha256: "13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944",
+  engineeringSmokeStatusSha256: "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  engineeringSmokeSummarySha256: "3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe",
+  engineeringSmokeTargetOnly: true,
+  engineeringSmokeSpeculative: false,
   hardwareCompletionObserved: true,
   benchmarkComparable: false,
   r33TpotEligible: false,
@@ -175,7 +180,10 @@ const expectedCurrent = {
 };
 assertExactKeys(project.current, Object.keys(expectedCurrent), "current");
 for (const [key, value] of Object.entries(expectedCurrent)) {
-  assert(project.current[key] === value, `current.${key} drifted`);
+  const matches = Array.isArray(value)
+    ? JSON.stringify(project.current[key]) === JSON.stringify(value)
+    : project.current[key] === value;
+  assert(matches, `current.${key} drifted`);
 }
 for (const key of [
   "siteRefreshBase",
@@ -226,17 +234,20 @@ assertSha256(project.current.adapterValidationLogSha256, "current.adapterValidat
 assert(project.current.remoteTestFailures === 0, "repinned remote tests must retain zero failures");
 assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNorm log prefix drifted");
 assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
+assertSha256(project.current.exactArtifactGateLogSha256, "current.exactArtifactGateLogSha256");
+assertSha256(project.current.exactAdapterLogSha256, "current.exactAdapterLogSha256");
 assertSha256(project.current.exactCompilerHandoffSha256, "current.exactCompilerHandoffSha256");
 assertSha256(project.current.exactCompilerHsacoSha256, "current.exactCompilerHsacoSha256");
 assertSha256(project.current.exactCompilerManifestSha256, "current.exactCompilerManifestSha256");
 assertSha256(project.current.exactCompilerDescriptorSha256, "current.exactCompilerDescriptorSha256");
 assert(project.current.exactCompilerExitStatus === 0, "exact compiler status must remain 0");
 assert(project.current.exactCompilerOutputs === 2, "exact compiler output count drifted");
-assert(project.current.exactCompilerHandoffBytes === 415660, "exact compiler handoff byte count drifted");
+assert(project.current.exactCompilerHandoffBytes === 415541, "exact compiler handoff byte count drifted");
 assert(project.current.exactCompilerGuardedStores === 26, "exact compiler GuardedStore count drifted");
 assert(project.current.exactCompilerHsacoBytes === 103616, "exact compiler HSACO byte count drifted");
 assert(project.current.exactCompilerKernelCount === 12, "exact compiler kernel count drifted");
 assert(project.current.exactCompilerReplayExact === true, "exact compiler replay must remain exact");
+assert(project.current.exactCompilerAdmissionGreen === true, "exact engineering admission must remain green");
 for (const grant of [
   "exactCompilerPublicationGrant",
   "exactCompilerLoadGrant",
@@ -251,43 +262,40 @@ assert(project.current.engineeringSmokeVramStateChanged === true, "hardware smok
 assert(project.current.engineeringSmokeProcessStatus === 0, "hardware smoke process must retain status 0");
 assert(project.current.hardwareCompletionObserved === true, "hardware completion must remain observed");
 assert(project.current.engineeringSmokePromptTokenId === 9707, "prompt token drifted");
-assert(project.current.engineeringSmokeGeneratedTokenId === 94364, "generated token drifted");
-assert(project.current.engineeringSmokeGeneratedText === "spent", "generated text drifted");
 assert(
-  project.current.engineeringSmokePostSetupSeconds === 5.002135558,
-  "post-setup execution duration drifted",
+  JSON.stringify(project.current.engineeringSmokeGeneratedTokenIds) ===
+    "[94364,43619,101691,33159]",
+  "generated token sequence drifted",
 );
+assert(project.current.engineeringSmokeGeneratedText === "spent_cm谊tered", "generated text drifted");
+assert(project.current.engineeringSmokeExecutionDurationSeconds === 17.076646692, "execution duration drifted");
+assert(project.current.engineeringSmokeInternalTtftSeconds === 4.227489904, "internal TTFT drifted");
+assert(project.current.engineeringSmokeTerminalOffsetSeconds === 15.429140005, "terminal offset drifted");
 assert(
-  project.current.engineeringSmokeFirstTokenOffsetSeconds === 3.414468641,
-  "first-token offset drifted",
+  project.current.engineeringSmokeDerivedGapAverageSecondsPerToken === 3.733883367,
+  "derived three-gap average drifted",
 );
-assert(project.current.engineeringSmokeColdWallSeconds === 1435.18, "optimized cold wall drifted");
-assert(project.current.engineeringSmokeColdBaselineSeconds === 1610.92, "cold baseline drifted");
-assert(project.current.engineeringSmokeColdImprovementSeconds === 175.74, "cold improvement drifted");
-assert(project.current.engineeringSmokeColdImprovementPercent === 10.91, "cold improvement percent drifted");
-assert(project.current.engineeringSmokeOverlappedAdmissions === 2, "overlapped admission count drifted");
+assert(project.current.engineeringSmokeColdWallSeconds === 1445.15, "cold wall drifted");
 assert(
   Math.abs(
-    project.current.engineeringSmokeColdBaselineSeconds -
-      project.current.engineeringSmokeColdWallSeconds -
-      project.current.engineeringSmokeColdImprovementSeconds,
+    (project.current.engineeringSmokeTerminalOffsetSeconds -
+      project.current.engineeringSmokeInternalTtftSeconds) /
+      3 -
+      project.current.engineeringSmokeDerivedGapAverageSecondsPerToken,
   ) < 1e-9,
-  "cold improvement must equal baseline minus optimized wall time",
-);
-assert(
-  Math.abs(
-    (100 * project.current.engineeringSmokeColdImprovementSeconds) /
-      project.current.engineeringSmokeColdBaselineSeconds -
-      project.current.engineeringSmokeColdImprovementPercent,
-  ) < 0.005,
-  "cold improvement percent must match the duration comparison",
-);
-assert(
-  project.current.engineeringSmokeBottleneck === "repeated serial KFD hashes/copy/readback",
-  "engineering bottleneck attribution drifted",
+  "three-gap average must derive from terminal minus internal TTFT",
 );
 assertSha256(project.current.engineeringSmokeStdoutSha256, "current.engineeringSmokeStdoutSha256");
 assertSha256(project.current.engineeringSmokeStderrSha256, "current.engineeringSmokeStderrSha256");
+assertSha256(project.current.engineeringSmokeTimeSha256, "current.engineeringSmokeTimeSha256");
+assertSha256(project.current.engineeringSmokeStatusSha256, "current.engineeringSmokeStatusSha256");
+assertSha256(project.current.engineeringSmokeSummarySha256, "current.engineeringSmokeSummarySha256");
+assert(project.current.engineeringSmokeTargetOnly === true, "four-token smoke must remain target-only");
+assert(project.current.engineeringSmokeSpeculative === false, "site must not claim speculative execution");
+assert(
+  project.current.integrationTree === project.current.engineeringSmokeRuntimeTree,
+  "current safety-revert tree must match the exact runtime tree",
+);
 assert(project.current.benchmarkComparable === false, "diagnostic smoke must not become benchmark-comparable");
 assert(project.current.r33TpotEligible === false, "one-token smoke must not become R33 TPOT-eligible");
 
@@ -363,8 +371,8 @@ assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "observed", "hardware token must remain an observed checkpoint");
 assert(!("commit" in project.latestObservation), "hardware smoke uses source status rather than a publication binding");
 assert(
-  JSON.stringify(project.latestObservation.generatedTokenIds) === "[94364]",
-  "latest observation must retain exactly the diagnostic token",
+  JSON.stringify(project.latestObservation.generatedTokenIds) === "[94364,43619,101691,33159]",
+  "latest observation must retain the exact four-token sequence",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -386,7 +394,7 @@ project.evidence.gates.forEach((entry, index) => {
     assert(entry[1] === "1", "authority-free aggregate HSACO count drifted");
     assert(entry[2] === "integration", "authority-free aggregate HSACO state drifted");
   } else if (entry[0] === "Authority-free diagnostic Qwen tokens") {
-    assert(entry[1] === "1", "diagnostic Qwen token count drifted");
+    assert(entry[1] === "4", "diagnostic Qwen token count drifted");
     assert(entry[2] === "observed", "diagnostic Qwen token state drifted");
   } else {
     assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
@@ -400,6 +408,11 @@ project.evidence.legend.forEach((entry, index) => {
 const snapshot = JSON.stringify(project);
 for (const claim of [
   "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
+  "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
+  "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
+  "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
+  "6d115af5cd5285b84b7629834393d6eee6a37045",
   "1dd3411af96a22f0ed86289b874b57fa28670ef9",
   "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
   "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
@@ -463,8 +476,9 @@ for (const claim of [
   "no outputs",
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
   "Exact v76",
+  "Exact v77",
   "Process status 0",
-  "415,660-byte Kernel IR V9 handoff",
+  "415,541-byte",
   "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   "both prior outlined-helper geometry gaps",
   "415,659-byte Kernel IR V9 handoff",
@@ -473,19 +487,34 @@ for (const claim of [
   "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
   "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
   "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+  "3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84",
+  "3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d",
+  "1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120",
+  "f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2",
+  "85073cf74d25ad06854b1874c0199b309c0636615a2e2f89b7d9b04d08b5dee6",
+  "13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49",
+  "1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83",
   "all 12 kernels",
   "exact replay",
-  "publication, load, and launch grants are false",
   "Prompt token 9707",
-  "token 94364",
-  "spent",
+  "94364, 43619, 101691, and 33159",
+  "spent_cm谊tered",
   "hardware completion",
   "process status 0",
+  "4.227489904 seconds",
+  "15.429140005 seconds",
+  "3.733883367 seconds/token",
+  "17.076646692 seconds",
+  "1445.15 seconds",
+  "10.15 seconds above",
+  "different output length",
+  "uncontrolled cold variance",
+  "neither speedup nor regression",
+  "target-only",
+  "not speculative serving",
   "23:55.18",
   "175.74 seconds",
   "10.91%",
-  "5.002135558 seconds",
-  "3.414468641 seconds",
   "26:50.92",
   "two independent admissions",
   "repeated serial KFD hashes/copy/readback",
@@ -493,8 +522,11 @@ for (const claim of [
   "not token compute",
   "benchmark_comparable=false",
   "r33_tpot_eligible=false",
-  "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
-  "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
+  "efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402",
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944",
+  "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  "3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe",
   "native AMDGPU LLVM worker",
   "SIGABRT",
   "empty output manifest",
@@ -537,7 +569,7 @@ for (const claim of [
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
-  "one authority-free diagnostic token",
+  "four target-only Qwen tokens",
   "TTFT",
   "TPOT",
   "vLLM and SGLang baselines are absent",

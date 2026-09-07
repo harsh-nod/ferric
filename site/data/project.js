@@ -4,10 +4,10 @@ window.FERRIC_PROJECT = Object.freeze({
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
     siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-    integrationCommit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
-    integrationTree: "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
-    engineeringSmokeRuntimeCommit: "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
-    engineeringSmokeRuntimeTree: "6af2244bf51cb1215747ed80309c89b61e3329bc",
+    integrationCommit: "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
+    integrationTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
+    engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
+    engineeringSmokeRuntimeTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
     rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
     r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
     intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -28,8 +28,8 @@ window.FERRIC_PROJECT = Object.freeze({
     kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
     fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-    fe2o3LatestMain: "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
-    fe2o3LatestTree: "553334d69d51c4ccffea383cd72cf9105df74130",
+    fe2o3LatestMain: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
+    fe2o3LatestTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
     formalVerified: 81,
     formalErrors: 0,
     proofTestsPassed: 26,
@@ -38,19 +38,22 @@ window.FERRIC_PROJECT = Object.freeze({
     combinedInventoryCurrent: false,
     focusedRmsnormTestsPassed: 21,
     focusedRmsnormLogShaPrefix: "4d2bcd1",
-    exactCompilerAttempt: "v76",
-    exactCompilerLogSha256: "338edfa1bfa3d7c8346a1b0eec2b64911b91eea149676d27a701651988198a65",
+    exactCompilerAttempt: "v77",
+    exactCompilerLogSha256: "85073cf74d25ad06854b1874c0199b309c0636615a2e2f89b7d9b04d08b5dee6",
+    exactArtifactGateLogSha256: "13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49",
+    exactAdapterLogSha256: "1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83",
     exactCompilerExitStatus: 0,
     exactCompilerOutputs: 2,
-    exactCompilerHandoffBytes: 415660,
-    exactCompilerHandoffSha256: "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
+    exactCompilerHandoffBytes: 415541,
+    exactCompilerHandoffSha256: "3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84",
     exactCompilerGuardedStores: 26,
     exactCompilerHsacoBytes: 103616,
-    exactCompilerHsacoSha256: "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
-    exactCompilerManifestSha256: "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
-    exactCompilerDescriptorSha256: "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+    exactCompilerHsacoSha256: "3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d",
+    exactCompilerManifestSha256: "1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120",
+    exactCompilerDescriptorSha256: "f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2",
     exactCompilerKernelCount: 12,
     exactCompilerReplayExact: true,
+    exactCompilerAdmissionGreen: true,
     exactCompilerPublicationGrant: false,
     exactCompilerLoadGrant: false,
     exactCompilerLaunchGrant: false,
@@ -60,18 +63,20 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringSmokeVramStateChanged: true,
     engineeringSmokeProcessStatus: 0,
     engineeringSmokePromptTokenId: 9707,
-    engineeringSmokeGeneratedTokenId: 94364,
-    engineeringSmokeGeneratedText: "spent",
-    engineeringSmokePostSetupSeconds: 5.002135558,
-    engineeringSmokeFirstTokenOffsetSeconds: 3.414468641,
-    engineeringSmokeColdWallSeconds: 1435.18,
-    engineeringSmokeColdBaselineSeconds: 1610.92,
-    engineeringSmokeColdImprovementSeconds: 175.74,
-    engineeringSmokeColdImprovementPercent: 10.91,
-    engineeringSmokeOverlappedAdmissions: 2,
-    engineeringSmokeBottleneck: "repeated serial KFD hashes/copy/readback",
-    engineeringSmokeStdoutSha256: "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
-    engineeringSmokeStderrSha256: "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
+    engineeringSmokeGeneratedTokenIds: [94364, 43619, 101691, 33159],
+    engineeringSmokeGeneratedText: "spent_cm谊tered",
+    engineeringSmokeExecutionDurationSeconds: 17.076646692,
+    engineeringSmokeInternalTtftSeconds: 4.227489904,
+    engineeringSmokeTerminalOffsetSeconds: 15.429140005,
+    engineeringSmokeDerivedGapAverageSecondsPerToken: 3.733883367,
+    engineeringSmokeColdWallSeconds: 1445.15,
+    engineeringSmokeStdoutSha256: "efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402",
+    engineeringSmokeStderrSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    engineeringSmokeTimeSha256: "13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944",
+    engineeringSmokeStatusSha256: "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    engineeringSmokeSummarySha256: "3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe",
+    engineeringSmokeTargetOnly: true,
+    engineeringSmokeSpeculative: false,
     hardwareCompletionObserved: true,
     benchmarkComparable: false,
     r33TpotEligible: false,
@@ -103,14 +108,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric runtime source 6239bdb overlaps two independent model admissions and repeats the authority-free Qwen hardware smoke on one gfx942. Prompt token 9707 again produced token 94364, decoded as \"spent\", with hardware completion and process status 0. Cold wall time improved from 26:50.92 to 23:55.18: 175.74 seconds, or 10.91%. The remaining cold bottleneck is repeated serial KFD hashes, copies, and readbacks; this is engineering attribution, not token-compute timing. The run remains benchmark_comparable=false, r33_tpot_eligible=false, authority none, and not serving or qualification evidence. Current integration 1dd3411 adds only the later executable inventory.",
+      "Exact v77 from Ferric runtime source 254b89a and public fe2o3 cf6faec emits all 12 kernels and completes a four-token target-only Qwen run on one gfx942. Prompt token 9707 produced IDs 94364, 43619, 101691, and 33159, decoded as \"spent_cm谊tered\", with status 0. Internal TTFT was 4.227489904 seconds, terminal offset 15.429140005 seconds, derived three-gap average 3.733883367 seconds/token, and execution duration 17.076646692 seconds. These are diagnostic internals: benchmark_comparable=false, r33_tpot_eligible=false, authority none. This is not speculative serving and has no vLLM/SGLang baseline.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Runtime source 6239bdb retains the authenticated queue path and paired-prefill executor while overlapping two independent model admissions. Current integration 1dd3411 adds the later executable inventory without changing the runtime binary used for the optimized smoke.",
+        "Exact runtime source 254b89a repins to public fe2o3 cf6faec and retains the authenticated queue and paired-prefill path. Current integration 0f22443 has the identical tree after rejecting and reverting an unsafe resident-session prerequisite.",
     },
     {
       label: "R33 lifecycle",
@@ -122,7 +127,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Engineering Qwen smoke path",
       state: "observed",
       detail:
-        "Runtime source 6239bdb repeats the authority-free one-token smoke through KFD on gfx942. Prompt token 9707 produces token 94364 (\"spent\") with hardware completion and process status 0. Cold wall improves 175.74 seconds, or 10.91%, by overlapping two admissions. The 5.002135558-second post-setup duration and 3.414468641-second first-token offset remain diagnostic only.",
+        "Runtime source 254b89a completes four target-only tokens through KFD on gfx942 with hardware completion and process status 0. The internal TTFT, three inter-token gaps, terminal offset, and execution duration are diagnostic only: benchmark_comparable=false and r33_tpot_eligible=false.",
     },
     {
       label: "Formal bootstrap model",
@@ -134,19 +139,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Exact v76 from Ferric 28b925a and public fe2o3 1ddcd36 emits the 103,616-byte aggregate HSACO containing all 12 kernels. Runtime source 6239bdb uses the same exact artifact for the optimized diagnostic smoke. HSACO SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none; publication, load, and launch grants are false.",
+        "Exact v77 from Ferric 254b89a and public fe2o3 cf6faec emits a 415,541-byte handoff with 26 GuardedStore operations and a 103,616-byte aggregate HSACO containing all 12 kernels. Handoff SHA 3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84; HSACO SHA 3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d; manifest SHA 1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120; descriptor SHA f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2. Exact replay and admission are green; authority is none.",
     },
     {
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "Current integration 1dd3411 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. The latest reported engine checks remain 857 passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
+        "Current integration 0f22443 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. The latest reported engine checks remain 857 passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. The four-token run is target-only and does not exercise or validate speculative prefix reuse.",
     },
     {
       label: "Qwen execution and serving",
       state: "open",
       detail:
-        "The optimized authority-free smoke again observes one Qwen token on gfx942, but it is not a serving or performance result. Overlapping two admissions reduced cold wall from 26:50.92 to 23:55.18. Remaining repeated serial KFD hashes, copies, and readbacks are the engineering-attributed cold bottleneck, not token compute. The protected receipt/verifier service is undeployed; no endpoint, comparable TTFT, TPOT, baseline, production authority, or qualification evidence exists.",
+        "The exact v77 smoke observes four target-only Qwen tokens on gfx942, not speculative serving. Its 1445.15-second cold wall is about 10.15 seconds above the prior 1435.18-second one-token run, but the workload now emits four tokens and cold variance was uncontrolled. It establishes neither speedup nor regression. The protected receipt/verifier service is undeployed; no endpoint, comparable metric, baseline, production authority, or qualification evidence exists.",
     },
   ],
   envelope: [
@@ -156,10 +161,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "1dd3411af96a22f0ed86289b874b57fa28670ef9; tree 55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e; adds the current executable inventory after the optimized runtime source; not public implementation main, a release, serving, benchmark, or qualification"],
-    ["Optimized smoke runtime", "6239bdb2c0c8863c21e8fff102c69a53cfb7a035; tree 6af2244bf51cb1215747ed80309c89b61e3329bc; exact binary source for the 23:55.18 authority-free diagnostic run"],
+    ["Ferric integration candidate", "0f22443df20fefef8875cdbd53c55fa5803ec1ce; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; current integration after rejecting and reverting the unsafe resident prerequisite; same tree as the exact runtime source"],
+    ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
-    ["fe2o3 exact v76 input", "public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1; tree 553334d69d51c4ccffea383cd72cf9105df74130; native gfx942 sqrt plus outlined-helper geometry lowering produce the authority-free aggregate"],
+    ["fe2o3 exact v77 input", "public main cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; current compiler/runtime input for the exact authority-free aggregate"],
   ],
   capabilities: {
     runnable: [
@@ -186,7 +191,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated paired-prefill execution",
         detail:
-          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits one first token, settles device KV, and releases prefill pages. Runtime source 6239bdb completed the optimized authority-free path on gfx942.",
+          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits tokens, settles device KV, and releases prefill pages. Runtime source 254b89a completed four target-only tokens on gfx942; speculative target/draft execution remains open.",
       },
       {
         name: "Authenticated one-window target execution",
@@ -203,7 +208,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric-owned Qwen kernel set",
         detail:
-          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Exact v76 emits a 415,660-byte Kernel IR V9 handoff with 26 GuardedStore operations and a 103,616-byte authority-free aggregate HSACO containing all 12 kernels. Exact replay is true; publication, load, and launch grants are false.",
+          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Exact v77 emits a 415,541-byte Kernel IR V9 handoff with 26 GuardedStore operations and a 103,616-byte authority-free aggregate HSACO containing all 12 kernels. Exact replay and engineering admission are green; production authority remains none.",
       },
       {
         name: "Bounded live radix prefix reuse",
@@ -223,19 +228,19 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Event-backed comparison schema",
         detail:
-          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. The optimized one-token smoke records diagnostic offsets and a cold-process comparison, but benchmark_comparable=false and r33_tpot_eligible=false. vLLM and SGLang baselines are absent.",
+          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. Exact v77 records four-token internal offsets, but the run is target-only, benchmark_comparable=false, and r33_tpot_eligible=false. vLLM and SGLang baselines are absent.",
       },
     ],
     roadmap: [
       {
-        name: "Remove serial KFD hashing, copying, and readback",
+        name: "Run the speculative target/draft path",
         detail:
-          "Overlapping the two independent admissions improves cold wall by 175.74 seconds. Engineering attribution now identifies repeated serial KFD hashes/copy/readback as the remaining cold bottleneck; this is not token-compute attribution.",
+          "The exact v77 result is target-only. Join the authenticated draft and target loop end to end before making a speculative-inference or serving claim.",
       },
       {
         name: "Extend the authenticated R33 run",
         detail:
-          "Move from the authority-free one-token diagnostic into the required 20-window authenticated R33 path. The current smoke is explicitly not R33 TPOT-eligible.",
+          "Move from the authority-free four-token target-only diagnostic into the required 20-window authenticated R33 path. The current smoke is explicitly not R33 TPOT-eligible.",
       },
       {
         name: "Deploy protected artifact admission",
@@ -245,7 +250,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Run Qwen and collect timings",
         detail:
-          "The diagnostic token and cold-start improvement are established. Comparable TTFT and TPOT still require the authenticated workload, corrected serial KFD setup path, required R33 windows, and matched vLLM and SGLang baselines.",
+          "The four-token diagnostic establishes internal offsets only. Comparable TTFT and TPOT still require the authenticated workload, controlled repeated runs, required R33 windows, and matched vLLM and SGLang baselines.",
       },
       {
         name: "Launch the comparison baselines",
@@ -282,12 +287,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "Source 240bb3d, integrated as f709a5d, adds the bootstrap model. The radix slice's separate pinned Verus run reports 608 verified and 0 errors. The latest scoped inventory diagnostic found 23 unadmitted bootstrap runtime bodies; combined regeneration remains pending, so no current whole-tree verified/unverified total is claimed. The pure proofs do not prove runtime refinement or effects.",
     },
     hardware: {
-      title: "Overlapped admission improves the diagnostic cold run",
+      title: "Exact v77 completes four target-only Qwen tokens",
       state: "observed",
-      sourceStatus: "Runtime source 6239bdb, tree 6af2244; current inventory-only integration 1dd3411, tree 55c283d",
-      result: "PASS: 23:55.18 cold wall, 175.74 seconds / 10.91% below the 26:50.92 baseline; token 94364 (\"spent\"); status 0",
+      sourceStatus: "Runtime source 254b89a, tree e31a988; current integration 0f22443 has the same tree after the resident-prerequisite revert",
+      result: "PASS: IDs 94364, 43619, 101691, 33159; text \"spent_cm谊tered\"; hardware completion; status 0",
       detail:
-        "Runtime source 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc, overlaps two independent admissions and runs the same exact v76 HSACO on one gfx942. Prompt token 9707 again produces token 94364 (\"spent\") with hardware completion and process status 0. Post-setup duration is 5.002135558 seconds; first-token offset is 3.414468641 seconds. Cold wall improves from 26:50.92 to 23:55.18, a 175.74-second / 10.91% reduction. Remaining repeated serial KFD hashes/copy/readback are an engineering-attributed cold bottleneck, not token compute. Stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. benchmark_comparable=false; r33_tpot_eligible=false; authority none; no serving or baselines.",
+        "Runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses exact v77 from public fe2o3 cf6faec. Prompt token 9707 produces four target-only tokens. Internal TTFT is 4.227489904 seconds; terminal offset 15.429140005 seconds; derived three-gap average 3.733883367 seconds/token; execution duration 17.076646692 seconds. Cold wall is 1445.15 seconds, about 10.15 seconds above the prior 1435.18-second one-token run; different output length and uncontrolled cold variance establish neither speedup nor regression. Recovery exact log SHA 85073cf74d25ad06854b1874c0199b309c0636615a2e2f89b7d9b04d08b5dee6; artifact gate SHA 13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49; adapter SHA 1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83. Stdout SHA efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402; empty stderr SHA e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; time SHA 13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944; status SHA 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa; summary SHA 3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe. Target-only, benchmark_comparable=false, r33_tpot_eligible=false, authority none; no serving or baselines.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -300,7 +305,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Live Ready radix source", "Shared committed logical prefix", "integration"],
     ],
     limitation:
-      "These transitions remain in current integration 1dd3411; the optimized runtime binary is exact source 6239bdb. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only. The optimized smoke is not a serving endpoint, benchmark, comparable TTFT/TPOT result, or qualification.",
+      "These transitions remain in current integration 0f22443; the exact v77 runtime binary is source 254b89a and has the same tree. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. The four-token result is target-only, not speculative serving, a benchmark, comparable TTFT/TPOT, or qualification.",
   },
   teams: [
     {
@@ -309,15 +314,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Runtime source 6239bdb overlaps two independent model admissions and repeats the authority-free Qwen token through KFD on gfx942. Current integration 1dd3411 adds only the later executable inventory.",
+        "Runtime source 254b89a repins to public fe2o3 cf6faec, exact-compiles all 12 kernels, and completes four target-only Qwen tokens through KFD on gfx942. Current integration 0f22443 rejects and reverts the unsafe resident prerequisite while retaining the exact runtime tree.",
       current:
-        "Cold wall improves from 26:50.92 to 23:55.18, saving 175.74 seconds / 10.91%. Remaining repeated serial KFD hashes/copy/readback are the engineering-attributed cold bottleneck, not token compute.",
+        "The four-token internal timing is diagnostic only. Cold wall is about 10.15 seconds above the prior one-token run, but changed output length and uncontrolled cold variance support neither a speedup nor regression claim.",
       blockedBy:
         "No team-local blocker. M1 still depends on removing startup duplication, extending the authenticated R33 path, deploying protected artifact admission, and running matched baselines.",
       next:
-        "Remove or overlap the remaining serial KFD hashes, copies, and readbacks, then rerun the exact diagnostic path.",
+        "Integrate authenticated target/draft speculative execution, then collect controlled repeated runs before any performance comparison.",
       validation:
-        "Optimized smoke status 0; stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. benchmark_comparable=false and r33_tpot_eligible=false.",
+        "Exact v77 artifact gate SHA 13fbfd7eab77b5eafd36967f642080fcd507059a34a2a7242754a883b66dee49; adapter SHA 1bfbdf9ecd30b03fcc59f3a172f1a3549dbb2dc57652bcccf0b978be97b08b83; smoke stdout SHA efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402.",
     },
     {
       name: "Kernels",
@@ -325,15 +330,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21, log SHA prefix 4d2bcd1. Exact v76 clears the prior convergence, helper-geometry, and native-sqrt failures and emits all 12 kernels.",
+        "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21. Exact v77 against public fe2o3 cf6faec emits all 12 kernels with 26 GuardedStore operations and exact replay.",
       current:
-        "The exact aggregate is 103,616 bytes with SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; exact replay is true and the canonical descriptor SHA is fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5.",
+        "The exact aggregate remains 103,616 bytes with SHA 3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d; canonical descriptor SHA f3522e568e787ea808e47ce56e82553c3f3214b7a7b9d1a20f82889cc67fa8c2.",
       blockedBy:
         "No team-local blocker. The exact aggregate has run diagnostically through KFD; artifact authority remains none.",
       next:
-        "Preserve exact v76 artifact identity while integration removes host-side startup duplication and extends the workload.",
+        "Preserve exact v77 artifact identity while integration adds authenticated draft/target speculative execution.",
       validation:
-        "Exact v76 status 0; 415,660-byte handoff; 26 GuardedStore operations; 103,616-byte HSACO; all 12 kernels; exact replay true; authority none and publication/load/launch grants false.",
+        "Exact v77 status 0; 415,541-byte handoff; 26 GuardedStore operations; 103,616-byte HSACO; all 12 kernels; exact replay and engineering admission green; authority none.",
     },
     {
       name: "Inference engine",
@@ -343,13 +348,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, authority-free engineering identities, live-source logical radix reuse, and one checked 128-output target window are integrated.",
       current:
-        "Runtime source 6239bdb overlaps two independent admissions before the exact v76 diagnostic execution. The R33 executor still supports one window before Faulted, and the smoke is not TPOT-eligible.",
+        "Runtime source 254b89a completes four target-only tokens. The R33 executor still supports one window before Faulted; draft/target speculative execution and serving remain open.",
       blockedBy:
         "No team-local blocker. Comparable execution depends on removing repeated startup authentication/copying and protected runtime admission; the required 20-window R33 path remains absent.",
       next:
         "Extend authenticated custody across all 20 required windows after the exact artifact and first diagnostic execution are available.",
       validation:
-        "The same prompt/output token pair and status 0 repeat after the admission overlap. Post-setup duration is 5.002135558 seconds and first-token offset is 3.414468641 seconds; neither is benchmark-comparable.",
+        "Four token IDs and status 0 are hardware-observed. Internal TTFT 4.227489904 seconds and derived three-gap average 3.733883367 seconds/token are not benchmark-comparable or R33 TPOT-eligible.",
     },
     {
       name: "Formal verification",
@@ -359,7 +364,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "The combined proof crate passes strict Verus 81/0, proof tests 26/26, and source-gate tests 28/28; the radix slice separately passes pinned Verus 608/0.",
       current:
-        "Inventory-only integration 1dd3411 postdates the optimized runtime binary; it does not enlarge the 6239bdb hardware observation. Runtime effects remain outside the pure proof claim.",
+        "Current integration 0f22443 restores the exact 254b89a runtime tree after rejecting and reverting an unsafe resident-session prerequisite. Runtime effects remain outside the pure proof claim.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
@@ -377,8 +382,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current integration 1dd3411af96a22f0ed86289b874b57fa28670ef9, tree 55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e, adds the latest executable inventory",
-      "Optimized runtime source 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc, overlaps two independent admissions and produces the repeated diagnostic token",
+      "Current integration 0f22443df20fefef8875cdbd53c55fa5803ec1ce, tree e31a988bb8b74557381a4a04f0cb765cafb7cf72, rejects and reverts the unsafe resident prerequisite",
+      "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d has the same tree and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
     fe2o3: [
@@ -386,24 +391,46 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree 553334d69d51c4ccffea383cd72cf9105df74130, contains reusable native gfx942 sqrt plus outlined-device-helper geometry lowering",
-      "Exact Ferric v76 uses public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree 553334d69d51c4ccffea383cd72cf9105df74130; the compiler emits the complete authority-free aggregate",
+      "Public main cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree 6d115af5cd5285b84b7629834393d6eee6a37045, is the current reusable compiler/runtime input",
+      "Exact Ferric v77 uses that public main and emits the complete authority-free aggregate with exact replay",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Overlapped admission reduces the diagnostic cold run",
+    title: "Exact v77 completes four target-only Qwen tokens",
     state: "observed",
-    sourceStatus: "Runtime 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc; current inventory 1dd3411",
-    environment: "mi300x, one gfx942, exact v76 aggregate built with public fe2o3 1ddcd36, tree 553334d",
+    sourceStatus: "Runtime 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; current integration 0f22443 has the same tree",
+    environment: "mi300x, one gfx942, exact v77 aggregate built with public fe2o3 cf6faec, tree 6d115af",
     result:
-      "Process status 0. Prompt token 9707 again produced token 94364, decoded as \"spent\", after hardware completion. Overlapping two independent admissions reduced cold wall from 26:50.92 to 23:55.18: 175.74 seconds / 10.91%. Post-setup duration: 5.002135558 seconds; first-token offset: 3.414468641 seconds. Remaining repeated serial KFD hashes/copy/readback are engineering attribution, not token compute.",
-    buildId: "SHA-256 c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
-    generatedTokenIds: [94364],
+      "Process status 0. Prompt token 9707 produced IDs 94364, 43619, 101691, and 33159, decoded as \"spent_cm谊tered\", after hardware completion. Internal TTFT: 4.227489904 seconds; terminal offset: 15.429140005 seconds; derived three-gap average: 3.733883367 seconds/token; execution duration: 17.076646692 seconds. This was target-only, not speculative.",
+    buildId: "SHA-256 3ce9820a870379d8e0d9e76bb98178776617a1ab132c7154d38929b1243a6d4d",
+    generatedTokenIds: [94364, 43619, 101691, 33159],
     authority:
-      "Authority: none. benchmark_comparable=false and r33_tpot_eligible=false. This remains one authority-free diagnostic token, not production publication, serving, TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6.",
+      "Authority: none. benchmark_comparable=false and r33_tpot_eligible=false. This target-only diagnostic is not speculative serving, production publication, comparable TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA efc5cc2c738ac37dca0893f5c8fc79c882ec043a7f4e646ef2d4b1c747418402; empty stderr SHA e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; time SHA 13b365651f5ac1c9b4081fb0a0f6f731f64184d6952f8c5557ae91d572494944; summary SHA 3cc352bece27748d35d275fe59a04895fd72162aa95225319147b500d66c06fe.",
   },
   recentProgress: [
+    {
+      commit: "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
+      title: "Rejected the unsafe resident prerequisite",
+      state: "integration",
+      detail:
+        "Current integration reverts the resident-session prerequisite and returns to tree e31a988bb8b74557381a4a04f0cb765cafb7cf72, identical to exact runtime source 254b89a. This safety decision adds no runtime behavior or performance claim.",
+    },
+    {
+      commit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
+      title: "Completed exact v77 and four target-only tokens",
+      state: "observed",
+      detail:
+        "Exact v77 against public fe2o3 cf6faec emits all 12 kernels with 26 GuardedStore operations, exact replay, and green engineering admission. Prompt token 9707 produces IDs 94364, 43619, 101691, and 33159 (\"spent_cm谊tered\") with status 0. Target-only, benchmark_comparable=false, r33_tpot_eligible=false, authority none; no speculative serving or baseline claim.",
+    },
+    {
+      commit: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Repinned exact v77 to current public fe2o3",
+      state: "implemented",
+      detail:
+        "Public fe2o3 main, tree 6d115af5cd5285b84b7629834393d6eee6a37045, is the compiler/runtime input for exact Ferric v77. The exact aggregate and four-token engineering admission are green; this does not grant production authority.",
+    },
     {
       commit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
       title: "Integrated the current executable inventory",
@@ -615,7 +642,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric separates integration, hardware observation, performance measurement, and M1 qualification. Runtime source 6239bdb overlaps two independent admissions and repeats the same diagnostic Qwen token on gfx942. Cold wall improves from 26:50.92 to 23:55.18, saving 175.74 seconds / 10.91%. Remaining repeated serial KFD hashes/copy/readback are engineering-attributed cold work, not token compute. The post-setup duration and first-token offset remain non-comparable; benchmark_comparable=false and r33_tpot_eligible=false. Current integration 1dd3411 adds only the later inventory. No serving endpoint, baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
+      "Exact v77 from Ferric 254b89a and public fe2o3 cf6faec emits all 12 kernels and completes four target-only Qwen tokens on gfx942. Internal TTFT 4.227489904 seconds and derived three-gap average 3.733883367 seconds/token are diagnostic, not comparable measurements. Cold wall 1445.15 seconds is about 10.15 seconds above the prior 1435.18-second one-token run; different output length and uncontrolled cold variance establish neither speedup nor regression. Current integration 0f22443 has the exact runtime tree after rejecting and reverting the unsafe resident prerequisite. benchmark_comparable=false, r33_tpot_eligible=false, authority none; no speculative serving, baseline, or qualification exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],
@@ -625,7 +652,7 @@ window.FERRIC_PROJECT = Object.freeze({
     gates: [
       ["M1 exit gates", "33 / 33", "open"],
       ["Authority-free aggregate HSACO", "1", "integration"],
-      ["Authority-free diagnostic Qwen tokens", "1", "observed"],
+      ["Authority-free diagnostic Qwen tokens", "4", "observed"],
       ["Authenticated Qwen tokens", "0", "open"],
       ["TTFT / TPOT measurements", "0", "open"],
       ["vLLM / SGLang baselines", "0", "open"],
