@@ -3,9 +3,10 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "3235ea8e4c7d12799022b7bec8a5e7c780514062",
+    siteRefreshBase: "4d5fd39b11a10152524518f34bdc00267a858753",
     integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
     integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
+    intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
     r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
     prefillProofSourceCommit: "240bb3d1ce394436cc62244f51888d7737ea6b9c",
     prefillProofIntegratedCommit: "f709a5da2f0130087bcfc0605a4c84ebd966ea0c",
@@ -21,8 +22,8 @@ window.FERRIC_PROJECT = Object.freeze({
     canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
     kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
     kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-    fe2o3LatestMain: "3d10825df93a86644cc5a5b006cadd45f71afb91",
-    fe2o3LatestTree: "84cdb971391617f1809cee08b706ba56dad40fd4",
+    fe2o3LatestMain: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+    fe2o3LatestTree: "68573bf31789625ecc2489491711ad9153eb1cac",
     formalVerified: 81,
     formalErrors: 0,
     proofTestsPassed: 26,
@@ -50,7 +51,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Integration candidate 1dc659b joins authenticated paired-prefill execution, authority-free engineering identity derivation, and bounded live-source radix prefix reuse. Current Ferric kernel candidate 72c78c6 targets fe2o3 main 3d10825. Its exact-total loop bound is cleared, focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite passes, and the engine physical-recipe matrix passes 7/7. Exact v17 reaches genuine lowering but fails closed on the sole current terminal blocker: function 6 retained local/type (178,63,borrow for compiler intrinsic), which requires general fe2o3 private-slot lowering. Status is 1 and no output was produced. No HSACO or Qwen token exists, and every M1 exit gate remains open.",
+      "Intermediate Ferric integration 23f326a contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix work, but it is not final or public product integration. The fe2o3 private-slot fix is public at 6492c8f. An exact patched compile of Ferric candidate 72c78c6 clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. It then fails closed at qwen3_rmsnorm_v1 bb6 op0 with UnprovenBarrierConvergence: Subgroup uniform required, Varying found. Status is 1 and no HSACO was produced. The final fe2o3 repin and RMSNorm fix remain pending; no Qwen token, TTFT, or TPOT exists, and every M1 exit gate remains open.",
   },
   readiness: [
     {
@@ -81,7 +82,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Ferric candidate 72c78c6, tree 6b3a5ab, is pinned to fe2o3 3d10825, tree 84cdb971. The exact-total loop bound is cleared. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite passes, and engine physical-recipe checks pass 7/7. Exact v17 reaches genuine lowering, then rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) because general fe2o3 private-slot lowering is not implemented. The run exits status 1 with no output or HSACO.",
+        "Ferric candidate 72c78c6, tree 6b3a5ab, retains its green focused Rope/KV 27/27 and full ferric-qwen-kernels suite; engine physical-recipe checks pass 7/7. The private-slot fix used by the patched exact compile is now public in fe2o3 at 6492c8f, tree 68573bf. That compile clears retained-borrow locals 178 and 40, reaches AMDGPU LLVM lowering, and fails closed at qwen3_rmsnorm_v1 bb6 op0: UnprovenBarrierConvergence: Subgroup uniform required, Varying found. The run exits status 1 with no HSACO.",
     },
     {
       label: "Radix prefix reuse",
@@ -104,7 +105,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration candidate", "1dc659beda81d37d746cb05a16d35fd7788e29ef; reviewed integration evidence, not public main, a release, or a serving result"],
-    ["fe2o3 main", "3d10825df93a86644cc5a5b006cadd45f71afb91; tree 84cdb971391617f1809cee08b706ba56dad40fd4; reusable compiler, runtime, and KFD"],
+    ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
+    ["fe2o3 main", "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6; tree 68573bf31789625ecc2489491711ad9153eb1cac; reusable compiler, runtime, and KFD"],
   ],
   capabilities: {
     runnable: [
@@ -143,7 +145,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric-owned Qwen kernel set",
         detail:
-          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Candidate 72c78c6 clears the exact-total loop-bound gate while retaining the reviewed row-striped paged-KV mapping. Focused Rope/KV, the full kernel suite, and engine physical-recipe checks are green. Exact v17 now stops only at the general compiler requirement to lower function 6 retained local/type (178,63,borrow for compiler intrinsic) through a private slot.",
+          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Candidate 72c78c6 retains green focused Rope/KV 27/27, full kernel-suite, and engine physical-recipe 7/7 checks. With private-slot lowering fixed, exact compilation clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. The current kernel obligation is RMSNorm barrier convergence: qwen3_rmsnorm_v1 bb6 op0 requires subgroup-uniform control flow but receives a varying value.",
       },
       {
         name: "Bounded live radix prefix reuse",
@@ -170,7 +172,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce the exact aggregate HSACO",
         detail:
-          "Implement and validate general retained-borrow private-slot lowering in fe2o3, rerun exact v17-equivalent compilation, then inspect an artifact only if one is produced.",
+          "Repair qwen3_rmsnorm_v1 subgroup barrier convergence, complete the final fe2o3 6492c8f repin, rerun exact compilation, then inspect an artifact only if one is produced.",
       },
       {
         name: "Run the staged engineering smoke",
@@ -220,9 +222,9 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "No current aggregate hardware result",
       state: "open",
       sourceStatus: "No exact aggregate artifact or authenticated Qwen run",
-      result: "OPEN: exact-total loop bound cleared; exact v17 fails only on function 6 retained local 178/type 63; no output or HSACO",
+      result: "OPEN: retained-borrow locals 178 and 40 cleared; RMSNorm barrier convergence fails in AMDGPU LLVM lowering; no HSACO",
       detail:
-        "Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, is evaluated against fe2o3 3d10825df93a86644cc5a5b006cadd45f71afb91, tree 84cdb971391617f1809cee08b706ba56dad40fd4. The exact-total loop bound is cleared. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite is green, and engine physical-recipe checks pass 7/7. Exact v17 reaches genuine lowering, then fails closed on function 6 retained local/type (178,63,borrow for compiler intrinsic), the one remaining terminal diagnostic. General fe2o3 private-slot lowering is required. The run exits status 1 with no output; log SHA bfad31c3331c6a2b92de73a4d873b88c94a8b45dfb7eb3d835f7515f9ce69965. No artifact, hardware execution, or timing authority exists.",
+        "The private-slot fix used by this patched exact compile is public in fe2o3 at 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree 68573bf31789625ecc2489491711ad9153eb1cac; Ferric's final repin remains pending. Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. The current terminal is qwen3_rmsnorm_v1 bb6 op0 UnprovenBarrierConvergence: Subgroup uniform required, Varying found. The run exits status 1 with no HSACO; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0. No artifact, hardware execution, token, or timing authority exists.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -245,29 +247,29 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Candidate 1dc659b joins the authenticated executor, authority-free engineering identities, and bounded live-source radix reuse on top of the existing R33 and bootstrap path.",
       current:
-        "Sequencing general fe2o3 private-slot lowering, the staged engineering smoke, protected production admission, and final combined evidence refresh.",
+        "Intermediate 23f326a contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix work. It is not final or public product integration and remains pending the final fe2o3 repin and RMSNorm fix.",
       blockedBy:
         "No team-local blocker. M1 depends on the exact kernel artifact, an exclusive GPU run, and deployed protected artifact admission.",
       next:
-        "Integrate the exact kernel result if successful, run the staged engineering smoke, regenerate the combined formal inventory, and rerun exact remote gates.",
+        "Complete the fe2o3 6492c8f repin and RMSNorm repair, settle the final integration head, then run the staged engineering smoke and combined evidence gates.",
       validation:
-        "1dc659b is the current reviewed integration candidate; engine gates report 597 passed, 5 hardware ignores, 164 doctests, and strict Clippy clean.",
+        "23f326a is audited intermediate integration only; its seven-file ABI delta and authenticated prefill, readback, and radix composition are not yet final public product integration.",
     },
     {
       name: "Kernels",
       scope: "Ferric-owned Qwen kernels compiled with fe2o3",
       state: "integration",
-      status: "Blocked on fe2o3 private-slot lowering",
+      status: "Blocked on RMSNorm barrier convergence",
       completed:
         "Exact compilation cleared paged-decode and Rope/KV arithmetic; v37 cleared ranked-CFG capacity and v38 cleared the ranked argument limit after 27/27 focused equivalence and source checks.",
       current:
-        "Candidate 72c78c6 clears the exact-total loop-bound gate. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite is green, and engine physical-recipe checks pass 7/7.",
+        "The fe2o3 private-slot fix clears both retained-borrow failures, locals 178 and 40, and exact compilation now reaches AMDGPU LLVM lowering.",
       blockedBy:
-        "Sole current terminal blocker: exact v17 requires general fe2o3 private-slot lowering for function 6 retained local 178/type 63.",
+        "Current exact blocker: qwen3_rmsnorm_v1 bb6 op0 reports UnprovenBarrierConvergence because subgroup-uniform control flow is required but a varying value was found.",
       next:
-        "Implement the general compiler lowering in fe2o3, repin Ferric to that public main, then rerun focused and exact validation.",
+        "Repair RMSNorm subgroup barrier convergence, finish the fe2o3 6492c8f repin, then rerun focused and exact validation.",
       validation:
-        "The exact-total loop bound is cleared. Exact v17 reaches genuine lowering but rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) with status 1 and no output. No artifact or HSACO exists.",
+        "The patched exact compile reaches AMDGPU LLVM lowering, then exits status 1 at the RMSNorm convergence diagnostic. No artifact or HSACO exists; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0.",
     },
     {
       name: "Inference engine",
@@ -312,23 +314,24 @@ window.FERRIC_PROJECT = Object.freeze({
       "Bounded live-source logical radix prefix reuse",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
       "Integration candidate 1dc659beda81d37d746cb05a16d35fd7788e29ef; no aggregate HSACO or Qwen result",
+      "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
     fe2o3: [
       "Reusable Rust-to-KIR-to-LLVM compiler infrastructure",
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Public main 3d10825df93a86644cc5a5b006cadd45f71afb91, tree 84cdb971391617f1809cee08b706ba56dad40fd4, selected for the current comprehensive repin",
+      "Public main 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree 68573bf31789625ecc2489491711ad9153eb1cac, contains the reusable private-slot lowering fix selected for Ferric's final repin",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Exact-total bound cleared; exact v17 needs private-slot lowering",
+    title: "Private-slot failures cleared; RMSNorm convergence is next",
     state: "open",
     sourceStatus: "Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-    environment: "mi300x exact v17 against fe2o3 3d10825, tree 84cdb971; compiler-only, no hardware execution",
+    environment: "mi300x patched exact compile using the private-slot fix now public in fe2o3 6492c8f; compiler-only, no hardware execution",
     result:
-      "The exact-total loop bound is cleared. Exact v17 reaches genuine lowering, then rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) because general fe2o3 private-slot lowering is absent. Status is 1, there is no output, and no HSACO exists.",
+      "Retained-borrow locals 178 and 40 are cleared. Exact compilation reaches AMDGPU LLVM lowering, then qwen3_rmsnorm_v1 bb6 op0 reports UnprovenBarrierConvergence: Subgroup uniform required, Varying found. Status is 1 and no HSACO exists; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0.",
     buildId: "None: no HSACO produced",
     generatedTokenIds: [],
     authority:
@@ -336,11 +339,26 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
+      title: "Audited the intermediate exact ABI integration",
+      state: "integration",
+      detail:
+        "This intermediate Ferric head contains the seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix work. It is not final or public product integration and remains pending the final fe2o3 repin and RMSNorm fix.",
+    },
+    {
+      commit: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Published general private-slot lowering",
+      state: "implemented",
+      detail:
+        "Public fe2o3 main, tree 68573bf31789625ecc2489491711ad9153eb1cac, contains the reusable compiler fix. In the patched exact compile it clears Ferric retained-borrow locals 178 and 40, allowing progress into AMDGPU LLVM lowering.",
+    },
+    {
       commit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
       title: "Cleared the exact-total loop-bound gate",
       state: "implemented",
       detail:
-        "This Ferric candidate, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, passes focused Rope/KV 27/27, the full ferric-qwen-kernels suite, and engine physical-recipe 7/7. Exact v17 reaches the sole remaining private-slot-lowering diagnostic and produces no artifact.",
+        "This Ferric candidate, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, passes focused Rope/KV 27/27, the full ferric-qwen-kernels suite, and engine physical-recipe 7/7. With the private-slot fix it advances to the RMSNorm convergence diagnostic and still produces no artifact.",
     },
     {
       commit: "42e959710d830c6394413ff861c41dcbf61fd54d",
@@ -444,7 +462,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric separates implemented source, reviewed integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. The current candidate has strong scoped source evidence and a staged engineering smoke, but no HSACO or token exists, production protected admission is undeployed, the combined body inventory is pending regeneration, and none of the 33 M1 exit gates is closed.",
+      "Ferric separates implemented source, intermediate integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. The private-slot compiler failures are cleared and exact compilation reaches RMSNorm barrier convergence in AMDGPU LLVM lowering, but no HSACO or token exists, production protected admission is undeployed, the combined body inventory is pending regeneration, and none of the 33 M1 exit gates is closed.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

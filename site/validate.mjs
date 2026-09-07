@@ -71,9 +71,10 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "3235ea8e4c7d12799022b7bec8a5e7c780514062",
+  siteRefreshBase: "4d5fd39b11a10152524518f34bdc00267a858753",
   integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
   integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
+  intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
   r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
   prefillProofSourceCommit: "240bb3d1ce394436cc62244f51888d7737ea6b9c",
   prefillProofIntegratedCommit: "f709a5da2f0130087bcfc0605a4c84ebd966ea0c",
@@ -89,8 +90,8 @@ const expectedCurrent = {
   canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
   kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-  fe2o3LatestMain: "3d10825df93a86644cc5a5b006cadd45f71afb91",
-  fe2o3LatestTree: "84cdb971391617f1809cee08b706ba56dad40fd4",
+  fe2o3LatestMain: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+  fe2o3LatestTree: "68573bf31789625ecc2489491711ad9153eb1cac",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -121,6 +122,7 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "intermediateIntegrationCommit",
   "r33LifecycleCommit",
   "prefillProofSourceCommit",
   "prefillProofIntegratedCommit",
@@ -203,8 +205,8 @@ project.teams.forEach((team, index) => {
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
   if (team.name === "Kernels") {
-    assert(team.status === "Blocked on fe2o3 private-slot lowering", "kernel blocker status drifted");
-    assert(team.blockedBy.startsWith("Sole current terminal blocker:"), "kernel terminal blocker must remain explicit");
+    assert(team.status === "Blocked on RMSNorm barrier convergence", "kernel blocker status drifted");
+    assert(team.blockedBy.startsWith("Current exact blocker:"), "kernel terminal blocker must remain explicit");
   } else {
     assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
     assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
@@ -258,8 +260,10 @@ for (const claim of [
   "240bb3d1ce394436cc62244f51888d7737ea6b9c",
   "f709a5da2f0130087bcfc0605a4c84ebd966ea0c",
   "18eed253d30b40a23f3984d7249d24b4db7318d2",
+  "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
+  "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+  "68573bf31789625ecc2489491711ad9153eb1cac",
   "3d10825df93a86644cc5a5b006cadd45f71afb91",
-  "84cdb971391617f1809cee08b706ba56dad40fd4",
   "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
   "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   "5ecad80658f27909fa2477d6f73e47e9f95407ae",
@@ -302,17 +306,18 @@ for (const claim of [
   "local 201/type 63",
   "cargo fmt",
   "v50 27/27",
-  "exact-total loop bound is cleared",
   "full ferric-qwen-kernels suite",
   "physical-recipe checks pass 7/7",
-  "Exact v17",
-  "sole current terminal blocker",
-  "function 6 retained local/type",
-  "178,63",
-  "general fe2o3 private-slot lowering",
-  "bfad31c3331c6a2b92de73a4d873b88c94a8b45dfb7eb3d835f7515f9ce69965",
+  "audited seven-file exact kernel/host ABI delta",
+  "not final or public product integration",
+  "final fe2o3 repin",
+  "retained-borrow locals 178 and 40",
+  "AMDGPU LLVM lowering",
+  "qwen3_rmsnorm_v1 bb6 op0",
+  "UnprovenBarrierConvergence",
+  "Subgroup uniform required, Varying found",
+  "8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0",
   "status 1",
-  "no outputs",
   "smoke binary",
   "verified Qwen snapshot",
   "protected receipt/verifier service is undeployed",
@@ -363,6 +368,9 @@ for (const staleOrForbidden of [
   "Exact v11 is live",
   "exact v13 is live",
   "Exact v13 is live",
+  "Blocked on fe2o3 private-slot lowering",
+  "General fe2o3 private-slot lowering is required",
+  "sole current terminal blocker: function 6",
 ]) {
   assert(!snapshot.includes(staleOrForbidden), `stale or forbidden claim remains: ${staleOrForbidden}`);
 }

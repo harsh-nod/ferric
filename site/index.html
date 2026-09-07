@@ -223,15 +223,19 @@
             radix reuse. Integrated engine gates report 597 passed with 5 hardware-dependent ignores and 164
             doctests; the radix slice's pinned Verus run reports 608 verified and 0 errors. Radix deliberately remains
             NoMatch for S1/T128 at the current logical width of 256, and it makes no persistent device-KV or speed
-            claim. Current Ferric kernel candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree
-            6b3a5ab219216fe2d7adf797d7ea890f94c76a60, is evaluated against public fe2o3 main
-            3d10825df93a86644cc5a5b006cadd45f71afb91, tree 84cdb971391617f1809cee08b706ba56dad40fd4.
-            The exact-total loop bound is cleared. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite is
-            green, and engine physical-recipe checks pass 7/7. Exact v17 reaches genuine lowering, then fails closed on
-            the sole current terminal blocker: function 6 retained local/type (178,63,borrow for compiler intrinsic).
-            General fe2o3 private-slot lowering is required. The run exits status 1 with no output; its log SHA is
-            bfad31c3331c6a2b92de73a4d873b88c94a8b45dfb7eb3d835f7515f9ce69965. The engineering smoke binary and
-            canonical Qwen snapshot are staged, but no HSACO,
+            claim. Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree
+            6b3a5ab219216fe2d7adf797d7ea890f94c76a60, retains green focused Rope/KV 27/27 and the full
+            ferric-qwen-kernels suite; engine physical-recipe checks pass 7/7. The reusable private-slot compiler fix
+            is public in fe2o3 at 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree
+            68573bf31789625ecc2489491711ad9153eb1cac.
+            A patched exact compile clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. It then
+            fails closed at qwen3_rmsnorm_v1 bb6 op0 with UnprovenBarrierConvergence: Subgroup uniform required, Varying
+            found. The run exits status 1 with no HSACO; its log SHA is
+            8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0. Intermediate Ferric integration
+            23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus
+            authenticated prefill, readback, and radix work, but it is not final or public product integration and
+            remains pending the final fe2o3 repin and RMSNorm fix. The engineering smoke binary and canonical Qwen
+            snapshot are staged, but no HSACO,
             hardware execution, or token exists. The production protected receipt and verifier service are undeployed.
             Symmetric memory and MTP are deferred. No TTFT, TPOT, serving endpoint, HTTP service, or vLLM/SGLang
             baseline exists, and all 33 M1 exit gates remain open.
