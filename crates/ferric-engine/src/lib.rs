@@ -240,6 +240,7 @@ pub use authenticated_queue_rollover::{
     M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1,
     M1AuthenticatedSpeculativeNewWindowSettlementErrorV1,
     M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+    M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
     M1AuthenticatedSpeculativeNewWindowSuccessorJoinErrorV1,
     M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1,
     M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1,

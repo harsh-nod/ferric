@@ -1899,6 +1899,44 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
+    pub(crate) fn admit_authenticated_successor_page_set(
+        &self,
+        lanes: Vec<crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1>,
+    ) -> Result<
+        crate::device_cache::M1AuthenticatedNewWindowPageSetAdmissionV1,
+        crate::M1DeviceKvArenaLeaseErrorV1,
+    > {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case
+                .custody
+                .partitioned_memory()
+                .admit_authenticated_successor_page_set(&case.lower, lanes),
+        }
+    }
+
+    pub(crate) fn commit_authenticated_successor_page_set(
+        &mut self,
+        admission: crate::device_cache::M1AuthenticatedNewWindowPageSetAdmissionV1,
+    ) -> Result<
+        Vec<crate::DeviceKvPageLease>,
+        Box<crate::device_cache::M1AuthenticatedNewWindowPageSetCommitFailureV1>,
+    > {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case
+                .custody
+                .partitioned_memory_mut()
+                .commit_authenticated_new_window_page_set(&case.lower, admission),
+        }
+    }
+
     /// Exact closed shape of the completed generation that was detached.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
