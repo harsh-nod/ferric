@@ -79,8 +79,10 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-  integrationCommit: "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
-  integrationTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
+  integrationCommit: "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
+  integrationTree: "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
+  successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
+  successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
   engineeringSmokeRuntimeTree: "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
@@ -109,8 +111,15 @@ const expectedCurrent = {
   formalErrors: 0,
   proofTestsPassed: 26,
   sourceGateTestsPassed: 28,
-  scopedUnadmittedRuntimeBodies: 23,
-  combinedInventoryCurrent: false,
+  successorKvPendingVerusBodies: 16,
+  admissionRows: 7126,
+  admissionBodiesTotal: 7816,
+  admissionVerifiedBodies: 690,
+  admissionUnverifiedBodies: 7126,
+  admissionModules: 167,
+  admissionSourceGatesGreen: true,
+  admissionTcbGatesGreen: true,
+  combinedInventoryCurrent: true,
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
   exactCompilerAttempt: "v77",
@@ -157,9 +166,19 @@ const expectedCurrent = {
   r33TpotEligible: false,
   r33AdapterTestsPassed: 68,
   r33AdapterHardwareIgnored: 2,
-  integratedEngineTestsPassed: 857,
+  previousIntegratedEngineTestsPassed: 857,
+  previousIntegratedEngineHardwareIgnored: 7,
+  previousEngineValidationLogSha256: "1d48f1a140d9f51dc7363dffa3bfbf2741e81ea97f9e9f125d9122ed247c356a",
+  integratedEngineTestsPassed: 862,
   integratedEngineHardwareIgnored: 7,
-  engineValidationLogSha256: "1d48f1a140d9f51dc7363dffa3bfbf2741e81ea97f9e9f125d9122ed247c356a",
+  engineLibTestsPassed: 608,
+  engineHarnessTestsPassed: 11,
+  enginePacketTestsPassed: 2,
+  engineQualificationTestsPassed: 75,
+  enginePreflightTestsPassed: 2,
+  engineDoctestsPassed: 164,
+  engineValidationLogSha256: "7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c",
+  engineValidationStatusSha256: "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
   adapterValidationLogSha256: "f712b18cd848291f524c86ba92065134adfc89e595d27d7dfa5b4ff4fdcde910",
   remoteTestFailures: 0,
   r33ExecutableWindows: 1,
@@ -189,6 +208,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "successorKvBridgeCommit",
+  "successorKvBridgeTree",
   "engineeringSmokeRuntimeCommit",
   "engineeringSmokeRuntimeTree",
   "rmsnormUniformFoldCommit",
@@ -210,11 +231,20 @@ for (const key of [
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
+assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
+assert(project.current.admissionRows === 7126, "unverified admission row count drifted");
+assert(project.current.admissionBodiesTotal === 7816, "admission body total drifted");
+assert(project.current.admissionVerifiedBodies === 690, "verified admission body count drifted");
+assert(project.current.admissionUnverifiedBodies === 7126, "unverified admission body count drifted");
+assert(project.current.admissionModules === 167, "admission module count drifted");
 assert(
-  project.current.scopedUnadmittedRuntimeBodies === 23,
-  "scoped bootstrap runtime admission drift must remain explicit",
+  project.current.admissionVerifiedBodies + project.current.admissionUnverifiedBodies ===
+    project.current.admissionBodiesTotal,
+  "verified and unverified admission bodies must equal the current total",
 );
-assert(project.current.combinedInventoryCurrent === false, "site must not claim current combined inventory closure");
+assert(project.current.admissionSourceGatesGreen === true, "source admission gates must remain green");
+assert(project.current.admissionTcbGatesGreen === true, "TCB admission gates must remain green");
+assert(project.current.combinedInventoryCurrent === true, "current admission inventory must remain explicit");
 assert(project.current.formalErrors === 0, "strict Verus errors must remain zero");
 assert(project.current.openM1Gates === 33, "all 33 M1 exit gates remain open");
 assert(project.current.engineeringSmokeBinaryStaged === true, "engineering smoke binary must remain explicit");
@@ -230,8 +260,20 @@ assert(project.current.r33ExecutableWindows === 1, "R33 must remain limited to o
 assert(project.current.r33RequiredWindows === 20, "R33 qualification must still require 20 windows");
 assert(project.current.r33OutputTokensPerWindow === 128, "R33 window must retain 128 output tokens");
 assertSha256(project.current.engineValidationLogSha256, "current.engineValidationLogSha256");
+assertSha256(project.current.engineValidationStatusSha256, "current.engineValidationStatusSha256");
+assertSha256(project.current.previousEngineValidationLogSha256, "current.previousEngineValidationLogSha256");
 assertSha256(project.current.adapterValidationLogSha256, "current.adapterValidationLogSha256");
 assert(project.current.remoteTestFailures === 0, "repinned remote tests must retain zero failures");
+assert(
+  project.current.engineLibTestsPassed +
+    project.current.engineHarnessTestsPassed +
+    project.current.enginePacketTestsPassed +
+    project.current.engineQualificationTestsPassed +
+    project.current.enginePreflightTestsPassed +
+    project.current.engineDoctestsPassed ===
+    project.current.integratedEngineTestsPassed,
+  "engine suite category counts must equal the integrated total",
+);
 assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNorm log prefix drifted");
 assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
 assertSha256(project.current.exactArtifactGateLogSha256, "current.exactArtifactGateLogSha256");
@@ -293,11 +335,11 @@ assertSha256(project.current.engineeringSmokeSummarySha256, "current.engineering
 assert(project.current.engineeringSmokeTargetOnly === true, "four-token smoke must remain target-only");
 assert(project.current.engineeringSmokeSpeculative === false, "site must not claim speculative execution");
 assert(
-  project.current.integrationTree === project.current.engineeringSmokeRuntimeTree,
-  "current safety-revert tree must match the exact runtime tree",
+  project.current.integrationTree !== project.current.engineeringSmokeRuntimeTree,
+  "current source-only integration must remain distinct from the exact v77 hardware runtime tree",
 );
 assert(project.current.benchmarkComparable === false, "diagnostic smoke must not become benchmark-comparable");
-assert(project.current.r33TpotEligible === false, "one-token smoke must not become R33 TPOT-eligible");
+assert(project.current.r33TpotEligible === false, "four-token smoke must not become R33 TPOT-eligible");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -406,8 +448,12 @@ project.evidence.legend.forEach((entry, index) => {
 });
 
 const snapshot = JSON.stringify(project);
-for (const claim of [
+const missingSnapshotClaims = [
   "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
+  "44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5",
+  "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
+  "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   "0f22443df20fefef8875cdbd53c55fa5803ec1ce",
   "e31a988bb8b74557381a4a04f0cb765cafb7cf72",
   "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -457,8 +503,12 @@ for (const claim of [
   "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
   "42e959710d830c6394413ff861c41dcbf61fd54d",
   "2af4b8672051740b26e2d8c0c81c0238a52f2114",
-  "23 unadmitted bootstrap runtime bodies",
-  "no current whole-tree",
+  "16 pending-verus",
+  "7,126 unverified",
+  "7,816 bodies",
+  "690 verified",
+  "167 modules",
+  "source and TCB gates are green",
   "strict Verus 81 verified / 0 errors",
   "proof tests 26/26",
   "source gate passes 28/28",
@@ -531,7 +581,14 @@ for (const claim of [
   "SIGABRT",
   "empty output manifest",
   "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
-  "engine 857 passed / 7 ignored",
+  "608 lib",
+  "11 harness",
+  "2 packet",
+  "75 qualification",
+  "2 preflight",
+  "164 doctests",
+  "7 hardware ignores",
+  "7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c",
   "adapter 68 passed / 2 ignored",
   "zero failures",
   "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
@@ -543,6 +600,12 @@ for (const claim of [
   "CLOCK_MONOTONIC_RAW",
   "checked-token causality",
   "required 20-window qualification",
+  "page-less successor KV leasing",
+  "exact K draft growth",
+  "fail-closed custody",
+  "independent no-blocker review",
+  "no resident daemon",
+  "No speculative hardware",
   "Authority is none",
   "608 verified and 0 errors",
   "S1/T128",
@@ -573,9 +636,11 @@ for (const claim of [
   "TTFT",
   "TPOT",
   "vLLM and SGLang baselines are absent",
-]) {
-  assert(snapshot.includes(claim), `current snapshot is missing claim: ${claim}`);
-}
+].filter((claim) => !snapshot.includes(claim));
+assert(
+  missingSnapshotClaims.length === 0,
+  `current snapshot is missing claims: ${missingSnapshotClaims.join(", ")}`,
+);
 for (const staleOrForbidden of [
   "6,854 admitted",
   "97 unadmitted",
@@ -626,6 +691,7 @@ for (const staleOrForbidden of [
   "GPU and VRAM state are unchanged",
   "No Qwen token",
   "No hardware execution",
+  "Worker V3",
 ]) {
   assert(!snapshot.includes(staleOrForbidden), `stale or forbidden claim remains: ${staleOrForbidden}`);
 }

@@ -215,12 +215,24 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Run the speculative target/draft path</h2>
+            <h2 id="next-title">Exercise authenticated successor KV</h2>
           </div>
           <p>
-            Current integration 0f22443df20fefef8875cdbd53c55fa5803ec1ce rejects and reverts the unsafe
-            resident prerequisite, returning to tree e31a988bb8b74557381a4a04f0cb765cafb7cf72. Exact runtime source
-            254b89aa3a6e4e751c3ad81db84073a5fb26b52d has that same tree and uses public fe2o3
+            Current integration 1d8bf9a5a6391bf817eb05d3288f956f691cf5b8, tree
+            44eaa3fef9e671f8b44ca76b3ac1f5dbde4704b5, admits signed bridge
+            136a6d2ff92597c91caad3d0e33baede74cd4c9a, tree
+            c9684e25b4fbd6737ce73307c3cdc21bde1b221e. It adds authenticated page-less successor KV leasing after
+            detach with exact K draft growth and fail-closed custody. Independent review reported no blocker. The
+            exact remote engine suite passed 608 lib, 11 harness, 2 packet, 75 qualification, 2 preflight, and 164
+            doctests, with 7 hardware ignores and zero failures. Engine log SHA
+            7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c; status SHA
+            9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa. Source admission adds 16
+            pending-verus bodies and records 7,816 total bodies across 167 modules: 690 verified and 7,126 explicitly
+            unverified; all source and TCB gates are green. This integrated path has no resident daemon and has not
+            run as speculative hardware execution or serving.
+
+            Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
+            e31a988bb8b74557381a4a04f0cb765cafb7cf72, predates this integration and uses public fe2o3
             cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree
             6d115af5cd5285b84b7629834393d6eee6a37045. Exact v77 exits status 0 after a 415,541-byte
             Kernel IR V9 handoff containing 26 GuardedStore operations and exact replay into a 103,616-byte HSACO
