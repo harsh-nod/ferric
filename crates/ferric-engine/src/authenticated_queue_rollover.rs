@@ -106,6 +106,42 @@ pub struct M1AuthenticatedSpeculativeRolloverIntentV1 {
     members: Box<[M1AuthenticatedSpeculativeRolloverMemberIntentV1]>,
 }
 
+/// Copy-only facts from joining the logical and physical halves of the exact
+/// paired-prefill rollover intent. This carries no queue or cache authority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct M1AuthenticatedPrefillRegistryIntentFactsV1 {
+    pub(crate) request: ferric_spec::RequestId,
+    pub(crate) prefill_selection: ferric_spec::Qwen3PlanSelection,
+    pub(crate) speculative_selection: ferric_spec::Qwen3PlanSelection,
+    pub(crate) prefill_epoch: CompletionEpoch,
+}
+
+pub(crate) fn join_m1_authenticated_prefill_registry_intent_v1(
+    physical: &M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    logical: &M1AuthenticatedSpeculativeRolloverIntentV1,
+) -> Option<M1AuthenticatedPrefillRegistryIntentFactsV1> {
+    let [physical_member] = physical.members.as_ref() else {
+        return None;
+    };
+    let [logical_member] = logical.members.as_ref() else {
+        return None;
+    };
+    if physical.identity != logical.identity
+        || physical.prefill_selection != logical.prefill_selection
+        || physical.speculative_selection != logical.speculative_selection
+        || physical.prefill_epoch != logical.prefill_epoch
+        || physical_member != logical_member
+    {
+        return None;
+    }
+    Some(M1AuthenticatedPrefillRegistryIntentFactsV1 {
+        request: physical_member.request(),
+        prefill_selection: physical.prefill_selection,
+        speculative_selection: physical.speculative_selection,
+        prefill_epoch: physical.prefill_epoch,
+    })
+}
+
 /// Validated logical inputs for the authenticated successor of a fresh window.
 ///
 /// This owner deliberately contains no KV page lease. Its exact missing tail
@@ -1345,6 +1381,9 @@ fn authenticated_speculative_tail_binding_width_matches(
     }
 }
 
+type M1AuthenticatedSpeculativeTailPageRostersV1 =
+    (Vec<Vec<DeviceKvPageLease>>, Vec<Vec<DeviceKvPageLease>>);
+
 pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     queue: &mut M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     projections: &[crate::DeviceKvCacheProjection],
@@ -1352,7 +1391,7 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     target_inputs: &ValidatedM1StepInputs,
     draft_round_tokens: u32,
 ) -> Result<
-    (Vec<Vec<DeviceKvPageLease>>, Vec<Vec<DeviceKvPageLease>>),
+    M1AuthenticatedSpeculativeTailPageRostersV1,
     Box<M1AuthenticatedSpeculativeTailPageMaterializationFailureV1>,
 > {
     let selected_shape =
@@ -8801,6 +8840,15 @@ mod tests {
             )
         };
         assert!(association(&logical, &[exact_seed]));
+        assert_eq!(
+            join_m1_authenticated_prefill_registry_intent_v1(&physical, &logical),
+            Some(M1AuthenticatedPrefillRegistryIntentFactsV1 {
+                request,
+                prefill_selection: prior.target(),
+                speculative_selection: next.target(),
+                prefill_epoch: epoch,
+            })
+        );
         assert!(!association(
             &logical,
             &[crate::M1SpeculativeMemberSeedV1::new(
@@ -8820,6 +8868,10 @@ mod tests {
             members: logical.members.clone(),
         };
         assert!(!association(&wrong_identity, &[exact_seed]));
+        assert_eq!(
+            join_m1_authenticated_prefill_registry_intent_v1(&physical, &wrong_identity),
+            None
+        );
         wrong_identity.identity = identity;
         wrong_identity.speculative_selection = serving_plan(
             Qwen3ExecutionMode::Speculative,
@@ -8827,6 +8879,26 @@ mod tests {
         )
         .target();
         assert!(!association(&wrong_identity, &[exact_seed]));
+        assert_eq!(
+            join_m1_authenticated_prefill_registry_intent_v1(&physical, &wrong_identity),
+            None
+        );
+        wrong_identity.speculative_selection = logical.speculative_selection;
+        wrong_identity.prefill_epoch = CompletionEpoch::new(epoch.value() + 1);
+        assert_eq!(
+            join_m1_authenticated_prefill_registry_intent_v1(&physical, &wrong_identity),
+            None
+        );
+        wrong_identity.prefill_epoch = epoch;
+        wrong_identity.members = [M1AuthenticatedSpeculativeRolloverMemberIntentV1::new(
+            RequestId::new(request.slot(), request.generation() + 1),
+            policy,
+        )]
+        .into();
+        assert_eq!(
+            join_m1_authenticated_prefill_registry_intent_v1(&physical, &wrong_identity),
+            None
+        );
         // This association gate runs before queue detachment or Engine dispatch.
         assert!(!engine.is_faulted());
     }

@@ -7,14 +7,22 @@
 //! result: the caller must retain and rebuild the physical queue custody before
 //! publishing the returned roster.
 
-use core::sync::atomic::{AtomicU64, Ordering};
-
-use ferric_spec::{
-    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, M1_MAX_ACTIVE_SEQUENCES,
+use core::{
+    fmt,
+    sync::atomic::{AtomicU64, Ordering},
 };
 
-use crate::M1PhysicalFixedBatchShapeV1;
+use ferric_spec::{
+    completion::CompletionEpoch, scheduling::RequestState, PhysicalKvLifecycle, Qwen3ExecutionMode,
+    Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, M1_KV_PAGE_TOKENS,
+    M1_MAX_ACTIVE_SEQUENCES,
+};
+
+use crate::{
+    authenticated_queue_rollover::join_m1_authenticated_prefill_registry_intent_v1,
+    CheckedCompletionSemantics, M1AuthenticatedS1T128PrefillExecutionSuccessV1,
+    M1PhysicalFixedBatchShapeV1, M1ReleasedDeviceKvMemberV1,
+};
 
 static NEXT_M1_SERVING_REGISTRY_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);
 
@@ -580,6 +588,139 @@ struct M1ServingReservedBatchV1 {
     batch: M1ServingBatchPlanV1,
 }
 
+/// Fail-closed rejection while reconciling a real authenticated paired-prefill
+/// completion into a fresh serving registry.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedPrefillRegistryReconciliationErrorV1 {
+    RegistryNotFresh,
+    ProfileMismatch,
+    IntentMismatch,
+    QueueMismatch,
+    CompletionMismatch,
+    RequestMismatch,
+    CacheMismatch,
+    EngineMismatch,
+}
+
+/// Opaque terminal custody after authenticated prefill registry reconciliation
+/// rejects. The registry and physical completion cannot be extracted.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedPrefillRegistryReconciliationFailureV1;
+/// fn extract<const C: usize>(failure: M1AuthenticatedPrefillRegistryReconciliationFailureV1<C>) {
+///     let _ = failure.into_parts();
+/// }
+/// ```
+#[must_use = "failed authenticated prefill reconciliation retains all consumed custody"]
+pub struct M1AuthenticatedPrefillRegistryReconciliationFailureV1<const C: usize> {
+    error: M1AuthenticatedPrefillRegistryReconciliationErrorV1,
+    _registry: M1ServingRegistryV1<C>,
+    _completed: M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+}
+
+impl<const C: usize> fmt::Debug for M1AuthenticatedPrefillRegistryReconciliationFailureV1<C> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPrefillRegistryReconciliationFailureV1")
+            .field("error", &self.error)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<const C: usize> M1AuthenticatedPrefillRegistryReconciliationFailureV1<C> {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedPrefillRegistryReconciliationErrorV1 {
+        self.error
+    }
+}
+
+/// Move-only real paired-prefill completion joined to its exact registry
+/// frontier. Queue, cache, page, and Engine owners remain opaque.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedPrefillRegistryReconciledV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedPrefillRegistryReconciledV1<1>>();
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedPrefillRegistryReconciledV1;
+/// fn extract(reconciled: M1AuthenticatedPrefillRegistryReconciledV1<1>) {
+///     let _ = reconciled.into_parts();
+/// }
+/// ```
+#[must_use = "authenticated prefill and registry custody remain joined"]
+pub struct M1AuthenticatedPrefillRegistryReconciledV1<const C: usize> {
+    registry: M1ServingRegistryV1<C>,
+    completed: M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+    request: RequestId,
+    epoch: CompletionEpoch,
+    prefill: M1ServingPlanV1,
+    successor: M1ServingPlanV1,
+}
+
+impl<const C: usize> fmt::Debug for M1AuthenticatedPrefillRegistryReconciledV1<C> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPrefillRegistryReconciledV1")
+            .field("request", &self.request)
+            .field("epoch", &self.epoch)
+            .field("prefill", &self.prefill)
+            .field("successor", &self.successor)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
+    #[must_use]
+    pub const fn request(&self) -> RequestId {
+        self.request
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    #[must_use]
+    pub const fn prefill_plan(&self) -> M1ServingPlanV1 {
+        self.prefill
+    }
+
+    #[must_use]
+    pub const fn successor_plan(&self) -> M1ServingPlanV1 {
+        self.successor
+    }
+
+    #[must_use]
+    pub const fn first_token(&self) -> ferric_spec::TokenId {
+        self.completed.first_token()
+    }
+
+    #[must_use]
+    pub const fn successor_epoch(&self) -> CompletionEpoch {
+        CompletionEpoch::new(2)
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1ServingRegistryV1<C>,
+        M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+    ) {
+        (self.registry, self.completed)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1AuthenticatedPrefillRegistryReconciliationV1 {
+    request: RequestId,
+    epoch: CompletionEpoch,
+    prefill: M1ServingPlanV1,
+    successor: M1ServingPlanV1,
+}
+
 /// Deterministic Ferric registry for homogeneous M1 serving batches.
 ///
 /// Prefill has priority over decode, and decode has priority over speculative
@@ -621,6 +762,38 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             submitted_epoch: 0,
             completed_epoch: 0,
         })
+    }
+
+    fn is_fresh_for_authenticated_prefill_reconciliation(&self) -> bool {
+        self.entries.is_empty()
+            && self.bound_plan.is_none()
+            && self.reservation.is_none()
+            && self.in_flight.is_none()
+            && self.next_reservation_id == 1
+            && self.submitted_epoch == 0
+            && self.completed_epoch == 0
+    }
+
+    fn install_authenticated_prefill_reconciliation(
+        &mut self,
+        reconciliation: M1AuthenticatedPrefillRegistryReconciliationV1,
+    ) -> Result<(), M1AuthenticatedPrefillRegistryReconciliationErrorV1> {
+        if !self.is_fresh_for_authenticated_prefill_reconciliation() {
+            return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RegistryNotFresh);
+        }
+        self.entries.push(M1ServingEntryV1 {
+            request: reconciliation.request,
+            plan: reconciliation.successor,
+            phase: M1ServingRequestPhaseV1::Ready,
+            last_quiescence: Some(reconciliation.epoch),
+        });
+        self.bound_plan = Some(reconciliation.prefill);
+        // The real prefill occupied the same first publication nonce as the
+        // ordinary path; the next reservation must therefore start at two.
+        self.next_reservation_id = 2;
+        self.submitted_epoch = reconciliation.epoch.value();
+        self.completed_epoch = reconciliation.epoch.value();
+        Ok(())
     }
 
     /// Registers a newly Engine-admitted request without mixing it into an
@@ -1408,6 +1581,318 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }
         Ok(())
     }
+}
+
+const fn authenticated_s1_t128_prefill_selection(role: Qwen3ModelRole) -> Qwen3PlanSelection {
+    Qwen3PlanSelection {
+        role,
+        mode: Qwen3ExecutionMode::Prefill,
+        bucket: Qwen3PlanBucket::PrefillS1T128,
+    }
+}
+
+const fn authenticated_s1_k4_selection(role: Qwen3ModelRole) -> Qwen3PlanSelection {
+    match role {
+        Qwen3ModelRole::Target8B => Qwen3PlanSelection {
+            role,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        },
+        Qwen3ModelRole::Draft06B => Qwen3PlanSelection {
+            role,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        },
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1AuthenticatedPrefillRegistryMemberFactsV1 {
+    member_request: RequestId,
+    target: ferric_spec::LogicalKvState,
+    draft: ferric_spec::LogicalKvState,
+    target_active_pages: usize,
+    draft_active_pages: usize,
+    target_retired_pages: usize,
+    draft_retired_pages: usize,
+    target_quiescent_retired_pages: usize,
+    draft_quiescent_retired_pages: usize,
+    target_write_pending: bool,
+    draft_write_pending: bool,
+    target_qualification_future_pages: usize,
+    device_join: M1AuthenticatedPrefillRegistryMemberAssociationV1,
+    target_arena_join: M1AuthenticatedPrefillRegistryMemberAssociationV1,
+    draft_arena_join: M1AuthenticatedPrefillRegistryMemberAssociationV1,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1AuthenticatedPrefillRegistryMemberAssociationV1 {
+    Exact,
+    Mismatch,
+}
+
+fn validate_authenticated_prefill_registry_member_v1(
+    request: RequestId,
+    facts: M1AuthenticatedPrefillRegistryMemberFactsV1,
+) -> Result<(), M1AuthenticatedPrefillRegistryReconciliationErrorV1> {
+    let expected_pages = 128_u32.div_ceil(M1_KV_PAGE_TOKENS) as usize;
+    if facts.member_request != request
+        || facts.target.request != request
+        || facts.draft.request != request
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RequestMismatch);
+    }
+    if facts.target.role != Qwen3ModelRole::Target8B
+        || facts.draft.role != Qwen3ModelRole::Draft06B
+        || facts.target.lifecycle != PhysicalKvLifecycle::Active
+        || facts.draft.lifecycle != PhysicalKvLifecycle::Active
+        || facts.target.resident_tokens != 128
+        || facts.target.committed_tokens != 128
+        || facts.draft.resident_tokens != 128
+        || facts.draft.committed_tokens != 128
+        || facts.target_active_pages != expected_pages
+        || facts.draft_active_pages != expected_pages
+        || facts.target_retired_pages != 0
+        || facts.draft_retired_pages != 0
+        || facts.target_quiescent_retired_pages != 0
+        || facts.draft_quiescent_retired_pages != 0
+        || facts.target_write_pending
+        || facts.draft_write_pending
+        || facts.target_qualification_future_pages != 0
+        || facts.device_join != M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+        || facts.target_arena_join != M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+        || facts.draft_arena_join != M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CacheMismatch);
+    }
+    Ok(())
+}
+
+fn validate_authenticated_prefill_registry_reconciliation_v1<const C: usize>(
+    registry: &M1ServingRegistryV1<C>,
+    completed: &M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+) -> Result<
+    M1AuthenticatedPrefillRegistryReconciliationV1,
+    M1AuthenticatedPrefillRegistryReconciliationErrorV1,
+> {
+    if C != 1 {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
+    }
+    if !registry.is_fresh_for_authenticated_prefill_reconciliation() {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RegistryNotFresh);
+    }
+    let prefill = M1ServingPlanV1::new(
+        authenticated_s1_t128_prefill_selection(Qwen3ModelRole::Target8B),
+        authenticated_s1_t128_prefill_selection(Qwen3ModelRole::Draft06B),
+    )
+    .map_err(|_| M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
+    let successor = M1ServingPlanV1::new(
+        authenticated_s1_k4_selection(Qwen3ModelRole::Target8B),
+        authenticated_s1_k4_selection(Qwen3ModelRole::Draft06B),
+    )
+    .map_err(|_| M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
+    let maximum_output_tokens = completed.generation_policy().max_output_tokens();
+    let Some(total_context) = 128_u32.checked_add(maximum_output_tokens) else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
+    };
+    let expected_target_tail_pages = total_context
+        .div_ceil(M1_KV_PAGE_TOKENS)
+        .saturating_sub(128_u32.div_ceil(M1_KV_PAGE_TOKENS))
+        as usize;
+    if completed.prompt_tokens().len() != 128
+        || maximum_output_tokens == 0
+        || total_context > 8_192
+        || expected_target_tail_pages == 0
+        || completed.target_rollover_pages().len() != expected_target_tail_pages
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
+    }
+    let released = completed.released();
+    let checked = released.checked();
+    let Some(physical_intent) = checked.speculative_rollover_intent() else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::IntentMismatch);
+    };
+    let Some(intent) = join_m1_authenticated_prefill_registry_intent_v1(
+        physical_intent,
+        completed.rollover_intent(),
+    ) else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::IntentMismatch);
+    };
+    let request = completed.request();
+    let epoch = checked.epoch();
+    if intent.request != request {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RequestMismatch);
+    }
+    if intent.prefill_selection != prefill.target()
+        || intent.speculative_selection != successor.target()
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
+    }
+    if epoch.value() != 1
+        || intent.prefill_epoch != epoch
+        || completed.engine().completed_epoch() != epoch
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    }
+    if released.queue().shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
+        || released.queue().custody().selection() != prefill.target()
+        || checked.selection() != prefill.target()
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::QueueMismatch);
+    }
+    let [record] = checked.records() else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    };
+    let [member] = released.members() else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    };
+    let [release_count] = released.release_counts() else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    };
+    let [first_token] = completed.direct_choices().choices() else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    };
+    let wire = record.record();
+    if released.logical_accepted_counts() != [1]
+        || released.externally_published_counts() != [1]
+        || released.completed_members() != 1
+        || released.total_released() != 0
+        || release_count.total() != 0
+        || checked.dispatch_generation() == 0
+        || record.selection() != prefill.target()
+        || wire.request != request
+        || wire.epoch != epoch
+        || wire.accepted_draft_tokens != 0
+        || wire.emitted_token_count != 1
+        || wire.emitted_tokens[0] != *first_token
+        || completed.first_token() != *first_token
+        || record.semantics()
+            != (CheckedCompletionSemantics::DirectFinalRow {
+                token: *first_token,
+            })
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CompletionMismatch);
+    }
+    let M1ReleasedDeviceKvMemberV1::Active(cache) = member else {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CacheMismatch);
+    };
+    let projection = cache.projection();
+    let queue = released.queue().custody();
+    validate_authenticated_prefill_registry_member_v1(
+        request,
+        M1AuthenticatedPrefillRegistryMemberFactsV1 {
+            member_request: member.request(),
+            target: projection.target,
+            draft: projection.draft,
+            target_active_pages: projection.target_active_pages,
+            draft_active_pages: projection.draft_active_pages,
+            target_retired_pages: projection.target_retired_pages,
+            draft_retired_pages: projection.draft_retired_pages,
+            target_quiescent_retired_pages: projection.target_quiescent_retired_pages,
+            draft_quiescent_retired_pages: projection.draft_quiescent_retired_pages,
+            target_write_pending: projection.target_write_pending,
+            draft_write_pending: projection.draft_write_pending,
+            target_qualification_future_pages: projection.target_qualification_future_pages,
+            device_join: if projection.device == queue.device() {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+            } else {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch
+            },
+            target_arena_join: if projection.target_arena_allocation_id
+                == Some(
+                    queue
+                        .partitioned_memory()
+                        .allocation_id(Qwen3ModelRole::Target8B),
+                ) {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+            } else {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch
+            },
+            draft_arena_join: if projection.draft_arena_allocation_id
+                == Some(
+                    queue
+                        .partitioned_memory()
+                        .allocation_id(Qwen3ModelRole::Draft06B),
+                ) {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact
+            } else {
+                M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch
+            },
+        },
+    )?;
+    if cache
+        .preflight_quiescent_reselection(successor.target(), successor.draft_cache_selection())
+        .is_err()
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::CacheMismatch);
+    }
+    if completed.engine().is_faulted()
+        || completed.engine().live_count() != 1
+        || completed.engine().state(request) != Some(RequestState::Ready)
+        || completed.engine().resident_tokens(request) != Some(1)
+        || completed.engine().committed_tokens(request) != Some(1)
+    {
+        return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::EngineMismatch);
+    }
+    Ok(M1AuthenticatedPrefillRegistryReconciliationV1 {
+        request,
+        epoch,
+        prefill,
+        successor,
+    })
+}
+
+/// Reconciles a fresh metadata registry from the exact authenticated physical
+/// paired-prefill completion that bypassed the ordinary serving publication
+/// bridge.
+///
+/// This function creates no synthetic publication or completion authority. It
+/// consumes the real paired-prefill success owner, validates its Engine,
+/// checked output, intent, queue, and active device-KV custody as one exact
+/// S1/T128 to S1/K4 transition, then installs only the corresponding metadata
+/// frontier. Success retains both owners opaquely for the physical rollover.
+///
+/// # Errors
+///
+/// Any mismatch retains the consumed registry and physical success owner in
+/// opaque failure custody.
+pub fn reconcile_m1_authenticated_s1_t128_prefill_registry_v1<const C: usize>(
+    mut registry: M1ServingRegistryV1<C>,
+    completed: M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+) -> Result<
+    M1AuthenticatedPrefillRegistryReconciledV1<C>,
+    Box<M1AuthenticatedPrefillRegistryReconciliationFailureV1<C>>,
+> {
+    let reconciliation =
+        match validate_authenticated_prefill_registry_reconciliation_v1(&registry, &completed) {
+            Ok(reconciliation) => reconciliation,
+            Err(error) => {
+                return Err(Box::new(
+                    M1AuthenticatedPrefillRegistryReconciliationFailureV1 {
+                        error,
+                        _registry: registry,
+                        _completed: completed,
+                    },
+                ));
+            }
+        };
+    if let Err(error) = registry.install_authenticated_prefill_reconciliation(reconciliation) {
+        return Err(Box::new(
+            M1AuthenticatedPrefillRegistryReconciliationFailureV1 {
+                error,
+                _registry: registry,
+                _completed: completed,
+            },
+        ));
+    }
+    Ok(M1AuthenticatedPrefillRegistryReconciledV1 {
+        registry,
+        completed,
+        request: reconciliation.request,
+        epoch: reconciliation.epoch,
+        prefill: reconciliation.prefill,
+        successor: reconciliation.successor,
+    })
 }
 
 fn validate_completed_window_predecessor(
@@ -2930,5 +3415,385 @@ mod tests {
         );
         let _ = failure.into_requests();
         assert!(!overflow_registry.has_publication_reservation());
+    }
+
+    fn authenticated_prefill_logical_state(
+        request: RequestId,
+        role: Qwen3ModelRole,
+    ) -> ferric_spec::LogicalKvState {
+        ferric_spec::LogicalKvState {
+            request,
+            role,
+            lifecycle: PhysicalKvLifecycle::Active,
+            resident_tokens: 128,
+            committed_tokens: 128,
+        }
+    }
+
+    #[test]
+    fn authenticated_prefill_member_reconciliation_rejects_generation_and_cache_drift() {
+        enum Drift {
+            MemberRequest,
+            TargetRequest,
+            DraftRequest,
+            TargetRole,
+            DraftRole,
+            TargetLifecycle,
+            DraftLifecycle,
+            TargetResident,
+            TargetCommitted,
+            DraftResident,
+            DraftCommitted,
+            TargetActivePages,
+            DraftActivePages,
+            TargetRetiredPages,
+            DraftRetiredPages,
+            TargetQuiescentPages,
+            DraftQuiescentPages,
+            TargetWritePending,
+            DraftWritePending,
+            TargetFuturePages,
+            Device,
+            TargetArena,
+            DraftArena,
+        }
+
+        let request = RequestId::new(0, 7);
+        let target = authenticated_prefill_logical_state(request, Qwen3ModelRole::Target8B);
+        let draft = authenticated_prefill_logical_state(request, Qwen3ModelRole::Draft06B);
+        let exact = M1AuthenticatedPrefillRegistryMemberFactsV1 {
+            member_request: request,
+            target,
+            draft,
+            target_active_pages: 8,
+            draft_active_pages: 8,
+            target_retired_pages: 0,
+            draft_retired_pages: 0,
+            target_quiescent_retired_pages: 0,
+            draft_quiescent_retired_pages: 0,
+            target_write_pending: false,
+            draft_write_pending: false,
+            target_qualification_future_pages: 0,
+            device_join: M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact,
+            target_arena_join: M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact,
+            draft_arena_join: M1AuthenticatedPrefillRegistryMemberAssociationV1::Exact,
+        };
+        assert_eq!(
+            validate_authenticated_prefill_registry_member_v1(request, exact),
+            Ok(())
+        );
+
+        let request_mismatch = M1AuthenticatedPrefillRegistryReconciliationErrorV1::RequestMismatch;
+        let cache_mismatch = M1AuthenticatedPrefillRegistryReconciliationErrorV1::CacheMismatch;
+        let cases = [
+            ("member request", Drift::MemberRequest, request_mismatch),
+            ("target request", Drift::TargetRequest, request_mismatch),
+            ("draft request", Drift::DraftRequest, request_mismatch),
+            ("target role", Drift::TargetRole, cache_mismatch),
+            ("draft role", Drift::DraftRole, cache_mismatch),
+            ("target lifecycle", Drift::TargetLifecycle, cache_mismatch),
+            ("draft lifecycle", Drift::DraftLifecycle, cache_mismatch),
+            ("target resident", Drift::TargetResident, cache_mismatch),
+            ("target committed", Drift::TargetCommitted, cache_mismatch),
+            ("draft resident", Drift::DraftResident, cache_mismatch),
+            ("draft committed", Drift::DraftCommitted, cache_mismatch),
+            (
+                "target active pages",
+                Drift::TargetActivePages,
+                cache_mismatch,
+            ),
+            (
+                "draft active pages",
+                Drift::DraftActivePages,
+                cache_mismatch,
+            ),
+            (
+                "target retired pages",
+                Drift::TargetRetiredPages,
+                cache_mismatch,
+            ),
+            (
+                "draft retired pages",
+                Drift::DraftRetiredPages,
+                cache_mismatch,
+            ),
+            (
+                "target quiescent pages",
+                Drift::TargetQuiescentPages,
+                cache_mismatch,
+            ),
+            (
+                "draft quiescent pages",
+                Drift::DraftQuiescentPages,
+                cache_mismatch,
+            ),
+            (
+                "target write pending",
+                Drift::TargetWritePending,
+                cache_mismatch,
+            ),
+            (
+                "draft write pending",
+                Drift::DraftWritePending,
+                cache_mismatch,
+            ),
+            (
+                "target future pages",
+                Drift::TargetFuturePages,
+                cache_mismatch,
+            ),
+            ("device", Drift::Device, cache_mismatch),
+            ("target arena", Drift::TargetArena, cache_mismatch),
+            ("draft arena", Drift::DraftArena, cache_mismatch),
+        ];
+        for (name, drift, expected) in cases {
+            let mut hostile = exact;
+            match drift {
+                Drift::MemberRequest => hostile.member_request = RequestId::new(0, 8),
+                Drift::TargetRequest => hostile.target.request = RequestId::new(0, 6),
+                Drift::DraftRequest => hostile.draft.request = RequestId::new(0, 6),
+                Drift::TargetRole => hostile.target.role = Qwen3ModelRole::Draft06B,
+                Drift::DraftRole => hostile.draft.role = Qwen3ModelRole::Target8B,
+                Drift::TargetLifecycle => {
+                    hostile.target.lifecycle = PhysicalKvLifecycle::Cancelled {
+                        after_epoch: CompletionEpoch::new(1),
+                    };
+                }
+                Drift::DraftLifecycle => {
+                    hostile.draft.lifecycle = PhysicalKvLifecycle::RetiredAwaitingQuiescence {
+                        after_epoch: CompletionEpoch::new(1),
+                    };
+                }
+                Drift::TargetResident => hostile.target.resident_tokens = 127,
+                Drift::TargetCommitted => hostile.target.committed_tokens = 127,
+                Drift::DraftResident => hostile.draft.resident_tokens = 127,
+                Drift::DraftCommitted => hostile.draft.committed_tokens = 127,
+                Drift::TargetActivePages => hostile.target_active_pages = 7,
+                Drift::DraftActivePages => hostile.draft_active_pages = 7,
+                Drift::TargetRetiredPages => hostile.target_retired_pages = 1,
+                Drift::DraftRetiredPages => hostile.draft_retired_pages = 1,
+                Drift::TargetQuiescentPages => hostile.target_quiescent_retired_pages = 1,
+                Drift::DraftQuiescentPages => hostile.draft_quiescent_retired_pages = 1,
+                Drift::TargetWritePending => hostile.target_write_pending = true,
+                Drift::DraftWritePending => hostile.draft_write_pending = true,
+                Drift::TargetFuturePages => hostile.target_qualification_future_pages = 1,
+                Drift::Device => {
+                    hostile.device_join =
+                        M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch;
+                }
+                Drift::TargetArena => {
+                    hostile.target_arena_join =
+                        M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch;
+                }
+                Drift::DraftArena => {
+                    hostile.draft_arena_join =
+                        M1AuthenticatedPrefillRegistryMemberAssociationV1::Mismatch;
+                }
+            }
+            assert_eq!(
+                validate_authenticated_prefill_registry_member_v1(request, hostile),
+                Err(expected),
+                "hostile cache drift accepted: {name}"
+            );
+        }
+    }
+
+    #[test]
+    fn authenticated_prefill_install_matches_ordinary_completed_publication_frontier() {
+        let request = RequestId::new(0, 1);
+        let prefill = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let successor = pair(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let epoch = CompletionEpoch::new(1);
+
+        let mut ordinary = M1ServingRegistryV1::<1>::new().unwrap();
+        ordinary.admit(request, prefill).unwrap();
+        let first = ordinary.plan_next().unwrap().unwrap();
+        let first_reservation = ordinary.reserve_publication(first).unwrap();
+        ordinary.record_publication(first_reservation).unwrap();
+        ordinary
+            .validate_completion_exact(
+                epoch,
+                &[M1ServingCompletionDispositionV1::Continue(successor)],
+            )
+            .unwrap();
+        ordinary.apply_validated_completion(
+            epoch,
+            &[M1ServingCompletionDispositionV1::Continue(successor)],
+        );
+
+        let mut reconciled = M1ServingRegistryV1::<1>::new().unwrap();
+        reconciled
+            .install_authenticated_prefill_reconciliation(
+                M1AuthenticatedPrefillRegistryReconciliationV1 {
+                    request,
+                    epoch,
+                    prefill,
+                    successor,
+                },
+            )
+            .unwrap();
+        assert_eq!(reconciled.phase(request), ordinary.phase(request));
+        assert_eq!(reconciled.plan(request), ordinary.plan(request));
+        assert_eq!(reconciled.bound_plan(), ordinary.bound_plan());
+        let ordinary_next = ordinary.plan_next().unwrap().unwrap();
+        let reconciled_next = reconciled.plan_next().unwrap().unwrap();
+        assert_eq!(ordinary_next, reconciled_next);
+        let ordinary_reservation = ordinary.reserve_publication(ordinary_next).unwrap();
+        let reconciled_reservation = reconciled.reserve_publication(reconciled_next).unwrap();
+        assert_eq!(ordinary_reservation.id, 2);
+        assert_eq!(reconciled_reservation.id, ordinary_reservation.id);
+    }
+
+    #[test]
+    fn authenticated_prefill_install_rejects_nonfresh_registry_without_mutation() {
+        let request = RequestId::new(0, 1);
+        let prefill = pair(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let successor = pair(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let reconciliation = M1AuthenticatedPrefillRegistryReconciliationV1 {
+            request,
+            epoch: CompletionEpoch::new(1),
+            prefill,
+            successor,
+        };
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(request, prefill).unwrap();
+        assert_eq!(
+            registry.install_authenticated_prefill_reconciliation(reconciliation),
+            Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::RegistryNotFresh)
+        );
+        assert_eq!(
+            registry.phase(request),
+            Some(M1ServingRequestPhaseV1::Ready)
+        );
+        assert_eq!(registry.plan(request), Some(prefill));
+        assert_eq!(registry.bound_plan(), None);
+    }
+
+    #[test]
+    fn authenticated_prefill_reconciliation_source_uses_real_completion_only() {
+        let source = include_str!("m1_serving_registry.rs");
+        let custody = source
+            .split(
+                "/// Fail-closed rejection while reconciling a real authenticated paired-prefill",
+            )
+            .nth(1)
+            .unwrap()
+            .split("/// Deterministic Ferric registry")
+            .next()
+            .unwrap();
+        let registry_glue_start = source
+            .find("fn is_fresh_for_authenticated_prefill_reconciliation")
+            .unwrap();
+        let registry_glue_end = source[registry_glue_start..]
+            .find("/// Registers a newly Engine-admitted request")
+            .unwrap()
+            + registry_glue_start;
+        let registry_glue = &source[registry_glue_start..registry_glue_end];
+        let reconciliation_start = source
+            .find("const fn authenticated_s1_t128_prefill_selection")
+            .unwrap();
+        let reconciliation_end = source[reconciliation_start..]
+            .find("fn validate_completed_window_predecessor")
+            .unwrap()
+            + reconciliation_start;
+        let reconciliation = &source[reconciliation_start..reconciliation_end];
+        let production = [custody, registry_glue, reconciliation].concat();
+        for forbidden in ["unwrap(", "expect(", "panic!(", "unreachable!("] {
+            assert!(
+                !production.contains(forbidden),
+                "forbidden reconciliation production path: {forbidden}"
+            );
+        }
+        let validator = source
+            .split("fn validate_authenticated_prefill_registry_reconciliation_v1")
+            .nth(1)
+            .unwrap()
+            .split("/// Reconciles a fresh metadata registry")
+            .next()
+            .unwrap();
+        for forbidden in ["unwrap(", "expect(", "panic!(", "unreachable!("] {
+            assert!(
+                !validator.contains(forbidden),
+                "forbidden validator path: {forbidden}"
+            );
+        }
+        for required in [
+            "speculative_rollover_intent()",
+            "join_m1_authenticated_prefill_registry_intent_v1",
+            "released.queue().shape()",
+            "checked.records()",
+            "released.members()",
+            "cache.projection()",
+            "completed.engine().state(request)",
+        ] {
+            assert!(
+                validator.contains(required),
+                "missing physical join: {required}"
+            );
+        }
+        let body = source
+            .split("pub fn reconcile_m1_authenticated_s1_t128_prefill_registry_v1")
+            .nth(1)
+            .unwrap()
+            .split("fn validate_completed_window_predecessor")
+            .next()
+            .unwrap();
+        for forbidden in [
+            ".admit(",
+            "reserve_publication(",
+            "record_publication(",
+            "apply_preflighted_completion(",
+        ] {
+            assert!(
+                !body.contains(forbidden),
+                "forbidden synthetic path: {forbidden}"
+            );
+        }
+        assert!(body.contains("validate_authenticated_prefill_registry_reconciliation_v1"));
+        assert!(body.contains("install_authenticated_prefill_reconciliation"));
+
+        let registry_bodies = [
+            "fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result",
+            "pub const fn error(&self) -> M1AuthenticatedPrefillRegistryReconciliationErrorV1",
+            "pub const fn request(&self) -> RequestId",
+            "pub const fn completion_epoch(&self) -> CompletionEpoch",
+            "pub const fn prefill_plan(&self) -> M1ServingPlanV1",
+            "pub const fn successor_plan(&self) -> M1ServingPlanV1",
+            "pub const fn first_token(&self) -> ferric_spec::TokenId",
+            "pub const fn successor_epoch(&self) -> CompletionEpoch",
+            "pub(crate) fn into_parts(",
+            "fn is_fresh_for_authenticated_prefill_reconciliation(&self) -> bool",
+            "fn install_authenticated_prefill_reconciliation(",
+            "const fn authenticated_s1_t128_prefill_selection(",
+            "const fn authenticated_s1_k4_selection(",
+            "fn validate_authenticated_prefill_registry_member_v1(",
+            "fn validate_authenticated_prefill_registry_reconciliation_v1<",
+            "pub fn reconcile_m1_authenticated_s1_t128_prefill_registry_v1<",
+        ];
+        assert_eq!(registry_bodies.len(), 16);
+        for signature in registry_bodies {
+            assert!(
+                production.contains(signature),
+                "new body omitted from source roster: {signature}"
+            );
+        }
+        assert_eq!(production.matches(registry_bodies[0]).count(), 2);
+
+        let rollover_source = include_str!("authenticated_queue_rollover.rs");
+        assert_eq!(
+            rollover_source
+                .matches("fn join_m1_authenticated_prefill_registry_intent_v1(")
+                .count(),
+            1,
+            "registry intent join helper omitted or duplicated"
+        );
+        let typed = reconcile_m1_authenticated_s1_t128_prefill_registry_v1::<1>;
+        assert_eq!(core::mem::size_of_val(&typed), 0);
     }
 }

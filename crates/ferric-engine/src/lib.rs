@@ -565,7 +565,11 @@ pub use m1_serving_physical_operations::{
     M1ServingPreparedSemanticEvidenceV1, M1ServingRearmedReadbackStateV1,
 };
 pub use m1_serving_registry::{
-    M1ServingBatchPlanV1, M1ServingCompletedWindowMemberV1, M1ServingCompletionDispositionV1,
+    reconcile_m1_authenticated_s1_t128_prefill_registry_v1,
+    M1AuthenticatedPrefillRegistryReconciledV1,
+    M1AuthenticatedPrefillRegistryReconciliationErrorV1,
+    M1AuthenticatedPrefillRegistryReconciliationFailureV1, M1ServingBatchPlanV1,
+    M1ServingCompletedWindowMemberV1, M1ServingCompletionDispositionV1,
     M1ServingNewWindowPublicationFailureV1, M1ServingNewWindowPublicationReservationV1,
     M1ServingNewWindowReservationFailureV1, M1ServingPlanV1, M1ServingPublicationFailureV1,
     M1ServingPublicationReservationV1, M1ServingQueueActionV1, M1ServingQuiescenceV1,
