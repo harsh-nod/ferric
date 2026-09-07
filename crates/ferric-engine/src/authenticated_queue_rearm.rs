@@ -25,7 +25,7 @@ use fe2o3_service_host::{DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceDevic
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanSelection, RequestId, StepPlan, M1_MAX_ACTIVE_SEQUENCES,
+    Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::m1_queue_rearm::{
@@ -796,6 +796,83 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
         };
         crate::runner::derive_physical_step_recipe(self.queue.operations(), intent, workspace_plans)
     }
+}
+
+/// Materializes only exact missing speculative KV tail pages after the
+/// authenticated queue has detached. The caller supplies no page authority.
+pub(crate) fn materialize_m1_authenticated_speculative_round_tail_pages_v1(
+    mut scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    draft_decode: ValidatedM1StepInputs,
+    target_speculative: ValidatedM1StepInputs,
+    draft_round_tokens: u32,
+) -> Result<
+    (
+        M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        M1LongLivedQueueRearmKvInputsV1,
+    ),
+    M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+> {
+    let selected_count = scheduled.selected.len();
+    let draft_live = usize::try_from(draft_decode.live_lane_count()).ok();
+    let target_live = usize::try_from(target_speculative.live_lane_count()).ok();
+    if draft_live != Some(selected_count)
+        || target_live != Some(selected_count)
+        || !authenticated_input_roster_matches(&scheduled, &target_speculative)
+        || draft_decode
+            .lanes()
+            .iter()
+            .take(selected_count)
+            .zip(&scheduled.selected)
+            .any(|(plan, cache)| {
+                plan.is_none_or(|plan| {
+                    plan.request() != cache.projection().request
+                        || plan.completion_epoch() != scheduled.scheduled.epoch()
+                })
+            })
+    {
+        return Err(authenticated_kv_reservation_failure(
+            M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+            (scheduled, draft_decode, target_speculative),
+        ));
+    }
+    let mut projections = Vec::new();
+    if projections.try_reserve_exact(selected_count).is_err() {
+        return Err(authenticated_kv_reservation_failure(
+            M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+            (scheduled, draft_decode, target_speculative),
+        ));
+    }
+    projections.extend(
+        scheduled
+            .selected
+            .iter()
+            .map(ActiveDeviceKvCache::projection),
+    );
+    let (draft_page_leases, target_page_leases) =
+        match crate::authenticated_queue_rollover::materialize_m1_authenticated_speculative_tail_pages_v1(
+            &mut scheduled.queue,
+            &projections,
+            &draft_decode,
+            &target_speculative,
+            draft_round_tokens,
+        ) {
+            Ok(page_leases) => page_leases,
+            Err(source) => {
+                return Err(authenticated_kv_reservation_failure(
+                    M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+                    (scheduled, draft_decode, target_speculative, source),
+                ));
+            }
+        };
+    Ok((
+        scheduled,
+        M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+            draft_page_leases,
+            target_page_leases,
+        },
+    ))
 }
 
 #[derive(Clone, Copy)]

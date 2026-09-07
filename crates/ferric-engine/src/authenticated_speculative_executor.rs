@@ -237,13 +237,35 @@ impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
 }
 
 /// Exact linear inputs for one next generation.
-#[must_use = "round inputs contain linear page leases and workspace plans"]
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+/// fn extract_page_authority(inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1) {
+///     let _pages = inputs.kv;
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedSpeculativePhysicalRoundInputsV1>();
+/// ```
+#[must_use = "round inputs retain validated KV intent and linear workspace plans"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
-    kv: M1LongLivedQueueRearmKvInputsV1,
+    kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
     recipe_workspace_plans: M1FullStepWorkspacePlans,
     preparation_workspace_plans: M1FullStepWorkspacePlans,
     controls: Vec<M1SpeculativeMemberControlV1>,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundKvInputsV1 {
+    Preleased(M1LongLivedQueueRearmKvInputsV1),
+    AuthenticatedTail {
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+    },
 }
 
 /// Pure authenticated round-zero bootstrap rejection.
@@ -679,7 +701,31 @@ impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
         controls: Vec<M1SpeculativeMemberControlV1>,
     ) -> Self {
         Self {
-            kv,
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(kv),
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+        }
+    }
+
+    /// Constructs a round whose exact missing KV tail pages are authenticated
+    /// and committed only after the retained queue has detached.
+    ///
+    /// The validated logical inputs grant no page, memory, queue, or launch
+    /// authority. Exact page spans are derived from the selected live caches
+    /// and committed by the partitioned-memory owner held inside queue custody.
+    pub const fn with_authenticated_tail_pages(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        recipe_workspace_plans: M1FullStepWorkspacePlans,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Self {
+        Self {
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            },
             recipe_workspace_plans,
             preparation_workspace_plans,
             controls,
@@ -696,6 +742,7 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundStageV1 {
     Epoch,
     Bind,
     Schedule,
+    TailPages,
     Recipe,
     KvReservation,
     WorkspacePreparation,
@@ -1602,11 +1649,21 @@ enum M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1 {
         Box<(
             M1SpeculativeGenerationLoopV1,
             crate::M1SpeculativeRoundBindingV1,
-            M1LongLivedQueueRearmKvInputsV1,
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
             M1FullStepWorkspacePlans,
             M1FullStepWorkspacePlans,
             Vec<M1SpeculativeMemberControlV1>,
             Box<crate::M1AuthenticatedLongLivedQueueRearmScheduleTerminalV1>,
+        )>,
+    ),
+    TailPages(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            M1FullStepWorkspacePlans,
+            M1FullStepWorkspacePlans,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
         )>,
     ),
     Recipe(
@@ -2098,6 +2155,17 @@ impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                     stage,
                     M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Schedule(source),
                     (lineage, coordinator, binding, kv, recipe, preparation, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(retained) => {
+                let (coordinator, binding, recipe, preparation, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::KvReservation(
+                        Box::new(source),
+                    ),
+                    (lineage, coordinator, binding, recipe, preparation, controls),
                 )
             }
             M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(retained) => {
@@ -2682,6 +2750,21 @@ fn speculative_round_inputs_match_binding(
         return false;
     };
     speculative_validated_pair_matches_binding(draft_decode, target_speculative, binding)
+}
+
+fn authenticated_speculative_round_inputs_match_binding(
+    inputs: &M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    match inputs {
+        M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(inputs) => {
+            speculative_round_inputs_match_binding(inputs, binding)
+        }
+        M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+            draft_decode,
+            target_speculative,
+        } => speculative_validated_pair_matches_binding(draft_decode, target_speculative, binding),
+    }
 }
 
 pub(crate) fn speculative_validated_pair_matches_binding(
@@ -4469,7 +4552,10 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
                 && matches!(
                     &inputs.kv,
-                    M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
+                    M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+                        | M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(
+                            M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
+                        )
                 ),
         };
         let (this, inputs) = match pre_detach_round_core(self, inputs, facts) {
@@ -4533,7 +4619,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 ));
             }
         };
-        if !speculative_round_inputs_match_binding(&inputs.kv, &binding) {
+        if !authenticated_speculative_round_inputs_match_binding(&inputs.kv, &binding) {
             return Err(retryable_failure(
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
                 Self {
@@ -4590,6 +4676,37 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     },
                 ));
             }
+        };
+        let (scheduled, kv) = match kv {
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(kv) => (scheduled, kv),
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            } => match crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_v1(
+                scheduled,
+                draft_decode,
+                target_speculative,
+                u32::from(binding.shape().draft_tokens()),
+            ) {
+                Ok(materialized) => materialized,
+                Err(source) => {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::TailPages,
+                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(
+                            Box::new((
+                                coordinator,
+                                binding,
+                                recipe_workspace_plans,
+                                preparation_workspace_plans,
+                                controls,
+                                source,
+                            )),
+                        ),
+                        lineage: Some(lineage),
+                    }));
+                }
+            },
         };
         let recipe = match scheduled.derive_retained_step_recipe(recipe_workspace_plans) {
             M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
@@ -6362,5 +6479,28 @@ mod tests {
         assert!(quarantined.retains_custody());
         let quarantined_debug = format!("{quarantined:?}");
         assert!(!quarantined_debug.contains("secret quarantined authority"));
+    }
+
+    #[test]
+    fn authenticated_tail_pages_use_binding_width_only_after_detach() {
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let production = source.split("#[cfg(test)]").next().unwrap();
+        let start = production
+            .find("fn execute_round_pending<const C: usize>")
+            .unwrap();
+        let body = &production[start..];
+        let schedule = body.find("released.schedule_next_exact").unwrap();
+        let materialize = body
+            .find("materialize_m1_authenticated_speculative_round_tail_pages_v1")
+            .unwrap();
+        let reserve = body
+            .find("reserve_m1_authenticated_long_lived_queue_rearm_kv_v1")
+            .unwrap();
+        assert!(schedule < materialize && materialize < reserve);
+        let call = &body[materialize..reserve];
+        assert!(call.contains("u32::from(binding.shape().draft_tokens())"));
+        assert!(!call.contains("queue.shape()"));
+        assert!(!call.contains(".unwrap()"));
+        assert!(!call.contains(".expect("));
     }
 }

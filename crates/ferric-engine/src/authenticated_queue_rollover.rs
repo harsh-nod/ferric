@@ -247,19 +247,26 @@ pub enum M1AuthenticatedSpeculativeRolloverScheduleErrorV1 {
 #[allow(dead_code)] // Every field is intentionally retained behind opaque terminal custody.
 #[derive(Debug)]
 enum M1AuthenticatedSpeculativeSuccessorPageFailureV1 {
-    Span {
+    Materialization {
+        source: Box<M1AuthenticatedSpeculativeTailPageMaterializationFailureV1>,
         inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
     },
+    MemberRoster {
+        inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
+    },
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedSpeculativeTailPageMaterializationFailureV1 {
+    Span,
     Admission {
         source: crate::M1DeviceKvArenaLeaseErrorV1,
-        inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
     },
     Commit {
         source: Box<crate::device_cache::M1AuthenticatedNewWindowPageSetCommitFailureV1>,
-        inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
     },
     CommittedRoster {
-        inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
         spans: Vec<M1AuthenticatedSpeculativeSuccessorLanePageSpansV1>,
         draft_page_leases: Vec<Vec<DeviceKvPageLease>>,
         target_page_leases: Vec<Vec<DeviceKvPageLease>>,
@@ -268,13 +275,13 @@ enum M1AuthenticatedSpeculativeSuccessorPageFailureV1 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct M1AuthenticatedSpeculativeSuccessorPageSpanV1 {
+pub(crate) struct M1AuthenticatedSpeculativeSuccessorPageSpanV1 {
     first_page: u32,
     page_count: u32,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct M1AuthenticatedSpeculativeSuccessorLanePageSpansV1 {
+pub(crate) struct M1AuthenticatedSpeculativeSuccessorLanePageSpansV1 {
     request: ferric_spec::RequestId,
     draft: M1AuthenticatedSpeculativeSuccessorPageSpanV1,
     target: M1AuthenticatedSpeculativeSuccessorPageSpanV1,
@@ -1261,7 +1268,7 @@ pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1<cons
     })
 }
 
-fn authenticated_speculative_successor_page_span(
+pub(crate) fn authenticated_speculative_successor_page_span(
     logical: ferric_spec::LogicalKvState,
     active_pages: usize,
     request: ferric_spec::RequestId,
@@ -1294,7 +1301,7 @@ fn authenticated_speculative_successor_page_span(
     })
 }
 
-fn authenticated_speculative_successor_lease_roster_matches(
+pub(crate) fn authenticated_speculative_successor_lease_roster_matches(
     leases: &[DeviceKvPageLease],
     spans: &[M1AuthenticatedSpeculativeSuccessorLanePageSpansV1],
 ) -> bool {
@@ -1328,6 +1335,215 @@ fn authenticated_speculative_successor_lease_roster_matches(
     cursor == leases.len()
 }
 
+fn authenticated_speculative_tail_binding_width_matches(
+    selected_shape: Option<crate::M1SpeculativePhysicalShapeV1>,
+    draft_round_tokens: u32,
+) -> bool {
+    match selected_shape {
+        Some(shape) => u32::from(shape.draft_tokens()) == draft_round_tokens,
+        None => false,
+    }
+}
+
+pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
+    queue: &mut M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    projections: &[crate::DeviceKvCacheProjection],
+    draft_inputs: &ValidatedM1StepInputs,
+    target_inputs: &ValidatedM1StepInputs,
+    draft_round_tokens: u32,
+) -> Result<
+    (Vec<Vec<DeviceKvPageLease>>, Vec<Vec<DeviceKvPageLease>>),
+    Box<M1AuthenticatedSpeculativeTailPageMaterializationFailureV1>,
+> {
+    let selected_shape =
+        crate::M1SpeculativePhysicalShapeV1::from_selection(target_inputs.selection()).ok();
+    if projections.is_empty()
+        || draft_inputs.live_lane_count() as usize != projections.len()
+        || target_inputs.live_lane_count() as usize != projections.len()
+        || draft_round_tokens == 0
+        || !authenticated_speculative_tail_binding_width_matches(selected_shape, draft_round_tokens)
+    {
+        return Err(Box::new(
+            M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+        ));
+    }
+
+    let mut lanes = Vec::new();
+    let mut spans = Vec::new();
+    let mut draft_page_leases = Vec::new();
+    let mut target_page_leases = Vec::new();
+    if lanes.try_reserve_exact(projections.len()).is_err()
+        || spans.try_reserve_exact(projections.len()).is_err()
+        || draft_page_leases
+            .try_reserve_exact(projections.len())
+            .is_err()
+        || target_page_leases
+            .try_reserve_exact(projections.len())
+            .is_err()
+    {
+        return Err(Box::new(
+            M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+        ));
+    }
+    for (lane, projection) in projections.iter().copied().enumerate() {
+        let Some(draft_plan) = draft_inputs.lanes().get(lane).and_then(Option::as_ref) else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let Some(target_plan) = target_inputs.lanes().get(lane).and_then(Option::as_ref) else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let Some(draft_context) = draft_inputs.context_lengths().get(lane).copied() else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let Some(target_context) = target_inputs.context_lengths().get(lane).copied() else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let Some(target_active) = target_inputs.active_lengths().get(lane).copied() else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        if projection.request != draft_plan.request() || projection.request != target_plan.request()
+        {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        }
+        let Some(draft) = authenticated_speculative_successor_page_span(
+            projection.draft,
+            projection.draft_active_pages,
+            projection.request,
+            Qwen3ModelRole::Draft06B,
+            draft_context,
+            draft_round_tokens,
+        ) else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let Some(target) = authenticated_speculative_successor_page_span(
+            projection.target,
+            projection.target_active_pages,
+            projection.request,
+            Qwen3ModelRole::Target8B,
+            target_context,
+            target_active,
+        ) else {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        };
+        let draft_count = match usize::try_from(draft.page_count) {
+            Ok(count) => count,
+            Err(_) => {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+                ));
+            }
+        };
+        let target_count = match usize::try_from(target.page_count) {
+            Ok(count) => count,
+            Err(_) => {
+                return Err(Box::new(
+                    M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+                ));
+            }
+        };
+        let mut draft_leases = Vec::new();
+        let mut target_leases = Vec::new();
+        if draft_leases.try_reserve_exact(draft_count).is_err()
+            || target_leases.try_reserve_exact(target_count).is_err()
+        {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        }
+        let lane_spans = M1AuthenticatedSpeculativeSuccessorLanePageSpansV1 {
+            request: projection.request,
+            draft,
+            target,
+        };
+        let admission =
+            match crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1::successor(
+                projection.request,
+                draft.first_page,
+                draft.page_count,
+                target.first_page,
+                target.page_count,
+            ) {
+                Ok(admission) => admission,
+                Err(_) => {
+                    return Err(Box::new(
+                        M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+                    ));
+                }
+            };
+        spans.push(lane_spans);
+        lanes.push(admission);
+        draft_page_leases.push(draft_leases);
+        target_page_leases.push(target_leases);
+    }
+
+    let admission = queue
+        .admit_authenticated_successor_page_set(lanes)
+        .map_err(|source| {
+            Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Admission { source },
+            )
+        })?;
+    let page_leases = queue
+        .commit_authenticated_successor_page_set(admission)
+        .map_err(|source| {
+            Box::new(M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Commit { source })
+        })?;
+    if !authenticated_speculative_successor_lease_roster_matches(&page_leases, &spans) {
+        return Err(Box::new(
+            M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::CommittedRoster {
+                spans,
+                draft_page_leases,
+                target_page_leases,
+                remaining: page_leases.into_iter(),
+            },
+        ));
+    }
+    let mut page_leases = page_leases.into_iter();
+    for ((lane_spans, draft), target) in spans
+        .iter()
+        .zip(draft_page_leases.iter_mut())
+        .zip(target_page_leases.iter_mut())
+    {
+        draft.extend(
+            page_leases
+                .by_ref()
+                .take(lane_spans.draft.page_count as usize),
+        );
+        target.extend(
+            page_leases
+                .by_ref()
+                .take(lane_spans.target.page_count as usize),
+        );
+    }
+    if !page_leases.as_slice().is_empty() {
+        return Err(Box::new(
+            M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::CommittedRoster {
+                spans,
+                draft_page_leases,
+                target_page_leases,
+                remaining: page_leases,
+            },
+        ));
+    }
+    Ok((draft_page_leases, target_page_leases))
+}
+
 fn successor_page_failure<T>(
     failure: M1AuthenticatedSpeculativeSuccessorPageFailureV1,
 ) -> Result<T, Box<M1AuthenticatedSpeculativeSuccessorPageFailureV1>> {
@@ -1355,187 +1571,42 @@ fn materialize_authenticated_speculative_rollover_inputs(
         || binding.members().len() != members.len()
         || draft_round_tokens == 0
     {
-        return successor_page_failure(M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span {
-            inputs,
-        });
+        return successor_page_failure(
+            M1AuthenticatedSpeculativeSuccessorPageFailureV1::MemberRoster { inputs },
+        );
     }
-
-    let mut lanes = Vec::new();
-    let mut spans = Vec::new();
-    let mut draft_page_leases = Vec::new();
-    let mut target_page_leases = Vec::new();
-    if lanes.try_reserve_exact(members.len()).is_err()
-        || spans.try_reserve_exact(members.len()).is_err()
-        || draft_page_leases.try_reserve_exact(members.len()).is_err()
-        || target_page_leases.try_reserve_exact(members.len()).is_err()
-    {
-        return successor_page_failure(M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span {
-            inputs,
-        });
+    let mut projections = Vec::new();
+    if projections.try_reserve_exact(members.len()).is_err() {
+        return successor_page_failure(
+            M1AuthenticatedSpeculativeSuccessorPageFailureV1::MemberRoster { inputs },
+        );
     }
-    for (lane, member) in members.iter().enumerate() {
+    for member in members {
         let M1ReleasedDeviceKvMemberV1::Active(cache) = member else {
             return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
+                M1AuthenticatedSpeculativeSuccessorPageFailureV1::MemberRoster { inputs },
             );
         };
-        let projection = cache.projection();
-        let Some(draft_plan) = draft_inputs.lanes().get(lane).and_then(Option::as_ref) else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let Some(target_plan) = target_inputs.lanes().get(lane).and_then(Option::as_ref) else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let Some(draft_context) = draft_inputs.context_lengths().get(lane).copied() else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let Some(target_context) = target_inputs.context_lengths().get(lane).copied() else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let Some(target_active) = target_inputs.active_lengths().get(lane).copied() else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        if projection.request != draft_plan.request() || projection.request != target_plan.request()
-        {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        }
-        let Some(draft) = authenticated_speculative_successor_page_span(
-            projection.draft,
-            projection.draft_active_pages,
-            projection.request,
-            Qwen3ModelRole::Draft06B,
-            draft_context,
+        projections.push(cache.projection());
+    }
+    let (draft_page_leases, target_page_leases) =
+        match materialize_m1_authenticated_speculative_tail_pages_v1(
+            queue,
+            &projections,
+            draft_inputs,
+            target_inputs,
             draft_round_tokens,
-        ) else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
+        ) {
+            Ok(page_leases) => page_leases,
+            Err(source) => {
+                return successor_page_failure(
+                    M1AuthenticatedSpeculativeSuccessorPageFailureV1::Materialization {
+                        source,
+                        inputs,
+                    },
+                );
+            }
         };
-        let Some(target) = authenticated_speculative_successor_page_span(
-            projection.target,
-            projection.target_active_pages,
-            projection.request,
-            Qwen3ModelRole::Target8B,
-            target_context,
-            target_active,
-        ) else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let mut draft_leases = Vec::new();
-        let mut target_leases = Vec::new();
-        let Some(draft_count) = usize::try_from(draft.page_count).ok() else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        let Some(target_count) = usize::try_from(target.page_count).ok() else {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        };
-        if draft_leases.try_reserve_exact(draft_count).is_err()
-            || target_leases.try_reserve_exact(target_count).is_err()
-        {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-            );
-        }
-        let lane_spans = M1AuthenticatedSpeculativeSuccessorLanePageSpansV1 {
-            request: projection.request,
-            draft,
-            target,
-        };
-        let admission =
-            match crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1::successor(
-                projection.request,
-                draft.first_page,
-                draft.page_count,
-                target.first_page,
-                target.page_count,
-            ) {
-                Ok(admission) => admission,
-                Err(_) => {
-                    return successor_page_failure(
-                        M1AuthenticatedSpeculativeSuccessorPageFailureV1::Span { inputs },
-                    );
-                }
-            };
-        spans.push(lane_spans);
-        lanes.push(admission);
-        draft_page_leases.push(draft_leases);
-        target_page_leases.push(target_leases);
-    }
-
-    let admission = match queue.admit_authenticated_successor_page_set(lanes) {
-        Ok(admission) => admission,
-        Err(source) => {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Admission { source, inputs },
-            );
-        }
-    };
-    let page_leases = match queue.commit_authenticated_successor_page_set(admission) {
-        Ok(page_leases) => page_leases,
-        Err(source) => {
-            return successor_page_failure(
-                M1AuthenticatedSpeculativeSuccessorPageFailureV1::Commit { source, inputs },
-            );
-        }
-    };
-    if !authenticated_speculative_successor_lease_roster_matches(&page_leases, &spans) {
-        return successor_page_failure(
-            M1AuthenticatedSpeculativeSuccessorPageFailureV1::CommittedRoster {
-                inputs,
-                spans,
-                draft_page_leases,
-                target_page_leases,
-                remaining: page_leases.into_iter(),
-            },
-        );
-    }
-
-    let mut page_leases = page_leases.into_iter();
-    for ((lane_spans, draft), target) in spans
-        .iter()
-        .zip(draft_page_leases.iter_mut())
-        .zip(target_page_leases.iter_mut())
-    {
-        draft.extend(
-            page_leases
-                .by_ref()
-                .take(lane_spans.draft.page_count as usize),
-        );
-        target.extend(
-            page_leases
-                .by_ref()
-                .take(lane_spans.target.page_count as usize),
-        );
-    }
-    if !page_leases.as_slice().is_empty() {
-        return successor_page_failure(
-            M1AuthenticatedSpeculativeSuccessorPageFailureV1::CommittedRoster {
-                inputs,
-                spans,
-                draft_page_leases,
-                target_page_leases,
-                remaining: page_leases,
-            },
-        );
-    }
     Ok(inputs.into_raw(draft_page_leases, target_page_leases))
 }
 
@@ -8316,6 +8387,29 @@ mod tests {
     }
 
     #[test]
+    fn authenticated_tail_materialization_rejects_cross_k_binding_drift() {
+        let k4 = crate::M1SpeculativePhysicalShapeV1::from_selection(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        })
+        .ok();
+        let k8 = crate::M1SpeculativePhysicalShapeV1::from_selection(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K8C8192,
+        })
+        .ok();
+        assert!(authenticated_speculative_tail_binding_width_matches(k4, 4));
+        assert!(!authenticated_speculative_tail_binding_width_matches(k4, 8));
+        assert!(authenticated_speculative_tail_binding_width_matches(k8, 8));
+        assert!(!authenticated_speculative_tail_binding_width_matches(k8, 4));
+        assert!(!authenticated_speculative_tail_binding_width_matches(
+            None, 4
+        ));
+    }
+
+    #[test]
     fn authenticated_successor_committed_roster_binds_role_request_and_page_order() {
         let request = RequestId::new(3, 7);
         let device = bind_gfx942_device(
@@ -8401,24 +8495,48 @@ mod tests {
         let dispatch = pending.find("engine.dispatch_m1_exact_ready").unwrap();
         assert!(detach < materialize && materialize < dispatch);
 
-        let helper_start = production
+        let wrapper_start = production
             .find("fn materialize_authenticated_speculative_rollover_inputs")
             .unwrap();
-        let helper_end = production[helper_start..]
+        let wrapper_end = production[wrapper_start..]
             .find("\n#[allow(clippy::too_many_arguments)]\nfn schedule_m1_authenticated")
-            .map(|offset| helper_start + offset)
+            .map(|offset| wrapper_start + offset)
             .unwrap();
-        let helper = &production[helper_start..helper_end];
+        let wrapper = &production[wrapper_start..wrapper_end];
         assert!(
-            helper.contains("let draft_round_tokens = u32::from(binding.shape().draft_tokens())")
+            wrapper.contains("let draft_round_tokens = u32::from(binding.shape().draft_tokens())")
         );
-        assert!(helper.contains("commit_authenticated_successor_page_set(admission)"));
-        assert!(helper.contains("M1AuthenticatedSpeculativeSuccessorPageFailureV1::Commit"));
+        assert!(wrapper.contains("materialize_m1_authenticated_speculative_tail_pages_v1"));
+        assert!(!wrapper.contains(".unwrap()"));
+        assert!(!wrapper.contains(".expect("));
+
+        let shared_start = production
+            .find("pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1")
+            .unwrap();
+        let shared_end = production[shared_start..]
+            .find("\nfn successor_page_failure")
+            .map(|offset| shared_start + offset)
+            .unwrap();
+        let shared = &production[shared_start..shared_end];
+        let admit = shared
+            .find("admit_authenticated_successor_page_set(lanes)")
+            .unwrap();
+        let commit = shared
+            .find("commit_authenticated_successor_page_set(admission)")
+            .unwrap();
+        let validate = shared
+            .find("authenticated_speculative_successor_lease_roster_matches")
+            .unwrap();
+        let split = shared.find("draft.extend(").unwrap();
+        assert!(admit < commit && commit < validate && validate < split);
         assert!(
-            helper.contains("M1AuthenticatedSpeculativeSuccessorPageFailureV1::CommittedRoster")
+            shared.contains("M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Commit")
         );
-        assert!(!helper.contains(".unwrap()"));
-        assert!(!helper.contains(".expect("));
+        assert!(shared.contains(
+            "M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::CommittedRoster"
+        ));
+        assert!(!shared.contains(".unwrap()"));
+        assert!(!shared.contains(".expect("));
 
         let released_start = production
             .find("pub fn schedule_successor<const C: usize>(")
