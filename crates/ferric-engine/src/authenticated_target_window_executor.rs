@@ -249,29 +249,29 @@ fn fail(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-// The unit suffix is intentional: these raw monotonic values must not be
-// confused with durations represented in any other unit at the evidence edge.
-#[allow(clippy::struct_field_names)]
+struct Nanoseconds(u64);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1AuthenticatedTargetWindowTimingV1 {
-    duration_ns: u64,
-    first_token_offset_ns: u64,
-    terminal_token_offset_ns: u64,
+    duration: Nanoseconds,
+    first_token_offset: Nanoseconds,
+    terminal_token_offset: Nanoseconds,
 }
 
 impl M1AuthenticatedTargetWindowTimingV1 {
     #[must_use]
     pub const fn duration_ns(self) -> u64 {
-        self.duration_ns
+        self.duration.0
     }
 
     #[must_use]
     pub const fn first_token_offset_ns(self) -> u64 {
-        self.first_token_offset_ns
+        self.first_token_offset.0
     }
 
     #[must_use]
     pub const fn terminal_token_offset_ns(self) -> u64 {
-        self.terminal_token_offset_ns
+        self.terminal_token_offset.0
     }
 }
 
@@ -1391,9 +1391,9 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
     Ok(M1AuthenticatedTargetWindowExecutionSuccessV1 {
         tokens: tokens.into_boxed_slice(),
         timing: M1AuthenticatedTargetWindowTimingV1 {
-            duration_ns,
-            first_token_offset_ns,
-            terminal_token_offset_ns,
+            duration: Nanoseconds(duration_ns),
+            first_token_offset: Nanoseconds(first_token_offset_ns),
+            terminal_token_offset: Nanoseconds(terminal_token_offset_ns),
         },
         retained: OpaqueCustody(Box::new((engine, teardown, successor_custody, registry))),
     })
@@ -1402,6 +1402,26 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn timing_newtype_is_zero_cost_and_preserves_nanoseconds() {
+        assert_eq!(
+            core::mem::size_of::<Nanoseconds>(),
+            core::mem::size_of::<u64>()
+        );
+        assert_eq!(
+            core::mem::size_of::<M1AuthenticatedTargetWindowTimingV1>(),
+            core::mem::size_of::<[u64; 3]>()
+        );
+        let timing = M1AuthenticatedTargetWindowTimingV1 {
+            duration: Nanoseconds(29),
+            first_token_offset: Nanoseconds(11),
+            terminal_token_offset: Nanoseconds(23),
+        };
+        assert_eq!(timing.duration_ns(), 29);
+        assert_eq!(timing.first_token_offset_ns(), 11);
+        assert_eq!(timing.terminal_token_offset_ns(), 23);
+    }
 
     #[test]
     fn exact_r33_window_counts_prefill_choice_once() {
