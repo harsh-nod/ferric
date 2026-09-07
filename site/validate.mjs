@@ -79,8 +79,10 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-  integrationCommit: "f1519652a789d9b27cc49a545072d4027d545b0b",
-  integrationTree: "7562c788ce52aa01e276dc7df9a3be34a0843a87",
+  integrationCommit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
+  integrationTree: "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
+  engineeringSmokeRuntimeCommit: "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
+  engineeringSmokeRuntimeTree: "6af2244bf51cb1215747ed80309c89b61e3329bc",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
   r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -135,11 +137,16 @@ const expectedCurrent = {
   engineeringSmokePromptTokenId: 9707,
   engineeringSmokeGeneratedTokenId: 94364,
   engineeringSmokeGeneratedText: "spent",
-  engineeringSmokePostSetupSeconds: 4.826879082,
-  engineeringSmokeFirstTokenOffsetSeconds: 3.322079162,
-  engineeringSmokeColdWallSeconds: 1610.92,
-  engineeringSmokeStdoutSha256: "b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea",
-  engineeringSmokeStderrSha256: "1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b",
+  engineeringSmokePostSetupSeconds: 5.002135558,
+  engineeringSmokeFirstTokenOffsetSeconds: 3.414468641,
+  engineeringSmokeColdWallSeconds: 1435.18,
+  engineeringSmokeColdBaselineSeconds: 1610.92,
+  engineeringSmokeColdImprovementSeconds: 175.74,
+  engineeringSmokeColdImprovementPercent: 10.91,
+  engineeringSmokeOverlappedAdmissions: 2,
+  engineeringSmokeBottleneck: "repeated serial KFD hashes/copy/readback",
+  engineeringSmokeStdoutSha256: "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
+  engineeringSmokeStderrSha256: "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
   hardwareCompletionObserved: true,
   benchmarkComparable: false,
   r33TpotEligible: false,
@@ -174,6 +181,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "engineeringSmokeRuntimeCommit",
+  "engineeringSmokeRuntimeTree",
   "rmsnormUniformFoldCommit",
   "r33ExecutorCommit",
   "intermediateIntegrationCommit",
@@ -245,14 +254,38 @@ assert(project.current.engineeringSmokePromptTokenId === 9707, "prompt token dri
 assert(project.current.engineeringSmokeGeneratedTokenId === 94364, "generated token drifted");
 assert(project.current.engineeringSmokeGeneratedText === "spent", "generated text drifted");
 assert(
-  project.current.engineeringSmokePostSetupSeconds === 4.826879082,
+  project.current.engineeringSmokePostSetupSeconds === 5.002135558,
   "post-setup execution duration drifted",
 );
 assert(
-  project.current.engineeringSmokeFirstTokenOffsetSeconds === 3.322079162,
+  project.current.engineeringSmokeFirstTokenOffsetSeconds === 3.414468641,
   "first-token offset drifted",
 );
-assert(project.current.engineeringSmokeColdWallSeconds === 1610.92, "cold wall duration drifted");
+assert(project.current.engineeringSmokeColdWallSeconds === 1435.18, "optimized cold wall drifted");
+assert(project.current.engineeringSmokeColdBaselineSeconds === 1610.92, "cold baseline drifted");
+assert(project.current.engineeringSmokeColdImprovementSeconds === 175.74, "cold improvement drifted");
+assert(project.current.engineeringSmokeColdImprovementPercent === 10.91, "cold improvement percent drifted");
+assert(project.current.engineeringSmokeOverlappedAdmissions === 2, "overlapped admission count drifted");
+assert(
+  Math.abs(
+    project.current.engineeringSmokeColdBaselineSeconds -
+      project.current.engineeringSmokeColdWallSeconds -
+      project.current.engineeringSmokeColdImprovementSeconds,
+  ) < 1e-9,
+  "cold improvement must equal baseline minus optimized wall time",
+);
+assert(
+  Math.abs(
+    (100 * project.current.engineeringSmokeColdImprovementSeconds) /
+      project.current.engineeringSmokeColdBaselineSeconds -
+      project.current.engineeringSmokeColdImprovementPercent,
+  ) < 0.005,
+  "cold improvement percent must match the duration comparison",
+);
+assert(
+  project.current.engineeringSmokeBottleneck === "repeated serial KFD hashes/copy/readback",
+  "engineering bottleneck attribution drifted",
+);
 assertSha256(project.current.engineeringSmokeStdoutSha256, "current.engineeringSmokeStdoutSha256");
 assertSha256(project.current.engineeringSmokeStderrSha256, "current.engineeringSmokeStderrSha256");
 assert(project.current.benchmarkComparable === false, "diagnostic smoke must not become benchmark-comparable");
@@ -367,8 +400,11 @@ project.evidence.legend.forEach((entry, index) => {
 const snapshot = JSON.stringify(project);
 for (const claim of [
   "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "1dd3411af96a22f0ed86289b874b57fa28670ef9",
+  "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
+  "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
+  "6af2244bf51cb1215747ed80309c89b61e3329bc",
   "f1519652a789d9b27cc49a545072d4027d545b0b",
-  "7562c788ce52aa01e276dc7df9a3be34a0843a87",
   "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
   "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
   "553334d69d51c4ccffea383cd72cf9105df74130",
@@ -445,15 +481,20 @@ for (const claim of [
   "spent",
   "hardware completion",
   "process status 0",
-  "4.826879082 seconds",
-  "3.322079162 seconds",
+  "23:55.18",
+  "175.74 seconds",
+  "10.91%",
+  "5.002135558 seconds",
+  "3.414468641 seconds",
   "26:50.92",
-  "more than 99%",
-  "repeated model authentication and copying",
+  "two independent admissions",
+  "repeated serial KFD hashes/copy/readback",
+  "engineering attribution",
+  "not token compute",
   "benchmark_comparable=false",
   "r33_tpot_eligible=false",
-  "b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea",
-  "1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b",
+  "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
+  "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
   "native AMDGPU LLVM worker",
   "SIGABRT",
   "empty output manifest",
@@ -471,8 +512,6 @@ for (const claim of [
   "checked-token causality",
   "required 20-window qualification",
   "Authority is none",
-  "Docker is inaccessible to this account",
-  "no baseline launch was attempted",
   "608 verified and 0 errors",
   "S1/T128",
   "NoMatch",
@@ -494,7 +533,6 @@ for (const claim of [
   "repin",
   "retained-borrow locals 178 and 40",
   "AMDGPU LLVM lowering",
-  "verified Qwen snapshot",
   "protected receipt/verifier service is undeployed",
   "symmetric memory",
   "MTP",
@@ -502,8 +540,7 @@ for (const claim of [
   "one authority-free diagnostic token",
   "TTFT",
   "TPOT",
-  "vLLM baseline",
-  "SGLang baseline",
+  "vLLM and SGLang baselines are absent",
 ]) {
   assert(snapshot.includes(claim), `current snapshot is missing claim: ${claim}`);
 }

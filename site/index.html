@@ -215,11 +215,13 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Remove cold-start duplication</h2>
+            <h2 id="next-title">Remove serial KFD setup work</h2>
           </div>
           <p>
-            Ferric integration candidate f1519652a789d9b27cc49a545072d4027d545b0b, tree
-            7562c788ce52aa01e276dc7df9a3be34a0843a87, uses public fe2o3
+            Current inventory-only integration 1dd3411af96a22f0ed86289b874b57fa28670ef9, tree
+            55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e, follows optimized runtime source
+            6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree
+            6af2244bf51cb1215747ed80309c89b61e3329bc. The runtime uses public fe2o3
             1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree
             553334d69d51c4ccffea383cd72cf9105df74130. Exact v76 exits status 0 after a 415,660-byte
             Kernel IR V9 handoff containing 26 GuardedStore operations and exact replay into a 103,616-byte HSACO
@@ -227,14 +229,15 @@
             31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; HSACO SHA
             c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA
             6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA
-            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Integration f151965
-            admitted this artifact and completed one authority-free hardware smoke on gfx942: prompt token 9707
-            produced token 94364, decoded as "spent", with process status 0. The post-setup execution duration was
-            4.826879082 seconds and the first-token offset was 3.322079162 seconds. Cold process wall was 26:50.92,
-            dominated more than 99% by repeated model authentication and copying. Therefore benchmark_comparable=false
-            and r33_tpot_eligible=false; these values are not TTFT or TPOT claims. Smoke stdout SHA
-            b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea; stderr SHA
-            1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b. Authority remains none. No production
+            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Runtime source 6239bdb
+            overlaps two independent admissions and repeats the authority-free gfx942 smoke: prompt token 9707
+            produces token 94364, decoded as "spent", with process status 0. Cold wall improves from 26:50.92 to
+            23:55.18, saving 175.74 seconds / 10.91%. Post-setup duration is 5.002135558 seconds and first-token
+            offset is 3.414468641 seconds. Remaining repeated serial KFD hashes/copy/readback are engineering
+            attribution, not token compute. benchmark_comparable=false and r33_tpot_eligible=false; these values
+            are not TTFT or TPOT claims. Smoke stdout SHA
+            76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA
+            adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. Authority remains none. No production
             publication, serving endpoint, vLLM/SGLang comparison, or qualification exists. The R33 executor still
             supports only one window, not the required 20. Symmetric memory and MTP remain deferred, and all 33 M1
             exit gates remain open.

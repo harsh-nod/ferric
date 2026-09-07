@@ -4,8 +4,10 @@ window.FERRIC_PROJECT = Object.freeze({
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
     siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
-    integrationCommit: "f1519652a789d9b27cc49a545072d4027d545b0b",
-    integrationTree: "7562c788ce52aa01e276dc7df9a3be34a0843a87",
+    integrationCommit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
+    integrationTree: "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
+    engineeringSmokeRuntimeCommit: "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
+    engineeringSmokeRuntimeTree: "6af2244bf51cb1215747ed80309c89b61e3329bc",
     rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
     r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
     intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -60,11 +62,16 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringSmokePromptTokenId: 9707,
     engineeringSmokeGeneratedTokenId: 94364,
     engineeringSmokeGeneratedText: "spent",
-    engineeringSmokePostSetupSeconds: 4.826879082,
-    engineeringSmokeFirstTokenOffsetSeconds: 3.322079162,
-    engineeringSmokeColdWallSeconds: 1610.92,
-    engineeringSmokeStdoutSha256: "b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea",
-    engineeringSmokeStderrSha256: "1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b",
+    engineeringSmokePostSetupSeconds: 5.002135558,
+    engineeringSmokeFirstTokenOffsetSeconds: 3.414468641,
+    engineeringSmokeColdWallSeconds: 1435.18,
+    engineeringSmokeColdBaselineSeconds: 1610.92,
+    engineeringSmokeColdImprovementSeconds: 175.74,
+    engineeringSmokeColdImprovementPercent: 10.91,
+    engineeringSmokeOverlappedAdmissions: 2,
+    engineeringSmokeBottleneck: "repeated serial KFD hashes/copy/readback",
+    engineeringSmokeStdoutSha256: "76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202",
+    engineeringSmokeStderrSha256: "adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6",
     hardwareCompletionObserved: true,
     benchmarkComparable: false,
     r33TpotEligible: false,
@@ -96,14 +103,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric integration f151965 admits the exact v76 aggregate and completed the first authority-free Qwen hardware smoke on one gfx942. Prompt token 9707 produced token 94364, decoded as \"spent\", with a hardware completion observed and process status 0. The post-setup execution interval was 4.826879082 seconds and the first-token offset was 3.322079162 seconds, but the cold process took 26:50.92 and spent more than 99% of that time in repeated model authentication and copying. This run is not benchmark-comparable, not R33 TPOT-eligible, and grants no production, serving, or qualification authority. All 33 M1 exit gates remain open.",
+      "Ferric runtime source 6239bdb overlaps two independent model admissions and repeats the authority-free Qwen hardware smoke on one gfx942. Prompt token 9707 again produced token 94364, decoded as \"spent\", with hardware completion and process status 0. Cold wall time improved from 26:50.92 to 23:55.18: 175.74 seconds, or 10.91%. The remaining cold bottleneck is repeated serial KFD hashes, copies, and readbacks; this is engineering attribution, not token-compute timing. The run remains benchmark_comparable=false, r33_tpot_eligible=false, authority none, and not serving or qualification evidence. Current integration 1dd3411 adds only the later executable inventory.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "f151965 retains the authenticated queue path and paired-prefill executor, including the one-window target executor added at c1b9590. It owns queue creation, bounded completion, checked direct readback, semantic completion, KV settlement, page release, and fail-closed teardown custody.",
+        "Runtime source 6239bdb retains the authenticated queue path and paired-prefill executor while overlapping two independent model admissions. Current integration 1dd3411 adds the later executable inventory without changing the runtime binary used for the optimized smoke.",
     },
     {
       label: "R33 lifecycle",
@@ -115,7 +122,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Engineering Qwen smoke path",
       state: "observed",
       detail:
-        "Integration f151965 admits the exact v76 observation and completes an authority-free one-token smoke through KFD on gfx942. Prompt token 9707 produces token 94364 (\"spent\") with a hardware completion and process status 0. The reported execution interval and token offset are diagnostic only: benchmark_comparable=false and r33_tpot_eligible=false.",
+        "Runtime source 6239bdb repeats the authority-free one-token smoke through KFD on gfx942. Prompt token 9707 produces token 94364 (\"spent\") with hardware completion and process status 0. Cold wall improves 175.74 seconds, or 10.91%, by overlapping two admissions. The 5.002135558-second post-setup duration and 3.414468641-second first-token offset remain diagnostic only.",
     },
     {
       label: "Formal bootstrap model",
@@ -127,19 +134,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Exact v76 from Ferric 28b925a and public fe2o3 1ddcd36 completes a 415,660-byte Kernel IR V9 handoff with 26 GuardedStore operations and exact replay, then emits a 103,616-byte aggregate HSACO containing all 12 kernels. HSACO SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; observation manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Integration f151965 uses that exact artifact for the successful diagnostic smoke. Authority is none and publication/load/launch grants are false.",
+        "Exact v76 from Ferric 28b925a and public fe2o3 1ddcd36 emits the 103,616-byte aggregate HSACO containing all 12 kernels. Runtime source 6239bdb uses the same exact artifact for the optimized diagnostic smoke. HSACO SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none; publication, load, and launch grants are false.",
     },
     {
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "f151965 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. Remote engine checks report 857 tests passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 correctly remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
+        "Current integration 1dd3411 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. The latest reported engine checks remain 857 passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
     },
     {
       label: "Qwen execution and serving",
       state: "open",
       detail:
-        "The first authority-free engineering smoke completed through KFD and observed one Qwen token on gfx942, but it is not a serving or performance result. Cold wall time was 26:50.92 because repeated model authentication and copying dominated more than 99% of the process. The production protected receipt/verifier service is undeployed; no endpoint, comparable TTFT, TPOT, vLLM run, SGLang run, or qualification evidence exists.",
+        "The optimized authority-free smoke again observes one Qwen token on gfx942, but it is not a serving or performance result. Overlapping two admissions reduced cold wall from 26:50.92 to 23:55.18. Remaining repeated serial KFD hashes, copies, and readbacks are the engineering-attributed cold bottleneck, not token compute. The protected receipt/verifier service is undeployed; no endpoint, comparable TTFT, TPOT, baseline, production authority, or qualification evidence exists.",
     },
   ],
   envelope: [
@@ -149,7 +156,8 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "f1519652a789d9b27cc49a545072d4027d545b0b; tree 7562c788ce52aa01e276dc7df9a3be34a0843a87; admits and runs the exact v76 aggregate for one authority-free diagnostic token; not public implementation main, a release, a serving result, a benchmark, or qualification"],
+    ["Ferric integration candidate", "1dd3411af96a22f0ed86289b874b57fa28670ef9; tree 55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e; adds the current executable inventory after the optimized runtime source; not public implementation main, a release, serving, benchmark, or qualification"],
+    ["Optimized smoke runtime", "6239bdb2c0c8863c21e8fff102c69a53cfb7a035; tree 6af2244bf51cb1215747ed80309c89b61e3329bc; exact binary source for the 23:55.18 authority-free diagnostic run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v76 input", "public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1; tree 553334d69d51c4ccffea383cd72cf9105df74130; native gfx942 sqrt plus outlined-helper geometry lowering produce the authority-free aggregate"],
   ],
@@ -178,7 +186,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated paired-prefill execution",
         detail:
-          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits one first token, settles device KV, and releases prefill pages. Integration f151965 completed this authority-free path on gfx942 for one diagnostic token.",
+          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits one first token, settles device KV, and releases prefill pages. Runtime source 6239bdb completed the optimized authority-free path on gfx942.",
       },
       {
         name: "Authenticated one-window target execution",
@@ -215,14 +223,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Event-backed comparison schema",
         detail:
-          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. The one-token smoke records diagnostic offsets, but benchmark_comparable=false and r33_tpot_eligible=false. vLLM and SGLang baselines are absent; Docker is inaccessible to this account, so no baseline launch was attempted.",
+          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang. The optimized one-token smoke records diagnostic offsets and a cold-process comparison, but benchmark_comparable=false and r33_tpot_eligible=false. vLLM and SGLang baselines are absent.",
       },
     ],
     roadmap: [
       {
-        name: "Remove repeated model authentication and copying",
+        name: "Remove serial KFD hashing, copying, and readback",
         detail:
-          "The completed cold smoke took 26:50.92, with more than 99% of wall time spent before execution in repeated model authentication and copying. Eliminate that startup duplication before collecting any benchmark-comparable timing.",
+          "Overlapping the two independent admissions improves cold wall by 175.74 seconds. Engineering attribution now identifies repeated serial KFD hashes/copy/readback as the remaining cold bottleneck; this is not token-compute attribution.",
       },
       {
         name: "Extend the authenticated R33 run",
@@ -237,7 +245,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Run Qwen and collect timings",
         detail:
-          "The first diagnostic token is established. Comparable TTFT and TPOT still require the authenticated workload, corrected startup path, required R33 windows, and matched vLLM and SGLang baselines.",
+          "The diagnostic token and cold-start improvement are established. Comparable TTFT and TPOT still require the authenticated workload, corrected serial KFD setup path, required R33 windows, and matched vLLM and SGLang baselines.",
       },
       {
         name: "Launch the comparison baselines",
@@ -274,12 +282,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "Source 240bb3d, integrated as f709a5d, adds the bootstrap model. The radix slice's separate pinned Verus run reports 608 verified and 0 errors. The latest scoped inventory diagnostic found 23 unadmitted bootstrap runtime bodies; combined regeneration remains pending, so no current whole-tree verified/unverified total is claimed. The pure proofs do not prove runtime refinement or effects.",
     },
     hardware: {
-      title: "First authority-free Qwen token observed on gfx942",
+      title: "Overlapped admission improves the diagnostic cold run",
       state: "observed",
-      sourceStatus: "Ferric f151965, exact v76 artifact from Ferric 28b925a and public fe2o3 1ddcd36",
-      result: "PASS: prompt token 9707 produced token 94364 (\"spent\"); hardware completion observed; process status 0",
+      sourceStatus: "Runtime source 6239bdb, tree 6af2244; current inventory-only integration 1dd3411, tree 55c283d",
+      result: "PASS: 23:55.18 cold wall, 175.74 seconds / 10.91% below the 26:50.92 baseline; token 94364 (\"spent\"); status 0",
       detail:
-        "Integration f1519652a789d9b27cc49a545072d4027d545b0b, tree 7562c788ce52aa01e276dc7df9a3be34a0843a87, admitted and ran the 103,616-byte exact v76 HSACO on one gfx942. The post-setup execution duration was 4.826879082 seconds and first-token offset was 3.322079162 seconds. Cold wall time was 26:50.92, dominated more than 99% by repeated model authentication and copying, so benchmark_comparable=false and r33_tpot_eligible=false. Stdout SHA b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea; stderr SHA 1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b. Authority is none; there is no production publication, serving, baseline comparison, or qualification grant.",
+        "Runtime source 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc, overlaps two independent admissions and runs the same exact v76 HSACO on one gfx942. Prompt token 9707 again produces token 94364 (\"spent\") with hardware completion and process status 0. Post-setup duration is 5.002135558 seconds; first-token offset is 3.414468641 seconds. Cold wall improves from 26:50.92 to 23:55.18, a 175.74-second / 10.91% reduction. Remaining repeated serial KFD hashes/copy/readback are an engineering-attributed cold bottleneck, not token compute. Stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. benchmark_comparable=false; r33_tpot_eligible=false; authority none; no serving or baselines.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -292,7 +300,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Live Ready radix source", "Shared committed logical prefix", "integration"],
     ],
     limitation:
-      "These are source-level transitions in integration candidate f151965, with the R33 executor integrated at c1b9590. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only; S1/T128 is NoMatch at logical width 256. Exact v76 produced the authority-free aggregate used for one successful diagnostic hardware token. That observation is not a serving endpoint, benchmark, comparable TTFT/TPOT result, or qualification.",
+      "These transitions remain in current integration 1dd3411; the optimized runtime binary is exact source 6239bdb. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only. The optimized smoke is not a serving endpoint, benchmark, comparable TTFT/TPOT result, or qualification.",
   },
   teams: [
     {
@@ -301,15 +309,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Candidate f151965 admits the exact v76 compiler observation and aggregate, then completes one authority-free Qwen token through KFD on gfx942 while retaining the one-window R33, paired-prefill, and bounded radix work.",
+        "Runtime source 6239bdb overlaps two independent model admissions and repeats the authority-free Qwen token through KFD on gfx942. Current integration 1dd3411 adds only the later executable inventory.",
       current:
-        "The diagnostic hardware completion is real, but the cold process spends more than 99% of its 26:50.92 wall time in repeated model authentication and copying. Integration f151965 is not public implementation main, a release, a benchmark, or a serving result.",
+        "Cold wall improves from 26:50.92 to 23:55.18, saving 175.74 seconds / 10.91%. Remaining repeated serial KFD hashes/copy/readback are the engineering-attributed cold bottleneck, not token compute.",
       blockedBy:
         "No team-local blocker. M1 still depends on removing startup duplication, extending the authenticated R33 path, deploying protected artifact admission, and running matched baselines.",
       next:
-        "Remove repeated model authentication and copying, then rerun the exact one-token path before attempting benchmark-comparable workloads.",
+        "Remove or overlap the remaining serial KFD hashes, copies, and readbacks, then rerun the exact diagnostic path.",
       validation:
-        "Remote checks report engine 857 passed / 7 ignored and adapter 68 passed / 2 ignored, zero failures. Hardware smoke stdout SHA b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea; stderr SHA 1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b.",
+        "Optimized smoke status 0; stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6. benchmark_comparable=false and r33_tpot_eligible=false.",
     },
     {
       name: "Kernels",
@@ -335,13 +343,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, authority-free engineering identities, live-source logical radix reuse, and one checked 128-output target window are integrated.",
       current:
-        "The staged smoke and verified Qwen snapshot consumed the exact v76 observation and produced one authority-free diagnostic token. The R33 executor intentionally supports only one window before Faulted, and the diagnostic run is not TPOT-eligible.",
+        "Runtime source 6239bdb overlaps two independent admissions before the exact v76 diagnostic execution. The R33 executor still supports one window before Faulted, and the smoke is not TPOT-eligible.",
       blockedBy:
         "No team-local blocker. Comparable execution depends on removing repeated startup authentication/copying and protected runtime admission; the required 20-window R33 path remains absent.",
       next:
         "Extend authenticated custody across all 20 required windows after the exact artifact and first diagnostic execution are available.",
       validation:
-        "Remote checks report engine 857 passed / 7 ignored and adapter 68 passed / 2 ignored, zero failures. One hardware completion is observed, but benchmark_comparable=false and r33_tpot_eligible=false.",
+        "The same prompt/output token pair and status 0 repeat after the admission overlap. Post-setup duration is 5.002135558 seconds and first-token offset is 3.414468641 seconds; neither is benchmark-comparable.",
     },
     {
       name: "Formal verification",
@@ -351,7 +359,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "The combined proof crate passes strict Verus 81/0, proof tests 26/26, and source-gate tests 28/28; the radix slice separately passes pinned Verus 608/0.",
       current:
-        "Keeping runtime effects outside the pure proof claim and preparing final combined inventory regeneration after active source integration.",
+        "Inventory-only integration 1dd3411 postdates the optimized runtime binary; it does not enlarge the 6239bdb hardware observation. Runtime effects remain outside the pure proof claim.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
@@ -369,7 +377,8 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Integration candidate f1519652a789d9b27cc49a545072d4027d545b0b, tree 7562c788ce52aa01e276dc7df9a3be34a0843a87; one-window R33 executor source c1b9590b548acea2450136d52ad37a586d03bfed; exact v76 aggregate produced one authority-free diagnostic Qwen token on gfx942",
+      "Current integration 1dd3411af96a22f0ed86289b874b57fa28670ef9, tree 55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e, adds the latest executable inventory",
+      "Optimized runtime source 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc, overlaps two independent admissions and produces the repeated diagnostic token",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
     fe2o3: [
@@ -383,18 +392,32 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
   },
   latestObservation: {
-    title: "First Qwen hardware token observed",
+    title: "Overlapped admission reduces the diagnostic cold run",
     state: "observed",
-    sourceStatus: "Ferric f1519652a789d9b27cc49a545072d4027d545b0b, tree 7562c788ce52aa01e276dc7df9a3be34a0843a87",
+    sourceStatus: "Runtime 6239bdb2c0c8863c21e8fff102c69a53cfb7a035, tree 6af2244bf51cb1215747ed80309c89b61e3329bc; current inventory 1dd3411",
     environment: "mi300x, one gfx942, exact v76 aggregate built with public fe2o3 1ddcd36, tree 553334d",
     result:
-      "Process status 0. Prompt token 9707 produced token 94364, decoded as \"spent\", after a hardware completion. Post-setup execution duration: 4.826879082 seconds; first-token offset: 3.322079162 seconds. Cold process wall: 26:50.92, dominated more than 99% by repeated model authentication and copying. benchmark_comparable=false; r33_tpot_eligible=false.",
+      "Process status 0. Prompt token 9707 again produced token 94364, decoded as \"spent\", after hardware completion. Overlapping two independent admissions reduced cold wall from 26:50.92 to 23:55.18: 175.74 seconds / 10.91%. Post-setup duration: 5.002135558 seconds; first-token offset: 3.414468641 seconds. Remaining repeated serial KFD hashes/copy/readback are engineering attribution, not token compute.",
     buildId: "SHA-256 c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
     generatedTokenIds: [94364],
     authority:
-      "Authority: none. This is one authority-free diagnostic token, not production publication, serving, comparable TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA b6223ce143ed716abeb628e4f3076bc704c8e0bbc9afee724f384b15f843eaea; stderr SHA 1cf762e6b7c61b764254dcc937f50eea31a6ed9fbf34fffb1e642c1a815a3f2b.",
+      "Authority: none. benchmark_comparable=false and r33_tpot_eligible=false. This remains one authority-free diagnostic token, not production publication, serving, TTFT, TPOT, a vLLM/SGLang comparison, or qualification. Stdout SHA 76ecaaf4b4e58f739e64e0d80e0e660b68dd37fc5b1bc0e39a006fb0bf6c6202; stderr SHA adea506cb0161911ccfcbfec03bef456e65d9703119f3c44040c27be82573be6.",
   },
   recentProgress: [
+    {
+      commit: "1dd3411af96a22f0ed86289b874b57fa28670ef9",
+      title: "Integrated the current executable inventory",
+      state: "integration",
+      detail:
+        "Tree 55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e is an inventory-only follow-up to runtime source 6239bdb. It postdates the optimized hardware binary and does not enlarge that observation.",
+    },
+    {
+      commit: "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
+      title: "Overlapped two model admissions",
+      state: "observed",
+      detail:
+        "Tree 6af2244bf51cb1215747ed80309c89b61e3329bc overlaps two independent admissions. The exact runtime repeats token 94364 (\"spent\") with status 0 and reduces cold wall from 26:50.92 to 23:55.18: 175.74 seconds / 10.91%. Remaining repeated serial KFD hashes/copy/readback are engineering attribution, not token compute. benchmark_comparable=false; r33_tpot_eligible=false; authority none.",
+    },
     {
       commit: "f1519652a789d9b27cc49a545072d4027d545b0b",
       title: "Observed the first authority-free Qwen hardware token",
@@ -592,7 +615,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric separates implemented source, integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. Exact v76 produces one 103,616-byte authority-free aggregate HSACO containing all 12 kernels. Integration f151965 used it for one successful diagnostic Qwen token on gfx942. The 4.826879082-second post-setup interval and 3.322079162-second first-token offset are not benchmark-comparable; cold wall was 26:50.92 and more than 99% was repeated model authentication and copying. The R33 path still supports only one 128-output window, not the required 20. No serving endpoint, comparable TTFT/TPOT, vLLM baseline, SGLang baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
+      "Ferric separates integration, hardware observation, performance measurement, and M1 qualification. Runtime source 6239bdb overlaps two independent admissions and repeats the same diagnostic Qwen token on gfx942. Cold wall improves from 26:50.92 to 23:55.18, saving 175.74 seconds / 10.91%. Remaining repeated serial KFD hashes/copy/readback are engineering-attributed cold work, not token compute. The post-setup duration and first-token offset remain non-comparable; benchmark_comparable=false and r33_tpot_eligible=false. Current integration 1dd3411 adds only the later inventory. No serving endpoint, baseline, production authority, or qualification exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],
