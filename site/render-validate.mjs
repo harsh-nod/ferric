@@ -299,6 +299,7 @@ try {
       /GPU and VRAM state are unchanged/i,
       /No Qwen token/i,
       /No hardware execution/i,
+      /unintegrated engineering harness/i,
     ]) {
       assert(!claim.test(result.currentText), `${name}: rendered current view overclaims open work: ${claim}`);
     }

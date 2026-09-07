@@ -324,7 +324,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated paired-prefill execution",
         detail:
-          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits tokens, settles device KV, and releases prefill pages. An unintegrated engineering harness has completed paired prefill and one S1/K4 target/draft round on gfx942 with an 11-allocation roster; production authority and serving remain open.",
+          "The exact S1/T128 bootstrap feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits tokens, settles device KV, and releases prefill pages. The reviewed engineering harness has completed paired prefill and one S1/K4 target/draft round on gfx942 with an 11-allocation roster; production authority and serving remain open.",
       },
       {
         name: "Authenticated one-window target execution",

@@ -936,6 +936,7 @@ for (const staleOrForbidden of [
   "GPU and VRAM state are unchanged",
   "No Qwen token",
   "No hardware execution",
+  "unintegrated engineering harness",
   "provisionally-integratable",
   "final audit pending",
 ]) {
