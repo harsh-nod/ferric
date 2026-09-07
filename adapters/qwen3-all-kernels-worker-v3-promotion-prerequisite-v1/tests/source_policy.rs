@@ -4,12 +4,16 @@ use std::fs;
 use std::path::PathBuf;
 
 const SOURCE: &str = include_str!("../src/lib.rs");
+const REFINEMENT: &str = include_str!("../src/refinement.rs");
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const ROOT_MANIFEST: &str = include_str!("../../../Cargo.toml");
 const QUALIFIER: &str = include_str!("../../../proofs/qualify-release.sh");
 const SOURCE_GATE: &str = include_str!("../../../proofs/source-gate/src/main.rs");
 const VERIFIED_MODULES: &str = include_str!("../../../proofs/VERIFIED_MODULES");
 const UNVERIFIED_BODIES: &str = include_str!("../../../proofs/UNVERIFIED_BODIES");
+const BEHAVIOR_HARNESS: &str = include_str!("behavioral-harness/run.sh");
+const BEHAVIOR_PATCH: &str = include_str!("behavioral-harness/patches/collector-test.patch");
+const BEHAVIOR_README: &str = include_str!("behavioral-harness/README.md");
 const FE2O3_REV: &str = "cf6faec0ee3c026d3a1fc5090ab606a3b425225c";
 const PACKAGE: &str = "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
 const ADAPTER: &str = "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
@@ -55,7 +59,9 @@ fn promotion_prerequisite_requires_external_inputs_and_denies_authority() {
         );
     }
     assert!(!SOURCE.contains("impl Clone for M1AllKernelsWorkerV3PromotionPrerequisiteV1"));
+    assert!(!SOURCE.contains("impl Clone for M1AllKernelsWorkerV3SealedPromotionHandoffV1"));
     assert!(!SOURCE.contains("Serialize for M1AllKernelsWorkerV3PromotionPrerequisiteV1"));
+    assert!(!SOURCE.contains("Serialize for M1AllKernelsWorkerV3SealedPromotionHandoffV1"));
     assert!(!SOURCE.contains("pub const fn recovered_publication"));
     assert!(!SOURCE.contains("pub const fn current_publication"));
     assert!(!SOURCE.contains("pub const fn protected_receipt(&self)"));
@@ -69,12 +75,76 @@ fn promotion_prerequisite_requires_external_inputs_and_denies_authority() {
             .contains("#[derive(Debug)]\npub struct M1AllKernelsWorkerV3PromotionPrerequisiteV1")
     );
     assert!(SOURCE.matches("\"[redacted]\"").count() >= 2);
+    assert!(SOURCE.contains("revalidate_and_seal_for_external_promotion_v1"));
+    assert!(SOURCE.contains("let _ = &handoff.owner;"));
+    assert!(!SOURCE.contains("pub fn into_parts"));
+    assert!(!SOURCE.contains("pub owner:"));
     let production = SOURCE
         .split("#[cfg(test)]")
         .next()
         .expect("production source");
     assert!(!production.contains(".expect("));
     assert!(!production.contains("unwrap("));
+}
+
+#[test]
+fn direct_refinement_binds_all_coordinates_and_denies_authority() {
+    for coordinate in [
+        "protected_receipt_authenticated",
+        "protected_service_request",
+        "recovered_current_publication",
+        "source_pin",
+        "finalized_hsaco_sha256",
+        "finalized_hsaco_length",
+        "compiler_issuer_policy",
+        "current_verification_transport",
+        "current_attestation",
+        "compiler_subject",
+        "compiler_carriage",
+        "compiler_policy",
+        "compiler_issuer_journal",
+        "compiler_occurrence",
+        "compiler_receipt",
+        "compiler_publication",
+        "compiler_acknowledgment",
+        "compiler_worker_ledger",
+        "compiler_sequence",
+        "compiler_prior_rollback_anchor",
+        "compiler_current_rollback_anchor",
+        "current_verification_identity",
+        "current_attestation_identity",
+        "protected_policy_verification",
+        "protected_worker_ledger_verification",
+        "external_rollback_verification",
+        "current_token_lease_binding",
+        "locked_currentness_revalidated",
+    ] {
+        assert!(
+            REFINEMENT.contains(coordinate),
+            "missing refinement coordinate {coordinate}"
+        );
+        assert!(
+            SOURCE.contains(coordinate),
+            "collector does not populate {coordinate}"
+        );
+    }
+    for index in 0..12 {
+        let entry = format!("entry_{index:02}");
+        assert_eq!(
+            REFINEMENT.matches(&entry).count(),
+            4,
+            "unexpected proof coverage for {entry}"
+        );
+        assert!(
+            SOURCE.contains(&entry),
+            "collector does not populate {entry}"
+        );
+    }
+    assert!(REFINEMENT.contains("successful_refinement_binds_every_coordinate_v1"));
+    assert!(REFINEMENT.contains("outcome.is_authority_free_spec()"));
+    assert!(SOURCE.contains("validate_m1_all_kernels_collector_refinement_v1(&refinement)"));
+    assert!(!REFINEMENT.contains("external_body"));
+    assert!(!REFINEMENT.contains("assume("));
 }
 
 #[test]
@@ -106,7 +176,7 @@ fn hostile_request_or_stale_publication_cannot_produce_a_prerequisite() {
         .find(".acquire_current_token()")
         .expect("current-token acquisition");
     let token_binding = helper
-        .find(".validate_current_token(&token)")
+        .find(".validate_current_token(token)")
         .expect("exact-lease token validation");
     let locked_revalidation = helper
         .find(".revalidate_locked_currentness()")
@@ -198,11 +268,13 @@ fn promotion_prerequisite_is_in_workspace_qualification_and_source_inventory() {
             .and_then(toml::Value::as_bool),
         Some(true)
     );
-    assert_eq!(QUALIFIER.matches(ADAPTER).count(), 3);
+    assert_eq!(QUALIFIER.matches(ADAPTER).count(), 4);
     for admitted in [
         format!("package={PACKAGE}|"),
         format!("module={PACKAGE}|{ADAPTER}/src/lib.rs|"),
+        format!("module={PACKAGE}|{ADAPTER}/src/refinement.rs|"),
         format!("unverified={PACKAGE}|{ADAPTER}/src/lib.rs|"),
+        format!("verified={PACKAGE}|{ADAPTER}/src/refinement.rs|"),
     ] {
         assert!(
             VERIFIED_MODULES.contains(&admitted),
@@ -214,7 +286,52 @@ fn promotion_prerequisite_is_in_workspace_qualification_and_source_inventory() {
         "promotion executable bodies are absent from the explicit unverified inventory"
     );
     assert!(SOURCE_GATE.matches("PROMOTION_PACKAGE_NAME").count() >= 4);
+    assert!(SOURCE_GATE.contains("PROMOTION_NORMAL_DEPENDENCIES"));
+    assert!(SOURCE_GATE.contains("PROMOTION_DEV_DEPENDENCIES"));
+    assert!(SOURCE_GATE.contains("validate_promotion_resolved_dependencies("));
+    assert!(SOURCE_GATE.contains("validate_promotion_proof_only_vstd("));
     assert!(SOURCE_GATE.contains("SOURCE_PIN_CRATE_NAME"));
     assert!(SOURCE_GATE.contains("validate_source_pin_package("));
     assert!(SOURCE_GATE.contains("validate_local_runtime_owner_binding("));
+}
+
+#[test]
+fn committed_behavior_harness_is_a_full_qualification_gate() {
+    assert!(QUALIFIER.contains("FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:BEGIN"));
+    assert!(QUALIFIER.contains("FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:PASS"));
+    assert!(BEHAVIOR_HARNESS.contains(FE2O3_REV));
+    assert!(BEHAVIOR_HARNESS.contains("FERRIC_BEHAVIOR_TARGET_DIR"));
+    assert!(
+        BEHAVIOR_HARNESS
+            .contains("ferric_all12_collector_accepts_exact_live_inputs_and_rejects_hostile_state")
+    );
+    for rejection in [
+        "M1AllKernelsPromotionBindingFieldV1::",
+        "CurrentVerification(_)",
+        "CurrentAttestation(_)",
+        "ProtectedReceipt(_)",
+        "Recovery(_)",
+        "DurableLink(_)",
+        "revalidate_and_seal_for_external_promotion_v1",
+        "publish_ferric_all12_worker_v3_fixture_in_directory",
+        "libc::flock",
+    ] {
+        assert!(
+            BEHAVIOR_PATCH.contains(rejection),
+            "behavior matrix omitted {rejection}"
+        );
+    }
+    for nonclaim in [
+        "synthetic",
+        "non-production",
+        "not compiler-produced evidence",
+        "artifact, promotion",
+        "V77 strict rejection",
+        "external promotion service",
+    ] {
+        assert!(
+            BEHAVIOR_README.contains(nonclaim),
+            "behavior nonclaim omitted {nonclaim}"
+        );
+    }
 }

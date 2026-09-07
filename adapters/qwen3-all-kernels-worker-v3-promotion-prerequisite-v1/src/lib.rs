@@ -29,7 +29,16 @@ use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
     M1AllKernelsProtectedReceiptCompilerClaimsV1, M1AllKernelsProtectedReceiptErrorV1,
     M1AllKernelsProtectedReceiptSourcePinV1, M1AllKernelsProtectedVerifierTrustPolicyV1,
 };
-use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_service::M1AllKernelsProtectedVerifierServiceRequestV1;
+use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_service::{
+    M1AllKernelsProtectedVerifierServiceEntryV1, M1AllKernelsProtectedVerifierServiceRequestV1,
+};
+
+mod refinement;
+
+use refinement::{
+    M1AllKernelsCollectorRefinementV1, M1AllKernelsOrderedEntryRefinementV1,
+    validate_m1_all_kernels_collector_refinement_v1,
+};
 
 /// Number of logical kernel families represented by the aggregate M1 receipt.
 pub const M1_ALL_KERNELS_PROMOTION_FAMILY_COUNT_V1: usize = 7;
@@ -125,6 +134,8 @@ pub enum M1AllKernelsPromotionPrerequisiteErrorV1 {
     Binding(M1AllKernelsPromotionBindingFieldV1),
     /// The current artifact length could not be represented in the receipt schema.
     ArtifactLengthOverflow,
+    /// The direct Verus refinement gate rejected the collected coordinate set.
+    RefinementRejected,
 }
 
 impl fmt::Display for M1AllKernelsPromotionPrerequisiteErrorV1 {
@@ -173,6 +184,9 @@ impl fmt::Display for M1AllKernelsPromotionPrerequisiteErrorV1 {
             Self::ArtifactLengthOverflow => {
                 formatter.write_str("current artifact length exceeds u64")
             }
+            Self::RefinementRejected => {
+                formatter.write_str("collector-success refinement rejected one coordinate")
+            }
         }
     }
 }
@@ -188,7 +202,8 @@ impl Error for M1AllKernelsPromotionPrerequisiteErrorV1 {
             Self::MissingExternalInput(_)
             | Self::ZeroCallerChallenge
             | Self::Binding(_)
-            | Self::ArtifactLengthOverflow => None,
+            | Self::ArtifactLengthOverflow
+            | Self::RefinementRejected => None,
         }
     }
 }
@@ -432,6 +447,76 @@ pub struct M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
     request_evidence: M1AllKernelsPromotionRequestEvidenceV1,
 }
 
+/// Opaque, move-only handoff produced immediately after locked-current revalidation.
+///
+/// A separately deployed promotion service consumes this value together with
+/// authority that this crate never owns. The retained publication descriptor,
+/// current token, and authenticated evidence owners remain private and cannot
+/// be decomposed or serialized through this API.
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1::
+///     M1AllKernelsWorkerV3SealedPromotionHandoffV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AllKernelsWorkerV3SealedPromotionHandoffV1>();
+/// ```
+///
+/// ```compile_fail
+/// use ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1::
+///     M1AllKernelsWorkerV3SealedPromotionHandoffV1;
+/// fn reveal_owner(handoff: &M1AllKernelsWorkerV3SealedPromotionHandoffV1) {
+///     let _ = &handoff.owner;
+/// }
+/// ```
+#[must_use = "the locked authenticated handoff must be consumed or deliberately dropped"]
+pub struct M1AllKernelsWorkerV3SealedPromotionHandoffV1 {
+    owner: M1AllKernelsWorkerV3PromotionPrerequisiteV1,
+}
+
+impl fmt::Debug for M1AllKernelsWorkerV3SealedPromotionHandoffV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AllKernelsWorkerV3SealedPromotionHandoffV1")
+            .field("request_evidence", &"[redacted]")
+            .field("holds_current_publication_lock", &true)
+            .field("is_current", &false)
+            .field("grants_publication_authority", &false)
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AllKernelsWorkerV3SealedPromotionHandoffV1 {
+    /// Borrows only the authority-free descriptive evidence.
+    #[must_use]
+    pub const fn request_evidence(&self) -> &M1AllKernelsPromotionRequestEvidenceV1 {
+        &self.owner.request_evidence
+    }
+
+    /// A sealed handoff is not a `CURRENT` publication.
+    #[must_use]
+    pub const fn is_current(&self) -> bool {
+        false
+    }
+
+    /// A sealed handoff grants no publication authority.
+    #[must_use]
+    pub const fn grants_publication_authority(&self) -> bool {
+        false
+    }
+
+    /// A sealed handoff grants no GPU load authority.
+    #[must_use]
+    pub const fn grants_load_authority(&self) -> bool {
+        false
+    }
+
+    /// A sealed handoff grants no GPU launch authority.
+    #[must_use]
+    pub const fn grants_launch_authority(&self) -> bool {
+        false
+    }
+}
+
 impl fmt::Debug for M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
@@ -485,6 +570,27 @@ impl M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
     #[must_use]
     pub const fn requires_external_promotion_service(&self) -> bool {
         true
+    }
+
+    /// Revalidates the retained locked `CURRENT` publication and consumes this
+    /// owner into the only supported external-service handoff state.
+    ///
+    /// The returned value remains authority-free. A promotion service must
+    /// supply its own publication capability and atomically consume its own
+    /// challenge/current-ledger state around this handoff.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed durable-link error if `CURRENT`, its locked descriptor,
+    /// or the retained publication changed after collection.
+    pub fn revalidate_and_seal_for_external_promotion_v1(
+        self,
+    ) -> Result<
+        M1AllKernelsWorkerV3SealedPromotionHandoffV1,
+        M1AllKernelsPromotionPrerequisiteErrorV1,
+    > {
+        revalidate_retained_current_publication(&self._recovered, &self._current_publication)?;
+        Ok(M1AllKernelsWorkerV3SealedPromotionHandoffV1 { owner: self })
     }
 }
 
@@ -552,10 +658,11 @@ pub fn collect_m1_all_kernels_promotion_prerequisite_v1(
     let attestation =
         CompilerExecutionCurrentRecordAttestationV3::decode(external.current_attestation_bytes)
             .map_err(M1AllKernelsPromotionPrerequisiteErrorV1::CurrentAttestation)?;
+    let current_verification_transport = attestation.verification() == &verification
+        && attestation.verification().canonical_bytes().as_slice()
+            == external.current_verification_bytes;
     require_binding(
-        attestation.verification() == &verification
-            && attestation.verification().canonical_bytes().as_slice()
-                == external.current_verification_bytes,
+        current_verification_transport,
         M1AllKernelsPromotionBindingFieldV1::CurrentVerification,
     )?;
     let compiler_current = attestation
@@ -565,7 +672,7 @@ pub fn collect_m1_all_kernels_promotion_prerequisite_v1(
             external.caller_current_challenge,
         )
         .map_err(M1AllKernelsPromotionPrerequisiteErrorV1::CurrentAttestation)?;
-    validate_compiler_claims(
+    let compiler_checks = validate_compiler_claims(
         protected_receipt.receipt().compiler_claims(),
         recovered.wire(),
         &compiler_current,
@@ -593,6 +700,58 @@ pub fn collect_m1_all_kernels_promotion_prerequisite_v1(
         caller_current_challenge: external.caller_current_challenge,
     };
     let current_publication = acquire_and_revalidate_current_publication(&recovered)?;
+    let receipt_entries = protected_receipt.receipt().entries();
+    let request_entries = external.protected_service_request.entries();
+    let refinement = M1AllKernelsCollectorRefinementV1 {
+        protected_receipt_authenticated: true,
+        protected_service_request: external
+            .protected_service_request
+            .matches_receipt(protected_receipt.receipt()),
+        recovered_current_publication: true,
+        source_pin: source_pin_matches(source_pin, request_claims.source_pin()),
+        finalized_hsaco_sha256: request_claims.finalized_hsaco_sha256() == artifact_sha256,
+        finalized_hsaco_length: request_claims.finalized_hsaco_length() == artifact_length,
+        compiler_issuer_policy: carriage.policy() == external.compiler_issuer_policy,
+        current_verification_transport,
+        current_attestation: true,
+        compiler_subject: compiler_checks.subject,
+        compiler_carriage: compiler_checks.carriage,
+        compiler_policy: compiler_checks.policy,
+        compiler_issuer_journal: compiler_checks.issuer_journal,
+        compiler_occurrence: compiler_checks.occurrence,
+        compiler_receipt: compiler_checks.receipt,
+        compiler_publication: compiler_checks.publication,
+        compiler_acknowledgment: compiler_checks.acknowledgment,
+        compiler_worker_ledger: compiler_checks.worker_ledger,
+        compiler_sequence: compiler_checks.sequence,
+        compiler_prior_rollback_anchor: compiler_checks.prior_rollback_anchor,
+        compiler_current_rollback_anchor: compiler_checks.current_rollback_anchor,
+        current_verification_identity: compiler_checks.current_verification_identity,
+        current_attestation_identity: compiler_checks.current_attestation_identity,
+        protected_policy_verification: compiler_checks.protected_policy_verification,
+        protected_worker_ledger_verification: compiler_checks.protected_worker_ledger_verification,
+        external_rollback_verification: compiler_checks.external_rollback_verification,
+        current_token_lease_binding: true,
+        locked_currentness_revalidated: true,
+        ordered_entries: M1AllKernelsOrderedEntryRefinementV1 {
+            entry_00: service_entry_matches(&request_entries[0], &receipt_entries[0]),
+            entry_01: service_entry_matches(&request_entries[1], &receipt_entries[1]),
+            entry_02: service_entry_matches(&request_entries[2], &receipt_entries[2]),
+            entry_03: service_entry_matches(&request_entries[3], &receipt_entries[3]),
+            entry_04: service_entry_matches(&request_entries[4], &receipt_entries[4]),
+            entry_05: service_entry_matches(&request_entries[5], &receipt_entries[5]),
+            entry_06: service_entry_matches(&request_entries[6], &receipt_entries[6]),
+            entry_07: service_entry_matches(&request_entries[7], &receipt_entries[7]),
+            entry_08: service_entry_matches(&request_entries[8], &receipt_entries[8]),
+            entry_09: service_entry_matches(&request_entries[9], &receipt_entries[9]),
+            entry_10: service_entry_matches(&request_entries[10], &receipt_entries[10]),
+            entry_11: service_entry_matches(&request_entries[11], &receipt_entries[11]),
+        },
+    };
+    let refinement_outcome = validate_m1_all_kernels_collector_refinement_v1(&refinement);
+    if !refinement_outcome.accepted || !refinement_outcome.is_authority_free() {
+        return Err(M1AllKernelsPromotionPrerequisiteErrorV1::RefinementRejected);
+    }
     Ok(M1AllKernelsWorkerV3PromotionPrerequisiteV1 {
         _recovered: recovered,
         _current_publication: current_publication,
@@ -609,20 +768,49 @@ fn acquire_and_revalidate_current_publication(
     let token = lease
         .acquire_current_token()
         .map_err(|error| M1AllKernelsPromotionPrerequisiteErrorV1::DurableLink(Box::new(error)))?;
+    revalidate_retained_current_publication(recovered, &token)?;
+    Ok(token)
+}
+
+fn revalidate_retained_current_publication(
+    recovered: &RecoveredWorkerV3LoadEnvelopeV2,
+    token: &DurableCurrentLinkPublicationTokenV1,
+) -> Result<(), M1AllKernelsPromotionPrerequisiteErrorV1> {
+    let lease = recovered.current_publication_lease();
     lease
-        .validate_current_token(&token)
+        .validate_current_token(token)
         .map_err(|error| M1AllKernelsPromotionPrerequisiteErrorV1::DurableLink(Box::new(error)))?;
     token
         .revalidate_locked_currentness()
         .map_err(|error| M1AllKernelsPromotionPrerequisiteErrorV1::DurableLink(Box::new(error)))?;
-    Ok(token)
+    Ok(())
+}
+
+struct M1CompilerClaimMatchesV1 {
+    subject: bool,
+    carriage: bool,
+    policy: bool,
+    issuer_journal: bool,
+    occurrence: bool,
+    receipt: bool,
+    publication: bool,
+    acknowledgment: bool,
+    worker_ledger: bool,
+    sequence: bool,
+    prior_rollback_anchor: bool,
+    current_rollback_anchor: bool,
+    current_verification_identity: bool,
+    current_attestation_identity: bool,
+    protected_policy_verification: bool,
+    protected_worker_ledger_verification: bool,
+    external_rollback_verification: bool,
 }
 
 fn validate_compiler_claims(
     claims: &M1AllKernelsProtectedReceiptCompilerClaimsV1,
     wire: &fe2o3_runtime_protocol::WorkerV3LoadEnvelopeWireV2,
     current: &VerifiedCompilerExecutionCurrentRecordV3,
-) -> Result<(), M1AllKernelsPromotionPrerequisiteErrorV1> {
+) -> Result<M1CompilerClaimMatchesV1, M1AllKernelsPromotionPrerequisiteErrorV1> {
     let carriage = wire.compiler_execution_receipt();
     let subject = wire
         .reconstructed_compiler_execution_subject_v1()
@@ -630,83 +818,107 @@ fn validate_compiler_claims(
     let publication = carriage.publication();
     let acknowledgment = carriage.acknowledgment();
     let verification = current.verification();
-    for (matches, field) in [
+    let matches = M1CompilerClaimMatchesV1 {
+        subject: claims.subject_sha256() == *subject.identity().sha256(),
+        carriage: claims.carriage_sha256() == *carriage.identity().as_bytes(),
+        policy: claims.policy_sha256() == *carriage.policy().identity().as_bytes(),
+        issuer_journal: claims.issuer_journal_sha256() == publication.issuer_journal_identity(),
+        occurrence: claims.compiler_occurrence_sha256()
+            == publication.compiler_occurrence_identity(),
+        receipt: claims.receipt_sha256() == *publication.receipt_identity().as_bytes(),
+        publication: claims.publication_sha256() == *publication.identity().as_bytes(),
+        acknowledgment: claims.acknowledgment_sha256() == *acknowledgment.identity().as_bytes(),
+        worker_ledger: claims.worker_ledger_record_sha256()
+            == acknowledgment.worker_ledger_record_identity(),
+        sequence: claims.sequence() == acknowledgment.sequence(),
+        prior_rollback_anchor: claims.prior_rollback_anchor()
+            == publication.receipt().prior_rollback_anchor(),
+        current_rollback_anchor: claims.current_rollback_anchor()
+            == acknowledgment.current_rollback_anchor(),
+        current_verification_identity: claims.current_record_verification_sha256()
+            == *verification.identity().as_bytes(),
+        current_attestation_identity: claims.current_record_attestation_sha256()
+            == *current.attestation().identity().as_bytes(),
+        protected_policy_verification: claims.protected_policy_verification_sha256()
+            == verification.protected_policy_verification_identity(),
+        protected_worker_ledger_verification: claims.protected_worker_ledger_verification_sha256()
+            == verification.protected_worker_ledger_verification_identity(),
+        external_rollback_verification: claims.external_rollback_verification_sha256()
+            == verification.external_rollback_verification_identity(),
+    };
+    for (coordinate_matches, field) in [
         (
-            claims.subject_sha256() == *subject.identity().sha256(),
+            matches.subject,
             M1AllKernelsPromotionBindingFieldV1::CompilerSubject,
         ),
         (
-            claims.carriage_sha256() == *carriage.identity().as_bytes(),
+            matches.carriage,
             M1AllKernelsPromotionBindingFieldV1::CompilerCarriage,
         ),
         (
-            claims.policy_sha256() == *carriage.policy().identity().as_bytes(),
+            matches.policy,
             M1AllKernelsPromotionBindingFieldV1::CompilerPolicy,
         ),
         (
-            claims.issuer_journal_sha256() == publication.issuer_journal_identity(),
+            matches.issuer_journal,
             M1AllKernelsPromotionBindingFieldV1::CompilerIssuerJournal,
         ),
         (
-            claims.compiler_occurrence_sha256() == publication.compiler_occurrence_identity(),
+            matches.occurrence,
             M1AllKernelsPromotionBindingFieldV1::CompilerOccurrence,
         ),
         (
-            claims.receipt_sha256() == *publication.receipt_identity().as_bytes(),
+            matches.receipt,
             M1AllKernelsPromotionBindingFieldV1::CompilerReceipt,
         ),
         (
-            claims.publication_sha256() == *publication.identity().as_bytes(),
+            matches.publication,
             M1AllKernelsPromotionBindingFieldV1::CompilerPublication,
         ),
         (
-            claims.acknowledgment_sha256() == *acknowledgment.identity().as_bytes(),
+            matches.acknowledgment,
             M1AllKernelsPromotionBindingFieldV1::CompilerAcknowledgment,
         ),
         (
-            claims.worker_ledger_record_sha256() == acknowledgment.worker_ledger_record_identity(),
+            matches.worker_ledger,
             M1AllKernelsPromotionBindingFieldV1::CompilerWorkerLedger,
         ),
         (
-            claims.sequence() == acknowledgment.sequence(),
+            matches.sequence,
             M1AllKernelsPromotionBindingFieldV1::CompilerSequence,
         ),
         (
-            claims.prior_rollback_anchor() == publication.receipt().prior_rollback_anchor(),
+            matches.prior_rollback_anchor,
             M1AllKernelsPromotionBindingFieldV1::CompilerPriorRollbackAnchor,
         ),
         (
-            claims.current_rollback_anchor() == acknowledgment.current_rollback_anchor(),
+            matches.current_rollback_anchor,
             M1AllKernelsPromotionBindingFieldV1::CompilerCurrentRollbackAnchor,
         ),
         (
-            claims.current_record_verification_sha256() == *verification.identity().as_bytes(),
+            matches.current_verification_identity,
             M1AllKernelsPromotionBindingFieldV1::CurrentVerificationIdentity,
         ),
         (
-            claims.current_record_attestation_sha256()
-                == *current.attestation().identity().as_bytes(),
+            matches.current_attestation_identity,
             M1AllKernelsPromotionBindingFieldV1::CurrentAttestationIdentity,
         ),
         (
-            claims.protected_policy_verification_sha256()
-                == verification.protected_policy_verification_identity(),
+            matches.protected_policy_verification,
             M1AllKernelsPromotionBindingFieldV1::ProtectedPolicyVerification,
         ),
         (
-            claims.protected_worker_ledger_verification_sha256()
-                == verification.protected_worker_ledger_verification_identity(),
+            matches.protected_worker_ledger_verification,
             M1AllKernelsPromotionBindingFieldV1::ProtectedWorkerLedgerVerification,
         ),
         (
-            claims.external_rollback_verification_sha256()
-                == verification.external_rollback_verification_identity(),
+            matches.external_rollback_verification,
             M1AllKernelsPromotionBindingFieldV1::ExternalRollbackVerification,
         ),
     ] {
-        require_binding(matches, field)?;
+        require_binding(coordinate_matches, field)?;
     }
-    Ok(())
+    Ok(matches)
 }
 
 fn source_pin_matches(
@@ -719,6 +931,13 @@ fn source_pin_matches(
         && projected.compiler_handoff_length() == claimed.compiler_handoff_length()
         && projected.symbol_manifest_sha256() == claimed.symbol_manifest_sha256()
         && projected.symbol_manifest_length() == claimed.symbol_manifest_length()
+}
+
+fn service_entry_matches(
+    expected: &M1AllKernelsProtectedVerifierServiceEntryV1,
+    actual: &ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::M1AllKernelsProtectedReceiptEntryV1,
+) -> bool {
+    expected == &M1AllKernelsProtectedVerifierServiceEntryV1::from_receipt_entry(actual)
 }
 
 fn require_binding(

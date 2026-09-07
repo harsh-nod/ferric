@@ -9,7 +9,7 @@ fail() {
     exit 1
 }
 
-for tool in awk cargo cat chmod cmp cp dirname grep mkdir mktemp mv python3 rm rustc sed sha256sum sort timeout tr uname; do
+for tool in awk cargo cat chmod cmp cp dirname git grep mkdir mktemp mv patch python3 rm rustc sed sha256sum sort timeout tr uname; do
     command -v "$tool" >/dev/null 2>&1 || fail "$tool is required by the qualification gate"
 done
 
@@ -64,6 +64,7 @@ proof_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-proof-target.XXXXXX")
 source_gate_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-source-gate-target.XXXXXX")
 property_binder_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-property-binder-target.XXXXXX")
 runtime_test_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-runtime-test-target.XXXXXX")
+worker_v3_behavior_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-worker-v3-behavior-target.XXXXXX")
 if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
     receipt_dir=$FERRIC_RECEIPT_DIR
     [ ! -e "$receipt_dir" ] || fail "receipt destination already exists: $receipt_dir"
@@ -71,7 +72,7 @@ if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
 else
     receipt_dir=$(mktemp -d "$repo/target/ferric-receipt.XXXXXX")
 fi
-trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target"' EXIT HUP INT TERM
+trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" "$worker_v3_behavior_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" "$worker_v3_behavior_target"' EXIT HUP INT TERM
 
 # Exclude ambient Cargo wrappers, flags, and configuration from the artifact.
 unset RUSTC RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER CARGO_BUILD_TARGET CARGO_TARGET_DIR
@@ -320,6 +321,10 @@ set +e
             --locked --target-dir "$runtime_test_target"
     done
     printf 'FERRIC_QUALITY_GATE=test-debug:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:BEGIN\n'
+    FERRIC_BEHAVIOR_TARGET_DIR="$worker_v3_behavior_target" \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1/tests/behavioral-harness/run.sh
+    printf 'FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-debug-all-features:BEGIN\n'
     cargo test --workspace --all-features --locked --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-debug-all-features:PASS\n'

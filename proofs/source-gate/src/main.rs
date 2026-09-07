@@ -20,6 +20,7 @@ const VERIFIER_DEV_TCB_FORMAT: &str = "FERRIC-VERIFIER-DEV-DEPENDENCY-TCB-V1";
 const VERIFIER_DEV_TCB_PATH: &str = "proofs/source-gate/VERIFIER_DEV_DEPENDENCY_TCB";
 const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-index";
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
+const VERUS_RESOLVED_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47";
 const FE2O3_SOURCE: &str =
     "git+https://github.com/harsh-nod/fe2o3.git?rev=cf6faec0ee3c026d3a1fc5090ab606a3b425225c";
 const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=cf6faec0ee3c026d3a1fc5090ab606a3b425225c#cf6faec0ee3c026d3a1fc5090ab606a3b425225c";
@@ -446,6 +447,95 @@ const VERIFIER_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
         checksum: Some(TOML_CHECKSUM),
     },
 ];
+
+const PROMOTION_NORMAL_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
+    ExpectedRuntimeDependency {
+        name: "fe2o3-artifact-transaction",
+        edge_name: "fe2o3_artifact_transaction",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: "fe2o3-runtime-protocol",
+        edge_name: "fe2o3_runtime_protocol",
+        declared_source: Some(FE2O3_SOURCE),
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: SOURCE_PIN_PACKAGE_NAME,
+        edge_name: "ferric_qwen3_all_kernels_worker_v3_source_pin_v1",
+        declared_source: None,
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: Some(SOURCE_PIN_RELATIVE_PATH),
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: VERIFIER_PACKAGE_NAME,
+        edge_name: "ferric_qwen3_all_kernels_worker_v3_verifier_v1",
+        declared_source: None,
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: Some(VERIFIER_RELATIVE_PATH),
+        resolved_version: "0.1.0",
+        checksum: None,
+    },
+    ExpectedRuntimeDependency {
+        name: "sha2",
+        edge_name: "sha2",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=0.11.0",
+        kind: None,
+        uses_default_features: false,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.11.0",
+        checksum: Some(SHA2_0_11_CHECKSUM),
+    },
+    ExpectedRuntimeDependency {
+        name: "vstd",
+        edge_name: "vstd",
+        declared_source: Some(VERUS_SOURCE),
+        requirement: "*",
+        kind: None,
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "0.0.0-2026-08-02-0125",
+        checksum: None,
+    },
+];
+
+const PROMOTION_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] =
+    &[ExpectedRuntimeDependency {
+        name: "toml",
+        edge_name: "toml",
+        declared_source: Some(CRATES_IO_SOURCE),
+        requirement: "=1.1.5",
+        kind: Some("dev"),
+        uses_default_features: true,
+        features: &[],
+        relative_path: None,
+        resolved_version: "1.1.5+spec-1.1.0",
+        checksum: Some(TOML_CHECKSUM),
+    }];
 
 const SOURCE_PIN_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
     ExpectedRuntimeDependency {
@@ -1038,6 +1128,8 @@ fn validate_verifier_lock_direct_dependency(
         None
     } else if expected.declared_source == Some(FE2O3_SOURCE) {
         Some(FE2O3_RESOLVED_SOURCE)
+    } else if expected.declared_source == Some(VERUS_SOURCE) {
+        Some(VERUS_RESOLVED_SOURCE)
     } else {
         expected.declared_source
     };
@@ -1480,6 +1572,8 @@ fn validate_runtime_resolved_identity(
         None
     } else if expected.declared_source == Some(FE2O3_SOURCE) {
         Some(FE2O3_RESOLVED_SOURCE)
+    } else if expected.declared_source == Some(VERUS_SOURCE) {
+        Some(VERUS_RESOLVED_SOURCE)
     } else {
         expected.declared_source
     };
@@ -1644,6 +1738,191 @@ fn validate_verifier_resolved_dependencies(
         .collect::<GateResult<BTreeSet<_>>>()?;
     if dependency_id_values.len() != dependency_ids.len() || dependency_ids != resolved_ids {
         return Err("protected verifier resolved dependency ID roster drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_promotion_dependency_declarations(
+    repo: &Path,
+    dependencies: &[Value],
+) -> GateResult<()> {
+    let mut normal = BTreeSet::new();
+    let mut dev = BTreeSet::new();
+    for dependency in dependencies {
+        let name = string_field(dependency, "name")?;
+        let (roster, seen) = match nullable_string_field(dependency, "kind")? {
+            None => (PROMOTION_NORMAL_DEPENDENCIES, &mut normal),
+            Some("dev") => (PROMOTION_DEV_DEPENDENCIES, &mut dev),
+            Some(kind) => {
+                return Err(format!(
+                    "unsupported promotion dependency kind: {name}::{kind}"
+                ));
+            }
+        };
+        let expected = expected_runtime_dependency(roster, name)
+            .ok_or_else(|| format!("unexpected promotion dependency declaration: {name}"))?;
+        if !seen.insert(name.to_owned()) {
+            return Err(format!(
+                "duplicate promotion dependency declaration: {name}"
+            ));
+        }
+        validate_runtime_dependency_declaration(repo, dependency, expected, "promotion")?;
+    }
+    let expected_normal = PROMOTION_NORMAL_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.name.to_owned())
+        .collect();
+    let expected_dev = PROMOTION_DEV_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.name.to_owned())
+        .collect();
+    if normal != expected_normal {
+        return Err("promotion normal dependency declaration roster drifted".to_owned());
+    }
+    if dev != expected_dev {
+        return Err("promotion dev dependency declaration roster drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_promotion_resolved_dependencies(
+    repo: &Path,
+    packages_by_id: &BTreeMap<&str, &Value>,
+    local_node: &Value,
+    checksums: &BTreeMap<(String, String, String), String>,
+) -> GateResult<()> {
+    if !string_array(local_node, "features", "promotion resolved feature")?.is_empty() {
+        return Err("promotion resolved features drifted".to_owned());
+    }
+    let edges = local_node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "promotion resolve edges are malformed".to_owned())?;
+    let mut normal_edges = BTreeSet::new();
+    let mut dev_edges = BTreeSet::new();
+    let mut resolved_ids = BTreeSet::new();
+    for edge in edges {
+        let edge_object = edge
+            .as_object()
+            .ok_or_else(|| "promotion resolve edge is malformed".to_owned())?;
+        if edge_object
+            .keys()
+            .map(String::as_str)
+            .collect::<BTreeSet<_>>()
+            != BTreeSet::from(["dep_kinds", "name", "pkg"])
+        {
+            return Err("promotion resolve edge field roster drifted".to_owned());
+        }
+        let edge_name = string_field(edge, "name")?;
+        let kinds = edge
+            .get("dep_kinds")
+            .and_then(Value::as_array)
+            .ok_or_else(|| format!("promotion resolve edge kinds are malformed: {edge_name}"))?;
+        let [kind] = kinds.as_slice() else {
+            return Err(format!(
+                "promotion resolve edge kind roster drifted: {edge_name}"
+            ));
+        };
+        let kind_object = kind
+            .as_object()
+            .ok_or_else(|| format!("promotion resolve edge kind is malformed: {edge_name}"))?;
+        if kind_object
+            .keys()
+            .map(String::as_str)
+            .collect::<BTreeSet<_>>()
+            != BTreeSet::from(["kind", "target"])
+            || nullable_string_field(kind, "target")?.is_some()
+        {
+            return Err(format!(
+                "promotion resolve edge kind/target drifted: {edge_name}"
+            ));
+        }
+        let (roster, seen) = match nullable_string_field(kind, "kind")? {
+            None => (PROMOTION_NORMAL_DEPENDENCIES, &mut normal_edges),
+            Some("dev") => (PROMOTION_DEV_DEPENDENCIES, &mut dev_edges),
+            Some(other) => {
+                return Err(format!(
+                    "unsupported promotion resolved dependency kind: {edge_name}::{other}"
+                ));
+            }
+        };
+        let expected = roster
+            .iter()
+            .find(|dependency| dependency.edge_name == edge_name)
+            .ok_or_else(|| format!("unexpected promotion resolved dependency: {edge_name}"))?;
+        if !seen.insert(edge_name.to_owned()) {
+            return Err(format!(
+                "duplicate promotion resolved dependency: {edge_name}"
+            ));
+        }
+        let dependency_id = string_field(edge, "pkg")?;
+        if !resolved_ids.insert(dependency_id.to_owned()) {
+            return Err(format!(
+                "duplicate promotion resolved dependency ID: {edge_name}"
+            ));
+        }
+        validate_runtime_resolved_identity(
+            repo,
+            packages_by_id,
+            checksums,
+            expected,
+            dependency_id,
+            "promotion",
+        )?;
+    }
+    let expected_normal_edges = PROMOTION_NORMAL_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.edge_name.to_owned())
+        .collect();
+    let expected_dev_edges = PROMOTION_DEV_DEPENDENCIES
+        .iter()
+        .map(|dependency| dependency.edge_name.to_owned())
+        .collect();
+    if normal_edges != expected_normal_edges {
+        return Err("promotion normal resolve edge roster drifted".to_owned());
+    }
+    if dev_edges != expected_dev_edges {
+        return Err("promotion dev resolve edge roster drifted".to_owned());
+    }
+    let expected_ids = PROMOTION_NORMAL_DEPENDENCIES
+        .iter()
+        .chain(PROMOTION_DEV_DEPENDENCIES)
+        .map(|dependency| expected_runtime_dependency_id(repo, dependency))
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    let dependency_id_values = local_node
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "promotion dependency IDs are malformed".to_owned())?;
+    let dependency_ids = dependency_id_values
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| "promotion dependency ID is malformed".to_owned())
+        })
+        .collect::<GateResult<BTreeSet<_>>>()?;
+    if dependency_id_values.len() != dependency_ids.len()
+        || dependency_ids != resolved_ids
+        || dependency_ids != expected_ids
+    {
+        return Err("promotion resolved dependency ID roster drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_promotion_proof_only_vstd(repo: &Path) -> GateResult<()> {
+    let root_source = fs::read_to_string(repo.join(PROMOTION_RELATIVE_PATH).join("src/lib.rs"))
+        .map_err(|error| format!("promotion root source: {error}"))?;
+    let refinement_source =
+        fs::read_to_string(repo.join(PROMOTION_RELATIVE_PATH).join("src/refinement.rs"))
+            .map_err(|error| format!("promotion refinement source: {error}"))?;
+    if root_source.contains("vstd")
+        || refinement_source.matches("use vstd::prelude::*;").count() != 1
+        || refinement_source.matches("vstd::").count() != 1
+        || refinement_source.contains("extern crate vstd")
+    {
+        return Err("promotion proof-only vstd source boundary drifted".to_owned());
     }
     Ok(())
 }
@@ -3444,7 +3723,13 @@ fn validate_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<
     Ok(runtime_tcb)
 }
 
-fn validate_promotion_workspace_package(repo: &Path, package: &Value) -> GateResult<()> {
+fn validate_promotion_workspace_package(
+    repo: &Path,
+    package: &Value,
+    packages_by_id: &BTreeMap<&str, &Value>,
+    resolve_nodes: &BTreeMap<&str, &Value>,
+    checksums: &BTreeMap<(String, String, String), String>,
+) -> GateResult<()> {
     let expected_root = canonical(&repo.join(PROMOTION_RELATIVE_PATH))?;
     if expected_root == repo
         || expected_root
@@ -3510,6 +3795,17 @@ fn validate_promotion_workspace_package(repo: &Path, package: &Value) -> GateRes
     {
         return Err("promotion package library target drifted".to_owned());
     }
+    let dependencies = package
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "promotion package dependencies are malformed".to_owned())?;
+    validate_promotion_dependency_declarations(repo, dependencies)?;
+    let package_id = string_field(package, "id")?;
+    let local_node = resolve_nodes
+        .get(package_id)
+        .ok_or_else(|| "promotion package has no resolve node".to_owned())?;
+    validate_promotion_resolved_dependencies(repo, packages_by_id, local_node, checksums)?;
+    validate_promotion_proof_only_vstd(repo)?;
     Ok(())
 }
 
@@ -3572,6 +3868,7 @@ fn packages(
     }
 
     let mut manifest_to_name = BTreeMap::new();
+    let lock_checksums = runtime_lock_checksums(repo)?;
     for package in &workspace {
         let name = string_field(package, "name")?;
         safe_atom(name, "workspace package name")?;
@@ -3581,7 +3878,13 @@ fn packages(
             ));
         }
         if name == PROMOTION_PACKAGE_NAME {
-            validate_promotion_workspace_package(repo, package)?;
+            validate_promotion_workspace_package(
+                repo,
+                package,
+                &packages_by_id,
+                &resolve_nodes,
+                &lock_checksums,
+            )?;
         }
         if name == "ferric-build" {
             let features = package
@@ -5492,8 +5795,9 @@ fn main() {
 mod tests {
     use super::{
         canonical_verifier_package_id, canonical_verifier_target_path, cfg_test_fixture_item,
-        cfg_test_item, inherent_owner_module, package_map, parse_generated_roster_declaration,
-        render_verifier_lock_records, resolve_map, runtime_lock_checksums, target_module_dir,
+        cfg_test_item, expected_runtime_dependency_id, inherent_owner_module, package_map,
+        parse_generated_roster_declaration, render_verifier_lock_records, resolve_map,
+        runtime_lock_checksums, target_module_dir,
         validate_aggregate_runtime_roster_file, validate_attributes,
         validate_local_runtime_package, validate_node_dependency_ids,
         validate_promotion_workspace_package,
@@ -5501,10 +5805,11 @@ mod tests {
         validate_verifier_dependency_declarations, validate_verifier_resolved_dependencies,
         verifier_edge_kinds, ExpectedRuntimeDependency, ExpectedSourcePinTarget,
         VerifierDependencyScope, VerifierEdgeKinds, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE,
-        FE2O3_SOURCE, PROMOTION_CRATE_NAME, PROMOTION_PACKAGE_NAME, PROMOTION_RELATIVE_PATH,
+        FE2O3_SOURCE, PROMOTION_CRATE_NAME, PROMOTION_DEV_DEPENDENCIES,
+        PROMOTION_NORMAL_DEPENDENCIES, PROMOTION_PACKAGE_NAME, PROMOTION_RELATIVE_PATH,
         SOURCE_PIN_CRATE_NAME, SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME,
         SOURCE_PIN_RELATIVE_PATH, SOURCE_PIN_TARGETS, VERIFIER_DEV_DEPENDENCIES,
-        VERIFIER_NORMAL_DEPENDENCIES,
+        VERIFIER_NORMAL_DEPENDENCIES, VERUS_RESOLVED_SOURCE, VERUS_SOURCE,
     };
     use serde_json::{json, Value};
     use std::collections::{BTreeMap, BTreeSet};
@@ -5529,7 +5834,12 @@ mod tests {
     }
 
     fn promotion_package(repo: &Path) -> Value {
-        json!({
+        let mut package = json!({
+            "id": format!(
+                "path+file://{}#{}@0.1.0",
+                repo.join(PROMOTION_RELATIVE_PATH).display(),
+                PROMOTION_PACKAGE_NAME,
+            ),
             "name": PROMOTION_PACKAGE_NAME,
             "version": "0.1.0",
             "source": null,
@@ -5547,27 +5857,191 @@ mod tests {
                 "src_path": repo.join(PROMOTION_RELATIVE_PATH).join("src/lib.rs"),
                 "edition": "2024",
             }],
+            "dependencies": [],
+        });
+        package["dependencies"] = Value::Array(
+            PROMOTION_NORMAL_DEPENDENCIES
+                .iter()
+                .chain(PROMOTION_DEV_DEPENDENCIES)
+                .map(|expected| verifier_declaration(repo, expected))
+                .collect(),
+        );
+        package
+    }
+
+    fn promotion_metadata(repo: &Path) -> Value {
+        let root = promotion_package(repo);
+        let root_id = root["id"].as_str().expect("root ID").to_owned();
+        let mut packages = vec![root];
+        let mut edges = Vec::new();
+        let mut ids = Vec::new();
+        for expected in PROMOTION_NORMAL_DEPENDENCIES
+            .iter()
+            .chain(PROMOTION_DEV_DEPENDENCIES)
+        {
+            let id = expected_runtime_dependency_id(repo, expected).expect("dependency ID");
+            let source = if expected.relative_path.is_some() {
+                None
+            } else if expected.declared_source == Some(FE2O3_SOURCE) {
+                Some(FE2O3_RESOLVED_SOURCE)
+            } else if expected.declared_source == Some(VERUS_SOURCE) {
+                Some(VERUS_RESOLVED_SOURCE)
+            } else {
+                expected.declared_source
+            };
+            let manifest = expected.relative_path.map_or_else(
+                || repo.join("fixture-registry").join(expected.name).join("Cargo.toml"),
+                |path| repo.join(path).join("Cargo.toml"),
+            );
+            packages.push(json!({
+                "id": id,
+                "name": expected.name,
+                "version": expected.resolved_version,
+                "source": source,
+                "manifest_path": manifest,
+            }));
+            edges.push(json!({
+                "name": expected.edge_name,
+                "pkg": id,
+                "dep_kinds": [{ "kind": expected.kind, "target": null }],
+            }));
+            ids.push(Value::String(id));
+        }
+        json!({
+            "packages": packages,
+            "resolve": {
+                "nodes": [{
+                    "id": root_id,
+                    "features": [],
+                    "deps": edges,
+                    "dependencies": ids,
+                }],
+            },
         })
+    }
+
+    fn validate_promotion_fixture(repo: &Path, metadata: &Value) -> Result<(), String> {
+        let packages = package_map(metadata)?;
+        let nodes = resolve_map(metadata)?;
+        let package = packages
+            .values()
+            .copied()
+            .find(|package| package["name"] == PROMOTION_PACKAGE_NAME)
+            .expect("promotion package");
+        validate_promotion_workspace_package(
+            repo,
+            package,
+            &packages,
+            &nodes,
+            &runtime_lock_checksums(repo)?,
+        )
     }
 
     #[test]
     fn promotion_workspace_package_binds_exact_root_identity_and_policy() {
         let repo = repo();
-        let package = promotion_package(&repo);
-        assert_eq!(validate_promotion_workspace_package(&repo, &package), Ok(()));
+        let metadata = promotion_metadata(&repo);
+        assert_eq!(validate_promotion_fixture(&repo, &metadata), Ok(()));
 
-        let mut wrong_manifest = package.clone();
-        wrong_manifest["manifest_path"] =
+        let mut wrong_manifest = metadata.clone();
+        wrong_manifest["packages"][0]["manifest_path"] =
             json!(repo.join(SOURCE_PIN_RELATIVE_PATH).join("Cargo.toml"));
-        assert!(validate_promotion_workspace_package(&repo, &wrong_manifest).is_err());
+        assert!(validate_promotion_fixture(&repo, &wrong_manifest).is_err());
 
-        let mut wrong_crate = package.clone();
-        wrong_crate["targets"][0]["name"] = json!(SOURCE_PIN_CRATE_NAME);
-        assert!(validate_promotion_workspace_package(&repo, &wrong_crate).is_err());
+        let mut wrong_crate = metadata.clone();
+        wrong_crate["packages"][0]["targets"][0]["name"] = json!(SOURCE_PIN_CRATE_NAME);
+        assert!(validate_promotion_fixture(&repo, &wrong_crate).is_err());
 
-        let mut opted_out = package;
-        opted_out["metadata"]["verus"]["verify"] = json!(false);
-        assert!(validate_promotion_workspace_package(&repo, &opted_out).is_err());
+        let mut opted_out = metadata;
+        opted_out["packages"][0]["metadata"]["verus"]["verify"] = json!(false);
+        assert!(validate_promotion_fixture(&repo, &opted_out).is_err());
+    }
+
+    #[test]
+    fn promotion_dependency_graph_rejects_every_declaration_drift_class() {
+        let repo = repo();
+        let clean = promotion_metadata(&repo);
+        for mutation in 0..11 {
+            let mut hostile = clean.clone();
+            let dependencies = hostile["packages"][0]["dependencies"]
+                .as_array_mut()
+                .expect("dependency array");
+            match mutation {
+                0 => {
+                    dependencies.pop();
+                }
+                1 => dependencies[0]["rename"] = json!("renamed_fe2"),
+                2 => dependencies[0]["kind"] = json!("build"),
+                3 => dependencies[0]["features"] = json!(["hostile"]),
+                4 => dependencies[0]["target"] = json!("cfg(unix)"),
+                5 => dependencies[0]["source"] = json!(CRATES_IO_SOURCE),
+                6 => dependencies.push(dependencies[0].clone()),
+                7 => dependencies.push(json!({
+                    "name": "ferric-engine", "source": null, "req": "*", "kind": null,
+                    "rename": null, "optional": false, "uses_default_features": true,
+                    "features": [], "target": null, "registry": null,
+                    "path": repo.join("crates/ferric-engine"),
+                })),
+                8 => dependencies.push(json!({
+                    "name": "ferric-build", "source": null, "req": "*", "kind": null,
+                    "rename": "compiler", "optional": false, "uses_default_features": true,
+                    "features": [], "target": null, "registry": null,
+                    "path": repo.join("crates/ferric-build"),
+                })),
+                9 => dependencies.push(json!({
+                    "name": "sha2", "source": CRATES_IO_SOURCE, "req": "=0.11.0",
+                    "kind": "dev", "rename": null, "optional": false,
+                    "uses_default_features": false, "features": [], "target": null,
+                    "registry": null,
+                })),
+                10 => {
+                    let vstd = dependencies
+                        .iter_mut()
+                        .find(|dependency| dependency["name"] == "vstd")
+                        .expect("vstd declaration");
+                    vstd["rename"] = json!("proof_runtime");
+                }
+                _ => unreachable!(),
+            }
+            assert!(
+                validate_promotion_fixture(&repo, &hostile).is_err(),
+                "declaration mutation {mutation} passed"
+            );
+        }
+    }
+
+    #[test]
+    fn promotion_dependency_graph_rejects_resolved_edge_and_package_drift() {
+        let repo = repo();
+        let clean = promotion_metadata(&repo);
+        for mutation in 0..7 {
+            let mut hostile = clean.clone();
+            match mutation {
+                0 => {
+                    hostile["resolve"]["nodes"][0]["deps"]
+                        .as_array_mut()
+                        .expect("edges")
+                        .pop();
+                }
+                1 => hostile["resolve"]["nodes"][0]["deps"][0]["name"] = json!("renamed"),
+                2 => {
+                    hostile["resolve"]["nodes"][0]["deps"][0]["dep_kinds"][0]["kind"] =
+                        json!("build");
+                }
+                3 => {
+                    hostile["resolve"]["nodes"][0]["deps"][0]["dep_kinds"][0]["target"] =
+                        json!("cfg(unix)");
+                }
+                4 => hostile["resolve"]["nodes"][0]["deps"][0]["pkg"] = json!("hostile#id"),
+                5 => hostile["packages"][1]["source"] = json!(CRATES_IO_SOURCE),
+                6 => hostile["packages"][1]["version"] = json!("0.1.1"),
+                _ => unreachable!(),
+            }
+            assert!(
+                validate_promotion_fixture(&repo, &hostile).is_err(),
+                "resolved mutation {mutation} passed"
+            );
+        }
     }
 
     fn verifier_declaration(repo: &Path, expected: &ExpectedRuntimeDependency) -> Value {

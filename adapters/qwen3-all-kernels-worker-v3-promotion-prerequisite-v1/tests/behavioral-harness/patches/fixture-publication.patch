@@ -1,0 +1,153 @@
+--- a/crates/fe2o3-hsaco-finalize/tests/worker_v3_hsaco_admission.rs
++++ b/crates/fe2o3-hsaco-finalize/tests/worker_v3_hsaco_admission.rs
+@@ -130,6 +130,7 @@
+ use hsaco_fixture::{
+     ScalarAddFixtureMutation, scalar_add_fixture_with, slice_fixture_with_descriptor_table,
+     slice_fixture_with_descriptor_table_and_workgroup,
++    synthetic_ferric_all12_slice_fixture_with_descriptor_table,
+     synthetic_two_kernel_slice_fixture_with_descriptor_table,
+ };
+ use production_semantic_debug_fixture_v1::{
+@@ -137,6 +138,47 @@
+ };
+
+ const TARGET: &str = "gfx942:xnack-";
++const FERRIC_ALL12_KERNEL_SYMBOLS: [(&str, &str); 12] = [
++    (
++        "ferric_qwen3_lowest_id_argmax_bf16_v1",
++        "ferric_qwen3_lowest_id_argmax_bf16_v1.kd",
++    ),
++    (
++        "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
++        "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1.kd",
++    ),
++    ("qwen3_rope_v1", "qwen3_rope_v1.kd"),
++    (
++        "ferric_qwen3_compact_completion_v1",
++        "ferric_qwen3_compact_completion_v1.kd",
++    ),
++    ("qwen3_paged_kv_write_v1", "qwen3_paged_kv_write_v1.kd"),
++    (
++        "qwen3_paged_gqa_decode_bf16_f32_v1",
++        "qwen3_paged_gqa_decode_bf16_f32_v1.kd",
++    ),
++    (
++        "qwen3_swiglu_bf16_f32_v1",
++        "qwen3_swiglu_bf16_f32_v1.kd",
++    ),
++    (
++        "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
++        "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1.kd",
++    ),
++    ("qwen3_rmsnorm_v1", "qwen3_rmsnorm_v1.kd"),
++    (
++        "ferric_qwen3_token_embedding_bf16_copy_v1",
++        "ferric_qwen3_token_embedding_bf16_copy_v1.kd",
++    ),
++    (
++        "ferric_qwen3_speculative_token_assembly_v1",
++        "ferric_qwen3_speculative_token_assembly_v1.kd",
++    ),
++    (
++        "qwen3_gqa_prefill_causal_bf16_f32_v1",
++        "qwen3_gqa_prefill_causal_bf16_f32_v1.kd",
++    ),
++];
+ // Measured for this test's one explicit i32, COV6, ROCm 7.2.4 LLVM 22 Worker signature.
+ const SCALAR_COV6_KERNARG_SEGMENT_BYTES: u32 = 264;
+ const WORKER_BUILD_ID: &str = "fixture-worker-v3-hsaco-v1";
+@@ -336,6 +378,80 @@
+ }
+
+ #[allow(dead_code)]
++pub(crate) fn published_ferric_all12_worker_v3_fixture(
++) -> PublishedWorkerV3Fixture {
++    let directory = TestDirectory::new();
++    let staged = publish_ferric_all12_worker_v3_fixture_in_directory(&directory, 0x61);
++    PublishedWorkerV3Fixture {
++        directory,
++        producer: staged.producer,
++        attempt: staged.attempt,
++        published: staged.published,
++    }
++}
++
++#[allow(dead_code)]
++pub(crate) fn publish_ferric_all12_worker_v3_fixture_in_directory(
++    directory: &TestDirectory,
++    attempt_seed: u8,
++) -> PublishedWorkerV3InDirectory {
++    let raw_hsaco = synthetic_ferric_all12_slice_fixture_with_descriptor_table(
++        &ferric_all12_slice_descriptor_table(),
++        &FERRIC_ALL12_KERNEL_SYMBOLS,
++    )
++    .bytes;
++    publish_worker_v3_fixture_in_directory_for_kernels_with_config(
++        directory,
++        raw_hsaco,
++        &FERRIC_ALL12_KERNEL_SYMBOLS,
++        EvidenceConfig {
++            attempt_seed,
++            llvm_build_identity: "7.2.4",
++            ..EvidenceConfig::BASE
++        },
++    )
++}
++
++fn ferric_all12_slice_descriptor_table() -> Vec<u8> {
++    let source = SourceTypeRecordV1::new(SourceTypeDescriptorV1::shared_slice(ScalarTypeV1::F32));
++    let layout = DeviceLayoutRecordV1::new(DeviceLayoutDescriptorV1::shared_slice(ScalarTypeV1::F32));
++    let kernels = FERRIC_ALL12_KERNEL_SYMBOLS
++        .iter()
++        .enumerate()
++        .map(|(index, (entry, descriptor))| {
++            slice_kernel_descriptor(
++                0xc0_u8.wrapping_add(index as u8),
++                entry,
++                entry,
++                descriptor,
++                &source,
++                &layout,
++                64,
++            )
++        })
++        .collect();
++    let table = DeviceDescriptorTableV1::new(
++        CanonicalCodeObjectDigest::from_bytes([0; 32]),
++        DescriptorCodeObjectVersion::V6,
++        CompilerIdentityV1::new(
++            Text::new("rustc-codegen-fe2o3").unwrap(),
++            Text::new("test-only-synthetic").unwrap(),
++            [0xa6; 20],
++        ),
++        ProducerIdentityV1::new(
++            Text::new("ferric-test-only-synthetic-worker-v3").unwrap(),
++            Text::new("test-only").unwrap(),
++        ),
++        target(),
++        vec![source],
++        vec![layout],
++        kernels,
++    )
++    .unwrap();
++    encode_device_descriptor_table_v1(&table).unwrap()
++}
++
++#[allow(dead_code)]
+ pub(crate) fn publish_worker_v3_fixture_in_directory(
+     directory: &TestDirectory,
+     attempt_seed: u8,
+@@ -1568,6 +1684,13 @@
+ fn pinned(directory: &TestDirectory, llvm_build_identity: &str) -> PinnedWorkerV1 {
+     let private_worker = directory.0.join("worker");
+     fs::copy(worker_path(), &private_worker).unwrap();
++    assert!(
++        std::process::Command::new("/usr/bin/strip")
++            .arg(&private_worker)
++            .status()
++            .unwrap()
++            .success()
++    );
+     let bytes = fs::read(&private_worker).unwrap();
+     let measurement = WorkerMeasurementV1::new(
+         ContentIdentityV1::calculate(&bytes),

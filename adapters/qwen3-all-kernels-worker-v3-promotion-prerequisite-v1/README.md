@@ -24,12 +24,28 @@ layout, and effect digests are accepted under the authenticated protected
 verifier TCB after the complete request matches the signed receipt; this
 collector does not independently rederive those results.
 
+A direct Verus refinement makes the final executable acceptance gate the
+conjunction of every protected-request, source, artifact, compiler, current,
+token, and exact ordered 12-entry observation. It also proves that the
+accepted outcome grants no publication, verifier, load, or launch authority.
+The model begins after the operating-system, filesystem, decoding, hashing,
+and cryptographic operations; those bodies remain explicitly unverified. The
+sole `vstd` dependency is proof-only and has no callable production path after
+proof erasure.
+
 Recovery uses fe2o3's retained-directory V2 API. The locked durable-root
 descriptor is preserved in the recovered publication lease, so promotion
 collection never re-resolves an ambient output path. After every correlation,
 the collector acquires and validates the exact lease's currentness token and
 revalidates the retained files while keeping the cooperative publication lock
 held in the returned owner.
+
+The supported transition for an external promotion service consumes the live
+owner, immediately revalidates the retained locked `CURRENT` state, and returns
+an opaque sealed handoff. It does not reveal the recovered publication,
+currentness token, or authenticated owners and still grants no authority. A
+change between collection and this transition returns a typed durable-link
+error.
 
 The returned live object is not cloneable or serializable. Its descriptive
 evidence exposes typed identity getters and no serialization API; it explicitly

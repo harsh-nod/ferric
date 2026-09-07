@@ -1,0 +1,191 @@
+--- a/crates/fe2o3-hsaco-finalize/tests/fixtures/worker_v3_hsaco_test_support.rs
++++ b/crates/fe2o3-hsaco-finalize/tests/fixtures/worker_v3_hsaco_test_support.rs
+@@ -608,6 +608,30 @@
+ }
+
+ #[allow(dead_code)]
++/// Builds a hand-authored 12-entry ELF for Ferric collector recovery tests only.
++///
++/// Neither this ELF nor its descriptor table is compiler-produced evidence.
++pub(crate) fn synthetic_ferric_all12_slice_fixture_with_descriptor_table(
++    descriptor_table: &[u8],
++    kernel_symbols: &[(&str, &str)],
++) -> Fixture {
++    let kernels = kernel_symbols
++        .iter()
++        .map(|(entry, descriptor)| {
++            let mut options = FixtureOptions::valid();
++            options.target = "gfx942:xnack-";
++            options.entry = entry;
++            options.descriptor = descriptor;
++            options.include_export = false;
++            options.required_workgroup_size = [64, 1, 1];
++            options.max_flat_workgroup_size = 64;
++            options
++        })
++        .collect::<Vec<_>>();
++    legacy_fixture_with_kernels(&kernels, Some(descriptor_table))
++}
++
++#[allow(dead_code)]
+ pub(crate) fn slice_fixture_with_descriptor_table_and_workgroup(
+     descriptor_table: &[u8],
+     workgroup_size: u32,
+@@ -1955,14 +1979,27 @@
+     second: Option<FixtureOptions<'_>>,
+     descriptor_table: Option<&[u8]>,
+ ) -> Fixture {
+-    const PROGRAM_COUNT: usize = 2;
++    let mut kernels = vec![options];
+     if let Some(second) = second {
+-        assert_eq!(second.target, options.target);
+-        assert_eq!(second.code_object_version, options.code_object_version);
++        kernels.push(second);
++    }
++    legacy_fixture_with_kernels(&kernels, descriptor_table)
++}
++
++fn legacy_fixture_with_kernels(
++    kernels: &[FixtureOptions<'_>],
++    descriptor_table: Option<&[u8]>,
++) -> Fixture {
++    const PROGRAM_COUNT: usize = 2;
++    assert!(!kernels.is_empty());
++    let options = kernels[0];
++    for kernel in kernels.iter().skip(1) {
++        assert_eq!(kernel.target, options.target);
++        assert_eq!(kernel.code_object_version, options.code_object_version);
+         assert!(!options.include_export);
+-        assert!(!second.include_export);
++        assert!(!kernel.include_export);
+     }
+-    let metadata = metadata_with_optional_second_kernel(options, second);
++    let metadata = metadata_with_kernels(kernels);
+     let note = metadata_note(&metadata);
+     let mut bytes = vec![0; ELF_HEADER_BYTES + PROGRAM_COUNT * PROGRAM_HEADER_BYTES];
+
+@@ -1973,18 +2010,19 @@
+     align(&mut bytes, 64);
+     let rodata_offset = bytes.len();
+     let descriptor_offset = bytes.len();
+-    bytes.resize(bytes.len() + 64 * (1 + usize::from(second.is_some())), 0);
++    bytes.resize(bytes.len() + 64 * kernels.len(), 0);
+     let rodata_end = bytes.len();
+
+     align(&mut bytes, 256);
+     let text_offset = bytes.len();
+     bytes.resize(bytes.len() + 64, 0xbf);
+-    let second_text_offset = second.map(|_| {
++    let mut kernel_text_offsets = vec![text_offset];
++    for index in 1..kernels.len() {
+         align(&mut bytes, 256);
+         let offset = bytes.len();
+-        bytes.resize(bytes.len() + 64, 0xbd);
+-        offset
+-    });
++        bytes.resize(bytes.len() + 64, 0xbd_u8.wrapping_sub(index as u8));
++        kernel_text_offsets.push(offset);
++    }
+     let export_offset = if options.include_export {
+         align(&mut bytes, 256);
+         let offset = bytes.len();
+@@ -2001,18 +2039,22 @@
+     let export_name = options
+         .include_export
+         .then(|| push_name(&mut strtab, "ffi_export"));
+-    let second_names = second.map(|second| {
+-        (
+-            push_name(&mut strtab, second.entry),
+-            push_name(&mut strtab, second.descriptor),
+-        )
+-    });
++    let remaining_names = kernels
++        .iter()
++        .skip(1)
++        .map(|kernel| {
++            (
++                push_name(&mut strtab, kernel.entry),
++                push_name(&mut strtab, kernel.descriptor),
++            )
++        })
++        .collect::<Vec<_>>();
+     let strtab_offset = bytes.len();
+     bytes.extend_from_slice(&strtab);
+
+     align(&mut bytes, 8);
+     let symtab_offset = bytes.len();
+-    let symbol_count = 3 + usize::from(options.include_export) + 2 * usize::from(second.is_some());
++    let symbol_count = 1 + (2 * kernels.len()) + usize::from(options.include_export);
+     bytes.resize(symtab_offset + symbol_count * 24, 0);
+     let entry_symbol = symtab_offset + 24;
+     write_u32(&mut bytes, entry_symbol, entry_name);
+@@ -2043,10 +2085,12 @@
+         write_u64(&mut bytes, export_symbol + 16, 64);
+     }
+
+-    if let (Some((entry_name, descriptor_name)), Some(entry_offset)) =
+-        (second_names, second_text_offset)
++    for (index, ((entry_name, descriptor_name), entry_offset)) in remaining_names
++        .into_iter()
++        .zip(kernel_text_offsets.iter().copied().skip(1))
++        .enumerate()
+     {
+-        let symbol_index = 3 + usize::from(options.include_export);
++        let symbol_index = 3 + usize::from(options.include_export) + (index * 2);
+         let entry_symbol = symtab_offset + symbol_index * 24;
+         write_u32(&mut bytes, entry_symbol, entry_name);
+         bytes[entry_symbol + 4] = 0x12;
+@@ -2063,11 +2107,7 @@
+             descriptor_symbol + 6,
+             RODATA_SECTION_INDEX as u16,
+         );
+-        write_u64(
+-            &mut bytes,
+-            descriptor_symbol + 8,
+-            (descriptor_offset + 64) as u64,
+-        );
++        write_u64(&mut bytes, descriptor_symbol + 8, (descriptor_offset + 64 * (index + 1)) as u64);
+         write_u64(&mut bytes, descriptor_symbol + 16, 64);
+     }
+
+@@ -2078,12 +2118,18 @@
+     }
+
+     write_legacy_kernel_descriptor(&mut bytes, descriptor_offset, entry_address, options);
+-    if let (Some(second), Some(entry_offset)) = (second, second_text_offset) {
++    for (index, (kernel, entry_offset)) in kernels
++        .iter()
++        .copied()
++        .zip(kernel_text_offsets.iter().copied())
++        .enumerate()
++        .skip(1)
++    {
+         write_legacy_kernel_descriptor(
+             &mut bytes,
+-            descriptor_offset + 64,
++            descriptor_offset + (64 * index),
+             (entry_offset + 0x1000) as u64,
+-            second,
++            kernel,
+         );
+     }
+
+@@ -2292,6 +2338,18 @@
+     if let Some(second) = second {
+         kernels.push(kernel_metadata(second));
+     }
++    metadata_with_kernel_values(options, kernels)
++}
++
++fn metadata_with_kernels(kernels: &[FixtureOptions<'_>]) -> Vec<u8> {
++    assert!(!kernels.is_empty());
++    metadata_with_kernel_values(
++        kernels[0],
++        kernels.iter().copied().map(kernel_metadata).collect(),
++    )
++}
++
++fn metadata_with_kernel_values(options: FixtureOptions<'_>, kernels: Vec<Value>) -> Vec<u8> {
+     let mut root = vec![
+         (
+             Value::from("amdhsa.version"),
