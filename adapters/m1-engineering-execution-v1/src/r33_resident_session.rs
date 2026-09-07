@@ -15,8 +15,7 @@ use crate::r33_wire::M1_R33_WINDOWS_PER_START_V1;
 mod vault;
 
 /// Exact number of sequential windows held by one R33 server start.
-pub(crate) const M1_R33_RESIDENT_WINDOWS_PER_INSTANCE_V1: usize =
-    M1_R33_WINDOWS_PER_START_V1;
+pub(crate) const M1_R33_RESIDENT_WINDOWS_PER_INSTANCE_V1: usize = M1_R33_WINDOWS_PER_START_V1;
 
 /// Observable phase of the private custody shell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -154,7 +153,10 @@ fn exact_roster_v1(
 fn exact_single_request_v1(
     window: &M1R33WorkloadWindowV1,
 ) -> Option<&crate::r33_wire::M1R33WorkloadRequestV1> {
-    window.requests.first().filter(|_| window.requests.len() == 1)
+    window
+        .requests
+        .first()
+        .filter(|_| window.requests.len() == 1)
 }
 
 /// Non-authoritative disposition produced without receiving either owner.
@@ -253,10 +255,7 @@ impl<C, I> M1R33ResidentSessionV1<C, I> {
             return Err(reject(M1R33ResidentSessionErrorV1::WindowLimit, input));
         }
         if self.state != M1R33ResidentSessionPhaseV1::Ready {
-            return Err(reject(
-                M1R33ResidentSessionErrorV1::SessionNotReady,
-                input,
-            ));
+            return Err(reject(M1R33ResidentSessionErrorV1::SessionNotReady, input));
         }
         if let Err(input) = self.vault.install_input(input) {
             self.state = M1R33ResidentSessionPhaseV1::Faulted;
@@ -417,10 +416,7 @@ impl<C, I> M1R33OutstandingWindowV1<'_, C, I> {
         result
     }
 
-    fn execute<E>(
-        mut self,
-        executor: &mut E,
-    ) -> Result<E::Report, M1R33ResidentSessionErrorV1>
+    fn execute<E>(mut self, executor: &mut E) -> Result<E::Report, M1R33ResidentSessionErrorV1>
     where
         E: M1R33ResidentWindowExecutorV1<C, I>,
     {
@@ -451,13 +447,13 @@ mod tests {
     use rustix::process::geteuid;
 
     use crate::r33_service::{
-        HeldM1R33ServiceBundleV1, M1_R33_SERVICE_AUTHORITY_V1,
-        M1_R33_SERVICE_PLAN_FORMAT_V1, M1_R33_WORKLOAD_FORMAT_V1, M1R33CommandIdentitiesV1,
-        M1R33ServicePlanDocumentV1, M1R33WorkloadDocumentV1, M1R33WorkloadWindowV1,
+        HeldM1R33ServiceBundleV1, M1_R33_SERVICE_AUTHORITY_V1, M1_R33_SERVICE_PLAN_FORMAT_V1,
+        M1_R33_WORKLOAD_FORMAT_V1, M1R33CommandIdentitiesV1, M1R33ServicePlanDocumentV1,
+        M1R33WorkloadDocumentV1, M1R33WorkloadWindowV1,
     };
     use crate::r33_wire::{
-        M1_R33_TARGET_V1, M1R33CollectorRowV1, M1R33SlotV1, M1R33WorkV1,
-        M1R33WorkloadRequestV1, encode_canonical_json_v1, sha256_hex,
+        M1_R33_TARGET_V1, M1R33CollectorRowV1, M1R33SlotV1, M1R33WorkV1, M1R33WorkloadRequestV1,
+        encode_canonical_json_v1, sha256_hex,
     };
 
     use super::*;
@@ -602,7 +598,10 @@ mod tests {
             assert_eq!(capability.row_ordinal(), 20 + capability.sequence() as u64);
             assert_eq!(capability.prompt_tokens(), &[1, 2]);
             assert_eq!(capability.expected_output_tokens(), 2);
-            assert_eq!(capability.entered_windows(), capability.sequence() as u64 + 1);
+            assert_eq!(
+                capability.entered_windows(),
+                capability.sequence() as u64 + 1
+            );
             M1R33ResidentExecutionDispositionV1::Complete(capability.sequence())
         }
     }
@@ -612,12 +611,8 @@ mod tests {
         let (_directory, bundle) = fixture();
         let custody_drops = Rc::new(Cell::new(0));
         let input_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            1,
-            CountedDrop(Rc::clone(&custody_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 1, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         assert_eq!(session.service_plan_sha256().len(), 64);
         for sequence in 0..M1_R33_RESIDENT_WINDOWS_PER_INSTANCE_V1 {
             let binding = session
@@ -643,12 +638,8 @@ mod tests {
         let custody_drops = Rc::new(Cell::new(0));
         let recovered_drops = Rc::new(Cell::new(0));
         let quarantined_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&custody_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         let recovered = session
             .bind_next(CountedDrop(Rc::clone(&recovered_drops)))
             .unwrap()
@@ -669,7 +660,10 @@ mod tests {
             Ok(_) => panic!("faulted session admitted a second input"),
             Err(rejected) => rejected,
         };
-        assert_eq!(rejected.error(), M1R33ResidentSessionErrorV1::SessionNotReady);
+        assert_eq!(
+            rejected.error(),
+            M1R33ResidentSessionErrorV1::SessionNotReady
+        );
         drop(rejected.into_input());
         assert_eq!(recovered_drops.get(), 2);
         session.stop().unwrap();
@@ -683,12 +677,8 @@ mod tests {
         let custody_drops = Rc::new(Cell::new(0));
         let installed_drops = Rc::new(Cell::new(0));
         let rejected_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&custody_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         let outstanding = session
             .bind_next(CountedDrop(Rc::clone(&installed_drops)))
             .unwrap();
@@ -714,12 +704,8 @@ mod tests {
         let (directory, bundle) = fixture();
         let custody_drops = Rc::new(Cell::new(0));
         let input_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&custody_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         fs::write(directory.0.join("workload.json"), b"replaced").unwrap();
         let rejected = match session.bind_next(CountedDrop(Rc::clone(&input_drops))) {
             Ok(_) => panic!("mutated held workload admitted an input"),
@@ -731,7 +717,10 @@ mod tests {
         );
         drop(rejected.into_input());
         assert_eq!(input_drops.get(), 1);
-        assert_eq!(session.stop(), Err(M1R33ResidentSessionErrorV1::HeldBundleChanged));
+        assert_eq!(
+            session.stop(),
+            Err(M1R33ResidentSessionErrorV1::HeldBundleChanged)
+        );
         drop(session);
         assert_eq!(custody_drops.get(), 0);
     }
@@ -754,12 +743,8 @@ mod tests {
         let (_directory, bundle) = fixture();
         let custody_drops = Rc::new(Cell::new(0));
         let input_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&custody_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         let failure = session
             .bind_next(CountedDrop(Rc::clone(&input_drops)))
             .unwrap()
@@ -776,9 +761,7 @@ mod tests {
         captured: Option<CountedDrop>,
     }
 
-    impl M1R33ResidentWindowExecutorV1<CountedDrop, CountedDrop>
-        for CapturedSameTypeExecutor
-    {
+    impl M1R33ResidentWindowExecutorV1<CountedDrop, CountedDrop> for CapturedSameTypeExecutor {
         type Report = ();
 
         fn execute(
@@ -797,12 +780,9 @@ mod tests {
         let resident_drops = Rc::new(Cell::new(0));
         let input_drops = Rc::new(Cell::new(0));
         let captured_drops = Rc::new(Cell::new(0));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&resident_drops)),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&resident_drops)))
+                .unwrap();
         let mut executor = CapturedSameTypeExecutor {
             captured: Some(CountedDrop(Rc::clone(&captured_drops))),
         };
@@ -822,13 +802,13 @@ mod tests {
     fn invalid_start_returns_held_bundle_and_custody() {
         let (_directory, bundle) = fixture();
         let drops = Rc::new(Cell::new(0));
-        let failure = M1R33ResidentSessionV1::<_, ()>::new(
-            bundle,
-            3,
-            CountedDrop(Rc::clone(&drops)),
-        )
-        .unwrap_err();
-        assert_eq!(failure.error(), M1R33ResidentSessionErrorV1::InvalidServerStart);
+        let failure =
+            M1R33ResidentSessionV1::<_, ()>::new(bundle, 3, CountedDrop(Rc::clone(&drops)))
+                .unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1R33ResidentSessionErrorV1::InvalidServerStart
+        );
         let (bundle, custody) = failure.into_parts();
         assert_eq!(bundle.workload().rows.len(), 60);
         drop(custody);
@@ -839,12 +819,9 @@ mod tests {
     fn direct_session_drop_quarantines_custody() {
         let (_directory, bundle) = fixture();
         let drops = Rc::new(Cell::new(0));
-        let session = M1R33ResidentSessionV1::<_, ()>::new(
-            bundle,
-            0,
-            CountedDrop(Rc::clone(&drops)),
-        )
-        .unwrap();
+        let session =
+            M1R33ResidentSessionV1::<_, ()>::new(bundle, 0, CountedDrop(Rc::clone(&drops)))
+                .unwrap();
         drop(session);
         assert_eq!(drops.get(), 0);
     }
@@ -889,12 +866,8 @@ mod tests {
         };
         let marker = PathBuf::from(std::env::var_os(SESSION_DROP_MARKER_ENV_V1).unwrap());
         let bundle = write_bundle(Path::new(&root));
-        let mut session = M1R33ResidentSessionV1::new(
-            bundle,
-            0,
-            FileDropMarker(marker.clone()),
-        )
-        .unwrap();
+        let mut session =
+            M1R33ResidentSessionV1::new(bundle, 0, FileDropMarker(marker.clone())).unwrap();
         let _ = session
             .bind_next(FileDropMarker(marker))
             .unwrap()

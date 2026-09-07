@@ -4,8 +4,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-const EXTERNAL_DROP_MARKER_ENV_V1: &str =
-    "FERRIC_R33_CUSTODY_VAULT_EXTERNAL_DROP_MARKER_V1";
+const EXTERNAL_DROP_MARKER_ENV_V1: &str = "FERRIC_R33_CUSTODY_VAULT_EXTERNAL_DROP_MARKER_V1";
 const RELEASE_PROBE_ENV_V1: &str = "FERRIC_R33_RELEASE_CUSTODY_VAULT_ABORT_PROBE_V1";
 
 static NEXT_TEST: AtomicU64 = AtomicU64::new(0);
@@ -34,9 +33,8 @@ impl Drop for TestDirectory {
 fn built_probe_is_exact_sigabrt_and_never_runs_external_owner_destructors() {
     let directory = TestDirectory::new();
     let marker = directory.0.join("drop-marker");
-    let program = std::env::var_os(RELEASE_PROBE_ENV_V1).unwrap_or_else(|| {
-        env!("CARGO_BIN_EXE_ferric-r33-custody-vault-abort-probe").into()
-    });
+    let program = std::env::var_os(RELEASE_PROBE_ENV_V1)
+        .unwrap_or_else(|| env!("CARGO_BIN_EXE_ferric-r33-custody-vault-abort-probe").into());
     let status = Command::new(program)
         .env(EXTERNAL_DROP_MARKER_ENV_V1, &marker)
         .status()
