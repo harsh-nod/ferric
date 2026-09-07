@@ -26,6 +26,7 @@ use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::{Component, Path, PathBuf};
+use std::thread;
 
 use super::{EngineeringIdentityInputV1, EngineeringObservationFacts};
 
@@ -160,21 +161,27 @@ pub(crate) fn prepare(
         )
         .map_err(|error| format!("cannot encode raw prompt: {error}"))?;
 
-    let runner_admission = model.authenticate()?;
-    let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
-        .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
-    let external = match external_file {
-        Some(closure) => complete_closure(&closure, &plan_catalog, observation.program_catalog)?,
-        None => derive_engineering_external_identity_inputs_v1(&plan_catalog, observation)?,
-    };
-    let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
-        .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
-    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
-        .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
-    let publication = publish_qwen3_gfx942_runner_declaration(declaration)
-        .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-
-    let memory_admission = model.authenticate()?;
+    let (publication, memory_admission) = authenticate_model_inputs_in_parallel_v1(
+        |_| model.authenticate(),
+        |runner_admission| {
+            let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
+                .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
+            let external = match external_file {
+                Some(closure) => {
+                    complete_closure(&closure, &plan_catalog, observation.program_catalog)?
+                }
+                None => derive_engineering_external_identity_inputs_v1(&plan_catalog, observation)?,
+            };
+            let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+                .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
+            let declaration =
+                generate_qwen3_gfx942_runner_declaration(identity_closure).map_err(|error| {
+                    format!("cannot generate authenticated runner declaration: {error:?}")
+                })?;
+            publish_qwen3_gfx942_runner_declaration(declaration)
+                .map_err(|error| format!("cannot publish runner declaration: {error:?}"))
+        },
+    )?;
     let memory_plan = model_memory_plan(memory_admission)?;
     Ok(SmokeBootstrapV1 {
         publication,
@@ -183,6 +190,38 @@ pub(crate) fn prepare(
         draft_weights: model.draft_weights,
         tokenizer,
         prompt_tokens,
+    })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ModelAuthenticationPurposeV1 {
+    Runner,
+    Memory,
+}
+
+fn authenticate_model_inputs_in_parallel_v1<T, R>(
+    authenticate: impl Fn(ModelAuthenticationPurposeV1) -> SmokeResult<T> + Sync,
+    build_runner: impl FnOnce(T) -> SmokeResult<R>,
+) -> SmokeResult<(R, T)>
+where
+    T: Send,
+{
+    thread::scope(|scope| {
+        let memory = thread::Builder::new()
+            .name("ferric-smoke-memory-authentication".to_owned())
+            .spawn_scoped(scope, || authenticate(ModelAuthenticationPurposeV1::Memory))
+            .map_err(|_| "cannot start memory model authentication worker".to_owned())?;
+        let runner_result =
+            authenticate(ModelAuthenticationPurposeV1::Runner).and_then(build_runner);
+        let memory_result = match memory.join() {
+            Ok(result) => result,
+            Err(_) => Err("memory model authentication worker panicked".to_owned()),
+        };
+
+        match runner_result {
+            Ok(runner) => memory_result.map(|memory| (runner, memory)),
+            Err(error) => Err(error),
+        }
     })
 }
 
@@ -911,6 +950,8 @@ fn hash_field(hasher: &mut Sha256, field: &[u8]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Barrier;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     fn identity(byte: u8) -> Identity {
         Identity::new([byte; 32])
@@ -990,5 +1031,77 @@ mod tests {
                 "coordinate {coordinate} did not rekey the derived identity"
             );
         }
+    }
+
+    #[test]
+    fn runner_and_memory_authentication_each_run_once_and_overlap() {
+        let rendezvous = Barrier::new(2);
+        let runner_calls = AtomicUsize::new(0);
+        let memory_calls = AtomicUsize::new(0);
+        let (runner, memory) = authenticate_model_inputs_in_parallel_v1(
+            |purpose| {
+                match purpose {
+                    ModelAuthenticationPurposeV1::Runner => {
+                        runner_calls.fetch_add(1, Ordering::SeqCst);
+                    }
+                    ModelAuthenticationPurposeV1::Memory => {
+                        memory_calls.fetch_add(1, Ordering::SeqCst);
+                    }
+                }
+                rendezvous.wait();
+                Ok(purpose)
+            },
+            Ok,
+        )
+        .expect("both independent admissions complete");
+
+        assert_eq!(runner, ModelAuthenticationPurposeV1::Runner);
+        assert_eq!(memory, ModelAuthenticationPurposeV1::Memory);
+        assert_eq!(runner_calls.load(Ordering::SeqCst), 1);
+        assert_eq!(memory_calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn runner_authentication_error_has_deterministic_precedence() {
+        let error = authenticate_model_inputs_in_parallel_v1(
+            |purpose| -> SmokeResult<ModelAuthenticationPurposeV1> {
+                match purpose {
+                    ModelAuthenticationPurposeV1::Runner => Err("runner authentication".to_owned()),
+                    ModelAuthenticationPurposeV1::Memory => Err("memory authentication".to_owned()),
+                }
+            },
+            Ok,
+        )
+        .expect_err("both admissions fail");
+        assert_eq!(error, "runner authentication");
+    }
+
+    #[test]
+    fn runner_pipeline_error_precedes_memory_authentication_error() {
+        let error = authenticate_model_inputs_in_parallel_v1(
+            |purpose| match purpose {
+                ModelAuthenticationPurposeV1::Runner => Ok(purpose),
+                ModelAuthenticationPurposeV1::Memory => Err("memory authentication".to_owned()),
+            },
+            |_| Err::<(), _>("runner pipeline".to_owned()),
+        )
+        .expect_err("runner construction and memory admission fail");
+        assert_eq!(error, "runner pipeline");
+    }
+
+    #[test]
+    fn memory_authentication_panic_fails_closed_without_payload_disclosure() {
+        let error = authenticate_model_inputs_in_parallel_v1(
+            |purpose| match purpose {
+                ModelAuthenticationPurposeV1::Runner => Ok(purpose),
+                ModelAuthenticationPurposeV1::Memory => {
+                    panic!("untrusted worker panic payload")
+                }
+            },
+            Ok,
+        )
+        .expect_err("memory worker panic must reject startup");
+        assert_eq!(error, "memory model authentication worker panicked");
+        assert!(!error.contains("untrusted worker panic payload"));
     }
 }

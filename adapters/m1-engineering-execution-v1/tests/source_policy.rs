@@ -168,6 +168,49 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
 }
 
 #[test]
+fn engineering_smoke_runs_two_independent_admissions_once_and_joins_fail_closed() {
+    let parallel = BOOTSTRAP_SOURCE
+        .split_once("fn authenticate_model_inputs_in_parallel_v1")
+        .map(|(_, tail)| tail)
+        .and_then(|tail| {
+            tail.split_once("fn derive_engineering_external_identity_inputs_v1")
+                .map(|(body, _)| body)
+        })
+        .expect("parallel authentication helper is a bounded source block");
+
+    assert_eq!(
+        parallel
+            .matches("authenticate(ModelAuthenticationPurposeV1::Runner)")
+            .count(),
+        1
+    );
+    assert_eq!(
+        parallel
+            .matches("authenticate(ModelAuthenticationPurposeV1::Memory)")
+            .count(),
+        1
+    );
+    for required in [
+        ".spawn_scoped(scope,",
+        "let runner_result =",
+        ".join()",
+        "match runner_result",
+        "Ok(runner) => memory_result.map(|memory| (runner, memory))",
+        "Err(error) => Err(error)",
+        "memory model authentication worker panicked",
+    ] {
+        assert!(
+            parallel.contains(required),
+            "parallel authentication helper is missing {required}"
+        );
+    }
+    assert!(
+        parallel.find(".join()").unwrap() < parallel.find("match runner_result").unwrap(),
+        "memory authentication must be joined before returning the runner result"
+    );
+}
+
+#[test]
 fn derived_engineering_identity_mode_is_coordinate_bound_and_authority_free() {
     let derived = BOOTSTRAP_SOURCE
         .split_once("fn derive_engineering_external_identity_inputs_v1")
