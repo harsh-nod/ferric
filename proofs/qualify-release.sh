@@ -285,6 +285,7 @@ set +e
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
         adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
         services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo fmt --manifest-path "$adapter/Cargo.toml" -- --check
     done
@@ -296,6 +297,7 @@ set +e
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
         adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
         services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo clippy --manifest-path "$adapter/Cargo.toml" --all-targets \
             --locked --target-dir "$runtime_test_target" -- -D warnings
@@ -312,6 +314,7 @@ set +e
         adapters/qwen3-swiglu-worker-v3-envelope-v2 \
         adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
         adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
         services/qwen3-all-kernels-worker-v3-verifier-v1; do
         cargo test --manifest-path "$adapter/Cargo.toml" --all-targets \
             --locked --target-dir "$runtime_test_target"

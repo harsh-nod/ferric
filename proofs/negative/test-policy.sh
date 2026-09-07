@@ -1020,6 +1020,83 @@ PY
 expect_rejected coverage-missing-record 'compiler-rooted proof coverage manifest drifted' \
     invoke_source_gate "$repo" "$scratch/missing-record.manifest" "$metadata"
 
+promotion_package=ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1
+promotion_path=adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1
+grep -v "^\(package\|module\|verified\|unverified\)=$promotion_package|" \
+    "$repo/proofs/VERIFIED_MODULES" >"$scratch/promotion-omitted.manifest"
+expect_rejected coverage-promotion-package-omitted \
+    'compiler-rooted proof coverage manifest drifted' \
+    invoke_source_gate "$repo" "$scratch/promotion-omitted.manifest" "$metadata"
+
+promotion_body_omission=$(new_copy promotion-body-omission)
+grep -v "^unverified=$promotion_package|$promotion_path/src/lib.rs|" \
+    "$promotion_body_omission/proofs/UNVERIFIED_BODIES" \
+    >"$scratch/promotion-body-omission.admissions"
+cp "$scratch/promotion-body-omission.admissions" \
+    "$promotion_body_omission/proofs/UNVERIFIED_BODIES"
+write_metadata "$promotion_body_omission" "$scratch/promotion-body-omission.metadata"
+expect_rejected coverage-promotion-body-omission \
+    'unverified executable body admission drifted' \
+    invoke_source_gate --generate "$promotion_body_omission" \
+    "$scratch/promotion-body-omission.metadata" \
+    "$scratch/promotion-body-omission.manifest"
+
+promotion_optout=$(new_copy promotion-verus-optout)
+python3 -I - "$promotion_optout/$promotion_path/Cargo.toml" <<'PY'
+from pathlib import Path
+import sys
+
+manifest = Path(sys.argv[1])
+source = manifest.read_text(encoding="utf-8")
+needle = "[package.metadata.verus]\nverify = true"
+if source.count(needle) != 1:
+    raise SystemExit("promotion Verus metadata anchor drifted")
+manifest.write_text(source.replace(needle, "[package.metadata.verus]\nverify = false"), encoding="utf-8")
+PY
+write_metadata "$promotion_optout" "$scratch/promotion-optout.metadata"
+expect_rejected dependency-promotion-verus-optout \
+    'first-party workspace package is not opted into strict Verus' \
+    invoke_source_gate --generate "$promotion_optout" \
+    "$scratch/promotion-optout.metadata" "$scratch/promotion-optout.manifest"
+
+python3 -I - "$metadata" "$scratch" <<'PY'
+import copy
+import json
+from pathlib import Path
+import sys
+
+metadata = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+scratch = Path(sys.argv[2])
+owner_name = "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1"
+source_name = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1"
+owner = next(package for package in metadata["packages"] if package["name"] == owner_name)
+source_pin = next(package for package in metadata["packages"] if package["name"] == source_name)
+owner_node = next(node for node in metadata["resolve"]["nodes"] if node["id"] == owner["id"])
+edge = next(edge for edge in owner_node["deps"] if edge["pkg"] == source_pin["id"])
+
+owner_edge = copy.deepcopy(metadata)
+mutated_node = next(node for node in owner_edge["resolve"]["nodes"] if node["id"] == owner["id"])
+mutated_edge = next(edge for edge in mutated_node["deps"] if edge["pkg"] == source_pin["id"])
+mutated_edge["name"] = "source_pin_decoy"
+(scratch / "promotion-owner-edge.metadata").write_text(json.dumps(owner_edge), encoding="utf-8")
+
+expected_path = copy.deepcopy(metadata)
+mutated_owner = next(package for package in expected_path["packages"] if package["id"] == owner["id"])
+mutated_dependency = next(
+    dependency for dependency in mutated_owner["dependencies"] if dependency["name"] == source_name
+)
+mutated_dependency["path"] = owner["manifest_path"].removesuffix("/Cargo.toml")
+(scratch / "promotion-expected-path.metadata").write_text(json.dumps(expected_path), encoding="utf-8")
+PY
+expect_rejected dependency-promotion-owner-edge \
+    'local runtime owner resolve edge drifted' \
+    invoke_source_gate --generate "$repo" "$scratch/promotion-owner-edge.metadata" \
+    "$scratch/promotion-owner-edge.manifest"
+expect_rejected dependency-promotion-expected-path \
+    'path dependency identity drifted' \
+    invoke_source_gate --generate "$repo" "$scratch/promotion-expected-path.metadata" \
+    "$scratch/promotion-expected-path.manifest"
+
 sed '/^verified=ferric-engine|/d' "$repo/proofs/VERIFIED_MODULES" \
     >"$scratch/zero-direct.manifest"
 : >"$scratch/empty-verus.transcript"

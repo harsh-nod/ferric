@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1",
     "benches/m1",
     "crates/ferric-build",
     "crates/ferric-engine",
@@ -12,6 +13,7 @@ members = [
 ]
 exclude = [
     "adapters/m1-engineering-execution-v1",
+    "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
     "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
     "device/qwen3-all-kernels-v1",
     "device/qwen3-gemm-v1",

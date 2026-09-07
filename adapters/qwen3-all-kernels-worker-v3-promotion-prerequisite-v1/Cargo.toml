@@ -1,0 +1,29 @@
+[package]
+name = "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1"
+description = "Fail-closed aggregate Worker V3 promotion-prerequisite collector"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+[package.metadata.verus]
+verify = true
+
+[dependencies]
+fe2o3-artifact-transaction.workspace = true
+fe2o3-runtime-protocol.workspace = true
+ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernels-worker-v3-source-pin-v1" }
+ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1" }
+sha2 = { version = "=0.11.0", default-features = false }
+
+[dev-dependencies]
+toml = "=1.1.5"
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"

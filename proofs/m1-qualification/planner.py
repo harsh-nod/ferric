@@ -207,6 +207,15 @@ FE2O3_ADAPTER_WORKSPACES = (
         FE2O3_RESOLVED_PACKAGES,
     ),
     (
+        "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1",
+        "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1",
+        (
+            ("dependencies", "fe2o3-artifact-transaction"),
+            ("dependencies", "fe2o3-runtime-protocol"),
+        ),
+        FE2O3_RESOLVED_PACKAGES,
+    ),
+    (
         "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
         "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
         (

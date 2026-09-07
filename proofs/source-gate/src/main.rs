@@ -109,6 +109,7 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
     ),
     ("ferric-m1-benchmarks", "serde_json", "=1.0.151", true, &[]),
     ("ferric-m1-benchmarks", "sha2", "^0.11.0", true, &[]),
+    (PROMOTION_PACKAGE_NAME, "sha2", "=0.11.0", false, &[]),
     ("ferric-qwen-kernels", "sha2", "^0.11.0", true, &[]),
 ];
 const FE2O3_ROOTS: &[(&str, &str)] = &[
@@ -123,6 +124,8 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-engine", "fe2o3-kfd"),
     ("ferric-engine", "fe2o3-runtime-protocol"),
     ("ferric-engine", "fe2o3-service-host"),
+    (PROMOTION_PACKAGE_NAME, "fe2o3-artifact-transaction"),
+    (PROMOTION_PACKAGE_NAME, "fe2o3-runtime-protocol"),
     ("ferric-qwen-kernels", "fe2o3-amdhsa-loader"),
     ("ferric-qwen-kernels", "fe2o3-artifact-transaction"),
     ("ferric-qwen-kernels", "fe2o3-compiler-ffi"),
@@ -133,6 +136,18 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-qwen-kernels", "reserved-fe2o3-symbols"),
 ];
 const LOCAL_RUNTIME_ROOTS: &[(&str, &str, &str, &str)] = &[
+    (
+        PROMOTION_PACKAGE_NAME,
+        "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
+        "adapters/qwen3-all-kernels-worker-v3-verifier-v1",
+        "ferric_qwen3_all_kernels_worker_v3_verifier_v1",
+    ),
+    (
+        PROMOTION_PACKAGE_NAME,
+        "ferric-qwen3-all-kernels-worker-v3-source-pin-v1",
+        "adapters/qwen3-all-kernels-worker-v3-source-pin-v1",
+        "ferric_qwen3_all_kernels_worker_v3_source_pin_v1",
+    ),
     (
         "ferric-engine",
         "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
@@ -161,6 +176,12 @@ const SERDE_JSON_CHECKSUM: &str =
 const SOURCE_PIN_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1";
 const SOURCE_PIN_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-source-pin-v1";
 const SOURCE_PIN_CRATE_NAME: &str = "ferric_qwen3_all_kernels_worker_v3_source_pin_v1";
+const PROMOTION_PACKAGE_NAME: &str =
+    "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
+const PROMOTION_RELATIVE_PATH: &str =
+    "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
+const PROMOTION_CRATE_NAME: &str =
+    "ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1";
 const VERIFIER_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-verifier-v1";
 const VERIFIER_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-verifier-v1";
 const NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME: &str =
@@ -1884,6 +1905,89 @@ fn validate_source_pin_package(
     validate_source_pin_resolved_dependencies(repo, packages_by_id, node, checksums)
 }
 
+fn validate_local_runtime_owner_binding(
+    packages_by_id: &BTreeMap<&str, &Value>,
+    resolve_nodes: &BTreeMap<&str, &Value>,
+    workspace_members: &BTreeSet<&str>,
+    owner: &str,
+    name: &str,
+    expected_crate_name: &str,
+    package_id: &str,
+) -> GateResult<()> {
+    let owner_candidates = packages_by_id
+        .values()
+        .copied()
+        .filter(|package| package.get("name").and_then(Value::as_str) == Some(owner))
+        .collect::<Vec<_>>();
+    let [owner_package] = owner_candidates.as_slice() else {
+        return Err(format!(
+            "local runtime dependency owner does not resolve uniquely: {owner}"
+        ));
+    };
+    let owner_id = string_field(owner_package, "id")?;
+    if !workspace_members.contains(owner_id) {
+        return Err(format!(
+            "local runtime dependency owner is not a workspace member: {owner}"
+        ));
+    }
+    let owner_node = resolve_nodes
+        .get(owner_id)
+        .ok_or_else(|| format!("local runtime dependency owner has no resolve node: {owner}"))?;
+    let owner_edges = owner_node
+        .get("deps")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner resolve edges are malformed: {owner}"))?;
+    let matching_owner_edges = owner_edges
+        .iter()
+        .filter(|edge| {
+            edge.get("name").and_then(Value::as_str) == Some(expected_crate_name)
+                || edge.get("pkg").and_then(Value::as_str) == Some(package_id)
+        })
+        .collect::<Vec<_>>();
+    let [owner_edge] = matching_owner_edges.as_slice() else {
+        return Err(format!(
+            "local runtime owner resolve edge does not resolve uniquely: {owner}::{name}"
+        ));
+    };
+    let owner_edge_kinds = owner_edge
+        .get("dep_kinds")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner resolve edge kinds are malformed: {name}"))?;
+    let [owner_edge_kind] = owner_edge_kinds.as_slice() else {
+        return Err(format!(
+            "local runtime owner resolve edge kind roster drifted: {owner}::{name}"
+        ));
+    };
+    if string_field(owner_edge, "name")? != expected_crate_name
+        || string_field(owner_edge, "pkg")? != package_id
+        || owner_edge_kind
+            .get("kind")
+            .is_some_and(|value| !value.is_null())
+        || owner_edge_kind
+            .get("target")
+            .is_some_and(|value| !value.is_null())
+    {
+        return Err(format!(
+            "local runtime owner resolve edge drifted: {owner}::{name}"
+        ));
+    }
+    let owner_dependency_ids = owner_node
+        .get("dependencies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| format!("local runtime owner dependency IDs are malformed: {owner}"))?;
+    if owner_dependency_ids
+        .iter()
+        .filter(|id| id.as_str() == Some(package_id))
+        .count()
+        != 1
+    {
+        return Err(format!(
+            "local runtime owner dependency identity drifted: {owner}::{name}"
+        ));
+    }
+    Ok(())
+}
+
 fn validate_local_runtime_package(
     repo: &Path,
     packages_by_id: &BTreeMap<&str, &Value>,
@@ -1961,6 +2065,26 @@ fn validate_local_runtime_package(
         return Err(format!(
             "local runtime package may not claim Verus authority: {name}"
         ));
+    }
+    if name == SOURCE_PIN_PACKAGE_NAME {
+        let checksums = runtime_lock_checksums(repo)?;
+        validate_source_pin_package(
+            repo,
+            packages_by_id,
+            resolve_nodes,
+            workspace_members,
+            &checksums,
+        )?;
+        validate_local_runtime_owner_binding(
+            packages_by_id,
+            resolve_nodes,
+            workspace_members,
+            owner,
+            name,
+            expected_crate_name,
+            package_id,
+        )?;
+        return Ok(true);
     }
     let manifest = canonical(Path::new(string_field(package, "manifest_path")?))?;
     let expected_manifest = canonical(&expected_root.join("Cargo.toml"))?;
@@ -2129,77 +2253,15 @@ fn validate_local_runtime_package(
         }
     }
 
-    let owner_candidates = packages_by_id
-        .values()
-        .copied()
-        .filter(|package| package.get("name").and_then(Value::as_str) == Some(owner))
-        .collect::<Vec<_>>();
-    let [owner_package] = owner_candidates.as_slice() else {
-        return Err(format!(
-            "local runtime dependency owner does not resolve uniquely: {owner}"
-        ));
-    };
-    let owner_id = string_field(owner_package, "id")?;
-    if !workspace_members.contains(owner_id) {
-        return Err(format!(
-            "local runtime dependency owner is not a workspace member: {owner}"
-        ));
-    }
-    let owner_node = resolve_nodes
-        .get(owner_id)
-        .ok_or_else(|| format!("local runtime dependency owner has no resolve node: {owner}"))?;
-    let owner_edges = owner_node
-        .get("deps")
-        .and_then(Value::as_array)
-        .ok_or_else(|| format!("local runtime owner resolve edges are malformed: {owner}"))?;
-    let matching_owner_edges = owner_edges
-        .iter()
-        .filter(|edge| {
-            edge.get("name").and_then(Value::as_str) == Some(*expected_crate_name)
-                || edge.get("pkg").and_then(Value::as_str) == Some(package_id)
-        })
-        .collect::<Vec<_>>();
-    let [owner_edge] = matching_owner_edges.as_slice() else {
-        return Err(format!(
-            "local runtime owner resolve edge does not resolve uniquely: {owner}::{name}"
-        ));
-    };
-    let owner_edge_kinds = owner_edge
-        .get("dep_kinds")
-        .and_then(Value::as_array)
-        .ok_or_else(|| format!("local runtime owner resolve edge kinds are malformed: {name}"))?;
-    let [owner_edge_kind] = owner_edge_kinds.as_slice() else {
-        return Err(format!(
-            "local runtime owner resolve edge kind roster drifted: {owner}::{name}"
-        ));
-    };
-    if string_field(owner_edge, "name")? != *expected_crate_name
-        || string_field(owner_edge, "pkg")? != package_id
-        || owner_edge_kind
-            .get("kind")
-            .is_some_and(|value| !value.is_null())
-        || owner_edge_kind
-            .get("target")
-            .is_some_and(|value| !value.is_null())
-    {
-        return Err(format!(
-            "local runtime owner resolve edge drifted: {owner}::{name}"
-        ));
-    }
-    let owner_dependency_ids = owner_node
-        .get("dependencies")
-        .and_then(Value::as_array)
-        .ok_or_else(|| format!("local runtime owner dependency IDs are malformed: {owner}"))?;
-    if owner_dependency_ids
-        .iter()
-        .filter(|id| id.as_str() == Some(package_id))
-        .count()
-        != 1
-    {
-        return Err(format!(
-            "local runtime owner dependency identity drifted: {owner}::{name}"
-        ));
-    }
+    validate_local_runtime_owner_binding(
+        packages_by_id,
+        resolve_nodes,
+        workspace_members,
+        owner,
+        name,
+        expected_crate_name,
+        package_id,
+    )?;
 
     let local_node = resolve_nodes
         .get(package_id)
@@ -3382,6 +3444,75 @@ fn validate_runtime_dependency_tcb(repo: &Path, metadata: &Value) -> GateResult<
     Ok(runtime_tcb)
 }
 
+fn validate_promotion_workspace_package(repo: &Path, package: &Value) -> GateResult<()> {
+    let expected_root = canonical(&repo.join(PROMOTION_RELATIVE_PATH))?;
+    if expected_root == repo
+        || expected_root
+            .strip_prefix(repo)
+            .map_err(|_| "promotion package path escapes repository".to_owned())?
+            != Path::new(PROMOTION_RELATIVE_PATH)
+    {
+        return Err("promotion package path is not an exact repository descendant".to_owned());
+    }
+    let expected_manifest = canonical(&expected_root.join("Cargo.toml"))?;
+    let publish = package
+        .get("publish")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "promotion package publish policy is malformed".to_owned())?;
+    let features = package
+        .get("features")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "promotion package features are malformed".to_owned())?;
+    let metadata = package
+        .get("metadata")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "promotion package metadata is malformed".to_owned())?;
+    let verus = metadata
+        .get("verus")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "promotion package Verus policy is malformed".to_owned())?;
+    if string_field(package, "name")? != PROMOTION_PACKAGE_NAME
+        || string_field(package, "version")? != "0.1.0"
+        || nullable_string_field(package, "source")?.is_some()
+        || canonical(Path::new(string_field(package, "manifest_path")?))? != expected_manifest
+        || string_field(package, "edition")? != "2024"
+        || string_field(package, "rust_version")? != "1.97.1"
+        || !publish.is_empty()
+        || !features.is_empty()
+        || metadata.len() != 1
+        || verus.len() != 1
+        || verus.get("verify").and_then(Value::as_bool) != Some(true)
+        || package.get("links").is_some_and(|value| !value.is_null())
+    {
+        return Err("promotion package identity or policy drifted".to_owned());
+    }
+
+    let expected_library = canonical(&expected_root.join("src/lib.rs"))?;
+    let libraries = package
+        .get("targets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "promotion package targets are malformed".to_owned())?
+        .iter()
+        .filter(|target| {
+            target
+                .get("kind")
+                .and_then(Value::as_array)
+                .is_some_and(|kinds| kinds.len() == 1 && kinds[0].as_str() == Some("lib"))
+        })
+        .collect::<Vec<_>>();
+    let [library] = libraries.as_slice() else {
+        return Err("promotion package library target roster drifted".to_owned());
+    };
+    if string_field(library, "name")? != PROMOTION_CRATE_NAME
+        || string_array(library, "crate_types", "promotion library crate type")? != ["lib"]
+        || canonical(Path::new(string_field(library, "src_path")?))? != expected_library
+        || string_field(library, "edition")? != "2024"
+    {
+        return Err("promotion package library target drifted".to_owned());
+    }
+    Ok(())
+}
+
 fn packages(
     repo: &Path,
     metadata: &Value,
@@ -3448,6 +3579,9 @@ fn packages(
             return Err(format!(
                 "first-party workspace package is not opted into strict Verus: {name}"
             ));
+        }
+        if name == PROMOTION_PACKAGE_NAME {
+            validate_promotion_workspace_package(repo, package)?;
         }
         if name == "ferric-build" {
             let features = package
@@ -5360,13 +5494,17 @@ mod tests {
         canonical_verifier_package_id, canonical_verifier_target_path, cfg_test_fixture_item,
         cfg_test_item, inherent_owner_module, package_map, parse_generated_roster_declaration,
         render_verifier_lock_records, resolve_map, runtime_lock_checksums, target_module_dir,
-        validate_aggregate_runtime_roster_file, validate_attributes, validate_node_dependency_ids,
+        validate_aggregate_runtime_roster_file, validate_attributes,
+        validate_local_runtime_package, validate_node_dependency_ids,
+        validate_promotion_workspace_package,
         validate_resolved_edge_declarations, validate_source_pin_package,
         validate_verifier_dependency_declarations, validate_verifier_resolved_dependencies,
         verifier_edge_kinds, ExpectedRuntimeDependency, ExpectedSourcePinTarget,
         VerifierDependencyScope, VerifierEdgeKinds, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE,
-        FE2O3_SOURCE, SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME, SOURCE_PIN_RELATIVE_PATH,
-        SOURCE_PIN_TARGETS, VERIFIER_DEV_DEPENDENCIES, VERIFIER_NORMAL_DEPENDENCIES,
+        FE2O3_SOURCE, PROMOTION_CRATE_NAME, PROMOTION_PACKAGE_NAME, PROMOTION_RELATIVE_PATH,
+        SOURCE_PIN_CRATE_NAME, SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME,
+        SOURCE_PIN_RELATIVE_PATH, SOURCE_PIN_TARGETS, VERIFIER_DEV_DEPENDENCIES,
+        VERIFIER_NORMAL_DEPENDENCIES,
     };
     use serde_json::{json, Value};
     use std::collections::{BTreeMap, BTreeSet};
@@ -5388,6 +5526,48 @@ mod tests {
             .join("../..")
             .canonicalize()
             .expect("test repository canonicalizes")
+    }
+
+    fn promotion_package(repo: &Path) -> Value {
+        json!({
+            "name": PROMOTION_PACKAGE_NAME,
+            "version": "0.1.0",
+            "source": null,
+            "manifest_path": repo.join(PROMOTION_RELATIVE_PATH).join("Cargo.toml"),
+            "edition": "2024",
+            "rust_version": "1.97.1",
+            "publish": [],
+            "features": {},
+            "metadata": { "verus": { "verify": true } },
+            "links": null,
+            "targets": [{
+                "name": PROMOTION_CRATE_NAME,
+                "kind": ["lib"],
+                "crate_types": ["lib"],
+                "src_path": repo.join(PROMOTION_RELATIVE_PATH).join("src/lib.rs"),
+                "edition": "2024",
+            }],
+        })
+    }
+
+    #[test]
+    fn promotion_workspace_package_binds_exact_root_identity_and_policy() {
+        let repo = repo();
+        let package = promotion_package(&repo);
+        assert_eq!(validate_promotion_workspace_package(&repo, &package), Ok(()));
+
+        let mut wrong_manifest = package.clone();
+        wrong_manifest["manifest_path"] =
+            json!(repo.join(SOURCE_PIN_RELATIVE_PATH).join("Cargo.toml"));
+        assert!(validate_promotion_workspace_package(&repo, &wrong_manifest).is_err());
+
+        let mut wrong_crate = package.clone();
+        wrong_crate["targets"][0]["name"] = json!(SOURCE_PIN_CRATE_NAME);
+        assert!(validate_promotion_workspace_package(&repo, &wrong_crate).is_err());
+
+        let mut opted_out = package;
+        opted_out["metadata"]["verus"]["verify"] = json!(false);
+        assert!(validate_promotion_workspace_package(&repo, &opted_out).is_err());
     }
 
     fn verifier_declaration(repo: &Path, expected: &ExpectedRuntimeDependency) -> Value {
@@ -5600,6 +5780,76 @@ mod tests {
         let packages_by_id = package_map(&metadata)?;
         let nodes = resolve_map(&metadata)?;
         validate_source_pin_package(repo, &packages_by_id, &nodes, workspace_members, checksums)
+    }
+
+    fn promotion_source_pin_dependency(repo: &Path) -> Value {
+        json!({
+            "name": SOURCE_PIN_PACKAGE_NAME,
+            "source": null,
+            "req": "*",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null,
+            "path": repo.join(SOURCE_PIN_RELATIVE_PATH).to_string_lossy(),
+        })
+    }
+
+    fn promotion_source_pin_fixture(repo: &Path) -> (Value, Vec<Value>, Vec<Value>, BTreeSet<String>) {
+        let (source_pin, mut packages, source_pin_node) = source_pin_fixture(repo);
+        let source_pin_id = source_pin_id(repo);
+        let owner_id = format!("path+file://{}#{PROMOTION_PACKAGE_NAME}@0.1.0", repo.display());
+        let owner_package = json!({
+            "id": owner_id,
+            "name": PROMOTION_PACKAGE_NAME,
+        });
+        let owner_node = json!({
+            "id": owner_id,
+            "deps": [{
+                "name": SOURCE_PIN_CRATE_NAME,
+                "pkg": source_pin_id,
+                "dep_kinds": [{ "kind": null, "target": null }],
+            }],
+            "dependencies": [source_pin_id],
+            "features": [],
+        });
+        packages.push(source_pin);
+        packages.push(owner_package);
+        let workspace_members = BTreeSet::from([owner_id]);
+        (
+            promotion_source_pin_dependency(repo),
+            packages,
+            vec![source_pin_node, owner_node],
+            workspace_members,
+        )
+    }
+
+    fn validate_promotion_source_pin_fixture(
+        repo: &Path,
+        dependency: &Value,
+        packages: &[Value],
+        nodes: &[Value],
+        workspace_members: &BTreeSet<String>,
+        owner: &str,
+    ) -> super::GateResult<bool> {
+        let metadata = json!({
+            "packages": packages,
+            "resolve": { "nodes": nodes },
+        });
+        let packages_by_id = package_map(&metadata)?;
+        let nodes = resolve_map(&metadata)?;
+        let members = workspace_members.iter().map(String::as_str).collect();
+        validate_local_runtime_package(
+            repo,
+            &packages_by_id,
+            &nodes,
+            &members,
+            owner,
+            dependency,
+        )
     }
 
     #[test]
@@ -5927,6 +6177,137 @@ mod tests {
             ),
             Ok(())
         );
+    }
+
+    #[test]
+    fn promotion_source_pin_edge_requires_exact_owner_path_and_package_policy() {
+        let repo = repo();
+        let (dependency, packages, nodes, workspace_members) =
+            promotion_source_pin_fixture(&repo);
+        assert_eq!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &packages,
+                &nodes,
+                &workspace_members,
+                PROMOTION_PACKAGE_NAME,
+            ),
+            Ok(true)
+        );
+
+        assert_eq!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &packages,
+                &nodes,
+                &workspace_members,
+                "ferric-engine",
+            ),
+            Ok(false),
+            "another owner must not enter through the promotion-only source-pin edge"
+        );
+
+        let mut wrong_path = dependency.clone();
+        wrong_path["path"] = json!(repo.join(PROMOTION_RELATIVE_PATH).to_string_lossy());
+        assert!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &wrong_path,
+                &packages,
+                &nodes,
+                &workspace_members,
+                PROMOTION_PACKAGE_NAME,
+            )
+            .is_err()
+        );
+
+        let mut wrong_manifest = packages.clone();
+        let source_pin = package_index(&wrong_manifest, SOURCE_PIN_PACKAGE_NAME);
+        wrong_manifest[source_pin]["manifest_path"] =
+            json!(repo.join(PROMOTION_RELATIVE_PATH).join("Cargo.toml"));
+        assert!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &wrong_manifest,
+                &nodes,
+                &workspace_members,
+                PROMOTION_PACKAGE_NAME,
+            )
+            .is_err()
+        );
+
+        let mut opted_source_pin = packages.clone();
+        let source_pin = package_index(&opted_source_pin, SOURCE_PIN_PACKAGE_NAME);
+        opted_source_pin[source_pin]["metadata"] = json!({ "verus": { "verify": true } });
+        assert!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &opted_source_pin,
+                &nodes,
+                &workspace_members,
+                PROMOTION_PACKAGE_NAME,
+            )
+            .is_err(),
+            "the unverified source-pin TCB must not claim Verus authority"
+        );
+    }
+
+    #[test]
+    fn promotion_source_pin_edge_rejects_owner_membership_and_resolve_drift() {
+        let repo = repo();
+        let (dependency, packages, exact_nodes, workspace_members) =
+            promotion_source_pin_fixture(&repo);
+
+        assert!(
+            validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &packages,
+                &exact_nodes,
+                &BTreeSet::new(),
+                PROMOTION_PACKAGE_NAME,
+            )
+            .is_err()
+        );
+
+        for nodes in [
+            {
+                let mut value = exact_nodes.clone();
+                value[1]["deps"][0]["name"] = json!("source_pin_decoy");
+                value
+            },
+            {
+                let mut value = exact_nodes.clone();
+                value[1]["deps"][0]["pkg"] = json!("path+file:///source-pin-decoy#0.1.0");
+                value
+            },
+            {
+                let mut value = exact_nodes.clone();
+                value[1]["deps"][0]["dep_kinds"][0]["kind"] = json!("dev");
+                value
+            },
+            {
+                let mut value = exact_nodes.clone();
+                value[1]["dependencies"] = json!([]);
+                value
+            },
+        ] {
+            assert!(
+                validate_promotion_source_pin_fixture(
+                    &repo,
+                    &dependency,
+                    &packages,
+                    &nodes,
+                    &workspace_members,
+                    PROMOTION_PACKAGE_NAME,
+                )
+                .is_err()
+            );
+        }
     }
 
     #[test]

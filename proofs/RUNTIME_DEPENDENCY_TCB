@@ -11,6 +11,7 @@ root=ferric-m1-benchmarks|rustix|=1.1.4|registry+https://github.com/rust-lang/cr
 root=ferric-m1-benchmarks|serde_json|=1.0.151|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151
 root=ferric-m1-benchmarks|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 root=ferric-qwen-kernels|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
+root=ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1|sha2|=0.11.0|registry+https://github.com/rust-lang/crates.io-index|false|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 package=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|autocfg|1.5.1|registry+https://github.com/rust-lang/crates.io-index|f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53
 package=registry+https://github.com/rust-lang/crates.io-index#bitflags@2.13.1|bitflags|2.13.1|registry+https://github.com/rust-lang/crates.io-index|b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da
 package=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|block-buffer|0.12.1|registry+https://github.com/rust-lang/crates.io-index|d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa
