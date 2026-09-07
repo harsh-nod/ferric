@@ -78,7 +78,7 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "1e5e609426ae06e2ca36316de0df1f54eedd1f44",
+  siteRefreshBase: "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
   integrationCommit: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
   integrationTree: "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
@@ -111,8 +111,10 @@ const expectedCurrent = {
   combinedInventoryCurrent: false,
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
-  exactCompilerAttempt: "v71",
-  exactCompilerLogShaPrefix: "07a6180",
+  exactCompilerAttempt: "v74",
+  exactCompilerLogSha256: "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+  exactCompilerExitStatus: 1,
+  exactCompilerOutputs: 0,
   r33AdapterTestsPassed: 67,
   r33AdapterHardwareIgnored: 2,
   integratedEngineTestsPassed: 689,
@@ -186,7 +188,9 @@ assertSha256(project.current.engineValidationLogSha256, "current.engineValidatio
 assertSha256(project.current.adapterValidationLogSha256, "current.adapterValidationLogSha256");
 assert(project.current.remoteTestFailures === 0, "repinned remote tests must retain zero failures");
 assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNorm log prefix drifted");
-assert(/^[0-9a-f]{7}$/.test(project.current.exactCompilerLogShaPrefix), "exact compiler log prefix drifted");
+assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
+assert(project.current.exactCompilerExitStatus === 1, "exact compiler status must remain 1");
+assert(project.current.exactCompilerOutputs === 0, "exact compiler outputs must remain zero");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -241,8 +245,13 @@ project.teams.forEach((team, index) => {
   );
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
-  assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
-  assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  if (team.name === "Kernels") {
+    assert(team.status === "Blocked on generic fe2 helper lowering", "kernel blocker status drifted");
+    assert(team.blockedBy.startsWith("Current exact blocker:"), "kernel terminal blocker must remain explicit");
+  } else {
+    assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
+    assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  }
   teamNames.add(team.name);
 });
 
@@ -258,7 +267,7 @@ assertExactKeys(
 );
 assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "open", "compiler validation in progress is not a hardware observation");
-assert(!("commit" in project.latestObservation), "exact v71 must not invent a build commit binding");
+assert(!("commit" in project.latestObservation), "exact v74 must not invent a build commit binding");
 assert(project.latestObservation.generatedTokenIds.length === 0, "no Qwen token has been observed");
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -285,6 +294,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 for (const claim of [
+  "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
   "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
   "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
   "c1b9590b548acea2450136d52ad37a586d03bfed",
@@ -323,12 +333,19 @@ for (const claim of [
   "strict Verus 81 verified / 0 errors",
   "proof tests 26/26",
   "source gate passes 28/28",
-  "focused RMSNorm validation passes 21/21",
+  "RMSNorm validation passes 21/21",
   "4d2bcd1",
   "Exact v71",
   "07a6180",
   "generic fe2 WorkgroupCount X lowering",
   "outlined device helper",
+  "Exact v74",
+  "WorkgroupCount helper gap",
+  "generic fe2 WorkgroupSize X lowering",
+  "f15 bb0 op2",
+  "Status is 1",
+  "no outputs",
+  "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
   "engine 689 passed / 7 ignored",
   "adapter 67 passed / 2 ignored",
   "zero failures",

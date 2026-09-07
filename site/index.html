@@ -215,7 +215,7 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Rerun exact compilation from the public helper fix</h2>
+            <h2 id="next-title">Lower WorkgroupSize X in outlined device helpers</h2>
           </div>
           <p>
             Ferric integration candidate b1d45a00b52fc76d74f32a61cef66ee13f6da080, tree
@@ -223,13 +223,13 @@
             uniform serial RMSNorm fold from
             7521cdcdfebf76dce5f5499aa25f2d90fb81033a and an authenticated executor for exactly one
             128-output R33 window from c1b9590b548acea2450136d52ad37a586d03bfed. Focused RMSNorm validation passes
-            21/21, log SHA prefix 4d2bcd1. Exact v71 against
-            fe2o3 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree
-            68573bf31789625ecc2489491711ad9153eb1cac, clears the prior convergence failure, then fails closed on
-            generic fe2 WorkgroupCount X lowering in an outlined device helper, log SHA prefix 07a6180. No HSACO was
-            produced. Public fe2o3 main be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree
-            f8b09ddeaaed81b0f9f49e5d17020fdb5a434367, contains the reusable compiler fix and b1d45a0 is repinned to it;
-            exact compilation has not been rerun. Remote all-target checks report engine 689 passed / 7 ignored and
+            21/21, log SHA prefix 4d2bcd1. Exact v74 from checkpoint
+            e8d0c889b710d2cb97f70b043e2ff67385bb4b75 uses public fe2o3 main
+            be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367.
+            It clears the prior WorkgroupCount helper gap, then fails closed on generic fe2 WorkgroupSize X lowering in
+            outlined device helper f15 bb0 op2. Status is 1 with no outputs; no HSACO was produced. The exact log SHA is
+            6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42. Remote all-target checks remain
+            engine 689 passed / 7 ignored and
             adapter 67 passed / 2 ignored, zero failures. Engine log SHA
             cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991; adapter log SHA
             6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215. These are non-hardware checks, not token
