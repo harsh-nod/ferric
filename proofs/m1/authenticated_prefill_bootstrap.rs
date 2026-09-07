@@ -601,16 +601,58 @@ mod tests {
             measure,
             "prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(",
         );
-        let after_preparation = &measure[preparation..];
-        let fault = preparation
+        let execution_mode = unique_offset(
+            measure,
+            "let M1R33AuthenticatedExecutionModeV1::TargetWindow {",
+        );
+        let bootstrap_rejection = &measure[preparation..execution_mode];
+        let bootstrap_fault = preparation
             + unique_offset(
-                after_preparation,
+                bootstrap_rejection,
                 "self.state.state = BackendStateV1::Faulted {",
             );
-        let no_report = preparation + unique_offset(after_preparation, "Err(fault(code))");
+        let bootstrap_reject = preparation
+            + unique_offset(
+                bootstrap_rejection,
+                "return Err(fault(FAULT_BOOTSTRAP_REJECTED));",
+            );
+        let execution = unique_offset(
+            measure,
+            "match execute_m1_authenticated_s1_t128_target_window_v1(",
+        );
+        let report = unique_offset(measure, "let report = M1R33MeasurementReportV1 {");
+        let validation = unique_offset(
+            measure,
+            "if report.validate_against(&window.row.expected_work).is_err() {",
+        );
+        let success = unique_offset(measure, "Ok(report)");
+        let validated_success = &measure[validation..success];
+        let validation_reject_offset = unique_offset(
+            validated_success,
+            "return Err(fault(FAULT_EXECUTION_REJECTED));",
+        );
+        let validation_fault = validation
+            + unique_offset(
+                &validated_success[..validation_reject_offset],
+                "self.state.state = BackendStateV1::Faulted {",
+            );
+        let validation_reject = validation + validation_reject_offset;
+        let terminal_fault = validation_reject
+            + unique_offset(
+                &measure[validation_reject..success],
+                "self.state.state = BackendStateV1::Faulted {",
+            );
         assert!(accounting < measure_start);
-        assert!(preparation < fault);
-        assert!(fault < no_report);
+        assert!(preparation < bootstrap_fault);
+        assert!(bootstrap_fault < bootstrap_reject);
+        assert!(bootstrap_reject < execution_mode);
+        assert!(execution_mode < execution);
+        assert!(execution < report);
+        assert!(report < validation);
+        assert!(validation < validation_fault);
+        assert!(validation_fault < validation_reject);
+        assert!(validation_reject < terminal_fault);
+        assert!(terminal_fault < success);
 
         let binding = unique_offset(
             R33_BACKEND_SOURCE,
