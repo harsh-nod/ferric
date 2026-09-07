@@ -9,7 +9,6 @@
 
 pub mod r33_lifecycle;
 pub mod r33_production_backend;
-pub mod r33_resident_session;
 pub mod r33_service;
 pub mod r33_wire;
 
