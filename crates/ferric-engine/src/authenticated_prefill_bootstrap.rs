@@ -854,8 +854,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
     };
     let successor_target_page_count = active_tokens
         .checked_add(policy.max_output_tokens())
-        .map(|tokens| tokens.div_ceil(M1_KV_PAGE_TOKENS))
-        .unwrap_or(u32::MAX);
+        .map_or(u32::MAX, |tokens| tokens.div_ceil(M1_KV_PAGE_TOKENS));
     let mut target_rollover_pages = Vec::new();
     if target_rollover_pages
         .try_reserve_exact(successor_target_page_count.saturating_sub(page_count) as usize)

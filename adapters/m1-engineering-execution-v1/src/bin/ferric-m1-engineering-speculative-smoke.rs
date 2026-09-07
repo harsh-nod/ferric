@@ -524,12 +524,11 @@ fn execute_and_report(
         elapsed_ns(speculative_started_ns),
         "measure finite S1/K4 duration",
     );
-    let physical_total_ns = match prefill_duration_ns.checked_add(speculative_duration_ns) {
-        Some(duration) => duration,
-        None => fail_stop(
+    let Some(physical_total_ns) = prefill_duration_ns.checked_add(speculative_duration_ns) else {
+        fail_stop(
             "sum paired-prefill and speculative durations",
             &(prefill_duration_ns, speculative_duration_ns),
-        ),
+        )
     };
 
     let published_tokens = logical_member.published().tokens().to_vec();

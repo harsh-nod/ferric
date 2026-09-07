@@ -9436,7 +9436,7 @@ mod tests {
             M1AuthenticatedPrefillRegistryFirstRoundClosureV1::Quarantined(witness) => {
                 panic!("integrated rollover queue teardown quarantined: {witness:?}")
             }
-        };
+        }
         drop((closed, logical_runner));
     }
 

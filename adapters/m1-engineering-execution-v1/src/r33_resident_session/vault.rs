@@ -77,18 +77,14 @@ impl<C, I> Vault<C, I> {
     }
 
     pub(super) fn quarantine_input(&mut self) {
-        if let Some(input) = self.input.take() {
-            core::mem::forget(input);
-        }
+        // Dropping the wrapper never drops its manually retained inner owner.
+        let _quarantined_input = self.input.take();
     }
 
     pub(super) fn quarantine_all(&mut self) {
-        if let Some(input) = self.input.take() {
-            core::mem::forget(input);
-        }
-        if let Some(custody) = self.custody.take() {
-            core::mem::forget(custody);
-        }
+        // Dropping either wrapper never drops its manually retained inner owner.
+        let _quarantined_input = self.input.take();
+        let _quarantined_custody = self.custody.take();
     }
 }
 

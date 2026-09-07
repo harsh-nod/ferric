@@ -53,6 +53,11 @@ pub struct M1AuthenticatedTargetWindowBoundsV1 {
 
 impl M1AuthenticatedTargetWindowBoundsV1 {
     /// The paired-prefill choice counts as the first output token.
+    ///
+    /// # Errors
+    ///
+    /// Rejects fewer than two output tokens or a request whose resident token
+    /// count would overflow or exceed the M1 context limit.
     pub fn new(output_tokens: u32) -> Result<Self, M1AuthenticatedTargetWindowInputErrorV1> {
         if output_tokens < 2 {
             return Err(M1AuthenticatedTargetWindowInputErrorV1::OutputTokenCount {
@@ -105,6 +110,10 @@ pub struct M1AuthenticatedTargetWindowRoundPlansV1 {
 
 impl M1AuthenticatedTargetWindowRoundPlansV1 {
     /// Rejects non-target workspace shapes without consuming either owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns both input owners when either plan is not target-only.
     pub fn new(
         preparation: M1FullStepWorkspacePlans,
         recipe: M1FullStepWorkspacePlans,
@@ -173,6 +182,11 @@ pub struct M1AuthenticatedTargetWindowClockStartV1 {
 
 impl M1AuthenticatedTargetWindowClockStartV1 {
     /// Captures the request-arrival boundary without acquiring execution authority.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Clock` when the monotonic raw clock cannot be represented by
+    /// the executor's checked nanosecond boundary.
     pub fn capture() -> Result<Self, M1AuthenticatedTargetWindowExecutionErrorV1> {
         monotonic_raw_ns()
             .map(|started_ns| Self { started_ns })
@@ -195,6 +209,7 @@ impl fmt::Debug for M1AuthenticatedTargetWindowExecutionFailureV1 {
         f.debug_struct("M1AuthenticatedTargetWindowExecutionFailureV1")
             .field("stage", &self.stage)
             .field("error", &self.error)
+            .field("retained", &self.retained)
             .field("retains_all_custody", &true)
             .finish()
     }
@@ -218,6 +233,9 @@ impl M1AuthenticatedTargetWindowExecutionFailureV1 {
     }
 }
 
+// Constructing the large move-only failure directly in a caller would create
+// a stack intermediate before it is placed in the public boxed error channel.
+#[allow(clippy::unnecessary_box_returns)]
 fn fail(
     stage: M1AuthenticatedTargetWindowExecutionStageV1,
     error: M1AuthenticatedTargetWindowExecutionErrorV1,
@@ -232,25 +250,25 @@ fn fail(
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1AuthenticatedTargetWindowTimingV1 {
-    duration_ns: u64,
-    first_token_offset_ns: u64,
-    terminal_token_offset_ns: u64,
+    duration: u64,
+    first_token_offset: u64,
+    terminal_token_offset: u64,
 }
 
 impl M1AuthenticatedTargetWindowTimingV1 {
     #[must_use]
     pub const fn duration_ns(self) -> u64 {
-        self.duration_ns
+        self.duration
     }
 
     #[must_use]
     pub const fn first_token_offset_ns(self) -> u64 {
-        self.first_token_offset_ns
+        self.first_token_offset
     }
 
     #[must_use]
     pub const fn terminal_token_offset_ns(self) -> u64 {
-        self.terminal_token_offset_ns
+        self.terminal_token_offset
     }
 }
 
@@ -266,6 +284,7 @@ impl fmt::Debug for M1AuthenticatedTargetWindowExecutionSuccessV1 {
         f.debug_struct("M1AuthenticatedTargetWindowExecutionSuccessV1")
             .field("tokens", &self.tokens)
             .field("timing", &self.timing)
+            .field("retained", &self.retained)
             .field("retains_terminal_custody", &true)
             .finish()
     }
@@ -291,8 +310,8 @@ impl M1AuthenticatedTargetWindowExecutionSuccessV1 {
 
 #[derive(Debug)]
 enum ReleasedRound {
-    Prefill(M1AuthenticatedReleasedCompletedStepV1),
-    Rearmed(M1AuthenticatedLongLivedQueueReleasedRoundV1),
+    Prefill(Box<M1AuthenticatedReleasedCompletedStepV1>),
+    Rearmed(Box<M1AuthenticatedLongLivedQueueReleasedRoundV1>),
 }
 
 fn close_released<const C: usize>(
@@ -301,9 +320,11 @@ fn close_released<const C: usize>(
 ) -> Box<dyn fmt::Debug> {
     match released {
         ReleasedRound::Prefill(released) => {
+            let released = *released;
             Box::new(released.destroy_queue_and_retain_step(engine))
         }
         ReleasedRound::Rearmed(released) => {
+            let released = *released;
             Box::new(released.destroy_queue_and_retain_round(engine))
         }
     }
@@ -405,6 +426,7 @@ fn publish_target_round<const C: usize>(
     let (preparation_plans, recipe_plans) = plans.into_parts();
     match released {
         ReleasedRound::Prefill(released) => {
+            let released = *released;
             let plan = match released.queue().operations().runner().bind_step_plan(
                 request,
                 batch.epoch(),
@@ -454,6 +476,7 @@ fn publish_target_round<const C: usize>(
             }
         }
         ReleasedRound::Rearmed(released) => {
+            let released = *released;
             let scheduled =
                 match released.schedule_next_exact(engine, batch.epoch(), batch.requests()) {
                     Ok(scheduled) => scheduled,
@@ -547,6 +570,12 @@ impl fmt::Debug for SuccessorCustody {
 /// completion after its direct S1 semantic check. Success requires exact output
 /// cardinality, Engine retirement, registry retirement, and terminal queue
 /// teardown.
+///
+/// # Errors
+///
+/// Returns a boxed failure retaining all move-only custody when input
+/// validation, authenticated publication or completion, device execution,
+/// timing, retirement, or queue teardown fails.
 #[allow(clippy::too_many_lines)]
 pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
     clock_start: M1AuthenticatedTargetWindowClockStartV1,
@@ -872,7 +901,7 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
             ),
         ));
     }
-    let mut released = ReleasedRound::Prefill(released);
+    let mut released = ReleasedRound::Prefill(Box::new(released));
     let mut plans = round_plans.into_iter();
     let mut target_pages = VecDeque::from(pages);
     let mut terminal_token_offset_ns = first_token_offset_ns;
@@ -1278,7 +1307,7 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
                 ),
             ));
         }
-        released = ReleasedRound::Rearmed(next_released);
+        released = ReleasedRound::Rearmed(Box::new(next_released));
     }
 
     if !target_pages.is_empty() {
@@ -1303,8 +1332,9 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
         ));
     }
     let released = match released {
-        ReleasedRound::Rearmed(released) => released,
+        ReleasedRound::Rearmed(released) => *released,
         ReleasedRound::Prefill(released) => {
+            let released = *released;
             let closed = released.destroy_queue_and_retain_step(&mut engine);
             return Err(fail(
                 M1AuthenticatedTargetWindowExecutionStageV1::QueueTeardown,
@@ -1360,9 +1390,9 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
     Ok(M1AuthenticatedTargetWindowExecutionSuccessV1 {
         tokens: tokens.into_boxed_slice(),
         timing: M1AuthenticatedTargetWindowTimingV1 {
-            duration_ns,
-            first_token_offset_ns,
-            terminal_token_offset_ns,
+            duration: duration_ns,
+            first_token_offset: first_token_offset_ns,
+            terminal_token_offset: terminal_token_offset_ns,
         },
         retained: OpaqueCustody(Box::new((engine, teardown, successor_custody, registry))),
     })

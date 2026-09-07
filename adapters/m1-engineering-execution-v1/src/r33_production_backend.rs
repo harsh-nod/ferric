@@ -746,20 +746,17 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 return Err(fault(FAULT_NOT_ACTIVE));
             }
         }
-        let clock_start = match M1AuthenticatedTargetWindowClockStartV1::capture() {
-            Ok(clock_start) => clock_start,
-            Err(_) => {
-                let result = self.state.reject_measure_with(
-                    instance_sha256,
-                    window.row.server_start,
-                    false,
-                    FAULT_EXECUTION_REJECTED,
-                );
-                return match result {
-                    Err(error) => Err(error),
-                    Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
-                };
-            }
+        let Ok(clock_start) = M1AuthenticatedTargetWindowClockStartV1::capture() else {
+            let result = self.state.reject_measure_with(
+                instance_sha256,
+                window.row.server_start,
+                false,
+                FAULT_EXECUTION_REJECTED,
+            );
+            return match result {
+                Err(error) => Err(error),
+                Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
+            };
         };
         let state = core::mem::replace(&mut self.state.state, BackendStateV1::Transitioning);
         let (binding, custody) = match state {
@@ -841,21 +838,18 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         ) {
             Ok(executed) => {
                 let timing = executed.timing();
-                let output_tokens = match u64::try_from(executed.tokens().len()) {
-                    Ok(output_tokens) => output_tokens,
-                    Err(_) => {
-                        self.state.state = BackendStateV1::Faulted {
-                            binding,
-                            custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
-                                runner: M1R33AuthenticatedRunnerCustodyV1::Executed {
-                                    _custody: Box::new(executed),
-                                },
-                                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
-                                engine: M1R33EngineCustodyV1::Joined,
-                            }),
-                        };
-                        return Err(fault(FAULT_EXECUTION_REJECTED));
-                    }
+                let Ok(output_tokens) = u64::try_from(executed.tokens().len()) else {
+                    self.state.state = BackendStateV1::Faulted {
+                        binding,
+                        custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                            runner: M1R33AuthenticatedRunnerCustodyV1::Executed {
+                                _custody: Box::new(executed),
+                            },
+                            model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                            engine: M1R33EngineCustodyV1::Joined,
+                        }),
+                    };
+                    return Err(fault(FAULT_EXECUTION_REJECTED));
                 };
                 let Some(total_tokens) = window
                     .row

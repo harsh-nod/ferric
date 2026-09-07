@@ -447,14 +447,15 @@ fn r33_resident_custody_vault_is_private_held_and_abort_on_unwind() {
         "struct ExecutionCapability",
         "std::process::abort()",
         "run_external_abort_probe_v1",
-        "core::mem::forget(custody)",
-        "core::mem::forget(input)",
+        "let _quarantined_input = self.input.take();",
+        "let _quarantined_custody = self.custody.take();",
     ] {
         assert!(
             R33_RESIDENT_VAULT_SOURCE.contains(required),
             "R33 private custody vault is missing {required}"
         );
     }
+    assert!(!R33_RESIDENT_VAULT_SOURCE.contains("core::mem::forget("));
     assert!(!production_session_source.contains("FnOnce"));
     assert!(!production_session_source.contains("AtomicU64"));
     assert!(R33_VAULT_ABORT_PROBE_SOURCE.contains("run_external_abort_probe_v1"));

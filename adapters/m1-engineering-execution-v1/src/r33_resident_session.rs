@@ -205,7 +205,7 @@ impl<C, I> M1R33ResidentSessionV1<C, I> {
         bundle: HeldM1R33ServiceBundleV1,
         server_start: u64,
         custody: C,
-    ) -> Result<Self, M1R33ResidentSessionAdmissionFailureV1<C>> {
+    ) -> Result<Self, Box<M1R33ResidentSessionAdmissionFailureV1<C>>> {
         let mut vault = vault::Vault::new(custody);
         let roster = match exact_roster_v1(&bundle, server_start) {
             Ok(roster) => roster,
@@ -213,11 +213,11 @@ impl<C, I> M1R33ResidentSessionV1<C, I> {
                 let custody = vault
                     .recover_custody()
                     .expect("new vault must retain exact construction custody");
-                return Err(M1R33ResidentSessionAdmissionFailureV1 {
+                return Err(Box::new(M1R33ResidentSessionAdmissionFailureV1 {
                     error,
                     bundle,
                     custody,
-                });
+                }));
             }
         };
         Ok(Self {
@@ -304,13 +304,14 @@ impl<C, I> M1R33ResidentSessionV1<C, I> {
             expected_output_tokens: facts.expected_output_tokens,
         };
         let mut abort_on_unwind = vault::AbortOnUnwind::armed();
-        let Some(mut capability) = self.vault.execution_capability(view) else {
-            abort_on_unwind.disarm();
-            self.state = M1R33ResidentSessionPhaseV1::Faulted;
-            return Err(M1R33ResidentSessionErrorV1::VaultInvariant);
+        let disposition = {
+            let Some(mut capability) = self.vault.execution_capability(view) else {
+                abort_on_unwind.disarm();
+                self.state = M1R33ResidentSessionPhaseV1::Faulted;
+                return Err(M1R33ResidentSessionErrorV1::VaultInvariant);
+            };
+            executor.execute(&mut capability)
         };
-        let disposition = executor.execute(&mut capability);
-        drop(capability);
         match disposition {
             M1R33ResidentExecutionDispositionV1::Complete(report) => {
                 if !self.vault.complete_input() {
@@ -656,9 +657,8 @@ mod tests {
         drop(binding);
         assert_eq!(session.phase(), M1R33ResidentSessionPhaseV1::Faulted);
         assert_eq!(quarantined_drops.get(), 0);
-        let rejected = match session.bind_next(CountedDrop(Rc::clone(&recovered_drops))) {
-            Ok(_) => panic!("faulted session admitted a second input"),
-            Err(rejected) => rejected,
+        let Err(rejected) = session.bind_next(CountedDrop(Rc::clone(&recovered_drops))) else {
+            panic!("faulted session admitted a second input");
         };
         assert_eq!(
             rejected.error(),
@@ -683,9 +683,8 @@ mod tests {
             .bind_next(CountedDrop(Rc::clone(&installed_drops)))
             .unwrap();
         core::mem::forget(outstanding);
-        let rejected = match session.bind_next(CountedDrop(Rc::clone(&rejected_drops))) {
-            Ok(_) => panic!("outstanding session admitted a second input"),
-            Err(rejected) => rejected,
+        let Err(rejected) = session.bind_next(CountedDrop(Rc::clone(&rejected_drops))) else {
+            panic!("outstanding session admitted a second input");
         };
         assert_eq!(
             rejected.error(),
@@ -707,9 +706,8 @@ mod tests {
         let mut session =
             M1R33ResidentSessionV1::new(bundle, 0, CountedDrop(Rc::clone(&custody_drops))).unwrap();
         fs::write(directory.0.join("workload.json"), b"replaced").unwrap();
-        let rejected = match session.bind_next(CountedDrop(Rc::clone(&input_drops))) {
-            Ok(_) => panic!("mutated held workload admitted an input"),
-            Err(rejected) => rejected,
+        let Err(rejected) = session.bind_next(CountedDrop(Rc::clone(&input_drops))) else {
+            panic!("mutated held workload admitted an input");
         };
         assert_eq!(
             rejected.error(),
