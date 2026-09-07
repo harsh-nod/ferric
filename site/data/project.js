@@ -3,7 +3,7 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "991bf809c9a86846cf50007f639563341a65a969",
+    siteRefreshBase: "3235ea8e4c7d12799022b7bec8a5e7c780514062",
     integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
     integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
     r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
@@ -19,9 +19,10 @@ window.FERRIC_PROJECT = Object.freeze({
     immediateBranchSourceCommit: "fb991b83e2a0f9d1cf4f11058c51b372ee96acff",
     flattenedLoopSourceCommit: "aad3b3aae05a261ac011b3318b786790c1f08320",
     canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
-    kernelCandidateSourceCommit: "42e959710d830c6394413ff861c41dcbf61fd54d",
-    kernelCandidateSourceTree: "2af4b8672051740b26e2d8c0c81c0238a52f2114",
+    kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
+    kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
     fe2o3LatestMain: "3d10825df93a86644cc5a5b006cadd45f71afb91",
+    fe2o3LatestTree: "84cdb971391617f1809cee08b706ba56dad40fd4",
     formalVerified: 81,
     formalErrors: 0,
     proofTestsPassed: 26,
@@ -49,7 +50,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Integration candidate 1dc659b joins authenticated paired-prefill execution, authority-free engineering identity derivation, and bounded live-source radix prefix reuse. Exact compilation on the prior compiler pin cleared paged-decode and Rope/KV arithmetic. v37 cleared the 1,024-block ranked-CFG gate, then failed closed at 77 ranked function arguments against the limit of 64. v38's nested 16-component loop cleared both ranked limits, then target-neutral lowering rejected one compiler-intrinsic borrow crossing that loop. Clean DCO repin 5ecad80 moves Ferric to fe2o3 3d10825 with TCB 28/28 green, and pinned-nightly vendor v7 clears sysroot closure. Flattened single-loop DCO aad3b3a cleared the retained-borrow class; exact v11 advanced to the next gate and rejected a noncanonical uniform induction bound. DCO 96df9a3 canonicalizes that bound, with format-only tip 42e9597 passing cargo fmt and v50 focused 27/27. Exact v13 still rejects the kv_elements/64 induction bound as not an exact total unsigned index expression, with status 1 and no output. No HSACO or Qwen token exists, and every M1 exit gate remains open.",
+      "Integration candidate 1dc659b joins authenticated paired-prefill execution, authority-free engineering identity derivation, and bounded live-source radix prefix reuse. Current Ferric kernel candidate 72c78c6 targets fe2o3 main 3d10825. Its exact-total loop bound is cleared, focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite passes, and the engine physical-recipe matrix passes 7/7. Exact v17 reaches genuine lowering but fails closed on the sole current terminal blocker: function 6 retained local/type (178,63,borrow for compiler intrinsic), which requires general fe2o3 private-slot lowering. Status is 1 and no output was produced. No HSACO or Qwen token exists, and every M1 exit gate remains open.",
   },
   readiness: [
     {
@@ -80,7 +81,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Exact compilation on the prior fe2o3 pin cleared paged-decode capacity plus Rope/KV division, remainder, and page-table arithmetic. v37 cleared ranked-CFG capacity, then the compiler rejected 77 ranked arguments against 64. v38 cleared both ranked limits, then target-neutral lowering rejected one compiler-intrinsic borrow crossing the component loop. Clean DCO repin 5ecad80 moves the 54-file dependency closure to fe2o3 3d10825, and pinned-nightly vendor v7 clears the earlier sysroot issues. Flattened DCO aad3b3a clears the retained-borrow diagnostic, while exact v11 fails closed because the uniform induction bound is not an exact total unsigned index expression. Canonical-bound DCO 96df9a3 plus format-only 42e9597 passes cargo fmt and v50 27/27. Exact v13 rejects the same condition for kv_elements/64 with status 1 and no output. No HSACO exists.",
+        "Ferric candidate 72c78c6, tree 6b3a5ab, is pinned to fe2o3 3d10825, tree 84cdb971. The exact-total loop bound is cleared. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite passes, and engine physical-recipe checks pass 7/7. Exact v17 reaches genuine lowering, then rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) because general fe2o3 private-slot lowering is not implemented. The run exits status 1 with no output or HSACO.",
     },
     {
       label: "Radix prefix reuse",
@@ -103,7 +104,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
     ["Ferric integration candidate", "1dc659beda81d37d746cb05a16d35fd7788e29ef; reviewed integration evidence, not public main, a release, or a serving result"],
-    ["fe2o3 main", "3d10825df93a86644cc5a5b006cadd45f71afb91; latest reusable compiler, runtime, and KFD selected for comprehensive repin"],
+    ["fe2o3 main", "3d10825df93a86644cc5a5b006cadd45f71afb91; tree 84cdb971391617f1809cee08b706ba56dad40fd4; reusable compiler, runtime, and KFD"],
   ],
   capabilities: {
     runnable: [
@@ -142,7 +143,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric-owned Qwen kernel set",
         detail:
-          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. v37 replaced Blocked<64,256> output ownership with an address-equivalent RowStriped2D<64,256> witness, collapsed 512 to 32 guarded writes, and cleared the ranked-CFG gate without an intended ABI, address, or launch change. v38's nested 16-component loop cleared the 77-to-64 ranked-argument gap. v39 derives a row-striped witness inside each component iteration. aad3b3a flattens row/component traversal and clears the retained-borrow class. 96df9a3 canonicalizes the induction bound and format-only 42e9597 passes fmt plus v50 27/27, but exact v13 still rejects kv_elements/64 as not an exact total unsigned index expression.",
+          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Candidate 72c78c6 clears the exact-total loop-bound gate while retaining the reviewed row-striped paged-KV mapping. Focused Rope/KV, the full kernel suite, and engine physical-recipe checks are green. Exact v17 now stops only at the general compiler requirement to lower function 6 retained local/type (178,63,borrow for compiler intrinsic) through a private slot.",
       },
       {
         name: "Bounded live radix prefix reuse",
@@ -169,7 +170,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Produce the exact aggregate HSACO",
         detail:
-          "Re-express the flattened uniform induction bound in a compiler-accepted exact-total form, rerun focused checks, then inspect an artifact only if a later exact run produces one.",
+          "Implement and validate general retained-borrow private-slot lowering in fe2o3, rerun exact v17-equivalent compilation, then inspect an artifact only if one is produced.",
       },
       {
         name: "Run the staged engineering smoke",
@@ -219,9 +220,9 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "No current aggregate hardware result",
       state: "open",
       sourceStatus: "No exact aggregate artifact or authenticated Qwen run",
-      result: "OPEN: retained borrow cleared and v50 passes 27/27; exact v13 rejects kv_elements/64 induction bound with no output; no HSACO",
+      result: "OPEN: exact-total loop bound cleared; exact v17 fails only on function 6 retained local 178/type 63; no output or HSACO",
       detail:
-        "The prior fe2o3 pin cleared deterministic reachability, paged-decode, and Rope/KV arithmetic blockers. Clean DCO source 5ecad80 completes Ferric's 54-file repin to 3d10825 with TCB gates 28/28 green, and pinned-nightly vendor v7 reaches genuine lowering. Flattened single-loop DCO aad3b3a passes corrected v46 27/27. Exact v11 then clears the retained-borrow class and fails closed at the next gate: uniform induction bound is not an exact total unsigned index expression, log SHA 7ce6bbac77f24efbb0d224b4cce0823b854ba7b5b9139fb9426292bcfe729e85. Canonical-bound DCO 96df9a3 plus format-only tip 42e9597, tree 2af4b8672051740b26e2d8c0c81c0238a52f2114, passes cargo fmt and focused v50 27/27, log SHA b00ac51eed01c51a9f8e41ce2618cc64df7380211ac81ebfa43d80cd49ccffe9. Exact v13 rejects the same exact-total condition for kv_elements/64 with status 1 and no output, log SHA 319d37bbf5581b2f79fb8a5ff02cda63024c48d747125879269027245cca78a1. No artifact, hardware execution, or timing authority exists.",
+        "Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, is evaluated against fe2o3 3d10825df93a86644cc5a5b006cadd45f71afb91, tree 84cdb971391617f1809cee08b706ba56dad40fd4. The exact-total loop bound is cleared. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite is green, and engine physical-recipe checks pass 7/7. Exact v17 reaches genuine lowering, then fails closed on function 6 retained local/type (178,63,borrow for compiler intrinsic), the one remaining terminal diagnostic. General fe2o3 private-slot lowering is required. The run exits status 1 with no output; log SHA bfad31c3331c6a2b92de73a4d873b88c94a8b45dfb7eb3d835f7515f9ce69965. No artifact, hardware execution, or timing authority exists.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -244,7 +245,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Candidate 1dc659b joins the authenticated executor, authority-free engineering identities, and bounded live-source radix reuse on top of the existing R33 and bootstrap path.",
       current:
-        "Sequencing the induction-bound repair after exact v13, staged engineering smoke, protected production admission, and final combined evidence refresh.",
+        "Sequencing general fe2o3 private-slot lowering, the staged engineering smoke, protected production admission, and final combined evidence refresh.",
       blockedBy:
         "No team-local blocker. M1 depends on the exact kernel artifact, an exclusive GPU run, and deployed protected artifact admission.",
       next:
@@ -256,17 +257,17 @@ window.FERRIC_PROJECT = Object.freeze({
       name: "Kernels",
       scope: "Ferric-owned Qwen kernels compiled with fe2o3",
       state: "integration",
-      status: "Progressing, no team blocker",
+      status: "Blocked on fe2o3 private-slot lowering",
       completed:
         "Exact compilation cleared paged-decode and Rope/KV arithmetic; v37 cleared ranked-CFG capacity and v38 cleared the ranked argument limit after 27/27 focused equivalence and source checks.",
       current:
-        "DCO aad3b3a clears the retained-borrow class. Canonical-bound DCO 96df9a3 plus format-only 42e9597 passes cargo fmt and v50 27/27.",
+        "Candidate 72c78c6 clears the exact-total loop-bound gate. Focused Rope/KV passes 27/27, the full ferric-qwen-kernels suite is green, and engine physical-recipe checks pass 7/7.",
       blockedBy:
-        "No team-local blocker. Artifact production depends on discharging the remaining exact arithmetic obligations without weakening source closure.",
+        "Sole current terminal blocker: exact v17 requires general fe2o3 private-slot lowering for function 6 retained local 178/type 63.",
       next:
-        "Express the flattened loop bound in an accepted exact-total form, then rerun focused and exact validation.",
+        "Implement the general compiler lowering in fe2o3, repin Ferric to that public main, then rerun focused and exact validation.",
       validation:
-        "Pinned-nightly vendor v7 reaches kernel lowering. Exact v11 clears the retained-borrow class but rejects the noncanonical induction-bound expression. Source 42e9597 passes fmt and v50 27/27; exact v13 rejects the same condition for kv_elements/64 with status 1 and no output. No artifact or HSACO exists.",
+        "The exact-total loop bound is cleared. Exact v17 reaches genuine lowering but rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) with status 1 and no output. No artifact or HSACO exists.",
     },
     {
       name: "Inference engine",
@@ -317,23 +318,30 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Public main 3d10825df93a86644cc5a5b006cadd45f71afb91 selected for the current comprehensive repin",
+      "Public main 3d10825df93a86644cc5a5b006cadd45f71afb91, tree 84cdb971391617f1809cee08b706ba56dad40fd4, selected for the current comprehensive repin",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Focused v50 is green; exact v13 rejects induction-bound form",
+    title: "Exact-total bound cleared; exact v17 needs private-slot lowering",
     state: "open",
-    sourceStatus: "Clean unintegrated DCO kernel source 42e959710d830c6394413ff861c41dcbf61fd54d, tree 2af4b8672051740b26e2d8c0c81c0238a52f2114",
-    environment: "mi300x exact v13 with pinned-nightly vendor v7 and fe2o3 3d10825; compiler-only, no hardware execution",
+    sourceStatus: "Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
+    environment: "mi300x exact v17 against fe2o3 3d10825, tree 84cdb971; compiler-only, no hardware execution",
     result:
-      "Exact v11 clears the retained-borrow class, then rejects a uniform induction bound that is not an exact total unsigned index expression. Canonical-bound 96df9a3 plus format-only 42e9597 passes cargo fmt and focused v50 27/27. Exact v13 rejects the same condition for kv_elements/64 with status 1 and no output. No HSACO exists.",
+      "The exact-total loop bound is cleared. Exact v17 reaches genuine lowering, then rejects function 6 retained local/type (178,63,borrow for compiler intrinsic) because general fe2o3 private-slot lowering is absent. Status is 1, there is no output, and no HSACO exists.",
     buildId: "None: no HSACO produced",
     generatedTokenIds: [],
     authority:
       "This is a fail-closed compiler diagnostic, not a compiler artifact or hardware observation. No Qwen token, TTFT, TPOT, numerical result, serving endpoint, or vLLM/SGLang baseline exists.",
   },
   recentProgress: [
+    {
+      commit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
+      title: "Cleared the exact-total loop-bound gate",
+      state: "implemented",
+      detail:
+        "This Ferric candidate, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, passes focused Rope/KV 27/27, the full ferric-qwen-kernels suite, and engine physical-recipe 7/7. Exact v17 reaches the sole remaining private-slot-lowering diagnostic and produces no artifact.",
+    },
     {
       commit: "42e959710d830c6394413ff861c41dcbf61fd54d",
       title: "Formatted the canonical flattened traversal",
@@ -346,7 +354,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Canonicalized the flattened KV loop bound",
       state: "implemented",
       detail:
-        "This DCO source replaces the induction-bound form exact v11 rejected after the retained-borrow class cleared. It remains unintegrated pending the exact v13 result.",
+        "This DCO source replaced the induction-bound form exact v11 rejected after the retained-borrow class cleared. Exact v13 still rejected that form; later candidate 72c78c6 cleared the gate.",
     },
     {
       commit: "aad3b3aae05a261ac011b3318b786790c1f08320",

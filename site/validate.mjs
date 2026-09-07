@@ -71,7 +71,7 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "991bf809c9a86846cf50007f639563341a65a969",
+  siteRefreshBase: "3235ea8e4c7d12799022b7bec8a5e7c780514062",
   integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
   integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
   r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
@@ -87,9 +87,10 @@ const expectedCurrent = {
   immediateBranchSourceCommit: "fb991b83e2a0f9d1cf4f11058c51b372ee96acff",
   flattenedLoopSourceCommit: "aad3b3aae05a261ac011b3318b786790c1f08320",
   canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
-  kernelCandidateSourceCommit: "42e959710d830c6394413ff861c41dcbf61fd54d",
-  kernelCandidateSourceTree: "2af4b8672051740b26e2d8c0c81c0238a52f2114",
+  kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
+  kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   fe2o3LatestMain: "3d10825df93a86644cc5a5b006cadd45f71afb91",
+  fe2o3LatestTree: "84cdb971391617f1809cee08b706ba56dad40fd4",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -127,7 +128,10 @@ for (const key of [
   "pairedPrefillExecutorCommit",
   "engineeringIdentityCommit",
   "radixPrefixCommit",
+  "kernelCandidateSourceCommit",
+  "kernelCandidateSourceTree",
   "fe2o3LatestMain",
+  "fe2o3LatestTree",
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
@@ -198,8 +202,13 @@ project.teams.forEach((team, index) => {
   );
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
-  assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
-  assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  if (team.name === "Kernels") {
+    assert(team.status === "Blocked on fe2o3 private-slot lowering", "kernel blocker status drifted");
+    assert(team.blockedBy.startsWith("Sole current terminal blocker:"), "kernel terminal blocker must remain explicit");
+  } else {
+    assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
+    assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  }
   teamNames.add(team.name);
 });
 
@@ -250,6 +259,9 @@ for (const claim of [
   "f709a5da2f0130087bcfc0605a4c84ebd966ea0c",
   "18eed253d30b40a23f3984d7249d24b4db7318d2",
   "3d10825df93a86644cc5a5b006cadd45f71afb91",
+  "84cdb971391617f1809cee08b706ba56dad40fd4",
+  "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
+  "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   "5ecad80658f27909fa2477d6f73e47e9f95407ae",
   "c4f63ca071a4012c09bdff349c11d69af0f18b18",
   "2360a11bbac4e3376ba004472c2fda7aee2d26b1",
@@ -277,35 +289,28 @@ for (const claim of [
   "NoMatch",
   "live-source",
   "logical",
-  "page-table arithmetic",
   "v37",
   "v38",
   "v39",
   "ranked-CFG capacity",
-  "Blocked<64,256>",
-  "RowStriped2D<64,256>",
-  "512 to 32 guarded writes",
   "27/27",
-  "77 ranked function arguments",
-  "limit of 64",
-  "nested 16-component loop",
-  "target-neutral lowering",
   "compiler-intrinsic borrow",
-  "row-striped witness inside each component iteration",
-  "54-file repin",
   "TCB gates pass 28/28",
-  "Pinned-nightly vendor v7",
   "focused Rope/KV v42 27/27",
   "v43 27/27",
   "v44 27/27",
   "local 201/type 63",
-  "corrected v46 27/27",
-  "uniform induction bound",
-  "not an exact total unsigned index expression",
   "cargo fmt",
   "v50 27/27",
-  "Exact v13 rejects",
-  "kv_elements/64",
+  "exact-total loop bound is cleared",
+  "full ferric-qwen-kernels suite",
+  "physical-recipe checks pass 7/7",
+  "Exact v17",
+  "sole current terminal blocker",
+  "function 6 retained local/type",
+  "178,63",
+  "general fe2o3 private-slot lowering",
+  "bfad31c3331c6a2b92de73a4d873b88c94a8b45dfb7eb3d835f7515f9ce69965",
   "status 1",
   "no outputs",
   "smoke binary",
