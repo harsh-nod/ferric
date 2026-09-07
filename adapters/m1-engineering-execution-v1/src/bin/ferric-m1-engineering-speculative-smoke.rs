@@ -282,9 +282,7 @@ fn execute_and_report(
         allocated.enable_direct_diagnostic_choices_capture(completion),
         "attach independent paired-prefill choice capture",
     );
-    let prefill_queue_data_allocations = allocated
-        .partitioned_memory()
-        .retained_allocation_count();
+    let prefill_queue_data_allocations = allocated.partitioned_memory().retained_allocation_count();
     if prefill_queue_data_allocations != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS
         || prefill_queue_data_allocations > GFX942_MAX_FIXED_DISPATCH_DATA_V1
     {

@@ -20,9 +20,8 @@ const ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_prefill_bootstrap.rs");
 const ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_target_window_executor.rs");
-const ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE: &str = include_str!(
-    "../../../crates/ferric-engine/src/m1_serving_physical_input_provider.rs"
-);
+const ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/m1_serving_physical_input_provider.rs");
 const ENGINE_QUALIFICATION_CAPTURE_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs");
 const CORE_SOURCE: &str =
@@ -693,7 +692,10 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
 fn generic_serving_provider_binds_one_exact_finite_successor_output() {
     let production = ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE
         .split_once("#[cfg(test)]")
-        .map_or(ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE, |(source, _)| source);
+        .map_or(
+            ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE,
+            |(source, _)| source,
+        );
     for required in [
         "new_with_finite_speculative_successor",
         "exact_finite_speculative_successor",
@@ -717,7 +719,10 @@ fn generic_serving_provider_binds_one_exact_finite_successor_output() {
     );
     let prepare = production
         .split_once("    fn prepare_first_publication(")
-        .and_then(|(_, tail)| tail.split_once("    fn prepare_same_shape_rearm(").map(|(body, _)| body))
+        .and_then(|(_, tail)| {
+            tail.split_once("    fn prepare_same_shape_rearm(")
+                .map(|(body, _)| body)
+        })
         .expect("generic first-publication provider remains a bounded source block");
     let successor_preflight = prepare
         .find("first_physical_preflight(front, batch)")
