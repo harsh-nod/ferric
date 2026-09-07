@@ -3,9 +3,11 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "4d5fd39b11a10152524518f34bdc00267a858753",
-    integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
-    integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
+    siteRefreshBase: "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
+    integrationCommit: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
+    integrationTree: "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
+    rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
+    r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
     intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
     r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
     prefillProofSourceCommit: "240bb3d1ce394436cc62244f51888d7737ea6b9c",
@@ -22,20 +24,32 @@ window.FERRIC_PROJECT = Object.freeze({
     canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
     kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
     kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-    fe2o3LatestMain: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
-    fe2o3LatestTree: "68573bf31789625ecc2489491711ad9153eb1cac",
+    fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+    fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
+    fe2o3LatestMain: "be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e",
+    fe2o3LatestTree: "f8b09ddeaaed81b0f9f49e5d17020fdb5a434367",
     formalVerified: 81,
     formalErrors: 0,
     proofTestsPassed: 26,
     sourceGateTestsPassed: 28,
     scopedUnadmittedRuntimeBodies: 23,
     combinedInventoryCurrent: false,
-    r33AdapterTestsPassed: 55,
+    focusedRmsnormTestsPassed: 21,
+    focusedRmsnormLogShaPrefix: "4d2bcd1",
+    exactCompilerAttempt: "v74",
+    exactCompilerLogSha256: "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+    exactCompilerExitStatus: 1,
+    exactCompilerOutputs: 0,
+    r33AdapterTestsPassed: 67,
     r33AdapterHardwareIgnored: 2,
-    r33AdapterDoctestsPassed: 3,
-    integratedEngineTestsPassed: 597,
-    integratedEngineHardwareIgnored: 5,
-    integratedEngineDoctestsPassed: 164,
+    integratedEngineTestsPassed: 689,
+    integratedEngineHardwareIgnored: 7,
+    engineValidationLogSha256: "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
+    adapterValidationLogSha256: "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
+    remoteTestFailures: 0,
+    r33ExecutableWindows: 1,
+    r33RequiredWindows: 20,
+    r33OutputTokensPerWindow: 128,
     radixVerusVerified: 608,
     radixVerusErrors: 0,
     openM1Gates: 33,
@@ -45,26 +59,29 @@ window.FERRIC_PROJECT = Object.freeze({
     currentAggregateHsaco: false,
     qwenTokenObserved: false,
     servingEndpointAvailable: false,
+    baselineRunsAvailable: false,
+    dockerAccessible: false,
+    authority: "none",
   },
   milestone: {
     name: "M1",
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Intermediate Ferric integration 23f326a contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix work, but it is not final or public product integration. The fe2o3 private-slot fix is public at 6492c8f. An exact patched compile of Ferric candidate 72c78c6 clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. It then fails closed at qwen3_rmsnorm_v1 bb6 op0 with UnprovenBarrierConvergence: Subgroup uniform required, Varying found. Status is 1 and no HSACO was produced. The final fe2o3 repin and RMSNorm fix remain pending; no Qwen token, TTFT, or TPOT exists, and every M1 exit gate remains open.",
+      "Ferric integration b1d45a0, carried by checkpoint e8d0c88, repins to public fe2o3 be5668e and includes the uniform serial RMSNorm fold from 7521cdc plus the one-window authenticated R33 executor from c1b9590. Exact v74 clears the prior WorkgroupCount helper gap, then fails closed on generic fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. Status is 1, no output was produced, and the log SHA prefix is 6dd1e79. The R33 path remains limited to exactly one 128-output window, not the required 20-window qualification. No HSACO, token, TTFT, TPOT, serving endpoint, baseline, or qualification evidence exists; authority remains none and all 33 M1 exit gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "1dc659b retains the authenticated multi-window queue path and the paired-prefill executor integrated at e8b9908. It owns queue creation, bounded completion, direct readback, semantic completion, KV settlement, page release, and fail-closed teardown custody.",
+        "b1d45a0 retains the authenticated queue path and paired-prefill executor, including the one-window target executor added at c1b9590. It owns queue creation, bounded completion, checked direct readback, semantic completion, KV settlement, page release, and fail-closed teardown custody.",
     },
     {
       label: "R33 lifecycle",
       state: "integration",
       detail:
-        "eebdb38 adds the authenticated R33 ownership and measurement lifecycle. The standalone adapter passes 55 tests with 2 hardware-dependent ignores and 3 compile-fail doctests. Those adapter bodies are outside the root-workspace formal inventory.",
+        "c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. This is not the required 20-window qualification. Repinned remote all-target checks report 67 adapter tests passed, 2 ignored, zero failures; log SHA 6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215. Authority is none.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -82,19 +99,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Ferric candidate 72c78c6, tree 6b3a5ab, retains its green focused Rope/KV 27/27 and full ferric-qwen-kernels suite; engine physical-recipe checks pass 7/7. The private-slot fix used by the patched exact compile is now public in fe2o3 at 6492c8f, tree 68573bf. That compile clears retained-borrow locals 178 and 40, reaches AMDGPU LLVM lowering, and fails closed at qwen3_rmsnorm_v1 bb6 op0: UnprovenBarrierConvergence: Subgroup uniform required, Varying found. The run exits status 1 with no HSACO.",
+        "Ferric 7521cdc retains its focused RMSNorm 21/21 pass, log SHA prefix 4d2bcd1. Exact v74 from the repinned path clears the prior generic fe2 WorkgroupCount helper gap and next fails closed on fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. The run exits status 1 with no outputs; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42. No aggregate HSACO was produced.",
     },
     {
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "1dc659b integrates bounded live-source reuse of logical committed prefixes through generational Engine custody. Integrated engine gates report 597 passed with 5 hardware ignores and 164 doctests; pinned Verus reports 608 verified and 0 errors. S1/T128 correctly remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
+        "b1d45a0 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. Remote all-target checks report 689 engine tests passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 correctly remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
     },
     {
       label: "Qwen execution and serving",
       state: "open",
       detail:
-        "The engineering smoke executable and verified model snapshot are staged, but exact compilation has not produced the aggregate HSACO. The production protected receipt/verifier service is undeployed. No hardware execution, Qwen token, endpoint, timing measurement, or baseline comparison exists.",
+        "Exact v74 produced no outputs or aggregate HSACO, so the engineering smoke executable was not launched. The production protected receipt/verifier service is undeployed. No hardware execution, Qwen token, endpoint, TTFT, TPOT, or baseline comparison exists. vLLM and SGLang baselines are absent, Docker is inaccessible to this account, and no baseline launch was attempted.",
     },
   ],
   envelope: [
@@ -104,9 +121,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "1dc659beda81d37d746cb05a16d35fd7788e29ef; reviewed integration evidence, not public main, a release, or a serving result"],
+    ["Ferric integration candidate", "b1d45a00b52fc76d74f32a61cef66ee13f6da080; tree 6f50ebdbbfef97a9aa98daeaf465513b6edd06d2; repinned to fe2o3 be5668e and includes uniform serial RMSNorm plus one-window authenticated R33 execution; not public main, a release, a serving result, or qualification"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
-    ["fe2o3 main", "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6; tree 68573bf31789625ecc2489491711ad9153eb1cac; reusable compiler, runtime, and KFD"],
+    ["fe2o3 exact v74 input", "public main be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e; tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367; WorkgroupCount helper lowering clears, then WorkgroupSize X helper lowering fails closed"],
   ],
   capabilities: {
     runnable: [
@@ -136,6 +153,11 @@ window.FERRIC_PROJECT = Object.freeze({
           "The exact S1/T128 bootstrap now feeds an integrated executor that submits, waits, recycles, observes completed device copies, commits one first token, settles device KV, and releases prefill pages. This is implemented source, not a completed GPU run.",
       },
       {
+        name: "Authenticated one-window target execution",
+        detail:
+          "c1b9590 can execute exactly one preadmitted 128-output R33 window. It derives token events only from checked device completions, records CLOCK_MONOTONIC_RAW offsets from the accepted measurement boundary, settles all owned state, and then fail-closes in Faulted. Authority is none, and this is not a serving or qualification result.",
+      },
+      {
         name: "Authority-free engineering identity derivation",
         detail:
           "The engineering smoke adapter can derive distinct domain-separated identities from the actual observation, authenticated target/draft model plans, descriptors, and program catalog. It grants no KFD, protected-verification, benchmark, or qualification authority.",
@@ -145,7 +167,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric-owned Qwen kernel set",
         detail:
-          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Candidate 72c78c6 retains green focused Rope/KV 27/27, full kernel-suite, and engine physical-recipe 7/7 checks. With private-slot lowering fixed, exact compilation clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. The current kernel obligation is RMSNorm barrier convergence: qwen3_rmsnorm_v1 bb6 op0 requires subgroup-uniform control flow but receives a varying value.",
+          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Exact v74 clears the prior RMSNorm and WorkgroupCount helper gaps. The next generic compiler obligation is fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. It fails closed with status 1, no outputs, and no HSACO; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42.",
       },
       {
         name: "Bounded live radix prefix reuse",
@@ -155,7 +177,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated R33 backend lifecycle",
         detail:
-          "The R33 lifecycle owns admitted engine capabilities, exact start/ready/measure/stop ordering, bounded twenty-window operation, and fail-closed cleanup. It has not produced a serving or comparison run.",
+          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. c1b9590 executes exactly one 128-output window with a real monotonic clock and checked-token causality, then fail-closes and rejects a second window. The required 20-window path and qualification evidence remain absent.",
       },
       {
         name: "Pure lifecycle proofs",
@@ -165,14 +187,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Event-backed comparison schema",
         detail:
-          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang, but no workload has been measured.",
+          "Ferric has structures for paired per-request E2E, TTFT, and TPOT collection across Ferric, vLLM, and SGLang, but no workload has been measured. vLLM and SGLang baselines are absent; Docker is inaccessible to this account, so no baseline launch was attempted.",
       },
     ],
     roadmap: [
       {
         name: "Produce the exact aggregate HSACO",
         detail:
-          "Repair qwen3_rmsnorm_v1 subgroup barrier convergence, complete the final fe2o3 6492c8f repin, rerun exact compilation, then inspect an artifact only if one is produced.",
+          "Implement generic fe2 WorkgroupSize X lowering for outlined device helpers, repin Ferric if required, rerun exact compilation, and inspect an artifact only if one is produced.",
       },
       {
         name: "Run the staged engineering smoke",
@@ -190,6 +212,11 @@ window.FERRIC_PROJECT = Object.freeze({
           "Only an authenticated end-to-end GPU run can establish a generated token, TTFT, TPOT, numerical behavior, or a result comparable with vLLM and SGLang.",
       },
       {
+        name: "Launch the comparison baselines",
+        detail:
+          "Restore container access, then launch and authenticate the exact vLLM and SGLang baseline configurations. Docker is currently inaccessible to this account, no baseline was launched, and no comparison result exists.",
+      },
+      {
         name: "Extend prefix caching after first execution",
         detail:
           "The integrated radix slice covers live logical page sharing. Persistent device-KV prefix caching, symmetric memory, and MTP remain deferred and do not delay the initial single-GPU smoke.",
@@ -203,12 +230,12 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Integrated executor, engineering identities, and radix source",
+      title: "Integrated one-window executor and engine source",
       state: "integration",
-      source: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
-      result: "PASS: integrated engine 597 passed / 5 hardware ignored; 164 doctests; strict workspace Clippy clean",
+      source: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
+      result: "PASS: remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored; zero failures",
       detail:
-        "1dc659b integrates the authenticated paired-prefill executor, authority-free engineering identity mode, and live-source logical radix reuse. The engineering smoke binary and verified snapshot are staged, not executed. These source checks are not a Qwen, serving, speed, or qualification result.",
+        "b1d45a0 repins Ferric to fe2o3 be5668e and retains c1b9590's one authenticated 128-output R33 target window with checked-token causality and CLOCK_MONOTONIC_RAW timing. Engine log SHA cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991; adapter log SHA 6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215. These are non-hardware checks: authority is none, and they are not GPU, token, serving, speed, 20-window, performance, or qualification evidence.",
     },
     proof: {
       title: "Authenticated bootstrap and finite-window models",
@@ -219,12 +246,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "Source 240bb3d, integrated as f709a5d, adds the bootstrap model. The radix slice's separate pinned Verus run reports 608 verified and 0 errors. The latest scoped inventory diagnostic found 23 unadmitted bootstrap runtime bodies; combined regeneration remains pending, so no current whole-tree verified/unverified total is claimed. The pure proofs do not prove runtime refinement or effects.",
     },
     hardware: {
-      title: "No current aggregate hardware result",
+      title: "Exact v74 advances to WorkgroupSize helper lowering",
       state: "open",
       sourceStatus: "No exact aggregate artifact or authenticated Qwen run",
-      result: "OPEN: retained-borrow locals 178 and 40 cleared; RMSNorm barrier convergence fails in AMDGPU LLVM lowering; no HSACO",
+      result: "OPEN: WorkgroupCount helper gap cleared; generic fe2 WorkgroupSize X lowering fails at f15 bb0 op2; status 1, no outputs or HSACO",
       detail:
-        "The private-slot fix used by this patched exact compile is public in fe2o3 at 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree 68573bf31789625ecc2489491711ad9153eb1cac; Ferric's final repin remains pending. Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60, clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. The current terminal is qwen3_rmsnorm_v1 bb6 op0 UnprovenBarrierConvergence: Subgroup uniform required, Varying found. The run exits status 1 with no HSACO; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0. No artifact, hardware execution, token, or timing authority exists.",
+        "Exact v74 from checkpoint e8d0c889b710d2cb97f70b043e2ff67385bb4b75 uses repinned Ferric b1d45a00b52fc76d74f32a61cef66ee13f6da080 and fe2o3 be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367. It clears the prior generic WorkgroupCount helper gap, then fails closed on generic fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. Status is 1 and no outputs exist; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42. No HSACO, hardware execution, token, timing, qualification, or authority exists.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -233,10 +260,11 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Authenticated paired-prefill readback", "Fresh speculative coordinator", "implemented"],
       ["Authenticated S1/T128 bootstrap", "Queue-ready prepublication custody", "implemented"],
       ["Queue-ready paired prefill", "Engine and device-KV completion", "implemented"],
+      ["Authenticated R33 128-output window", "Faulted custody; second window rejected", "implemented"],
       ["Live Ready radix source", "Shared committed logical prefix", "integration"],
     ],
     limitation:
-      "These are source-level transitions in integration candidate 1dc659b. Radix reuse is live-source and logical only; S1/T128 is NoMatch at logical width 256. No aggregate artifact has been produced or accepted, and no row is evidence of a Qwen run, serving endpoint, or performance result.",
+      "These are source-level transitions in integration candidate b1d45a0, with the R33 executor integrated at c1b9590. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only; S1/T128 is NoMatch at logical width 256. No aggregate artifact has been produced or accepted, and no row is evidence of a Qwen run, serving endpoint, or performance result.",
   },
   teams: [
     {
@@ -245,31 +273,31 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Candidate 1dc659b joins the authenticated executor, authority-free engineering identities, and bounded live-source radix reuse on top of the existing R33 and bootstrap path.",
+        "Candidate b1d45a0 repins the uniform serial RMSNorm fold, one-window authenticated R33 target execution, paired-prefill executor, authority-free engineering identities, and bounded live-source radix reuse to public fe2o3 be5668e.",
       current:
-        "Intermediate 23f326a contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix work. It is not final or public product integration and remains pending the final fe2o3 repin and RMSNorm fix.",
+        "Exact v74 clears the WorkgroupCount helper gap and stops at generic fe2 WorkgroupSize X lowering in outlined helper f15 bb0 op2. Integration b1d45a0 is not public main or a release, and no HSACO has been produced from this source.",
       blockedBy:
-        "No team-local blocker. M1 depends on the exact kernel artifact, an exclusive GPU run, and deployed protected artifact admission.",
+        "No team-local blocker. M1 still depends on the rerun producing an exact kernel artifact, an exclusive GPU run, deployed protected artifact admission, and authenticated baselines.",
       next:
-        "Complete the fe2o3 6492c8f repin and RMSNorm repair, settle the final integration head, then run the staged engineering smoke and combined evidence gates.",
+        "Land generic WorkgroupSize X helper lowering, rerun exact compilation, and only then run the staged engineering smoke if an aggregate HSACO is produced.",
       validation:
-        "23f326a is audited intermediate integration only; its seven-file ABI delta and authenticated prefill, readback, and radix composition are not yet final public product integration.",
+        "Repinned remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored, zero failures. They establish no hardware, token, timing, serving, baseline, or qualification result.",
     },
     {
       name: "Kernels",
       scope: "Ferric-owned Qwen kernels compiled with fe2o3",
       state: "integration",
-      status: "Blocked on RMSNorm barrier convergence",
+      status: "Blocked on generic fe2 helper lowering",
       completed:
-        "Exact compilation cleared paged-decode and Rope/KV arithmetic; v37 cleared ranked-CFG capacity and v38 cleared the ranked argument limit after 27/27 focused equivalence and source checks.",
+        "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21, log SHA prefix 4d2bcd1. Exact v74 clears the prior convergence and WorkgroupCount helper failures.",
       current:
-        "The fe2o3 private-slot fix clears both retained-borrow failures, locals 178 and 40, and exact compilation now reaches AMDGPU LLVM lowering.",
+        "The current exact terminal is generic fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. The run exits status 1 with no outputs and no HSACO.",
       blockedBy:
-        "Current exact blocker: qwen3_rmsnorm_v1 bb6 op0 reports UnprovenBarrierConvergence because subgroup-uniform control flow is required but a varying value was found.",
+        "Current exact blocker: reusable fe2 WorkgroupSize X lowering is absent for outlined device helpers.",
       next:
-        "Repair RMSNorm subgroup barrier convergence, finish the fe2o3 6492c8f repin, then rerun focused and exact validation.",
+        "Implement the generic helper lowering in fe2o3, repin if required, and rerun exact compilation; inspect or execute only an aggregate actually produced by that run.",
       validation:
-        "The patched exact compile reaches AMDGPU LLVM lowering, then exits status 1 at the RMSNorm convergence diagnostic. No artifact or HSACO exists; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0.",
+        "Exact v74 clears WorkgroupCount helper lowering, then fails closed at WorkgroupSize X in f15 bb0 op2. Status 1, no outputs; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42.",
     },
     {
       name: "Inference engine",
@@ -277,15 +305,15 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Authenticated rollover, paired-prefill execution, authority-free engineering identities, and live-source logical radix reuse are integrated.",
+        "Authenticated rollover, paired-prefill execution, authority-free engineering identities, live-source logical radix reuse, and one checked 128-output target window are integrated.",
       current:
-        "Holding the staged smoke executable and verified Qwen snapshot ready for the first exact aggregate and exclusive GPU slot.",
+        "Holding the staged smoke executable and verified Qwen snapshot while the exact compiler rerun remains pending. The R33 executor intentionally supports only one window before Faulted.",
       blockedBy:
-        "No team-local blocker. End-to-end execution depends on the exact HSACO and protected runtime admission.",
+        "No team-local blocker. End-to-end execution depends on an exact HSACO and protected runtime admission; the required 20-window R33 path remains absent.",
       next:
-        "Run the authority-free engineering smoke after HSACO production, while retaining fail-closed production admission.",
+        "Extend authenticated custody across all 20 required windows after the exact artifact and first diagnostic execution are available.",
       validation:
-        "Integrated engine: 597 passed, 5 hardware-dependent ignored, 164 doctests; strict workspace Clippy clean.",
+        "Remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored, zero failures. Real monotonic timing and checked-token causality are source-validated, not hardware-observed.",
     },
     {
       name: "Formal verification",
@@ -313,7 +341,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Integration candidate 1dc659beda81d37d746cb05a16d35fd7788e29ef; no aggregate HSACO or Qwen result",
+      "Integration candidate b1d45a00b52fc76d74f32a61cef66ee13f6da080, tree 6f50ebdbbfef97a9aa98daeaf465513b6edd06d2; one-window R33 executor source c1b9590b548acea2450136d52ad37a586d03bfed; authority is none; no aggregate HSACO or Qwen result",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
     fe2o3: [
@@ -321,23 +349,60 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Public main 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree 68573bf31789625ecc2489491711ad9153eb1cac, contains the reusable private-slot lowering fix selected for Ferric's final repin",
+      "Public main be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367, contains the reusable outlined-device-helper workgroup-count lowering fix",
+      "Exact Ferric v74 uses public main be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367; WorkgroupCount helper lowering clears, while generic WorkgroupSize X lowering in outlined device helpers remains absent",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Private-slot failures cleared; RMSNorm convergence is next",
+    title: "WorkgroupCount helper lowering cleared; WorkgroupSize X is next",
     state: "open",
-    sourceStatus: "Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree 6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-    environment: "mi300x patched exact compile using the private-slot fix now public in fe2o3 6492c8f; compiler-only, no hardware execution",
+    sourceStatus: "Exact v74 from Ferric checkpoint e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
+    environment: "mi300x compiler-only validation of repinned Ferric b1d45a0 against fe2o3 be5668e, tree f8b09dd; no hardware execution",
     result:
-      "Retained-borrow locals 178 and 40 are cleared. Exact compilation reaches AMDGPU LLVM lowering, then qwen3_rmsnorm_v1 bb6 op0 reports UnprovenBarrierConvergence: Subgroup uniform required, Varying found. Status is 1 and no HSACO exists; log SHA 8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0.",
+      "The prior WorkgroupCount helper gap is cleared. Exact v74 next fails closed on generic fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. Status is 1, no outputs exist, and no HSACO exists; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42.",
     buildId: "None: no HSACO produced",
     generatedTokenIds: [],
     authority:
-      "This is a fail-closed compiler diagnostic, not a compiler artifact or hardware observation. No Qwen token, TTFT, TPOT, numerical result, serving endpoint, or vLLM/SGLang baseline exists.",
+      "Authority: none. This is a fail-closed compiler diagnostic, not a compiler artifact or hardware observation. No Qwen token, TTFT, TPOT, numerical result, serving endpoint, vLLM baseline, or SGLang baseline exists. Docker is inaccessible to this account, so no baseline launch was attempted.",
   },
   recentProgress: [
+    {
+      commit: "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
+      title: "Advanced exact compilation to WorkgroupSize helper lowering",
+      state: "integration",
+      detail:
+        "Exact v74 clears the prior WorkgroupCount helper gap and next fails closed on generic fe2 WorkgroupSize X lowering in outlined device helper f15 bb0 op2. Status is 1 with no outputs; log SHA 6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42. This compiler diagnostic grants no artifact, hardware, token, timing, or qualification authority.",
+    },
+    {
+      commit: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
+      title: "Repinned Ferric to the public device-helper fix",
+      state: "integration",
+      detail:
+        "Integration tree 6f50ebdbbfef97a9aa98daeaf465513b6edd06d2 pins public fe2o3 be5668e. Remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored, zero failures. Engine log SHA cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991; adapter log SHA 6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215. This is non-hardware validation, not token or performance evidence.",
+    },
+    {
+      commit: "be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Published generic workgroup-count lowering for device helpers",
+      state: "implemented",
+      detail:
+        "Public fe2o3 main, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367, lowers workgroup-count intrinsics in outlined device helpers. Ferric b1d45a0 later repinned to it, and exact v74 confirms that the v71 WorkgroupCount terminal clears.",
+    },
+    {
+      commit: "c1b9590b548acea2450136d52ad37a586d03bfed",
+      title: "Integrated one authenticated R33 target window",
+      state: "integration",
+      detail:
+        "The executor handles exactly one 128-output window with CLOCK_MONOTONIC_RAW offsets and checked-token causality, settles owned state, then fail-closes and rejects another window. Remote all-target checks report 689 engine and 67 adapter tests passed. Authority is none; the required 20-window qualification remains open.",
+    },
+    {
+      commit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
+      title: "Integrated a uniform serial RMSNorm fold",
+      state: "integration",
+      detail:
+        "Focused RMSNorm validation passes 21/21, log SHA prefix 4d2bcd1. Exact v71 clears the prior convergence failure and next fails closed on generic fe2 WorkgroupCount X lowering in an outlined device helper, log SHA prefix 07a6180, with no HSACO.",
+    },
     {
       commit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
       title: "Audited the intermediate exact ABI integration",
@@ -462,7 +527,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric separates implemented source, intermediate integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. The private-slot compiler failures are cleared and exact compilation reaches RMSNorm barrier convergence in AMDGPU LLVM lowering, but no HSACO or token exists, production protected admission is undeployed, the combined body inventory is pending regeneration, and none of the 33 M1 exit gates is closed.",
+      "Ferric separates implemented source, integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. Exact v74 clears the prior WorkgroupCount helper gap and reaches generic WorkgroupSize X lowering in outlined device helper f15 bb0 op2, then exits status 1 with no outputs. The authenticated R33 path executes one 128-output window with authority none, not the required 20 windows. No HSACO, token, TTFT, TPOT, serving endpoint, vLLM baseline, SGLang baseline, or qualification evidence exists; Docker is inaccessible to this account, no baseline was launched, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

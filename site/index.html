@@ -215,30 +215,30 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Produce the exact artifact and run the staged smoke</h2>
+            <h2 id="next-title">Lower WorkgroupSize X in outlined device helpers</h2>
           </div>
           <p>
-            Ferric integration candidate 1dc659beda81d37d746cb05a16d35fd7788e29ef includes the authenticated
-            paired-prefill executor, authority-free engineering identity derivation, and bounded live-source logical
-            radix reuse. Integrated engine gates report 597 passed with 5 hardware-dependent ignores and 164
-            doctests; the radix slice's pinned Verus run reports 608 verified and 0 errors. Radix deliberately remains
-            NoMatch for S1/T128 at the current logical width of 256, and it makes no persistent device-KV or speed
-            claim. Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree
-            6b3a5ab219216fe2d7adf797d7ea890f94c76a60, retains green focused Rope/KV 27/27 and the full
-            ferric-qwen-kernels suite; engine physical-recipe checks pass 7/7. The reusable private-slot compiler fix
-            is public in fe2o3 at 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree
-            68573bf31789625ecc2489491711ad9153eb1cac.
-            A patched exact compile clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. It then
-            fails closed at qwen3_rmsnorm_v1 bb6 op0 with UnprovenBarrierConvergence: Subgroup uniform required, Varying
-            found. The run exits status 1 with no HSACO; its log SHA is
-            8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0. Intermediate Ferric integration
-            23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus
-            authenticated prefill, readback, and radix work, but it is not final or public product integration and
-            remains pending the final fe2o3 repin and RMSNorm fix. The engineering smoke binary and canonical Qwen
-            snapshot are staged, but no HSACO,
-            hardware execution, or token exists. The production protected receipt and verifier service are undeployed.
-            Symmetric memory and MTP are deferred. No TTFT, TPOT, serving endpoint, HTTP service, or vLLM/SGLang
-            baseline exists, and all 33 M1 exit gates remain open.
+            Ferric integration candidate b1d45a00b52fc76d74f32a61cef66ee13f6da080, tree
+            6f50ebdbbfef97a9aa98daeaf465513b6edd06d2, repins to public fe2o3 main and includes the
+            uniform serial RMSNorm fold from
+            7521cdcdfebf76dce5f5499aa25f2d90fb81033a and an authenticated executor for exactly one
+            128-output R33 window from c1b9590b548acea2450136d52ad37a586d03bfed. Focused RMSNorm validation passes
+            21/21, log SHA prefix 4d2bcd1. Exact v74 from checkpoint
+            e8d0c889b710d2cb97f70b043e2ff67385bb4b75 uses public fe2o3 main
+            be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e, tree f8b09ddeaaed81b0f9f49e5d17020fdb5a434367.
+            It clears the prior WorkgroupCount helper gap, then fails closed on generic fe2 WorkgroupSize X lowering in
+            outlined device helper f15 bb0 op2. Status is 1 with no outputs; no HSACO was produced. The exact log SHA is
+            6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42. Remote all-target checks remain
+            engine 689 passed / 7 ignored and
+            adapter 67 passed / 2 ignored, zero failures. Engine log SHA
+            cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991; adapter log SHA
+            6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215. These are non-hardware checks, not token
+            or performance evidence. The R33
+            executor uses CLOCK_MONOTONIC_RAW and checked-token causality, then enters Faulted and rejects a second
+            window; it is not the required 20-window qualification. Authority: none. No hardware execution, Qwen token,
+            TTFT, TPOT, serving endpoint, vLLM baseline, or SGLang baseline exists. Docker is inaccessible to this
+            account, so no baseline launch was attempted. The production protected receipt/verifier service is
+            undeployed, symmetric memory and MTP remain deferred, and all 33 M1 exit gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

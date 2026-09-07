@@ -33,6 +33,13 @@ function assertCommit(value, location) {
   );
 }
 
+function assertSha256(value, location) {
+  assert(
+    typeof value === "string" && /^[0-9a-f]{64}$/.test(value),
+    `${location} must be an exact lowercase SHA-256 digest`,
+  );
+}
+
 const states = new Set([
   "implemented",
   "integration",
@@ -71,9 +78,11 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "4d5fd39b11a10152524518f34bdc00267a858753",
-  integrationCommit: "1dc659beda81d37d746cb05a16d35fd7788e29ef",
-  integrationTree: "5b6cb64b72a0fefe8a92cd76a3129d63fa53a8ad",
+  siteRefreshBase: "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
+  integrationCommit: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
+  integrationTree: "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
+  rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
+  r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
   r33LifecycleCommit: "eebdb38dab764143b023b33311363a452a1238ee",
   prefillProofSourceCommit: "240bb3d1ce394436cc62244f51888d7737ea6b9c",
@@ -90,20 +99,32 @@ const expectedCurrent = {
   canonicalBoundSourceCommit: "96df9a33eaf0ef0d97c176e5aaa870ff336747c5",
   kernelCandidateSourceCommit: "72c78c6fb3766ae3de1a4a393f6a8fa358498ca4",
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
-  fe2o3LatestMain: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
-  fe2o3LatestTree: "68573bf31789625ecc2489491711ad9153eb1cac",
+  fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
+  fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
+  fe2o3LatestMain: "be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e",
+  fe2o3LatestTree: "f8b09ddeaaed81b0f9f49e5d17020fdb5a434367",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
   sourceGateTestsPassed: 28,
   scopedUnadmittedRuntimeBodies: 23,
   combinedInventoryCurrent: false,
-  r33AdapterTestsPassed: 55,
+  focusedRmsnormTestsPassed: 21,
+  focusedRmsnormLogShaPrefix: "4d2bcd1",
+  exactCompilerAttempt: "v74",
+  exactCompilerLogSha256: "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+  exactCompilerExitStatus: 1,
+  exactCompilerOutputs: 0,
+  r33AdapterTestsPassed: 67,
   r33AdapterHardwareIgnored: 2,
-  r33AdapterDoctestsPassed: 3,
-  integratedEngineTestsPassed: 597,
-  integratedEngineHardwareIgnored: 5,
-  integratedEngineDoctestsPassed: 164,
+  integratedEngineTestsPassed: 689,
+  integratedEngineHardwareIgnored: 7,
+  engineValidationLogSha256: "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
+  adapterValidationLogSha256: "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
+  remoteTestFailures: 0,
+  r33ExecutableWindows: 1,
+  r33RequiredWindows: 20,
+  r33OutputTokensPerWindow: 128,
   radixVerusVerified: 608,
   radixVerusErrors: 0,
   openM1Gates: 33,
@@ -113,6 +134,9 @@ const expectedCurrent = {
   currentAggregateHsaco: false,
   qwenTokenObserved: false,
   servingEndpointAvailable: false,
+  baselineRunsAvailable: false,
+  dockerAccessible: false,
+  authority: "none",
 };
 assertExactKeys(project.current, Object.keys(expectedCurrent), "current");
 for (const [key, value] of Object.entries(expectedCurrent)) {
@@ -122,6 +146,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "rmsnormUniformFoldCommit",
+  "r33ExecutorCommit",
   "intermediateIntegrationCommit",
   "r33LifecycleCommit",
   "prefillProofSourceCommit",
@@ -132,6 +158,8 @@ for (const key of [
   "radixPrefixCommit",
   "kernelCandidateSourceCommit",
   "kernelCandidateSourceTree",
+  "fe2o3V71Main",
+  "fe2o3V71Tree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
 ]) {
@@ -150,6 +178,19 @@ assert(project.current.radixPrefixIntegrated === true, "integrated radix status 
 assert(project.current.currentAggregateHsaco === false, "site must not claim a current HSACO");
 assert(project.current.qwenTokenObserved === false, "site must not claim a Qwen token");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
+assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
+assert(project.current.dockerAccessible === false, "Docker must remain inaccessible for this checkpoint");
+assert(project.current.authority === "none", "checkpoint authority must remain none");
+assert(project.current.r33ExecutableWindows === 1, "R33 must remain limited to one executable window");
+assert(project.current.r33RequiredWindows === 20, "R33 qualification must still require 20 windows");
+assert(project.current.r33OutputTokensPerWindow === 128, "R33 window must retain 128 output tokens");
+assertSha256(project.current.engineValidationLogSha256, "current.engineValidationLogSha256");
+assertSha256(project.current.adapterValidationLogSha256, "current.adapterValidationLogSha256");
+assert(project.current.remoteTestFailures === 0, "repinned remote tests must retain zero failures");
+assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNorm log prefix drifted");
+assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
+assert(project.current.exactCompilerExitStatus === 1, "exact compiler status must remain 1");
+assert(project.current.exactCompilerOutputs === 0, "exact compiler outputs must remain zero");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -205,7 +246,7 @@ project.teams.forEach((team, index) => {
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
   if (team.name === "Kernels") {
-    assert(team.status === "Blocked on RMSNorm barrier convergence", "kernel blocker status drifted");
+    assert(team.status === "Blocked on generic fe2 helper lowering", "kernel blocker status drifted");
     assert(team.blockedBy.startsWith("Current exact blocker:"), "kernel terminal blocker must remain explicit");
   } else {
     assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
@@ -226,7 +267,7 @@ assertExactKeys(
 );
 assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "open", "compiler validation in progress is not a hardware observation");
-assert(!("commit" in project.latestObservation), "an unintegrated exact-kernel attempt must not claim an integrated source commit");
+assert(!("commit" in project.latestObservation), "exact v74 must not invent a build commit binding");
 assert(project.latestObservation.generatedTokenIds.length === 0, "no Qwen token has been observed");
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -253,6 +294,13 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 for (const claim of [
+  "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
+  "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
+  "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
+  "c1b9590b548acea2450136d52ad37a586d03bfed",
+  "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
+  "be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e",
+  "f8b09ddeaaed81b0f9f49e5d17020fdb5a434367",
   "1dc659beda81d37d746cb05a16d35fd7788e29ef",
   "6df1f2fa99a409adbafd8c3e138f8eae2a728260",
   "e8b9908e48313ee43cbeec8092e4ba62006a3dfb",
@@ -285,18 +333,38 @@ for (const claim of [
   "strict Verus 81 verified / 0 errors",
   "proof tests 26/26",
   "source gate passes 28/28",
-  "55 tests with 2 hardware-dependent ignores and 3 compile-fail doctests",
-  "597 passed",
-  "164 doctests",
+  "RMSNorm validation passes 21/21",
+  "4d2bcd1",
+  "Exact v71",
+  "07a6180",
+  "generic fe2 WorkgroupCount X lowering",
+  "outlined device helper",
+  "Exact v74",
+  "WorkgroupCount helper gap",
+  "generic fe2 WorkgroupSize X lowering",
+  "f15 bb0 op2",
+  "Status is 1",
+  "no outputs",
+  "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+  "engine 689 passed / 7 ignored",
+  "adapter 67 passed / 2 ignored",
+  "zero failures",
+  "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
+  "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
+  "non-hardware validation",
+  "exactly one 128-output window",
+  "CLOCK_MONOTONIC_RAW",
+  "checked-token causality",
+  "required 20-window qualification",
+  "authority is none",
+  "Docker is inaccessible to this account",
+  "no baseline launch was attempted",
   "608 verified and 0 errors",
   "S1/T128",
   "NoMatch",
   "live-source",
   "logical",
-  "v37",
-  "v38",
   "v39",
-  "ranked-CFG capacity",
   "27/27",
   "compiler-intrinsic borrow",
   "TCB gates pass 28/28",
@@ -307,17 +375,11 @@ for (const claim of [
   "cargo fmt",
   "v50 27/27",
   "full ferric-qwen-kernels suite",
-  "physical-recipe checks pass 7/7",
   "audited seven-file exact kernel/host ABI delta",
   "not final or public product integration",
-  "final fe2o3 repin",
+  "repin",
   "retained-borrow locals 178 and 40",
   "AMDGPU LLVM lowering",
-  "qwen3_rmsnorm_v1 bb6 op0",
-  "UnprovenBarrierConvergence",
-  "Subgroup uniform required, Varying found",
-  "8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0",
-  "status 1",
   "smoke binary",
   "verified Qwen snapshot",
   "protected receipt/verifier service is undeployed",
@@ -328,7 +390,8 @@ for (const claim of [
   "No Qwen token",
   "TTFT",
   "TPOT",
-  "vLLM/SGLang baseline",
+  "vLLM baseline",
+  "SGLang baseline",
 ]) {
   assert(snapshot.includes(claim), `current snapshot is missing claim: ${claim}`);
 }
@@ -344,6 +407,9 @@ for (const staleOrForbidden of [
   "Focused v26",
   "v21's single-SSA-local fix",
   "production R33 backend remain absent",
+  "Blocked on RMSNorm barrier convergence",
+  "The current kernel obligation is RMSNorm barrier convergence",
+  "Current exact blocker: qwen3_rmsnorm_v1",
   "Qwen serving is ready",
   "bootstrap remains under review",
   "bootstrap is not integrated",
