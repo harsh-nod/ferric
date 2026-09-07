@@ -215,27 +215,27 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Diagnose the native LLVM worker abort</h2>
+            <h2 id="next-title">Bind the exact descriptor roster</h2>
           </div>
           <p>
-            Ferric integration candidate 01b2cb2ae9100dc28a729481d7c8ef660fef5b76, tree
-            0d0db8cf22de3e04cf78fc64155cadb680873911, repins to public fe2o3 main and includes the
-            uniform serial RMSNorm fold from
-            7521cdcdfebf76dce5f5499aa25f2d90fb81033a and an authenticated executor for exactly one
-            128-output R33 window from c1b9590b548acea2450136d52ad37a586d03bfed. Focused RMSNorm validation passes
-            21/21, log SHA prefix 4d2bcd1. Exact v75 from this integration uses public fe2o3 main
-            629465f1a85a1af331a4e285062991f7ab59a5ce, tree 12da211265860aeec3235e49b631238ce3e618cf.
-            It clears both prior outlined-helper geometry gaps and completes semantic extraction to a 415,659-byte
-            Kernel IR V9 handoff containing 26 GuardedStore operations. The native AMDGPU LLVM worker then exits
-            SIGABRT before producing HSACO. Status is 1 with an empty output manifest; the exact log SHA is
-            7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e. Remote all-target checks remain
-            engine 689 passed / 7 ignored and
+            Ferric integration candidate 28b925a1c4de75aa4ea35175a9f76d6071f4ca86, tree
+            5a6d77564d96e9fdcdc2c124f42b37215988dae9, repins to public fe2o3
+            1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree
+            553334d69d51c4ccffea383cd72cf9105df74130. Exact v76 exits status 0 after a 415,660-byte
+            Kernel IR V9 handoff containing 26 GuardedStore operations and exact replay into a 103,616-byte HSACO
+            containing all 12 kernels. Handoff SHA
+            31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; HSACO SHA
+            c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA
+            6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA
+            fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none and publication,
+            load, and launch grants are false. The first smoke stops at CurrentFerricDescriptorRoster before KFD;
+            GPU and VRAM state are unchanged. Remote all-target checks remain engine 689 passed / 7 ignored and
             adapter 67 passed / 2 ignored, zero failures. Engine log SHA
             ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f; adapter log SHA
             d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a. These are non-hardware checks, not token
             or performance evidence. The R33
             executor uses CLOCK_MONOTONIC_RAW and checked-token causality, then enters Faulted and rejects a second
-            window; it is not the required 20-window qualification. Authority: none. No hardware execution, Qwen token,
+            window; it is not the required 20-window qualification. No hardware execution, Qwen token,
             TTFT, TPOT, serving endpoint, vLLM baseline, or SGLang baseline exists. Docker is inaccessible to this
             account, so no baseline launch was attempted. The production protected receipt/verifier service is
             undeployed, symmetric memory and MTP remain deferred, and all 33 M1 exit gates remain open.

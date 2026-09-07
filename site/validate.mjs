@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "78bcfce2377ece2b79f08d55c3ba3bdca5c9a8f9",
-  integrationCommit: "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
-  integrationTree: "0d0db8cf22de3e04cf78fc64155cadb680873911",
+  siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  integrationCommit: "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
+  integrationTree: "5a6d77564d96e9fdcdc2c124f42b37215988dae9",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
   r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -101,8 +101,8 @@ const expectedCurrent = {
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-  fe2o3LatestMain: "629465f1a85a1af331a4e285062991f7ab59a5ce",
-  fe2o3LatestTree: "12da211265860aeec3235e49b631238ce3e618cf",
+  fe2o3LatestMain: "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
+  fe2o3LatestTree: "553334d69d51c4ccffea383cd72cf9105df74130",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -111,13 +111,26 @@ const expectedCurrent = {
   combinedInventoryCurrent: false,
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
-  exactCompilerAttempt: "v75",
-  exactCompilerLogSha256: "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
-  exactCompilerExitStatus: 1,
-  exactCompilerOutputs: 0,
-  exactCompilerHandoffBytes: 415659,
+  exactCompilerAttempt: "v76",
+  exactCompilerLogSha256: "338edfa1bfa3d7c8346a1b0eec2b64911b91eea149676d27a701651988198a65",
+  exactCompilerExitStatus: 0,
+  exactCompilerOutputs: 2,
+  exactCompilerHandoffBytes: 415660,
+  exactCompilerHandoffSha256: "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   exactCompilerGuardedStores: 26,
-  exactCompilerTerminalSignal: "SIGABRT",
+  exactCompilerHsacoBytes: 103616,
+  exactCompilerHsacoSha256: "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
+  exactCompilerManifestSha256: "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
+  exactCompilerDescriptorSha256: "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+  exactCompilerKernelCount: 12,
+  exactCompilerReplayExact: true,
+  exactCompilerPublicationGrant: false,
+  exactCompilerLoadGrant: false,
+  exactCompilerLaunchGrant: false,
+  engineeringSmokeStop: "CurrentFerricDescriptorRoster",
+  engineeringSmokeReachedKfd: false,
+  engineeringSmokeGpuStateChanged: false,
+  engineeringSmokeVramStateChanged: false,
   r33AdapterTestsPassed: 67,
   r33AdapterHardwareIgnored: 2,
   integratedEngineTestsPassed: 689,
@@ -134,7 +147,7 @@ const expectedCurrent = {
   engineeringSmokeBinaryStaged: true,
   canonicalQwenSnapshotVerified: true,
   radixPrefixIntegrated: true,
-  currentAggregateHsaco: false,
+  currentAggregateHsaco: true,
   qwenTokenObserved: false,
   servingEndpointAvailable: false,
   baselineRunsAvailable: false,
@@ -178,7 +191,7 @@ assert(project.current.openM1Gates === 33, "all 33 M1 exit gates remain open");
 assert(project.current.engineeringSmokeBinaryStaged === true, "engineering smoke binary must remain explicit");
 assert(project.current.canonicalQwenSnapshotVerified === true, "canonical Qwen snapshot status drifted");
 assert(project.current.radixPrefixIntegrated === true, "integrated radix status drifted");
-assert(project.current.currentAggregateHsaco === false, "site must not claim a current HSACO");
+assert(project.current.currentAggregateHsaco === true, "authority-free exact HSACO must remain explicit");
 assert(project.current.qwenTokenObserved === false, "site must not claim a Qwen token");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
 assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
@@ -192,11 +205,31 @@ assertSha256(project.current.adapterValidationLogSha256, "current.adapterValidat
 assert(project.current.remoteTestFailures === 0, "repinned remote tests must retain zero failures");
 assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNorm log prefix drifted");
 assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
-assert(project.current.exactCompilerExitStatus === 1, "exact compiler status must remain 1");
-assert(project.current.exactCompilerOutputs === 0, "exact compiler outputs must remain zero");
-assert(project.current.exactCompilerHandoffBytes === 415659, "exact compiler handoff byte count drifted");
+assertSha256(project.current.exactCompilerHandoffSha256, "current.exactCompilerHandoffSha256");
+assertSha256(project.current.exactCompilerHsacoSha256, "current.exactCompilerHsacoSha256");
+assertSha256(project.current.exactCompilerManifestSha256, "current.exactCompilerManifestSha256");
+assertSha256(project.current.exactCompilerDescriptorSha256, "current.exactCompilerDescriptorSha256");
+assert(project.current.exactCompilerExitStatus === 0, "exact compiler status must remain 0");
+assert(project.current.exactCompilerOutputs === 2, "exact compiler output count drifted");
+assert(project.current.exactCompilerHandoffBytes === 415660, "exact compiler handoff byte count drifted");
 assert(project.current.exactCompilerGuardedStores === 26, "exact compiler GuardedStore count drifted");
-assert(project.current.exactCompilerTerminalSignal === "SIGABRT", "exact compiler terminal signal drifted");
+assert(project.current.exactCompilerHsacoBytes === 103616, "exact compiler HSACO byte count drifted");
+assert(project.current.exactCompilerKernelCount === 12, "exact compiler kernel count drifted");
+assert(project.current.exactCompilerReplayExact === true, "exact compiler replay must remain exact");
+for (const grant of [
+  "exactCompilerPublicationGrant",
+  "exactCompilerLoadGrant",
+  "exactCompilerLaunchGrant",
+]) {
+  assert(project.current[grant] === false, `${grant} must remain false`);
+}
+assert(
+  project.current.engineeringSmokeStop === "CurrentFerricDescriptorRoster",
+  "engineering smoke stop drifted",
+);
+assert(project.current.engineeringSmokeReachedKfd === false, "engineering smoke must remain pre-KFD");
+assert(project.current.engineeringSmokeGpuStateChanged === false, "smoke must not claim GPU state changes");
+assert(project.current.engineeringSmokeVramStateChanged === false, "smoke must not claim VRAM state changes");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -251,13 +284,8 @@ project.teams.forEach((team, index) => {
   );
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
-  if (team.name === "Kernels") {
-    assert(team.status === "Blocked on native LLVM worker abort", "kernel blocker status drifted");
-    assert(team.blockedBy.startsWith("Current exact blocker:"), "kernel terminal blocker must remain explicit");
-  } else {
-    assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
-    assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
-  }
+  assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
+  assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
   teamNames.add(team.name);
 });
 
@@ -272,8 +300,8 @@ assertExactKeys(
   "latestObservation",
 );
 assertState(project.latestObservation.state, "latestObservation.state");
-assert(project.latestObservation.state === "open", "compiler validation in progress is not a hardware observation");
-assert(!("commit" in project.latestObservation), "exact v75 must not invent a build commit binding");
+assert(project.latestObservation.state === "integration", "authority-free exact artifact is an integration observation");
+assert(!("commit" in project.latestObservation), "exact v76 uses a source status rather than a publication binding");
 assert(project.latestObservation.generatedTokenIds.length === 0, "no Qwen token has been observed");
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -291,7 +319,12 @@ assert(project.evidence.gates.length >= 6, "evidence gate roster is incomplete")
 project.evidence.gates.forEach((entry, index) => {
   assert(Array.isArray(entry) && entry.length === 3, `evidence.gates[${index}] must be a triple`);
   assertState(entry[2], `evidence.gates[${index}].state`);
-  assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
+  if (entry[0] === "Authority-free aggregate HSACO") {
+    assert(entry[1] === "1", "authority-free aggregate HSACO count drifted");
+    assert(entry[2] === "integration", "authority-free aggregate HSACO state drifted");
+  } else {
+    assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
+  }
 });
 project.evidence.legend.forEach((entry, index) => {
   assert(Array.isArray(entry) && entry.length === 2, `evidence.legend[${index}] must be a pair`);
@@ -300,9 +333,11 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 for (const claim of [
-  "78bcfce2377ece2b79f08d55c3ba3bdca5c9a8f9",
-  "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
-  "0d0db8cf22de3e04cf78fc64155cadb680873911",
+  "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+  "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
+  "5a6d77564d96e9fdcdc2c124f42b37215988dae9",
+  "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
+  "553334d69d51c4ccffea383cd72cf9105df74130",
   "629465f1a85a1af331a4e285062991f7ab59a5ce",
   "12da211265860aeec3235e49b631238ce3e618cf",
   "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
@@ -357,10 +392,23 @@ for (const claim of [
   "Status is 1",
   "no outputs",
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
-  "Exact v75",
+  "Exact v76",
+  "Status 0",
+  "415,660-byte Kernel IR V9 handoff",
+  "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   "both prior outlined-helper geometry gaps",
   "415,659-byte Kernel IR V9 handoff",
   "26 GuardedStore operations",
+  "103,616-byte",
+  "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
+  "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
+  "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+  "all 12 kernels",
+  "exact replay",
+  "publication, load, and launch grants are false",
+  "CurrentFerricDescriptorRoster",
+  "before KFD",
+  "GPU and VRAM state are unchanged",
   "native AMDGPU LLVM worker",
   "SIGABRT",
   "empty output manifest",
@@ -406,7 +454,6 @@ for (const claim of [
   "protected receipt/verifier service is undeployed",
   "symmetric memory",
   "MTP",
-  "no HSACO",
   "All 33 M1 exit gates remain open",
   "No Qwen token",
   "TTFT",
@@ -431,6 +478,9 @@ for (const staleOrForbidden of [
   "Blocked on RMSNorm barrier convergence",
   "The current kernel obligation is RMSNorm barrier convergence",
   "Current exact blocker: qwen3_rmsnorm_v1",
+  "Blocked on native LLVM worker abort",
+  "Current exact blocker: native LLVM worker abort",
+  "No aggregate HSACO was produced",
   "Qwen serving is ready",
   "bootstrap remains under review",
   "bootstrap is not integrated",

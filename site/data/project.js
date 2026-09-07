@@ -3,9 +3,9 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "78bcfce2377ece2b79f08d55c3ba3bdca5c9a8f9",
-    integrationCommit: "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
-    integrationTree: "0d0db8cf22de3e04cf78fc64155cadb680873911",
+    siteRefreshBase: "d57242e978a2b215a33ea1e48cd43fea16e9cdc1",
+    integrationCommit: "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
+    integrationTree: "5a6d77564d96e9fdcdc2c124f42b37215988dae9",
     rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
     r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
     intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -26,8 +26,8 @@ window.FERRIC_PROJECT = Object.freeze({
     kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
     fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-    fe2o3LatestMain: "629465f1a85a1af331a4e285062991f7ab59a5ce",
-    fe2o3LatestTree: "12da211265860aeec3235e49b631238ce3e618cf",
+    fe2o3LatestMain: "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
+    fe2o3LatestTree: "553334d69d51c4ccffea383cd72cf9105df74130",
     formalVerified: 81,
     formalErrors: 0,
     proofTestsPassed: 26,
@@ -36,13 +36,26 @@ window.FERRIC_PROJECT = Object.freeze({
     combinedInventoryCurrent: false,
     focusedRmsnormTestsPassed: 21,
     focusedRmsnormLogShaPrefix: "4d2bcd1",
-    exactCompilerAttempt: "v75",
-    exactCompilerLogSha256: "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
-    exactCompilerExitStatus: 1,
-    exactCompilerOutputs: 0,
-    exactCompilerHandoffBytes: 415659,
+    exactCompilerAttempt: "v76",
+    exactCompilerLogSha256: "338edfa1bfa3d7c8346a1b0eec2b64911b91eea149676d27a701651988198a65",
+    exactCompilerExitStatus: 0,
+    exactCompilerOutputs: 2,
+    exactCompilerHandoffBytes: 415660,
+    exactCompilerHandoffSha256: "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
     exactCompilerGuardedStores: 26,
-    exactCompilerTerminalSignal: "SIGABRT",
+    exactCompilerHsacoBytes: 103616,
+    exactCompilerHsacoSha256: "c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
+    exactCompilerManifestSha256: "6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a",
+    exactCompilerDescriptorSha256: "fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5",
+    exactCompilerKernelCount: 12,
+    exactCompilerReplayExact: true,
+    exactCompilerPublicationGrant: false,
+    exactCompilerLoadGrant: false,
+    exactCompilerLaunchGrant: false,
+    engineeringSmokeStop: "CurrentFerricDescriptorRoster",
+    engineeringSmokeReachedKfd: false,
+    engineeringSmokeGpuStateChanged: false,
+    engineeringSmokeVramStateChanged: false,
     r33AdapterTestsPassed: 67,
     r33AdapterHardwareIgnored: 2,
     integratedEngineTestsPassed: 689,
@@ -59,7 +72,7 @@ window.FERRIC_PROJECT = Object.freeze({
     engineeringSmokeBinaryStaged: true,
     canonicalQwenSnapshotVerified: true,
     radixPrefixIntegrated: true,
-    currentAggregateHsaco: false,
+    currentAggregateHsaco: true,
     qwenTokenObserved: false,
     servingEndpointAvailable: false,
     baselineRunsAvailable: false,
@@ -71,14 +84,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric integration 01b2cb2, carried by checkpoint 78bcfce, repins to public fe2o3 629465f and includes the uniform serial RMSNorm fold from 7521cdc plus the one-window authenticated R33 executor from c1b9590. Exact v75 clears both prior outlined-helper geometry gaps and completes semantic extraction to a 415,659-byte Kernel IR V9 handoff containing 26 GuardedStore operations. The native AMDGPU LLVM worker then exits SIGABRT before producing HSACO; status is 1, the output manifest remains empty, and the log SHA prefix is 7d7fbb5. The R33 path remains limited to exactly one 128-output window, not the required 20-window qualification. No HSACO, token, TTFT, TPOT, serving endpoint, baseline, or qualification evidence exists; authority remains none and all 33 M1 exit gates remain open.",
+      "Ferric integration 28b925a repins to public fe2o3 1ddcd36 and retains the uniform serial RMSNorm fold, one-window authenticated R33 executor, paired-prefill/readback, and radix work. Exact v76 completes a 415,660-byte Kernel IR V9 handoff containing 26 GuardedStore operations and produces a 103,616-byte aggregate HSACO for all 12 kernels with exact replay. The observation and every grant remain authority none/false. The first smoke stops at CurrentFerricDescriptorRoster before KFD; GPU and VRAM state are unchanged. No Qwen token, TTFT, TPOT, serving endpoint, baseline, or qualification evidence exists, and all 33 M1 exit gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "01b2cb2 retains the authenticated queue path and paired-prefill executor, including the one-window target executor added at c1b9590. It owns queue creation, bounded completion, checked direct readback, semantic completion, KV settlement, page release, and fail-closed teardown custody.",
+        "28b925a retains the authenticated queue path and paired-prefill executor, including the one-window target executor added at c1b9590. It owns queue creation, bounded completion, checked direct readback, semantic completion, KV settlement, page release, and fail-closed teardown custody.",
     },
     {
       label: "R33 lifecycle",
@@ -90,7 +103,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Engineering Qwen smoke path",
       state: "integration",
       detail:
-        "6df1f2f adds authority-free, domain-separated engineering identity derivation. A smoke binary is staged and the canonical Qwen snapshot is verified, but this path is explicitly non-production and has produced no GPU token or timing result.",
+        "6df1f2f adds authority-free, domain-separated engineering identity derivation. The first smoke using the exact v76 observation stops at CurrentFerricDescriptorRoster before entering KFD. GPU and VRAM state remain unchanged, and no token or timing result exists.",
     },
     {
       label: "Formal bootstrap model",
@@ -102,19 +115,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Ferric 7521cdc retains its focused RMSNorm 21/21 pass, log SHA prefix 4d2bcd1. Exact v75 from the repinned path clears both prior outlined-helper geometry gaps and completes semantic extraction to a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations. The native AMDGPU LLVM worker then exits SIGABRT; the run exits status 1 with an empty output manifest, log SHA 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e. No aggregate HSACO was produced.",
+        "Exact v76 from Ferric 28b925a and public fe2o3 1ddcd36 completes a 415,660-byte Kernel IR V9 handoff with 26 GuardedStore operations and exact replay, then emits a 103,616-byte aggregate HSACO containing all 12 kernels. HSACO SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; observation manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; canonical descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none and publication/load/launch grants are false.",
     },
     {
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "01b2cb2 retains bounded live-source reuse of logical committed prefixes through generational Engine custody. Remote all-target checks report 689 engine tests passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 correctly remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
+        "28b925a retains bounded live-source reuse of logical committed prefixes through generational Engine custody. Remote all-target checks report 689 engine tests passed with 7 ignored and zero failures; pinned Verus reports 608 verified and 0 errors. S1/T128 correctly remains NoMatch at logical width 256, with no persistent device-KV or speed claim.",
     },
     {
       label: "Qwen execution and serving",
       state: "open",
       detail:
-        "Exact v75 reaches the native LLVM worker but produces no aggregate HSACO, so the engineering smoke executable was not launched. The production protected receipt/verifier service is undeployed. No hardware execution, Qwen token, endpoint, TTFT, TPOT, or baseline comparison exists. vLLM and SGLang baselines are absent, Docker is inaccessible to this account, and no baseline launch was attempted.",
+        "Exact v76 produces an authority-free aggregate HSACO, but the first engineering smoke stops at CurrentFerricDescriptorRoster before KFD. GPU and VRAM state are unchanged. The production protected receipt/verifier service is undeployed. No hardware execution, Qwen token, endpoint, TTFT, TPOT, or baseline comparison exists. vLLM and SGLang baselines are absent, Docker is inaccessible to this account, and no baseline launch was attempted.",
     },
   ],
   envelope: [
@@ -124,9 +137,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration candidate", "01b2cb2ae9100dc28a729481d7c8ef660fef5b76; tree 0d0db8cf22de3e04cf78fc64155cadb680873911; repinned to fe2o3 629465f and includes uniform serial RMSNorm plus one-window authenticated R33 execution; not public main, a release, a serving result, or qualification"],
+    ["Ferric integration candidate", "28b925a1c4de75aa4ea35175a9f76d6071f4ca86; tree 5a6d77564d96e9fdcdc2c124f42b37215988dae9; repinned to fe2o3 1ddcd36 and exact-compiled as v76; not public main, a release, a serving result, or qualification"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
-    ["fe2o3 exact v75 input", "public main 629465f1a85a1af331a4e285062991f7ab59a5ce; tree 12da211265860aeec3235e49b631238ce3e618cf; WorkgroupCount and WorkgroupSize helper lowering both clear before the native AMDGPU LLVM worker exits SIGABRT"],
+    ["fe2o3 exact v76 input", "public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1; tree 553334d69d51c4ccffea383cd72cf9105df74130; native gfx942 sqrt plus outlined-helper geometry lowering produce the authority-free aggregate"],
   ],
   capabilities: {
     runnable: [
@@ -170,7 +183,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Ferric-owned Qwen kernel set",
         detail:
-          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Exact v75 clears the prior RMSNorm, WorkgroupCount, and WorkgroupSize helper gaps, then emits a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations. The native AMDGPU LLVM worker exits SIGABRT before HSACO; status is 1, the output manifest is empty, and log SHA is 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e.",
+          "The model kernels remain in Ferric and are written through fe2o3 compiler APIs. Exact v76 emits a 415,660-byte Kernel IR V9 handoff with 26 GuardedStore operations and a 103,616-byte authority-free aggregate HSACO containing all 12 kernels. Exact replay is true; publication, load, and launch grants are false.",
       },
       {
         name: "Bounded live radix prefix reuse",
@@ -195,9 +208,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     roadmap: [
       {
-        name: "Diagnose the native LLVM worker abort",
+        name: "Bind the current descriptor roster",
         detail:
-          "Reproduce and diagnose the native AMDGPU LLVM worker SIGABRT after the valid Kernel IR V9 handoff, correct the owning layer, rerun exact compilation, and inspect an artifact only if one is produced.",
+          "Update the staged engineering smoke's CurrentFerricDescriptorRoster binding to the exact v76 canonical descriptor and preserve the fail-closed identity checks. The first attempt stopped here before KFD and changed no GPU or VRAM state.",
       },
       {
         name: "Run the staged engineering smoke",
@@ -235,10 +248,10 @@ window.FERRIC_PROJECT = Object.freeze({
     host: {
       title: "Integrated one-window executor and engine source",
       state: "integration",
-      source: "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
+      source: "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
       result: "PASS: remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored; zero failures",
       detail:
-        "01b2cb2 repins Ferric to fe2o3 629465f and retains c1b9590's one authenticated 128-output R33 target window with checked-token causality and CLOCK_MONOTONIC_RAW timing. Engine log SHA ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f; adapter log SHA d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a. These are non-hardware checks: authority is none, and they are not GPU, token, serving, speed, 20-window, performance, or qualification evidence.",
+        "28b925a repins Ferric to fe2o3 1ddcd36 and retains c1b9590's one authenticated 128-output R33 target window with checked-token causality and CLOCK_MONOTONIC_RAW timing. Engine log SHA ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f; adapter log SHA d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a. These are non-hardware checks: authority is none, and they are not GPU, token, serving, speed, 20-window, performance, or qualification evidence.",
     },
     proof: {
       title: "Authenticated bootstrap and finite-window models",
@@ -249,12 +262,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "Source 240bb3d, integrated as f709a5d, adds the bootstrap model. The radix slice's separate pinned Verus run reports 608 verified and 0 errors. The latest scoped inventory diagnostic found 23 unadmitted bootstrap runtime bodies; combined regeneration remains pending, so no current whole-tree verified/unverified total is claimed. The pure proofs do not prove runtime refinement or effects.",
     },
     hardware: {
-      title: "Exact v75 reaches the native AMDGPU LLVM worker",
-      state: "open",
-      sourceStatus: "No exact aggregate artifact or authenticated Qwen run",
-      result: "OPEN: both helper geometry gaps cleared; 415,659-byte Kernel IR V9 handoff emitted; native LLVM worker exits SIGABRT; status 1, no HSACO",
+      title: "Exact v76 emits an authority-free aggregate",
+      state: "integration",
+      sourceStatus: "Exact compiler artifact exists; first smoke stops before KFD",
+      result: "PASS: 415,660-byte handoff; exact replay; 103,616-byte HSACO with all 12 kernels. OPEN: descriptor-roster smoke admission, GPU execution, and tokens",
       detail:
-        "Exact v75 from Ferric 01b2cb2ae9100dc28a729481d7c8ef660fef5b76, tree 0d0db8cf22de3e04cf78fc64155cadb680873911, uses fe2o3 629465f1a85a1af331a4e285062991f7ab59a5ce, tree 12da211265860aeec3235e49b631238ce3e618cf. It clears both prior outlined-helper geometry gaps and completes semantic extraction to a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations. The native AMDGPU LLVM worker then exits SIGABRT. Status is 1 and the output manifest is empty; log SHA 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e. No HSACO, hardware execution, token, timing, qualification, or authority exists.",
+        "Exact v76 from Ferric 28b925a1c4de75aa4ea35175a9f76d6071f4ca86, tree 5a6d77564d96e9fdcdc2c124f42b37215988dae9, uses public fe2o3 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree 553334d69d51c4ccffea383cd72cf9105df74130. It emits a 415,660-byte Kernel IR V9 handoff with 26 GuardedStore operations and SHA 31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282. Exact replay produces a 103,616-byte HSACO with SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94 and all 12 kernels; manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none and every grant is false. The first smoke stops at CurrentFerricDescriptorRoster before KFD, with GPU and VRAM state unchanged; no token or timing exists.",
     },
     transitions: [
       ["Speculative S1/K4 (all terminal)", "Paired prefill new window", "implemented"],
@@ -267,7 +280,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Live Ready radix source", "Shared committed logical prefix", "integration"],
     ],
     limitation:
-      "These are source-level transitions in integration candidate 01b2cb2, with the R33 executor integrated at c1b9590. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only; S1/T128 is NoMatch at logical width 256. The semantic compiler handoff is not an aggregate artifact: no HSACO has been produced or accepted, and no row is evidence of a Qwen run, serving endpoint, or performance result.",
+      "These are source-level transitions in integration candidate 28b925a, with the R33 executor integrated at c1b9590. R33 supports exactly one 128-output window, then fail-closes; it does not provide the required 20-window qualification. Radix reuse is live-source and logical only; S1/T128 is NoMatch at logical width 256. Exact v76 produced an authority-free aggregate HSACO, but it has not been accepted, loaded, or launched. The smoke stopped before KFD, and no row is evidence of a Qwen run, serving endpoint, or performance result.",
   },
   teams: [
     {
@@ -276,13 +289,13 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Progressing, no team blocker",
       completed:
-        "Candidate 01b2cb2 repins the uniform serial RMSNorm fold, one-window authenticated R33 target execution, paired-prefill executor, authority-free engineering identities, and bounded live-source radix reuse to public fe2o3 629465f.",
+        "Candidate 28b925a repins the uniform serial RMSNorm fold, one-window authenticated R33 target execution, paired-prefill executor, authority-free engineering identities, and bounded live-source radix reuse to public fe2o3 1ddcd36.",
       current:
-        "Exact v75 clears both outlined-helper geometry gaps, produces a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations, and stops when the native AMDGPU LLVM worker exits SIGABRT. Integration 01b2cb2 is not public main or a release, and no HSACO has been produced from this source.",
+        "Exact v76 produces an authority-free 103,616-byte aggregate HSACO with exact replay and all 12 kernels. Integration 28b925a is not public main or a release. The first smoke stops at CurrentFerricDescriptorRoster before KFD and changes no GPU or VRAM state.",
       blockedBy:
-        "No team-local blocker. M1 still depends on the rerun producing an exact kernel artifact, an exclusive GPU run, deployed protected artifact admission, and authenticated baselines.",
+        "No team-local blocker. M1 still depends on current descriptor-roster admission, an exclusive GPU run, deployed protected artifact admission, and authenticated baselines.",
       next:
-        "Diagnose the native LLVM worker abort, correct the owning layer, rerun exact compilation, and only then run the staged engineering smoke if an aggregate HSACO is produced.",
+        "Bind the exact v76 descriptor roster, rerun the staged one-token smoke, and stop on any identity or KFD preflight failure.",
       validation:
         "Repinned remote all-target checks report engine 689 passed / 7 ignored and adapter 67 passed / 2 ignored, zero failures. They establish no hardware, token, timing, serving, baseline, or qualification result.",
     },
@@ -290,17 +303,17 @@ window.FERRIC_PROJECT = Object.freeze({
       name: "Kernels",
       scope: "Ferric-owned Qwen kernels compiled with fe2o3",
       state: "integration",
-      status: "Blocked on native LLVM worker abort",
+      status: "Progressing, no team blocker",
       completed:
-        "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21, log SHA prefix 4d2bcd1. Exact v75 clears the prior convergence, WorkgroupCount, and WorkgroupSize helper failures and reaches native AMDGPU LLVM execution.",
+        "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21, log SHA prefix 4d2bcd1. Exact v76 clears the prior convergence, helper-geometry, and native-sqrt failures and emits all 12 kernels.",
       current:
-        "The current exact terminal is SIGABRT from the native AMDGPU LLVM worker after a 415,659-byte Kernel IR V9 handoff containing 26 GuardedStore operations. The run exits status 1 with an empty output manifest and no HSACO.",
+        "The exact aggregate is 103,616 bytes with SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; exact replay is true and the canonical descriptor SHA is fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5.",
       blockedBy:
-        "Current exact blocker: native AMDGPU LLVM worker abort after successful semantic extraction and compiler-bound handoff.",
+        "No team-local blocker. Runtime progress depends on admitting the exact descriptor roster before KFD; artifact authority remains none.",
       next:
-        "Capture and diagnose the worker abort, fix the owning compiler or Ferric kernel layer, and rerun exact compilation; inspect or execute only an aggregate actually produced by that run.",
+        "Preserve the exact v76 artifact identity while integration fixes the CurrentFerricDescriptorRoster smoke admission boundary.",
       validation:
-        "Exact v75 clears both helper geometry gaps and emits the Kernel IR V9 handoff, then the native worker exits SIGABRT. Status 1, empty output manifest; log SHA 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e.",
+        "Exact v76 status 0; 415,660-byte handoff; 26 GuardedStore operations; 103,616-byte HSACO; all 12 kernels; exact replay true; authority none and publication/load/launch grants false.",
     },
     {
       name: "Inference engine",
@@ -310,9 +323,9 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, authority-free engineering identities, live-source logical radix reuse, and one checked 128-output target window are integrated.",
       current:
-        "Holding the staged smoke executable and verified Qwen snapshot while the native LLVM worker abort is diagnosed. The R33 executor intentionally supports only one window before Faulted.",
+        "The staged smoke and verified Qwen snapshot now consume the exact v76 observation, but the first attempt stops at CurrentFerricDescriptorRoster before KFD. The R33 executor intentionally supports only one window before Faulted.",
       blockedBy:
-        "No team-local blocker. End-to-end execution depends on an exact HSACO and protected runtime admission; the required 20-window R33 path remains absent.",
+        "No team-local blocker. End-to-end execution depends on current descriptor-roster admission and protected runtime admission; the required 20-window R33 path remains absent.",
       next:
         "Extend authenticated custody across all 20 required windows after the exact artifact and first diagnostic execution are available.",
       validation:
@@ -344,7 +357,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authenticated paired-prefill execution and authority-free engineering smoke identity derivation",
       "Bounded live-source logical radix prefix reuse",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Integration candidate 01b2cb2ae9100dc28a729481d7c8ef660fef5b76, tree 0d0db8cf22de3e04cf78fc64155cadb680873911; one-window R33 executor source c1b9590b548acea2450136d52ad37a586d03bfed; authority is none; no aggregate HSACO or Qwen result",
+      "Integration candidate 28b925a1c4de75aa4ea35175a9f76d6071f4ca86, tree 5a6d77564d96e9fdcdc2c124f42b37215988dae9; one-window R33 executor source c1b9590b548acea2450136d52ad37a586d03bfed; exact v76 aggregate exists with authority none; no Qwen result",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
     fe2o3: [
@@ -352,30 +365,45 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Public main 629465f1a85a1af331a4e285062991f7ab59a5ce, tree 12da211265860aeec3235e49b631238ce3e618cf, contains reusable outlined-device-helper workgroup-count and workgroup-size lowering",
-      "Exact Ferric v75 uses public main 629465f1a85a1af331a4e285062991f7ab59a5ce, tree 12da211265860aeec3235e49b631238ce3e618cf; both helper geometry gaps clear before the native AMDGPU LLVM worker exits SIGABRT",
+      "Public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree 553334d69d51c4ccffea383cd72cf9105df74130, contains reusable native gfx942 sqrt plus outlined-device-helper geometry lowering",
+      "Exact Ferric v76 uses public main 1ddcd36b8f8b758e0d75780fe27813b4cd0581b1, tree 553334d69d51c4ccffea383cd72cf9105df74130; the compiler emits the complete authority-free aggregate",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
   },
   latestObservation: {
-    title: "Semantic extraction cleared; native LLVM worker aborts",
-    state: "open",
-    sourceStatus: "Exact v75 from Ferric 01b2cb2ae9100dc28a729481d7c8ef660fef5b76, tree 0d0db8cf22de3e04cf78fc64155cadb680873911",
-    environment: "mi300x compiler-only validation against public fe2o3 629465f, tree 12da211; no hardware execution",
+    title: "Exact v76 emits all 12 kernels",
+    state: "integration",
+    sourceStatus: "Ferric 28b925a1c4de75aa4ea35175a9f76d6071f4ca86, tree 5a6d77564d96e9fdcdc2c124f42b37215988dae9",
+    environment: "mi300x exact compilation against public fe2o3 1ddcd36, tree 553334d; first smoke stopped before KFD",
     result:
-      "Both prior outlined-helper geometry gaps are cleared. Exact v75 completes semantic extraction to a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations, then the native AMDGPU LLVM worker exits SIGABRT. Status is 1, the output manifest is empty, and no HSACO exists; log SHA 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e.",
-    buildId: "None: no HSACO produced",
+      "Status 0. A 415,660-byte handoff with 26 GuardedStore operations replays exactly into a 103,616-byte HSACO containing all 12 kernels. Handoff SHA 31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5.",
+    buildId: "SHA-256 c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94",
     generatedTokenIds: [],
     authority:
-      "Authority: none. The Kernel IR handoff is not HSACO and this is a fail-closed compiler diagnostic, not an accepted compiler artifact or hardware observation. No Qwen token, TTFT, TPOT, numerical result, serving endpoint, vLLM baseline, or SGLang baseline exists. Docker is inaccessible to this account, so no baseline launch was attempted.",
+      "Authority: none; publication, load, and launch grants are false. The first smoke stops at CurrentFerricDescriptorRoster before KFD, and GPU and VRAM state are unchanged. No Qwen token, TTFT, TPOT, numerical result, serving endpoint, vLLM baseline, SGLang baseline, or qualification evidence exists.",
   },
   recentProgress: [
+    {
+      commit: "28b925a1c4de75aa4ea35175a9f76d6071f4ca86",
+      title: "Produced the exact authority-free aggregate",
+      state: "integration",
+      detail:
+        "Exact v76 status 0 emits a 103,616-byte aggregate HSACO with all 12 kernels and exact replay. Handoff SHA 31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282; HSACO SHA c270a528439df199cdae59b4cffda5566ad8a1d24d7029b2b58a519a4aef5b94; manifest SHA 6af8bd8292c5c108ea77e2416fb1325f11507d471254f2cc9607b6ae8be5035a; descriptor SHA fc8469775585a165c9674ff25683ee0676fd0e6c11a1885e1dde26cdcea392d5. Authority is none and all grants are false. The first smoke stops at CurrentFerricDescriptorRoster before KFD with GPU and VRAM unchanged.",
+    },
+    {
+      commit: "1ddcd36b8f8b758e0d75780fe27813b4cd0581b1",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Published native gfx942 sqrt lowering",
+      state: "implemented",
+      detail:
+        "Public fe2o3 main, tree 553334d69d51c4ccffea383cd72cf9105df74130, emits strict native llvm.sqrt.f32 on gfx942. Exact Ferric v76 confirms the prior native-worker abort is cleared and the aggregate is emitted.",
+    },
     {
       commit: "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
       title: "Advanced exact compilation into the native LLVM worker",
       state: "integration",
       detail:
-        "Exact v75 clears both prior outlined-helper geometry gaps and produces a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations. The native AMDGPU LLVM worker then exits SIGABRT before HSACO; status is 1, the output manifest is empty, and log SHA is 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e. This compiler diagnostic grants no artifact, hardware, token, timing, or qualification authority.",
+        "Historical exact v75 cleared both prior outlined-helper geometry gaps and produced a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations. The native AMDGPU LLVM worker then exited SIGABRT before HSACO; status 1, empty output manifest, log SHA 7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e. Exact v76 supersedes this compiler terminal.",
     },
     {
       commit: "629465f1a85a1af331a4e285062991f7ab59a5ce",
@@ -545,7 +573,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Ferric separates implemented source, integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. Exact v75 clears both prior outlined-helper geometry gaps and completes semantic extraction to a 415,659-byte Kernel IR V9 handoff with 26 GuardedStore operations, then the native AMDGPU LLVM worker exits SIGABRT with status 1 and an empty output manifest. The handoff is not HSACO. The authenticated R33 path executes one 128-output window with authority none, not the required 20 windows. No HSACO, token, TTFT, TPOT, serving endpoint, vLLM baseline, SGLang baseline, or qualification evidence exists; Docker is inaccessible to this account, no baseline was launched, and all 33 M1 exit gates remain open.",
+      "Ferric separates implemented source, integration, pure proofs, compiler-rooted coverage, artifact acceptance, GPU observation, performance measurement, and M1 qualification. Exact v76 produces one 103,616-byte authority-free aggregate HSACO containing all 12 kernels from a 415,660-byte handoff with 26 GuardedStore operations; exact replay is true. Publication, load, and launch grants are false. The first smoke stops at CurrentFerricDescriptorRoster before KFD, with GPU and VRAM unchanged. The authenticated R33 path executes one 128-output window with authority none, not the required 20 windows. No token, TTFT, TPOT, serving endpoint, vLLM baseline, SGLang baseline, or qualification evidence exists; Docker is inaccessible to this account, no baseline was launched, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],
@@ -554,7 +582,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     gates: [
       ["M1 exit gates", "33 / 33", "open"],
-      ["Current aggregate HSACO", "0", "open"],
+      ["Authority-free aggregate HSACO", "1", "integration"],
       ["Authenticated Qwen tokens", "0", "open"],
       ["TTFT / TPOT measurements", "0", "open"],
       ["vLLM / SGLang baselines", "0", "open"],

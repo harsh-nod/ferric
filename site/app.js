@@ -217,7 +217,7 @@
     ],
     ["Environment", project.latestObservation.environment],
     ["Result", project.latestObservation.result],
-    ["ELF Build ID", project.latestObservation.buildId],
+    ["Artifact identity", project.latestObservation.buildId],
   ];
   if (project.latestObservation.generatedTokenIds.length > 0) {
     observationEntries.splice(3, 0, [
