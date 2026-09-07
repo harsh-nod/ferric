@@ -1089,7 +1089,7 @@ mutated_dependency["path"] = owner["manifest_path"].removesuffix("/Cargo.toml")
 (scratch / "promotion-expected-path.metadata").write_text(json.dumps(expected_path), encoding="utf-8")
 PY
 expect_rejected dependency-promotion-owner-edge \
-    'local runtime owner resolve edge drifted' \
+    'unexpected promotion resolved dependency: source_pin_decoy' \
     invoke_source_gate --generate "$repo" "$scratch/promotion-owner-edge.metadata" \
     "$scratch/promotion-owner-edge.manifest"
 expect_rejected dependency-promotion-expected-path \
