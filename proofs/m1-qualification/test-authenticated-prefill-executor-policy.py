@@ -146,7 +146,7 @@ def main() -> None:
         "first_token: TokenId",
         "direct_choices: M1ObservedDirectDiagnosticChoicesV1",
         "draft_rollover_page: DeviceKvPageLease",
-        "target_rollover_page: DeviceKvPageLease",
+        "target_rollover_pages: Vec<DeviceKvPageLease>",
         "rollover_intent: M1AuthenticatedSpeculativeRolloverIntentV1",
         "prompt_tokens: Box<[TokenId]>",
         "policy: M1SpeculativeGenerationPolicyV1",
