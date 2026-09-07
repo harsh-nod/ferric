@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
-  integrationCommit: "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
-  integrationTree: "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
+  siteRefreshBase: "78bcfce2377ece2b79f08d55c3ba3bdca5c9a8f9",
+  integrationCommit: "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
+  integrationTree: "0d0db8cf22de3e04cf78fc64155cadb680873911",
   rmsnormUniformFoldCommit: "7521cdcdfebf76dce5f5499aa25f2d90fb81033a",
   r33ExecutorCommit: "c1b9590b548acea2450136d52ad37a586d03bfed",
   intermediateIntegrationCommit: "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b",
@@ -101,8 +101,8 @@ const expectedCurrent = {
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-  fe2o3LatestMain: "be5668eaa71f8d60a0a5041891d25ce2ed9c2e6e",
-  fe2o3LatestTree: "f8b09ddeaaed81b0f9f49e5d17020fdb5a434367",
+  fe2o3LatestMain: "629465f1a85a1af331a4e285062991f7ab59a5ce",
+  fe2o3LatestTree: "12da211265860aeec3235e49b631238ce3e618cf",
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -111,16 +111,19 @@ const expectedCurrent = {
   combinedInventoryCurrent: false,
   focusedRmsnormTestsPassed: 21,
   focusedRmsnormLogShaPrefix: "4d2bcd1",
-  exactCompilerAttempt: "v74",
-  exactCompilerLogSha256: "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+  exactCompilerAttempt: "v75",
+  exactCompilerLogSha256: "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
   exactCompilerExitStatus: 1,
   exactCompilerOutputs: 0,
+  exactCompilerHandoffBytes: 415659,
+  exactCompilerGuardedStores: 26,
+  exactCompilerTerminalSignal: "SIGABRT",
   r33AdapterTestsPassed: 67,
   r33AdapterHardwareIgnored: 2,
   integratedEngineTestsPassed: 689,
   integratedEngineHardwareIgnored: 7,
-  engineValidationLogSha256: "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
-  adapterValidationLogSha256: "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
+  engineValidationLogSha256: "ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f",
+  adapterValidationLogSha256: "d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a",
   remoteTestFailures: 0,
   r33ExecutableWindows: 1,
   r33RequiredWindows: 20,
@@ -191,6 +194,9 @@ assert(/^[0-9a-f]{7}$/.test(project.current.focusedRmsnormLogShaPrefix), "RMSNor
 assertSha256(project.current.exactCompilerLogSha256, "current.exactCompilerLogSha256");
 assert(project.current.exactCompilerExitStatus === 1, "exact compiler status must remain 1");
 assert(project.current.exactCompilerOutputs === 0, "exact compiler outputs must remain zero");
+assert(project.current.exactCompilerHandoffBytes === 415659, "exact compiler handoff byte count drifted");
+assert(project.current.exactCompilerGuardedStores === 26, "exact compiler GuardedStore count drifted");
+assert(project.current.exactCompilerTerminalSignal === "SIGABRT", "exact compiler terminal signal drifted");
 
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
@@ -246,7 +252,7 @@ project.teams.forEach((team, index) => {
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
   if (team.name === "Kernels") {
-    assert(team.status === "Blocked on generic fe2 helper lowering", "kernel blocker status drifted");
+    assert(team.status === "Blocked on native LLVM worker abort", "kernel blocker status drifted");
     assert(team.blockedBy.startsWith("Current exact blocker:"), "kernel terminal blocker must remain explicit");
   } else {
     assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
@@ -267,7 +273,7 @@ assertExactKeys(
 );
 assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "open", "compiler validation in progress is not a hardware observation");
-assert(!("commit" in project.latestObservation), "exact v74 must not invent a build commit binding");
+assert(!("commit" in project.latestObservation), "exact v75 must not invent a build commit binding");
 assert(project.latestObservation.generatedTokenIds.length === 0, "no Qwen token has been observed");
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -294,6 +300,11 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 for (const claim of [
+  "78bcfce2377ece2b79f08d55c3ba3bdca5c9a8f9",
+  "01b2cb2ae9100dc28a729481d7c8ef660fef5b76",
+  "0d0db8cf22de3e04cf78fc64155cadb680873911",
+  "629465f1a85a1af331a4e285062991f7ab59a5ce",
+  "12da211265860aeec3235e49b631238ce3e618cf",
   "e8d0c889b710d2cb97f70b043e2ff67385bb4b75",
   "b1d45a00b52fc76d74f32a61cef66ee13f6da080",
   "6f50ebdbbfef97a9aa98daeaf465513b6edd06d2",
@@ -346,11 +357,21 @@ for (const claim of [
   "Status is 1",
   "no outputs",
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
+  "Exact v75",
+  "both prior outlined-helper geometry gaps",
+  "415,659-byte Kernel IR V9 handoff",
+  "26 GuardedStore operations",
+  "native AMDGPU LLVM worker",
+  "SIGABRT",
+  "empty output manifest",
+  "7d7fbb57a113f27ec42fcf919751466b783706242f12949950a0b2bd80db7d0e",
   "engine 689 passed / 7 ignored",
   "adapter 67 passed / 2 ignored",
   "zero failures",
   "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
   "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
+  "ac5c60dfde5bdb4eae1d5ce1f1f8cc6b096afae2a7c71895bdc0c8ceddfc669f",
+  "d79f354d37d65fa47ff7cc1deeff43de6f30070f7d0c487fe15d60994ad8731a",
   "non-hardware validation",
   "exactly one 128-output window",
   "CLOCK_MONOTONIC_RAW",
