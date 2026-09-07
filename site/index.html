@@ -60,7 +60,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-04">Updated 2026-09-04</time>
+              <time data-updated datetime="2026-09-06">Updated 2026-09-06</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -215,22 +215,30 @@
         <div class="shell next-layout">
           <div>
             <div class="section-label">Next engineering checkpoint</div>
-            <h2 id="next-title">Bring the aggregate within its compiler bound</h2>
+            <h2 id="next-title">Produce the exact artifact and run the staged smoke</h2>
           </div>
           <p>
-            Public fe2o3 main b2cce9c271e85a97c35ce7a1ccffe17bb330f07c supplies reusable compiler,
-            runtime, and KFD support. Compiler, runtime, and KFD work stays in fe2o3; Ferric owns all Qwen
-            kernels and inference. Ferric checkpoints a2bb2dc and 4e18d1d are public on feature branch
-            origin/codex/fe2o3-current-main-repin-v1, but are not on main or final. Source includes 12
-            K1-K7 entrypoints across 440 profiles, a 545-packet target runner,
-            physical KV custody, same-shape decode rearm, authenticated target rollover, and R33 V3
-            event-backed TTFT/TPOT records. Real Qwen3-8B and Qwen3-0.6B inputs are canonically prepacked,
-            but the last sequential compiler limits differ: isolated vector-GEMM semantic SSA reached
-            94,192,887 against 67,108,864, while the earlier aggregate-only result reached 3,188,438 storage
-            words against the 2,097,152 limit. The aggregate has not been rerun after current GEMM reductions.
-            The aggregate Worker V3 HSACO is still absent, as are the protected execution profile and service socket. No
-            Qwen run, generated token, measured TTFT or TPOT, serving or HTTP endpoint, or vLLM/SGLang
-            comparison exists. All 33 M1 gates remain open.
+            Ferric integration candidate 1dc659beda81d37d746cb05a16d35fd7788e29ef includes the authenticated
+            paired-prefill executor, authority-free engineering identity derivation, and bounded live-source logical
+            radix reuse. Integrated engine gates report 597 passed with 5 hardware-dependent ignores and 164
+            doctests; the radix slice's pinned Verus run reports 608 verified and 0 errors. Radix deliberately remains
+            NoMatch for S1/T128 at the current logical width of 256, and it makes no persistent device-KV or speed
+            claim. Ferric candidate 72c78c6fb3766ae3de1a4a393f6a8fa358498ca4, tree
+            6b3a5ab219216fe2d7adf797d7ea890f94c76a60, retains green focused Rope/KV 27/27 and the full
+            ferric-qwen-kernels suite; engine physical-recipe checks pass 7/7. The reusable private-slot compiler fix
+            is public in fe2o3 at 6492c8fa85a00d93aa6ca2a4a77675fefad2fee6, tree
+            68573bf31789625ecc2489491711ad9153eb1cac.
+            A patched exact compile clears retained-borrow locals 178 and 40 and reaches AMDGPU LLVM lowering. It then
+            fails closed at qwen3_rmsnorm_v1 bb6 op0 with UnprovenBarrierConvergence: Subgroup uniform required, Varying
+            found. The run exits status 1 with no HSACO; its log SHA is
+            8bb0e6cb1e87f3c22a4328fd3aeebcb6285197d33cab830bf6afedad91653be0. Intermediate Ferric integration
+            23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus
+            authenticated prefill, readback, and radix work, but it is not final or public product integration and
+            remains pending the final fe2o3 repin and RMSNorm fix. The engineering smoke binary and canonical Qwen
+            snapshot are staged, but no HSACO,
+            hardware execution, or token exists. The production protected receipt and verifier service are undeployed.
+            Symmetric memory and MTP are deferred. No TTFT, TPOT, serving endpoint, HTTP service, or vLLM/SGLang
+            baseline exists, and all 33 M1 exit gates remain open.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

@@ -782,9 +782,11 @@ h3 {
 }
 
 .team-state strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   color: var(--green);
   font-size: 11px;
-  white-space: nowrap;
+  text-align: right;
 }
 
 .team-facts {
@@ -1323,6 +1325,10 @@ footer {
 
   .team-state {
     justify-items: start;
+  }
+
+  .team-state strong {
+    text-align: left;
   }
 
   .team-facts {
