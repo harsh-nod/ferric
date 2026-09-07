@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "37ad8bd28e28eae1883bc8c74a19e6b2a466a29d",
-  integrationCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
-  integrationTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
+  siteRefreshBase: "a8ce419e8262b4bf65ab56f1876528a2fd405973",
+  integrationCommit: "b7a8545ed00ec948942690f89b2cbe891d46f836",
+  integrationTree: "42f408c0c602166edcc703563df7574324ad4ad2",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -135,22 +135,33 @@ const expectedCurrent = {
   combinedAttempt5ReceiptEmitted: false,
   combinedAttempt5NestedFmtDiffs: 4,
   combinedQualificationAttempt: 6,
-  combinedQualificationState: "running",
-  combinedQualificationRunning: true,
+  combinedQualificationState: "stopped-at-clippy",
+  combinedQualificationRunning: false,
+  combinedQualificationStrictProofPackagesPassed: 10,
+  combinedQualificationSameSourceNegativeProofsGreen: true,
+  combinedQualificationNegativePropertyPolicyGreen: true,
+  combinedQualificationFmtGreen: true,
+  combinedQualificationReceiptEmitted: false,
+  combinedQualificationLogSha256: "a3b7d71bc95c687c460a5b2903ccfbb1a53e066a8b0ec60c8b4c17f0a40849af",
+  nextCombinedQualificationAttempt: 7,
+  nextCombinedQualificationLaunched: false,
   combinedPreflightGreen: true,
   combinedPreflightLogSha256: "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
   combinedPreflightCuratedAdmissions: 7229,
+  workerSignerNarrowPreflightGreen: true,
+  workerSignerNarrowPreflightLogSha256: "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
+  workerSignerNarrowSourceGateTestsPassed: 33,
   r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
   r33TwentyWindowTree: "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
   r33TwentyWindowImplemented: true,
-  r33TwentyWindowReviewState: "under-review",
+  r33TwentyWindowReviewState: "hold",
   r33TwentyWindowReviewHasProbableHoldItems: true,
-  r33TwentyWindowActive: false,
+  r33TwentyWindowActive: true,
   r33TwentyWindowIntegrated: false,
   r33TwentyWindowValidationReported: false,
-  signerIpcCommit: "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
-  signerIpcTree: "969611f506286f250d027d619e25d04728312419",
-  signerIpcIntegrated: false,
+  signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
+  signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
+  signerIpcIntegrated: true,
   signerIpcReviewDisposition: "integrate",
   signerIpcServiceTestsPassed: 58,
   signerIpcServiceTestsIgnored: 3,
@@ -158,6 +169,8 @@ const expectedCurrent = {
   signerIpcSourceGateTestsPassed: 28,
   signerIpcValidationLogSha256: "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
   signerIpcHardwareQualified: false,
+  workerV3LintFixCommit: "b7a8545ed00ec948942690f89b2cbe891d46f836",
+  workerV3LintFixTree: "42f408c0c602166edcc703563df7574324ad4ad2",
   successorKvBridgeCommit: "136a6d2ff92597c91caad3d0e33baede74cd4c9a",
   successorKvBridgeTree: "c9684e25b4fbd6737ce73307c3cdc21bde1b221e",
   engineeringSmokeRuntimeCommit: "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
@@ -357,6 +370,8 @@ for (const key of [
   "r33TwentyWindowTree",
   "signerIpcCommit",
   "signerIpcTree",
+  "workerV3LintFixCommit",
+  "workerV3LintFixTree",
   "successorKvBridgeCommit",
   "successorKvBridgeTree",
   "engineeringSmokeRuntimeCommit",
@@ -513,18 +528,29 @@ assert(project.current.combinedAttempt5FullNegativePropertyPolicyGreen === true,
 assert(project.current.combinedAttempt5ReceiptEmitted === false, "combined #5 must not claim a receipt");
 assert(project.current.combinedAttempt5NestedFmtDiffs === 4, "combined #5 nested formatting diff count drifted");
 assert(project.current.combinedQualificationAttempt === 6, "combined qualification attempt drifted");
-assert(project.current.combinedQualificationState === "running", "combined qualification state drifted");
-assert(project.current.combinedQualificationRunning === true, "combined qualification #6 must remain running");
+assert(project.current.combinedQualificationState === "stopped-at-clippy", "combined qualification state drifted");
+assert(project.current.combinedQualificationRunning === false, "combined qualification #6 must not remain running");
+assert(project.current.combinedQualificationStrictProofPackagesPassed === 10, "combined #6 strict proof count drifted");
+assert(project.current.combinedQualificationSameSourceNegativeProofsGreen === true, "combined #6 same-source negative proofs must remain green");
+assert(project.current.combinedQualificationNegativePropertyPolicyGreen === true, "combined #6 negative/property policy must remain green");
+assert(project.current.combinedQualificationFmtGreen === true, "combined #6 formatting must remain green");
+assert(project.current.combinedQualificationReceiptEmitted === false, "combined #6 must not claim a receipt");
+assertSha256(project.current.combinedQualificationLogSha256, "current.combinedQualificationLogSha256");
+assert(project.current.nextCombinedQualificationAttempt === 7, "next combined qualification attempt drifted");
+assert(project.current.nextCombinedQualificationLaunched === false, "combined qualification #7 must remain unlaunched");
 assert(project.current.combinedPreflightGreen === true, "combined qualification preflight must remain green");
 assertSha256(project.current.combinedPreflightLogSha256, "current.combinedPreflightLogSha256");
 assert(project.current.combinedPreflightCuratedAdmissions === 7229, "combined preflight admission count drifted");
+assert(project.current.workerSignerNarrowPreflightGreen === true, "Worker and signer narrow preflight must remain green");
+assertSha256(project.current.workerSignerNarrowPreflightLogSha256, "current.workerSignerNarrowPreflightLogSha256");
+assert(project.current.workerSignerNarrowSourceGateTestsPassed === 33, "Worker and signer narrow source-gate count drifted");
 assert(project.current.r33TwentyWindowImplemented === true, "20-window R33 candidate must remain implemented");
-assert(project.current.r33TwentyWindowReviewState === "under-review", "20-window R33 review state drifted");
+assert(project.current.r33TwentyWindowReviewState === "hold", "20-window R33 review state drifted");
 assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === true, "20-window R33 probable HOLD items must remain explicit");
-assert(project.current.r33TwentyWindowActive === false, "20-window R33 implementation work must not remain active");
+assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work must remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
-assert(project.current.signerIpcIntegrated === false, "signer IPC slice must remain unintegrated");
+assert(project.current.signerIpcIntegrated === true, "accepted signer IPC slice must remain integrated");
 assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
 assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
 assert(project.current.signerIpcServiceTestsIgnored === 3, "signer IPC ignored test count drifted");
@@ -636,8 +662,16 @@ project.teams.forEach((team, index) => {
   );
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
-  assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
-  assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  if (team.name === "Integration") {
+    assert(team.status === "Clippy repair active", "Integration must expose the active Clippy blocker");
+    assert(
+      team.blockedBy.startsWith("Exact combined qualification is blocked on current engine and engineering-adapter Clippy failures."),
+      "Integration blocker must remain exact",
+    );
+  } else {
+    assert(team.status.includes("no team blocker"), `${team.name} must report current blocker state`);
+    assert(team.blockedBy.startsWith("No team-local blocker."), `${team.name} dependencies must remain explicit`);
+  }
   teamNames.add(team.name);
 });
 
@@ -694,7 +728,9 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "37ad8bd28e28eae1883bc8c74a19e6b2a466a29d",
+  "a8ce419e8262b4bf65ab56f1876528a2fd405973",
+  "b7a8545ed00ec948942690f89b2cbe891d46f836",
+  "42f408c0c602166edcc703563df7574324ad4ad2",
   "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
@@ -722,8 +758,8 @@ const missingSnapshotClaims = [
   "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
   "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
   "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
-  "f657c5f1ae4cdbf8039ed55933b4f0e3385b47de",
-  "969611f506286f250d027d619e25d04728312419",
+  "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
+  "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
   "ac38d31da43810046ad57079582d1ba1ca78b318112ab8eceb8a7a407fbaba49",
   "1d8bf9a5a6391bf817eb05d3288f956f691cf5b8",
@@ -916,18 +952,18 @@ const missingSnapshotClaims = [
   "all 10 strict proof packages",
   "every same-source negative proof",
   "full negative/property policy",
-  "four nested formatting diffs",
   "no qualification receipt",
-  "Combined qualification #5",
-  "combined qualification #6",
-  "running from clean committed",
-  "root plus all six standalone formatting manifests",
-  "five exact TCB",
+  "Combined qualification #6",
+  "full #7 has not launched",
+  "Clippy",
+  "narrow Worker plus signer preflight",
+  "exact dependency TCB",
   "7,229",
   "7,922",
   "170 modules",
-  "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
-  "probable lifecycle/custody HOLD items",
+  "a3b7d71bc95c687c460a5b2903ccfbb1a53e066a8b0ec60c8b4c17f0a40849af",
+  "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
+  "on HOLD",
   "independently ACCEPTED",
   "58 service tests",
   "88 adapter tests",
