@@ -11,6 +11,10 @@ name = "ferric-m1-engineering-target-smoke"
 path = "src/bin/ferric-m1-engineering-target-smoke.rs"
 
 [[bin]]
+name = "ferric-m1-engineering-speculative-smoke"
+path = "src/bin/ferric-m1-engineering-speculative-smoke.rs"
+
+[[bin]]
 name = "ferric-m1-r33-adapter"
 path = "src/bin/ferric-m1-r33-adapter.rs"
 

@@ -3574,6 +3574,7 @@ unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine:
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_finite_speculative_rollover_output_catalog
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_finite_speculative_rollover_outputs
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_s1_k4_rollover_output
+unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::retained_allocation_count
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::return_unpublished_pages
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::s1_k4_rollover_output_state
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::speculative_diagnostic_choices_dispatch_ranges

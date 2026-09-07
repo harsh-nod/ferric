@@ -2039,6 +2039,7 @@ unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine:
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_finite_speculative_rollover_output_catalog|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_finite_speculative_rollover_outputs|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::reserve_s1_k4_rollover_output|pending-verus|m1-device-cache-proof-pending
+unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::retained_allocation_count|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::return_unpublished_pages|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::s1_k4_rollover_output_state|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::M1PartitionedModelMemoryKvPoolV1::speculative_diagnostic_choices_dispatch_ranges|pending-verus|compiler-rooted-body-proof-pending

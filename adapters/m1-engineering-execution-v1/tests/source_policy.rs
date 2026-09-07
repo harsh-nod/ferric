@@ -1,6 +1,8 @@
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const SOURCE: &str = include_str!("../src/lib.rs");
 const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-smoke.rs");
+const SPECULATIVE_CLI_SOURCE: &str =
+    include_str!("../src/bin/ferric-m1-engineering-speculative-smoke.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
 const R33_PRODUCTION_BACKEND_SOURCE: &str = include_str!("../src/r33_production_backend.rs");
@@ -168,6 +170,61 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
                 "engineering CLI contains forbidden authority marker {forbidden}"
             );
         }
+    }
+}
+
+#[test]
+fn engineering_speculative_smoke_is_inventory_bound_and_authority_free() {
+    assert!(MANIFEST.contains("name = \"ferric-m1-engineering-speculative-smoke\""));
+    assert!(MANIFEST.contains("path = \"src/bin/ferric-m1-engineering-speculative-smoke.rs\""));
+    for required in [
+        "ferric.m1-engineering-speculative-smoke-observation.v1",
+        "bind_engineering_structural_m1_physical_runner_v1",
+        "reserve_s1_k4_rollover_output",
+        "GFX942_MAX_FIXED_DISPATCH_DATA_V1",
+        "schedule_m1_finite_speculative_queue_rollover_v1",
+        "reserve_m1_finite_speculative_queue_rollover_kv_v1",
+        "prepare_m1_finite_speculative_queue_rollover_v1",
+        "submit_finite_speculative_rollover",
+        "observe_direct_diagnostic_choices",
+        "read_and_check_speculative_k4_diagnostic_completion",
+        "\"authority\": \"none\"",
+        "\"artifact_authority\": \"none\"",
+        "\"benchmark_comparable\": false",
+        "\"authenticated_AB_exercised\": false",
+        "\"compiler_origin_authenticated\": false",
+        "\"current_publication_selected\": false",
+        "\"worker_v3_authenticated\": false",
+        "structural-host-fixture-only-no-token-or-completion-oracle",
+        "active-token-fill-not-attention-mask-padding",
+        "4-model-memory+2-paired-workspaces+3-k4-successor-output+1-prefill-compact+1-prefill-direct-choice",
+    ] {
+        assert!(
+            SPECULATIVE_CLI_SOURCE.contains(required),
+            "engineering speculative smoke is missing {required}"
+        );
+    }
+    for forbidden in [
+        "M1AuthenticatedPhysicalRunnerV1",
+        "acquire_m1_all_kernels_authenticated_worker_v3_programs_v1",
+        "WorkerV3VerifierV1",
+        "AuthenticatedWorkerV3ExecutableV1",
+        "prepare_m1_swiglu_protected_verifier_request_v1",
+        "reserve_finite_speculative_rollover_outputs",
+        "require_current_",
+        "\"benchmark_comparable\": true",
+        "\"authenticated_AB_exercised\": true",
+        "\"current_publication_selected\": true",
+        "\"worker_v3_authenticated\": true",
+        ".expect(",
+        "panic!(",
+        "unreachable!(",
+        "todo!(",
+    ] {
+        assert!(
+            !SPECULATIVE_CLI_SOURCE.contains(forbidden),
+            "engineering speculative smoke contains forbidden marker {forbidden}"
+        );
     }
 }
 

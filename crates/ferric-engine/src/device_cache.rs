@@ -2280,6 +2280,15 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         self.device
     }
 
+    /// Returns the redacted number of allocations retained by this closed pool.
+    ///
+    /// Callers can use this before first publication to bound the fixed-dispatch
+    /// data roster without gaining access to any allocation key or native range.
+    #[must_use]
+    pub fn retained_allocation_count(&self) -> usize {
+        self.allocations.allocation_count()
+    }
+
     /// State of the one-shot future S1/K4 output portfolio.
     #[must_use]
     pub const fn s1_k4_rollover_output_state(&self) -> M1S1K4RolloverOutputPortfolioStateV1 {
