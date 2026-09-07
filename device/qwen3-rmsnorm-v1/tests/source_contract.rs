@@ -231,7 +231,6 @@ fn numerical_path_traps_nonfinite_inputs_intermediates_and_bf16_outputs() {
         "if!input.is_finite()",
         "if!residual.is_finite()",
         "if!fused.is_finite()",
-        "if!square.is_finite()||!next_sum.is_finite()",
         "if!sum.is_finite()",
         "if!mean_square.is_finite()||!stabilized.is_finite()||stabilized<=0.0",
         "if!denominator.is_finite()||denominator<=0.0",
@@ -243,7 +242,27 @@ fn numerical_path_traps_nonfinite_inputs_intermediates_and_bf16_outputs() {
     ] {
         assert!(body.contains(marker), "missing finite trap marker {marker}");
     }
+    assert_eq!(
+        body.matches("if!square.is_finite()||!next_sum.is_finite()")
+            .count(),
+        0
+    );
     assert!(body.matches("fe2o3_device::trap()").count() >= 15);
+}
+
+#[test]
+fn lane_varying_accumulation_has_no_exit_before_the_collective() {
+    let body = compact_tokens(&kernel().block);
+    let lane_zero = body.find("iflane_index==0").unwrap();
+    let collective = body
+        .find("collectives.subgroup_reduce_sum_f32::<64>(local_sum)")
+        .unwrap();
+    let accumulation = &body[lane_zero..collective];
+    assert_eq!(accumulation.matches("fe2o3_device::trap()").count(), 0);
+    assert_eq!(accumulation.matches("return").count(), 0);
+    assert_eq!(accumulation.matches("break").count(), 0);
+    assert_eq!(accumulation.matches("continue").count(), 0);
+    assert!(body[collective..].contains("if!sum.is_finite(){fe2o3_device::trap();}"));
 }
 
 #[test]

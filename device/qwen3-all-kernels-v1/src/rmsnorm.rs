@@ -424,28 +424,16 @@ pub fn qwen3_rmsnorm_v1(
         while column < width as usize {
             let index = row_base + column;
             let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
-            if !input.is_finite() {
-                fe2o3_device::trap();
-            }
             let input_value = input.to_f32();
             let normalized_input = if fused_mode {
                 let residual = Bf16::from_bits(memory::volatile_load(residual_bf16, index));
-                if !residual.is_finite() {
-                    fe2o3_device::trap();
-                }
                 let fused = input_value + residual.to_f32();
-                if !fused.is_finite() {
-                    fe2o3_device::trap();
-                }
                 fused
             } else {
                 input_value
             };
             let square = normalized_input * normalized_input;
             let next_sum = local_sum + square;
-            if !square.is_finite() || !next_sum.is_finite() {
-                fe2o3_device::trap();
-            }
             local_sum = next_sum;
             column += 1;
         }
