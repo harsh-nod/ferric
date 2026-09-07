@@ -249,26 +249,29 @@ fn fail(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+// The unit suffix is intentional: these raw monotonic values must not be
+// confused with durations represented in any other unit at the evidence edge.
+#[allow(clippy::struct_field_names)]
 pub struct M1AuthenticatedTargetWindowTimingV1 {
-    duration: u64,
-    first_token_offset: u64,
-    terminal_token_offset: u64,
+    duration_ns: u64,
+    first_token_offset_ns: u64,
+    terminal_token_offset_ns: u64,
 }
 
 impl M1AuthenticatedTargetWindowTimingV1 {
     #[must_use]
     pub const fn duration_ns(self) -> u64 {
-        self.duration
+        self.duration_ns
     }
 
     #[must_use]
     pub const fn first_token_offset_ns(self) -> u64 {
-        self.first_token_offset
+        self.first_token_offset_ns
     }
 
     #[must_use]
     pub const fn terminal_token_offset_ns(self) -> u64 {
-        self.terminal_token_offset
+        self.terminal_token_offset_ns
     }
 }
 
@@ -308,10 +311,13 @@ impl M1AuthenticatedTargetWindowExecutionSuccessV1 {
     }
 }
 
+// The inline variants preserve allocation-free queue-custody transfer in the
+// measured decode loop; boxing would add TPOT noise and an OOM abort boundary.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 enum ReleasedRound {
-    Prefill(Box<M1AuthenticatedReleasedCompletedStepV1>),
-    Rearmed(Box<M1AuthenticatedLongLivedQueueReleasedRoundV1>),
+    Prefill(M1AuthenticatedReleasedCompletedStepV1),
+    Rearmed(M1AuthenticatedLongLivedQueueReleasedRoundV1),
 }
 
 fn close_released<const C: usize>(
@@ -320,11 +326,9 @@ fn close_released<const C: usize>(
 ) -> Box<dyn fmt::Debug> {
     match released {
         ReleasedRound::Prefill(released) => {
-            let released = *released;
             Box::new(released.destroy_queue_and_retain_step(engine))
         }
         ReleasedRound::Rearmed(released) => {
-            let released = *released;
             Box::new(released.destroy_queue_and_retain_round(engine))
         }
     }
@@ -426,7 +430,6 @@ fn publish_target_round<const C: usize>(
     let (preparation_plans, recipe_plans) = plans.into_parts();
     match released {
         ReleasedRound::Prefill(released) => {
-            let released = *released;
             let plan = match released.queue().operations().runner().bind_step_plan(
                 request,
                 batch.epoch(),
@@ -476,7 +479,6 @@ fn publish_target_round<const C: usize>(
             }
         }
         ReleasedRound::Rearmed(released) => {
-            let released = *released;
             let scheduled =
                 match released.schedule_next_exact(engine, batch.epoch(), batch.requests()) {
                     Ok(scheduled) => scheduled,
@@ -901,7 +903,7 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
             ),
         ));
     }
-    let mut released = ReleasedRound::Prefill(Box::new(released));
+    let mut released = ReleasedRound::Prefill(released);
     let mut plans = round_plans.into_iter();
     let mut target_pages = VecDeque::from(pages);
     let mut terminal_token_offset_ns = first_token_offset_ns;
@@ -1307,7 +1309,7 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
                 ),
             ));
         }
-        released = ReleasedRound::Rearmed(Box::new(next_released));
+        released = ReleasedRound::Rearmed(next_released);
     }
 
     if !target_pages.is_empty() {
@@ -1332,9 +1334,8 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
         ));
     }
     let released = match released {
-        ReleasedRound::Rearmed(released) => *released,
+        ReleasedRound::Rearmed(released) => released,
         ReleasedRound::Prefill(released) => {
-            let released = *released;
             let closed = released.destroy_queue_and_retain_step(&mut engine);
             return Err(fail(
                 M1AuthenticatedTargetWindowExecutionStageV1::QueueTeardown,
@@ -1390,9 +1391,9 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
     Ok(M1AuthenticatedTargetWindowExecutionSuccessV1 {
         tokens: tokens.into_boxed_slice(),
         timing: M1AuthenticatedTargetWindowTimingV1 {
-            duration: duration_ns,
-            first_token_offset: first_token_offset_ns,
-            terminal_token_offset: terminal_token_offset_ns,
+            duration_ns,
+            first_token_offset_ns,
+            terminal_token_offset_ns,
         },
         retained: OpaqueCustody(Box::new((engine, teardown, successor_custody, registry))),
     })

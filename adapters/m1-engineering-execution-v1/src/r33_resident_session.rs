@@ -201,11 +201,14 @@ impl<C, I> fmt::Debug for M1R33ResidentSessionV1<C, I> {
 
 impl<C, I> M1R33ResidentSessionV1<C, I> {
     /// Consumes the held canonical bundle and custody owner.
+    // The large error is an allocation-free recovery channel for the exact
+    // held bundle and generic custody owner; boxing would add an OOM boundary.
+    #[allow(clippy::result_large_err)]
     pub(crate) fn new(
         bundle: HeldM1R33ServiceBundleV1,
         server_start: u64,
         custody: C,
-    ) -> Result<Self, Box<M1R33ResidentSessionAdmissionFailureV1<C>>> {
+    ) -> Result<Self, M1R33ResidentSessionAdmissionFailureV1<C>> {
         let mut vault = vault::Vault::new(custody);
         let roster = match exact_roster_v1(&bundle, server_start) {
             Ok(roster) => roster,
@@ -213,11 +216,11 @@ impl<C, I> M1R33ResidentSessionV1<C, I> {
                 let custody = vault
                     .recover_custody()
                     .expect("new vault must retain exact construction custody");
-                return Err(Box::new(M1R33ResidentSessionAdmissionFailureV1 {
+                return Err(M1R33ResidentSessionAdmissionFailureV1 {
                     error,
                     bundle,
                     custody,
-                }));
+                });
             }
         };
         Ok(Self {
