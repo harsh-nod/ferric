@@ -6,6 +6,7 @@
 
 use core::fmt;
 
+use arrayvec::ArrayVec;
 use fe2o3_host::{
     AuthenticatedQuarantinedServiceQueueV1, AuthenticatedServiceQueueReleaseFailureV1,
     AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueRetainedRolloverFailureV1,
@@ -5678,7 +5679,10 @@ enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
     DeadlineReadback(
         Box<(
             crate::M1AuthenticatedRearmedCompletedReadbackV1,
-            Vec<crate::M1DeviceKvCompletionDispositionV1>,
+            ArrayVec<
+                crate::M1DeviceKvCompletionDispositionV1,
+                { ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize },
+            >,
             crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
         )>,
     ),
