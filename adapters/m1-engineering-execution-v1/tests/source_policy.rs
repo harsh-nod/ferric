@@ -188,7 +188,19 @@ fn engineering_r29_capture_is_aggregate_only_and_explicitly_non_authoritative() 
         R29_TECHNICAL_CLI_SOURCE.matches("#[rustfmt::skip]").count(),
         1
     );
+    for allowed_root_lint in [
+        "clippy::manual_let_else",
+        "clippy::needless_pass_by_value",
+        "clippy::semicolon_if_nothing_returned",
+    ] {
+        assert_eq!(
+            R29_TECHNICAL_CLI_SOURCE.matches(allowed_root_lint).count(),
+            1,
+            "engineering R29 capture must mirror the owning root lint exactly once: {allowed_root_lint}"
+        );
+    }
     for required in [
+        "Mirror only the owning root workspace's lint policy for this shared module.",
         "#[rustfmt::skip] // Skip cross-edition traversal only; the root workspace formats this shared module.",
         "reopen_m1_engineering_aggregate_artifact_v1",
         "bind_engineering_structural_m1_physical_runner_v1",
@@ -205,6 +217,8 @@ fn engineering_r29_capture_is_aggregate_only_and_explicitly_non_authoritative() 
         );
     }
     for forbidden in [
+        "clippy::all",
+        "clippy::pedantic",
         "reopen_persisted_m1_kernel_artifacts_v1",
         "require_m1_authenticated_roster_acquisition_v1",
         "M1AuthenticatedWorkerV3ProgramSetV1",
