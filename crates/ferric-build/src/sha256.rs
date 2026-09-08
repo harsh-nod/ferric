@@ -228,6 +228,34 @@ proof fn absorb_concat(
     }
 }
 
+proof fn absorb_complete_block(state: Seq<u32>, block: Seq<u8>, offset: nat)
+    requires state.len() == 8, block.len() == 64, offset < 64,
+    ensures
+        absorb(
+            (state, block.subrange(0, offset as int)),
+            block.subrange(offset as int, 64),
+        ) == (compress_block(state, block), Seq::<u8>::empty()),
+    decreases 64 - offset,
+{
+    reveal_with_fuel(absorb, 2);
+    let prefix = block.subrange(0, offset as int);
+    let remaining = block.subrange(offset as int, 64);
+    assert(remaining.len() == 64 - offset);
+    assert(remaining[0] == block[offset as int]);
+    assert(prefix.push(remaining[0]) =~= block.subrange(0, (offset + 1) as int));
+    assert(remaining.subrange(1, remaining.len() as int)
+        =~= block.subrange((offset + 1) as int, 64));
+    if offset < 63 {
+        assert(prefix.push(remaining[0]).len() < 64);
+        absorb_complete_block(state, block, offset + 1);
+    } else {
+        assert(offset == 63);
+        assert(prefix.push(remaining[0]).len() == 64);
+        assert(block.subrange(0, 64) == block);
+        assert(block.subrange(64, 64) == Seq::<u8>::empty());
+    }
+}
+
 pub(super) open spec fn valid_view(view: ((Seq<u32>, Seq<u8>), nat)) -> bool {
     &&& view.0.0.len() == 8
     &&& view.0.1.len() < 64
@@ -552,41 +580,95 @@ impl Sha256 {
                 ) == expected_core,
             decreases additional - offset,
         {
-            let buffer_index = self.buffered;
-            let ghost core_before = self.view().0;
-            let ghost remaining_input =
-                bytes@.subrange(offset as int, additional as int);
-            let ghost filled = core_before.1.push(bytes@[offset as int]);
-            let ghost next_core = if filled.len() == 64 {
-                (compress_block(core_before.0, filled), Seq::empty())
-            } else {
-                (core_before.0, filled)
-            };
-            assert(remaining_input.len() != 0);
-            assert(remaining_input[0] == bytes@[offset as int]);
-            assert(remaining_input.subrange(1, remaining_input.len() as int)
-                == bytes@.subrange((offset + 1) as int, additional as int));
-            self.buffer[buffer_index] = bytes[offset];
-            self.buffered += 1;
-            assert(self.view().0.1 == filled);
-            offset += 1;
-            if self.buffered == 64 {
-                assert(filled.len() == 64);
-                assert(self.buffer@ == filled);
-                let block = self.buffer;
+            // Bulk compression refines the same byte-wise streaming model.
+            if self.buffered == 0 && additional - offset >= 64 {
+                let ghost core_before = self.view().0;
+                let ghost input_block = bytes@.subrange(offset as int, (offset + 64) as int);
+                let ghost remaining_input = bytes@.subrange(offset as int, additional as int);
+                let ghost remaining_tail = bytes@.subrange((offset + 64) as int, additional as int);
+                let mut block = [0_u8; 64];
+                let mut index = 0;
+                while index < 64
+                    invariant
+                        index <= 64,
+                        offset + 64 <= additional,
+                        additional == bytes.len(),
+                        block@.subrange(0, index as int)
+                            == bytes@.subrange(offset as int, (offset + index) as int),
+                    decreases 64 - index,
+                {
+                    block[index] = bytes[offset + index];
+                    index += 1;
+                }
+                assert(block@ == input_block);
+                assert(core_before.1 == Seq::<u8>::empty());
+                proof {
+                    absorb_complete_block(core_before.0, input_block, 0);
+                    assert(input_block.subrange(0, 0) == Seq::<u8>::empty());
+                    assert(input_block.subrange(0, 64) == input_block);
+                    absorb_concat(core_before, input_block, remaining_tail);
+                    assert(input_block + remaining_tail =~= remaining_input);
+                }
                 self.compress(&block);
-                assert(self.state@ == compress_block(core_before.0, filled));
-                self.buffered = 0;
-                assert(self.buffer@.subrange(0, 0) == Seq::<u8>::empty());
+                offset += 64;
+                assert(self.view().0
+                    == (compress_block(core_before.0, input_block), Seq::<u8>::empty()));
             } else {
-                assert(filled.len() != 64);
+                let remaining = additional - offset;
+                let to_boundary = 64 - self.buffered;
+                let take = if remaining < to_boundary { remaining } else { to_boundary };
+                let stop = offset + take;
+                while offset < stop
+                    invariant
+                        offset <= stop <= additional,
+                        additional == bytes.len(),
+                        self.buffered < 64,
+                        self.byte_len <= u64::MAX / 8,
+                        self.byte_len as nat == initial_byte_len as nat + additional,
+                        self.view().0.0.len() == 8,
+                        absorb(
+                            self.view().0,
+                            bytes@.subrange(offset as int, additional as int),
+                        ) == expected_core,
+                    decreases stop - offset,
+                {
+                    let buffer_index = self.buffered;
+                    let ghost core_before = self.view().0;
+                    let ghost remaining_input =
+                        bytes@.subrange(offset as int, additional as int);
+                    let ghost filled = core_before.1.push(bytes@[offset as int]);
+                    let ghost next_core = if filled.len() == 64 {
+                        (compress_block(core_before.0, filled), Seq::empty())
+                    } else {
+                        (core_before.0, filled)
+                    };
+                    assert(remaining_input.len() != 0);
+                    assert(remaining_input[0] == bytes@[offset as int]);
+                    assert(remaining_input.subrange(1, remaining_input.len() as int)
+                        == bytes@.subrange((offset + 1) as int, additional as int));
+                    self.buffer[buffer_index] = bytes[offset];
+                    self.buffered += 1;
+                    assert(self.view().0.1 == filled);
+                    offset += 1;
+                    if self.buffered == 64 {
+                        assert(filled.len() == 64);
+                        assert(self.buffer@ == filled);
+                        let block = self.buffer;
+                        self.compress(&block);
+                        assert(self.state@ == compress_block(core_before.0, filled));
+                        self.buffered = 0;
+                        assert(self.buffer@.subrange(0, 0) == Seq::<u8>::empty());
+                    } else {
+                        assert(filled.len() != 64);
+                    }
+                    assert(self.view().0 == next_core);
+                    assert(absorb(core_before, remaining_input)
+                        == absorb(
+                            next_core,
+                            bytes@.subrange(offset as int, additional as int),
+                        ));
+                }
             }
-            assert(self.view().0 == next_core);
-            assert(absorb(core_before, remaining_input)
-                == absorb(
-                    next_core,
-                    bytes@.subrange(offset as int, additional as int),
-                ));
         }
     }
 

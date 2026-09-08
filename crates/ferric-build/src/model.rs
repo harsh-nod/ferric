@@ -2355,12 +2355,18 @@ mod tests {
 
     #[test]
     fn sha256_chunk_boundaries_match_one_shot_digest() {
-        for byte_len in [0, 1, 55, 56, 63, 64, 65, 119, 120, 127, 128, 129, 257] {
+        use sha2::Digest as _;
+
+        for byte_len in [
+            0, 1, 55, 56, 63, 64, 65, 119, 120, 127, 128, 129, 257, 511, 512, 513, 1024, 4097,
+        ] {
             let bytes = (0..byte_len)
                 .map(|index| u8::try_from((index * 131 + 17) % 256).expect("fixture byte fits u8"))
                 .collect::<Vec<_>>();
             let expected = super::sha256::digest(&bytes);
-            for chunk_len in [1, 2, 7, 31, 63, 64, 65, 127] {
+            let independent: [u8; 32] = sha2::Sha256::digest(&bytes).into();
+            assert_eq!(expected, independent, "byte_len={byte_len}");
+            for chunk_len in [1, 2, 7, 31, 63, 64, 65, 127, 128, 129, 1024] {
                 let mut incremental = super::Sha256::new();
                 for chunk in bytes.chunks(chunk_len) {
                     incremental.update(chunk);
@@ -2369,6 +2375,17 @@ mod tests {
                     incremental.finish(),
                     expected,
                     "byte_len={byte_len}, chunk_len={chunk_len}"
+                );
+            }
+            for prefix_len in 0..=byte_len.min(64) {
+                let mut incremental = super::Sha256::new();
+                incremental.update(&bytes[..prefix_len]);
+                incremental.update(&[]);
+                incremental.update(&bytes[prefix_len..]);
+                assert_eq!(
+                    incremental.finish(),
+                    independent,
+                    "byte_len={byte_len}, prefix_len={prefix_len}"
                 );
             }
         }
