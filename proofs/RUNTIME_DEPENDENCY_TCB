@@ -3,6 +3,7 @@ root=ferric-build|onig|=6.5.3|registry+https://github.com/rust-lang/crates.io-in
 root=ferric-build|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 root=ferric-build|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 root=ferric-build|unicode-normalization-alignments|=0.1.12|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#unicode-normalization-alignments@0.1.12
+root=ferric-engine|arrayvec|=0.7.8|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8
 root=ferric-engine|rustix|=1.1.4|registry+https://github.com/rust-lang/crates.io-index|true|false|features=fs,time|registry+https://github.com/rust-lang/crates.io-index#rustix@1.1.4
 root=ferric-engine|serde_json|=1.0.151|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#serde_json@1.0.151
 root=ferric-engine|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
@@ -12,6 +13,7 @@ root=ferric-m1-benchmarks|serde_json|=1.0.151|registry+https://github.com/rust-l
 root=ferric-m1-benchmarks|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 root=ferric-qwen-kernels|sha2|^0.11.0|registry+https://github.com/rust-lang/crates.io-index|true|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
 root=ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1|sha2|=0.11.0|registry+https://github.com/rust-lang/crates.io-index|false|false|features=none|registry+https://github.com/rust-lang/crates.io-index#sha2@0.11.0
+package=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|arrayvec|0.7.8|registry+https://github.com/rust-lang/crates.io-index|d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56
 package=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|autocfg|1.5.1|registry+https://github.com/rust-lang/crates.io-index|f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53
 package=registry+https://github.com/rust-lang/crates.io-index#bitflags@2.13.1|bitflags|2.13.1|registry+https://github.com/rust-lang/crates.io-index|b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da
 package=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|block-buffer|0.12.1|registry+https://github.com/rust-lang/crates.io-index|d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa
@@ -52,6 +54,7 @@ package=registry+https://github.com/rust-lang/crates.io-index#unicode-normalizat
 package=registry+https://github.com/rust-lang/crates.io-index#windows-link@0.2.1|windows-link|0.2.1|registry+https://github.com/rust-lang/crates.io-index|f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5
 package=registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.61.2|windows-sys|0.61.2|registry+https://github.com/rust-lang/crates.io-index|ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc
 package=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|zmij|1.0.23|registry+https://github.com/rust-lang/crates.io-index|29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b
+features=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|default,std
 features=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|none
 features=registry+https://github.com/rust-lang/crates.io-index#bitflags@2.13.1|std
 features=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|none
@@ -92,6 +95,12 @@ features=registry+https://github.com/rust-lang/crates.io-index#unicode-normaliza
 features=registry+https://github.com/rust-lang/crates.io-index#windows-link@0.2.1|none
 features=registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.61.2|Win32,Win32_Foundation,Win32_Networking,Win32_Networking_WinSock,Win32_Storage,Win32_Storage_FileSystem,Win32_System,Win32_System_Console,Win32_System_Diagnostics,Win32_System_Diagnostics_Debug,Win32_System_SystemInformation,default
 features=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|none
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|arraystring|bench|bin
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|arrayvec|lib|lib
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|borsh|test|bin
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|extend|bench|bin
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|serde|test|bin
+target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|tests|test|bin
 target=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|autocfg|lib|lib
 target=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|integers|example|bin
 target=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|nightly|example|bin
@@ -265,6 +274,7 @@ target=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|exhaust
 target=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|ryu_comparison|test|bin
 target=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|test|test|bin
 target=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|zmij|lib|lib
+build-scripts=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|none
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|none
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#bitflags@2.13.1|none
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|none
@@ -305,6 +315,7 @@ build-scripts=registry+https://github.com/rust-lang/crates.io-index#unicode-norm
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#windows-link@0.2.1|none
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.61.2|none
 build-scripts=registry+https://github.com/rust-lang/crates.io-index#zmij@1.0.23|build-script-build
+proc-macros=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|none
 proc-macros=registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.1|none
 proc-macros=registry+https://github.com/rust-lang/crates.io-index#bitflags@2.13.1|none
 proc-macros=registry+https://github.com/rust-lang/crates.io-index#block-buffer@0.12.1|none
