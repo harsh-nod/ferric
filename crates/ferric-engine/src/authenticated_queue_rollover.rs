@@ -1912,6 +1912,13 @@ impl M1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
     pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
         &self.disposition
     }
+
+    #[allow(clippy::boxed_local)]
+    pub(crate) fn into_disposition(
+        self: Box<Self>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        self.disposition.retain(self.stage)
+    }
 }
 
 /// Internal detached preparation custody pending mandatory closure.
@@ -2000,6 +2007,32 @@ impl M1AuthenticatedPreparedSpeculativeRolloverV1 {
     pub const fn next_epoch(&self) -> CompletionEpoch {
         self.prepared.step().scheduled_dispatch().epoch()
     }
+
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let Self {
+            prior,
+            next,
+            reason,
+            queue,
+            selected,
+            residue,
+            prepared,
+            recipe,
+            logical,
+        } = self;
+        let pending = PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
+            stage: M1AuthenticatedSpeculativeRolloverPrepareStageV1::LineageAttachment,
+            queue,
+            retained: Box::new((
+                prior, next, reason, selected, residue, prepared, recipe, logical,
+            )),
+        };
+        let closed = close_pending_preparation_failure(engine, Box::new(pending));
+        closed.into_disposition()
+    }
 }
 
 /// Reserves exact successor KV writes and prepares authenticated rollover images.
@@ -2021,14 +2054,27 @@ pub fn prepare_m1_authenticated_speculative_rollover_v1<const C: usize>(
     M1AuthenticatedPreparedSpeculativeRolloverV1,
     Box<M1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
 > {
-    prepare_m1_authenticated_speculative_rollover_pending_v1(engine, scheduled, runner)
+    prepare_m1_authenticated_speculative_rollover_pending_v1(engine, scheduled, Some(runner))
+        .map_err(|failure| close_pending_preparation_failure(engine, failure))
+}
+
+/// Prepares rollover from the logical declaration already sealed into the
+/// authenticated predecessor queue.
+pub(crate) fn prepare_m1_authenticated_speculative_rollover_retained_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledSpeculativeRolloverV1,
+) -> Result<
+    M1AuthenticatedPreparedSpeculativeRolloverV1,
+    Box<M1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
+> {
+    prepare_m1_authenticated_speculative_rollover_pending_v1(engine, scheduled, None)
         .map_err(|failure| close_pending_preparation_failure(engine, failure))
 }
 
 fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
     engine: &mut Engine<C>,
     scheduled: M1AuthenticatedScheduledSpeculativeRolloverV1,
-    runner: &LogicalRunnerDeclaration,
+    runner: Option<&LogicalRunnerDeclaration>,
 ) -> Result<
     M1AuthenticatedPreparedSpeculativeRolloverV1,
     Box<PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1>,
@@ -2047,6 +2093,7 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         physical_lineage,
         logical,
     } = scheduled;
+    let runner = runner.unwrap_or_else(|| queue.operations().runner());
     let recipe = match crate::runner::derive_physical_step_recipe(
         queue.operations(),
         crate::M1StepDispatchIntent::SpeculativeRound(next.target()),
@@ -2441,6 +2488,10 @@ impl M1AuthenticatedSpeculativeRolloverSubmissionFailureV1 {
     #[must_use = "the terminal disposition must remain observed"]
     pub const fn disposition(&self) -> &crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
         &self.disposition
+    }
+
+    pub(crate) fn into_disposition(self) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        self.disposition.retain(self.stage)
     }
 }
 
@@ -5271,6 +5322,52 @@ pub struct M1AuthenticatedPreparedSpeculativeNewWindowV1 {
     next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
 }
 
+impl M1AuthenticatedPreparedSpeculativeNewWindowV1 {
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let Self {
+            prior,
+            next,
+            queue,
+            scheduled,
+            residue,
+            binding,
+            draft_prefill,
+            target_prefill,
+            preparation_plans,
+            recipe,
+            speculative_successor,
+            member_intents,
+            prior_windows,
+            ring_bytes,
+            next_queue_wait_timeout,
+        } = self;
+        close_new_window_prepared_detached(
+            engine,
+            queue,
+            (
+                prior,
+                next,
+                scheduled,
+                residue,
+                binding,
+                draft_prefill,
+                target_prefill,
+                preparation_plans,
+                recipe,
+                speculative_successor,
+                member_intents,
+                prior_windows,
+                ring_bytes,
+                next_queue_wait_timeout,
+            ),
+        )
+        .into_disposition()
+    }
+}
+
 /// Opaque paired-prefill publication carrying its exact frozen wait budget.
 ///
 /// ```compile_fail
@@ -5336,6 +5433,7 @@ pub enum M1AuthenticatedSpeculativeNewWindowMemberDispositionV1 {
 /// Stable stage-local observation failure class.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedSpeculativeNewWindowObservationErrorV1 {
+    Deadline,
     Wait,
     Recycle,
     Readback,
@@ -5346,6 +5444,7 @@ pub enum M1AuthenticatedSpeculativeNewWindowObservationErrorV1 {
 
 #[derive(Debug)]
 enum M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1 {
+    Deadline(crate::M1AuthenticatedSpeculativeFailureDispositionV1),
     Progress(Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>),
     Readback(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
     Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
@@ -5408,6 +5507,9 @@ impl M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
         };
         engine.quarantine_m1_queue_rearm_failure();
         match self.state {
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(retained) => {
+                retained.retain(self.error)
+            }
             M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(source) => {
                 quarantined_disposition((self.error, source))
             }
@@ -5469,6 +5571,28 @@ pub struct M1AuthenticatedSpeculativeNewWindowObservedV1 {
 }
 
 impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        engine.quarantine_m1_queue_rearm_failure();
+        let retained = (self.members, self.member_count, self.selection, self.epoch);
+        match self.observed.check_completion(&[]) {
+            Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((released, retained)),
+                Err(quarantined) => quarantined_disposition((quarantined, retained)),
+            },
+            Err(source) => match source.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((released, retained)),
+                Err(quarantined) => quarantined_disposition((quarantined, retained)),
+            },
+        }
+    }
+
     #[must_use]
     pub const fn member_count(&self) -> usize {
         self.member_count
@@ -5507,13 +5631,33 @@ impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
         M1AuthenticatedSpeculativeNewWindowReleasedV1,
         M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
     > {
-        settle_authenticated_speculative_new_window(engine, self, dispositions)
+        self.settle_with_deadline(engine, dispositions, |_| false)
+    }
+
+    pub(crate) fn settle_with_deadline<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+        deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        ) -> bool,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowReleasedV1,
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+    > {
+        settle_authenticated_speculative_new_window_with_deadline(
+            engine,
+            self,
+            dispositions,
+            deadline_expired,
+        )
     }
 }
 
 /// Stable settlement failure class without generic completion custody.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedSpeculativeNewWindowSettlementErrorV1 {
+    Deadline,
     DispositionCount { expected: usize, actual: usize },
     HostAllocation,
     SemanticJoin,
@@ -5525,6 +5669,31 @@ pub enum M1AuthenticatedSpeculativeNewWindowSettlementErrorV1 {
 
 #[derive(Debug)]
 enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
+    DeadlineObserved(
+        Box<(
+            crate::M1AuthenticatedRearmedObservedCompletionOutputV1,
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        )>,
+    ),
+    DeadlineReadback(
+        Box<(
+            crate::M1AuthenticatedRearmedCompletedReadbackV1,
+            Vec<crate::M1DeviceKvCompletionDispositionV1>,
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        )>,
+    ),
+    DeadlineCompletion(
+        Box<(
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        )>,
+    ),
+    DeadlineRelease(
+        Box<(
+            crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1,
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        )>,
+    ),
     Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
     Join(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
     CompletionPreflight(Box<crate::M1AuthenticatedRearmedCompletionPreflightFailureV1>),
@@ -5656,6 +5825,10 @@ pub struct M1AuthenticatedSpeculativeNewWindowReleasedV1 {
 }
 
 impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {
+    pub(crate) const fn retained_logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
+        self.released.retained_logical_runner()
+    }
+
     #[must_use]
     pub const fn member_count(&self) -> usize {
         self.member_count
@@ -5708,12 +5881,39 @@ impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {
             preparation_plans,
         )
     }
+
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        engine.quarantine_m1_queue_rearm_failure();
+        let retained = (self.members, self.member_count, self.selection, self.epoch);
+        match self.released.destroy_queue_and_retain_round(engine) {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
 }
 
 impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
     #[must_use]
     pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
         self.queue_wait_timeout
+    }
+
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_speculative_executor::disposition_with_logical(
+            self.published.close_in_flight(engine),
+            self.queue_wait_timeout,
+        )
     }
 
     /// Waits with the frozen deadline, recycles, and copies exactly once.
@@ -5729,10 +5929,35 @@ impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
         M1AuthenticatedSpeculativeNewWindowObservedV1,
         M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
     > {
-        let completed = match self
-            .published
-            .wait_for(self.queue_wait_timeout.milliseconds(), engine)
-        {
+        self.observe_with_deadline(engine, |_, timeout| Some(timeout))
+    }
+
+    pub(crate) fn observe_with_deadline<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        mut deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowObservedV1,
+        M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
+    > {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        let queue_wait_timeout = self.queue_wait_timeout;
+        let Some(wait_timeout) =
+            deadline_expired(Boundary::BeforeCompletionWait, queue_wait_timeout)
+        else {
+            let disposition = self.cancel_and_close(engine);
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition.retain(Boundary::BeforeCompletionWait),
+                ),
+            });
+        };
+        let completed = match self.published.wait_for(wait_timeout.milliseconds(), engine) {
             Ok(completed) => completed,
             Err(source) => {
                 return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
@@ -5743,6 +5968,18 @@ impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
                 });
             }
         };
+        if deadline_expired(Boundary::AfterCompletionWait, queue_wait_timeout).is_none() {
+            let disposition = crate::authenticated_speculative_executor::disposition_with_logical(
+                completed.close_completed(engine),
+                Boundary::AfterCompletionWait,
+            );
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition,
+                ),
+            });
+        }
         let recycled = match completed.recycle(engine) {
             Ok(recycled) => recycled,
             Err(source) => {
@@ -5754,7 +5991,29 @@ impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
                 });
             }
         };
+        if deadline_expired(Boundary::BeforeReadback, queue_wait_timeout).is_none() {
+            let disposition = crate::authenticated_speculative_executor::disposition_with_logical(
+                recycled.close_recycled(engine),
+                Boundary::BeforeReadback,
+            );
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition,
+                ),
+            });
+        }
         match recycled.observe_completion() {
+            Ok(observed)
+                if deadline_expired(Boundary::AfterReadback, queue_wait_timeout).is_none() =>
+            {
+                Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Observed(
+                        Box::new(observed),
+                    ),
+                })
+            }
             Ok(observed) => authenticated_new_window_observed(observed),
             Err(source) => Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
                 error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Readback,
@@ -5876,6 +6135,27 @@ fn settle_authenticated_speculative_new_window<const C: usize>(
     M1AuthenticatedSpeculativeNewWindowReleasedV1,
     M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
 > {
+    settle_authenticated_speculative_new_window_with_deadline(
+        engine,
+        observed,
+        dispositions,
+        |_| false,
+    )
+}
+
+fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
+    engine: &mut Engine<C>,
+    observed: M1AuthenticatedSpeculativeNewWindowObservedV1,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+    mut deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+    ) -> bool,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
     let M1AuthenticatedSpeculativeNewWindowObservedV1 {
         observed,
         members,
@@ -5926,6 +6206,19 @@ fn settle_authenticated_speculative_new_window<const C: usize>(
         }
     }));
     let expectations = authenticated_new_window_expectations(&members, member_count);
+    if deadline_expired(Boundary::BeforeReadback) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(
+                Box::new((observed, Boundary::BeforeReadback)),
+            ),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
     let readback = match observed.check_completion(&expectations[..member_count]) {
         Ok(readback) => readback,
         Err(source) => {
@@ -5940,27 +6233,70 @@ fn settle_authenticated_speculative_new_window<const C: usize>(
             ));
         }
     };
-    match readback.complete(engine, physical_dispositions) {
-        Ok(outcome) => finish_authenticated_speculative_new_window_completion(
-            outcome,
-            members,
-            member_count,
-            selection,
-            epoch,
-            dispositions,
-        ),
-        Err(source) => Err(new_window_settlement_failure(
-            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionPreflight,
-            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
-                Box::new(source),
+    if deadline_expired(Boundary::AfterReadback) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(
+                Box::new((readback, physical_dispositions, Boundary::AfterReadback)),
             ),
             members,
             member_count,
             selection,
             epoch,
             dispositions,
-        )),
+        ));
     }
+    if deadline_expired(Boundary::BeforeSettlement) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(
+                Box::new((readback, physical_dispositions, Boundary::BeforeSettlement)),
+            ),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    let outcome = match readback.complete(engine, physical_dispositions) {
+        Ok(outcome) => outcome,
+        Err(source) => {
+            return Err(new_window_settlement_failure(
+                M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::CompletionPreflight,
+                M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::CompletionPreflight(
+                    Box::new(source),
+                ),
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ));
+        }
+    };
+    if deadline_expired(Boundary::AfterSettlement) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineCompletion(
+                Box::new((outcome, Boundary::AfterSettlement)),
+            ),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    finish_authenticated_speculative_new_window_completion_with_deadline(
+        outcome,
+        members,
+        member_count,
+        selection,
+        epoch,
+        dispositions,
+        deadline_expired,
+    )
 }
 
 fn finish_authenticated_speculative_new_window_completion(
@@ -5977,7 +6313,64 @@ fn finish_authenticated_speculative_new_window_completion(
     M1AuthenticatedSpeculativeNewWindowReleasedV1,
     M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
 > {
-    match outcome.release_completed() {
+    finish_authenticated_speculative_new_window_completion_with_deadline(
+        outcome,
+        members,
+        member_count,
+        selection,
+        epoch,
+        dispositions,
+        |_| false,
+    )
+}
+
+fn finish_authenticated_speculative_new_window_completion_with_deadline(
+    outcome: crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+    members: Box<
+        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
+    >,
+    member_count: usize,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+    mut deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+    ) -> bool,
+) -> Result<
+    M1AuthenticatedSpeculativeNewWindowReleasedV1,
+    M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+> {
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    if deadline_expired(Boundary::BeforeSettlement) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineCompletion(
+                Box::new((outcome, Boundary::BeforeSettlement)),
+            ),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    let released = outcome.release_completed();
+    if deadline_expired(Boundary::AfterSettlement) {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineRelease(Box::new(
+                (released, Boundary::AfterSettlement),
+            )),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    match released {
         crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
             finish_authenticated_speculative_new_window_release(
                 released,
@@ -6117,6 +6510,20 @@ fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
         dispositions,
     } = failure;
     match state {
+        state @ (M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(_)
+        | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(_)
+        | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineCompletion(_)
+        | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineRelease(_)) => {
+            Err(new_window_settlement_failure(
+                error,
+                state,
+                members,
+                member_count,
+                selection,
+                epoch,
+                dispositions,
+            ))
+        }
         M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(observed) => {
             settle_authenticated_speculative_new_window(
                 engine,
@@ -6259,7 +6666,7 @@ fn close_authenticated_speculative_new_window_settlement<const C: usize>(
     failure: M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
 ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
     use crate::authenticated_speculative_executor::{
-        quarantined_disposition, released_disposition,
+        close_deadline_phase, quarantined_disposition, released_disposition,
     };
     engine.quarantine_m1_queue_rearm_failure();
     let M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
@@ -6274,10 +6681,74 @@ fn close_authenticated_speculative_new_window_settlement<const C: usize>(
     let observed_expectations = matches!(
         &state,
         M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(_)
+            | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(_)
     )
     .then(|| authenticated_new_window_expectations(&members, member_count));
     let metadata = (error, members, member_count, selection, epoch, dispositions);
     match state {
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(retained) => {
+            close_deadline_phase(*retained, |(observed, boundary)| {
+                let expectations = observed_expectations
+                    .expect("deadline-observed settlement state prepared exact expectations");
+                match observed.check_completion(&expectations[..member_count]) {
+                    Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
+                        Ok(released) => released_disposition((metadata, boundary, released)),
+                        Err(quarantined) => {
+                            quarantined_disposition((metadata, boundary, quarantined))
+                        }
+                    },
+                    Err(source) => match source.destroy_queue_and_retain_custody(engine) {
+                        Ok(released) => released_disposition((metadata, boundary, released)),
+                        Err(quarantined) => {
+                            quarantined_disposition((metadata, boundary, quarantined))
+                        }
+                    },
+                }
+            })
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(retained) => {
+            close_deadline_phase(*retained, |(readback, physical_dispositions, boundary)| {
+                match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => {
+                        released_disposition((metadata, physical_dispositions, boundary, released))
+                    }
+                    Err(quarantined) => quarantined_disposition((
+                        metadata,
+                        physical_dispositions,
+                        boundary,
+                        quarantined,
+                    )),
+                }
+            })
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineCompletion(
+            retained,
+        ) => close_deadline_phase(*retained, |(outcome, boundary)| {
+            outcome.destroy_queue_and_retain_any(engine, (metadata, boundary))
+        }),
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineRelease(retained) => {
+            close_deadline_phase(*retained, |(released, boundary)| match released {
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                    match released.destroy_queue_and_retain_round(engine) {
+                        Ok(released) => released_disposition((metadata, boundary, released)),
+                        Err(quarantined) => {
+                            quarantined_disposition((metadata, boundary, quarantined))
+                        }
+                    }
+                }
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+                    match source.destroy_queue_and_retain_round(engine) {
+                        Ok(released) => released_disposition((metadata, boundary, released)),
+                        Err(quarantined) => {
+                            quarantined_disposition((metadata, boundary, quarantined))
+                        }
+                    }
+                }
+                crate::M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(outcome) => {
+                    outcome.destroy_queue_and_retain_any(engine, (metadata, boundary))
+                }
+            })
+        }
         M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(observed) => {
             let expectations = observed_expectations
                 .expect("observed settlement state prepared exact expectations");
@@ -8597,6 +9068,84 @@ mod tests {
         assert!(!authenticated_new_window_transition_within_limit(
             usize::MAX
         ));
+    }
+
+    #[test]
+    fn hostile_new_window_expiry_is_checked_immediately_around_wait() {
+        let source = include_str!("authenticated_queue_rollover.rs");
+        let observe = source
+            .split("pub(crate) fn observe_with_deadline")
+            .nth(1)
+            .and_then(|tail| tail.split("fn cancel_and_close").next())
+            .expect("deadline-bound new-window observation is present");
+        let mut tail = observe;
+        for needle in [
+            "let Some(wait_timeout)",
+            "deadline_expired(Boundary::BeforeCompletionWait",
+            "self.published.wait_for(wait_timeout.milliseconds(), engine)",
+            "deadline_expired(Boundary::AfterCompletionWait",
+        ] {
+            let position = tail
+                .find(needle)
+                .unwrap_or_else(|| panic!("missing deadline-bound new-window wait step {needle}"));
+            tail = &tail[position + needle.len()..];
+        }
+    }
+
+    #[test]
+    fn hostile_new_window_settlement_deadlines_destroy_exactly_once() {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        use crate::authenticated_speculative_executor::{
+            close_deadline_phase, quarantined_disposition, released_disposition,
+        };
+
+        let phases = [
+            ("observed", Boundary::BeforeReadback),
+            ("readback-after", Boundary::AfterReadback),
+            ("readback-before-settlement", Boundary::BeforeSettlement),
+            ("completion-after", Boundary::AfterSettlement),
+            ("completion-before-release", Boundary::BeforeSettlement),
+            ("released-after", Boundary::AfterSettlement),
+        ];
+        for (phase, boundary) in phases {
+            let mut destroys = 0;
+            let disposition = close_deadline_phase((phase, boundary), |retained| {
+                assert_eq!(retained, (phase, boundary));
+                destroys += 1;
+                released_disposition((retained, "model native release"))
+            });
+            assert_eq!(destroys, 1);
+            assert!(disposition.queue_released());
+        }
+
+        let mut destroys = 0;
+        let disposition = close_deadline_phase("released-after", |retained| {
+            destroys += 1;
+            quarantined_disposition((retained, "model native destruction failure"))
+        });
+        assert_eq!(destroys, 1);
+        assert!(!disposition.queue_released());
+
+        let production = include_str!("authenticated_queue_rollover.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .unwrap();
+        assert!(!production.contains("Deadline(Box<dyn fmt::Debug>)"));
+        for typed in [
+            "DeadlineObserved",
+            "DeadlineReadback",
+            "DeadlineCompletion",
+            "DeadlineRelease",
+        ] {
+            assert!(production.contains(typed));
+        }
+        for destroy in [
+            "destroy_queue_and_retain_custody(engine)",
+            "destroy_queue_and_retain_any(engine",
+            "destroy_queue_and_retain_round(engine)",
+        ] {
+            assert!(production.contains(destroy));
+        }
     }
 
     #[test]

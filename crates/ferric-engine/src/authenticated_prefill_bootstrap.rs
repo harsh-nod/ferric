@@ -246,6 +246,25 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
     pub const fn maximum_successor_output_tokens(&self) -> u32 {
         self.policy.max_output_tokens()
     }
+
+    /// Separates a validated bootstrap only for Ferric-owned resident rollover.
+    ///
+    /// The values remain addressless and carry no queue or publication authority.
+    pub(crate) fn into_resident_parts(
+        self,
+    ) -> (
+        Box<[TokenId]>,
+        M1SpeculativeGenerationPolicyV1,
+        M1FullStepWorkspacePlans,
+        M1FullStepWorkspacePlans,
+    ) {
+        (
+            self.prompt_tokens,
+            self.policy,
+            self.preparation_plans,
+            self.recipe_plans,
+        )
+    }
 }
 
 /// Exact phase at which authenticated fresh-prefill preparation stopped.

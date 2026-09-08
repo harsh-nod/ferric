@@ -708,7 +708,7 @@ pub trait M1R33AuthorityFreeBackendV1: sealed::Sealed {
 }
 
 /// Cooperative absolute deadline supplied to every backend operation.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M1R33OperationDeadlineV1(Instant);
 
 impl M1R33OperationDeadlineV1 {
@@ -716,6 +716,22 @@ impl M1R33OperationDeadlineV1 {
     #[must_use]
     pub fn expired(self) -> bool {
         Instant::now() >= self.0
+    }
+
+    /// Caps one physical queue wait to the immutable start deadline.
+    /// Sub-millisecond remainder is treated as expired rather than rounded up.
+    #[must_use]
+    pub(crate) fn bounded_queue_timeout(
+        self,
+        configured: ferric_engine::M1QueueWaitTimeoutV1,
+    ) -> Option<ferric_engine::M1QueueWaitTimeoutV1> {
+        let remaining = self.0.checked_duration_since(Instant::now())?;
+        let remaining_ms = remaining.as_millis();
+        if remaining_ms == 0 {
+            return None;
+        }
+        let remaining_ms = u32::try_from(remaining_ms).unwrap_or(u32::MAX);
+        ferric_engine::M1QueueWaitTimeoutV1::new(configured.milliseconds().min(remaining_ms))
     }
 }
 
@@ -781,11 +797,12 @@ enum LifecycleV1 {
 /// Its successful path enforces `start -> ready -> 20 ordered bounded measures
 /// -> stop`; the exact instance-bound `stop` is also admitted for cleanup after
 /// a collector abort. Any backend failure or undelivered post-mutation response
-/// enters a fault state in which only that stop is admitted. It does not claim
-/// that the current Ferric physical queue can yet recycle all 20 windows.
+/// enters a fault state in which only that stop is admitted. Physical residency
+/// remains a backend responsibility and grants this controller no GPU authority.
 pub struct M1R33DaemonCoordinatorV1<'a, B: M1R33AuthorityFreeBackendV1> {
     backend: B,
     bundle: &'a HeldM1R33ServiceBundleV1,
+    start_deadline: Option<M1R33OperationDeadlineV1>,
     state: LifecycleV1,
 }
 
@@ -806,6 +823,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         Self {
             backend,
             bundle,
+            start_deadline: None,
             state: LifecycleV1::Stable(StableLifecycleV1::Idle),
         }
     }
@@ -964,6 +982,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         let Ok(deadline) = self.deadline() else {
             return Self::fault_response(request, Some(instance), "deadline-failed");
         };
+        self.start_deadline = Some(deadline);
         match self.backend.start(
             &instance,
             request.context.server_start,
@@ -1005,7 +1024,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         if !exact_instance_action(request, M1R33ActionV1::Ready, &instance, start) {
             return Self::fault_response(request, Some(instance), "only-exact-ready-admitted");
         }
-        let Ok(deadline) = self.deadline() else {
+        let Some(deadline) = self.start_deadline else {
             return self.backend_failure(
                 request,
                 instance,
@@ -1059,7 +1078,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         {
             return Self::fault_response(request, Some(instance), "only-next-window-admitted");
         }
-        let Ok(deadline) = self.deadline() else {
+        let Some(deadline) = self.start_deadline else {
             return self.backend_failure(
                 request,
                 instance,
@@ -1122,6 +1141,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         };
         match self.backend.stop(&instance, deadline) {
             Ok(()) if !deadline.expired() => {
+                self.start_deadline = None;
                 let response =
                     Self::passed_response(request, instance.clone(), M1R33WireReportV1::Lifecycle);
                 self.set_pending(
@@ -1365,6 +1385,46 @@ mod tests {
 
     static NEXT_TEST: AtomicU64 = AtomicU64::new(0);
 
+    fn queue_timeout(milliseconds: u32) -> ferric_engine::M1QueueWaitTimeoutV1 {
+        ferric_engine::M1QueueWaitTimeoutV1::new(milliseconds).unwrap()
+    }
+
+    #[test]
+    fn operation_deadline_never_extends_configured_queue_wait() {
+        let deadline = M1R33OperationDeadlineV1(Instant::now() + Duration::from_secs(5));
+        assert_eq!(
+            deadline
+                .bounded_queue_timeout(queue_timeout(7))
+                .unwrap()
+                .milliseconds(),
+            7
+        );
+    }
+
+    #[test]
+    fn operation_deadline_floors_remaining_milliseconds() {
+        let deadline = M1R33OperationDeadlineV1(Instant::now() + Duration::from_millis(1_500));
+        let bounded = deadline
+            .bounded_queue_timeout(queue_timeout(5_000))
+            .unwrap()
+            .milliseconds();
+        assert!((1..=1_500).contains(&bounded));
+    }
+
+    #[test]
+    fn expired_and_submillisecond_deadlines_fail_before_queue_wait() {
+        assert!(
+            M1R33OperationDeadlineV1(Instant::now())
+                .bounded_queue_timeout(queue_timeout(1))
+                .is_none()
+        );
+        assert!(
+            M1R33OperationDeadlineV1(Instant::now() + Duration::from_micros(500))
+                .bounded_queue_timeout(queue_timeout(1))
+                .is_none()
+        );
+    }
+
     struct TestDirectory(PathBuf);
 
     impl TestDirectory {
@@ -1510,6 +1570,7 @@ mod tests {
     #[derive(Default)]
     struct TestBackend {
         active: Option<String>,
+        start_deadline: Option<M1R33OperationDeadlineV1>,
         fail_measure: bool,
         measures: usize,
         starts: usize,
@@ -1524,10 +1585,11 @@ mod tests {
             instance: &str,
             _start: u64,
             _workload: &M1R33WorkloadDocumentV1,
-            _deadline: M1R33OperationDeadlineV1,
+            deadline: M1R33OperationDeadlineV1,
         ) -> Result<(), M1R33BackendFaultV1> {
             assert!(self.active.is_none());
             self.active = Some(instance.to_owned());
+            self.start_deadline = Some(deadline);
             self.starts += 1;
             Ok(())
         }
@@ -1535,9 +1597,10 @@ mod tests {
         fn ready(
             &mut self,
             instance: &str,
-            _deadline: M1R33OperationDeadlineV1,
+            deadline: M1R33OperationDeadlineV1,
         ) -> Result<(), M1R33BackendFaultV1> {
             assert_eq!(self.active.as_deref(), Some(instance));
+            assert_eq!(self.start_deadline, Some(deadline));
             Ok(())
         }
 
@@ -1545,9 +1608,10 @@ mod tests {
             &mut self,
             instance: &str,
             window: &M1R33WorkloadWindowV1,
-            _deadline: M1R33OperationDeadlineV1,
+            deadline: M1R33OperationDeadlineV1,
         ) -> Result<M1R33MeasurementReportV1, M1R33BackendFaultV1> {
             assert_eq!(self.active.as_deref(), Some(instance));
+            assert_eq!(self.start_deadline, Some(deadline));
             if self.fail_measure {
                 return Err(M1R33BackendFaultV1::new("injected-measure-fault"));
             }
@@ -1580,6 +1644,7 @@ mod tests {
         ) -> Result<(), M1R33BackendFaultV1> {
             assert_eq!(self.active.as_deref(), Some(instance));
             self.active = None;
+            self.start_deadline = None;
             self.stops += 1;
             Ok(())
         }

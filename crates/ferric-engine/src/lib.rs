@@ -14,6 +14,7 @@ mod authenticated_prefill_executor;
 mod authenticated_prefill_registry_rollover;
 mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
+mod authenticated_resident_session;
 mod authenticated_speculative_executor;
 mod authenticated_target_rollover_phase_custody;
 mod authenticated_target_window_executor;
@@ -276,6 +277,14 @@ pub use authenticated_queue_rollover::{
     M1AuthenticatedTargetDecodeSchedulePreDetachRetryV1,
     M1AuthenticatedTargetDecodeServingFailureV1, M1AuthenticatedTargetDecodeServingInputsV1,
     M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1,
+};
+pub use authenticated_resident_session::{
+    execute_m1_authenticated_resident_first_window_v1,
+    execute_m1_authenticated_resident_next_window_v1, M1AuthenticatedResidentCloseV1,
+    M1AuthenticatedResidentFailureV1, M1AuthenticatedResidentRoundPlansV1,
+    M1AuthenticatedResidentSessionV1, M1AuthenticatedResidentStageV1,
+    M1AuthenticatedResidentWindowInputV1, M1AuthenticatedResidentWindowSuccessV1,
+    M1_AUTHENTICATED_RESIDENT_WINDOWS_V1,
 };
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,

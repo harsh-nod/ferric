@@ -76,11 +76,13 @@ impl<C, I> Vault<C, I> {
         true
     }
 
+    #[allow(clippy::forget_non_drop)]
     pub(super) fn quarantine_input(&mut self) {
         // Dropping the wrapper never drops its manually retained inner owner.
         let _quarantined_input = self.input.take();
     }
 
+    #[allow(clippy::forget_non_drop)]
     pub(super) fn quarantine_all(&mut self) {
         // Dropping either wrapper never drops its manually retained inner owner.
         let _quarantined_input = self.input.take();

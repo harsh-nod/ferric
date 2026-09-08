@@ -22,6 +22,8 @@ const ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_prefill_bootstrap.rs");
 const ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_target_window_executor.rs");
+const ENGINE_AUTHENTICATED_RESIDENT_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/authenticated_resident_session.rs");
 const ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/m1_serving_physical_input_provider.rs");
 const ENGINE_QUALIFICATION_CAPTURE_SOURCE: &str =
@@ -539,6 +541,10 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
         "authenticated-window-bootstrap-unavailable",
         "new_with_s1_t128_prefill_bootstrap",
         "new_with_s1_t128_target_window",
+        "new_with_s1_k4_resident_windows",
+        "M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1",
+        "execute_m1_authenticated_resident_first_window_v1",
+        "execute_m1_authenticated_resident_next_window_v1",
         "authenticated-window-execution-unavailable",
         "authenticated-window-execution-rejected",
         "prepare_m1_authenticated_s1_t128_prefill_prepublication_v1",
@@ -579,6 +585,76 @@ fn r33_authenticated_backend_owns_only_pre_admitted_production_capabilities() {
             "R33 authenticated ownership backend contains forbidden marker {forbidden}"
         );
     }
+}
+
+#[test]
+fn authenticated_resident_path_is_exact_bounded_and_phase_ordered() {
+    let engine = ENGINE_AUTHENTICATED_RESIDENT_SOURCE
+        .split_once("#[cfg(test)]")
+        .map_or(ENGINE_AUTHENTICATED_RESIDENT_SOURCE, |(source, _)| source);
+    for required in [
+        "M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1",
+        "reserve_completed_window_replacement",
+        "schedule_m1_authenticated_speculative_new_window_v1",
+        "submit_m1_authenticated_speculative_new_window_v1",
+        "registry.record_new_window_publication",
+        "M1AuthenticatedSpeculativeNewWindowMemberDispositionV1",
+        "M1SpeculativeGenerationLoopV1::new",
+        "prepare_m1_authenticated_speculative_rollover_retained_v1",
+        "submit_m1_authenticated_speculative_rollover_v1",
+        "execute_round_with_post_submit_and_deadline",
+        "registry.record_publication",
+        "clock_start.elapsed_ns()",
+        "cancel_and_close",
+        "quarantine_m1_queue_rearm_failure",
+    ] {
+        assert!(
+            engine.contains(required),
+            "resident engine path is missing {required}"
+        );
+    }
+    let next = engine
+        .split_once("pub fn execute_m1_authenticated_resident_next_window_v1")
+        .unwrap()
+        .1;
+    assert!(
+        next.find("submit_m1_authenticated_speculative_new_window_v1")
+            .unwrap()
+            < next.find("registry.record_new_window_publication").unwrap()
+    );
+    for forbidden in [
+        "TcpListener",
+        "axum::",
+        "hyper::",
+        "M1EngineeringAggregateArtifactV1",
+        "bind_engineering_structural_m1_physical_runner_v1",
+        "std::time::Instant",
+    ] {
+        assert!(
+            !engine.contains(forbidden),
+            "resident engine path contains {forbidden}"
+        );
+    }
+    for required in [
+        "new_with_s1_k4_resident_windows",
+        "exact_resident_roster",
+        "pending.front().is_some_and(|bound| bound.matches(window))",
+        "resident_report(window, tokens.len(), timing)",
+        "session.completed_windows() != expected_completed",
+        "session.close()",
+    ] {
+        assert!(
+            R33_PRODUCTION_BACKEND_SOURCE.contains(required),
+            "resident backend wiring is missing {required}"
+        );
+    }
+    assert_eq!(
+        R33_PRODUCTION_BACKEND_SOURCE
+            .matches("resident_report(window, tokens.len(), timing),\n                            deadline.expired(),")
+            .count(),
+        2,
+        "both resident success paths must reject an expired immutable start deadline before returning a timing row"
+    );
 }
 
 #[test]

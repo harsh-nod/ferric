@@ -293,6 +293,20 @@ pub(crate) enum M1AuthenticatedPhysicalQueueClosureV1 {
     Quarantined(Box<dyn core::fmt::Debug>),
 }
 
+pub(crate) fn retain_in_queue_closure(
+    closure: M1AuthenticatedPhysicalQueueClosureV1,
+    retained: impl core::fmt::Debug + 'static,
+) -> M1AuthenticatedPhysicalQueueClosureV1 {
+    match closure {
+        M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, retained)))
+        }
+        M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((quarantined, retained)))
+        }
+    }
+}
+
 trait M1AuthenticatedUnsubmittedQueueCloseEffectV1: core::fmt::Debug {
     fn close(self) -> M1AuthenticatedPhysicalQueueClosureV1;
 }
@@ -403,6 +417,14 @@ pub enum M1AuthenticatedPhysicalPublishedQueueSessionV1 {
 }
 
 impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
+    /// Attempts terminalization of an in-flight queue without an unbounded wait.
+    pub(crate) fn close_in_flight(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        match self.wait_for(0) {
+            Ok(completed) => completed.close_completed(),
+            Err(quarantined) => M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined),
+        }
+    }
+
     /// Exact closed M1 publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -500,6 +522,14 @@ pub enum M1AuthenticatedPhysicalCompletedQueueSessionV1 {
 }
 
 impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
+    /// Recycles completion signals and destroys the resulting quiescent queue.
+    pub(crate) fn close_completed(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        match self.recycle() {
+            Ok(recycled) => recycled.close_recycled(),
+            Err(quarantined) => M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined),
+        }
+    }
+
     /// Exact closed M1 publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -597,6 +627,17 @@ pub enum M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 }
 
 impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    /// Destroys the exact quiescent queue and retains all Ferric custody.
+    pub(crate) fn close_recycled(self) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        match self {
+            Self::TargetOnly(case) => close_recycled_case(case),
+            Self::PairedPrefill(case) => close_recycled_case(case),
+            Self::SpeculativeK4(case) => close_recycled_case(case),
+            Self::SpeculativeK8(case) => close_recycled_case(case),
+            Self::SpeculativeK16(case) => close_recycled_case(case),
+        }
+    }
+
     /// Exact closed M1 publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -637,6 +678,26 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK8(case) => case.device(),
             Self::SpeculativeK16(case) => case.device(),
         }
+    }
+}
+
+fn close_recycled_case<const N: usize>(
+    case: Box<
+        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
+    >,
+) -> M1AuthenticatedPhysicalQueueClosureV1 {
+    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    match lower.destroy_and_release() {
+        Ok(released) => M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+            released, witness, operations, custody, step,
+        ))),
+        Err(quarantined) => M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
+            quarantined,
+            witness,
+            operations,
+            custody,
+            step,
+        ))),
     }
 }
 

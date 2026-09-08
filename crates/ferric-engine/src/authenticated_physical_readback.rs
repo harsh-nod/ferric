@@ -2737,6 +2737,11 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
         }
     }
 
+    /// Borrows only the logical declaration sealed into this queue generation.
+    pub(crate) const fn logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
+        self.operations().runner()
+    }
+
     /// Exact former publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {

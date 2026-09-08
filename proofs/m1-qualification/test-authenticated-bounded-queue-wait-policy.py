@@ -98,7 +98,28 @@ def validate(sources: dict[str, str]) -> None:
     signature = rollover_completion[: rollover_completion.find(") ->")]
     if "queue_wait_timeout:" in signature:
         raise PolicyError("rollover completion permits post-publication timeout substitution")
-    require(rollover_completion, "queue_wait_timeout,", "retained rollover timeout consumption")
+    require(
+        rollover_completion,
+        "self.complete_round_with_deadline(engine, controls, |_, timeout| Some(timeout))",
+        "deadline-aware rollover completion delegation",
+    )
+    deadline_rollover_completion = function(
+        speculative,
+        "pub(crate) fn complete_round_with_deadline<const C: usize, D>(",
+        "deadline-aware rollover completion",
+    )
+    if deadline_rollover_completion.count("queue_wait_timeout,") != 3:
+        raise PolicyError("deadline-aware rollover completion lost retained timeout custody")
+    require(
+        deadline_rollover_completion,
+        "deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout)",
+        "retained pre-settlement timeout consumption",
+    )
+    require(
+        deadline_rollover_completion,
+        "deadline_expired(Boundary::AfterSettlement, queue_wait_timeout)",
+        "retained post-settlement timeout consumption",
+    )
 
     submit_rollover = function(rollover, "pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(", "rollover submit")
     require(submit_rollover, "queue_wait_timeout: crate::M1QueueWaitTimeoutV1", "prepublication rollover timeout")
@@ -190,10 +211,22 @@ def main() -> None:
     changed["speculative"] = changed["speculative"].replace(completion, substituted, 1)
     expect_rejected("post-publication rollover timeout substitution", changed)
 
+    deadline_completion = function(
+        sources["speculative"],
+        "pub(crate) fn complete_round_with_deadline<const C: usize, D>(",
+        "deadline-aware rollover completion",
+    )
+    erased_timeout = deadline_completion.replace("queue_wait_timeout,", "", 1)
+    changed = dict(sources)
+    changed["speculative"] = changed["speculative"].replace(
+        deadline_completion, erased_timeout, 1
+    )
+    expect_rejected("retained rollover timeout erasure", changed)
+
     print(
         "PASS: authenticated production waits combine progress and monotonic wall bounds, "
         "terminalize through race-aware KFD wait_for(0), retain timeout custody, fault rearm "
-        "Engine state, and reject 11 hostile mutations"
+        "Engine state, and reject 12 hostile mutations"
     )
 
 

@@ -5,19 +5,23 @@
 //! capabilities from engineering artifacts. `start` creates and binds the real
 //! Ferric Engine, while `stop` deterministically drops unpublished ownership.
 //!
-//! The opt-in S1/T128 target-window constructor can execute one exact canonical
-//! row through authenticated prefill and target-only decode. It then retains
-//! terminal custody in `Faulted`; it does not implement R33's 20-window run.
-//! The default, prefill-only, and unsupported-row paths remain fail-closed.
+//! The opt-in resident constructor consumes all 20 canonical S1/T128 window
+//! inputs before start and carries one authenticated queue across their exact
+//! ordered lifecycle. The default, prefill-only, target-only, and unsupported
+//! row paths retain their existing fail-closed behavior.
 
 use core::fmt;
+use std::collections::VecDeque;
 
 use ferric_engine::{
-    Engine, M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
-    M1AuthenticatedS1T128PrefillBootstrapInputV1, M1AuthenticatedS1T128PrefillPrepublicationV1,
-    M1AuthenticatedTargetWindowClockStartV1, M1AuthenticatedTargetWindowExecutionFailureV1,
-    M1AuthenticatedTargetWindowExecutionSuccessV1, M1AuthenticatedTargetWindowRoundPlansV1,
-    M1PartitionedModelMemoryKvPoolV1, M1QueueWaitTimeoutV1,
+    Engine, M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedResidentCloseV1,
+    M1AuthenticatedResidentSessionV1, M1AuthenticatedResidentWindowInputV1,
+    M1AuthenticatedS1T128PrefillBootstrapFailureV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
+    M1AuthenticatedS1T128PrefillPrepublicationV1, M1AuthenticatedTargetWindowClockStartV1,
+    M1AuthenticatedTargetWindowExecutionFailureV1, M1AuthenticatedTargetWindowExecutionSuccessV1,
+    M1AuthenticatedTargetWindowRoundPlansV1, M1PartitionedModelMemoryKvPoolV1,
+    M1QueueWaitTimeoutV1, execute_m1_authenticated_resident_first_window_v1,
+    execute_m1_authenticated_resident_next_window_v1,
     execute_m1_authenticated_s1_t128_target_window_v1,
     prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
 };
@@ -36,6 +40,8 @@ const M1_R33_ENGINE_CAPACITY_V1: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
 const M1_R33_ENGINE_PAGE_COUNT_V1: u32 = 512;
 const M1_R33_ENGINE_PAGE_TOKENS_V1: u32 = M1_MAX_KV_PAGE_TOKENS;
 const M1_R33_AUTHENTICATED_TARGET_WINDOWS_PER_INSTANCE_V1: usize = 1;
+const M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1: usize =
+    crate::r33_wire::M1_R33_WINDOWS_PER_START_V1;
 
 type M1R33EngineV1 = Engine<M1_R33_ENGINE_CAPACITY_V1>;
 
@@ -47,6 +53,7 @@ const FAULT_BOOTSTRAP_BINDING: &str = "authenticated-window-bootstrap-binding-re
 const FAULT_BOOTSTRAP_REJECTED: &str = "authenticated-window-bootstrap-rejected";
 const FAULT_EXECUTION_UNAVAILABLE: &str = "authenticated-window-execution-unavailable";
 const FAULT_EXECUTION_REJECTED: &str = "authenticated-window-execution-rejected";
+const FAULT_RESIDENT_ROSTER: &str = "authenticated-resident-roster-rejected";
 const FAULT_NOT_ACTIVE: &str = "backend-not-active";
 const FAULT_STOPPED: &str = "backend-stopped";
 const FAULT_UNHEALTHY_ENGINE: &str = "backend-engine-not-ready";
@@ -379,6 +386,42 @@ fn valid_sha256(value: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
+fn resident_report(
+    window: &M1R33WorkloadWindowV1,
+    output_tokens: usize,
+    timing: ferric_engine::M1AuthenticatedTargetWindowTimingV1,
+) -> Option<M1R33MeasurementReportV1> {
+    let output_tokens = u64::try_from(output_tokens).ok()?;
+    let total_tokens = window
+        .row
+        .expected_work
+        .input_tokens
+        .checked_add(output_tokens)?;
+    let report = M1R33MeasurementReportV1 {
+        clock: M1_R33_CLOCK_V1.to_owned(),
+        duration_boundary: M1_R33_DURATION_BOUNDARY_V1.to_owned(),
+        duration_ns: timing.duration_ns(),
+        failed_requests: 0,
+        input_tokens: window.row.expected_work.input_tokens,
+        output_tokens,
+        request_events: vec![M1R33RequestEventWireV1 {
+            arrival_offset_ns: 0,
+            first_token_offset_ns: timing.first_token_offset_ns(),
+            input_tokens: window.row.expected_work.input_tokens,
+            output_tokens,
+            request_ordinal: 0,
+            terminal_offset_ns: timing.terminal_token_offset_ns(),
+        }],
+        request_timing_boundaries: M1_R33_TIMING_BOUNDARIES_V1.to_owned(),
+        successful_requests: 1,
+        total_tokens,
+    };
+    report
+        .validate_against(&window.row.expected_work)
+        .ok()
+        .map(|()| report)
+}
+
 /// Stable rejection while binding one canonical R33 row to S1/T128 inputs.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1R33AuthenticatedS1T128BootstrapBindingErrorV1 {
@@ -500,6 +543,135 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
     }
 }
 
+/// One canonical R33 row joined to the complete authenticated resident input.
+#[must_use = "R33 row identity and resident input remain joined"]
+#[derive(Debug)]
+pub struct M1R33AuthenticatedResidentWindowBindingV1 {
+    row_id: Box<str>,
+    row_ordinal: u64,
+    server_start: u64,
+    window: u64,
+    input: M1AuthenticatedResidentWindowInputV1,
+}
+
+impl M1R33AuthenticatedResidentWindowBindingV1 {
+    /// # Errors
+    ///
+    /// Returns the unchanged resident input when the workload row is not the
+    /// exact supported singleton row or its prompt/output policy does not match.
+    #[allow(clippy::result_large_err)]
+    pub fn bind(
+        window: &M1R33WorkloadWindowV1,
+        input: M1AuthenticatedResidentWindowInputV1,
+    ) -> Result<Self, M1R33AuthenticatedResidentWindowBindingFailureV1> {
+        let reject =
+            |error, input| M1R33AuthenticatedResidentWindowBindingFailureV1 { error, input };
+        if window.validate().is_err() {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::InvalidWindow,
+                input,
+            ));
+        }
+        let Some(request) = window
+            .requests
+            .first()
+            .filter(|_| window.requests.len() == 1)
+        else {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::UnsupportedRoster,
+                input,
+            ));
+        };
+        if request.request_ordinal != 0 || request.prompt_tokens != input.prompt_tokens() {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::PretokenizedRoster,
+                input,
+            ));
+        }
+        if u64::from(input.expected_output_tokens()) != request.expected_output_tokens {
+            return Err(reject(
+                M1R33AuthenticatedS1T128BootstrapBindingErrorV1::OutputPolicy,
+                input,
+            ));
+        }
+        Ok(Self {
+            row_id: window.row.id.clone().into_boxed_str(),
+            row_ordinal: window.row.ordinal,
+            server_start: window.row.server_start,
+            window: window.row.window,
+            input,
+        })
+    }
+
+    fn matches(&self, window: &M1R33WorkloadWindowV1) -> bool {
+        let Some(request) = window
+            .requests
+            .first()
+            .filter(|_| window.requests.len() == 1)
+        else {
+            return false;
+        };
+        window.validate().is_ok()
+            && window.row.id == self.row_id.as_ref()
+            && window.row.ordinal == self.row_ordinal
+            && window.row.server_start == self.server_start
+            && window.row.window == self.window
+            && request.request_ordinal == 0
+            && request.prompt_tokens == self.input.prompt_tokens()
+            && request.expected_output_tokens == u64::from(self.input.expected_output_tokens())
+    }
+}
+
+/// Resident-row bind failure retaining the complete physical input.
+#[must_use = "rejected resident input remains linearly owned"]
+#[derive(Debug)]
+pub struct M1R33AuthenticatedResidentWindowBindingFailureV1 {
+    error: M1R33AuthenticatedS1T128BootstrapBindingErrorV1,
+    input: M1AuthenticatedResidentWindowInputV1,
+}
+
+impl M1R33AuthenticatedResidentWindowBindingFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1R33AuthenticatedS1T128BootstrapBindingErrorV1 {
+        self.error
+    }
+
+    #[must_use = "the rejected resident input remains linearly owned"]
+    pub fn into_input(self) -> M1AuthenticatedResidentWindowInputV1 {
+        self.input
+    }
+}
+
+/// Constructor rejection retaining every unpublished production owner.
+#[must_use = "resident admission failure retains authenticated production custody"]
+pub struct M1R33AuthenticatedResidentAdmissionFailureV1 {
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    model_memory: M1PartitionedModelMemoryKvPoolV1,
+    windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
+}
+
+impl fmt::Debug for M1R33AuthenticatedResidentAdmissionFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1R33AuthenticatedResidentAdmissionFailureV1")
+            .field("window_count", &self.windows.len())
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1R33AuthenticatedResidentAdmissionFailureV1 {
+    #[must_use = "all rejected resident owners remain linearly owned"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalRunnerV1,
+        M1PartitionedModelMemoryKvPoolV1,
+        Vec<M1R33AuthenticatedResidentWindowBindingV1>,
+    ) {
+        (self.runner, self.model_memory, self.windows)
+    }
+}
+
 enum M1R33AuthenticatedRunnerCustodyV1 {
     MissingBootstrap {
         _runner: M1AuthenticatedPhysicalRunnerV1,
@@ -508,6 +680,10 @@ enum M1R33AuthenticatedRunnerCustodyV1 {
         runner: M1AuthenticatedPhysicalRunnerV1,
         bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
         execution: M1R33AuthenticatedExecutionModeV1,
+    },
+    ResidentPending {
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        pending: VecDeque<M1R33AuthenticatedResidentWindowBindingV1>,
     },
     Prepared {
         _custody: Box<M1AuthenticatedS1T128PrefillPrepublicationV1<M1_R33_ENGINE_CAPACITY_V1>>,
@@ -520,6 +696,18 @@ enum M1R33AuthenticatedRunnerCustodyV1 {
     },
     ExecutionRejected {
         _custody: Box<M1AuthenticatedTargetWindowExecutionFailureV1>,
+    },
+    Resident {
+        session: Box<M1AuthenticatedResidentSessionV1<M1_R33_ENGINE_CAPACITY_V1>>,
+        pending: VecDeque<M1R33AuthenticatedResidentWindowBindingV1>,
+    },
+    ResidentRejected {
+        custody: M1AuthenticatedResidentCloseV1,
+        _pending: VecDeque<M1R33AuthenticatedResidentWindowBindingV1>,
+    },
+    ResidentClosed {
+        _custody: M1AuthenticatedResidentCloseV1,
+        _pending: VecDeque<M1R33AuthenticatedResidentWindowBindingV1>,
     },
 }
 
@@ -544,19 +732,34 @@ enum M1R33EngineCustodyV1 {
 
 /// Authenticated, initialized ownership for one fail-closed R33 instance.
 ///
-/// This is not a serving-complete backend. Its opt-in execution path serves
-/// exactly one bound row, then enters terminal custody; R33 requires 20 windows
-/// per instance. The constructor requires production capabilities obtainable
+/// This is not a serving-complete backend. Its opt-in resident path owns the
+/// exact bounded 20-window lifecycle. The constructor requires capabilities obtainable
 /// only through Ferric's authenticated Worker V3 and checked-device
 /// model-memory paths. It accepts no artifact path, verifier, structural
 /// runner, raw KFD handle, or report callback.
 #[must_use = "authenticated runner and initialized model memory remain linearly owned"]
 pub struct M1R33AuthenticatedProductionBackendV1 {
+    start_deadline: Option<M1R33OperationDeadlineV1>,
     state: BackendStateMachineV1<
         M1R33AuthenticatedRunnerCustodyV1,
         M1R33AuthenticatedMemoryCustodyV1,
         M1R33EngineCustodyV1,
     >,
+}
+
+fn exact_resident_roster(windows: &[M1R33AuthenticatedResidentWindowBindingV1]) -> bool {
+    windows.len() == M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1
+        && windows.first().is_some_and(|first| {
+            first
+                .server_start
+                .checked_mul(M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1 as u64)
+                == Some(first.row_ordinal)
+                && windows.iter().enumerate().all(|(sequence, window)| {
+                    window.server_start == first.server_start
+                        && first.row_ordinal.checked_add(sequence as u64)
+                            == Some(window.row_ordinal)
+                })
+        })
 }
 
 impl fmt::Debug for M1R33AuthenticatedProductionBackendV1 {
@@ -576,12 +779,19 @@ impl M1R33AuthenticatedProductionBackendV1 {
         M1_R33_AUTHENTICATED_TARGET_WINDOWS_PER_INSTANCE_V1
     }
 
+    /// Exact number of ordered windows required by the resident constructor.
+    #[must_use]
+    pub const fn authenticated_resident_windows_per_instance() -> usize {
+        M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1
+    }
+
     /// Consumes already-authenticated program and initialized physical-memory owners.
     pub fn new(
         runner: M1AuthenticatedPhysicalRunnerV1,
         model_memory: M1PartitionedModelMemoryKvPoolV1,
     ) -> Self {
         Self {
+            start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::MissingBootstrap { _runner: runner },
                 M1R33AuthenticatedMemoryCustodyV1::Initialized(Box::new(model_memory)),
@@ -600,6 +810,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
         bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
     ) -> Self {
         Self {
+            start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::Pending {
                     runner,
@@ -627,6 +838,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
         queue_wait_timeout: M1QueueWaitTimeoutV1,
     ) -> Self {
         Self {
+            start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::Pending {
                     runner,
@@ -640,6 +852,37 @@ impl M1R33AuthenticatedProductionBackendV1 {
                 M1R33AuthenticatedMemoryCustodyV1::Initialized(Box::new(model_memory)),
             ),
         }
+    }
+
+    /// Consumes one exact canonical 20-window roster and every physical owner.
+    ///
+    /// # Errors
+    ///
+    /// Returns every supplied owner when the roster is not the exact ordered
+    /// 20-window sequence for one server start.
+    #[allow(clippy::result_large_err)]
+    pub fn new_with_s1_k4_resident_windows(
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        model_memory: M1PartitionedModelMemoryKvPoolV1,
+        windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
+    ) -> Result<Self, M1R33AuthenticatedResidentAdmissionFailureV1> {
+        if !exact_resident_roster(&windows) {
+            return Err(M1R33AuthenticatedResidentAdmissionFailureV1 {
+                runner,
+                model_memory,
+                windows,
+            });
+        }
+        Ok(Self {
+            start_deadline: None,
+            state: BackendStateMachineV1::new(
+                M1R33AuthenticatedRunnerCustodyV1::ResidentPending {
+                    runner,
+                    pending: VecDeque::from(windows),
+                },
+                M1R33AuthenticatedMemoryCustodyV1::Initialized(Box::new(model_memory)),
+            ),
+        })
     }
 
     /// Current explicit ownership phase.
@@ -665,7 +908,7 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         workload: &M1R33WorkloadDocumentV1,
         deadline: M1R33OperationDeadlineV1,
     ) -> Result<(), M1R33BackendFaultV1> {
-        self.state.start(
+        let result = self.state.start(
             instance_sha256,
             server_start,
             workload.validate().is_ok(),
@@ -678,14 +921,21 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 )
                 .map(|engine| M1R33EngineCustodyV1::Fresh(Box::new(engine)))
             },
-        )
+        );
+        if self.start_deadline.is_none() && self.state.state().binding().is_some() {
+            self.start_deadline = Some(deadline);
+        }
+        result
     }
 
     fn ready(
         &mut self,
         instance_sha256: &str,
-        deadline: M1R33OperationDeadlineV1,
+        _deadline: M1R33OperationDeadlineV1,
     ) -> Result<(), M1R33BackendFaultV1> {
+        let Some(deadline) = self.start_deadline else {
+            return Err(fault(FAULT_DEADLINE_EXPIRED));
+        };
         self.state
             .ready(instance_sha256, deadline.expired(), |engine| {
                 matches!(
@@ -700,8 +950,11 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         &mut self,
         instance_sha256: &str,
         window: &M1R33WorkloadWindowV1,
-        deadline: M1R33OperationDeadlineV1,
+        _deadline: M1R33OperationDeadlineV1,
     ) -> Result<M1R33MeasurementReportV1, M1R33BackendFaultV1> {
+        let Some(deadline) = self.start_deadline else {
+            return Err(fault(FAULT_DEADLINE_EXPIRED));
+        };
         if window.validate().is_err() {
             return Err(fault(FAULT_WINDOW));
         }
@@ -739,10 +992,28 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 };
             }
             M1R33AuthenticatedRunnerCustodyV1::Pending { .. } => {}
+            M1R33AuthenticatedRunnerCustodyV1::ResidentPending { pending, .. }
+            | M1R33AuthenticatedRunnerCustodyV1::Resident { pending, .. }
+                if pending.front().is_some_and(|bound| bound.matches(window)) => {}
+            M1R33AuthenticatedRunnerCustodyV1::ResidentPending { .. }
+            | M1R33AuthenticatedRunnerCustodyV1::Resident { .. } => {
+                let result = self.state.reject_measure_with(
+                    instance_sha256,
+                    window.row.server_start,
+                    false,
+                    FAULT_RESIDENT_ROSTER,
+                );
+                return match result {
+                    Err(error) => Err(error),
+                    Ok(()) => Err(fault(FAULT_NOT_ACTIVE)),
+                };
+            }
             M1R33AuthenticatedRunnerCustodyV1::Prepared { .. }
             | M1R33AuthenticatedRunnerCustodyV1::Rejected { .. }
             | M1R33AuthenticatedRunnerCustodyV1::Executed { .. }
-            | M1R33AuthenticatedRunnerCustodyV1::ExecutionRejected { .. } => {
+            | M1R33AuthenticatedRunnerCustodyV1::ExecutionRejected { .. }
+            | M1R33AuthenticatedRunnerCustodyV1::ResidentRejected { .. }
+            | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed { .. } => {
                 return Err(fault(FAULT_NOT_ACTIVE));
             }
         }
@@ -771,6 +1042,199 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
             model_memory,
             engine,
         } = custody;
+        let (runner, model_memory, engine) = match (runner, model_memory, engine) {
+            (
+                M1R33AuthenticatedRunnerCustodyV1::ResidentPending {
+                    runner,
+                    mut pending,
+                },
+                M1R33AuthenticatedMemoryCustodyV1::Initialized(memory),
+                M1R33EngineCustodyV1::Fresh(engine),
+            ) => {
+                let Some(bound) = pending.pop_front() else {
+                    self.state.state = BackendStateV1::Faulted {
+                        binding,
+                        custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                            runner: M1R33AuthenticatedRunnerCustodyV1::ResidentPending {
+                                runner,
+                                pending,
+                            },
+                            model_memory: M1R33AuthenticatedMemoryCustodyV1::Initialized(memory),
+                            engine: M1R33EngineCustodyV1::Fresh(engine),
+                        }),
+                    };
+                    return Err(fault(FAULT_RESIDENT_ROSTER));
+                };
+                match execute_m1_authenticated_resident_first_window_v1(
+                    clock_start,
+                    *engine,
+                    runner,
+                    *memory,
+                    bound.input,
+                    |_, timeout| deadline.bounded_queue_timeout(timeout),
+                ) {
+                    Ok(success) => {
+                        let (session, tokens, timing) = success.into_parts();
+                        let report = match (
+                            resident_report(window, tokens.len(), timing),
+                            deadline.expired(),
+                        ) {
+                            (Some(report), false) => report,
+                            (_, deadline_expired) => {
+                                let closed = session.close();
+                                self.state.state = BackendStateV1::Faulted {
+                                    binding,
+                                    custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                        runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                            _custody: closed,
+                                            _pending: pending,
+                                        },
+                                        model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                        engine: M1R33EngineCustodyV1::Joined,
+                                    }),
+                                };
+                                return Err(fault(if deadline_expired {
+                                    FAULT_DEADLINE_EXPIRED
+                                } else {
+                                    FAULT_EXECUTION_REJECTED
+                                }));
+                            }
+                        };
+                        self.state.state = BackendStateV1::Active {
+                            binding,
+                            custody: ActiveCustodyV1 {
+                                runner: M1R33AuthenticatedRunnerCustodyV1::Resident {
+                                    session: Box::new(session),
+                                    pending,
+                                },
+                                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                engine: M1R33EngineCustodyV1::Joined,
+                            },
+                        };
+                        return Ok(report);
+                    }
+                    Err(failure) => {
+                        let closed = failure.close();
+                        self.state.state = BackendStateV1::Faulted {
+                            binding,
+                            custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                runner: M1R33AuthenticatedRunnerCustodyV1::ResidentRejected {
+                                    custody: closed,
+                                    _pending: pending,
+                                },
+                                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                engine: M1R33EngineCustodyV1::Joined,
+                            }),
+                        };
+                        return Err(fault(FAULT_EXECUTION_REJECTED));
+                    }
+                }
+            }
+            (
+                M1R33AuthenticatedRunnerCustodyV1::Resident {
+                    session,
+                    mut pending,
+                },
+                M1R33AuthenticatedMemoryCustodyV1::Joined,
+                M1R33EngineCustodyV1::Joined,
+            ) => {
+                let expected_completed = M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1
+                    .saturating_sub(pending.len());
+                let Some(bound) = pending.pop_front() else {
+                    let closed = session.close();
+                    self.state.state = BackendStateV1::Faulted {
+                        binding,
+                        custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                            runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                _custody: closed,
+                                _pending: pending,
+                            },
+                            model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                            engine: M1R33EngineCustodyV1::Joined,
+                        }),
+                    };
+                    return Err(fault(FAULT_RESIDENT_ROSTER));
+                };
+                if session.completed_windows() != expected_completed {
+                    let closed = session.close();
+                    self.state.state = BackendStateV1::Faulted {
+                        binding,
+                        custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                            runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                _custody: closed,
+                                _pending: pending,
+                            },
+                            model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                            engine: M1R33EngineCustodyV1::Joined,
+                        }),
+                    };
+                    return Err(fault(FAULT_RESIDENT_ROSTER));
+                }
+                match execute_m1_authenticated_resident_next_window_v1(
+                    clock_start,
+                    *session,
+                    bound.input,
+                    |_, timeout| deadline.bounded_queue_timeout(timeout),
+                ) {
+                    Ok(success) => {
+                        let (session, tokens, timing) = success.into_parts();
+                        let report = match (
+                            resident_report(window, tokens.len(), timing),
+                            deadline.expired(),
+                        ) {
+                            (Some(report), false) => report,
+                            (_, deadline_expired) => {
+                                let closed = session.close();
+                                self.state.state = BackendStateV1::Faulted {
+                                    binding,
+                                    custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                        runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                            _custody: closed,
+                                            _pending: pending,
+                                        },
+                                        model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                        engine: M1R33EngineCustodyV1::Joined,
+                                    }),
+                                };
+                                return Err(fault(if deadline_expired {
+                                    FAULT_DEADLINE_EXPIRED
+                                } else {
+                                    FAULT_EXECUTION_REJECTED
+                                }));
+                            }
+                        };
+                        self.state.state = BackendStateV1::Active {
+                            binding,
+                            custody: ActiveCustodyV1 {
+                                runner: M1R33AuthenticatedRunnerCustodyV1::Resident {
+                                    session: Box::new(session),
+                                    pending,
+                                },
+                                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                engine: M1R33EngineCustodyV1::Joined,
+                            },
+                        };
+                        return Ok(report);
+                    }
+                    Err(failure) => {
+                        let closed = failure.close();
+                        self.state.state = BackendStateV1::Faulted {
+                            binding,
+                            custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                runner: M1R33AuthenticatedRunnerCustodyV1::ResidentRejected {
+                                    custody: closed,
+                                    _pending: pending,
+                                },
+                                model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                engine: M1R33EngineCustodyV1::Joined,
+                            }),
+                        };
+                        return Err(fault(FAULT_EXECUTION_REJECTED));
+                    }
+                }
+            }
+            other => other,
+        };
         let (runner, bootstrap, execution, memory, engine) = match (runner, model_memory, engine) {
             (
                 M1R33AuthenticatedRunnerCustodyV1::Pending {
@@ -934,7 +1398,116 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
         instance_sha256: &str,
         deadline: M1R33OperationDeadlineV1,
     ) -> Result<(), M1R33BackendFaultV1> {
-        self.state.stop(instance_sha256, deadline.expired())
+        if deadline.expired() {
+            return Err(fault(FAULT_DEADLINE_EXPIRED));
+        }
+        let resident_owned = matches!(
+            self.state.state(),
+            BackendStateV1::Active {
+                custody: ActiveCustodyV1 {
+                    runner: M1R33AuthenticatedRunnerCustodyV1::Resident { .. },
+                    ..
+                },
+                ..
+            } | BackendStateV1::Faulted {
+                custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                    runner: M1R33AuthenticatedRunnerCustodyV1::ResidentRejected { .. }
+                        | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed { .. },
+                    ..
+                }),
+                ..
+            }
+        );
+        if resident_owned {
+            let Some(binding) = self.state.state().binding() else {
+                return Err(fault(FAULT_NOT_ACTIVE));
+            };
+            if !binding.matches(instance_sha256) {
+                return Err(fault(FAULT_IDENTITY));
+            }
+            let state = core::mem::replace(&mut self.state.state, BackendStateV1::Transitioning);
+            let (binding, closed, pending, model_memory, engine) = match state {
+                BackendStateV1::Active { binding, custody } => {
+                    let ActiveCustodyV1 {
+                        runner,
+                        model_memory,
+                        engine,
+                    } = custody;
+                    let M1R33AuthenticatedRunnerCustodyV1::Resident { session, pending } = runner
+                    else {
+                        self.state.state = BackendStateV1::Active {
+                            binding,
+                            custody: ActiveCustodyV1 {
+                                runner,
+                                model_memory,
+                                engine,
+                            },
+                        };
+                        return Err(fault(FAULT_NOT_ACTIVE));
+                    };
+                    (binding, session.close(), pending, model_memory, engine)
+                }
+                BackendStateV1::Faulted {
+                    binding,
+                    custody: FaultedCustodyV1::Active(custody),
+                } => {
+                    let ActiveCustodyV1 {
+                        runner,
+                        model_memory,
+                        engine,
+                    } = custody;
+                    let (closed, pending) = match runner {
+                        M1R33AuthenticatedRunnerCustodyV1::ResidentRejected {
+                            custody,
+                            _pending: pending,
+                        }
+                        | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                            _custody: custody,
+                            _pending: pending,
+                        } => (custody, pending),
+                        runner => {
+                            self.state.state = BackendStateV1::Faulted {
+                                binding,
+                                custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                    runner,
+                                    model_memory,
+                                    engine,
+                                }),
+                            };
+                            return Err(fault(FAULT_NOT_ACTIVE));
+                        }
+                    };
+                    (binding, closed, pending, model_memory, engine)
+                }
+                state => {
+                    self.state.state = state;
+                    return Err(fault(FAULT_NOT_ACTIVE));
+                }
+            };
+            if closed.permits_stop_success() {
+                drop((closed, pending, model_memory, engine));
+                self.state.state = BackendStateV1::Stopped { binding };
+                self.start_deadline = None;
+                return Ok(());
+            }
+            self.state.state = BackendStateV1::Faulted {
+                binding,
+                custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                    runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                        _custody: closed,
+                        _pending: pending,
+                    },
+                    model_memory,
+                    engine,
+                }),
+            };
+            return Err(fault(FAULT_UNHEALTHY_ENGINE));
+        }
+        let result = self.state.stop(instance_sha256, deadline.expired());
+        if result.is_ok() {
+            self.start_deadline = None;
+        }
+        result
     }
 }
 
@@ -947,7 +1520,7 @@ mod tests {
         DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
         m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
     };
-    use ferric_engine::M1FullStepWorkspacePlans;
+    use ferric_engine::{M1AuthenticatedResidentRoundPlansV1, M1FullStepWorkspacePlans};
     use ferric_spec::{
         Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
     };
@@ -965,6 +1538,14 @@ mod tests {
         );
     }
 
+    #[test]
+    fn authenticated_resident_owner_declares_twenty_ordered_windows() {
+        assert_eq!(
+            M1R33AuthenticatedProductionBackendV1::authenticated_resident_windows_per_instance(),
+            20
+        );
+    }
+
     const TARGET_PREFILL: Qwen3PlanSelection = Qwen3PlanSelection {
         role: Qwen3ModelRole::Target8B,
         mode: Qwen3ExecutionMode::Prefill,
@@ -979,6 +1560,16 @@ mod tests {
         role: Qwen3ModelRole::Target8B,
         mode: Qwen3ExecutionMode::Decode,
         bucket: Qwen3PlanBucket::DecodeS1C8192,
+    };
+    const DRAFT_DECODE: Qwen3PlanSelection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        mode: Qwen3ExecutionMode::Decode,
+        bucket: Qwen3PlanBucket::DecodeS1C8192,
+    };
+    const TARGET_SPECULATIVE: Qwen3PlanSelection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Speculative,
+        bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
     };
 
     #[derive(Debug)]
@@ -1043,6 +1634,25 @@ mod tests {
         .unwrap()
     }
 
+    fn resident_input(prompt: Vec<u32>) -> M1AuthenticatedResidentWindowInputV1 {
+        let round = || {
+            let plans = || {
+                M1FullStepWorkspacePlans::speculative_round(
+                    workspace_plan(DRAFT_DECODE, 3),
+                    workspace_plan(TARGET_SPECULATIVE, 4),
+                )
+            };
+            M1AuthenticatedResidentRoundPlansV1::new(plans(), plans()).unwrap()
+        };
+        M1AuthenticatedResidentWindowInputV1::new(
+            bootstrap_input(prompt, 3),
+            vec![round(), round(), round()],
+            4096,
+            M1QueueWaitTimeoutV1::new(1_000).unwrap(),
+        )
+        .unwrap()
+    }
+
     #[test]
     fn target_window_round_plans_accept_only_target_decode_owners() {
         let target = || M1FullStepWorkspacePlans::target_only(workspace_plan(TARGET_DECODE, 3));
@@ -1086,6 +1696,32 @@ mod tests {
                 window: 0,
             },
         }
+    }
+
+    #[test]
+    fn resident_roster_pins_all_twenty_rows_before_start() {
+        let mut bindings = Vec::new();
+        for sequence in 0..M1_R33_AUTHENTICATED_RESIDENT_WINDOWS_PER_INSTANCE_V1 {
+            let mut window = r33_window(vec![1; 128], 4);
+            window.row.id = format!("start-0.row-{sequence:02}");
+            window.row.ordinal = sequence as u64;
+            window.row.phase = if sequence < 10 { "warmup" } else { "recorded" }.to_owned();
+            window.row.window = (sequence % 10) as u64;
+            bindings.push(
+                M1R33AuthenticatedResidentWindowBindingV1::bind(
+                    &window,
+                    resident_input(vec![1; 128]),
+                )
+                .unwrap(),
+            );
+        }
+        assert!(exact_resident_roster(&bindings));
+        bindings[7].row_ordinal += 1;
+        assert!(!exact_resident_roster(&bindings));
+        bindings[7].row_ordinal -= 1;
+        let removed = bindings.pop().unwrap();
+        assert!(!exact_resident_roster(&bindings));
+        drop(removed);
     }
 
     #[test]
@@ -1355,5 +1991,36 @@ mod tests {
             FAULT_NOT_ACTIVE
         );
         assert_eq!(drops.get(), 2);
+    }
+
+    #[test]
+    fn resident_backend_pins_deadline_and_retains_ambiguous_stop_custody() {
+        let production = include_str!("r33_production_backend.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .unwrap();
+        assert!(!production.contains("Instant::"));
+        assert!(!production.contains("Duration::"));
+        assert!(
+            production
+                .matches("deadline.bounded_queue_timeout(timeout)")
+                .count()
+                >= 2
+        );
+
+        let stop = production
+            .split("impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1")
+            .nth(1)
+            .and_then(|body| body.split("#[cfg(test)]").next())
+            .expect("resident backend implementation is present");
+        let close = stop.find("session.close()").unwrap();
+        let confirm = stop.find("closed.permits_stop_success()").unwrap();
+        let retain = stop
+            .rfind("M1R33AuthenticatedRunnerCustodyV1::ResidentClosed")
+            .unwrap();
+        let reject = stop
+            .rfind("return Err(fault(FAULT_UNHEALTHY_ENGINE))")
+            .unwrap();
+        assert!(close < confirm && confirm < retain && retain < reject);
     }
 }

@@ -64,6 +64,7 @@ pub enum M1AuthenticatedPrefillRegistryFirstRoundStageV1 {
     Schedule,
     Prepare,
     Submit,
+    Deadline,
     RegistryPublication,
     PhysicalCompletion,
     RegistryCompletion,
@@ -81,7 +82,7 @@ pub enum M1AuthenticatedPrefillRegistryFirstRoundStageV1 {
 pub struct M1AuthenticatedPrefillRegistryFirstRoundFailureV1 {
     stage: M1AuthenticatedPrefillRegistryFirstRoundStageV1,
     engine_quarantined: bool,
-    _custody: Box<dyn Any>,
+    teardown: crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
 }
 
 impl fmt::Debug for M1AuthenticatedPrefillRegistryFirstRoundFailureV1 {
@@ -104,17 +105,45 @@ impl M1AuthenticatedPrefillRegistryFirstRoundFailureV1 {
     pub const fn engine_quarantined(&self) -> bool {
         self.engine_quarantined
     }
+
+    pub(crate) fn into_resident_teardown(
+        self,
+    ) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+        self.teardown.retain((self.stage, self.engine_quarantined))
+    }
 }
 
 fn first_round_failure(
     stage: M1AuthenticatedPrefillRegistryFirstRoundStageV1,
     engine_quarantined: bool,
-    custody: impl Any,
+    teardown: crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
 ) -> M1AuthenticatedPrefillRegistryFirstRoundFailureV1 {
     M1AuthenticatedPrefillRegistryFirstRoundFailureV1 {
         stage,
         engine_quarantined,
-        _custody: Box::new(custody),
+        teardown,
+    }
+}
+
+fn teardown_from_disposition(
+    disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+    retained: impl Any,
+) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+    crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(
+        disposition,
+    )
+    .retain(retained)
+}
+
+fn teardown_from_result<T: Any, E: Any>(
+    result: Result<T, E>,
+    retained: impl Any,
+) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+    use crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 as Teardown;
+    if result.is_ok() {
+        Teardown::released((result, retained))
+    } else {
+        Teardown::quarantined((result, retained))
     }
 }
 
@@ -318,10 +347,53 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryScheduledFirstRoundV1<C> {
             Ok(prepared) => prepared,
             Err(source) => {
                 let abort = registry.abort_publication(reservation);
+                let disposition = source.into_disposition();
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::Prepare,
                     engine.is_faulted(),
-                    (engine, registry, abort, source, residue),
+                    teardown_from_disposition(disposition, (engine, registry, abort, residue)),
+                ));
+            }
+        };
+        Ok(M1AuthenticatedPrefillRegistryPreparedFirstRoundV1 {
+            registry,
+            reservation,
+            engine,
+            prepared,
+            residue,
+        })
+    }
+
+    /// Prepares with the declaration already sealed into authenticated queue
+    /// custody, avoiding any independently supplied logical runner.
+    pub(crate) fn prepare_retained(
+        self,
+    ) -> Result<
+        M1AuthenticatedPrefillRegistryPreparedFirstRoundV1<C>,
+        M1AuthenticatedPrefillRegistryFirstRoundFailureV1,
+    > {
+        let Self {
+            mut registry,
+            reservation,
+            mut engine,
+            scheduled,
+            residue,
+        } = self;
+        let prepared = match crate::authenticated_queue_rollover::prepare_m1_authenticated_speculative_rollover_retained_v1(
+            &mut engine,
+            scheduled,
+        ) {
+            Ok(prepared) => prepared,
+            Err(source) => {
+                let abort = registry.abort_publication(reservation);
+                let disposition = source.into_disposition();
+                return Err(first_round_failure(
+                    M1AuthenticatedPrefillRegistryFirstRoundStageV1::Prepare,
+                    engine.is_faulted(),
+                    teardown_from_disposition(
+                        disposition,
+                        (engine, registry, abort, residue),
+                    ),
                 ));
             }
         };
@@ -360,6 +432,21 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPreparedFirstRoundV1<C> {
         M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C>,
         M1AuthenticatedPrefillRegistryFirstRoundFailureV1,
     > {
+        self.publish_with_deadline(|_, timeout| Some(timeout))
+    }
+
+    pub(crate) fn publish_with_deadline(
+        self,
+        mut deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            M1QueueWaitTimeoutV1,
+        ) -> Option<M1QueueWaitTimeoutV1>,
+    ) -> Result<
+        M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C>,
+        M1AuthenticatedPrefillRegistryFirstRoundFailureV1,
+    > {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
         let Self {
             mut registry,
             reservation,
@@ -369,14 +456,28 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPreparedFirstRoundV1<C> {
         } = self;
         if let Err(error) = registry.preflight_publication(&reservation) {
             engine.quarantine_m1_queue_rearm_failure();
+            let disposition = prepared.cancel_and_close(&mut engine);
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryPublication,
                 true,
-                (engine, registry, reservation, prepared, residue, error),
+                teardown_from_disposition(
+                    disposition,
+                    (engine, registry, reservation, residue, error),
+                ),
             ));
         }
         let registry_identity = reservation.registry_identity();
         let epoch = reservation.epoch();
+        if deadline_expired(Boundary::BeforeQueueSubmit, residue.queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let abort = registry.abort_publication(reservation);
+            let disposition = prepared.cancel_and_close(&mut engine);
+            return Err(first_round_failure(
+                M1AuthenticatedPrefillRegistryFirstRoundStageV1::Deadline,
+                true,
+                teardown_from_disposition(disposition, (engine, registry, abort, residue)),
+            ));
+        }
         let published = match submit_m1_authenticated_speculative_rollover_v1(
             &mut engine,
             prepared,
@@ -386,19 +487,31 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPreparedFirstRoundV1<C> {
             Ok(published) => published,
             Err(source) => {
                 let abort = registry.abort_publication(reservation);
+                let disposition = source.into_disposition();
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::Submit,
                     engine.is_faulted(),
-                    (engine, registry, abort, source, residue),
+                    teardown_from_disposition(disposition, (engine, registry, abort, residue)),
                 ));
             }
         };
+        if deadline_expired(Boundary::AfterQueueSubmit, residue.queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let abort = registry.abort_publication(reservation);
+            let disposition = published.cancel_and_close(&mut engine);
+            return Err(first_round_failure(
+                M1AuthenticatedPrefillRegistryFirstRoundStageV1::Deadline,
+                true,
+                teardown_from_disposition(disposition, (engine, registry, abort, residue)),
+            ));
+        }
         if let Err(error) = registry.record_publication(reservation) {
             engine.quarantine_m1_queue_rearm_failure();
+            let disposition = published.cancel_and_close(&mut engine);
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryPublication,
                 true,
-                (engine, registry, published, error, residue),
+                teardown_from_disposition(disposition, (engine, registry, error, residue)),
             ));
         }
         Ok(M1AuthenticatedPrefillRegistryPublishedFirstRoundV1 {
@@ -441,6 +554,20 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C> {
         M1AuthenticatedPrefillRegistryCompletedFirstRoundV1<C>,
         M1AuthenticatedPrefillRegistryFirstRoundFailureV1,
     > {
+        self.complete_round_with_deadline(controls, |_, timeout| Some(timeout))
+    }
+
+    pub(crate) fn complete_round_with_deadline(
+        self,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            M1QueueWaitTimeoutV1,
+        ) -> Option<M1QueueWaitTimeoutV1>,
+    ) -> Result<
+        M1AuthenticatedPrefillRegistryCompletedFirstRoundV1<C>,
+        M1AuthenticatedPrefillRegistryFirstRoundFailureV1,
+    > {
         let Self {
             mut registry,
             registry_identity,
@@ -449,23 +576,35 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C> {
             published,
             residue,
         } = self;
-        let physical = match published.complete_round(&mut engine, controls) {
-            Ok(physical) => physical,
-            Err(source) => {
-                return Err(first_round_failure(
-                    M1AuthenticatedPrefillRegistryFirstRoundStageV1::PhysicalCompletion,
-                    engine.is_faulted(),
-                    (engine, registry, source, residue),
-                ));
-            }
-        };
+        let physical =
+            match published.complete_round_with_deadline(&mut engine, controls, deadline_expired) {
+                Ok(physical) => physical,
+                Err(source) => {
+                    let stage = if source.stage()
+                        == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+                    {
+                        M1AuthenticatedPrefillRegistryFirstRoundStageV1::Deadline
+                    } else {
+                        M1AuthenticatedPrefillRegistryFirstRoundStageV1::PhysicalCompletion
+                    };
+                    return Err(first_round_failure(
+                        stage,
+                        engine.is_faulted(),
+                        teardown_from_disposition(
+                            source.into_disposition(),
+                            (engine, registry, residue),
+                        ),
+                    ));
+                }
+            };
         let outcome = physical.outcome();
         let [member] = outcome.members() else {
             engine.quarantine_m1_queue_rearm_failure();
+            let disposition = physical.close_for_resident(&mut engine);
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryCompletion,
                 true,
-                (engine, registry, physical, residue),
+                teardown_from_disposition(disposition, (engine, registry, residue)),
             ));
         };
         let active = member.status() == M1SpeculativeMemberStatusV1::Active;
@@ -487,10 +626,11 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C> {
             || !next_roster_matches
         {
             engine.quarantine_m1_queue_rearm_failure();
+            let disposition = physical.close_for_resident(&mut engine);
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryCompletion,
                 true,
-                (engine, registry, physical, residue),
+                teardown_from_disposition(disposition, (engine, registry, residue)),
             ));
         }
         let disposition = match member.status() {
@@ -504,10 +644,11 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C> {
             registry.preflight_completion_exact_for(registry_identity, epoch, &[disposition])
         {
             engine.quarantine_m1_queue_rearm_failure();
+            let disposition = physical.close_for_resident(&mut engine);
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryCompletion,
                 true,
-                (engine, registry, physical, residue, error),
+                teardown_from_disposition(disposition, (engine, registry, residue, error)),
             ));
         }
         registry.apply_preflighted_completion(epoch, &[disposition]);
@@ -534,6 +675,26 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryCompletedFirstRoundV1<C> {
     #[must_use = "authenticated outcome remains borrowed without exposing executor custody"]
     pub const fn outcome(&self) -> &M1SpeculativeRoundOutcomeV1 {
         self.physical.outcome()
+    }
+
+    pub(crate) fn into_resident_parts(
+        self,
+    ) -> (
+        M1ServingRegistryV1<C>,
+        Engine<C>,
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        RequestId,
+        ferric_spec::TokenId,
+        M1ServingPlanV1,
+    ) {
+        (
+            self.registry,
+            self.engine,
+            self.physical,
+            self.residue.request,
+            self.residue.first_token,
+            self.residue.successor,
+        )
     }
 
     /// Explicitly destroys the live speculative queue and retains all logical,
@@ -625,17 +786,21 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
         let batch = match registry.plan_next() {
             Ok(Some(batch)) => batch,
             Ok(None) => {
+                let teardown = completed.close_for_resident().retain((registry, inputs));
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryPlan,
                     false,
-                    (registry, completed, inputs),
+                    teardown,
                 ));
             }
             Err(error) => {
+                let teardown = completed
+                    .close_for_resident()
+                    .retain((registry, inputs, error));
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryPlan,
                     false,
-                    (registry, completed, inputs, error),
+                    teardown,
                 ));
             }
         };
@@ -643,28 +808,37 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
             || batch.epoch() != expected_epoch
             || batch.requests() != [expected_request]
         {
+            let teardown = completed
+                .close_for_resident()
+                .retain((registry, inputs, batch));
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryPlan,
                 false,
-                (registry, completed, inputs, batch),
+                teardown,
             ));
         }
         let reservation = match registry.reserve_publication(batch) {
             Ok(reservation) => reservation,
             Err(error) => {
+                let teardown = completed
+                    .close_for_resident()
+                    .retain((registry, inputs, error));
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryReservation,
                     false,
-                    (registry, completed, inputs, error),
+                    teardown,
                 ));
             }
         };
         if let Err(error) = registry.preflight_publication(&reservation) {
             let abort = registry.abort_publication(reservation);
+            let teardown = completed
+                .close_for_resident()
+                .retain((registry, inputs, abort, error));
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryReservation,
                 false,
-                (registry, completed, inputs, abort, error),
+                teardown,
             ));
         }
         let batch = reservation.physical_batch();
@@ -694,21 +868,23 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
             return Err(first_round_failure(
                 M1AuthenticatedPrefillRegistryFirstRoundStageV1::InputJoin,
                 engine.is_faulted(),
-                (
-                    engine,
-                    registry,
-                    abort,
+                teardown_from_result(
                     teardown,
-                    draft_rollover_page,
-                    target_rollover_pages,
-                    direct_choices,
-                    prompt_tokens,
-                    policy,
-                    intent,
-                    draft_decode,
-                    target_speculative,
-                    recipe_plans,
-                    preparation_plans,
+                    (
+                        engine,
+                        registry,
+                        abort,
+                        draft_rollover_page,
+                        target_rollover_pages,
+                        direct_choices,
+                        prompt_tokens,
+                        policy,
+                        intent,
+                        draft_decode,
+                        target_speculative,
+                        recipe_plans,
+                        preparation_plans,
+                    ),
                 ),
             ));
         }
@@ -729,19 +905,21 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
                     return Err(first_round_failure(
                         M1AuthenticatedPrefillRegistryFirstRoundStageV1::Coordinator,
                         engine.is_faulted(),
-                        (
-                            engine,
-                            registry,
-                            abort,
+                        teardown_from_result(
                             teardown,
-                            intent,
-                            rollover_inputs,
-                            recipe_plans,
-                            preparation_plans,
-                            direct_choices,
-                            remaining_target_pages,
-                            prompt_tokens,
-                            error,
+                            (
+                                engine,
+                                registry,
+                                abort,
+                                intent,
+                                rollover_inputs,
+                                recipe_plans,
+                                preparation_plans,
+                                direct_choices,
+                                remaining_target_pages,
+                                prompt_tokens,
+                                error,
+                            ),
                         ),
                     ));
                 }
@@ -777,7 +955,10 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::Schedule,
                     engine.is_faulted(),
-                    (engine, registry, abort, error, disposition, residue),
+                    teardown_from_disposition(
+                        disposition,
+                        (engine, registry, abort, error, residue),
+                    ),
                 ));
             }
             Err(M1AuthenticatedSpeculativeRolloverScheduleFailureV1::Terminal {
@@ -788,7 +969,10 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
                 return Err(first_round_failure(
                     M1AuthenticatedPrefillRegistryFirstRoundStageV1::Schedule,
                     engine.is_faulted(),
-                    (engine, registry, abort, error, disposition, residue),
+                    teardown_from_disposition(
+                        disposition,
+                        (engine, registry, abort, error, residue),
+                    ),
                 ));
             }
         };

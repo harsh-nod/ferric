@@ -192,6 +192,14 @@ impl M1AuthenticatedTargetWindowClockStartV1 {
             .map(|started_ns| Self { started_ns })
             .map_err(|()| M1AuthenticatedTargetWindowExecutionErrorV1::Clock)
     }
+
+    /// Reads elapsed monotonic time after an event-backed physical boundary.
+    ///
+    /// The caller cannot construct or alter the captured start instant. This
+    /// helper grants no execution or completion authority.
+    pub(crate) fn elapsed_ns(&self) -> Result<u64, M1AuthenticatedTargetWindowExecutionErrorV1> {
+        elapsed_ns(self.started_ns).map_err(|()| M1AuthenticatedTargetWindowExecutionErrorV1::Clock)
+    }
 }
 
 #[derive(Debug)]
@@ -211,7 +219,7 @@ impl fmt::Debug for M1AuthenticatedTargetWindowExecutionFailureV1 {
             .field("error", &self.error)
             .field("retained", &self.retained)
             .field("retains_all_custody", &true)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -259,6 +267,24 @@ pub struct M1AuthenticatedTargetWindowTimingV1 {
 }
 
 impl M1AuthenticatedTargetWindowTimingV1 {
+    pub(crate) fn from_resident_boundaries(
+        duration_ns: u64,
+        first_token_offset_ns: u64,
+        terminal_token_offset_ns: u64,
+        output_tokens: usize,
+    ) -> Option<Self> {
+        let valid = first_token_offset_ns > 0
+            && terminal_token_offset_ns >= first_token_offset_ns
+            && duration_ns >= terminal_token_offset_ns
+            && output_tokens > 0
+            && (output_tokens == 1 || terminal_token_offset_ns > first_token_offset_ns);
+        valid.then_some(Self {
+            duration: Nanoseconds(duration_ns),
+            first_token_offset: Nanoseconds(first_token_offset_ns),
+            terminal_token_offset: Nanoseconds(terminal_token_offset_ns),
+        })
+    }
+
     #[must_use]
     pub const fn duration_ns(self) -> u64 {
         self.duration.0
@@ -289,7 +315,7 @@ impl fmt::Debug for M1AuthenticatedTargetWindowExecutionSuccessV1 {
             .field("timing", &self.timing)
             .field("retained", &self.retained)
             .field("retains_terminal_custody", &true)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

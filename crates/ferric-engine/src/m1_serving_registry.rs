@@ -632,6 +632,18 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciliationFailureV1<C> {
     pub const fn error(&self) -> M1AuthenticatedPrefillRegistryReconciliationErrorV1 {
         self.error
     }
+
+    #[allow(clippy::boxed_local)]
+    pub(crate) fn into_resident_teardown(
+        self: Box<Self>,
+    ) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+        let Self {
+            error,
+            _registry: registry,
+            _completed: completed,
+        } = *self;
+        completed.close_for_resident().retain((registry, error))
+    }
 }
 
 /// Move-only real paired-prefill completion joined to its exact registry
@@ -700,6 +712,30 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
     #[must_use]
     pub const fn successor_epoch(&self) -> CompletionEpoch {
         CompletionEpoch::new(2)
+    }
+
+    pub(crate) const fn retained_logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
+        self.completed.released().queue().logical_runner()
+    }
+
+    pub(crate) fn permits_speculative_successor(&self) -> bool {
+        self.completed.permits_speculative_successor()
+    }
+
+    pub(crate) fn close_for_resident(
+        self,
+    ) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+        let Self {
+            registry,
+            completed,
+            request,
+            epoch,
+            prefill,
+            successor,
+        } = self;
+        completed
+            .close_for_resident()
+            .retain((registry, request, epoch, prefill, successor))
     }
 
     #[allow(dead_code)]

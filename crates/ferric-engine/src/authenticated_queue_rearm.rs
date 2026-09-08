@@ -209,6 +209,10 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
         &self.released
     }
 
+    pub(crate) const fn retained_logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
+        self.released.queue().logical_runner()
+    }
+
     #[must_use]
     pub const fn parked_count(&self) -> usize {
         self.parked.len()
@@ -2282,6 +2286,26 @@ fn close_prepared_rearm_submission(
     close_prepared_rearm_submission_core(lower, retained)
 }
 
+pub(crate) fn close_m1_authenticated_prepared_long_lived_queue_rearm_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+    engine.quarantine_m1_queue_rearm_failure();
+    match close_prepared_rearm_submission(prepared, recipe) {
+        AuthenticatedSubmissionOpaqueCustodyV1::Released(released) => {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(
+                released,
+            )
+        }
+        AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(quarantined) => {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+                quarantined,
+            )
+        }
+    }
+}
+
 const fn authenticated_submission_phase(
     phase: M1AuthenticatedQueueRearmTerminalPhaseV1,
 ) -> M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1 {
@@ -2360,6 +2384,23 @@ pub struct M1AuthenticatedRearmedPublishedQueueV1 {
 }
 
 impl M1AuthenticatedRearmedPublishedQueueV1 {
+    pub(crate) fn close_in_flight<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            queue.close_in_flight(),
+            (carry, queue_observation, device),
+        )
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub(crate) const fn from_authenticated_rollover(
         queue: M1AuthenticatedPhysicalPublishedQueueSessionV1,
@@ -2648,6 +2689,23 @@ pub struct M1AuthenticatedRearmedCompletedQueueV1 {
 }
 
 impl M1AuthenticatedRearmedCompletedQueueV1 {
+    pub(crate) fn close_completed<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            queue.close_completed(),
+            (carry, queue_observation, device),
+        )
+    }
+
     /// Recycles exact completion signals while retaining authenticated custody.
     ///
     /// # Errors
@@ -3160,6 +3218,23 @@ impl M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1 {
 }
 
 impl M1AuthenticatedRearmedRecycledQueueV1 {
+    pub(crate) fn close_recycled<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            queue.close_recycled(),
+            (carry, queue_observation, device),
+        )
+    }
+
     /// Copies and structurally observes the exact authenticated completion once.
     ///
     /// # Errors

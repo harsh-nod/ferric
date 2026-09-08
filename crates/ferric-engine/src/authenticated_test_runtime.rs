@@ -246,12 +246,25 @@ impl ModelPublishedQueueV1 {
         }
         Ok(ModelCompletedQueueV1 { queue: self.queue })
     }
+
+    pub(crate) fn close(self) -> bool {
+        let completed = match self.wait() {
+            Ok(completed) => completed,
+            Err(_) => return false,
+        };
+        completed.destroy(true);
+        true
+    }
 }
 
 impl ModelCompletedQueueV1 {
     pub(crate) fn recycle(self) -> ModelRecycledQueueV1 {
         self.queue.recycle();
         ModelRecycledQueueV1 { queue: self.queue }
+    }
+
+    pub(crate) fn destroy(self, releases_cleanly: bool) {
+        self.recycle().destroy(releases_cleanly);
     }
 }
 
@@ -274,6 +287,12 @@ impl ModelRecycledQueueV1 {
         }
     }
 
+    pub(crate) fn destroy(self, releases_cleanly: bool) {
+        self.queue.destroy(releases_cleanly);
+    }
+}
+
+impl ModelDiagnosticV1 {
     pub(crate) fn destroy(self, releases_cleanly: bool) {
         self.queue.destroy(releases_cleanly);
     }

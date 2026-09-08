@@ -416,6 +416,17 @@ impl M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
     pub const fn disposition(&self) -> &M1AuthenticatedSpeculativeFailureDispositionV1 {
         &self.disposition
     }
+
+    pub(crate) fn into_disposition(self) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        self.disposition.retain(self.stage)
+    }
+}
+
+pub(crate) fn close_deadline_phase<T>(
+    owner: T,
+    close: impl FnOnce(T) -> M1AuthenticatedSpeculativeFailureDispositionV1,
+) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+    close(owner)
 }
 
 /// Internal first-round rollover custody pending mandatory terminal closure.
@@ -453,6 +464,22 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         }
     }
 
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            published,
+            continuation,
+            queue_wait_timeout,
+        } = self;
+        disposition_with_logical(
+            published.close_in_flight(engine),
+            (continuation, queue_wait_timeout),
+        )
+    }
+
     /// Drives wait, recycle, diagnostic readback, and coordinator completion
     /// without ever exposing the generic published queue independently.
     ///
@@ -468,22 +495,75 @@ impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         M1AuthenticatedSpeculativeRolloverRoundFailureV1,
     > {
+        self.complete_round_with_deadline(engine, controls, |_, timeout| Some(timeout))
+    }
+
+    pub(crate) fn complete_round_with_deadline<const C: usize, D>(
+        self,
+        engine: &mut Engine<C>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        mut deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    >
+    where
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
         let Self {
             published,
             continuation,
             queue_wait_timeout,
         } = self;
         let (diagnostic, (continuation, controls)) =
-            complete_round_core::<M1NativeRearmedQueueEffectsV1, _, C>(
+            complete_round_core_with_deadline::<M1NativeRearmedQueueEffectsV1, _, _, C>(
                 engine,
                 published,
                 (continuation, controls),
                 queue_wait_timeout,
+                &mut deadline_expired,
             )
             .map_err(|(stage, disposition)| {
                 M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
             })?;
-        continuation.complete_rollover_round(engine, diagnostic, queue_wait_timeout, controls)
+        if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: close_deadline_phase(diagnostic, |diagnostic| {
+                    let closure =
+                        M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+                    disposition_with_logical(
+                        closure,
+                        (continuation, controls, Boundary::BeforeSettlement),
+                    )
+                }),
+            });
+        }
+        let success = continuation.complete_rollover_round_with_deadline(
+            engine,
+            diagnostic,
+            queue_wait_timeout,
+            controls,
+            &mut deadline_expired,
+        )?;
+        if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: close_deadline_phase(success, |success| {
+                    success
+                        .close_for_resident(engine)
+                        .retain(Boundary::AfterSettlement)
+                }),
+            });
+        }
+        Ok(success)
     }
 }
 
@@ -747,6 +827,8 @@ pub enum M1AuthenticatedSpeculativePhysicalRoundStageV1 {
     KvReservation,
     WorkspacePreparation,
     Submit,
+    RegistryPublication,
+    Deadline,
     Wait,
     Recycle,
     DiagnosticReadback,
@@ -835,7 +917,28 @@ pub enum M1AuthenticatedSpeculativeFailureDispositionV1 {
     Quarantined(M1AuthenticatedSpeculativeTerminalQuarantineV1),
 }
 
-fn disposition_with_logical(
+impl M1AuthenticatedSpeculativeFailureDispositionV1 {
+    /// Whether native queue destruction completed successfully.
+    #[must_use]
+    pub const fn queue_released(&self) -> bool {
+        matches!(self, Self::Released(_))
+    }
+
+    pub(crate) fn retain(self, extra: impl fmt::Debug + 'static) -> Self {
+        match self {
+            Self::Released(released) => Self::Released(M1AuthenticatedSpeculativeCleanReleaseV1 {
+                retained: Box::new((released.retained, extra)),
+            }),
+            Self::Quarantined(quarantined) => {
+                Self::Quarantined(M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+                    retained: Box::new((quarantined.retained, extra)),
+                })
+            }
+        }
+    }
+}
+
+pub(crate) fn disposition_with_logical(
     closure: crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1,
     logical: impl fmt::Debug + 'static,
 ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
@@ -1059,14 +1162,19 @@ where
 }
 
 trait M1RearmedQueueEffectsV1 {
-    type Prepared;
-    type Published;
-    type Completed;
-    type Recycled;
-    type Diagnostic;
+    type Prepared: fmt::Debug + 'static;
+    type Published: fmt::Debug + 'static;
+    type Completed: fmt::Debug + 'static;
+    type Recycled: fmt::Debug + 'static;
+    type Diagnostic: fmt::Debug + 'static;
     type SubmitFailure: fmt::Debug + 'static;
     type ProgressFailure: fmt::Debug + 'static;
     type ReadbackFailure: fmt::Debug + 'static;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
 
     fn submit<const C: usize>(
         engine: &mut Engine<C>,
@@ -1075,19 +1183,39 @@ trait M1RearmedQueueEffectsV1 {
     fn classify_submit_failure(
         failure: Self::SubmitFailure,
     ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        published: Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
     fn wait<const C: usize>(
         engine: &mut Engine<C>,
         published: Self::Published,
         timeout: crate::M1QueueWaitTimeoutV1,
     ) -> Result<Self::Completed, Self::ProgressFailure>;
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        completed: Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
     fn recycle<const C: usize>(
         engine: &mut Engine<C>,
         completed: Self::Completed,
     ) -> Result<Self::Recycled, Self::ProgressFailure>;
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        recycled: Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
     fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure>;
     fn close_readback_failure<const C: usize>(
         engine: &mut Engine<C>,
         failure: Self::ReadbackFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
     ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
 }
 
@@ -1105,6 +1233,15 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
     type SubmitFailure = crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1;
     type ProgressFailure = Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>;
     type ReadbackFailure = Box<crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureV1>;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe): Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(
+            engine, prepared, recipe,
+        )
+    }
 
     fn submit<const C: usize>(
         engine: &mut Engine<C>,
@@ -1127,6 +1264,13 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
         }
     }
 
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        published: Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        published.close_in_flight(engine)
+    }
+
     fn wait<const C: usize>(
         engine: &mut Engine<C>,
         published: Self::Published,
@@ -1135,11 +1279,35 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
         published.wait_for(timeout.milliseconds(), engine)
     }
 
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+            failure,
+        )
+    }
+
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        completed: Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        completed.close_completed(engine)
+    }
+
     fn recycle<const C: usize>(
         engine: &mut Engine<C>,
         completed: Self::Completed,
     ) -> Result<Self::Recycled, Self::ProgressFailure> {
         completed.recycle(engine)
+    }
+
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        recycled: Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        recycled.close_recycled(engine)
     }
 
     fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
@@ -1155,8 +1323,21 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
             Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(quarantined)),
         }
     }
+
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let (readback, choices) = diagnostic.into_parts();
+        match readback.destroy_queue_and_retain_custody(engine) {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, choices))),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((quarantined, choices))),
+        }
+    }
 }
 
+#[cfg(test)]
 fn complete_round_core<A, L, const C: usize>(
     engine: &mut Engine<C>,
     published: A::Published,
@@ -1173,28 +1354,99 @@ where
     A: M1RearmedQueueEffectsV1,
     L: fmt::Debug + 'static,
 {
-    let completed = match A::wait(engine, published, timeout) {
+    complete_round_core_with_deadline::<A, _, _, C>(
+        engine,
+        published,
+        logical,
+        timeout,
+        |_, configured| Some(configured),
+    )
+}
+
+fn complete_round_core_with_deadline<A, L, D, const C: usize>(
+    engine: &mut Engine<C>,
+    published: A::Published,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+    mut deadline_expired: D,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    A::Published: fmt::Debug + 'static,
+    A::Completed: fmt::Debug + 'static,
+    A::Recycled: fmt::Debug + 'static,
+    A::Diagnostic: fmt::Debug + 'static,
+    L: fmt::Debug + 'static,
+    D: FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+{
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    let Some(wait_timeout) = deadline_expired(Boundary::BeforeCompletionWait, timeout) else {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeCompletionWait)),
+        ));
+    };
+    let completed = match A::wait(engine, published, wait_timeout) {
         Ok(completed) => completed,
         Err(failure) => {
-            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::close_progress_failure(engine, failure);
             return Err((
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait,
-                quarantined_disposition((failure, logical)),
+                disposition_with_logical(closure, logical),
             ));
         }
     };
+    if deadline_expired(Boundary::AfterCompletionWait, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_completed(engine, completed);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::AfterCompletionWait)),
+        ));
+    }
     let recycled = match A::recycle(engine, completed) {
         Ok(recycled) => recycled,
         Err(failure) => {
-            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::close_progress_failure(engine, failure);
             return Err((
                 M1AuthenticatedSpeculativePhysicalRoundStageV1::Recycle,
-                quarantined_disposition((failure, logical)),
+                disposition_with_logical(closure, logical),
             ));
         }
     };
+    if deadline_expired(Boundary::BeforeReadback, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_recycled(engine, recycled);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeReadback)),
+        ));
+    }
     match A::readback(recycled) {
-        Ok(diagnostic) => Ok((diagnostic, logical)),
+        Ok(diagnostic) => {
+            if deadline_expired(Boundary::AfterReadback, timeout).is_none() {
+                engine.quarantine_m1_queue_rearm_failure();
+                let closure = A::close_diagnostic(engine, diagnostic);
+                Err((
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    disposition_with_logical(closure, (logical, Boundary::AfterReadback)),
+                ))
+            } else {
+                Ok((diagnostic, logical))
+            }
+        }
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
             let closure = A::close_readback_failure(engine, failure);
@@ -1206,6 +1458,7 @@ where
     }
 }
 
+#[cfg(test)]
 fn execute_round_core<A, L, const C: usize>(
     engine: &mut Engine<C>,
     prepared: A::Prepared,
@@ -1234,6 +1487,81 @@ where
         }
     };
     complete_round_core::<A, _, C>(engine, published, logical, timeout)
+}
+
+fn execute_round_core_with_post_submit_and_deadline<A, L, F, E, D, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: A::Prepared,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+    post_submit: F,
+    mut deadline_expired: D,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    A::Prepared: fmt::Debug + 'static,
+    A::Published: fmt::Debug + 'static,
+    A::Completed: fmt::Debug + 'static,
+    A::Recycled: fmt::Debug + 'static,
+    A::Diagnostic: fmt::Debug + 'static,
+    L: fmt::Debug + 'static,
+    F: FnOnce() -> Result<(), E>,
+    E: fmt::Debug + 'static,
+    D: FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+{
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    if deadline_expired(Boundary::BeforeQueueSubmit, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_prepared(engine, prepared);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeQueueSubmit)),
+        ));
+    }
+    let published = match A::submit(engine, prepared) {
+        Ok(published) => published,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::classify_submit_failure(failure);
+            return Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Submit,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    if deadline_expired(Boundary::AfterQueueSubmit, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::AfterQueueSubmit)),
+        ));
+    }
+    if let Err(error) = post_submit() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::RegistryPublication,
+            disposition_with_logical(closure, (logical, error)),
+        ));
+    }
+    complete_round_core_with_deadline::<A, _, _, C>(
+        engine,
+        published,
+        logical,
+        timeout,
+        deadline_expired,
+    )
 }
 
 trait M1SpeculativeRoundObservationV1: fmt::Debug {
@@ -1541,6 +1869,16 @@ impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
     #[must_use]
     pub const fn is_terminal(&self) -> bool {
         matches!(self, Self::Terminal { .. })
+    }
+
+    pub(crate) fn close_for_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::PreDetach { stage, retry } => retry.close_without_authority(engine).retain(stage),
+            Self::Terminal { stage, disposition } => disposition.retain(stage),
+        }
     }
 }
 
@@ -2630,6 +2968,17 @@ impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
         M1ObservedSpeculativeDiagnosticChoicesV1,
     ) {
         (self.executor, self.outcome, self.choices)
+    }
+
+    pub(crate) fn close_for_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let (executor, outcome, choices) = self.into_parts();
+        match executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_disposition((released, outcome, choices)),
+            Err(quarantined) => quarantined_disposition((quarantined, outcome, choices)),
+        }
     }
 }
 
@@ -3759,7 +4108,8 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
     }
 }
 
-fn complete_authenticated_rearmed_speculative_round<const C: usize>(
+#[allow(clippy::too_many_arguments)]
+fn complete_authenticated_rearmed_speculative_round_with_deadline<const C: usize>(
     engine: &mut Engine<C>,
     coordinator: M1SpeculativeGenerationLoopV1,
     binding: crate::M1SpeculativeRoundBindingV1,
@@ -3767,6 +4117,10 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     controls: Vec<M1SpeculativeMemberControlV1>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
@@ -3774,7 +4128,12 @@ fn complete_authenticated_rearmed_speculative_round<const C: usize>(
     let prepared =
         prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
             .map_err(map_rearmed_coordinator_preparation_failure)?;
-    complete_authenticated_rearmed_speculative_round_prepared(engine, prepared, queue_wait_timeout)
+    complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
+        engine,
+        prepared,
+        queue_wait_timeout,
+        deadline_expired,
+    )
 }
 
 #[allow(clippy::unnecessary_box_returns)]
@@ -3832,16 +4191,22 @@ fn map_rearmed_coordinator_preparation_failure(
     })
 }
 
-fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
+fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const C: usize>(
     engine: &mut Engine<C>,
     prepared: M1PreparedCoordinatorRoundCoreV1<
         crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
     >,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    mut deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
 ) -> Result<
     M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
     Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
 > {
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
     let M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -3850,6 +4215,29 @@ fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
         dispositions,
         lineage,
     } = prepared;
+    if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition_with_logical(
+                        closure,
+                        (
+                            coordinator,
+                            controls,
+                            preflighted,
+                            dispositions,
+                            lineage,
+                            Boundary::BeforeSettlement,
+                        ),
+                    ),
+                ),
+                lineage: None,
+            },
+        ));
+    }
     let (readback, choices) = diagnostic.into_parts();
     let physical = match readback.complete(engine, dispositions) {
         Ok(physical) => physical,
@@ -3864,6 +4252,29 @@ fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
             }));
         }
     };
+    if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = physical.destroy_queue_and_retain_any(
+            engine,
+            (
+                coordinator,
+                preflighted,
+                controls,
+                choices,
+                lineage,
+                Boundary::AfterSettlement,
+            ),
+        );
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition,
+                ),
+                lineage: None,
+            },
+        ));
+    }
     if !matches!(
         physical.outcome(),
         crate::M1AuthenticatedCompletedStepOutcomeV1::Completed(_)
@@ -3921,7 +4332,65 @@ fn complete_authenticated_rearmed_speculative_round_prepared<const C: usize>(
         physical: (choices, physical),
         lineage,
     } = committed;
-    match physical.release_completed() {
+    if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = physical.destroy_queue_and_retain_any(
+            engine,
+            (
+                coordinator,
+                outcome,
+                choices,
+                lineage,
+                Boundary::BeforeSettlement,
+            ),
+        );
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition,
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    let released = physical.release_completed();
+    if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = match released {
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                match released.destroy_queue_and_retain_round(engine) {
+                    Ok(clean) => released_disposition(clean),
+                    Err(quarantined) => quarantined_disposition(quarantined),
+                }
+            }
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(rejected) => {
+                match rejected.destroy_queue_and_retain_round(engine) {
+                    Ok(clean) => released_disposition(clean),
+                    Err(quarantined) => quarantined_disposition(quarantined),
+                }
+            }
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(not_completed) => {
+                not_completed.destroy_queue_and_retain_any(engine, Boundary::AfterSettlement)
+            }
+        };
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition.retain((
+                        coordinator,
+                        outcome,
+                        choices,
+                        lineage,
+                        Boundary::AfterSettlement,
+                    )),
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    match released {
         M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
             if validate_prior_association(&coordinator, &outcome, &released).is_err()
                 || !validate_causal_lineage(&coordinator, &released, &lineage)
@@ -3996,12 +4465,16 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
     ///
     /// Every failure quarantines the Engine, consumes the detached queue when
     /// possible, and returns no retry or scheduling authority.
-    fn complete_rollover_round<const C: usize>(
+    fn complete_rollover_round_with_deadline<const C: usize>(
         self,
         engine: &mut Engine<C>,
         diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
         queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
         controls: Vec<M1SpeculativeMemberControlV1>,
+        deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         M1AuthenticatedSpeculativeRolloverRoundFailureV1,
@@ -4027,10 +4500,11 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
                 };
                 close_pending_rollover_failure(engine, pending)
             })?;
-        complete_authenticated_rearmed_speculative_round_prepared(
+        complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
             engine,
             prepared,
             queue_wait_timeout,
+            deadline_expired,
         )
         .map_err(|failure| {
             close_pending_rollover_failure(
@@ -4436,6 +4910,21 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         self.lineage.prior_windows.len()
     }
 
+    pub(crate) fn active_roster(&self) -> Vec<RequestId> {
+        self.coordinator.active_roster()
+    }
+
+    pub(crate) fn member_snapshot(
+        &self,
+        request: RequestId,
+    ) -> Option<crate::M1SpeculativeMemberSnapshotV1> {
+        self.coordinator.member(request)
+    }
+
+    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.released.current_released().queue().logical_runner()
+    }
+
     pub(crate) const fn new_window_released_round(
         &self,
     ) -> &M1AuthenticatedLongLivedQueueReleasedRoundV1 {
@@ -4533,6 +5022,35 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             .map_err(|failure| close_pending_round_failure(engine, failure))
     }
 
+    /// Executes one round with deadline checks around every physical effect and
+    /// a sealed registry transition immediately after successful submission.
+    pub(crate) fn execute_round_with_post_submit_and_deadline<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        self.execute_round_pending_with_post_submit_and_deadline(
+            engine,
+            inputs,
+            post_submit,
+            deadline_expired,
+        )
+        .map_err(|failure| close_pending_round_failure(engine, failure))
+    }
+
     fn execute_round_pending<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -4541,6 +5059,52 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
     > {
+        self.execute_round_pending_with_post_submit(engine, inputs, || {
+            Ok::<(), core::convert::Infallible>(())
+        })
+    }
+
+    fn execute_round_pending_with_post_submit<const C: usize, F, E>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+    {
+        self.execute_round_pending_with_post_submit_and_deadline(
+            engine,
+            inputs,
+            post_submit,
+            |_, configured| Some(configured),
+        )
+    }
+
+    fn execute_round_pending_with_post_submit_and_deadline<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        mut deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
         let facts = M1PreDetachRoundFactsV1 {
             profile_matches: production_entry_profile_matches(
                 self.selection(),
@@ -4770,11 +5334,20 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             }
         };
         let (diagnostic, (coordinator, binding, controls, lineage)) =
-            execute_round_core::<M1NativeRearmedQueueEffectsV1, _, C>(
+            execute_round_core_with_post_submit_and_deadline::<
+                M1NativeRearmedQueueEffectsV1,
+                _,
+                _,
+                _,
+                _,
+                C,
+            >(
                 engine,
                 (prepared, recipe),
                 (coordinator, binding, controls, lineage),
                 queue_wait_timeout,
+                post_submit,
+                &mut deadline_expired,
             )
             .map_err(|(stage, disposition)| {
                 Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
@@ -4785,7 +5358,29 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     lineage: None,
                 })
             })?;
-        complete_authenticated_rearmed_speculative_round(
+        if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        disposition_with_logical(
+                            closure,
+                            (
+                                coordinator,
+                                binding,
+                                controls,
+                                lineage,
+                                Boundary::BeforeSettlement,
+                            ),
+                        ),
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
+        let success = complete_authenticated_rearmed_speculative_round_with_deadline(
             engine,
             coordinator,
             binding,
@@ -4793,7 +5388,33 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             controls,
             lineage,
             queue_wait_timeout,
-        )
+            &mut deadline_expired,
+        )?;
+        if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let (executor, outcome, choices) = success.into_parts();
+            let disposition = match executor.destroy_queue_and_retain_state(engine) {
+                Ok(released) => released_disposition((released, outcome, choices)),
+                Err(quarantined) => quarantined_disposition((quarantined, outcome, choices)),
+            };
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        match disposition {
+                            M1AuthenticatedSpeculativeFailureDispositionV1::Released(released) => {
+                                released_disposition((released, Boundary::AfterSettlement))
+                            }
+                            M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(
+                                quarantined,
+                            ) => quarantined_disposition((quarantined, Boundary::AfterSettlement)),
+                        },
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
+        Ok(success)
     }
 }
 
@@ -4830,8 +5451,8 @@ mod tests {
     use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
     use crate::authenticated_test_runtime::{
         ModelCompletedQueueV1, ModelDiagnosticV1, ModelMemberReadbackV1, ModelPreparedQueueV1,
-        ModelPublishedQueueV1, ModelQueueFailureV1, ModelQueueV1, ModelReadbackFailureV1,
-        ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
+        ModelPublishedQueueV1, ModelQueueFailureV1, ModelQueuePhaseV1, ModelQueueV1,
+        ModelReadbackFailureV1, ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
     };
     use crate::speculative_generation_loop::CheckedMemberObservationV1;
     use crate::{CheckedCompletionSemantics, M1SpeculativeTokenBlockV1};
@@ -4955,6 +5576,14 @@ mod tests {
         type ProgressFailure = ModelWaitFailureV1;
         type ReadbackFailure = ModelReadbackFailureV1;
 
+        fn close_prepared<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            prepared.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model prepared destroyed"))
+        }
+
         fn submit<const C: usize>(
             _engine: &mut Engine<C>,
             prepared: Self::Prepared,
@@ -4968,6 +5597,21 @@ mod tests {
             close_model_submit_failure(failure)
         }
 
+        fn close_published<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            if published.close() {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(
+                    "model published settled and destroyed",
+                ))
+            } else {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                    "model published quarantine retained",
+                ))
+            }
+        }
+
         fn wait<const C: usize>(
             _engine: &mut Engine<C>,
             published: Self::Published,
@@ -4976,11 +5620,35 @@ mod tests {
             published.wait()
         }
 
+        fn close_progress_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ProgressFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(failure))
+        }
+
+        fn close_completed<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            completed.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model completed destroyed"))
+        }
+
         fn recycle<const C: usize>(
             _engine: &mut Engine<C>,
             completed: Self::Completed,
         ) -> Result<Self::Recycled, Self::ProgressFailure> {
             Ok(completed.recycle())
+        }
+
+        fn close_recycled<const C: usize>(
+            _engine: &mut Engine<C>,
+            recycled: Self::Recycled,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            recycled.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model recycled destroyed"))
         }
 
         fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
@@ -4992,6 +5660,14 @@ mod tests {
             failure: Self::ReadbackFailure,
         ) -> M1AuthenticatedPhysicalQueueClosureV1 {
             close_model_readback_failure(failure)
+        }
+
+        fn close_diagnostic<const C: usize>(
+            _engine: &mut Engine<C>,
+            diagnostic: Self::Diagnostic,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            diagnostic.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model diagnostic destroyed"))
         }
     }
 
@@ -5065,6 +5741,24 @@ mod tests {
         type ProgressFailure = ModelRolloverProgressFailureV1;
         type ReadbackFailure = ModelRolloverReadbackFailureV1;
 
+        fn close_prepared<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverPreparedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = prepared;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+
         fn submit<const C: usize>(
             _engine: &mut Engine<C>,
             prepared: Self::Prepared,
@@ -5095,6 +5789,31 @@ mod tests {
             close_model_submit_failure(failure.lower)
         }
 
+        fn close_published<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverPublishedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = published;
+            if queue.close() {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                )))
+            } else {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                )))
+            }
+        }
+
         fn wait<const C: usize>(
             _engine: &mut Engine<C>,
             published: Self::Published,
@@ -5120,6 +5839,32 @@ mod tests {
             }
         }
 
+        fn close_progress_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ProgressFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(failure))
+        }
+
+        fn close_completed<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverCompletedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = completed;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+
         fn recycle<const C: usize>(
             _engine: &mut Engine<C>,
             completed: Self::Completed,
@@ -5130,6 +5875,24 @@ mod tests {
                 checked_selection: completed.checked_selection,
                 checked_epoch: completed.checked_epoch,
             })
+        }
+
+        fn close_recycled<const C: usize>(
+            _engine: &mut Engine<C>,
+            recycled: Self::Recycled,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverRecycledQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = recycled;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
         }
 
         fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
@@ -5158,6 +5921,24 @@ mod tests {
             failure: Self::ReadbackFailure,
         ) -> M1AuthenticatedPhysicalQueueClosureV1 {
             close_model_readback_failure(failure.lower)
+        }
+
+        fn close_diagnostic<const C: usize>(
+            _engine: &mut Engine<C>,
+            diagnostic: Self::Diagnostic,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverDiagnosticV1 {
+                diagnostic,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = diagnostic;
+            diagnostic.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
         }
     }
 
@@ -5568,6 +6349,122 @@ mod tests {
             );
             assert_eq!(snapshot.readbacks, 1);
             assert_eq!(snapshot.releases, 1);
+        }
+    }
+
+    #[test]
+    fn hostile_same_shape_deadlines_close_exact_phase_custody() {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        let cases = [
+            (Boundary::BeforeQueueSubmit, 0, 0, 0),
+            (Boundary::AfterQueueSubmit, 1, 1, 0),
+            (Boundary::BeforeCompletionWait, 1, 1, 0),
+            (Boundary::AfterCompletionWait, 1, 1, 0),
+            (Boundary::BeforeReadback, 1, 1, 0),
+            (Boundary::AfterReadback, 1, 1, 1),
+        ];
+        for (expired_at, submits, waits, readbacks) in cases {
+            let queue = ModelQueueV1::new([None], [model_members(1, 1, None)]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let result = execute_round_core_with_post_submit_and_deadline::<
+                ModelRearmedQueueEffectsV1,
+                _,
+                _,
+                core::convert::Infallible,
+                _,
+                1,
+            >(
+                &mut engine,
+                ModelPreparedQueueV1::new(queue.clone()),
+                "same-shape-custody",
+                model_queue_wait_timeout(),
+                || Ok(()),
+                |boundary, timeout| {
+                    if boundary == expired_at {
+                        None
+                    } else {
+                        Some(timeout)
+                    }
+                },
+            );
+            let (stage, disposition) = result.unwrap_err();
+            assert_eq!(
+                stage,
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+            );
+            assert!(matches!(
+                disposition,
+                M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+            ));
+            assert!(engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.phase, ModelQueuePhaseV1::Destroyed);
+            assert_eq!(snapshot.submits, submits);
+            assert_eq!(snapshot.waits, waits);
+            assert_eq!(snapshot.readbacks, readbacks);
+            assert_eq!(snapshot.destroys, 1);
+        }
+    }
+
+    #[test]
+    fn first_rollover_settlement_deadlines_destroy_exactly_once() {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        for boundary in [Boundary::BeforeSettlement, Boundary::AfterSettlement] {
+            let mut destroys = 0;
+            let disposition = close_deadline_phase(boundary, |retained| {
+                assert_eq!(retained, boundary);
+                destroys += 1;
+                released_disposition((retained, "model native release"))
+            });
+            assert_eq!(destroys, 1);
+            assert!(disposition.queue_released());
+        }
+
+        let mut destroys = 0;
+        let disposition = close_deadline_phase(Boundary::AfterSettlement, |retained| {
+            destroys += 1;
+            quarantined_disposition((retained, "model native destruction failure"))
+        });
+        assert_eq!(destroys, 1);
+        assert!(!disposition.queue_released());
+
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let body = source
+            .split("impl M1AuthenticatedSpeculativeRolloverPublishedV1")
+            .nth(1)
+            .and_then(|tail| tail.split("/// Round-zero completion failure stage").next())
+            .unwrap();
+        assert!(body.contains("M1NativeRearmedQueueEffectsV1::close_diagnostic"));
+        assert!(body.contains(".close_for_resident(engine)"));
+        assert_eq!(body.matches("close_deadline_phase").count(), 2);
+    }
+
+    #[test]
+    fn hostile_same_shape_deadline_guards_each_settlement_effect() {
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let body = source
+            .split("fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline")
+            .nth(1)
+            .and_then(|tail| {
+                tail.split("impl M1AuthenticatedSpeculativeRolloverContinuationV1")
+                    .next()
+            })
+            .expect("deadline-bound same-shape settlement is present");
+        let mut tail = body;
+        for needle in [
+            "Boundary::BeforeSettlement",
+            "readback.complete",
+            "Boundary::AfterSettlement",
+            "Boundary::BeforeSettlement",
+            "physical.release_completed()",
+            "Boundary::AfterSettlement",
+        ] {
+            let position = tail
+                .find(needle)
+                .unwrap_or_else(|| panic!("missing hostile same-shape settlement guard {needle}"));
+            tail = &tail[position + needle.len()..];
         }
     }
 
@@ -6539,11 +7436,10 @@ mod tests {
     #[test]
     fn authenticated_tail_pages_use_binding_width_only_after_detach() {
         let source = include_str!("authenticated_speculative_executor.rs");
-        let production = source.split("#[cfg(test)]").next().unwrap();
-        let start = production
-            .find("fn execute_round_pending<const C: usize>")
+        let start = source
+            .find("fn execute_round_pending_with_post_submit_and_deadline")
             .unwrap();
-        let body = &production[start..];
+        let body = &source[start..];
         let schedule = body.find("released.schedule_next_exact").unwrap();
         let materialize = body
             .find("materialize_m1_authenticated_speculative_round_tail_pages_v1")
