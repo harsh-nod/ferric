@@ -21,11 +21,9 @@ fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
         .collect::<Vec<_>>();
     let expected_source = format!("source = \"{FE2O3_LOCK_SOURCE}\"");
     assert!(fe2o3_sources.len() > 20);
-    assert!(
-        fe2o3_sources
-            .iter()
-            .all(|line| line.trim() == expected_source)
-    );
+    assert!(fe2o3_sources
+        .iter()
+        .all(|line| line.trim() == expected_source));
     assert_eq!(
         LOCK.matches("?rev=d9f6bbcd089fb4bf7980f807e6550b13daed9178#")
             .count(),
@@ -38,12 +36,14 @@ fn package_retains_the_reviewed_nightly_and_truthful_nonclaims() {
     assert!(TOOLCHAIN.contains("nightly-2026-04-03"));
     assert!(TOOLCHAIN.contains("rustc-dev"));
     assert!(README.contains("revision `2d275684d7a2`"));
-    assert!(README.contains("parallel ownership boundary"));
+    assert!(README.contains("initial work-proportional schedule"));
+    assert!(README.contains("unique grid leader"));
+    assert!(README.contains("other 63 lanes"));
     assert!(README.contains("does not claim"));
     assert!(README.contains("hardware measurement"));
     assert!(README.contains("both fixed 512 MiB cache"));
     assert!(README.contains("buffers in each direction"));
-    assert!(README.contains("host profile uses the same"));
-    assert!(README.contains("fixed physical-page"));
+    assert!(README.contains("profile binds the same single-workgroup geometry"));
+    assert!(!README.contains("one Wave64 workgroup for each"));
     assert!(README.contains("not establish extracted host-plan binding"));
 }

@@ -40,9 +40,12 @@ translation, eight KV heads, and one fixed global physical cache pool with
 layout `[16384,16,8,128]`. Layer selection remains outside the kernel. Machine
 control flow checks logical position, selected context, the per-sequence
 page-table index, the global physical page, and exact byte spans before address
-use. A sequence selects a translation table; it does not prefix cache storage.
-Generation, exclusive-owner, role, profile, and page-table identities remain
-host labels and are not authenticated by the machine ABI.
+use. The initial work-proportional schedule uses one workgroup whose unique
+grid leader serially copies only active rows through `GridExclusive` cache
+custody; it does not scan the 16,384 physical-page pool. A sequence selects a
+translation table; it does not prefix cache storage. Generation,
+exclusive-owner, role, profile, and page-table identities remain host labels
+and are not authenticated by the machine ABI.
 
 The modules construct pinned direct-LLVM or typed Handoff V2 payloads and bind
 them only to compiler-produced, move-only Worker V3 evidence before strict

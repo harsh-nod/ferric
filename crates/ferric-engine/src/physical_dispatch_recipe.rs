@@ -864,6 +864,14 @@ mod tests {
                 .rows()
                 .iter()
                 .all(|row| row.dynamic_group_segment_bytes() == 0));
+            for row in recipe
+                .rows()
+                .iter()
+                .filter(|row| row.program() == M1PhysicalProgramV1::PagedKvWrite)
+            {
+                assert_eq!(row.geometry().grid(), [64, 1, 1]);
+                assert_eq!(row.geometry().workgroup(), [64, 1, 1]);
+            }
             seen_programs.extend(recipe.rows().iter().map(|row| row.program()));
             let assembly = recipe
                 .rows()

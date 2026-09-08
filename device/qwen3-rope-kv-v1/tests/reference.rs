@@ -1,9 +1,9 @@
 use ferric_qwen3_rope_kv_device_v1::{
+    qwen3_paged_kv_write_profile_is_admitted_v1, qwen3_rope_profile_is_admitted_v1,
     QWEN3_KV_CACHE_ELEMENTS_V1, QWEN3_KV_PAGE_TABLE_ENTRIES_V1, QWEN3_KV_PAGE_TOKENS_V1,
     QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1,
     QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1,
-    QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1, qwen3_paged_kv_write_profile_is_admitted_v1,
-    qwen3_rope_profile_is_admitted_v1,
+    QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1,
 };
 
 fn widen_bf16(bits: u16) -> f32 {
@@ -36,10 +36,6 @@ fn reference_rope_pair(first: u16, second: u16, cos: f32, sin: f32) -> [u16; 2] 
 
 fn cache_index(physical_page: usize, token_in_page: usize, component: usize) -> usize {
     ((physical_page * QWEN3_KV_PAGE_TOKENS_V1 as usize + token_in_page) * 8 * 128) + component
-}
-
-fn blocked_cache_index(physical_page: usize, lane: usize, blocked_component: usize) -> usize {
-    physical_page * 64 * 256 + blocked_component * 64 + lane
 }
 
 fn checked_kv_destination(
@@ -127,8 +123,8 @@ fn exact_profile_rosters_are_finite_and_fit_the_flat_grid_maximum() {
         QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1,
         QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1
     );
-    assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 16_384);
-    assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1_048_576);
+    assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1);
+    assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 64);
 
     for [active, sequences, query_heads, context] in [
         [0, 1, 32, 128],
@@ -219,38 +215,31 @@ fn hostile_logical_physical_and_component_boundaries_fail_closed() {
 }
 
 #[test]
-fn reverse_page_block_mapping_is_identical_and_injective() {
+fn flat_grid_exclusive_mapping_is_injective() {
     assert_eq!(
-        QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize * 256 * 64,
+        QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize * 16 * 1_024,
         QWEN3_KV_CACHE_ELEMENTS_V1
     );
     for physical_page in 0..QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize {
-        for blocked_component in 0..256 {
-            for lane in [0_usize, 1, 63] {
-                let index = blocked_cache_index(physical_page, lane, blocked_component);
+        for token_in_page in 0..16 {
+            for component in [0_usize, 1, 63, 64, 1_023] {
+                let index = cache_index(physical_page, token_in_page, component);
                 assert!(index < QWEN3_KV_CACHE_ELEMENTS_V1);
-                assert_eq!(index / (256 * 64), physical_page);
-                let page_offset = index % (256 * 64);
-                assert_eq!(page_offset / 64, blocked_component);
-                assert_eq!(page_offset % 64, lane);
-
-                let token_in_page = blocked_component / 16;
-                let input_component = blocked_component % 16;
-                assert_eq!(
-                    index,
-                    cache_index(physical_page, token_in_page, input_component * 64 + lane)
-                );
+                assert_eq!(index / 16_384, physical_page);
+                let page_offset = index % 16_384;
+                assert_eq!(page_offset / 1_024, token_in_page);
+                assert_eq!(page_offset % 1_024, component);
             }
         }
     }
     assert_eq!(
-        blocked_cache_index(16_383, 63, 255),
+        cache_index(16_383, 15, 1_023),
         QWEN3_KV_CACHE_ELEMENTS_V1 - 1
     );
 }
 
 #[test]
-fn aliasing_rows_share_one_page_owner_and_preserve_untouched_seed_bits() {
+fn serial_active_rows_preserve_order_and_untouched_seed_bits() {
     let first_key = (0..1_024)
         .map(|index| (index as u16).wrapping_mul(17) ^ 0x7fc1)
         .collect::<Vec<_>>();
@@ -276,15 +265,10 @@ fn aliasing_rows_share_one_page_owner_and_preserve_untouched_seed_bits() {
         if physical_page != 7 {
             continue;
         }
-        for input_component in 0..16 {
-            let blocked_component = token_in_page * 16 + input_component;
-            for lane in 0..64 {
-                let source = input_component * 64 + lane;
-                let destination = blocked_component * 64 + lane;
-                assert_eq!(7 * 64 + lane, physical_page * 64 + lane);
-                key_page[destination] = key[source];
-                value_page[destination] = value[source];
-            }
+        for component in 0..1_024 {
+            let destination = token_in_page * 1_024 + component;
+            key_page[destination] = key[component];
+            value_page[destination] = value[component];
         }
     }
 

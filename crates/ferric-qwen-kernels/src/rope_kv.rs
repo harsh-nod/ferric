@@ -71,7 +71,7 @@ pub const QWEN3_PAGED_KV_WRITE_GLOBAL_BUFFER_ABI_V1: [KernelGlobalBufferAbiV1<'s
 pub const QWEN3_ROPE_KV_TARGET_V1: &str = "gfx942:xnack-";
 /// Exact code-object version required by this compiler lane.
 pub const QWEN3_ROPE_KV_CODE_OBJECT_VERSION_V1: u8 = 6;
-/// Wave64 workgroup shape shared by `RoPE` rows and physical KV pages.
+/// Wave64 workgroup shape shared by `RoPE` and the initial grid-exclusive KV schedule.
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 /// Exact Qwen3 head dimension.
 pub const QWEN3_ROPE_KV_HEAD_DIMENSION_V1: u32 = 128;
@@ -87,8 +87,8 @@ pub const QWEN3_KV_PAGE_TOKENS_V1: u32 = 16;
 pub const QWEN3_KV_PAGE_TABLE_ENTRIES_V1: u32 = 512;
 /// Fixed physical page slots in the global Ferric KV cache pool.
 pub const QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1: u32 = 16_384;
-/// One paged-KV-write workgroup owns each physical cache page.
-pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1;
+/// One grid-exclusive paged-KV-write workgroup follows the authenticated page table.
+pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = 1;
 /// Exact one-dimensional paged-KV-write AQL grid extent.
 pub const QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1: u32 =
     QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1 * QWEN3_ROPE_KV_WORKGROUP_V1[0];
@@ -309,6 +309,16 @@ pub enum Qwen3RopeKvOperationV1 {
     PagedKvWrite = 2,
 }
 
+/// Exact source schedule selected by a K3 operation profile.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(u8)]
+pub enum Qwen3RopeKvScheduleV1 {
+    /// One Wave64 row stripe applies split-half `RoPE`.
+    RopeRowStripedWave64V1 = 1,
+    /// The unique grid leader scatters only active rows through the page table.
+    GridExclusivePagedKvWorkProportionalV1 = 2,
+}
+
 /// One finite checked Qwen3 RoPE/KV operation profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Qwen3RopeKvProfileV1 {
@@ -378,6 +388,9 @@ impl Qwen3RopeKvProfileV1 {
         bytes.push(self.bucket.role as u8);
         bytes.push(self.bucket.kind as u8);
         bytes.push(self.operation as u8);
+        if self.operation == Qwen3RopeKvOperationV1::PagedKvWrite {
+            bytes.push(self.schedule() as u8);
+        }
         bytes.extend_from_slice(&self.base_rows.to_le_bytes());
         bytes.extend_from_slice(&self.bucket.context_tokens().to_le_bytes());
         bytes.extend_from_slice(&self.bucket.role.query_heads().to_le_bytes());
@@ -406,6 +419,17 @@ impl Qwen3RopeKvProfileV1 {
     #[must_use]
     pub const fn operation(self) -> Qwen3RopeKvOperationV1 {
         self.operation
+    }
+
+    /// Exact source schedule selected for this operation.
+    #[must_use]
+    pub const fn schedule(self) -> Qwen3RopeKvScheduleV1 {
+        match self.operation {
+            Qwen3RopeKvOperationV1::Rope => Qwen3RopeKvScheduleV1::RopeRowStripedWave64V1,
+            Qwen3RopeKvOperationV1::PagedKvWrite => {
+                Qwen3RopeKvScheduleV1::GridExclusivePagedKvWorkProportionalV1
+            }
+        }
     }
 
     /// Exact flattened sequence-token row count.
@@ -2181,31 +2205,17 @@ impl KvValues {
     }
 }
 
-fn emit_kv_component(
+fn emit_flat_kv_component(
     builder: &mut TypedFunctionBuilder,
     values: &KvValues,
     token_index: ValueIdV2,
     cache_token: ValueIdV2,
-    head: ValueIdV2,
     component: ValueIdV2,
 ) {
-    let width = builder.constant(ScalarTypeV1::I64, 128);
-    let heads = builder.constant(ScalarTypeV1::I64, 8);
-    let input_head = builder.integer(
-        IntegerBinaryOperationV2::Multiply,
-        token_index,
-        heads,
-        ScalarTypeV1::I64,
-    );
-    let input_head = builder.integer(
-        IntegerBinaryOperationV2::Add,
-        input_head,
-        head,
-        ScalarTypeV1::I64,
-    );
+    let width = builder.constant(ScalarTypeV1::I64, 1_024);
     let input_base = builder.integer(
         IntegerBinaryOperationV2::Multiply,
-        input_head,
+        token_index,
         width,
         ScalarTypeV1::I64,
     );
@@ -2215,21 +2225,9 @@ fn emit_kv_component(
         component,
         ScalarTypeV1::I64,
     );
-    let cache_head = builder.integer(
-        IntegerBinaryOperationV2::Multiply,
-        cache_token,
-        heads,
-        ScalarTypeV1::I64,
-    );
-    let cache_head = builder.integer(
-        IntegerBinaryOperationV2::Add,
-        cache_head,
-        head,
-        ScalarTypeV1::I64,
-    );
     let cache_base = builder.integer(
         IntegerBinaryOperationV2::Multiply,
-        cache_head,
+        cache_token,
         width,
         ScalarTypeV1::I64,
     );
@@ -2342,57 +2340,102 @@ fn build_kv_kernel_function(
             arguments: vec![],
         },
     );
-    let local_token = builder.instruction(
-        i32_type,
-        InstructionKindV2::Call {
-            target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkgroupId(
-                AxisV2::X,
-            )),
-            arguments: vec![],
-        },
-    );
-    let sequence = builder.instruction(
-        i32_type,
-        InstructionKindV2::Call {
-            target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkgroupId(
-                AxisV2::Y,
-            )),
-            arguments: vec![],
-        },
-    );
-    let token_valid = builder.compare(
-        ComparePredicateV2::UnsignedLessThan,
-        local_token,
-        values.active_tokens,
-    );
-    let sequence_valid = builder.compare(
-        ComparePredicateV2::UnsignedLessThan,
-        sequence,
-        values.sequences,
-    );
-    let active = builder.and(token_valid, sequence_valid);
-    let compute = builder.block();
+    let zero_i32 = builder.constant(ScalarTypeV1::I32, 0);
+    let is_grid_leader = builder.compare(ComparePredicateV2::IntegerEqual, lane, zero_i32);
+    let leader = builder.block();
     let complete = builder.block();
     builder.finish(TerminatorV2::ConditionalBranch {
-        condition: active,
-        then_block: compute,
+        condition: is_grid_leader,
+        then_block: leader,
         else_block: complete,
     });
     builder.start(complete);
     builder.finish(TerminatorV2::Return(None));
-    builder.start(compute);
-    let lane64 = builder.cast(CastOperationV2::ZeroExtend, lane, i64_type);
-    let token64 = builder.cast(CastOperationV2::ZeroExtend, local_token, i64_type);
-    let workgroup_y64 = builder.cast(CastOperationV2::ZeroExtend, sequence, i64_type);
-    let token_index = global_index(&mut builder, workgroup_y64, active64, token64);
-    let logical_start = builder.scalar_load(values.starts, workgroup_y64, ScalarTypeV1::I32, 4);
+    builder.start(leader);
+
+    let one_i32 = builder.constant(ScalarTypeV1::I32, 1);
+    let zero_i64 = builder.constant(ScalarTypeV1::I64, 0);
+    let one_i64 = builder.constant(ScalarTypeV1::I64, 1);
     let max_start = builder.constant(ScalarTypeV1::I32, 8_192);
+    let shift = builder.constant(ScalarTypeV1::I32, 4);
+    let mask = builder.constant(ScalarTypeV1::I32, 15);
+    let logical_page_limit =
+        builder.constant(ScalarTypeV1::I32, u64::from(QWEN3_KV_PAGE_TABLE_ENTRIES_V1));
+    let page_token_limit = builder.constant(ScalarTypeV1::I32, u64::from(QWEN3_KV_PAGE_TOKENS_V1));
+    let physical_page_limit = builder.constant(
+        ScalarTypeV1::I32,
+        u64::from(QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1),
+    );
+    let page_tokens = builder.constant(ScalarTypeV1::I64, u64::from(QWEN3_KV_PAGE_TOKENS_V1));
+    let component_limit = builder.constant(ScalarTypeV1::I64, 1_024);
+
+    let sequence_initial = builder.current_id;
+    let sequence_header = builder.block();
+    let sequence_body = builder.block();
+    let sequence_latch = builder.block();
+    let sequence_backedge = builder.block();
+    let done = builder.block();
+    let next_sequence = builder.reserve();
+    builder.finish(TerminatorV2::Branch(sequence_header));
+    builder.start(sequence_header);
+    let sequence = builder.instruction(
+        i32_type,
+        InstructionKindV2::Phi {
+            incoming: vec![
+                (zero_i32, sequence_initial),
+                (next_sequence, sequence_backedge),
+            ],
+        },
+    );
+    let sequence_active = builder.compare(
+        ComparePredicateV2::UnsignedLessThan,
+        sequence,
+        values.sequences,
+    );
+    builder.finish(TerminatorV2::ConditionalBranch {
+        condition: sequence_active,
+        then_block: sequence_body,
+        else_block: done,
+    });
+
+    builder.start(sequence_body);
+    let sequence_index64 = builder.cast(CastOperationV2::ZeroExtend, sequence, i64_type);
+    let logical_start = builder.scalar_load(values.starts, sequence_index64, ScalarTypeV1::I32, 4);
     let start_valid = builder.compare(
         ComparePredicateV2::UnsignedLessThan,
         logical_start,
         max_start,
     );
     trap_unless(&mut builder, start_valid);
+
+    let token_initial = builder.current_id;
+    let token_header = builder.block();
+    let token_body = builder.block();
+    let token_latch = builder.block();
+    let token_backedge = builder.block();
+    let next_token = builder.reserve();
+    builder.finish(TerminatorV2::Branch(token_header));
+    builder.start(token_header);
+    let local_token = builder.instruction(
+        i32_type,
+        InstructionKindV2::Phi {
+            incoming: vec![(zero_i32, token_initial), (next_token, token_backedge)],
+        },
+    );
+    let token_active = builder.compare(
+        ComparePredicateV2::UnsignedLessThan,
+        local_token,
+        values.active_tokens,
+    );
+    builder.finish(TerminatorV2::ConditionalBranch {
+        condition: token_active,
+        then_block: token_body,
+        else_block: sequence_latch,
+    });
+
+    builder.start(token_body);
+    let token64 = builder.cast(CastOperationV2::ZeroExtend, local_token, i64_type);
+    let token_index = global_index(&mut builder, sequence_index64, active64, token64);
     let logical_position = builder.integer(
         IntegerBinaryOperationV2::Add,
         logical_start,
@@ -2411,8 +2454,6 @@ fn build_kv_kernel_function(
     );
     let logical_valid = builder.and(below_context, below_max);
     trap_unless(&mut builder, logical_valid);
-    let shift = builder.constant(ScalarTypeV1::I32, 4);
-    let mask = builder.constant(ScalarTypeV1::I32, 15);
     let logical_page = builder.integer(
         IntegerBinaryOperationV2::LogicalShiftRight,
         logical_position,
@@ -2425,14 +2466,11 @@ fn build_kv_kernel_function(
         mask,
         ScalarTypeV1::I32,
     );
-    let logical_page_limit =
-        builder.constant(ScalarTypeV1::I32, u64::from(QWEN3_KV_PAGE_TABLE_ENTRIES_V1));
     let logical_page_valid = builder.compare(
         ComparePredicateV2::UnsignedLessThan,
         logical_page,
         logical_page_limit,
     );
-    let page_token_limit = builder.constant(ScalarTypeV1::I32, u64::from(QWEN3_KV_PAGE_TOKENS_V1));
     let page_offset_valid = builder.compare(
         ComparePredicateV2::UnsignedLessThan,
         token_in_page,
@@ -2442,7 +2480,7 @@ fn build_kv_kernel_function(
     trap_unless(&mut builder, translation_valid);
     let table_sequence = builder.integer(
         IntegerBinaryOperationV2::Multiply,
-        workgroup_y64,
+        sequence_index64,
         pages_per_sequence,
         ScalarTypeV1::I64,
     );
@@ -2454,10 +2492,6 @@ fn build_kv_kernel_function(
         ScalarTypeV1::I64,
     );
     let physical_page = builder.scalar_load(values.pages, table_index, ScalarTypeV1::I32, 4);
-    let physical_page_limit = builder.constant(
-        ScalarTypeV1::I32,
-        u64::from(QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1),
-    );
     let page_valid = builder.compare(
         ComparePredicateV2::UnsignedLessThan,
         physical_page,
@@ -2465,7 +2499,6 @@ fn build_kv_kernel_function(
     );
     trap_unless(&mut builder, page_valid);
     let physical64 = builder.cast(CastOperationV2::ZeroExtend, physical_page, i64_type);
-    let page_tokens = builder.constant(ScalarTypeV1::I64, u64::from(QWEN3_KV_PAGE_TOKENS_V1));
     let cache_token = builder.integer(
         IntegerBinaryOperationV2::Multiply,
         physical64,
@@ -2480,65 +2513,75 @@ fn build_kv_kernel_function(
         ScalarTypeV1::I64,
     );
 
-    let zero = builder.constant(ScalarTypeV1::I64, 0);
-    let one = builder.constant(ScalarTypeV1::I64, 1);
-    let eight = builder.constant(ScalarTypeV1::I64, 8);
-    let half = builder.constant(ScalarTypeV1::I64, 64);
-    let initial = builder.current_id;
-    let header = builder.block();
-    let body = builder.block();
-    let backedge = builder.block();
-    let done = builder.block();
-    let next_head = builder.reserve();
-    builder.finish(TerminatorV2::Branch(header));
-    builder.start(header);
-    let head = builder.instruction(
+    let component_initial = builder.current_id;
+    let component_header = builder.block();
+    let component_body = builder.block();
+    let component_backedge = builder.block();
+    let next_component = builder.reserve();
+    builder.finish(TerminatorV2::Branch(component_header));
+    builder.start(component_header);
+    let component = builder.instruction(
         i64_type,
         InstructionKindV2::Phi {
-            incoming: vec![(zero, initial), (next_head, backedge)],
+            incoming: vec![
+                (zero_i64, component_initial),
+                (next_component, component_backedge),
+            ],
         },
     );
-    let head_active = builder.compare(ComparePredicateV2::UnsignedLessThan, head, eight);
+    let component_active = builder.compare(
+        ComparePredicateV2::UnsignedLessThan,
+        component,
+        component_limit,
+    );
     builder.finish(TerminatorV2::ConditionalBranch {
-        condition: head_active,
-        then_block: body,
-        else_block: done,
+        condition: component_active,
+        then_block: component_body,
+        else_block: token_latch,
     });
-    builder.start(body);
-    emit_kv_component(
-        &mut builder,
-        &values,
-        token_index,
-        cache_token,
-        head,
-        lane64,
-    );
-    let upper_component = builder.integer(
-        IntegerBinaryOperationV2::Add,
-        lane64,
-        half,
-        ScalarTypeV1::I64,
-    );
-    emit_kv_component(
-        &mut builder,
-        &values,
-        token_index,
-        cache_token,
-        head,
-        upper_component,
-    );
+    builder.start(component_body);
+    emit_flat_kv_component(&mut builder, &values, token_index, cache_token, component);
     builder.instruction_with(
-        next_head,
+        next_component,
         i64_type,
         InstructionKindV2::Binary {
             operation: BinaryOperationV2::Integer(IntegerBinaryOperationV2::Add),
-            left: head,
-            right: one,
+            left: component,
+            right: one_i64,
         },
     );
-    builder.finish(TerminatorV2::Branch(backedge));
-    builder.start(backedge);
-    builder.finish(TerminatorV2::Branch(header));
+    builder.finish(TerminatorV2::Branch(component_backedge));
+    builder.start(component_backedge);
+    builder.finish(TerminatorV2::Branch(component_header));
+
+    builder.start(token_latch);
+    builder.instruction_with(
+        next_token,
+        i32_type,
+        InstructionKindV2::Binary {
+            operation: BinaryOperationV2::Integer(IntegerBinaryOperationV2::Add),
+            left: local_token,
+            right: one_i32,
+        },
+    );
+    builder.finish(TerminatorV2::Branch(token_backedge));
+    builder.start(token_backedge);
+    builder.finish(TerminatorV2::Branch(token_header));
+
+    builder.start(sequence_latch);
+    builder.instruction_with(
+        next_sequence,
+        i32_type,
+        InstructionKindV2::Binary {
+            operation: BinaryOperationV2::Integer(IntegerBinaryOperationV2::Add),
+            left: sequence,
+            right: one_i32,
+        },
+    );
+    builder.finish(TerminatorV2::Branch(sequence_backedge));
+    builder.start(sequence_backedge);
+    builder.finish(TerminatorV2::Branch(sequence_header));
+
     builder.start(done);
     builder.finish(TerminatorV2::Return(None));
 
@@ -3572,6 +3615,10 @@ mod tests {
                     );
                     match operation {
                         Qwen3RopeKvOperationV1::Rope => {
+                            assert_eq!(
+                                profile.schedule(),
+                                Qwen3RopeKvScheduleV1::RopeRowStripedWave64V1
+                            );
                             assert_eq!(profile.hsa_adapter_block_counts(), [active, sequences, 1]);
                             assert_eq!(
                                 profile.aql_grid_work_items(),
@@ -3579,6 +3626,10 @@ mod tests {
                             );
                         }
                         Qwen3RopeKvOperationV1::PagedKvWrite => {
+                            assert_eq!(
+                                profile.schedule(),
+                                Qwen3RopeKvScheduleV1::GridExclusivePagedKvWorkProportionalV1
+                            );
                             assert_eq!(
                                 profile.hsa_adapter_block_counts(),
                                 [QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1, 1]
@@ -3592,8 +3643,8 @@ mod tests {
                 }
             }
         }
-        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 16_384);
-        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1_048_576);
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1);
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 64);
         assert_eq!(Qwen3RopeKvModelRoleV1::Target8B.query_heads(), 32);
         assert_eq!(Qwen3RopeKvModelRoleV1::Draft06B.query_heads(), 16);
         assert_eq!(Qwen3RopeKvModelRoleV1::Target8B.layers(), 36);
@@ -3752,6 +3803,37 @@ mod tests {
             Some(InstructionKindV2::Constant(value)) => Some(value.bits()),
             _ => None,
         };
+        let lane = definitions
+            .iter()
+            .find_map(|(result, kind)| match kind {
+                InstructionKindV2::Call {
+                    target:
+                        fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkitemId(
+                            AxisV2::X,
+                        )),
+                    arguments,
+                } if arguments.is_empty() => Some(*result),
+                _ => None,
+            })
+            .expect("the single-workgroup schedule must select the grid leader");
+        assert!(definitions.values().any(|kind| matches!(
+            kind,
+            InstructionKindV2::Compare {
+                predicate: ComparePredicateV2::IntegerEqual,
+                left,
+                right,
+            } if (*left == lane && constant_bits(*right) == Some(0))
+                || (*right == lane && constant_bits(*left) == Some(0))
+        )));
+        assert!(!definitions.values().any(|kind| matches!(
+            kind,
+            InstructionKindV2::Call {
+                target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(
+                    IntrinsicV2::AmdGpuWorkgroupId(_),
+                ),
+                ..
+            }
+        )));
         let physical_page = definitions
             .iter()
             .find_map(|(result, kind)| match kind {

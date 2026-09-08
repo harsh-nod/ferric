@@ -3,14 +3,16 @@
 
 //! Attributed Rust source for Ferric's exact Qwen3 K3 device roots.
 
-use fe2o3_device::{Bf16, Index1D, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread};
+use fe2o3_device::{
+    kernel, memory, thread, Bf16, GridExclusive, Index1D, RowStriped2D, WriteOnlyDisjointSlice,
+};
 
 pub const QWEN3_ROPE_KERNEL_SYMBOL_V1: &str = "qwen3_rope_v1";
 pub const QWEN3_PAGED_KV_WRITE_KERNEL_SYMBOL_V1: &str = "qwen3_paged_kv_write_v1";
 pub const QWEN3_ROPE_KV_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
 pub const QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1: u32 = 2_048;
 pub const QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1: u32 = QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1;
-pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = 16_384;
+pub const QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1: u32 = 1;
 pub const QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1: usize =
     QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1 as usize * 64;
 pub const QWEN3_ROPE_EXPLICIT_KERNARG_BYTES_V1: usize = 128;
@@ -247,8 +249,8 @@ pub fn qwen3_rope_v1(
 
 #[kernel(
     typed,
-    launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [16384, 1, 1]),
-    control_flow(loop_bounds(32768))
+    launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [1, 1, 1]),
+    control_flow(loop_bounds(2048, 1024))
 )]
 #[allow(clippy::too_many_arguments)]
 pub fn qwen3_paged_kv_write_v1(
@@ -256,13 +258,22 @@ pub fn qwen3_paged_kv_write_v1(
     value_bf16: &[u16],
     logical_starts: &[u32],
     page_indices: &[u32],
-    mut key_cache_bf16: WriteOnlyDisjointSlice<u16, RowStriped2D<Index1D, 64, 256>>,
-    mut value_cache_bf16: WriteOnlyDisjointSlice<u16, RowStriped2D<Index1D, 64, 256>>,
+    mut key_cache_bf16: WriteOnlyDisjointSlice<u16, GridExclusive>,
+    mut value_cache_bf16: WriteOnlyDisjointSlice<u16, GridExclusive>,
     active_tokens: u32,
     sequences: u32,
     context_tokens: u32,
     row_components: u32,
 ) {
+    // Indirect page-table indexing is not an injective thread-index mapping.
+    // Grid-exclusive custody keeps arbitrary physical-page writes safe until a
+    // compiler-authenticated indirect permutation view exists.
+    let leader;
+    if let Some(current_leader) = thread::grid_leader() {
+        leader = current_leader;
+    } else {
+        return;
+    }
     let common_profile_is_admitted = (((active_tokens == 128)
         & ((sequences == 1) | (sequences == 8)))
         & (context_tokens == 128))
@@ -307,13 +318,6 @@ pub fn qwen3_paged_kv_write_v1(
         fe2o3_device::trap();
     }
 
-    let page_lane_index = thread::index_1d();
-    let raw = page_lane_index.get();
-    let owned_physical_page = raw / 64;
-    let lane = raw % 64;
-    if owned_physical_page >= QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize {
-        fe2o3_device::trap();
-    }
     let row_components = row_components as usize;
     if row_components > 32_768 {
         fe2o3_device::trap();
@@ -321,10 +325,8 @@ pub fn qwen3_paged_kv_write_v1(
     if row_components % 16 != 0 || row_components / 16 != rows {
         fe2o3_device::trap();
     }
-    let mut row_component = 0_usize;
-    while row_component < row_components {
-        let row = row_component / 16;
-        let component = row_component % 16;
+    let mut row = 0_usize;
+    while row < rows {
         let (sequence, local_token) = if active_tokens != 0 {
             (row / active_tokens, row % active_tokens)
         } else {
@@ -360,74 +362,23 @@ pub fn qwen3_paged_kv_write_v1(
             fe2o3_device::trap();
         }
         let input_base = row * kv_columns;
-
-        if physical_page == owned_physical_page {
-            let cache_component_base = if token_in_page < 16 {
-                token_in_page * 16
-            } else {
-                fe2o3_device::trap()
-            };
-            let input_component_offset = if component < 16 {
-                component * 64
-            } else {
-                fe2o3_device::trap()
-            };
-            let input_component_base = if input_component_offset <= usize::MAX - input_base {
-                input_base + input_component_offset
-            } else {
-                fe2o3_device::trap()
-            };
-            let input_index = if lane <= usize::MAX - input_component_base {
-                input_component_base + lane
-            } else {
-                fe2o3_device::trap()
-            };
-            let cache_component = if component <= usize::MAX - cache_component_base {
-                cache_component_base + component
-            } else {
-                fe2o3_device::trap()
-            };
+        let cache_page_base = physical_page * 16_384;
+        let cache_token_base = cache_page_base + token_in_page * kv_columns;
+        let mut component = 0_usize;
+        while component < kv_columns {
+            let input_index = input_base + component;
+            let cache_index = cache_token_base + component;
             let key_component = memory::volatile_load(rotated_key_bf16, input_index);
             let value_component = memory::volatile_load(value_bf16, input_index);
-            {
-                let Some(key_cache_stripe) = thread::index_1d().checked_row_striped_2d::<64, 256>()
-                else {
-                    fe2o3_device::trap();
-                };
-                if !key_cache_bf16.write_row_striped_2d(
-                    &key_cache_stripe,
-                    cache_component,
-                    QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize,
-                    16_384,
-                    16_384,
-                    key_component,
-                ) {
-                    fe2o3_device::trap();
-                }
+            if !key_cache_bf16.write_exclusive(&leader, cache_index, key_component) {
+                fe2o3_device::trap();
             }
-            {
-                let Some(value_cache_stripe) =
-                    thread::index_1d().checked_row_striped_2d::<64, 256>()
-                else {
-                    fe2o3_device::trap();
-                };
-                if !value_cache_bf16.write_row_striped_2d(
-                    &value_cache_stripe,
-                    cache_component,
-                    QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize,
-                    16_384,
-                    16_384,
-                    value_component,
-                ) {
-                    fe2o3_device::trap();
-                }
+            if !value_cache_bf16.write_exclusive(&leader, cache_index, value_component) {
+                fe2o3_device::trap();
             }
+            component += 1;
         }
-        if row_component < 32_768 {
-            row_component += 1;
-        } else {
-            fe2o3_device::trap();
-        }
+        row += 1;
     }
 }
 
@@ -459,8 +410,8 @@ mod tests {
     #[test]
     fn launch_and_cache_maxima_are_exact() {
         assert_eq!(QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1, 2_048);
-        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 16_384);
-        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 1_048_576);
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1, 1);
+        assert_eq!(QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, 64);
         assert_eq!(QWEN3_KV_CACHE_ELEMENTS_V1, 268_435_456);
         assert_eq!(
             (QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1 as usize - 1)
