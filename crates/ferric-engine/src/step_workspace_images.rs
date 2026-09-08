@@ -379,24 +379,61 @@ pub fn compose_m1_step_workspace_image_v1(
     inputs: ValidatedM1StepInputs,
     kv_page_indices: Box<[u32]>,
 ) -> M1StepWorkspaceImageCompositionOutcomeV1 {
+    compose_m1_step_workspace_image_core_v1(plan, inputs, kv_page_indices, None)
+}
+
+pub(crate) fn compose_m1_step_workspace_image_with_storage_v1(
+    plan: AddresslessM1StepWorkspacePlan,
+    inputs: ValidatedM1StepInputs,
+    kv_page_indices: Box<[u32]>,
+    image: Box<[u8]>,
+) -> M1StepWorkspaceImageCompositionOutcomeV1 {
+    compose_m1_step_workspace_image_core_v1(plan, inputs, kv_page_indices, Some(image))
+}
+
+fn compose_m1_step_workspace_image_core_v1(
+    plan: AddresslessM1StepWorkspacePlan,
+    inputs: ValidatedM1StepInputs,
+    kv_page_indices: Box<[u32]>,
+    image: Option<Box<[u8]>>,
+) -> M1StepWorkspaceImageCompositionOutcomeV1 {
     match compose_preflight(&plan, &inputs, &kv_page_indices) {
         Ok((layout, image_len)) => {
-            let mut image = Vec::new();
-            if image.try_reserve_exact(image_len).is_err() {
-                return rejected(
-                    M1StepWorkspaceImageCompositionErrorV1::HostImageReservation {
-                        byte_len: image_len,
-                    },
-                    plan,
-                    inputs,
-                    kv_page_indices,
-                );
-            }
-            image.resize(image_len, 0);
+            let mut image = match image {
+                Some(mut image) if image.len() == image_len => {
+                    image.fill(0);
+                    image
+                }
+                Some(_) => {
+                    return rejected(
+                        M1StepWorkspaceImageCompositionErrorV1::HostImageReservation {
+                            byte_len: image_len,
+                        },
+                        plan,
+                        inputs,
+                        kv_page_indices,
+                    );
+                }
+                None => {
+                    let mut image = Vec::new();
+                    if image.try_reserve_exact(image_len).is_err() {
+                        return rejected(
+                            M1StepWorkspaceImageCompositionErrorV1::HostImageReservation {
+                                byte_len: image_len,
+                            },
+                            plan,
+                            inputs,
+                            kv_page_indices,
+                        );
+                    }
+                    image.resize(image_len, 0);
+                    image.into_boxed_slice()
+                }
+            };
             populate_image(&mut image, &layout, &inputs, &kv_page_indices);
             M1StepWorkspaceImageCompositionOutcomeV1::Composed(ComposedM1StepWorkspaceImageV1 {
                 plan,
-                image: image.into_boxed_slice(),
+                image,
             })
         }
         Err(error) => rejected(error, plan, inputs, kv_page_indices),

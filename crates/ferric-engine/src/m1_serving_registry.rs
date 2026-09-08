@@ -252,6 +252,23 @@ struct M1ServingEntryV1 {
     last_quiescence: Option<CompletionEpoch>,
 }
 
+/// Preallocated private entry storage for an all-terminal window replacement.
+///
+/// The entries remain inaccessible so this storage cannot manufacture registry
+/// membership or publication authority.
+#[derive(Debug)]
+pub(crate) struct M1ServingNewWindowEntryStorageV1 {
+    entries: Vec<M1ServingEntryV1>,
+}
+
+impl M1ServingNewWindowEntryStorageV1 {
+    pub(crate) fn try_new(capacity: usize) -> Option<Self> {
+        let mut entries = Vec::new();
+        entries.try_reserve_exact(capacity).ok()?;
+        Some(Self { entries })
+    }
+}
+
 /// Stable fail-closed serving-registry rejection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1ServingRegistryErrorV1 {
@@ -1110,6 +1127,23 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         requests: Box<[RequestId]>,
     ) -> Result<M1ServingNewWindowPublicationReservationV1, M1ServingNewWindowReservationFailureV1>
     {
+        let Some(storage) = M1ServingNewWindowEntryStorageV1::try_new(requests.len()) else {
+            return Err(M1ServingNewWindowReservationFailureV1 {
+                error: M1ServingRegistryErrorV1::HostAllocation,
+                plan,
+                requests,
+            });
+        };
+        self.reserve_completed_window_replacement_with_storage(plan, requests, storage)
+    }
+
+    pub(crate) fn reserve_completed_window_replacement_with_storage(
+        &mut self,
+        plan: M1ServingPlanV1,
+        requests: Box<[RequestId]>,
+        storage: M1ServingNewWindowEntryStorageV1,
+    ) -> Result<M1ServingNewWindowPublicationReservationV1, M1ServingNewWindowReservationFailureV1>
+    {
         let reject = |error, requests| {
             Err(M1ServingNewWindowReservationFailureV1 {
                 error,
@@ -1194,8 +1228,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             );
         };
 
-        let mut next_entries = Vec::new();
-        if next_entries.try_reserve_exact(requests.len()).is_err() {
+        let mut next_entries = storage.entries;
+        next_entries.clear();
+        if next_entries.capacity() < requests.len() {
             return reject(M1ServingRegistryErrorV1::HostAllocation, requests);
         }
         next_entries.extend(requests.iter().copied().map(|request| M1ServingEntryV1 {

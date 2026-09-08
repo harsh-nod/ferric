@@ -376,6 +376,23 @@ impl<T> M1RearmRoundHistoryV1<T> {
         }
     }
 
+    pub(crate) fn has_reserved_append_capacity(&self, additional: usize) -> bool {
+        if self.len().saturating_add(additional) > M1_MAX_REARM_ROUND_HISTORY_V1 {
+            return false;
+        }
+        match self {
+            Self::Empty => additional <= 1,
+            Self::Reserved(earlier) => earlier.capacity() >= additional.saturating_sub(1),
+            Self::NonEmpty(history) => {
+                history
+                    .earlier
+                    .capacity()
+                    .saturating_sub(history.earlier.len())
+                    >= additional
+            }
+        }
+    }
+
     pub(crate) fn append(self, entry: T) -> M1NonEmptyRearmRoundHistoryV1<T> {
         match self {
             Self::Empty => M1NonEmptyRearmRoundHistoryV1 {
@@ -3166,71 +3183,114 @@ pub(crate) fn rebuild_bound_rows(
     previous_capture: &RetainedHostCaptureRangesV1,
     retained_capture: &RetainedHostCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
-    let mut old_rows = Vec::new();
-    old_rows
-        .try_reserve_exact(old_bound_rows.len())
-        .map_err(|_| ())?;
-    for old in old_bound_rows {
-        let mut buffers = Vec::new();
-        buffers
-            .try_reserve_exact(old.buffers().len())
-            .map_err(|_| ())?;
-        buffers.extend(old.buffers().iter().map(|buffer| RearmBoundRangeV1 {
-            explicit_argument_index: buffer.explicit_argument_index(),
-            range: buffer.range(),
-        }));
-        old_rows.push(RearmBoundRowV1 {
-            dispatch_index: old.dispatch_index(),
-            profile_id: old.profile_id(),
-            program: old.program(),
-            buffers,
-        });
-    }
-    let rebuilt = rebuild_bound_row_ranges(
+    rebuild_bound_rows_core(
         source_rows,
-        &old_rows,
+        old_bound_rows,
         composition,
-        previous_capture
-            .ranges
-            .map(ServiceDispatchRangeV1::HostVisible),
-        retained_capture
-            .ranges
-            .map(ServiceDispatchRangeV1::HostVisible),
-        |workspace, requested| {
-            Ok((
-                workspace,
-                ServiceDispatchRangeV1::Device(resolve_fresh_workspace_range(
-                    workspace,
-                    requested,
-                    workspace_ranges,
-                )?),
-            ))
-        },
-    )?;
-    let mut rows = Vec::new();
-    rows.try_reserve_exact(rebuilt.len()).map_err(|_| ())?;
-    for ((source, rebuilt), old) in source_rows.iter().zip(rebuilt).zip(old_bound_rows) {
-        let mut buffers = Vec::new();
-        buffers
-            .try_reserve_exact(rebuilt.buffers.len())
-            .map_err(|_| ())?;
-        for ((semantic, buffer), old_buffer) in source
-            .buffers()
-            .iter()
-            .zip(rebuilt.buffers)
-            .zip(old.buffers())
+        workspace_ranges,
+        previous_capture,
+        retained_capture,
+        None,
+    )
+}
+
+pub(crate) fn rebuild_bound_rows_with_storage(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    previous_capture: &RetainedHostCaptureRangesV1,
+    retained_capture: &RetainedHostCaptureRangesV1,
+    storage: M1RolloverBoundRowsHostStorageV1,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    rebuild_bound_rows_core(
+        source_rows,
+        old_bound_rows,
+        composition,
+        workspace_ranges,
+        previous_capture,
+        retained_capture,
+        Some(storage),
+    )
+}
+
+fn rebuild_bound_rows_core(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    previous_capture: &RetainedHostCaptureRangesV1,
+    retained_capture: &RetainedHostCaptureRangesV1,
+    storage: Option<M1RolloverBoundRowsHostStorageV1>,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    if source_rows.len() != old_bound_rows.len() {
+        return Err(());
+    }
+    let (mut rows, buffers) = storage
+        .map(|storage| (storage.rows, storage.buffers))
+        .unwrap_or_default();
+    rows.clear();
+    if rows.capacity() < source_rows.len() {
+        rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
+    }
+    let previous = previous_capture
+        .ranges
+        .map(ServiceDispatchRangeV1::HostVisible);
+    let retained = retained_capture
+        .ranges
+        .map(ServiceDispatchRangeV1::HostVisible);
+    let mut selection = RearmRangeSelectionV1::new(&retained_capture.ranges.semantic);
+    let mut buffers = buffers.into_iter();
+    for (source, old) in source_rows.iter().zip(old_bound_rows) {
+        if source.dispatch_index() != old.dispatch_index()
+            || source.profile_id() != old.profile_id()
+            || source.program() != old.program()
+            || source.buffers().len() != old.buffers().len()
         {
+            return Err(());
+        }
+        let mut row_buffers = buffers.next().unwrap_or_default();
+        row_buffers.clear();
+        if row_buffers.capacity() < source.buffers().len() {
+            row_buffers
+                .try_reserve_exact(source.buffers().len())
+                .map_err(|_| ())?;
+        }
+        for (semantic, old_buffer) in source.buffers().iter().zip(old.buffers()) {
+            if semantic.explicit_argument_index() != old_buffer.explicit_argument_index() {
+                return Err(());
+            }
+            let request = requested_workspace_range(
+                semantic.source(),
+                composition,
+                &retained_capture.ranges.semantic,
+            )?;
+            let fresh = match request {
+                RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
+                    Some(ServiceDispatchRangeV1::Device(
+                        resolve_fresh_workspace_range(workspace, requested, workspace_ranges)?,
+                    ))
+                }
+                RearmRangeRequestV1::RetainedCompletionOutput
+                | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                | RearmRangeRequestV1::RetainedSpeculativeTargetChoices
+                | RearmRangeRequestV1::Unchanged => None,
+            };
+            let range = selection.select(request, old_buffer.range(), fresh, previous, retained)?;
             let completed_snapshot = select_rearm_completed_snapshot(
                 semantic.source(),
                 old_buffer.completed_snapshot(),
                 retained_capture.completion_snapshot,
             )?;
-            buffers.push(match buffer.range {
+            row_buffers.push(match range {
                 ServiceDispatchRangeV1::Device(range) => {
                     if completed_snapshot.is_some() {
                         return Err(());
                     }
-                    ServiceFixedDispatchBufferV1::new(buffer.explicit_argument_index, range)
+                    ServiceFixedDispatchBufferV1::new(semantic.explicit_argument_index(), range)
                 }
                 ServiceDispatchRangeV1::HostVisible(range) => {
                     if matches!(
@@ -3239,31 +3299,32 @@ pub(crate) fn rebuild_bound_rows(
                     ) {
                         match completed_snapshot {
                             Some(snapshot) => ServiceFixedDispatchBufferV1::new_host_visible_with_completed_snapshot(
-                                buffer.explicit_argument_index,
+                                semantic.explicit_argument_index(),
                                 range,
                                 snapshot,
                             )
                             .map_err(|_| ())?,
                             None => ServiceFixedDispatchBufferV1::new_host_visible(
-                                buffer.explicit_argument_index,
+                                semantic.explicit_argument_index(),
                                 range,
                             ),
                         }
                     } else {
                         debug_assert!(completed_snapshot.is_none());
                         ServiceFixedDispatchBufferV1::new_host_visible(
-                            buffer.explicit_argument_index,
+                            semantic.explicit_argument_index(),
                             range,
                         )
                     }
                 }
             });
         }
-        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm(
+        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm_vec(
             source,
-            buffers.into_boxed_slice(),
+            row_buffers,
         ));
     }
+    selection.validate()?;
     Ok(rows.into_boxed_slice())
 }
 
@@ -3301,17 +3362,87 @@ pub(crate) fn build_rollover_bound_rows(
     workspace_ranges: &[FreshWorkspaceRangeV1],
     retained_capture: &RetainedHostCaptureRangesV1,
 ) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    build_rollover_bound_rows_core(
+        source_rows,
+        old_source_rows,
+        old_bound_rows,
+        composition,
+        workspace_ranges,
+        retained_capture,
+        None,
+    )
+}
+
+#[derive(Debug)]
+pub(crate) struct M1RolloverBoundRowsHostStorageV1 {
+    rows: Vec<M1BoundPhysicalBufferRowV1>,
+    buffers: Vec<Vec<ServiceFixedDispatchBufferV1>>,
+}
+
+impl M1RolloverBoundRowsHostStorageV1 {
+    pub(crate) fn try_new(row_count: usize, buffers_per_row: usize) -> Option<Self> {
+        let mut rows = Vec::new();
+        let mut buffers = Vec::new();
+        rows.try_reserve_exact(row_count).ok()?;
+        buffers.try_reserve_exact(row_count).ok()?;
+        for _ in 0..row_count {
+            let mut row = Vec::new();
+            row.try_reserve_exact(buffers_per_row).ok()?;
+            buffers.push(row);
+        }
+        Some(Self { rows, buffers })
+    }
+}
+
+pub(crate) fn build_rollover_bound_rows_with_storage(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    retained_capture: &RetainedHostCaptureRangesV1,
+    storage: M1RolloverBoundRowsHostStorageV1,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
+    build_rollover_bound_rows_core(
+        source_rows,
+        old_source_rows,
+        old_bound_rows,
+        composition,
+        workspace_ranges,
+        retained_capture,
+        Some(storage),
+    )
+}
+
+fn build_rollover_bound_rows_core(
+    source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_source_rows: &[M1PhysicalBufferRecipeRowV1],
+    old_bound_rows: &[M1BoundPhysicalBufferRowV1],
+    composition: &AddresslessM1FullStepWorkspaceComposition,
+    workspace_ranges: &[FreshWorkspaceRangeV1],
+    retained_capture: &RetainedHostCaptureRangesV1,
+    storage: Option<M1RolloverBoundRowsHostStorageV1>,
+) -> Result<Box<[M1BoundPhysicalBufferRowV1]>, ()> {
     let retained = retained_capture
         .ranges
         .map(ServiceDispatchRangeV1::HostVisible);
     let mut selection = RearmRangeSelectionV1::new(&retained_capture.ranges.semantic);
-    let mut rows = Vec::new();
-    rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
+    let (mut rows, buffers) = storage
+        .map(|storage| (storage.rows, storage.buffers))
+        .unwrap_or_default();
+    rows.clear();
+    if rows.capacity() < source_rows.len() {
+        rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
+    }
+    let mut buffers = buffers.into_iter();
     for source_row in source_rows {
-        let mut buffers = Vec::new();
-        buffers
-            .try_reserve_exact(source_row.buffers().len())
-            .map_err(|_| ())?;
+        let mut row_buffers = buffers.next().unwrap_or_default();
+        row_buffers.clear();
+        if row_buffers.capacity() < source_row.buffers().len() {
+            row_buffers
+                .try_reserve_exact(source_row.buffers().len())
+                .map_err(|_| ())?;
+        }
         for semantic in source_row.buffers() {
             let request = requested_workspace_range(
                 semantic.source(),
@@ -3338,7 +3469,7 @@ pub(crate) fn build_rollover_bound_rows(
             };
             let range = selection.select_fresh(request, fresh, retained)?;
             let argument = semantic.explicit_argument_index();
-            buffers.push(match range {
+            row_buffers.push(match range {
                 ServiceDispatchRangeV1::Device(range) => {
                     ServiceFixedDispatchBufferV1::new(argument, range)
                 }
@@ -3362,9 +3493,9 @@ pub(crate) fn build_rollover_bound_rows(
                 }
             });
         }
-        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm(
+        rows.push(M1BoundPhysicalBufferRowV1::from_queue_rearm_vec(
             source_row,
-            buffers.into_boxed_slice(),
+            row_buffers,
         ));
     }
     selection.validate()?;
@@ -3372,12 +3503,14 @@ pub(crate) fn build_rollover_bound_rows(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(test)]
 struct RearmBoundRangeV1<T> {
     explicit_argument_index: usize,
     range: T,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg(test)]
 struct RearmBoundRowV1<T> {
     dispatch_index: u32,
     profile_id: ferric_spec::Identity,
@@ -3385,6 +3518,7 @@ struct RearmBoundRowV1<T> {
     buffers: Vec<RearmBoundRangeV1<T>>,
 }
 
+#[cfg(test)]
 fn rebuild_bound_row_ranges<T: Copy + Eq>(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[RearmBoundRowV1<T>],
@@ -3406,6 +3540,7 @@ fn rebuild_bound_row_ranges<T: Copy + Eq>(
     )
 }
 
+#[cfg(test)]
 fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
     source_rows: &[M1PhysicalBufferRecipeRowV1],
     old_bound_rows: &[RearmBoundRowV1<T>],
@@ -11430,9 +11565,9 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
 
     let (binding, draft_prefill, target_prefill, preparation_plans, recipe_plans) =
         input.into_parts();
-    let recipe = match runner.derive_step_recipe(
+    let recipe = match recipe_plans.derive(
+        runner.operations(),
         crate::M1StepDispatchIntent::PairedPrefill(next.target()),
-        recipe_plans,
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
         M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {

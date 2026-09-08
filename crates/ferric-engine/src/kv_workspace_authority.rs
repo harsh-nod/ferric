@@ -700,6 +700,47 @@ pub fn bind_m1_kv_workspace_table_v1(
     inputs: ValidatedM1StepInputs,
     reservations: Vec<PendingDeviceKvStepWrite>,
 ) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
+    bind_m1_kv_workspace_table_core_v1(inputs, reservations, None)
+}
+
+#[derive(Debug)]
+pub(crate) struct M1KvWorkspaceTableHostStorageV1 {
+    seen_pages: Vec<u32>,
+    page_table: Vec<u32>,
+}
+
+impl M1KvWorkspaceTableHostStorageV1 {
+    pub(crate) fn try_new(sequence_count: usize) -> Option<Self> {
+        let physical_page_slots = usize::try_from(M1_KV_PHYSICAL_PAGE_SLOTS_V1).ok()?;
+        let entries_per_sequence =
+            usize::try_from(M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1).ok()?;
+        let table_entries = sequence_count.checked_mul(entries_per_sequence)?;
+        let mut seen_pages = Vec::new();
+        let mut page_table = Vec::new();
+        seen_pages.try_reserve_exact(physical_page_slots).ok()?;
+        page_table.try_reserve_exact(table_entries).ok()?;
+        seen_pages.resize(physical_page_slots, UNSEEN_PHYSICAL_PAGE);
+        page_table.resize(table_entries, 0);
+        Some(Self {
+            seen_pages,
+            page_table,
+        })
+    }
+}
+
+pub(crate) fn bind_m1_kv_workspace_table_with_storage_v1(
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingDeviceKvStepWrite>,
+    storage: M1KvWorkspaceTableHostStorageV1,
+) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
+    bind_m1_kv_workspace_table_core_v1(inputs, reservations, Some(storage))
+}
+
+fn bind_m1_kv_workspace_table_core_v1(
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingDeviceKvStepWrite>,
+    storage: Option<M1KvWorkspaceTableHostStorageV1>,
+) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
     let live_lanes = usize::try_from(inputs.live_lane_count()).unwrap_or(usize::MAX);
     if reservations.len() != live_lanes {
         return reject(
@@ -734,8 +775,12 @@ pub fn bind_m1_kv_workspace_table_v1(
     };
 
     let physical_page_slots = usize::try_from(M1_KV_PHYSICAL_PAGE_SLOTS_V1).unwrap_or(usize::MAX);
-    let mut seen_pages = Vec::new();
-    if seen_pages.try_reserve_exact(physical_page_slots).is_err() {
+    let (mut seen_pages, mut page_table) = storage
+        .map(|storage| (storage.seen_pages, storage.page_table))
+        .unwrap_or_default();
+    if seen_pages.capacity() < physical_page_slots
+        && seen_pages.try_reserve_exact(physical_page_slots).is_err()
+    {
         return reject(
             M1KvWorkspaceTableBindingErrorV1::HostValidationReservation {
                 entries: physical_page_slots,
@@ -744,6 +789,17 @@ pub fn bind_m1_kv_workspace_table_v1(
             reservations,
         );
     }
+    if page_table.capacity() < table_entries && page_table.try_reserve_exact(table_entries).is_err()
+    {
+        return reject(
+            M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
+                entries: table_entries,
+            },
+            inputs,
+            reservations,
+        );
+    }
+    seen_pages.clear();
     seen_pages.resize(physical_page_slots, UNSEEN_PHYSICAL_PAGE);
     let mut allocation_id = None;
     for (lane, reservation) in reservations.iter().enumerate() {
@@ -966,16 +1022,7 @@ pub fn bind_m1_kv_workspace_table_v1(
             reservations,
         );
     };
-    let mut page_table = Vec::new();
-    if page_table.try_reserve_exact(table_entries).is_err() {
-        return reject(
-            M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
-                entries: table_entries,
-            },
-            inputs,
-            reservations,
-        );
-    }
+    page_table.clear();
     page_table.resize(table_entries, 0);
     for (lane, reservation) in reservations.iter().enumerate() {
         let row_start = lane * entries_per_sequence;
@@ -1043,6 +1090,7 @@ fn build_speculative_draft_round_page_table(
     inputs: &ValidatedM1StepInputs,
     reservations: &[PendingSpeculativeDraftKvRoundWrite],
     draft_speculative_selection: Qwen3PlanSelection,
+    storage: Option<M1KvWorkspaceTableHostStorageV1>,
 ) -> Result<(Identity, Box<[u32]>), M1KvWorkspaceTableBindingErrorV1> {
     let sequence_count = usize::try_from(inputs.dimensions().sequences)
         .map_err(|_| M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
@@ -1052,14 +1100,25 @@ fn build_speculative_draft_round_page_table(
         .checked_mul(entries_per_sequence)
         .ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
     let physical_page_slots = usize::try_from(M1_KV_PHYSICAL_PAGE_SLOTS_V1).unwrap_or(usize::MAX);
-    let mut seen_pages = Vec::new();
-    if seen_pages.try_reserve_exact(physical_page_slots).is_err() {
+    let (mut seen_pages, mut page_table) = storage
+        .map(|storage| (storage.seen_pages, storage.page_table))
+        .unwrap_or_default();
+    if seen_pages.capacity() < physical_page_slots
+        && seen_pages.try_reserve_exact(physical_page_slots).is_err()
+    {
         return Err(
             M1KvWorkspaceTableBindingErrorV1::HostValidationReservation {
                 entries: physical_page_slots,
             },
         );
     }
+    if page_table.capacity() < table_entries && page_table.try_reserve_exact(table_entries).is_err()
+    {
+        return Err(M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
+            entries: table_entries,
+        });
+    }
+    seen_pages.clear();
     seen_pages.resize(physical_page_slots, UNSEEN_PHYSICAL_PAGE);
 
     let mut allocation_id = None;
@@ -1141,12 +1200,7 @@ fn build_speculative_draft_round_page_table(
     }
 
     let allocation_id = allocation_id.ok_or(M1KvWorkspaceTableBindingErrorV1::TableExtent)?;
-    let mut page_table = Vec::new();
-    if page_table.try_reserve_exact(table_entries).is_err() {
-        return Err(M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
-            entries: table_entries,
-        });
-    }
+    page_table.clear();
     page_table.resize(table_entries, 0);
     for (lane, aggregate) in reservations.iter().enumerate() {
         let row_start = lane
@@ -1196,6 +1250,40 @@ pub fn bind_m1_speculative_draft_kv_round_workspace_table_v1(
     target_speculative_selection: Qwen3PlanSelection,
     inputs: ValidatedM1StepInputs,
     reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+) -> Result<
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
+    Box<M1SpeculativeDraftKvRoundBindingFailureV1>,
+> {
+    bind_m1_speculative_draft_kv_round_workspace_table_core_v1(
+        target_speculative_selection,
+        inputs,
+        reservations,
+        None,
+    )
+}
+
+pub(crate) fn bind_m1_speculative_draft_kv_round_workspace_table_with_storage_v1(
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+    storage: M1KvWorkspaceTableHostStorageV1,
+) -> Result<
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
+    Box<M1SpeculativeDraftKvRoundBindingFailureV1>,
+> {
+    bind_m1_speculative_draft_kv_round_workspace_table_core_v1(
+        target_speculative_selection,
+        inputs,
+        reservations,
+        Some(storage),
+    )
+}
+
+fn bind_m1_speculative_draft_kv_round_workspace_table_core_v1(
+    target_speculative_selection: Qwen3PlanSelection,
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+    storage: Option<M1KvWorkspaceTableHostStorageV1>,
 ) -> Result<
     BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
     Box<M1SpeculativeDraftKvRoundBindingFailureV1>,
@@ -1437,6 +1525,7 @@ pub fn bind_m1_speculative_draft_kv_round_workspace_table_v1(
         &inputs,
         &reservations,
         draft_speculative_selection,
+        storage,
     ) {
         Ok(table) => table,
         Err(error) => {

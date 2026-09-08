@@ -478,6 +478,7 @@ impl M1R33AuthenticatedS1T128BootstrapBindingV1 {
     /// Rejects an invalid window, any roster other than one ordinal-zero
     /// request, a prompt mismatch, or an output-limit mismatch. The returned
     /// failure retains the unchanged move-only bootstrap input.
+    #[allow(clippy::result_large_err)]
     pub fn bind(
         window: &M1R33WorkloadWindowV1,
         input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
@@ -672,6 +673,7 @@ impl M1R33AuthenticatedResidentAdmissionFailureV1 {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum M1R33AuthenticatedRunnerCustodyV1 {
     MissingBootstrap {
         _runner: M1AuthenticatedPhysicalRunnerV1,
@@ -879,9 +881,13 @@ impl M1R33AuthenticatedProductionBackendV1 {
     pub fn new_with_s1_k4_resident_windows(
         runner: M1AuthenticatedPhysicalRunnerV1,
         model_memory: M1PartitionedModelMemoryKvPoolV1,
-        windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
+        mut windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
     ) -> Result<Self, M1R33AuthenticatedResidentAdmissionFailureV1> {
-        if !exact_resident_roster(&windows) {
+        if !exact_resident_roster(&windows)
+            || windows
+                .iter_mut()
+                .any(|window| !window.input.prepare_for_authenticated_runner(&runner))
+        {
             return Err(M1R33AuthenticatedResidentAdmissionFailureV1 {
                 runner,
                 model_memory,
@@ -1755,6 +1761,7 @@ mod tests {
         .unwrap()
     }
 
+    #[allow(clippy::result_large_err)]
     fn resident_input_with_output(
         prompt: Vec<u32>,
         expected_output_tokens: u32,

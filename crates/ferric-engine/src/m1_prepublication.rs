@@ -7,6 +7,7 @@
 
 use core::fmt;
 
+use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
     Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
     StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
@@ -753,6 +754,59 @@ pub fn prepare_m1_scheduled_workspace_images_v1(
     plans: M1FullStepWorkspacePlans,
     tables: M1FullStepKvWorkspaceTablesV1,
 ) -> Result<M1PreparedScheduledWorkspaceImagesV1, M1PrepareFailureV1> {
+    prepare_m1_scheduled_workspace_images_core_v1(scheduled, runner, plans, tables, None)
+}
+
+#[derive(Debug)]
+pub(crate) struct M1FullStepWorkspaceImageHostStorageV1 {
+    draft: Option<Box<[u8]>>,
+    target: Option<Box<[u8]>>,
+}
+
+impl M1FullStepWorkspaceImageHostStorageV1 {
+    pub(crate) fn try_new(plans: &M1FullStepWorkspacePlans) -> Option<Self> {
+        fn image(plan: &AddresslessM1StepWorkspacePlan) -> Option<Box<[u8]>> {
+            let len = usize::try_from(plan.allocation().byte_len()).ok()?;
+            let mut image = Vec::new();
+            image.try_reserve_exact(len).ok()?;
+            image.resize(len, 0);
+            Some(image.into_boxed_slice())
+        }
+
+        match plans {
+            M1FullStepWorkspacePlans::TargetOnly { target } => Some(Self {
+                draft: None,
+                target: Some(image(target)?),
+            }),
+            M1FullStepWorkspacePlans::PairedPrefill { draft, target }
+            | M1FullStepWorkspacePlans::SpeculativeRound {
+                draft_decode: draft,
+                target_speculative: target,
+            } => Some(Self {
+                draft: Some(image(draft)?),
+                target: Some(image(target)?),
+            }),
+        }
+    }
+}
+
+pub(crate) fn prepare_m1_scheduled_workspace_images_with_storage_v1(
+    scheduled: M1ScheduledDispatchV1,
+    runner: &LogicalRunnerDeclaration,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+    storage: M1FullStepWorkspaceImageHostStorageV1,
+) -> Result<M1PreparedScheduledWorkspaceImagesV1, M1PrepareFailureV1> {
+    prepare_m1_scheduled_workspace_images_core_v1(scheduled, runner, plans, tables, Some(storage))
+}
+
+fn prepare_m1_scheduled_workspace_images_core_v1(
+    scheduled: M1ScheduledDispatchV1,
+    runner: &LogicalRunnerDeclaration,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+    storage: Option<M1FullStepWorkspaceImageHostStorageV1>,
+) -> Result<M1PreparedScheduledWorkspaceImagesV1, M1PrepareFailureV1> {
     let target_plans = match validate_join(&scheduled, runner, &plans, &tables) {
         Ok(plans) => plans,
         Err(error) => {
@@ -764,7 +818,7 @@ pub fn prepare_m1_scheduled_workspace_images_v1(
             }))
         }
     };
-    let (outcomes, kv) = compose_all(plans, tables);
+    let (outcomes, kv) = compose_all(plans, tables, storage);
     match collect_composed(outcomes) {
         Ok(images) => {
             let (plans, images) = images.into_allocation_inputs();
@@ -1357,7 +1411,26 @@ enum FullComposeOutcomes {
 fn compose_all(
     plans: M1FullStepWorkspacePlans,
     tables: M1FullStepKvWorkspaceTablesV1,
+    mut storage: Option<M1FullStepWorkspaceImageHostStorageV1>,
 ) -> (FullComposeOutcomes, M1FullStepKvReservationCustodyV1) {
+    let mut compose = |plan, inputs, pages, draft| match storage.as_mut() {
+        Some(storage) => {
+            let image = if draft {
+                storage.draft.take()
+            } else {
+                storage.target.take()
+            };
+            match image {
+                Some(image) => {
+                    crate::step_workspace_images::compose_m1_step_workspace_image_with_storage_v1(
+                        plan, inputs, pages, image,
+                    )
+                }
+                None => compose_m1_step_workspace_image_v1(plan, inputs, pages),
+            }
+        }
+        None => compose_m1_step_workspace_image_v1(plan, inputs, pages),
+    };
     match (plans, tables) {
         (
             M1FullStepWorkspacePlans::TargetOnly { target: plan },
@@ -1365,9 +1438,7 @@ fn compose_all(
         ) => {
             let (inputs, pages, reservations) = target.into_workspace_image_parts();
             (
-                FullComposeOutcomes::TargetOnly(compose_m1_step_workspace_image_v1(
-                    *plan, inputs, pages,
-                )),
+                FullComposeOutcomes::TargetOnly(compose(*plan, inputs, pages, false)),
                 M1FullStepKvReservationCustodyV1::TargetOnly {
                     target: reservations,
                 },
@@ -1386,8 +1457,8 @@ fn compose_all(
                 target.into_workspace_image_parts();
             (
                 FullComposeOutcomes::PairedPrefill(
-                    compose_m1_step_workspace_image_v1(*draft_plan, draft_inputs, draft_pages),
-                    compose_m1_step_workspace_image_v1(*target_plan, target_inputs, target_pages),
+                    compose(*draft_plan, draft_inputs, draft_pages, true),
+                    compose(*target_plan, target_inputs, target_pages, false),
                 ),
                 M1FullStepKvReservationCustodyV1::PairedPrefill {
                     draft: draft_reservations,
@@ -1411,8 +1482,8 @@ fn compose_all(
                 target_speculative.into_workspace_image_parts();
             (
                 FullComposeOutcomes::SpeculativeRound(
-                    compose_m1_step_workspace_image_v1(*draft_plan, draft_inputs, draft_pages),
-                    compose_m1_step_workspace_image_v1(*target_plan, target_inputs, target_pages),
+                    compose(*draft_plan, draft_inputs, draft_pages, true),
+                    compose(*target_plan, target_inputs, target_pages, false),
                 ),
                 M1FullStepKvReservationCustodyV1::SpeculativeRound {
                     draft_decode: draft_reservations,

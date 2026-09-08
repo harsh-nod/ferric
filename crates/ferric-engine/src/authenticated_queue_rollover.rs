@@ -21,6 +21,7 @@ use ferric_spec::{
 
 use crate::authenticated_speculative_executor::{
     speculative_validated_pair_matches_binding, upgrade_m1_authenticated_speculative_lineage_v1,
+    upgrade_m1_authenticated_speculative_lineage_with_seeds_v1,
     M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
     M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
 };
@@ -38,8 +39,8 @@ use crate::m1_serving_registry::{
 use crate::{
     ActiveDeviceKvCache, AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
     DeviceKvCacheProjection, DeviceKvPageLease, Engine, LogicalRunnerDeclaration,
-    M1AuthenticatedPhysicalQueuePhaseCaseV1, M1AuthenticatedPhysicalQueueSessionV1,
-    M1AuthenticatedPhysicalQueueSubmitFailureV1,
+    M1AuthenticatedPhysicalQueuePhaseOwnerV1, M1AuthenticatedPhysicalQueuePhaseSlotV1,
+    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueSubmitFailureV1,
     M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     M1AuthenticatedPhysicalReadbackQueueOperationFailureV1, M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedReleasedCompletedStepV1, M1FiniteSpeculativeQueueRolloverKvInputsV1,
@@ -51,10 +52,160 @@ use crate::{
     M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1,
     M1ServingQueuedPairedPrefillNewWindowV1, M1ServingRolloverReasonV1,
     M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1, M1StepDispatchIntent,
-    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1, M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    PendingDeviceKvStepWrite, PendingSpeculativeDraftKvRoundWrite,
+    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
+
+/// Queue-shape slots allocated while a resident window is still cold.
+///
+/// The slots are inert until the authenticated rollover installs the exact
+/// lower queue and its Ferric custody. They cannot mint queue authority.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentQueuePhaseStorageV1 {
+    paired_prefill: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
+    >,
+    speculative_k4: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
+    >,
+    replaced_lanes: Vec<bool>,
+    physical_member_intents: Option<Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>>,
+    new_window_selected: Vec<ActiveDeviceKvCache>,
+    new_window_draft_reservations: Vec<PendingDeviceKvStepWrite>,
+    new_window_target_reservations: Vec<PendingDeviceKvStepWrite>,
+    new_window_draft_page_leases: Vec<Vec<DeviceKvPageLease>>,
+    new_window_target_page_leases: Vec<Vec<DeviceKvPageLease>>,
+    successor_projections: Vec<DeviceKvCacheProjection>,
+    successor_draft_page_leases: Vec<Vec<DeviceKvPageLease>>,
+    successor_target_page_leases: Vec<Vec<DeviceKvPageLease>>,
+    successor_selected: Vec<ActiveDeviceKvCache>,
+    successor_draft_reservations: Vec<PendingSpeculativeDraftKvRoundWrite>,
+    successor_target_reservations: Vec<PendingDeviceKvStepWrite>,
+    new_window_draft_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    new_window_target_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    successor_draft_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    successor_target_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    new_window_images: Option<crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1>,
+    successor_images: Option<crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1>,
+    new_window_workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
+    successor_workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
+    new_window_bound_rows: Option<crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1>,
+    successor_bound_rows: Option<crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1>,
+    packet_batches: crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1,
+    successor_round_history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
+    successor_lineage_seeds: Vec<crate::M1SpeculativeMemberSeedV1>,
+}
+
+fn resident_vec_with_capacity<T>(capacity: usize) -> Option<Vec<T>> {
+    let mut values = Vec::new();
+    values.try_reserve_exact(capacity).ok()?;
+    Some(values)
+}
+
+impl M1AuthenticatedResidentQueuePhaseStorageV1 {
+    pub(crate) fn try_new(
+        new_window_plans: &M1FullStepWorkspacePlans,
+        successor_plans: &M1FullStepWorkspacePlans,
+    ) -> Option<Self> {
+        let mut replaced_lanes = Vec::new();
+        replaced_lanes
+            .try_reserve_exact(M1_MAX_ACTIVE_SEQUENCES as usize)
+            .ok()?;
+        let page_roster = |pages: usize| -> Option<Vec<Vec<DeviceKvPageLease>>> {
+            let mut outer = Vec::new();
+            outer.try_reserve_exact(1).ok()?;
+            let mut inner = Vec::new();
+            inner.try_reserve_exact(pages).ok()?;
+            outer.push(inner);
+            Some(outer)
+        };
+        let mut successor_round_history = crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty;
+        successor_round_history
+            .try_reserve_additional(crate::M1_MAX_REARM_ROUND_HISTORY_V1)
+            .ok()?;
+        Some(Self {
+            paired_prefill: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            speculative_k4: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            replaced_lanes,
+            physical_member_intents: Some(resident_vec_with_capacity(1)?),
+            new_window_selected: resident_vec_with_capacity(1)?,
+            new_window_draft_reservations: resident_vec_with_capacity(1)?,
+            new_window_target_reservations: resident_vec_with_capacity(1)?,
+            new_window_draft_page_leases: page_roster(
+                128_usize.div_ceil(M1_KV_PAGE_TOKENS as usize),
+            )?,
+            new_window_target_page_leases: page_roster(
+                128_usize.div_ceil(M1_KV_PAGE_TOKENS as usize),
+            )?,
+            successor_projections: resident_vec_with_capacity(1)?,
+            successor_draft_page_leases: page_roster(1)?,
+            successor_target_page_leases: page_roster(1)?,
+            successor_selected: resident_vec_with_capacity(1)?,
+            successor_draft_reservations: resident_vec_with_capacity(1)?,
+            successor_target_reservations: resident_vec_with_capacity(1)?,
+            new_window_draft_table: Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(1)?,
+            ),
+            new_window_target_table: Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(1)?,
+            ),
+            successor_draft_table: Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(1)?,
+            ),
+            successor_target_table: Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(1)?,
+            ),
+            new_window_images: Some(
+                crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1::try_new(
+                    new_window_plans,
+                )?,
+            ),
+            successor_images: Some(
+                crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1::try_new(
+                    successor_plans,
+                )?,
+            ),
+            new_window_workspace_ranges: resident_vec_with_capacity(
+                M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
+                    + M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            )?,
+            successor_workspace_ranges: resident_vec_with_capacity(
+                M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
+                    + M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            )?,
+            new_window_bound_rows: Some(
+                crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
+                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+                    16,
+                )?,
+            ),
+            successor_bound_rows: Some(
+                crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                    16,
+                )?,
+            ),
+            packet_batches:
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new(),
+            successor_round_history,
+            successor_lineage_seeds: resident_vec_with_capacity(1)?,
+        })
+    }
+
+    pub(crate) fn prepare_recipes(
+        &mut self,
+        new_window: &AddresslessM1PhysicalBufferRecipeV1,
+        successor: &AddresslessM1PhysicalBufferRecipeV1,
+    ) -> bool {
+        new_window.rows().len() == M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+            && successor.rows().len() == M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+            && self.packet_batches.prepare_recipe(new_window)
+            && self.packet_batches.prepare_recipe(successor)
+    }
+}
 
 /// One request and immutable generation policy fixed before paired-prefill
 /// publication.
@@ -437,7 +588,7 @@ pub struct M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
     intent: Box<M1AuthenticatedSpeculativeRolloverIntentV1>,
     coordinator: Box<M1SpeculativeGenerationLoopV1>,
     inputs: Box<M1AuthenticatedSpeculativeRolloverInputsV1>,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
     prior_window_continuation: Box<M1AuthenticatedSpeculativePriorWindowContinuationV1>,
 }
@@ -476,6 +627,7 @@ impl M1AuthenticatedSpeculativeRolloverSchedulePreDetachRetryV1 {
             self.recipe_plans,
             self.preparation_plans,
             *self.prior_window_continuation,
+            None,
         )
         .map_err(|failure| close_pending_schedule_failure(engine, failure))
     }
@@ -531,7 +683,7 @@ enum PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1 {
         intent: Box<M1AuthenticatedSpeculativeRolloverIntentV1>,
         coordinator: Box<M1SpeculativeGenerationLoopV1>,
         inputs: Box<M1AuthenticatedSpeculativeRolloverInputsV1>,
-        recipe_plans: M1FullStepWorkspacePlans,
+        recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
         preparation_plans: M1FullStepWorkspacePlans,
         prior_window_continuation: Box<M1AuthenticatedSpeculativePriorWindowContinuationV1>,
     },
@@ -722,10 +874,11 @@ pub struct M1AuthenticatedScheduledSpeculativeRolloverV1 {
     selected: Vec<ActiveDeviceKvCache>,
     residue: M1AuthenticatedSpeculativeRolloverResidueV1,
     inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
     physical_lineage: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
     logical: M1AuthenticatedSpeculativeRolloverLogicalV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 impl M1AuthenticatedScheduledSpeculativeRolloverV1 {
@@ -770,6 +923,7 @@ impl M1AuthenticatedScheduledSpeculativeRolloverV1 {
                 self.preparation_plans,
                 self.physical_lineage,
                 self.logical,
+                self.resident_phase_storage,
             )),
         }
         .destroy_queue_and_retain_custody(engine)
@@ -843,6 +997,18 @@ pub fn bind_m1_authenticated_speculative_rollover_intent_v1(
     M1AuthenticatedSpeculativeRolloverIntentPreparedV1,
     Box<M1AuthenticatedSpeculativeRolloverIntentFailureV1>,
 > {
+    bind_m1_authenticated_speculative_rollover_intent_core_v1(prepared, successor, members, None)
+}
+
+fn bind_m1_authenticated_speculative_rollover_intent_core_v1(
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    successor: M1ServingPlanV1,
+    members: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    physical_members: Option<Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>>,
+) -> Result<
+    M1AuthenticatedSpeculativeRolloverIntentPreparedV1,
+    Box<M1AuthenticatedSpeculativeRolloverIntentFailureV1>,
+> {
     let reject = |error, prepared, members| {
         Box::new(M1AuthenticatedSpeculativeRolloverIntentFailureV1 {
             error,
@@ -897,12 +1063,22 @@ pub fn bind_m1_authenticated_speculative_rollover_intent_v1(
         ));
     };
     let prefill_epoch = scheduled.epoch();
+    let mut physical_members = physical_members.unwrap_or_else(|| members.clone());
+    if physical_members.capacity() < members.len() {
+        return Err(reject(
+            M1AuthenticatedSpeculativeRolloverIntentErrorV1::Roster,
+            prepared,
+            members,
+        ));
+    }
+    physical_members.clear();
+    physical_members.extend_from_slice(&members);
     let physical = M1AuthenticatedSpeculativeRolloverPhysicalIntentV1 {
         identity,
         prefill_selection,
         speculative_selection: successor.target(),
         prefill_epoch,
-        members: members.clone().into_boxed_slice(),
+        members: physical_members.into_boxed_slice(),
     };
     let prepared = match prepared.retain_speculative_rollover_intent(physical) {
         Ok(prepared) => prepared,
@@ -1015,6 +1191,7 @@ fn preflight<const C: usize>(
     intent: &M1AuthenticatedSpeculativeRolloverIntentV1,
     coordinator: &M1SpeculativeGenerationLoopV1,
     inputs: &M1AuthenticatedSpeculativeRolloverInputsV1,
+    resident_lineage_seeds: Option<&mut Vec<crate::M1SpeculativeMemberSeedV1>>,
 ) -> Result<
     (
         M1ServingPlanV1,
@@ -1054,9 +1231,21 @@ fn preflight<const C: usize>(
     {
         return Err(M1AuthenticatedSpeculativeRolloverScheduleErrorV1::OutputReserve);
     }
-    let seeds = coordinator
-        .bootstrap_seed_snapshot()
-        .map_err(|_| M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator)?;
+    let owned_seeds;
+    let seeds = match resident_lineage_seeds {
+        Some(seeds) => {
+            coordinator
+                .write_bootstrap_seed_snapshot(seeds)
+                .map_err(|_| M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator)?;
+            seeds.as_slice()
+        }
+        None => {
+            owned_seeds = coordinator
+                .bootstrap_seed_snapshot()
+                .map_err(|_| M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator)?;
+            &owned_seeds
+        }
+    };
     if coordinator.shape().selection() != next.target() || seeds.len() != batch.requests().len() {
         return Err(M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Coordinator);
     }
@@ -1071,7 +1260,7 @@ fn preflight<const C: usize>(
         released.checked().selection(),
         released.checked().epoch(),
         batch.epoch(),
-        &seeds,
+        seeds,
     ) {
         return Err(M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Lineage);
     }
@@ -1082,6 +1271,10 @@ fn preflight<const C: usize>(
     if !speculative_validated_pair_matches_binding(draft, target, &binding) {
         return Err(M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Inputs);
     }
+    #[allow(
+        clippy::needless_range_loop,
+        reason = "lane indexes several independently authenticated parallel rosters"
+    )]
     for lane in 0..batch.requests().len() {
         let member = &released.members()[lane];
         let M1ReleasedDeviceKvMemberV1::Active(cache) = member else {
@@ -1147,9 +1340,41 @@ pub fn schedule_m1_authenticated_speculative_rollover_v1<const C: usize>(
         intent,
         coordinator,
         M1AuthenticatedSpeculativeRolloverInputsV1::Preleased(inputs),
+        crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+        preparation_plans,
+        M1AuthenticatedSpeculativePriorWindowContinuationV1::initial(),
+        None,
+    )
+    .map_err(|failure| close_pending_schedule_failure(engine, failure))
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn schedule_m1_authenticated_speculative_rollover_with_recipe_input_v1<
+    const C: usize,
+>(
+    engine: &mut Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    batch: &M1ServingBatchPlanV1,
+    intent: M1AuthenticatedSpeculativeRolloverIntentV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    preparation_plans: M1FullStepWorkspacePlans,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeRolloverV1,
+    M1AuthenticatedSpeculativeRolloverScheduleFailureV1,
+> {
+    schedule_m1_authenticated_speculative_rollover_pending_v1(
+        engine,
+        released,
+        batch,
+        intent,
+        coordinator,
+        M1AuthenticatedSpeculativeRolloverInputsV1::Preleased(inputs),
         recipe_plans,
         preparation_plans,
         M1AuthenticatedSpeculativePriorWindowContinuationV1::initial(),
+        None,
     )
     .map_err(|failure| close_pending_schedule_failure(engine, failure))
 }
@@ -1167,7 +1392,7 @@ pub struct M1AuthenticatedSpeculativeNewWindowSuccessorJoinRetryV1 {
     released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
     coordinator: M1SpeculativeGenerationLoopV1,
     inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
 }
 
@@ -1243,7 +1468,7 @@ pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1<cons
     batch: &M1ServingBatchPlanV1,
     coordinator: M1SpeculativeGenerationLoopV1,
     inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
 ) -> Result<
     M1AuthenticatedScheduledSpeculativeRolloverV1,
@@ -1276,12 +1501,22 @@ pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1<cons
         intent,
         mut prior_windows,
         next_queue_wait_timeout,
+        mut resident_phase_storage,
     } = bridge;
     prior_windows
         .last_mut()
         .expect("new-window bridge always archives its predecessor")
         .attach_physical_history(history)
         .expect("predecessor physical history is attached exactly once");
+    let history = resident_phase_storage.as_mut().map_or(
+        crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
+        |storage| {
+            core::mem::replace(
+                &mut storage.successor_round_history,
+                crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
+            )
+        },
+    );
     schedule_m1_authenticated_speculative_rollover_pending_v1(
         engine,
         released,
@@ -1293,10 +1528,11 @@ pub(crate) fn schedule_m1_authenticated_speculative_new_window_successor_v1<cons
         preparation_plans,
         M1AuthenticatedSpeculativePriorWindowContinuationV1 {
             terminal,
-            history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,
+            history,
             prior_windows,
             frozen_queue_wait_timeout: Some(next_queue_wait_timeout),
         },
+        resident_phase_storage,
     )
     .map_err(|failure| {
         M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1::Rollover(
@@ -1385,6 +1621,10 @@ fn authenticated_speculative_tail_binding_width_matches(
 pub(crate) type M1AuthenticatedSpeculativeTailPageRostersV1 =
     (Vec<Vec<DeviceKvPageLease>>, Vec<Vec<DeviceKvPageLease>>);
 
+#[allow(
+    dead_code,
+    reason = "allocating entry remains available to non-resident rollover callers"
+)]
 pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     queue: &mut M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     projections: &[crate::DeviceKvCacheProjection],
@@ -1454,13 +1694,15 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_with_rosters_v
     target_page_leases.clear();
     if (resident && projections.len() != 1)
         || (draft_page_leases.capacity() < projections.len()
-            && draft_page_leases
-                .try_reserve_exact(projections.len())
-                .is_err())
+            && (resident
+                || draft_page_leases
+                    .try_reserve_exact(projections.len())
+                    .is_err()))
         || (target_page_leases.capacity() < projections.len()
-            && target_page_leases
-                .try_reserve_exact(projections.len())
-                .is_err())
+            && (resident
+                || target_page_leases
+                    .try_reserve_exact(projections.len())
+                    .is_err()))
     {
         return Err(Box::new(
             M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
@@ -1543,9 +1785,9 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_with_rosters_v
         draft_leases.clear();
         target_leases.clear();
         if (draft_leases.capacity() < draft_count
-            && draft_leases.try_reserve_exact(draft_count).is_err())
+            && (resident || draft_leases.try_reserve_exact(draft_count).is_err()))
             || (target_leases.capacity() < target_count
-                && target_leases.try_reserve_exact(target_count).is_err())
+                && (resident || target_leases.try_reserve_exact(target_count).is_err()))
         {
             return Err(Box::new(
                 M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
@@ -1659,6 +1901,7 @@ fn materialize_authenticated_speculative_rollover_inputs(
     members: &[M1ReleasedDeviceKvMemberV1],
     binding: &crate::M1SpeculativeRoundBindingV1,
     inputs: M1AuthenticatedSpeculativeRolloverInputsV1,
+    resident_phase_storage: &mut Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 ) -> Result<
     M1FiniteSpeculativeQueueRolloverKvInputsV1,
     Box<M1AuthenticatedSpeculativeSuccessorPageFailureV1>,
@@ -1679,8 +1922,15 @@ fn materialize_authenticated_speculative_rollover_inputs(
             M1AuthenticatedSpeculativeSuccessorPageFailureV1::MemberRoster { inputs },
         );
     }
-    let mut projections = Vec::new();
-    if projections.try_reserve_exact(members.len()).is_err() {
+    let resident = resident_phase_storage.is_some();
+    let mut projections = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.successor_projections))
+        .unwrap_or_default();
+    projections.clear();
+    if (resident && projections.capacity() < members.len())
+        || (!resident && projections.try_reserve_exact(members.len()).is_err())
+    {
         return successor_page_failure(
             M1AuthenticatedSpeculativeSuccessorPageFailureV1::MemberRoster { inputs },
         );
@@ -1693,13 +1943,20 @@ fn materialize_authenticated_speculative_rollover_inputs(
         };
         projections.push(cache.projection());
     }
+    let resident_rosters = resident_phase_storage.as_mut().map(|storage| {
+        (
+            core::mem::take(&mut storage.successor_draft_page_leases),
+            core::mem::take(&mut storage.successor_target_page_leases),
+        )
+    });
     let (draft_page_leases, target_page_leases) =
-        match materialize_m1_authenticated_speculative_tail_pages_v1(
+        match materialize_m1_authenticated_speculative_tail_pages_with_rosters_v1(
             queue,
             &projections,
             draft_inputs,
             target_inputs,
             draft_round_tokens,
+            resident_rosters,
         ) {
             Ok(page_leases) => page_leases,
             Err(source) => {
@@ -1714,7 +1971,7 @@ fn materialize_authenticated_speculative_rollover_inputs(
     Ok(inputs.into_raw(draft_page_leases, target_page_leases))
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::result_large_err, clippy::too_many_arguments)]
 fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
     engine: &mut Engine<C>,
     released: M1AuthenticatedReleasedCompletedStepV1,
@@ -1722,38 +1979,63 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
     intent: M1AuthenticatedSpeculativeRolloverIntentV1,
     coordinator: M1SpeculativeGenerationLoopV1,
     inputs: M1AuthenticatedSpeculativeRolloverInputsV1,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
     prior_window_continuation: M1AuthenticatedSpeculativePriorWindowContinuationV1,
+    mut resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 ) -> Result<
     M1AuthenticatedScheduledSpeculativeRolloverV1,
     PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1,
 > {
-    let (prior, next, reason, binding) =
-        match preflight(engine, &released, batch, &intent, &coordinator, &inputs) {
-            Ok(value) => value,
-            Err(error) => {
-                return Err(
-                    PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
-                        error,
-                        released: Box::new(released),
-                        intent: Box::new(intent),
-                        coordinator: Box::new(coordinator),
-                        inputs: Box::new(inputs),
-                        recipe_plans,
-                        preparation_plans,
-                        prior_window_continuation: Box::new(prior_window_continuation),
-                    },
-                );
-            }
-        };
-    let (physical_lineage, logical_lineage) = match upgrade_m1_authenticated_speculative_lineage_v1(
+    let (prior, next, reason, binding) = match preflight(
+        engine,
+        &released,
+        batch,
+        &intent,
         &coordinator,
-        &binding,
-        intent.identity,
+        &inputs,
+        resident_phase_storage
+            .as_mut()
+            .map(|storage| &mut storage.successor_lineage_seeds),
     ) {
         Ok(value) => value,
-        Err(_) => {
+        Err(error) => {
+            return Err(
+                PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
+                    error,
+                    released: Box::new(released),
+                    intent: Box::new(intent),
+                    coordinator: Box::new(coordinator),
+                    inputs: Box::new(inputs),
+                    recipe_plans,
+                    preparation_plans,
+                    prior_window_continuation: Box::new(prior_window_continuation),
+                },
+            );
+        }
+    };
+    let resident_lineage_seeds = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.successor_lineage_seeds));
+    let lineage = match resident_lineage_seeds {
+        Some(seeds) => upgrade_m1_authenticated_speculative_lineage_with_seeds_v1(
+            &coordinator,
+            &binding,
+            intent.identity,
+            seeds.into_boxed_slice(),
+        )
+        .map_err(|(error, seeds)| (error, Some(seeds))),
+        None => {
+            upgrade_m1_authenticated_speculative_lineage_v1(&coordinator, &binding, intent.identity)
+                .map_err(|error| (error, None))
+        }
+    };
+    let (physical_lineage, logical_lineage) = match lineage {
+        Ok(value) => value,
+        Err((_error, seeds)) => {
+            if let (Some(storage), Some(seeds)) = (resident_phase_storage.as_mut(), seeds) {
+                storage.successor_lineage_seeds = seeds.into_vec();
+            }
             return Err(
                 PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Rejected {
                     error: M1AuthenticatedSpeculativeRolloverScheduleErrorV1::Lineage,
@@ -1811,7 +2093,11 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         }
     };
     let inputs = match materialize_authenticated_speculative_rollover_inputs(
-        &mut queue, &members, &binding, inputs,
+        &mut queue,
+        &members,
+        &binding,
+        inputs,
+        &mut resident_phase_storage,
     ) {
         Ok(inputs) => inputs,
         Err(failure) => {
@@ -1861,8 +2147,15 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             );
         }
     };
-    let mut selected = Vec::new();
-    if selected.try_reserve_exact(members.len()).is_err() {
+    let resident = resident_phase_storage.is_some();
+    let mut selected = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.successor_selected))
+        .unwrap_or_default();
+    selected.clear();
+    if (resident && selected.capacity() < members.len())
+        || (!resident && selected.try_reserve_exact(members.len()).is_err())
+    {
         engine.quarantine_m1_queue_rearm_failure();
         return Err(
             PendingM1AuthenticatedSpeculativeRolloverScheduleFailureV1::Detached(Box::new(
@@ -1936,6 +2229,7 @@ fn schedule_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             prior_windows: prior_window_continuation.prior_windows,
             frozen_queue_wait_timeout: prior_window_continuation.frozen_queue_wait_timeout,
         },
+        resident_phase_storage,
     })
 }
 
@@ -2060,6 +2354,7 @@ pub struct M1AuthenticatedPreparedSpeculativeRolloverV1 {
     pub(crate) prepared: M1PreparedScheduledWorkspaceImagesV1,
     pub(crate) recipe: AddresslessM1PhysicalBufferRecipeV1,
     pub(crate) logical: M1AuthenticatedSpeculativeRolloverLogicalV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 impl M1AuthenticatedPreparedSpeculativeRolloverV1 {
@@ -2087,12 +2382,21 @@ impl M1AuthenticatedPreparedSpeculativeRolloverV1 {
             prepared,
             recipe,
             logical,
+            resident_phase_storage,
         } = self;
         let pending = PendingM1AuthenticatedSpeculativeRolloverPrepareFailureV1 {
             stage: M1AuthenticatedSpeculativeRolloverPrepareStageV1::LineageAttachment,
             queue,
             retained: Box::new((
-                prior, next, reason, selected, residue, prepared, recipe, logical,
+                prior,
+                next,
+                reason,
+                selected,
+                residue,
+                prepared,
+                recipe,
+                logical,
+                resident_phase_storage,
             )),
         };
         let closed = close_pending_preparation_failure(engine, Box::new(pending));
@@ -2157,12 +2461,12 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         preparation_plans,
         physical_lineage,
         logical,
+        mut resident_phase_storage,
     } = scheduled;
     let runner = runner.unwrap_or_else(|| queue.operations().runner());
-    let recipe = match crate::runner::derive_physical_step_recipe(
+    let recipe = match recipe_plans.derive(
         queue.operations(),
         crate::M1StepDispatchIntent::SpeculativeRound(next.target()),
-        recipe_plans,
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
         M1PhysicalRunnerRecipeOutcomeV1::Rejected(source) => {
@@ -2217,14 +2521,28 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             ),
         ));
     }
-    let mut draft_reservations = Vec::new();
-    let mut target_reservations = Vec::new();
-    if draft_reservations
-        .try_reserve_exact(selected.len())
-        .is_err()
-        || target_reservations
-            .try_reserve_exact(selected.len())
-            .is_err()
+    let resident = resident_phase_storage.is_some();
+    let (mut draft_reservations, mut target_reservations) = resident_phase_storage
+        .as_mut()
+        .map(|storage| {
+            (
+                core::mem::take(&mut storage.successor_draft_reservations),
+                core::mem::take(&mut storage.successor_target_reservations),
+            )
+        })
+        .unwrap_or_default();
+    draft_reservations.clear();
+    target_reservations.clear();
+    if (resident
+        && (draft_reservations.capacity() < selected.len()
+            || target_reservations.capacity() < selected.len()))
+        || (!resident
+            && (draft_reservations
+                .try_reserve_exact(selected.len())
+                .is_err()
+                || target_reservations
+                    .try_reserve_exact(selected.len())
+                    .is_err()))
     {
         engine.quarantine_m1_queue_rearm_failure();
         return Err(preparation_failure(
@@ -2338,7 +2656,17 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             }
         }
     }
-    let target = match crate::bind_m1_kv_workspace_table_v1(target_inputs, target_reservations) {
+    let target_table_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.successor_target_table.take());
+    let target = match match target_table_storage {
+        Some(storage) => crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+            target_inputs,
+            target_reservations,
+            storage,
+        ),
+        None => crate::bind_m1_kv_workspace_table_v1(target_inputs, target_reservations),
+    } {
         Ok(table) => table,
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -2359,11 +2687,22 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             ));
         }
     };
-    let draft = match crate::bind_m1_speculative_draft_kv_round_workspace_table_v1(
-        next.target(),
-        draft_inputs,
-        draft_reservations,
-    ) {
+    let draft_table_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.successor_draft_table.take());
+    let draft = match match draft_table_storage {
+        Some(storage) => crate::kv_workspace_authority::bind_m1_speculative_draft_kv_round_workspace_table_with_storage_v1(
+            next.target(),
+            draft_inputs,
+            draft_reservations,
+            storage,
+        ),
+        None => crate::bind_m1_speculative_draft_kv_round_workspace_table_v1(
+            next.target(),
+            draft_inputs,
+            draft_reservations,
+        ),
+    } {
         Ok(table) => table,
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -2391,12 +2730,26 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         draft_decode: draft,
         target_speculative: target,
     };
-    let prepared = match crate::prepare_m1_scheduled_workspace_images_v1(
-        scheduled,
-        runner,
-        preparation_plans,
-        tables,
-    ) {
+    let image_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.successor_images.take());
+    let prepared = match match image_storage {
+        Some(storage) => {
+            crate::m1_prepublication::prepare_m1_scheduled_workspace_images_with_storage_v1(
+                scheduled,
+                runner,
+                preparation_plans,
+                tables,
+                storage,
+            )
+        }
+        None => crate::prepare_m1_scheduled_workspace_images_v1(
+            scheduled,
+            runner,
+            preparation_plans,
+            tables,
+        ),
+    } {
         Ok(prepared) => prepared,
         Err(source) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -2440,6 +2793,7 @@ fn prepare_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         prepared,
         recipe,
         logical,
+        resident_phase_storage,
     })
 }
 
@@ -3163,6 +3517,7 @@ fn rollover_case<const N: usize, F>(
     operations: crate::DeclaredOperationKernelPlan,
     step: crate::M1PrepublicationStepCustodyV1,
     _predecessor_generation: u64,
+    phase_storage: Option<Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>>,
     wrap: F,
 ) -> Result<
     (
@@ -3173,7 +3528,7 @@ fn rollover_case<const N: usize, F>(
 >
 where
     F: FnOnce(
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<fe2o3_host::AuthenticatedServiceQueueSessionV1<N>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalQueueSessionV1,
 {
     let (packets, custody) = batch.into_parts();
@@ -3192,16 +3547,19 @@ where
         rollover.replacement_queue_observation(),
         rollover.replacement_dispatch_generation(),
     );
-    Ok((
-        wrap(M1AuthenticatedPhysicalQueuePhaseCaseV1::from_queue_rearm(
-            rollover.into_queue(),
-            witness,
-            operations,
-            custody,
-            step,
+    let lower = rollover.into_queue();
+    let queue = match phase_storage {
+        Some(mut slot) => {
+            slot.install_prepared(lower, witness, operations, custody, step);
+            slot
+        }
+        None => Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::occupied(
+            M1AuthenticatedPhysicalQueuePhaseOwnerV1::from_queue_rearm(
+                lower, witness, operations, custody, step,
+            ),
         )),
-        observation,
-    ))
+    };
+    Ok((wrap(queue), observation))
 }
 
 /// Structural target-decode inputs retained until authenticated scheduling.
@@ -4481,7 +4839,8 @@ pub fn submit_m1_authenticated_target_decode_rollover_v1<const C: usize>(
         operations,
         step,
         predecessor_generation,
-        |case| M1AuthenticatedPhysicalQueueSessionV1::TargetOnly(Box::new(case)),
+        None,
+        M1AuthenticatedPhysicalQueueSessionV1::TargetOnly,
     ) {
         Ok(value) => value,
         Err(mut source) => {
@@ -4661,6 +5020,7 @@ pub struct M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1 {
     member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
     ring_bytes: u32,
     next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 /// Pure retry rejection or terminal post-detachment closure.
@@ -4722,6 +5082,7 @@ pub(crate) struct M1AuthenticatedSpeculativeNewWindowBridgeV1 {
     pub(crate) intent: M1AuthenticatedSpeculativeRolloverIntentV1,
     pub(crate) prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
     pub(crate) next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    pub(crate) resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 /// Detached authenticated predecessor and exact fresh paired-prefill request.
@@ -4737,12 +5098,13 @@ pub struct M1AuthenticatedScheduledSpeculativeNewWindowV1 {
     draft_prefill: ValidatedM1StepInputs,
     target_prefill: ValidatedM1StepInputs,
     preparation_plans: M1FullStepWorkspacePlans,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     speculative_successor: M1ServingPlanV1,
     member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
     prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
     ring_bytes: u32,
     next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 impl M1AuthenticatedScheduledSpeculativeNewWindowV1 {
@@ -4977,6 +5339,7 @@ fn authenticated_new_window_transition_within_limit(prior_window_count: usize) -
         })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn new_window_schedule_rejection(
     error: M1AuthenticatedSpeculativeNewWindowScheduleErrorV1,
     state: M1AuthenticatedSpeculativeNewWindowRetryStateV1,
@@ -4985,6 +5348,7 @@ fn new_window_schedule_rejection(
     member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
     ring_bytes: u32,
     next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 ) -> M1AuthenticatedSpeculativeNewWindowScheduleFailureV1 {
     M1AuthenticatedSpeculativeNewWindowScheduleFailureV1::PreDetach {
         error,
@@ -4996,6 +5360,7 @@ fn new_window_schedule_rejection(
                 member_intents,
                 ring_bytes,
                 next_queue_wait_timeout,
+                resident_phase_storage,
             },
         ),
     }
@@ -5053,6 +5418,62 @@ pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
     M1AuthenticatedScheduledSpeculativeNewWindowV1,
     M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
 > {
+    schedule_m1_authenticated_speculative_new_window_core_v1(
+        engine,
+        executor,
+        batch,
+        input,
+        speculative_successor,
+        member_intents,
+        ring_bytes,
+        next_queue_wait_timeout,
+        None,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn schedule_m1_authenticated_speculative_new_window_resident_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    executor: crate::M1AuthenticatedSpeculativePhysicalExecutorV1,
+    batch: &M1ServingBatchPlanV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    resident_phase_storage: M1AuthenticatedResidentQueuePhaseStorageV1,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeNewWindowV1,
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
+> {
+    schedule_m1_authenticated_speculative_new_window_core_v1(
+        engine,
+        executor,
+        batch,
+        input,
+        speculative_successor,
+        member_intents,
+        ring_bytes,
+        next_queue_wait_timeout,
+        Some(resident_phase_storage),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn schedule_m1_authenticated_speculative_new_window_core_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    executor: crate::M1AuthenticatedSpeculativePhysicalExecutorV1,
+    batch: &M1ServingBatchPlanV1,
+    input: M1ServingQueuedPairedPrefillNewWindowV1,
+    speculative_successor: M1ServingPlanV1,
+    member_intents: Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>,
+    ring_bytes: u32,
+    next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    mut resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
+) -> Result<
+    M1AuthenticatedScheduledSpeculativeNewWindowV1,
+    M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
+> {
     let (prior, next) = match new_window_preflight(
         engine,
         &executor,
@@ -5071,22 +5492,38 @@ pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
                 member_intents,
                 ring_bytes,
                 next_queue_wait_timeout,
+                resident_phase_storage,
             ));
         }
     };
     let mut handoff = executor
         .into_completed_new_window_handoff()
         .expect("completed executor was checked in pure preflight");
-    let mut replaced_lanes = Vec::new();
-    if handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
-        || handoff
-            .released
-            .try_reserve_new_window_terminal_lineage()
-            .is_err()
-        || replaced_lanes
-            .try_reserve_exact(batch.requests().len())
-            .is_err()
-    {
+    let resident = resident_phase_storage.is_some();
+    let mut replaced_lanes = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.replaced_lanes))
+        .unwrap_or_default();
+    replaced_lanes.clear();
+    let insufficient_resident_storage = resident
+        && (handoff
+            .lineage
+            .prior_windows
+            .capacity()
+            .saturating_sub(handoff.lineage.prior_windows.len())
+            < 1
+            || !handoff.released.has_new_window_terminal_lineage_capacity()
+            || replaced_lanes.capacity() < batch.requests().len());
+    let ordinary_reserve_failed = !resident
+        && (handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
+            || handoff
+                .released
+                .try_reserve_new_window_terminal_lineage()
+                .is_err()
+            || replaced_lanes
+                .try_reserve_exact(batch.requests().len())
+                .is_err());
+    if insufficient_resident_storage || ordinary_reserve_failed {
         return Err(new_window_schedule_rejection(
             M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::HostAllocation,
             M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(handoff),
@@ -5095,6 +5532,7 @@ pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
             member_intents,
             ring_bytes,
             next_queue_wait_timeout,
+            resident_phase_storage,
         ));
     }
     replaced_lanes.resize(batch.requests().len(), false);
@@ -5251,6 +5689,10 @@ pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
             ));
         }
     };
+    if let Some(storage) = resident_phase_storage.as_mut() {
+        replaced_lanes.clear();
+        storage.replaced_lanes = replaced_lanes;
+    }
     Ok(M1AuthenticatedScheduledSpeculativeNewWindowV1 {
         prior,
         next,
@@ -5267,6 +5709,7 @@ pub fn schedule_m1_authenticated_speculative_new_window_v1<const C: usize>(
         prior_windows,
         ring_bytes,
         next_queue_wait_timeout,
+        resident_phase_storage,
     })
 }
 
@@ -5285,48 +5728,70 @@ impl M1AuthenticatedSpeculativeNewWindowSchedulePreDetachRetryV1 {
         M1AuthenticatedScheduledSpeculativeNewWindowV1,
         M1AuthenticatedSpeculativeNewWindowScheduleFailureV1,
     > {
-        match self.state {
+        let Self {
+            state,
+            input,
+            speculative_successor,
+            member_intents,
+            ring_bytes,
+            next_queue_wait_timeout,
+            resident_phase_storage,
+        } = self;
+        match state {
             M1AuthenticatedSpeculativeNewWindowRetryStateV1::Executor(executor) => {
-                schedule_m1_authenticated_speculative_new_window_v1(
+                schedule_m1_authenticated_speculative_new_window_core_v1(
                     engine,
                     executor,
                     batch,
-                    self.input,
-                    self.speculative_successor,
-                    self.member_intents,
-                    self.ring_bytes,
-                    self.next_queue_wait_timeout,
+                    input,
+                    speculative_successor,
+                    member_intents,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    resident_phase_storage,
                 )
             }
             M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(mut handoff) => {
-                if handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
-                    || handoff
-                        .released
-                        .try_reserve_new_window_terminal_lineage()
-                        .is_err()
-                {
+                let resident = resident_phase_storage.is_some();
+                let insufficient_resident_storage = resident
+                    && (handoff
+                        .lineage
+                        .prior_windows
+                        .capacity()
+                        .saturating_sub(handoff.lineage.prior_windows.len())
+                        < 1
+                        || !handoff.released.has_new_window_terminal_lineage_capacity());
+                let ordinary_reserve_failed = !resident
+                    && (handoff.lineage.prior_windows.try_reserve_exact(1).is_err()
+                        || handoff
+                            .released
+                            .try_reserve_new_window_terminal_lineage()
+                            .is_err());
+                if insufficient_resident_storage || ordinary_reserve_failed {
                     return Err(new_window_schedule_rejection(
                         M1AuthenticatedSpeculativeNewWindowScheduleErrorV1::HostAllocation,
                         M1AuthenticatedSpeculativeNewWindowRetryStateV1::Completed(handoff),
-                        self.input,
-                        self.speculative_successor,
-                        self.member_intents,
-                        self.ring_bytes,
-                        self.next_queue_wait_timeout,
+                        input,
+                        speculative_successor,
+                        member_intents,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        resident_phase_storage,
                     ));
                 }
                 // Allocation retry is the only state that reaches this arm;
                 // rebuild the private executor solely to re-run pure admission.
                 let executor = crate::M1AuthenticatedSpeculativePhysicalExecutorV1::from_completed_new_window_handoff(handoff);
-                schedule_m1_authenticated_speculative_new_window_v1(
+                schedule_m1_authenticated_speculative_new_window_core_v1(
                     engine,
                     executor,
                     batch,
-                    self.input,
-                    self.speculative_successor,
-                    self.member_intents,
-                    self.ring_bytes,
-                    self.next_queue_wait_timeout,
+                    input,
+                    speculative_successor,
+                    member_intents,
+                    ring_bytes,
+                    next_queue_wait_timeout,
+                    resident_phase_storage,
                 )
             }
         }
@@ -5385,6 +5850,7 @@ pub struct M1AuthenticatedPreparedSpeculativeNewWindowV1 {
     prior_windows: Vec<crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
     ring_bytes: u32,
     next_queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    resident_phase_storage: Option<M1AuthenticatedResidentQueuePhaseStorageV1>,
 }
 
 impl M1AuthenticatedPreparedSpeculativeNewWindowV1 {
@@ -5408,6 +5874,7 @@ impl M1AuthenticatedPreparedSpeculativeNewWindowV1 {
             prior_windows,
             ring_bytes,
             next_queue_wait_timeout,
+            resident_phase_storage,
         } = self;
         close_new_window_prepared_detached(
             engine,
@@ -5427,6 +5894,7 @@ impl M1AuthenticatedPreparedSpeculativeNewWindowV1 {
                 prior_windows,
                 ring_bytes,
                 next_queue_wait_timeout,
+                resident_phase_storage,
             ),
         )
         .into_disposition()
@@ -5512,6 +5980,10 @@ enum M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1 {
     Deadline(crate::M1AuthenticatedSpeculativeFailureDispositionV1),
     Progress(Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>),
     Readback(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
+    ResidentReadback(
+        Box<crate::authenticated_queue_rearm::M1AuthenticatedRearmedResidentReadbackFailureV1>,
+    ),
+    ResidentChecked(Box<crate::M1AuthenticatedRearmedCompletedReadbackV1>),
     Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
 }
 
@@ -5584,6 +6056,18 @@ impl M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
                     Err(quarantined) => quarantined_disposition((self.error, quarantined)),
                 }
             }
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::ResidentReadback(
+                source,
+            ) => crate::authenticated_speculative_executor::disposition_with_logical(
+                source.close(engine),
+                self.error,
+            ),
+            M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::ResidentChecked(
+                source,
+            ) => match source.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((self.error, released)),
+                Err(quarantined) => quarantined_disposition((self.error, quarantined)),
+            },
             M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Observed(observed) => {
                 match (*observed).check_completion(&[]) {
                     Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
@@ -5625,16 +6109,25 @@ impl M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
 #[must_use = "observed new-window output must be settled or closed"]
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeNewWindowObservedV1 {
-    observed: crate::M1AuthenticatedRearmedObservedCompletionOutputV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    state: M1AuthenticatedSpeculativeNewWindowObservedStateV1,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
 }
 
+#[derive(Debug)]
+#[allow(
+    clippy::large_enum_variant,
+    reason = "resident success keeps physical readback inline to avoid a timed heap allocation"
+)]
+enum M1AuthenticatedSpeculativeNewWindowObservedStateV1 {
+    Ordinary(crate::M1AuthenticatedRearmedObservedCompletionOutputV1),
+    Resident(crate::M1AuthenticatedRearmedCompletedReadbackV1),
+}
+
+#[allow(clippy::result_large_err)]
 impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
     pub(crate) fn cancel_and_close<const C: usize>(
         self,
@@ -5646,7 +6139,13 @@ impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
 
         engine.quarantine_m1_queue_rearm_failure();
         let retained = (self.members, self.member_count, self.selection, self.epoch);
-        match self.observed.check_completion(&[]) {
+        let readback = match self.state {
+            M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed) => {
+                observed.check_completion(&[])
+            }
+            M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(readback) => Ok(readback),
+        };
+        match readback {
             Ok(readback) => match readback.destroy_queue_and_retain_custody(engine) {
                 Ok(released) => released_disposition((released, retained)),
                 Err(quarantined) => quarantined_disposition((quarantined, retained)),
@@ -5714,6 +6213,32 @@ impl M1AuthenticatedSpeculativeNewWindowObservedV1 {
             engine,
             self,
             dispositions,
+            None,
+            None,
+            deadline_expired,
+        )
+    }
+
+    pub(crate) fn settle_with_deadline_and_storage<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+        physical_dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
+        completion_scratch:
+            crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+        deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        ) -> bool,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowReleasedV1,
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
+    > {
+        settle_authenticated_speculative_new_window_with_deadline(
+            engine,
+            self,
+            dispositions,
+            Some(physical_dispositions),
+            Some(completion_scratch),
             deadline_expired,
         )
     }
@@ -5740,6 +6265,12 @@ enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
             crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
         )>,
     ),
+    DeadlineChecked(
+        Box<(
+            crate::M1AuthenticatedRearmedCompletedReadbackV1,
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        )>,
+    ),
     DeadlineReadback(
         Box<(
             crate::M1AuthenticatedRearmedCompletedReadbackV1,
@@ -5760,6 +6291,7 @@ enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
         )>,
     ),
     Observed(Box<crate::M1AuthenticatedRearmedObservedCompletionOutputV1>),
+    Checked(Box<crate::M1AuthenticatedRearmedCompletedReadbackV1>),
     Join(Box<crate::M1AuthenticatedRearmedReadbackFailureV1>),
     CompletionPreflight(Box<crate::M1AuthenticatedRearmedCompletionPreflightFailureV1>),
     Completion(Box<crate::M1AuthenticatedRearmedCompletionOutcomeV1>),
@@ -5773,16 +6305,15 @@ enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
 pub struct M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
     error: M1AuthenticatedSpeculativeNewWindowSettlementErrorV1,
     state: M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
     dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
 }
 
+#[allow(clippy::result_large_err)]
 impl M1AuthenticatedSpeculativeNewWindowSettlementFailureV1 {
     #[must_use]
     pub const fn error(&self) -> M1AuthenticatedSpeculativeNewWindowSettlementErrorV1 {
@@ -5880,10 +6411,8 @@ impl M1AuthenticatedSpeculativeNewWindowReleasedMemberV1 {
 #[derive(Debug)]
 pub struct M1AuthenticatedSpeculativeNewWindowReleasedV1 {
     released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowReleasedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowReleasedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
@@ -5931,6 +6460,29 @@ impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {
         coordinator: M1SpeculativeGenerationLoopV1,
         inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
         recipe_plans: M1FullStepWorkspacePlans,
+        preparation_plans: M1FullStepWorkspacePlans,
+    ) -> Result<
+        M1AuthenticatedScheduledSpeculativeRolloverV1,
+        M1AuthenticatedSpeculativeNewWindowSuccessorJoinFailureV1,
+    > {
+        schedule_m1_authenticated_speculative_new_window_successor_v1(
+            engine,
+            self.released,
+            batch,
+            coordinator,
+            inputs,
+            crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+            preparation_plans,
+        )
+    }
+
+    pub(crate) fn schedule_successor_with_recipe_input<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        inputs: M1AuthenticatedSpeculativeNewWindowSuccessorInputsV1,
+        recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
         preparation_plans: M1FullStepWorkspacePlans,
     ) -> Result<
         M1AuthenticatedScheduledSpeculativeRolloverV1,
@@ -6088,6 +6640,126 @@ impl M1AuthenticatedSpeculativeNewWindowPublishedV1 {
             }),
         }
     }
+
+    pub(crate) fn observe_with_deadline_and_storage<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        storage: crate::authenticated_physical_readback::M1AuthenticatedResidentPrefillReadbackHostStorageV1,
+        mut deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeNewWindowObservedV1,
+        M1AuthenticatedSpeculativeNewWindowObservationFailureV1,
+    > {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        let queue_wait_timeout = self.queue_wait_timeout;
+        let Some(wait_timeout) =
+            deadline_expired(Boundary::BeforeCompletionWait, queue_wait_timeout)
+        else {
+            let disposition = self.cancel_and_close(engine);
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition.retain(Boundary::BeforeCompletionWait),
+                ),
+            });
+        };
+        let completed = match self.published.wait_for(wait_timeout.milliseconds(), engine) {
+            Ok(completed) => completed,
+            Err(source) => {
+                return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Wait,
+                    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(
+                        source,
+                    ),
+                });
+            }
+        };
+        if deadline_expired(Boundary::AfterCompletionWait, queue_wait_timeout).is_none() {
+            let disposition = crate::authenticated_speculative_executor::disposition_with_logical(
+                completed.close_completed(engine),
+                Boundary::AfterCompletionWait,
+            );
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition,
+                ),
+            });
+        }
+        let recycled = match completed.recycle(engine) {
+            Ok(recycled) => recycled,
+            Err(source) => {
+                return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Recycle,
+                    state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Progress(
+                        source,
+                    ),
+                });
+            }
+        };
+        if deadline_expired(Boundary::BeforeReadback, queue_wait_timeout).is_none() {
+            let disposition = crate::authenticated_speculative_executor::disposition_with_logical(
+                recycled.close_recycled(engine),
+                Boundary::BeforeReadback,
+            );
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state: M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::Deadline(
+                    disposition,
+                ),
+            });
+        }
+        let resident = match recycled.read_and_check_paired_prefill_completion_with_storage(storage)
+        {
+            Ok(resident) => resident,
+            Err(source) => {
+                return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                    error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Readback,
+                    state:
+                        M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::ResidentReadback(
+                            source,
+                        ),
+                });
+            }
+        };
+        let (readback, request, emitted_token, selection, epoch) = resident.into_parts();
+        if deadline_expired(Boundary::AfterReadback, queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Deadline,
+                state:
+                    M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::ResidentChecked(
+                        Box::new(readback),
+                    ),
+            });
+        }
+        if selection.role != Qwen3ModelRole::Target8B
+            || selection.mode != Qwen3ExecutionMode::Prefill
+        {
+            return Err(M1AuthenticatedSpeculativeNewWindowObservationFailureV1 {
+                error: M1AuthenticatedSpeculativeNewWindowObservationErrorV1::Selection,
+                state:
+                    M1AuthenticatedSpeculativeNewWindowObservationFailureStateV1::ResidentChecked(
+                        Box::new(readback),
+                    ),
+            });
+        }
+        let mut members = [None; ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
+        members[0] = Some(M1AuthenticatedSpeculativeNewWindowObservedMemberV1 {
+            request,
+            emitted_token,
+        });
+        Ok(M1AuthenticatedSpeculativeNewWindowObservedV1 {
+            state: M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(readback),
+            members,
+            member_count: 1,
+            selection,
+            epoch,
+        })
+    }
 }
 
 fn authenticated_new_window_observed(
@@ -6143,8 +6815,8 @@ fn authenticated_new_window_observed(
         });
     }
     Ok(M1AuthenticatedSpeculativeNewWindowObservedV1 {
-        observed,
-        members: Box::new(members),
+        state: M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed),
+        members,
         member_count,
         selection,
         epoch,
@@ -6169,13 +6841,12 @@ fn authenticated_new_window_expectations(
     expectations
 }
 
+#[allow(clippy::large_types_passed_by_value)]
 fn new_window_settlement_failure(
     error: M1AuthenticatedSpeculativeNewWindowSettlementErrorV1,
     state: M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
@@ -6192,6 +6863,40 @@ fn new_window_settlement_failure(
     }
 }
 
+fn new_window_unsettled_state(
+    state: M1AuthenticatedSpeculativeNewWindowObservedStateV1,
+) -> M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
+    match state {
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed) => {
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
+                observed,
+            ))
+        }
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(readback) => {
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Checked(Box::new(readback))
+        }
+    }
+}
+
+fn new_window_deadline_unsettled_state(
+    state: M1AuthenticatedSpeculativeNewWindowObservedStateV1,
+    boundary: crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+) -> M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
+    match state {
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed) => {
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(Box::new(
+                (observed, boundary),
+            ))
+        }
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(readback) => {
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineChecked(Box::new(
+                (readback, boundary),
+            ))
+        }
+    }
+}
+
+#[allow(clippy::result_large_err)]
 fn settle_authenticated_speculative_new_window<const C: usize>(
     engine: &mut Engine<C>,
     observed: M1AuthenticatedSpeculativeNewWindowObservedV1,
@@ -6204,14 +6909,21 @@ fn settle_authenticated_speculative_new_window<const C: usize>(
         engine,
         observed,
         dispositions,
+        None,
+        None,
         |_| false,
     )
 }
 
+#[allow(clippy::result_large_err)]
 fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
     engine: &mut Engine<C>,
     observed: M1AuthenticatedSpeculativeNewWindowObservedV1,
     dispositions: Vec<M1AuthenticatedSpeculativeNewWindowMemberDispositionV1>,
+    physical_dispositions: Option<Vec<crate::M1DeviceKvCompletionDispositionV1>>,
+    resident_completion_scratch: Option<
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    >,
     mut deadline_expired: impl FnMut(
         crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
     ) -> bool,
@@ -6222,7 +6934,7 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
     use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
 
     let M1AuthenticatedSpeculativeNewWindowObservedV1 {
-        observed,
+        state,
         members,
         member_count,
         selection,
@@ -6235,9 +6947,7 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
                 expected: member_count,
                 actual,
             },
-            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
-                observed,
-            )),
+            new_window_unsettled_state(state),
             members,
             member_count,
             selection,
@@ -6245,16 +6955,15 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
             dispositions,
         ));
     }
-    let mut physical_dispositions = Vec::new();
+    let mut physical_dispositions = physical_dispositions.unwrap_or_default();
+    physical_dispositions.clear();
     if physical_dispositions
         .try_reserve_exact(member_count)
         .is_err()
     {
         return Err(new_window_settlement_failure(
             M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::HostAllocation,
-            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
-                observed,
-            )),
+            new_window_unsettled_state(state),
             members,
             member_count,
             selection,
@@ -6274,9 +6983,7 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
     if deadline_expired(Boundary::BeforeReadback) {
         return Err(new_window_settlement_failure(
             M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::Deadline,
-            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(
-                Box::new((observed, Boundary::BeforeReadback)),
-            ),
+            new_window_deadline_unsettled_state(state, Boundary::BeforeReadback),
             members,
             member_count,
             selection,
@@ -6284,7 +6991,13 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
             dispositions,
         ));
     }
-    let readback = match observed.check_completion(&expectations[..member_count]) {
+    let checked = match state {
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed) => {
+            observed.check_completion(&expectations[..member_count])
+        }
+        M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(readback) => Ok(readback),
+    };
+    let readback = match checked {
         Ok(readback) => readback,
         Err(source) => {
             return Err(new_window_settlement_failure(
@@ -6324,7 +7037,16 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
             dispositions,
         ));
     }
-    let outcome = match readback.complete(engine, physical_dispositions) {
+    let completion = match resident_completion_scratch {
+        Some(scratch) => {
+            let mut resident_dispositions =
+                crate::authenticated_queue_rearm::M1AuthenticatedRearmedDispositionsV1::new();
+            resident_dispositions.extend(physical_dispositions.iter().copied());
+            readback.complete_resident(engine, resident_dispositions, scratch)
+        }
+        None => readback.complete(engine, physical_dispositions),
+    };
+    let outcome = match completion {
         Ok(outcome) => outcome,
         Err(source) => {
             return Err(new_window_settlement_failure(
@@ -6364,12 +7086,11 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
     )
 }
 
+#[allow(clippy::large_types_passed_by_value, clippy::result_large_err)]
 fn finish_authenticated_speculative_new_window_completion(
     outcome: crate::M1AuthenticatedRearmedCompletionOutcomeV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
@@ -6389,12 +7110,11 @@ fn finish_authenticated_speculative_new_window_completion(
     )
 }
 
+#[allow(clippy::large_types_passed_by_value, clippy::result_large_err)]
 fn finish_authenticated_speculative_new_window_completion_with_deadline(
     outcome: crate::M1AuthenticatedRearmedCompletionOutcomeV1,
-    members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
@@ -6473,12 +7193,11 @@ fn finish_authenticated_speculative_new_window_completion_with_deadline(
     }
 }
 
+#[allow(clippy::large_types_passed_by_value, clippy::result_large_err)]
 fn finish_authenticated_speculative_new_window_release(
     released: crate::M1AuthenticatedLongLivedQueueReleasedRoundV1,
-    observed_members: Box<
-        [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
-            ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
-    >,
+    observed_members: [Option<M1AuthenticatedSpeculativeNewWindowObservedMemberV1>;
+        ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize],
     member_count: usize,
     selection: Qwen3PlanSelection,
     epoch: CompletionEpoch,
@@ -6551,13 +7270,14 @@ fn finish_authenticated_speculative_new_window_release(
     }
     Ok(M1AuthenticatedSpeculativeNewWindowReleasedV1 {
         released,
-        members: Box::new(members),
+        members,
         member_count,
         selection,
         epoch,
     })
 }
 
+#[allow(clippy::result_large_err)]
 fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
     engine: &mut Engine<C>,
     failure: M1AuthenticatedSpeculativeNewWindowSettlementFailureV1,
@@ -6576,6 +7296,7 @@ fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
     } = failure;
     match state {
         state @ (M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineObserved(_)
+        | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineChecked(_)
         | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(_)
         | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineCompletion(_)
         | M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineRelease(_)) => {
@@ -6593,7 +7314,20 @@ fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
             settle_authenticated_speculative_new_window(
                 engine,
                 M1AuthenticatedSpeculativeNewWindowObservedV1 {
-                    observed: *observed,
+                    state: M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(*observed),
+                    members,
+                    member_count,
+                    selection,
+                    epoch,
+                },
+                dispositions,
+            )
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Checked(readback) => {
+            settle_authenticated_speculative_new_window(
+                engine,
+                M1AuthenticatedSpeculativeNewWindowObservedV1 {
+                    state: M1AuthenticatedSpeculativeNewWindowObservedStateV1::Resident(*readback),
                     members,
                     member_count,
                     selection,
@@ -6607,7 +7341,7 @@ fn retry_authenticated_speculative_new_window_settlement<const C: usize>(
                 Ok(observed) => settle_authenticated_speculative_new_window(
                     engine,
                     M1AuthenticatedSpeculativeNewWindowObservedV1 {
-                        observed,
+                        state: M1AuthenticatedSpeculativeNewWindowObservedStateV1::Ordinary(observed),
                         members,
                         member_count,
                         selection,
@@ -6771,6 +7505,14 @@ fn close_authenticated_speculative_new_window_settlement<const C: usize>(
                 }
             })
         }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineChecked(retained) => {
+            close_deadline_phase(*retained, |(readback, boundary)| {
+                match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => released_disposition((metadata, boundary, released)),
+                    Err(quarantined) => quarantined_disposition((metadata, boundary, quarantined)),
+                }
+            })
+        }
         M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::DeadlineReadback(retained) => {
             close_deadline_phase(*retained, |(readback, physical_dispositions, boundary)| {
                 match readback.destroy_queue_and_retain_custody(engine) {
@@ -6826,6 +7568,12 @@ fn close_authenticated_speculative_new_window_settlement<const C: usize>(
                     Ok(released) => released_disposition((metadata, released)),
                     Err(quarantined) => quarantined_disposition((metadata, quarantined)),
                 },
+            }
+        }
+        M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Checked(readback) => {
+            match (*readback).destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((metadata, released)),
+                Err(quarantined) => quarantined_disposition((metadata, quarantined)),
             }
         }
         M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Join(source) => {
@@ -6899,11 +7647,11 @@ pub fn prepare_m1_authenticated_speculative_new_window_v1<const C: usize>(
         prior_windows,
         ring_bytes,
         next_queue_wait_timeout,
+        resident_phase_storage,
     } = scheduled;
-    let recipe = match crate::runner::derive_physical_step_recipe(
+    let recipe = match recipe_plans.derive(
         queue.operations(),
         M1StepDispatchIntent::PairedPrefill(next.target()),
-        recipe_plans,
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
         M1PhysicalRunnerRecipeOutcomeV1::Rejected(source) => {
@@ -6982,6 +7730,7 @@ pub fn prepare_m1_authenticated_speculative_new_window_v1<const C: usize>(
         prior_windows,
         ring_bytes,
         next_queue_wait_timeout,
+        resident_phase_storage,
     })
 }
 
@@ -7071,6 +7820,7 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
         prior_windows,
         ring_bytes,
         next_queue_wait_timeout,
+        mut resident_phase_storage,
     } = prepared;
     let old = queue.custody();
     if engine.is_faulted()
@@ -7146,16 +7896,42 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
     );
 
     let members = scheduled.member_count();
-    let mut selected = Vec::new();
-    let mut draft_reservations = Vec::new();
-    let mut target_reservations = Vec::new();
-    let mut draft_page_leases: Vec<Vec<DeviceKvPageLease>> = Vec::new();
-    let mut target_page_leases: Vec<Vec<DeviceKvPageLease>> = Vec::new();
-    if selected.try_reserve_exact(members).is_err()
-        || draft_reservations.try_reserve_exact(members).is_err()
-        || target_reservations.try_reserve_exact(members).is_err()
-        || draft_page_leases.try_reserve_exact(members).is_err()
-        || target_page_leases.try_reserve_exact(members).is_err()
+    let resident = resident_phase_storage.is_some();
+    let (
+        mut selected,
+        mut draft_reservations,
+        mut target_reservations,
+        mut draft_page_leases,
+        mut target_page_leases,
+    ) = match resident_phase_storage.as_mut() {
+        Some(storage) => (
+            core::mem::take(&mut storage.new_window_selected),
+            core::mem::take(&mut storage.new_window_draft_reservations),
+            core::mem::take(&mut storage.new_window_target_reservations),
+            core::mem::take(&mut storage.new_window_draft_page_leases),
+            core::mem::take(&mut storage.new_window_target_page_leases),
+        ),
+        None => (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+    };
+    let mut resident_draft_pages = resident.then(|| draft_page_leases.pop()).flatten();
+    let mut resident_target_pages = resident.then(|| target_page_leases.pop()).flatten();
+    selected.clear();
+    draft_reservations.clear();
+    target_reservations.clear();
+    draft_page_leases.clear();
+    target_page_leases.clear();
+    if (resident
+        && (selected.capacity() < members
+            || draft_reservations.capacity() < members
+            || target_reservations.capacity() < members
+            || draft_page_leases.capacity() < members
+            || target_page_leases.capacity() < members))
+        || (!resident
+            && (selected.try_reserve_exact(members).is_err()
+                || draft_reservations.try_reserve_exact(members).is_err()
+                || target_reservations.try_reserve_exact(members).is_err()
+                || draft_page_leases.try_reserve_exact(members).is_err()
+                || target_page_leases.try_reserve_exact(members).is_err()))
     {
         return Err(close_new_window_unbound(
             engine,
@@ -7189,10 +7965,16 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
     for lane in 0..members {
         let draft_pages = draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
         let target_pages = target_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS);
-        let mut draft = Vec::new();
-        let mut target = Vec::new();
-        if draft.try_reserve_exact(draft_pages as usize).is_err()
-            || target.try_reserve_exact(target_pages as usize).is_err()
+        let mut draft = resident_draft_pages.take().unwrap_or_default();
+        let mut target = resident_target_pages.take().unwrap_or_default();
+        draft.clear();
+        target.clear();
+        if (resident
+            && (draft.capacity() < draft_pages as usize
+                || target.capacity() < target_pages as usize))
+            || (!resident
+                && (draft.try_reserve_exact(draft_pages as usize).is_err()
+                    || target.try_reserve_exact(target_pages as usize).is_err()))
         {
             return Err(close_new_window_unbound(
                 engine,
@@ -7496,7 +8278,17 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
     }
     debug_assert!(page_leases.next().is_none());
 
-    let target = match crate::bind_m1_kv_workspace_table_v1(target_prefill, target_reservations) {
+    let target_table_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.new_window_target_table.take());
+    let target = match match target_table_storage {
+        Some(storage) => crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+            target_prefill,
+            target_reservations,
+            storage,
+        ),
+        None => crate::bind_m1_kv_workspace_table_v1(target_prefill, target_reservations),
+    } {
         Ok(table) => table,
         Err(source) => {
             return Err(close_new_window_unbound(
@@ -7533,7 +8325,17 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             ));
         }
     };
-    let draft = match crate::bind_m1_kv_workspace_table_v1(draft_prefill, draft_reservations) {
+    let draft_table_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.new_window_draft_table.take());
+    let draft = match match draft_table_storage {
+        Some(storage) => crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+            draft_prefill,
+            draft_reservations,
+            storage,
+        ),
+        None => crate::bind_m1_kv_workspace_table_v1(draft_prefill, draft_reservations),
+    } {
         Ok(table) => table,
         Err(source) => {
             return Err(close_new_window_unbound(
@@ -7569,12 +8371,27 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             ));
         }
     };
-    let prepared = match crate::prepare_m1_scheduled_workspace_images_v1(
-        scheduled,
-        operations.runner(),
-        preparation_plans,
-        M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target },
-    ) {
+    let image_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.new_window_images.take());
+    let tables = M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target };
+    let prepared = match match image_storage {
+        Some(storage) => {
+            crate::m1_prepublication::prepare_m1_scheduled_workspace_images_with_storage_v1(
+                scheduled,
+                operations.runner(),
+                preparation_plans,
+                tables,
+                storage,
+            )
+        }
+        None => crate::prepare_m1_scheduled_workspace_images_v1(
+            scheduled,
+            operations.runner(),
+            preparation_plans,
+            tables,
+        ),
+    } {
         Ok(prepared) => prepared,
         Err(source) => {
             return Err(close_new_window_unbound(
@@ -7608,10 +8425,14 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             ));
         }
     };
-    let prepared = match bind_m1_authenticated_speculative_rollover_intent_v1(
+    let physical_member_intents = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.physical_member_intents.take());
+    let prepared = match bind_m1_authenticated_speculative_rollover_intent_core_v1(
         prepared,
         speculative_successor,
         member_intents,
+        physical_member_intents,
     ) {
         Ok(prepared) => prepared,
         Err(source) => {
@@ -7860,10 +8681,17 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                 return Err(close_pending_submission_failure(engine, pending));
             }
         };
-    let mut workspace_ranges = Vec::new();
-    if workspace_ranges
-        .try_reserve_exact(draft_ranges.len() + target_ranges.len())
-        .is_err()
+    let mut workspace_ranges = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.new_window_workspace_ranges))
+        .unwrap_or_default();
+    workspace_ranges.clear();
+    let workspace_range_count = draft_ranges.len() + target_ranges.len();
+    if (resident && workspace_ranges.capacity() < workspace_range_count)
+        || (!resident
+            && workspace_ranges
+                .try_reserve_exact(workspace_range_count)
+                .is_err())
     {
         return Err(close_new_window_unbound(
             engine,
@@ -7978,14 +8806,28 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             ));
         }
     };
-    let bound_rows = match crate::m1_queue_rearm::build_rollover_bound_rows(
-        recipe.rows(),
-        &old_source_rows,
-        &old_bound_rows,
-        recipe.workspace_composition(),
-        &workspace_ranges,
-        &capture,
-    ) {
+    let bound_row_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.new_window_bound_rows.take());
+    let bound_rows = match match bound_row_storage {
+        Some(storage) => crate::m1_queue_rearm::build_rollover_bound_rows_with_storage(
+            recipe.rows(),
+            &old_source_rows,
+            &old_bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &capture,
+            storage,
+        ),
+        None => crate::m1_queue_rearm::build_rollover_bound_rows(
+            recipe.rows(),
+            &old_source_rows,
+            &old_bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &capture,
+        ),
+    } {
         Ok(rows) => rows,
         Err(()) => {
             return Err(close_new_window_unbound(
@@ -8032,13 +8874,23 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             retired_rollover_custody,
         },
     );
-    let batch = match crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
-        &witness,
-        &operations,
-        recipe,
-        bound_rows,
-        custody,
-    ) {
+    let batch = match match resident_phase_storage.as_mut() {
+        Some(storage) => crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_with_storage_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+            &mut storage.packet_batches,
+        ),
+        None => crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+        ),
+    } {
         Ok(crate::physical_fixed_batch::M1AuthenticatedQueuePacketBatchV1::PairedPrefill(
             batch,
         )) => batch,
@@ -8093,7 +8945,10 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
         operations,
         step,
         predecessor_generation,
-        |case| M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill(Box::new(case)),
+        resident_phase_storage
+            .as_mut()
+            .and_then(|storage| storage.paired_prefill.take()),
+        M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill,
     ) {
         Ok(value) => value,
         Err(mut source) => {
@@ -8181,6 +9036,7 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
         intent,
         prior_windows,
         next_queue_wait_timeout,
+        resident_phase_storage,
     };
     Ok(M1AuthenticatedSpeculativeNewWindowPublishedV1 {
         published: M1AuthenticatedRearmedPublishedQueueV1::from_authenticated_new_window(
@@ -8223,7 +9079,9 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
         prepared,
         recipe,
         logical,
+        mut resident_phase_storage,
     } = prepared;
+    let resident = resident_phase_storage.is_some();
     let old = queue.custody();
     if engine.is_faulted()
         || queue.shape() != M1PhysicalFixedBatchShapeV1::PairedPrefill
@@ -8494,10 +9352,17 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 ));
             }
         };
-    let mut workspace_ranges = Vec::new();
-    if workspace_ranges
-        .try_reserve_exact(draft_ranges.len() + target_ranges.len())
-        .is_err()
+    let mut workspace_ranges = resident_phase_storage
+        .as_mut()
+        .map(|storage| core::mem::take(&mut storage.successor_workspace_ranges))
+        .unwrap_or_default();
+    workspace_ranges.clear();
+    let workspace_range_count = draft_ranges.len() + target_ranges.len();
+    if (resident && workspace_ranges.capacity() < workspace_range_count)
+        || (!resident
+            && workspace_ranges
+                .try_reserve_exact(workspace_range_count)
+                .is_err())
     {
         return Err(close_unbound(
             engine,
@@ -8610,14 +9475,28 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             ));
         }
     };
-    let bound_rows = match crate::m1_queue_rearm::build_rollover_bound_rows(
-        recipe.rows(),
-        &old_source_rows,
-        &old_bound_rows,
-        recipe.workspace_composition(),
-        &workspace_ranges,
-        &capture,
-    ) {
+    let bound_row_storage = resident_phase_storage
+        .as_mut()
+        .and_then(|storage| storage.successor_bound_rows.take());
+    let bound_rows = match match bound_row_storage {
+        Some(storage) => crate::m1_queue_rearm::build_rollover_bound_rows_with_storage(
+            recipe.rows(),
+            &old_source_rows,
+            &old_bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &capture,
+            storage,
+        ),
+        None => crate::m1_queue_rearm::build_rollover_bound_rows(
+            recipe.rows(),
+            &old_source_rows,
+            &old_bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &capture,
+        ),
+    } {
         Ok(rows) => rows,
         Err(()) => {
             return Err(close_unbound(
@@ -8661,13 +9540,23 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
             retired_rollover_custody,
         },
     );
-    let batch = match crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
-        &witness,
-        &operations,
-        recipe,
-        bound_rows,
-        custody,
-    ) {
+    let batch = match match resident_phase_storage.as_mut() {
+        Some(storage) => crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_with_storage_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+            &mut storage.packet_batches,
+        ),
+        None => crate::physical_fixed_batch::build_m1_authenticated_rollover_packet_batch_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+        ),
+    } {
         Ok(batch) => batch,
         Err(source) => {
             return Err(close_unbound(
@@ -8690,7 +9579,10 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 operations,
                 step,
                 predecessor_generation,
-                |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4(Box::new(case)),
+                resident_phase_storage
+                    .as_mut()
+                    .and_then(|storage| storage.speculative_k4.take()),
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4,
             ) {
                 Ok(value) => value,
                 Err(mut source) => {
@@ -8713,7 +9605,8 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 operations,
                 step,
                 predecessor_generation,
-                |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8(Box::new(case)),
+                None,
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
             ) {
                 Ok(value) => value,
                 Err(mut source) => {
@@ -8736,7 +9629,8 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 operations,
                 step,
                 predecessor_generation,
-                |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16(Box::new(case)),
+                None,
+                M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
             ) {
                 Ok(value) => value,
                 Err(mut source) => {
@@ -9074,14 +9968,16 @@ mod tests {
             .find("fn materialize_authenticated_speculative_rollover_inputs")
             .unwrap();
         let wrapper_end = production[wrapper_start..]
-            .find("\n#[allow(clippy::too_many_arguments)]\nfn schedule_m1_authenticated")
+            .find("\nfn schedule_m1_authenticated_speculative_rollover_pending_v1")
             .map(|offset| wrapper_start + offset)
             .unwrap();
         let wrapper = &production[wrapper_start..wrapper_end];
         assert!(
             wrapper.contains("let draft_round_tokens = u32::from(binding.shape().draft_tokens())")
         );
-        assert!(wrapper.contains("materialize_m1_authenticated_speculative_tail_pages_v1"));
+        assert!(
+            wrapper.contains("materialize_m1_authenticated_speculative_tail_pages_with_rosters_v1")
+        );
         assert!(!wrapper.contains(".unwrap()"));
         assert!(!wrapper.contains(".expect("));
 
@@ -9230,7 +10126,7 @@ mod tests {
         assert!(!published.contains("pub fn wait("));
         assert!(!published.contains("pub fn wait_for("));
         assert!(!published.contains("pub fn complete("));
-        assert!(!published.contains("into_parts"));
+        assert!(!published.contains("pub fn into_parts"));
 
         let observed_start = production
             .find("impl M1AuthenticatedSpeculativeNewWindowObservedV1 {")
@@ -9299,9 +10195,7 @@ mod tests {
             .unwrap();
         let join = &source[join_start..join_end];
         let archive = join.find(".attach_physical_history(history)").unwrap();
-        let reset = join
-            .find("history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty")
-            .unwrap();
+        let reset = join.find("let history = resident_phase_storage").unwrap();
         assert!(archive < reset);
     }
 

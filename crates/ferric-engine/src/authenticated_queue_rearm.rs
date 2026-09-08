@@ -31,12 +31,14 @@ use ferric_spec::{
 
 use crate::m1_queue_rearm::{
     append_workspace_ranges, member_layout, preflight_all_terminal_rearm_shutdown,
-    rebuild_bound_rows, retained_host_capture_ranges, M1NonEmptyRearmRoundHistoryV1,
-    M1RearmRoundHistoryV1,
+    rebuild_bound_rows, rebuild_bound_rows_with_storage, retained_host_capture_ranges,
+    M1NonEmptyRearmRoundHistoryV1, M1RearmRoundHistoryV1,
 };
 use crate::physical_fixed_batch::{
-    build_m1_authenticated_queue_packet_batch_v1, validate_authenticated_operation_plan_v1,
-    M1AuthenticatedQueuePacketBatchCaseV1, M1AuthenticatedQueuePacketBatchV1,
+    build_m1_authenticated_queue_packet_batch_v1,
+    build_m1_authenticated_rollover_packet_batch_with_storage_v1,
+    validate_authenticated_operation_plan_v1, M1AuthenticatedQueuePacketBatchCaseV1,
+    M1AuthenticatedQueuePacketBatchV1,
 };
 use crate::step_workspace_subleases::{
     bind_authenticated_queue_replaced_m1_step_workspace,
@@ -49,8 +51,9 @@ use crate::{
     M1AuthenticatedCompletedStepOutcomeV1, M1AuthenticatedCompletionObservationFailureV1,
     M1AuthenticatedObservedCompletionOutputV1, M1AuthenticatedPhysicalCompletedQueueSessionV1,
     M1AuthenticatedPhysicalCompletedReadbackV1, M1AuthenticatedPhysicalPublishedQueueSessionV1,
-    M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseCaseV1,
-    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    M1AuthenticatedPhysicalQueueOperationFailureV1, M1AuthenticatedPhysicalQueuePhaseOwnerV1,
+    M1AuthenticatedPhysicalQueuePhaseSlotV1, M1AuthenticatedPhysicalQueueSessionV1,
+    M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
     M1AuthenticatedPhysicalReadbackQueueSessionV1, M1AuthenticatedPhysicalRecycledQueueSessionV1,
     M1AuthenticatedReleasedCompletedStepV1, M1CheckedCompletionOutputV1,
     M1CompletedKvPageReleaseCountsV1, M1DeviceKvCompletionDispositionV1,
@@ -86,10 +89,70 @@ pub(crate) struct M1AuthenticatedResidentCompletionScratchV1 {
     target_reservations: Vec<crate::PendingDeviceKvStepWrite>,
     draft_page_leases: Vec<Vec<crate::DeviceKvPageLease>>,
     target_page_leases: Vec<Vec<crate::DeviceKvPageLease>>,
+    draft_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    target_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    workspace_images: Option<crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1>,
+    publication: Option<M1AuthenticatedRearmPublicationHostStorageV1>,
+    readback: Option<
+        crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+    >,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedRearmPublicationHostStorageV1 {
+    workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
+    bound_rows: Option<crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1>,
+    packet_batch: crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1,
+    phase: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
+    >,
+}
+
+impl M1AuthenticatedRearmPublicationHostStorageV1 {
+    fn try_new() -> Option<Self> {
+        let mut workspace_ranges = Vec::new();
+        workspace_ranges
+            .try_reserve_exact(
+                crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
+                    + crate::M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            )
+            .ok()?;
+        Some(Self {
+            workspace_ranges,
+            bound_rows: Some(
+                crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                    16,
+                )?,
+            ),
+            packet_batch:
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new(),
+            phase: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+        })
+    }
+
+    fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
+        recipe.rows().len() == M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+            && self.packet_batch.prepare_recipe(recipe)
+    }
 }
 
 impl M1AuthenticatedResidentCompletionScratchV1 {
     pub(crate) fn try_new(member_capacity: usize) -> Option<Self> {
+        Self::try_new_inner(member_capacity, None)
+    }
+
+    pub(crate) fn try_new_for_plans(
+        member_capacity: usize,
+        plans: &M1FullStepWorkspacePlans,
+    ) -> Option<Self> {
+        Self::try_new_inner(member_capacity, Some(plans))
+    }
+
+    fn try_new_inner(
+        member_capacity: usize,
+        plans: Option<&M1FullStepWorkspacePlans>,
+    ) -> Option<Self> {
         let mut members = Vec::new();
         let mut dispositions = Vec::new();
         let mut selected_slots = Vec::new();
@@ -120,6 +183,22 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
             draft_page_leases.push(draft);
             target_page_leases.push(target);
         }
+        let draft_table = match plans {
+            Some(_) => Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(
+                    member_capacity,
+                )?,
+            ),
+            None => None,
+        };
+        let target_table = match plans {
+            Some(_) => Some(
+                crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(
+                    member_capacity,
+                )?,
+            ),
+            None => None,
+        };
         Some(Self {
             dispositions,
             members,
@@ -137,7 +216,48 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
             target_reservations,
             draft_page_leases,
             target_page_leases,
+            draft_table,
+            target_table,
+            workspace_images: match plans {
+                Some(plans) => Some(
+                    crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1::try_new(
+                        plans,
+                    )?,
+                ),
+                None => None,
+            },
+            publication: match plans {
+                Some(_) => Some(M1AuthenticatedRearmPublicationHostStorageV1::try_new()?),
+                None => None,
+            },
+            readback: match plans {
+                Some(plans) => Some(
+                    crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1::try_new(
+                        plans.target().selection(),
+                    )?,
+                ),
+                None => None,
+            },
         })
+    }
+
+    pub(crate) fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
+        self.publication
+            .as_mut()
+            .is_some_and(|storage| storage.prepare_recipe(recipe))
+    }
+
+    pub(crate) fn take_publication(
+        &mut self,
+    ) -> Option<M1AuthenticatedRearmPublicationHostStorageV1> {
+        self.publication.take()
+    }
+
+    pub(crate) fn take_readback(
+        &mut self,
+    ) -> Option<crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1>
+    {
+        self.readback.take()
     }
 }
 
@@ -283,6 +403,10 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
         self.history.try_reserve_additional(additional)
     }
 
+    pub(crate) fn has_reserved_round_history_capacity(&self, additional: usize) -> bool {
+        self.history.has_reserved_append_capacity(additional)
+    }
+
     /// Current released authenticated step retained by this round.
     #[must_use = "current released-step custody remains linear"]
     pub const fn current_released(&self) -> &M1AuthenticatedReleasedCompletedStepV1 {
@@ -402,6 +526,18 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
     ) -> Result<(), std::collections::TryReserveError> {
         self.terminal
             .try_reserve_exact(self.released.members().len())
+    }
+
+    pub(crate) fn has_new_window_terminal_lineage_capacity(&self) -> bool {
+        self.terminal.capacity().saturating_sub(self.terminal.len())
+            >= self.released.members().len()
+    }
+
+    pub(crate) fn try_reserve_resident_window_terminal_lineage(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.terminal.try_reserve_exact(additional)
     }
 
     pub(crate) fn into_authenticated_new_window_custody(
@@ -902,6 +1038,25 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
             }
         };
         crate::runner::derive_physical_step_recipe(self.queue.operations(), intent, workspace_plans)
+    }
+
+    pub(crate) fn derive_retained_step_recipe_input(
+        &self,
+        recipe: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    ) -> M1PhysicalRunnerRecipeOutcomeV1 {
+        let selection = self.queue.custody().selection();
+        let intent = match self.queue.shape() {
+            M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(selection),
+            M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+                M1StepDispatchIntent::PairedPrefill(selection)
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                M1StepDispatchIntent::SpeculativeRound(selection)
+            }
+        };
+        recipe.derive(self.queue.operations(), intent)
     }
 }
 
@@ -1812,7 +1967,20 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     }
                 }
             }
-            let target = match crate::bind_m1_kv_workspace_table_v1(target, reservations) {
+            let target_storage = resident_scratch
+                .as_deref_mut()
+                .and_then(|scratch| scratch.target_table.take());
+            let target_result = match target_storage {
+                Some(storage) => {
+                    crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+                        target,
+                        reservations,
+                        storage,
+                    )
+                }
+                None => crate::bind_m1_kv_workspace_table_v1(target, reservations),
+            };
+            let target = match target_result {
                 Ok(table) => table,
                 Err(failure) => {
                     return Err(authenticated_kv_reservation_failure(
@@ -1879,7 +2047,20 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     }
                 }
             }
-            let target = match crate::bind_m1_kv_workspace_table_v1(target, reservations) {
+            let target_storage = resident_scratch
+                .as_deref_mut()
+                .and_then(|scratch| scratch.target_table.take());
+            let target_result = match target_storage {
+                Some(storage) => {
+                    crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+                        target,
+                        reservations,
+                        storage,
+                    )
+                }
+                None => crate::bind_m1_kv_workspace_table_v1(target, reservations),
+            };
+            let target = match target_result {
                 Ok(table) => table,
                 Err(failure) => {
                     return Err(authenticated_kv_reservation_failure(
@@ -1948,15 +2129,16 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     ),
                 ));
             }
-            let (mut draft_reservations, mut target_reservations) = resident_scratch.map_or_else(
-                || (Vec::new(), Vec::new()),
-                |scratch| {
-                    (
-                        core::mem::take(&mut scratch.draft_reservations),
-                        core::mem::take(&mut scratch.target_reservations),
-                    )
-                },
-            );
+            let (mut draft_reservations, mut target_reservations) =
+                resident_scratch.as_deref_mut().map_or_else(
+                    || (Vec::new(), Vec::new()),
+                    |scratch| {
+                        (
+                            core::mem::take(&mut scratch.draft_reservations),
+                            core::mem::take(&mut scratch.target_reservations),
+                        )
+                    },
+                );
             draft_reservations.clear();
             target_reservations.clear();
             if (draft_reservations.capacity() < scheduled.selected.len()
@@ -2042,29 +2224,54 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     }
                 }
             }
-            let target =
-                match crate::bind_m1_kv_workspace_table_v1(target_speculative, target_reservations)
-                {
-                    Ok(table) => table,
-                    Err(failure) => {
-                        return Err(authenticated_kv_reservation_failure(
-                            M1LongLivedQueueRearmKvReservationPhaseV1::TargetTableBinding,
-                            (
-                                scheduled,
-                                draft_decode,
-                                draft_page_leases,
-                                target_page_leases,
-                                draft_reservations,
-                                failure,
-                            ),
-                        ));
-                    }
-                };
-            let draft_decode = match crate::bind_m1_speculative_draft_kv_round_workspace_table_v1(
-                target_selection,
-                draft_decode,
-                draft_reservations,
-            ) {
+            let target_storage = resident_scratch
+                .as_deref_mut()
+                .and_then(|scratch| scratch.target_table.take());
+            let target_result = match target_storage {
+                Some(storage) => {
+                    crate::kv_workspace_authority::bind_m1_kv_workspace_table_with_storage_v1(
+                        target_speculative,
+                        target_reservations,
+                        storage,
+                    )
+                }
+                None => {
+                    crate::bind_m1_kv_workspace_table_v1(target_speculative, target_reservations)
+                }
+            };
+            let target = match target_result {
+                Ok(table) => table,
+                Err(failure) => {
+                    return Err(authenticated_kv_reservation_failure(
+                        M1LongLivedQueueRearmKvReservationPhaseV1::TargetTableBinding,
+                        (
+                            scheduled,
+                            draft_decode,
+                            draft_page_leases,
+                            target_page_leases,
+                            draft_reservations,
+                            failure,
+                        ),
+                    ));
+                }
+            };
+            let draft_storage = resident_scratch
+                .as_mut()
+                .and_then(|scratch| scratch.draft_table.take());
+            let draft_result = match draft_storage {
+                Some(storage) => crate::kv_workspace_authority::bind_m1_speculative_draft_kv_round_workspace_table_with_storage_v1(
+                    target_selection,
+                    draft_decode,
+                    draft_reservations,
+                    storage,
+                ),
+                None => crate::bind_m1_speculative_draft_kv_round_workspace_table_v1(
+                    target_selection,
+                    draft_decode,
+                    draft_reservations,
+                ),
+            };
+            let draft_decode = match draft_result {
                 Ok(table) => table,
                 Err(failure) => {
                     return Err(authenticated_kv_reservation_failure(
@@ -2244,6 +2451,7 @@ impl M1AuthenticatedPreparedLongLivedQueueRearmV1 {
 fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
     reserved: M1AuthenticatedReservedLongLivedQueueRearmV1,
     plans: M1FullStepWorkspacePlans,
+    storage: Option<crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1>,
 ) -> Result<
     M1AuthenticatedPreparedLongLivedQueueRearmV1,
     Box<M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
@@ -2263,12 +2471,23 @@ fn prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(
         total_released,
         history,
     } = scheduled;
-    let preparation = crate::prepare_m1_scheduled_workspace_images_v1(
-        scheduled,
-        queue.operations().runner(),
-        plans,
-        tables,
-    );
+    let preparation = match storage {
+        Some(storage) => {
+            crate::m1_prepublication::prepare_m1_scheduled_workspace_images_with_storage_v1(
+                scheduled,
+                queue.operations().runner(),
+                plans,
+                tables,
+                storage,
+            )
+        }
+        None => crate::prepare_m1_scheduled_workspace_images_v1(
+            scheduled,
+            queue.operations().runner(),
+            plans,
+            tables,
+        ),
+    };
     let remainder = M1AuthenticatedScheduledRemainderV1 {
         queue,
         selected,
@@ -2320,7 +2539,35 @@ pub fn prepare_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
             },
         ));
     }
-    match prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(reserved, plans) {
+    match prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(reserved, plans, None) {
+        Ok(prepared) => Ok(prepared),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
+pub(crate) fn prepare_m1_authenticated_long_lived_queue_rearm_resident_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    reserved: M1AuthenticatedReservedLongLivedQueueRearmV1,
+    plans: M1FullStepWorkspacePlans,
+    scratch: &mut M1AuthenticatedResidentCompletionScratchV1,
+) -> Result<
+    M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    Box<M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
+> {
+    if engine.is_faulted() {
+        return Err(Box::new(
+            M1AuthenticatedLongLivedQueueRearmPrepareFailureV1 {
+                error: M1AuthenticatedLongLivedQueueRearmPrepareErrorV1::EngineFaulted,
+                source: None,
+                retained: AuthenticatedPrepareOpaqueCustodyV1(Box::new((reserved, plans))),
+            },
+        ));
+    }
+    let storage = scratch.workspace_images.take();
+    match prepare_m1_authenticated_long_lived_queue_rearm_inner_v1(reserved, plans, storage) {
         Ok(prepared) => Ok(prepared),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -3442,7 +3689,204 @@ impl M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1 {
     }
 }
 
+#[derive(Debug)]
+enum M1AuthenticatedRearmedResidentReadbackFailureSourceV1 {
+    DispatchGeneration {
+        queue: M1AuthenticatedPhysicalRecycledQueueSessionV1,
+        storage: Box<dyn fmt::Debug>,
+    },
+    Physical(
+        Box<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentPhysicalReadbackFailureV1,
+        >,
+    ),
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedRearmedResidentPrefillReadbackV1 {
+    readback: M1AuthenticatedRearmedCompletedReadbackV1,
+    request: RequestId,
+    emitted_token: ferric_spec::TokenId,
+    selection: Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+}
+
+impl M1AuthenticatedRearmedResidentPrefillReadbackV1 {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedRearmedCompletedReadbackV1,
+        RequestId,
+        ferric_spec::TokenId,
+        Qwen3PlanSelection,
+        CompletionEpoch,
+    ) {
+        (
+            self.readback,
+            self.request,
+            self.emitted_token,
+            self.selection,
+            self.epoch,
+        )
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedRearmedResidentReadbackFailureV1 {
+    source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1AuthenticatedRearmedResidentReadbackFailureV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        let Self {
+            source,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let closure = match source {
+            M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
+                queue,
+                storage,
+            } => {
+                engine.quarantine_m1_queue_rearm_failure();
+                crate::authenticated_physical_queue::retain_in_queue_closure(
+                    queue.close_recycled(),
+                    storage,
+                )
+            }
+            M1AuthenticatedRearmedResidentReadbackFailureSourceV1::Physical(failure) => {
+                failure.close(engine)
+            }
+        };
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            closure,
+            (carry, queue_observation, device),
+        )
+    }
+}
+
 impl M1AuthenticatedRearmedRecycledQueueV1 {
+    pub(crate) fn read_and_check_paired_prefill_completion_with_storage(
+        self,
+        storage: crate::authenticated_physical_readback::M1AuthenticatedResidentPrefillReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedRearmedResidentPrefillReadbackV1,
+        Box<M1AuthenticatedRearmedResidentReadbackFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let expected_dispatch_generation = carry.rollover.as_ref().map_or_else(
+            || carry.prior_checked.dispatch_generation().checked_add(1),
+            |rollover| Some(rollover.replacement_dispatch_generation()),
+        );
+        let Some(expected_dispatch_generation) = expected_dispatch_generation else {
+            return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
+                    queue,
+                    storage: Box::new(storage),
+                },
+                carry,
+                queue_observation,
+                device,
+            }));
+        };
+        let readback = match queue.read_and_check_paired_prefill_completion_with_storage(
+            expected_dispatch_generation,
+            storage,
+        ) {
+            Ok(readback) => readback,
+            Err(source) => {
+                return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                    source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::Physical(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let (readback, request, emitted_token, selection, epoch) = readback.into_parts();
+        Ok(M1AuthenticatedRearmedResidentPrefillReadbackV1 {
+            readback: M1AuthenticatedRearmedCompletedReadbackV1 {
+                readback,
+                carry,
+                queue_observation,
+                device,
+            },
+            request,
+            emitted_token,
+            selection,
+            epoch,
+        })
+    }
+
+    pub(crate) fn read_and_check_speculative_diagnostic_completion_with_storage(
+        self,
+        storage:
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        Box<M1AuthenticatedRearmedResidentReadbackFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let expected_dispatch_generation = carry.rollover.as_ref().map_or_else(
+            || carry.prior_checked.dispatch_generation().checked_add(1),
+            |rollover| Some(rollover.replacement_dispatch_generation()),
+        );
+        let Some(expected_dispatch_generation) = expected_dispatch_generation else {
+            return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
+                    queue,
+                    storage: Box::new(storage),
+                },
+                carry,
+                queue_observation,
+                device,
+            }));
+        };
+        let joined = match queue.read_and_check_speculative_diagnostic_completion_with_storage(
+            expected_dispatch_generation,
+            storage,
+        ) {
+            Ok(joined) => joined,
+            Err(source) => {
+                return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                    source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::Physical(source),
+                    carry,
+                    queue_observation,
+                    device,
+                }));
+            }
+        };
+        let (readback, choices) = joined.into_parts();
+        Ok(
+            M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1 {
+                readback: M1AuthenticatedRearmedCompletedReadbackV1 {
+                    readback,
+                    carry,
+                    queue_observation,
+                    device,
+                },
+                choices,
+            },
+        )
+    }
+
     pub(crate) fn close_recycled<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -4670,6 +5114,30 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
     M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
 > {
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(engine, prepared, recipe, None)
+}
+
+pub(crate) fn submit_m1_authenticated_long_lived_queue_rearm_resident_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    storage: M1AuthenticatedRearmPublicationHostStorageV1,
+) -> Result<
+    M1AuthenticatedRearmedPublishedQueueV1,
+    M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+> {
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(engine, prepared, recipe, Some(storage))
+}
+
+fn submit_m1_authenticated_long_lived_queue_rearm_core_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    mut storage: Option<M1AuthenticatedRearmPublicationHostStorageV1>,
+) -> Result<
+    M1AuthenticatedRearmedPublishedQueueV1,
+    M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+> {
     if engine.is_faulted() {
         let retained = close_prepared_rearm_submission(prepared, recipe);
         return Err(authenticated_classified_submission_failure(
@@ -4712,11 +5180,12 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
         rollover: None,
         new_window_bridge: None,
     };
-    let queue = match rearm_m1_authenticated_detached_queue_v1(
+    let queue = match rearm_m1_authenticated_detached_queue_core_v1(
         queue,
         prepared,
         recipe,
         queue_observation,
+        storage.as_mut(),
     ) {
         Ok(queue) => queue,
         Err(M1AuthenticatedQueueRearmFailureV1::Rejected(rejection)) => {
@@ -5523,11 +5992,12 @@ fn bind_authenticated_case<const N: usize, F>(
     operations: DeclaredOperationKernelPlan,
     step: M1PrepublicationStepCustodyV1,
     expected_observation: ComputeAqlQueueObservationV1,
+    phase: Option<Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>>,
     wrap: F,
 ) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedQueueRearmFailureV1>
 where
     F: FnOnce(
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalQueueSessionV1,
 {
     let (packets, custody) = batch.into_parts();
@@ -5548,11 +6018,17 @@ where
             (witness, operations, custody, step),
         ));
     }
-    Ok(wrap(
-        M1AuthenticatedPhysicalQueuePhaseCaseV1::from_queue_rearm(
-            lower, witness, operations, custody, step,
-        ),
-    ))
+    let owner = M1AuthenticatedPhysicalQueuePhaseOwnerV1::from_queue_rearm(
+        lower, witness, operations, custody, step,
+    );
+    let phase = match phase {
+        Some(mut phase) => {
+            phase.install_prepared_from_owner(owner);
+            phase
+        }
+        None => Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::occupied(owner)),
+    };
+    Ok(wrap(phase))
 }
 
 pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
@@ -5560,6 +6036,22 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
     prepared: M1PreparedScheduledWorkspaceImagesV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     expected_observation: ComputeAqlQueueObservationV1,
+) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedQueueRearmFailureV1> {
+    rearm_m1_authenticated_detached_queue_core_v1(
+        detached,
+        prepared,
+        recipe,
+        expected_observation,
+        None,
+    )
+}
+
+fn rearm_m1_authenticated_detached_queue_core_v1(
+    detached: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    expected_observation: ComputeAqlQueueObservationV1,
+    mut storage: Option<&mut M1AuthenticatedRearmPublicationHostStorageV1>,
 ) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedQueueRearmFailureV1> {
     if let Err(error) = preflight_authenticated_queue_rearm(&detached, &prepared, &recipe) {
         return Err(M1AuthenticatedQueueRearmFailureV1::Rejected(Box::new(
@@ -5608,7 +6100,11 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                         ));
                     }
                 };
-                let mut workspace_ranges = Vec::new();
+                let mut workspace_ranges =
+                    storage.as_deref_mut().map_or_else(Vec::new, |storage| {
+                        core::mem::take(&mut storage.workspace_ranges)
+                    });
+                workspace_ranges.clear();
                 if workspace_ranges.try_reserve_exact(ranges.len()).is_err() {
                     return Err(terminal_unbound(
                         M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
@@ -5739,7 +6235,11 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                         ));
                     }
                 };
-                let mut workspace_ranges = Vec::new();
+                let mut workspace_ranges =
+                    storage.as_deref_mut().map_or_else(Vec::new, |storage| {
+                        core::mem::take(&mut storage.workspace_ranges)
+                    });
+                workspace_ranges.clear();
                 if workspace_ranges
                     .try_reserve_exact(draft_ranges.len() + target_ranges.len())
                     .is_err()
@@ -5891,7 +6391,11 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
                         ));
                     }
                 };
-                let mut workspace_ranges = Vec::new();
+                let mut workspace_ranges =
+                    storage.as_deref_mut().map_or_else(Vec::new, |storage| {
+                        core::mem::take(&mut storage.workspace_ranges)
+                    });
+                workspace_ranges.clear();
                 if workspace_ranges
                     .try_reserve_exact(draft_ranges.len() + target_ranges.len())
                     .is_err()
@@ -5988,14 +6492,29 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             ));
         }
     };
-    let bound_rows = match rebuild_bound_rows(
-        recipe.rows(),
-        &custody.bound_rows,
-        recipe.workspace_composition(),
-        &workspace_ranges,
-        &previous_capture,
-        &retained_capture,
-    ) {
+    let bound_storage = storage
+        .as_deref_mut()
+        .and_then(|storage| storage.bound_rows.take());
+    let bound_result = match bound_storage {
+        Some(storage) => rebuild_bound_rows_with_storage(
+            recipe.rows(),
+            &custody.bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &previous_capture,
+            &retained_capture,
+            storage,
+        ),
+        None => rebuild_bound_rows(
+            recipe.rows(),
+            &custody.bound_rows,
+            recipe.workspace_composition(),
+            &workspace_ranges,
+            &previous_capture,
+            &retained_capture,
+        ),
+    };
+    let bound_rows = match bound_result {
         Ok(rows) => rows,
         Err(()) => {
             return Err(terminal_unbound(
@@ -6006,13 +6525,24 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
         }
     };
     let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(custody);
-    let batch = match build_m1_authenticated_queue_packet_batch_v1(
-        &witness,
-        &operations,
-        recipe,
-        bound_rows,
-        custody,
-    ) {
+    let batch_result = match storage.as_deref_mut() {
+        Some(storage) => build_m1_authenticated_rollover_packet_batch_with_storage_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+            &mut storage.packet_batch,
+        ),
+        None => build_m1_authenticated_queue_packet_batch_v1(
+            &witness,
+            &operations,
+            recipe,
+            bound_rows,
+            custody,
+        ),
+    };
+    let batch = match batch_result {
         Ok(batch) => batch,
         Err(failure) => {
             let error = failure.error();
@@ -6043,7 +6573,8 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             operations,
             step,
             expected_observation,
-            |case| M1AuthenticatedPhysicalQueueSessionV1::TargetOnly(Box::new(case)),
+            None,
+            M1AuthenticatedPhysicalQueueSessionV1::TargetOnly,
         ),
         (
             M1PhysicalFixedBatchShapeV1::PairedPrefill,
@@ -6055,7 +6586,8 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             operations,
             step,
             expected_observation,
-            |case| M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill(Box::new(case)),
+            None,
+            M1AuthenticatedPhysicalQueueSessionV1::PairedPrefill,
         ),
         (
             M1PhysicalFixedBatchShapeV1::SpeculativeK4,
@@ -6067,7 +6599,8 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             operations,
             step,
             expected_observation,
-            |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4(Box::new(case)),
+            storage.as_mut().and_then(|storage| storage.phase.take()),
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4,
         ),
         (
             M1PhysicalFixedBatchShapeV1::SpeculativeK8,
@@ -6079,7 +6612,8 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             operations,
             step,
             expected_observation,
-            |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8(Box::new(case)),
+            None,
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
         ),
         (
             M1PhysicalFixedBatchShapeV1::SpeculativeK16,
@@ -6091,7 +6625,8 @@ pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
             operations,
             step,
             expected_observation,
-            |case| M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16(Box::new(case)),
+            None,
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
         ),
         (_, batch) => Err(terminal_unbound(
             M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,

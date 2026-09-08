@@ -1106,6 +1106,129 @@ pub(crate) fn build_m1_authenticated_rollover_packet_batch_v1(
     bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
     custody: M1PhysicalQueueBatchCustodyV1,
 ) -> Result<M1AuthenticatedQueuePacketBatchV1, M1AuthenticatedQueuePacketBatchBuildFailureV1> {
+    build_m1_authenticated_rollover_packet_batch_core_v1(
+        witness, operations, recipe, bound_rows, custody, None,
+    )
+}
+
+pub(crate) struct M1AuthenticatedRolloverPacketBatchHostStorageV1 {
+    paired_prefill: Option<
+        Box<
+            core::mem::MaybeUninit<
+                M1AuthenticatedQueuePacketBatchCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    >,
+    speculative_k4: Option<
+        Box<
+            core::mem::MaybeUninit<
+                M1AuthenticatedQueuePacketBatchCaseV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    >,
+    paired_prefill_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
+    speculative_k4_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
+}
+
+struct M1AuthenticatedPacketArrayHostStorageV1 {
+    inputs: Vec<PacketLoweringInputV1>,
+    buffers: Vec<Vec<fe2o3_service_host::ServiceFixedDispatchBufferV1>>,
+}
+
+impl M1AuthenticatedPacketArrayHostStorageV1 {
+    fn try_new(rows: &[M1PhysicalBufferRecipeRowV1]) -> Option<Self> {
+        let mut inputs = Vec::new();
+        let mut buffers = Vec::new();
+        inputs.try_reserve_exact(rows.len()).ok()?;
+        buffers.try_reserve_exact(rows.len()).ok()?;
+        for row in rows {
+            let mut row_buffers = Vec::new();
+            row_buffers.try_reserve_exact(row.buffers().len()).ok()?;
+            buffers.push(row_buffers);
+        }
+        Some(Self { inputs, buffers })
+    }
+}
+
+impl core::fmt::Debug for M1AuthenticatedRolloverPacketBatchHostStorageV1 {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedRolloverPacketBatchHostStorageV1")
+            .field("paired_prefill", &self.paired_prefill.is_some())
+            .field("speculative_k4", &self.speculative_k4.is_some())
+            .field(
+                "paired_prefill_lowering",
+                &self.paired_prefill_lowering.is_some(),
+            )
+            .field(
+                "speculative_k4_lowering",
+                &self.speculative_k4_lowering.is_some(),
+            )
+            .finish()
+    }
+}
+
+impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
+    pub(crate) fn new() -> Self {
+        Self {
+            paired_prefill: Some(Box::new_uninit()),
+            speculative_k4: Some(Box::new_uninit()),
+            paired_prefill_lowering: None,
+            speculative_k4_lowering: None,
+        }
+    }
+
+    pub(crate) fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
+        let Some(shape) = m1_physical_fixed_batch_shape_for_intent_v1(
+            recipe.workspace_composition().dispatch_plan().intent(),
+        ) else {
+            return false;
+        };
+        let Some(lowering) = M1AuthenticatedPacketArrayHostStorageV1::try_new(recipe.rows()) else {
+            return false;
+        };
+        match shape {
+            M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+                self.paired_prefill_lowering = Some(lowering);
+                true
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+                self.speculative_k4_lowering = Some(lowering);
+                true
+            }
+            M1PhysicalFixedBatchShapeV1::TargetOnly
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => false,
+        }
+    }
+}
+
+pub(crate) fn build_m1_authenticated_rollover_packet_batch_with_storage_v1(
+    witness: &M1AuthenticatedProgramCatalogWitnessV1,
+    operations: &DeclaredOperationKernelPlan,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    storage: &mut M1AuthenticatedRolloverPacketBatchHostStorageV1,
+) -> Result<M1AuthenticatedQueuePacketBatchV1, M1AuthenticatedQueuePacketBatchBuildFailureV1> {
+    build_m1_authenticated_rollover_packet_batch_core_v1(
+        witness,
+        operations,
+        recipe,
+        bound_rows,
+        custody,
+        Some(storage),
+    )
+}
+
+fn build_m1_authenticated_rollover_packet_batch_core_v1(
+    witness: &M1AuthenticatedProgramCatalogWitnessV1,
+    operations: &DeclaredOperationKernelPlan,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    mut storage: Option<&mut M1AuthenticatedRolloverPacketBatchHostStorageV1>,
+) -> Result<M1AuthenticatedQueuePacketBatchV1, M1AuthenticatedQueuePacketBatchBuildFailureV1> {
     let reject =
         |error, recipe, bound_rows, custody| M1AuthenticatedQueuePacketBatchBuildFailureV1 {
             error,
@@ -1165,14 +1288,32 @@ pub(crate) fn build_m1_authenticated_rollover_packet_batch_v1(
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
                 .map(M1AuthenticatedQueuePacketBatchV1::TargetOnly)
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
-            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
-                .map(M1AuthenticatedQueuePacketBatchV1::PairedPrefill)
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
-                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK4)
-        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => lower_authenticated_queue_packet_case_core(
+            witness,
+            recipe,
+            bound_rows,
+            custody,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.paired_prefill.take()),
+            storage
+                .as_mut()
+                .and_then(|storage| storage.paired_prefill_lowering.take()),
+        )
+        .map(M1AuthenticatedQueuePacketBatchV1::PairedPrefill),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => lower_authenticated_queue_packet_case_core(
+            witness,
+            recipe,
+            bound_rows,
+            custody,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_k4.take()),
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_k4_lowering.take()),
+        )
+        .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK4),
         M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
                 .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK8)
@@ -1668,6 +1809,7 @@ fn lower_authenticated_packet_batch<const N: usize, R: AuthenticatedProgramIndex
         &parts.physical_recipe,
         images,
         &parts.bound_rows,
+        None,
     ) {
         Ok(packets) => packets,
         Err(failure) => {
@@ -1700,38 +1842,61 @@ fn lower_authenticated_queue_packet_case<const N: usize>(
     Box<M1AuthenticatedQueuePacketBatchCaseV1<N>>,
     M1AuthenticatedQueuePacketBatchBuildFailureV1,
 > {
+    lower_authenticated_queue_packet_case_core(witness, recipe, bound_rows, custody, None, None)
+}
+
+fn lower_authenticated_queue_packet_case_core<const N: usize>(
+    witness: &M1AuthenticatedProgramCatalogWitnessV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    bound_rows: Box<[M1BoundPhysicalBufferRowV1]>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    storage: Option<Box<core::mem::MaybeUninit<M1AuthenticatedQueuePacketBatchCaseV1<N>>>>,
+    lowering_storage: Option<M1AuthenticatedPacketArrayHostStorageV1>,
+) -> Result<
+    Box<M1AuthenticatedQueuePacketBatchCaseV1<N>>,
+    M1AuthenticatedQueuePacketBatchBuildFailureV1,
+> {
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
     let (physical_recipe, images) = kernargs.into_parts();
-    let packets =
-        match lower_authenticated_packet_array(witness, &physical_recipe, images, &bound_rows) {
-            Ok(packets) => packets,
-            Err(failure) => {
-                let AuthenticatedPacketArrayLoweringFailureV1 { error, images } = *failure;
-                let kernargs =
-                    AddresslessM1PhysicalKernargRecipeV1::from_parts(physical_recipe, images);
-                let recipe = AddresslessM1PhysicalBufferRecipeV1::from_parts(
-                    kernargs,
-                    workspace_composition,
-                    source_rows,
-                );
-                return Err(M1AuthenticatedQueuePacketBatchBuildFailureV1 {
-                    error,
-                    recipe: Box::new(recipe),
-                    bound_rows,
-                    custody: Box::new(custody),
-                });
-            }
-        };
+    let packets = match lower_authenticated_packet_array(
+        witness,
+        &physical_recipe,
+        images,
+        &bound_rows,
+        lowering_storage,
+    ) {
+        Ok(packets) => packets,
+        Err(failure) => {
+            let AuthenticatedPacketArrayLoweringFailureV1 { error, images } = *failure;
+            let kernargs =
+                AddresslessM1PhysicalKernargRecipeV1::from_parts(physical_recipe, images);
+            let recipe = AddresslessM1PhysicalBufferRecipeV1::from_parts(
+                kernargs,
+                workspace_composition,
+                source_rows,
+            );
+            return Err(M1AuthenticatedQueuePacketBatchBuildFailureV1 {
+                error,
+                recipe: Box::new(recipe),
+                bound_rows,
+                custody: Box::new(custody),
+            });
+        }
+    };
 
     let mut parts = custody.into_rearm_parts();
     parts.physical_recipe = physical_recipe;
     parts.workspace_composition = workspace_composition;
     parts.source_rows = source_rows;
     parts.bound_rows = bound_rows;
-    Ok(Box::new(M1AuthenticatedQueuePacketBatchCaseV1 {
+    let batch = M1AuthenticatedQueuePacketBatchCaseV1 {
         packets,
         custody: M1PhysicalQueueBatchCustodyV1::from_rearm_parts(parts),
-    }))
+    };
+    Ok(match storage {
+        Some(storage) => Box::write(storage, batch),
+        None => Box::new(batch),
+    })
 }
 
 fn lower_authenticated_packet_array<const N: usize, R: AuthenticatedProgramIndexResolverV1>(
@@ -1739,6 +1904,7 @@ fn lower_authenticated_packet_array<const N: usize, R: AuthenticatedProgramIndex
     physical_recipe: &AddresslessM1PhysicalDispatchRecipeV1,
     images: Box<[M1PhysicalKernargImageV1]>,
     bound_rows: &[M1BoundPhysicalBufferRowV1],
+    storage: Option<M1AuthenticatedPacketArrayHostStorageV1>,
 ) -> Result<[ServiceFixedDispatchPacketV1; N], Box<AuthenticatedPacketArrayLoweringFailureV1>> {
     if physical_recipe.rows().len() != N {
         return Err(Box::new(AuthenticatedPacketArrayLoweringFailureV1 {
@@ -1770,23 +1936,52 @@ fn lower_authenticated_packet_array<const N: usize, R: AuthenticatedProgramIndex
             images,
         }));
     }
-    let mut inputs = Vec::new();
-    if inputs.try_reserve_exact(N).is_err() {
+    let (mut inputs, mut buffers) = storage
+        .map(|storage| (storage.inputs, storage.buffers))
+        .unwrap_or_default();
+    inputs.clear();
+    if inputs.capacity() < N && inputs.try_reserve_exact(N).is_err() {
         return Err(Box::new(AuthenticatedPacketArrayLoweringFailureV1 {
             error: M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
             images,
         }));
     }
+    if buffers.capacity() < N && buffers.try_reserve_exact(N).is_err() {
+        return Err(Box::new(AuthenticatedPacketArrayLoweringFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
+            images,
+        }));
+    }
+    while buffers.len() < N {
+        buffers.push(Vec::new());
+    }
+    for (packet_buffers, bound) in buffers.iter_mut().zip(bound_rows) {
+        packet_buffers.clear();
+        if packet_buffers.capacity() < bound.buffers().len()
+            && packet_buffers
+                .try_reserve_exact(bound.buffers().len())
+                .is_err()
+        {
+            return Err(Box::new(AuthenticatedPacketArrayLoweringFailureV1 {
+                error: M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
+                images,
+            }));
+        }
+    }
+    let mut buffers = buffers.into_iter();
     for ((image, physical), bound) in images
         .into_vec()
         .into_iter()
         .zip(physical_recipe.rows().iter().copied())
         .zip(bound_rows)
     {
+        let mut packet_buffers = buffers.next().unwrap_or_default();
+        packet_buffers.clear();
+        packet_buffers.extend_from_slice(bound.buffers());
         inputs.push(PacketLoweringInputV1 {
             physical,
             image,
-            buffers: bound.buffers().to_vec().into_boxed_slice(),
+            buffers: packet_buffers.into_boxed_slice(),
         });
     }
     let inputs: [PacketLoweringInputV1; N] = match inputs.try_into() {

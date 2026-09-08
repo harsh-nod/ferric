@@ -8,7 +8,7 @@
 //! one target matrix needed by the existing Ferric diagnostic semantics. These
 //! diagnostic copies do not by themselves claim serving or R33 evidence.
 
-use core::fmt;
+use core::{fmt, mem::MaybeUninit};
 
 use fe2o3_host::{
     AuthenticatedServiceQueueOperationFailureV1, AuthenticatedServiceQueueReleaseFailureV1,
@@ -20,22 +20,31 @@ use fe2o3_service_host::{
     ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1, ServiceQueueErrorV1,
     ServiceQueueReleaseFailureV1,
 };
-use ferric_spec::{completion::CompletionEpoch, Identity, M1_MAX_ACTIVE_SEQUENCES};
+use ferric_spec::{
+    completion::CompletionEpoch, Identity, Qwen3ExecutionMode, Qwen3ModelRole, RequestId, TokenId,
+    M1_MAX_ACTIVE_SEQUENCES,
+};
 
 use crate::authenticated_kernel_programs::M1AuthenticatedProgramCatalogWitnessV1;
-use crate::completed_readback_join::check_m1_completed_output_v1;
+use crate::completed_readback_join::{
+    check_m1_completed_output_v1, check_m1_completed_output_with_storage_v1,
+    M1CheckedCompletionHostStorageV1,
+};
 use crate::direct_diagnostic_choices::observe_m1_direct_diagnostic_choices_v1;
 use crate::observed_completion::{
-    observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
+    observe_m1_completed_output_v1, observe_m1_completed_output_with_storage_v1,
+    observe_m1_guarded_completed_output_v1, M1ObservedCompletionHostStorageV1,
 };
 use crate::physical_queue_lifecycle::prepare_m1_direct_diagnostic_ranges_v1;
 use crate::speculative_diagnostic_choices::{
     m1_speculative_diagnostic_is_s1_k4_selection_v1, observe_m1_speculative_diagnostic_choices_v1,
+    observe_m1_speculative_diagnostic_choices_with_storage_v1,
+    M1SpeculativeDiagnosticChoicesHostStorageV1,
 };
 use crate::{
     preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
     CompletionWireExpectation, CompletionWireSemanticExpectation, DeclaredOperationKernelPlan,
-    Engine, ExactCompletion, Gfx942DeviceBinding, M1AuthenticatedPhysicalQueuePhaseCaseV1,
+    Engine, ExactCompletion, Gfx942DeviceBinding, M1AuthenticatedPhysicalQueuePhaseSlotV1,
     M1AuthenticatedPhysicalRecycledQueueSessionV1, M1CheckedCompletionOutputV1,
     M1CompletedOutputCheckErrorV1, M1CompletionObservationErrorV1,
     M1DirectDiagnosticObservationErrorV1, M1FullStepKvReservationCustodyV1,
@@ -61,6 +70,104 @@ const M1_AUTHENTICATED_SPECULATIVE_DRAFT_RANGE_NAMES_V1: [&str;
     "draft-8", "draft-9", "draft-10", "draft-11", "draft-12", "draft-13", "draft-14", "draft-15",
 ];
 
+/// Pre-clock storage for the exact resident S1/K4 readback and semantic join.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentReadbackHostStorageV1 {
+    completion: M1ObservedCompletionHostStorageV1,
+    choices: M1SpeculativeDiagnosticChoicesHostStorageV1,
+    checked: M1CheckedCompletionHostStorageV1,
+    readback_case: Option<
+        Box<
+            MaybeUninit<
+                M1AuthenticatedPhysicalReadbackQueueCaseV1<
+                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    >,
+    detached_case: Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
+}
+
+impl M1AuthenticatedResidentReadbackHostStorageV1 {
+    pub(crate) fn try_new(selection: ferric_spec::Qwen3PlanSelection) -> Option<Self> {
+        if !m1_speculative_diagnostic_is_s1_k4_selection_v1(selection) {
+            return None;
+        }
+        let completion_shape = crate::m1_completion_output_shape_v1(selection).ok()?;
+        let choice_shape = crate::m1_speculative_diagnostic_choices_shape_v1(selection).ok()?;
+        Some(Self {
+            completion: M1ObservedCompletionHostStorageV1::try_new(completion_shape, 1)?,
+            choices: M1SpeculativeDiagnosticChoicesHostStorageV1::try_new(choice_shape)?,
+            checked: M1CheckedCompletionHostStorageV1::try_new(1)?,
+            readback_case: Some(Box::new_uninit()),
+            detached_case: Some(Box::new_uninit()),
+        })
+    }
+}
+
+/// Pre-clock storage for the resident paired-prefill copy and semantic join.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentPrefillReadbackHostStorageV1 {
+    completion: M1ObservedCompletionHostStorageV1,
+    checked: M1CheckedCompletionHostStorageV1,
+    readback_case: Option<
+        Box<
+            MaybeUninit<
+                M1AuthenticatedPhysicalReadbackQueueCaseV1<
+                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    >,
+    detached_case: Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
+}
+
+impl M1AuthenticatedResidentPrefillReadbackHostStorageV1 {
+    pub(crate) fn try_new(selection: ferric_spec::Qwen3PlanSelection) -> Option<Self> {
+        if selection.role != Qwen3ModelRole::Target8B
+            || selection.mode != Qwen3ExecutionMode::Prefill
+        {
+            return None;
+        }
+        let shape = crate::m1_completion_output_shape_v1(selection).ok()?;
+        Some(Self {
+            completion: M1ObservedCompletionHostStorageV1::try_new(shape, 1)?,
+            checked: M1CheckedCompletionHostStorageV1::try_new(1)?,
+            readback_case: Some(Box::new_uninit()),
+            detached_case: Some(Box::new_uninit()),
+        })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentPrefillCompletedReadbackV1 {
+    completed: M1AuthenticatedPhysicalCompletedReadbackV1,
+    request: RequestId,
+    emitted_token: TokenId,
+    selection: ferric_spec::Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+}
+
+impl M1AuthenticatedResidentPrefillCompletedReadbackV1 {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalCompletedReadbackV1,
+        RequestId,
+        TokenId,
+        ferric_spec::Qwen3PlanSelection,
+        CompletionEpoch,
+    ) {
+        (
+            self.completed,
+            self.request,
+            self.emitted_token,
+            self.selection,
+            self.epoch,
+        )
+    }
+}
+
 const fn is_authenticated_s1_k4_first_dispatch_generation(generation: u64) -> bool {
     generation == M1_AUTHENTICATED_S1_K4_FIRST_DISPATCH_GENERATION_V1
 }
@@ -68,8 +175,7 @@ const fn is_authenticated_s1_k4_first_dispatch_generation(generation: u64) -> bo
 /// One authenticated recycled queue generation paired with its completed output copy.
 #[must_use = "observed bytes and authenticated queue custody remain linear"]
 pub struct M1AuthenticatedObservedCompletionCaseV1<const N: usize> {
-    case:
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     image: M1ObservedCompletionImageV1,
 }
 
@@ -692,12 +798,12 @@ fn read_authenticated_direct_choice(
 ) -> Option<Result<ServiceCompletedReadbackV1, ServiceQueueErrorV1>> {
     match completion {
         M1AuthenticatedObservedCompletionOutputV1::TargetOnly(case) => {
-            let (lower, _custody, _step) = case.case.observation_parts();
+            let (lower, _custody, _step) = case.case.recycled_observation_parts();
             let request = lower.completed_read_request(range);
             Some(lower.read_completed(request))
         }
         M1AuthenticatedObservedCompletionOutputV1::PairedPrefill(case) => {
-            let (lower, _custody, _step) = case.case.observation_parts();
+            let (lower, _custody, _step) = case.case.recycled_observation_parts();
             let request = lower.completed_read_request(range);
             Some(lower.read_completed(request))
         }
@@ -788,17 +894,17 @@ fn read_authenticated_speculative_choice(
 ) -> Result<ServiceCompletedReadbackV1, ServiceQueueErrorV1> {
     match completion {
         M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) => {
-            let (lower, _custody, _step) = case.case.observation_parts();
+            let (lower, _custody, _step) = case.case.recycled_observation_parts();
             let request = lower.completed_read_request(range);
             lower.read_completed(request)
         }
         M1AuthenticatedObservedCompletionOutputV1::SpeculativeK8(case) => {
-            let (lower, _custody, _step) = case.case.observation_parts();
+            let (lower, _custody, _step) = case.case.recycled_observation_parts();
             let request = lower.completed_read_request(range);
             lower.read_completed(request)
         }
         M1AuthenticatedObservedCompletionOutputV1::SpeculativeK16(case) => {
-            let (lower, _custody, _step) = case.case.observation_parts();
+            let (lower, _custody, _step) = case.case.recycled_observation_parts();
             let request = lower.completed_read_request(range);
             lower.read_completed(request)
         }
@@ -814,7 +920,7 @@ fn read_authenticated_speculative_k4_choice(
     let M1AuthenticatedObservedCompletionOutputV1::SpeculativeK4(case) = completion else {
         unreachable!("authenticated diagnostic read was preflighted as S1/K4")
     };
-    let (lower, _custody, _step) = case.case.observation_parts();
+    let (lower, _custody, _step) = case.case.recycled_observation_parts();
     let request = lower.completed_read_request(range);
     lower.read_completed(request)
 }
@@ -1239,8 +1345,7 @@ impl M1AuthenticatedObservedSpeculativeK4DiagnosticOutputV1 {
 /// One authenticated queue paired with a completed copy that failed structural observation.
 #[must_use = "rejected completed bytes and authenticated queue custody remain retained"]
 pub struct M1AuthenticatedRejectedCompletionCaseV1<const N: usize> {
-    case:
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     readback: ServiceCompletedReadbackV1,
 }
 
@@ -1293,48 +1398,18 @@ impl M1AuthenticatedRejectedCompletionOutputV1 {
 /// Closed authenticated owner after an enclosing-snapshot read became ambiguous.
 #[must_use = "snapshot-read failure custody must remain closed"]
 pub enum M1AuthenticatedCompletionSnapshotReadFailedOutputV1 {
-    TargetOnly(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
-    ),
+    TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     PairedPrefill(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
     SpeculativeK4(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     ),
     SpeculativeK8(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     ),
     SpeculativeK16(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     ),
 }
 
@@ -1497,31 +1572,23 @@ impl M1AuthenticatedCompletionObservationFailureV1 {
 enum ObserveCaseFailureV1<const N: usize> {
     BeforeCopy {
         error: M1CompletionObservationErrorV1,
-        case: Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-        >,
+        case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     },
     SnapshotReadFailed {
         error: M1CompletionObservationErrorV1,
-        case: Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-        >,
+        case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     },
     AfterCopy {
         error: M1CompletionObservationErrorV1,
-        case: Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-        >,
+        case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
         readback: ServiceCompletedReadbackV1,
     },
 }
 
 fn observe_case<const N: usize>(
-    mut case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
 ) -> Result<Box<M1AuthenticatedObservedCompletionCaseV1<N>>, Box<ObserveCaseFailureV1<N>>> {
-    let (lower, custody, step) = case.observation_parts();
+    let (lower, custody, step) = case.recycled_observation_parts();
     let output = custody.completion_output();
     let output_shape = output.shape();
     let range = output.retained_host_dispatch_range();
@@ -1627,13 +1694,13 @@ fn observe_case<const N: usize>(
 fn retain_observation_failure<const N: usize>(
     failure: ObserveCaseFailureV1<N>,
     recycled: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
     rejected: fn(
         Box<M1AuthenticatedRejectedCompletionCaseV1<N>>,
     ) -> M1AuthenticatedRejectedCompletionOutputV1,
     snapshot_read_failed: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedCompletionSnapshotReadFailedOutputV1,
 ) -> M1AuthenticatedCompletionObservationFailureV1 {
     match failure {
@@ -1669,7 +1736,583 @@ fn retain_observation_failure<const N: usize>(
     }
 }
 
+#[derive(Debug)]
+#[expect(
+    dead_code,
+    reason = "typed resident readback diagnostics remain retained in opaque failure custody"
+)]
+pub(crate) enum M1AuthenticatedResidentPhysicalReadbackErrorV1 {
+    Shape,
+    Storage,
+    CompletionCanary,
+    Queue {
+        range: &'static str,
+        source: ServiceQueueErrorV1,
+    },
+    Observation(crate::M1ObservedCompletionImageErrorV1),
+    Choices(M1SpeculativeDiagnosticChoicesErrorV1),
+    Join(M1CompletedOutputCheckErrorV1),
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentPhysicalReadbackFailureV1 {
+    error: M1AuthenticatedResidentPhysicalReadbackErrorV1,
+    queue: M1AuthenticatedPhysicalRecycledQueueSessionV1,
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl M1AuthenticatedResidentPhysicalReadbackFailureV1 {
+    fn new(
+        error: M1AuthenticatedResidentPhysicalReadbackErrorV1,
+        queue: M1AuthenticatedPhysicalRecycledQueueSessionV1,
+        retained: impl fmt::Debug + 'static,
+    ) -> Box<Self> {
+        Box::new(Self {
+            error,
+            queue,
+            retained: Box::new(retained),
+        })
+    }
+
+    fn from_k4(
+        error: M1AuthenticatedResidentPhysicalReadbackErrorV1,
+        case: Box<
+            M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
+        >,
+        retained: impl fmt::Debug + 'static,
+    ) -> Box<Self> {
+        Self::new(
+            error,
+            M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK4(case),
+            retained,
+        )
+    }
+
+    fn from_prefill(
+        error: M1AuthenticatedResidentPhysicalReadbackErrorV1,
+        case: Box<
+            M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
+        >,
+        retained: impl fmt::Debug + 'static,
+    ) -> Box<Self> {
+        Self::new(
+            error,
+            M1AuthenticatedPhysicalRecycledQueueSessionV1::PairedPrefill(case),
+            retained,
+        )
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            self.queue.close_recycled(),
+            (self.error, self.retained),
+        )
+    }
+}
+
 impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    pub(crate) fn read_and_check_paired_prefill_completion_with_storage(
+        self,
+        expected_dispatch_generation: u64,
+        storage: M1AuthenticatedResidentPrefillReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedResidentPrefillCompletedReadbackV1,
+        Box<M1AuthenticatedResidentPhysicalReadbackFailureV1>,
+    > {
+        let mut case = match self {
+            Self::PairedPrefill(case) => case,
+            queue => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    queue,
+                    storage,
+                ));
+            }
+        };
+        let M1AuthenticatedResidentPrefillReadbackHostStorageV1 {
+            mut completion,
+            checked,
+            mut readback_case,
+            detached_case,
+        } = storage;
+        let completion_copy = {
+            let (lower, custody, _step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            if output.completion_canary().is_some() {
+                Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::CompletionCanary)
+            } else {
+                let range = output.retained_host_dispatch_range();
+                match completion.bytes_mut() {
+                    Some(destination) => lower
+                        .read_completed_into(lower.completed_read_request(range), destination)
+                        .map_err(
+                            |source| M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                range: "completion",
+                                source,
+                            },
+                        ),
+                    None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                }
+            }
+        };
+        if let Err(error) = completion_copy {
+            return Err(
+                M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                    error,
+                    case,
+                    (completion, checked, readback_case, detached_case),
+                ),
+            );
+        }
+
+        let image = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            observe_m1_completed_output_with_storage_v1(
+                output.shape(),
+                custody.selection(),
+                step.scheduled_dispatch(),
+                expected_dispatch_generation,
+                output.data_index(),
+                output.retained_host_dispatch_range().offset_bytes(),
+                completion,
+            )
+        };
+        let image = match image {
+            Ok(image) => image,
+            Err((source, completion)) => {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Observation(source),
+                        case,
+                        (completion, checked, readback_case, detached_case),
+                    ),
+                );
+            }
+        };
+
+        let checked_result = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let scheduled = step.scheduled_dispatch();
+            let Some(record) = image
+                .records()
+                .first()
+                .filter(|_| scheduled.member_count() == 1 && image.records().len() == 1)
+            else {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                        case,
+                        (image, checked, readback_case, detached_case),
+                    ),
+                );
+            };
+            let emitted = record.emitted_tokens();
+            if Some(record.record().request) != scheduled.members()[0]
+                || record.record().epoch != scheduled.epoch()
+                || record.accepted_draft_tokens() != 0
+                || emitted.len() != 1
+            {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                        case,
+                        (image, checked, readback_case, detached_case),
+                    ),
+                );
+            }
+            let Some(plan) = step.target_plans()[0].as_ref() else {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                        case,
+                        (image, checked, readback_case, detached_case),
+                    ),
+                );
+            };
+            let semantic = CompletionWireSemanticExpectation::DirectFinalRow { choice: emitted[0] };
+            if let Err(source) = validate_generic_observed_semantics(
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::Generic,
+                custody.completion_output().qualification_logits().is_some(),
+                custody
+                    .completion_output()
+                    .direct_diagnostic_choices()
+                    .is_some(),
+                custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                    .is_some(),
+                &[semantic],
+            ) {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                        case,
+                        (image, checked, readback_case, detached_case),
+                    ),
+                );
+            }
+            let expectations = [CompletionWireExpectation::new(plan, semantic)];
+            check_m1_completed_output_with_storage_v1(
+                &image,
+                custody.selection(),
+                scheduled,
+                &expectations,
+                checked,
+            )
+        };
+        let checked = match checked_result {
+            Ok(checked) => checked,
+            Err(source) => {
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_prefill(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                        case,
+                        (image, readback_case, detached_case),
+                    ),
+                );
+            }
+        };
+        let record = image
+            .records()
+            .first()
+            .expect("paired-prefill record was checked above");
+        let request = record.record().request;
+        let emitted_token = record.emitted_tokens()[0];
+        let selection = image.selection();
+        let epoch = image.epoch();
+        let checked =
+            checked.retain_completion_canary_readback(image.into_completion_canary_readback());
+        let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
+        let (scheduled, _target_plans, kv, speculative_lineage, speculative_rollover_intent) =
+            step.into_parts_with_speculative_lineage();
+        let checked = checked
+            .retain_speculative_lineage(speculative_lineage)
+            .retain_speculative_rollover_intent(speculative_rollover_intent);
+        let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+        let readback_case = Box::write(
+            readback_case
+                .take()
+                .expect("resident prefill readback case is preallocated exactly once"),
+            M1AuthenticatedPhysicalReadbackQueueCaseV1 {
+                lower,
+                witness,
+                operations,
+                custody,
+                resident_detached_case: detached_case,
+            },
+        );
+        Ok(M1AuthenticatedResidentPrefillCompletedReadbackV1 {
+            completed: M1AuthenticatedPhysicalCompletedReadbackV1 {
+                queue: M1AuthenticatedPhysicalReadbackQueueSessionV1::PairedPrefill(readback_case),
+                checked,
+                completion,
+                kv,
+            },
+            request,
+            emitted_token,
+            selection,
+            epoch,
+        })
+    }
+
+    pub(crate) fn read_and_check_speculative_diagnostic_completion_with_storage(
+        self,
+        expected_dispatch_generation: u64,
+        storage: M1AuthenticatedResidentReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        Box<M1AuthenticatedResidentPhysicalReadbackFailureV1>,
+    > {
+        let mut case = match self {
+            Self::SpeculativeK4(case) => case,
+            queue => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    queue,
+                    storage,
+                ));
+            }
+        };
+        let M1AuthenticatedResidentReadbackHostStorageV1 {
+            mut completion,
+            mut choices,
+            checked,
+            mut readback_case,
+            detached_case,
+        } = storage;
+
+        let completion_copy = {
+            let (lower, custody, _step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            if output.completion_canary().is_some() {
+                Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::CompletionCanary)
+            } else {
+                let range = output.retained_host_dispatch_range();
+                match completion.bytes_mut() {
+                    Some(destination) => lower
+                        .read_completed_into(lower.completed_read_request(range), destination)
+                        .map_err(
+                            |source| M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                range: "completion",
+                                source,
+                            },
+                        ),
+                    None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                }
+            }
+        };
+        if let Err(error) = completion_copy {
+            return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                error,
+                case,
+                (completion, choices, checked, readback_case, detached_case),
+            ));
+        }
+
+        let choice_copy = {
+            let (lower, custody, _step) = case.recycled_observation_parts();
+            let owner = custody.completion_output().speculative_diagnostic_choices();
+            match owner {
+                None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape),
+                Some(owner) => match owner.retained_draft_read_ranges() {
+                    Err(source) => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Choices(
+                        source,
+                    )),
+                    Ok(ranges) => {
+                        let row_extent =
+                            usize::try_from(owner.shape().draft_iteration_extent_bytes())
+                                .unwrap_or(usize::MAX);
+                        let draft_tokens = usize::from(owner.shape().draft_tokens());
+                        let draft_result = match choices.draft_bytes_mut() {
+                            Some(destination)
+                                if row_extent != usize::MAX
+                                    && destination.len()
+                                        == row_extent.saturating_mul(draft_tokens) =>
+                            {
+                                let mut result = Ok(());
+                                for index in 0..draft_tokens {
+                                    let Some(range) = ranges[index] else {
+                                        result = Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Choices(
+                                            M1SpeculativeDiagnosticChoicesErrorV1::DraftReadRangeMissing {
+                                                iteration: index,
+                                            },
+                                        ));
+                                        break;
+                                    };
+                                    let start = index * row_extent;
+                                    let end = start + row_extent;
+                                    if let Err(source) = lower.read_completed_into(
+                                        lower.completed_read_request(range),
+                                        &mut destination[start..end],
+                                    ) {
+                                        result = Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                            range: M1_AUTHENTICATED_SPECULATIVE_DRAFT_RANGE_NAMES_V1[index],
+                                            source,
+                                        });
+                                        break;
+                                    }
+                                }
+                                result
+                            }
+                            _ => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                        };
+                        match draft_result {
+                            Err(error) => Err(error),
+                            Ok(()) => match choices.target_bytes_mut() {
+                                Some(destination) => lower
+                                    .read_completed_into(
+                                        lower.completed_read_request(owner.retained_target_range()),
+                                        destination,
+                                    )
+                                    .map_err(|source| {
+                                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                            range: "target",
+                                            source,
+                                        }
+                                    }),
+                                None => {
+                                    Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage)
+                                }
+                            },
+                        }
+                    }
+                },
+            }
+        };
+        if let Err(error) = choice_copy {
+            return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                error,
+                case,
+                (completion, choices, checked, readback_case, detached_case),
+            ));
+        }
+
+        let image = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            observe_m1_completed_output_with_storage_v1(
+                output.shape(),
+                custody.selection(),
+                step.scheduled_dispatch(),
+                expected_dispatch_generation,
+                output.data_index(),
+                output.retained_host_dispatch_range().offset_bytes(),
+                completion,
+            )
+        };
+        let image = match image {
+            Ok(image) => image,
+            Err((source, completion)) => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Observation(source),
+                    case,
+                    (completion, choices, checked, readback_case, detached_case),
+                ));
+            }
+        };
+        let diagnostic_choices = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let owner = custody
+                .completion_output()
+                .speculative_diagnostic_choices()
+                .expect("diagnostic owner was retained through completed copies");
+            observe_m1_speculative_diagnostic_choices_with_storage_v1(
+                owner,
+                expected_dispatch_generation,
+                u32::try_from(step.scheduled_dispatch().member_count()).unwrap_or(u32::MAX),
+                choices,
+            )
+        };
+        let diagnostic_choices = match diagnostic_choices {
+            Ok(choices) => choices,
+            Err(source) => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Choices(source),
+                    case,
+                    (image, checked, readback_case, detached_case),
+                ));
+            }
+        };
+
+        let checked = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let scheduled = step.scheduled_dispatch();
+            if scheduled.member_count() != 1 {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    case,
+                    (
+                        image,
+                        diagnostic_choices,
+                        checked,
+                        readback_case,
+                        detached_case,
+                    ),
+                ));
+            }
+            let semantic = CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: diagnostic_choices.draft_choices_for_lane(0).unwrap_or(&[]),
+                target_choices: diagnostic_choices.target_choices_for_lane(0).unwrap_or(&[]),
+            };
+            if let Err(source) = validate_generic_observed_semantics(
+                M1AuthenticatedCompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                custody.completion_output().qualification_logits().is_some(),
+                custody
+                    .completion_output()
+                    .direct_diagnostic_choices()
+                    .is_some(),
+                custody
+                    .completion_output()
+                    .speculative_diagnostic_choices()
+                    .is_some(),
+                &[semantic],
+            ) {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                    case,
+                    (
+                        image,
+                        diagnostic_choices,
+                        checked,
+                        readback_case,
+                        detached_case,
+                    ),
+                ));
+            }
+            let Some(plan) = step.target_plans()[0].as_ref() else {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    case,
+                    (
+                        image,
+                        diagnostic_choices,
+                        checked,
+                        readback_case,
+                        detached_case,
+                    ),
+                ));
+            };
+            let expectations = [CompletionWireExpectation::new(plan, semantic)];
+            match check_m1_completed_output_with_storage_v1(
+                &image,
+                custody.selection(),
+                scheduled,
+                &expectations,
+                checked,
+            ) {
+                Ok(checked) => checked,
+                Err(source) => {
+                    return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                        case,
+                        (image, diagnostic_choices, readback_case, detached_case),
+                    ));
+                }
+            }
+        };
+
+        let checked =
+            checked.retain_completion_canary_readback(image.into_completion_canary_readback());
+        let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
+        let (scheduled, _target_plans, kv, speculative_lineage, speculative_rollover_intent) =
+            step.into_parts_with_speculative_lineage();
+        let checked = checked
+            .retain_speculative_lineage(speculative_lineage)
+            .retain_speculative_rollover_intent(speculative_rollover_intent);
+        let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+        let readback_case = Box::write(
+            readback_case
+                .take()
+                .expect("resident readback case is preallocated exactly once"),
+            M1AuthenticatedPhysicalReadbackQueueCaseV1 {
+                lower,
+                witness,
+                operations,
+                custody,
+                resident_detached_case: detached_case,
+            },
+        );
+        Ok(M1AuthenticatedSpeculativeK4DiagnosticCompletedReadbackV1 {
+            corresponding_target_only_token: diagnostic_choices
+                .target_choices()
+                .first()
+                .copied()
+                .unwrap_or(u32::MAX),
+            completed: M1AuthenticatedPhysicalCompletedReadbackV1 {
+                queue: M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4(readback_case),
+                checked,
+                completion,
+                kv,
+            },
+            choices: diagnostic_choices,
+        })
+    }
+
     /// Copies and structurally observes the exact completed K7 output once.
     ///
     /// Ordinary failures before a successful copy preserve retryable recycled
@@ -1748,6 +2391,8 @@ pub struct M1AuthenticatedPhysicalReadbackQueueCaseV1<const N: usize> {
     witness: M1AuthenticatedProgramCatalogWitnessV1,
     operations: DeclaredOperationKernelPlan,
     custody: M1PhysicalQueueBatchCustodyV1,
+    resident_detached_case:
+        Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
 }
 
 impl<const N: usize> fmt::Debug for M1AuthenticatedPhysicalReadbackQueueCaseV1<N> {
@@ -1773,8 +2418,15 @@ impl<const N: usize> M1AuthenticatedPhysicalReadbackQueueCaseV1<N> {
         M1AuthenticatedProgramCatalogWitnessV1,
         DeclaredOperationKernelPlan,
         M1PhysicalQueueBatchCustodyV1,
+        Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
     ) {
-        (self.lower, self.witness, self.operations, self.custody)
+        (
+            self.lower,
+            self.witness,
+            self.operations,
+            self.custody,
+            self.resident_detached_case,
+        )
     }
 }
 
@@ -2541,15 +3193,13 @@ type AuthenticatedObservedReleaseResultV1 = Result<
 >;
 
 fn release_authenticated_phase_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<
     AuthenticatedServiceQueueReleaseV1,
     Box<M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1>,
 > {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
     match lower.destroy_and_release() {
         Ok(release) => Ok(release),
         Err(lower) => Err(Box::new(
@@ -2884,7 +3534,7 @@ fn release_authenticated_post_readback_case<const N: usize>(
     AuthenticatedServiceQueueReleaseV1,
     Box<M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1>,
 > {
-    let (lower, witness, operations, custody) = (*case).into_parts();
+    let (lower, witness, operations, custody, _resident_detached_case) = (*case).into_parts();
     match lower.destroy_and_release() {
         Ok(release) => Ok(release),
         Err(lower) => Err(Box::new(
@@ -2906,16 +3556,20 @@ fn detach_authenticated_readback_case<const N: usize>(
     Box<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>,
     Box<M1AuthenticatedPhysicalReadbackQueueOperationFailureV1>,
 > {
-    let (lower, witness, operations, custody) = (*case).into_parts();
+    let (lower, witness, operations, custody, resident_detached_case) = (*case).into_parts();
     match lower.detach() {
-        Ok(lower) => Ok(Box::new(
-            M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1 {
+        Ok(lower) => {
+            let detached = M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1 {
                 lower,
                 witness,
                 operations,
                 custody,
-            },
-        )),
+            };
+            Ok(match resident_detached_case {
+                Some(slot) => Box::write(slot, detached),
+                None => Box::new(detached),
+            })
+        }
         Err(lower) => Err(Box::new(
             M1AuthenticatedPhysicalReadbackQueueOperationFailureV1 {
                 shape,
@@ -3052,7 +3706,7 @@ fn check_observed_case<const N: usize>(
         Err(error) => return Err((error, case)),
     };
     let M1AuthenticatedObservedCompletionCaseV1 { case, image } = *case;
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
     let (scheduled, _target_plans, kv, speculative_lineage, speculative_rollover_intent) =
         step.into_parts_with_speculative_lineage();
     let checked = checked
@@ -3066,6 +3720,7 @@ fn check_observed_case<const N: usize>(
             witness,
             operations,
             custody,
+            resident_detached_case: None,
         }),
         checked,
         completion,

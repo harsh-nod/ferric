@@ -907,6 +907,23 @@ pub struct M1SpeculativeGenerationLoopV1 {
     last_epoch: Option<CompletionEpoch>,
 }
 
+/// Preallocated member storage for one resident speculative coordinator.
+///
+/// The concrete member state remains private so callers can provide capacity
+/// without gaining authority to forge coordinator state.
+#[derive(Debug)]
+pub(crate) struct M1SpeculativeGenerationLoopStorageV1 {
+    members: Vec<M1SpeculativeMemberStateV1>,
+}
+
+impl M1SpeculativeGenerationLoopStorageV1 {
+    pub(crate) fn try_new(capacity: usize) -> Option<Self> {
+        let mut members = Vec::new();
+        members.try_reserve_exact(capacity).ok()?;
+        Some(Self { members })
+    }
+}
+
 impl M1SpeculativeGenerationLoopV1 {
     pub(crate) const fn identity(&self) -> M1SpeculativeCoordinatorIdentityV1 {
         self.identity
@@ -915,16 +932,28 @@ impl M1SpeculativeGenerationLoopV1 {
     pub(crate) fn bootstrap_seed_snapshot(
         &self,
     ) -> Result<Box<[M1SpeculativeMemberSeedV1]>, M1SpeculativeGenerationLoopErrorV1> {
+        let mut seeds = Vec::new();
+        seeds
+            .try_reserve_exact(self.members.len())
+            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        self.write_bootstrap_seed_snapshot(&mut seeds)?;
+        Ok(seeds.into_boxed_slice())
+    }
+
+    pub(crate) fn write_bootstrap_seed_snapshot(
+        &self,
+        seeds: &mut Vec<M1SpeculativeMemberSeedV1>,
+    ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
         if self.next_round != 0 || self.last_epoch.is_some() {
             return Err(M1SpeculativeGenerationLoopErrorV1::RoundDrift {
                 expected: 0,
                 actual: self.next_round,
             });
         }
-        let mut seeds = Vec::new();
-        seeds
-            .try_reserve_exact(self.members.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        seeds.clear();
+        if seeds.capacity() < self.members.len() {
+            return Err(M1SpeculativeGenerationLoopErrorV1::HostAllocation);
+        }
         for (lane, member) in self.members.iter().enumerate() {
             if member.status != M1SpeculativeMemberStatusV1::Active || member.generated_tokens != 0
             {
@@ -941,7 +970,7 @@ impl M1SpeculativeGenerationLoopV1 {
                 policy: member.policy,
             });
         }
-        Ok(seeds.into_boxed_slice())
+        Ok(())
     }
 
     pub(crate) fn matches_bootstrap_seeds(
@@ -998,6 +1027,16 @@ impl M1SpeculativeGenerationLoopV1 {
         selection: Qwen3PlanSelection,
         seeds: &[M1SpeculativeMemberSeedV1],
     ) -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
+        let storage = M1SpeculativeGenerationLoopStorageV1::try_new(seeds.len())
+            .ok_or(M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        Self::new_with_storage(selection, seeds, storage)
+    }
+
+    pub(crate) fn new_with_storage(
+        selection: Qwen3PlanSelection,
+        seeds: &[M1SpeculativeMemberSeedV1],
+        storage: M1SpeculativeGenerationLoopStorageV1,
+    ) -> Result<Self, M1SpeculativeGenerationLoopErrorV1> {
         let shape = M1SpeculativePhysicalShapeV1::from_selection(selection)?;
         let identity = M1SpeculativeCoordinatorIdentityV1::fresh()?;
         if seeds.is_empty() {
@@ -1010,10 +1049,11 @@ impl M1SpeculativeGenerationLoopV1 {
                 actual: seeds.len(),
             });
         }
-        let mut members = Vec::new();
-        members
-            .try_reserve_exact(seeds.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut members = storage.members;
+        members.clear();
+        if members.capacity() < seeds.len() {
+            return Err(M1SpeculativeGenerationLoopErrorV1::HostAllocation);
+        }
         for (lane, seed) in seeds.iter().copied().enumerate() {
             validate_seed(shape, seeds, lane, seed)?;
             members.push(M1SpeculativeMemberStateV1 {

@@ -22,6 +22,12 @@ use crate::{
 enum M1ObservedCompletionBackingV1 {
     Physical(ServiceCompletedReadbackV1),
     PhysicalCanary(Box<M1ValidatedCompletionCanaryReadbackV1>),
+    Resident {
+        dispatch_generation: u64,
+        data_index: usize,
+        offset_bytes: u64,
+        bytes: Box<[u8]>,
+    },
     #[allow(dead_code)]
     Test {
         dispatch_generation: u64,
@@ -36,7 +42,11 @@ impl M1ObservedCompletionBackingV1 {
         match self {
             Self::Physical(readback) => readback.dispatch_generation(),
             Self::PhysicalCanary(readback) => readback.dispatch_generation(),
-            Self::Test {
+            Self::Resident {
+                dispatch_generation,
+                ..
+            }
+            | Self::Test {
                 dispatch_generation,
                 ..
             } => *dispatch_generation,
@@ -47,7 +57,7 @@ impl M1ObservedCompletionBackingV1 {
         match self {
             Self::Physical(readback) => readback.data_index(),
             Self::PhysicalCanary(readback) => readback.data_index(),
-            Self::Test { data_index, .. } => *data_index,
+            Self::Resident { data_index, .. } | Self::Test { data_index, .. } => *data_index,
         }
     }
 
@@ -55,7 +65,7 @@ impl M1ObservedCompletionBackingV1 {
         match self {
             Self::Physical(readback) => readback.offset_bytes(),
             Self::PhysicalCanary(readback) => readback.interior_offset_bytes(),
-            Self::Test { offset_bytes, .. } => *offset_bytes,
+            Self::Resident { offset_bytes, .. } | Self::Test { offset_bytes, .. } => *offset_bytes,
         }
     }
 
@@ -63,14 +73,14 @@ impl M1ObservedCompletionBackingV1 {
         match self {
             Self::Physical(readback) => readback.bytes(),
             Self::PhysicalCanary(readback) => readback.interior_bytes(),
-            Self::Test { bytes, .. } => bytes,
+            Self::Resident { bytes, .. } | Self::Test { bytes, .. } => bytes,
         }
     }
 
     const fn completion_canary(&self) -> Option<M1ObservedCompletionCanarySummaryV1> {
         match self {
             Self::PhysicalCanary(readback) => Some(readback.summary()),
-            Self::Physical(_) | Self::Test { .. } => None,
+            Self::Physical(_) | Self::Resident { .. } | Self::Test { .. } => None,
         }
     }
 }
@@ -222,8 +232,35 @@ impl M1ObservedCompletionImageV1 {
         match self.backing {
             M1ObservedCompletionBackingV1::PhysicalCanary(readback) => Some(readback),
             M1ObservedCompletionBackingV1::Physical(_)
+            | M1ObservedCompletionBackingV1::Resident { .. }
             | M1ObservedCompletionBackingV1::Test { .. } => None,
         }
+    }
+}
+
+/// Caller-owned storage for one ordinary compact completion observation.
+#[derive(Debug)]
+pub(crate) struct M1ObservedCompletionHostStorageV1 {
+    bytes: Option<Box<[u8]>>,
+    records: Vec<M1ObservedCompletionRecordV1>,
+}
+
+impl M1ObservedCompletionHostStorageV1 {
+    pub(crate) fn try_new(shape: M1CompletionOutputShapeV1, members: usize) -> Option<Self> {
+        let extent = usize::try_from(shape.extent_bytes()).ok()?;
+        let mut bytes = Vec::new();
+        bytes.try_reserve_exact(extent).ok()?;
+        bytes.resize(extent, 0);
+        let mut records = Vec::new();
+        records.try_reserve_exact(members).ok()?;
+        Some(Self {
+            bytes: Some(bytes.into_boxed_slice()),
+            records,
+        })
+    }
+
+    pub(crate) fn bytes_mut(&mut self) -> Option<&mut [u8]> {
+        self.bytes.as_deref_mut()
     }
 }
 
@@ -246,6 +283,51 @@ pub(crate) fn observe_m1_completed_output_v1(
         epoch: scheduled.epoch(),
         raw_sha256,
         backing: M1ObservedCompletionBackingV1::Physical(readback),
+        records,
+    })
+}
+
+pub(crate) fn observe_m1_completed_output_with_storage_v1(
+    shape: M1CompletionOutputShapeV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    dispatch_generation: u64,
+    data_index: usize,
+    offset_bytes: u64,
+    mut storage: M1ObservedCompletionHostStorageV1,
+) -> Result<
+    M1ObservedCompletionImageV1,
+    (
+        M1ObservedCompletionImageErrorV1,
+        M1ObservedCompletionHostStorageV1,
+    ),
+> {
+    let Some(bytes) = storage.bytes.take() else {
+        return Err((
+            M1ObservedCompletionImageErrorV1::Output(M1CompletionOutputErrorV1::ExtentOverflow),
+            storage,
+        ));
+    };
+    let observed =
+        observe_records_with_storage(shape, queue_selection, scheduled, &bytes, storage.records);
+    let (raw_sha256, records) = match observed {
+        Ok(observed) => observed,
+        Err((error, records)) => {
+            storage.bytes = Some(bytes);
+            storage.records = records;
+            return Err((error, storage));
+        }
+    };
+    Ok(M1ObservedCompletionImageV1 {
+        shape,
+        epoch: scheduled.epoch(),
+        raw_sha256,
+        backing: M1ObservedCompletionBackingV1::Resident {
+            dispatch_generation,
+            data_index,
+            offset_bytes,
+            bytes,
+        },
         records,
     })
 }
@@ -282,43 +364,87 @@ fn observe_records(
     scheduled: &M1ScheduledDispatchV1,
     bytes: &[u8],
 ) -> Result<([u8; 32], Box<[M1ObservedCompletionRecordV1]>), M1ObservedCompletionImageErrorV1> {
+    observe_records_with_storage(shape, queue_selection, scheduled, bytes, Vec::new())
+        .map_err(|(error, _)| error)
+}
+
+#[allow(clippy::type_complexity)]
+fn observe_records_with_storage(
+    shape: M1CompletionOutputShapeV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    bytes: &[u8],
+    mut records: Vec<M1ObservedCompletionRecordV1>,
+) -> Result<
+    ([u8; 32], Box<[M1ObservedCompletionRecordV1]>),
+    (
+        M1ObservedCompletionImageErrorV1,
+        Vec<M1ObservedCompletionRecordV1>,
+    ),
+> {
     if shape.selection() != queue_selection {
-        return Err(M1ObservedCompletionImageErrorV1::SelectionDrift {
-            expected: queue_selection,
-            actual: shape.selection(),
-        });
+        return Err((
+            M1ObservedCompletionImageErrorV1::SelectionDrift {
+                expected: queue_selection,
+                actual: shape.selection(),
+            },
+            records,
+        ));
     }
     let capacity = shape.sequences() as usize;
     if scheduled.member_count() > capacity {
-        return Err(M1ObservedCompletionImageErrorV1::SchedulerCapacity {
-            members: scheduled.member_count(),
-            capacity,
-        });
+        return Err((
+            M1ObservedCompletionImageErrorV1::SchedulerCapacity {
+                members: scheduled.member_count(),
+                capacity,
+            },
+            records,
+        ));
     }
 
-    let mut records = Vec::new();
-    records
-        .try_reserve_exact(scheduled.member_count())
-        .map_err(|_| {
-            M1ObservedCompletionImageErrorV1::Output(M1CompletionOutputErrorV1::ExtentOverflow)
-        })?;
+    records.clear();
+    if records.capacity() < scheduled.member_count()
+        && records.try_reserve_exact(scheduled.member_count()).is_err()
+    {
+        return Err((
+            M1ObservedCompletionImageErrorV1::Output(M1CompletionOutputErrorV1::ExtentOverflow),
+            records,
+        ));
+    }
     for lane in 0..scheduled.member_count() {
         let record_bytes = shape
             .record_bytes(bytes, u32::try_from(lane).unwrap_or(u32::MAX))
-            .map_err(M1ObservedCompletionImageErrorV1::Output)?;
-        let record = decode_completion_record(record_bytes)
-            .map_err(|source| M1ObservedCompletionImageErrorV1::LiveRecord { lane, source })?;
+            .map_err(|error| {
+                (
+                    M1ObservedCompletionImageErrorV1::Output(error),
+                    core::mem::take(&mut records),
+                )
+            })?;
+        let record = decode_completion_record(record_bytes).map_err(|source| {
+            (
+                M1ObservedCompletionImageErrorV1::LiveRecord { lane, source },
+                core::mem::take(&mut records),
+            )
+        })?;
         records.push(M1ObservedCompletionRecordV1 { record });
     }
     for lane in scheduled.member_count()..capacity {
         let record_bytes = shape
             .record_bytes(bytes, u32::try_from(lane).unwrap_or(u32::MAX))
-            .map_err(M1ObservedCompletionImageErrorV1::Output)?;
+            .map_err(|error| {
+                (
+                    M1ObservedCompletionImageErrorV1::Output(error),
+                    core::mem::take(&mut records),
+                )
+            })?;
         if let Some(record_offset) = record_bytes.iter().position(|byte| *byte != 0) {
-            return Err(M1ObservedCompletionImageErrorV1::InactiveRecordNonzero {
-                lane,
-                record_offset,
-            });
+            return Err((
+                M1ObservedCompletionImageErrorV1::InactiveRecordNonzero {
+                    lane,
+                    record_offset,
+                },
+                records,
+            ));
         }
     }
 

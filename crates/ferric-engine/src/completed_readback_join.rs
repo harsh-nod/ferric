@@ -303,7 +303,45 @@ pub(crate) fn check_m1_completed_output_v1(
     scheduled: &M1ScheduledDispatchV1,
     expectations: &[CompletionWireExpectation<'_>],
 ) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
-    check_m1_completed_output(observed, queue_selection, scheduled, expectations, None)
+    check_m1_completed_output(
+        observed,
+        queue_selection,
+        scheduled,
+        expectations,
+        None,
+        None,
+    )
+}
+
+/// Preallocated checked-record storage for a resident completion join.
+#[derive(Debug)]
+pub(crate) struct M1CheckedCompletionHostStorageV1 {
+    records: Vec<InertCheckedCompletionRecord>,
+}
+
+impl M1CheckedCompletionHostStorageV1 {
+    pub(crate) fn try_new(members: usize) -> Option<Self> {
+        let mut records = Vec::new();
+        records.try_reserve_exact(members).ok()?;
+        Some(Self { records })
+    }
+}
+
+pub(crate) fn check_m1_completed_output_with_storage_v1(
+    observed: &M1ObservedCompletionImageV1,
+    queue_selection: Qwen3PlanSelection,
+    scheduled: &M1ScheduledDispatchV1,
+    expectations: &[CompletionWireExpectation<'_>],
+    storage: M1CheckedCompletionHostStorageV1,
+) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
+    check_m1_completed_output(
+        observed,
+        queue_selection,
+        scheduled,
+        expectations,
+        None,
+        Some(storage.records),
+    )
 }
 
 pub(crate) fn check_m1_qualification_completed_output_v1(
@@ -327,6 +365,7 @@ pub(crate) fn check_m1_qualification_completed_output_v1(
         scheduled,
         expectations,
         Some(final_rows),
+        None,
     )
 }
 
@@ -336,6 +375,7 @@ fn check_m1_completed_output(
     scheduled: &M1ScheduledDispatchV1,
     expectations: &[CompletionWireExpectation<'_>],
     qualification_final_rows: Option<&M1QualificationFinalRowChoicesV1>,
+    record_storage: Option<Vec<InertCheckedCompletionRecord>>,
 ) -> Result<M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1> {
     if observed.selection() != queue_selection {
         return Err(M1CompletedOutputCheckErrorV1::SelectionDrift {
@@ -397,10 +437,15 @@ fn check_m1_completed_output(
         return Err(M1CompletedOutputCheckErrorV1::QualificationContextDrift { lane });
     }
 
-    let mut records = Vec::new();
-    records.try_reserve_exact(expectations.len()).map_err(|_| {
-        M1CompletedOutputCheckErrorV1::Output(M1CompletionOutputErrorV1::ExtentOverflow)
-    })?;
+    let mut records = record_storage.unwrap_or_default();
+    records.clear();
+    if records.capacity() < expectations.len()
+        && records.try_reserve_exact(expectations.len()).is_err()
+    {
+        return Err(M1CompletedOutputCheckErrorV1::Output(
+            M1CompletionOutputErrorV1::ExtentOverflow,
+        ));
+    }
     for (lane, expectation) in expectations.iter().copied().enumerate() {
         let plan = expectation.plan();
         if let Some(context) = expectation.semantics().qualification_context() {

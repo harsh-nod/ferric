@@ -410,6 +410,10 @@ impl M1AuthenticatedPhysicalRunnerV1 {
 }
 
 impl M1PhysicalRunnerV1 {
+    pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
+        &self.operations
+    }
+
     /// Exact structural artifact-admission manifest identity.
     #[must_use]
     pub const fn kernel_artifact_manifest_id(&self) -> Identity {
@@ -1161,6 +1165,74 @@ pub enum M1PhysicalRunnerRecipeFailureV1 {
 pub enum M1PhysicalRunnerRecipeOutcomeV1 {
     Prepared(AddresslessM1PhysicalBufferRecipeV1),
     Rejected(M1PhysicalRunnerRecipeFailureV1),
+}
+
+/// Addressless recipe custody that may be derived before a timed resident
+/// window begins. The rejected form retains every linear derivation input.
+#[derive(Debug)]
+pub(crate) enum M1PhysicalRunnerRecipeInputV1 {
+    Empty,
+    Plans(M1FullStepWorkspacePlans),
+    Prepared(AddresslessM1PhysicalBufferRecipeV1),
+    Rejected(M1PhysicalRunnerRecipeFailureV1),
+}
+
+impl M1PhysicalRunnerRecipeInputV1 {
+    pub(crate) const fn plans(plans: M1FullStepWorkspacePlans) -> Self {
+        Self::Plans(plans)
+    }
+
+    pub(crate) fn workspace_plans(&self) -> Option<&M1FullStepWorkspacePlans> {
+        match self {
+            Self::Empty | Self::Rejected(_) => None,
+            Self::Plans(plans) => Some(plans),
+            Self::Prepared(recipe) => Some(recipe.workspace_composition().workspace_plans()),
+        }
+    }
+
+    pub(crate) const fn prepared_recipe(&self) -> Option<&AddresslessM1PhysicalBufferRecipeV1> {
+        match self {
+            Self::Prepared(recipe) => Some(recipe),
+            Self::Empty | Self::Plans(_) | Self::Rejected(_) => None,
+        }
+    }
+
+    pub(crate) fn prepare(
+        self,
+        runner: &M1AuthenticatedPhysicalRunnerV1,
+        intent: M1StepDispatchIntent,
+    ) -> (Self, bool) {
+        match self {
+            Self::Empty => (Self::Empty, false),
+            Self::Plans(plans) => match runner.derive_step_recipe(intent, plans) {
+                M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => (Self::Prepared(recipe), true),
+                M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                    (Self::Rejected(failure), false)
+                }
+            },
+            Self::Prepared(recipe) => {
+                let dispatch = recipe.workspace_composition().dispatch_plan();
+                let matches = dispatch.intent() == intent
+                    && dispatch.runner_declaration_id() == runner.declaration_id()
+                    && dispatch.kernel_catalog_id() == runner.kernel_catalog_id();
+                (Self::Prepared(recipe), matches)
+            }
+            Self::Rejected(failure) => (Self::Rejected(failure), false),
+        }
+    }
+
+    pub(crate) fn derive(
+        self,
+        operations: &DeclaredOperationKernelPlan,
+        intent: M1StepDispatchIntent,
+    ) -> M1PhysicalRunnerRecipeOutcomeV1 {
+        match self {
+            Self::Empty => unreachable!("recipe input is never consumed while empty"),
+            Self::Plans(plans) => derive_physical_step_recipe(operations, intent, plans),
+            Self::Prepared(recipe) => M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe),
+            Self::Rejected(failure) => M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure),
+        }
+    }
 }
 
 /// First-publication failure retaining exact retry or quarantine custody.

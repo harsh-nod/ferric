@@ -6,7 +6,6 @@ use ferric_spec::{completion::CompletionEpoch, RequestId, ValidatedM1StepInputs}
 
 use crate::{
     prepare_m1_authenticated_speculative_rollover_v1,
-    schedule_m1_authenticated_speculative_rollover_v1,
     submit_m1_authenticated_speculative_rollover_v1, Engine, LogicalRunnerDeclaration,
     M1AuthenticatedPrefillRegistryReconciledV1, M1AuthenticatedPreparedSpeculativeRolloverV1,
     M1AuthenticatedScheduledSpeculativeRolloverV1,
@@ -32,7 +31,7 @@ use crate::{
 pub struct M1AuthenticatedPrefillRegistryFirstRoundInputsV1 {
     draft_decode: ValidatedM1StepInputs,
     target_speculative: ValidatedM1StepInputs,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation_plans: M1FullStepWorkspacePlans,
 }
 
@@ -43,6 +42,20 @@ impl M1AuthenticatedPrefillRegistryFirstRoundInputsV1 {
         draft_decode: ValidatedM1StepInputs,
         target_speculative: ValidatedM1StepInputs,
         recipe_plans: M1FullStepWorkspacePlans,
+        preparation_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            draft_decode,
+            target_speculative,
+            recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+            preparation_plans,
+        }
+    }
+
+    pub(crate) const fn new_with_recipe_input(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
         preparation_plans: M1FullStepWorkspacePlans,
     ) -> Self {
         Self {
@@ -935,7 +948,7 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryReconciledV1<C> {
             diagnostic_ring_bytes,
             queue_wait_timeout,
         };
-        let scheduled = match schedule_m1_authenticated_speculative_rollover_v1(
+        let scheduled = match crate::authenticated_queue_rollover::schedule_m1_authenticated_speculative_rollover_with_recipe_input_v1(
             &mut engine,
             released,
             &batch,
@@ -1015,7 +1028,7 @@ mod tests {
             .find("registry.reserve_publication(batch)")
             .unwrap();
         let physical = schedule
-            .find("schedule_m1_authenticated_speculative_rollover_v1")
+            .find("schedule_m1_authenticated_speculative_rollover_with_recipe_input_v1")
             .unwrap();
         assert!(plan < reserve && reserve < physical);
 

@@ -200,6 +200,7 @@ pub struct BoundM1CompletionOutputV1 {
     shape: M1CompletionOutputShapeV1,
     key: CompletionOutputAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
+    data_index: usize,
     completion_canary: Option<BoundM1CompletionCanaryV1>,
     direct_diagnostic_choices: Option<BoundM1DirectDiagnosticChoicesV1>,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
@@ -218,6 +219,11 @@ impl BoundM1CompletionOutputV1 {
     #[must_use]
     pub const fn retained_host_dispatch_range(&self) -> ServiceHostDispatchRangeV1 {
         self.dispatch_range
+    }
+
+    /// Addressless dispatch-data ordinal retained for caller-buffer readback.
+    pub(crate) const fn data_index(&self) -> usize {
+        self.data_index
     }
 
     /// Returns the opt-in adjacent-guard snapshot association, when present.
@@ -427,6 +433,7 @@ pub fn allocate_m1_completion_output_v1(
     let shape = m1_completion_output_shape_v1(selection)?;
     let requested_bytes = usize::try_from(shape.extent_bytes)
         .map_err(|_| M1CompletionOutputErrorV1::ExtentOverflow)?;
+    let data_index = allocations.allocation_count();
     let key = allocations.allocate_host_visible::<HostDownloadRoleV1>(requested_bytes)?;
     validate_key_geometry(key, shape.extent_bytes())?;
     let _mapped = allocations.map_host_visible(key)?;
@@ -441,6 +448,7 @@ pub fn allocate_m1_completion_output_v1(
         shape,
         key,
         dispatch_range,
+        data_index,
         completion_canary: None,
         direct_diagnostic_choices: None,
         qualification_logits: None,
@@ -469,6 +477,7 @@ pub fn allocate_m1_guarded_completion_output_v1(
     let initialized = layout
         .initialized_bytes()
         .map_err(M1CompletionOutputErrorV1::Canary)?;
+    let data_index = allocations.allocation_count();
     let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
     validate_key_geometry(key, layout.snapshot_extent_bytes())?;
     let snapshot_typed = allocations.range(
@@ -488,6 +497,7 @@ pub fn allocate_m1_guarded_completion_output_v1(
         shape,
         key,
         dispatch_range,
+        data_index,
         completion_canary: Some(BoundM1CompletionCanaryV1::new(layout, snapshot_range)),
         direct_diagnostic_choices: None,
         qualification_logits: None,

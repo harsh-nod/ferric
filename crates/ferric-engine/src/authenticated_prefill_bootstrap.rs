@@ -122,7 +122,7 @@ pub struct M1AuthenticatedS1T128PrefillBootstrapInputV1 {
     prompt_tokens: Box<[TokenId]>,
     policy: M1SpeculativeGenerationPolicyV1,
     preparation_plans: M1FullStepWorkspacePlans,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
 }
 
 impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
@@ -233,7 +233,7 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
             prompt_tokens: prompt_tokens.into_boxed_slice(),
             policy,
             preparation_plans,
-            recipe_plans,
+            recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
         })
     }
 
@@ -247,6 +247,27 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
         self.policy.max_output_tokens()
     }
 
+    pub(crate) const fn preparation_plans(&self) -> &M1FullStepWorkspacePlans {
+        &self.preparation_plans
+    }
+
+    pub(crate) fn prepare_recipe(&mut self, runner: &M1AuthenticatedPhysicalRunnerV1) -> bool {
+        let pending = core::mem::replace(
+            &mut self.recipe_plans,
+            crate::runner::M1PhysicalRunnerRecipeInputV1::Empty,
+        );
+        let (prepared, accepted) =
+            pending.prepare(runner, M1StepDispatchIntent::PairedPrefill(TARGET_PREFILL));
+        self.recipe_plans = prepared;
+        accepted
+    }
+
+    pub(crate) const fn prepared_recipe(
+        &self,
+    ) -> Option<&crate::AddresslessM1PhysicalBufferRecipeV1> {
+        self.recipe_plans.prepared_recipe()
+    }
+
     /// Separates a validated bootstrap only for Ferric-owned resident rollover.
     ///
     /// The values remain addressless and carry no queue or publication authority.
@@ -256,7 +277,7 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
         Box<[TokenId]>,
         M1SpeculativeGenerationPolicyV1,
         M1FullStepWorkspacePlans,
-        M1FullStepWorkspacePlans,
+        crate::runner::M1PhysicalRunnerRecipeInputV1,
     ) {
         (
             self.prompt_tokens,
@@ -948,9 +969,9 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    let recipe = match runner.derive_step_recipe(
+    let recipe = match recipe_plans.derive(
+        runner.operations(),
         M1StepDispatchIntent::PairedPrefill(TARGET_PREFILL),
-        recipe_plans,
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
         M1PhysicalRunnerRecipeOutcomeV1::Rejected(error) => {

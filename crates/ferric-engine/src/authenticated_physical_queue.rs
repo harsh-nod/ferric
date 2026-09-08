@@ -61,26 +61,38 @@ impl M1QueueWaitTimeoutV1 {
     }
 }
 
-/// One authenticated lower typestate paired with all Ferric authority.
+#[derive(Debug)]
+enum M1AuthenticatedPhysicalQueuePhaseV1<const N: usize> {
+    Prepared(AuthenticatedServiceQueueSessionV1<N>),
+    Published(AuthenticatedServicePublishedQueueSessionV1<N>),
+    Completed(AuthenticatedServiceCompletedQueueSessionV1<N>),
+    Recycled(AuthenticatedServiceRecycledQueueSessionV1<N>),
+    Transitioning,
+}
+
+/// One persistent authenticated phase allocation paired with all Ferric authority.
+///
+/// Successful queue transitions replace only the private lower typestate. The
+/// allocation itself remains stable for the complete resident queue lifetime.
 #[must_use = "authenticated lower queue and Ferric custody must remain paired"]
-pub struct M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
-    lower: Q,
+pub struct M1AuthenticatedPhysicalQueuePhaseOwnerV1<const N: usize> {
+    lower: M1AuthenticatedPhysicalQueuePhaseV1<N>,
     witness: M1AuthenticatedProgramCatalogWitnessV1,
     operations: DeclaredOperationKernelPlan,
     custody: M1PhysicalQueueBatchCustodyV1,
     step: M1PrepublicationStepCustodyV1,
 }
 
-impl<Q> M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
+impl<const N: usize> M1AuthenticatedPhysicalQueuePhaseOwnerV1<N> {
     const fn new(
-        lower: Q,
+        lower: AuthenticatedServiceQueueSessionV1<N>,
         witness: M1AuthenticatedProgramCatalogWitnessV1,
         operations: DeclaredOperationKernelPlan,
         custody: M1PhysicalQueueBatchCustodyV1,
         step: M1PrepublicationStepCustodyV1,
     ) -> Self {
         Self {
-            lower,
+            lower: M1AuthenticatedPhysicalQueuePhaseV1::Prepared(lower),
             witness,
             operations,
             custody,
@@ -89,7 +101,7 @@ impl<Q> M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
     }
 
     pub(crate) const fn from_queue_rearm(
-        lower: Q,
+        lower: AuthenticatedServiceQueueSessionV1<N>,
         witness: M1AuthenticatedProgramCatalogWitnessV1,
         operations: DeclaredOperationKernelPlan,
         custody: M1PhysicalQueueBatchCustodyV1,
@@ -144,36 +156,130 @@ impl<Q> M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
         &self.step
     }
 
-    pub(crate) fn observation_parts(
+    pub(crate) fn recycled_observation_parts(
         &mut self,
     ) -> (
-        &mut Q,
+        &mut AuthenticatedServiceRecycledQueueSessionV1<N>,
         &M1PhysicalQueueBatchCustodyV1,
         &M1PrepublicationStepCustodyV1,
     ) {
-        (&mut self.lower, &self.custody, &self.step)
+        let M1AuthenticatedPhysicalQueuePhaseV1::Recycled(lower) = &mut self.lower else {
+            unreachable!("recycled owner carries the recycled lower phase")
+        };
+        (lower, &self.custody, &self.step)
     }
 
-    pub(crate) fn into_parts(
+    fn take_prepared(&mut self) -> AuthenticatedServiceQueueSessionV1<N> {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Prepared(lower) = core::mem::replace(
+            &mut self.lower,
+            M1AuthenticatedPhysicalQueuePhaseV1::Transitioning,
+        ) else {
+            unreachable!("prepared owner carries the prepared lower phase")
+        };
+        lower
+    }
+
+    fn take_published(&mut self) -> AuthenticatedServicePublishedQueueSessionV1<N> {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Published(lower) = core::mem::replace(
+            &mut self.lower,
+            M1AuthenticatedPhysicalQueuePhaseV1::Transitioning,
+        ) else {
+            unreachable!("published owner carries the published lower phase")
+        };
+        lower
+    }
+
+    fn take_completed(&mut self) -> AuthenticatedServiceCompletedQueueSessionV1<N> {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Completed(lower) = core::mem::replace(
+            &mut self.lower,
+            M1AuthenticatedPhysicalQueuePhaseV1::Transitioning,
+        ) else {
+            unreachable!("completed owner carries the completed lower phase")
+        };
+        lower
+    }
+
+    fn take_recycled(&mut self) -> AuthenticatedServiceRecycledQueueSessionV1<N> {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Recycled(lower) = core::mem::replace(
+            &mut self.lower,
+            M1AuthenticatedPhysicalQueuePhaseV1::Transitioning,
+        ) else {
+            unreachable!("recycled owner carries the recycled lower phase")
+        };
+        lower
+    }
+
+    fn set_prepared(&mut self, lower: AuthenticatedServiceQueueSessionV1<N>) {
+        self.lower = M1AuthenticatedPhysicalQueuePhaseV1::Prepared(lower);
+    }
+
+    fn set_published(&mut self, lower: AuthenticatedServicePublishedQueueSessionV1<N>) {
+        self.lower = M1AuthenticatedPhysicalQueuePhaseV1::Published(lower);
+    }
+
+    fn set_completed(&mut self, lower: AuthenticatedServiceCompletedQueueSessionV1<N>) {
+        self.lower = M1AuthenticatedPhysicalQueuePhaseV1::Completed(lower);
+    }
+
+    fn set_recycled(&mut self, lower: AuthenticatedServiceRecycledQueueSessionV1<N>) {
+        self.lower = M1AuthenticatedPhysicalQueuePhaseV1::Recycled(lower);
+    }
+
+    fn into_prepared_parts(
         self,
     ) -> (
-        Q,
+        AuthenticatedServiceQueueSessionV1<N>,
         M1AuthenticatedProgramCatalogWitnessV1,
         DeclaredOperationKernelPlan,
         M1PhysicalQueueBatchCustodyV1,
         M1PrepublicationStepCustodyV1,
     ) {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Prepared(lower) = self.lower else {
+            unreachable!("prepared owner carries the prepared lower phase")
+        };
         (
-            self.lower,
+            lower,
             self.witness,
             self.operations,
             self.custody,
             self.step,
         )
     }
+
+    pub(crate) fn into_recycled_parts(
+        self,
+    ) -> (
+        AuthenticatedServiceRecycledQueueSessionV1<N>,
+        M1AuthenticatedProgramCatalogWitnessV1,
+        DeclaredOperationKernelPlan,
+        M1PhysicalQueueBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        let M1AuthenticatedPhysicalQueuePhaseV1::Recycled(lower) = self.lower else {
+            unreachable!("recycled owner carries the recycled lower phase")
+        };
+        (
+            lower,
+            self.witness,
+            self.operations,
+            self.custody,
+            self.step,
+        )
+    }
+
+    fn into_custody_parts(
+        self,
+    ) -> (
+        M1AuthenticatedProgramCatalogWitnessV1,
+        DeclaredOperationKernelPlan,
+        M1PhysicalQueueBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        (self.witness, self.operations, self.custody, self.step)
+    }
 }
 
-impl<Q: core::fmt::Debug> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhaseCaseV1<Q> {
+impl<const N: usize> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhaseOwnerV1<N> {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedPhysicalQueuePhaseCaseV1")
@@ -186,48 +292,197 @@ impl<Q: core::fmt::Debug> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhase
     }
 }
 
+/// Stable heap slot for one authenticated queue owner.
+///
+/// Empty slots carry no queue authority and are allocated only by trusted host
+/// preparation before a resident timing interval begins.
+pub struct M1AuthenticatedPhysicalQueuePhaseSlotV1<const N: usize> {
+    owner: Option<M1AuthenticatedPhysicalQueuePhaseOwnerV1<N>>,
+}
+
+impl<const N: usize> M1AuthenticatedPhysicalQueuePhaseSlotV1<N> {
+    pub(crate) const fn empty() -> Self {
+        Self { owner: None }
+    }
+
+    pub(crate) const fn occupied(owner: M1AuthenticatedPhysicalQueuePhaseOwnerV1<N>) -> Self {
+        Self { owner: Some(owner) }
+    }
+
+    pub(crate) fn install_prepared(
+        &mut self,
+        lower: AuthenticatedServiceQueueSessionV1<N>,
+        witness: M1AuthenticatedProgramCatalogWitnessV1,
+        operations: DeclaredOperationKernelPlan,
+        custody: M1PhysicalQueueBatchCustodyV1,
+        step: M1PrepublicationStepCustodyV1,
+    ) {
+        assert!(
+            self.owner.is_none(),
+            "phase storage is installed exactly once"
+        );
+        self.owner = Some(M1AuthenticatedPhysicalQueuePhaseOwnerV1::from_queue_rearm(
+            lower, witness, operations, custody, step,
+        ));
+    }
+
+    pub(crate) fn install_prepared_from_owner(
+        &mut self,
+        owner: M1AuthenticatedPhysicalQueuePhaseOwnerV1<N>,
+    ) {
+        assert!(
+            self.owner.is_none(),
+            "phase storage is installed exactly once"
+        );
+        self.owner = Some(owner);
+    }
+
+    const fn owner(&self) -> &M1AuthenticatedPhysicalQueuePhaseOwnerV1<N> {
+        match &self.owner {
+            Some(owner) => owner,
+            None => panic!("live phase slot is occupied"),
+        }
+    }
+
+    fn owner_mut(&mut self) -> &mut M1AuthenticatedPhysicalQueuePhaseOwnerV1<N> {
+        self.owner.as_mut().expect("live phase slot is occupied")
+    }
+
+    #[must_use]
+    pub const fn device(&self) -> Gfx942DeviceBinding {
+        self.owner().device()
+    }
+
+    #[must_use]
+    pub const fn program_catalog_id(&self) -> Identity {
+        self.owner().program_catalog_id()
+    }
+
+    #[must_use]
+    pub const fn runner_declaration_id(&self) -> Identity {
+        self.owner().runner_declaration_id()
+    }
+
+    #[must_use]
+    pub const fn kernel_catalog_id(&self) -> Identity {
+        self.owner().kernel_catalog_id()
+    }
+
+    #[must_use]
+    pub const fn queue_epoch(&self) -> CompletionEpoch {
+        self.owner().queue_epoch()
+    }
+
+    pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.owner().scheduled_dispatch()
+    }
+
+    pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
+        self.owner().custody()
+    }
+
+    pub(crate) const fn step(&self) -> &M1PrepublicationStepCustodyV1 {
+        self.owner().step()
+    }
+
+    pub(crate) fn recycled_observation_parts(
+        &mut self,
+    ) -> (
+        &mut AuthenticatedServiceRecycledQueueSessionV1<N>,
+        &M1PhysicalQueueBatchCustodyV1,
+        &M1PrepublicationStepCustodyV1,
+    ) {
+        self.owner_mut().recycled_observation_parts()
+    }
+
+    fn into_prepared_parts(
+        mut self,
+    ) -> (
+        AuthenticatedServiceQueueSessionV1<N>,
+        M1AuthenticatedProgramCatalogWitnessV1,
+        DeclaredOperationKernelPlan,
+        M1PhysicalQueueBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        self.owner
+            .take()
+            .expect("prepared phase slot is occupied")
+            .into_prepared_parts()
+    }
+
+    pub(crate) fn into_recycled_parts(
+        mut self,
+    ) -> (
+        AuthenticatedServiceRecycledQueueSessionV1<N>,
+        M1AuthenticatedProgramCatalogWitnessV1,
+        DeclaredOperationKernelPlan,
+        M1PhysicalQueueBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        self.owner
+            .take()
+            .expect("recycled phase slot is occupied")
+            .into_recycled_parts()
+    }
+
+    fn into_custody_parts(
+        mut self,
+    ) -> (
+        M1AuthenticatedProgramCatalogWitnessV1,
+        DeclaredOperationKernelPlan,
+        M1PhysicalQueueBatchCustodyV1,
+        M1PrepublicationStepCustodyV1,
+    ) {
+        self.owner
+            .take()
+            .expect("transitioning phase slot is occupied")
+            .into_custody_parts()
+    }
+}
+
+impl<const N: usize> core::ops::Deref for M1AuthenticatedPhysicalQueuePhaseSlotV1<N> {
+    type Target = M1AuthenticatedPhysicalQueuePhaseOwnerV1<N>;
+
+    fn deref(&self) -> &Self::Target {
+        self.owner.as_ref().expect("live phase slot is occupied")
+    }
+}
+
+impl<const N: usize> core::ops::DerefMut for M1AuthenticatedPhysicalQueuePhaseSlotV1<N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.owner.as_mut().expect("live phase slot is occupied")
+    }
+}
+
+impl<const N: usize> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhaseSlotV1<N> {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedPhysicalQueuePhaseSlotV1")
+            .field("owner", &self.owner)
+            .finish()
+    }
+}
+
 #[must_use = "prepared authenticated queue custody must be submitted or retained"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalQueueSessionV1 {
     /// One complete target-only queue generation.
-    TargetOnly(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
-    ),
+    TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
     PairedPrefill(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceQueueSessionV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K4 speculative queue generation.
     SpeculativeK4(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K8 speculative queue generation.
     SpeculativeK8(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K16 speculative queue generation.
     SpeculativeK16(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceQueueSessionV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     ),
 }
 
@@ -346,9 +601,9 @@ fn quarantine_without_authority_core<const C: usize>(
 }
 
 fn close_unpublished_case<const N: usize>(
-    case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
 ) -> M1AuthenticatedPhysicalQueueClosureV1 {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let (lower, witness, operations, custody, step) = (*case).into_prepared_parts();
     match lower.destroy_and_release() {
         Ok(released) => M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
             released, witness, operations, custody, step,
@@ -367,52 +622,22 @@ fn close_unpublished_case<const N: usize>(
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalPublishedQueueSessionV1 {
     /// One complete target-only queue generation.
-    TargetOnly(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServicePublishedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
-    ),
+    TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
     PairedPrefill(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServicePublishedQueueSessionV1<
-                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K4 speculative queue generation.
     SpeculativeK4(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServicePublishedQueueSessionV1<
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K8 speculative queue generation.
     SpeculativeK8(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServicePublishedQueueSessionV1<
-                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K16 speculative queue generation.
     SpeculativeK16(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServicePublishedQueueSessionV1<
-                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     ),
 }
 
@@ -472,52 +697,22 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalCompletedQueueSessionV1 {
     /// One complete target-only queue generation.
-    TargetOnly(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceCompletedQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
-    ),
+    TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
     PairedPrefill(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceCompletedQueueSessionV1<
-                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K4 speculative queue generation.
     SpeculativeK4(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceCompletedQueueSessionV1<
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K8 speculative queue generation.
     SpeculativeK8(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceCompletedQueueSessionV1<
-                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K16 speculative queue generation.
     SpeculativeK16(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceCompletedQueueSessionV1<
-                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     ),
 }
 
@@ -577,52 +772,22 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalRecycledQueueSessionV1 {
     /// One complete target-only queue generation.
-    TargetOnly(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>,
-            >,
-        >,
-    ),
+    TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
     PairedPrefill(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K4 speculative queue generation.
     SpeculativeK4(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K8 speculative queue generation.
     SpeculativeK8(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
     ),
     /// One complete K16 speculative queue generation.
     SpeculativeK16(
-        Box<
-            M1AuthenticatedPhysicalQueuePhaseCaseV1<
-                AuthenticatedServiceRecycledQueueSessionV1<
-                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
-                >,
-            >,
-        >,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     ),
 }
 
@@ -682,11 +847,9 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 }
 
 fn close_recycled_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
 ) -> M1AuthenticatedPhysicalQueueClosureV1 {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
     match lower.destroy_and_release() {
         Ok(released) => M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
             released, witness, operations, custody, step,
@@ -955,7 +1118,7 @@ impl M1AuthenticatedPhysicalQueueCreateFailureV1 {
 }
 
 enum CreateCaseResultV1<const N: usize> {
-    Ready(Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>),
+    Ready(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>),
     Rejected {
         diagnostic: M1AuthenticatedPhysicalQueueCreateDiagnosticV1,
         runner: Box<M1AuthenticatedPhysicalRunnerV1>,
@@ -1002,12 +1165,14 @@ fn create_case<const N: usize>(
     let (allocations, queue_custody) = custody.into_queue_creation_parts();
     match AuthenticatedServiceQueueSessionV1::create(programs, allocations, ring_bytes, packets) {
         Ok(lower) => {
-            CreateCaseResultV1::Ready(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-                lower,
-                witness,
-                operations,
-                queue_custody,
-                step,
+            CreateCaseResultV1::Ready(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::occupied(
+                M1AuthenticatedPhysicalQueuePhaseOwnerV1::new(
+                    lower,
+                    witness,
+                    operations,
+                    queue_custody,
+                    step,
+                ),
             )))
         }
         Err(AuthenticatedServiceQueueCreateFailureV1::Program {
@@ -1068,7 +1233,7 @@ fn create_case<const N: usize>(
 fn finish_create<const N: usize>(
     result: CreateCaseResultV1<N>,
     queue_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalQueueSessionV1,
     batch_variant: fn(
         Box<M1AuthenticatedPhysicalPacketBatchCaseV1<N>>,
@@ -1366,33 +1531,30 @@ impl M1AuthenticatedPhysicalQueueSubmitFailureV1 {
 enum SubmitCaseFailureV1<const N: usize> {
     Currentness {
         error: Box<AuthenticatedWorkerV3ProgramMaterializationErrorV1>,
-        retained:
-            Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+        retained: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     },
     Queue(Box<M1AuthenticatedPhysicalQueueOperationFailureV1>),
 }
 
 fn submit_case<const N: usize>(
-    case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
-) -> Result<
-    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>>,
-    SubmitCaseFailureV1<N>,
-> {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+) -> Result<Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>, SubmitCaseFailureV1<N>> {
+    let lower = case.take_prepared();
     match lower.submit() {
-        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-            lower, witness, operations, custody, step,
-        ))),
+        Ok(lower) => {
+            case.set_published(lower);
+            Ok(case)
+        }
         Err(AuthenticatedServiceQueueSubmitFailureV1::Currentness { error, retained }) => {
+            case.set_prepared(*retained);
             Err(SubmitCaseFailureV1::Currentness {
                 error,
-                retained: Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-                    *retained, witness, operations, custody, step,
-                )),
+                retained: case,
             })
         }
         Err(AuthenticatedServiceQueueSubmitFailureV1::Queue(lower)) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
             Err(SubmitCaseFailureV1::Queue(operation_failure(
                 shape, *lower, witness, operations, custody, step, None,
             )))
@@ -1401,13 +1563,13 @@ fn submit_case<const N: usize>(
 }
 
 fn submit_variant<const N: usize>(
-    case: Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
     published_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalPublishedQueueSessionV1,
     retained_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalQueueSessionV1,
 ) -> Result<
     M1AuthenticatedPhysicalPublishedQueueSessionV1,
@@ -1476,15 +1638,13 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
 }
 
 fn wait_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
-    >,
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<
-    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+    Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
 > {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let lower = case.take_published();
     let completed = wait_with_completion_progress_policy::<N, _, _, _>(
         lower,
         M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
@@ -1515,13 +1675,18 @@ fn wait_case<const N: usize>(
         },
     );
     match completed {
-        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-            lower, witness, operations, custody, step,
-        ))),
-        Err(CompletionProgressWaitFailureV1::Lower(lower)) => Err(operation_failure(
-            shape, lower, witness, operations, custody, step, None,
-        )),
+        Ok(lower) => {
+            case.set_completed(lower);
+            Ok(case)
+        }
+        Err(CompletionProgressWaitFailureV1::Lower(lower)) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
+            Err(operation_failure(
+                shape, lower, witness, operations, custody, step, None,
+            ))
+        }
         Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
             Err(operation_failure(
                 shape,
                 lower,
@@ -1536,12 +1701,10 @@ fn wait_case<const N: usize>(
 }
 
 fn wait_variant<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
     completed_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalCompletedQueueSessionV1,
 ) -> Result<
     M1AuthenticatedPhysicalCompletedQueueSessionV1,
@@ -1551,16 +1714,14 @@ fn wait_variant<const N: usize>(
 }
 
 fn wait_for_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
-    >,
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
     timeout_ms: u32,
 ) -> Result<
-    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+    Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
 > {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let lower = case.take_published();
     let completed = wait_with_completion_progress_deadline_policy::<N, _, _, _>(
         lower,
         M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
@@ -1589,13 +1750,18 @@ fn wait_for_case<const N: usize>(
         |published| published.wait_for(0),
     );
     match completed {
-        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-            lower, witness, operations, custody, step,
-        ))),
-        Err(CompletionProgressWaitFailureV1::Lower(lower)) => Err(operation_failure(
-            shape, lower, witness, operations, custody, step, None,
-        )),
+        Ok(lower) => {
+            case.set_completed(lower);
+            Ok(case)
+        }
+        Err(CompletionProgressWaitFailureV1::Lower(lower)) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
+            Err(operation_failure(
+                shape, lower, witness, operations, custody, step, None,
+            ))
+        }
         Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
             Err(operation_failure(
                 shape,
                 lower,
@@ -1610,13 +1776,11 @@ fn wait_for_case<const N: usize>(
 }
 
 fn wait_for_variant<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServicePublishedQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
     timeout_ms: u32,
     completed_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalCompletedQueueSessionV1,
 ) -> Result<
     M1AuthenticatedPhysicalCompletedQueueSessionV1,
@@ -1723,32 +1887,32 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
 }
 
 fn recycle_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>,
-    >,
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<
-    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
 > {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    let lower = case.take_completed();
     match lower.recycle() {
-        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-            lower, witness, operations, custody, step,
-        ))),
-        Err(lower) => Err(operation_failure(
-            shape, lower, witness, operations, custody, step, None,
-        )),
+        Ok(lower) => {
+            case.set_recycled(lower);
+            Ok(case)
+        }
+        Err(lower) => {
+            let (witness, operations, custody, step) = (*case).into_custody_parts();
+            Err(operation_failure(
+                shape, lower, witness, operations, custody, step, None,
+            ))
+        }
     }
 }
 
 fn recycle_variant<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceCompletedQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     shape: M1PhysicalFixedBatchShapeV1,
     recycled_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
 ) -> Result<
     M1AuthenticatedPhysicalRecycledQueueSessionV1,
@@ -1828,44 +1992,36 @@ impl M1AuthenticatedPhysicalQueueReuseFailureV1 {
 
 struct ReuseCaseFailureV1<const N: usize> {
     error: AuthenticatedWorkerV3ProgramMaterializationErrorV1,
-    retained:
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+    retained: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
 }
 
 fn reuse_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
-) -> Result<
-    Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
-    ReuseCaseFailureV1<N>,
-> {
-    let (lower, witness, operations, custody, step) = (*case).into_parts();
+    mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
+) -> Result<Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>, ReuseCaseFailureV1<N>> {
+    let lower = case.take_recycled();
     match lower.reuse() {
-        Ok(lower) => Ok(Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-            lower, witness, operations, custody, step,
-        ))),
+        Ok(lower) => {
+            case.set_prepared(lower);
+            Ok(case)
+        }
         Err(failure) => {
             let (error, lower) = failure.into_parts();
+            case.set_recycled(lower);
             Err(ReuseCaseFailureV1 {
                 error,
-                retained: Box::new(M1AuthenticatedPhysicalQueuePhaseCaseV1::new(
-                    lower, witness, operations, custody, step,
-                )),
+                retained: case,
             })
         }
     }
 }
 
 fn reuse_variant<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     prepared_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalQueueSessionV1,
     retained_variant: fn(
-        Box<M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>>,
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
 ) -> Result<M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalQueueReuseFailureV1> {
     match reuse_case(case) {
@@ -1921,15 +2077,13 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
 }
 
 fn detach_case<const N: usize>(
-    case: Box<
-        M1AuthenticatedPhysicalQueuePhaseCaseV1<AuthenticatedServiceRecycledQueueSessionV1<N>>,
-    >,
+    case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
     former_shape: M1PhysicalFixedBatchShapeV1,
 ) -> Result<
     M1AuthenticatedPhysicalDetachedQueueSessionV1,
     Box<M1AuthenticatedPhysicalQueueOperationFailureV1>,
 > {
-    let (lower, witness, operations, custody, prior_step) = (*case).into_parts();
+    let (lower, witness, operations, custody, prior_step) = (*case).into_recycled_parts();
     match lower.detach() {
         Ok(lower) => Ok(M1AuthenticatedPhysicalDetachedQueueSessionV1 {
             lower,

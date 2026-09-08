@@ -308,16 +308,26 @@ pub struct M1ObservedSpeculativeDiagnosticChoicesV1 {
     shape: M1SpeculativeDiagnosticChoicesShapeV1,
     live_sequences: u32,
     dispatch_generation: u64,
-    _draft: Box<[ServiceCompletedReadbackV1]>,
+    backing: M1ObservedSpeculativeDiagnosticChoiceBackingV1,
     draft_bytes: Box<[u8]>,
     draft_choice_matrix: Box<[TokenId]>,
     lane_major_draft_choices: Box<[TokenId]>,
     legacy_k4_draft_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_DRAFT_CHOICES_V1 as usize],
     draft_sha256: [u8; 32],
-    target: ServiceCompletedReadbackV1,
     target_choice_matrix: Box<[TokenId]>,
     legacy_k4_target_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1 as usize],
     target_sha256: [u8; 32],
+}
+
+#[derive(Debug)]
+enum M1ObservedSpeculativeDiagnosticChoiceBackingV1 {
+    Physical {
+        _draft: Box<[ServiceCompletedReadbackV1]>,
+        target: ServiceCompletedReadbackV1,
+    },
+    Resident {
+        target_bytes: Box<[u8]>,
+    },
 }
 
 impl M1ObservedSpeculativeDiagnosticChoicesV1 {
@@ -406,13 +416,70 @@ impl M1ObservedSpeculativeDiagnosticChoicesV1 {
     /// Exact copied target bytes.
     #[must_use]
     pub fn target_bytes(&self) -> &[u8] {
-        self.target.bytes()
+        match &self.backing {
+            M1ObservedSpeculativeDiagnosticChoiceBackingV1::Physical { target, .. } => {
+                target.bytes()
+            }
+            M1ObservedSpeculativeDiagnosticChoiceBackingV1::Resident { target_bytes } => {
+                target_bytes
+            }
+        }
     }
 
     /// SHA-256 of the copied target bytes.
     #[must_use]
     pub const fn target_sha256(&self) -> &[u8; 32] {
         &self.target_sha256
+    }
+}
+
+/// Caller-owned buffers and decoded arrays for one resident diagnostic copy.
+#[derive(Debug)]
+pub(crate) struct M1SpeculativeDiagnosticChoicesHostStorageV1 {
+    draft_bytes: Option<Box<[u8]>>,
+    target_bytes: Option<Box<[u8]>>,
+    draft_choice_matrix: Vec<TokenId>,
+    lane_major_draft_choices: Vec<TokenId>,
+    target_choice_matrix: Vec<TokenId>,
+}
+
+impl M1SpeculativeDiagnosticChoicesHostStorageV1 {
+    pub(crate) fn try_new(shape: M1SpeculativeDiagnosticChoicesShapeV1) -> Option<Self> {
+        let draft_extent = usize::try_from(shape.draft_extent_bytes).ok()?;
+        let target_extent = usize::try_from(shape.target_extent_bytes).ok()?;
+        let draft_elements = draft_extent.checked_div(TOKEN_BYTES_USIZE)?;
+        let target_elements = target_extent.checked_div(TOKEN_BYTES_USIZE)?;
+        let mut draft_bytes = Vec::new();
+        draft_bytes.try_reserve_exact(draft_extent).ok()?;
+        draft_bytes.resize(draft_extent, 0);
+        let mut target_bytes = Vec::new();
+        target_bytes.try_reserve_exact(target_extent).ok()?;
+        target_bytes.resize(target_extent, 0);
+        let mut draft_choice_matrix = Vec::new();
+        draft_choice_matrix.try_reserve_exact(draft_elements).ok()?;
+        let mut lane_major_draft_choices = Vec::new();
+        lane_major_draft_choices
+            .try_reserve_exact(draft_elements)
+            .ok()?;
+        let mut target_choice_matrix = Vec::new();
+        target_choice_matrix
+            .try_reserve_exact(target_elements)
+            .ok()?;
+        Some(Self {
+            draft_bytes: Some(draft_bytes.into_boxed_slice()),
+            target_bytes: Some(target_bytes.into_boxed_slice()),
+            draft_choice_matrix,
+            lane_major_draft_choices,
+            target_choice_matrix,
+        })
+    }
+
+    pub(crate) fn draft_bytes_mut(&mut self) -> Option<&mut [u8]> {
+        self.draft_bytes.as_deref_mut()
+    }
+
+    pub(crate) fn target_bytes_mut(&mut self) -> Option<&mut [u8]> {
+        self.target_bytes.as_deref_mut()
     }
 }
 
@@ -791,18 +858,121 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
     let legacy_k4_target_choices = target_choice_matrix[..5]
         .try_into()
         .expect("every finite speculative shape has at least five lane-zero target choices");
+    let target_sha256 = Sha256::digest(target.bytes()).into();
     Ok(M1ObservedSpeculativeDiagnosticChoicesV1 {
         shape: owner.shape,
         live_sequences,
         dispatch_generation,
         draft_sha256: Sha256::digest(&draft_bytes).into(),
-        _draft: draft,
+        backing: M1ObservedSpeculativeDiagnosticChoiceBackingV1::Physical {
+            _draft: draft,
+            target,
+        },
         draft_bytes: draft_bytes.into_boxed_slice(),
         draft_choice_matrix,
         lane_major_draft_choices,
         legacy_k4_draft_choices,
-        target_sha256: Sha256::digest(target.bytes()).into(),
-        target,
+        target_sha256,
+        target_choice_matrix,
+        legacy_k4_target_choices,
+    })
+}
+
+pub(crate) fn observe_m1_speculative_diagnostic_choices_with_storage_v1(
+    owner: &BoundM1SpeculativeDiagnosticChoicesV1,
+    dispatch_generation: u64,
+    live_sequences: u32,
+    mut storage: M1SpeculativeDiagnosticChoicesHostStorageV1,
+) -> Result<M1ObservedSpeculativeDiagnosticChoicesV1, M1SpeculativeDiagnosticChoicesErrorV1> {
+    validate_choice_extents(
+        owner.shape,
+        owner.shape.draft_extent_bytes,
+        owner.shape.target_extent_bytes,
+    )?;
+    if live_sequences == 0 || live_sequences > owner.shape.sequences {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::LiveSequenceCount {
+            capacity: owner.shape.sequences,
+            actual: live_sequences,
+        });
+    }
+    let draft_bytes = storage.draft_bytes.take().ok_or(
+        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+            requested_bytes: usize::try_from(owner.shape.draft_extent_bytes).unwrap_or(usize::MAX),
+        },
+    )?;
+    let target_bytes = storage.target_bytes.take().ok_or(
+        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+            requested_bytes: usize::try_from(owner.shape.target_extent_bytes).unwrap_or(usize::MAX),
+        },
+    )?;
+    validate_readback_coordinates(
+        (
+            dispatch_generation,
+            owner.draft_data_index,
+            owner.draft_range.offset_bytes(),
+            owner.shape.draft_extent_bytes,
+        ),
+        (
+            dispatch_generation,
+            owner.draft_data_index,
+            owner.draft_range.offset_bytes(),
+            u64::try_from(draft_bytes.len()).unwrap_or(u64::MAX),
+        ),
+    )?;
+    validate_readback_coordinates(
+        (
+            dispatch_generation,
+            owner.target_data_index,
+            owner.target_range.offset_bytes(),
+            owner.shape.target_extent_bytes,
+        ),
+        (
+            dispatch_generation,
+            owner.target_data_index,
+            owner.target_range.offset_bytes(),
+            u64::try_from(target_bytes.len()).unwrap_or(u64::MAX),
+        ),
+    )?;
+    let draft_choice_matrix = decode_choice_matrix_with_storage(
+        &draft_bytes,
+        owner.shape.sequences,
+        owner.shape.draft_tokens,
+        live_sequences,
+        ChoiceMatrixLayout::IterationMajor,
+        storage.draft_choice_matrix,
+    )?;
+    let lane_major_draft_choices = transpose_draft_choices_with_storage(
+        &draft_choice_matrix,
+        owner.shape.sequences,
+        owner.shape.draft_tokens,
+        storage.lane_major_draft_choices,
+    )?;
+    let target_choice_matrix = decode_choice_matrix_with_storage(
+        &target_bytes,
+        owner.shape.sequences,
+        owner.shape.draft_tokens + 1,
+        live_sequences,
+        ChoiceMatrixLayout::SequenceMajor,
+        storage.target_choice_matrix,
+    )?;
+    let legacy_k4_draft_choices = lane_major_draft_choices[..4]
+        .try_into()
+        .expect("every finite speculative shape has at least four lane-zero draft choices");
+    let legacy_k4_target_choices = target_choice_matrix[..5]
+        .try_into()
+        .expect("every finite speculative shape has at least five lane-zero target choices");
+    let target_sha256 = Sha256::digest(&target_bytes).into();
+    Ok(M1ObservedSpeculativeDiagnosticChoicesV1 {
+        shape: owner.shape,
+        live_sequences,
+        dispatch_generation,
+        draft_sha256: Sha256::digest(&draft_bytes).into(),
+        backing: M1ObservedSpeculativeDiagnosticChoiceBackingV1::Resident { target_bytes },
+        draft_bytes,
+        draft_choice_matrix,
+        lane_major_draft_choices,
+        legacy_k4_draft_choices,
+        target_sha256,
         target_choice_matrix,
         legacy_k4_target_choices,
     })
@@ -872,6 +1042,17 @@ fn decode_choice_matrix(
     live_sequences: u32,
     layout: ChoiceMatrixLayout,
 ) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    decode_choice_matrix_with_storage(bytes, sequences, width, live_sequences, layout, Vec::new())
+}
+
+fn decode_choice_matrix_with_storage(
+    bytes: &[u8],
+    sequences: u32,
+    width: u8,
+    live_sequences: u32,
+    layout: ChoiceMatrixLayout,
+    mut choices: Vec<TokenId>,
+) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
     let elements = usize::try_from(sequences)
         .ok()
         .and_then(|sequences| sequences.checked_mul(usize::from(width)))
@@ -885,12 +1066,12 @@ fn decode_choice_matrix(
             actual: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
         });
     }
-    let mut choices = Vec::new();
-    choices.try_reserve_exact(elements).map_err(|_| {
-        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+    choices.clear();
+    if choices.capacity() < elements && choices.try_reserve_exact(elements).is_err() {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
             requested_bytes: expected,
-        }
-    })?;
+        });
+    }
     for (ordinal, encoded) in bytes.chunks_exact(4).enumerate() {
         let token = u32::from_le_bytes(encoded.try_into().expect("exact u32 chunk"));
         let lane = match layout {
@@ -915,6 +1096,15 @@ fn transpose_draft_choices(
     sequences: u32,
     draft_tokens: u8,
 ) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+    transpose_draft_choices_with_storage(iteration_major, sequences, draft_tokens, Vec::new())
+}
+
+fn transpose_draft_choices_with_storage(
+    iteration_major: &[TokenId],
+    sequences: u32,
+    draft_tokens: u8,
+    mut lane_major: Vec<TokenId>,
+) -> Result<Box<[TokenId]>, M1SpeculativeDiagnosticChoicesErrorV1> {
     let sequences =
         usize::try_from(sequences).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
     let draft_tokens = usize::from(draft_tokens);
@@ -928,12 +1118,12 @@ fn transpose_draft_choices(
                 .unwrap_or(u64::MAX),
         });
     }
-    let mut lane_major = Vec::new();
-    lane_major.try_reserve_exact(elements).map_err(|_| {
-        M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
+    lane_major.clear();
+    if lane_major.capacity() < elements && lane_major.try_reserve_exact(elements).is_err() {
+        return Err(M1SpeculativeDiagnosticChoicesErrorV1::HostInitialization {
             requested_bytes: elements.saturating_mul(TOKEN_BYTES_USIZE),
-        }
-    })?;
+        });
+    }
     for lane in 0..sequences {
         for iteration in 0..draft_tokens {
             lane_major.push(iteration_major[iteration * sequences + lane]);

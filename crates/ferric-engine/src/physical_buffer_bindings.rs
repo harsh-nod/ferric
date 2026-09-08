@@ -36,13 +36,13 @@ pub struct M1BoundPhysicalBufferRowV1 {
     dispatch_index: u32,
     profile_id: Identity,
     program: M1PhysicalProgramV1,
-    buffers: Box<[ServiceFixedDispatchBufferV1]>,
+    buffers: Vec<ServiceFixedDispatchBufferV1>,
 }
 
 impl M1BoundPhysicalBufferRowV1 {
-    pub(crate) fn from_queue_rearm(
+    pub(crate) fn from_queue_rearm_vec(
         source: &M1PhysicalBufferRecipeRowV1,
-        buffers: Box<[ServiceFixedDispatchBufferV1]>,
+        buffers: Vec<ServiceFixedDispatchBufferV1>,
     ) -> Self {
         Self {
             dispatch_index: source.dispatch_index(),
@@ -1155,7 +1155,7 @@ fn resolve_rows(
                 dispatch_index: row.dispatch_index,
                 profile_id: row.profile_id,
                 program: row.program,
-                buffers: row.buffers,
+                buffers: row.buffers.into_vec(),
             })
             .collect()
     })

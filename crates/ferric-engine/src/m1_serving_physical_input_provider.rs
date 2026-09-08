@@ -357,7 +357,7 @@ pub struct M1ServingQueuedPairedPrefillNewWindowV1 {
     draft_prefill: ValidatedM1StepInputs,
     target_prefill: ValidatedM1StepInputs,
     preparation_plans: M1FullStepWorkspacePlans,
-    recipe_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
 }
 
 impl M1ServingQueuedPairedPrefillNewWindowV1 {
@@ -367,6 +367,22 @@ impl M1ServingQueuedPairedPrefillNewWindowV1 {
         target_prefill: ValidatedM1StepInputs,
         preparation_plans: M1FullStepWorkspacePlans,
         recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            binding,
+            draft_prefill,
+            target_prefill,
+            preparation_plans,
+            recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+        }
+    }
+
+    pub(crate) const fn new_with_recipe_input(
+        binding: M1ServingQueuedGenerationBindingV1,
+        draft_prefill: ValidatedM1StepInputs,
+        target_prefill: ValidatedM1StepInputs,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
     ) -> Self {
         Self {
             binding,
@@ -397,7 +413,10 @@ impl M1ServingQueuedPairedPrefillNewWindowV1 {
             .matches(batch.plan(), batch.requests(), batch.epoch())
             && batch.plan().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
             && self.preparation_plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill
-            && self.recipe_plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill
+            && self
+                .recipe_plans
+                .workspace_plans()
+                .is_some_and(|plans| plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill)
             && prefill_new_window_role_matches(
                 &self.draft_prefill,
                 batch.plan().draft(),
@@ -441,7 +460,7 @@ impl M1ServingQueuedPairedPrefillNewWindowV1 {
         ValidatedM1StepInputs,
         ValidatedM1StepInputs,
         M1FullStepWorkspacePlans,
-        M1FullStepWorkspacePlans,
+        crate::runner::M1PhysicalRunnerRecipeInputV1,
     ) {
         (
             self.binding,
