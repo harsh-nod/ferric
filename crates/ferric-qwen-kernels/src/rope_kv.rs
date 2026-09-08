@@ -1195,6 +1195,7 @@ fn construct_typed_handoff(
         IntrinsicV2::AmdGpuWorkitemId(AxisV2::X),
         IntrinsicV2::AmdGpuWorkgroupId(AxisV2::X),
         IntrinsicV2::AmdGpuWorkgroupId(AxisV2::Y),
+        IntrinsicV2::AmdGpuWorkgroupId(AxisV2::Z),
         IntrinsicV2::Trap,
     ]
     .into_iter()
@@ -2340,8 +2341,49 @@ fn build_kv_kernel_function(
             arguments: vec![],
         },
     );
+    let workgroup_x = builder.instruction(
+        i32_type,
+        InstructionKindV2::Call {
+            target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkgroupId(
+                AxisV2::X,
+            )),
+            arguments: vec![],
+        },
+    );
+    let workgroup_y = builder.instruction(
+        i32_type,
+        InstructionKindV2::Call {
+            target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkgroupId(
+                AxisV2::Y,
+            )),
+            arguments: vec![],
+        },
+    );
+    let workgroup_z = builder.instruction(
+        i32_type,
+        InstructionKindV2::Call {
+            target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(IntrinsicV2::AmdGpuWorkgroupId(
+                AxisV2::Z,
+            )),
+            arguments: vec![],
+        },
+    );
     let zero_i32 = builder.constant(ScalarTypeV1::I32, 0);
-    let is_grid_leader = builder.compare(ComparePredicateV2::IntegerEqual, lane, zero_i32);
+    let lane_is_zero = builder.compare(ComparePredicateV2::IntegerEqual, lane, zero_i32);
+    let workgroup_origin = [
+        builder.compare(ComparePredicateV2::IntegerEqual, workgroup_x, zero_i32),
+        builder.compare(ComparePredicateV2::IntegerEqual, workgroup_y, zero_i32),
+        builder.compare(ComparePredicateV2::IntegerEqual, workgroup_z, zero_i32),
+    ];
+    let is_grid_leader = all(
+        &mut builder,
+        &[
+            lane_is_zero,
+            workgroup_origin[0],
+            workgroup_origin[1],
+            workgroup_origin[2],
+        ],
+    );
     let leader = builder.block();
     let complete = builder.block();
     builder.finish(TerminatorV2::ConditionalBranch {
@@ -3589,6 +3631,24 @@ mod tests {
         )
     }
 
+    const fn is_kv_grid_leader(lane: u32, workgroup: [u32; 3]) -> bool {
+        lane == 0 && workgroup[0] == 0 && workgroup[1] == 0 && workgroup[2] == 0
+    }
+
+    #[test]
+    fn kv_grid_leader_rejects_nonzero_lane_or_workgroup_coordinate() {
+        assert!(is_kv_grid_leader(0, [0, 0, 0]));
+        for (lane, workgroup) in [
+            (1, [0, 0, 0]),
+            (0, [1, 0, 0]),
+            (0, [0, 1, 0]),
+            (0, [0, 0, 1]),
+            (0, [u32::MAX, u32::MAX, u32::MAX]),
+        ] {
+            assert!(!is_kv_grid_leader(lane, workgroup));
+        }
+    }
+
     #[test]
     fn exact_44_profile_catalog_is_complete_and_unique() {
         let catalog = Qwen3RopeKvProfileCatalogV1::canonical().unwrap();
@@ -3803,6 +3863,20 @@ mod tests {
             Some(InstructionKindV2::Constant(value)) => Some(value.bits()),
             _ => None,
         };
+        let zero_guard = |value: ValueIdV2| {
+            definitions.iter().find_map(|(result, kind)| match kind {
+                InstructionKindV2::Compare {
+                    predicate: ComparePredicateV2::IntegerEqual,
+                    left,
+                    right,
+                } if (*left == value && constant_bits(*right) == Some(0))
+                    || (*right == value && constant_bits(*left) == Some(0)) =>
+                {
+                    Some(*result)
+                }
+                _ => None,
+            })
+        };
         let lane = definitions
             .iter()
             .find_map(|(result, kind)| match kind {
@@ -3816,24 +3890,51 @@ mod tests {
                 _ => None,
             })
             .expect("the single-workgroup schedule must select the grid leader");
-        assert!(definitions.values().any(|kind| matches!(
-            kind,
-            InstructionKindV2::Compare {
-                predicate: ComparePredicateV2::IntegerEqual,
-                left,
-                right,
-            } if (*left == lane && constant_bits(*right) == Some(0))
-                || (*right == lane && constant_bits(*left) == Some(0))
-        )));
-        assert!(!definitions.values().any(|kind| matches!(
-            kind,
-            InstructionKindV2::Call {
-                target: fe2o3_llvm_handoff::CallTargetV2::Intrinsic(
-                    IntrinsicV2::AmdGpuWorkgroupId(_),
-                ),
-                ..
+        let mut leader_predicates =
+            BTreeSet::from([zero_guard(lane).expect("lane zero must guard grid-leader authority")]);
+        for axis in [AxisV2::X, AxisV2::Y, AxisV2::Z] {
+            let workgroup =
+                definitions
+                    .iter()
+                    .find_map(|(result, kind)| match kind {
+                        InstructionKindV2::Call {
+                            target:
+                                fe2o3_llvm_handoff::CallTargetV2::Intrinsic(
+                                    IntrinsicV2::AmdGpuWorkgroupId(candidate),
+                                ),
+                            arguments,
+                        } if *candidate == axis && arguments.is_empty() => Some(*result),
+                        _ => None,
+                    })
+                    .expect("each workgroup coordinate must participate in grid-leader selection");
+            assert!(leader_predicates.insert(
+                zero_guard(workgroup)
+                    .expect("each workgroup zero comparison must guard grid-leader authority")
+            ));
+        }
+        assert!(function.blocks().iter().any(|block| {
+            let TerminatorV2::ConditionalBranch { condition, .. } = block.terminator() else {
+                return false;
+            };
+            let mut stack = vec![*condition];
+            let mut leaves = BTreeSet::new();
+            while let Some(value) = stack.pop() {
+                match definitions.get(&value) {
+                    Some(InstructionKindV2::Binary {
+                        operation: BinaryOperationV2::Integer(IntegerBinaryOperationV2::And),
+                        left,
+                        right,
+                    }) => {
+                        stack.push(*left);
+                        stack.push(*right);
+                    }
+                    _ => {
+                        leaves.insert(value);
+                    }
+                }
             }
-        )));
+            leaves == leader_predicates
+        }));
         let physical_page = definitions
             .iter()
             .find_map(|(result, kind)| match kind {

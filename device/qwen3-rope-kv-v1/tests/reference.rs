@@ -196,6 +196,50 @@ fn paged_kv_mapping_crosses_page_boundaries_and_stays_in_the_global_pool() {
 }
 
 #[test]
+fn multi_sequence_rows_cross_pages_through_arbitrary_global_mappings() {
+    let sequences = 8_usize;
+    let active_tokens = 5_usize;
+    let logical_starts = [14_usize, 15, 16, 31, 30, 32, 47, 48];
+    let mut pages = vec![usize::MAX; sequences * QWEN3_KV_PAGE_TABLE_ENTRIES_V1 as usize];
+    for sequence in 0..sequences {
+        for logical_page in 0..8 {
+            pages[sequence * QWEN3_KV_PAGE_TABLE_ENTRIES_V1 as usize + logical_page] =
+                (7 - logical_page) * sequences + sequence;
+        }
+    }
+
+    let mut sampled_destinations = std::collections::BTreeSet::new();
+    for row in 0..sequences * active_tokens {
+        let sequence = row / active_tokens;
+        let local_token = row % active_tokens;
+        let logical_position = logical_starts[sequence] + local_token;
+        let logical_page = logical_position / QWEN3_KV_PAGE_TOKENS_V1 as usize;
+        let token_in_page = logical_position % QWEN3_KV_PAGE_TOKENS_V1 as usize;
+        let table_index = sequence * QWEN3_KV_PAGE_TABLE_ENTRIES_V1 as usize + logical_page;
+        let physical_page = pages[table_index];
+        assert_eq!(physical_page, (7 - logical_page) * sequences + sequence);
+        for component in [0_usize, 511, 1_023] {
+            assert!(sampled_destinations.insert(cache_index(
+                physical_page,
+                token_in_page,
+                component,
+            )));
+        }
+    }
+    assert_eq!(sampled_destinations.len(), sequences * active_tokens * 3);
+    assert_eq!(logical_starts[0] / 16, 0);
+    assert_eq!((logical_starts[0] + active_tokens - 1) / 16, 1);
+    assert_eq!(logical_starts[3] / 16, 1);
+    assert_eq!((logical_starts[3] + active_tokens - 1) / 16, 2);
+    assert_ne!(pages[0], pages[1]);
+    assert_ne!(pages[0], pages[QWEN3_KV_PAGE_TABLE_ENTRIES_V1 as usize]);
+    assert_ne!(
+        cache_index(pages[0], 15, 1_023),
+        cache_index(pages[1], 0, 0)
+    );
+}
+
+#[test]
 fn hostile_logical_physical_and_component_boundaries_fail_closed() {
     assert_eq!(checked_kv_destination(0, 0, 8_192, 0, 0), Some(0));
     assert_eq!(
