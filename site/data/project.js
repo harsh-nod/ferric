@@ -491,7 +491,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 authority integration",
       state: "integration",
       detail:
-        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6; its quality fixes remain in current 9886f60. Exact full preflight and qualification runs #7/#8 apply to prior a689418, tree ce9e0bc: #7 stopped after all 10 strict packages at a cold 600-second KV negative timeout, while #8 passed all 10 strict packages, all 37 mutations, full negative/property policy, formatting, and strict Clippy before the nested-TMPDIR SUN_LEN harness failure. They have not run on 9886f60 and neither emitted a receipt; authority remains none and all 33 M1 gates remain open.",
+        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6. At current-source checkpoint cb9b5ca, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies. The full qualifier then stopped at its 600-second limit while cold-compiling the first negative ferric-engine target; the remaining negative and quality gates did not run, no receipt was emitted, authority remains none, and all 33 M1 gates remain open.",
     },
     {
       label: "Generic serving provider integration",
@@ -533,7 +533,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Engineering Qwen smoke path",
       state: "observed",
       detail:
-        "The corrected target-only run completed all 8 tokens as \" Paris. The capital of Italy is Rome\" with hardware completion true. Diagnostic timing was 13.649661699s TTFT, 2.7656050044 seconds per post-first token, and 34.094s total controller duration. Authority is none: this is not authenticated R33, qualification, serving, or a benchmark. The earlier 14.36s TTFT and approximately 3.05s TPOT remain invalid and noncomparable.",
+        "The corrected target-only run completed all 8 tokens as \" Paris. The capital of Italy is Rome\" with hardware completion true. A separate offline Hugging Face/PyTorch reference reproduced the exact 8 token IDs on two passes, and a second 32-token experiment repeated identically with the same 8-token prefix. Ferric has not run the 32-token check. Diagnostic Ferric timing remains 13.649661699s TTFT and 2.7656050044 seconds per post-first token; none of these observations is authenticated R33, qualification, serving, or a benchmark.",
     },
     {
       label: "Formal bootstrap model",
@@ -551,7 +551,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "K3 work-proportional KV-write",
       state: "integration",
       detail:
-        "The K3 kernel change is in progress and under review. No benchmark has completed and no speedup or regression has been measured.",
+        "The K3 source change and cross-page indexing tests are integrated at checkpoint cb9b5ca. Fresh artifact work exposed missing generic dynamic GridExclusive projection and singleton-invocation race analysis in fe2o3; that compiler repair and artifact validation remain pending. No benchmark has completed and no speedup or regression has been measured.",
     },
     {
       label: "Radix prefix reuse",
@@ -718,12 +718,12 @@ window.FERRIC_PROJECT = Object.freeze({
         "On prior integration a689418, tree ce9e0bc, Qualification #8 passed all 10 strict proof packages, all 37 same-source actual-body mutations, the full negative/property policy suite, formatting, and strict Clippy. Root debug then stopped when the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; full log SHA 92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027. It emitted no receipt, and full candidate correctness is not claimed. This qualification has not run on current 9886f60 and grants no hardware, serving, benchmark, or production authority.",
     },
     proof: {
-      title: "Exact full preflight and qualification #7",
+      title: "Current-source positive proof checkpoint",
       state: "integration",
-      source: "a689418a737bf0b1cf71ec3742bca5702f083187",
-      result: "PREFLIGHT PASS; #7 passed all 10 strict proof packages before a cold KV negative exceeded the admitted 600-second timeout",
+      source: "cb9b5ca2612c11f94e30a6b80c3cf285f905cd22",
+      result: "PARTIAL: all 10 selected positive packages passed 1,586 verification queries with 0 errors over 694 admitted executable bodies; first cold negative build exceeded 600 seconds",
       detail:
-        "Exact full preflight at prior a689418, tree ce9e0bc, passed root and all six standalone formatting and strict Clippy rosters, 33/33 source-gate tests, byte-exact VERIFIED_MODULES and five dependency TCBs, and the exact 7,229-record curated admission identity set; log SHA 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4. Qualification #7 then passed all 10 strict packages before the cold per-package KV negative target exceeded its admitted 600-second timeout; log SHA 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4. Neither preflight nor qualification has run on current 9886f60; no receipt exists.",
+        "At source cb9b5ca2612c11f94e30a6b80c3cf285f905cd22, tree ba49adff7807ccaa953a526b3c3c845c780e07c3, every selected positive package completed: 10 packages, 1,586 selected-package verification queries, 0 errors, and 694 admitted executable bodies. The next phase stopped at the 600-second limit while cold-compiling a negative ferric-engine target. The remaining negative and quality gates did not run in that invocation. Evidence SHA256SUMS digest is 0c28904134dc52c96b7049b3dca63e469a710646b7fc22c6cbe898576df4d82b. This is incomplete qualification, not a semantic proof failure or receipt. Historical Qualification #7 remains prior-source evidence only; its preflight covered 7,922 bodies across 170 modules, the exact 7,229-record curated admission set, and 33/33 source-gate tests. The historical preflight log SHA-256 is 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4; the Qualification #7 log SHA-256 is 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4.",
     },
     hardware: {
       title: "Reduced-roster S1/K4 speculative round completes",
@@ -757,7 +757,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Current integration 9886f60, tree 02c3c07, joins the production owner, resident same-shape allocation repair, and exact active d9f6bbcd compiler/runtime pin with the previously integrated engine and authority-boundary work.",
       current:
-        "The host engine matrix passes 636 tests with 9 hardware ignores plus 171 doctests. Integrated engine check, strict Clippy, and focused allocation validation pass. The corrected-layout target-only Qwen observation remains authority-free and benchmark_comparable=false.",
+        "The host engine matrix passes 636 tests with 9 hardware ignores plus 171 doctests. Integrated engine check, strict Clippy, and focused allocation validation pass. Two separate offline Hugging Face/PyTorch reference experiments now provide exact 8-token and 32-token greedy sequences; only the 8-token prefix has been observed through Ferric.",
       blockedBy:
         "R33 still needs the external authenticated authority bundle and a 20-window hardware run. M1 also depends on protected services, current-head qualification, authenticated Qwen accuracy, and matched baselines.",
       next:
@@ -773,7 +773,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21. Historical exact v77 emits all 12 Ferric-owned kernels through fe2o3 with 26 GuardedStore operations and exact replay.",
       current:
-        "Candidate a3c941c, tree 3fe917f, corrects GEMM and GEMV indexing for native Qwen row-major [N,K] weight tensors. The d9f target-only run generated 8/8 coherent tokens with hardware completion; HSACO SHA-256 is 068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3. K3 work-proportional KV-write is in progress and under review, with no measured speedup.",
+        "Candidate a3c941c, tree 3fe917f, corrects GEMM and GEMV indexing for native Qwen row-major [N,K] weight tensors. The d9f target-only run generated 8/8 coherent tokens with hardware completion; HSACO SHA-256 is 068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3. K3 source is integrated at cb9b5ca, while generic dynamic GridExclusive compiler support and fresh artifact validation remain pending. No K3 speedup has been measured.",
       blockedBy:
         "No team-local blocker. Candidate review and authenticated R33 execution remain; artifact authority is none and the diagnostic timing is not a benchmark.",
       next:
@@ -805,13 +805,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "The resident repair now has production-used same-shape core allocation tests for one and repeated 16 rounds, but this is host validation rather than a Verus refinement proof. Final proof and inventory identity still depend on the settled combined kernel and executor head.",
+        "At cb9b5ca, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies. The full qualifier stopped at the 600-second limit while cold-compiling its first negative ferric-engine target, before the remaining negative and quality gates.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
         "Regenerate and audit exact body identities, then rerun the full formal and hostile-policy matrix on the settled combined head.",
       validation:
-        "Prior full a689 preflight passes root and six standalone formatting and strict Clippy rosters plus all 33 source-gate tests at 170 modules and 7,922 bodies. Prior-source qualification #8 clears every strict proof and mutation stage, but no qualification receipt exists and current 9886f60 is not qualified. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
+        "Current-source positive proof evidence covers 10 packages, 1,586 selected-package verification queries, 0 errors, and 694 admitted executable bodies. Evidence SHA256SUMS digest is 0c28904134dc52c96b7049b3dca63e469a710646b7fc22c6cbe898576df4d82b. The complete negative and quality suite did not finish, no qualification receipt exists, and runtime paths remain covered by source admission and host tests rather than a Verus refinement proof.",
     },
   ],
   boundaries: {
@@ -869,6 +869,34 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none. This target-only observation is technical prequalification only, benchmark_comparable=false, and not authenticated R33, serving, a vLLM/SGLang comparison, or qualification. The external supervisor, current-record, verifier, model, and artifact authority bundle remains absent.",
   },
   recentProgress: [
+    {
+      sourceStatus: "cb9b5ca",
+      title: "Completed every current-source positive proof package",
+      state: "verified",
+      detail:
+        "Source cb9b5ca2612c11f94e30a6b80c3cf285f905cd22, tree ba49adff7807ccaa953a526b3c3c845c780e07c3, completed all 10 selected positive packages: 1,586 verification queries, 0 errors, and 694 admitted executable bodies. The full qualifier then stopped at 600 seconds while cold-compiling the first negative ferric-engine target, so later negative and quality gates did not run and no receipt was emitted. Evidence SHA256SUMS digest: 0c28904134dc52c96b7049b3dca63e469a710646b7fc22c6cbe898576df4d82b.",
+    },
+    {
+      sourceStatus: "baae947",
+      title: "Pinned the reference model-loading dependencies",
+      state: "integration",
+      detail:
+        "Reference-package commit baae9479f4cc06339c0f4c7054a7158005b2ad09, tree d2baec0692a86376fe60aa3227263dbba535e7e8, adds exact Accelerate 1.14.0 and psutil 7.2.2 pins to the package, lock, protocol, runtime version checks, and active-virtual-environment provenance checks. All 23 reference tests, policy, and lock validation pass; all 27 pre-existing external lock records are unchanged. Independent review found no blocker. This packaging result does not qualify model output or Ferric.",
+    },
+    {
+      sourceStatus: "1ed8686",
+      title: "Prepared a 32-token independent Qwen reference",
+      state: "observed",
+      detail:
+        "A second offline Hugging Face/PyTorch experiment with the canonical Qwen3-8B model produced two identical 32-token greedy passes, every chosen token equaled the score argmax, and model hashes were unchanged before and after. The decoded sequence is \" Paris. The capital of Italy is Rome. The capital of Spain is Madrid. The capital of Germany is Berlin. The capital of the Netherlands is Amsterdam. The\"; its first 8 IDs match the shorter reference and Ferric observation. Result SHA-256: 1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094. Ferric has not run 32 tokens; this is a reference for later checks across logical KV positions 16 and 32, not qualification or a benchmark.",
+    },
+    {
+      sourceStatus: "7e2ac0e",
+      title: "Matched Ferric's 8-token output to an independent reference",
+      state: "observed",
+      detail:
+        "An offline Hugging Face/PyTorch run using the canonical Qwen3-8B model produced IDs [12095, 13, 576, 6722, 315, 15344, 374, 21718] on two identical greedy passes; every ID equaled the score argmax and decoded to \" Paris. The capital of Italy is Rome\". The IDs exactly match the prior Ferric target-only observation. Result SHA-256: 7e2ac0ed7d03f7521a11500a6ed084b97f4e4ad222227c337296e6dd1dc45a0a; compact evidence aggregate SHA-256: ffb2dc81e46bbb6723e4d673592666f637505547252ad55d82bb75e626750e26. This independent reference is not Ferric qualification, serving, or a benchmark.",
+    },
     {
       commit: "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
       repository: "https://github.com/harsh-nod/fe2o3",
