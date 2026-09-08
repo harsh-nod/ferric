@@ -376,6 +376,35 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             "resolved fe2o3 package declaration drifted",
         )
 
+        promotion_lock_case = temporary / "promotion-root-lock-pin"
+        clone_at(ferric_fixture, promotion_lock_case)
+        promotion_lock = promotion_lock_case / "Cargo.lock"
+        promotion_lock_parts = promotion_lock.read_text(encoding="utf-8").split(
+            "\n[[package]]\n"
+        )
+        promotion_runtime_parts = [
+            index
+            for index, part in enumerate(promotion_lock_parts)
+            if 'name = "fe2o3-runtime-protocol"\n' in part and expected_url in part
+        ]
+        if len(promotion_runtime_parts) != 1:
+            fail("promotion prerequisite root lock pin anchor drifted")
+        promotion_runtime_index = promotion_runtime_parts[0]
+        promotion_lock_parts[promotion_runtime_index] = promotion_lock_parts[
+            promotion_runtime_index
+        ].replace(expected_url, "git+https://evil.invalid/fe2o3.git", 1)
+        promotion_lock.write_text(
+            "\n[[package]]\n".join(promotion_lock_parts), encoding="utf-8"
+        )
+        commit_fixture(promotion_lock_case, "mutate promotion prerequisite root lock")
+        expect_prepare_failure(
+            promotion_lock_case / "proofs/m1-qualification/planner.py",
+            promotion_lock_case,
+            fe2o3_fixture,
+            temporary / "promotion-root-lock-pin-output",
+            "resolved fe2o3 package declaration drifted",
+        )
+
         device_case = temporary / "device-pin"
         clone_at(ferric_fixture, device_case)
         device_manifest = device_case / "device/qwen3-gemm-v1/Cargo.toml"
@@ -804,6 +833,22 @@ def main() -> None:
         planner.FE2O3_AGGREGATE_DEVICE_WORKSPACES
     ) & set(planner.FE2O3_COMPATIBILITY_DEVICE_WORKSPACES):
         fail("M1 planner compatibility device classification drifted")
+    promotion_package = (
+        "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1"
+    )
+    promotion_root_edges = {
+        (scope, dependency)
+        for owner, scope, dependency in planner.FE2O3_DEPENDENCY_TOPOLOGY
+        if owner == promotion_package
+    }
+    if promotion_root_edges != {
+        ("dependencies", "fe2o3-artifact-transaction"),
+        ("dependencies", "fe2o3-runtime-protocol"),
+    } or any(
+        package_name == promotion_package
+        for package_name, _, _, _ in planner.FE2O3_ADAPTER_WORKSPACES
+    ):
+        fail("M1 planner promotion prerequisite root classification drifted")
     if planner.FE2O3_ADAPTER_WORKSPACES != (
         (
             "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
