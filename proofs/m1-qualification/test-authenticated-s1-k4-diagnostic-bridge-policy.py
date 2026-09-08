@@ -32,10 +32,14 @@ def has_ordered_effective_prefill_wait(source: str) -> bool:
         return False
     if "published.wait_for(queue_wait_timeout.milliseconds())" in source:
         return False
-    ordered = [
+    derivation = (
         "let Some(wait_timeout) = deadline_expired("
-        "Boundary::BeforeCompletionWait, queue_wait_timeout)",
-        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "Boundary::BeforeCompletionWait, queue_wait_timeout)"
+    )
+    wait = "let completed = match published.wait_for(wait_timeout.milliseconds())"
+    ordered = [
+        derivation,
+        wait,
         "if deadline_expired(Boundary::AfterCompletionWait, queue_wait_timeout).is_none()",
     ]
     tail = source
@@ -44,6 +48,19 @@ def has_ordered_effective_prefill_wait(source: str) -> bool:
         if position < 0:
             return False
         tail = tail[position + len(needle) :]
+    derivation_end = source.find(derivation) + len(derivation)
+    wait_position = source.find(wait, derivation_end)
+    before_wait = source[derivation_end:wait_position]
+    if any(
+        shadow in before_wait
+        for shadow in [
+            "let wait_timeout",
+            "let mut wait_timeout",
+            "let queue_wait_timeout",
+            "let mut queue_wait_timeout",
+        ]
+    ):
+        return False
     return True
 
 
@@ -351,6 +368,22 @@ def main() -> None:
     )
     if has_ordered_effective_prefill_wait(hostile_substitute):
         fail("bounded prefill checker accepts substituted deadline input")
+    hostile_wait_shadow = deadline_execution.replace(
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "let wait_timeout = queue_wait_timeout;\n    "
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        1,
+    )
+    if has_ordered_effective_prefill_wait(hostile_wait_shadow):
+        fail("bounded prefill checker accepts effective-timeout shadowing")
+    hostile_configured_shadow = deadline_execution.replace(
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "let queue_wait_timeout = wait_timeout;\n    "
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        1,
+    )
+    if has_ordered_effective_prefill_wait(hostile_configured_shadow):
+        fail("bounded prefill checker accepts configured-timeout shadowing")
     hostile_reordered = deadline_execution.replace(
         "Boundary::BeforeCompletionWait", "Boundary::DeadlineSwap", 1
     ).replace("Boundary::AfterCompletionWait", "Boundary::BeforeCompletionWait", 1)
