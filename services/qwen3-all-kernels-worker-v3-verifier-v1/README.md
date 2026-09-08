@@ -104,9 +104,8 @@ exclusive durable serialization, and permanent namespace retention.
 These clients do not implement or provision the external signer or protected
 head-store processes, store a private key, authenticate a compiler current
 record, run an independent checker, or launch a protected deployment. Signer
-authority is unchanged: Its descriptor checks and wire protocol grant no
-production authority. Head-store authority exists only through its explicit
-unsafe supervisor admission.
+authority is unchanged: Its descriptor checks and wire protocol grant no production authority.
+Head-store authority exists only through its explicit unsafe supervisor admission.
 
 The private `0700` directory excludes different-UID path mutation. Like any
 pathname API, it cannot exclude a concurrent rename by another thread or
