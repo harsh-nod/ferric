@@ -200,8 +200,8 @@ def main() -> None:
         if workspace_template.count(required) != 1:
             fail(f"engineering vendor workspace lost pinned Cargo path: {required}")
     if (
-        'set(checksum) != {"$comment", "files", "package"}' not in source
-        or "CARGO_VENDOR_CHECKSUM_COMMENT" not in source
+        'set(checksum) != {"files", "package"}' not in source
+        or "CARGO_VENDOR_CHECKSUM_COMMENT" in source
     ):
         fail("engineering vendor checksum policy drifted from pinned Cargo")
     for required in [
