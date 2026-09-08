@@ -2804,7 +2804,7 @@ mod tests {
         let outcome = coordinator.commit_preflighted_round(preflighted).unwrap();
         assert_eq!(outcome.next_active_roster(), roster.as_slice());
         registry.apply_preflighted_completion(epoch, &[disposition]);
-        core::hint::black_box(outcome);
+        drop(core::hint::black_box(outcome));
     }
 
     #[test]
