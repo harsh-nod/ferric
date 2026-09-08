@@ -1,0 +1,37 @@
+[package]
+name = "ferric-m1-r33-production-owner-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+# This deployment boundary is qualified separately from the legacy workspace.
+[workspace]
+
+[dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "cf6faec0ee3c026d3a1fc5090ab606a3b425225c", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "cf6faec0ee3c026d3a1fc5090ab606a3b425225c", version = "=0.1.0" }
+ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
+ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
+ferric-m1-engineering-execution-v1 = { path = "../../adapters/m1-engineering-execution-v1", version = "=0.1.0" }
+ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../../adapters/qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
+ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
+rustix = { version = "=1.1.4", features = ["fs"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+sha2 = "=0.11.0"
+
+[dev-dependencies]
+tempfile = "=3.27.0"
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too_many_lines = "allow"
+
+[profile.release]
+panic = "abort"
