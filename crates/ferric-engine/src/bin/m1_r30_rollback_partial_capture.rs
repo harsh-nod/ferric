@@ -1190,8 +1190,7 @@ mod tests {
     #[test]
     fn protocol_and_exact_partial_capture_are_accepted() {
         require_protocol().unwrap();
-        let checked_in =
-            include_bytes!("ferric-m1-r30-rollback-partial-protocol.json").as_slice();
+        let checked_in = include_bytes!("ferric-m1-r30-rollback-partial-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
         validate_manifest(&canonical_bytes(&fixture()).unwrap(), &expected()).unwrap();
     }

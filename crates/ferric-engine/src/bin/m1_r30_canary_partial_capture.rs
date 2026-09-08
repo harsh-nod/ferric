@@ -867,8 +867,7 @@ mod tests {
     fn exact_partial_canary_capture_and_checked_protocol_are_accepted() {
         validate_manifest(&canonical_bytes(&fixture()).unwrap(), &expected()).unwrap();
         require_protocol().unwrap();
-        let checked_in =
-            include_bytes!("ferric-m1-r30-canary-partial-protocol.json").as_slice();
+        let checked_in = include_bytes!("ferric-m1-r30-canary-partial-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
     }
 

@@ -363,8 +363,7 @@ mod tests {
 
     #[test]
     fn composition_preserves_the_native_fault_authority_gap() {
-        let checked_in =
-            include_bytes!("ferric-m1-r30-composed-runner-protocol.json").as_slice();
+        let checked_in = include_bytes!("ferric-m1-r30-composed-runner-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
         let bytes = compose(&physical(), &"aa".repeat(32)).unwrap();
         let value = parse_canonical(&bytes, "test r30 composition").unwrap();

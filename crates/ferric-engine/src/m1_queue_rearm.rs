@@ -3502,113 +3502,6 @@ fn build_rollover_bound_rows_core(
     Ok(rows.into_boxed_slice())
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg(test)]
-struct RearmBoundRangeV1<T> {
-    explicit_argument_index: usize,
-    range: T,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg(test)]
-struct RearmBoundRowV1<T> {
-    dispatch_index: u32,
-    profile_id: ferric_spec::Identity,
-    program: crate::M1PhysicalProgramV1,
-    buffers: Vec<RearmBoundRangeV1<T>>,
-}
-
-#[cfg(test)]
-fn rebuild_bound_row_ranges<T: Copy + Eq>(
-    source_rows: &[M1PhysicalBufferRecipeRowV1],
-    old_bound_rows: &[RearmBoundRowV1<T>],
-    composition: &AddresslessM1FullStepWorkspaceComposition,
-    previous: RetainedCaptureRangesV1<T>,
-    retained: RetainedCaptureRangesV1<T>,
-    fresh_range: impl FnMut(
-        M1FullStepWorkspaceRole,
-        M1StepWorkspaceRange,
-    ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
-) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
-    rebuild_bound_row_ranges_with_requests(
-        source_rows,
-        old_bound_rows,
-        previous,
-        retained,
-        |source| requested_workspace_range(source, composition, &retained.semantic),
-        fresh_range,
-    )
-}
-
-#[cfg(test)]
-fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
-    source_rows: &[M1PhysicalBufferRecipeRowV1],
-    old_bound_rows: &[RearmBoundRowV1<T>],
-    previous: RetainedCaptureRangesV1<T>,
-    retained: RetainedCaptureRangesV1<T>,
-    mut range_request: impl FnMut(M1PhysicalBufferSourceV1) -> Result<RearmRangeRequestV1, ()>,
-    mut fresh_range: impl FnMut(
-        M1FullStepWorkspaceRole,
-        M1StepWorkspaceRange,
-    ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
-) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
-    if source_rows.len() != old_bound_rows.len() {
-        return Err(());
-    }
-    let mut rows = Vec::new();
-    let mut range_selection = RearmRangeSelectionV1::new(&retained.semantic);
-    rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
-    for (source, old) in source_rows.iter().zip(old_bound_rows) {
-        if source.dispatch_index() != old.dispatch_index
-            || source.profile_id() != old.profile_id
-            || source.program() != old.program
-            || source.buffers().len() != old.buffers.len()
-        {
-            return Err(());
-        }
-        let mut buffers = Vec::new();
-        buffers
-            .try_reserve_exact(source.buffers().len())
-            .map_err(|_| ())?;
-        for (semantic, old_buffer) in source.buffers().iter().zip(&old.buffers) {
-            if semantic.explicit_argument_index() != old_buffer.explicit_argument_index {
-                return Err(());
-            }
-            let request = range_request(semantic.source())?;
-            let fresh = match request {
-                RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
-                    let (bound_workspace, range) = fresh_range(workspace, requested)?;
-                    if bound_workspace != workspace {
-                        return Err(());
-                    }
-                    Some(range)
-                }
-                RearmRangeRequestV1::RetainedCompletionOutput
-                | RearmRangeRequestV1::RetainedQualificationLogits
-                | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
-                | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
-                | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
-                | RearmRangeRequestV1::RetainedSpeculativeTargetChoices
-                | RearmRangeRequestV1::Unchanged => None,
-            };
-            let selected =
-                range_selection.select(request, old_buffer.range, fresh, previous, retained)?;
-            buffers.push(RearmBoundRangeV1 {
-                explicit_argument_index: semantic.explicit_argument_index(),
-                range: selected,
-            });
-        }
-        rows.push(RearmBoundRowV1 {
-            dispatch_index: source.dispatch_index(),
-            profile_id: source.profile_id(),
-            program: source.program(),
-            buffers,
-        });
-    }
-    range_selection.validate()?;
-    Ok(rows)
-}
-
 fn preflight_rearm(
     prepared: &M1PreparedLongLivedQueueRearmV1,
     recipe: &AddresslessM1PhysicalBufferRecipeV1,
@@ -12944,6 +12837,109 @@ mod tests {
         atomic::{AtomicUsize, Ordering},
         Arc,
     };
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct RearmBoundRangeV1<T> {
+        explicit_argument_index: usize,
+        range: T,
+    }
+
+    #[derive(Clone, Debug, Eq, PartialEq)]
+    struct RearmBoundRowV1<T> {
+        dispatch_index: u32,
+        profile_id: ferric_spec::Identity,
+        program: crate::M1PhysicalProgramV1,
+        buffers: Vec<RearmBoundRangeV1<T>>,
+    }
+
+    fn rebuild_bound_row_ranges<T: Copy + Eq>(
+        source_rows: &[M1PhysicalBufferRecipeRowV1],
+        old_bound_rows: &[RearmBoundRowV1<T>],
+        composition: &AddresslessM1FullStepWorkspaceComposition,
+        previous: RetainedCaptureRangesV1<T>,
+        retained: RetainedCaptureRangesV1<T>,
+        fresh_range: impl FnMut(
+            M1FullStepWorkspaceRole,
+            M1StepWorkspaceRange,
+        ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
+    ) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
+        rebuild_bound_row_ranges_with_requests(
+            source_rows,
+            old_bound_rows,
+            previous,
+            retained,
+            |source| requested_workspace_range(source, composition, &retained.semantic),
+            fresh_range,
+        )
+    }
+
+    fn rebuild_bound_row_ranges_with_requests<T: Copy + Eq>(
+        source_rows: &[M1PhysicalBufferRecipeRowV1],
+        old_bound_rows: &[RearmBoundRowV1<T>],
+        previous: RetainedCaptureRangesV1<T>,
+        retained: RetainedCaptureRangesV1<T>,
+        mut range_request: impl FnMut(M1PhysicalBufferSourceV1) -> Result<RearmRangeRequestV1, ()>,
+        mut fresh_range: impl FnMut(
+            M1FullStepWorkspaceRole,
+            M1StepWorkspaceRange,
+        ) -> Result<(M1FullStepWorkspaceRole, T), ()>,
+    ) -> Result<Vec<RearmBoundRowV1<T>>, ()> {
+        if source_rows.len() != old_bound_rows.len() {
+            return Err(());
+        }
+        let mut rows = Vec::new();
+        let mut range_selection = RearmRangeSelectionV1::new(&retained.semantic);
+        rows.try_reserve_exact(source_rows.len()).map_err(|_| ())?;
+        for (source, old) in source_rows.iter().zip(old_bound_rows) {
+            if source.dispatch_index() != old.dispatch_index
+                || source.profile_id() != old.profile_id
+                || source.program() != old.program
+                || source.buffers().len() != old.buffers.len()
+            {
+                return Err(());
+            }
+            let mut buffers = Vec::new();
+            buffers
+                .try_reserve_exact(source.buffers().len())
+                .map_err(|_| ())?;
+            for (semantic, old_buffer) in source.buffers().iter().zip(&old.buffers) {
+                if semantic.explicit_argument_index() != old_buffer.explicit_argument_index {
+                    return Err(());
+                }
+                let request = range_request(semantic.source())?;
+                let fresh = match request {
+                    RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
+                        let (bound_workspace, range) = fresh_range(workspace, requested)?;
+                        if bound_workspace != workspace {
+                            return Err(());
+                        }
+                        Some(range)
+                    }
+                    RearmRangeRequestV1::RetainedCompletionOutput
+                    | RearmRangeRequestV1::RetainedQualificationLogits
+                    | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                    | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
+                    | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
+                    | RearmRangeRequestV1::RetainedSpeculativeTargetChoices
+                    | RearmRangeRequestV1::Unchanged => None,
+                };
+                let selected =
+                    range_selection.select(request, old_buffer.range, fresh, previous, retained)?;
+                buffers.push(RearmBoundRangeV1 {
+                    explicit_argument_index: semantic.explicit_argument_index(),
+                    range: selected,
+                });
+            }
+            rows.push(RearmBoundRowV1 {
+                dispatch_index: source.dispatch_index(),
+                profile_id: source.profile_id(),
+                program: source.program(),
+                buffers,
+            });
+        }
+        range_selection.validate()?;
+        Ok(rows)
+    }
 
     const fn selection(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {

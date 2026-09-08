@@ -764,27 +764,27 @@ pub(crate) struct M1FullStepWorkspaceImageHostStorageV1 {
 }
 
 impl M1FullStepWorkspaceImageHostStorageV1 {
-    pub(crate) fn try_new(plans: &M1FullStepWorkspacePlans) -> Option<Self> {
-        fn image(plan: &AddresslessM1StepWorkspacePlan) -> Option<Box<[u8]>> {
-            let len = usize::try_from(plan.allocation().byte_len()).ok()?;
-            let mut image = Vec::new();
-            image.try_reserve_exact(len).ok()?;
-            image.resize(len, 0);
-            Some(image.into_boxed_slice())
-        }
+    fn allocate_image(plan: &AddresslessM1StepWorkspacePlan) -> Option<Box<[u8]>> {
+        let len = usize::try_from(plan.allocation().byte_len()).ok()?;
+        let mut image = Vec::new();
+        image.try_reserve_exact(len).ok()?;
+        image.resize(len, 0);
+        Some(image.into_boxed_slice())
+    }
 
+    pub(crate) fn try_new(plans: &M1FullStepWorkspacePlans) -> Option<Self> {
         match plans {
             M1FullStepWorkspacePlans::TargetOnly { target } => Some(Self {
                 draft: None,
-                target: Some(image(target)?),
+                target: Some(Self::allocate_image(target)?),
             }),
             M1FullStepWorkspacePlans::PairedPrefill { draft, target }
             | M1FullStepWorkspacePlans::SpeculativeRound {
                 draft_decode: draft,
                 target_speculative: target,
             } => Some(Self {
-                draft: Some(image(draft)?),
-                target: Some(image(target)?),
+                draft: Some(Self::allocate_image(draft)?),
+                target: Some(Self::allocate_image(target)?),
             }),
         }
     }
