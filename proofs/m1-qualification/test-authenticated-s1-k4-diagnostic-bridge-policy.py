@@ -51,15 +51,20 @@ def has_ordered_effective_prefill_wait(source: str) -> bool:
     derivation_end = source.find(derivation) + len(derivation)
     wait_position = source.find(wait, derivation_end)
     before_wait = source[derivation_end:wait_position]
-    if any(
-        shadow in before_wait
-        for shadow in [
-            "let wait_timeout",
-            "let mut wait_timeout",
-            "let queue_wait_timeout",
-            "let mut queue_wait_timeout",
-        ]
-    ):
+    exact_rejection = (
+        "\n    else {\n"
+        "        let closure = published.close_in_flight();\n"
+        "        let queue_status = physical_closure_status(&closure);\n"
+        "        return Err(terminal_failure(\n"
+        "            engine,\n"
+        "            M1AuthenticatedS1T128PrefillExecutionStageV1::QueueWait,\n"
+        "            M1AuthenticatedS1T128PrefillExecutionErrorV1::DeadlineExpired,\n"
+        "            queue_status,\n"
+        "            (closure, cache, successor),\n"
+        "        ));\n"
+        "    };\n    "
+    )
+    if before_wait != exact_rejection:
         return False
     return True
 
@@ -384,6 +389,29 @@ def main() -> None:
     )
     if has_ordered_effective_prefill_wait(hostile_configured_shadow):
         fail("bounded prefill checker accepts configured-timeout shadowing")
+    hostile_match_shadow = deadline_execution.replace(
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "match queue_wait_timeout {\n"
+        "        wait_timeout => {\n"
+        "            let completed = match published.wait_for(wait_timeout.milliseconds())",
+        1,
+    )
+    match_body, match_close = hostile_match_shadow.rsplit("\n}", 1)
+    hostile_match_shadow = match_body + "\n        }\n    }\n}" + match_close
+    if has_ordered_effective_prefill_wait(hostile_match_shadow):
+        fail("bounded prefill checker accepts match-pattern timeout shadowing")
+    hostile_closure_shadow = deadline_execution.replace(
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "(|wait_timeout| {\n"
+        "        let completed = match published.wait_for(wait_timeout.milliseconds())",
+        1,
+    )
+    closure_body, closure_close = hostile_closure_shadow.rsplit("\n}", 1)
+    hostile_closure_shadow = (
+        closure_body + "\n    })(queue_wait_timeout)\n}" + closure_close
+    )
+    if has_ordered_effective_prefill_wait(hostile_closure_shadow):
+        fail("bounded prefill checker accepts closure-parameter timeout shadowing")
     hostile_reordered = deadline_execution.replace(
         "Boundary::BeforeCompletionWait", "Boundary::DeadlineSwap", 1
     ).replace("Boundary::AfterCompletionWait", "Boundary::BeforeCompletionWait", 1)
