@@ -78,7 +78,7 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "5de891d618a963d3bfe9f32fac8784a15b44789f",
+  siteRefreshBase: "edfb0af0e303ef75b9eb1ff5d785665966527c3c",
   integrationCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
   integrationTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
@@ -171,17 +171,22 @@ const expectedCurrent = {
   r33TwentyWindowCommit: "1e44a64b673f8ede149686979ef759757e71369b",
   r33TwentyWindowTree: "d9e9a381e2a23a3e948943a93abe281f7fd5a0c7",
   r33TwentyWindowImplemented: true,
-  r33TwentyWindowReviewState: "pending-independent-review",
-  r33TwentyWindowReviewHasProbableHoldItems: false,
+  r33TwentyWindowReviewState: "hold-independent-review",
+  r33TwentyWindowReviewHasProbableHoldItems: true,
   r33TwentyWindowActive: true,
   r33TwentyWindowIntegrated: false,
   r33TwentyWindowValidationReported: true,
   r33TwentyWindowValidationGreen: true,
   r33TwentyWindowHardwareQualified: false,
-  r33TwentyWindowHardwareState: "blocked-no-production-owner-or-artifacts",
+  r33TwentyWindowHardwareState: "blocked-independent-review-hold",
   r33MeasuredAllocationRounds: [1, 16],
   r33MeasuredAllocations: 0,
   r33MeasuredReallocations: 0,
+  r33AllocatorTestCoversResidentPrepareCore: false,
+  r33ResidentPrepareCoreStillAllocatesVec: true,
+  r33FaultedResidentExplicitCloseProved: false,
+  r33OutputBudgetBoundedToFixedBuffer: false,
+  r33HostileMutationsMeaningful: false,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -217,10 +222,20 @@ const expectedCurrent = {
   r29InputFilesGenerated: 20,
   r29Buckets: 7,
   r29InputsValidated: true,
-  r29FirstCaptureState: "prefill-s1-t128-active",
+  r29FirstCaptureState: "completed-failed-closed-at-semantic-join",
+  r29FirstCaptureElapsedSeconds: 1601,
+  r29FirstCaptureStatus: 134,
+  r29FirstCapturePhysicalCompletionObserved: true,
+  r29FirstCaptureReadbackObserved: true,
+  r29FirstCaptureTypedCustodyRetained: true,
+  r29FirstCaptureVramReleased: true,
+  r29FirstCaptureErrorBranchKnown: false,
+  r29ObservabilityFixActive: true,
+  r29SameCaseRerunActive: true,
   r29TechnicalPrequalificationOnly: true,
   r29FormalQualificationBlocked: true,
   r29ColdStartupHbmCostObserved: true,
+  r29ColdHbmTargetInitApproxMinutes: 24,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -654,17 +669,22 @@ assertSha256(project.current.workerSignerNarrowPreflightLogSha256, "current.work
 assert(project.current.workerSignerNarrowSourceGateTestsPassed === 33, "Worker and signer narrow source-gate count drifted");
 assert(project.current.r33TwentyWindowImplemented === true, "20-window R33 candidate must remain implemented");
 assert(project.current.r33RejectedCandidateReviewDisposition === "hold-steady-state-allocation", "rejected R33 disposition drifted");
-assert(project.current.r33TwentyWindowReviewState === "pending-independent-review", "20-window R33 review state drifted");
-assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === false, "resolved R33 review items must not remain probable HOLD items");
+assert(project.current.r33TwentyWindowReviewState === "hold-independent-review", "20-window R33 review state drifted");
+assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === true, "R33 HOLD findings must remain explicit");
 assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work must remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === true, "20-window R33 validation result must remain explicit");
 assert(project.current.r33TwentyWindowValidationGreen === true, "20-window R33 author matrix must remain green");
 assert(project.current.r33TwentyWindowHardwareQualified === false, "20-window R33 work must remain hardware-unqualified");
-assert(project.current.r33TwentyWindowHardwareState === "blocked-no-production-owner-or-artifacts", "R33 hardware blocker drifted");
+assert(project.current.r33TwentyWindowHardwareState === "blocked-independent-review-hold", "R33 hardware blocker drifted");
 assert(JSON.stringify(project.current.r33MeasuredAllocationRounds) === "[1,16]", "R33 measured allocation rounds drifted");
 assert(project.current.r33MeasuredAllocations === 0, "R33 warmed path must retain zero measured allocations");
 assert(project.current.r33MeasuredReallocations === 0, "R33 warmed path must retain zero measured reallocations");
+assert(project.current.r33AllocatorTestCoversResidentPrepareCore === false, "narrow allocator test must not claim resident prepare coverage");
+assert(project.current.r33ResidentPrepareCoreStillAllocatesVec === true, "real resident prepare allocation must remain explicit");
+assert(project.current.r33FaultedResidentExplicitCloseProved === false, "faulted resident close must remain unproved");
+assert(project.current.r33OutputBudgetBoundedToFixedBuffer === false, "R33 output-budget bound must remain open");
+assert(project.current.r33HostileMutationsMeaningful === false, "textual hostile mutations must not claim semantic coverage");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
 assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
@@ -692,10 +712,20 @@ assertSha256(project.current.r29PlanSha256, "current.r29PlanSha256");
 assert(project.current.r29InputFilesGenerated === 20, "R29 input count drifted");
 assert(project.current.r29Buckets === 7, "R29 bucket count drifted");
 assert(project.current.r29InputsValidated === true, "R29 inputs must remain validated");
-assert(project.current.r29FirstCaptureState === "prefill-s1-t128-active", "R29 active capture drifted");
+assert(project.current.r29FirstCaptureState === "completed-failed-closed-at-semantic-join", "R29 first capture state drifted");
+assert(project.current.r29FirstCaptureElapsedSeconds === 1601, "R29 first capture elapsed time drifted");
+assert(project.current.r29FirstCaptureStatus === 134, "R29 first capture status drifted");
+assert(project.current.r29FirstCapturePhysicalCompletionObserved === true, "R29 physical completion must remain explicit");
+assert(project.current.r29FirstCaptureReadbackObserved === true, "R29 readback must remain explicit");
+assert(project.current.r29FirstCaptureTypedCustodyRetained === true, "R29 typed custody must remain retained");
+assert(project.current.r29FirstCaptureVramReleased === true, "R29 VRAM release must remain explicit");
+assert(project.current.r29FirstCaptureErrorBranchKnown === false, "R29 error branch must remain unknown");
+assert(project.current.r29ObservabilityFixActive === true, "R29 observability fix must remain active");
+assert(project.current.r29SameCaseRerunActive === true, "R29 same-case rerun must remain active");
 assert(project.current.r29TechnicalPrequalificationOnly === true, "R29 must remain technical prequalification");
 assert(project.current.r29FormalQualificationBlocked === true, "R29 formal qualification blocker must remain explicit");
 assert(project.current.r29ColdStartupHbmCostObserved === true, "R29 cold HBM cost observation must remain explicit");
+assert(project.current.r29ColdHbmTargetInitApproxMinutes === 24, "R29 cold HBM target initialization estimate drifted");
 assert(project.current.fe2o3LatestMigrationTechnicallyAccepted === true, "latest-fe2 migration technical acceptance must remain explicit");
 assert(project.current.fe2o3LatestMigrationFullMi300xSuiteGreen === true, "latest-fe2 migration MI300X suite must remain green");
 assert(project.current.fe2o3LatestMigrationIntegrated === false, "latest-fe2 migration must remain unintegrated while held");
@@ -880,7 +910,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "5de891d618a963d3bfe9f32fac8784a15b44789f",
+  "edfb0af0e303ef75b9eb1ff5d785665966527c3c",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",

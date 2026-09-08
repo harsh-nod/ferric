@@ -3,7 +3,7 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "5de891d618a963d3bfe9f32fac8784a15b44789f",
+    siteRefreshBase: "edfb0af0e303ef75b9eb1ff5d785665966527c3c",
     integrationCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
     integrationTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
     integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
@@ -96,17 +96,22 @@ window.FERRIC_PROJECT = Object.freeze({
     r33TwentyWindowCommit: "1e44a64b673f8ede149686979ef759757e71369b",
     r33TwentyWindowTree: "d9e9a381e2a23a3e948943a93abe281f7fd5a0c7",
     r33TwentyWindowImplemented: true,
-    r33TwentyWindowReviewState: "pending-independent-review",
-    r33TwentyWindowReviewHasProbableHoldItems: false,
+    r33TwentyWindowReviewState: "hold-independent-review",
+    r33TwentyWindowReviewHasProbableHoldItems: true,
     r33TwentyWindowActive: true,
     r33TwentyWindowIntegrated: false,
     r33TwentyWindowValidationReported: true,
     r33TwentyWindowValidationGreen: true,
     r33TwentyWindowHardwareQualified: false,
-    r33TwentyWindowHardwareState: "blocked-no-production-owner-or-artifacts",
+    r33TwentyWindowHardwareState: "blocked-independent-review-hold",
     r33MeasuredAllocationRounds: [1, 16],
     r33MeasuredAllocations: 0,
     r33MeasuredReallocations: 0,
+    r33AllocatorTestCoversResidentPrepareCore: false,
+    r33ResidentPrepareCoreStillAllocatesVec: true,
+    r33FaultedResidentExplicitCloseProved: false,
+    r33OutputBudgetBoundedToFixedBuffer: false,
+    r33HostileMutationsMeaningful: false,
     headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
     headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
     headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -142,10 +147,20 @@ window.FERRIC_PROJECT = Object.freeze({
     r29InputFilesGenerated: 20,
     r29Buckets: 7,
     r29InputsValidated: true,
-    r29FirstCaptureState: "prefill-s1-t128-active",
+    r29FirstCaptureState: "completed-failed-closed-at-semantic-join",
+    r29FirstCaptureElapsedSeconds: 1601,
+    r29FirstCaptureStatus: 134,
+    r29FirstCapturePhysicalCompletionObserved: true,
+    r29FirstCaptureReadbackObserved: true,
+    r29FirstCaptureTypedCustodyRetained: true,
+    r29FirstCaptureVramReleased: true,
+    r29FirstCaptureErrorBranchKnown: false,
+    r29ObservabilityFixActive: true,
+    r29SameCaseRerunActive: true,
     r29TechnicalPrequalificationOnly: true,
     r29FormalQualificationBlocked: true,
     r29ColdStartupHbmCostObserved: true,
+    r29ColdHbmTargetInitApproxMinutes: 24,
     signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
     signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
     signerIpcIntegrated: true,
@@ -336,7 +351,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Accepted integration 2958b69, tree 48de4c1, adds the independently accepted protected current-record provider to the accepted client and head-store series. Production deployment, full-envelope lookup, protected signing, a live ledger, external rollback, durable replay, checker service, and Verus refinement remain open. The prior R33 candidate a305034 was placed on HOLD after independent review found steady-state allocations. Repaired candidate 1e44a64, tree d9e9a38, is based exactly on 2958b69, passes its full MI300X software matrix, and measures zero allocations and reallocations across warmed one-round and 16-round production boundaries; independent review is active. Its real 20-window hardware run is BLOCKED without a production owner and admitted artifacts. R29 has generated and validated all 20 inputs for seven numerical buckets; its first real KFD/GPU technical capture is active. This is prequalification only because protected aggregate deployment is absent. Latest-fe2 migration aba3f86 remains technically green but on DCO HOLD. No production TTFT/TPOT or vLLM/SGLang comparison exists. All 33 M1 gates remain open.",
+      "Accepted integration 2958b69, tree 48de4c1, adds the independently accepted protected current-record provider to the accepted client and head-store series. Production deployment and the remaining authority services stay open. Independent review placed repaired R33 candidate 1e44a64, tree d9e9a38, on HOLD despite its narrow zero-allocation result: real resident prepare still allocates a Vec and the test bypasses it; faulted Active+Resident custody may skip explicit close; budgets above 128 are admitted before the fixed 128-token buffer fails; and textual hostile mutations do not establish meaningful coverage. Repair is active and unintegrated. R29's first real prefill S1/T128 KFD/GPU technical capture completed after 26m41s and failed closed at the semantic join after physical completion and readback, status 134. Typed custody was retained and VRAM released. The exact error branch is unknown because typed-error observability was omitted; its diagnostic fix and same-case rerun are underway. Approximately 24 minutes of target initialization is a cold-start HBM defect, not request latency. Latest-fe2 migration aba3f86 remains technically green but on DCO HOLD. No production TTFT/TPOT or vLLM/SGLang comparison exists. All 33 M1 gates remain open.",
   },
   readiness: [
     {
@@ -349,7 +364,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "R33 lifecycle",
       state: "integration",
       detail:
-        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Independent review placed a305034, tree 4239027, on HOLD because its claimed hot loop still allocated. Repaired candidate 1e44a64, tree d9e9a38, is review-ready on exact base 2958b69. Its full MI300X software gates pass, and an allocator-counting test records 0 allocations and 0 reallocations for warmed one-round and 16-round production boundaries. Independent review is active. A real 20-window hardware run is BLOCKED without a production owner and admitted artifacts; it is unintegrated and hardware-unqualified. Authority is none.",
+        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Candidate 1e44a64, tree d9e9a38, passes its author matrix and a narrow test reports 0 allocations and 0 reallocations for warmed one-round and 16-round boundaries, but independent review issued HOLD. The production resident prepare_coordinator_round_core still allocates a Vec and that test bypasses it; faulted Active+Resident may skip explicit close; output budgets above 128 are admitted before failing the fixed 128-token buffer; and textual hostile mutations are not meaningful validation. Repair is active. The candidate is unintegrated and hardware-unqualified. Authority is none.",
     },
     {
       label: "Successor KV custody",
@@ -403,7 +418,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "R29 numerical capture",
       state: "integration",
       detail:
-        "All 20 inputs for seven buckets are generated and validated: decode S1/S8/S32 at C8192; prefill S1 at T128/T512/T2048; and prefill S8 at T128. Plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c. The first real prefill S1/T128 KFD/GPU technical capture is active. This is technical prequalification only because the protected aggregate publication and deployment path is absent. Cold startup exposed fe2o3 CPU-mapped HBM copy/readback cost; that setup cost is not request latency or TTFT.",
+        "All 20 inputs for seven buckets are generated and validated under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c. The first real prefill S1/T128 KFD/GPU technical capture completed in 26m41s and failed closed at the semantic join after physical completion and readback, status 134. Typed custody was retained and VRAM released. The capture omitted the typed error, so the exact failing branch is not yet known; an observability fix and same-case rerun are underway. Approximately 24 minutes of target initialization is a cold-start defect in CPU-mapped HBM copy/readback, not request latency, TTFT, or TPOT. This remains technical prequalification only.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -447,11 +462,11 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Resident continuation integration", "commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and exact-roster fix 68091859ce0710dc26cfb839d580e40ea0839253; integrated after no-blocker review; no resident hardware qualification"],
     ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current 2958b69; hardware-unqualified"],
     ["Qualification checkpoint", "prior source a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362: #7 passed all 10 strict proof packages then stopped at the cold KV negative 600-second timeout; #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy, then stopped at nested-TMPDIR SUN_LEN; neither emitted a receipt; neither ran on current 2958b69"],
-    ["R33 20-window candidate", "Prior a305034b0e7f5ae8b204f066254601fc835592d6, tree 42390274000b3a6674fc0043ced3fdd8f8fe7c59, is on HOLD because independent review found steady-state allocations. Repaired 1e44a64b673f8ede149686979ef759757e71369b, tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, is based on exact integration 2958b69, passes the full MI300X software matrix, and measures 0 allocations and 0 reallocations across warmed one-round and 16-round production paths. Independent review is active; the real 20-window hardware run is BLOCKED without a production owner and admitted artifacts"],
+    ["R33 20-window candidate", "Candidate 1e44a64b673f8ede149686979ef759757e71369b, tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, is on HOLD after independent review. Although its narrow warmed test reports 0 allocations and 0 reallocations, real resident prepare_coordinator_round_core still allocates Vec and the test bypasses it; faulted Active+Resident may skip explicit close; output budgets above 128 are admitted before fixed-buffer failure; and textual hostile mutations are not meaningful. Repair is active and unintegrated"],
     ["Head-store IPC integration", "fc5f86939cc826480aa008ddf69b044f3d63c585 plus 4d0486476c907ae681bf48d4ba57efb1394e78f5 plus d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83; independently accepted and integrated; standalone validation green; no daemon, durability, session generator store, launcher, distinct-UID exercise, protected infrastructure, or authority"],
     ["Current-record IPC integration", "5df8c5e463cca191b142321a9b5040ed66955f06; tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591; exact committed-tree MI300X author matrix green at log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830; independently accepted and integrated; no daemon or authority"],
     ["Current-record provider integration", "2958b6915cfbbd9bbb81bdb14471fe044b203e0f; tree 48de4c1fe214b9d9df2576cde735f58b0dc63b25; descriptor-only provider/server independently accepted after exact MI300X validation; no production daemon, full-envelope lookup, protected signer, live ledger, external rollback, durable replay, checker, Verus refinement, or authority"],
-    ["R29 numerical capture", "20 inputs across seven buckets generated and validated under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c; first real prefill S1/T128 KFD/GPU technical capture active; technical prequalification only because protected aggregate deployment is absent; cold CPU-mapped HBM setup cost is not request latency"],
+    ["R29 numerical capture", "20 inputs across seven buckets generated and validated under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c; first prefill S1/T128 technical capture completed after 26m41s and failed closed at the semantic join after physical completion/readback with status 134; typed custody retained and VRAM released; exact error branch unknown because typed error was omitted; observability fix and same-case rerun active; approximately 24m target initialization is a cold-start HBM defect, not request latency"],
     ["Signer IPC integration", "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4; tree b524a9ccc981466ecde2aa31afa59e2dff672fc8; independently accepted and integrated; no deployed signer, protected infrastructure, receipt, or authority"],
     ["Speculative hardware source", "commit f18ffe2566112cb8b9518562afe2c8919577c907; tree 04d09e03af9a8257d211382a6f7c91909dda7df6; one authority-free S1/K4 diagnostic round completed; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended"],
     ["Successor KV bridge", "136a6d2ff92597c91caad3d0e33baede74cd4c9a; tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; authenticated page-less successor leasing after detach; no speculative hardware claim"],
@@ -517,7 +532,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated R33 backend lifecycle",
         detail:
-          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window. Independent review rejected a305034 because its claimed steady-state loop allocated. Repaired candidate 1e44a64, tree d9e9a38, is based exactly on 2958b69, passes its full MI300X software matrix, and records zero allocations and reallocations in allocator-counted warmed one-round and 16-round paths. Independent review is active. The real 20-window hardware run is blocked without a production owner and admitted artifacts; it is unintegrated and hardware-unqualified.",
+          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window. Candidate 1e44a64 is on independent-review HOLD. Its narrow warmed allocator test bypasses the real resident prepare path, which still allocates Vec; faulted resident close, the greater-than-128 budget admission mismatch, and meaningful hostile mutations also require repair. Work is active, unintegrated, and hardware-unqualified.",
       },
       {
         name: "Resident first-round continuation",
@@ -616,7 +631,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised resident continuation under hardware authority. Prior-source qualification #8 reached root debug after all strict proof, mutation, policy, formatting, and Clippy stages but emitted no receipt because the nested TMPDIR exceeded SUN_LEN; it has not run on current 2958b69. Integrated R33 supports one window. Candidate a305034 is on HOLD for steady-state allocations; repaired 1e44a64 passes software gates and allocator-counted tests but remains unintegrated and under independent review. Its real 20-window hardware run is blocked without a production owner and admitted artifacts. Current-record client and provider are independently accepted and integrated, but production deployment remains open. Latest-fe2 migration aba3f86 is technically accepted but held from integration by two unsigned upstream commits. Protected infrastructure is absent. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
+      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised resident continuation under hardware authority. Prior-source qualification #8 emitted no receipt and has not run on current 2958b69. Integrated R33 supports one window. Candidate 1e44a64 is on independent-review HOLD: its narrow allocator test bypasses real resident prepare, faulted resident close may be skipped, budgets above 128 can reach a fixed-buffer failure, and textual hostile mutations are not meaningful. Repair is active and unintegrated. R29's first technical capture failed closed at its semantic join after physical completion/readback; custody was retained and VRAM released, but the typed error was omitted and the same case is being rerun after an observability fix. Current-record client and provider are integrated, but production deployment remains open. Protected infrastructure is absent. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
   },
   teams: [
     {
@@ -627,7 +642,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Current integration 2958b69, tree 48de4c1, joins the signed successor-KV bridge, reduced-roster speculative harness, resident series, generic provider, Worker V3, signer and head-store clients, plus independently accepted current-record client 5df8c5e and provider 2958b69.",
       current:
-        "Current-record provider 2958b69 passed its exact MI300X matrix and independent review. Repaired R33 candidate 1e44a64 passes its full software matrix and allocator-counted warmed paths; independent review is active. R29 has validated all 20 inputs and is running the first of seven real technical KFD/GPU captures. Migration aba3f86 is technically accepted against public fe2o3 e535164, but 2958b69 keeps cf6 because two upstream commits lack DCO signoffs.",
+        "Current-record provider 2958b69 passed its exact MI300X matrix and independent review. R33 candidate 1e44a64 is on HOLD with four review findings and repair active. R29's first technical capture completed after 26m41s and failed closed after physical completion/readback; a typed-error observability fix and same-case rerun are active. Migration aba3f86 is technically accepted against public fe2o3 e535164, but 2958b69 keeps cf6 because two upstream commits lack DCO signoffs.",
       blockedBy:
         "Latest-fe2 integration is on HOLD pending legitimate DCO remediation for upstream commits f405dfc and e535164. M1 also depends on R33 independent review and real 20-window execution, production deployment of protected services, full-envelope lookup, protected signing, a live ledger, external rollback, durable replay, checker and Verus coverage, protected artifact admission, current-head combined qualification, and matched baselines.",
       next:
@@ -659,7 +674,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Integration 2958b69 preserves exact K draft growth and fail-closed successor custody and adds the accepted current-record provider. Prior a305034 is on HOLD because it allocates in steady state. Repaired 1e44a64 implements bounded authenticated residency across 20 windows, passes its full MI300X software matrix, and measures zero allocations and reallocations for warmed one-round and 16-round paths. Independent review is active; real 20-window hardware execution is blocked without a production owner and admitted artifacts. No resident daemon or serving endpoint exists.",
+        "Integration 2958b69 preserves exact K draft growth and fail-closed successor custody and adds the accepted current-record provider. Candidate 1e44a64 is on independent-review HOLD: real resident prepare still allocates Vec outside its narrow allocator test; faulted Active+Resident may skip explicit close; budgets above 128 are admitted before fixed-buffer failure; and textual hostile mutations are not meaningful. Repair is active, unintegrated, and hardware-unqualified. No resident daemon or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. The 11-allocation harness clears attempt 2's pre-publication capacity failure. Comparable execution still depends on reviewed integration, protected runtime admission, repeated controlled runs, and the required 20-window R33 path.",
       next:
@@ -697,11 +712,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Integrated generic provider b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; exact finite-successor roster independently accepted at 11 for S1/K4, S1/K8, S1/K16, and S8/K4; hardware-unqualified",
       "Speculative smoke orchestration and its exact S1/K4 allocation roster",
       "Worker V3 protected-evidence collection and authority policy; candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5 was independently accepted and integrated as 61a40cad79b31124044fca198155492e6b151ef4, 2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c, 57973da0c3d362446361d1db026c19040bd20bdb, 7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-      "R33 candidate a305034b0e7f5ae8b204f066254601fc835592d6, tree 42390274000b3a6674fc0043ced3fdd8f8fe7c59, is on HOLD after independent review found allocations in every steady-state round; repaired candidate 1e44a64b673f8ede149686979ef759757e71369b, tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, is based on exact 2958b69 and is under independent review after full MI300X software gates and zero-allocation warmed tests",
+      "R33 candidate 1e44a64b673f8ede149686979ef759757e71369b, tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, is on independent-review HOLD: real resident prepare still allocates Vec outside its narrow allocator test, faulted Active+Resident may skip explicit close, budgets above 128 can reach fixed-buffer failure, and textual hostile mutations are not meaningful; repair is active and unintegrated",
       "Protected head-store series fc5f86939cc826480aa008ddf69b044f3d63c585 plus 4d0486476c907ae681bf48d4ba57efb1394e78f5 plus d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83, is independently accepted, validation-green, and integrated; it provides no daemon, durability, session generator store, launcher, distinct-UID exercise, protected infrastructure, or authority",
       "Protected current-record client 5df8c5e463cca191b142321a9b5040ed66955f06, tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591, passed its exact MI300X author matrix, was independently accepted, and is integrated; no authenticator daemon or external authority exists",
       "Protected current-record provider 2958b6915cfbbd9bbb81bdb14471fe044b203e0f, tree 48de4c1fe214b9d9df2576cde735f58b0dc63b25, is independently accepted and integrated; it is descriptor-only and provides no production daemon, full-envelope lookup, protected signer, live ledger, external rollback, durable replay, checker, Verus refinement, or authority",
-      "R29 has generated and validated 20 inputs across seven numerical buckets under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c; its first real prefill S1/T128 KFD/GPU technical capture is active and is not formal qualification",
+      "R29 generated and validated 20 inputs across seven numerical buckets under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c; its first prefill S1/T128 technical capture failed closed at the semantic join after physical completion/readback with status 134, retained typed custody, and released VRAM; the exact error is unknown and an observability fix plus same-case rerun are active",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
       "Current source integration 2958b6915cfbbd9bbb81bdb14471fe044b203e0f, tree 48de4c1fe214b9d9df2576cde735f58b0dc63b25, includes independently accepted head-store plus current-record client and provider IPC; combined qualification #8 applies to prior a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362, and has not run on current 2958b69; no receipt exists",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
@@ -741,10 +756,10 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       commit: "1e44a64b673f8ede149686979ef759757e71369b",
-      title: "Prepared the allocation-repaired R33 candidate for review",
-      state: "integration",
+      title: "Held the R33 repair after independent review",
+      state: "open",
       detail:
-        "Tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7 is based exactly on integration 2958b69. Its full MI300X software gates pass, and allocator-counted warmed production boundaries report 0 allocations and 0 reallocations for one and 16 rounds. Independent review is active. The real 20-window hardware run is BLOCKED because no production owner or admitted artifacts exist; the candidate is unintegrated and hardware-unqualified.",
+        "Tree d9e9a381e2a23a3e948943a93abe281f7fd5a0c7 is based exactly on 2958b69 and passes its author matrix. Independent review nevertheless issued HOLD: production prepare_coordinator_round_core still allocates Vec while the narrow zero-allocation test bypasses it; faulted Active+Resident may skip explicit close; output budgets above 128 are admitted before the fixed 128-token buffer fails; and textual hostile mutations are not meaningful. Repair is active. The candidate is unintegrated and hardware-unqualified.",
     },
     {
       commit: "5df8c5e463cca191b142321a9b5040ed66955f06",
@@ -1077,7 +1092,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Accepted integration 2958b69, tree 48de4c1, includes independently accepted current-record client and provider slices but not their production deployment or the remaining protected authority services. R33 a305034 is on HOLD for steady-state allocation; repaired 1e44a64 passes its software matrix and zero-allocation warmed tests while independent review remains active, and real 20-window hardware is blocked without a production owner and admitted artifacts. R29's 20 inputs are validated and its first real technical KFD/GPU capture is active under plan SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c. Migration aba3f86 is technically accepted against public fe2o3 e535164 but remains on DCO HOLD; 2958b69 retains cf6. Protected infrastructure is absent. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, production TTFT/TPOT, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
+      "Accepted integration 2958b69, tree 48de4c1, includes independently accepted current-record client and provider slices but not their production deployment or the remaining protected authority services. R33 candidate 1e44a64 is on independent-review HOLD with four defects: unmeasured resident prepare allocation, a possible missed faulted-resident close, output-budget admission beyond its fixed buffer, and ineffective textual hostile mutations. Repair is active and unintegrated. R29's first prefill S1/T128 technical capture completed after 26m41s and failed closed at the semantic join after physical completion/readback, status 134; typed custody was retained and VRAM released. The omitted typed error leaves the exact branch unknown, so observability repair and a same-case rerun are active. Approximately 24 minutes of target initialization is a cold-start HBM defect, not latency. Migration aba3f86 remains on DCO HOLD. Protected infrastructure is absent. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, production TTFT/TPOT, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

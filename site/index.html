@@ -230,22 +230,23 @@
             external rollback, durable replay, checker service, and Verus refinement remain open.
 
             Independent review placed R33 candidate
-            a305034b0e7f5ae8b204f066254601fc835592d6, tree
-            42390274000b3a6674fc0043ced3fdd8f8fe7c59, on HOLD after finding allocations
-            in every steady-state round. Repaired candidate
             1e44a64b673f8ede149686979ef759757e71369b, tree
-            d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, is based exactly on 2958b69. Its
-            full MI300X software gates pass, and allocator-counted warmed production paths report
-            0 allocations and 0 reallocations for one and 16 rounds. Independent review is active.
-            The real 20-window hardware run is BLOCKED because no production owner or admitted
-            artifacts exist.
+            d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, on HOLD despite a narrow test
+            reporting 0 allocations and 0 reallocations. The real resident
+            prepare_coordinator_round_core still allocates a Vec and the test bypasses it; faulted
+            Active+Resident custody may skip explicit close; output budgets above 128 are admitted
+            before the fixed 128-token buffer fails; and textual hostile mutations are not meaningful.
+            Repair is active. The candidate is unintegrated and hardware-unqualified.
 
             R29 has generated and validated all 20 inputs across seven numerical buckets under plan
             SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c.
-            The first real prefill S1/T128 KFD/GPU technical capture is active. This is technical
-            prequalification only because protected aggregate publication and deployment are absent.
-            Cold startup exposed fe2o3 CPU-mapped HBM copy/readback cost; that setup cost is not
-            request latency, TTFT, or TPOT.
+            The first real prefill S1/T128 KFD/GPU technical capture completed after 26m41s and
+            failed closed at the semantic join after physical completion and readback, status 134.
+            Typed custody was retained and VRAM released. The capture omitted the typed error, so the
+            exact failing branch is unknown; an observability fix and same-case rerun are underway.
+            Approximately 24 minutes of target initialization is a cold-start defect in fe2o3's
+            CPU-mapped HBM copy/readback path, not request latency, TTFT, or TPOT. This remains
+            technical prequalification only.
 
             The latest-fe2 migration aba3f86ef14136fa73a385834d4f33f7c9416a32 is technically
             green against public fe2o3 e5351640e3df3868205bc68eac8d5ff5556352ea, tree
