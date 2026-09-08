@@ -161,10 +161,18 @@ pub enum ProtectedLedgerKindV1 {
 }
 
 impl ProtectedLedgerKindV1 {
-    const fn tag(self) -> u16 {
+    pub(crate) const fn tag(self) -> u16 {
         match self {
             Self::Replay => REPLAY_KIND,
             Self::Reservation => RESERVATION_KIND,
+        }
+    }
+
+    pub(crate) const fn from_tag(tag: u16) -> Option<Self> {
+        match tag {
+            REPLAY_KIND => Some(Self::Replay),
+            RESERVATION_KIND => Some(Self::Reservation),
+            _ => None,
         }
     }
 }

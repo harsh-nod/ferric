@@ -11,6 +11,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod durable;
+mod head_store_ipc;
 mod listener;
 mod service;
 mod signer_ipc;
@@ -21,6 +22,17 @@ pub use durable::{
     ProtectedLedgerExternalHeadV1, ProtectedLedgerHeadStoreFailureV1, ProtectedLedgerHeadStoreV1,
     ProtectedLedgerKindV1, ProtectedLedgerReplacementAuthorizationV1,
     ProtectedLedgerStorageCapabilityV1, ProtectedPolicyRevocationV1,
+};
+pub use head_store_ipc::{
+    PREOPENED_PROTECTED_HEAD_STORE_REQUEST_BYTES_V1,
+    PREOPENED_PROTECTED_HEAD_STORE_RESPONSE_BYTES_V1, PreopenedProtectedHeadStoreClientV1,
+    ProtectedHeadStoreClientAdmissionErrorV1, ProtectedHeadStoreClientAdmissionFailureV1,
+    ProtectedHeadStoreClientCustodyV1, ProtectedHeadStoreClientErrorV1,
+    ProtectedHeadStoreClientFailureV1, ProtectedHeadStoreEndpointIdentityErrorV1,
+    ProtectedHeadStoreEndpointIdentityV1, ProtectedHeadStoreOperationV1,
+    ProtectedHeadStorePeerIdentityErrorV1, ProtectedHeadStorePeerIdentityV1,
+    ProtectedHeadStoreProtocolErrorV1, ProtectedHeadStoreRequestV1,
+    ProtectedHeadStoreResponseStatusV1, ProtectedHeadStoreResponseV1,
 };
 pub use listener::{
     FerricProtectedVerifierListenerFailureReasonV2, FerricProtectedVerifierListenerFailureV2,

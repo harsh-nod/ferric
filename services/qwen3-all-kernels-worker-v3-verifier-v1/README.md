@@ -22,6 +22,9 @@ The foundation provides:
 - a descriptor-only protected-signer client for one supervisor-preopened,
   connected `SOCK_SEQPACKET` endpoint with pinned object identity, exact peer
   PID/UID/GID, provider identity, and public key;
+- a descriptor-only protected head-store client for one supervisor-preopened,
+  connected `SOCK_SEQPACKET` endpoint pinned to one protocol, measured provider,
+  policy, ledger kind, and durable namespace;
 - exact 12-entry request/result joins and a terminal Ferric V1 response payload;
 - a connected-path entrypoint consuming only fe2o3's separately admitted
   accepted-endpoint capability;
@@ -80,10 +83,30 @@ accepted descriptor. After successful endpoint admission, failures provide
 exactly the existing fe2o3/Ferric terminal custody and do not claim general
 post-Begin descriptor recovery.
 
-This client does not implement or provision the external signer process, store
-a private key, authenticate a compiler current record, run an independent
-checker, maintain an antirollback head, or launch a protected deployment. Its
-descriptor checks and wire protocol grant no production authority.
+The protected head-store client uses fixed 396-byte request and 328-byte
+response packets and one supervisor-bounded absolute timeout per operation.
+Every exchange binds a nonzero per-client request sequence, the protocol and
+provider identities, and the exact `(namespace, policy, ledger kind)` context.
+Initialization admits only an empty head. Compare-and-advance admits only the
+same policy/header and an exact one-record successor with a nonzero record
+identity. A protected peer may return `Advanced` only after that successor is
+externally durable. Correlated conflicts and explicit rejections leave the
+channel synchronized. A correlated `Absent` after synchronized existence
+evidence is treated as rollback, as is a loaded head below or inconsistent
+with the client's last observed head. Endpoint change, ancillary data,
+truncation, replayed/uncorrelated responses, deadline expiry after send, and
+every other ambiguous post-send outcome permanently poison and close the
+endpoint. The head-store wire protocol and descriptor checks do not prove
+external durability. Constructing the trait implementation is therefore an
+unsafe supervisor boundary requiring a separately measured protected provider,
+exclusive durable serialization, and permanent namespace retention.
+
+These clients do not implement or provision the external signer or protected
+head-store processes, store a private key, authenticate a compiler current
+record, run an independent checker, or launch a protected deployment. Signer
+authority is unchanged: Its descriptor checks and wire protocol grant no
+production authority. Head-store authority exists only through its explicit
+unsafe supervisor admission.
 
 The private `0700` directory excludes different-UID path mutation. Like any
 pathname API, it cannot exclude a concurrent rename by another thread or
