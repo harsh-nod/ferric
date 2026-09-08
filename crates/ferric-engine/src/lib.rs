@@ -284,7 +284,7 @@ pub use authenticated_resident_session::{
     M1AuthenticatedResidentFailureV1, M1AuthenticatedResidentRoundPlansV1,
     M1AuthenticatedResidentSessionV1, M1AuthenticatedResidentStageV1,
     M1AuthenticatedResidentWindowInputV1, M1AuthenticatedResidentWindowSuccessV1,
-    M1_AUTHENTICATED_RESIDENT_WINDOWS_V1,
+    M1_AUTHENTICATED_RESIDENT_MAX_OUTPUT_TOKENS_V1, M1_AUTHENTICATED_RESIDENT_WINDOWS_V1,
 };
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,

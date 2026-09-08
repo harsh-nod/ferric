@@ -12,6 +12,7 @@
 
 use core::fmt;
 
+use arrayvec::ArrayVec;
 use fe2o3_host::{
     AuthenticatedServiceQueueDataUpdateFailureV1, AuthenticatedServiceQueueReleaseV1,
     AuthenticatedServiceQueueRetainedBindFailureV1, AuthenticatedServiceQueueSessionV1,
@@ -67,6 +68,78 @@ use crate::{
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
+
+pub(crate) type M1AuthenticatedRearmedDispositionsV1 =
+    ArrayVec<M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>;
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentCompletionScratchV1 {
+    dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+    members: Vec<M1DeviceKvCompletionMemberV1>,
+    completion: crate::m1_completed_step::M1CompletedStepScratchV1,
+    release: crate::m1_completed_step_release::M1CompletedStepKvReleaseScratchV1,
+    selected_slots: Vec<Option<ActiveDeviceKvCache>>,
+    selected: Vec<ActiveDeviceKvCache>,
+    parked: Vec<ActiveDeviceKvCache>,
+    terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    draft_reservations: Vec<crate::PendingSpeculativeDraftKvRoundWrite>,
+    target_reservations: Vec<crate::PendingDeviceKvStepWrite>,
+    draft_page_leases: Vec<Vec<crate::DeviceKvPageLease>>,
+    target_page_leases: Vec<Vec<crate::DeviceKvPageLease>>,
+}
+
+impl M1AuthenticatedResidentCompletionScratchV1 {
+    pub(crate) fn try_new(member_capacity: usize) -> Option<Self> {
+        let mut members = Vec::new();
+        let mut dispositions = Vec::new();
+        let mut selected_slots = Vec::new();
+        let mut selected = Vec::new();
+        let mut parked = Vec::new();
+        let mut terminal = Vec::new();
+        let mut draft_reservations = Vec::new();
+        let mut target_reservations = Vec::new();
+        let mut draft_page_leases = Vec::new();
+        let mut target_page_leases = Vec::new();
+        dispositions.try_reserve_exact(member_capacity).ok()?;
+        members.try_reserve_exact(member_capacity).ok()?;
+        selected_slots.try_reserve_exact(member_capacity).ok()?;
+        selected.try_reserve_exact(member_capacity).ok()?;
+        parked.try_reserve_exact(member_capacity).ok()?;
+        terminal.try_reserve_exact(member_capacity).ok()?;
+        draft_reservations.try_reserve_exact(member_capacity).ok()?;
+        target_reservations
+            .try_reserve_exact(member_capacity)
+            .ok()?;
+        draft_page_leases.try_reserve_exact(member_capacity).ok()?;
+        target_page_leases.try_reserve_exact(member_capacity).ok()?;
+        for _ in 0..member_capacity {
+            let mut draft = Vec::new();
+            let mut target = Vec::new();
+            draft.try_reserve_exact(1).ok()?;
+            target.try_reserve_exact(1).ok()?;
+            draft_page_leases.push(draft);
+            target_page_leases.push(target);
+        }
+        Some(Self {
+            dispositions,
+            members,
+            completion: crate::m1_completed_step::M1CompletedStepScratchV1::try_new(
+                member_capacity,
+            )?,
+            release: crate::m1_completed_step_release::M1CompletedStepKvReleaseScratchV1::try_new(
+                member_capacity,
+            )?,
+            selected_slots,
+            selected,
+            parked,
+            terminal,
+            draft_reservations,
+            target_reservations,
+            draft_page_leases,
+            target_page_leases,
+        })
+    }
+}
 
 /// Authenticated scheduling rejection before or after physical queue detachment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -201,6 +274,13 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             history: M1RearmRoundHistoryV1::Empty,
             new_window_bridge: None,
         }
+    }
+
+    pub(crate) fn try_reserve_round_history(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), crate::M1RearmedCompletionPreflightErrorV1> {
+        self.history.try_reserve_additional(additional)
     }
 
     /// Current released authenticated step retained by this round.
@@ -494,6 +574,7 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             engine,
             self,
             M1AuthenticatedRearmDispatchV1::Automatic,
+            None,
         )
     }
 
@@ -519,6 +600,28 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                 expected_epoch,
                 requests,
             },
+            None,
+        )
+    }
+
+    pub(crate) fn schedule_next_exact_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        expected_epoch: CompletionEpoch,
+        requests: &[RequestId],
+        scratch: &mut M1AuthenticatedResidentCompletionScratchV1,
+    ) -> Result<
+        M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
+    > {
+        schedule_m1_authenticated_long_lived_queue_rearm_inner_v1(
+            engine,
+            self,
+            M1AuthenticatedRearmDispatchV1::Exact {
+                expected_epoch,
+                requests,
+            },
+            Some(scratch),
         )
     }
 }
@@ -805,10 +908,60 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
 /// Materializes only exact missing speculative KV tail pages after the
 /// authenticated queue has detached. The caller supplies no page authority.
 pub(crate) fn materialize_m1_authenticated_speculative_round_tail_pages_v1(
+    scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    draft_decode: ValidatedM1StepInputs,
+    target_speculative: ValidatedM1StepInputs,
+    draft_round_tokens: u32,
+) -> Result<
+    (
+        M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        M1LongLivedQueueRearmKvInputsV1,
+    ),
+    M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+> {
+    materialize_m1_authenticated_speculative_round_tail_pages_inner_v1(
+        scheduled,
+        draft_decode,
+        target_speculative,
+        draft_round_tokens,
+        None,
+    )
+}
+
+pub(crate) fn materialize_m1_authenticated_speculative_round_tail_pages_resident_v1(
+    scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    draft_decode: ValidatedM1StepInputs,
+    target_speculative: ValidatedM1StepInputs,
+    draft_round_tokens: u32,
+    scratch: &mut M1AuthenticatedResidentCompletionScratchV1,
+) -> Result<
+    (
+        M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        M1LongLivedQueueRearmKvInputsV1,
+    ),
+    M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+> {
+    let rosters = (
+        core::mem::take(&mut scratch.draft_page_leases),
+        core::mem::take(&mut scratch.target_page_leases),
+    );
+    materialize_m1_authenticated_speculative_round_tail_pages_inner_v1(
+        scheduled,
+        draft_decode,
+        target_speculative,
+        draft_round_tokens,
+        Some(rosters),
+    )
+}
+
+fn materialize_m1_authenticated_speculative_round_tail_pages_inner_v1(
     mut scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
     draft_decode: ValidatedM1StepInputs,
     target_speculative: ValidatedM1StepInputs,
     draft_round_tokens: u32,
+    resident_rosters: Option<
+        crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeTailPageRostersV1,
+    >,
 ) -> Result<
     (
         M1AuthenticatedScheduledLongLivedQueueRearmV1,
@@ -839,26 +992,28 @@ pub(crate) fn materialize_m1_authenticated_speculative_round_tail_pages_v1(
             (scheduled, draft_decode, target_speculative),
         ));
     }
-    let mut projections = Vec::new();
-    if projections.try_reserve_exact(selected_count).is_err() {
-        return Err(authenticated_kv_reservation_failure(
-            M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
-            (scheduled, draft_decode, target_speculative),
-        ));
+    let mut projections =
+        ArrayVec::<crate::DeviceKvCacheProjection, { M1_MAX_ACTIVE_SEQUENCES as usize }>::new();
+    for projection in scheduled
+        .selected
+        .iter()
+        .map(ActiveDeviceKvCache::projection)
+    {
+        if projections.try_push(projection).is_err() {
+            return Err(authenticated_kv_reservation_failure(
+                M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+                (scheduled, draft_decode, target_speculative),
+            ));
+        }
     }
-    projections.extend(
-        scheduled
-            .selected
-            .iter()
-            .map(ActiveDeviceKvCache::projection),
-    );
     let (draft_page_leases, target_page_leases) =
-        match crate::authenticated_queue_rollover::materialize_m1_authenticated_speculative_tail_pages_v1(
+        match crate::authenticated_queue_rollover::materialize_m1_authenticated_speculative_tail_pages_with_rosters_v1(
             &mut scheduled.queue,
             &projections,
             &draft_decode,
             &target_speculative,
             draft_round_tokens,
+            resident_rosters,
         ) {
             Ok(page_leases) => page_leases,
             Err(source) => {
@@ -1028,15 +1183,20 @@ fn validate_authenticated_exact_rearm_preflight<const C: usize>(
             actual: expected_epoch,
         });
     }
-    let mut available = Vec::new();
-    available
-        .try_reserve_exact(released.members().len() + parked.len())
-        .map_err(|_| M1LongLivedQueueRearmScheduleErrorV1::HostAllocation)?;
-    available.extend(released.members().iter().filter_map(|member| match member {
-        M1ReleasedDeviceKvMemberV1::Active(cache) => Some(cache.projection().request),
-        M1ReleasedDeviceKvMemberV1::Terminal(_) => None,
-    }));
-    available.extend(parked.iter().map(|cache| cache.projection().request));
+    let mut available = ArrayVec::<RequestId, { M1_MAX_ACTIVE_SEQUENCES as usize }>::new();
+    for request in released
+        .members()
+        .iter()
+        .filter_map(|member| match member {
+            M1ReleasedDeviceKvMemberV1::Active(cache) => Some(cache.projection().request),
+            M1ReleasedDeviceKvMemberV1::Terminal(_) => None,
+        })
+        .chain(parked.iter().map(|cache| cache.projection().request))
+    {
+        available
+            .try_push(request)
+            .map_err(|_| M1LongLivedQueueRearmScheduleErrorV1::HostAllocation)?;
+    }
     validate_authenticated_request_partition(&available, requests)?;
     for (lane, request) in requests.iter().copied().enumerate() {
         match engine.state(request) {
@@ -1110,6 +1270,7 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
     engine: &mut Engine<C>,
     released_round: M1AuthenticatedLongLivedQueueReleasedRoundV1,
     dispatch: M1AuthenticatedRearmDispatchV1<'_>,
+    resident_scratch: Option<&mut M1AuthenticatedResidentCompletionScratchV1>,
 ) -> Result<
     M1AuthenticatedScheduledLongLivedQueueRearmV1,
     M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
@@ -1307,20 +1468,7 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
         ));
     }
 
-    let mut scheduled_requests = Vec::new();
-    if scheduled_requests
-        .try_reserve_exact(scheduled.member_count())
-        .is_err()
-    {
-        return Err(authenticated_schedule_terminal(
-            engine,
-            M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
-            M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
-                M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
-            ),
-            (queue, residue, scheduled),
-        ));
-    }
+    let mut scheduled_requests = ArrayVec::<RequestId, { M1_MAX_ACTIVE_SEQUENCES as usize }>::new();
     for lane in 0..scheduled.member_count() {
         let Some(request) = scheduled.member(lane) else {
             return Err(authenticated_schedule_terminal(
@@ -1332,26 +1480,33 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
                 (queue, residue, scheduled),
             ));
         };
-        scheduled_requests.push(request);
+        if scheduled_requests.try_push(request).is_err() {
+            return Err(authenticated_schedule_terminal(
+                engine,
+                M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
+                M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
+                    M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
+                ),
+                (queue, residue, scheduled),
+            ));
+        }
     }
-    let mut available_requests = Vec::new();
-    if available_requests
-        .try_reserve_exact(residue.members.len())
-        .is_err()
-    {
-        return Err(authenticated_schedule_terminal(
-            engine,
-            M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
-            M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
-                M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
-            ),
-            (queue, residue, scheduled),
-        ));
-    }
-    available_requests.extend(residue.members.iter().filter_map(|member| match member {
+    let mut available_requests = ArrayVec::<RequestId, { M1_MAX_ACTIVE_SEQUENCES as usize }>::new();
+    for request in residue.members.iter().filter_map(|member| match member {
         M1ReleasedDeviceKvMemberV1::Active(cache) => Some(cache.projection().request),
         M1ReleasedDeviceKvMemberV1::Terminal(_) => None,
-    }));
+    }) {
+        if available_requests.try_push(request).is_err() {
+            return Err(authenticated_schedule_terminal(
+                engine,
+                M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
+                M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
+                    M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
+                ),
+                (queue, residue, scheduled),
+            ));
+        }
+    }
     if let Err(error) =
         validate_authenticated_request_partition(&available_requests, &scheduled_requests)
     {
@@ -1363,29 +1518,45 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
         ));
     }
 
-    let mut selected_slots = Vec::new();
-    let mut selected = Vec::new();
-    let mut parked = Vec::new();
-    let mut terminal_members = Vec::new();
-    if selected_slots
-        .try_reserve_exact(scheduled.member_count())
-        .is_err()
-        || selected
+    let (mut selected_slots, mut selected, mut parked, mut terminal_members) =
+        match resident_scratch {
+            Some(scratch) => (
+                core::mem::take(&mut scratch.selected_slots),
+                core::mem::take(&mut scratch.selected),
+                core::mem::take(&mut scratch.parked),
+                core::mem::take(&mut scratch.terminal),
+            ),
+            None => (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+        };
+    selected_slots.clear();
+    selected.clear();
+    parked.clear();
+    terminal_members.clear();
+    if selected_slots.capacity() < scheduled.member_count()
+        || selected.capacity() < scheduled.member_count()
+        || parked.capacity() < residue.members.len()
+        || terminal_members.capacity() < residue.members.len()
+    {
+        let reserve_failed = selected_slots
             .try_reserve_exact(scheduled.member_count())
             .is_err()
-        || parked.try_reserve_exact(residue.members.len()).is_err()
-        || terminal_members
-            .try_reserve_exact(residue.members.len())
-            .is_err()
-    {
-        return Err(authenticated_schedule_terminal(
-            engine,
-            M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
-            M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
-                M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
-            ),
-            (queue, residue, scheduled),
-        ));
+            || selected
+                .try_reserve_exact(scheduled.member_count())
+                .is_err()
+            || parked.try_reserve_exact(residue.members.len()).is_err()
+            || terminal_members
+                .try_reserve_exact(residue.members.len())
+                .is_err();
+        if reserve_failed {
+            return Err(authenticated_schedule_terminal(
+                engine,
+                M1LongLivedQueueRearmSchedulePhaseV1::PostDispatch,
+                M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(
+                    M1LongLivedQueueRearmScheduleErrorV1::HostAllocation,
+                ),
+                (queue, residue, scheduled),
+            ));
+        }
     }
     selected_slots.resize_with(scheduled.member_count(), || None);
     for member in residue.members {
@@ -1441,6 +1612,7 @@ pub fn schedule_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
         engine,
         M1AuthenticatedLongLivedQueueReleasedRoundV1::initial(released),
         M1AuthenticatedRearmDispatchV1::Automatic,
+        None,
     )
 }
 
@@ -1467,6 +1639,7 @@ pub fn schedule_m1_authenticated_long_lived_queue_rearm_exact_v1<const C: usize>
             expected_epoch,
             requests,
         },
+        None,
     )
 }
 
@@ -1575,6 +1748,7 @@ fn authenticated_qualification_logits_preflight(
 fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
     mut scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
     inputs: M1LongLivedQueueRearmKvInputsV1,
+    mut resident_scratch: Option<&mut M1AuthenticatedResidentCompletionScratchV1>,
 ) -> Result<
     M1AuthenticatedReservedLongLivedQueueRearmV1,
     M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
@@ -1593,10 +1767,16 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     (scheduled, target, target_page_leases),
                 ));
             }
-            let mut reservations = Vec::new();
-            if reservations
-                .try_reserve_exact(scheduled.selected.len())
-                .is_err()
+            let mut reservations = resident_scratch
+                .as_deref_mut()
+                .map_or_else(Vec::new, |scratch| {
+                    core::mem::take(&mut scratch.target_reservations)
+                });
+            reservations.clear();
+            if reservations.capacity() < scheduled.selected.len()
+                && reservations
+                    .try_reserve_exact(scheduled.selected.len())
+                    .is_err()
             {
                 return Err(authenticated_kv_reservation_failure(
                     M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
@@ -1661,10 +1841,16 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     (scheduled, target, contexts),
                 ));
             }
-            let mut reservations = Vec::new();
-            if reservations
-                .try_reserve_exact(scheduled.selected.len())
-                .is_err()
+            let mut reservations = resident_scratch
+                .as_deref_mut()
+                .map_or_else(Vec::new, |scratch| {
+                    core::mem::take(&mut scratch.target_reservations)
+                });
+            reservations.clear();
+            if reservations.capacity() < scheduled.selected.len()
+                && reservations
+                    .try_reserve_exact(scheduled.selected.len())
+                    .is_err()
             {
                 return Err(authenticated_kv_reservation_failure(
                     M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
@@ -1762,14 +1948,25 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                     ),
                 ));
             }
-            let mut draft_reservations = Vec::new();
-            let mut target_reservations = Vec::new();
-            if draft_reservations
-                .try_reserve_exact(scheduled.selected.len())
-                .is_err()
-                || target_reservations
+            let (mut draft_reservations, mut target_reservations) = resident_scratch.map_or_else(
+                || (Vec::new(), Vec::new()),
+                |scratch| {
+                    (
+                        core::mem::take(&mut scratch.draft_reservations),
+                        core::mem::take(&mut scratch.target_reservations),
+                    )
+                },
+            );
+            draft_reservations.clear();
+            target_reservations.clear();
+            if (draft_reservations.capacity() < scheduled.selected.len()
+                && draft_reservations
                     .try_reserve_exact(scheduled.selected.len())
-                    .is_err()
+                    .is_err())
+                || (target_reservations.capacity() < scheduled.selected.len()
+                    && target_reservations
+                        .try_reserve_exact(scheduled.selected.len())
+                        .is_err())
             {
                 return Err(authenticated_kv_reservation_failure(
                     M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
@@ -1913,7 +2110,35 @@ pub fn reserve_m1_authenticated_long_lived_queue_rearm_kv_v1<const C: usize>(
             (scheduled, inputs),
         ));
     }
-    match reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(scheduled, inputs) {
+    match reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(scheduled, inputs, None) {
+        Ok(reserved) => Ok(reserved),
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(failure)
+        }
+    }
+}
+
+pub(crate) fn reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    inputs: M1LongLivedQueueRearmKvInputsV1,
+    scratch: &mut M1AuthenticatedResidentCompletionScratchV1,
+) -> Result<
+    M1AuthenticatedReservedLongLivedQueueRearmV1,
+    M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+> {
+    if engine.is_faulted() {
+        return Err(authenticated_kv_reservation_failure(
+            M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+            (scheduled, inputs),
+        ));
+    }
+    match reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
+        scheduled,
+        inputs,
+        Some(scratch),
+    ) {
         Ok(reserved) => Ok(reserved),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -3497,9 +3722,44 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
     /// Returns unchanged readback/cache custody and all supplied dispositions
     /// for a count mismatch or host reservation failure.
     pub fn complete<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+    ) -> Result<
+        M1AuthenticatedRearmedCompletionOutcomeV1,
+        M1AuthenticatedRearmedCompletionPreflightFailureV1,
+    > {
+        self.complete_inner(engine, dispositions, None)
+    }
+
+    pub(crate) fn complete_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        dispositions: M1AuthenticatedRearmedDispositionsV1,
+        mut scratch: M1AuthenticatedResidentCompletionScratchV1,
+    ) -> Result<
+        M1AuthenticatedRearmedCompletionOutcomeV1,
+        M1AuthenticatedRearmedCompletionPreflightFailureV1,
+    > {
+        scratch.dispositions.clear();
+        if scratch.dispositions.capacity() < dispositions.len() {
+            let retained = dispositions.into_iter().collect();
+            return Err(M1AuthenticatedRearmedCompletionPreflightFailureV1 {
+                error: M1AuthenticatedRearmedCompletionPreflightErrorV1::HostAllocation,
+                readback: Box::new(self),
+                dispositions: retained,
+            });
+        }
+        scratch.dispositions.extend(dispositions);
+        let dispositions = core::mem::take(&mut scratch.dispositions);
+        self.complete_inner(engine, dispositions, Some(scratch))
+    }
+
+    fn complete_inner<const C: usize>(
         mut self,
         engine: &mut Engine<C>,
         dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
+        scratch: Option<M1AuthenticatedResidentCompletionScratchV1>,
     ) -> Result<
         M1AuthenticatedRearmedCompletionOutcomeV1,
         M1AuthenticatedRearmedCompletionPreflightFailureV1,
@@ -3530,10 +3790,18 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
                 dispositions,
             });
         }
-        let mut members = Vec::new();
-        if members
-            .try_reserve_exact(self.carry.selected.len())
-            .is_err()
+        let (mut members, completion_scratch, release_scratch) = match scratch {
+            Some(scratch) => (
+                scratch.members,
+                Some(scratch.completion),
+                Some(scratch.release),
+            ),
+            None => (Vec::new(), None, None),
+        };
+        if members.capacity() < self.carry.selected.len()
+            && members
+                .try_reserve_exact(self.carry.selected.len())
+                .is_err()
         {
             return Err(M1AuthenticatedRearmedCompletionPreflightFailureV1 {
                 error: M1AuthenticatedRearmedCompletionPreflightErrorV1::HostAllocation,
@@ -3558,7 +3826,14 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
             });
         }
         let roster = M1DeviceKvCompletionRosterV1::new(members);
-        let outcome = crate::complete_m1_authenticated_physical_step_v1(engine, readback, roster);
+        let outcome = match completion_scratch {
+            Some(scratch) => {
+                crate::m1_completed_step::complete_m1_authenticated_physical_step_with_scratch_v1(
+                    engine, readback, roster, scratch,
+                )
+            }
+            None => crate::complete_m1_authenticated_physical_step_v1(engine, readback, roster),
+        };
         let history_entry = match carry.rollover {
             Some(rollover) => crate::M1RearmRoundHistoryEntryV1::from_queue_transition(
                 carry.prior_checked,
@@ -3585,6 +3860,7 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
         let history = carry.history.append(history_entry);
         Ok(M1AuthenticatedRearmedCompletionOutcomeV1 {
             outcome,
+            release_scratch,
             lineage: M1AuthenticatedRearmPriorRoundCustodyV1 {
                 parked: carry.parked,
                 terminal: carry.terminal,
@@ -3926,6 +4202,7 @@ struct M1AuthenticatedRearmPriorRoundCustodyV1 {
 #[derive(Debug)]
 pub struct M1AuthenticatedRearmedCompletionOutcomeV1 {
     outcome: M1AuthenticatedCompletedStepOutcomeV1,
+    release_scratch: Option<crate::m1_completed_step_release::M1CompletedStepKvReleaseScratchV1>,
     lineage: M1AuthenticatedRearmPriorRoundCustodyV1,
 }
 
@@ -3962,13 +4239,22 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
     /// Returns this owner unchanged when completion already succeeded or became
     /// terminal poison.
     pub fn retry_rejected<const C: usize>(self, engine: &mut Engine<C>) -> Result<Self, Box<Self>> {
-        let Self { outcome, lineage } = self;
+        let Self {
+            outcome,
+            release_scratch,
+            lineage,
+        } = self;
         let M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) = outcome else {
-            return Err(Box::new(Self { outcome, lineage }));
+            return Err(Box::new(Self {
+                outcome,
+                release_scratch,
+                lineage,
+            }));
         };
         let (_error, readback, roster) = rejected.into_parts();
         Ok(Self {
             outcome: crate::complete_m1_authenticated_physical_step_v1(engine, readback, roster),
+            release_scratch,
             lineage,
         })
     }
@@ -3990,9 +4276,17 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
         >,
         Box<Self>,
     > {
-        let Self { outcome, lineage } = self;
+        let Self {
+            outcome,
+            release_scratch,
+            lineage,
+        } = self;
         let M1AuthenticatedCompletedStepOutcomeV1::Rejected(rejected) = outcome else {
-            return Err(Box::new(Self { outcome, lineage }));
+            return Err(Box::new(Self {
+                outcome,
+                release_scratch,
+                lineage,
+            }));
         };
         Ok(match rejected.destroy_queue_and_retain_rejection(engine) {
             Ok(source) => {
@@ -4012,9 +4306,17 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
     pub fn into_terminal_poison(
         self,
     ) -> Result<M1AuthenticatedRearmedPoisonedCompletionV1, Box<Self>> {
-        let Self { outcome, lineage } = self;
+        let Self {
+            outcome,
+            release_scratch,
+            lineage,
+        } = self;
         let M1AuthenticatedCompletedStepOutcomeV1::Poisoned(poison) = outcome else {
-            return Err(Box::new(Self { outcome, lineage }));
+            return Err(Box::new(Self {
+                outcome,
+                release_scratch,
+                lineage,
+            }));
         };
         Ok(M1AuthenticatedRearmedPoisonedCompletionV1 {
             poison: *poison,
@@ -4025,14 +4327,19 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
     /// Releases retired KV pages only after successful authenticated completion.
     #[must_use = "release outcome retains every authenticated queue and cache owner"]
     pub fn release_completed(self) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1 {
-        let Self { outcome, lineage } = self;
+        let Self {
+            outcome,
+            release_scratch,
+            lineage,
+        } = self;
         let M1AuthenticatedCompletedStepOutcomeV1::Completed(completed) = outcome else {
             return M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(Self {
                 outcome,
+                release_scratch,
                 lineage,
             });
         };
-        release_authenticated_rearmed_round(completed, lineage)
+        release_authenticated_rearmed_round(completed, lineage, release_scratch)
     }
 
     pub(crate) fn destroy_queue_and_retain_any<const C: usize>(
@@ -4043,7 +4350,11 @@ impl M1AuthenticatedRearmedCompletionOutcomeV1 {
         use crate::authenticated_speculative_executor::{
             quarantined_disposition, released_disposition,
         };
-        let Self { outcome, lineage } = self;
+        let Self {
+            outcome,
+            release_scratch: _,
+            lineage,
+        } = self;
         match crate::m1_completed_step::close_m1_authenticated_completed_step_outcome_v1(
             engine, outcome,
         ) {
@@ -4196,7 +4507,7 @@ impl M1AuthenticatedRearmedRoundPageReleaseFailureV1 {
     #[must_use = "retry outcome retains every authenticated round owner"]
     pub fn retry(self) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1 {
         let (_error, completed) = (*self.source).into_parts();
-        release_authenticated_rearmed_round(completed, self.lineage)
+        release_authenticated_rearmed_round(completed, self.lineage, None)
     }
 
     /// Destroys the queue after page release cannot make progress.
@@ -4313,6 +4624,7 @@ impl M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1 {
 /// Exhaustive transition from authenticated completion into another schedulable round.
 #[must_use = "every authenticated release outcome retains exact linear custody"]
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum M1AuthenticatedRearmedRoundReleaseOutcomeV1 {
     Released(M1AuthenticatedLongLivedQueueReleasedRoundV1),
     Rejected(Box<M1AuthenticatedRearmedRoundPageReleaseFailureV1>),
@@ -4322,8 +4634,13 @@ pub enum M1AuthenticatedRearmedRoundReleaseOutcomeV1 {
 fn release_authenticated_rearmed_round(
     completed: crate::M1AuthenticatedCompletedStepSuccessV1,
     lineage: M1AuthenticatedRearmPriorRoundCustodyV1,
+    scratch: Option<crate::m1_completed_step_release::M1CompletedStepKvReleaseScratchV1>,
 ) -> M1AuthenticatedRearmedRoundReleaseOutcomeV1 {
-    match crate::release_m1_authenticated_completed_step_kv_pages_v1(completed) {
+    let released = match scratch {
+        Some(scratch) => crate::m1_completed_step_release::release_m1_authenticated_completed_step_kv_pages_with_scratch_v1(completed, scratch),
+        None => crate::release_m1_authenticated_completed_step_kv_pages_v1(completed),
+    };
+    match released {
         Ok(released) => M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(
             M1AuthenticatedLongLivedQueueReleasedRoundV1 {
                 released,

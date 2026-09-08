@@ -1918,6 +1918,22 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
+    pub(crate) fn validate_authenticated_empty_successor_page_set(
+        &self,
+        lanes: &[crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1],
+    ) -> Result<(), crate::M1DeviceKvArenaLeaseErrorV1> {
+        match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case
+                .custody
+                .partitioned_memory()
+                .validate_authenticated_empty_successor_page_set(&case.lower, lanes),
+        }
+    }
+
     pub(crate) fn commit_authenticated_successor_page_set(
         &mut self,
         admission: crate::device_cache::M1AuthenticatedNewWindowPageSetAdmissionV1,

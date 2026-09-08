@@ -314,20 +314,21 @@ impl<T> M1NonEmptyRearmRoundHistoryV1<T> {
 #[derive(Debug)]
 pub(crate) enum M1RearmRoundHistoryV1<T = M1RearmRoundHistoryEntryV1> {
     Empty,
+    Reserved(Vec<T>),
     NonEmpty(M1NonEmptyRearmRoundHistoryV1<T>),
 }
 
 impl<T> M1RearmRoundHistoryV1<T> {
     pub(crate) const fn len(&self) -> usize {
         match self {
-            Self::Empty => 0,
+            Self::Empty | Self::Reserved(_) => 0,
             Self::NonEmpty(history) => history.len(),
         }
     }
 
     pub(crate) fn get(&self, index: usize) -> Option<&T> {
         match self {
-            Self::Empty => None,
+            Self::Empty | Self::Reserved(_) => None,
             Self::NonEmpty(history) => history.get(index),
         }
     }
@@ -339,10 +340,38 @@ impl<T> M1RearmRoundHistoryV1<T> {
             });
         }
         match self {
-            Self::Empty => Ok(()),
+            Self::Empty | Self::Reserved(_) => Ok(()),
             Self::NonEmpty(history) => history
                 .earlier
                 .try_reserve(1)
+                .map_err(|_| M1RearmedCompletionPreflightErrorV1::HostAllocation),
+        }
+    }
+
+    pub(crate) fn try_reserve_additional(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), M1RearmedCompletionPreflightErrorV1> {
+        if self.len().saturating_add(additional) > M1_MAX_REARM_ROUND_HISTORY_V1 {
+            return Err(M1RearmedCompletionPreflightErrorV1::RoundHistoryCapacity {
+                maximum: M1_MAX_REARM_ROUND_HISTORY_V1,
+            });
+        }
+        match self {
+            Self::Empty => {
+                let mut earlier = Vec::new();
+                earlier
+                    .try_reserve_exact(additional.saturating_sub(1))
+                    .map_err(|_| M1RearmedCompletionPreflightErrorV1::HostAllocation)?;
+                *self = Self::Reserved(earlier);
+                Ok(())
+            }
+            Self::Reserved(earlier) => earlier
+                .try_reserve_exact(additional.saturating_sub(1))
+                .map_err(|_| M1RearmedCompletionPreflightErrorV1::HostAllocation),
+            Self::NonEmpty(history) => history
+                .earlier
+                .try_reserve_exact(additional)
                 .map_err(|_| M1RearmedCompletionPreflightErrorV1::HostAllocation),
         }
     }
@@ -351,6 +380,10 @@ impl<T> M1RearmRoundHistoryV1<T> {
         match self {
             Self::Empty => M1NonEmptyRearmRoundHistoryV1 {
                 earlier: Vec::new(),
+                latest: entry,
+            },
+            Self::Reserved(earlier) => M1NonEmptyRearmRoundHistoryV1 {
+                earlier,
                 latest: entry,
             },
             Self::NonEmpty(mut history) => {
@@ -886,7 +919,7 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
     #[must_use]
     pub const fn prior_completed_members(&self) -> Option<usize> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => Some(history.latest().completed_members()),
         }
     }
@@ -895,7 +928,7 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => {
                 Some(history.latest().logical_accepted_counts())
             }
@@ -906,7 +939,7 @@ impl M1LongLivedQueueRearmTeardownSuccessV1 {
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => {
                 Some(history.latest().externally_published_counts())
             }
@@ -953,7 +986,7 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
     #[must_use]
     pub const fn prior_completed_members(&self) -> Option<usize> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => Some(history.latest().completed_members()),
         }
     }
@@ -962,7 +995,7 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
     #[must_use]
     pub fn prior_logical_accepted_counts(&self) -> Option<&[u32]> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => {
                 Some(history.latest().logical_accepted_counts())
             }
@@ -973,7 +1006,7 @@ impl M1LongLivedQueueRearmTeardownFailureV1 {
     #[must_use]
     pub fn prior_externally_published_counts(&self) -> Option<&[u32]> {
         match &self.history {
-            M1RearmRoundHistoryV1::Empty => None,
+            M1RearmRoundHistoryV1::Empty | M1RearmRoundHistoryV1::Reserved(_) => None,
             M1RearmRoundHistoryV1::NonEmpty(history) => {
                 Some(history.latest().externally_published_counts())
             }
@@ -12771,6 +12804,7 @@ mod tests {
     use super::*;
     use crate::device_cache::test_support::bind_gfx942_device;
     use ferric_spec::{Identity, Qwen3ModelRole, Qwen3PlanBucket};
+    use stats_alloc::Region;
     use std::sync::{
         atomic::{AtomicUsize, Ordering},
         Arc,
@@ -12792,6 +12826,28 @@ mod tests {
             crate::GFX942_TARGET_FEATURES,
         )
         .unwrap()
+    }
+
+    #[test]
+    #[ignore = "global counting allocator requires serial execution"]
+    fn reserved_round_history_appends_allocate_zero_times() {
+        fn append_rounds(count: usize) -> (usize, usize) {
+            let mut history = M1RearmRoundHistoryV1::Empty;
+            history
+                .try_reserve_additional(count)
+                .expect("test history reservation must succeed");
+            let region = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+            let mut nonempty = history.append(0usize);
+            for round in 1..count {
+                nonempty = M1RearmRoundHistoryV1::NonEmpty(nonempty).append(round);
+            }
+            let changes = region.change();
+            assert_eq!(nonempty.len(), count);
+            (changes.allocations, changes.reallocations)
+        }
+
+        assert_eq!(append_rounds(1), (0, 0));
+        assert_eq!(append_rounds(20), (0, 0));
     }
 
     #[derive(Debug)]

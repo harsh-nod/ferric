@@ -1488,6 +1488,53 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         self.admit_authenticated_page_set(queue, lanes)
     }
 
+    pub(crate) fn validate_authenticated_empty_successor_page_set(
+        &self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        lanes: &[M1AuthenticatedNewWindowLaneAdmissionV1],
+    ) -> Result<(), M1DeviceKvArenaLeaseErrorV1> {
+        validate_authenticated_page_span_roster(lanes)?;
+        if lanes
+            .iter()
+            .any(|lane| lane.draft_page_count != 0 || lane.target_page_count != 0)
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        self.model_memory
+            .revalidate_for_kv_partition()
+            .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
+        if self.allocation_id(Qwen3ModelRole::Target8B)
+            == self.allocation_id(Qwen3ModelRole::Draft06B)
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::AllocationIdentityMismatch);
+        }
+        let _exact_detached_queue = (queue.observation(), queue.detached_dispatch_generation());
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let member_count = self.plane_count(role);
+            for layer in 0..role.layers() {
+                for component in [KvCacheComponent::Key, KvCacheComponent::Value] {
+                    let member_index = plane_member_index(role, component, layer)?;
+                    let (offset_bytes, extent_bytes, alignment) =
+                        self.new_window_plane_geometry(role, member_index)?;
+                    let plan_range = self
+                        .model_memory
+                        .plan()
+                        .kv_layer(role, component, layer)
+                        .map_err(M1DeviceKvArenaLeaseErrorV1::ModelPlan)?;
+                    if member_index >= member_count
+                        || plan_range.allocation_id() != self.allocation_id(role)
+                        || plan_range.offset() != offset_bytes
+                        || plan_range.byte_len() != extent_bytes
+                        || alignment != QWEN3_KV_ARENA_ALIGNMENT_V1
+                    {
+                        return Err(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role });
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn admit_authenticated_page_set(
         &self,
         queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,

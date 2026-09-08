@@ -595,6 +595,43 @@ struct BoundMemberWorkV1 {
     arithmetic: MemberArithmeticV1,
 }
 
+#[derive(Debug)]
+pub(crate) struct M1CompletedStepScratchV1 {
+    arithmetic: Vec<MemberArithmeticV1>,
+    logical_accepted: Vec<u32>,
+    externally_published: Vec<u32>,
+    completed: Vec<M1CompletedDeviceKvMemberV1>,
+    remaining: Vec<Option<BoundMemberWorkV1>>,
+}
+
+impl M1CompletedStepScratchV1 {
+    const fn empty() -> Self {
+        Self {
+            arithmetic: Vec::new(),
+            logical_accepted: Vec::new(),
+            externally_published: Vec::new(),
+            completed: Vec::new(),
+            remaining: Vec::new(),
+        }
+    }
+
+    pub(crate) fn try_new(member_capacity: usize) -> Option<Self> {
+        let mut scratch = Self::empty();
+        scratch.arithmetic.try_reserve_exact(member_capacity).ok()?;
+        scratch
+            .logical_accepted
+            .try_reserve_exact(member_capacity)
+            .ok()?;
+        scratch
+            .externally_published
+            .try_reserve_exact(member_capacity)
+            .ok()?;
+        scratch.completed.try_reserve_exact(member_capacity).ok()?;
+        scratch.remaining.try_reserve_exact(member_capacity).ok()?;
+        Some(scratch)
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 enum PoisonedCurrentMemberV1 {
@@ -1608,6 +1645,9 @@ fn preflight_all<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
     engine: &Engine<C>,
     readback: &R,
     roster: &M1DeviceKvCompletionRosterV1,
+    mut arithmetic: Vec<MemberArithmeticV1>,
+    mut logical_accepted: Vec<u32>,
+    mut externally_published: Vec<u32>,
 ) -> Result<M1CompletedStepPreflightV1, M1CompletedStepErrorV1> {
     let checked = readback.checked();
     let reservations = readback.kv_reservations();
@@ -1655,18 +1695,24 @@ fn preflight_all<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
         });
     }
 
-    let mut arithmetic = Vec::new();
-    arithmetic
-        .try_reserve_exact(member_count)
-        .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
-    let mut logical_accepted = Vec::new();
-    logical_accepted
-        .try_reserve_exact(member_count)
-        .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
-    let mut externally_published = Vec::new();
-    externally_published
-        .try_reserve_exact(member_count)
-        .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
+    arithmetic.clear();
+    if arithmetic.capacity() < member_count {
+        arithmetic
+            .try_reserve_exact(member_count)
+            .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
+    }
+    logical_accepted.clear();
+    if logical_accepted.capacity() < member_count {
+        logical_accepted
+            .try_reserve_exact(member_count)
+            .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
+    }
+    externally_published.clear();
+    if externally_published.capacity() < member_count {
+        externally_published
+            .try_reserve_exact(member_count)
+            .map_err(|_| M1CompletedStepErrorV1::HostAllocation)?;
+    }
     for lane in 0..member_count {
         let record = &checked.records()[lane];
         if record.selection() != checked.selection() {
@@ -2120,22 +2166,37 @@ fn complete_m1_step_core_v1<const C: usize, R: M1CompletedStepReadbackCarrierV1>
     engine: &mut Engine<C>,
     readback: R,
     roster: M1DeviceKvCompletionRosterV1,
+    scratch: M1CompletedStepScratchV1,
 ) -> M1CompletedStepCoreOutcomeV1<R::Queue, R> {
+    let M1CompletedStepScratchV1 {
+        arithmetic,
+        logical_accepted,
+        externally_published,
+        mut completed,
+        mut remaining,
+    } = scratch;
     let M1CompletedStepPreflightV1 {
         arithmetic,
         logical_accepted,
         externally_published,
-    } = match preflight_all(engine, &readback, &roster) {
+    } = match preflight_all(
+        engine,
+        &readback,
+        &roster,
+        arithmetic,
+        logical_accepted,
+        externally_published,
+    ) {
         Ok(preflight) => preflight,
         Err(error) => return reject_core(error, readback, roster),
     };
     let member_count = arithmetic.len();
-    let mut completed = Vec::new();
-    if completed.try_reserve_exact(member_count).is_err() {
+    completed.clear();
+    if completed.capacity() < member_count && completed.try_reserve_exact(member_count).is_err() {
         return reject_core(M1CompletedStepErrorV1::HostAllocation, readback, roster);
     }
-    let mut remaining = Vec::new();
-    if remaining.try_reserve_exact(member_count).is_err() {
+    remaining.clear();
+    if remaining.capacity() < member_count && remaining.try_reserve_exact(member_count).is_err() {
         return reject_core(M1CompletedStepErrorV1::HostAllocation, readback, roster);
     }
 
@@ -2362,7 +2423,8 @@ pub fn complete_m1_physical_step_v1<const C: usize>(
     readback: M1PhysicalCompletedReadbackV1,
     roster: M1DeviceKvCompletionRosterV1,
 ) -> M1CompletedStepOutcomeV1 {
-    into_raw_completed_step_outcome(complete_m1_step_core_v1(engine, readback, roster))
+    let scratch = M1CompletedStepScratchV1::empty();
+    into_raw_completed_step_outcome(complete_m1_step_core_v1(engine, readback, roster, scratch))
 }
 
 /// Completes one authenticated physical M1 readback without raw queue conversion.
@@ -2391,16 +2453,32 @@ pub fn complete_m1_authenticated_physical_step_v1<const C: usize>(
     readback: M1AuthenticatedPhysicalCompletedReadbackV1,
     roster: M1DeviceKvCompletionRosterV1,
 ) -> M1AuthenticatedCompletedStepOutcomeV1 {
-    into_authenticated_completed_step_outcome(complete_m1_step_core_v1(engine, readback, roster))
+    let scratch = M1CompletedStepScratchV1::empty();
+    into_authenticated_completed_step_outcome(complete_m1_step_core_v1(
+        engine, readback, roster, scratch,
+    ))
+}
+
+pub(crate) fn complete_m1_authenticated_physical_step_with_scratch_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    readback: M1AuthenticatedPhysicalCompletedReadbackV1,
+    roster: M1DeviceKvCompletionRosterV1,
+    scratch: M1CompletedStepScratchV1,
+) -> M1AuthenticatedCompletedStepOutcomeV1 {
+    into_authenticated_completed_step_outcome(complete_m1_step_core_v1(
+        engine, readback, roster, scratch,
+    ))
 }
 
 #[cfg(test)]
 mod tests {
+    use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as Layout;
     use ferric_spec::{
         m1_qualification_context_plan, Identity, M1QualificationExecutionBindingDeclaration,
         M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvLifecycle,
-        PhysicalPageId, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection,
+        PhysicalPageId, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection, StepPlan,
     };
+    use stats_alloc::Region;
 
     use super::*;
     use crate::device_cache::test_support::bind_gfx942_device;
@@ -2658,6 +2736,180 @@ mod tests {
                 externally_published: 1,
             },
         }
+    }
+
+    #[derive(Debug)]
+    struct AllocationTestReadbackV1 {
+        checked: M1CheckedCompletionOutputV1,
+        completion: ExactCompletion,
+        reservations: M1FullStepKvReservationCustodyV1,
+    }
+
+    impl M1CompletedStepReadbackCarrierV1 for AllocationTestReadbackV1 {
+        type Queue = ();
+
+        fn checked(&self) -> &M1CheckedCompletionOutputV1 {
+            &self.checked
+        }
+
+        fn kv_reservations(&self) -> &M1FullStepKvReservationCustodyV1 {
+            &self.reservations
+        }
+
+        fn completion_epoch(&self) -> CompletionEpoch {
+            self.completion.epoch()
+        }
+
+        fn completion_authority(&self) -> &ExactCompletion {
+            &self.completion
+        }
+
+        fn queue_shape(&self) -> M1PhysicalFixedBatchShapeV1 {
+            M1PhysicalFixedBatchShapeV1::TargetOnly
+        }
+
+        fn into_completion_parts(
+            self,
+        ) -> (
+            Self::Queue,
+            M1CheckedCompletionOutputV1,
+            ExactCompletion,
+            M1FullStepKvReservationCustodyV1,
+        ) {
+            ((), self.checked, self.completion, self.reservations)
+        }
+    }
+
+    fn allocation_test_completion_case() -> (
+        Engine<1>,
+        AllocationTestReadbackV1,
+        M1DeviceKvCompletionRosterV1,
+        M1CompletedStepScratchV1,
+    ) {
+        let mut engine = Engine::<1>::new(8, 4, 32).expect("construct allocation test Engine");
+        let request = engine.admit().expect("admit allocation test request");
+        engine
+            .append_tentative(request, 1)
+            .expect("append allocation test token");
+        let scheduled = engine
+            .dispatch_m1_ready()
+            .expect("dispatch allocation test request")
+            .expect("one allocation test request is ready");
+        let epoch = scheduled.epoch();
+        let choice: ferric_spec::TokenId = 17;
+        let selection = selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let plan_id = identity(31);
+        let plan = StepPlan::new(request, epoch, plan_id, selection);
+        let mut bytes = [0; Layout::RECORD_BYTES_USIZE];
+        bytes[Layout::REQUEST_SLOT_OFFSET..Layout::REQUEST_SLOT_OFFSET + 4]
+            .copy_from_slice(&request.slot().to_le_bytes());
+        bytes[Layout::REQUEST_GENERATION_OFFSET..Layout::REQUEST_GENERATION_OFFSET + 4]
+            .copy_from_slice(&request.generation().to_le_bytes());
+        bytes[Layout::COMPLETION_EPOCH_OFFSET..Layout::COMPLETION_EPOCH_OFFSET + 8]
+            .copy_from_slice(&epoch.value().to_le_bytes());
+        bytes[Layout::PLAN_IDENTITY_OFFSET
+            ..Layout::PLAN_IDENTITY_OFFSET + Layout::PLAN_IDENTITY_BYTES]
+            .copy_from_slice(plan_id.as_bytes());
+        bytes[Layout::EMITTED_TOKEN_COUNT_OFFSET] = 1;
+        let token_offset = Layout::token_offset(0).expect("first token slot exists");
+        bytes[token_offset..token_offset + 4].copy_from_slice(&choice.to_le_bytes());
+        let record = crate::check_inert_completion_record(
+            &bytes,
+            crate::CompletionWireExpectation::new(
+                &plan,
+                crate::CompletionWireSemanticExpectation::DirectFinalRow { choice },
+            ),
+        )
+        .expect("construct checked allocation test record");
+        let checked = M1CheckedCompletionOutputV1::for_serving_history_test(
+            selection,
+            epoch,
+            vec![record].into_boxed_slice(),
+        );
+        let BoundMemberWorkV1 {
+            member,
+            reservations,
+            ..
+        } = target_only_work(request, M1DeviceKvCompletionDispositionV1::Continue);
+        let MemberReservationsV1::TargetOnly { target } = reservations else {
+            unreachable!("target-only helper returned another reservation shape");
+        };
+        let allocation_id = target
+            .page_table()
+            .first()
+            .expect("one target page")
+            .allocation_id();
+        let reservations = M1FullStepKvReservationCustodyV1::TargetOnly {
+            target: crate::M1KvWorkspaceReservationCustodyV1::for_completed_step_test(
+                selection,
+                allocation_id,
+                vec![target],
+            ),
+        };
+        let roster = M1DeviceKvCompletionRosterV1::new(vec![member]);
+        let readback = AllocationTestReadbackV1 {
+            checked,
+            completion: ExactCompletion::from_completed_m1_queue_readback(scheduled),
+            reservations,
+        };
+        let scratch = M1CompletedStepScratchV1::try_new(1)
+            .expect("preallocate allocation test completion scratch");
+        (engine, readback, roster, scratch)
+    }
+
+    #[test]
+    #[ignore = "global counting allocator requires serial execution"]
+    fn real_completion_core_with_warmed_scratch_allocates_zero_times() {
+        std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(real_completion_core_with_warmed_scratch_allocates_zero_times_inner)
+            .expect("spawn large-stack completion allocation test")
+            .join()
+            .expect("completion allocation test must not panic");
+    }
+
+    fn real_completion_core_with_warmed_scratch_allocates_zero_times_inner() {
+        let (mut one_engine, one_readback, one_roster, one_scratch) =
+            allocation_test_completion_case();
+        let one = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+        let one_outcome =
+            complete_m1_step_core_v1(&mut one_engine, one_readback, one_roster, one_scratch);
+        let one = one.change();
+        assert!(matches!(
+            one_outcome,
+            M1CompletedStepCoreOutcomeV1::Completed(_)
+        ));
+        assert_eq!(one.allocations, 0, "one completion core round allocated");
+        assert_eq!(
+            one.reallocations, 0,
+            "one completion core round reallocated"
+        );
+
+        let mut cases = Vec::new();
+        cases
+            .try_reserve_exact(16)
+            .expect("preallocate repeated completion cases");
+        for _ in 0..16 {
+            cases.push(allocation_test_completion_case());
+        }
+        let region = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+        let mut completed = 0usize;
+        while let Some((mut engine, readback, roster, scratch)) = cases.pop() {
+            let outcome = complete_m1_step_core_v1(&mut engine, readback, roster, scratch);
+            assert!(matches!(
+                outcome,
+                M1CompletedStepCoreOutcomeV1::Completed(_)
+            ));
+            completed += 1;
+        }
+        let changes = region.change();
+        assert_eq!(completed, 16);
+        assert_eq!(changes.allocations, 0, "completion core allocated");
+        assert_eq!(changes.reallocations, 0, "completion core reallocated");
     }
 
     fn qualification_context(

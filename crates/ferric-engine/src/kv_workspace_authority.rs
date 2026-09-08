@@ -76,6 +76,19 @@ impl M1KvWorkspaceReservationCustodyV1 {
         self.reservations
     }
 
+    #[cfg(test)]
+    pub(crate) fn for_completed_step_test(
+        selection: Qwen3PlanSelection,
+        allocation_id: Identity,
+        reservations: Vec<PendingDeviceKvStepWrite>,
+    ) -> Self {
+        Self {
+            selection,
+            allocation_id,
+            reservations,
+        }
+    }
+
     /// This structural custody grants no initialization or runtime authority.
     #[must_use]
     pub const fn grants_runtime_authority(&self) -> bool {

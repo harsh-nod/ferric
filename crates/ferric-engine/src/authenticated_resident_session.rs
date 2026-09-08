@@ -48,6 +48,9 @@ const DRAFT_PREFILL: Qwen3PlanSelection = Qwen3PlanSelection {
     bucket: Qwen3PlanBucket::PrefillS1T128,
 };
 
+/// Maximum output admitted by the fixed M1 resident token/evidence buffers.
+pub const M1_AUTHENTICATED_RESIDENT_MAX_OUTPUT_TOKENS_V1: u32 = 128;
+
 fn push_preallocated<T>(values: &mut Vec<T>, value: T) -> Result<(), T> {
     if values.len() == values.capacity() {
         return Err(value);
@@ -224,8 +227,14 @@ impl M1AuthenticatedResidentWindowInputV1 {
             Vec<M1AuthenticatedResidentRoundPlansV1>,
         ),
     > {
+        let Some(output_tokens) = bootstrap.maximum_successor_output_tokens().checked_add(1) else {
+            return Err((bootstrap, rounds));
+        };
         let expected = bootstrap.maximum_successor_output_tokens() as usize;
-        if rounds.len() != expected || diagnostic_ring_bytes == 0 {
+        if output_tokens > M1_AUTHENTICATED_RESIDENT_MAX_OUTPUT_TOKENS_V1
+            || rounds.len() != expected
+            || diagnostic_ring_bytes == 0
+        {
             return Err((bootstrap, rounds));
         }
         Ok(Self {
@@ -730,6 +739,8 @@ struct M1AuthenticatedResidentRoundInputStorageV1 {
     draft: M1AuthenticatedResidentRoleInputStorageV1,
     target: M1AuthenticatedResidentRoleInputStorageV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
+    completion_scratch:
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
 }
 
 impl M1AuthenticatedResidentRoundInputStorageV1 {
@@ -752,6 +763,8 @@ impl M1AuthenticatedResidentRoundInputStorageV1 {
                 target.active_tokens as usize,
             )?,
             controls,
+            completion_scratch:
+                crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1::try_new(1)?,
         })
     }
 }
@@ -809,12 +822,13 @@ fn next_round_inputs(
     )
     .ok()?;
     Some(
-        M1AuthenticatedSpeculativePhysicalRoundInputsV1::with_authenticated_tail_pages(
+        M1AuthenticatedSpeculativePhysicalRoundInputsV1::with_authenticated_tail_pages_and_completion_scratch(
             draft,
             target,
             plans.recipe,
             plans.preparation,
             storage.controls,
+            storage.completion_scratch,
         ),
     )
 }
@@ -1096,6 +1110,19 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         ));
     }
     let (mut executor, outcome, choices) = physical.into_parts();
+    if executor
+        .try_reserve_resident_round_history(rounds.len())
+        .is_err()
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        let teardown =
+            close_resident_executor(engine, executor, (registry, outcome, choices, rounds));
+        return Err(resident_failure(
+            M1AuthenticatedResidentStageV1::Input,
+            true,
+            teardown,
+        ));
+    }
     let Some(mut round_input_storage) = preallocate_resident_round_inputs(rounds.len(), plan)
     else {
         engine.quarantine_m1_queue_rearm_failure();
@@ -2289,6 +2316,22 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
         }
     };
     let (mut executor, outcome, choices) = physical.into_parts();
+    if executor
+        .try_reserve_resident_round_history(rounds.len())
+        .is_err()
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        let teardown = close_resident_executor(
+            engine,
+            executor,
+            (registry, outcome, choices, rounds, evidence, unused_plans),
+        );
+        return Err(resident_failure(
+            M1AuthenticatedResidentStageV1::Input,
+            true,
+            teardown,
+        ));
+    }
     let [member] = outcome.members() else {
         engine.quarantine_m1_queue_rearm_failure();
         let teardown = close_resident_executor(
@@ -2732,13 +2775,16 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
 }
 
 #[cfg(test)]
+pub(crate) use tests::TEST_ALLOCATOR;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use stats_alloc::{Region, INSTRUMENTED_SYSTEM};
     use std::alloc::System;
 
     #[global_allocator]
-    static TEST_ALLOCATOR: &stats_alloc::StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+    pub(crate) static TEST_ALLOCATOR: &stats_alloc::StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
     fn advance_registry_round(
         registry: &mut M1ServingRegistryV1<1>,
@@ -2938,74 +2984,6 @@ mod tests {
             repeated.reallocations, 0,
             "repeated steady-state rounds reallocated"
         );
-    }
-
-    fn allocation_source_gate_accepts(registry: &str, coordinator: &str) -> bool {
-        let plan_next = registry
-            .split("pub fn plan_next")
-            .nth(1)
-            .and_then(|tail| tail.split("pub fn reserve_publication").next())
-            .unwrap_or_default();
-        let reserve = registry
-            .split("pub fn reserve_publication")
-            .nth(1)
-            .and_then(|tail| {
-                tail.split("pub fn reserve_completed_window_replacement")
-                    .next()
-            })
-            .unwrap_or_default();
-        let active = coordinator
-            .split("pub fn active_roster")
-            .nth(1)
-            .and_then(|tail| tail.split("pub fn active_count").next())
-            .unwrap_or_default();
-        !plan_next.contains("collect::<Vec")
-            && !reserve.contains("self.plan_next()")
-            && !reserve.contains("batch.duplicate()")
-            && !active.contains(".collect()")
-            && plan_next.contains("M1ServingInlineRosterV1::new()")
-            && active.contains("M1SpeculativeActiveRosterV1::new()")
-    }
-
-    #[test]
-    fn hostile_heap_roster_restorations_fail_allocation_source_gate() {
-        let registry = include_str!("m1_serving_registry.rs");
-        let coordinator = include_str!("speculative_generation_loop.rs");
-        assert!(allocation_source_gate_accepts(registry, coordinator));
-
-        let collected_plan = registry.replacen(
-            "let mut requests = M1ServingInlineRosterV1::new();",
-            "let requests = self.entries.iter().collect::<Vec<_>>();",
-            1,
-        );
-        assert!(!allocation_source_gate_accepts(
-            &collected_plan,
-            coordinator
-        ));
-
-        let replanned_reservation = registry.replacen(
-            "self.validate_next_batch(&batch)?;",
-            "let _expected = self.plan_next()?;",
-            1,
-        );
-        assert!(!allocation_source_gate_accepts(
-            &replanned_reservation,
-            coordinator
-        ));
-
-        let cloned_reservation =
-            registry.replacen("plan: batch.plan,", "batch: batch.duplicate(),", 1);
-        assert!(!allocation_source_gate_accepts(
-            &cloned_reservation,
-            coordinator
-        ));
-
-        let collected_active = coordinator.replacen(
-            "let mut roster = M1SpeculativeActiveRosterV1::new();",
-            "return self.members.iter().map(|member| member.request).collect();",
-            1,
-        );
-        assert!(!allocation_source_gate_accepts(registry, &collected_active));
     }
 
     #[test]

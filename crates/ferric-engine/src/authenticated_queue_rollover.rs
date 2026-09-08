@@ -6,6 +6,7 @@
 
 use core::fmt;
 
+use arrayvec::ArrayVec;
 use fe2o3_host::{
     AuthenticatedQuarantinedServiceQueueV1, AuthenticatedServiceQueueReleaseFailureV1,
     AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueRetainedRolloverFailureV1,
@@ -15,7 +16,7 @@ use fe2o3_service_host::{DeviceWorkspaceRoleV1, ServiceDeviceDispatchRangeV1};
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, PhysicalKvLifecycle, Qwen3ExecutionMode,
     Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS,
-    M1_KV_PHYSICAL_PAGE_SLOTS,
+    M1_KV_PHYSICAL_PAGE_SLOTS, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::authenticated_speculative_executor::{
@@ -1381,7 +1382,7 @@ fn authenticated_speculative_tail_binding_width_matches(
     }
 }
 
-type M1AuthenticatedSpeculativeTailPageRostersV1 =
+pub(crate) type M1AuthenticatedSpeculativeTailPageRostersV1 =
     (Vec<Vec<DeviceKvPageLease>>, Vec<Vec<DeviceKvPageLease>>);
 
 pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
@@ -1390,6 +1391,27 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     draft_inputs: &ValidatedM1StepInputs,
     target_inputs: &ValidatedM1StepInputs,
     draft_round_tokens: u32,
+) -> Result<
+    M1AuthenticatedSpeculativeTailPageRostersV1,
+    Box<M1AuthenticatedSpeculativeTailPageMaterializationFailureV1>,
+> {
+    materialize_m1_authenticated_speculative_tail_pages_with_rosters_v1(
+        queue,
+        projections,
+        draft_inputs,
+        target_inputs,
+        draft_round_tokens,
+        None,
+    )
+}
+
+pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_with_rosters_v1(
+    queue: &mut M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    projections: &[crate::DeviceKvCacheProjection],
+    draft_inputs: &ValidatedM1StepInputs,
+    target_inputs: &ValidatedM1StepInputs,
+    draft_round_tokens: u32,
+    resident_rosters: Option<M1AuthenticatedSpeculativeTailPageRostersV1>,
 ) -> Result<
     M1AuthenticatedSpeculativeTailPageRostersV1,
     Box<M1AuthenticatedSpeculativeTailPageMaterializationFailureV1>,
@@ -1407,18 +1429,38 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
         ));
     }
 
-    let mut lanes = Vec::new();
-    let mut spans = Vec::new();
-    let mut draft_page_leases = Vec::new();
-    let mut target_page_leases = Vec::new();
-    if lanes.try_reserve_exact(projections.len()).is_err()
-        || spans.try_reserve_exact(projections.len()).is_err()
-        || draft_page_leases
-            .try_reserve_exact(projections.len())
-            .is_err()
-        || target_page_leases
-            .try_reserve_exact(projections.len())
-            .is_err()
+    let mut lanes = ArrayVec::<
+        crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1,
+        { M1_MAX_ACTIVE_SEQUENCES as usize },
+    >::new();
+    let mut spans = ArrayVec::<
+        M1AuthenticatedSpeculativeSuccessorLanePageSpansV1,
+        { M1_MAX_ACTIVE_SEQUENCES as usize },
+    >::new();
+    let resident = resident_rosters.is_some();
+    let (mut draft_page_leases, mut target_page_leases) =
+        resident_rosters.unwrap_or_else(|| (Vec::new(), Vec::new()));
+    let mut resident_draft = if resident {
+        draft_page_leases.pop()
+    } else {
+        None
+    };
+    let mut resident_target = if resident {
+        target_page_leases.pop()
+    } else {
+        None
+    };
+    draft_page_leases.clear();
+    target_page_leases.clear();
+    if (resident && projections.len() != 1)
+        || (draft_page_leases.capacity() < projections.len()
+            && draft_page_leases
+                .try_reserve_exact(projections.len())
+                .is_err())
+        || (target_page_leases.capacity() < projections.len()
+            && target_page_leases
+                .try_reserve_exact(projections.len())
+                .is_err())
     {
         return Err(Box::new(
             M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
@@ -1496,10 +1538,14 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
                 ));
             }
         };
-        let mut draft_leases = Vec::new();
-        let mut target_leases = Vec::new();
-        if draft_leases.try_reserve_exact(draft_count).is_err()
-            || target_leases.try_reserve_exact(target_count).is_err()
+        let mut draft_leases = resident_draft.take().unwrap_or_default();
+        let mut target_leases = resident_target.take().unwrap_or_default();
+        draft_leases.clear();
+        target_leases.clear();
+        if (draft_leases.capacity() < draft_count
+            && draft_leases.try_reserve_exact(draft_count).is_err())
+            || (target_leases.capacity() < target_count
+                && target_leases.try_reserve_exact(target_count).is_err())
         {
             return Err(Box::new(
                 M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
@@ -1525,14 +1571,33 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
                     ));
                 }
             };
-        spans.push(lane_spans);
-        lanes.push(admission);
+        if spans.try_push(lane_spans).is_err() || lanes.try_push(admission).is_err() {
+            return Err(Box::new(
+                M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Span,
+            ));
+        }
         draft_page_leases.push(draft_leases);
         target_page_leases.push(target_leases);
     }
 
+    if spans
+        .iter()
+        .all(|lane| lane.draft.page_count == 0 && lane.target.page_count == 0)
+    {
+        queue
+            .validate_authenticated_empty_successor_page_set(&lanes)
+            .map_err(|source| {
+                Box::new(
+                    M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Admission {
+                        source,
+                    },
+                )
+            })?;
+        return Ok((draft_page_leases, target_page_leases));
+    }
+
     let admission = queue
-        .admit_authenticated_successor_page_set(lanes)
+        .admit_authenticated_successor_page_set(lanes.into_iter().collect())
         .map_err(|source| {
             Box::new(
                 M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::Admission { source },
@@ -1546,7 +1611,7 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     if !authenticated_speculative_successor_lease_roster_matches(&page_leases, &spans) {
         return Err(Box::new(
             M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::CommittedRoster {
-                spans,
+                spans: spans.to_vec(),
                 draft_page_leases,
                 target_page_leases,
                 remaining: page_leases.into_iter(),
@@ -1573,7 +1638,7 @@ pub(crate) fn materialize_m1_authenticated_speculative_tail_pages_v1(
     if !page_leases.as_slice().is_empty() {
         return Err(Box::new(
             M1AuthenticatedSpeculativeTailPageMaterializationFailureV1::CommittedRoster {
-                spans,
+                spans: spans.to_vec(),
                 draft_page_leases,
                 target_page_leases,
                 remaining: page_leases,
@@ -9029,7 +9094,7 @@ mod tests {
             .unwrap();
         let shared = &production[shared_start..shared_end];
         let admit = shared
-            .find("admit_authenticated_successor_page_set(lanes)")
+            .find("admit_authenticated_successor_page_set(lanes.into_iter().collect())")
             .unwrap();
         let commit = shared
             .find("commit_authenticated_successor_page_set(admission)")

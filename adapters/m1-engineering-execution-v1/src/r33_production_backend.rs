@@ -711,6 +711,21 @@ enum M1R33AuthenticatedRunnerCustodyV1 {
     },
 }
 
+enum M1R33ResidentStopOwnerV1<Session, Closed, Pending> {
+    Live { session: Session, pending: Pending },
+    Closed { closed: Closed, pending: Pending },
+}
+
+fn close_resident_stop_owner<Session, Closed, Pending>(
+    owner: M1R33ResidentStopOwnerV1<Session, Closed, Pending>,
+    close: impl FnOnce(Session) -> Closed,
+) -> (Closed, Pending) {
+    match owner {
+        M1R33ResidentStopOwnerV1::Live { session, pending } => (close(session), pending),
+        M1R33ResidentStopOwnerV1::Closed { closed, pending } => (closed, pending),
+    }
+}
+
 enum M1R33AuthenticatedExecutionModeV1 {
     PrefillOnly,
     TargetWindow {
@@ -1411,7 +1426,8 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 ..
             } | BackendStateV1::Faulted {
                 custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
-                    runner: M1R33AuthenticatedRunnerCustodyV1::ResidentRejected { .. }
+                    runner: M1R33AuthenticatedRunnerCustodyV1::Resident { .. }
+                        | M1R33AuthenticatedRunnerCustodyV1::ResidentRejected { .. }
                         | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed { .. },
                     ..
                 }),
@@ -1445,7 +1461,11 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                         };
                         return Err(fault(FAULT_NOT_ACTIVE));
                     };
-                    (binding, session.close(), pending, model_memory, engine)
+                    let (closed, pending) = close_resident_stop_owner(
+                        M1R33ResidentStopOwnerV1::Live { session, pending },
+                        |session| session.close(),
+                    );
+                    (binding, closed, pending, model_memory, engine)
                 }
                 BackendStateV1::Faulted {
                     binding,
@@ -1456,7 +1476,10 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                         model_memory,
                         engine,
                     } = custody;
-                    let (closed, pending) = match runner {
+                    let owner = match runner {
+                        M1R33AuthenticatedRunnerCustodyV1::Resident { session, pending } => {
+                            M1R33ResidentStopOwnerV1::Live { session, pending }
+                        }
                         M1R33AuthenticatedRunnerCustodyV1::ResidentRejected {
                             custody,
                             _pending: pending,
@@ -1464,7 +1487,10 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                         | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
                             _custody: custody,
                             _pending: pending,
-                        } => (custody, pending),
+                        } => M1R33ResidentStopOwnerV1::Closed {
+                            closed: custody,
+                            pending,
+                        },
                         runner => {
                             self.state.state = BackendStateV1::Faulted {
                                 binding,
@@ -1477,6 +1503,8 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                             return Err(fault(FAULT_NOT_ACTIVE));
                         }
                     };
+                    let (closed, pending) =
+                        close_resident_stop_owner(owner, |session| session.close());
                     (binding, closed, pending, model_memory, engine)
                 }
                 state => {
@@ -1581,6 +1609,99 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
+    struct ModelResidentSession(Rc<Cell<usize>>);
+
+    #[derive(Debug, Eq, PartialEq)]
+    struct ModelResidentClosed;
+
+    fn close_model_resident(session: ModelResidentSession) -> ModelResidentClosed {
+        let ModelResidentSession(counter) = session;
+        counter.set(counter.get() + 1);
+        ModelResidentClosed
+    }
+
+    fn take_faulted_model_resident(
+        backend: &mut BackendStateMachineV1<ModelResidentSession, (), ()>,
+    ) -> ModelResidentSession {
+        let state = core::mem::replace(&mut backend.state, BackendStateV1::Transitioning);
+        let BackendStateV1::Faulted {
+            custody:
+                FaultedCustodyV1::Active(ActiveCustodyV1 {
+                    runner,
+                    model_memory: (),
+                    engine: (),
+                }),
+            ..
+        } = state
+        else {
+            panic!("model resident must be faulted with active custody")
+        };
+        runner
+    }
+
+    fn assert_faulted_resident_closes_once(
+        backend: &mut BackendStateMachineV1<ModelResidentSession, (), ()>,
+        close_count: &Rc<Cell<usize>>,
+    ) {
+        assert_eq!(close_count.get(), 0);
+        let session = take_faulted_model_resident(backend);
+        let (closed_owner, pending) = close_resident_stop_owner(
+            M1R33ResidentStopOwnerV1::Live {
+                session,
+                pending: (),
+            },
+            close_model_resident,
+        );
+        assert_eq!(closed_owner, ModelResidentClosed);
+        assert_eq!(pending, ());
+        assert_eq!(close_count.get(), 1);
+        let (closed_owner, ()) = close_resident_stop_owner(
+            M1R33ResidentStopOwnerV1::<ModelResidentSession, _, _>::Closed {
+                closed: closed_owner,
+                pending: (),
+            },
+            close_model_resident,
+        );
+        assert_eq!(closed_owner, ModelResidentClosed);
+        assert_eq!(close_count.get(), 1, "repeat stop must not destroy twice");
+    }
+
+    #[test]
+    fn measure_mismatch_fault_retains_resident_for_exactly_one_close() {
+        let closes = Rc::new(Cell::new(0));
+        let mut backend = BackendStateMachineV1::new(ModelResidentSession(Rc::clone(&closes)), ());
+        backend
+            .start(INSTANCE, 7, true, false, || Ok::<_, ()>(()))
+            .unwrap();
+        assert_eq!(
+            backend
+                .reject_measure_with(INSTANCE, 7, false, FAULT_RESIDENT_ROSTER)
+                .unwrap_err()
+                .code(),
+            FAULT_RESIDENT_ROSTER
+        );
+        assert_faulted_resident_closes_once(&mut backend, &closes);
+    }
+
+    #[test]
+    fn repeated_ready_fault_retains_resident_for_exactly_one_close() {
+        let closes = Rc::new(Cell::new(0));
+        let mut backend = BackendStateMachineV1::new(ModelResidentSession(Rc::clone(&closes)), ());
+        backend
+            .start(INSTANCE, 7, true, false, || Ok::<_, ()>(()))
+            .unwrap();
+        backend.ready(INSTANCE, false, |()| true).unwrap();
+        assert_eq!(
+            backend
+                .ready(INSTANCE, false, |()| false)
+                .unwrap_err()
+                .code(),
+            FAULT_UNHEALTHY_ENGINE
+        );
+        assert_faulted_resident_closes_once(&mut backend, &closes);
+    }
+
     fn backend() -> (
         BackendStateMachineV1<DropWitness, DropWitness, usize>,
         Rc<Cell<usize>>,
@@ -1634,7 +1755,16 @@ mod tests {
         .unwrap()
     }
 
-    fn resident_input(prompt: Vec<u32>) -> M1AuthenticatedResidentWindowInputV1 {
+    fn resident_input_with_output(
+        prompt: Vec<u32>,
+        expected_output_tokens: u32,
+    ) -> Result<
+        M1AuthenticatedResidentWindowInputV1,
+        (
+            M1AuthenticatedS1T128PrefillBootstrapInputV1,
+            Vec<M1AuthenticatedResidentRoundPlansV1>,
+        ),
+    > {
         let round = || {
             let plans = || {
                 M1FullStepWorkspacePlans::speculative_round(
@@ -1644,13 +1774,28 @@ mod tests {
             };
             M1AuthenticatedResidentRoundPlansV1::new(plans(), plans()).unwrap()
         };
+        let successor = expected_output_tokens - 1;
         M1AuthenticatedResidentWindowInputV1::new(
-            bootstrap_input(prompt, 3),
-            vec![round(), round(), round()],
+            bootstrap_input(prompt, successor),
+            (0..successor).map(|_| round()).collect(),
             4096,
             M1QueueWaitTimeoutV1::new(1_000).unwrap(),
         )
-        .unwrap()
+    }
+
+    fn resident_input(prompt: Vec<u32>) -> M1AuthenticatedResidentWindowInputV1 {
+        resident_input_with_output(prompt, 4).unwrap()
+    }
+
+    #[test]
+    fn resident_input_capacity_accepts_128_and_rejects_129() {
+        assert_eq!(
+            resident_input_with_output(vec![1; 128], 128)
+                .unwrap()
+                .expected_output_tokens(),
+            128
+        );
+        assert!(resident_input_with_output(vec![1; 128], 129).is_err());
     }
 
     #[test]

@@ -1315,6 +1315,39 @@ struct SeenPageV1 {
     lane: usize,
 }
 
+#[derive(Debug)]
+pub(crate) struct M1CompletedStepKvReleaseScratchV1 {
+    plans: Vec<MemberReleasePlanV1>,
+    seen: Vec<SeenPageV1>,
+    released_members: Vec<M1ReleasedDeviceKvMemberV1>,
+    release_counts: Vec<M1CompletedKvPageReleaseCountsV1>,
+}
+
+impl M1CompletedStepKvReleaseScratchV1 {
+    const fn empty() -> Self {
+        Self {
+            plans: Vec::new(),
+            seen: Vec::new(),
+            released_members: Vec::new(),
+            release_counts: Vec::new(),
+        }
+    }
+
+    pub(crate) fn try_new(member_capacity: usize) -> Option<Self> {
+        let mut scratch = Self::empty();
+        scratch.plans.try_reserve_exact(member_capacity).ok()?;
+        scratch
+            .released_members
+            .try_reserve_exact(member_capacity)
+            .ok()?;
+        scratch
+            .release_counts
+            .try_reserve_exact(member_capacity)
+            .ok()?;
+        Some(scratch)
+    }
+}
+
 fn member_projection(member: &M1CompletedDeviceKvMemberV1) -> DeviceKvCacheProjection {
     match member {
         M1CompletedDeviceKvMemberV1::Active(cache) => cache.projection(),
@@ -1513,6 +1546,8 @@ where
 
 fn preflight_all<C>(
     completed: &C,
+    mut plans: Vec<MemberReleasePlanV1>,
+    mut seen: Vec<SeenPageV1>,
 ) -> Result<Vec<MemberReleasePlanV1>, M1CompletedStepKvReleaseErrorV1>
 where
     C: M1CompletedStepKvReleaseCarrierV1,
@@ -1523,13 +1558,17 @@ where
         .revalidate_page_return_authority()
         .map_err(M1CompletedStepKvReleaseErrorV1::Authority)?;
 
-    let mut plans = Vec::new();
-    plans
-        .try_reserve_exact(completed.members().len())
-        .map_err(|_| M1CompletedStepKvReleaseErrorV1::HostAllocation)?;
-    let mut seen = Vec::new();
-    seen.try_reserve_exact(total_pages)
-        .map_err(|_| M1CompletedStepKvReleaseErrorV1::HostAllocation)?;
+    plans.clear();
+    if plans.capacity() < completed.members().len() {
+        plans
+            .try_reserve_exact(completed.members().len())
+            .map_err(|_| M1CompletedStepKvReleaseErrorV1::HostAllocation)?;
+    }
+    seen.clear();
+    if seen.capacity() < total_pages {
+        seen.try_reserve_exact(total_pages)
+            .map_err(|_| M1CompletedStepKvReleaseErrorV1::HostAllocation)?;
+    }
     let checked_epoch = completed.checked().epoch();
 
     for (lane, member) in completed.members().iter().enumerate() {
@@ -1650,11 +1689,18 @@ struct M1CompletedStepKvReleaseCoreFailureV1<C> {
 
 fn release_m1_completed_step_kv_pages_core_v1<C>(
     completed: C,
+    scratch: M1CompletedStepKvReleaseScratchV1,
 ) -> Result<M1ReleasedCompletedStepCoreV1<C::Queue>, Box<M1CompletedStepKvReleaseCoreFailureV1<C>>>
 where
     C: M1CompletedStepKvReleaseCarrierV1,
 {
-    let mut plans = match preflight_all(&completed) {
+    let M1CompletedStepKvReleaseScratchV1 {
+        plans,
+        seen,
+        mut released_members,
+        mut release_counts,
+    } = scratch;
+    let mut plans = match preflight_all(&completed, plans, seen) {
         Ok(plans) => plans,
         Err(error) => {
             return Err(Box::new(M1CompletedStepKvReleaseCoreFailureV1 {
@@ -1665,15 +1711,19 @@ where
     };
 
     let member_count = completed.members().len();
-    let mut released_members = Vec::new();
-    if released_members.try_reserve_exact(member_count).is_err() {
+    released_members.clear();
+    if released_members.capacity() < member_count
+        && released_members.try_reserve_exact(member_count).is_err()
+    {
         return Err(Box::new(M1CompletedStepKvReleaseCoreFailureV1 {
             error: M1CompletedStepKvReleaseErrorV1::HostAllocation,
             completed,
         }));
     }
-    let mut release_counts = Vec::new();
-    if release_counts.try_reserve_exact(member_count).is_err() {
+    release_counts.clear();
+    if release_counts.capacity() < member_count
+        && release_counts.try_reserve_exact(member_count).is_err()
+    {
         return Err(Box::new(M1CompletedStepKvReleaseCoreFailureV1 {
             error: M1CompletedStepKvReleaseErrorV1::HostAllocation,
             completed,
@@ -1740,7 +1790,8 @@ where
 pub fn release_m1_completed_step_kv_pages_v1(
     completed: M1CompletedStepSuccessV1,
 ) -> Result<M1ReleasedCompletedStepV1, Box<M1CompletedStepKvReleaseFailureV1>> {
-    match release_m1_completed_step_kv_pages_core_v1(completed) {
+    let scratch = M1CompletedStepKvReleaseScratchV1::empty();
+    match release_m1_completed_step_kv_pages_core_v1(completed, scratch) {
         Ok(core) => Ok(M1ReleasedCompletedStepV1 {
             queue: core.queue,
             checked: core.checked,
@@ -1778,7 +1829,18 @@ pub fn release_m1_authenticated_completed_step_kv_pages_v1(
     M1AuthenticatedReleasedCompletedStepV1,
     Box<M1AuthenticatedCompletedStepKvReleaseFailureV1>,
 > {
-    match release_m1_completed_step_kv_pages_core_v1(completed) {
+    let scratch = M1CompletedStepKvReleaseScratchV1::empty();
+    release_m1_authenticated_completed_step_kv_pages_with_scratch_v1(completed, scratch)
+}
+
+pub(crate) fn release_m1_authenticated_completed_step_kv_pages_with_scratch_v1(
+    completed: M1AuthenticatedCompletedStepSuccessV1,
+    scratch: M1CompletedStepKvReleaseScratchV1,
+) -> Result<
+    M1AuthenticatedReleasedCompletedStepV1,
+    Box<M1AuthenticatedCompletedStepKvReleaseFailureV1>,
+> {
+    match release_m1_completed_step_kv_pages_core_v1(completed, scratch) {
         Ok(core) => Ok(M1AuthenticatedReleasedCompletedStepV1 {
             queue: core.queue,
             checked: core.checked,

@@ -24,6 +24,8 @@ use rustix::time::{ClockId, clock_gettime};
 use serde::Serialize;
 use std::fmt;
 
+use crate::r33_wire::M1_R33_MAX_OUTPUT_TOKENS_V1;
+
 /// R33's exact timing-clock label.
 pub const M1_R33_MONOTONIC_RAW_CLOCK_V1: &str = "monotonic-raw-nanoseconds";
 
@@ -58,6 +60,11 @@ impl M1R33PretokenizedRequestV1 {
         }
         if expected_output_tokens < 2 {
             return Err(M1R33PretokenizedRequestErrorV1::OutputTooShort);
+        }
+        if u64::try_from(expected_output_tokens)
+            .map_or(true, |tokens| tokens > M1_R33_MAX_OUTPUT_TOKENS_V1)
+        {
+            return Err(M1R33PretokenizedRequestErrorV1::OutputTooLong);
         }
         if prompt_tokens
             .len()
@@ -98,6 +105,7 @@ pub enum M1R33PretokenizedRequestErrorV1 {
     EmptyPrompt,
     TokenOutOfRange,
     OutputTooShort,
+    OutputTooLong,
     ContextExceeded,
 }
 
@@ -834,6 +842,16 @@ mod tests {
         assert_eq!(
             M1R33PretokenizedRequestV1::new(0, vec![1].into_boxed_slice(), 1).unwrap_err(),
             M1R33PretokenizedRequestErrorV1::OutputTooShort
+        );
+        assert_eq!(
+            M1R33PretokenizedRequestV1::new(0, vec![1].into_boxed_slice(), 128)
+                .unwrap()
+                .expected_output_tokens(),
+            128
+        );
+        assert_eq!(
+            M1R33PretokenizedRequestV1::new(0, vec![1].into_boxed_slice(), 129).unwrap_err(),
+            M1R33PretokenizedRequestErrorV1::OutputTooLong
         );
         assert_eq!(
             M1R33PretokenizedRequestV1::new(

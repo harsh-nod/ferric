@@ -10,9 +10,10 @@
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
+use arrayvec::ArrayVec;
 use ferric_spec::{
     completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs,
+    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::{
@@ -257,6 +258,8 @@ pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
     recipe_workspace_plans: M1FullStepWorkspacePlans,
     preparation_workspace_plans: M1FullStepWorkspacePlans,
     controls: Vec<M1SpeculativeMemberControlV1>,
+    resident_completion_scratch:
+        Option<Box<crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1>>,
 }
 
 #[derive(Debug)]
@@ -785,6 +788,7 @@ impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
             recipe_workspace_plans,
             preparation_workspace_plans,
             controls,
+            resident_completion_scratch: None,
         }
     }
 
@@ -809,6 +813,27 @@ impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
             recipe_workspace_plans,
             preparation_workspace_plans,
             controls,
+            resident_completion_scratch: None,
+        }
+    }
+
+    pub(crate) fn with_authenticated_tail_pages_and_completion_scratch(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        recipe_workspace_plans: M1FullStepWorkspacePlans,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        scratch: crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    ) -> Self {
+        Self {
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            },
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+            resident_completion_scratch: Some(Box::new(scratch)),
         }
     }
 }
@@ -1640,7 +1665,8 @@ struct M1PreparedCoordinatorRoundCoreV1<D> {
     diagnostic: D,
     controls: Vec<M1SpeculativeMemberControlV1>,
     preflighted: crate::M1SpeculativePreflightedRoundV1,
-    dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
+    dispositions:
+        ArrayVec<crate::M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
@@ -1709,29 +1735,24 @@ where
             },
         ));
     }
-    let mut dispositions = Vec::new();
-    if dispositions
-        .try_reserve_exact(preflighted.members().len())
-        .is_err()
-    {
-        engine.quarantine_m1_queue_rearm_failure();
-        return Err(Box::new(
-            M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
-                coordinator,
-                diagnostic,
-                controls,
-                preflighted,
-                lineage,
-            },
-        ));
+    let mut dispositions = ArrayVec::new();
+    for outcome in preflighted.members().iter().copied() {
+        if dispositions
+            .try_push(outcome.physical_disposition())
+            .is_err()
+        {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    preflighted,
+                    lineage,
+                },
+            ));
+        }
     }
-    dispositions.extend(
-        preflighted
-            .members()
-            .iter()
-            .copied()
-            .map(crate::M1SpeculativeMemberRoundOutcomeV1::physical_disposition),
-    );
     Ok(M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -4116,6 +4137,9 @@ fn complete_authenticated_rearmed_speculative_round_with_deadline<const C: usize
     diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
     controls: Vec<M1SpeculativeMemberControlV1>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    resident_completion_scratch: Option<
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    >,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     deadline_expired: impl FnMut(
         crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
@@ -4131,6 +4155,7 @@ fn complete_authenticated_rearmed_speculative_round_with_deadline<const C: usize
     complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
         engine,
         prepared,
+        resident_completion_scratch,
         queue_wait_timeout,
         deadline_expired,
     )
@@ -4196,6 +4221,9 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
     prepared: M1PreparedCoordinatorRoundCoreV1<
         crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
     >,
+    resident_completion_scratch: Option<
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    >,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     mut deadline_expired: impl FnMut(
         crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
@@ -4239,7 +4267,11 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
         ));
     }
     let (readback, choices) = diagnostic.into_parts();
-    let physical = match readback.complete(engine, dispositions) {
+    let completion = match resident_completion_scratch {
+        Some(scratch) => readback.complete_resident(engine, dispositions, scratch),
+        None => readback.complete(engine, dispositions.into_iter().collect()),
+    };
+    let physical = match completion {
         Ok(physical) => physical,
         Err(failure) => {
             return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
@@ -4503,6 +4535,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
         complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
             engine,
             prepared,
+            None,
             queue_wait_timeout,
             deadline_expired,
         )
@@ -4876,6 +4909,13 @@ fn terminal_quarantine<const C: usize>(
 }
 
 impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
+    pub(crate) fn try_reserve_resident_round_history(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), crate::M1RearmedCompletionPreflightErrorV1> {
+        self.released.try_reserve_round_history(additional)
+    }
+
     /// Returns the wall-clock budget retained for every queue generation.
     #[must_use]
     pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
@@ -5198,8 +5238,13 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             recipe_workspace_plans,
             preparation_workspace_plans,
             controls,
+            mut resident_completion_scratch,
         } = inputs;
-        let scheduled = match released.schedule_next_exact(engine, epoch, &roster) {
+        let scheduled_result = match resident_completion_scratch.as_deref_mut() {
+            Some(scratch) => released.schedule_next_exact_resident(engine, epoch, &roster, scratch),
+            None => released.schedule_next_exact(engine, epoch, &roster),
+        };
+        let scheduled = match scheduled_result {
             Ok(scheduled) => scheduled,
             Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Rejected(rejected)) => {
                 let (_error, released) = rejected.into_parts();
@@ -5216,6 +5261,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         recipe_workspace_plans,
                         preparation_workspace_plans,
                         controls,
+                        resident_completion_scratch,
                     },
                 ));
             }
@@ -5244,31 +5290,45 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
                 draft_decode,
                 target_speculative,
-            } => match crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_v1(
-                scheduled,
-                draft_decode,
-                target_speculative,
-                u32::from(binding.shape().draft_tokens()),
-            ) {
-                Ok(materialized) => materialized,
-                Err(source) => {
-                    engine.quarantine_m1_queue_rearm_failure();
-                    return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
-                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::TailPages,
-                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(
-                            Box::new((
-                                coordinator,
-                                binding,
-                                recipe_workspace_plans,
-                                preparation_workspace_plans,
-                                controls,
-                                source,
-                            )),
-                        ),
-                        lineage: Some(lineage),
-                    }));
+            } => {
+                let materialized = match resident_completion_scratch.as_deref_mut() {
+                    Some(scratch) => crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_resident_v1(
+                        scheduled,
+                        draft_decode,
+                        target_speculative,
+                        u32::from(binding.shape().draft_tokens()),
+                        scratch,
+                    ),
+                    None => crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_v1(
+                        scheduled,
+                        draft_decode,
+                        target_speculative,
+                        u32::from(binding.shape().draft_tokens()),
+                    ),
+                };
+                match materialized {
+                    Ok(materialized) => materialized,
+                    Err(source) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        return Err(Box::new(
+                            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::TailPages,
+                                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(
+                                    Box::new((
+                                        coordinator,
+                                        binding,
+                                        recipe_workspace_plans,
+                                        preparation_workspace_plans,
+                                        controls,
+                                        source,
+                                    )),
+                                ),
+                                lineage: Some(lineage),
+                            },
+                        ));
+                    }
                 }
-            },
+            }
         };
         let recipe = match scheduled.derive_retained_step_recipe(recipe_workspace_plans) {
             M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
@@ -5293,8 +5353,14 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 ));
             }
         };
+        let reserved_result = match resident_completion_scratch.as_deref_mut() {
+            Some(scratch) => crate::authenticated_queue_rearm::reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1(
+                engine, scheduled, kv, scratch,
+            ),
+            None => reserve_m1_authenticated_long_lived_queue_rearm_kv_v1(engine, scheduled, kv),
+        };
         let reserved =
-            match reserve_m1_authenticated_long_lived_queue_rearm_kv_v1(engine, scheduled, kv) {
+            match reserved_result {
                 Ok(reserved) => reserved,
                 Err(failure) => {
                     return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
@@ -5385,6 +5451,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             diagnostic,
             controls,
             lineage,
+            resident_completion_scratch.map(|scratch| *scratch),
             queue_wait_timeout,
             &mut deadline_expired,
         )?;
@@ -5453,7 +5520,10 @@ mod tests {
         ModelReadbackFailureV1, ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
     };
     use crate::speculative_generation_loop::CheckedMemberObservationV1;
-    use crate::{CheckedCompletionSemantics, M1SpeculativeTokenBlockV1};
+    use crate::{
+        CheckedCompletionSemantics, M1DeviceKvCompletionDispositionV1, M1SpeculativeTokenBlockV1,
+    };
+    use stats_alloc::{Region, INSTRUMENTED_SYSTEM};
 
     struct ModelInitialQueueEffectsV1;
 
@@ -5986,6 +6056,146 @@ mod tests {
         {
             self.diagnostic.preflight(coordinator, binding, controls)
         }
+    }
+
+    #[derive(Debug)]
+    struct AllocationFreeDiagnosticV1 {
+        observation: CheckedMemberObservationV1,
+    }
+
+    impl M1SpeculativeRoundObservationV1 for AllocationFreeDiagnosticV1 {
+        fn preflight(
+            &self,
+            coordinator: &M1SpeculativeGenerationLoopV1,
+            binding: crate::M1SpeculativeRoundBindingV1,
+            controls: &[M1SpeculativeMemberControlV1],
+        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+        {
+            let epoch = binding.epoch();
+            coordinator.preflight_observed_round(
+                binding,
+                coordinator.shape().selection(),
+                epoch,
+                core::slice::from_ref(&self.observation),
+                controls,
+            )
+        }
+    }
+
+    fn execute_production_coordinator_boundary(
+        engine: &mut Engine<1>,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        epoch: CompletionEpoch,
+        token: ferric_spec::TokenId,
+        mut controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1AuthenticatedSpeculativeCausalLineageV1,
+    ) {
+        let roster = coordinator.active_roster();
+        let binding = coordinator
+            .bind_round(coordinator.next_round(), epoch, &roster)
+            .unwrap();
+        controls.push(M1SpeculativeMemberControlV1::continuing(roster[0]));
+        let diagnostic = AllocationFreeDiagnosticV1 {
+            observation: CheckedMemberObservationV1 {
+                request: roster[0],
+                semantics: CheckedCompletionSemantics::Speculative {
+                    accepted_draft_tokens: 0,
+                    correction_or_bonus: token,
+                },
+                emitted: M1SpeculativeTokenBlockV1::from_slice(&[token]).unwrap(),
+            },
+        };
+        let prepared = prepare_coordinator_round_core(
+            engine,
+            coordinator,
+            binding,
+            diagnostic,
+            controls,
+            lineage,
+        )
+        .unwrap();
+        let M1PreparedCoordinatorRoundCoreV1 {
+            coordinator: prepared_coordinator,
+            diagnostic: _,
+            controls,
+            preflighted,
+            dispositions,
+            lineage,
+        } = prepared;
+        assert_eq!(
+            dispositions.as_slice(),
+            &[M1DeviceKvCompletionDispositionV1::Continue]
+        );
+        let committed = commit_coordinator_round_core(
+            engine,
+            prepared_coordinator,
+            preflighted,
+            controls,
+            (),
+            lineage,
+        )
+        .unwrap();
+        assert!(!engine.is_faulted());
+        (committed.coordinator, committed.lineage)
+    }
+
+    #[test]
+    #[ignore = "must run alone because the allocator counter is process-global"]
+    fn real_coordinator_preparation_boundary_allocates_zero_times() {
+        let mut controls = std::collections::VecDeque::new();
+        controls.try_reserve_exact(18).unwrap();
+        for _ in 0..18 {
+            let mut round = Vec::new();
+            round.try_reserve_exact(1).unwrap();
+            controls.push_back(round);
+        }
+        let mut coordinator = coordinator(selection(Qwen3PlanBucket::SpeculativeS1K4C8192));
+        let mut lineage = model_lineage(&coordinator);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        (coordinator, lineage) = execute_production_coordinator_boundary(
+            &mut engine,
+            coordinator,
+            lineage,
+            CompletionEpoch::new(40),
+            700,
+            controls.pop_front().unwrap(),
+        );
+
+        let one = Region::new(&INSTRUMENTED_SYSTEM);
+        (coordinator, lineage) = execute_production_coordinator_boundary(
+            &mut engine,
+            coordinator,
+            lineage,
+            CompletionEpoch::new(41),
+            701,
+            controls.pop_front().unwrap(),
+        );
+        let one = one.change();
+        assert_eq!(one.allocations, 0, "production preparation allocated");
+        assert_eq!(one.reallocations, 0, "production preparation reallocated");
+
+        let repeated = Region::new(&INSTRUMENTED_SYSTEM);
+        for (offset, token) in (702..718).enumerate() {
+            (coordinator, lineage) = execute_production_coordinator_boundary(
+                &mut engine,
+                coordinator,
+                lineage,
+                CompletionEpoch::new(42 + u64::try_from(offset).unwrap()),
+                token,
+                controls.pop_front().unwrap(),
+            );
+        }
+        let repeated = repeated.change();
+        assert_eq!(repeated.allocations, 0, "repeated preparation allocated");
+        assert_eq!(
+            repeated.reallocations, 0,
+            "repeated preparation reallocated"
+        );
+        assert_eq!(coordinator.next_round(), 18);
+        assert_eq!(lineage.completed_rounds, 18);
     }
 
     impl M1RolloverRoundObservationV1 for ModelRolloverDiagnosticV1 {

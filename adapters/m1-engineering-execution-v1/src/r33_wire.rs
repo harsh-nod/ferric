@@ -426,6 +426,9 @@ pub struct M1R33WorkloadRequestV1 {
     pub request_ordinal: u64,
 }
 
+/// Exact output bound admitted by Ferric's fixed resident execution buffers.
+pub const M1_R33_MAX_OUTPUT_TOKENS_V1: u64 = 128;
+
 impl M1R33WorkloadRequestV1 {
     pub(crate) fn validate(&self, ordinal: usize) -> Result<(), M1R33WireErrorV1> {
         if self.request_ordinal != ordinal as u64
@@ -435,6 +438,7 @@ impl M1R33WorkloadRequestV1 {
                 .iter()
                 .any(|token| *token >= QWEN3_VOCABULARY_SIZE)
             || self.expected_output_tokens < 2
+            || self.expected_output_tokens > M1_R33_MAX_OUTPUT_TOKENS_V1
             || u64::try_from(self.prompt_tokens.len())
                 .ok()
                 .and_then(|input| input.checked_add(self.expected_output_tokens))
@@ -980,6 +984,17 @@ mod tests {
             OsString::from("substitution"),
         );
         assert!(parse_context(&values).is_err());
+    }
+
+    #[test]
+    fn workload_request_enforces_resident_output_capacity_at_admission() {
+        let request = |expected_output_tokens| M1R33WorkloadRequestV1 {
+            expected_output_tokens,
+            prompt_tokens: vec![17],
+            request_ordinal: 0,
+        };
+        assert!(request(128).validate(0).is_ok());
+        assert!(request(129).validate(0).is_err());
     }
 
     #[test]
