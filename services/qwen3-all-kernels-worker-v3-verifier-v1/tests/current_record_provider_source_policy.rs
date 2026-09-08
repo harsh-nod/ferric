@@ -73,7 +73,7 @@ fn provider_source_policy(provider: &str, library: &str, readme: &str) -> bool {
         }
     }
     let normalized_readme = readme.split_whitespace().collect::<Vec<_>>().join(" ");
-    tests.contains("Self::admit_inner::<false>(")
+    tests.contains("PreopenedProtectedCompilerCurrentServerV1::admit_inner::<false>(")
         && tests.contains("server.serve_one_inner::<false>(")
         && tests.contains("libc::SCM_RIGHTS")
         && tests.contains("replayed_or_skipped_sequence_is_rejected_and_poisoned")

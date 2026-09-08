@@ -280,7 +280,7 @@ impl<A> fmt::Debug for ProtectedCompilerCurrentServerAdmissionFailureV1<A> {
             .field("error", &self.error)
             .field("retains_peer", &true)
             .field("retains_authority", &true)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -692,39 +692,36 @@ impl<A: ProtectedCompilerCurrentAuthorityV1> PreopenedProtectedCompilerCurrentSe
                 self.poisoned_failure(ProtectedCompilerCurrentServerErrorV1::AuthoritySubstitution)
             );
         }
-        let (response, outcome) = match authority_result {
-            Ok(authentication) => {
-                let transcript_identity =
-                    bind_provider_transcript(&request, authentication.transcript_identity());
-                if transcript_identity == [0; 32] {
-                    let response = ProtectedCompilerCurrentResponseV1::rejected(&request);
-                    let outcome = ProtectedCompilerCurrentServerOutcomeV1::Rejected {
-                        request_identity: request.request_identity(),
-                        response_identity: response.response_identity(),
-                    };
-                    (response, outcome)
-                } else {
-                    let response = ProtectedCompilerCurrentResponseV1::authenticated(
-                        &request,
-                        transcript_identity,
-                    )
-                    .map_err(|source| self.protocol_failure(source))?;
-                    let outcome = ProtectedCompilerCurrentServerOutcomeV1::Authenticated {
-                        request_identity: request.request_identity(),
-                        response_identity: response.response_identity(),
-                        transcript_identity,
-                    };
-                    (response, outcome)
-                }
-            }
-            Err(_) => {
+        let (response, outcome) = if let Ok(authentication) = authority_result {
+            let transcript_identity =
+                bind_provider_transcript(&request, authentication.transcript_identity());
+            if transcript_identity == [0; 32] {
                 let response = ProtectedCompilerCurrentResponseV1::rejected(&request);
                 let outcome = ProtectedCompilerCurrentServerOutcomeV1::Rejected {
                     request_identity: request.request_identity(),
                     response_identity: response.response_identity(),
                 };
                 (response, outcome)
+            } else {
+                let response = ProtectedCompilerCurrentResponseV1::authenticated(
+                    &request,
+                    transcript_identity,
+                )
+                .map_err(|source| self.protocol_failure(source))?;
+                let outcome = ProtectedCompilerCurrentServerOutcomeV1::Authenticated {
+                    request_identity: request.request_identity(),
+                    response_identity: response.response_identity(),
+                    transcript_identity,
+                };
+                (response, outcome)
             }
+        } else {
+            let response = ProtectedCompilerCurrentResponseV1::rejected(&request);
+            let outcome = ProtectedCompilerCurrentServerOutcomeV1::Rejected {
+                request_identity: request.request_identity(),
+                response_identity: response.response_identity(),
+            };
+            (response, outcome)
         };
         send_response(&peer, &response, deadline).map_err(|error| self.poisoned_failure(error))?;
         if remaining(deadline).is_none() {
