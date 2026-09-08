@@ -7,11 +7,14 @@
 
 use core::fmt;
 
+use arrayvec::ArrayVec;
 use fe2o3_host::AuthenticatedServiceQueueReleaseV1;
 use fe2o3_service_host::ServiceQueueReleaseObservationV1;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
-use ferric_spec::{M1QualificationContextStepKind, Qwen3ModelRole, RequestId};
+use ferric_spec::{
+    M1QualificationContextStepKind, Qwen3ModelRole, RequestId, M1_MAX_ACTIVE_SEQUENCES,
+};
 
 use crate::device_cache::{
     DeviceKvStepCompletionOutcome, InertInitializedDeviceKvStepWrite,
@@ -91,24 +94,49 @@ impl M1DeviceKvCompletionMemberV1 {
 #[must_use = "the exact cache roster must enter completion or remain retained"]
 #[derive(Debug, PartialEq, Eq)]
 pub struct M1DeviceKvCompletionRosterV1 {
-    members: Vec<M1DeviceKvCompletionMemberV1>,
+    members: M1DeviceKvCompletionRosterMembersV1,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum M1DeviceKvCompletionRosterMembersV1 {
+    Inline(ArrayVec<M1DeviceKvCompletionMemberV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>),
+    Owned(Vec<M1DeviceKvCompletionMemberV1>),
 }
 
 impl M1DeviceKvCompletionRosterV1 {
     /// Retains callers' exact scheduler order for transactional validation.
     pub fn new(members: Vec<M1DeviceKvCompletionMemberV1>) -> Self {
-        Self { members }
+        Self {
+            members: M1DeviceKvCompletionRosterMembersV1::Owned(members),
+        }
+    }
+
+    pub(crate) fn from_inline(
+        members: ArrayVec<
+            M1DeviceKvCompletionMemberV1,
+            { M1_MAX_ACTIVE_SEQUENCES as usize },
+        >,
+    ) -> Self {
+        Self {
+            members: M1DeviceKvCompletionRosterMembersV1::Inline(members),
+        }
     }
 
     /// Number of retained scheduler members.
     #[must_use]
     pub const fn member_count(&self) -> usize {
-        self.members.len()
+        match &self.members {
+            M1DeviceKvCompletionRosterMembersV1::Inline(members) => members.len(),
+            M1DeviceKvCompletionRosterMembersV1::Owned(members) => members.len(),
+        }
     }
 
     /// Borrows the exact retained order.
     pub fn members(&self) -> &[M1DeviceKvCompletionMemberV1] {
-        &self.members
+        match &self.members {
+            M1DeviceKvCompletionRosterMembersV1::Inline(members) => members,
+            M1DeviceKvCompletionRosterMembersV1::Owned(members) => members,
+        }
     }
 }
 

@@ -12,11 +12,15 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use arrayvec::ArrayVec;
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, PhysicalKvLifecycle, Qwen3ExecutionMode,
     Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, M1_KV_PAGE_TOKENS,
     M1_MAX_ACTIVE_SEQUENCES,
 };
+
+const M1_SERVING_INLINE_ROSTER_CAPACITY_V1: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
+type M1ServingInlineRosterV1 = ArrayVec<RequestId, M1_SERVING_INLINE_ROSTER_CAPACITY_V1>;
 
 use crate::{
     authenticated_queue_rollover::join_m1_authenticated_prefill_registry_intent_v1,
@@ -304,7 +308,7 @@ pub enum M1ServingCompletionDispositionV1 {
 #[derive(Debug, Eq, PartialEq)]
 pub struct M1ServingBatchPlanV1 {
     plan: M1ServingPlanV1,
-    requests: Box<[RequestId]>,
+    requests: M1ServingInlineRosterV1,
     epoch: CompletionEpoch,
     action: M1ServingQueueActionV1,
 }
@@ -434,6 +438,7 @@ impl M1ServingCompletedWindowMemberV1 {
 pub struct M1ServingNewWindowPublicationReservationV1 {
     prior: M1ServingPlanV1,
     predecessors: Vec<M1ServingEntryV1>,
+    requests: Box<[RequestId]>,
     publication: M1ServingPublicationReservationV1,
 }
 
@@ -578,14 +583,16 @@ impl M1ServingPublicationFailureV1 {
 #[derive(Debug, Eq, PartialEq)]
 struct M1ServingInFlightBatchV1 {
     plan: M1ServingPlanV1,
-    requests: Box<[RequestId]>,
+    requests: M1ServingInlineRosterV1,
     epoch: CompletionEpoch,
 }
 
 #[derive(Debug, Eq, PartialEq)]
 struct M1ServingReservedBatchV1 {
     id: u64,
-    batch: M1ServingBatchPlanV1,
+    plan: M1ServingPlanV1,
+    epoch: CompletionEpoch,
+    action: M1ServingQueueActionV1,
 }
 
 /// Fail-closed rejection while reconciling a real authenticated paired-prefill
@@ -1015,16 +1022,19 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             return Ok(None);
         };
         let limit = C.min(selected_plan.sequence_capacity());
-        let requests = self
+        let mut requests = M1ServingInlineRosterV1::new();
+        for entry in self
             .entries
             .iter()
             .filter(|entry| {
                 entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == selected_plan
             })
             .take(limit)
-            .map(|entry| entry.request)
-            .collect::<Vec<_>>()
-            .into_boxed_slice();
+        {
+            requests
+                .try_push(entry.request)
+                .map_err(|_| M1ServingRegistryErrorV1::CapacityExceedsM1)?;
+        }
         let next_epoch = self
             .submitted_epoch
             .checked_add(1)
@@ -1053,12 +1063,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
-        let Some(expected) = self.plan_next()? else {
-            return Err(M1ServingRegistryErrorV1::RequestNotReady);
-        };
-        if batch != expected {
-            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
-        }
+        self.validate_next_batch(&batch)?;
         let following_id = self
             .next_reservation_id
             .checked_add(1)
@@ -1066,7 +1071,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let id = self.next_reservation_id;
         self.reservation = Some(M1ServingReservedBatchV1 {
             id,
-            batch: batch.duplicate(),
+            plan: batch.plan,
+            epoch: batch.epoch,
+            action: batch.action,
         });
         self.next_reservation_id = following_id;
         Ok(M1ServingPublicationReservationV1 {
@@ -1197,11 +1204,12 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             phase: M1ServingRequestPhaseV1::Ready,
             last_quiescence: None,
         }));
-        let mut retained_requests = Vec::new();
-        if retained_requests.try_reserve_exact(requests.len()).is_err() {
-            return reject(M1ServingRegistryErrorV1::HostAllocation, requests);
+        let mut inline_requests = M1ServingInlineRosterV1::new();
+        for request in requests.iter().copied() {
+            if inline_requests.try_push(request).is_err() {
+                return reject(M1ServingRegistryErrorV1::NewWindowRosterExceedsPlan, requests);
+            }
         }
-        retained_requests.extend(requests.iter().copied());
 
         let id = self.next_reservation_id;
         let action = M1ServingQueueActionV1::QuiescentNewWindow { prior, next: plan };
@@ -1210,25 +1218,23 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             id,
             batch: M1ServingBatchPlanV1 {
                 plan,
-                requests,
+                requests: inline_requests,
                 epoch: CompletionEpoch::new(next_epoch),
                 action,
             },
         };
         self.reservation = Some(M1ServingReservedBatchV1 {
             id,
-            batch: M1ServingBatchPlanV1 {
-                plan,
-                requests: retained_requests.into_boxed_slice(),
-                epoch: CompletionEpoch::new(next_epoch),
-                action,
-            },
+            plan,
+            epoch: CompletionEpoch::new(next_epoch),
+            action,
         });
         self.next_reservation_id = following_id;
         let predecessors = core::mem::replace(&mut self.entries, next_entries);
         Ok(M1ServingNewWindowPublicationReservationV1 {
             prior,
             predecessors,
+            requests,
             publication,
         })
     }
@@ -1254,10 +1260,10 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let M1ServingNewWindowPublicationReservationV1 {
             prior: _,
             predecessors,
+            requests,
             publication,
         } = reservation;
         let plan = publication.plan();
-        let requests = publication.batch.requests;
         self.reservation = None;
         self.entries = predecessors;
         Ok(M1ServingRestoredNewWindowV1 { plan, requests })
@@ -1285,6 +1291,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let M1ServingNewWindowPublicationReservationV1 {
             prior: _,
             predecessors: _,
+            requests: _,
             publication,
         } = reservation;
         let batch = publication.batch;
@@ -1527,6 +1534,55 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }
     }
 
+    fn validate_ready_roster(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        let limit = C.min(batch.plan.sequence_capacity());
+        let mut expected_count = 0;
+        for entry in self
+            .entries
+            .iter()
+            .filter(|entry| {
+                entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == batch.plan
+            })
+            .take(limit)
+        {
+            if batch.requests.get(expected_count) != Some(&entry.request) {
+                return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+            }
+            expected_count += 1;
+        }
+        if expected_count == 0 {
+            return Err(M1ServingRegistryErrorV1::RequestNotReady);
+        }
+        if batch.requests.len() != expected_count {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+        }
+        Ok(())
+    }
+
+    fn validate_next_batch(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        let Some(selected_plan) = self.next_ready_plan() else {
+            return Err(M1ServingRegistryErrorV1::RequestNotReady);
+        };
+        let next_epoch = self
+            .submitted_epoch
+            .checked_add(1)
+            .ok_or(M1ServingRegistryErrorV1::CompletionEpochMismatch)?;
+        let action = classify_queue_action(self.bound_plan, selected_plan)?;
+        if batch.plan != selected_plan
+            || batch.epoch != CompletionEpoch::new(next_epoch)
+            || batch.action != action
+        {
+            return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+        }
+        self.validate_ready_roster(batch)
+    }
+
     fn validate_reservation(
         &self,
         reservation: &M1ServingPublicationReservationV1,
@@ -1540,22 +1596,17 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let Some(live) = self.reservation.as_ref() else {
             return Err(M1ServingRegistryErrorV1::PublicationReservationRequired);
         };
-        if live.id != reservation.id || live.batch != reservation.batch {
+        if live.id != reservation.id
+            || live.plan != reservation.batch.plan
+            || live.epoch != reservation.batch.epoch
+            || live.action != reservation.batch.action
+        {
             return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
         }
         if reservation.batch.epoch.value() != self.submitted_epoch.saturating_add(1) {
             return Err(M1ServingRegistryErrorV1::CompletionEpochMismatch);
         }
-        for (lane, request) in reservation.batch.requests.iter().copied().enumerate() {
-            let Some(entry) = self.entries.iter().find(|entry| entry.request == request) else {
-                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
-            };
-            if entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != reservation.batch.plan
-            {
-                return Err(M1ServingRegistryErrorV1::CompletionRosterMismatch { lane });
-            }
-        }
-        Ok(())
+        self.validate_ready_roster(&reservation.batch)
     }
 
     fn validate_new_window_reservation(
@@ -1573,6 +1624,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             || reservation.predecessors.is_empty()
             || reservation.predecessors.len() != self.entries.len()
             || self.entries.len() != reservation.publication.requests().len()
+            || reservation.requests.as_ref() != reservation.publication.requests()
             || self.entries.is_empty()
             || self.entries.len() > C
             || self.entries.len() > plan.sequence_capacity()

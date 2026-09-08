@@ -10,9 +10,10 @@
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
+use arrayvec::ArrayVec;
 use ferric_spec::{
     completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs,
+    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::{
@@ -1640,7 +1641,8 @@ struct M1PreparedCoordinatorRoundCoreV1<D> {
     diagnostic: D,
     controls: Vec<M1SpeculativeMemberControlV1>,
     preflighted: crate::M1SpeculativePreflightedRoundV1,
-    dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
+    dispositions:
+        ArrayVec<crate::M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
@@ -1709,29 +1711,21 @@ where
             },
         ));
     }
-    let mut dispositions = Vec::new();
-    if dispositions
-        .try_reserve_exact(preflighted.members().len())
-        .is_err()
-    {
-        engine.quarantine_m1_queue_rearm_failure();
-        return Err(Box::new(
-            M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
-                coordinator,
-                diagnostic,
-                controls,
-                preflighted,
-                lineage,
-            },
-        ));
+    let mut dispositions = ArrayVec::new();
+    for outcome in preflighted.members().iter().copied() {
+        if dispositions.try_push(outcome.physical_disposition()).is_err() {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    preflighted,
+                    lineage,
+                },
+            ));
+        }
     }
-    dispositions.extend(
-        preflighted
-            .members()
-            .iter()
-            .copied()
-            .map(crate::M1SpeculativeMemberRoundOutcomeV1::physical_disposition),
-    );
     Ok(M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -4680,14 +4674,12 @@ fn validate_prior_association(
     let checked = current.checked();
     let selection = coordinator.shape().selection();
     let active = coordinator.active_roster();
-    let released_active: Vec<RequestId> = current
-        .members()
-        .iter()
-        .filter_map(|member| match member {
-            M1ReleasedDeviceKvMemberV1::Active(cache) => Some(cache.projection().request),
-            M1ReleasedDeviceKvMemberV1::Terminal(_) => None,
-        })
-        .collect();
+    let mut released_active = crate::M1SpeculativeActiveRosterV1::new();
+    for member in current.members() {
+        if let M1ReleasedDeviceKvMemberV1::Active(cache) = member {
+            released_active.push(cache.projection().request);
+        }
+    }
     validate_prior_association_header(&M1AuthenticatedSpeculativeAssociationHeaderV1 {
         coordinator_identity: coordinator.identity(),
         prior_identity: prior.coordinator_identity(),
@@ -4896,7 +4888,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
 
     #[must_use]
     pub fn active_count(&self) -> usize {
-        self.coordinator.active_roster().len()
+        self.coordinator.active_count()
     }
 
     #[must_use]
@@ -4910,7 +4902,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         self.lineage.prior_windows.len()
     }
 
-    pub(crate) fn active_roster(&self) -> Vec<RequestId> {
+    pub(crate) fn active_roster(&self) -> crate::M1SpeculativeActiveRosterV1 {
         self.coordinator.active_roster()
     }
 

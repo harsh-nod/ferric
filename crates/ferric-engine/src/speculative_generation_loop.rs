@@ -13,6 +13,7 @@
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
+use arrayvec::ArrayVec;
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{
     Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, TokenId,
@@ -25,6 +26,11 @@ use crate::{
 };
 
 const M1_SPECULATIVE_STOP_TOKEN_CAPACITY_V1: usize = 2;
+const M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
+type M1SpeculativeInlineMembersV1<T> =
+    ArrayVec<T, M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1>;
+pub type M1SpeculativeActiveRosterV1 =
+    ArrayVec<RequestId, M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1>;
 static NEXT_M1_SPECULATIVE_COORDINATOR_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -371,7 +377,7 @@ pub struct M1SpeculativeRoundBindingV1 {
     shape: M1SpeculativePhysicalShapeV1,
     round: u64,
     epoch: CompletionEpoch,
-    members: Box<[M1SpeculativeRoundMemberInputV1]>,
+    members: M1SpeculativeInlineMembersV1<M1SpeculativeRoundMemberInputV1>,
 }
 
 impl M1SpeculativeRoundBindingV1 {
@@ -663,8 +669,8 @@ pub struct M1SpeculativeRoundOutcomeV1 {
     selection: Qwen3PlanSelection,
     completed_round: u64,
     completed_epoch: CompletionEpoch,
-    members: Box<[M1SpeculativeMemberRoundOutcomeV1]>,
-    next_active_roster: Box<[RequestId]>,
+    members: M1SpeculativeInlineMembersV1<M1SpeculativeMemberRoundOutcomeV1>,
+    next_active_roster: M1SpeculativeActiveRosterV1,
 }
 
 impl M1SpeculativeRoundOutcomeV1 {
@@ -713,9 +719,9 @@ struct M1SpeculativePreparedMemberUpdateV1 {
 #[derive(Debug)]
 pub struct M1SpeculativePreflightedRoundV1 {
     binding: M1SpeculativeRoundBindingV1,
-    updates: Box<[M1SpeculativePreparedMemberUpdateV1]>,
-    outcomes: Box<[M1SpeculativeMemberRoundOutcomeV1]>,
-    next_active_roster: Box<[RequestId]>,
+    updates: M1SpeculativeInlineMembersV1<M1SpeculativePreparedMemberUpdateV1>,
+    outcomes: M1SpeculativeInlineMembersV1<M1SpeculativeMemberRoundOutcomeV1>,
+    next_active_roster: M1SpeculativeActiveRosterV1,
 }
 
 impl M1SpeculativePreflightedRoundV1 {
@@ -1056,12 +1062,25 @@ impl M1SpeculativeGenerationLoopV1 {
 
     /// Current active roster in original scheduler order.
     #[must_use]
-    pub fn active_roster(&self) -> Vec<RequestId> {
+    pub fn active_roster(&self) -> M1SpeculativeActiveRosterV1 {
+        let mut roster = M1SpeculativeActiveRosterV1::new();
+        for member in self
+            .members
+            .iter()
+            .filter(|member| member.status == M1SpeculativeMemberStatusV1::Active)
+        {
+            roster.push(member.request);
+        }
+        roster
+    }
+
+    /// Number of active members without materializing a roster.
+    #[must_use]
+    pub fn active_count(&self) -> usize {
         self.members
             .iter()
             .filter(|member| member.status == M1SpeculativeMemberStatusV1::Active)
-            .map(|member| member.request)
-            .collect()
+            .count()
     }
 
     /// Binds the exact next physical round without mutating coordinator state.
@@ -1114,10 +1133,7 @@ impl M1SpeculativeGenerationLoopV1 {
                 actual: roster.len(),
             });
         }
-        let mut inputs = Vec::new();
-        inputs
-            .try_reserve_exact(active_count)
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut inputs = M1SpeculativeInlineMembersV1::new();
         for (lane, (member, actual)) in active.zip(roster.iter().copied()).enumerate() {
             if member.request != actual {
                 return Err(M1SpeculativeGenerationLoopErrorV1::RosterOrder {
@@ -1127,19 +1143,24 @@ impl M1SpeculativeGenerationLoopV1 {
                 });
             }
             validate_context(self.shape, lane, member)?;
-            inputs.push(M1SpeculativeRoundMemberInputV1 {
-                request: member.request,
-                round_anchor: member.next_anchor,
-                target_pre_committed: member.target_committed_tokens,
-                draft_pre_committed: member.draft_committed_tokens,
-            });
+            inputs
+                .try_push(M1SpeculativeRoundMemberInputV1 {
+                    request: member.request,
+                    round_anchor: member.next_anchor,
+                    target_pre_committed: member.target_committed_tokens,
+                    draft_pre_committed: member.draft_committed_tokens,
+                })
+                .map_err(|_| M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
+                    maximum: M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1,
+                    actual: active_count,
+                })?;
         }
         Ok(M1SpeculativeRoundBindingV1 {
             coordinator_identity: self.identity,
             shape: self.shape,
             round,
             epoch,
-            members: inputs.into_boxed_slice(),
+            members: inputs,
         })
     }
 
@@ -1158,10 +1179,7 @@ impl M1SpeculativeGenerationLoopV1 {
         checked: &M1CheckedCompletionOutputV1,
         controls: &[M1SpeculativeMemberControlV1],
     ) -> Result<M1SpeculativePreflightedRoundV1, M1SpeculativeGenerationLoopErrorV1> {
-        let mut observations = Vec::new();
-        observations
-            .try_reserve_exact(checked.records().len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut observations = M1SpeculativeInlineMembersV1::new();
         for (lane, checked_record) in checked.records().iter().enumerate() {
             let record = checked_record.record();
             let count = usize::from(record.emitted_token_count);
@@ -1174,11 +1192,16 @@ impl M1SpeculativeGenerationLoopV1 {
             )?;
             let emitted = M1SpeculativeTokenBlockV1::from_slice(tokens)
                 .map_err(|error| with_emitted_lane(error, lane))?;
-            observations.push(CheckedMemberObservationV1 {
-                request: record.request,
-                semantics: checked_record.semantics(),
-                emitted,
-            });
+            observations
+                .try_push(CheckedMemberObservationV1 {
+                    request: record.request,
+                    semantics: checked_record.semantics(),
+                    emitted,
+                })
+                .map_err(|_| M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
+                    maximum: M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1,
+                    actual: checked.records().len(),
+                })?;
         }
         self.preflight_observed_round(
             binding,
@@ -1298,10 +1321,7 @@ impl M1SpeculativeGenerationLoopV1 {
             });
         }
 
-        let mut prepared = Vec::new();
-        prepared
-            .try_reserve_exact(binding.members.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut prepared = M1SpeculativeInlineMembersV1::new();
         for lane in 0..binding.members.len() {
             let input = binding.members[lane];
             let observation = observations[lane];
@@ -1331,24 +1351,23 @@ impl M1SpeculativeGenerationLoopV1 {
                 });
             };
             let member = &self.members[member_index];
-            prepared.push(prepare_member(
-                self.shape,
-                lane,
-                member_index,
-                member,
-                &observation,
-                control.action,
-            )?);
+            prepared
+                .try_push(prepare_member(
+                    self.shape,
+                    lane,
+                    member_index,
+                    member,
+                    &observation,
+                    control.action,
+                )?)
+                .map_err(|_| M1SpeculativeGenerationLoopErrorV1::RosterCapacity {
+                    maximum: M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1,
+                    actual: binding.members.len(),
+                })?;
         }
 
-        let mut updates = Vec::new();
-        updates
-            .try_reserve_exact(prepared.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
-        let mut outcomes = Vec::new();
-        outcomes
-            .try_reserve_exact(prepared.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut updates = M1SpeculativeInlineMembersV1::new();
+        let mut outcomes = M1SpeculativeInlineMembersV1::new();
         for prepared_member in prepared {
             updates.push(M1SpeculativePreparedMemberUpdateV1 {
                 member_index: prepared_member.member_index,
@@ -1356,10 +1375,7 @@ impl M1SpeculativeGenerationLoopV1 {
             });
             outcomes.push(prepared_member.outcome);
         }
-        let mut next_active_roster = Vec::new();
-        next_active_roster
-            .try_reserve_exact(self.members.len())
-            .map_err(|_| M1SpeculativeGenerationLoopErrorV1::HostAllocation)?;
+        let mut next_active_roster = M1SpeculativeActiveRosterV1::new();
         for outcome in &outcomes {
             if outcome.status == M1SpeculativeMemberStatusV1::Active {
                 next_active_roster.push(outcome.request);
@@ -1367,9 +1383,9 @@ impl M1SpeculativeGenerationLoopV1 {
         }
         Ok(M1SpeculativePreflightedRoundV1 {
             binding,
-            updates: updates.into_boxed_slice(),
-            outcomes: outcomes.into_boxed_slice(),
-            next_active_roster: next_active_roster.into_boxed_slice(),
+            updates,
+            outcomes,
+            next_active_roster,
         })
     }
 }

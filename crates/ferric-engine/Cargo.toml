@@ -27,6 +27,7 @@ name = "ferric-m1-worker-v3-preflight"
 path = "src/bin/ferric-m1-worker-v3-preflight.rs"
 
 [dependencies]
+arrayvec.workspace = true
 fe2o3-amdhsa-loader.workspace = true
 fe2o3-amd-target.workspace = true
 fe2o3-aql.workspace = true
@@ -50,6 +51,7 @@ vstd.workspace = true
 [dev-dependencies]
 fe2o3-hsaco.workspace = true
 ferric-build = { path = "../ferric-build", features = ["test-fixtures"] }
+stats_alloc = "=0.1.10"
 
 [package.metadata.verus]
 verify = true

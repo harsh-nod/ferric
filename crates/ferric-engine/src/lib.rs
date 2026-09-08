@@ -779,7 +779,8 @@ pub use speculative_diagnostic_choices::{
     M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1, M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1,
 };
 pub use speculative_generation_loop::{
-    M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationLoopErrorV1,
+    M1SpeculativeActiveRosterV1, M1SpeculativeCancellationReasonV1,
+    M1SpeculativeGenerationLoopErrorV1,
     M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
     M1SpeculativeKvRoleSettlementV1, M1SpeculativeMemberControlActionV1,
     M1SpeculativeMemberControlV1, M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeMemberSeedV1,

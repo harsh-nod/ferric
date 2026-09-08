@@ -2734,6 +2734,78 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use stats_alloc::{Region, INSTRUMENTED_SYSTEM};
+    use std::alloc::System;
+
+    #[global_allocator]
+    static TEST_ALLOCATOR: &stats_alloc::StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
+    fn advance_registry_round(
+        registry: &mut M1ServingRegistryV1<1>,
+        disposition: M1ServingCompletionDispositionV1,
+    ) {
+        let batch = registry.plan_next().unwrap().unwrap();
+        let epoch = batch.epoch();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let registry_identity = reservation.registry_identity();
+        registry.record_publication(reservation).unwrap();
+        registry
+            .preflight_completion_exact_for(registry_identity, epoch, &[disposition])
+            .unwrap();
+        registry.apply_preflighted_completion(epoch, &[disposition]);
+    }
+
+    fn execute_production_planning_round(
+        registry: &mut M1ServingRegistryV1<1>,
+        coordinator: &mut M1SpeculativeGenerationLoopV1,
+        plan: M1ServingPlanV1,
+        token: TokenId,
+    ) {
+        let batch = registry.plan_next().unwrap().unwrap();
+        assert_eq!(batch.plan(), plan);
+        assert_eq!(batch.action(), M1ServingQueueActionV1::SameShapeRearm);
+        let epoch = batch.epoch();
+        let roster = coordinator.active_roster();
+        assert_eq!(coordinator.active_count(), 1);
+        assert_eq!(roster.as_slice(), batch.requests());
+        let binding = coordinator
+            .bind_round(coordinator.next_round(), epoch, &roster)
+            .unwrap();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let registry_identity = reservation.registry_identity();
+        registry.record_publication(reservation).unwrap();
+        let observations = [
+            crate::speculative_generation_loop::CheckedMemberObservationV1 {
+                request: roster[0],
+                semantics: crate::CheckedCompletionSemantics::Speculative {
+                    accepted_draft_tokens: 0,
+                    correction_or_bonus: token,
+                },
+                emitted: crate::M1SpeculativeTokenBlockV1::from_slice(&[token]).unwrap(),
+            },
+        ];
+        let controls = [M1SpeculativeMemberControlV1::continuing(roster[0])];
+        let preflighted = coordinator
+            .preflight_observed_round(
+                binding,
+                coordinator.shape().selection(),
+                epoch,
+                &observations,
+                &controls,
+            )
+            .unwrap();
+        coordinator
+            .preflight_prepared_round_commit(&preflighted)
+            .unwrap();
+        let disposition = M1ServingCompletionDispositionV1::Continue(plan);
+        registry
+            .preflight_completion_exact_for(registry_identity, epoch, &[disposition])
+            .unwrap();
+        let outcome = coordinator.commit_preflighted_round(preflighted).unwrap();
+        assert_eq!(outcome.next_active_roster(), roster.as_slice());
+        registry.apply_preflighted_completion(epoch, &[disposition]);
+        core::hint::black_box(outcome);
+    }
 
     #[test]
     fn resident_protocol_is_exactly_twenty_windows() {
@@ -2811,7 +2883,8 @@ mod tests {
     }
 
     #[test]
-    fn warmed_resident_hot_loop_allocation_counter_stays_zero() {
+    #[ignore = "must run alone because the allocator counter is process-global"]
+    fn warmed_resident_production_planning_round_allocates_zero_times() {
         let plan = M1ServingPlanV1::new(
             Qwen3PlanSelection {
                 role: Qwen3ModelRole::Target8B,
@@ -2825,82 +2898,108 @@ mod tests {
             },
         )
         .unwrap();
-        let mut storage = preallocate_resident_round_inputs(32, plan).unwrap();
-        let mut tokens = Vec::new();
-        tokens.try_reserve_exact(128).unwrap();
-        let mut evidence = Vec::new();
-        evidence.try_reserve_exact(32).unwrap();
-        let token_capacity = tokens.capacity();
-        let evidence_capacity = evidence.capacity();
-        let mut allocation_count = 0;
+        let prefill = M1ServingPlanV1::new(TARGET_PREFILL, DRAFT_PREFILL).unwrap();
+        let request = RequestId::new(0, 1);
+        let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(request, prefill).unwrap();
+        advance_registry_round(
+            &mut registry,
+            M1ServingCompletionDispositionV1::Continue(plan),
+        );
+        advance_registry_round(
+            &mut registry,
+            M1ServingCompletionDispositionV1::Continue(plan),
+        );
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(128, &[999]).unwrap();
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(
+            plan.target(),
+            &[M1SpeculativeMemberSeedV1::new(request, 70, 10, 10, policy)],
+        )
+        .unwrap();
 
-        while let Some(mut round) = storage.pop_front() {
-            let capacities = [
-                round.draft.lanes.capacity(),
-                round.draft.tokens.capacity(),
-                round.draft.positions.capacity(),
-                round.draft.active_lengths.capacity(),
-                round.draft.context_lengths.capacity(),
-                round.target.lanes.capacity(),
-                round.target.tokens.capacity(),
-                round.target.positions.capacity(),
-                round.target.active_lengths.capacity(),
-                round.target.context_lengths.capacity(),
-                round.controls.capacity(),
-            ];
-            round.draft.lanes.clear();
-            round.draft.positions.clear();
-            round.draft.active_lengths.clear();
-            round.draft.context_lengths.clear();
-            round.target.lanes.clear();
-            round.target.positions.clear();
-            round.target.active_lengths.clear();
-            round.target.context_lengths.clear();
-            round.controls.clear();
-            round.draft.tokens.fill(0);
-            round.target.tokens.fill(0);
-            push_preallocated(&mut round.draft.lanes, None).unwrap();
-            push_preallocated(&mut round.target.lanes, None).unwrap();
-            for position in 0..4 {
-                push_preallocated(&mut round.target.positions, position).unwrap();
-            }
-            push_preallocated(&mut round.draft.positions, 0).unwrap();
-            push_preallocated(&mut round.draft.active_lengths, 1).unwrap();
-            push_preallocated(&mut round.draft.context_lengths, 128).unwrap();
-            push_preallocated(&mut round.target.active_lengths, 4).unwrap();
-            push_preallocated(&mut round.target.context_lengths, 128).unwrap();
-            push_preallocated(
-                &mut round.controls,
-                M1SpeculativeMemberControlV1::continuing(RequestId::new(0, 1)),
-            )
-            .unwrap();
-            assert!(extend_preallocated_copy(&mut tokens, &[1, 2, 3, 4]));
-            push_preallocated(&mut evidence, ()).unwrap();
-            let warmed_capacities = [
-                round.draft.lanes.capacity(),
-                round.draft.tokens.capacity(),
-                round.draft.positions.capacity(),
-                round.draft.active_lengths.capacity(),
-                round.draft.context_lengths.capacity(),
-                round.target.lanes.capacity(),
-                round.target.tokens.capacity(),
-                round.target.positions.capacity(),
-                round.target.active_lengths.capacity(),
-                round.target.context_lengths.capacity(),
-                round.controls.capacity(),
-            ];
-            allocation_count += capacities
-                .into_iter()
-                .zip(warmed_capacities)
-                .filter(|(before, after)| before != after)
-                .count();
+        execute_production_planning_round(&mut registry, &mut coordinator, plan, 700);
+
+        let one = Region::new(&INSTRUMENTED_SYSTEM);
+        execute_production_planning_round(&mut registry, &mut coordinator, plan, 701);
+        let one = one.change();
+        assert_eq!(one.allocations, 0, "one steady-state round allocated");
+        assert_eq!(one.reallocations, 0, "one steady-state round reallocated");
+
+        let repeated = Region::new(&INSTRUMENTED_SYSTEM);
+        for token in 702..718 {
+            execute_production_planning_round(&mut registry, &mut coordinator, plan, token);
         }
+        let repeated = repeated.change();
+        assert_eq!(repeated.allocations, 0, "repeated steady-state rounds allocated");
+        assert_eq!(
+            repeated.reallocations, 0,
+            "repeated steady-state rounds reallocated"
+        );
+    }
 
-        allocation_count += usize::from(tokens.capacity() != token_capacity);
-        allocation_count += usize::from(evidence.capacity() != evidence_capacity);
-        assert_eq!(allocation_count, 0);
-        assert_eq!(tokens.len(), 128);
-        assert_eq!(evidence.len(), 32);
+    fn allocation_source_gate_accepts(registry: &str, coordinator: &str) -> bool {
+        let plan_next = registry
+            .split("pub fn plan_next")
+            .nth(1)
+            .and_then(|tail| tail.split("pub fn reserve_publication").next())
+            .unwrap_or_default();
+        let reserve = registry
+            .split("pub fn reserve_publication")
+            .nth(1)
+            .and_then(|tail| tail.split("pub fn reserve_completed_window_replacement").next())
+            .unwrap_or_default();
+        let active = coordinator
+            .split("pub fn active_roster")
+            .nth(1)
+            .and_then(|tail| tail.split("pub fn active_count").next())
+            .unwrap_or_default();
+        !plan_next.contains("collect::<Vec")
+            && !reserve.contains("self.plan_next()")
+            && !reserve.contains("batch.duplicate()")
+            && !active.contains(".collect()")
+            && plan_next.contains("M1ServingInlineRosterV1::new()")
+            && active.contains("M1SpeculativeActiveRosterV1::new()")
+    }
+
+    #[test]
+    fn hostile_heap_roster_restorations_fail_allocation_source_gate() {
+        let registry = include_str!("m1_serving_registry.rs");
+        let coordinator = include_str!("speculative_generation_loop.rs");
+        assert!(allocation_source_gate_accepts(registry, coordinator));
+
+        let collected_plan = registry.replacen(
+            "let mut requests = M1ServingInlineRosterV1::new();",
+            "let requests = self.entries.iter().collect::<Vec<_>>();",
+            1,
+        );
+        assert!(!allocation_source_gate_accepts(&collected_plan, coordinator));
+
+        let replanned_reservation = registry.replacen(
+            "self.validate_next_batch(&batch)?;",
+            "let _expected = self.plan_next()?;",
+            1,
+        );
+        assert!(!allocation_source_gate_accepts(
+            &replanned_reservation,
+            coordinator
+        ));
+
+        let cloned_reservation = registry.replacen(
+            "plan: batch.plan,",
+            "batch: batch.duplicate(),",
+            1,
+        );
+        assert!(!allocation_source_gate_accepts(
+            &cloned_reservation,
+            coordinator
+        ));
+
+        let collected_active = coordinator.replacen(
+            "let mut roster = M1SpeculativeActiveRosterV1::new();",
+            "return self.members.iter().map(|member| member.request).collect();",
+            1,
+        );
+        assert!(!allocation_source_gate_accepts(registry, &collected_active));
     }
 
     #[test]
