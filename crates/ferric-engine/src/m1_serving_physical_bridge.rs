@@ -232,7 +232,7 @@ pub type M1ServingPhysicalNewWindowPublishResultV1<Q, P, T, E> = Result<
 >;
 
 type M1ServingPhysicalRouteResultV1<Q, P, T, E> =
-    Result<M1ServingPhysicalRawPublishedV1<P>, M1ServingPhysicalRouteFailureV1<Q, T, E>>;
+    Result<M1ServingPhysicalRawPublishedV1<P>, Box<M1ServingPhysicalRouteFailureV1<Q, T, E>>>;
 
 /// Physical queue state at a registry planning boundary.
 #[must_use = "physical queue and model/KV custody must remain retained"]
@@ -285,7 +285,7 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
         let raw = match self.route_batch(batch, registry_identity, operations) {
             Ok(raw) => raw,
             Err(failure) => {
-                let (error, custody, batch) = failure.into_parts();
+                let (error, custody, batch) = (*failure).into_parts();
                 let custody = match custody {
                     M1ServingPhysicalRouteFailureCustodyV1::Retryable(custody) => {
                         M1ServingPhysicalFailureCustodyV1::Retryable(
@@ -373,7 +373,7 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
         let raw = match self.route_batch(batch, registry_identity, operations) {
             Ok(raw) => raw,
             Err(failure) => {
-                let (error, custody, batch) = failure.into_parts();
+                let (error, custody, batch) = (*failure).into_parts();
                 let custody = match custody {
                     M1ServingPhysicalRouteFailureCustodyV1::Retryable(custody) => {
                         M1ServingPhysicalNewWindowFailureCustodyV1::Retryable(
@@ -478,11 +478,11 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
                     map_operation_failure(failure, |custody| Self::Quiescent { plan, custody })
                 }),
             (custody, _) => {
-                return Err(M1ServingPhysicalRouteFailureV1 {
+                return Err(Box::new(M1ServingPhysicalRouteFailureV1 {
                     error: M1ServingPhysicalBridgeErrorV1::ActionCustodyDrift,
                     custody: M1ServingPhysicalRouteFailureCustodyV1::Retryable(custody),
                     batch,
-                });
+                }));
             }
         };
         match result {
@@ -494,18 +494,18 @@ impl<Q> M1ServingPhysicalQueueCustodyV1<Q> {
                 batch,
             }),
             Err(M1ServingPhysicalOperationFailureV1::Retryable { source, custody }) => {
-                Err(M1ServingPhysicalRouteFailureV1 {
+                Err(Box::new(M1ServingPhysicalRouteFailureV1 {
                     error: M1ServingPhysicalBridgeErrorV1::Operation(source),
                     custody: M1ServingPhysicalRouteFailureCustodyV1::Retryable(custody),
                     batch,
-                })
+                }))
             }
             Err(M1ServingPhysicalOperationFailureV1::Terminal { source, custody }) => {
-                Err(M1ServingPhysicalRouteFailureV1 {
+                Err(Box::new(M1ServingPhysicalRouteFailureV1 {
                     error: M1ServingPhysicalBridgeErrorV1::Operation(source),
                     custody: M1ServingPhysicalRouteFailureCustodyV1::Terminal(custody),
                     batch,
-                })
+                }))
             }
         }
     }
