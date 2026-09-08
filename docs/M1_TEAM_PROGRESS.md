@@ -5,9 +5,9 @@ receipt. The 33 M1 roadmap gates remain open.
 
 | Team | Implemented And Checked | Current Work |
 | --- | --- | --- |
-| Integration and runtime | Active fe2o3 dependencies pinned to public main `42882993b3f84d60f38e398d2018cc9302e8fe19`; resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests integrated. Reference model-loading dependencies are pinned and checked; all 23 reference unit tests pass. | Integrate the reviewed compiler fix and rerun Qwen against the independent reference. |
-| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV write changes from a full physical-page scan to copying active rows. The integrated K3 series passes independent review, d9f structural compiler checks, and cross-page multi-sequence indexing tests. | Hardware artifact emission exposed missing dynamic GridExclusive projection and singleton-invocation race analysis in fe2o3. The compiler team is implementing and testing those generic capabilities. |
-| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Engine library: 636 passed, 9 ignored. Engine doctests: 171 passed. Source-gate unit tests: 36 passed. All ten positive proof packages passed at the cb9b5ca checkpoint. | Complete component quality gates, then rerun the full qualifier with an explicit longer timeout on the updated compiler pin. No complete receipt has been produced. |
+| Integration and runtime | Active fe2o3 dependencies pinned to public main `42882993b3f84d60f38e398d2018cc9302e8fe19`; all 15 lockfiles and regenerated dependency records pass independent review without registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. | Latest-pin release host and kernel artifact are ready. Run the 32-token Qwen comparison when a shared GPU is available. |
+| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The all-latest aggregate now emits successfully and passes independent review. | Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No K3 speedup has been measured. |
+| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Earlier engine library: 636 passed, 9 ignored; doctests: 171 passed. Source-gate unit tests: 36 passed. All ten positive proof packages passed at cb9b5ca. The frozen latest-pin 9dcbd6e checkpoint has passed formatting, strict Clippy, ordinary debug and adapter suites, and worker behavior tests. | Finish all-feature/component tests, then run the full qualifier on the same frozen checkpoint with an explicit 1,800-second proof timeout. No complete receipt has been produced. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
 
 ## Qwen Observations
@@ -30,6 +30,27 @@ reference also repeated identically and preserves that eight-token prefix.
 It will support a Ferric comparison across logical KV positions 16 and 32;
 the 32-token Ferric comparison has not yet run. These short reference checks
 do not establish full-model numerical qualification.
+
+The latest compiler/runtime pin and K3 artifact are ready for that comparison.
+All eight GPUs on the shared MI300X host became occupied by another user's
+training job before launch, so the run is waiting for a GPU window. No other
+user's process was stopped or modified.
+
+The final engineering artifact has content ID
+`528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a`
+and HSACO SHA-256
+`cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804`.
+Its 12-kernel roster and compiler replay pass, with authority explicitly
+`none`. The latest release host admitted this artifact in a pre-model-loading
+check; that check intentionally stopped at a missing model snapshot and did
+not execute GPU work.
+
+An earlier K3 attempt exceeded a 240-second whole-process limit without a
+result. Historical successful release builds needed approximately 24-27
+minutes for the full process, including two independent scalar-SHA model
+admissions before opening KFD. That startup cost is excluded from the
+controller timing above. A future run needs a longer process limit; the
+timeout is not a TTFT measurement or a demonstrated kernel failure.
 
 The reference package now pins Accelerate 1.14.0 and psutil 7.2.2, the actual
 dependencies needed by the pinned Transformers loading path. Its exact-version
