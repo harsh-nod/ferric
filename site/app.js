@@ -22,7 +22,7 @@
       "Integration surface",
       "Scoped source or hardware evidence exists",
     ],
-    ["roadmap", "Still blocked", "Required before end-to-end Qwen and M1"],
+    ["roadmap", "Still blocked", "Required before authenticated R33 serving and M1"],
   ];
 
   function element(tag, className, text) {
@@ -203,7 +203,7 @@
   const observationHeader = element("div", "observation-heading");
   const observationTitle = element("div", "");
   observationTitle.append(
-    element("div", "observation-label", "Latest exact-compile attempt"),
+    element("div", "observation-label", "Latest Qwen hardware observation"),
     element("h3", "", project.latestObservation.title),
   );
   observationHeader.append(observationTitle, stateTag(project.latestObservation.state));

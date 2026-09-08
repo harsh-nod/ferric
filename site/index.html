@@ -45,7 +45,7 @@
             <p class="lede">
               A Rust inference engine building an authority-bound path from authenticated model
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Historical
-              authority-free GPU observations exist, but the current compiler-pinned artifact,
+              and current authority-free GPU observations exist, but the authenticated artifact,
               serving, performance comparison, and qualification remain open.
             </p>
             <div class="milestone-line">
@@ -229,30 +229,36 @@
             Production daemon deployment, full-envelope lookup, protected signing, a live ledger,
             external rollback, durable replay, checker service, and Verus refinement remain open.
 
-            R33 review candidate 2ba02a8 passes its exact MI300X matrix: 724 engine targets,
-            171 engine doctests, 104 adapter targets, and 33 source-gate tests. Four narrow warmed
-            component tests report zero allocations and reallocations. Independent review placed
-            the candidate on HOLD because those tests do not exercise the public next-window path,
-            which still allocates in-window. The allocation-free claim is unaccepted and repair is
-            required. The authenticated 20-window run was not attempted because the required
-            artifacts and non-test production owner are absent.
+            R33 review candidate 2ba02a8 passes its exact MI300X source matrix, but independent
+            review found that its narrow allocation tests bypass the public warmed next-window
+            path, which still allocates. Resident allocation repair remains active. Production-owner
+            source candidate c0b6c36 plus d9f repin 9cb4230 is complete and focused-gate green but
+            unintegrated. No accepted authenticated 20-window run exists.
 
-            R29 has generated and validated all 20 inputs across seven numerical buckets under plan
-            SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c.
-            Ferric review candidate d7d2 passes 75 shared tests with 2 hardware tests ignored,
-            17 source-policy tests, one native transcript test, producer policy, and the exact vendor
-            overlay. Aggregate compilation is on HOLD because the exact pinned-nightly offline
-            build-std vendor closure lacks rustc-literal-escaper. No current aggregate HSACO, target
-            smoke, S1/T128 capture, TTFT, or TPOT exists.
+            The exact canonical Qwen3-8B target, Qwen3-0.6B draft, tokenizer, weights, and numerical
+            input bundle is prepared. Private review candidate a3c941cc5853c8d9d49aaa80456df82ab0672ef4,
+            tree 3fe917fb4c6601453c74a97deaad529bc83d92ae, corrects dense GEMM weights to native
+            row-major [N,K] and remains unintegrated. Against public fe2o3 d9f6bbcd, model bundle
+            6dfba0ac and HSACO 068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3
+            generated 8/8 coherent tokens as " Paris. The capital of Italy is Rome" with hardware
+            completion. Diagnostic timing was 13.649661699s TTFT, 2.7656050044 seconds per
+            post-first token, and 34.094s total controller duration. Authority is none and
+            benchmark_comparable=false. The prior 14.36s TTFT and approximately 3.05s TPOT
+            observation used the wrong GEMM layout and produced nonsense output; it is invalid and
+            noncomparable, not a Ferric performance result. Authenticated R33 remains blocked on the
+            external supervisor/current-record/verifier/model/artifact authority bundle.
 
-            Signed fe2o3 main d211c9a0f0c4eebe98172cb30d09c6947f62e233, tree
-            7f59964f3a66959e3518b898224b47330a949d58, reduces arbitrary-model KFD
-            initialization on MI300X from 76.512s to 6.150s for 1 GiB (12.44x) and from 1206.846s
-            to 93.074s for 16.384 GB (12.97x), saving 18m33.8s. Formatting, check, strict Clippy,
-            and tests pass. Ferric repin and artifact requalification remain open. Authority is none,
-            protected infrastructure is absent, and all 33 M1 exit gates remain open. There is no
-            current Qwen accuracy result, serving endpoint, authenticated A/B, production TTFT/TPOT,
-            vLLM/SGLang comparison, benchmark, qualification receipt, or production authority.
+            Ferric owns its model-specific kernels and inference semantics, and writes those kernels
+            through fe2o3's Rust-to-KIR-to-LLVM compiler path. Signed fe2o3 public main
+            d9f6bbcd089fb4bf7980f807e6550b13daed9178, tree
+            b5fa3750bff9df5c70e02e5acca3ec5471191762, is the current compiler and KFD baseline;
+            it includes the complete pinned-nightly offline build-std vendor contract, caller-buffer
+            completed readback, and bounded Worker diagnostics. Ferric repin and artifact
+            requalification remain open. Authority is none, protected infrastructure is absent, and
+            all 33 M1 exit gates remain open. The coherent target-only observation is not an
+            authenticated Qwen accuracy evaluation. There is no serving endpoint, authenticated
+            A/B, production TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification receipt, or
+            production authority.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

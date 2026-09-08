@@ -208,7 +208,7 @@ const expectedCurrent = {
   r33CurrentPublicWarmedPathAllocationFree: false,
   r33CurrentRepairRequired: true,
   r33CurrentTwentyWindowAttempted: false,
-  r33CurrentTwentyWindowBlocker: "absent-authenticated-artifacts-and-non-test-production-owner",
+  r33CurrentTwentyWindowBlocker: "resident-allocation-repair-unintegrated-owner-and-absent-authenticated-authority-bundle",
   r33CurrentHardwareQualified: false,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
@@ -267,20 +267,48 @@ const expectedCurrent = {
   r29FormalQualificationBlocked: true,
   r29ColdStartupHbmCostObserved: true,
   r29ColdHbmTargetInitApproxMinutes: 24,
-  r29CurrentCandidateAbbrev: "d7d2",
-  r29CurrentSharedTestsPassed: 75,
-  r29CurrentHardwareTestsIgnored: 2,
-  r29CurrentSourcePolicyTestsPassed: 17,
-  r29CurrentNativeTranscriptTestsPassed: 1,
-  r29CurrentProducerPolicyGreen: true,
-  r29CurrentVendorOverlayGreen: true,
-  r29CurrentAggregateBuildState: "hold-offline-build-std-vendor-closure",
-  r29CurrentAggregateMissingPackage: "rustc-literal-escaper",
-  r29CurrentAggregateHsaco: false,
-  r29CurrentTargetSmokeCompleted: false,
+  r29PriorCandidateAbbrev: "d7d2",
+  r29PriorSharedTestsPassed: 75,
+  r29PriorHardwareTestsIgnored: 2,
+  r29PriorSourcePolicyTestsPassed: 17,
+  r29PriorNativeTranscriptTestsPassed: 1,
+  r29PriorProducerPolicyGreen: true,
+  r29PriorVendorOverlayGreen: true,
+  r29CurrentAggregateBuildState: "corrected-target-only-observed",
+  r29CurrentAggregateMissingPackage: null,
+  r29CurrentAggregateHsaco: true,
+  r29CurrentTargetSmokeCompleted: true,
   r29CurrentS1T128Captured: false,
-  r29CurrentTtftMeasured: false,
-  r29CurrentTpotMeasured: false,
+  r29CurrentTtftMeasured: true,
+  r29CurrentTpotMeasured: true,
+  qwenInputBundlePrepared: true,
+  freshQwenRerunActive: false,
+  freshQwenRerunResultAvailable: true,
+  gemmLayoutFixCommit: "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
+  gemmLayoutFixTree: "3fe917fb4c6601453c74a97deaad529bc83d92ae",
+  gemmLayoutFixIntegrated: false,
+  invalidLayoutRunTtftSeconds: 14.36,
+  invalidLayoutRunTpotSecondsApprox: 3.05,
+  invalidLayoutRunComparable: false,
+  invalidLayoutRunOutputValid: false,
+  correctedTargetOnlyObservation: true,
+  correctedOutputText: " Paris. The capital of Italy is Rome",
+  correctedOutputTokenCount: 8,
+  correctedHardwareCompletion: true,
+  correctedHsacoSha256: "068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3",
+  correctedModelBundleId: "6dfba0ac",
+  correctedTtftSeconds: 13.649661699,
+  correctedPostFirstSecondsPerToken: 2.7656050044,
+  correctedControllerDurationSeconds: 34.094,
+  correctedBenchmarkComparable: false,
+  correctedAuthority: "none",
+  residentAllocationRepairActive: true,
+  productionOwnerRepairActive: false,
+  productionOwnerCandidateComplete: true,
+  productionOwnerCandidateIntegrated: false,
+  productionOwnerSourceCommit: "c0b6c3676fbabce896a55874ef53864cb0898cfb",
+  productionOwnerRepinCommit: "9cb42304bb4b647206d0d0e0e5d8a038aa2514f8",
+  productionOwnerFocusedGatesGreen: true,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -319,8 +347,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "d211c9a0f0c4eebe98172cb30d09c6947f62e233",
-  fe2o3LatestTree: "7f59964f3a66959e3518b898224b47330a949d58",
+  fe2o3LatestMain: "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
+  fe2o3LatestTree: "b5fa3750bff9df5c70e02e5acca3ec5471191762",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: true,
@@ -465,7 +493,7 @@ const expectedCurrent = {
   engineeringSmokeBinaryStaged: false,
   canonicalQwenSnapshotVerified: true,
   radixPrefixIntegrated: true,
-  currentAggregateHsaco: false,
+  currentAggregateHsaco: true,
   qwenTokenObserved: true,
   servingEndpointAvailable: false,
   baselineRunsAvailable: false,
@@ -554,6 +582,10 @@ for (const key of [
   "fe2o3FerricPinTree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
+  "gemmLayoutFixCommit",
+  "gemmLayoutFixTree",
+  "productionOwnerSourceCommit",
+  "productionOwnerRepinCommit",
   "fe2o3PriorE535MigrationCommit",
   "fe2o3PriorE535MigrationTree",
   "fe2o3UnsignedUpstreamCommit1",
@@ -564,6 +596,7 @@ for (const key of [
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
+assertSha256(project.current.correctedHsacoSha256, "current.correctedHsacoSha256");
 assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
 assert(project.current.admissionBodiesTotal === 7922, "admission body total drifted");
 assert(project.current.admissionModules === 170, "admission module count drifted");
@@ -581,7 +614,7 @@ assert(project.current.openM1Gates === 33, "all 33 M1 exit gates remain open");
 assert(project.current.engineeringSmokeBinaryStaged === false, "current engineering smoke must remain absent");
 assert(project.current.canonicalQwenSnapshotVerified === true, "canonical Qwen snapshot status drifted");
 assert(project.current.radixPrefixIntegrated === true, "integrated radix status drifted");
-assert(project.current.currentAggregateHsaco === false, "current d211 aggregate HSACO must remain absent");
+assert(project.current.currentAggregateHsaco === true, "current authority-free aggregate HSACO observation must remain explicit");
 assert(project.current.qwenTokenObserved === true, "site must retain the diagnostic Qwen token observation");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
 assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
@@ -759,7 +792,7 @@ assert(project.current.r33CurrentPublicNextWindowAllocationTested === false, "R3
 assert(project.current.r33CurrentPublicWarmedPathAllocationFree === false, "R33 public warmed path must not claim allocation freedom");
 assert(project.current.r33CurrentRepairRequired === true, "R33 allocation repair must remain required");
 assert(project.current.r33CurrentTwentyWindowAttempted === false, "R33 20-window hardware run must remain unattempted");
-assert(project.current.r33CurrentTwentyWindowBlocker === "absent-authenticated-artifacts-and-non-test-production-owner", "R33 20-window blocker drifted");
+assert(project.current.r33CurrentTwentyWindowBlocker === "resident-allocation-repair-unintegrated-owner-and-absent-authenticated-authority-bundle", "R33 20-window blocker drifted");
 assert(project.current.r33CurrentHardwareQualified === false, "current R33 candidate must remain hardware-unqualified");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
@@ -810,24 +843,51 @@ assert(project.current.r29TechnicalPrequalificationOnly === true, "R29 must rema
 assert(project.current.r29FormalQualificationBlocked === true, "R29 formal qualification blocker must remain explicit");
 assert(project.current.r29ColdStartupHbmCostObserved === true, "R29 cold HBM cost observation must remain explicit");
 assert(project.current.r29ColdHbmTargetInitApproxMinutes === 24, "R29 cold HBM target initialization estimate drifted");
-assert(project.current.r29CurrentCandidateAbbrev === "d7d2", "current R29 candidate abbreviation drifted");
-assert(project.current.r29CurrentSharedTestsPassed === 75, "current R29 shared-test count drifted");
-assert(project.current.r29CurrentHardwareTestsIgnored === 2, "current R29 ignored hardware-test count drifted");
-assert(project.current.r29CurrentSourcePolicyTestsPassed === 17, "current R29 source-policy count drifted");
-assert(project.current.r29CurrentNativeTranscriptTestsPassed === 1, "current R29 transcript-test count drifted");
-assert(project.current.r29CurrentProducerPolicyGreen === true, "current R29 producer policy must remain green");
-assert(project.current.r29CurrentVendorOverlayGreen === true, "current R29 vendor overlay must remain green");
-assert(project.current.r29CurrentAggregateBuildState === "hold-offline-build-std-vendor-closure", "current R29 aggregate build HOLD drifted");
-assert(project.current.r29CurrentAggregateMissingPackage === "rustc-literal-escaper", "current R29 missing vendor package drifted");
+assert(project.current.r29PriorCandidateAbbrev === "d7d2", "prior R29 candidate abbreviation drifted");
+assert(project.current.r29PriorSharedTestsPassed === 75, "prior R29 shared-test count drifted");
+assert(project.current.r29PriorHardwareTestsIgnored === 2, "prior R29 ignored hardware-test count drifted");
+assert(project.current.r29PriorSourcePolicyTestsPassed === 17, "prior R29 source-policy count drifted");
+assert(project.current.r29PriorNativeTranscriptTestsPassed === 1, "prior R29 transcript-test count drifted");
+assert(project.current.r29PriorProducerPolicyGreen === true, "prior R29 producer policy must remain green");
+assert(project.current.r29PriorVendorOverlayGreen === true, "prior R29 vendor overlay must remain green");
+assert(project.current.r29CurrentAggregateBuildState === "corrected-target-only-observed", "current R29 observation state drifted");
+assert(project.current.r29CurrentAggregateMissingPackage === null, "cleared R29 vendor blocker must remain cleared");
 for (const key of [
-  "r29CurrentAggregateHsaco",
-  "r29CurrentTargetSmokeCompleted",
   "r29CurrentS1T128Captured",
-  "r29CurrentTtftMeasured",
-  "r29CurrentTpotMeasured",
 ]) {
   assert(project.current[key] === false, `${key} must remain false`);
 }
+for (const key of [
+  "r29CurrentAggregateHsaco",
+  "r29CurrentTargetSmokeCompleted",
+  "r29CurrentTtftMeasured",
+  "r29CurrentTpotMeasured",
+  "qwenInputBundlePrepared",
+  "freshQwenRerunResultAvailable",
+  "correctedTargetOnlyObservation",
+  "correctedHardwareCompletion",
+]) {
+  assert(project.current[key] === true, `${key} must remain true`);
+}
+assert(project.current.freshQwenRerunActive === false, "completed corrected-layout rerun must not remain active");
+assert(project.current.gemmLayoutFixIntegrated === false, "private GEMM layout repair must remain unintegrated");
+assert(project.current.invalidLayoutRunTtftSeconds === 14.36, "invalid-layout TTFT observation drifted");
+assert(project.current.invalidLayoutRunTpotSecondsApprox === 3.05, "invalid-layout TPOT observation drifted");
+assert(project.current.invalidLayoutRunComparable === false, "invalid-layout timing must remain noncomparable");
+assert(project.current.invalidLayoutRunOutputValid === false, "invalid-layout output must remain invalid");
+assert(project.current.correctedOutputText === " Paris. The capital of Italy is Rome", "corrected Qwen output drifted");
+assert(project.current.correctedOutputTokenCount === 8, "corrected Qwen token count drifted");
+assert(project.current.correctedModelBundleId === "6dfba0ac", "corrected model bundle identity drifted");
+assert(project.current.correctedTtftSeconds === 13.649661699, "corrected diagnostic TTFT drifted");
+assert(project.current.correctedPostFirstSecondsPerToken === 2.7656050044, "corrected diagnostic post-first-token timing drifted");
+assert(project.current.correctedControllerDurationSeconds === 34.094, "corrected controller duration drifted");
+assert(project.current.correctedBenchmarkComparable === false, "corrected observation must remain nonbenchmark");
+assert(project.current.correctedAuthority === "none", "corrected observation authority must remain none");
+assert(project.current.residentAllocationRepairActive === true, "resident allocation repair must remain active");
+assert(project.current.productionOwnerRepairActive === false, "completed production-owner repair must not remain active");
+assert(project.current.productionOwnerCandidateComplete === true, "production-owner source candidate must remain complete");
+assert(project.current.productionOwnerCandidateIntegrated === false, "production-owner source candidate must remain unintegrated");
+assert(project.current.productionOwnerFocusedGatesGreen === true, "production-owner focused gates must remain green");
 assert(project.current.fe2o3CurrentRepinActive === true, "current fe2o3 repin must remain active");
 assert(project.current.fe2o3CurrentRepinIntegrated === false, "current fe2o3 repin must remain unintegrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
@@ -978,11 +1038,11 @@ assertExactKeys(
   "latestObservation",
 );
 assertState(project.latestObservation.state, "latestObservation.state");
-assert(project.latestObservation.state === "open", "current R29 aggregate checkpoint must remain open");
-assert(!("commit" in project.latestObservation), "unpublished R29 candidate must use source status rather than a public commit link");
+assert(project.latestObservation.state === "observed", "corrected-layout Qwen checkpoint must remain observed");
+assert(!("commit" in project.latestObservation), "unpublished Qwen candidate must use source status rather than a public commit link");
 assert(
   JSON.stringify(project.latestObservation.generatedTokenIds) === "[]",
-  "current R29 checkpoint must not claim generated tokens",
+  "current corrected-layout checkpoint must not invent token IDs",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -1086,6 +1146,12 @@ const missingSnapshotClaims = [
   "6d115af5cd5285b84b7629834393d6eee6a37045",
   "d211c9a0f0c4eebe98172cb30d09c6947f62e233",
   "7f59964f3a66959e3518b898224b47330a949d58",
+  "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
+  "b5fa3750bff9df5c70e02e5acca3ec5471191762",
+  "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
+  "3fe917fb4c6601453c74a97deaad529bc83d92ae",
+  "c0b6c3676fbabce896a55874ef53864cb0898cfb",
+  "9cb42304bb4b647206d0d0e0e5d8a038aa2514f8",
   "e5351640e3df3868205bc68eac8d5ff5556352ea",
   "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -1300,6 +1366,30 @@ const missingSnapshotClaims = [
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
+  "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
+  "b5fa3750bff9df5c70e02e5acca3ec5471191762",
+  "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
+  "3fe917fb4c6601453c74a97deaad529bc83d92ae",
+  "exact Qwen input bundle",
+  "14.36s TTFT",
+  "3.05s TPOT",
+  "invalid and noncomparable",
+  "wrong GEMM layout",
+  "nonsense output",
+  "068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3",
+  "6dfba0ac",
+  " Paris. The capital of Italy is Rome",
+  "8/8",
+  "13.649661699s TTFT",
+  "2.7656050044 seconds per post-first token",
+  "34.094s",
+  "hardware completion",
+  "benchmark_comparable=false",
+  "Resident allocation repair",
+  "Production-owner source candidate",
+  "complete and focused-gate green but unintegrated",
+  "caller-buffer completed readback",
+  "bounded Worker diagnostic",
   "d7d2",
   "2ba02a8",
   "rustc-literal-escaper",
@@ -1309,7 +1399,7 @@ const missingSnapshotClaims = [
   "allocation-free claim is unaccepted",
   "public next-window path",
   "non-test production owner",
-  "No current aggregate HSACO",
+  "current authority-free HSACO",
   "20-window run was not attempted",
   "TTFT",
   "TPOT",
