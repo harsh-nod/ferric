@@ -3,6 +3,7 @@
 //! Authority-none R29 technical capture over one aggregate engineering observation.
 
 #[allow(dead_code)] // The shared source also contains protected R30/R32 commands unreachable here.
+#[rustfmt::skip] // Skip cross-edition traversal only; the root workspace formats this shared module.
 #[path = "../../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs"]
 mod qualification_capture;
 

@@ -38,6 +38,8 @@ const FE2O3_REVISION: &str = "d9f6bbcd089fb4bf7980f807e6550b13daed9178";
 #[test]
 fn adapter_is_an_exact_standalone_workspace() {
     assert_eq!(MANIFEST.matches("[workspace]").count(), 1);
+    assert!(MANIFEST.contains("edition = \"2024\""));
+    assert!(ROOT_MANIFEST.contains("edition = \"2021\""));
     let root = toml::from_str::<toml::Value>(ROOT_MANIFEST).unwrap();
     let workspace = root
         .get("workspace")
@@ -182,7 +184,12 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
 #[test]
 fn engineering_r29_capture_is_aggregate_only_and_explicitly_non_authoritative() {
     assert!(MANIFEST.contains("name = \"ferric-m1-engineering-r29-capture\""));
+    assert_eq!(
+        R29_TECHNICAL_CLI_SOURCE.matches("#[rustfmt::skip]").count(),
+        1
+    );
     for required in [
+        "#[rustfmt::skip] // Skip cross-edition traversal only; the root workspace formats this shared module.",
         "reopen_m1_engineering_aggregate_artifact_v1",
         "bind_engineering_structural_m1_physical_runner_v1",
         "run_technical_r29_capture",
