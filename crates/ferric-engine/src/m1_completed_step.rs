@@ -103,6 +103,48 @@ enum M1DeviceKvCompletionRosterMembersV1 {
     Owned(Vec<M1DeviceKvCompletionMemberV1>),
 }
 
+enum M1DeviceKvCompletionRosterIntoIterV1 {
+    Inline(
+        arrayvec::IntoIter<
+            M1DeviceKvCompletionMemberV1,
+            { M1_MAX_ACTIVE_SEQUENCES as usize },
+        >,
+    ),
+    Owned(std::vec::IntoIter<M1DeviceKvCompletionMemberV1>),
+}
+
+impl Iterator for M1DeviceKvCompletionRosterIntoIterV1 {
+    type Item = M1DeviceKvCompletionMemberV1;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Inline(iter) => iter.next(),
+            Self::Owned(iter) => iter.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Inline(iter) => iter.size_hint(),
+            Self::Owned(iter) => iter.size_hint(),
+        }
+    }
+}
+
+impl ExactSizeIterator for M1DeviceKvCompletionRosterIntoIterV1 {}
+
+impl IntoIterator for M1DeviceKvCompletionRosterMembersV1 {
+    type Item = M1DeviceKvCompletionMemberV1;
+    type IntoIter = M1DeviceKvCompletionRosterIntoIterV1;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            Self::Inline(members) => M1DeviceKvCompletionRosterIntoIterV1::Inline(members.into_iter()),
+            Self::Owned(members) => M1DeviceKvCompletionRosterIntoIterV1::Owned(members.into_iter()),
+        }
+    }
+}
+
 impl M1DeviceKvCompletionRosterV1 {
     /// Retains callers' exact scheduler order for transactional validation.
     pub fn new(members: Vec<M1DeviceKvCompletionMemberV1>) -> Self {

@@ -1282,7 +1282,10 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
         } else {
             M1DeviceKvCompletionDispositionV1::Continue
         };
-        let completion = match readback.complete(&mut engine, vec![physical_disposition]) {
+        let completion = match readback.complete(
+            &mut engine,
+            [physical_disposition].into_iter().collect(),
+        ) {
             Ok(completion) => completion,
             Err(error) => {
                 return Err(fail(

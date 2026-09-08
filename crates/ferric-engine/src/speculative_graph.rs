@@ -2116,7 +2116,7 @@ mod bounded_graph_tests {
         );
         assert!(failure.custody().is_settled_committed_prefix());
         assert_eq!(coordinator.next_round(), 1);
-        assert_eq!(coordinator.active_roster(), vec![request(0)]);
+        assert_eq!(coordinator.active_roster().as_slice(), [request(0)]);
         assert!(executor
             .events
             .iter()
@@ -2174,6 +2174,6 @@ mod bounded_graph_tests {
         assert_eq!(run.stop(), M1SpeculativeGraphStopV1::RoundBoundReached);
         assert_eq!(run.rounds().len(), 1);
         assert_eq!(coordinator.next_round(), 1);
-        assert_eq!(coordinator.active_roster(), vec![request(0)]);
+        assert_eq!(coordinator.active_roster().as_slice(), [request(0)]);
     }
 }

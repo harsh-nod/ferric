@@ -777,7 +777,7 @@ fn next_round_inputs(
     mut storage: M1AuthenticatedResidentRoundInputStorageV1,
 ) -> Option<M1AuthenticatedSpeculativePhysicalRoundInputsV1> {
     if plan.target().bucket != Qwen3PlanBucket::SpeculativeS1K4C8192
-        || executor.active_roster() != [request]
+        || executor.active_roster().as_slice() != [request]
     {
         return None;
     }

@@ -6180,31 +6180,17 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
             dispositions,
         ));
     }
-    let mut physical_dispositions = Vec::new();
-    if physical_dispositions
-        .try_reserve_exact(member_count)
-        .is_err()
-    {
-        return Err(new_window_settlement_failure(
-            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::HostAllocation,
-            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
-                observed,
-            )),
-            members,
-            member_count,
-            selection,
-            epoch,
-            dispositions,
-        ));
-    }
-    physical_dispositions.extend(dispositions.iter().map(|disposition| match disposition {
-        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue => {
-            crate::M1DeviceKvCompletionDispositionV1::Continue
-        }
-        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire => {
-            crate::M1DeviceKvCompletionDispositionV1::Retire
-        }
-    }));
+    let physical_dispositions = dispositions
+        .iter()
+        .map(|disposition| match disposition {
+            M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue => {
+                crate::M1DeviceKvCompletionDispositionV1::Continue
+            }
+            M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire => {
+                crate::M1DeviceKvCompletionDispositionV1::Retire
+            }
+        })
+        .collect();
     let expectations = authenticated_new_window_expectations(&members, member_count);
     if deadline_expired(Boundary::BeforeReadback) {
         return Err(new_window_settlement_failure(

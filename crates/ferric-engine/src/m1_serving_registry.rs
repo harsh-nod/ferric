@@ -2890,7 +2890,7 @@ mod tests {
             id,
             batch: M1ServingBatchPlanV1 {
                 plan: reservation.plan(),
-                requests: reservation.requests().into(),
+                requests: reservation.requests().iter().copied().collect(),
                 epoch: CompletionEpoch::new(reservation.epoch().value() + 1),
                 action: reservation.action(),
             },
@@ -2907,7 +2907,7 @@ mod tests {
             id,
             batch: M1ServingBatchPlanV1 {
                 plan: prefill_s1(),
-                requests: reservation.requests().into(),
+                requests: reservation.requests().iter().copied().collect(),
                 epoch: reservation.epoch(),
                 action: reservation.action(),
             },
@@ -2922,7 +2922,7 @@ mod tests {
             id,
             batch: M1ServingBatchPlanV1 {
                 plan: reservation.plan(),
-                requests: vec![second, first].into_boxed_slice(),
+                requests: [second, first].into_iter().collect(),
                 epoch: reservation.epoch(),
                 action: reservation.action(),
             },
