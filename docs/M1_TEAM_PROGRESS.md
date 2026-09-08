@@ -6,8 +6,8 @@ receipt. The 33 M1 roadmap gates remain open.
 | Team | Implemented And Checked | Current Work |
 | --- | --- | --- |
 | Integration and runtime | Active fe2o3 dependencies pinned to public main `d9f6bbcd089fb4bf7980f807e6550b13daed9178`; resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests integrated. | Refresh source/dependency records and rerun Qwen using the integrated kernel artifact. |
-| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV write changes from a full physical-page scan to copying active rows. The K3 candidate passes the d9f compiler check and focused host/device tests. | Resolve the independent review's global workgroup guard finding, validate cross-page multi-sequence indexing, and emit a fresh gfx942 artifact. |
-| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Engine library: 636 passed, 9 ignored. Engine doctests: 171 passed. | Source-gate integration checks, independent K3 review, and final combined-tree qualification. |
+| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV write changes from a full physical-page scan to copying active rows. The integrated K3 series passes independent review, d9f compiler checks, and cross-page multi-sequence indexing tests. | Emit a fresh gfx942 artifact and measure the single-grid-leader implementation on hardware. |
+| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Engine library: 636 passed, 9 ignored. Engine doctests: 171 passed. Source-gate unit tests: 36 passed. | Regenerate the combined kernel/source records and run final combined-tree qualification. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
 
 ## Qwen Observations
