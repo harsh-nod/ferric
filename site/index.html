@@ -231,31 +231,31 @@
 
             Independent review placed R33 candidate
             1e44a64b673f8ede149686979ef759757e71369b, tree
-            d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, on HOLD despite a narrow test
-            reporting 0 allocations and 0 reallocations. The real resident
-            prepare_coordinator_round_core still allocates a Vec and the test bypasses it; faulted
-            Active+Resident custody may skip explicit close; output budgets above 128 are admitted
-            before the fixed 128-token buffer fails; and textual hostile mutations are not meaningful.
-            Repair is active. The candidate is unintegrated and hardware-unqualified.
+            d9e9a381e2a23a3e948943a93abe281f7fd5a0c7, on HOLD. Broader repair now
+            measures allocations over the actual full warmed route through coordinator preparation,
+            settlement, and release; adds explicit faulted Active+Resident close; and covers 128-token
+            acceptance plus 129-token rejection. Repair remains active, unintegrated, unreviewed as a
+            finished candidate, and hardware-unqualified.
 
             R29 has generated and validated all 20 inputs across seven numerical buckets under plan
             SHA 61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c.
-            The first real prefill S1/T128 KFD/GPU technical capture completed after 26m41s and
-            failed closed at the semantic join after physical completion and readback, status 134.
-            Typed custody was retained and VRAM released. The capture omitted the typed error, so the
-            exact failing branch is unknown; an observability fix and same-case rerun are underway.
-            Approximately 24 minutes of target initialization is a cold-start defect in fe2o3's
-            CPU-mapped HBM copy/readback path, not request latency, TTFT, or TPOT. This remains
-            technical prequalification only.
+            The diagnostic rerun exposed the exact typed failure after 26m48s:
+            QualificationFinalLogits(NonFinite { lane: 0, token: 0 }). It failed closed with status
+            134 after physical completion/readback, retained typed custody, and released VRAM. The
+            stale 2026-08-26 HSACOs cannot represent current aggregate kernels. An engineering aggregate
+            artifact exists and target smoke can bind it, but seven-case capture accepts only obsolete
+            seven-object artifacts and has no honest identity conversion. Aggregate technical-capture
+            wiring is in progress while protected paths stay fail-closed.
 
-            The latest-fe2 migration aba3f86ef14136fa73a385834d4f33f7c9416a32 is technically
-            green against public fe2o3 e5351640e3df3868205bc68eac8d5ff5556352ea, tree
-            84015c274c74a4378002360cb54a4010e374e7e8, but remains on DCO HOLD because
-            upstream commits f405dfc and e535164 lack signoffs. Ferric 2958b69 therefore retains
-            approved pin cf6faec0ee3c026d3a1fc5090ab606a3b425225c. Authority is none,
+            Signed fe2o3 main d211c9a0f0c4eebe98172cb30d09c6947f62e233, tree
+            7f59964f3a66959e3518b898224b47330a949d58, reduces arbitrary-model KFD
+            initialization on MI300X from 76.512s to 6.150s for 1 GiB (12.44x) and from 1206.846s
+            to 93.074s for 16.384 GB (12.97x), saving 18m33.8s. Formatting, check, strict Clippy,
+            and tests pass. Ferric repin and artifact requalification are active; no formal acceptance
+            is claimed, and the pre-existing e535/f405 DCO ancestry concern remains. Authority is none,
             protected infrastructure is absent, and all 33 M1 exit gates remain open. There is no
-            serving endpoint, authenticated A/B, production TTFT/TPOT, vLLM/SGLang comparison,
-            benchmark, qualification receipt, or production authority.
+            current Qwen accuracy result, serving endpoint, authenticated A/B, production TTFT/TPOT,
+            vLLM/SGLang comparison, benchmark, qualification receipt, or production authority.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>

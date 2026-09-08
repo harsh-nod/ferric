@@ -78,7 +78,7 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "edfb0af0e303ef75b9eb1ff5d785665966527c3c",
+  siteRefreshBase: "fa24d00f37eb04c5aaabe164c7c946fbd9284472",
   integrationCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
   integrationTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
@@ -187,6 +187,10 @@ const expectedCurrent = {
   r33FaultedResidentExplicitCloseProved: false,
   r33OutputBudgetBoundedToFixedBuffer: false,
   r33HostileMutationsMeaningful: false,
+  r33BroaderRepairMeasuresFullWarmedRoute: true,
+  r33BroaderRepairCoversSettlementAndRelease: true,
+  r33BroaderRepairAddsExplicitFaultedClose: true,
+  r33BroaderRepairTestsOutputBudgets: [128, 129],
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -223,15 +227,23 @@ const expectedCurrent = {
   r29Buckets: 7,
   r29InputsValidated: true,
   r29FirstCaptureState: "completed-failed-closed-at-semantic-join",
-  r29FirstCaptureElapsedSeconds: 1601,
+  r29FirstCaptureElapsedSeconds: 1608,
   r29FirstCaptureStatus: 134,
   r29FirstCapturePhysicalCompletionObserved: true,
   r29FirstCaptureReadbackObserved: true,
   r29FirstCaptureTypedCustodyRetained: true,
   r29FirstCaptureVramReleased: true,
-  r29FirstCaptureErrorBranchKnown: false,
-  r29ObservabilityFixActive: true,
-  r29SameCaseRerunActive: true,
+  r29FirstCaptureErrorBranchKnown: true,
+  r29FirstCaptureTypedError: "QualificationFinalLogits(NonFinite { lane: 0, token: 0 })",
+  r29ObservabilityFixActive: false,
+  r29SameCaseRerunActive: false,
+  r29StaleHsacoDate: "2026-08-26",
+  r29StaleHsacoRepresentsCurrentAggregate: false,
+  r29EngineeringAggregateArtifactExists: true,
+  r29TargetSmokeCanBindAggregate: true,
+  r29SevenCaseCaptureAcceptsAggregate: false,
+  r29HonestAggregateIdentityConversionExists: false,
+  r29AggregateTechnicalCaptureWiringActive: true,
   r29TechnicalPrequalificationOnly: true,
   r29FormalQualificationBlocked: true,
   r29ColdStartupHbmCostObserved: true,
@@ -274,18 +286,26 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "e5351640e3df3868205bc68eac8d5ff5556352ea",
-  fe2o3LatestTree: "84015c274c74a4378002360cb54a4010e374e7e8",
-  fe2o3LatestMigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
-  fe2o3LatestMigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
-  fe2o3LatestMigrationTechnicallyAccepted: true,
-  fe2o3LatestMigrationFullMi300xSuiteGreen: true,
-  fe2o3LatestMigrationIntegrated: false,
-  fe2o3LatestMigrationActive: false,
-  fe2o3LatestMigrationHold: "upstream-dco",
+  fe2o3LatestMain: "d211c9a0f0c4eebe98172cb30d09c6947f62e233",
+  fe2o3LatestTree: "7f59964f3a66959e3518b898224b47330a949d58",
+  fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
+  fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
+  fe2o3CurrentRepinActive: true,
+  fe2o3CurrentRepinIntegrated: false,
+  fe2o3CurrentRepinFormalAcceptance: false,
+  fe2o3PreexistingDcoAncestryConcern: true,
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
   fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
   fe2o3LatestQualificationClaimed: false,
+  fe2o3KfdInitializationGatesGreen: true,
+  fe2o3KfdOneGibBeforeSeconds: 76.512,
+  fe2o3KfdOneGibAfterSeconds: 6.15,
+  fe2o3KfdOneGibSpeedup: 12.44,
+  fe2o3KfdLargeBytes: 16384000000,
+  fe2o3KfdLargeBeforeSeconds: 1206.846,
+  fe2o3KfdLargeAfterSeconds: 93.074,
+  fe2o3KfdLargeSpeedup: 12.97,
+  fe2o3KfdLargeSecondsSaved: 1113.772,
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -501,8 +521,8 @@ for (const key of [
   "fe2o3FerricPinTree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
-  "fe2o3LatestMigrationCommit",
-  "fe2o3LatestMigrationTree",
+  "fe2o3PriorE535MigrationCommit",
+  "fe2o3PriorE535MigrationTree",
   "fe2o3UnsignedUpstreamCommit1",
   "fe2o3UnsignedUpstreamCommit2",
   "speculativeAttempt2BaseCommit",
@@ -685,6 +705,10 @@ assert(project.current.r33ResidentPrepareCoreStillAllocatesVec === true, "real r
 assert(project.current.r33FaultedResidentExplicitCloseProved === false, "faulted resident close must remain unproved");
 assert(project.current.r33OutputBudgetBoundedToFixedBuffer === false, "R33 output-budget bound must remain open");
 assert(project.current.r33HostileMutationsMeaningful === false, "textual hostile mutations must not claim semantic coverage");
+assert(project.current.r33BroaderRepairMeasuresFullWarmedRoute === true, "R33 repair must measure the full warmed route");
+assert(project.current.r33BroaderRepairCoversSettlementAndRelease === true, "R33 repair must include settlement and release");
+assert(project.current.r33BroaderRepairAddsExplicitFaultedClose === true, "R33 repair must include explicit faulted close");
+assert(JSON.stringify(project.current.r33BroaderRepairTestsOutputBudgets) === "[128,129]", "R33 repair budget tests drifted");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
 assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
@@ -713,25 +737,41 @@ assert(project.current.r29InputFilesGenerated === 20, "R29 input count drifted")
 assert(project.current.r29Buckets === 7, "R29 bucket count drifted");
 assert(project.current.r29InputsValidated === true, "R29 inputs must remain validated");
 assert(project.current.r29FirstCaptureState === "completed-failed-closed-at-semantic-join", "R29 first capture state drifted");
-assert(project.current.r29FirstCaptureElapsedSeconds === 1601, "R29 first capture elapsed time drifted");
+assert(project.current.r29FirstCaptureElapsedSeconds === 1608, "R29 diagnostic rerun elapsed time drifted");
 assert(project.current.r29FirstCaptureStatus === 134, "R29 first capture status drifted");
 assert(project.current.r29FirstCapturePhysicalCompletionObserved === true, "R29 physical completion must remain explicit");
 assert(project.current.r29FirstCaptureReadbackObserved === true, "R29 readback must remain explicit");
 assert(project.current.r29FirstCaptureTypedCustodyRetained === true, "R29 typed custody must remain retained");
 assert(project.current.r29FirstCaptureVramReleased === true, "R29 VRAM release must remain explicit");
-assert(project.current.r29FirstCaptureErrorBranchKnown === false, "R29 error branch must remain unknown");
-assert(project.current.r29ObservabilityFixActive === true, "R29 observability fix must remain active");
-assert(project.current.r29SameCaseRerunActive === true, "R29 same-case rerun must remain active");
+assert(project.current.r29FirstCaptureErrorBranchKnown === true, "R29 typed error branch must remain known");
+assert(project.current.r29FirstCaptureTypedError === "QualificationFinalLogits(NonFinite { lane: 0, token: 0 })", "R29 typed error drifted");
+assert(project.current.r29ObservabilityFixActive === false, "R29 observability fix must not remain active after the typed rerun");
+assert(project.current.r29SameCaseRerunActive === false, "R29 stale-artifact rerun must not remain active");
+assert(project.current.r29StaleHsacoDate === "2026-08-26", "R29 stale HSACO date drifted");
+assert(project.current.r29StaleHsacoRepresentsCurrentAggregate === false, "stale HSACO must not represent current aggregate kernels");
+assert(project.current.r29EngineeringAggregateArtifactExists === true, "engineering aggregate artifact must remain explicit");
+assert(project.current.r29TargetSmokeCanBindAggregate === true, "target smoke aggregate binding must remain explicit");
+assert(project.current.r29SevenCaseCaptureAcceptsAggregate === false, "seven-case capture must not claim aggregate acceptance");
+assert(project.current.r29HonestAggregateIdentityConversionExists === false, "aggregate identity conversion must remain absent");
+assert(project.current.r29AggregateTechnicalCaptureWiringActive === true, "aggregate technical capture wiring must remain active");
 assert(project.current.r29TechnicalPrequalificationOnly === true, "R29 must remain technical prequalification");
 assert(project.current.r29FormalQualificationBlocked === true, "R29 formal qualification blocker must remain explicit");
 assert(project.current.r29ColdStartupHbmCostObserved === true, "R29 cold HBM cost observation must remain explicit");
 assert(project.current.r29ColdHbmTargetInitApproxMinutes === 24, "R29 cold HBM target initialization estimate drifted");
-assert(project.current.fe2o3LatestMigrationTechnicallyAccepted === true, "latest-fe2 migration technical acceptance must remain explicit");
-assert(project.current.fe2o3LatestMigrationFullMi300xSuiteGreen === true, "latest-fe2 migration MI300X suite must remain green");
-assert(project.current.fe2o3LatestMigrationIntegrated === false, "latest-fe2 migration must remain unintegrated while held");
-assert(project.current.fe2o3LatestMigrationActive === false, "latest-fe2 migration author work must not remain active");
-assert(project.current.fe2o3LatestMigrationHold === "upstream-dco", "latest-fe2 migration hold reason drifted");
+assert(project.current.fe2o3CurrentRepinActive === true, "current fe2o3 repin must remain active");
+assert(project.current.fe2o3CurrentRepinIntegrated === false, "current fe2o3 repin must remain unintegrated");
+assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
+assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
+assert(project.current.fe2o3KfdInitializationGatesGreen === true, "KFD initialization gates must remain green");
+assert(project.current.fe2o3KfdOneGibBeforeSeconds === 76.512, "1 GiB prior timing drifted");
+assert(project.current.fe2o3KfdOneGibAfterSeconds === 6.15, "1 GiB current timing drifted");
+assert(project.current.fe2o3KfdOneGibSpeedup === 12.44, "1 GiB speedup drifted");
+assert(project.current.fe2o3KfdLargeBytes === 16384000000, "large KFD initialization byte count drifted");
+assert(project.current.fe2o3KfdLargeBeforeSeconds === 1206.846, "large prior timing drifted");
+assert(project.current.fe2o3KfdLargeAfterSeconds === 93.074, "large current timing drifted");
+assert(project.current.fe2o3KfdLargeSpeedup === 12.97, "large speedup drifted");
+assert(project.current.fe2o3KfdLargeSecondsSaved === 1113.772, "large saved-time total drifted");
 assert(project.current.signerIpcIntegrated === true, "accepted signer IPC slice must remain integrated");
 assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
 assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
@@ -847,7 +887,7 @@ project.teams.forEach((team, index) => {
   if (team.name === "Integration") {
     assert(team.status === "Authority paths under review", "Integration must expose the active authority work");
     assert(
-      team.blockedBy.startsWith("Latest-fe2 integration is on HOLD pending legitimate DCO remediation"),
+      team.blockedBy.startsWith("Current Ferric repin is active"),
       "Integration blocker must remain exact",
     );
   } else {
@@ -910,7 +950,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "edfb0af0e303ef75b9eb1ff5d785665966527c3c",
+  "fa24d00f37eb04c5aaabe164c7c946fbd9284472",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
@@ -976,8 +1016,9 @@ const missingSnapshotClaims = [
   "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
   "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   "6d115af5cd5285b84b7629834393d6eee6a37045",
+  "d211c9a0f0c4eebe98172cb30d09c6947f62e233",
+  "7f59964f3a66959e3518b898224b47330a949d58",
   "e5351640e3df3868205bc68eac8d5ff5556352ea",
-  "84015c274c74a4378002360cb54a4010e374e7e8",
   "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   "f405dfccb5b7021c417df37c0a692aead02fd071",
