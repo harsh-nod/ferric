@@ -1,5 +1,5 @@
 [workspace]
-members = ["fe2o3-device-0.1.0"]
+members = ["fe2o3-device"]
 resolver = "3"
 
 [workspace.package]
@@ -9,6 +9,6 @@ repository = "https://github.com/harsh-nod/fe2o3"
 rust-version = "1.94"
 
 [workspace.dependencies]
-fe2o3-amd-target = { path = "fe2o3-amd-target-0.1.0" }
-fe2o3-macros = { path = "fe2o3-macros-0.1.0" }
+fe2o3-amd-target = { path = "fe2o3-amd-target" }
+fe2o3-macros = { path = "fe2o3-macros" }
 sha2 = { version = "0.11.0", default-features = false }

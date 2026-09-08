@@ -163,6 +163,10 @@ def main() -> None:
         / "proofs/m1-qualification/produce-protected-worker-v3-all-kernels-release.py"
     )
     source = producer.read_text(encoding="ascii")
+    workspace_template = (
+        repository
+        / "proofs/m1-qualification/ENGINEERING_VENDOR_WORKSPACE_V1.toml"
+    ).read_text(encoding="ascii")
     for required in [
         'FE2O3_REVISION = "d211c9a0f0c4eebe98172cb30d09c6947f62e233"',
         '"FE2O3_PRODUCTION_BUILD_CONFIG_V2": str(arguments.config)',
@@ -178,12 +182,27 @@ def main() -> None:
         '"--cargo-git-source"',
         'f"https://github.com/harsh-nod/fe2o3.git@{FE2O3_REVISION}"',
         'f"https://github.com/harsh-nod/pliron.git@{PLIRON_REVISION}"',
+        'package = vendor / "fe2o3-device"',
         "MAX_TOOL_BYTES = 1024 * 1024 * 1024",
     ]:
         if required not in source:
             fail(f"aggregate release producer lost required policy: {required}")
     if source.count("held_regular(path, description, MAX_TOOL_BYTES)") != 2:
         fail("aggregate release producer does not apply the exact tool-size bound")
+    for required in [
+        'members = ["fe2o3-device"]',
+        'fe2o3-amd-target = { path = "fe2o3-amd-target" }',
+        'fe2o3-macros = { path = "fe2o3-macros" }',
+    ]:
+        if workspace_template.count(required) != 1:
+            fail(f"engineering vendor workspace lost pinned Cargo path: {required}")
+    if "-0.1.0" in workspace_template:
+        fail("engineering vendor workspace drifted from the pinned Cargo layout")
+    if (
+        'set(checksum) != {"$comment", "files", "package"}' not in source
+        or "CARGO_VENDOR_CHECKSUM_COMMENT" not in source
+    ):
+        fail("engineering vendor checksum policy drifted from pinned Cargo")
 
     module = load(producer)
     if (

@@ -32,6 +32,10 @@ WORKER_BUILD_ID = re.compile(r"fe2o3-worker-v1-sha256-[0-9a-f]{64}\Z")
 MAX_WORKER_BYTES = 512 * 1024 * 1024
 MAX_TOOL_BYTES = 1024 * 1024 * 1024
 MAX_CONFIG_BYTES = 1024 * 1024
+CARGO_VENDOR_CHECKSUM_COMMENT = (
+    "This file only protects against accidental modifications. It is not a security "
+    "mechanism and does not protect against malicious changes."
+)
 KERNELS = (
     "ferric_qwen3_lowest_id_argmax_bf16_v1",
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
@@ -608,7 +612,10 @@ def prepare_engineering_vendor(arguments: argparse.Namespace) -> None:
     require_ferric_device(arguments.ferric)
     require_fe2o3_repository(arguments.fe2o3)
     vendor = canonical_absolute(arguments.cargo_vendor, "Cargo vendor directory")
-    package = vendor / "fe2o3-device-0.1.0"
+    # Cargo 1.97.1 uses the unsuffixed package name when the vendor set has a
+    # single fe2o3-device version. Keep this in lockstep with the workspace
+    # template consumed by the engineering compiler.
+    package = vendor / "fe2o3-device"
     canonical_absolute(package, "vendored fe2o3-device package")
     source = arguments.fe2o3 / "crates/fe2o3-device"
     source_files = {
@@ -639,7 +646,8 @@ def prepare_engineering_vendor(arguments: argparse.Namespace) -> None:
         fail(f"vendored fe2o3-device checksum is invalid: {error}")
     if (
         not isinstance(checksum, dict)
-        or set(checksum) != {"files", "package"}
+        or set(checksum) != {"$comment", "files", "package"}
+        or checksum["$comment"] != CARGO_VENDOR_CHECKSUM_COMMENT
         or checksum["package"] is not None
         or not isinstance(checksum["files"], dict)
         or "Cargo.toml" not in checksum["files"]
