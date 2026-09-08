@@ -83,10 +83,14 @@ accepted descriptor. After successful endpoint admission, failures provide
 exactly the existing fe2o3/Ferric terminal custody and do not claim general
 post-Begin descriptor recovery.
 
-The protected head-store client uses fixed 396-byte request and 328-byte
+The protected head-store client uses fixed 428-byte request and 360-byte
 response packets and one supervisor-bounded absolute timeout per operation.
-Every exchange binds a nonzero per-client request sequence, the protocol and
-provider identities, and the exact `(namespace, policy, ledger kind)` context.
+Every exchange binds a fresh nonzero supervisor-provisioned admission-session
+identity, a nonzero per-client request sequence, the protocol and provider
+identities, and the exact `(namespace, policy, ledger kind)` context. The
+admission identity must never be reused for that provider and namespace,
+including across verifier and provider restarts, so a sequence-one response
+from an earlier admission cannot correlate to a new client.
 Initialization admits only an empty head. Compare-and-advance admits only the
 same policy/header and an exact one-record successor with a nonzero record
 identity. A protected peer may return `Advanced` only after that successor is
@@ -99,7 +103,13 @@ every other ambiguous post-send outcome permanently poison and close the
 endpoint. The head-store wire protocol and descriptor checks do not prove
 external durability. Constructing the trait implementation is therefore an
 unsafe supervisor boundary requiring a separately measured protected provider,
-exclusive durable serialization, and permanent namespace retention.
+exclusive durable serialization, and permanent namespace retention. Admission
+also requires exclusive custody of a fresh connection with no prequeued packets
+and no descriptor duplicate retained by the supervisor or an earlier client.
+The typed bounded methods preserve whether the client retains the endpoint.
+The legacy trait boxes that typed failure; dropping a boxed `Retained` failure
+does not close the endpoint because custody remains in the client, while callers
+that need to branch on custody must downcast it or call the typed methods.
 
 These clients do not implement or provision the external signer or protected
 head-store processes, store a private key, authenticate a compiler current

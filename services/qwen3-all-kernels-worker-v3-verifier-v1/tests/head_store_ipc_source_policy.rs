@@ -41,6 +41,7 @@ fn head_store_ipc_policy(head_store: &str, durable: &str, library: &str, readme:
         "&provider_identity",
         "&namespace_identity",
         "&policy_identity",
+        "&admission_session_identity",
         "&kind.tag().to_le_bytes()",
         "&request_sequence.to_le_bytes()",
         "if !response.matches_request(request)",
@@ -53,6 +54,7 @@ fn head_store_ipc_policy(head_store: &str, durable: &str, library: &str, readme:
         "self.peer = None",
         "ProtectedHeadStoreClientCustodyV1::Poisoned",
         "operation_timeout < Duration::from_millis(1)",
+        "operation_timeout > MAX_OPERATION_TIMEOUT",
     ] {
         if !production.contains(required) {
             return false;
@@ -84,12 +86,15 @@ fn head_store_ipc_policy(head_store: &str, durable: &str, library: &str, readme:
         && production.matches("&provider_identity").count() == 4
         && production.matches("&namespace_identity").count() == 4
         && production.matches("&policy_identity").count() == 4
+        && production.matches("&admission_session_identity").count() == 4
         && production
             .matches("&request_sequence.to_le_bytes()")
             .count()
             == 4
         && tests.contains("Self::admit_inner::<false>(")
         && tests.contains("libc::SCM_RIGHTS")
+        && tests.contains("cross_admission_prequeued_sequence_one_responses_poison")
+        && tests.contains("valid_recomputed_response_coordinate_substitutions_poison")
         && durable.contains("pub(crate) const fn from_tag(tag: u16) -> Option<Self>")
         && library.contains("PreopenedProtectedHeadStoreClientV1")
         && library.contains("ProtectedHeadStoreClientCustodyV1")
@@ -99,6 +104,12 @@ fn head_store_ipc_policy(head_store: &str, durable: &str, library: &str, readme:
         && normalized_readme.contains(
             "A correlated `Absent` after synchronized existence evidence is treated as rollback",
         )
+        && normalized_readme
+            .contains("The admission identity must never be reused for that provider and namespace")
+        && normalized_readme
+            .contains("exclusive custody of a fresh connection with no prequeued packets")
+        && normalized_readme
+            .contains("dropping a boxed `Retained` failure does not close the endpoint")
 }
 
 #[test]
@@ -127,6 +138,8 @@ fn head_store_source_policy_rejects_security_boundary_substitution() {
     let detached_namespace = HEAD_STORE_SOURCE.replacen("&namespace_identity", "&[0x55; 32]", 1);
     let detached_sequence =
         HEAD_STORE_SOURCE.replacen("&request_sequence.to_le_bytes()", "&0_u64.to_le_bytes()", 1);
+    let detached_admission_session =
+        HEAD_STORE_SOURCE.replacen("&admission_session_identity", "&[0x5a; 32]", 1);
     let missing_correlation =
         HEAD_STORE_SOURCE.replacen("if !response.matches_request(request)", "if false", 1);
     let rollback_absent = HEAD_STORE_SOURCE.replacen(
@@ -152,6 +165,7 @@ fn head_store_source_policy_rejects_security_boundary_substitution() {
         (stream.as_str(), README),
         (detached_namespace.as_str(), README),
         (detached_sequence.as_str(), README),
+        (detached_admission_session.as_str(), README),
         (missing_correlation.as_str(), README),
         (rollback_absent.as_str(), README),
         (skipped_cas.as_str(), README),

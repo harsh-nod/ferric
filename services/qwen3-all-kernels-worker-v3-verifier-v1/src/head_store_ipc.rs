@@ -1,10 +1,11 @@
 //! Descriptor-only IPC client for an externally protected antirollback head store.
 //!
 //! One client is pinned to one `(policy, kind, namespace)` and one measured
-//! provider. It consumes an already-connected Unix `SOCK_SEQPACKET` endpoint,
-//! uses fixed canonical packets, and permits only initialize-at-zero or exact
-//! single-record compare-and-advance transitions. An ambiguous outcome after a
-//! send attempt closes the endpoint and permanently poisons the client.
+//! provider and a fresh admission-session identity. It consumes an
+//! already-connected Unix `SOCK_SEQPACKET` endpoint, uses fixed canonical
+//! packets, and permits only initialize-at-zero or exact single-record
+//! compare-and-advance transitions. An ambiguous outcome after a send attempt
+//! closes the endpoint and permanently poisons the client.
 
 #![allow(
     clippy::must_use_candidate,
@@ -38,19 +39,19 @@ const INVALID_LINUX_ID: u32 = u32::MAX;
 const MAX_OPERATION_TIMEOUT: Duration = Duration::from_mins(1);
 const REQUEST_IDENTITY_DOMAIN_V1: &[u8] = b"FERRIC/PROTECTED-HEAD-STORE/REQUEST/V1\0";
 const RESPONSE_IDENTITY_DOMAIN_V1: &[u8] = b"FERRIC/PROTECTED-HEAD-STORE/RESPONSE/V1\0";
-const REQUEST_DECLARED_BYTES_V1: u32 = 396;
-const RESPONSE_DECLARED_BYTES_V1: u32 = 328;
+const REQUEST_DECLARED_BYTES_V1: u32 = 428;
+const RESPONSE_DECLARED_BYTES_V1: u32 = 360;
 
 /// Exact byte length of one protected head-store request packet.
 pub const PREOPENED_PROTECTED_HEAD_STORE_REQUEST_BYTES_V1: usize =
-    HEADER_BYTES + (5 * IDENTITY_BYTES) + KIND_BLOCK_BYTES + (2 * HEAD_BYTES);
+    HEADER_BYTES + (6 * IDENTITY_BYTES) + KIND_BLOCK_BYTES + (2 * HEAD_BYTES);
 
 /// Exact byte length of one protected head-store response packet.
 pub const PREOPENED_PROTECTED_HEAD_STORE_RESPONSE_BYTES_V1: usize =
-    HEADER_BYTES + (6 * IDENTITY_BYTES) + KIND_BLOCK_BYTES + HEAD_BYTES;
+    HEADER_BYTES + (7 * IDENTITY_BYTES) + KIND_BLOCK_BYTES + HEAD_BYTES;
 
-const _: () = assert!(PREOPENED_PROTECTED_HEAD_STORE_REQUEST_BYTES_V1 == 396);
-const _: () = assert!(PREOPENED_PROTECTED_HEAD_STORE_RESPONSE_BYTES_V1 == 328);
+const _: () = assert!(PREOPENED_PROTECTED_HEAD_STORE_REQUEST_BYTES_V1 == 428);
+const _: () = assert!(PREOPENED_PROTECTED_HEAD_STORE_RESPONSE_BYTES_V1 == 360);
 
 /// Supervisor-pinned identity of one preopened head-store socket endpoint.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -224,6 +225,7 @@ pub struct ProtectedHeadStoreRequestV1 {
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     current: Option<ProtectedLedgerExternalHeadV1>,
@@ -242,6 +244,7 @@ impl ProtectedHeadStoreRequestV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         request_sequence: u64,
     ) -> Result<Self, ProtectedHeadStoreProtocolErrorV1> {
@@ -251,6 +254,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             None,
@@ -268,6 +272,7 @@ impl ProtectedHeadStoreRequestV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         request_sequence: u64,
         initial: ProtectedLedgerExternalHeadV1,
@@ -278,6 +283,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             None,
@@ -296,6 +302,7 @@ impl ProtectedHeadStoreRequestV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         request_sequence: u64,
         current: ProtectedLedgerExternalHeadV1,
@@ -307,6 +314,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             Some(current),
@@ -321,6 +329,7 @@ impl ProtectedHeadStoreRequestV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         request_sequence: u64,
         current: Option<ProtectedLedgerExternalHeadV1>,
@@ -331,6 +340,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
         )?;
         if request_sequence == 0 {
             return Err(ProtectedHeadStoreProtocolErrorV1::ZeroRequestSequence);
@@ -344,6 +354,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             &current_bytes,
@@ -356,6 +367,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             &current_bytes,
@@ -368,6 +380,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             current,
@@ -404,6 +417,7 @@ impl ProtectedHeadStoreRequestV1 {
         let provider_identity = reader.array()?;
         let namespace_identity = reader.array()?;
         let policy_identity = reader.array()?;
+        let admission_session_identity = reader.array()?;
         let kind = ProtectedLedgerKindV1::from_tag(reader.u16()?)
             .ok_or(ProtectedHeadStoreProtocolErrorV1::LedgerKind)?;
         let request_sequence = reader.u64()?;
@@ -423,6 +437,7 @@ impl ProtectedHeadStoreRequestV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             current,
@@ -467,6 +482,11 @@ impl ProtectedHeadStoreRequestV1 {
         self.policy_identity
     }
 
+    /// Returns the nonzero, fresh supervisor-provisioned admission identity.
+    pub const fn admission_session_identity(&self) -> [u8; 32] {
+        self.admission_session_identity
+    }
+
     /// Returns the pinned ledger kind.
     pub const fn kind(&self) -> ProtectedLedgerKindV1 {
         self.kind
@@ -508,6 +528,10 @@ impl fmt::Debug for ProtectedHeadStoreRequestV1 {
             .field("provider_identity", &self.provider_identity)
             .field("namespace_identity", &self.namespace_identity)
             .field("policy_identity", &self.policy_identity)
+            .field(
+                "admission_session_identity",
+                &self.admission_session_identity,
+            )
             .field("kind", &self.kind)
             .field("request_sequence", &self.request_sequence)
             .field("current", &self.current)
@@ -570,6 +594,7 @@ pub struct ProtectedHeadStoreResponseV1 {
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     head: Option<ProtectedLedgerExternalHeadV1>,
@@ -659,6 +684,7 @@ impl ProtectedHeadStoreResponseV1 {
             provider_identity: request.provider_identity,
             namespace_identity: request.namespace_identity,
             policy_identity: request.policy_identity,
+            admission_session_identity: request.admission_session_identity,
             kind: request.kind,
             request_sequence: request.request_sequence,
             head,
@@ -695,6 +721,7 @@ impl ProtectedHeadStoreResponseV1 {
         let provider_identity = reader.array()?;
         let namespace_identity = reader.array()?;
         let policy_identity = reader.array()?;
+        let admission_session_identity = reader.array()?;
         let kind = ProtectedLedgerKindV1::from_tag(reader.u16()?)
             .ok_or(ProtectedHeadStoreProtocolErrorV1::LedgerKind)?;
         let request_sequence = reader.u64()?;
@@ -714,6 +741,7 @@ impl ProtectedHeadStoreResponseV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
         )?;
         validate_decoded_response_shape(operation, status, policy_identity, head)?;
         let expected_identity = response_identity_fields(
@@ -724,6 +752,7 @@ impl ProtectedHeadStoreResponseV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             &head_bytes,
@@ -740,6 +769,7 @@ impl ProtectedHeadStoreResponseV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             request_sequence,
             head,
@@ -752,6 +782,7 @@ impl ProtectedHeadStoreResponseV1 {
                 provider_identity,
                 namespace_identity,
                 policy_identity,
+                admission_session_identity,
                 kind,
                 request_sequence,
                 &head_bytes,
@@ -791,6 +822,7 @@ impl ProtectedHeadStoreResponseV1 {
             && self.provider_identity == request.provider_identity
             && self.namespace_identity == request.namespace_identity
             && self.policy_identity == request.policy_identity
+            && self.admission_session_identity == request.admission_session_identity
             && self.kind == request.kind
             && self.request_sequence == request.request_sequence
             && validate_response_semantics(request, self.status, self.head).is_ok()
@@ -835,6 +867,8 @@ pub enum ProtectedHeadStoreProtocolErrorV1 {
     ZeroNamespaceIdentity,
     /// Trust-policy identity was zero.
     ZeroPolicyIdentity,
+    /// The supervisor-provisioned admission session identity was zero.
+    ZeroAdmissionSessionIdentity,
     /// Request operation code was unsupported.
     Operation {
         /// Unsupported operation code.
@@ -916,6 +950,8 @@ pub enum ProtectedHeadStoreClientAdmissionErrorV1 {
     ZeroNamespaceIdentity,
     /// Trust-policy identity was zero.
     ZeroPolicyIdentity,
+    /// The supervisor-provisioned admission session identity was zero.
+    ZeroAdmissionSessionIdentity,
     /// Operation timeout was below one millisecond or above the hard ceiling.
     InvalidOperationTimeout,
     /// Descriptor inspection failed.
@@ -1017,7 +1053,9 @@ impl Error for ProtectedHeadStoreClientAdmissionFailureV1 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum ProtectedHeadStoreClientCustodyV1 {
-    /// No request could have committed; the synchronized endpoint remains retained.
+    /// No request could have committed; the synchronized endpoint remains in the client.
+    ///
+    /// Dropping a typed or legacy boxed failure does not drop this endpoint.
     Retained,
     /// The outcome may be ambiguous or the endpoint changed; the endpoint was closed.
     Poisoned,
@@ -1142,6 +1180,7 @@ pub struct PreopenedProtectedHeadStoreClientV1 {
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     operation_timeout: Duration,
     next_request_sequence: u64,
@@ -1160,6 +1199,10 @@ impl fmt::Debug for PreopenedProtectedHeadStoreClientV1 {
             .field("provider_identity", &self.provider_identity)
             .field("namespace_identity", &self.namespace_identity)
             .field("policy_identity", &self.policy_identity)
+            .field(
+                "admission_session_identity",
+                &self.admission_session_identity,
+            )
             .field("kind", &self.kind)
             .field("observed_existing", &self.observed_existing)
             .field("authority", &"unsafe supervisor boundary")
@@ -1170,7 +1213,7 @@ impl fmt::Debug for PreopenedProtectedHeadStoreClientV1 {
 impl PreopenedProtectedHeadStoreClientV1 {
     /// Admits one exact supervisor-preopened protected head-store endpoint.
     ///
-    /// The endpoint must already be connected, nonblocking, and close-on-exec.
+    /// The endpoint must already be freshly connected, nonblocking, and close-on-exec.
     /// Production requires a dedicated non-root UID distinct from the verifier.
     /// This function performs no path discovery or connection. Descriptor and
     /// protocol checks alone cannot establish the peer's durability properties.
@@ -1183,8 +1226,13 @@ impl PreopenedProtectedHeadStoreClientV1 {
     /// `(policy_identity, kind, namespace_identity)`; that it durably serializes
     /// every operation across processes and restarts; and that it emits
     /// [`ProtectedHeadStoreResponseStatusV1::Advanced`] only after the requested
-    /// head is externally durable. The namespace may never be reset, deleted, or
-    /// reused, including after policy revocation or capacity exhaustion.
+    /// head is externally durable. `admission_session_identity` must be nonzero,
+    /// freshly generated, and never reused for this provider and namespace,
+    /// including across verifier and provider restarts. The supervisor must give
+    /// this client exclusive custody of a fresh connection with no prequeued
+    /// packets and must retain no duplicate descriptor. The namespace may never
+    /// be reset, deleted, or reused, including after policy revocation or capacity
+    /// exhaustion.
     ///
     /// # Errors
     ///
@@ -1198,6 +1246,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         operation_timeout: Duration,
     ) -> Result<Self, ProtectedHeadStoreClientAdmissionFailureV1> {
@@ -1209,6 +1258,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             operation_timeout,
         )
@@ -1223,6 +1273,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         operation_timeout: Duration,
     ) -> Result<Self, ProtectedHeadStoreClientAdmissionFailureV1> {
@@ -1231,6 +1282,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             operation_timeout,
         )
         .and_then(|()| validate_endpoint::<REQUIRE_DISTINCT_UID>(&peer, endpoint, expected_peer));
@@ -1245,6 +1297,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             operation_timeout,
             next_request_sequence: 1,
@@ -1288,6 +1341,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             self.provider_identity,
             self.namespace_identity,
             self.policy_identity,
+            self.admission_session_identity,
             self.kind,
             request_sequence,
         )
@@ -1334,6 +1388,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             self.provider_identity,
             self.namespace_identity,
             self.policy_identity,
+            self.admission_session_identity,
             self.kind,
             request_sequence,
             initial,
@@ -1366,6 +1421,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             self.provider_identity,
             self.namespace_identity,
             self.policy_identity,
+            self.admission_session_identity,
             self.kind,
             request_sequence,
             current,
@@ -1516,9 +1572,11 @@ impl PreopenedProtectedHeadStoreClientV1 {
 }
 
 // SAFETY: the only public constructor is the documented unsafe supervisor
-// boundary. After admission, every request remains pinned to that one provider
-// and namespace; mutations are initialize-at-zero or exact single-record CAS;
-// exchanges are bounded; and every ambiguous post-send outcome poisons.
+// boundary. After admission, every request remains pinned to that one provider,
+// namespace, and fresh admission identity; mutations are initialize-at-zero or
+// exact single-record CAS; exchanges are bounded; and every ambiguous post-send
+// outcome poisons. The legacy boxed error retains this concrete failure's custody
+// coordinate; dropping a boxed Retained failure leaves the endpoint in `self`.
 unsafe impl ProtectedLedgerHeadStoreV1 for PreopenedProtectedHeadStoreClientV1 {
     fn provider_identity(&self) -> [u8; 32] {
         self.provider_identity
@@ -1554,6 +1612,7 @@ fn validate_context(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
 ) -> Result<(), ProtectedHeadStoreProtocolErrorV1> {
     if protocol_identity == [0; 32] {
         return Err(ProtectedHeadStoreProtocolErrorV1::ZeroProtocolIdentity);
@@ -1566,6 +1625,9 @@ fn validate_context(
     }
     if policy_identity == [0; 32] {
         return Err(ProtectedHeadStoreProtocolErrorV1::ZeroPolicyIdentity);
+    }
+    if admission_session_identity == [0; 32] {
+        return Err(ProtectedHeadStoreProtocolErrorV1::ZeroAdmissionSessionIdentity);
     }
     Ok(())
 }
@@ -1677,6 +1739,7 @@ fn validate_admission_coordinates(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     operation_timeout: Duration,
 ) -> Result<(), ProtectedHeadStoreClientAdmissionErrorV1> {
     if protocol_identity == [0; 32] {
@@ -1690,6 +1753,9 @@ fn validate_admission_coordinates(
     }
     if policy_identity == [0; 32] {
         return Err(ProtectedHeadStoreClientAdmissionErrorV1::ZeroPolicyIdentity);
+    }
+    if admission_session_identity == [0; 32] {
+        return Err(ProtectedHeadStoreClientAdmissionErrorV1::ZeroAdmissionSessionIdentity);
     }
     if operation_timeout < Duration::from_millis(1) || operation_timeout > MAX_OPERATION_TIMEOUT {
         return Err(ProtectedHeadStoreClientAdmissionErrorV1::InvalidOperationTimeout);
@@ -2009,6 +2075,7 @@ fn request_identity(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     current: &[u8; HEAD_BYTES],
@@ -2023,6 +2090,7 @@ fn request_identity(
         &provider_identity,
         &namespace_identity,
         &policy_identity,
+        &admission_session_identity,
         &kind.tag().to_le_bytes(),
         &request_sequence.to_le_bytes(),
         current,
@@ -2043,6 +2111,7 @@ fn response_identity(
         request.provider_identity,
         request.namespace_identity,
         request.policy_identity,
+        request.admission_session_identity,
         request.kind,
         request.request_sequence,
         head,
@@ -2058,6 +2127,7 @@ fn response_identity_fields(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     head: &[u8; HEAD_BYTES],
@@ -2073,6 +2143,7 @@ fn response_identity_fields(
         &provider_identity,
         &namespace_identity,
         &policy_identity,
+        &admission_session_identity,
         &kind.tag().to_le_bytes(),
         &request_sequence.to_le_bytes(),
         head,
@@ -2087,6 +2158,7 @@ fn encode_request(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     current: &[u8; HEAD_BYTES],
@@ -2109,6 +2181,7 @@ fn encode_request(
     put(&mut bytes, &mut offset, &provider_identity);
     put(&mut bytes, &mut offset, &namespace_identity);
     put(&mut bytes, &mut offset, &policy_identity);
+    put(&mut bytes, &mut offset, &admission_session_identity);
     put(&mut bytes, &mut offset, &kind.tag().to_le_bytes());
     put(&mut bytes, &mut offset, &request_sequence.to_le_bytes());
     put(&mut bytes, &mut offset, &[0; 6]);
@@ -2133,6 +2206,7 @@ fn encode_response(
         request.provider_identity,
         request.namespace_identity,
         request.policy_identity,
+        request.admission_session_identity,
         request.kind,
         request.request_sequence,
         head,
@@ -2149,6 +2223,7 @@ fn encode_response_fields(
     provider_identity: [u8; 32],
     namespace_identity: [u8; 32],
     policy_identity: [u8; 32],
+    admission_session_identity: [u8; 32],
     kind: ProtectedLedgerKindV1,
     request_sequence: u64,
     head: &[u8; HEAD_BYTES],
@@ -2171,6 +2246,7 @@ fn encode_response_fields(
     put(&mut bytes, &mut offset, &provider_identity);
     put(&mut bytes, &mut offset, &namespace_identity);
     put(&mut bytes, &mut offset, &policy_identity);
+    put(&mut bytes, &mut offset, &admission_session_identity);
     put(&mut bytes, &mut offset, &kind.tag().to_le_bytes());
     put(&mut bytes, &mut offset, &request_sequence.to_le_bytes());
     put(&mut bytes, &mut offset, &[0; 6]);
@@ -2280,6 +2356,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
         provider_identity: [u8; 32],
         namespace_identity: [u8; 32],
         policy_identity: [u8; 32],
+        admission_session_identity: [u8; 32],
         kind: ProtectedLedgerKindV1,
         operation_timeout: Duration,
     ) -> Result<Self, ProtectedHeadStoreClientAdmissionFailureV1> {
@@ -2291,6 +2368,7 @@ impl PreopenedProtectedHeadStoreClientV1 {
             provider_identity,
             namespace_identity,
             policy_identity,
+            admission_session_identity,
             kind,
             operation_timeout,
         )
@@ -2331,6 +2409,8 @@ mod tests {
     const PROVIDER: [u8; 32] = [0x22; 32];
     const NAMESPACE: [u8; 32] = [0x33; 32];
     const POLICY: [u8; 32] = [0x44; 32];
+    const ADMISSION_SESSION: [u8; 32] = [0x45; 32];
+    const OLD_ADMISSION_SESSION: [u8; 32] = [0x46; 32];
 
     fn initial_head() -> ProtectedLedgerExternalHeadV1 {
         ProtectedLedgerExternalHeadV1::new(POLICY, [0x55; 32], 0, [0; 32]).unwrap()
@@ -2360,6 +2440,13 @@ mod tests {
     }
 
     fn admit_test_client(peer: OwnedFd) -> PreopenedProtectedHeadStoreClientV1 {
+        admit_test_client_for_session(peer, ADMISSION_SESSION)
+    }
+
+    fn admit_test_client_for_session(
+        peer: OwnedFd,
+        admission_session_identity: [u8; 32],
+    ) -> PreopenedProtectedHeadStoreClientV1 {
         let endpoint = endpoint_identity(&peer);
         let expected_peer = current_peer_identity(&peer);
         PreopenedProtectedHeadStoreClientV1::admit_same_uid_for_test(
@@ -2370,6 +2457,7 @@ mod tests {
             PROVIDER,
             NAMESPACE,
             POLICY,
+            admission_session_identity,
             ProtectedLedgerKindV1::Replay,
             Duration::from_secs(2),
         )
@@ -2427,6 +2515,7 @@ mod tests {
             PROVIDER,
             NAMESPACE,
             POLICY,
+            ADMISSION_SESSION,
             ProtectedLedgerKindV1::Replay,
             1,
         )
@@ -2436,12 +2525,36 @@ mod tests {
             load
         );
         assert!(!load.grants_authority());
+        let other_session = ProtectedHeadStoreRequestV1::load(
+            PROTOCOL,
+            PROVIDER,
+            NAMESPACE,
+            POLICY,
+            OLD_ADMISSION_SESSION,
+            ProtectedLedgerKindV1::Replay,
+            1,
+        )
+        .unwrap();
+        assert_ne!(load.request_identity(), other_session.request_identity());
+        assert!(matches!(
+            ProtectedHeadStoreRequestV1::load(
+                PROTOCOL,
+                PROVIDER,
+                NAMESPACE,
+                POLICY,
+                [0; 32],
+                ProtectedLedgerKindV1::Replay,
+                1,
+            ),
+            Err(ProtectedHeadStoreProtocolErrorV1::ZeroAdmissionSessionIdentity)
+        ));
 
         let initialize = ProtectedHeadStoreRequestV1::initialize(
             PROTOCOL,
             PROVIDER,
             NAMESPACE,
             POLICY,
+            ADMISSION_SESSION,
             ProtectedLedgerKindV1::Replay,
             2,
             initial_head(),
@@ -2452,6 +2565,7 @@ mod tests {
             PROVIDER,
             NAMESPACE,
             POLICY,
+            ADMISSION_SESSION,
             ProtectedLedgerKindV1::Replay,
             3,
             initial_head(),
@@ -2471,7 +2585,9 @@ mod tests {
         assert!(!advanced.grants_authority());
 
         let loaded = ProtectedHeadStoreResponseV1::loaded(&load, initial_head()).unwrap();
-        for offset in [10, 12, 52, 84, 116, 148, 180, 212, 214, 260, 292, 296] {
+        for offset in [
+            10, 12, 52, 84, 116, 148, 180, 212, 244, 246, 260, 292, 324, 328,
+        ] {
             let mut mutation = *loaded.encode_canonical();
             mutation[offset] ^= 1;
             assert!(
@@ -2488,6 +2604,7 @@ mod tests {
             load.provider_identity,
             load.namespace_identity,
             load.policy_identity,
+            load.admission_session_identity,
             load.kind,
             load.request_sequence,
             &head_bytes,
@@ -2501,6 +2618,7 @@ mod tests {
             load.provider_identity,
             load.namespace_identity,
             load.policy_identity,
+            load.admission_session_identity,
             load.kind,
             load.request_sequence,
             &head_bytes,
@@ -2518,6 +2636,7 @@ mod tests {
             initialize.provider_identity,
             initialize.namespace_identity,
             initialize.policy_identity,
+            initialize.admission_session_identity,
             initialize.kind,
             initialize.request_sequence,
             &empty_head,
@@ -2531,6 +2650,7 @@ mod tests {
             initialize.provider_identity,
             initialize.namespace_identity,
             initialize.policy_identity,
+            initialize.admission_session_identity,
             initialize.kind,
             initialize.request_sequence,
             &empty_head,
@@ -2548,6 +2668,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 4,
                 initial_head(),
@@ -2563,6 +2684,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 5,
                 initial_head(),
@@ -2571,13 +2693,13 @@ mod tests {
             Err(ProtectedHeadStoreProtocolErrorV1::InvalidAdvance)
         ));
 
-        for offset in [52, 84, 116, 148, 180] {
+        for offset in [52, 84, 116, 148, 180, 212] {
             let mut mutation = *load.encode_canonical();
             mutation[offset] ^= 1;
             assert!(ProtectedHeadStoreRequestV1::decode_canonical(&mutation).is_err());
         }
         let mut kind_mutation = *load.encode_canonical();
-        kind_mutation[180..182]
+        kind_mutation[212..214]
             .copy_from_slice(&ProtectedLedgerKindV1::Reservation.tag().to_le_bytes());
         assert!(matches!(
             ProtectedHeadStoreRequestV1::decode_canonical(&kind_mutation),
@@ -2603,6 +2725,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 Duration::from_secs(2),
             )
@@ -2632,6 +2755,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 Duration::from_secs(2),
             )
@@ -2657,6 +2781,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 Duration::from_secs(2),
             )
@@ -2668,7 +2793,11 @@ mod tests {
         ));
         assert_eq!(failure.into_peer().as_raw_fd(), raw);
 
-        for timeout in [Duration::ZERO, Duration::from_nanos(999_999)] {
+        for timeout in [
+            Duration::ZERO,
+            Duration::from_nanos(999_999),
+            MAX_OPERATION_TIMEOUT + Duration::from_nanos(1),
+        ] {
             let (peer, _store) = pair(SocketType::SEQPACKET);
             let raw = peer.as_raw_fd();
             let endpoint = endpoint_identity(&peer);
@@ -2681,6 +2810,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 timeout,
             )
@@ -2691,6 +2821,29 @@ mod tests {
             ));
             assert_eq!(failure.into_peer().as_raw_fd(), raw);
         }
+
+        let (peer, _store) = pair(SocketType::SEQPACKET);
+        let raw = peer.as_raw_fd();
+        let endpoint = endpoint_identity(&peer);
+        let expected_peer = current_peer_identity(&peer);
+        let failure = PreopenedProtectedHeadStoreClientV1::admit_same_uid_for_test(
+            peer,
+            endpoint,
+            expected_peer,
+            PROTOCOL,
+            PROVIDER,
+            NAMESPACE,
+            POLICY,
+            [0; 32],
+            ProtectedLedgerKindV1::Replay,
+            Duration::from_secs(2),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedHeadStoreClientAdmissionErrorV1::ZeroAdmissionSessionIdentity
+        ));
+        assert_eq!(failure.into_peer().as_raw_fd(), raw);
     }
 
     #[test]
@@ -2708,6 +2861,7 @@ mod tests {
                 PROVIDER,
                 NAMESPACE,
                 POLICY,
+                ADMISSION_SESSION,
                 ProtectedLedgerKindV1::Replay,
                 Duration::from_secs(2),
             )
@@ -2855,6 +3009,7 @@ mod tests {
                         PROVIDER,
                         [0x99; 32],
                         POLICY,
+                        request.admission_session_identity(),
                         ProtectedLedgerKindV1::Replay,
                         request.request_sequence(),
                     )
@@ -2918,6 +3073,176 @@ mod tests {
         );
         assert!(client.is_poisoned());
         server.join().unwrap();
+    }
+
+    #[test]
+    fn valid_recomputed_response_coordinate_substitutions_poison() {
+        for coordinate in 0..8 {
+            let (peer, store) = pair(SocketType::SEQPACKET);
+            let mut client = admit_test_client(peer);
+            let server = spawn_response(store, move |request| {
+                let foreign = match coordinate {
+                    0 => ProtectedHeadStoreRequestV1::initialize(
+                        PROTOCOL,
+                        PROVIDER,
+                        NAMESPACE,
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                        initial_head(),
+                    ),
+                    1 => ProtectedHeadStoreRequestV1::load(
+                        [0x91; 32],
+                        PROVIDER,
+                        NAMESPACE,
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                    ),
+                    2 => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        [0x92; 32],
+                        NAMESPACE,
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                    ),
+                    3 => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        PROVIDER,
+                        [0x93; 32],
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                    ),
+                    4 => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        PROVIDER,
+                        NAMESPACE,
+                        [0x94; 32],
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                    ),
+                    5 => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        PROVIDER,
+                        NAMESPACE,
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Reservation,
+                        request.request_sequence(),
+                    ),
+                    6 => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        PROVIDER,
+                        NAMESPACE,
+                        POLICY,
+                        OLD_ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence(),
+                    ),
+                    _ => ProtectedHeadStoreRequestV1::load(
+                        PROTOCOL,
+                        PROVIDER,
+                        NAMESPACE,
+                        POLICY,
+                        ADMISSION_SESSION,
+                        ProtectedLedgerKindV1::Replay,
+                        request.request_sequence().checked_add(1).unwrap(),
+                    ),
+                }
+                .unwrap();
+                let response = ProtectedHeadStoreResponseV1::rejected(&foreign).unwrap();
+                assert!(
+                    ProtectedHeadStoreResponseV1::decode_canonical(response.encode_canonical())
+                        .is_ok()
+                );
+                response.encode_canonical().to_vec()
+            });
+            let failure = client.load_head_same_uid_for_test().unwrap_err();
+            assert!(matches!(
+                failure.error(),
+                ProtectedHeadStoreClientErrorV1::ResponseRequestMismatch
+            ));
+            assert_eq!(
+                failure.custody(),
+                ProtectedHeadStoreClientCustodyV1::Poisoned
+            );
+            assert!(client.is_poisoned());
+            server.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn cross_admission_prequeued_sequence_one_responses_poison() {
+        for advanced in [false, true] {
+            let (peer, store) = pair(SocketType::SEQPACKET);
+            let duplicate = peer.try_clone().unwrap();
+            let old_client = admit_test_client_for_session(peer, OLD_ADMISSION_SESSION);
+            let old_request = if advanced {
+                ProtectedHeadStoreRequestV1::initialize(
+                    PROTOCOL,
+                    PROVIDER,
+                    NAMESPACE,
+                    POLICY,
+                    OLD_ADMISSION_SESSION,
+                    ProtectedLedgerKindV1::Replay,
+                    1,
+                    initial_head(),
+                )
+                .unwrap()
+            } else {
+                ProtectedHeadStoreRequestV1::load(
+                    PROTOCOL,
+                    PROVIDER,
+                    NAMESPACE,
+                    POLICY,
+                    OLD_ADMISSION_SESSION,
+                    ProtectedLedgerKindV1::Replay,
+                    1,
+                )
+                .unwrap()
+            };
+            let old_response = if advanced {
+                ProtectedHeadStoreResponseV1::advanced(&old_request).unwrap()
+            } else {
+                ProtectedHeadStoreResponseV1::absent(&old_request).unwrap()
+            };
+            assert_eq!(old_request.request_sequence(), 1);
+            assert_eq!(
+                old_request.admission_session_identity(),
+                OLD_ADMISSION_SESSION
+            );
+            assert!(
+                ProtectedHeadStoreResponseV1::decode_canonical(old_response.encode_canonical())
+                    .is_ok()
+            );
+            send_bytes(&store, old_response.encode_canonical());
+            drop(old_client);
+
+            let mut client = admit_test_client_for_session(duplicate, ADMISSION_SESSION);
+            let failure = if advanced {
+                client
+                    .initialize_head_same_uid_for_test(initial_head())
+                    .unwrap_err()
+            } else {
+                client.load_head_same_uid_for_test().unwrap_err()
+            };
+            assert!(matches!(
+                failure.error(),
+                ProtectedHeadStoreClientErrorV1::ResponseRequestMismatch
+            ));
+            assert_eq!(
+                failure.custody(),
+                ProtectedHeadStoreClientCustodyV1::Poisoned
+            );
+            assert!(client.is_poisoned());
+        }
     }
 
     #[test]
