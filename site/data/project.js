@@ -3,9 +3,29 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "d72f740cbfd0c17ee2125930c322ed825507c0b7",
-    integrationCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-    integrationTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
+    siteRefreshBase: "2af5494b9d2a1f75cb63722505a734ba8855b83b",
+    integrationCommit: "6ef78dc4534317384f7275115c5e77a8b1acb702",
+    integrationTree: "5fc4c38f0490ad8073b2b576c691a772e465203a",
+    sha256FastPathCommit: "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
+    sha256FastPathVerusQueries: 296,
+    sha256FastPathVerusErrors: 0,
+    sha256FastPathReleaseTestsPassed: 143,
+    sha256FastPathGeneratedRecordsExact: 7,
+    sha256FastPathOneMiBSpeedupMinimum: 1.115,
+    sha256FastPathOneMiBSpeedupMaximum: 1.119,
+    sha256FastPathSmallChunkRegressionMinimumPercent: 0.49,
+    sha256FastPathSmallChunkRegressionMaximumPercent: 1.53,
+    sha256FastPathEndToEndGainClaimed: false,
+    startupDiagnosticsCommit: "6ef78dc4534317384f7275115c5e77a8b1acb702",
+    startupDiagnosticsDefaultEnabled: false,
+    startupDiagnosticsStderrOnly: true,
+    startupDiagnosticsChangesJson: false,
+    startupDiagnosticsChangesControllerTiming: false,
+    startupDiagnosticsSpeculativeTestsPassed: 10,
+    startupDiagnosticsTargetTestsPassed: 17,
+    startupDiagnosticsTargetHardwareIgnored: 1,
+    startupDiagnosticsPolicyTestsPassed: 20,
+    startupDiagnosticsStrictClippyGreen: true,
     integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
     integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
     priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -294,14 +314,18 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
     fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
     fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-    fe2o3LatestMain: "42882993b3f84d60f38e398d2018cc9302e8fe19",
-    fe2o3LatestTree: "d7d69a4aa0f9be48fd153840e96b1550c0de4117",
+    fe2o3LatestMain: "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
+    fe2o3LatestTree: "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
     fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
     fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
-    fe2o3CurrentRepinActive: false,
-    fe2o3CurrentRepinIntegrated: true,
+    fe2o3CurrentRepinActive: true,
+    fe2o3CurrentRepinIntegrated: false,
     fe2o3CurrentRepinFormalAcceptance: false,
     fe2o3CurrentRepinLockfiles: 15,
+    fe2o3CurrentRepinUnchangedRecordsExact: true,
+    fe2o3CurrentRepinChangedTcbRecords: 3,
+    fe2o3CurrentRepinElfRebuiltAndBound: true,
+    fe2o3CurrentRepinFinalHandoffPending: true,
     fe2o3PreexistingDcoAncestryConcern: true,
     fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
     fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
@@ -312,13 +336,32 @@ window.FERRIC_PROJECT = Object.freeze({
     currentAggregateGuardedStores: 26,
     currentAggregateAuthority: "none",
     currentAggregateHardwareRunPending: true,
-    currentQualificationSourceCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-    currentQualificationSourceTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
-    currentQualificationState: "component-matrix-passed-stale-s1k4-policy-anchor",
+    currentAggregateCompilerCommit: "42882993b3f84d60f38e398d2018cc9302e8fe19",
+    latestFe2o3AggregateEmitted: false,
+    currentQualificationSourceCommit: "bb50d0e0c71e44271b892120c208650bd444f684",
+    currentQualificationSourceTree: "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
+    currentQualificationState: "positive-and-negative-semantic-gates-passed-quality-runtime-running",
     currentQualificationComponentMatrixPassed: true,
-    currentQualificationFullRunStarted: false,
-    currentQualificationRunning: false,
+    currentQualificationFullRunStarted: true,
+    currentQualificationRunning: true,
     currentQualificationReceiptEmitted: false,
+    currentQualificationPositivePackagesPassed: 10,
+    currentQualificationPositiveQueries: 1586,
+    currentQualificationPositiveErrors: 0,
+    currentQualificationPositiveBodies: 694,
+    currentQualificationNegativeActualBodyMutationsPassed: true,
+    currentQualificationNegativeAndQualityComplete: false,
+    currentHostArtifactPreDeviceProbeSeconds: 98.23,
+    currentHostArtifactPreDeviceProbeIncludesKfdAdmission: true,
+    currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration: true,
+    currentHostArtifactPreDeviceProbeIncludesInitialize: false,
+    currentHostArtifactPreDeviceProbeIncludesHbm: false,
+    latestFe2o3KfdDescriptorProbeGib: 97.313,
+    latestFe2o3KfdDescriptorProbeSeconds: 58.133,
+    latestFe2o3KfdDescriptorProbeIncludesGpu: false,
+    mi300xGpuCount: 8,
+    mi300xGpuAvailableForFerric: false,
+    mi300xGpuOccupancy: "all-in-use-by-other-users",
     qwenReference32ResultSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
     qwenReference32Available: true,
     ferricQwen32ComparisonComplete: false,
@@ -471,14 +514,14 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Current source 9dcbd6e pins all 15 active compiler/runtime lockfiles to signed public fe2o3 42882993. The reviewed authority-free aggregate was emitted with 26 GuardedStore operations and exact replay; its hardware run is waiting for an available MI300X GPU. The production-used resident same-shape core records 0 allocations and 0 reallocations for one round and repeated 16-round execution, with a positive allocator control. The prior target-only Qwen run remains diagnostic and nonbenchmark at approximately 13.65s TTFT and 2.77 seconds per post-first token. A 32-token Hugging Face reference is ready, but Ferric has not run that comparison. The 9dc component matrix passed, then preflight stopped at a stale authenticated S1/K4 source-policy anchor; the full qualifier has not started, no receipt exists, and all 33 M1 gates remain open.",
+      "Private integration 6ef78dc adds a verified SHA-256 full-block fast path and opt-in engineering startup phase diagnostics. The diagnostics are off by default, stderr-only, and do not change stdout JSON or controller timing. Published public fe2o3 main is now 0ea54ed; its Ferric repin is under validation, while the emitted authority-free aggregate 528 remains built with public 42882993. A CPU-only pre-device probe completed in 98.23 seconds after KFD admission and topology enumeration; it excludes initialize_memory, HBM upload, and dispatch. At frozen qualifier source bb50d0e, all 10 positive proof packages passed with 1,586 queries, 0 errors, and 694 bodies, and the negative actual-body semantic mutations passed without timeout; remaining workspace quality and runtime checks are incomplete, no receipt exists, and all 33 M1 gates remain open. A 32-token Hugging Face reference is ready, but the Ferric run has not started because all eight shared MI300X GPUs were occupied by other users at the latest availability checkpoint. No new TTFT, TPOT, vLLM, or SGLang comparison is available.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Current source 9dcbd6e, tree fd9cfdb, contains the production owner, resident allocation repair and tests, and an exact 15-lock active dependency pin to public fe2o3 42882993. Its formatting, Clippy, debug, release, default-feature, all-feature, Worker behavior, source-closure, benchmark, reference, and R29 component matrix passed. Preflight then stopped at a stale authenticated S1/K4 source-policy anchor before the full qualifier started; the completed 1,586-query positive result remains evidence for prior source cb9b5ca, and no current receipt exists.",
+        "Private integration 6ef78dc contains the production owner, resident allocation repair, K3 source, the verified SHA-256 full-block path, and opt-in startup diagnostics. Frozen qualifier source bb50d0e includes the corrected S1/K4 policy anchor and passed all 10 positive proof packages: 1,586 queries, 0 errors, and 694 bodies. Negative actual-body semantic mutations also pass without timeout; remaining workspace quality and runtime checks are incomplete, no receipt exists, and the external authenticated authority bundle remains absent.",
     },
     {
       label: "R33 lifecycle",
@@ -508,7 +551,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 authority integration",
       state: "integration",
       detail:
-        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6. At current-source checkpoint cb9b5ca, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies. The full qualifier then stopped at its 600-second limit while cold-compiling the first negative ferric-engine target; the remaining negative and quality gates did not run, no receipt was emitted, authority remains none, and all 33 M1 gates remain open.",
+        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6. At frozen qualifier source bb50d0e, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, and the negative actual-body semantic mutations passed without timeout. Remaining workspace quality and runtime checks are incomplete, no receipt has been emitted, authority remains none, and all 33 M1 gates remain open.",
     },
     {
       label: "Generic serving provider integration",
@@ -544,13 +587,19 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 KFD model initialization",
       state: "implemented",
       detail:
-        "Signed public fe2o3 main is 42882993, tree d7d69a4. It retains the measured arbitrary-model KFD initialization improvement and adds reviewed dynamic GridExclusive projection plus singleton execution-domain race discharge. Ferric source 9dcbd6e pins all 15 active compiler/runtime lockfiles to that exact revision. Formal M1 qualification remains open; the KFD figures are cold initialization measurements, not request latency.",
+        "Published public fe2o3 main is now 0ea54ed, tree 15f49dd. Repin review found unchanged records byte-exact; three TCB records changed only for the revision and declared float-casts test target, and the source-pinned ELF was rebuilt and binding-checked. Final handoff is pending, so the current emitted aggregate 528 remains compiled with public 42882993. An independent descriptor-only CPU probe on public 0ea hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution. Formal M1 qualification remains open, and these figures are not request latency.",
     },
     {
       label: "Engineering Qwen smoke path",
       state: "observed",
       detail:
-        "The corrected target-only run completed all 8 tokens as \" Paris. The capital of Italy is Rome\" with hardware completion true. A separate offline Hugging Face/PyTorch reference reproduced the exact 8 token IDs on two passes, and a second 32-token experiment repeated identically with the same 8-token prefix. Ferric has not run the 32-token check. Diagnostic Ferric timing remains 13.649661699s TTFT and 2.7656050044 seconds per post-first token; none of these observations is authenticated R33, qualification, serving, or a benchmark.",
+        "The corrected target-only run completed all 8 tokens as \" Paris. The capital of Italy is Rome\" with hardware completion true. A separate offline Hugging Face/PyTorch reference reproduced the exact 8 token IDs on two passes, and a second 32-token experiment repeated identically with the same 8-token prefix. Ferric has not run the 32-token check because all eight shared MI300X GPUs were occupied by other users at the latest availability checkpoint. Existing diagnostic timing remains 13.649661699s TTFT and 2.7656050044 seconds per post-first token; there is no new TTFT, TPOT, vLLM, or SGLang comparison, and none of these observations is authenticated R33, qualification, serving, or a benchmark.",
+    },
+    {
+      label: "Startup CPU work and diagnostics",
+      state: "integration",
+      detail:
+        "Private integration 63e adds a verified aligned SHA-256 full-block path: ferric-build passed 296 Verus queries with 0 errors, 143 release tests, and seven byte-exact generated records. Its 1 MiB microbenchmark improved 1.115x to 1.119x while 63/65-byte cases regressed 0.49% to 1.53%; no end-to-end gain is claimed. Integration 6ef adds phase-completion diagnostics that are off by default, stderr-only, and excluded from stdout JSON and controller timing. Focused gates passed 10 speculative tests, 17 target tests with one GPU test ignored, 20 policy tests, and strict Clippy.",
     },
     {
       label: "Formal bootstrap model",
@@ -562,7 +611,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Aggregate kernel artifact",
       state: "integration",
       detail:
-        "Public fe2o3 42882993 compiled the current authority-free aggregate from source 9dcbd6e with 26 GuardedStore operations and exact replay. Content ID is 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 is cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 is 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. Source-custody review found no blocker. The hardware run is pending GPU availability, and no protected verifier or production receipt authenticated the artifact.",
+        "Public fe2o3 42882993 compiled authority-free aggregate 528 with 26 GuardedStore operations and exact replay. Content ID is 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 is cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 is 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. Public fe2o3 main has advanced to 0ea54ed, but a new 0ea aggregate has not been emitted. The 428 host plus aggregate 528 CPU pre-device probe completed in 98.23 seconds after KFD admission and topology enumeration; it excludes initialize_memory, HBM upload, and dispatch. Hardware execution is waiting for a shared GPU, and no protected verifier or production receipt authenticated the artifact.",
     },
     {
       label: "K3 work-proportional KV-write",
@@ -590,10 +639,10 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1; tree fd9cfdb068620b8b16c3ed9bcc5f81918afd1293; production owner, resident same-shape allocation repair, K3 source, and all 15 active compiler/runtime lockfile pins to public fe2o3 42882993 are integrated; the component matrix passed but full qualification has not started"],
+    ["Ferric integration", "Private integration 6ef78dc; production owner, resident same-shape allocation repair, K3 source, verified SHA-256 full-block updates, and opt-in engineering startup diagnostics are integrated; no serving or qualification claim follows"],
     ["Resident continuation integration", "commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and exact-roster fix 68091859ce0710dc26cfb839d580e40ea0839253; integrated after no-blocker review; no resident hardware qualification"],
     ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current 9dcbd6e; hardware-unqualified"],
-    ["Qualification checkpoint", "Source 9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1, tree fd9cfdb068620b8b16c3ed9bcc5f81918afd1293, passed its component matrix before preflight stopped at a stale authenticated S1/K4 source-policy anchor. The full qualifier has not started. The completed positive checkpoint remains prior source cb9b5ca: 10 packages, 1,586 queries, 0 errors, and 694 admitted executable bodies. No current-source receipt exists"],
+    ["Qualification checkpoint", "Frozen source bb50d0e, tree 7f3f235, includes the corrected authenticated S1/K4 policy anchor. All 10 positive proof packages passed: 1,586 queries, 0 errors, and 694 admitted executable bodies. Negative actual-body semantic mutations also pass without timeout; remaining workspace quality and runtime checks are incomplete, and no receipt exists"],
     ["R33 resident execution", "Source 9dcbd6e includes the production owner and allocation repair. The production-used same-shape core measures 0 allocations and 0 reallocations for one round and repeated 16-round execution, with a positive allocator control. The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests; integrated check, strict Clippy, and focused allocation validation pass. No authenticated 20-window run was attempted because the external authority bundle remains absent"],
     ["Head-store IPC integration", "fc5f86939cc826480aa008ddf69b044f3d63c585 plus 4d0486476c907ae681bf48d4ba57efb1394e78f5 plus d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83; independently accepted and integrated; standalone validation green; no daemon, durability, session generator store, launcher, distinct-UID exercise, protected infrastructure, or authority"],
     ["Current-record IPC integration", "5df8c5e463cca191b142321a9b5040ed66955f06; tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591; exact committed-tree MI300X author matrix green at log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830; independently accepted and integrated; no daemon or authority"],
@@ -605,7 +654,9 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "signed 42882993b3f84d60f38e398d2018cc9302e8fe19; tree d7d69a4aa0f9be48fd153840e96b1550c0de4117; reviewed dynamic GridExclusive projection and singleton execution-domain race discharge are public; all 15 Ferric active compiler/runtime lockfiles are pinned to this exact revision"],
+    ["fe2o3 current public main", "published 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71; tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68; Ferric repin checks are underway, while emitted aggregate 528 remains compiled with public 42882993"],
+    ["CPU pre-device observations", "428 host plus aggregate 528 completed its CPU pre-device probe in 98.23s after KFD admission and topology enumeration, excluding initialize_memory, HBM upload, and dispatch. An independent public-0ea KFD descriptor probe hashed 97.313 GiB in 58.133s, excluding GPU work. Neither is request latency"],
+    ["Shared GPU availability", "All eight MI300X GPUs were occupied by other users at this checkpoint; the Ferric 32-token run has not started"],
   ],
   capabilities: {
     runnable: [
@@ -684,7 +735,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 evidence collector integration",
         detail:
-          "The independently accepted c492 series is integrated through e3dc8d6 and correlates protected service evidence without enlarging authority; current 9dcbd6e includes the reviewed quality fixes. Its component matrix passed before preflight stopped at a stale authenticated S1/K4 source-policy anchor; the full qualifier has not started. The completed 1,586-query positive checkpoint remains prior-source evidence from cb9b5ca, no current receipt exists, and authority is none.",
+          "The independently accepted c492 series is integrated through e3dc8d6 and correlates protected service evidence without enlarging authority. Frozen qualifier source bb50d0e contains the corrected authenticated S1/K4 policy anchor and passed all 10 positive packages at 1,586 queries, 0 errors, and 694 bodies. Negative and quality gates are still incomplete, no receipt exists, and authority is none.",
       },
     ],
     roadmap: [
@@ -727,20 +778,20 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   validation: {
     host: {
-      title: "Current-source qualification preflight stopped at stale policy",
+      title: "Current qualification positives pass; remaining gates incomplete",
       state: "integration",
-      source: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-      result: "PARTIAL: component matrix passed; full qualifier not started",
+      source: "bb50d0e0c71e44271b892120c208650bd444f684",
+      result: "PARTIAL: positive and negative semantic gates pass; workspace quality/runtime checks remain",
       detail:
-        "Source 9dcbd6e, tree fd9cfdb, passed formatting, Clippy, debug, release, default-feature, all-feature, Worker behavior, source-closure, benchmark, reference, and R29 component gates. Preflight then stopped because the authenticated S1/K4 checker still expects the old fixed queue wait expression while production correctly uses a remaining-deadline wait timeout with before/after completion-wait guards. A narrow fail-closed policy retarget is in preparation; no production change is required. The full qualifier has not started and no receipt, hardware authority, serving result, or benchmark is claimed.",
+        "Frozen source bb50d0e, tree 7f3f235, contains the corrected authenticated S1/K4 policy anchor. All 10 positive proof packages passed with 1,586 verification queries, 0 errors, and 694 admitted executable bodies. Negative actual-body semantic mutations also pass without timeout; remaining workspace quality and runtime checks are incomplete. No receipt, hardware authority, serving result, or benchmark is claimed.",
     },
     proof: {
       title: "Current-source positive proof checkpoint",
       state: "integration",
-      source: "cb9b5ca2612c11f94e30a6b80c3cf285f905cd22",
-      result: "PARTIAL: all 10 selected positive packages passed 1,586 verification queries with 0 errors over 694 admitted executable bodies; first cold negative build exceeded 600 seconds",
+      source: "bb50d0e0c71e44271b892120c208650bd444f684",
+      result: "PARTIAL: 10 positive packages and negative actual-body semantic mutations pass; remaining workspace quality/runtime checks are incomplete",
       detail:
-        "At source cb9b5ca2612c11f94e30a6b80c3cf285f905cd22, tree ba49adff7807ccaa953a526b3c3c845c780e07c3, every selected positive package completed: 10 packages, 1,586 selected-package verification queries, 0 errors, and 694 admitted executable bodies. The next phase stopped at the 600-second limit while cold-compiling a negative ferric-engine target. The remaining negative and quality gates did not run in that invocation. Evidence SHA256SUMS digest is 0c28904134dc52c96b7049b3dca63e469a710646b7fc22c6cbe898576df4d82b. This is incomplete qualification, not a semantic proof failure or receipt. Historical Qualification #7 remains prior-source evidence only; its preflight covered 7,922 bodies across 170 modules, the exact 7,229-record curated admission set, and 33/33 source-gate tests. The historical preflight log SHA-256 is 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4; the Qualification #7 log SHA-256 is 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4.",
+        "At frozen source bb50d0e0c71e44271b892120c208650bd444f684, tree 7f3f23579b0adfac8ad7357fbf1246ab4b05dc95, every selected positive package completed: 10 packages, 1,586 selected-package verification queries, 0 errors, and 694 admitted executable bodies. Negative actual-body semantic mutations also pass without timeout. Remaining workspace quality and runtime checks are incomplete. This is incomplete qualification, not a semantic proof failure or receipt. Historical Qualification #7 remains prior-source evidence only; its preflight covered 7,922 bodies across 170 modules, the exact 7,229-record curated admission set, and 33/33 source-gate tests.",
     },
     hardware: {
       title: "Reduced-roster S1/K4 speculative round completes",
@@ -763,7 +814,7 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "Current source 9dcbd6e pins all 15 active compiler/runtime lockfiles to public fe2o3 42882993 and includes the production owner, resident same-shape allocation repair, and K3 work-proportional KV-write. The reviewed aggregate emitted, but its hardware run is waiting for GPU availability and no speedup is measured. Scoped allocation tests pass at 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive control. The prior authority-free target-only Qwen observation remains diagnostic and nonbenchmark at approximately 13.65s TTFT and 2.77 seconds per post-first token. Protected infrastructure is absent; no authenticated R33, serving, authenticated A/B, vLLM/SGLang comparison, qualification, or production authority exists.",
+      "Private integration 6ef78dc adds verified SHA-256 full-block updates and opt-in engineering startup diagnostics. The emitted aggregate 528 still uses public fe2o3 42882993; a repin to latest public 0ea54ed and a corresponding new artifact are pending. All 10 positive proof packages and the negative actual-body semantic mutations pass at frozen source bb50d0e, but remaining workspace quality and runtime checks are incomplete. The 32-token Ferric run has not started because all eight shared GPUs were occupied at the latest availability checkpoint. Protected infrastructure and the external authenticated authority bundle are absent; no authenticated R33, serving, new TTFT/TPOT, authenticated A/B, vLLM/SGLang comparison, qualification, or production authority exists.",
   },
   teams: [
     {
@@ -772,9 +823,9 @@ window.FERRIC_PROJECT = Object.freeze({
       state: "integration",
       status: "Authority paths under review",
       completed:
-        "Current source 9dcbd6e, tree fd9cfdb, joins the production owner, resident same-shape allocation repair, K3 source, and exact 15-lock active 42882993 compiler/runtime pin with the previously integrated engine and authority-boundary work.",
+        "Private integration 6ef78dc joins the production owner, resident same-shape allocation repair, K3 source, verified SHA-256 full-block updates, and off-by-default engineering startup diagnostics with the previously integrated engine and authority-boundary work.",
       current:
-        "The host engine matrix passes 636 tests with 9 hardware ignores plus 171 doctests. Integrated engine check, strict Clippy, and focused allocation validation pass. The reviewed 428 aggregate emitted with exact replay; hardware execution is waiting for GPU availability. The 32-token Hugging Face reference is ready, but only its 8-token prefix has been observed through Ferric. The 9dc component matrix passed; a stale authenticated S1/K4 policy anchor stopped preflight before the full qualifier started.",
+        "Frozen qualifier source bb50d0e passed all 10 positive proof packages with 1,586 queries, 0 errors, and 694 bodies, plus the negative actual-body semantic mutations without timeout; remaining workspace quality and runtime checks are incomplete. The reviewed 428 aggregate emitted with exact replay, while public fe2o3 has advanced to 0ea54ed and repin checks are underway. The 32-token Hugging Face reference is ready, but Ferric hardware execution has not started because all eight shared GPUs were occupied at the latest availability checkpoint.",
       blockedBy:
         "R33 still needs the external authenticated authority bundle and a 20-window hardware run. M1 also depends on protected services, current-head qualification, authenticated Qwen accuracy, and matched baselines.",
       next:
@@ -822,7 +873,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "At cb9b5ca, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies. The full qualifier stopped at the 600-second limit while cold-compiling its first negative ferric-engine target, before the remaining negative and quality gates.",
+        "At frozen source bb50d0e, all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, and negative actual-body semantic mutations passed without timeout. Remaining workspace quality and runtime checks are incomplete.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
@@ -854,7 +905,7 @@ window.FERRIC_PROJECT = Object.freeze({
       "The corrected observation is diagnostic, benchmark_comparable=false, and authority none; authenticated R33 remains blocked on the external supervisor/current-record/verifier/model/artifact authority bundle",
       "A prior 14.36s TTFT and approximately 3.05s TPOT observation used the wrong GEMM layout and produced nonsense output; those numbers are invalid and noncomparable, not Ferric performance results",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current source integration 9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1, tree fd9cfdb068620b8b16c3ed9bcc5f81918afd1293, pins all 15 active compiler/runtime lockfiles to public fe2o3 42882993b3f84d60f38e398d2018cc9302e8fe19; its component matrix passed, then stale S1/K4 source policy stopped preflight before the full qualifier started; no receipt exists",
+      "Private integration 6ef78dc includes verified SHA-256 full-block updates and off-by-default stderr-only startup diagnostics. Frozen qualifier source bb50d0e contains the corrected S1/K4 policy anchor; all 10 positive packages pass, negative and quality gates remain incomplete, and no receipt exists",
       "K3 work-proportional KV-write is integrated and the reviewed aggregate emitted with exact replay; hardware execution is waiting for GPU availability and no speedup or regression has been measured",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
@@ -864,10 +915,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Signed current public main 42882993b3f84d60f38e398d2018cc9302e8fe19, tree d7d69a4aa0f9be48fd153840e96b1550c0de4117, provides the current compiler and KFD runtime baseline",
+      "Published current public main 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68, provides the latest compiler and KFD runtime baseline",
       "Public 428 includes reviewed dynamic GridExclusive projection and singleton execution-domain race discharge in addition to the pinned-nightly vendor contract, caller-buffer completed readback, and bounded Worker diagnostics",
       "On MI300X, KFD initialization improves from 76.512s to 6.150s for 1 GiB (12.44x) and from 1206.846s to 93.074s for 16.384 GB (12.97x), saving 1113.772s or 18m33.8s; formatting, check, strict Clippy, and tests pass",
-      "Ferric source 9dcbd6e pins all 15 active compiler/runtime lockfiles to public 428; its integrated engine check and strict Clippy pass, while formal M1 qualification remains open",
+      "Ferric repin checks for public 0ea are underway; current emitted aggregate 528 remains compiled with public 428, and formal M1 qualification remains open",
+      "An independent public-0ea descriptor-only CPU probe hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution, device initialization, HBM upload, and request latency",
       "The current corrected HSACO has an authority-free target-only observation but no authenticated R33 result",
       "fe2o3's generic service queue currently admits at most 16 queue-visible allocations; Ferric attempt 2 presented 20 and failed closed before publication",
       "No Ferric model kernel or inference policy is moved upstream",
@@ -887,25 +939,40 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
-      sourceStatus: "9dcbd6e",
-      title: "Passed the current-source component matrix",
+      sourceStatus: "6ef78dc",
+      title: "Added bounded engineering startup phase diagnostics",
       state: "integration",
       detail:
-        "Source 9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1, tree fd9cfdb068620b8b16c3ed9bcc5f81918afd1293, passed formatting, Clippy, debug, release, default-feature, all-feature, Worker behavior, source-closure, benchmark, reference, and R29 component gates. Preflight then stopped at a stale authenticated S1/K4 source-policy anchor before the full qualifier started. A narrow fail-closed policy retarget is in preparation with no production change. The prior cb9b5ca positive checkpoint remains the latest completed proof total: 10 packages, 1,586 queries, 0 errors, and 694 admitted executable bodies.",
+        "Private integration 6ef78dc adds monotonic phase-completion diagnostics for target and speculative engineering smoke. They are off by default, stderr-only, contain no user or model data, and do not alter stdout JSON or controller timing. Focused validation passed 10 speculative tests, 17 target tests with one GPU test ignored, 20 policy tests, and strict Clippy. This adds observability only, not a performance or serving claim.",
     },
     {
-      sourceStatus: "9dcbd6e",
-      title: "Validated the exact public fe2o3 428 repin",
-      state: "integration",
-      detail:
-        "All 15 active Ferric compiler/runtime lockfiles are pinned to public fe2o3 42882993b3f84d60f38e398d2018cc9302e8fe19, tree d7d69a4aa0f9be48fd153840e96b1550c0de4117. Source and dependency inventories were regenerated and independently checked; the only dependency-record delta beyond the revision was fe2o3-host's required rustix process feature. This is not formal M1 acceptance.",
-    },
-    {
-      sourceStatus: "cb9b5ca",
-      title: "Completed every current-source positive proof package",
+      sourceStatus: "63e0f7f",
+      title: "Verified SHA-256 aligned full-block updates",
       state: "verified",
       detail:
-        "Source cb9b5ca2612c11f94e30a6b80c3cf285f905cd22, tree ba49adff7807ccaa953a526b3c3c845c780e07c3, completed all 10 selected positive packages: 1,586 verification queries, 0 errors, and 694 admitted executable bodies. The full qualifier then stopped at 600 seconds while cold-compiling the first negative ferric-engine target, so later negative and quality gates did not run and no receipt was emitted. Evidence SHA256SUMS digest: 0c28904134dc52c96b7049b3dca63e469a710646b7fc22c6cbe898576df4d82b.",
+        "Private integration 63e passed the full ferric-build proof at 296 queries with 0 errors, 143 release tests, strict Clippy, and seven byte-exact generated records. Interleaved microbenchmarks improved 1 MiB updates by 1.115x to 1.119x, while 63/65-byte updates regressed 0.49% to 1.53%. No end-to-end startup gain is claimed.",
+    },
+    {
+      sourceStatus: "bb50d0e",
+      title: "Passed all positive packages on the frozen qualifier",
+      state: "integration",
+      detail:
+        "Frozen source bb50d0e, tree 7f3f235, includes the corrected authenticated S1/K4 policy anchor and completed all 10 selected positive packages: 1,586 verification queries, 0 errors, and 694 admitted executable bodies. Negative actual-body semantic mutations also pass without timeout; remaining workspace quality and runtime checks are incomplete, so no qualification receipt exists.",
+    },
+    {
+      commit: "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Advanced the public compiler and runtime baseline",
+      state: "implemented",
+      detail:
+        "Published public fe2o3 main is 0ea54ed, tree 15f49dd. Repin review found unchanged records byte-exact, with three TCB changes limited to the revision and declared float-casts test target; the source-pinned ELF was rebuilt and binding-checked. Final handoff is pending, current authority-free aggregate 528 remains compiled with public 42882993, and a new 0ea artifact has not been emitted. An independent descriptor-only CPU probe hashed 97.313 GiB in 58.133 seconds and excludes GPU execution.",
+    },
+    {
+      sourceStatus: "528fa12",
+      title: "Bounded the current pre-device startup observation",
+      state: "observed",
+      detail:
+        "The 428 host plus authority-free aggregate 528 completed artifact admission, KFD admission, topology enumeration, and CPU model/bootstrap preparation to the pre-device probe in 98.23 seconds. This excludes initialize_memory, allocation, HBM upload, dispatch, controller execution, and token generation. All eight shared MI300X GPUs were occupied by other users, so no Ferric 32-token run or new TTFT/TPOT result followed.",
     },
     {
       sourceStatus: "baae947",
@@ -1324,7 +1391,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Current source 9dcbd6e, tree fd9cfdb, pins all 15 active compiler/runtime lockfiles to signed fe2o3 public main 42882993, tree d7d69a4. It includes the production owner, resident allocation repair, and K3 work-proportional KV-write. The production-used same-shape core measures 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive allocator control; the host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests, and integrated check, strict Clippy, and focused allocation validation pass. The reviewed aggregate emitted with 26 GuardedStore operations and exact replay, but hardware execution is waiting for GPU availability and no speedup is measured. The prior target-only Qwen observation remains diagnostic and nonbenchmark at 13.649661699s TTFT and 2.7656050044 seconds per post-first token; the 32-token reference exists but Ferric has not run that comparison. The 9dc component matrix passed, then stale authenticated S1/K4 source policy stopped preflight before the full qualifier started. No serving, comparable benchmark, vLLM/SGLang baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
+      "Private integration 6ef78dc adds a verified SHA-256 aligned full-block path and opt-in engineering startup diagnostics. The SHA path passed 296 Verus queries with 0 errors, 143 release tests, and seven byte-exact records; 1 MiB microbenchmarks improved 1.115x to 1.119x while 63/65-byte cases regressed 0.49% to 1.53%, with no end-to-end gain claim. The diagnostics are off by default, stderr-only, and do not alter stdout JSON or controller timing. Published public fe2o3 main is now 0ea54ed and repin checks are underway; emitted aggregate 528 remains compiled with public 42882993. Its CPU pre-device probe completed in 98.23 seconds after KFD admission and topology enumeration and excludes initialize_memory, HBM upload, and dispatch. Frozen qualifier source bb50d0e passed all 10 positive packages at 1,586 queries, 0 errors, and 694 bodies, plus the negative actual-body semantic mutations without timeout; remaining workspace quality and runtime checks are incomplete. The 32-token reference exists; all eight shared GPUs were occupied at the latest availability checkpoint, so Ferric has not run it. No serving, new TTFT/TPOT, comparable benchmark, vLLM/SGLang baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],

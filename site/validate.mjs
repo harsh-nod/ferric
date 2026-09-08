@@ -78,9 +78,29 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "d72f740cbfd0c17ee2125930c322ed825507c0b7",
-  integrationCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-  integrationTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
+  siteRefreshBase: "2af5494b9d2a1f75cb63722505a734ba8855b83b",
+  integrationCommit: "6ef78dc4534317384f7275115c5e77a8b1acb702",
+  integrationTree: "5fc4c38f0490ad8073b2b576c691a772e465203a",
+  sha256FastPathCommit: "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
+  sha256FastPathVerusQueries: 296,
+  sha256FastPathVerusErrors: 0,
+  sha256FastPathReleaseTestsPassed: 143,
+  sha256FastPathGeneratedRecordsExact: 7,
+  sha256FastPathOneMiBSpeedupMinimum: 1.115,
+  sha256FastPathOneMiBSpeedupMaximum: 1.119,
+  sha256FastPathSmallChunkRegressionMinimumPercent: 0.49,
+  sha256FastPathSmallChunkRegressionMaximumPercent: 1.53,
+  sha256FastPathEndToEndGainClaimed: false,
+  startupDiagnosticsCommit: "6ef78dc4534317384f7275115c5e77a8b1acb702",
+  startupDiagnosticsDefaultEnabled: false,
+  startupDiagnosticsStderrOnly: true,
+  startupDiagnosticsChangesJson: false,
+  startupDiagnosticsChangesControllerTiming: false,
+  startupDiagnosticsSpeculativeTestsPassed: 10,
+  startupDiagnosticsTargetTestsPassed: 17,
+  startupDiagnosticsTargetHardwareIgnored: 1,
+  startupDiagnosticsPolicyTestsPassed: 20,
+  startupDiagnosticsStrictClippyGreen: true,
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -368,14 +388,18 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "42882993b3f84d60f38e398d2018cc9302e8fe19",
-  fe2o3LatestTree: "d7d69a4aa0f9be48fd153840e96b1550c0de4117",
+  fe2o3LatestMain: "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
+  fe2o3LatestTree: "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
-  fe2o3CurrentRepinActive: false,
-  fe2o3CurrentRepinIntegrated: true,
+  fe2o3CurrentRepinActive: true,
+  fe2o3CurrentRepinIntegrated: false,
   fe2o3CurrentRepinFormalAcceptance: false,
   fe2o3CurrentRepinLockfiles: 15,
+  fe2o3CurrentRepinUnchangedRecordsExact: true,
+  fe2o3CurrentRepinChangedTcbRecords: 3,
+  fe2o3CurrentRepinElfRebuiltAndBound: true,
+  fe2o3CurrentRepinFinalHandoffPending: true,
   fe2o3PreexistingDcoAncestryConcern: true,
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
   fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
@@ -386,13 +410,32 @@ const expectedCurrent = {
   currentAggregateGuardedStores: 26,
   currentAggregateAuthority: "none",
   currentAggregateHardwareRunPending: true,
-  currentQualificationSourceCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-  currentQualificationSourceTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
-  currentQualificationState: "component-matrix-passed-stale-s1k4-policy-anchor",
+  currentAggregateCompilerCommit: "42882993b3f84d60f38e398d2018cc9302e8fe19",
+  latestFe2o3AggregateEmitted: false,
+  currentQualificationSourceCommit: "bb50d0e0c71e44271b892120c208650bd444f684",
+  currentQualificationSourceTree: "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
+  currentQualificationState: "positive-and-negative-semantic-gates-passed-quality-runtime-running",
   currentQualificationComponentMatrixPassed: true,
-  currentQualificationFullRunStarted: false,
-  currentQualificationRunning: false,
+  currentQualificationFullRunStarted: true,
+  currentQualificationRunning: true,
   currentQualificationReceiptEmitted: false,
+  currentQualificationPositivePackagesPassed: 10,
+  currentQualificationPositiveQueries: 1586,
+  currentQualificationPositiveErrors: 0,
+  currentQualificationPositiveBodies: 694,
+  currentQualificationNegativeActualBodyMutationsPassed: true,
+  currentQualificationNegativeAndQualityComplete: false,
+  currentHostArtifactPreDeviceProbeSeconds: 98.23,
+  currentHostArtifactPreDeviceProbeIncludesKfdAdmission: true,
+  currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration: true,
+  currentHostArtifactPreDeviceProbeIncludesInitialize: false,
+  currentHostArtifactPreDeviceProbeIncludesHbm: false,
+  latestFe2o3KfdDescriptorProbeGib: 97.313,
+  latestFe2o3KfdDescriptorProbeSeconds: 58.133,
+  latestFe2o3KfdDescriptorProbeIncludesGpu: false,
+  mi300xGpuCount: 8,
+  mi300xGpuAvailableForFerric: false,
+  mi300xGpuOccupancy: "all-in-use-by-other-users",
   qwenReference32ResultSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
   qwenReference32Available: true,
   ferricQwen32ComparisonComplete: false,
@@ -551,6 +594,8 @@ for (const key of [
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
+  "sha256FastPathCommit",
+  "startupDiagnosticsCommit",
   "integrationFormattingFixCommit",
   "integrationFormattingFixTree",
   "priorValidatedIntegrationCommit",
@@ -637,6 +682,7 @@ for (const key of [
   "speculativeAttempt3Tree",
   "currentQualificationSourceCommit",
   "currentQualificationSourceTree",
+  "currentAggregateCompilerCommit",
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
@@ -953,20 +999,43 @@ assert(project.current.productionOwnerFocusedGatesGreen === true, "production-ow
 assert(project.current.k3WorkProportionalKvWriteState === "artifact-emitted-hardware-pending", "K3 validation state drifted");
 assert(project.current.k3WorkProportionalKvWriteIntegrated === true, "K3 source must remain integrated");
 assert(project.current.k3WorkProportionalSpeedupMeasured === false, "K3 must not claim a measured speedup");
-assert(project.current.fe2o3CurrentRepinActive === false, "integrated fe2o3 repin must not remain active");
-assert(project.current.fe2o3CurrentRepinIntegrated === true, "current fe2o3 repin must remain integrated");
+assert(project.current.fe2o3CurrentRepinActive === true, "latest fe2o3 repin must remain in progress");
+assert(project.current.fe2o3CurrentRepinIntegrated === false, "latest fe2o3 repin must not be presented as integrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
 assert(project.current.fe2o3CurrentRepinLockfiles === 15, "active fe2o3 lockfile pin count drifted");
+assert(project.current.fe2o3CurrentRepinUnchangedRecordsExact === true, "unchanged repin records must remain byte-exact");
+assert(project.current.fe2o3CurrentRepinChangedTcbRecords === 3, "changed repin TCB record count drifted");
+assert(project.current.fe2o3CurrentRepinElfRebuiltAndBound === true, "source-pinned ELF rebuild and binding check must remain explicit");
+assert(project.current.fe2o3CurrentRepinFinalHandoffPending === true, "latest repin final handoff must remain pending");
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
 assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
 assert(project.current.currentAggregateHardwareRunPending === true, "current aggregate hardware run must remain pending");
-assert(project.current.currentQualificationState === "component-matrix-passed-stale-s1k4-policy-anchor", "current-source qualification state drifted");
+assert(project.current.currentQualificationState === "positive-and-negative-semantic-gates-passed-quality-runtime-running", "current-source qualification state drifted");
 assert(project.current.currentQualificationComponentMatrixPassed === true, "current-source component matrix must remain passed");
-assert(project.current.currentQualificationFullRunStarted === false, "full current-source qualifier must remain unstarted");
-assert(project.current.currentQualificationRunning === false, "full current-source qualifier must not be presented as running");
+assert(project.current.currentQualificationFullRunStarted === true, "full current-source qualifier must remain started");
+assert(project.current.currentQualificationRunning === true, "full current-source qualifier must remain in progress");
 assert(project.current.currentQualificationReceiptEmitted === false, "current-source qualifier must not claim a receipt");
+assert(project.current.currentQualificationPositivePackagesPassed === 10, "positive proof package count drifted");
+assert(project.current.currentQualificationPositiveQueries === 1586, "positive proof query count drifted");
+assert(project.current.currentQualificationPositiveErrors === 0, "positive proof errors must remain zero");
+assert(project.current.currentQualificationPositiveBodies === 694, "positive proof body count drifted");
+assert(project.current.currentQualificationNegativeActualBodyMutationsPassed === true, "negative actual-body semantic mutations must remain passed");
+assert(project.current.currentQualificationNegativeAndQualityComplete === false, "incomplete qualifier gates must not be presented as complete");
+assert(project.current.latestFe2o3AggregateEmitted === false, "a public-0ea aggregate must not be claimed before emission");
+assert(project.current.currentHostArtifactPreDeviceProbeIncludesKfdAdmission === true, "pre-device probe must retain KFD admission");
+assert(project.current.currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration === true, "pre-device probe must retain topology enumeration");
+assert(project.current.currentHostArtifactPreDeviceProbeIncludesInitialize === false, "pre-device probe must exclude initialization");
+assert(project.current.currentHostArtifactPreDeviceProbeIncludesHbm === false, "pre-device probe must exclude HBM upload");
+assert(project.current.latestFe2o3KfdDescriptorProbeIncludesGpu === false, "descriptor CPU probe must exclude GPU work");
+assert(project.current.mi300xGpuCount === 8, "shared MI300X count drifted");
+assert(project.current.mi300xGpuAvailableForFerric === false, "site must not claim a free Ferric GPU");
+assert(project.current.sha256FastPathEndToEndGainClaimed === false, "SHA microbenchmark must not become an end-to-end gain claim");
+assert(project.current.startupDiagnosticsDefaultEnabled === false, "engineering diagnostics must remain opt-in");
+assert(project.current.startupDiagnosticsStderrOnly === true, "engineering diagnostics must remain stderr-only");
+assert(project.current.startupDiagnosticsChangesJson === false, "engineering diagnostics must not change JSON");
+assert(project.current.startupDiagnosticsChangesControllerTiming === false, "engineering diagnostics must not change controller timing");
 assert(project.current.qwenReference32Available === true, "32-token Qwen reference must remain available");
 assert(project.current.ferricQwen32ComparisonComplete === false, "Ferric 32-token comparison must remain pending");
 assert(project.current.fe2o3KfdInitializationGatesGreen === true, "KFD initialization gates must remain green");
@@ -1154,11 +1223,15 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "d72f740cbfd0c17ee2125930c322ed825507c0b7",
-  "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
-  "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
+  "2af5494b9d2a1f75cb63722505a734ba8855b83b",
+  "6ef78dc4534317384f7275115c5e77a8b1acb702",
+  "5fc4c38f0490ad8073b2b576c691a772e465203a",
+  "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
+  "bb50d0e0c71e44271b892120c208650bd444f684",
+  "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
+  "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
+  "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
   "42882993b3f84d60f38e398d2018cc9302e8fe19",
-  "d7d69a4aa0f9be48fd153840e96b1550c0de4117",
   "528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a",
   "cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804",
   "382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5",
@@ -1167,9 +1240,21 @@ const missingSnapshotClaims = [
   "26 GuardedStore",
   "exact replay",
   "hardware run is pending",
-  "component matrix passed",
-  "stale authenticated S1/K4 source-policy anchor",
-  "full qualifier has not started",
+  "1.115x",
+  "1.119x",
+  "0.49%",
+  "1.53%",
+  "off by default",
+  "stderr-only",
+  "98.23 seconds",
+  "97.313 GiB",
+  "58.133 seconds",
+  "three TCB",
+  "source-pinned ELF",
+  "Final handoff is pending",
+  "negative actual-body semantic mutations",
+  "remaining workspace quality and runtime checks",
+  "all eight shared MI300X GPUs",
   "Ferric has not run 32 tokens",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
@@ -1449,7 +1534,7 @@ const missingSnapshotClaims = [
   "repin",
   "retained-borrow locals 178 and 40",
   "AMDGPU LLVM lowering",
-  "Protected infrastructure is absent",
+  "protected infrastructure",
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
@@ -1487,7 +1572,7 @@ const missingSnapshotClaims = [
   "2ba02a8",
   "rustc-literal-escaper",
   "public next-window path",
-  "reviewed authority-free aggregate",
+  "authority-free aggregate 528",
   "No authenticated 20-window run",
   "TTFT",
   "TPOT",
@@ -1500,6 +1585,12 @@ assert(
   `current snapshot is missing claims: ${missingSnapshotClaims.join(", ")}`,
 );
 for (const staleOrForbidden of [
+  "Signed public fe2o3 main is now 0ea",
+  "Signed public fe2o3 main is 0ea",
+  "Signed current public main 0ea",
+  "Signed fe2o3 public main is now 0ea",
+  "stale authenticated S1/K4 source-policy anchor",
+  "stale S1/K4 source policy",
   "6,854 admitted",
   "97 unadmitted",
   "7,632 executable bodies",

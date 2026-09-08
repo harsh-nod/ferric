@@ -219,10 +219,13 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current reviewed source 9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1, tree
-            fd9cfdb068620b8b16c3ed9bcc5f81918afd1293, includes the production owner,
-            resident allocation repair, and K3 work-proportional KV-write. All 15 active
-            compiler/runtime lockfiles are pinned to signed public fe2o3 42882993.
+            Private integration 6ef78dc includes the production owner, resident allocation repair,
+            K3 work-proportional KV-write, verified SHA-256 full-block updates, and opt-in
+            engineering startup diagnostics. The diagnostics are off by default, stderr-only, and
+            do not change stdout JSON or controller timing. The SHA path passed 296 Verus queries
+            with 0 errors, 143 release tests, and seven byte-exact records. Its 1 MiB microbenchmark
+            improved 1.115x to 1.119x, while 63/65-byte cases regressed 0.49% to 1.53%; no
+            end-to-end gain is claimed.
             The production-used same-shape core measures 0 allocations and 0 reallocations for one
             round and repeated 16-round execution; a positive control confirms allocator counting.
             The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests.
@@ -243,18 +246,24 @@
             supervisor/current-record/verifier/model/artifact authority bundle.
 
             Ferric owns its model-specific kernels and inference semantics, and writes those kernels
-            through fe2o3's Rust-to-KIR-to-LLVM compiler path. Signed fe2o3 public main
-            42882993b3f84d60f38e398d2018cc9302e8fe19, tree
-            d7d69a4aa0f9be48fd153840e96b1550c0de4117, is the current compiler and KFD baseline.
-            The reviewed authority-free aggregate emitted with 26 GuardedStore operations and exact
+            through fe2o3's Rust-to-KIR-to-LLVM compiler path. Published fe2o3 public main is now
+            0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree
+            15f49dde796fe9cbf76274f7d36c7de4c25fef68. Ferric repin checks are underway, and a new
+            0ea artifact has not been emitted. The current authority-free aggregate remains built
+            with public 42882993 and emitted with 26 GuardedStore operations and exact
             replay: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a,
             HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804,
             and handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5.
-            Its hardware run is waiting for GPU availability, and no K3 speedup or regression has
-            been measured. The 9dc component matrix passed, then preflight stopped at a stale
-            authenticated S1/K4 source-policy anchor before the full qualifier started. A narrow
-            fail-closed policy retarget is in preparation; no production change is required and no
-            receipt exists. Authority is none, protected infrastructure is absent, and all 33 M1
+            A CPU-only pre-device probe completed in 98.23 seconds after KFD admission and topology
+            enumeration; it excludes initialize_memory, HBM upload, and dispatch. An independent public-0ea descriptor probe hashed
+            97.313 GiB in 58.133 seconds and also excludes GPU work. Frozen qualifier source bb50d0e
+            includes the corrected S1/K4 policy anchor and passed all 10 positive proof packages:
+            1,586 queries, 0 errors, and 694 bodies. Negative actual-body semantic mutations also
+            pass without timeout; remaining workspace quality and runtime checks are incomplete,
+            and no receipt exists. At the latest availability checkpoint, all eight shared MI300X
+            GPUs were occupied by other users, so the
+            Ferric 32-token run has not started and there is no new TTFT, TPOT, vLLM, or SGLang
+            comparison. Authority is none, protected infrastructure is absent, and all 33 M1
             exit gates remain open. There is no serving endpoint, authenticated A/B, production
             TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification receipt, or production
             authority.
