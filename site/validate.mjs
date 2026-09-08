@@ -191,6 +191,25 @@ const expectedCurrent = {
   r33BroaderRepairCoversSettlementAndRelease: true,
   r33BroaderRepairAddsExplicitFaultedClose: true,
   r33BroaderRepairTestsOutputBudgets: [128, 129],
+  r33CurrentCandidateAbbrev: "2ba02a8",
+  r33CurrentCandidateBaseAbbrev: "2958b69",
+  r33CurrentReviewState: "hold-allocation-free-claim-unaccepted",
+  r33CurrentMatrixGreen: true,
+  r33CurrentEngineAllTargetsPassed: 724,
+  r33CurrentEngineDoctestsPassed: 171,
+  r33CurrentAdapterAllTargetsPassed: 104,
+  r33CurrentSourceGateTestsPassed: 33,
+  r33CurrentAdmissionModules: 171,
+  r33CurrentAdmissionBodies: 8059,
+  r33CurrentNarrowZeroAllocationTestsPassed: 4,
+  r33CurrentNarrowMeasuredAllocations: 0,
+  r33CurrentNarrowMeasuredReallocations: 0,
+  r33CurrentPublicNextWindowAllocationTested: false,
+  r33CurrentPublicWarmedPathAllocationFree: false,
+  r33CurrentRepairRequired: true,
+  r33CurrentTwentyWindowAttempted: false,
+  r33CurrentTwentyWindowBlocker: "absent-authenticated-artifacts-and-non-test-production-owner",
+  r33CurrentHardwareQualified: false,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -248,6 +267,20 @@ const expectedCurrent = {
   r29FormalQualificationBlocked: true,
   r29ColdStartupHbmCostObserved: true,
   r29ColdHbmTargetInitApproxMinutes: 24,
+  r29CurrentCandidateAbbrev: "d7d2",
+  r29CurrentSharedTestsPassed: 75,
+  r29CurrentHardwareTestsIgnored: 2,
+  r29CurrentSourcePolicyTestsPassed: 17,
+  r29CurrentNativeTranscriptTestsPassed: 1,
+  r29CurrentProducerPolicyGreen: true,
+  r29CurrentVendorOverlayGreen: true,
+  r29CurrentAggregateBuildState: "hold-offline-build-std-vendor-closure",
+  r29CurrentAggregateMissingPackage: "rustc-literal-escaper",
+  r29CurrentAggregateHsaco: false,
+  r29CurrentTargetSmokeCompleted: false,
+  r29CurrentS1T128Captured: false,
+  r29CurrentTtftMeasured: false,
+  r29CurrentTpotMeasured: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -429,10 +462,10 @@ const expectedCurrent = {
   radixVerusVerified: 608,
   radixVerusErrors: 0,
   openM1Gates: 33,
-  engineeringSmokeBinaryStaged: true,
+  engineeringSmokeBinaryStaged: false,
   canonicalQwenSnapshotVerified: true,
   radixPrefixIntegrated: true,
-  currentAggregateHsaco: true,
+  currentAggregateHsaco: false,
   qwenTokenObserved: true,
   servingEndpointAvailable: false,
   baselineRunsAvailable: false,
@@ -545,10 +578,10 @@ assert(project.current.integrationAdapterHardwareIgnored === 2, "integration ada
 assertSha256(project.current.integrationEvidenceAggregateSha256, "current.integrationEvidenceAggregateSha256");
 assert(project.current.formalErrors === 0, "strict Verus errors must remain zero");
 assert(project.current.openM1Gates === 33, "all 33 M1 exit gates remain open");
-assert(project.current.engineeringSmokeBinaryStaged === true, "engineering smoke binary must remain explicit");
+assert(project.current.engineeringSmokeBinaryStaged === false, "current engineering smoke must remain absent");
 assert(project.current.canonicalQwenSnapshotVerified === true, "canonical Qwen snapshot status drifted");
 assert(project.current.radixPrefixIntegrated === true, "integrated radix status drifted");
-assert(project.current.currentAggregateHsaco === true, "authority-free exact HSACO must remain explicit");
+assert(project.current.currentAggregateHsaco === false, "current d211 aggregate HSACO must remain absent");
 assert(project.current.qwenTokenObserved === true, "site must retain the diagnostic Qwen token observation");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
 assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
@@ -709,6 +742,25 @@ assert(project.current.r33BroaderRepairMeasuresFullWarmedRoute === true, "R33 re
 assert(project.current.r33BroaderRepairCoversSettlementAndRelease === true, "R33 repair must include settlement and release");
 assert(project.current.r33BroaderRepairAddsExplicitFaultedClose === true, "R33 repair must include explicit faulted close");
 assert(JSON.stringify(project.current.r33BroaderRepairTestsOutputBudgets) === "[128,129]", "R33 repair budget tests drifted");
+assert(/^[0-9a-f]{7}$/.test(project.current.r33CurrentCandidateAbbrev), "current R33 candidate abbreviation drifted");
+assert(/^[0-9a-f]{7}$/.test(project.current.r33CurrentCandidateBaseAbbrev), "current R33 base abbreviation drifted");
+assert(project.current.r33CurrentReviewState === "hold-allocation-free-claim-unaccepted", "current R33 review HOLD drifted");
+assert(project.current.r33CurrentMatrixGreen === true, "current R33 matrix must remain green");
+assert(project.current.r33CurrentEngineAllTargetsPassed === 724, "current R33 engine matrix count drifted");
+assert(project.current.r33CurrentEngineDoctestsPassed === 171, "current R33 doctest count drifted");
+assert(project.current.r33CurrentAdapterAllTargetsPassed === 104, "current R33 adapter matrix count drifted");
+assert(project.current.r33CurrentSourceGateTestsPassed === 33, "current R33 source-gate count drifted");
+assert(project.current.r33CurrentAdmissionModules === 171, "current R33 admission module count drifted");
+assert(project.current.r33CurrentAdmissionBodies === 8059, "current R33 admission body count drifted");
+assert(project.current.r33CurrentNarrowZeroAllocationTestsPassed === 4, "current R33 narrow allocator test count drifted");
+assert(project.current.r33CurrentNarrowMeasuredAllocations === 0, "current R33 narrow allocation count drifted");
+assert(project.current.r33CurrentNarrowMeasuredReallocations === 0, "current R33 narrow reallocation count drifted");
+assert(project.current.r33CurrentPublicNextWindowAllocationTested === false, "R33 narrow tests must not claim public next-window coverage");
+assert(project.current.r33CurrentPublicWarmedPathAllocationFree === false, "R33 public warmed path must not claim allocation freedom");
+assert(project.current.r33CurrentRepairRequired === true, "R33 allocation repair must remain required");
+assert(project.current.r33CurrentTwentyWindowAttempted === false, "R33 20-window hardware run must remain unattempted");
+assert(project.current.r33CurrentTwentyWindowBlocker === "absent-authenticated-artifacts-and-non-test-production-owner", "R33 20-window blocker drifted");
+assert(project.current.r33CurrentHardwareQualified === false, "current R33 candidate must remain hardware-unqualified");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
 assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
@@ -758,6 +810,24 @@ assert(project.current.r29TechnicalPrequalificationOnly === true, "R29 must rema
 assert(project.current.r29FormalQualificationBlocked === true, "R29 formal qualification blocker must remain explicit");
 assert(project.current.r29ColdStartupHbmCostObserved === true, "R29 cold HBM cost observation must remain explicit");
 assert(project.current.r29ColdHbmTargetInitApproxMinutes === 24, "R29 cold HBM target initialization estimate drifted");
+assert(project.current.r29CurrentCandidateAbbrev === "d7d2", "current R29 candidate abbreviation drifted");
+assert(project.current.r29CurrentSharedTestsPassed === 75, "current R29 shared-test count drifted");
+assert(project.current.r29CurrentHardwareTestsIgnored === 2, "current R29 ignored hardware-test count drifted");
+assert(project.current.r29CurrentSourcePolicyTestsPassed === 17, "current R29 source-policy count drifted");
+assert(project.current.r29CurrentNativeTranscriptTestsPassed === 1, "current R29 transcript-test count drifted");
+assert(project.current.r29CurrentProducerPolicyGreen === true, "current R29 producer policy must remain green");
+assert(project.current.r29CurrentVendorOverlayGreen === true, "current R29 vendor overlay must remain green");
+assert(project.current.r29CurrentAggregateBuildState === "hold-offline-build-std-vendor-closure", "current R29 aggregate build HOLD drifted");
+assert(project.current.r29CurrentAggregateMissingPackage === "rustc-literal-escaper", "current R29 missing vendor package drifted");
+for (const key of [
+  "r29CurrentAggregateHsaco",
+  "r29CurrentTargetSmokeCompleted",
+  "r29CurrentS1T128Captured",
+  "r29CurrentTtftMeasured",
+  "r29CurrentTpotMeasured",
+]) {
+  assert(project.current[key] === false, `${key} must remain false`);
+}
 assert(project.current.fe2o3CurrentRepinActive === true, "current fe2o3 repin must remain active");
 assert(project.current.fe2o3CurrentRepinIntegrated === false, "current fe2o3 repin must remain unintegrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
@@ -908,20 +978,26 @@ assertExactKeys(
   "latestObservation",
 );
 assertState(project.latestObservation.state, "latestObservation.state");
-assert(project.latestObservation.state === "observed", "hardware token must remain an observed checkpoint");
-assert(!("commit" in project.latestObservation), "hardware smoke uses source status rather than a publication binding");
+assert(project.latestObservation.state === "open", "current R29 aggregate checkpoint must remain open");
+assert(!("commit" in project.latestObservation), "unpublished R29 candidate must use source status rather than a public commit link");
 assert(
-  JSON.stringify(project.latestObservation.generatedTokenIds) === "[3681]",
-  "latest observation must retain the exact speculative correction token",
+  JSON.stringify(project.latestObservation.generatedTokenIds) === "[]",
+  "current R29 checkpoint must not claim generated tokens",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
 project.recentProgress.forEach((item, index) => {
-  const expected = item.repository
-    ? ["commit", "repository", "title", "state", "detail"]
-    : ["commit", "title", "state", "detail"];
+  const expected = item.commit
+    ? item.repository
+      ? ["commit", "repository", "title", "state", "detail"]
+      : ["commit", "title", "state", "detail"]
+    : ["sourceStatus", "title", "state", "detail"];
   assertExactKeys(item, expected, `recentProgress[${index}]`);
-  assertCommit(item.commit, `recentProgress[${index}].commit`);
+  if (item.commit) {
+    assertCommit(item.commit, `recentProgress[${index}].commit`);
+  } else {
+    assert(/^[0-9a-f]{4,7}$/.test(item.sourceStatus), `recentProgress[${index}].sourceStatus must be an abbreviated private identity`);
+  }
   assertState(item.state, `recentProgress[${index}].state`);
 });
 
@@ -930,17 +1006,9 @@ assert(project.evidence.gates.length >= 6, "evidence gate roster is incomplete")
 project.evidence.gates.forEach((entry, index) => {
   assert(Array.isArray(entry) && entry.length === 3, `evidence.gates[${index}] must be a triple`);
   assertState(entry[2], `evidence.gates[${index}].state`);
-  if (entry[0] === "Authority-free aggregate HSACO") {
-    assert(entry[1] === "1", "authority-free aggregate HSACO count drifted");
-    assert(entry[2] === "integration", "authority-free aggregate HSACO state drifted");
-  } else if (entry[0] === "Authority-free target-only diagnostic Qwen tokens") {
-    assert(entry[1] === "4", "diagnostic Qwen token count drifted");
-    assert(entry[2] === "observed", "diagnostic Qwen token state drifted");
-  } else if (entry[0] === "Authority-free speculative diagnostic Qwen tokens") {
-    assert(entry[1] === "1", "speculative Qwen token count drifted");
-    assert(entry[2] === "observed", "speculative Qwen token state drifted");
-  } else {
-    assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
+  assert(entry[2] === "open", `evidence gate ${entry[0]} must remain open`);
+  if (entry[0] !== "M1 exit gates") {
+    assert(entry[1] === "0", `evidence gate ${entry[0]} must retain zero current results`);
   }
 });
 project.evidence.legend.forEach((entry, index) => {
@@ -1089,7 +1157,6 @@ const missingSnapshotClaims = [
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
   "Exact v76",
   "Exact v77",
-  "Process status 0",
   "415,541-byte",
   "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   "both prior outlined-helper geometry gaps",
@@ -1113,17 +1180,7 @@ const missingSnapshotClaims = [
   "spent_cm谊tered",
   "hardware completion",
   "process status 0",
-  "4.227489904 seconds",
-  "15.429140005 seconds",
-  "3.733883367 seconds/token",
-  "17.076646692 seconds",
-  "1445.15 seconds",
-  "10.15 seconds above",
-  "different output length",
-  "uncontrolled cold variance",
-  "neither speedup nor regression",
   "target-only",
-  "not speculative serving",
   "23:55.18",
   "175.74 seconds",
   "10.91%",
@@ -1179,7 +1236,6 @@ const missingSnapshotClaims = [
   "1424.71 seconds",
   "status 134",
   "before queue publication",
-  "11 queue-visible allocations",
   "paired prefill plus one S1/K4 round",
   "zero draft tokens",
   "correction ID 3681",
@@ -1207,7 +1263,6 @@ const missingSnapshotClaims = [
   "all 37",
   "600-second timeout",
   "SUN_LEN",
-  "exact dependency TCB",
   "7,229",
   "7,922",
   "170 modules",
@@ -1245,7 +1300,17 @@ const missingSnapshotClaims = [
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
-  "four target-only Qwen tokens",
+  "d7d2",
+  "2ba02a8",
+  "rustc-literal-escaper",
+  "724 engine targets",
+  "104 adapter targets",
+  "8,059 bodies",
+  "allocation-free claim is unaccepted",
+  "public next-window path",
+  "non-test production owner",
+  "No current aggregate HSACO",
+  "20-window run was not attempted",
   "TTFT",
   "TPOT",
   "vLLM and SGLang baselines are absent",

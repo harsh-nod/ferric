@@ -248,8 +248,11 @@
     const body = element("div", "timeline-body");
     const heading = element("div", "timeline-heading");
     const title = element("h3", "");
+    const source = item.commit
+      ? commitLink(item.commit, item.repository)
+      : element("code", "commit-link", item.sourceStatus);
     title.append(
-      commitLink(item.commit, item.repository),
+      source,
       document.createTextNode(` ${item.title}`),
     );
     heading.append(title, stateTag(item.state));
