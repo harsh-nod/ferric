@@ -17,7 +17,7 @@ from types import ModuleType, SimpleNamespace
 from typing import NoReturn
 
 
-REVISION = "d211c9a0f0c4eebe98172cb30d09c6947f62e233"
+REVISION = "e527d230c05dfeefec6cc6c91de0b6f16310f677"
 WORKER_BYTES = b"synthetic Worker V3 linker\n"
 WORKER_ID = "fe2o3-worker-v1-sha256-" + hashlib.sha256(b"worker build").hexdigest()
 
@@ -120,10 +120,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e527d230c05dfeefec6cc6c91de0b6f16310f677", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e527d230c05dfeefec6cc6c91de0b6f16310f677", version = "=0.1.0" }
 """,
         encoding="ascii",
     )
@@ -167,8 +167,11 @@ def main() -> None:
         repository
         / "proofs/m1-qualification/ENGINEERING_VENDOR_WORKSPACE_V1.toml"
     ).read_text(encoding="ascii")
+    qualification_readme = (
+        repository / "proofs/m1-qualification/README.md"
+    ).read_text(encoding="ascii")
     for required in [
-        'FE2O3_REVISION = "d211c9a0f0c4eebe98172cb30d09c6947f62e233"',
+        'FE2O3_REVISION = "e527d230c05dfeefec6cc6c91de0b6f16310f677"',
         '"FE2O3_PRODUCTION_BUILD_CONFIG_V2": str(arguments.config)',
         '"FE2O3_TARGET": "gfx942"',
         '"authority",\n        "release",\n        "build",\n        "--locked"',
@@ -203,6 +206,12 @@ def main() -> None:
         or "CARGO_VENDOR_CHECKSUM_COMMENT" not in source
     ):
         fail("engineering vendor checksum policy drifted from pinned Cargo")
+    for required in [
+        'TOOLCHAIN=nightly-2026-04-03',
+        '--sync "$SYSROOT/lib/rustlib/src/rust/library/Cargo.toml"',
+    ]:
+        if qualification_readme.count(required) != 1:
+            fail(f"engineering build-std vendor runbook drifted: {required}")
 
     module = load(producer)
     if (

@@ -1,7 +1,7 @@
 # Synthetic Worker V3 Collector Harness
 
 This committed harness overlays test-only code onto the exact pinned fe2o3
-`d211c9a0f0c4eebe98172cb30d09c6947f62e233` source tree. It reuses fe2o3's
+`e527d230c05dfeefec6cc6c91de0b6f16310f677` source tree. It reuses fe2o3's
 adversarial durable-publication fixture and invokes Ferric's real aggregate
 collector against a hand-authored synthetic 12-entry HSACO.
 

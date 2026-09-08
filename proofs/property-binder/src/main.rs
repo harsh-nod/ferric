@@ -19,8 +19,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const FORMAT: &str = "ferric.m0-property-manifest.v1";
-const FE2O3_COMMIT: &str = "d211c9a0f0c4eebe98172cb30d09c6947f62e233";
-const FE2O3_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=d211c9a0f0c4eebe98172cb30d09c6947f62e233#d211c9a0f0c4eebe98172cb30d09c6947f62e233";
+const FE2O3_COMMIT: &str = "e527d230c05dfeefec6cc6c91de0b6f16310f677";
+const FE2O3_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=e527d230c05dfeefec6cc6c91de0b6f16310f677#e527d230c05dfeefec6cc6c91de0b6f16310f677";
 const MACHINE_NAMESPACE: &str = "harsh-nod.ferric.machine_refined.v1";
 const MACHINE_CODE: u16 = 1;
 const EVIDENCE_FORMAT: &str = "FERRIC-M0-EVIDENCE-INDEX-V1";

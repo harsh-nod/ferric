@@ -383,7 +383,7 @@ python3 -I -B \
 ```
 
 The command admits only public fe2o3 main revision
-`d211c9a0f0c4eebe98172cb30d09c6947f62e233`, verifies both aggregate Cargo
+`e527d230c05dfeefec6cc6c91de0b6f16310f677`, verifies both aggregate Cargo
 pins and the lockfile, reconstructs the exact protected-release environment,
 and invokes `cargo-fe2o3 authority release build --locked`. It fails before
 spawning Cargo unless the fixed root-owned compiler client profile at
@@ -424,9 +424,21 @@ python3 -I -B \
 When the protected compiler service is unavailable, the same entrypoint can
 produce an explicitly non-authoritative engineering HSACO without contacting
 that service. First prepare a disposable, canonical `cargo vendor` tree for
-the exact public fe2o3 checkout. This installs only the reviewed
-`fe2o3-device` manifest and its required workspace overlay into that disposable
-tree:
+the exact public fe2o3 checkout. The vendor tree must include both the aggregate
+device workspace and the pinned nightly rust-src `-Zbuild-std=core` dependency
+closure:
+
+```text
+TOOLCHAIN=nightly-2026-04-03
+SYSROOT="$(rustup run "$TOOLCHAIN" rustc --print sysroot)"
+rustup run "$TOOLCHAIN" cargo vendor --locked --versioned-dirs \
+  --manifest-path FERRIC_SOURCE_REPO/device/qwen3-all-kernels-v1/Cargo.toml \
+  --sync "$SYSROOT/lib/rustlib/src/rust/library/Cargo.toml" \
+  CARGO_VENDOR
+```
+
+Then install only the reviewed `fe2o3-device` manifest and its required
+workspace overlay into that disposable tree:
 
 ```text
 python3 -I -B \

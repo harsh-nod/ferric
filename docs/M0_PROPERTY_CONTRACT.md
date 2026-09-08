@@ -56,7 +56,7 @@ constructing the set.
 
 The qualification builds `proofs/property-binder` against
 `fe2o3-proof-contracts` at exact fe2o3 commit
-`d211c9a0f0c4eebe98172cb30d09c6947f62e233`. The binder checks this table
+`e527d230c05dfeefec6cc6c91de0b6f16310f677`. The binder checks this table
 against `proofs/M0_PROPERTIES.json`, reconciles every `Proved` path and required
 actual-body mutation, invokes `ContractSetV1::validate_closed`, and emits a
 canonical property artifact. Its binary, source closure, lockfile, complete
