@@ -26,6 +26,27 @@ def reject_panicking_production(source: str, label: str) -> None:
             fail(f"{label} contains forbidden production token {token}")
 
 
+def has_ordered_effective_prefill_wait(source: str) -> bool:
+    """Require the deadline-derived timeout to cross the one wait effect."""
+    if source.count("published.wait_for(") != 1:
+        return False
+    if "published.wait_for(queue_wait_timeout.milliseconds())" in source:
+        return False
+    ordered = [
+        "let Some(wait_timeout) = deadline_expired("
+        "Boundary::BeforeCompletionWait, queue_wait_timeout)",
+        "let completed = match published.wait_for(wait_timeout.milliseconds())",
+        "if deadline_expired(Boundary::AfterCompletionWait, queue_wait_timeout).is_none()",
+    ]
+    tail = source
+    for needle in ordered:
+        position = tail.find(needle)
+        if position < 0:
+            return False
+        tail = tail[position + len(needle) :]
+    return True
+
+
 def main() -> None:
     root = Path(sys.argv[1] if len(sys.argv) == 2 else ".").resolve()
     readback_path = root / "crates/ferric-engine/src/authenticated_physical_readback.rs"
@@ -304,11 +325,46 @@ def main() -> None:
 
     if "FERRIC_M1_ROLLOVER_PREFILL_TOKEN" in fixture:
         fail("MI300X rollover fixture still accepts an external prefill-token oracle")
-    require(
-        prefill_executor,
-        "published.wait_for(queue_wait_timeout.milliseconds())",
-        "bounded prefill wait",
+    deadline_helper = (
+        "pub(crate) fn "
+        "execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1"
     )
+    prefill_production = prefill_executor.split("#[cfg(test)]", 1)[0]
+    if prefill_production.count(deadline_helper) != 1:
+        fail("authenticated S1/K4 bridge lost unique deadline-aware prefill executor")
+    deadline_execution = prefill_production.split(deadline_helper, 1)[1]
+    if not has_ordered_effective_prefill_wait(deadline_execution):
+        fail("authenticated S1/K4 bridge lost bounded effective prefill wait")
+
+    effective_wait = "published.wait_for(wait_timeout.milliseconds())"
+    old_configured_wait = "published.wait_for(queue_wait_timeout.milliseconds())"
+    hostile_configured = deadline_execution.replace(
+        effective_wait, old_configured_wait, 1
+    )
+    if has_ordered_effective_prefill_wait(hostile_configured):
+        fail("bounded prefill checker accepts configured-timeout substitution")
+    hostile_substitute = deadline_execution.replace(
+        "Boundary::BeforeCompletionWait, queue_wait_timeout)",
+        "Boundary::BeforeCompletionWait, "
+        "M1QueueWaitTimeoutV1::new(1).unwrap_or(queue_wait_timeout))",
+        1,
+    )
+    if has_ordered_effective_prefill_wait(hostile_substitute):
+        fail("bounded prefill checker accepts substituted deadline input")
+    hostile_reordered = deadline_execution.replace(
+        "Boundary::BeforeCompletionWait", "Boundary::DeadlineSwap", 1
+    ).replace("Boundary::AfterCompletionWait", "Boundary::BeforeCompletionWait", 1)
+    hostile_reordered = hostile_reordered.replace(
+        "Boundary::DeadlineSwap", "Boundary::AfterCompletionWait", 1
+    )
+    if has_ordered_effective_prefill_wait(hostile_reordered):
+        fail("bounded prefill checker accepts reordered deadline boundaries")
+    hostile_missing_post = deadline_execution.replace(
+        "Boundary::AfterCompletionWait", "Boundary::BeforeCompletionWait", 1
+    )
+    if has_ordered_effective_prefill_wait(hostile_missing_post):
+        fail("bounded prefill checker accepts a missing post-wait deadline boundary")
+
     require(
         prefill_executor,
         "observed.observe_direct_diagnostic_choices()",
