@@ -22,8 +22,8 @@ const CRATES_IO_SOURCE: &str = "registry+https://github.com/rust-lang/crates.io-
 const VERUS_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5";
 const VERUS_RESOLVED_SOURCE: &str = "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47";
 const FE2O3_SOURCE: &str =
-    "git+https://github.com/harsh-nod/fe2o3.git?rev=cf6faec0ee3c026d3a1fc5090ab606a3b425225c";
-const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=cf6faec0ee3c026d3a1fc5090ab606a3b425225c#cf6faec0ee3c026d3a1fc5090ab606a3b425225c";
+    "git+https://github.com/harsh-nod/fe2o3.git?rev=e5351640e3df3868205bc68eac8d5ff5556352ea";
+const FE2O3_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=e5351640e3df3868205bc68eac8d5ff5556352ea#e5351640e3df3868205bc68eac8d5ff5556352ea";
 const PLIRON_SOURCE: &str =
     "git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487";
 const PLIRON_RESOLVED_SOURCE: &str = "git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487#5bdf861bf03e7f20242b25717fb653336d02e487";

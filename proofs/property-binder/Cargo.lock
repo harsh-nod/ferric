@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "fe2o3-proof-contracts"
 version = "0.1.0"
-source = "git+https://github.com/harsh-nod/fe2o3.git?rev=a6fa86b5ccf8f0438925cfec8f48a5d713874da3#a6fa86b5ccf8f0438925cfec8f48a5d713874da3"
+source = "git+https://github.com/harsh-nod/fe2o3.git?rev=e5351640e3df3868205bc68eac8d5ff5556352ea#e5351640e3df3868205bc68eac8d5ff5556352ea"
 
 [[package]]
 name = "ferric-property-binder"

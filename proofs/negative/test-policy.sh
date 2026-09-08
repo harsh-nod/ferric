@@ -323,7 +323,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_dependency["source"] = compiler_dependency["source"].replace(
-    "cf6faec0ee3c026d3a1fc5090ab606a3b425225c", "0" * 40
+    "e5351640e3df3868205bc68eac8d5ff5556352ea", "0" * 40
 )
 (scratch / "fe2o3-source.metadata").write_text(json.dumps(fe2o3), encoding="utf-8")
 
@@ -482,7 +482,7 @@ write_hostile("target", local_target)
 local_fe2o3 = copy.deepcopy(metadata)
 device_dependency = dependency(local_fe2o3, device_aggregate, "fe2o3-device")
 device_dependency["source"] = device_dependency["source"].replace(
-    "cf6faec0ee3c026d3a1fc5090ab606a3b425225c", "0" * 40
+    "e5351640e3df3868205bc68eac8d5ff5556352ea", "0" * 40
 )
 write_hostile("fe2o3", local_fe2o3)
 

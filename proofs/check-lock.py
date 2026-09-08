@@ -18,7 +18,7 @@ ROOT_PACKAGES = {
     "vstd",
 }
 SOURCE_GATE_PACKAGES = {"verus_syn"}
-FE2O3_COMMIT = "a6fa86b5ccf8f0438925cfec8f48a5d713874da3"
+FE2O3_COMMIT = "e5351640e3df3868205bc68eac8d5ff5556352ea"
 FE2O3_SOURCE = (
     "git+https://github.com/harsh-nod/fe2o3.git?"
     f"rev={FE2O3_COMMIT}#{FE2O3_COMMIT}"

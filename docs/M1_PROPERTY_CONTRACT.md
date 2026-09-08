@@ -13,12 +13,13 @@ compiler/runtime path obligations, and the allowed evidence-profile vocabulary.
 A required status is the status that a future qualification must close; it is
 never a report of current evidence.
 
-The roster distinguishes the inherited M0 `fe2o3-proof-contracts` authority at
-commit `a6fa86b5ccf8f0438925cfec8f48a5d713874da3` from the reviewed M1 upstream
-integration base at generic compiler/runtime commit
+The roster binds the inherited M0 `fe2o3-proof-contracts` authority and active
+compiler/runtime dependencies to current upstream commit
+`e5351640e3df3868205bc68eac8d5ff5556352ea`. It separately retains the reviewed
+historical M1 integration base at commit
 `a6c779f6f8052839c3a07901f9bfafa681f7b09a`, tree
-`1636cae7363b421f8850d6c455a53216f374667c`. The older M0 pin does not own or
-describe future M1 compiler, AQL, KFD, or service-host implementation.
+`1636cae7363b421f8850d6c455a53216f374667c`, as provenance rather than an active
+pin. Neither record grants or describes future M1 service-host authority.
 
 ## Target Assurance Roster
 
