@@ -61,7 +61,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-07">Updated 2026-09-07</time>
+              <time data-updated datetime="2026-09-08">Updated 2026-09-08</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -219,19 +219,20 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration b7a8545ed00ec948942690f89b2cbe891d46f836, tree
-            42f408c0c602166edcc703563df7574324ad4ad2, includes independently accepted protected
-            signer IPC commit dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4 and the Worker V3
-            quality-policy fix. Combined qualification #6 passed all 10 strict proof packages, every
-            same-source negative proof, the full negative/property policy suite, and formatting. It emitted
-            no qualification receipt because Clippy later failed; full log SHA
-            a3b7d71bc95c687c460a5b2903ccfbb1a53e066a8b0ec60c8b4c17f0a40849af. A narrow
-            exact-tree Worker plus signer preflight passes all relevant standalone formatting and Clippy
-            checks, 33/33 source-gate tests, byte-exact dependency inventories, 7,229 exact curated
-            admission identities, and 170 modules / 7,922 bodies. Its log SHA is
-            65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be. Engine and
-            engineering-adapter Clippy repairs are active; full qualification #7 has not launched. Authority
-            is none and all 33 M1 exit gates remain open.
+            Current integration a689418a737bf0b1cf71ec3742bca5702f083187, tree
+            ce9e0bc76238e569756473cf93ab8a4439062362, includes independently accepted protected
+            signer IPC commit dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4 and the reviewed quality
+            fixes. Exact full preflight is green; log SHA
+            6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4.
+            Qualification #7 passed all 10 strict proof packages, then a cold KV negative proof exceeded
+            its admitted 600-second timeout; log SHA
+            7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4.
+            Qualification #8 passed all 10 strict packages, all 37 same-source mutations, the full
+            negative/property policy, formatting, and strict Clippy. Root debug then stopped when
+            the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; log SHA
+            92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027.
+            Neither run emitted a qualification receipt, so full candidate correctness is not claimed.
+            Authority is none, protected infrastructure is absent, and all 33 M1 exit gates remain open.
 
             Prior combined remote validation at e5d23e19973a01000129aaf2ec705b8993bd21c3,
             tree f331a34c08394d4fc599880ac342baa51140eca3, passes 711 engine target tests with 7
@@ -242,10 +243,22 @@
             generic provider and resident bootstrap each retain an exact 11-allocation portfolio against
             KFD's maximum of 16; neither path has hardware qualification.
 
-            R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271, tree
-            9f5b2fa6284b029ab216466fa9bd91b001f7c792, implements bounded authenticated 20-window
-            residency but remains unintegrated on HOLD while lifecycle/custody fixes are active. No
-            candidate validation or qualification result is claimed. Integrated signer IPC commit
+            R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 plus follow-up
+            94c3c88518971700498bc05b5da34fb96b23d4e1, final tree
+            e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, implements bounded authenticated
+            20-window residency but remains unintegrated and hardware-unqualified on independent-review
+            HOLD. It needs an immediate deadline check before first-round and successor scheduling and
+            destroy-and-retain handling on two settlement Deadline paths, plus an allocation-free resident
+            hot loop before timing. Protected head-store candidate
+            fc5f86939cc826480aa008ddf69b044f3d63c585 plus
+            4d0486476c907ae681bf48d4ba57efb1394e78f5 now has cross-admission session-replay
+            repair candidate d05b2daffcc32a061f497e23db8292fb208f0e75, tree
+            c46263cc73b02d4f41b7c57137954ba08bda9f83. Remote validation is green: lib 45;
+            auth 1 passed / 2 ignored; source 2; listener 2; session 13 passed / 1 ignored; signer 3;
+            connected 2; formatting, check, and strict Clippy all pass with zero failures. Log SHA
+            d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27;
+            manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84.
+            It remains unintegrated and independent rereview is pending, so acceptance is not claimed. Integrated signer IPC commit
             dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4, tree
             b524a9ccc981466ecde2aa31afa59e2dff672fc8, was independently accepted. Its prior focused
             validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and
@@ -265,7 +278,7 @@
             262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a. Authority is none,
             benchmark_comparable=false and authenticated_AB=false. Independent review found no blocker;
             integration ea6ef07 changed only proof-inventory ordering; the result remains present in current
-            integration b7a8545.
+            integration a689418.
 
             Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
             e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses public fe2o3
@@ -277,10 +290,11 @@
             average is 3.733883367 seconds/token, both diagnostic only.
 
             Neither hardware observation is serving, authenticated A/B, comparable TTFT/TPOT, a
-            vLLM/SGLang comparison, or qualification. Physical device-KV radix prefix reuse is M2;
+            vLLM/SGLang comparison, or qualification. The baseline host is blocked by Docker permission
+            and has no native vLLM or SGLang installs, so no baseline exists. Physical device-KV radix prefix reuse is M2;
             symmetric memory and MTP remain deferred. The integrated R33 executor still supports one
-            window, not the required 20; candidate a996 implements 20-window residency but is unintegrated
-            on HOLD with lifecycle/custody fixes active. No serving endpoint,
+            window, not the required 20; the revised R33 candidate and head-store candidate remain
+            unintegrated on HOLD. No serving endpoint,
             authenticated A/B, comparable TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification
             receipt, or production authority exists.
           </p>

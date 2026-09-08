@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "a8ce419e8262b4bf65ab56f1876528a2fd405973",
-  integrationCommit: "b7a8545ed00ec948942690f89b2cbe891d46f836",
-  integrationTree: "42f408c0c602166edcc703563df7574324ad4ad2",
+  siteRefreshBase: "b08e882a86dd811f9c305c7285188d754cb9aefc",
+  integrationCommit: "a689418a737bf0b1cf71ec3742bca5702f083187",
+  integrationTree: "ce9e0bc76238e569756473cf93ab8a4439062362",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -134,31 +134,53 @@ const expectedCurrent = {
   combinedAttempt5FullNegativePropertyPolicyGreen: true,
   combinedAttempt5ReceiptEmitted: false,
   combinedAttempt5NestedFmtDiffs: 4,
-  combinedQualificationAttempt: 6,
-  combinedQualificationState: "stopped-at-clippy",
+  combinedAttempt7SourceCommit: "a689418a737bf0b1cf71ec3742bca5702f083187",
+  combinedAttempt7SourceTree: "ce9e0bc76238e569756473cf93ab8a4439062362",
+  combinedAttempt7State: "stopped-at-cold-kv-negative-timeout",
+  combinedAttempt7StrictProofPackagesPassed: 10,
+  combinedAttempt7TimeoutSeconds: 600,
+  combinedAttempt7ReceiptEmitted: false,
+  combinedAttempt7LogSha256: "7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4",
+  combinedQualificationAttempt: 8,
+  combinedQualificationState: "stopped-at-nested-tmpdir-sun-len",
   combinedQualificationRunning: false,
   combinedQualificationStrictProofPackagesPassed: 10,
   combinedQualificationSameSourceNegativeProofsGreen: true,
+  combinedQualificationSameSourceMutationsPassed: 37,
   combinedQualificationNegativePropertyPolicyGreen: true,
   combinedQualificationFmtGreen: true,
+  combinedQualificationClippyGreen: true,
   combinedQualificationReceiptEmitted: false,
-  combinedQualificationLogSha256: "a3b7d71bc95c687c460a5b2903ccfbb1a53e066a8b0ec60c8b4c17f0a40849af",
-  nextCombinedQualificationAttempt: 7,
+  combinedQualificationLogSha256: "92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027",
+  nextCombinedQualificationAttempt: 9,
   nextCombinedQualificationLaunched: false,
   combinedPreflightGreen: true,
-  combinedPreflightLogSha256: "ec50af0f4a3ed5231046db9f82b2e639edf8a84b5e7cb43dd2b190818c306188",
+  combinedPreflightLogSha256: "6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4",
   combinedPreflightCuratedAdmissions: 7229,
   workerSignerNarrowPreflightGreen: true,
   workerSignerNarrowPreflightLogSha256: "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
   workerSignerNarrowSourceGateTestsPassed: 33,
   r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
-  r33TwentyWindowTree: "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
+  r33TwentyWindowFollowupCommit: "94c3c88518971700498bc05b5da34fb96b23d4e1",
+  r33TwentyWindowTree: "e5c6d82c2c0fd02c60bcdafffd887f46bbb35720",
   r33TwentyWindowImplemented: true,
   r33TwentyWindowReviewState: "hold",
   r33TwentyWindowReviewHasProbableHoldItems: true,
   r33TwentyWindowActive: true,
   r33TwentyWindowIntegrated: false,
   r33TwentyWindowValidationReported: false,
+  r33TwentyWindowHardwareQualified: false,
+  headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
+  headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
+  headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
+  headStoreTree: "c46263cc73b02d4f41b7c57137954ba08bda9f83",
+  headStoreReviewState: "independent-rereview-pending",
+  headStoreIntegrated: false,
+  headStoreSessionReplayRepairCandidateExists: true,
+  headStoreValidationReported: true,
+  headStoreValidationGreen: true,
+  headStoreValidationLogSha256: "d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27",
+  headStoreValidationManifestSha256: "21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84",
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -328,6 +350,8 @@ const expectedCurrent = {
   servingEndpointAvailable: false,
   baselineRunsAvailable: false,
   dockerAccessible: false,
+  nativeBaselineInstallsAvailable: false,
+  protectedInfrastructureDeployed: false,
   authority: "none",
 };
 assertExactKeys(project.current, Object.keys(expectedCurrent), "current");
@@ -366,8 +390,15 @@ for (const key of [
   "workerV3FullQualificationBaseCommit",
   "combinedAttempt5SourceCommit",
   "combinedAttempt5SourceTree",
+  "combinedAttempt7SourceCommit",
+  "combinedAttempt7SourceTree",
   "r33TwentyWindowCommit",
+  "r33TwentyWindowFollowupCommit",
   "r33TwentyWindowTree",
+  "headStoreCommit",
+  "headStoreFollowupCommit",
+  "headStoreReplayRepairCommit",
+  "headStoreTree",
   "signerIpcCommit",
   "signerIpcTree",
   "workerV3LintFixCommit",
@@ -420,6 +451,8 @@ assert(project.current.qwenTokenObserved === true, "site must retain the diagnos
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
 assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
 assert(project.current.dockerAccessible === false, "Docker must remain inaccessible for this checkpoint");
+assert(project.current.nativeBaselineInstallsAvailable === false, "native baseline installs must remain absent");
+assert(project.current.protectedInfrastructureDeployed === false, "protected infrastructure must remain absent");
 assert(project.current.authority === "none", "checkpoint authority must remain none");
 assert(project.current.r33ExecutableWindows === 1, "R33 must remain limited to one executable window");
 assert(project.current.r33RequiredWindows === 20, "R33 qualification must still require 20 windows");
@@ -527,17 +560,24 @@ assert(project.current.combinedAttempt5SameSourceNegativeProofsGreen === true, "
 assert(project.current.combinedAttempt5FullNegativePropertyPolicyGreen === true, "combined #5 negative/property policy must remain green");
 assert(project.current.combinedAttempt5ReceiptEmitted === false, "combined #5 must not claim a receipt");
 assert(project.current.combinedAttempt5NestedFmtDiffs === 4, "combined #5 nested formatting diff count drifted");
-assert(project.current.combinedQualificationAttempt === 6, "combined qualification attempt drifted");
-assert(project.current.combinedQualificationState === "stopped-at-clippy", "combined qualification state drifted");
-assert(project.current.combinedQualificationRunning === false, "combined qualification #6 must not remain running");
-assert(project.current.combinedQualificationStrictProofPackagesPassed === 10, "combined #6 strict proof count drifted");
-assert(project.current.combinedQualificationSameSourceNegativeProofsGreen === true, "combined #6 same-source negative proofs must remain green");
-assert(project.current.combinedQualificationNegativePropertyPolicyGreen === true, "combined #6 negative/property policy must remain green");
-assert(project.current.combinedQualificationFmtGreen === true, "combined #6 formatting must remain green");
-assert(project.current.combinedQualificationReceiptEmitted === false, "combined #6 must not claim a receipt");
+assert(project.current.combinedAttempt7State === "stopped-at-cold-kv-negative-timeout", "combined #7 state drifted");
+assert(project.current.combinedAttempt7StrictProofPackagesPassed === 10, "combined #7 strict proof count drifted");
+assert(project.current.combinedAttempt7TimeoutSeconds === 600, "combined #7 timeout drifted");
+assert(project.current.combinedAttempt7ReceiptEmitted === false, "combined #7 must not claim a receipt");
+assertSha256(project.current.combinedAttempt7LogSha256, "current.combinedAttempt7LogSha256");
+assert(project.current.combinedQualificationAttempt === 8, "combined qualification attempt drifted");
+assert(project.current.combinedQualificationState === "stopped-at-nested-tmpdir-sun-len", "combined qualification state drifted");
+assert(project.current.combinedQualificationRunning === false, "combined qualification #8 must not remain running");
+assert(project.current.combinedQualificationStrictProofPackagesPassed === 10, "combined #8 strict proof count drifted");
+assert(project.current.combinedQualificationSameSourceNegativeProofsGreen === true, "combined #8 same-source negative proofs must remain green");
+assert(project.current.combinedQualificationSameSourceMutationsPassed === 37, "combined #8 mutation count drifted");
+assert(project.current.combinedQualificationNegativePropertyPolicyGreen === true, "combined #8 negative/property policy must remain green");
+assert(project.current.combinedQualificationFmtGreen === true, "combined #8 formatting must remain green");
+assert(project.current.combinedQualificationClippyGreen === true, "combined #8 strict Clippy must remain green");
+assert(project.current.combinedQualificationReceiptEmitted === false, "combined #8 must not claim a receipt");
 assertSha256(project.current.combinedQualificationLogSha256, "current.combinedQualificationLogSha256");
-assert(project.current.nextCombinedQualificationAttempt === 7, "next combined qualification attempt drifted");
-assert(project.current.nextCombinedQualificationLaunched === false, "combined qualification #7 must remain unlaunched");
+assert(project.current.nextCombinedQualificationAttempt === 9, "next combined qualification attempt drifted");
+assert(project.current.nextCombinedQualificationLaunched === false, "combined qualification #9 must remain unlaunched");
 assert(project.current.combinedPreflightGreen === true, "combined qualification preflight must remain green");
 assertSha256(project.current.combinedPreflightLogSha256, "current.combinedPreflightLogSha256");
 assert(project.current.combinedPreflightCuratedAdmissions === 7229, "combined preflight admission count drifted");
@@ -550,6 +590,14 @@ assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === true, "20-w
 assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work must remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
+assert(project.current.r33TwentyWindowHardwareQualified === false, "20-window R33 work must remain hardware-unqualified");
+assert(project.current.headStoreReviewState === "independent-rereview-pending", "head-store review state drifted");
+assert(project.current.headStoreIntegrated === false, "head-store work must remain unintegrated");
+assert(project.current.headStoreSessionReplayRepairCandidateExists === true, "head-store session-replay repair candidate must remain explicit");
+assert(project.current.headStoreValidationReported === true, "head-store validation result must remain explicit");
+assert(project.current.headStoreValidationGreen === true, "head-store validation must remain green");
+assertSha256(project.current.headStoreValidationLogSha256, "current.headStoreValidationLogSha256");
+assertSha256(project.current.headStoreValidationManifestSha256, "current.headStoreValidationManifestSha256");
 assert(project.current.signerIpcIntegrated === true, "accepted signer IPC slice must remain integrated");
 assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
 assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
@@ -663,9 +711,9 @@ project.teams.forEach((team, index) => {
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
   if (team.name === "Integration") {
-    assert(team.status === "Clippy repair active", "Integration must expose the active Clippy blocker");
+    assert(team.status === "Qualification harness repair pending", "Integration must expose the active qualification blocker");
     assert(
-      team.blockedBy.startsWith("Exact combined qualification is blocked on current engine and engineering-adapter Clippy failures."),
+      team.blockedBy.startsWith("Exact combined qualification needs a short mode-0700 TMPDIR"),
       "Integration blocker must remain exact",
     );
   } else {
@@ -728,7 +776,9 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "a8ce419e8262b4bf65ab56f1876528a2fd405973",
+  "b08e882a86dd811f9c305c7285188d754cb9aefc",
+  "a689418a737bf0b1cf71ec3742bca5702f083187",
+  "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
   "42f408c0c602166edcc703563df7574324ad4ad2",
   "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
@@ -757,7 +807,14 @@ const missingSnapshotClaims = [
   "7747409db8b4f3013456d99b5e418bc12bc72494",
   "ea6ef07c7b13d31c84b14d2ad06f19f8d1220665",
   "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
-  "9f5b2fa6284b029ab216466fa9bd91b001f7c792",
+  "94c3c88518971700498bc05b5da34fb96b23d4e1",
+  "e5c6d82c2c0fd02c60bcdafffd887f46bbb35720",
+  "fc5f86939cc826480aa008ddf69b044f3d63c585",
+  "4d0486476c907ae681bf48d4ba57efb1394e78f5",
+  "d05b2daffcc32a061f497e23db8292fb208f0e75",
+  "c46263cc73b02d4f41b7c57137954ba08bda9f83",
+  "d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27",
+  "21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84",
   "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   "0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73",
@@ -897,7 +954,6 @@ const missingSnapshotClaims = [
   "164 doctests",
   "7 hardware ignores",
   "7fdee7b4c554418e94b28a3d9d35b140fe983c88a0f9b68ec89d87cd00ea803c",
-  "adapter 68 passed / 2 ignored",
   "zero failures",
   "cde5a597108aa90784e04d2397cdd5090378a67e98cc5c05f95da9f157bf4991",
   "6dbc57fc05b06935a24f29b68c1fc4718df4dd541a187103327e36f5c7b36215",
@@ -953,18 +1009,21 @@ const missingSnapshotClaims = [
   "every same-source negative proof",
   "full negative/property policy",
   "no qualification receipt",
-  "Combined qualification #6",
-  "full #7 has not launched",
+  "Qualification #7",
+  "Qualification #8",
   "Clippy",
-  "narrow Worker plus signer preflight",
+  "all 37",
+  "600-second timeout",
+  "SUN_LEN",
   "exact dependency TCB",
   "7,229",
   "7,922",
   "170 modules",
-  "a3b7d71bc95c687c460a5b2903ccfbb1a53e066a8b0ec60c8b4c17f0a40849af",
-  "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
+  "6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4",
+  "7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4",
+  "92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027",
   "on HOLD",
-  "independently ACCEPTED",
+  "independently accepted",
   "58 service tests",
   "88 adapter tests",
   "Physical device-KV prefix reuse is M2",
@@ -990,7 +1049,7 @@ const missingSnapshotClaims = [
   "repin",
   "retained-borrow locals 178 and 40",
   "AMDGPU LLVM lowering",
-  "protected receipt/verifier service is undeployed",
+  "Protected infrastructure is absent",
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
@@ -998,6 +1057,8 @@ const missingSnapshotClaims = [
   "TTFT",
   "TPOT",
   "vLLM and SGLang baselines are absent",
+  "Docker permission",
+  "no native",
 ].filter((claim) => !snapshot.includes(claim));
 assert(
   missingSnapshotClaims.length === 0,
