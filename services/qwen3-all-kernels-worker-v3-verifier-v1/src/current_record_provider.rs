@@ -566,6 +566,14 @@ impl<A: ProtectedCompilerCurrentAuthorityV1> PreopenedProtectedCompilerCurrentSe
         deadline: Instant,
     ) -> Result<ProtectedCompilerCurrentServerOutcomeV1, ProtectedCompilerCurrentServerFailureV1>
     {
+        self.serve_one_inner::<true>(deadline)
+    }
+
+    fn serve_one_inner<const REQUIRE_DISTINCT_UID: bool>(
+        &mut self,
+        deadline: Instant,
+    ) -> Result<ProtectedCompilerCurrentServerOutcomeV1, ProtectedCompilerCurrentServerFailureV1>
+    {
         if remaining(deadline).is_none() {
             return Err(
                 self.pre_receive_failure(ProtectedCompilerCurrentServerErrorV1::DeadlineExpired)
@@ -574,7 +582,9 @@ impl<A: ProtectedCompilerCurrentAuthorityV1> PreopenedProtectedCompilerCurrentSe
         let Some(peer) = self.peer.take() else {
             return Err(self.poisoned_failure(ProtectedCompilerCurrentServerErrorV1::Poisoned));
         };
-        if let Err(error) = validate_endpoint::<true>(&peer, self.endpoint, self.expected_peer) {
+        if let Err(error) =
+            validate_endpoint::<REQUIRE_DISTINCT_UID>(&peer, self.endpoint, self.expected_peer)
+        {
             return Err(ProtectedCompilerCurrentServerFailureV1 {
                 error: ProtectedCompilerCurrentServerErrorV1::EndpointRevalidation(error),
                 custody: ProtectedCompilerCurrentServerCustodyV1::Poisoned,
@@ -596,7 +606,9 @@ impl<A: ProtectedCompilerCurrentAuthorityV1> PreopenedProtectedCompilerCurrentSe
                 });
             }
         };
-        if let Err(error) = validate_endpoint::<true>(&peer, self.endpoint, self.expected_peer) {
+        if let Err(error) =
+            validate_endpoint::<REQUIRE_DISTINCT_UID>(&peer, self.endpoint, self.expected_peer)
+        {
             return Err(ProtectedCompilerCurrentServerFailureV1 {
                 error: ProtectedCompilerCurrentServerErrorV1::EndpointRevalidation(error),
                 custody: ProtectedCompilerCurrentServerCustodyV1::Poisoned,
@@ -1206,4 +1218,753 @@ fn boxed_zero_array<const N: usize>() -> Box<[u8; N]> {
         .into_boxed_slice()
         .try_into()
         .unwrap_or_else(|_| unreachable!("fixed zero buffer has its declared length"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::Cell;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
+
+    use ed25519_dalek::{Signer, SigningKey};
+    use fe2o3_external_anchor_protocol::{
+        AnchorPositionV1, AnchorTransitionReceiptV1, AnchoredStateV1, CallerNonceV1,
+        HashChainHeadV1, PinnedAnchorKeyV1, UnsignedAnchorObservationV1,
+    };
+    use fe2o3_runtime_protocol::{
+        CompilerExecutionCurrentRecordAttestationV3, CompilerExecutionCurrentRecordVerificationV3,
+        CompilerExecutionExternalAnchorTransactionV1, WorkerV3LoadEnvelopeWireV2,
+    };
+    use fe2o3_worker_v3_verification_protocol::{
+        WorkerV3VerificationChallengeReservationV2, WorkerV3VerificationEntryCoordinateV1,
+        WorkerV3VerificationFdPayloadDescriptorV1, WorkerV3VerificationFreshChallengeV1,
+        WorkerV3VerificationMeasurementIdentityV1, WorkerV3VerificationPolicyIdentityV1,
+        WorkerV3VerificationRosterIdentityV1,
+    };
+    use rustix::net::{AddressFamily, SocketFlags, SocketType, socketpair};
+
+    use super::*;
+
+    const ENVELOPE: &[u8] = include_bytes!("../tests/fixtures/valid-envelope-v2.bin");
+    const PROTOCOL: [u8; 32] = [0xa1; 32];
+    const PROVIDER: [u8; 32] = [0xa2; 32];
+    const SESSION: [u8; 32] = [0xa3; 32];
+    const AUTHORITY_TRANSCRIPT: [u8; 32] = [0xa4; 32];
+
+    struct Fixture {
+        begin: WorkerV3VerificationRequestV1,
+        envelope: WorkerV3LoadEnvelopeWireV2,
+        current: WorkerV3VerificationCurrentRecordFrameV2,
+        policy: [u8; 32],
+    }
+
+    impl Fixture {
+        fn new() -> Self {
+            let envelope = WorkerV3LoadEnvelopeWireV2::decode_canonical(ENVELOPE).unwrap();
+            let begin = begin_request(ENVELOPE);
+            let reservation =
+                WorkerV3VerificationChallengeReservationV2::new([0xb1; 32], [0xb2; 32]).unwrap();
+            let records = CurrentRecordsFixture::from_envelope(&envelope);
+            let (verification, attestation) = records.records(*reservation.challenge_bytes());
+            let current = WorkerV3VerificationCurrentRecordFrameV2::new(
+                &begin,
+                &reservation,
+                verification.canonical_bytes(),
+                attestation.canonical_bytes(),
+            )
+            .unwrap();
+            let policy = *envelope
+                .compiler_execution_receipt()
+                .policy()
+                .identity()
+                .as_bytes();
+            Self {
+                begin,
+                envelope,
+                current,
+                policy,
+            }
+        }
+
+        fn request(
+            &self,
+            protocol: [u8; 32],
+            provider: [u8; 32],
+            session: [u8; 32],
+            sequence: u64,
+        ) -> ProtectedCompilerCurrentRequestV1 {
+            ProtectedCompilerCurrentRequestV1::new(
+                protocol,
+                provider,
+                self.policy,
+                session,
+                sequence,
+                &self.begin,
+                &self.envelope,
+                &self.current,
+            )
+            .unwrap()
+        }
+    }
+
+    #[derive(Clone)]
+    struct CurrentRecordsFixture {
+        issuer: SigningKey,
+        anchor: SigningKey,
+        carriage: CompilerExecutionReceiptCarriageV1,
+    }
+
+    impl CurrentRecordsFixture {
+        fn from_envelope(envelope: &WorkerV3LoadEnvelopeWireV2) -> Self {
+            Self {
+                issuer: SigningKey::from_bytes(&[0x51; 32]),
+                anchor: SigningKey::from_bytes(&[0x52; 32]),
+                carriage: envelope.compiler_execution_receipt().clone(),
+            }
+        }
+
+        fn records(
+            &self,
+            challenge: [u8; 32],
+        ) -> (
+            CompilerExecutionCurrentRecordVerificationV3,
+            CompilerExecutionCurrentRecordAttestationV3,
+        ) {
+            let transaction = CompilerExecutionExternalAnchorTransactionV1::new(
+                self.carriage.policy().clone(),
+                self.carriage.request().clone(),
+                self.carriage.publication().clone(),
+            )
+            .unwrap();
+            let anchor_key =
+                PinnedAnchorKeyV1::from_bytes(self.anchor.verifying_key().to_bytes()).unwrap();
+            let pending =
+                AnchoredStateV1::from_local_state(0, HashChainHeadV1::from_bytes([0; 32]))
+                    .prepare(transaction.external_anchor_digest(), &anchor_key)
+                    .unwrap()
+                    .begin_advance(CallerNonceV1::from_bytes([0xc1; 32]), &anchor_key)
+                    .unwrap();
+            let commit = signed_anchor_receipt(&self.anchor, &anchor_key, pending.challenge());
+            let current_challenge =
+                CompilerExecutionCurrentRecordVerificationV3::external_anchor_currentness_challenge(
+                    &self.carriage,
+                    &commit,
+                    challenge,
+                )
+                .unwrap();
+            let current = signed_anchor_receipt(&self.anchor, &anchor_key, &current_challenge);
+            let verification = CompilerExecutionCurrentRecordVerificationV3::new(
+                &self.carriage,
+                commit,
+                current,
+                challenge,
+                [0xc2; 32],
+                [0xc3; 32],
+            )
+            .unwrap();
+            let attestation = CompilerExecutionCurrentRecordAttestationV3::issue(
+                self.carriage.policy(),
+                &self.carriage,
+                verification.clone(),
+                challenge,
+                &self.issuer,
+            )
+            .unwrap();
+            (verification, attestation)
+        }
+    }
+
+    fn signed_anchor_receipt(
+        key: &SigningKey,
+        pinned: &PinnedAnchorKeyV1,
+        challenge: &fe2o3_external_anchor_protocol::AnchorChallengeV1,
+    ) -> AnchorTransitionReceiptV1 {
+        let unsigned =
+            UnsignedAnchorObservationV1::from_challenge(challenge, AnchorPositionV1::Proposed);
+        let signature = key.sign(&unsigned.signing_bytes()).to_bytes();
+        AnchorTransitionReceiptV1::new(
+            challenge.clone(),
+            &unsigned.attach_signature(signature),
+            pinned,
+        )
+        .unwrap()
+    }
+
+    fn begin_request(envelope: &[u8]) -> WorkerV3VerificationRequestV1 {
+        WorkerV3VerificationRequestV1::new(
+            WorkerV3VerificationFreshChallengeV1::new([0xd1; 32]).unwrap(),
+            WorkerV3VerificationRosterIdentityV1::new([0xd2; 32]).unwrap(),
+            WorkerV3VerificationPolicyIdentityV1::new([0xd3; 32]).unwrap(),
+            WorkerV3VerificationMeasurementIdentityV1::new([0xd4; 32]).unwrap(),
+            WorkerV3VerificationFdPayloadDescriptorV1::load_envelope_v2(
+                envelope.len() as u64,
+                sha256(envelope),
+            )
+            .unwrap(),
+            WorkerV3VerificationFdPayloadDescriptorV1::finalized_hsaco(32, [0xd5; 32]).unwrap(),
+            vec![
+                WorkerV3VerificationEntryCoordinateV1::new(
+                    0, "logical", "export", [0xd6; 32], [0xd7; 32], [0xd8; 32],
+                )
+                .unwrap(),
+            ],
+        )
+        .unwrap()
+    }
+
+    #[derive(Clone, Copy)]
+    enum AuthorityMode {
+        Accept,
+        RejectFirst,
+        SubstituteAfterCall,
+        Delay(Duration),
+    }
+
+    #[derive(Debug)]
+    struct MockAuthorityError;
+
+    impl fmt::Display for MockAuthorityError {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            formatter.write_str("mock authority rejection")
+        }
+    }
+
+    impl Error for MockAuthorityError {}
+
+    struct MockAuthority {
+        measurement: Cell<[u8; 32]>,
+        policy: [u8; 32],
+        calls: Arc<AtomicUsize>,
+        mode: AuthorityMode,
+    }
+
+    // SAFETY: this implementation exists only under cfg(test); acceptance asserts every
+    // structural input exposed by the production boundary before minting a fixture transcript.
+    unsafe impl ProtectedCompilerCurrentAuthorityV1 for MockAuthority {
+        type Error = MockAuthorityError;
+
+        fn provider_measurement(&self) -> [u8; 32] {
+            self.measurement.get()
+        }
+
+        fn compiler_policy_identity(&self) -> [u8; 32] {
+            self.policy
+        }
+
+        fn authenticate_current_record(
+            &mut self,
+            input: ProtectedCompilerCurrentAuthorityInputV1<'_>,
+        ) -> Result<ProtectedCompilerCurrentAuthorityAuthenticationV1, Self::Error> {
+            let call = self.calls.fetch_add(1, Ordering::SeqCst);
+            assert_eq!(input.wire_request().provider_measurement(), PROVIDER);
+            assert_eq!(input.wire_request().compiler_policy_identity(), self.policy);
+            assert_eq!(
+                input.wire_request().begin_request_identity(),
+                *input.begin_request().identity().as_bytes()
+            );
+            assert_eq!(
+                input.wire_request().carriage_identity(),
+                *input.carriage().identity().as_bytes()
+            );
+            assert_eq!(
+                input.current_record().verification().carriage_identity(),
+                *input.carriage().identity().as_bytes()
+            );
+            assert!(input.deadline() > Instant::now());
+            match self.mode {
+                AuthorityMode::RejectFirst if call == 0 => return Err(MockAuthorityError),
+                AuthorityMode::SubstituteAfterCall => self.measurement.set([0xee; 32]),
+                AuthorityMode::Delay(duration) => thread::sleep(duration),
+                _ => {}
+            }
+            // SAFETY: the cfg(test) assertions above define this fixture authority.
+            unsafe {
+                ProtectedCompilerCurrentAuthorityAuthenticationV1::from_protected_authority(
+                    AUTHORITY_TRANSCRIPT,
+                )
+            }
+            .map_err(|_| MockAuthorityError)
+        }
+    }
+
+    fn authority(policy: [u8; 32], mode: AuthorityMode) -> MockAuthority {
+        MockAuthority {
+            measurement: Cell::new(PROVIDER),
+            policy,
+            calls: Arc::new(AtomicUsize::new(0)),
+            mode,
+        }
+    }
+
+    fn pair(kind: SocketType) -> (OwnedFd, OwnedFd) {
+        socketpair(
+            AddressFamily::UNIX,
+            kind,
+            SocketFlags::CLOEXEC | SocketFlags::NONBLOCK,
+            None,
+        )
+        .unwrap()
+    }
+
+    fn endpoint(peer: &OwnedFd) -> ProtectedCompilerCurrentEndpointIdentityV1 {
+        let stat = rustix::fs::fstat(peer).unwrap();
+        ProtectedCompilerCurrentEndpointIdentityV1::new(stat.st_dev, stat.st_ino).unwrap()
+    }
+
+    fn expected_peer() -> ProtectedCompilerCurrentPeerIdentityV1 {
+        ProtectedCompilerCurrentPeerIdentityV1::new(
+            std::process::id(),
+            rustix::process::getuid().as_raw(),
+            rustix::process::getgid().as_raw(),
+        )
+        .unwrap()
+    }
+
+    fn admit_test_server(
+        peer: OwnedFd,
+        policy: [u8; 32],
+        authority: MockAuthority,
+    ) -> PreopenedProtectedCompilerCurrentServerV1<MockAuthority> {
+        let identity = endpoint(&peer);
+        PreopenedProtectedCompilerCurrentServerV1::admit_inner::<false>(
+            peer,
+            identity,
+            expected_peer(),
+            PROTOCOL,
+            PROVIDER,
+            policy,
+            SESSION,
+            authority,
+        )
+        .unwrap()
+    }
+
+    fn deadline(duration: Duration) -> Instant {
+        Instant::now().checked_add(duration).unwrap()
+    }
+
+    fn send_bytes(peer: &OwnedFd, bytes: &[u8]) {
+        wait_for_peer(peer, libc::POLLOUT, deadline(Duration::from_secs(2))).unwrap();
+        // SAFETY: bytes remains readable for the complete send.
+        let sent = unsafe {
+            libc::send(
+                peer.as_raw_fd(),
+                bytes.as_ptr().cast(),
+                bytes.len(),
+                libc::MSG_DONTWAIT | libc::MSG_NOSIGNAL,
+            )
+        };
+        assert_eq!(usize::try_from(sent).unwrap(), bytes.len());
+    }
+
+    fn receive_response(peer: &OwnedFd) -> ProtectedCompilerCurrentResponseV1 {
+        wait_for_peer(peer, libc::POLLIN, deadline(Duration::from_secs(2))).unwrap();
+        let mut bytes = [0_u8; crate::PREOPENED_PROTECTED_COMPILER_CURRENT_RESPONSE_BYTES_V1];
+        // SAFETY: bytes is writable for the exact fixed response.
+        let received = unsafe {
+            libc::recv(
+                peer.as_raw_fd(),
+                bytes.as_mut_ptr().cast(),
+                bytes.len(),
+                libc::MSG_DONTWAIT,
+            )
+        };
+        assert_eq!(usize::try_from(received).unwrap(), bytes.len());
+        ProtectedCompilerCurrentResponseV1::decode_canonical(&bytes).unwrap()
+    }
+
+    fn assert_no_response(peer: &OwnedFd) {
+        let mut byte = 0_u8;
+        // SAFETY: byte is writable for one nonblocking receive.
+        let received = unsafe {
+            libc::recv(
+                peer.as_raw_fd(),
+                (&raw mut byte).cast(),
+                1,
+                libc::MSG_DONTWAIT,
+            )
+        };
+        if received < 0 {
+            assert_eq!(io::Error::last_os_error().kind(), io::ErrorKind::WouldBlock);
+        } else {
+            assert_eq!(received, 0, "a poisoned server emitted response bytes");
+        }
+    }
+
+    fn send_ancillary(peer: &OwnedFd, bytes: &[u8]) {
+        let mut vector = libc::iovec {
+            iov_base: bytes.as_ptr().cast_mut().cast(),
+            iov_len: bytes.len(),
+        };
+        let control_bytes = usize::try_from(unsafe {
+            libc::CMSG_SPACE(u32::try_from(mem::size_of::<i32>()).unwrap())
+        })
+        .unwrap();
+        // SAFETY: all-zero storage is valid backing memory for cmsghdr control data.
+        let mut control: [libc::cmsghdr; 2] = unsafe { mem::zeroed() };
+        // SAFETY: zero initializes a valid msghdr and pointers are installed below.
+        let mut header = unsafe { mem::zeroed::<libc::msghdr>() };
+        header.msg_iov = &raw mut vector;
+        header.msg_iovlen = 1;
+        header.msg_control = control.as_mut_ptr().cast();
+        header.msg_controllen = control_bytes;
+        // SAFETY: header has room for one descriptor control message.
+        unsafe {
+            let message = libc::CMSG_FIRSTHDR(&raw const header);
+            assert!(!message.is_null());
+            (*message).cmsg_level = libc::SOL_SOCKET;
+            (*message).cmsg_type = libc::SCM_RIGHTS;
+            (*message).cmsg_len = libc::CMSG_LEN(u32::try_from(mem::size_of::<i32>()).unwrap())
+                .try_into()
+                .unwrap();
+            std::ptr::copy_nonoverlapping(
+                peer.as_raw_fd().to_ne_bytes().as_ptr(),
+                libc::CMSG_DATA(message),
+                mem::size_of::<i32>(),
+            );
+        }
+        // SAFETY: header retains live data and control buffers for the complete call.
+        let sent = unsafe {
+            libc::sendmsg(
+                peer.as_raw_fd(),
+                &raw const header,
+                libc::MSG_DONTWAIT | libc::MSG_NOSIGNAL,
+            )
+        };
+        assert_eq!(usize::try_from(sent).unwrap(), bytes.len());
+    }
+
+    #[test]
+    fn authenticated_exchange_is_exactly_correlated_and_retained() {
+        let fixture = Fixture::new();
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        let calls = Arc::new(AtomicUsize::new(0));
+        let authority = MockAuthority {
+            measurement: Cell::new(PROVIDER),
+            policy: fixture.policy,
+            calls: Arc::clone(&calls),
+            mode: AuthorityMode::Accept,
+        };
+        let mut server = admit_test_server(server_peer, fixture.policy, authority);
+        let request = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        send_bytes(&client_peer, request.encode_canonical());
+        let outcome = server
+            .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+            .unwrap();
+        let response = receive_response(&client_peer);
+        assert!(response.matches_request(&request));
+        assert!(matches!(
+            outcome,
+            ProtectedCompilerCurrentServerOutcomeV1::Authenticated {
+                request_identity,
+                response_identity,
+                transcript_identity,
+            } if request_identity == request.request_identity()
+                && response_identity == response.response_identity()
+                && transcript_identity == response.transcript_identity()
+                && transcript_identity != AUTHORITY_TRANSCRIPT
+        ));
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert!(!server.is_poisoned());
+    }
+
+    #[test]
+    fn authority_rejection_is_correlated_retained_and_advances_sequence() {
+        let fixture = Fixture::new();
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        let mut server = admit_test_server(
+            server_peer,
+            fixture.policy,
+            authority(fixture.policy, AuthorityMode::RejectFirst),
+        );
+        let first = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        send_bytes(&client_peer, first.encode_canonical());
+        let outcome = server
+            .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+            .unwrap();
+        let response = receive_response(&client_peer);
+        assert!(matches!(
+            outcome,
+            ProtectedCompilerCurrentServerOutcomeV1::Rejected { .. }
+        ));
+        assert!(response.matches_request(&first));
+        assert_eq!(response.transcript_identity(), [0; 32]);
+        assert!(!server.is_poisoned());
+
+        let second = fixture.request(PROTOCOL, PROVIDER, SESSION, 2);
+        send_bytes(&client_peer, second.encode_canonical());
+        assert!(matches!(
+            server
+                .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+                .unwrap(),
+            ProtectedCompilerCurrentServerOutcomeV1::Authenticated { .. }
+        ));
+        assert!(receive_response(&client_peer).matches_request(&second));
+    }
+
+    #[test]
+    fn substituted_context_is_correlated_rejected_and_poisoned() {
+        let fixture = Fixture::new();
+        for (protocol, provider, session) in [
+            ([0xe1; 32], PROVIDER, SESSION),
+            (PROTOCOL, [0xe2; 32], SESSION),
+            (PROTOCOL, PROVIDER, [0xe3; 32]),
+        ] {
+            let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+            let mut server = admit_test_server(
+                server_peer,
+                fixture.policy,
+                authority(fixture.policy, AuthorityMode::Accept),
+            );
+            let request = fixture.request(protocol, provider, session, 1);
+            send_bytes(&client_peer, request.encode_canonical());
+            let failure = server
+                .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+                .unwrap_err();
+            let response = receive_response(&client_peer);
+            assert!(response.matches_request(&request));
+            assert_eq!(response.transcript_identity(), [0; 32]);
+            assert!(matches!(
+                failure.error(),
+                ProtectedCompilerCurrentServerErrorV1::RequestCoordinateMismatch
+            ));
+            assert_eq!(
+                failure.custody(),
+                ProtectedCompilerCurrentServerCustodyV1::Poisoned
+            );
+            assert!(server.is_poisoned());
+        }
+    }
+
+    #[test]
+    fn replayed_or_skipped_sequence_is_rejected_and_poisoned() {
+        let fixture = Fixture::new();
+        for sequence in [2, u64::MAX] {
+            let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+            let mut server = admit_test_server(
+                server_peer,
+                fixture.policy,
+                authority(fixture.policy, AuthorityMode::Accept),
+            );
+            let request = fixture.request(PROTOCOL, PROVIDER, SESSION, sequence);
+            send_bytes(&client_peer, request.encode_canonical());
+            let failure = server
+                .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+                .unwrap_err();
+            assert!(receive_response(&client_peer).matches_request(&request));
+            assert!(matches!(
+                failure.error(),
+                ProtectedCompilerCurrentServerErrorV1::RequestSequenceMismatch
+            ));
+            assert!(server.is_poisoned());
+        }
+    }
+
+    #[test]
+    fn malformed_short_and_ancillary_requests_poison_without_authority() {
+        let fixture = Fixture::new();
+        let canonical = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        for case in 0..3 {
+            let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+            let calls = Arc::new(AtomicUsize::new(0));
+            let authority = MockAuthority {
+                measurement: Cell::new(PROVIDER),
+                policy: fixture.policy,
+                calls: Arc::clone(&calls),
+                mode: AuthorityMode::Accept,
+            };
+            let mut server = admit_test_server(server_peer, fixture.policy, authority);
+            match case {
+                0 => {
+                    let mut bytes = canonical.encode_canonical().to_vec();
+                    bytes[24] ^= 1;
+                    send_bytes(&client_peer, &bytes);
+                }
+                1 => send_bytes(&client_peer, &[0x55; 32]),
+                2 => send_ancillary(&client_peer, canonical.encode_canonical()),
+                _ => unreachable!(),
+            }
+            let failure = server
+                .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+                .unwrap_err();
+            assert_eq!(
+                failure.custody(),
+                ProtectedCompilerCurrentServerCustodyV1::Poisoned
+            );
+            assert_eq!(calls.load(Ordering::SeqCst), 0);
+            assert!(server.is_poisoned());
+            assert_no_response(&client_peer);
+        }
+    }
+
+    #[test]
+    fn expired_before_receive_retains_the_fresh_endpoint() {
+        let fixture = Fixture::new();
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        let mut server = admit_test_server(
+            server_peer,
+            fixture.policy,
+            authority(fixture.policy, AuthorityMode::Accept),
+        );
+        let failure = server.serve_one_inner::<false>(Instant::now()).unwrap_err();
+        assert_eq!(
+            failure.custody(),
+            ProtectedCompilerCurrentServerCustodyV1::Retained
+        );
+        assert!(!server.is_poisoned());
+        let request = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        send_bytes(&client_peer, request.encode_canonical());
+        server
+            .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+            .unwrap();
+        assert!(receive_response(&client_peer).matches_request(&request));
+    }
+
+    #[test]
+    fn authority_overrun_never_emits_a_response() {
+        let fixture = Fixture::new();
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        let mut server = admit_test_server(
+            server_peer,
+            fixture.policy,
+            authority(
+                fixture.policy,
+                AuthorityMode::Delay(Duration::from_millis(20)),
+            ),
+        );
+        let request = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        send_bytes(&client_peer, request.encode_canonical());
+        let failure = server
+            .serve_one_inner::<false>(deadline(Duration::from_millis(1)))
+            .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerErrorV1::DeadlineExpired
+        ));
+        assert!(server.is_poisoned());
+        assert_no_response(&client_peer);
+    }
+
+    #[test]
+    fn post_call_authority_substitution_rejects_and_poisons() {
+        let fixture = Fixture::new();
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        let mut server = admit_test_server(
+            server_peer,
+            fixture.policy,
+            authority(fixture.policy, AuthorityMode::SubstituteAfterCall),
+        );
+        let request = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        send_bytes(&client_peer, request.encode_canonical());
+        let failure = server
+            .serve_one_inner::<false>(deadline(Duration::from_secs(2)))
+            .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerErrorV1::AuthoritySubstitution
+        ));
+        let response = receive_response(&client_peer);
+        assert!(response.matches_request(&request));
+        assert_eq!(response.transcript_identity(), [0; 32]);
+        assert!(server.is_poisoned());
+    }
+
+    #[test]
+    fn admission_rejects_prequeued_stream_same_uid_and_authority_substitution() {
+        let fixture = Fixture::new();
+        let request = fixture.request(PROTOCOL, PROVIDER, SESSION, 1);
+        let (server_peer, client_peer) = pair(SocketType::SEQPACKET);
+        send_bytes(&client_peer, request.encode_canonical());
+        let identity = endpoint(&server_peer);
+        let failure = PreopenedProtectedCompilerCurrentServerV1::admit_inner::<false>(
+            server_peer,
+            identity,
+            expected_peer(),
+            PROTOCOL,
+            PROVIDER,
+            fixture.policy,
+            SESSION,
+            authority(fixture.policy, AuthorityMode::Accept),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerAdmissionErrorV1::PrequeuedPacket
+        ));
+        let (_, _peer, _authority) = failure.into_parts();
+
+        let (stream, _peer) = pair(SocketType::STREAM);
+        let identity = endpoint(&stream);
+        let failure = PreopenedProtectedCompilerCurrentServerV1::admit_inner::<false>(
+            stream,
+            identity,
+            expected_peer(),
+            PROTOCOL,
+            PROVIDER,
+            fixture.policy,
+            SESSION,
+            authority(fixture.policy, AuthorityMode::Accept),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerAdmissionErrorV1::SocketShape
+        ));
+
+        let (server_peer, _client_peer) = pair(SocketType::SEQPACKET);
+        let identity = endpoint(&server_peer);
+        // SAFETY: this is the negative test for the production distinct-UID check.
+        let failure = unsafe {
+            PreopenedProtectedCompilerCurrentServerV1::admit_from_supervisor(
+                server_peer,
+                identity,
+                expected_peer(),
+                PROTOCOL,
+                PROVIDER,
+                fixture.policy,
+                SESSION,
+                authority(fixture.policy, AuthorityMode::Accept),
+            )
+        }
+        .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerAdmissionErrorV1::ProviderAndVerifierUidMatch
+        ));
+
+        let (server_peer, _client_peer) = pair(SocketType::SEQPACKET);
+        let identity = endpoint(&server_peer);
+        let wrong_authority = authority(fixture.policy, AuthorityMode::Accept);
+        wrong_authority.measurement.set([0xef; 32]);
+        let failure = PreopenedProtectedCompilerCurrentServerV1::admit_inner::<false>(
+            server_peer,
+            identity,
+            expected_peer(),
+            PROTOCOL,
+            PROVIDER,
+            fixture.policy,
+            SESSION,
+            wrong_authority,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            failure.error(),
+            ProtectedCompilerCurrentServerAdmissionErrorV1::AuthorityMeasurementMismatch
+        ));
+    }
+
+    #[test]
+    fn transcript_constructor_rejects_zero_and_poll_conversion_is_bounded() {
+        // SAFETY: zero is intentionally supplied to exercise the claim guard.
+        assert!(
+            unsafe {
+                ProtectedCompilerCurrentAuthorityAuthenticationV1::from_protected_authority([0; 32])
+            }
+            .is_err()
+        );
+        assert_eq!(duration_to_poll_millis(Duration::ZERO), 1);
+        assert_eq!(duration_to_poll_millis(Duration::from_nanos(1)), 1);
+        assert_eq!(duration_to_poll_millis(Duration::MAX), i32::MAX);
+    }
 }

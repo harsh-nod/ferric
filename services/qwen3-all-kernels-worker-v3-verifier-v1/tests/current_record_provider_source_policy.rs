@@ -5,13 +5,18 @@ const LIB_SOURCE: &str = include_str!("../src/lib.rs");
 const README: &str = include_str!("../README.md");
 
 fn provider_source_policy(provider: &str, library: &str, readme: &str) -> bool {
+    let Some(test_boundary) = provider.find("#[cfg(test)]") else {
+        return false;
+    };
+    let production = &provider[..test_boundary];
+    let tests = &provider[test_boundary..];
     for required in [
         "pub unsafe fn admit_from_supervisor(",
         "Self::admit_inner::<true>(",
         "peer: Option<OwnedFd>",
         "authority: A",
         "ProtectedCompilerCurrentServerAdmissionFailureV1 {",
-        "validate_endpoint::<true>",
+        "self.serve_one_inner::<true>(deadline)",
         "require_empty_connection(&peer)",
         "FdFlags::CLOEXEC",
         "OFlags::NONBLOCK",
@@ -43,7 +48,7 @@ fn provider_source_policy(provider: &str, library: &str, readme: &str) -> bool {
         "ProtectedCompilerCurrentServerCustodyV1::Poisoned",
         "ProtectedCompilerCurrentServerCustodyV1::Retained",
     ] {
-        if !provider.contains(required) {
+        if !production.contains(required) {
             return false;
         }
     }
@@ -63,12 +68,17 @@ fn provider_source_policy(provider: &str, library: &str, readme: &str) -> bool {
         "private_key",
         "secret_key",
     ] {
-        if provider.contains(forbidden) {
+        if production.contains(forbidden) {
             return false;
         }
     }
     let normalized_readme = readme.split_whitespace().collect::<Vec<_>>().join(" ");
-    library.contains("PreopenedProtectedCompilerCurrentServerV1")
+    tests.contains("Self::admit_inner::<false>(")
+        && tests.contains("server.serve_one_inner::<false>(")
+        && tests.contains("libc::SCM_RIGHTS")
+        && tests.contains("replayed_or_skipped_sequence_is_rejected_and_poisoned")
+        && tests.contains("authority_overrun_never_emits_a_response")
+        && library.contains("PreopenedProtectedCompilerCurrentServerV1")
         && library.contains("ProtectedCompilerCurrentAuthorityV1")
         && normalized_readme.contains(
             "A production authority must use those coordinates to reacquire and verify the retained full envelope",
@@ -105,10 +115,9 @@ fn provider_source_policy_rejects_boundary_substitution() {
         "false",
         1,
     );
-    let no_poison = PROVIDER_SOURCE.replacen(
+    let no_poison = PROVIDER_SOURCE.replace(
         "ProtectedCompilerCurrentServerCustodyV1::Poisoned",
         "ProtectedCompilerCurrentServerCustodyV1::Retained",
-        1,
     );
     let weakened_docs = README.replacen(
         "a durable admission-session/replay store that survives every process\nrestart",
