@@ -1,6 +1,8 @@
 use syn::Item;
 
 const ROOT: &str = include_str!("../src/lib.rs");
+const HOST_GEMM_PROOF_SOURCE: &str =
+    include_str!("../../../crates/ferric-qwen-kernels/src/gemm.rs");
 const FAMILY_SOURCES: [(&str, &str); 7] = [
     ("gemm", include_str!("../src/gemm.rs")),
     ("logits", include_str!("../src/logits.rs")),
@@ -562,6 +564,42 @@ fn aggregate_gemm_roots_fail_closed_before_column_arithmetic_and_b_reads() {
             .count(),
         2
     );
+    assert_eq!(
+        compact
+            .matches("letright_index=column*k+reduction;")
+            .count(),
+        1
+    );
+    assert_eq!(
+        compact
+            .matches("letright_index_0=column*k+reduction;")
+            .count(),
+        1
+    );
+    for lane in 1..4 {
+        assert_eq!(
+            compact
+                .matches(&format!(
+                    "letright_index_{lane}=right_index_{}+1;",
+                    lane - 1
+                ))
+                .count(),
+            1
+        );
+    }
+    assert!(!compact.contains("reduction*n+column"));
+    assert!(!compact.contains("reduction*n64+column"));
+
+    let compact_proof = HOST_GEMM_PROOF_SOURCE
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    assert!(compact_proof.contains(
+        "pubopenspecfnqwen3_native_weight_index_spec(column:int,reduction:int,k:int,)->int{column*k+reduction}"
+    ));
+    assert!(compact_proof.contains("pubprooffnqwen3_native_weight_vector4_indices_are_in_bounds("));
+    assert!(compact_proof.contains("reduction+3<k"));
+    assert!(compact_proof.contains("qwen3_native_weight_index_spec(column,reduction+3,k)<n*k"));
 }
 
 #[test]

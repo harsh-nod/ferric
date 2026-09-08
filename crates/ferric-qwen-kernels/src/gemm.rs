@@ -3095,6 +3095,139 @@ fn checked_ceil_div_16(value: u32) -> Option<u32> {
     value.checked_add(15).map(|sum| sum / 16)
 }
 
+/// Mathematical row-major `[N,K]` offset used by the native Qwen GEMM weight.
+pub open spec fn qwen3_native_weight_index_spec(
+    column: int,
+    reduction: int,
+    k: int,
+) -> int {
+    column * k + reduction
+}
+
+/// Exact finite coordinate envelope admitted by the Qwen GEMM catalog.
+pub open spec fn qwen3_native_weight_coordinate_is_admitted_spec(
+    column: int,
+    reduction: int,
+    n: int,
+    k: int,
+) -> bool {
+    &&& 0 < n <= 151_936
+    &&& 0 < k <= 12_288
+    &&& 0 <= column < n
+    &&& 0 <= reduction < k
+}
+
+/// Any admitted native `[N,K]` coordinate is below the flat weight extent.
+pub proof fn qwen3_native_weight_index_is_in_bounds(
+    column: int,
+    reduction: int,
+    n: int,
+    k: int,
+)
+    requires qwen3_native_weight_coordinate_is_admitted_spec(column, reduction, n, k),
+    ensures
+        0 <= qwen3_native_weight_index_spec(column, reduction, k) < n * k,
+{
+    reveal(qwen3_native_weight_coordinate_is_admitted_spec);
+    reveal(qwen3_native_weight_index_spec);
+    assert(column + 1 <= n);
+    vstd::arithmetic::mul::lemma_mul_inequality(column + 1, n, k);
+    vstd::arithmetic::mul::lemma_mul_is_distributive_add_other_way(k, column, 1);
+    vstd::arithmetic::mul::lemma_mul_basics(k);
+    assert(column * k + reduction < column * k + k);
+}
+
+/// Checks a native row-major `[N,K]` coordinate and returns its exact offset.
+///
+/// This proves source-level integer indexing only. It grants no compiler,
+/// machine-code, hardware, numerical, allocation, load, or launch refinement.
+#[must_use]
+pub fn checked_qwen3_native_weight_index_v1(
+    column: u32,
+    reduction: u32,
+    n: u32,
+    k: u32,
+) -> (result: Option<u64>)
+    ensures
+        result.is_some() == qwen3_native_weight_coordinate_is_admitted_spec(
+            column as int,
+            reduction as int,
+            n as int,
+            k as int,
+        ),
+        result.is_some() ==> {
+            &&& 0 <= (result.unwrap() as int)
+            &&& result.unwrap() as int
+                == qwen3_native_weight_index_spec(column as int, reduction as int, k as int)
+            &&& (result.unwrap() as int) < (n as int) * (k as int)
+        },
+{
+    if n == 0
+        || n > 151_936
+        || k == 0
+        || k > 12_288
+        || column >= n
+        || reduction >= k
+    {
+        None
+    } else {
+        proof {
+            assert(qwen3_native_weight_coordinate_is_admitted_spec(
+                column as int,
+                reduction as int,
+                n as int,
+                k as int,
+            ));
+            qwen3_native_weight_index_is_in_bounds(
+                column as int,
+                reduction as int,
+                n as int,
+                k as int,
+            );
+            assert(((column as int) * (k as int) + reduction as int) < u64::MAX as int)
+                by (nonlinear_arith);
+        }
+        let row_base = u64::from(column) * u64::from(k);
+        let index = row_base + u64::from(reduction);
+        Some(index)
+    }
+}
+
+/// Every adjacent B read in the four-wide GEMM reduction remains in `[N,K]`.
+pub proof fn qwen3_native_weight_vector4_indices_are_in_bounds(
+    column: int,
+    reduction: int,
+    n: int,
+    k: int,
+)
+    requires
+        0 < n <= 151_936,
+        0 < k <= 12_288,
+        0 <= column < n,
+        0 <= reduction,
+        reduction + 3 < k,
+    ensures
+        0 <= qwen3_native_weight_index_spec(column, reduction, k) < n * k,
+        qwen3_native_weight_index_spec(column, reduction + 1, k)
+            == qwen3_native_weight_index_spec(column, reduction, k) + 1,
+        0 <= qwen3_native_weight_index_spec(column, reduction + 1, k) < n * k,
+        qwen3_native_weight_index_spec(column, reduction + 2, k)
+            == qwen3_native_weight_index_spec(column, reduction, k) + 2,
+        0 <= qwen3_native_weight_index_spec(column, reduction + 2, k) < n * k,
+        qwen3_native_weight_index_spec(column, reduction + 3, k)
+            == qwen3_native_weight_index_spec(column, reduction, k) + 3,
+        0 <= qwen3_native_weight_index_spec(column, reduction + 3, k) < n * k,
+{
+    assert(reduction < k);
+    assert(reduction + 1 < k);
+    assert(reduction + 2 < k);
+    qwen3_native_weight_index_is_in_bounds(column, reduction, n, k);
+    qwen3_native_weight_index_is_in_bounds(column, reduction + 1, n, k);
+    qwen3_native_weight_index_is_in_bounds(column, reduction + 2, n, k);
+    qwen3_native_weight_index_is_in_bounds(column, reduction + 3, n, k);
+    reveal(qwen3_native_weight_index_spec);
+}
+
 } // verus!
 
 fn exact_target() -> DeviceTargetV1 {
@@ -3124,6 +3257,31 @@ mod tests {
         assert_eq!(checked_ceil_div_16(u32::MAX - 15), Some(u32::MAX / 16));
         assert_eq!(checked_ceil_div_16(u32::MAX - 14), None);
         assert_eq!(checked_ceil_div_16(u32::MAX), None);
+    }
+
+    #[test]
+    fn checked_native_weight_index_covers_catalog_edges_and_rejects_hostile_coordinates() {
+        assert_eq!(QWEN3_VOCABULARY_SIZE_V1, 151_936);
+        let catalog = Qwen3GemmProfileCatalogV1::canonical().unwrap();
+        for profile in catalog.profiles() {
+            let [_, n, k] = profile.dimensions();
+            let extent = u64::from(n) * u64::from(k);
+            assert_eq!(checked_qwen3_native_weight_index_v1(0, 0, n, k), Some(0));
+            assert_eq!(
+                checked_qwen3_native_weight_index_v1(n - 1, k - 1, n, k),
+                Some(extent - 1)
+            );
+            assert_eq!(checked_qwen3_native_weight_index_v1(n, 0, n, k), None);
+            assert_eq!(checked_qwen3_native_weight_index_v1(0, k, n, k), None);
+        }
+
+        assert_eq!(checked_qwen3_native_weight_index_v1(0, 0, 0, 1), None);
+        assert_eq!(checked_qwen3_native_weight_index_v1(0, 0, 1, 0), None);
+        assert_eq!(
+            checked_qwen3_native_weight_index_v1(0, 0, QWEN3_VOCABULARY_SIZE_V1 + 1, 1),
+            None
+        );
+        assert_eq!(checked_qwen3_native_weight_index_v1(0, 0, 1, 12_289), None);
     }
 
     fn bindings(seed: u8) -> Qwen3GemmSourceBindingsV1 {

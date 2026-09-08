@@ -7333,6 +7333,7 @@ unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwe
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::bind_qwen3_gemm_worker_v3_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::canonical_qwen3_gemm_llvm
 verified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::checked_ceil_div_16
+verified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::checked_qwen3_native_weight_index_v1
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::emit_allowed_rows
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::emit_gemm_kernel
 unverified=ferric-qwen-kernels|crates/ferric-qwen-kernels/src/gemm.rs|ferric_qwen_kernels::gemm::emit_machine_classifier
