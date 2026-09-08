@@ -6,7 +6,8 @@
 #[allow(
     clippy::manual_let_else,
     clippy::needless_pass_by_value,
-    clippy::semicolon_if_nothing_returned
+    clippy::semicolon_if_nothing_returned,
+    clippy::used_underscore_binding
 )] // Mirror only the owning root workspace's lint policy for this shared module.
 #[rustfmt::skip] // Skip cross-edition traversal only; the root workspace formats this shared module.
 #[path = "../../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs"]

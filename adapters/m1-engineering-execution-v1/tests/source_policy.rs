@@ -217,6 +217,7 @@ fn engineering_r29_capture_is_aggregate_only_and_explicitly_non_authoritative() 
         "clippy::manual_let_else",
         "clippy::needless_pass_by_value",
         "clippy::semicolon_if_nothing_returned",
+        "clippy::used_underscore_binding",
     ] {
         assert_eq!(
             R29_TECHNICAL_CLI_SOURCE.matches(allowed_root_lint).count(),
