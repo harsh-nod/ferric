@@ -612,6 +612,34 @@ mod source_policy_tests {
         offset
     }
 
+    fn has_ordered_history_take_and_reset(source: &str) -> bool {
+        let unique = |needle: &str| {
+            let mut matches = source.match_indices(needle);
+            let offset = matches.next().map(|(offset, _)| offset)?;
+            matches.next().is_none().then_some(offset)
+        };
+        let Some(attach) = unique(".attach_physical_history(history)") else {
+            return false;
+        };
+        let Some(select) = unique("let history = resident_phase_storage.as_mut().map_or(") else {
+            return false;
+        };
+        let Some(take) = unique("&mut storage.successor_round_history,") else {
+            return false;
+        };
+        let Some(reset) =
+            unique("crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,\n            )")
+        else {
+            return false;
+        };
+        let Some(continue_with_history) = unique(
+            "M1AuthenticatedSpeculativePriorWindowContinuationV1 {\n            terminal,\n            history,",
+        ) else {
+            return false;
+        };
+        attach < select && select < take && take < reset && reset < continue_with_history
+    }
+
     #[test]
     fn model_outcome_constructors_are_unique() {
         for constructor in [
@@ -1218,15 +1246,25 @@ mod source_policy_tests {
             .map(|offset| join_start + offset)
             .expect("authenticated successor join end is absent");
         let join = &AUTHENTICATED_ROLLOVER_SOURCE[join_start..join_end];
-        let attach = unique_offset(join, ".attach_physical_history(history)");
-        let reset = unique_offset(
-            join,
-            "history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,",
-        );
         assert!(cap < admission);
         assert!(admission < archive);
         assert!(archive < append);
-        assert!(attach < reset);
+        assert!(has_ordered_history_take_and_reset(join));
+        assert!(!join.contains("history: crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,"));
+
+        let missing_take = join.replacen(
+            "&mut storage.successor_round_history,",
+            "&mut storage.successor_lineage_seeds,",
+            1,
+        );
+        assert!(!has_ordered_history_take_and_reset(&missing_take));
+        let reordered_reset = join.replacen(
+            "&mut storage.successor_round_history,\n                crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,",
+            "crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,\n                &mut storage.successor_round_history,",
+            1,
+        );
+        assert_ne!(reordered_reset, join);
+        assert!(!has_ordered_history_take_and_reset(&reordered_reset));
 
         let record = unique_offset(
             AUTHENTICATED_EXECUTOR_SOURCE,

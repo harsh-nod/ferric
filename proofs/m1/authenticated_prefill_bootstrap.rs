@@ -625,7 +625,8 @@ mod tests {
             measure,
             "if report.validate_against(&window.row.expected_work).is_err() {",
         );
-        let success = unique_offset(measure, "Ok(report)");
+        let success =
+            validation + unique_offset(&measure[validation..], "\n                Ok(report)\n");
         let validated_success = &measure[validation..success];
         let validation_reject_offset = unique_offset(
             validated_success,
