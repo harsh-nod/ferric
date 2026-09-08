@@ -612,10 +612,10 @@ def prepare_engineering_vendor(arguments: argparse.Namespace) -> None:
     require_ferric_device(arguments.ferric)
     require_fe2o3_repository(arguments.fe2o3)
     vendor = canonical_absolute(arguments.cargo_vendor, "Cargo vendor directory")
-    # Cargo 1.97.1 uses the unsuffixed package name when the vendor set has a
-    # single fe2o3-device version. Keep this in lockstep with the workspace
-    # template consumed by the engineering compiler.
-    package = vendor / "fe2o3-device"
+    # The pinned nightly `cargo vendor --versioned-dirs` contract includes the
+    # version even when the vendor set contains one fe2o3-device release. Keep
+    # this in lockstep with the workspace template consumed by the compiler.
+    package = vendor / "fe2o3-device-0.1.0"
     canonical_absolute(package, "vendored fe2o3-device package")
     source = arguments.fe2o3 / "crates/fe2o3-device"
     source_files = {

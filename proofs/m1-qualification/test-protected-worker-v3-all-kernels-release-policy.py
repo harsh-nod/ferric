@@ -185,7 +185,7 @@ def main() -> None:
         '"--cargo-git-source"',
         'f"https://github.com/harsh-nod/fe2o3.git@{FE2O3_REVISION}"',
         'f"https://github.com/harsh-nod/pliron.git@{PLIRON_REVISION}"',
-        'package = vendor / "fe2o3-device"',
+        'package = vendor / "fe2o3-device-0.1.0"',
         "MAX_TOOL_BYTES = 1024 * 1024 * 1024",
     ]:
         if required not in source:
@@ -193,14 +193,12 @@ def main() -> None:
     if source.count("held_regular(path, description, MAX_TOOL_BYTES)") != 2:
         fail("aggregate release producer does not apply the exact tool-size bound")
     for required in [
-        'members = ["fe2o3-device"]',
-        'fe2o3-amd-target = { path = "fe2o3-amd-target" }',
-        'fe2o3-macros = { path = "fe2o3-macros" }',
+        'members = ["fe2o3-device-0.1.0"]',
+        'fe2o3-amd-target = { path = "fe2o3-amd-target-0.1.0" }',
+        'fe2o3-macros = { path = "fe2o3-macros-0.1.0" }',
     ]:
         if workspace_template.count(required) != 1:
             fail(f"engineering vendor workspace lost pinned Cargo path: {required}")
-    if "-0.1.0" in workspace_template:
-        fail("engineering vendor workspace drifted from the pinned Cargo layout")
     if (
         'set(checksum) != {"$comment", "files", "package"}' not in source
         or "CARGO_VENDOR_CHECKSUM_COMMENT" not in source
