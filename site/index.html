@@ -219,10 +219,14 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration a689418a737bf0b1cf71ec3742bca5702f083187, tree
-            ce9e0bc76238e569756473cf93ab8a4439062362, includes independently accepted protected
-            signer IPC commit dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4 and the reviewed quality
-            fixes. Exact full preflight is green; log SHA
+            Current integration d05b2daffcc32a061f497e23db8292fb208f0e75, tree
+            c46263cc73b02d4f41b7c57137954ba08bda9f83, includes independently accepted and
+            integrated protected head-store IPC commits fc5f86939cc826480aa008ddf69b044f3d63c585,
+            4d0486476c907ae681bf48d4ba57efb1394e78f5, and d05b2da. Exact full preflight and
+            qualifications #7/#8 apply to prior integration
+            a689418a737bf0b1cf71ec3742bca5702f083187, tree
+            ce9e0bc76238e569756473cf93ab8a4439062362, not current d05. That preflight is
+            green; log SHA
             6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4.
             Qualification #7 passed all 10 strict proof packages, then a cold KV negative proof exceeded
             its admitted 600-second timeout; log SHA
@@ -231,7 +235,8 @@
             negative/property policy, formatting, and strict Clippy. Root debug then stopped when
             the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; log SHA
             92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027.
-            Neither run emitted a qualification receipt, so full candidate correctness is not claimed.
+            Neither run emitted a qualification receipt, and neither ran on current d05, so full current
+            candidate correctness is not claimed.
             Authority is none, protected infrastructure is absent, and all 33 M1 exit gates remain open.
 
             Prior combined remote validation at e5d23e19973a01000129aaf2ec705b8993bd21c3,
@@ -252,13 +257,14 @@
             hot loop before timing. Protected head-store candidate
             fc5f86939cc826480aa008ddf69b044f3d63c585 plus
             4d0486476c907ae681bf48d4ba57efb1394e78f5 now has cross-admission session-replay
-            repair candidate d05b2daffcc32a061f497e23db8292fb208f0e75, tree
+            repair commit d05b2daffcc32a061f497e23db8292fb208f0e75, tree
             c46263cc73b02d4f41b7c57137954ba08bda9f83. Remote validation is green: lib 45;
             auth 1 passed / 2 ignored; source 2; listener 2; session 13 passed / 1 ignored; signer 3;
             connected 2; formatting, check, and strict Clippy all pass with zero failures. Log SHA
             d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27;
             manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84.
-            It remains unintegrated and independent rereview is pending, so acceptance is not claimed. Integrated signer IPC commit
+            Independent review accepted the series and it is integrated as current d05. It provides no
+            daemon, durability layer, session generator store, launcher, or distinct-UID exercise. Integrated signer IPC commit
             dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4, tree
             b524a9ccc981466ecde2aa31afa59e2dff672fc8, was independently accepted. Its prior focused
             validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and
@@ -281,7 +287,7 @@
             integration a689418.
 
             Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d, tree
-            e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses public fe2o3
+            e31a988bb8b74557381a4a04f0cb765cafb7cf72, uses pinned public fe2o3 commit
             cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree
             6d115af5cd5285b84b7629834393d6eee6a37045. It emits a 415,541-byte Kernel IR V9 handoff
             with 26 GuardedStore operations and exact replay into a 103,616-byte HSACO containing all
@@ -289,12 +295,18 @@
             decoded as "spent_cm谊tered". Internal TTFT is 4.227489904 seconds and the derived three-gap
             average is 3.733883367 seconds/token, both diagnostic only.
 
+            Public fe2o3 main has advanced to e5351640e3df3868205bc68eac8d5ff5556352ea,
+            tree 84015c274c74a4378002360cb54a4010e374e7e8. Current Ferric d05 still pins
+            cf6faec0ee3c026d3a1fc5090ab606a3b425225c. Migration and requalification are active;
+            qualification against latest fe2o3 is not claimed.
+
             Neither hardware observation is serving, authenticated A/B, comparable TTFT/TPOT, a
             vLLM/SGLang comparison, or qualification. The baseline host is blocked by Docker permission
             and has no native vLLM or SGLang installs, so no baseline exists. Physical device-KV radix prefix reuse is M2;
             symmetric memory and MTP remain deferred. The integrated R33 executor still supports one
-            window, not the required 20; the revised R33 candidate and head-store candidate remain
-            unintegrated on HOLD. No serving endpoint,
+            window, not the required 20; the revised R33 candidate remains unintegrated on HOLD. The
+            integrated head-store IPC slice does not provide the absent protected service infrastructure.
+            No serving endpoint,
             authenticated A/B, comparable TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification
             receipt, or production authority exists.
           </p>

@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "b08e882a86dd811f9c305c7285188d754cb9aefc",
-  integrationCommit: "a689418a737bf0b1cf71ec3742bca5702f083187",
-  integrationTree: "ce9e0bc76238e569756473cf93ab8a4439062362",
+  siteRefreshBase: "7d8a3f4e229a0d4a447df8003b3f19cec812a36e",
+  integrationCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
+  integrationTree: "c46263cc73b02d4f41b7c57137954ba08bda9f83",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -141,6 +141,8 @@ const expectedCurrent = {
   combinedAttempt7TimeoutSeconds: 600,
   combinedAttempt7ReceiptEmitted: false,
   combinedAttempt7LogSha256: "7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4",
+  combinedQualificationSourceCommit: "a689418a737bf0b1cf71ec3742bca5702f083187",
+  combinedQualificationSourceTree: "ce9e0bc76238e569756473cf93ab8a4439062362",
   combinedQualificationAttempt: 8,
   combinedQualificationState: "stopped-at-nested-tmpdir-sun-len",
   combinedQualificationRunning: false,
@@ -152,9 +154,12 @@ const expectedCurrent = {
   combinedQualificationClippyGreen: true,
   combinedQualificationReceiptEmitted: false,
   combinedQualificationLogSha256: "92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027",
+  combinedQualificationAppliesToCurrentIntegration: false,
   nextCombinedQualificationAttempt: 9,
   nextCombinedQualificationLaunched: false,
   combinedPreflightGreen: true,
+  combinedPreflightSourceCommit: "a689418a737bf0b1cf71ec3742bca5702f083187",
+  combinedPreflightSourceTree: "ce9e0bc76238e569756473cf93ab8a4439062362",
   combinedPreflightLogSha256: "6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4",
   combinedPreflightCuratedAdmissions: 7229,
   workerSignerNarrowPreflightGreen: true,
@@ -174,13 +179,19 @@ const expectedCurrent = {
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
   headStoreTree: "c46263cc73b02d4f41b7c57137954ba08bda9f83",
-  headStoreReviewState: "independent-rereview-pending",
-  headStoreIntegrated: false,
+  headStoreReviewState: "accepted",
+  headStoreReviewDisposition: "integrate",
+  headStoreIntegrated: true,
   headStoreSessionReplayRepairCandidateExists: true,
   headStoreValidationReported: true,
   headStoreValidationGreen: true,
   headStoreValidationLogSha256: "d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27",
   headStoreValidationManifestSha256: "21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84",
+  headStoreDaemonAvailable: false,
+  headStoreDurabilityImplemented: false,
+  headStoreSessionGeneratorStoreImplemented: false,
+  headStoreLauncherImplemented: false,
+  headStoreDistinctUidExercised: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -217,8 +228,12 @@ const expectedCurrent = {
   kernelCandidateSourceTree: "6b3a5ab219216fe2d7adf797d7ea890f94c76a60",
   fe2o3V71Main: "6492c8fa85a00d93aa6ca2a4a77675fefad2fee6",
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
-  fe2o3LatestMain: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
-  fe2o3LatestTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
+  fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
+  fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
+  fe2o3LatestMain: "e5351640e3df3868205bc68eac8d5ff5556352ea",
+  fe2o3LatestTree: "84015c274c74a4378002360cb54a4010e374e7e8",
+  fe2o3LatestMigrationActive: true,
+  fe2o3LatestQualificationClaimed: false,
   formalVerified: 81,
   formalErrors: 0,
   proofTestsPassed: 26,
@@ -392,6 +407,10 @@ for (const key of [
   "combinedAttempt5SourceTree",
   "combinedAttempt7SourceCommit",
   "combinedAttempt7SourceTree",
+  "combinedQualificationSourceCommit",
+  "combinedQualificationSourceTree",
+  "combinedPreflightSourceCommit",
+  "combinedPreflightSourceTree",
   "r33TwentyWindowCommit",
   "r33TwentyWindowFollowupCommit",
   "r33TwentyWindowTree",
@@ -421,6 +440,8 @@ for (const key of [
   "kernelCandidateSourceTree",
   "fe2o3V71Main",
   "fe2o3V71Tree",
+  "fe2o3FerricPin",
+  "fe2o3FerricPinTree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
   "speculativeAttempt2BaseCommit",
@@ -576,6 +597,7 @@ assert(project.current.combinedQualificationFmtGreen === true, "combined #8 form
 assert(project.current.combinedQualificationClippyGreen === true, "combined #8 strict Clippy must remain green");
 assert(project.current.combinedQualificationReceiptEmitted === false, "combined #8 must not claim a receipt");
 assertSha256(project.current.combinedQualificationLogSha256, "current.combinedQualificationLogSha256");
+assert(project.current.combinedQualificationAppliesToCurrentIntegration === false, "prior qualification must not be attributed to current integration");
 assert(project.current.nextCombinedQualificationAttempt === 9, "next combined qualification attempt drifted");
 assert(project.current.nextCombinedQualificationLaunched === false, "combined qualification #9 must remain unlaunched");
 assert(project.current.combinedPreflightGreen === true, "combined qualification preflight must remain green");
@@ -591,13 +613,21 @@ assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work m
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
 assert(project.current.r33TwentyWindowHardwareQualified === false, "20-window R33 work must remain hardware-unqualified");
-assert(project.current.headStoreReviewState === "independent-rereview-pending", "head-store review state drifted");
-assert(project.current.headStoreIntegrated === false, "head-store work must remain unintegrated");
+assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
+assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
+assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
 assert(project.current.headStoreSessionReplayRepairCandidateExists === true, "head-store session-replay repair candidate must remain explicit");
 assert(project.current.headStoreValidationReported === true, "head-store validation result must remain explicit");
 assert(project.current.headStoreValidationGreen === true, "head-store validation must remain green");
 assertSha256(project.current.headStoreValidationLogSha256, "current.headStoreValidationLogSha256");
 assertSha256(project.current.headStoreValidationManifestSha256, "current.headStoreValidationManifestSha256");
+assert(project.current.headStoreDaemonAvailable === false, "head-store must not claim a daemon");
+assert(project.current.headStoreDurabilityImplemented === false, "head-store must not claim durable storage");
+assert(project.current.headStoreSessionGeneratorStoreImplemented === false, "head-store must not claim a session generator store");
+assert(project.current.headStoreLauncherImplemented === false, "head-store must not claim a launcher");
+assert(project.current.headStoreDistinctUidExercised === false, "head-store must not claim distinct-UID exercise");
+assert(project.current.fe2o3LatestMigrationActive === true, "latest-fe2 migration must remain active");
+assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assert(project.current.signerIpcIntegrated === true, "accepted signer IPC slice must remain integrated");
 assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
 assert(project.current.signerIpcServiceTestsPassed === 58, "signer IPC service test count drifted");
@@ -713,7 +743,7 @@ project.teams.forEach((team, index) => {
   if (team.name === "Integration") {
     assert(team.status === "Qualification harness repair pending", "Integration must expose the active qualification blocker");
     assert(
-      team.blockedBy.startsWith("Exact combined qualification needs a short mode-0700 TMPDIR"),
+      team.blockedBy.startsWith("Exact combined qualification on current d05 needs the active fe2o3 migration"),
       "Integration blocker must remain exact",
     );
   } else {
@@ -776,7 +806,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "b08e882a86dd811f9c305c7285188d754cb9aefc",
+  "7d8a3f4e229a0d4a447df8003b3f19cec812a36e",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
@@ -830,6 +860,8 @@ const missingSnapshotClaims = [
   "254b89aa3a6e4e751c3ad81db84073a5fb26b52d",
   "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   "6d115af5cd5285b84b7629834393d6eee6a37045",
+  "e5351640e3df3868205bc68eac8d5ff5556352ea",
+  "84015c274c74a4378002360cb54a4010e374e7e8",
   "1dd3411af96a22f0ed86289b874b57fa28670ef9",
   "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
   "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",
