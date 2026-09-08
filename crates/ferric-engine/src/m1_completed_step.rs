@@ -2875,7 +2875,7 @@ mod tests {
     fn real_completion_core_with_warmed_scratch_allocates_zero_times_inner() {
         let (mut one_engine, one_readback, one_roster, one_scratch) =
             allocation_test_completion_case();
-        let one = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+        let one = Region::new(crate::authenticated_resident_session::test_allocator());
         let one_outcome =
             complete_m1_step_core_v1(&mut one_engine, one_readback, one_roster, one_scratch);
         let one = one.change();
@@ -2896,7 +2896,7 @@ mod tests {
         for _ in 0..16 {
             cases.push(allocation_test_completion_case());
         }
-        let region = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+        let region = Region::new(crate::authenticated_resident_session::test_allocator());
         let mut completed = 0usize;
         while let Some((mut engine, readback, roster, scratch)) = cases.pop() {
             let outcome = complete_m1_step_core_v1(&mut engine, readback, roster, scratch);

@@ -2775,7 +2775,9 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
 }
 
 #[cfg(test)]
-pub(crate) use tests::TEST_ALLOCATOR;
+pub(crate) fn test_allocator() -> &'static stats_alloc::StatsAlloc<std::alloc::System> {
+    tests::TEST_ALLOCATOR
+}
 
 #[cfg(test)]
 mod tests {

@@ -12836,7 +12836,7 @@ mod tests {
             history
                 .try_reserve_additional(count)
                 .expect("test history reservation must succeed");
-            let region = Region::new(crate::authenticated_resident_session::TEST_ALLOCATOR);
+            let region = Region::new(crate::authenticated_resident_session::test_allocator());
             let mut nonempty = history.append(0usize);
             for round in 1..count {
                 nonempty = M1RearmRoundHistoryV1::NonEmpty(nonempty).append(round);
