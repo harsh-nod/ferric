@@ -624,11 +624,9 @@ mod source_policy_tests {
         let Some(select) = unique("let history = resident_phase_storage.as_mut().map_or(") else {
             return false;
         };
-        let Some(take) = unique("&mut storage.successor_round_history,") else {
-            return false;
-        };
-        let Some(reset) =
-            unique("crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,\n            )")
+        let Some(take_and_reset) = unique(
+            "core::mem::replace(\n                &mut storage.successor_round_history,\n                crate::m1_queue_rearm::M1RearmRoundHistoryV1::Empty,\n            )",
+        )
         else {
             return false;
         };
@@ -637,7 +635,7 @@ mod source_policy_tests {
         ) else {
             return false;
         };
-        attach < select && select < take && take < reset && reset < continue_with_history
+        attach < select && select < take_and_reset && take_and_reset < continue_with_history
     }
 
     #[test]
@@ -1265,6 +1263,9 @@ mod source_policy_tests {
         );
         assert_ne!(reordered_reset, join);
         assert!(!has_ordered_history_take_and_reset(&reordered_reset));
+        let substituted_operation = join.replacen("core::mem::replace(", "take_history(", 1);
+        assert_ne!(substituted_operation, join);
+        assert!(!has_ordered_history_take_and_reset(&substituted_operation));
 
         let record = unique_offset(
             AUTHENTICATED_EXECUTOR_SOURCE,
