@@ -12,6 +12,14 @@ fn production_owner_has_one_external_capability_chain_and_no_engineering_fallbac
         "COMPILER_CURRENT_RECORD_FD_V1: i32 = 195",
         "PROTECTED_VERIFIER_FD_V1: i32 = 196",
         "BEGIN_CHALLENGE_FD_V1: i32 = 197",
+        "OWNER_PLAN_FD_V1: i32 = 198",
+        "duplicate_inherited_fd",
+        "libc::F_GETFD",
+        "libc::F_DUPFD_CLOEXEC",
+        "require_distinct_descriptors",
+        "require_seqpacket",
+        "read_sealed_owner_plan",
+        "consume_canonical_slot",
         "admit_inherited_application_service",
         "admit_connected_path",
         "from_durable_reservation",
@@ -20,7 +28,10 @@ fn production_owner_has_one_external_capability_chain_and_no_engineering_fallbac
         "initialize_m1_physical_runner_memory_v1",
         "new_with_s1_k4_resident_windows",
         "EXPECTED_SERVICE_EXCHANGES_V1",
-        "coordinator.into_backend().close()",
+        "coordinator.into_completed_backend()",
+        "successful_ordered_measurements()",
+        "terminate_with_quarantined_custody",
+        "ManuallyDrop::new",
     ] {
         assert!(
             source.contains(required),
@@ -33,6 +44,7 @@ fn production_owner_has_one_external_capability_chain_and_no_engineering_fallbac
         "bind_engineering_structural_m1_physical_runner_v1",
         "synthetic_for_test_only",
         "authority-free structural",
+        "serve(Path::new(plan_path))",
     ] {
         assert!(
             !source.contains(forbidden),

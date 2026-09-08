@@ -65,6 +65,10 @@ instance remains live across all action processes and windows. A backend error,
 timeout, or abandoned post-mutation response faults the instance; only its exact
 `stop` binding is then admitted. External supervision is intentionally outside
 collector authority because the collector kills every action process group.
+The coordinator exposes a terminal proof only after all 20 successful ordered
+measurement responses and the normal stop response have been digest-acknowledged.
+An exact replay may recover a lost normal-stop acknowledgement, but cleanup-stop
+or fault-stop replay cannot create that proof.
 
 This foundation grants no compiler authentication, publication, load, queue,
 allocation, or launch authority. Those capabilities must be supplied by a

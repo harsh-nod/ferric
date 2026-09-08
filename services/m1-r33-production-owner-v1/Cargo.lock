@@ -1040,6 +1040,7 @@ dependencies = [
  "ferric-m1-engineering-execution-v1",
  "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
  "ferric-spec",
+ "libc",
  "rustix",
  "serde",
  "serde_json",

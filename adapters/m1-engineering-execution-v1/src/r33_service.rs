@@ -774,22 +774,101 @@ enum StableLifecycleV1 {
         start: u64,
     },
     StopReplay {
+        completion_eligible: bool,
         context: Box<M1R33CollectorContextV1>,
         instance: String,
     },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+enum DeliveredEffectV1 {
+    None,
+    Start,
+    Measurement { ordinal: usize },
+    Completed { instance: String, start: u64 },
+}
+
+#[derive(Debug)]
 struct PendingLifecycleV1 {
     abandoned: StableLifecycleV1,
     delivered: StableLifecycleV1,
+    effect: DeliveredEffectV1,
     request_sha256: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 enum LifecycleV1 {
     Stable(StableLifecycleV1),
     Pending(Box<PendingLifecycleV1>),
+}
+
+/// Terminal proof that one coordinator lifecycle delivered all 20 ordered
+/// measurement responses and its normal stop response to the collector.
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1R33CompletedLifecycleProofV1 {
+    server_instance_sha256: Box<str>,
+    server_start: u64,
+    service_plan_sha256: Box<str>,
+    successful_ordered_measurements: usize,
+}
+
+impl M1R33CompletedLifecycleProofV1 {
+    /// Exact backend instance bound to the completed lifecycle.
+    #[must_use]
+    pub fn server_instance_sha256(&self) -> &str {
+        &self.server_instance_sha256
+    }
+
+    /// Workload start ordinal bound to the completed lifecycle.
+    #[must_use]
+    pub const fn server_start(&self) -> u64 {
+        self.server_start
+    }
+
+    /// Held service-plan identity bound to the completed lifecycle.
+    #[must_use]
+    pub fn service_plan_sha256(&self) -> &str {
+        &self.service_plan_sha256
+    }
+
+    /// Number of successful measurement responses delivered in exact row order.
+    #[must_use]
+    pub const fn successful_ordered_measurements(&self) -> usize {
+        self.successful_ordered_measurements
+    }
+}
+
+/// Backend custody returned when the bounded lifecycle did not produce a
+/// complete terminal proof.
+pub struct M1R33IncompleteLifecycleV1<B> {
+    backend: B,
+    successful_ordered_measurements: usize,
+}
+
+impl<B> fmt::Debug for M1R33IncompleteLifecycleV1<B> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1R33IncompleteLifecycleV1")
+            .field(
+                "successful_ordered_measurements",
+                &self.successful_ordered_measurements,
+            )
+            .finish_non_exhaustive()
+    }
+}
+
+impl<B> M1R33IncompleteLifecycleV1<B> {
+    /// Returns the backend to its process owner for explicit close/recovery.
+    #[must_use]
+    pub fn into_backend(self) -> B {
+        self.backend
+    }
+
+    /// Number of ordered measurement responses actually delivered.
+    #[must_use]
+    pub const fn successful_ordered_measurements(&self) -> usize {
+        self.successful_ordered_measurements
+    }
 }
 
 /// Top-level 20-window service controller over one long-lived backend instance.
@@ -802,8 +881,10 @@ enum LifecycleV1 {
 pub struct M1R33DaemonCoordinatorV1<'a, B: M1R33AuthorityFreeBackendV1> {
     backend: B,
     bundle: &'a HeldM1R33ServiceBundleV1,
+    completed: Option<M1R33CompletedLifecycleProofV1>,
     start_deadline: Option<M1R33OperationDeadlineV1>,
     state: LifecycleV1,
+    successful_ordered_measurements: usize,
 }
 
 impl<B: M1R33AuthorityFreeBackendV1> fmt::Debug for M1R33DaemonCoordinatorV1<'_, B> {
@@ -823,8 +904,10 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         Self {
             backend,
             bundle,
+            completed: None,
             start_deadline: None,
             state: LifecycleV1::Stable(StableLifecycleV1::Idle),
+            successful_ordered_measurements: 0,
         }
     }
 
@@ -836,6 +919,25 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
     #[must_use]
     pub fn into_backend(self) -> B {
         self.backend
+    }
+
+    /// Returns backend custody together with proof only after the exact normal
+    /// lifecycle terminal has been delivered.
+    ///
+    /// # Errors
+    ///
+    /// Returns backend custody without proof when any ordered measurement or
+    /// the normal terminal response was not delivered.
+    pub fn into_completed_backend(
+        self,
+    ) -> Result<(B, M1R33CompletedLifecycleProofV1), M1R33IncompleteLifecycleV1<B>> {
+        match self.completed {
+            Some(proof) => Ok((self.backend, proof)),
+            None => Err(M1R33IncompleteLifecycleV1 {
+                backend: self.backend,
+                successful_ordered_measurements: self.successful_ordered_measurements,
+            }),
+        }
     }
 
     fn deadline(&self) -> Result<M1R33OperationDeadlineV1, M1R33ServiceErrorV1> {
@@ -902,9 +1004,20 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         delivered: StableLifecycleV1,
         abandoned: StableLifecycleV1,
     ) {
+        self.set_pending_with_effect(request, delivered, abandoned, DeliveredEffectV1::None);
+    }
+
+    fn set_pending_with_effect(
+        &mut self,
+        request: &M1R33WireRequestV1,
+        delivered: StableLifecycleV1,
+        abandoned: StableLifecycleV1,
+        effect: DeliveredEffectV1,
+    ) {
         self.state = LifecycleV1::Pending(Box::new(PendingLifecycleV1 {
             abandoned,
             delivered,
+            effect,
             request_sha256: request.request_sha256.clone(),
         }));
     }
@@ -941,7 +1054,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
             StableLifecycleV1::Idle => self.dispatch_start(request),
             StableLifecycleV1::AwaitReady { instance, start } => {
                 if exact_instance_action(request, M1R33ActionV1::Stop, &instance, start) {
-                    self.dispatch_stop(request, instance, start)
+                    self.dispatch_stop(request, instance, start, false)
                 } else {
                     self.dispatch_ready(request, instance, start)
                 }
@@ -952,26 +1065,46 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
                 start,
             } => {
                 if exact_instance_action(request, M1R33ActionV1::Stop, &instance, start) {
-                    self.dispatch_stop(request, instance, start)
+                    self.dispatch_stop(request, instance, start, false)
                 } else {
                     self.dispatch_measure(request, instance, next, start)
                 }
             }
-            StableLifecycleV1::AwaitStop { instance, start }
-            | StableLifecycleV1::Faulted { instance, start } => {
-                self.dispatch_stop(request, instance, start)
+            StableLifecycleV1::AwaitStop { instance, start } => {
+                self.dispatch_stop(request, instance, start, true)
             }
-            StableLifecycleV1::StopReplay { context, instance } => {
+            StableLifecycleV1::Faulted { instance, start } => {
+                self.dispatch_stop(request, instance, start, false)
+            }
+            StableLifecycleV1::StopReplay {
+                completion_eligible,
+                context,
+                instance,
+            } => {
                 if request.context == *context {
                     let response = Self::passed_response(
                         request,
                         instance.clone(),
                         M1R33WireReportV1::Lifecycle,
                     );
-                    self.set_pending(
+                    let abandoned = StableLifecycleV1::StopReplay {
+                        completion_eligible,
+                        context,
+                        instance: instance.clone(),
+                    };
+                    let effect = if completion_eligible {
+                        DeliveredEffectV1::Completed {
+                            instance,
+                            start: request.context.server_start,
+                        }
+                    } else {
+                        DeliveredEffectV1::None
+                    };
+                    self.set_pending_with_effect(
                         request,
                         StableLifecycleV1::Idle,
-                        StableLifecycleV1::StopReplay { context, instance },
+                        abandoned,
+                        effect,
                     );
                     response
                 } else {
@@ -1006,13 +1139,14 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
                     instance: instance.clone(),
                     start: request.context.server_start,
                 };
-                self.set_pending(
+                self.set_pending_with_effect(
                     request,
                     StableLifecycleV1::AwaitReady {
                         instance,
                         start: request.context.server_start,
                     },
                     faulted,
+                    DeliveredEffectV1::Start,
                 );
                 response
             }
@@ -1117,10 +1251,11 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
                         start,
                     }
                 };
-                self.set_pending(
+                self.set_pending_with_effect(
                     request,
                     delivered,
                     StableLifecycleV1::Faulted { instance, start },
+                    DeliveredEffectV1::Measurement { ordinal: next },
                 );
                 response
             }
@@ -1138,6 +1273,7 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         request: &M1R33WireRequestV1,
         instance: String,
         start: u64,
+        completion_eligible: bool,
     ) -> M1R33WireResponseV1 {
         if !exact_instance_action(request, M1R33ActionV1::Stop, &instance, start) {
             return Self::fault_response(request, Some(instance), "only-exact-stop-admitted");
@@ -1154,13 +1290,23 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
                 self.start_deadline = None;
                 let response =
                     Self::passed_response(request, instance.clone(), M1R33WireReportV1::Lifecycle);
-                self.set_pending(
+                let effect = if completion_eligible {
+                    DeliveredEffectV1::Completed {
+                        instance: instance.clone(),
+                        start,
+                    }
+                } else {
+                    DeliveredEffectV1::None
+                };
+                self.set_pending_with_effect(
                     request,
                     StableLifecycleV1::Idle,
                     StableLifecycleV1::StopReplay {
+                        completion_eligible,
                         context: Box::new(request.context.clone()),
                         instance,
                     },
+                    effect,
                 );
                 response
             }
@@ -1184,22 +1330,69 @@ impl<B: M1R33AuthorityFreeBackendV1> M1R33WireHandlerV1 for M1R33DaemonCoordinat
     }
 
     fn response_delivered(&mut self, request_sha256: &str) {
-        let LifecycleV1::Pending(pending) = &self.state else {
-            return;
+        let state = std::mem::replace(
+            &mut self.state,
+            LifecycleV1::Stable(StableLifecycleV1::Idle),
+        );
+        let pending = match state {
+            LifecycleV1::Pending(pending) => pending,
+            stable @ LifecycleV1::Stable(_) => {
+                self.state = stable;
+                return;
+            }
         };
-        let next = if pending.request_sha256 == request_sha256 {
-            pending.delivered.clone()
+        let exact_response = pending.request_sha256 == request_sha256;
+        let effect_accepted = exact_response
+            && match pending.effect {
+                DeliveredEffectV1::None => true,
+                DeliveredEffectV1::Start => {
+                    self.completed = None;
+                    self.successful_ordered_measurements = 0;
+                    true
+                }
+                DeliveredEffectV1::Measurement { ordinal } => {
+                    if ordinal == self.successful_ordered_measurements {
+                        self.successful_ordered_measurements += 1;
+                        true
+                    } else {
+                        false
+                    }
+                }
+                DeliveredEffectV1::Completed { instance, start } => {
+                    if self.successful_ordered_measurements == M1_R33_WINDOWS_PER_START_V1 {
+                        self.completed = Some(M1R33CompletedLifecycleProofV1 {
+                            server_instance_sha256: instance.into_boxed_str(),
+                            server_start: start,
+                            service_plan_sha256: self.bundle.plan_sha256().into(),
+                            successful_ordered_measurements: self.successful_ordered_measurements,
+                        });
+                        true
+                    } else {
+                        false
+                    }
+                }
+            };
+        let next = if effect_accepted {
+            pending.delivered
         } else {
-            pending.abandoned.clone()
+            pending.abandoned
         };
         self.state = LifecycleV1::Stable(next);
     }
 
     fn response_abandoned(&mut self, _request_sha256: &str) {
-        let LifecycleV1::Pending(pending) = &self.state else {
-            return;
+        let state = std::mem::replace(
+            &mut self.state,
+            LifecycleV1::Stable(StableLifecycleV1::Idle),
+        );
+        let pending = match state {
+            LifecycleV1::Pending(pending) => pending,
+            stable @ LifecycleV1::Stable(_) => {
+                self.state = stable;
+                return;
+            }
         };
-        self.state = LifecycleV1::Stable(pending.abandoned.clone());
+        self.state = LifecycleV1::Stable(pending.abandoned);
     }
 }
 
@@ -1772,9 +1965,19 @@ mod tests {
             dispatch_delivered(&mut coordinator, &stop).status,
             M1R33WireStatusV1::Passed
         );
-        assert_eq!(coordinator.backend.starts, 1);
-        assert_eq!(coordinator.backend.measures, M1_R33_WINDOWS_PER_START_V1);
-        assert_eq!(coordinator.backend.stops, 1);
+        let Ok((backend, proof)) = coordinator.into_completed_backend() else {
+            panic!("exact lifecycle must return terminal proof");
+        };
+        assert_eq!(backend.starts, 1);
+        assert_eq!(backend.measures, M1_R33_WINDOWS_PER_START_V1);
+        assert_eq!(backend.stops, 1);
+        assert_eq!(proof.successful_ordered_measurements(), 20);
+        assert_eq!(proof.server_start(), 0);
+        assert_eq!(
+            proof.server_instance_sha256(),
+            stop.context.server_instance_sha256.as_deref().unwrap()
+        );
+        assert_eq!(proof.service_plan_sha256(), bundle.plan_sha256());
     }
 
     #[test]
@@ -1934,6 +2137,246 @@ mod tests {
             dispatch_delivered(&mut coordinator, &stop).status,
             M1R33WireStatusV1::Passed
         );
+        let Err(incomplete) = coordinator.into_completed_backend() else {
+            panic!("fault cleanup cannot return terminal proof");
+        };
+        assert_eq!(incomplete.successful_ordered_measurements(), 0);
+        assert_eq!(incomplete.into_backend().stops, 1);
+    }
+
+    #[test]
+    fn abandoned_successful_measurement_faults_without_counting() {
+        let (_root, bundle) = fixture();
+        let mut coordinator = M1R33DaemonCoordinatorV1::new(&bundle, TestBackend::default());
+        let start = request(
+            &bundle,
+            context(&bundle, M1R33ActionV1::Start, 0, None, None),
+            "abandon-start",
+        );
+        let instance = dispatch_delivered(&mut coordinator, &start)
+            .server_instance_sha256
+            .unwrap();
+        let ready = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Ready,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "abandon-ready",
+        );
+        let _ = dispatch_delivered(&mut coordinator, &ready);
+        let measure = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Measure,
+                0,
+                Some(instance.clone()),
+                Some(bundle.workload().row(0, 0).unwrap().row.clone()),
+            ),
+            "abandoned-measure",
+        );
+        assert_eq!(
+            coordinator
+                .handle_request(
+                    M1R33PeerCredentialsV1 {
+                        gid: 0,
+                        pid: 1,
+                        uid: 0,
+                    },
+                    &measure,
+                )
+                .status,
+            M1R33WireStatusV1::Passed
+        );
+        coordinator.response_abandoned(&measure.request_sha256);
+        let stop = request(
+            &bundle,
+            context(&bundle, M1R33ActionV1::Stop, 0, Some(instance), None),
+            "abandon-cleanup-stop",
+        );
+        assert_eq!(
+            dispatch_delivered(&mut coordinator, &stop).status,
+            M1R33WireStatusV1::Passed
+        );
+        let Err(incomplete) = coordinator.into_completed_backend() else {
+            panic!("abandoned measurement cannot return terminal proof");
+        };
+        assert_eq!(incomplete.successful_ordered_measurements(), 0);
+        let backend = incomplete.into_backend();
+        assert_eq!(backend.measures, 1);
+        assert_eq!(backend.stops, 1);
+    }
+
+    #[test]
+    fn early_stop_and_replay_never_mint_terminal_proof() {
+        let (_root, bundle) = fixture();
+        let mut coordinator = M1R33DaemonCoordinatorV1::new(&bundle, TestBackend::default());
+        let start = request(
+            &bundle,
+            context(&bundle, M1R33ActionV1::Start, 0, None, None),
+            "early-start",
+        );
+        let instance = dispatch_delivered(&mut coordinator, &start)
+            .server_instance_sha256
+            .unwrap();
+        let ready = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Ready,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "early-ready",
+        );
+        let _ = dispatch_delivered(&mut coordinator, &ready);
+        for ordinal in 0..3 {
+            let measure = request(
+                &bundle,
+                context(
+                    &bundle,
+                    M1R33ActionV1::Measure,
+                    0,
+                    Some(instance.clone()),
+                    Some(bundle.workload().row(0, ordinal).unwrap().row.clone()),
+                ),
+                &format!("early-measure-{ordinal}"),
+            );
+            assert_eq!(
+                dispatch_delivered(&mut coordinator, &measure).status,
+                M1R33WireStatusV1::Passed
+            );
+        }
+        let stop = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Stop,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "early-stop",
+        );
+        assert_eq!(
+            coordinator
+                .handle_request(
+                    M1R33PeerCredentialsV1 {
+                        gid: 0,
+                        pid: 1,
+                        uid: 0,
+                    },
+                    &stop,
+                )
+                .status,
+            M1R33WireStatusV1::Passed
+        );
+        coordinator.response_abandoned(&stop.request_sha256);
+        let replay = request(
+            &bundle,
+            context(&bundle, M1R33ActionV1::Stop, 0, Some(instance), None),
+            "early-stop-replay",
+        );
+        assert_eq!(
+            dispatch_delivered(&mut coordinator, &replay).status,
+            M1R33WireStatusV1::Passed
+        );
+        let Err(incomplete) = coordinator.into_completed_backend() else {
+            panic!("early-stop replay cannot return terminal proof");
+        };
+        assert_eq!(incomplete.successful_ordered_measurements(), 3);
+        assert_eq!(incomplete.into_backend().stops, 1);
+    }
+
+    #[test]
+    fn lost_normal_stop_requires_exact_delivered_replay_for_terminal_proof() {
+        let (_root, bundle) = fixture();
+        let mut coordinator = M1R33DaemonCoordinatorV1::new(&bundle, TestBackend::default());
+        let start = request(
+            &bundle,
+            context(&bundle, M1R33ActionV1::Start, 0, None, None),
+            "replay-start",
+        );
+        let instance = dispatch_delivered(&mut coordinator, &start)
+            .server_instance_sha256
+            .unwrap();
+        let ready = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Ready,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "replay-ready",
+        );
+        let _ = dispatch_delivered(&mut coordinator, &ready);
+        for ordinal in 0..M1_R33_WINDOWS_PER_START_V1 {
+            let measure = request(
+                &bundle,
+                context(
+                    &bundle,
+                    M1R33ActionV1::Measure,
+                    0,
+                    Some(instance.clone()),
+                    Some(bundle.workload().row(0, ordinal).unwrap().row.clone()),
+                ),
+                &format!("replay-measure-{ordinal}"),
+            );
+            let _ = dispatch_delivered(&mut coordinator, &measure);
+        }
+        let stop = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Stop,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "lost-stop",
+        );
+        assert_eq!(
+            coordinator
+                .handle_request(
+                    M1R33PeerCredentialsV1 {
+                        gid: 0,
+                        pid: 1,
+                        uid: 0,
+                    },
+                    &stop,
+                )
+                .status,
+            M1R33WireStatusV1::Passed
+        );
+        coordinator.response_abandoned(&stop.request_sha256);
+        let replay = request(
+            &bundle,
+            context(
+                &bundle,
+                M1R33ActionV1::Stop,
+                0,
+                Some(instance.clone()),
+                None,
+            ),
+            "delivered-stop-replay",
+        );
+        assert_eq!(
+            dispatch_delivered(&mut coordinator, &replay).status,
+            M1R33WireStatusV1::Passed
+        );
+        let Ok((backend, proof)) = coordinator.into_completed_backend() else {
+            panic!("exact delivered stop replay must return terminal proof");
+        };
+        assert_eq!(backend.stops, 1);
+        assert_eq!(proof.successful_ordered_measurements(), 20);
+        assert_eq!(proof.server_instance_sha256(), instance);
     }
 
     #[test]

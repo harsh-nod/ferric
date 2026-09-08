@@ -12,11 +12,19 @@ The supervisor must transfer these exclusive descriptors:
 - FD 197: an exact 32-byte sealed memfd containing an unpredictable Begin
   challenge that the supervisor has already durably reserved and globally
   replay-excluded.
+- FD 198: an immutable, mode-0400 sealed memfd containing the exact canonical
+  owner plan. The supervisor independently approves that plan and passes its
+  SHA-256 as the sole `serve` argument.
+
+All four descriptors must name distinct kernel objects. The owner validates
+and duplicates the complete roster before constructing any owned authority;
+it then consumes the canonical FD 196, 197, and 198 slots. The fe2o3 current
+record admission API consumes canonical FD 195 under its one-use contract.
 
 Run the service with one canonical owner plan:
 
 ```text
-ferric-m1-r33-production-owner-v1 serve OWNER-PLAN.json
+ferric-m1-r33-production-owner-v1 serve OWNER-PLAN-SHA256
 ```
 
 `validate-plan` performs only structural and held-file validation. It consumes
@@ -27,9 +35,12 @@ production verifier, binds the authenticated program set to the declared
 runner closure, authenticates the canonical Qwen3-8B/Qwen3-0.6B model bundle,
 acquires the exact checked gfx942 device through KFD, initializes model and KV
 memory, constructs the complete 20-window resident input roster, and then
-serves the bounded R33 lifecycle. Every service failure consumes the backend
-through its explicit close path and retains any quarantined native custody
-until process exit.
+serves the bounded R33 lifecycle. Success requires a typed terminal proof
+created only after 20 successful ordered measurement responses and the normal
+stop response are delivered. Transport exchange count is only a resource
+bound. Every service failure consumes the backend through its explicit close
+path; quarantined native custody is placed in `ManuallyDrop` and held through
+immediate process termination.
 
 This executable is not an HTTP server and is not serving, performance,
 correctness, qualification, or M1 evidence. Real execution still requires all

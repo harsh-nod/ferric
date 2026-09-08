@@ -52,15 +52,17 @@ use ferric_spec::{
 };
 use rustix::fd::OwnedFd;
 use rustix::fs::{CWD, Dir, FileType, Mode, OFlags, ResolveFlags, SealFlags, Stat, fstat, openat2};
+use rustix::net::{AddressFamily, SocketType, getpeername, getsockname, sockopt::socket_type};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Cursor, Read};
-use std::os::fd::FromRawFd;
+use std::mem::ManuallyDrop;
+use std::os::fd::{BorrowedFd, FromRawFd, IntoRawFd};
 use std::path::{Component, Path, PathBuf};
-use std::process::ExitCode;
+use std::process::{self, ExitCode};
 use std::time::Duration;
 
 type OwnerResult<T> = Result<T, String>;
@@ -70,6 +72,7 @@ const OWNER_AUTHORITY_V1: &str = "externally-supervised-production-capabilities-
 const COMPILER_CURRENT_RECORD_FD_V1: i32 = 195;
 const PROTECTED_VERIFIER_FD_V1: i32 = 196;
 const BEGIN_CHALLENGE_FD_V1: i32 = 197;
+const OWNER_PLAN_FD_V1: i32 = 198;
 const MAX_OWNER_PLAN_BYTES_V1: u64 = 64 * 1024;
 const MAX_SELECTOR_BYTES_V1: u64 = 64 * 1024;
 const EXPECTED_SERVICE_EXCHANGES_V1: usize = 3 + M1_R33_WINDOWS_PER_START_V1;
@@ -247,12 +250,17 @@ fn run(arguments: &[OsString]) -> OwnerResult<&'static str> {
             let _ = load_owner_plan(Path::new(plan_path))?;
             Ok("status=OWNER_PLAN_VALIDATED authority=none")
         }
-        [command, plan_path] if command == "serve" => {
-            serve(Path::new(plan_path))?;
+        [command, expected_plan_sha256] if command == "serve" => {
+            let expected_plan_sha256 = expected_plan_sha256
+                .to_str()
+                .ok_or_else(|| "owner-plan-sha256: UTF-8 required".to_owned())?;
+            let expected_plan_sha256 = decode_bytes_32(expected_plan_sha256, true)
+                .map_err(|error| format!("owner-plan-sha256: {error}"))?;
+            serve(expected_plan_sha256)?;
             Ok("status=BOUNDED_R33_INSTANCE_CLOSED")
         }
         _ => Err(
-            "usage: ferric-m1-r33-production-owner-v1 <validate-plan|serve> OWNER-PLAN.json"
+            "usage: ferric-m1-r33-production-owner-v1 validate-plan OWNER-PLAN.json | serve OWNER-PLAN-SHA256"
                 .to_owned(),
         ),
     }
@@ -260,8 +268,12 @@ fn run(arguments: &[OsString]) -> OwnerResult<&'static str> {
 
 fn load_owner_plan(path: &Path) -> OwnerResult<OwnerPlanV1> {
     let bytes = read_secure_file(path, MAX_OWNER_PLAN_BYTES_V1, "owner-plan")?;
+    decode_owner_plan(&bytes)
+}
+
+fn decode_owner_plan(bytes: &[u8]) -> OwnerResult<OwnerPlanV1> {
     let plan: OwnerPlanV1 =
-        serde_json::from_slice(&bytes).map_err(|error| format!("owner-plan-json: {error}"))?;
+        serde_json::from_slice(bytes).map_err(|error| format!("owner-plan-json: {error}"))?;
     let mut canonical = serde_json::to_vec_pretty(&plan)
         .map_err(|error| format!("owner-plan-canonical-serialization: {error}"))?;
     canonical.push(b'\n');
@@ -899,20 +911,73 @@ fn read_secure_file(path: &Path, maximum: u64, description: &str) -> OwnerResult
     input.read_snapshot(length, description)
 }
 
-fn serve(plan_path: &Path) -> OwnerResult<()> {
-    let owner_plan_bytes = read_secure_file(plan_path, MAX_OWNER_PLAN_BYTES_V1, "owner-plan")?;
+struct SupervisorCapabilitiesV1 {
+    begin_challenge: [u8; 32],
+    compiler_current: OwnedFd,
+    owner_plan_bytes: Vec<u8>,
+    protected_verifier: OwnedFd,
+}
+
+fn admit_supervisor_capabilities(
+    expected_owner_plan_sha256: [u8; 32],
+) -> OwnerResult<SupervisorCapabilitiesV1> {
+    // Duplicate the complete roster before consuming any canonical descriptor.
+    // This leaves admission fail-atomic and never constructs an OwnedFd around
+    // an unvalidated supervisor-provided integer.
+    let compiler_current_probe = duplicate_inherited_fd(
+        COMPILER_CURRENT_RECORD_FD_V1,
+        "compiler-current-record-fd195",
+    )?;
+    let protected_verifier =
+        duplicate_inherited_fd(PROTECTED_VERIFIER_FD_V1, "protected-verifier-fd196")?;
+    let begin_challenge_fd =
+        duplicate_inherited_fd(BEGIN_CHALLENGE_FD_V1, "begin-challenge-fd197")?;
+    let owner_plan = duplicate_inherited_fd(OWNER_PLAN_FD_V1, "owner-plan-fd198")?;
+    require_distinct_descriptors(&[
+        ("compiler-current-record-fd195", &compiler_current_probe),
+        ("protected-verifier-fd196", &protected_verifier),
+        ("begin-challenge-fd197", &begin_challenge_fd),
+        ("owner-plan-fd198", &owner_plan),
+    ])?;
+    require_seqpacket(&compiler_current_probe, "compiler-current-record-fd195")?;
+    require_seqpacket(&protected_verifier, "protected-verifier-fd196")?;
+    let begin_challenge = read_reserved_challenge(&begin_challenge_fd)?;
+    let owner_plan_bytes = read_sealed_owner_plan(&owner_plan, expected_owner_plan_sha256)?;
+
+    let compiler_current = take_canonical_slot(
+        COMPILER_CURRENT_RECORD_FD_V1,
+        &compiler_current_probe,
+        "compiler-current-record-fd195",
+    )?;
+    consume_canonical_slot(
+        PROTECTED_VERIFIER_FD_V1,
+        &protected_verifier,
+        "protected-verifier-fd196",
+    )?;
+    consume_canonical_slot(
+        BEGIN_CHALLENGE_FD_V1,
+        &begin_challenge_fd,
+        "begin-challenge-fd197",
+    )?;
+    consume_canonical_slot(OWNER_PLAN_FD_V1, &owner_plan, "owner-plan-fd198")?;
+    drop(compiler_current_probe);
+    Ok(SupervisorCapabilitiesV1 {
+        begin_challenge,
+        compiler_current,
+        owner_plan_bytes,
+        protected_verifier,
+    })
+}
+
+fn serve(expected_owner_plan_sha256: [u8; 32]) -> OwnerResult<()> {
+    let SupervisorCapabilitiesV1 {
+        begin_challenge: challenge_bytes,
+        compiler_current,
+        owner_plan_bytes,
+        protected_verifier: verifier_fd,
+    } = admit_supervisor_capabilities(expected_owner_plan_sha256)?;
     let owner_plan_sha256: [u8; 32] = Sha256::digest(&owner_plan_bytes).into();
-    let plan: OwnerPlanV1 = serde_json::from_slice(&owner_plan_bytes)
-        .map_err(|error| format!("owner-plan-json: {error}"))?;
-    let mut canonical = serde_json::to_vec_pretty(&plan)
-        .map_err(|error| format!("owner-plan-canonical-serialization: {error}"))?;
-    canonical.push(b'\n');
-    if canonical != owner_plan_bytes {
-        return Err(
-            "owner-plan-canonical-json: exact pretty JSON plus newline required".to_owned(),
-        );
-    }
-    plan.validate()?;
+    let plan = decode_owner_plan(&owner_plan_bytes)?;
 
     let bundle = HeldM1R33ServiceBundleV1::open(Path::new(&plan.service_plan_path))
         .map_err(|error| format!("service-plan-admission: {error}"))?;
@@ -942,7 +1007,6 @@ fn serve(plan_path: &Path) -> OwnerResult<()> {
 
     // No external verifier deadline starts until all large model files and all
     // deterministic addressless plans have been admitted.
-    let verifier_fd = adopt_inherited_fd(PROTECTED_VERIFIER_FD_V1, "protected-verifier-fd196")?;
     let verifier_identity = M1AllKernelsProtectedVerifierServiceIdentityV1::new(
         plan.protected_verifier.expected_uid,
         plan.protected_verifier.expected_gid,
@@ -955,8 +1019,6 @@ fn serve(plan_path: &Path) -> OwnerResult<()> {
         Duration::from_millis(plan.protected_verifier.timeout_ms),
     )
     .map_err(|failure| format!("protected-verifier-fd196: admission rejected: {failure:?}"))?;
-    let challenge_fd = adopt_inherited_fd(BEGIN_CHALLENGE_FD_V1, "begin-challenge-fd197")?;
-    let challenge_bytes = read_reserved_challenge(challenge_fd)?;
     // SAFETY: The supervisor alone creates FD197 and promises the durable,
     // globally replay-excluding reservation contract. This owner verifies the
     // sealed one-use byte carrier but cannot manufacture that authority.
@@ -970,6 +1032,10 @@ fn serve(plan_path: &Path) -> OwnerResult<()> {
         decode_bytes_32(&plan.protected_verifier.checker_measurement_sha256, true)?,
     )
     .map_err(|error| format!("protected-verifier-trust-policy: {error}"))?;
+    // The fe2 admission contract consumes canonical FD195 on success or
+    // failure. Relinquish RAII custody only at that exact transfer boundary.
+    let compiler_current_raw = compiler_current.into_raw_fd();
+    assert_eq!(compiler_current_raw, COMPILER_CURRENT_RECORD_FD_V1);
     let current_auditor =
         InheritedWorkerV3CompilerCurrentRecordAuditorV1::admit_inherited_application_service()
             .map_err(|error| {
@@ -977,9 +1043,10 @@ fn serve(plan_path: &Path) -> OwnerResult<()> {
                     "compiler-current-record-fd{COMPILER_CURRENT_RECORD_FD_V1}: admission rejected: {error}"
                 )
             })?;
-    // SAFETY: FD195, FD196, FD197, the key, and both measurements are installed
-    // by the external supervisor. The exact obligations remain explicit in the
-    // public constructor and in this service's owner-plan contract.
+    // SAFETY: FD195, FD196, FD197, sealed FD198 policy, the key, and both
+    // measurements are installed by the external supervisor. The exact
+    // obligations remain explicit in the public constructor and in this
+    // service's owner-plan contract.
     let protected = unsafe {
         M1AllKernelsProductionProtectedVerifierV1::new(
             verifier_client,
@@ -1024,36 +1091,149 @@ fn serve(plan_path: &Path) -> OwnerResult<()> {
             .serve_one(&mut coordinator)
             .map_err(|error| format!("r33-exchange-{ordinal}: {error}"))
     });
-    let close = coordinator.into_backend().close();
+    let (backend, terminal_proof, delivered_measurements) =
+        match coordinator.into_completed_backend() {
+            Ok((backend, proof)) => {
+                let delivered = proof.successful_ordered_measurements();
+                (backend, Some(proof), delivered)
+            }
+            Err(incomplete) => {
+                let delivered = incomplete.successful_ordered_measurements();
+                (incomplete.into_backend(), None, delivered)
+            }
+        };
+    let close = backend.close();
     let queue_status = close.queue_status();
     if !close.retains_all_custody() {
-        return Err("resident-close: terminal custody not retained".to_owned());
+        terminate_with_quarantined_custody(
+            close,
+            "resident-close: terminal custody contract rejected",
+        );
     }
     if !close.permits_process_exit() {
-        return Err(format!(
-            "resident-close: native queue quarantined; queue_status={queue_status:?}"
-        ));
+        terminate_with_quarantined_custody(
+            close,
+            &format!("resident-close: native queue quarantined; queue_status={queue_status:?}"),
+        );
     }
+    drop(close);
     exchanges?;
     if queue_status.is_none() {
         return Err("resident-close: bounded lifecycle created no resident queue".to_owned());
     }
+    let proof = terminal_proof.ok_or_else(|| {
+        format!(
+            "r33-terminal-proof: absent; successful_ordered_measurements={delivered_measurements} expected={M1_R33_WINDOWS_PER_START_V1}"
+        )
+    })?;
+    if proof.successful_ordered_measurements() != M1_R33_WINDOWS_PER_START_V1
+        || proof.server_start() != plan.server_start
+        || proof.service_plan_sha256() != bundle.plan_sha256()
+    {
+        return Err("r33-terminal-proof: exact owner bindings rejected".to_owned());
+    }
     Ok(())
 }
 
-fn adopt_inherited_fd(raw: i32, name: &str) -> OwnerResult<OwnedFd> {
-    // SAFETY: This executable's external supervisor contract reserves these
-    // exact descriptor numbers and transfers sole ownership at exec.
-    let descriptor = unsafe { OwnedFd::from_raw_fd(raw) };
-    let flags = rustix::io::fcntl_getfd(&descriptor)
-        .map_err(|error| format!("{name}: required inherited capability absent: {error}"))?;
-    rustix::io::fcntl_setfd(&descriptor, flags | rustix::io::FdFlags::CLOEXEC)
-        .map_err(|error| format!("{name}: cannot install close-on-exec: {error}"))?;
-    Ok(descriptor)
+fn duplicate_inherited_fd(raw: i32, name: &str) -> OwnerResult<OwnedFd> {
+    // SAFETY: F_GETFD reads descriptor metadata without pointer arguments.
+    // This owner is still single-threaded, so a successful result establishes
+    // validity for the immediately following borrow and duplication.
+    if unsafe { libc::fcntl(raw, libc::F_GETFD) } < 0 {
+        return Err(format!(
+            "{name}: required inherited capability absent: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    // SAFETY: F_GETFD established that `raw` is live and the single-threaded
+    // startup transaction retains the supervisor's canonical descriptor.
+    let descriptor = unsafe { BorrowedFd::borrow_raw(raw) };
+    let initial = fstat(descriptor)
+        .map_err(|error| format!("{name}: initial metadata unavailable: {error}"))?;
+    // SAFETY: F_DUPFD_CLOEXEC has no pointer arguments and duplicates the
+    // validated live descriptor into a new, process-owned raw slot.
+    let duplicate_raw = unsafe { libc::fcntl(raw, libc::F_DUPFD_CLOEXEC, 0) };
+    if duplicate_raw < 0 {
+        return Err(format!(
+            "{name}: close-on-exec duplication failed: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    // SAFETY: F_DUPFD_CLOEXEC returned this fresh descriptor to the process.
+    let duplicate = unsafe { OwnedFd::from_raw_fd(duplicate_raw) };
+    let copied = fstat(&duplicate)
+        .map_err(|error| format!("{name}: duplicate metadata unavailable: {error}"))?;
+    if !same_file_snapshot(&initial, &copied) {
+        return Err(format!(
+            "{name}: descriptor identity changed during duplication"
+        ));
+    }
+    Ok(duplicate)
 }
 
-fn read_reserved_challenge(descriptor: OwnedFd) -> OwnerResult<[u8; 32]> {
-    let stat = fstat(&descriptor)
+fn require_distinct_descriptors(descriptors: &[(&str, &OwnedFd)]) -> OwnerResult<()> {
+    let metadata = descriptors
+        .iter()
+        .map(|(name, descriptor)| {
+            fstat(*descriptor)
+                .map(|stat| (*name, stat))
+                .map_err(|error| format!("{name}: metadata unavailable: {error}"))
+        })
+        .collect::<OwnerResult<Vec<_>>>()?;
+    for left in 0..metadata.len() {
+        for right in left + 1..metadata.len() {
+            if metadata[left].1.st_dev == metadata[right].1.st_dev
+                && metadata[left].1.st_ino == metadata[right].1.st_ino
+            {
+                return Err(format!(
+                    "supervisor-capabilities: {} and {} alias one kernel object",
+                    metadata[left].0, metadata[right].0
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn require_seqpacket(descriptor: &OwnedFd, name: &str) -> OwnerResult<()> {
+    let kind = socket_type(descriptor)
+        .map_err(|error| format!("{name}: socket type unavailable: {error}"))?;
+    if kind != SocketType::SEQPACKET {
+        return Err(format!("{name}: connected Unix SOCK_SEQPACKET required"));
+    }
+    let local = getsockname(descriptor)
+        .map_err(|error| format!("{name}: local socket identity unavailable: {error}"))?;
+    let peer = getpeername(descriptor)
+        .map_err(|error| format!("{name}: connected peer unavailable: {error}"))?;
+    if local.address_family() != AddressFamily::UNIX
+        || peer.map(|address| address.address_family()) != Some(AddressFamily::UNIX)
+    {
+        return Err(format!("{name}: connected Unix SOCK_SEQPACKET required"));
+    }
+    Ok(())
+}
+
+fn consume_canonical_slot(raw: i32, duplicate: &OwnedFd, name: &str) -> OwnerResult<()> {
+    drop(take_canonical_slot(raw, duplicate, name)?);
+    Ok(())
+}
+
+fn take_canonical_slot(raw: i32, duplicate: &OwnedFd, name: &str) -> OwnerResult<OwnedFd> {
+    // SAFETY: The successful raw-FD preflight and duplicate above establish
+    // that the supervisor transferred ownership of this exact canonical slot.
+    let canonical = unsafe { OwnedFd::from_raw_fd(raw) };
+    let canonical_stat = fstat(&canonical)
+        .map_err(|error| format!("{name}: canonical metadata unavailable: {error}"))?;
+    let duplicate_stat = fstat(duplicate)
+        .map_err(|error| format!("{name}: duplicate metadata unavailable: {error}"))?;
+    if !same_file_snapshot(&canonical_stat, &duplicate_stat) {
+        return Err(format!("{name}: canonical slot changed before consumption"));
+    }
+    Ok(canonical)
+}
+
+fn read_reserved_challenge(descriptor: &OwnedFd) -> OwnerResult<[u8; 32]> {
+    let stat = fstat(descriptor)
         .map_err(|error| format!("begin-challenge-fd197: metadata unavailable: {error}"))?;
     if FileType::from_raw_mode(stat.st_mode) != FileType::RegularFile || stat.st_size != 32 {
         return Err("begin-challenge-fd197: exact 32-byte regular memfd required".to_owned());
@@ -1062,18 +1242,15 @@ fn read_reserved_challenge(descriptor: OwnedFd) -> OwnerResult<[u8; 32]> {
         return Err("begin-challenge-fd197: exact mode 0400 required".to_owned());
     }
     let expected = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
-    let seals = rustix::fs::fcntl_get_seals(&descriptor)
+    let seals = rustix::fs::fcntl_get_seals(descriptor)
         .map_err(|error| format!("begin-challenge-fd197: memfd seals unavailable: {error}"))?;
     if seals != expected {
         return Err("begin-challenge-fd197: exact immutable seal set required".to_owned());
     }
-    let mut file = File::from(descriptor);
     let mut bytes = [0_u8; 32];
-    file.read_exact(&mut bytes)
-        .map_err(|error| format!("begin-challenge-fd197: exact read failed: {error}"))?;
+    read_exact_at(descriptor, &mut bytes, "begin-challenge-fd197")?;
     let mut trailing = [0_u8; 1];
-    if file
-        .read(&mut trailing)
+    if rustix::io::pread(descriptor, &mut trailing, 32)
         .map_err(|error| format!("begin-challenge-fd197: trailing read failed: {error}"))?
         != 0
     {
@@ -1083,6 +1260,61 @@ fn read_reserved_challenge(descriptor: OwnedFd) -> OwnerResult<[u8; 32]> {
         return Err("begin-challenge-fd197: all-zero reservation rejected".to_owned());
     }
     Ok(bytes)
+}
+
+fn read_sealed_owner_plan(descriptor: &OwnedFd, expected_sha256: [u8; 32]) -> OwnerResult<Vec<u8>> {
+    let stat = fstat(descriptor)
+        .map_err(|error| format!("owner-plan-fd198: metadata unavailable: {error}"))?;
+    let length = usize::try_from(stat.st_size)
+        .map_err(|_| "owner-plan-fd198: bounded size rejected".to_owned())?;
+    if FileType::from_raw_mode(stat.st_mode) != FileType::RegularFile
+        || length == 0
+        || u64::try_from(length).unwrap_or(u64::MAX) > MAX_OWNER_PLAN_BYTES_V1
+    {
+        return Err("owner-plan-fd198: bounded regular memfd required".to_owned());
+    }
+    if stat.st_mode & 0o777 != 0o400 {
+        return Err("owner-plan-fd198: exact mode 0400 required".to_owned());
+    }
+    let expected_seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+    let seals = rustix::fs::fcntl_get_seals(descriptor)
+        .map_err(|error| format!("owner-plan-fd198: memfd seals unavailable: {error}"))?;
+    if seals != expected_seals {
+        return Err("owner-plan-fd198: exact immutable seal set required".to_owned());
+    }
+    let mut bytes = vec![0_u8; length];
+    read_exact_at(descriptor, &mut bytes, "owner-plan-fd198")?;
+    if <[u8; 32]>::from(Sha256::digest(&bytes)) != expected_sha256 {
+        return Err("owner-plan-fd198: supervisor digest mismatch".to_owned());
+    }
+    Ok(bytes)
+}
+
+fn read_exact_at(descriptor: &OwnedFd, bytes: &mut [u8], name: &str) -> OwnerResult<()> {
+    let mut offset = 0_usize;
+    while offset < bytes.len() {
+        let file_offset =
+            u64::try_from(offset).map_err(|_| format!("{name}: read offset conversion failed"))?;
+        let count = rustix::io::pread(descriptor, &mut bytes[offset..], file_offset)
+            .map_err(|error| format!("{name}: exact read failed: {error}"))?;
+        if count == 0 {
+            return Err(format!("{name}: premature end of file"));
+        }
+        offset = offset
+            .checked_add(count)
+            .ok_or_else(|| format!("{name}: read offset overflow"))?;
+    }
+    Ok(())
+}
+
+fn terminate_with_quarantined_custody<T>(custody: T, diagnostic: &str) -> ! {
+    eprintln!("FAIL-CLOSED: {diagnostic}; custody retained through process termination");
+    let _custody = retain_quarantined_custody(custody);
+    process::exit(1)
+}
+
+fn retain_quarantined_custody<T>(custody: T) -> ManuallyDrop<T> {
+    ManuallyDrop::new(custody)
 }
 
 fn require_canonical_absolute_path(path: &Path, description: &str) -> OwnerResult<()> {
@@ -1177,7 +1409,11 @@ fn sha256_hex(bytes: &[u8]) -> String {
 mod tests {
     use super::*;
     use rustix::fs::MemfdFlags;
+    use rustix::net::{SocketFlags, socketpair};
+    use std::cell::Cell;
     use std::io::{Seek, SeekFrom, Write};
+    use std::os::fd::AsRawFd;
+    use std::rc::Rc;
 
     const IDENTITY: &str = "0101010101010101010101010101010101010101010101010101010101010101";
     const KEY: &str = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
@@ -1259,12 +1495,10 @@ mod tests {
         assert!(decode_bytes_32(&"00".repeat(32), true).is_err());
     }
 
-    fn challenge_fd(bytes: &[u8], seals: SealFlags) -> OwnedFd {
-        let descriptor = rustix::fs::memfd_create(
-            "ferric-r33-owner-challenge-test",
-            MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING,
-        )
-        .unwrap();
+    fn sealed_memfd(name: &str, bytes: &[u8], seals: SealFlags) -> OwnedFd {
+        let descriptor =
+            rustix::fs::memfd_create(name, MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING)
+                .unwrap();
         let mut file = File::from(descriptor);
         rustix::fs::fchmod(&file, Mode::RUSR).unwrap();
         file.write_all(bytes).unwrap();
@@ -1273,11 +1507,15 @@ mod tests {
         file.into()
     }
 
+    fn challenge_fd(bytes: &[u8], seals: SealFlags) -> OwnedFd {
+        sealed_memfd("ferric-r33-owner-challenge-test", bytes, seals)
+    }
+
     #[test]
     fn sealed_reserved_challenge_is_read_exactly_once() {
         let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
         assert_eq!(
-            read_reserved_challenge(challenge_fd(&[7; 32], seals)).unwrap(),
+            read_reserved_challenge(&challenge_fd(&[7; 32], seals)).unwrap(),
             [7; 32]
         );
     }
@@ -1285,9 +1523,90 @@ mod tests {
     #[test]
     fn challenge_rejects_missing_seals_size_and_zero() {
         let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
-        assert!(read_reserved_challenge(challenge_fd(&[7; 32], SealFlags::empty())).is_err());
-        assert!(read_reserved_challenge(challenge_fd(&[7; 31], seals)).is_err());
-        assert!(read_reserved_challenge(challenge_fd(&[0; 32], seals)).is_err());
+        assert!(read_reserved_challenge(&challenge_fd(&[7; 32], SealFlags::empty())).is_err());
+        assert!(read_reserved_challenge(&challenge_fd(&[7; 31], seals)).is_err());
+        assert!(read_reserved_challenge(&challenge_fd(&[0; 32], seals)).is_err());
+    }
+
+    #[test]
+    fn sealed_supervisor_plan_requires_exact_digest() {
+        let mut bytes = serde_json::to_vec_pretty(&plan()).unwrap();
+        bytes.push(b'\n');
+        let digest: [u8; 32] = Sha256::digest(&bytes).into();
+        let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+        let descriptor = sealed_memfd("ferric-r33-owner-plan-test", &bytes, seals);
+        assert_eq!(read_sealed_owner_plan(&descriptor, digest).unwrap(), bytes);
+        assert!(read_sealed_owner_plan(&descriptor, [9; 32]).is_err());
+        assert!(decode_owner_plan(&bytes).is_ok());
+    }
+
+    #[test]
+    fn inherited_descriptor_preflight_rejects_absence_type_and_alias() {
+        assert!(duplicate_inherited_fd(-1, "missing-fd").is_err());
+        let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+        let regular = challenge_fd(&[7; 32], seals);
+        assert!(require_seqpacket(&regular, "current-record-fd").is_err());
+        let (current, verifier) = socketpair(
+            AddressFamily::UNIX,
+            SocketType::SEQPACKET,
+            SocketFlags::CLOEXEC,
+            None,
+        )
+        .unwrap();
+        require_seqpacket(&current, "current-record-fd").unwrap();
+        require_seqpacket(&verifier, "verifier-fd").unwrap();
+        let alias = rustix::io::fcntl_dupfd_cloexec(&current, 0).unwrap();
+        assert!(
+            require_distinct_descriptors(&[("current-record-fd", &current), ("alias", &alias)])
+                .unwrap_err()
+                .contains("alias one kernel object")
+        );
+        let duplicate = duplicate_inherited_fd(current.as_raw_fd(), "current-record-fd").unwrap();
+        assert_ne!(duplicate.as_raw_fd(), current.as_raw_fd());
+        require_seqpacket(&duplicate, "current-record-duplicate").unwrap();
+    }
+
+    #[test]
+    fn canonical_slot_is_owned_only_after_validated_duplication() {
+        let (canonical, _peer) = socketpair(
+            AddressFamily::UNIX,
+            SocketType::SEQPACKET,
+            SocketFlags::CLOEXEC,
+            None,
+        )
+        .unwrap();
+        let raw = canonical.into_raw_fd();
+        let duplicate = duplicate_inherited_fd(raw, "test-canonical").unwrap();
+        let canonical = take_canonical_slot(raw, &duplicate, "test-canonical").unwrap();
+        assert_eq!(canonical.as_raw_fd(), raw);
+        drop(canonical);
+        require_seqpacket(&duplicate, "test-duplicate").unwrap();
+    }
+
+    #[test]
+    fn invalid_selector_and_current_record_carriers_fail_before_authority() {
+        assert!(decode_m1_worker_v3_selector_manifest_v2(b"{}\n").is_err());
+        let seals = SealFlags::WRITE | SealFlags::GROW | SealFlags::SHRINK | SealFlags::SEAL;
+        let wrong_current_record = challenge_fd(&[3; 32], seals);
+        assert!(require_seqpacket(&wrong_current_record, "compiler-current-record-fd195").is_err());
+    }
+
+    #[test]
+    fn quarantine_custody_does_not_drop_before_process_termination() {
+        struct DropProbe(Rc<Cell<usize>>);
+
+        impl Drop for DropProbe {
+            fn drop(&mut self) {
+                self.0.set(self.0.get() + 1);
+            }
+        }
+
+        let drops = Rc::new(Cell::new(0));
+        let mut retained = retain_quarantined_custody(DropProbe(Rc::clone(&drops)));
+        assert_eq!(drops.get(), 0);
+        // SAFETY: The test owns this ManuallyDrop and invokes its destructor once.
+        unsafe { ManuallyDrop::drop(&mut retained) };
+        assert_eq!(drops.get(), 1);
     }
 
     #[test]
@@ -1305,7 +1624,9 @@ mod tests {
             "OpenedKfd::open_default",
             "initialize_m1_physical_runner_memory_v1",
             "new_with_s1_k4_resident_windows",
-            "coordinator.into_backend().close()",
+            "coordinator.into_completed_backend()",
+            "terminate_with_quarantined_custody",
+            "ManuallyDrop::new",
         ] {
             assert!(
                 source.contains(required),
@@ -1323,5 +1644,6 @@ mod tests {
         assert_eq!(COMPILER_CURRENT_RECORD_FD_V1, 195);
         assert_eq!(PROTECTED_VERIFIER_FD_V1, 196);
         assert_eq!(BEGIN_CHALLENGE_FD_V1, 197);
+        assert_eq!(OWNER_PLAN_FD_V1, 198);
     }
 }
