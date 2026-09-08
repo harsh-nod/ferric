@@ -6,6 +6,8 @@ const SPECULATIVE_CLI_SOURCE: &str =
 const R29_TECHNICAL_CLI_SOURCE: &str =
     include_str!("../src/bin/ferric-m1-engineering-r29-capture.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
+const STARTUP_DIAGNOSTICS_SOURCE: &str = include_str!("../src/bin/startup_diagnostics.rs");
+const ADAPTER_README: &str = include_str!("../README.md");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
 const R33_PRODUCTION_BACKEND_SOURCE: &str = include_str!("../src/r33_production_backend.rs");
 const R33_RESIDENT_SESSION_SOURCE: &str = include_str!("../src/r33_resident_session.rs");
@@ -222,6 +224,99 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
             );
         }
     }
+}
+
+#[test]
+fn engineering_startup_diagnostics_are_opt_in_stderr_only_and_non_authoritative() {
+    for required in [
+        "FERRIC_M1_ENGINEERING_STARTUP_PHASE_DIAGNOSTICS_V1",
+        "FERRIC_M1_ENGINEERING_STARTUP_PHASE_V1",
+        "std::env::var_os",
+        "Some(OsStr::new(STARTUP_PHASE_DIAGNOSTICS_OPT_IN_V1))",
+        "std::io::stderr().lock()",
+        "scope=engineering-only authority=none evidence=false",
+        "benchmark_comparable=false clock=std-instant-cumulative",
+        "let _ = writeln!",
+    ] {
+        assert!(
+            STARTUP_DIAGNOSTICS_SOURCE.contains(required),
+            "startup diagnostic helper is missing {required}"
+        );
+    }
+    for phase in [
+        "artifact-admission",
+        "cpu-model-bootstrap-preparation",
+        "runner-bind",
+        "kfd-bind",
+        "initialize-memory-allocation-upload",
+        "controller-execution",
+    ] {
+        assert!(
+            STARTUP_DIAGNOSTICS_SOURCE.contains(phase),
+            "startup diagnostic helper is missing phase ID {phase}"
+        );
+    }
+    for forbidden in ["stdout", "serde_json", "prompt", "token", "model_bundle"] {
+        assert!(
+            !STARTUP_DIAGNOSTICS_SOURCE.contains(forbidden),
+            "startup diagnostic helper contains payload or stdout marker {forbidden}"
+        );
+    }
+    assert!(ADAPTER_README.contains("`FERRIC_M1_ENGINEERING_STARTUP_PHASE_DIAGNOSTICS_V1=1`"));
+    assert!(ADAPTER_README.contains("do not change"));
+    assert!(ADAPTER_README.contains("the stdout observation schema"));
+}
+
+#[test]
+fn both_engineering_smokes_complete_the_same_six_startup_boundaries_in_order() {
+    const COMPLETIONS: [&str; 6] = [
+        "diagnostics.completed(EngineeringStartupPhaseV1::ArtifactAdmission)",
+        "diagnostics.completed(EngineeringStartupPhaseV1::CpuModelBootstrapPreparation)",
+        "diagnostics.completed(EngineeringStartupPhaseV1::RunnerBind)",
+        "diagnostics.completed(EngineeringStartupPhaseV1::KfdBind)",
+        "diagnostics.completed(EngineeringStartupPhaseV1::InitializeMemoryAllocationUpload)",
+        "diagnostics.completed(EngineeringStartupPhaseV1::ControllerExecution)",
+    ];
+    const OPERATIONS: [&str; 6] = [
+        "let artifact = reopen_m1_engineering_aggregate_artifact_v1",
+        "smoke_bootstrap::prepare(",
+        "let bound = bootstrap.bind(",
+        "let checked = OpenedKfd::open_default()",
+        "let initialized = bound.initialize_memory(checked)?",
+        "shutdown_all_terminal_queue",
+    ];
+
+    for source in [CLI_SOURCE, SPECULATIVE_CLI_SOURCE] {
+        assert!(source.contains("mod startup_diagnostics;"));
+        assert!(source.contains("EngineeringStartupDiagnosticsV1::from_process_environment()"));
+        assert_eq!(source.matches("diagnostics.completed(").count(), 6);
+
+        let completion_offsets = COMPLETIONS.map(|completion| {
+            source
+                .find(completion)
+                .unwrap_or_else(|| panic!("engineering smoke is missing {completion}"))
+        });
+        assert!(completion_offsets.windows(2).all(|pair| pair[0] < pair[1]));
+
+        for (operation, completion) in OPERATIONS[..5].iter().zip(&COMPLETIONS[..5]) {
+            assert!(
+                source.find(operation).unwrap() < source.find(completion).unwrap(),
+                "completion {completion} must follow successful operation {operation}"
+            );
+        }
+    }
+
+    let target_controller = CLI_SOURCE
+        .find("let execution = execute_m1_target_smoke_v1")
+        .unwrap();
+    assert!(target_controller < CLI_SOURCE.find(COMPLETIONS[5]).unwrap());
+    let speculative_shutdown = SPECULATIVE_CLI_SOURCE.find(OPERATIONS[5]).unwrap();
+    let speculative_duration = SPECULATIVE_CLI_SOURCE
+        .find("let speculative_duration_ns =")
+        .unwrap();
+    let speculative_completion = SPECULATIVE_CLI_SOURCE.find(COMPLETIONS[5]).unwrap();
+    assert!(speculative_shutdown < speculative_duration);
+    assert!(speculative_duration < speculative_completion);
 }
 
 #[test]

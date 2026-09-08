@@ -3,6 +3,7 @@
 //! Explicit non-authoritative target-smoke execution for one fe2o3 engineering observation.
 
 mod smoke_bootstrap;
+mod startup_diagnostics;
 
 use fe2o3_kfd::{DeviceSelector, OpenedKfd};
 use ferric_build::{SpecialTokenDecodePolicy, TokenizerExecutionLimits};
@@ -12,6 +13,7 @@ use ferric_m1_engineering_execution_v1::{
 };
 use ferric_spec::{Identity, M1_QUALIFICATION_TOKENS_PER_LANE};
 use serde_json::{Value, json};
+use startup_diagnostics::{EngineeringStartupDiagnosticsV1, EngineeringStartupPhaseV1};
 use std::collections::BTreeSet;
 use std::ffi::{OsStr, OsString};
 use std::io::Write;
@@ -130,6 +132,7 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: &[OsString]) -> SmokeResult<()> {
+    let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
     let [
         prepacked_root,
         observation_root,
@@ -161,6 +164,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
 
     let artifact = reopen_m1_engineering_aggregate_artifact_v1(Path::new(observation_root))
         .map_err(|error| format!("cannot admit engineering aggregate: {error}"))?;
+    diagnostics.completed(EngineeringStartupPhaseV1::ArtifactAdmission);
     let facts = EngineeringObservationFacts {
         manifest: artifact.manifest_id(),
         hsaco: artifact.hsaco_id(),
@@ -170,23 +174,28 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
     };
     let bootstrap =
         smoke_bootstrap::prepare(Path::new(prepacked_root), &identity_input, prompt, facts)?;
+    diagnostics.completed(EngineeringStartupPhaseV1::CpuModelBootstrapPreparation);
     let bound = bootstrap.bind(|publication| {
         bind_engineering_structural_m1_physical_runner_v1(artifact, publication)
             .map_err(|error| format!("cannot bind engineering physical runner: {error:?}"))
     })?;
+    diagnostics.completed(EngineeringStartupPhaseV1::RunnerBind);
     let checked = OpenedKfd::open_default()
         .map_err(|error| format!("cannot open KFD: {error}"))?
         .admit_uapi()
         .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
         .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
         .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    diagnostics.completed(EngineeringStartupPhaseV1::KfdBind);
     let initialized = bound.initialize_memory(checked)?;
+    diagnostics.completed(EngineeringStartupPhaseV1::InitializeMemoryAllocationUpload);
     let execution = execute_m1_target_smoke_v1(
         &initialized.runner,
         initialized.memory,
         initialized.prompt_tokens,
         max_new_tokens,
     )?;
+    diagnostics.completed(EngineeringStartupPhaseV1::ControllerExecution);
     let text_bytes = initialized
         .tokenizer
         .decode_to_bytes(

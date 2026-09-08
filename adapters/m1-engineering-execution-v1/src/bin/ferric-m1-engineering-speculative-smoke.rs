@@ -3,6 +3,7 @@
 //! Authority-free paired-prefill to S1/K4 hardware diagnostic.
 
 mod smoke_bootstrap;
+mod startup_diagnostics;
 
 use fe2o3_kfd::{DeviceSelector, GFX942_MAX_FIXED_DISPATCH_DATA_V1, OpenedKfd};
 use ferric_build::{
@@ -37,6 +38,7 @@ use ferric_spec::{
 };
 use rustix::time::{ClockId, clock_gettime};
 use serde_json::{Value, json};
+use startup_diagnostics::{EngineeringStartupDiagnosticsV1, EngineeringStartupPhaseV1};
 use std::ffi::OsString;
 use std::fmt::Debug;
 use std::io::Write;
@@ -96,6 +98,7 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: &[OsString]) -> SmokeResult<()> {
+    let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
     let [prepacked_root, observation_root, gpu_unique_id, prompt] = arguments else {
         return Err("usage: ferric-m1-engineering-speculative-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT".to_owned());
     };
@@ -110,6 +113,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
 
     let artifact = reopen_m1_engineering_aggregate_artifact_v1(Path::new(observation_root))
         .map_err(|error| format!("cannot admit engineering aggregate: {error}"))?;
+    diagnostics.completed(EngineeringStartupPhaseV1::ArtifactAdmission);
     let facts = EngineeringObservationFacts {
         manifest: artifact.manifest_id(),
         hsaco: artifact.hsaco_id(),
@@ -123,23 +127,28 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         prompt,
         facts,
     )?;
+    diagnostics.completed(EngineeringStartupPhaseV1::CpuModelBootstrapPreparation);
     let bound = bootstrap.bind(|publication| {
         bind_engineering_structural_m1_physical_runner_v1(artifact, publication)
             .map_err(|error| format!("cannot bind engineering physical runner: {error:?}"))
     })?;
+    diagnostics.completed(EngineeringStartupPhaseV1::RunnerBind);
     let checked = OpenedKfd::open_default()
         .map_err(|error| format!("cannot open KFD: {error}"))?
         .admit_uapi()
         .map_err(|error| format!("cannot admit pinned KFD UAPI: {error}"))?
         .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
         .map_err(|error| format!("cannot bind selected gfx942:xnack- device: {error}"))?;
+    diagnostics.completed(EngineeringStartupPhaseV1::KfdBind);
     let initialized = bound.initialize_memory(checked)?;
-    execute_and_report(initialized, facts)
+    diagnostics.completed(EngineeringStartupPhaseV1::InitializeMemoryAllocationUpload);
+    execute_and_report(initialized, facts, &diagnostics)
 }
 
 fn execute_and_report(
     initialized: smoke_bootstrap::InitializedSmokeBootstrapV1,
     facts: EngineeringObservationFacts,
+    diagnostics: &EngineeringStartupDiagnosticsV1,
 ) -> SmokeResult<()> {
     let smoke_bootstrap::InitializedSmokeBootstrapV1 {
         runner,
@@ -524,6 +533,7 @@ fn execute_and_report(
         elapsed_ns(speculative_started_ns),
         "measure finite S1/K4 duration",
     );
+    diagnostics.completed(EngineeringStartupPhaseV1::ControllerExecution);
     let Some(physical_total_ns) = prefill_duration_ns.checked_add(speculative_duration_ns) else {
         fail_stop(
             "sum paired-prefill and speculative durations",

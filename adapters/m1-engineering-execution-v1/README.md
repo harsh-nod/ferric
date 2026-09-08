@@ -20,6 +20,14 @@ single-request timing with the production target-smoke field names. That timing
 starts after artifact, model-memory, and tokenizer setup and is explicitly not
 comparable to R33 serving, vLLM, or SGLang measurements.
 
+For engineering startup diagnosis only, set
+`FERRIC_M1_ENGINEERING_STARTUP_PHASE_DIAGNOSTICS_V1=1` when invoking either
+smoke binary. The opt-in writes fixed, cumulative `std::time::Instant` phase
+completion records to stderr. They carry authority `none`, are not evidence or
+benchmark-comparable timing, contain no prompt/model data, and do not change
+the stdout observation schema. Unset or any value other than the exact literal
+`1` disables them.
+
 For a direct authority-free smoke, the identity-closure argument may be the
 reserved literal `@derive-engineering-identities-v1`. That mode derives inert,
 nonzero preliminary runner inputs from the exact admitted engineering
