@@ -92,13 +92,7 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
         &[],
     ),
     ("ferric-engine", "arrayvec", "=0.7.8", true, &[]),
-    (
-        "ferric-engine",
-        "rustix",
-        "=1.1.4",
-        true,
-        &["fs", "time"],
-    ),
+    ("ferric-engine", "rustix", "=1.1.4", true, &["fs", "time"]),
     ("ferric-engine", "serde_json", "=1.0.151", true, &[]),
     ("ferric-engine", "sha2", "^0.11.0", true, &[]),
     ("ferric-m1-benchmarks", "num-bigint", "=0.4.8", true, &[]),
@@ -178,16 +172,13 @@ const SERDE_JSON_CHECKSUM: &str =
 const SOURCE_PIN_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1";
 const SOURCE_PIN_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-source-pin-v1";
 const SOURCE_PIN_CRATE_NAME: &str = "ferric_qwen3_all_kernels_worker_v3_source_pin_v1";
-const PROMOTION_PACKAGE_NAME: &str =
-    "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
+const PROMOTION_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
 const PROMOTION_RELATIVE_PATH: &str =
     "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
-const PROMOTION_CRATE_NAME: &str =
-    "ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1";
+const PROMOTION_CRATE_NAME: &str = "ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1";
 const VERIFIER_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-worker-v3-verifier-v1";
 const VERIFIER_RELATIVE_PATH: &str = "adapters/qwen3-all-kernels-worker-v3-verifier-v1";
-const NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME: &str =
-    "ferric-non-authoritative-program-source-v1";
+const NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME: &str = "ferric-non-authoritative-program-source-v1";
 const DEVICE_PACKAGE_NAME: &str = "ferric-qwen3-all-kernels-device-v1";
 const DEVICE_RELATIVE_PATH: &str = "device/qwen3-all-kernels-v1";
 const VERIFIER_LOCK_RELATIVE_PATH: &str =
@@ -524,19 +515,18 @@ const PROMOTION_NORMAL_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
     },
 ];
 
-const PROMOTION_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] =
-    &[ExpectedRuntimeDependency {
-        name: "toml",
-        edge_name: "toml",
-        declared_source: Some(CRATES_IO_SOURCE),
-        requirement: "=1.1.5",
-        kind: Some("dev"),
-        uses_default_features: true,
-        features: &[],
-        relative_path: None,
-        resolved_version: "1.1.5+spec-1.1.0",
-        checksum: Some(TOML_CHECKSUM),
-    }];
+const PROMOTION_DEV_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[ExpectedRuntimeDependency {
+    name: "toml",
+    edge_name: "toml",
+    declared_source: Some(CRATES_IO_SOURCE),
+    requirement: "=1.1.5",
+    kind: Some("dev"),
+    uses_default_features: true,
+    features: &[],
+    relative_path: None,
+    resolved_version: "1.1.5+spec-1.1.0",
+    checksum: Some(TOML_CHECKSUM),
+}];
 
 const SOURCE_PIN_DEPENDENCIES: &[ExpectedRuntimeDependency] = &[
     ExpectedRuntimeDependency {
@@ -4022,9 +4012,7 @@ fn packages(
         {
             let dependency_name = string_field(dependency, "name")?;
             let is_dev = is_dev_dependency(dependency)?;
-            if dependency_name == NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME
-                && name != "ferric-engine"
-            {
+            if dependency_name == NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME && name != "ferric-engine" {
                 return Err(format!(
                     "package {name} cannot directly construct non-authoritative program source custody"
                 ));
@@ -4083,8 +4071,7 @@ fn packages(
                 }
             }
         }
-        if name == "ferric-engine"
-            && !dependencies.contains(NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME)
+        if name == "ferric-engine" && !dependencies.contains(NON_AUTHORITATIVE_SOURCE_PACKAGE_NAME)
         {
             return Err(
                 "ferric-engine no longer retains the internal non-authoritative source boundary"
@@ -4157,6 +4144,96 @@ fn path_name(path: &SynPath) -> String {
         .join("::")
 }
 
+const QUALIFICATION_CAPTURE_ROOT_SOURCE: &str =
+    "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs";
+const QUALIFICATION_CAPTURE_SIBLING_MODULES: &[(&str, bool)] = &[
+    ("input_bundle", false),
+    ("m1_r30_canary_partial_capture", false),
+    ("m1_r30_capture_composition", false),
+    ("m1_r30_exhaustion_partial_capture", false),
+    ("m1_r30_fault_transition_partial_capture", true),
+    ("m1_r30_partial_capture", false),
+    ("m1_r30_rollback_partial_capture", false),
+    ("m1_r32_partial_capture", false),
+    ("m1_target_smoke", false),
+];
+
+fn validate_module_attributes(module: &verus_syn::ItemMod, source: &str) -> GateResult<()> {
+    let path_attributes = module
+        .attrs
+        .iter()
+        .filter(|attribute| path_name(attribute.path()) == "path")
+        .count();
+    if path_attributes == 0 {
+        return validate_attributes(&module.attrs, false);
+    }
+    if source != QUALIFICATION_CAPTURE_ROOT_SOURCE {
+        return Err(format!(
+            "#[path] module redirection is forbidden outside the qualification-capture root: {source}"
+        ));
+    }
+    if path_attributes != 1
+        || module.content.is_some()
+        || !matches!(&module.vis, Visibility::Inherited)
+    {
+        return Err("qualification-capture sibling module shape drifted".to_owned());
+    }
+
+    let module_name = module.ident.to_string();
+    let feature_gated = QUALIFICATION_CAPTURE_SIBLING_MODULES
+        .iter()
+        .find_map(|(name, feature_gated)| (*name == module_name).then_some(*feature_gated))
+        .ok_or_else(|| format!("unadmitted qualification-capture sibling module: {module_name}"))?;
+    let expected_attributes = if feature_gated { 2 } else { 1 };
+    if module.attrs.len() != expected_attributes {
+        return Err(format!(
+            "qualification-capture sibling module attributes drifted: {module_name}"
+        ));
+    }
+    if feature_gated
+        && !matches!(
+            &module.attrs[0],
+            attribute
+                if matches!(&attribute.style, AttrStyle::Outer)
+                    && path_name(attribute.path()) == "cfg"
+                    && matches!(
+                        &attribute.meta,
+                        Meta::List(list)
+                            if list.tokens.to_string()
+                                == "feature = \"qualification-fault-injection\""
+                    )
+        )
+    {
+        return Err(format!(
+            "qualification-capture sibling module feature guard drifted: {module_name}"
+        ));
+    }
+
+    let path_attribute = &module.attrs[expected_attributes - 1];
+    let expected_path = format!("{module_name}.rs");
+    if !matches!(&path_attribute.style, AttrStyle::Outer)
+        || !matches!(
+            &path_attribute.meta,
+            Meta::NameValue(value)
+                if path_name(&value.path) == "path"
+                    && matches!(
+                        &value.value,
+                        Expr::Lit(expression)
+                            if matches!(
+                                &expression.lit,
+                                verus_syn::Lit::Str(literal)
+                                    if literal.value() == expected_path
+                            )
+                    )
+        )
+    {
+        return Err(format!(
+            "qualification-capture sibling module path drifted: {module_name}"
+        ));
+    }
+    Ok(())
+}
+
 fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) -> GateResult<()> {
     const DERIVES: &[&str] = &[
         "Clone",
@@ -4196,7 +4273,10 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
             "path" => return Err("#[path] module redirection is forbidden".to_owned()),
             "doc" | "must_use" | "inline" | "cold" | "non_exhaustive" | "deprecated" => {}
             "expect" => {
-                const REASON: &str = "the staged private rebind core is consumed by the authenticated reserve/prepare/submit bridge";
+                const REASONS: [&str; 2] = [
+                    "the staged private rebind core is consumed by the authenticated reserve/prepare/submit bridge",
+                    "typed resident readback diagnostics remain retained in opaque failure custody",
+                ];
                 let Meta::List(expect_list) = &attribute.meta else {
                     return Err("malformed expect attribute".to_owned());
                 };
@@ -4222,7 +4302,7 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                             && matches!(
                                 &value.value,
                                 Expr::Lit(expression)
-                                    if matches!(&expression.lit, verus_syn::Lit::Str(literal) if literal.value() == REASON)
+                                    if matches!(&expression.lit, verus_syn::Lit::Str(literal) if REASONS.contains(&literal.value().as_str()))
                             )
                 );
                 if !exact_lint || !exact_reason || expectations.next().is_some() {
@@ -4236,15 +4316,21 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                 if !matches!(
                     list.tokens.to_string().as_str(),
                     "dead_code"
+                        | "dead_code , reason = \"allocating entry remains available to non-resident rollover callers\""
                         | "unused_imports"
                         | "clippy :: boxed_local"
                         | "clippy :: cast_possible_truncation"
                         | "clippy :: large_enum_variant"
+                        | "clippy :: large_enum_variant , reason = \"resident success keeps physical readback inline to avoid a timed heap allocation\""
+                        | "clippy :: large_types_passed_by_value"
+                        | "clippy :: large_types_passed_by_value , clippy :: result_large_err"
                         | "clippy :: missing_fields_in_debug"
+                        | "clippy :: needless_range_loop , reason = \"lane indexes several independently authenticated parallel rosters\""
                         | "clippy :: result_large_err"
                         | "clippy :: result_large_err , clippy :: too_many_arguments"
                         | "clippy :: struct_excessive_bools"
                         | "clippy :: too_many_arguments"
+                        | "clippy :: too_many_arguments , clippy :: type_complexity"
                         | "clippy :: too_many_lines"
                         | "clippy :: type_complexity"
                         | "clippy :: unnecessary_box_returns"
@@ -4419,14 +4505,10 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
 
     fn visit_stmt_macro(&mut self, statement: &'ast verus_syn::StmtMacro) {
         let name = path_name(&statement.mac.path);
-        if matches!(name.as_str(), "assert" | "debug_assert") {
-            match verus_syn::parse2::<Expr>(statement.mac.tokens.clone()) {
-                Ok(expression) => self.visit_expr(&expression),
-                Err(error) => self
-                    .errors
-                    .push(format!("unsupported assertion invocation: {error}")),
-            }
-        } else if matches!(name.as_str(), "debug_assert_eq" | "eprintln" | "println") {
+        if matches!(
+            name.as_str(),
+            "assert" | "debug_assert" | "debug_assert_eq" | "eprintln" | "println"
+        ) {
             self.visit_expression_macro_arguments(statement.mac.tokens.clone(), &name);
         } else {
             self.reject_macro(&statement.mac.path, "statement");
@@ -5170,7 +5252,7 @@ impl SourceWalker<'_> {
                     if in_verus {
                         return Err("module declarations inside verus! are forbidden".to_owned());
                     }
-                    validate_attributes(&module.attrs, false)?;
+                    validate_module_attributes(module, source)?;
                     let child_name = module.ident.to_string();
                     if child_name.starts_with("r#") {
                         return Err(format!("raw module identifier is forbidden: {child_name}"));
@@ -5798,23 +5880,23 @@ mod tests {
         canonical_verifier_package_id, canonical_verifier_target_path, cfg_test_fixture_item,
         cfg_test_item, expected_runtime_dependency_id, inherent_owner_module, package_map,
         parse_generated_roster_declaration, render_verifier_lock_records, resolve_map,
-        runtime_lock_checksums, target_module_dir,
-        validate_aggregate_runtime_roster_file, validate_attributes,
-        validate_local_runtime_package, validate_node_dependency_ids,
-        validate_promotion_workspace_package,
-        validate_resolved_edge_declarations, validate_source_pin_package,
-        validate_verifier_dependency_declarations, validate_verifier_resolved_dependencies,
-        verifier_edge_kinds, ExpectedRuntimeDependency, ExpectedSourcePinTarget,
-        VerifierDependencyScope, VerifierEdgeKinds, CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE,
-        FE2O3_SOURCE, PROMOTION_CRATE_NAME, PROMOTION_DEV_DEPENDENCIES,
-        PROMOTION_NORMAL_DEPENDENCIES, PROMOTION_PACKAGE_NAME, PROMOTION_RELATIVE_PATH,
-        SOURCE_PIN_CRATE_NAME, SOURCE_PIN_DEPENDENCIES, SOURCE_PIN_PACKAGE_NAME,
-        SOURCE_PIN_RELATIVE_PATH, SOURCE_PIN_TARGETS, VERIFIER_DEV_DEPENDENCIES,
-        VERIFIER_NORMAL_DEPENDENCIES, VERUS_RESOLVED_SOURCE, VERUS_SOURCE,
+        runtime_lock_checksums, target_module_dir, validate_aggregate_runtime_roster_file,
+        validate_attributes, validate_local_runtime_package, validate_node_dependency_ids,
+        validate_promotion_workspace_package, validate_resolved_edge_declarations,
+        validate_source_pin_package, validate_verifier_dependency_declarations,
+        validate_verifier_resolved_dependencies, verifier_edge_kinds, ExpectedRuntimeDependency,
+        ExpectedSourcePinTarget, SyntaxAudit, VerifierDependencyScope, VerifierEdgeKinds,
+        CRATES_IO_SOURCE, FE2O3_RESOLVED_SOURCE, FE2O3_SOURCE, PROMOTION_CRATE_NAME,
+        PROMOTION_DEV_DEPENDENCIES, PROMOTION_NORMAL_DEPENDENCIES, PROMOTION_PACKAGE_NAME,
+        PROMOTION_RELATIVE_PATH, SOURCE_PIN_CRATE_NAME, SOURCE_PIN_DEPENDENCIES,
+        SOURCE_PIN_PACKAGE_NAME, SOURCE_PIN_RELATIVE_PATH, SOURCE_PIN_TARGETS,
+        VERIFIER_DEV_DEPENDENCIES, VERIFIER_NORMAL_DEPENDENCIES, VERUS_RESOLVED_SOURCE,
+        VERUS_SOURCE,
     };
     use serde_json::{json, Value};
     use std::collections::{BTreeMap, BTreeSet};
     use std::path::{Path, PathBuf};
+    use verus_syn::visit::Visit;
     use verus_syn::Item;
 
     const AGGREGATE_RUNTIME_SOURCE: &str =
@@ -5891,7 +5973,11 @@ mod tests {
                 expected.declared_source
             };
             let manifest = expected.relative_path.map_or_else(
-                || repo.join("fixture-registry").join(expected.name).join("Cargo.toml"),
+                || {
+                    repo.join("fixture-registry")
+                        .join(expected.name)
+                        .join("Cargo.toml")
+                },
                 |path| repo.join(path).join("Cargo.toml"),
             );
             packages.push(json!({
@@ -6273,10 +6359,15 @@ mod tests {
         })
     }
 
-    fn promotion_source_pin_fixture(repo: &Path) -> (Value, Vec<Value>, Vec<Value>, BTreeSet<String>) {
+    fn promotion_source_pin_fixture(
+        repo: &Path,
+    ) -> (Value, Vec<Value>, Vec<Value>, BTreeSet<String>) {
         let (source_pin, mut packages, source_pin_node) = source_pin_fixture(repo);
         let source_pin_id = source_pin_id(repo);
-        let owner_id = format!("path+file://{}#{PROMOTION_PACKAGE_NAME}@0.1.0", repo.display());
+        let owner_id = format!(
+            "path+file://{}#{PROMOTION_PACKAGE_NAME}@0.1.0",
+            repo.display()
+        );
         let owner_package = json!({
             "id": owner_id,
             "name": PROMOTION_PACKAGE_NAME,
@@ -6317,14 +6408,7 @@ mod tests {
         let packages_by_id = package_map(&metadata)?;
         let nodes = resolve_map(&metadata)?;
         let members = workspace_members.iter().map(String::as_str).collect();
-        validate_local_runtime_package(
-            repo,
-            &packages_by_id,
-            &nodes,
-            &members,
-            owner,
-            dependency,
-        )
+        validate_local_runtime_package(repo, &packages_by_id, &nodes, &members, owner, dependency)
     }
 
     #[test]
@@ -6657,8 +6741,7 @@ mod tests {
     #[test]
     fn promotion_source_pin_edge_requires_exact_owner_path_and_package_policy() {
         let repo = repo();
-        let (dependency, packages, nodes, workspace_members) =
-            promotion_source_pin_fixture(&repo);
+        let (dependency, packages, nodes, workspace_members) = promotion_source_pin_fixture(&repo);
         assert_eq!(
             validate_promotion_source_pin_fixture(
                 &repo,
@@ -6686,33 +6769,29 @@ mod tests {
 
         let mut wrong_path = dependency.clone();
         wrong_path["path"] = json!(repo.join(PROMOTION_RELATIVE_PATH).to_string_lossy());
-        assert!(
-            validate_promotion_source_pin_fixture(
-                &repo,
-                &wrong_path,
-                &packages,
-                &nodes,
-                &workspace_members,
-                PROMOTION_PACKAGE_NAME,
-            )
-            .is_err()
-        );
+        assert!(validate_promotion_source_pin_fixture(
+            &repo,
+            &wrong_path,
+            &packages,
+            &nodes,
+            &workspace_members,
+            PROMOTION_PACKAGE_NAME,
+        )
+        .is_err());
 
         let mut wrong_manifest = packages.clone();
         let source_pin = package_index(&wrong_manifest, SOURCE_PIN_PACKAGE_NAME);
         wrong_manifest[source_pin]["manifest_path"] =
             json!(repo.join(PROMOTION_RELATIVE_PATH).join("Cargo.toml"));
-        assert!(
-            validate_promotion_source_pin_fixture(
-                &repo,
-                &dependency,
-                &wrong_manifest,
-                &nodes,
-                &workspace_members,
-                PROMOTION_PACKAGE_NAME,
-            )
-            .is_err()
-        );
+        assert!(validate_promotion_source_pin_fixture(
+            &repo,
+            &dependency,
+            &wrong_manifest,
+            &nodes,
+            &workspace_members,
+            PROMOTION_PACKAGE_NAME,
+        )
+        .is_err());
 
         let mut opted_source_pin = packages.clone();
         let source_pin = package_index(&opted_source_pin, SOURCE_PIN_PACKAGE_NAME);
@@ -6737,17 +6816,15 @@ mod tests {
         let (dependency, packages, exact_nodes, workspace_members) =
             promotion_source_pin_fixture(&repo);
 
-        assert!(
-            validate_promotion_source_pin_fixture(
-                &repo,
-                &dependency,
-                &packages,
-                &exact_nodes,
-                &BTreeSet::new(),
-                PROMOTION_PACKAGE_NAME,
-            )
-            .is_err()
-        );
+        assert!(validate_promotion_source_pin_fixture(
+            &repo,
+            &dependency,
+            &packages,
+            &exact_nodes,
+            &BTreeSet::new(),
+            PROMOTION_PACKAGE_NAME,
+        )
+        .is_err());
 
         for nodes in [
             {
@@ -6771,17 +6848,15 @@ mod tests {
                 value
             },
         ] {
-            assert!(
-                validate_promotion_source_pin_fixture(
-                    &repo,
-                    &dependency,
-                    &packages,
-                    &nodes,
-                    &workspace_members,
-                    PROMOTION_PACKAGE_NAME,
-                )
-                .is_err()
-            );
+            assert!(validate_promotion_source_pin_fixture(
+                &repo,
+                &dependency,
+                &packages,
+                &nodes,
+                &workspace_members,
+                PROMOTION_PACKAGE_NAME,
+            )
+            .is_err());
         }
     }
 
@@ -7381,10 +7456,8 @@ mod tests {
         .expect("conditional external module parses");
         assert!(!cfg_test_item(&conditional));
 
-        let broader = verus_syn::parse_str::<Item>(
-            "#[cfg(test)] #[allow(dead_code)] mod broader;",
-        )
-        .expect("broader cfg(test) external module parses");
+        let broader = verus_syn::parse_str::<Item>("#[cfg(test)] #[allow(dead_code)] mod broader;")
+            .expect("broader cfg(test) external module parses");
         assert!(!cfg_test_item(&broader));
     }
 
@@ -7519,6 +7592,121 @@ mod tests {
         assert!(validate_aggregate_source(&wrong_reexport).is_err());
     }
 
+    fn validate_module_fixture(source: &str, module_source: &str) -> super::GateResult<()> {
+        let file = verus_syn::parse_file(source).expect("module fixture parses");
+        let Some(Item::Mod(module)) = file.items.first() else {
+            panic!("module fixture contains one module declaration");
+        };
+        super::validate_module_attributes(module, module_source)
+    }
+
+    #[test]
+    fn qualification_capture_paths_are_exact_same_name_siblings() {
+        for &(module, feature_gated) in super::QUALIFICATION_CAPTURE_SIBLING_MODULES {
+            let declaration = if feature_gated {
+                format!(
+                    "#[cfg(feature = \"qualification-fault-injection\")] #[path = \"{module}.rs\"] mod {module};"
+                )
+            } else {
+                format!("#[path = \"{module}.rs\"] mod {module};")
+            };
+            assert_eq!(
+                validate_module_fixture(&declaration, super::QUALIFICATION_CAPTURE_ROOT_SOURCE,),
+                Ok(())
+            );
+        }
+
+        assert_eq!(
+            validate_module_fixture("mod ordinary;", "crates/ferric-engine/src/lib.rs"),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn qualification_capture_paths_reject_redirection_and_policy_drift() {
+        for (source, module_source) in [
+            (
+                "#[path = \"input_bundle.rs\"] mod input_bundle;",
+                "crates/ferric-engine/src/lib.rs",
+            ),
+            (
+                "#[path = \"../input_bundle.rs\"] mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"/tmp/input_bundle.rs\"] mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"m1_target_smoke.rs\"] mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"input_bundle.rs\"] mod renamed;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"input_bundle.rs\"] mod input_bundle {}",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"input_bundle.rs\"] pub mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[allow(dead_code)] #[path = \"input_bundle.rs\"] mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"m1_r30_fault_transition_partial_capture.rs\"] mod m1_r30_fault_transition_partial_capture;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[cfg(not(feature = \"qualification-fault-injection\"))] #[path = \"m1_r30_fault_transition_partial_capture.rs\"] mod m1_r30_fault_transition_partial_capture;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"input_bundle.rs\"] #[path = \"input_bundle.rs\"] mod input_bundle;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+        ] {
+            assert!(
+                validate_module_fixture(source, module_source).is_err(),
+                "unreviewed module redirection was accepted: {source}"
+            );
+        }
+    }
+
+    #[test]
+    fn assertion_messages_are_parsed_and_audited() {
+        for source in [
+            "fn check() { assert!(ready()); }",
+            "fn check() { assert!(ready(),); }",
+            "fn check() { assert!(ready(), \"slot {} is occupied\", slot()); }",
+            "fn check() { debug_assert!(ready(), \"slot is occupied\"); }",
+        ] {
+            let file = verus_syn::parse_file(source).expect("assertion fixture parses");
+            let mut audit = SyntaxAudit::new(true, false);
+            audit.visit_file(&file);
+            assert!(audit.errors.is_empty(), "{:?}", audit.errors);
+        }
+
+        for source in [
+            "fn check() { assert!(admit(), \"condition\"); }",
+            "fn check() { assert!(ready(), \"message {}\", assume()); }",
+            "fn check() { debug_assert!(ready(), \"message {}\", admit()); }",
+            "fn check() { assert!(ready(), \"message\"; extra); }",
+        ] {
+            let file = verus_syn::parse_file(source).expect("rejected assertion fixture parses");
+            let mut audit = SyntaxAudit::new(true, false);
+            audit.visit_file(&file);
+            assert!(
+                !audit.errors.is_empty(),
+                "unreviewed assertion accepted: {source}"
+            );
+        }
+    }
+
     #[test]
     fn exact_dead_code_expectation_is_lint_only() {
         let exact = verus_syn::parse_file(
@@ -7526,6 +7714,12 @@ mod tests {
         )
         .expect("exact lint expectation parses");
         assert_eq!(validate_attributes(&exact.attrs, false), Ok(()));
+
+        let resident = verus_syn::parse_file(
+            "#![expect(dead_code, reason = \"typed resident readback diagnostics remain retained in opaque failure custody\")]",
+        )
+        .expect("resident readback lint expectation parses");
+        assert_eq!(validate_attributes(&resident.attrs, false), Ok(()));
 
         let drifted =
             verus_syn::parse_file("#![expect(dead_code, reason = \"broader suppression\")]")
@@ -7544,6 +7738,12 @@ mod tests {
             "#![allow(clippy::struct_excessive_bools)]",
             "#![allow(clippy::too_many_lines)]",
             "#![allow(clippy::unnecessary_wraps)]",
+            "#![allow(clippy::large_types_passed_by_value)]",
+            "#![allow(clippy::too_many_arguments, clippy::type_complexity)]",
+            "#![allow(clippy::large_types_passed_by_value, clippy::result_large_err)]",
+            "#![allow(dead_code, reason = \"allocating entry remains available to non-resident rollover callers\")]",
+            "#![allow(clippy::large_enum_variant, reason = \"resident success keeps physical readback inline to avoid a timed heap allocation\")]",
+            "#![allow(clippy::needless_range_loop, reason = \"lane indexes several independently authenticated parallel rosters\")]",
         ] {
             let exact = verus_syn::parse_file(source).expect("exact Clippy allowance parses");
             assert_eq!(validate_attributes(&exact.attrs, false), Ok(()));
