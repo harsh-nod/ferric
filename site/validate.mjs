@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "fa24d00f37eb04c5aaabe164c7c946fbd9284472",
-  integrationCommit: "9886f60d7aa78ba48115f54a67d44f448837a469",
-  integrationTree: "02c3c0792b5fc21428ca7499d12f3552d26af533",
+  siteRefreshBase: "d72f740cbfd0c17ee2125930c322ed825507c0b7",
+  integrationCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
+  integrationTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -292,7 +292,7 @@ const expectedCurrent = {
   r29PriorNativeTranscriptTestsPassed: 1,
   r29PriorProducerPolicyGreen: true,
   r29PriorVendorOverlayGreen: true,
-  r29CurrentAggregateBuildState: "corrected-target-only-observed",
+  r29CurrentAggregateBuildState: "428-aggregate-emitted-hardware-pending",
   r29CurrentAggregateMissingPackage: null,
   r29CurrentAggregateHsaco: true,
   r29CurrentTargetSmokeCompleted: true,
@@ -304,7 +304,7 @@ const expectedCurrent = {
   freshQwenRerunResultAvailable: true,
   gemmLayoutFixCommit: "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
   gemmLayoutFixTree: "3fe917fb4c6601453c74a97deaad529bc83d92ae",
-  gemmLayoutFixIntegrated: false,
+  gemmLayoutFixIntegrated: true,
   invalidLayoutRunTtftSeconds: 14.36,
   invalidLayoutRunTpotSecondsApprox: 3.05,
   invalidLayoutRunComparable: false,
@@ -327,8 +327,8 @@ const expectedCurrent = {
   productionOwnerSourceCommit: "c0b6c3676fbabce896a55874ef53864cb0898cfb",
   productionOwnerRepinCommit: "9cb42304bb4b647206d0d0e0e5d8a038aa2514f8",
   productionOwnerFocusedGatesGreen: true,
-  k3WorkProportionalKvWriteState: "in-progress-review",
-  k3WorkProportionalKvWriteIntegrated: false,
+  k3WorkProportionalKvWriteState: "artifact-emitted-hardware-pending",
+  k3WorkProportionalKvWriteIntegrated: true,
   k3WorkProportionalSpeedupMeasured: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
@@ -368,17 +368,34 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
-  fe2o3LatestTree: "b5fa3750bff9df5c70e02e5acca3ec5471191762",
+  fe2o3LatestMain: "42882993b3f84d60f38e398d2018cc9302e8fe19",
+  fe2o3LatestTree: "d7d69a4aa0f9be48fd153840e96b1550c0de4117",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: false,
   fe2o3CurrentRepinIntegrated: true,
   fe2o3CurrentRepinFormalAcceptance: false,
+  fe2o3CurrentRepinLockfiles: 15,
   fe2o3PreexistingDcoAncestryConcern: true,
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
   fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
   fe2o3LatestQualificationClaimed: false,
+  currentAggregateContentId: "528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a",
+  currentAggregateHsacoSha256: "cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804",
+  currentAggregateHandoffSha256: "382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5",
+  currentAggregateGuardedStores: 26,
+  currentAggregateAuthority: "none",
+  currentAggregateHardwareRunPending: true,
+  currentQualificationSourceCommit: "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
+  currentQualificationSourceTree: "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
+  currentQualificationState: "component-matrix-passed-stale-s1k4-policy-anchor",
+  currentQualificationComponentMatrixPassed: true,
+  currentQualificationFullRunStarted: false,
+  currentQualificationRunning: false,
+  currentQualificationReceiptEmitted: false,
+  qwenReference32ResultSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+  qwenReference32Available: true,
+  ferricQwen32ComparisonComplete: false,
   fe2o3KfdInitializationGatesGreen: true,
   fe2o3KfdOneGibBeforeSeconds: 76.512,
   fe2o3KfdOneGibAfterSeconds: 6.15,
@@ -618,10 +635,16 @@ for (const key of [
   "speculativeAttempt2BaseCommit",
   "speculativeAttempt3Commit",
   "speculativeAttempt3Tree",
+  "currentQualificationSourceCommit",
+  "currentQualificationSourceTree",
 ]) {
   assertCommit(project.current[key], `current.${key}`);
 }
 assertSha256(project.current.correctedHsacoSha256, "current.correctedHsacoSha256");
+assertSha256(project.current.currentAggregateContentId, "current.currentAggregateContentId");
+assertSha256(project.current.currentAggregateHsacoSha256, "current.currentAggregateHsacoSha256");
+assertSha256(project.current.currentAggregateHandoffSha256, "current.currentAggregateHandoffSha256");
+assertSha256(project.current.qwenReference32ResultSha256, "current.qwenReference32ResultSha256");
 assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
 assert(project.current.admissionBodiesTotal === 7922, "admission body total drifted");
 assert(project.current.admissionModules === 170, "admission module count drifted");
@@ -889,7 +912,7 @@ assert(project.current.r29PriorSourcePolicyTestsPassed === 17, "prior R29 source
 assert(project.current.r29PriorNativeTranscriptTestsPassed === 1, "prior R29 transcript-test count drifted");
 assert(project.current.r29PriorProducerPolicyGreen === true, "prior R29 producer policy must remain green");
 assert(project.current.r29PriorVendorOverlayGreen === true, "prior R29 vendor overlay must remain green");
-assert(project.current.r29CurrentAggregateBuildState === "corrected-target-only-observed", "current R29 observation state drifted");
+assert(project.current.r29CurrentAggregateBuildState === "428-aggregate-emitted-hardware-pending", "current R29 aggregate state drifted");
 assert(project.current.r29CurrentAggregateMissingPackage === null, "cleared R29 vendor blocker must remain cleared");
 for (const key of [
   "r29CurrentS1T128Captured",
@@ -909,7 +932,7 @@ for (const key of [
   assert(project.current[key] === true, `${key} must remain true`);
 }
 assert(project.current.freshQwenRerunActive === false, "completed corrected-layout rerun must not remain active");
-assert(project.current.gemmLayoutFixIntegrated === false, "private GEMM layout repair must remain unintegrated");
+assert(project.current.gemmLayoutFixIntegrated === true, "GEMM layout repair must remain integrated");
 assert(project.current.invalidLayoutRunTtftSeconds === 14.36, "invalid-layout TTFT observation drifted");
 assert(project.current.invalidLayoutRunTpotSecondsApprox === 3.05, "invalid-layout TPOT observation drifted");
 assert(project.current.invalidLayoutRunComparable === false, "invalid-layout timing must remain noncomparable");
@@ -927,14 +950,25 @@ assert(project.current.productionOwnerRepairActive === false, "completed product
 assert(project.current.productionOwnerCandidateComplete === true, "production-owner source candidate must remain complete");
 assert(project.current.productionOwnerCandidateIntegrated === true, "production owner must remain integrated");
 assert(project.current.productionOwnerFocusedGatesGreen === true, "production-owner focused gates must remain green");
-assert(project.current.k3WorkProportionalKvWriteState === "in-progress-review", "K3 validation state drifted");
-assert(project.current.k3WorkProportionalKvWriteIntegrated === false, "K3 candidate must not be presented as integrated");
+assert(project.current.k3WorkProportionalKvWriteState === "artifact-emitted-hardware-pending", "K3 validation state drifted");
+assert(project.current.k3WorkProportionalKvWriteIntegrated === true, "K3 source must remain integrated");
 assert(project.current.k3WorkProportionalSpeedupMeasured === false, "K3 must not claim a measured speedup");
 assert(project.current.fe2o3CurrentRepinActive === false, "integrated fe2o3 repin must not remain active");
 assert(project.current.fe2o3CurrentRepinIntegrated === true, "current fe2o3 repin must remain integrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
+assert(project.current.fe2o3CurrentRepinLockfiles === 15, "active fe2o3 lockfile pin count drifted");
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
+assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
+assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
+assert(project.current.currentAggregateHardwareRunPending === true, "current aggregate hardware run must remain pending");
+assert(project.current.currentQualificationState === "component-matrix-passed-stale-s1k4-policy-anchor", "current-source qualification state drifted");
+assert(project.current.currentQualificationComponentMatrixPassed === true, "current-source component matrix must remain passed");
+assert(project.current.currentQualificationFullRunStarted === false, "full current-source qualifier must remain unstarted");
+assert(project.current.currentQualificationRunning === false, "full current-source qualifier must not be presented as running");
+assert(project.current.currentQualificationReceiptEmitted === false, "current-source qualifier must not claim a receipt");
+assert(project.current.qwenReference32Available === true, "32-token Qwen reference must remain available");
+assert(project.current.ferricQwen32ComparisonComplete === false, "Ferric 32-token comparison must remain pending");
 assert(project.current.fe2o3KfdInitializationGatesGreen === true, "KFD initialization gates must remain green");
 assert(project.current.fe2o3KfdOneGibBeforeSeconds === 76.512, "1 GiB prior timing drifted");
 assert(project.current.fe2o3KfdOneGibAfterSeconds === 6.15, "1 GiB current timing drifted");
@@ -1080,11 +1114,11 @@ assertExactKeys(
   "latestObservation",
 );
 assertState(project.latestObservation.state, "latestObservation.state");
-assert(project.latestObservation.state === "observed", "corrected-layout Qwen checkpoint must remain observed");
-assert(!("commit" in project.latestObservation), "unpublished Qwen candidate must use source status rather than a public commit link");
+assert(project.latestObservation.state === "observed", "current aggregate checkpoint must remain observed");
+assert(!("commit" in project.latestObservation), "unpublished Ferric source must use source status rather than a public commit link");
 assert(
   JSON.stringify(project.latestObservation.generatedTokenIds) === "[]",
-  "current corrected-layout checkpoint must not invent token IDs",
+  "artifact-only checkpoint must not invent token IDs",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -1120,7 +1154,23 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "fa24d00f37eb04c5aaabe164c7c946fbd9284472",
+  "d72f740cbfd0c17ee2125930c322ed825507c0b7",
+  "9dcbd6eccc36c54ce707e35f6e5b05bfc5132fd1",
+  "fd9cfdb068620b8b16c3ed9bcc5f81918afd1293",
+  "42882993b3f84d60f38e398d2018cc9302e8fe19",
+  "d7d69a4aa0f9be48fd153840e96b1550c0de4117",
+  "528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a",
+  "cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804",
+  "382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5",
+  "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+  "all 15 active",
+  "26 GuardedStore",
+  "exact replay",
+  "hardware run is pending",
+  "component matrix passed",
+  "stale authenticated S1/K4 source-policy anchor",
+  "full qualifier has not started",
+  "Ferric has not run 32 tokens",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
@@ -1188,8 +1238,6 @@ const missingSnapshotClaims = [
   "6d115af5cd5285b84b7629834393d6eee6a37045",
   "d211c9a0f0c4eebe98172cb30d09c6947f62e233",
   "7f59964f3a66959e3518b898224b47330a949d58",
-  "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
-  "b5fa3750bff9df5c70e02e5acca3ec5471191762",
   "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
   "3fe917fb4c6601453c74a97deaad529bc83d92ae",
   "c0b6c3676fbabce896a55874ef53864cb0898cfb",
@@ -1265,7 +1313,6 @@ const missingSnapshotClaims = [
   "6dd1e79bcc88d24fb1a42779e567985a329cf65ee6a995fc9e3511f2ed88fe42",
   "Exact v76",
   "Exact v77",
-  "415,541-byte",
   "31a15c036261f0d7d2ab7027e709ea6c01c16f9654bc3d6e248dca3994a12282",
   "both prior outlined-helper geometry gaps",
   "415,659-byte Kernel IR V9 handoff",
@@ -1366,10 +1413,8 @@ const missingSnapshotClaims = [
   "full negative/property policy",
   "no qualification receipt",
   "Qualification #7",
-  "Qualification #8",
   "Clippy",
   "all 37",
-  "600-second timeout",
   "SUN_LEN",
   "7,229",
   "7,922",
@@ -1408,8 +1453,6 @@ const missingSnapshotClaims = [
   "symmetric memory",
   "MTP",
   "All 33 M1 exit gates remain open",
-  "d9f6bbcd089fb4bf7980f807e6550b13daed9178",
-  "b5fa3750bff9df5c70e02e5acca3ec5471191762",
   "a3c941cc5853c8d9d49aaa80456df82ab0672ef4",
   "3fe917fb4c6601453c74a97deaad529bc83d92ae",
   "exact Qwen input bundle",
@@ -1444,8 +1487,8 @@ const missingSnapshotClaims = [
   "2ba02a8",
   "rustc-literal-escaper",
   "public next-window path",
-  "current authority-free HSACO",
-  "20-window run was not attempted",
+  "reviewed authority-free aggregate",
+  "No authenticated 20-window run",
   "TTFT",
   "TPOT",
   "vLLM and SGLang baselines are absent",
