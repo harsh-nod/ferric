@@ -76,7 +76,15 @@ impl M1KvWorkspaceReservationCustodyV1 {
         self.reservations
     }
 
-    #[cfg(test)]
+    /// This structural custody grants no initialization or runtime authority.
+    #[must_use]
+    pub const fn grants_runtime_authority(&self) -> bool {
+        false
+    }
+}
+
+#[cfg(test)]
+impl M1KvWorkspaceReservationCustodyV1 {
     pub(crate) fn for_completed_step_test(
         selection: Qwen3PlanSelection,
         allocation_id: Identity,
@@ -87,12 +95,6 @@ impl M1KvWorkspaceReservationCustodyV1 {
             allocation_id,
             reservations,
         }
-    }
-
-    /// This structural custody grants no initialization or runtime authority.
-    #[must_use]
-    pub const fn grants_runtime_authority(&self) -> bool {
-        false
     }
 }
 
