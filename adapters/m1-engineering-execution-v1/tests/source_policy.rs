@@ -33,7 +33,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "e527d230c05dfeefec6cc6c91de0b6f16310f677";
+const FE2O3_REVISION: &str = "d9f6bbcd089fb4bf7980f807e6550b13daed9178";
 
 #[test]
 fn adapter_is_an_exact_standalone_workspace() {
