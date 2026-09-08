@@ -104,12 +104,7 @@ enum M1DeviceKvCompletionRosterMembersV1 {
 }
 
 enum M1DeviceKvCompletionRosterIntoIterV1 {
-    Inline(
-        arrayvec::IntoIter<
-            M1DeviceKvCompletionMemberV1,
-            { M1_MAX_ACTIVE_SEQUENCES as usize },
-        >,
-    ),
+    Inline(arrayvec::IntoIter<M1DeviceKvCompletionMemberV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>),
     Owned(std::vec::IntoIter<M1DeviceKvCompletionMemberV1>),
 }
 
@@ -139,8 +134,12 @@ impl IntoIterator for M1DeviceKvCompletionRosterMembersV1 {
 
     fn into_iter(self) -> Self::IntoIter {
         match self {
-            Self::Inline(members) => M1DeviceKvCompletionRosterIntoIterV1::Inline(members.into_iter()),
-            Self::Owned(members) => M1DeviceKvCompletionRosterIntoIterV1::Owned(members.into_iter()),
+            Self::Inline(members) => {
+                M1DeviceKvCompletionRosterIntoIterV1::Inline(members.into_iter())
+            }
+            Self::Owned(members) => {
+                M1DeviceKvCompletionRosterIntoIterV1::Owned(members.into_iter())
+            }
         }
     }
 }
@@ -154,10 +153,7 @@ impl M1DeviceKvCompletionRosterV1 {
     }
 
     pub(crate) fn from_inline(
-        members: ArrayVec<
-            M1DeviceKvCompletionMemberV1,
-            { M1_MAX_ACTIVE_SEQUENCES as usize },
-        >,
+        members: ArrayVec<M1DeviceKvCompletionMemberV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>,
     ) -> Self {
         Self {
             members: M1DeviceKvCompletionRosterMembersV1::Inline(members),

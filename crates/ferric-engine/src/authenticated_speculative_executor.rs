@@ -1713,7 +1713,10 @@ where
     }
     let mut dispositions = ArrayVec::new();
     for outcome in preflighted.members().iter().copied() {
-        if dispositions.try_push(outcome.physical_disposition()).is_err() {
+        if dispositions
+            .try_push(outcome.physical_disposition())
+            .is_err()
+        {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(Box::new(
                 M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {

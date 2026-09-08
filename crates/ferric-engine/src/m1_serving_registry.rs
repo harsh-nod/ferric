@@ -1207,7 +1207,10 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let mut inline_requests = M1ServingInlineRosterV1::new();
         for request in requests.iter().copied() {
             if inline_requests.try_push(request).is_err() {
-                return reject(M1ServingRegistryErrorV1::NewWindowRosterExceedsPlan, requests);
+                return reject(
+                    M1ServingRegistryErrorV1::NewWindowRosterExceedsPlan,
+                    requests,
+                );
             }
         }
 

@@ -780,14 +780,14 @@ pub use speculative_diagnostic_choices::{
 };
 pub use speculative_generation_loop::{
     M1SpeculativeActiveRosterV1, M1SpeculativeCancellationReasonV1,
-    M1SpeculativeGenerationLoopErrorV1,
-    M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
-    M1SpeculativeKvRoleSettlementV1, M1SpeculativeMemberControlActionV1,
-    M1SpeculativeMemberControlV1, M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeMemberSeedV1,
-    M1SpeculativeMemberSnapshotV1, M1SpeculativeMemberStatusV1, M1SpeculativePhysicalShapeV1,
-    M1SpeculativePreflightedRoundV1, M1SpeculativePreparedRoundCommitFailureV1,
-    M1SpeculativeRoundBindingV1, M1SpeculativeRoundMemberInputV1, M1SpeculativeRoundOutcomeV1,
-    M1SpeculativeTerminalReasonV1, M1SpeculativeTokenBlockV1, M1SpeculativeVerificationChoiceV1,
+    M1SpeculativeGenerationLoopErrorV1, M1SpeculativeGenerationLoopV1,
+    M1SpeculativeGenerationPolicyV1, M1SpeculativeKvRoleSettlementV1,
+    M1SpeculativeMemberControlActionV1, M1SpeculativeMemberControlV1,
+    M1SpeculativeMemberRoundOutcomeV1, M1SpeculativeMemberSeedV1, M1SpeculativeMemberSnapshotV1,
+    M1SpeculativeMemberStatusV1, M1SpeculativePhysicalShapeV1, M1SpeculativePreflightedRoundV1,
+    M1SpeculativePreparedRoundCommitFailureV1, M1SpeculativeRoundBindingV1,
+    M1SpeculativeRoundMemberInputV1, M1SpeculativeRoundOutcomeV1, M1SpeculativeTerminalReasonV1,
+    M1SpeculativeTokenBlockV1, M1SpeculativeVerificationChoiceV1,
 };
 pub use speculative_graph::{
     complete_single_member_speculative_graph, run_bounded_multi_member_speculative_graph_v1,

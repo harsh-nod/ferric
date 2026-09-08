@@ -27,8 +27,7 @@ use crate::{
 
 const M1_SPECULATIVE_STOP_TOKEN_CAPACITY_V1: usize = 2;
 const M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
-type M1SpeculativeInlineMembersV1<T> =
-    ArrayVec<T, M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1>;
+type M1SpeculativeInlineMembersV1<T> = ArrayVec<T, M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1>;
 pub type M1SpeculativeActiveRosterV1 =
     ArrayVec<RequestId, M1_SPECULATIVE_INLINE_ROSTER_CAPACITY_V1>;
 static NEXT_M1_SPECULATIVE_COORDINATOR_IDENTITY_V1: AtomicU64 = AtomicU64::new(1);

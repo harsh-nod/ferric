@@ -2930,7 +2930,10 @@ mod tests {
             execute_production_planning_round(&mut registry, &mut coordinator, plan, token);
         }
         let repeated = repeated.change();
-        assert_eq!(repeated.allocations, 0, "repeated steady-state rounds allocated");
+        assert_eq!(
+            repeated.allocations, 0,
+            "repeated steady-state rounds allocated"
+        );
         assert_eq!(
             repeated.reallocations, 0,
             "repeated steady-state rounds reallocated"
@@ -2946,7 +2949,10 @@ mod tests {
         let reserve = registry
             .split("pub fn reserve_publication")
             .nth(1)
-            .and_then(|tail| tail.split("pub fn reserve_completed_window_replacement").next())
+            .and_then(|tail| {
+                tail.split("pub fn reserve_completed_window_replacement")
+                    .next()
+            })
             .unwrap_or_default();
         let active = coordinator
             .split("pub fn active_roster")
@@ -2972,7 +2978,10 @@ mod tests {
             "let requests = self.entries.iter().collect::<Vec<_>>();",
             1,
         );
-        assert!(!allocation_source_gate_accepts(&collected_plan, coordinator));
+        assert!(!allocation_source_gate_accepts(
+            &collected_plan,
+            coordinator
+        ));
 
         let replanned_reservation = registry.replacen(
             "self.validate_next_batch(&batch)?;",
@@ -2984,11 +2993,8 @@ mod tests {
             coordinator
         ));
 
-        let cloned_reservation = registry.replacen(
-            "plan: batch.plan,",
-            "batch: batch.duplicate(),",
-            1,
-        );
+        let cloned_reservation =
+            registry.replacen("plan: batch.plan,", "batch: batch.duplicate(),", 1);
         assert!(!allocation_source_gate_accepts(
             &cloned_reservation,
             coordinator
