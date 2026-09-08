@@ -5,9 +5,9 @@ receipt. The 33 M1 roadmap gates remain open.
 
 | Team | Implemented And Checked | Current Work |
 | --- | --- | --- |
-| Integration and runtime | Active fe2o3 dependencies pinned to public main `42882993b3f84d60f38e398d2018cc9302e8fe19`; all 15 lockfiles and regenerated dependency records pass independent review without registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. | Latest-pin release host and kernel artifact are ready. Run the 32-token Qwen comparison when a shared GPU is available. |
+| Integration and runtime | Active fe2o3 dependencies pinned to published `42882993b3f84d60f38e398d2018cc9302e8fe19`; all 15 lockfiles and regenerated dependency records pass independent review without registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates are integrated at `63e0f7f`. | Review the newer fe2o3 main `0ea54ed9` cast and worker-teardown fixes for the next pin. Measure device initialization separately when a shared GPU is available, then run the 32-token Qwen comparison. |
 | Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The all-latest aggregate now emits successfully and passes independent review. | Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No K3 speedup has been measured. |
-| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Earlier engine library: 636 passed, 9 ignored; doctests: 171 passed. Source-gate unit tests: 36 passed. All ten positive proof packages passed at cb9b5ca. The frozen latest-pin 9dcbd6e checkpoint has passed formatting, strict Clippy, ordinary debug and adapter suites, and worker behavior tests. | Finish all-feature/component tests, then run the full qualifier on the same frozen checkpoint with an explicit 1,800-second proof timeout. No complete receipt has been produced. |
+| Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Earlier engine library: 636 passed, 9 ignored; doctests: 171 passed. Source-gate unit tests: 36 passed. All ten positive proof packages passed at cb9b5ca. The 9dcbd6e component matrix passed formatting, strict Clippy, debug/release and all-feature suites, and worker behavior tests. Stale S1/K4 policy anchors and the source-pin adapter binding were subsequently repaired and independently reviewed. | Full qualification is running on frozen `bb50d0e`, with a 1,800-second per-proof timeout. That checkpoint excludes the later SHA optimization. No complete receipt has been produced. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
 
 ## Qwen Observations
@@ -31,7 +31,7 @@ It will support a Ferric comparison across logical KV positions 16 and 32;
 the 32-token Ferric comparison has not yet run. These short reference checks
 do not establish full-model numerical qualification.
 
-The latest compiler/runtime pin and K3 artifact are ready for that comparison.
+The `42882993` compiler/runtime pin and K3 artifact are ready for that comparison.
 All eight GPUs on the shared MI300X host became occupied by another user's
 training job before launch, so the run is waiting for a GPU window. No other
 user's process was stopped or modified.
@@ -47,10 +47,23 @@ not execute GPU work.
 
 An earlier K3 attempt exceeded a 240-second whole-process limit without a
 result. Historical successful release builds needed approximately 24-27
-minutes for the full process, including two independent scalar-SHA model
-admissions before opening KFD. That startup cost is excluded from the
-controller timing above. A future run needs a longer process limit; the
-timeout is not a TTFT measurement or a demonstrated kernel failure.
+minutes for the full process. A later CPU-only probe of the `42882993` host and
+final artifact took 98.23 seconds through artifact admission, CPU preparation,
+runner binding, and intentionally failing device selection. It stopped before
+`initialize_memory`, so it measured no HBM allocation/upload, dispatch, tokens,
+TTFT, or TPOT. The two independent model-authentication passes run in parallel.
+Their cost must not be conflated with the unmeasured device-initialization
+portion of historical full-process timings. Setup is excluded from the
+controller timing above. The earlier timeout is not a TTFT measurement or a
+demonstrated kernel failure.
+
+The verified SHA update preserves the existing streaming specification and
+passes whole-crate Verus verification (296 queries, zero errors), 143 release
+unit tests, strict Clippy, and independent source review. Five alternating CPU
+benchmark matrices per build measured 1.115-1.119x throughput for 1 MiB update
+chunks, with a 0.49-1.53% time regression for 63/65-byte chunks. This is not a
+measured total-startup improvement. All seven regenerated source/dependency
+records remain exact, with 171 modules and 8,207 executable bodies.
 
 The reference package now pins Accelerate 1.14.0 and psutil 7.2.2, the actual
 dependencies needed by the pinned Transformers loading path. Its exact-version
