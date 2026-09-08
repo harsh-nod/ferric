@@ -219,13 +219,14 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current integration d05b2daffcc32a061f497e23db8292fb208f0e75, tree
-            c46263cc73b02d4f41b7c57137954ba08bda9f83, includes independently accepted and
-            integrated protected head-store IPC commits fc5f86939cc826480aa008ddf69b044f3d63c585,
+            Current integration 5df8c5e463cca191b142321a9b5040ed66955f06, tree
+            7c0c4a203903d1515cbe1451754db8d9b1ddd591, adds independently accepted
+            current-record IPC atop the accepted protected head-store commits
+            fc5f86939cc826480aa008ddf69b044f3d63c585,
             4d0486476c907ae681bf48d4ba57efb1394e78f5, and d05b2da. Exact full preflight and
             qualifications #7/#8 apply to prior integration
             a689418a737bf0b1cf71ec3742bca5702f083187, tree
-            ce9e0bc76238e569756473cf93ab8a4439062362, not current d05. That preflight is
+            ce9e0bc76238e569756473cf93ab8a4439062362, not current 5df8c5e. That preflight is
             green; log SHA
             6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4.
             Qualification #7 passed all 10 strict proof packages, then a cold KV negative proof exceeded
@@ -235,7 +236,7 @@
             negative/property policy, formatting, and strict Clippy. Root debug then stopped when
             the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; log SHA
             92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027.
-            Neither run emitted a qualification receipt, and neither ran on current d05, so full current
+            Neither run emitted a qualification receipt, and neither ran on current 5df8c5e, so full current
             candidate correctness is not claimed.
             Authority is none, protected infrastructure is absent, and all 33 M1 exit gates remain open.
 
@@ -248,13 +249,13 @@
             generic provider and resident bootstrap each retain an exact 11-allocation portfolio against
             KFD's maximum of 16; neither path has hardware qualification.
 
-            R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 plus follow-up
-            94c3c88518971700498bc05b5da34fb96b23d4e1, final tree
-            e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, implements bounded authenticated
-            20-window residency but remains unintegrated and hardware-unqualified on independent-review
-            HOLD. It needs an immediate deadline check before first-round and successor scheduling and
-            destroy-and-retain handling on two settlement Deadline paths, plus an allocation-free resident
-            hot loop before timing. Protected head-store candidate
+            R33 candidate a305034b0e7f5ae8b204f066254601fc835592d6, tree
+            42390274000b3a6674fc0043ced3fdd8f8fe7c59, implements bounded authenticated
+            20-window residency and contains the prior deadline, queue-custody, allocation-free resident-loop,
+            and final source-policy repairs. Targeted source policy and its full exact MI300X final matrix pass;
+            evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c.
+            Independent review and transplant/requalification onto current 5df8c5e remain; it is unintegrated
+            and hardware-unqualified. Protected head-store candidate
             fc5f86939cc826480aa008ddf69b044f3d63c585 plus
             4d0486476c907ae681bf48d4ba57efb1394e78f5 now has cross-admission session-replay
             repair commit d05b2daffcc32a061f497e23db8292fb208f0e75, tree
@@ -263,7 +264,7 @@
             connected 2; formatting, check, and strict Clippy all pass with zero failures. Log SHA
             d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27;
             manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84.
-            Independent review accepted the series and it is integrated as current d05. It provides no
+            Independent review accepted the series and it remains in current 5df8c5e. It provides no
             daemon, durability layer, session generator store, launcher, or distinct-UID exercise. Integrated signer IPC commit
             dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4, tree
             b524a9ccc981466ecde2aa31afa59e2dff672fc8, was independently accepted. Its prior focused
@@ -271,6 +272,12 @@
             28/28 source-gate tests; log SHA
             0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. It provides no
             deployed signer, protected infrastructure, receipt, hardware qualification, or authority.
+            Current-record IPC commit 5df8c5e463cca191b142321a9b5040ed66955f06, tree
+            7c0c4a203903d1515cbe1451754db8d9b1ddd591, passed its exact committed-tree MI300X
+            author matrix; log SHA
+            be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830. Independent
+            review accepted it and integration fast-forwarded exactly from d05b2da to 5df8c5e. It is a client slice only and provides no authenticator
+            daemon, durable policy or session store, external authority, serving, or qualification.
 
             Attempt 2 failed before queue publication because 20 queue-visible allocations exceeded
             fe2o3's maximum of 16. DCO commit
@@ -296,15 +303,20 @@
             average is 3.733883367 seconds/token, both diagnostic only.
 
             Public fe2o3 main has advanced to e5351640e3df3868205bc68eac8d5ff5556352ea,
-            tree 84015c274c74a4378002360cb54a4010e374e7e8. Current Ferric d05 still pins
-            cf6faec0ee3c026d3a1fc5090ab606a3b425225c. Migration and requalification are active;
+            tree 84015c274c74a4378002360cb54a4010e374e7e8. Migration commit
+            aba3f86ef14136fa73a385834d4f33f7c9416a32, tree
+            ea47a88d49ea67384299d1bc3054b09ba4567dd3, is technically accepted after the full
+            MI300X suite. Integration is on HOLD because upstream commits
+            f405dfccb5b7021c417df37c0a692aead02fd071 and
+            e5351640e3df3868205bc68eac8d5ff5556352ea lack required DCO signoffs. Current Ferric
+            5df8c5e therefore keeps approved pin cf6faec0ee3c026d3a1fc5090ab606a3b425225c;
             qualification against latest fe2o3 is not claimed.
 
             Neither hardware observation is serving, authenticated A/B, comparable TTFT/TPOT, a
             vLLM/SGLang comparison, or qualification. The baseline host is blocked by Docker permission
             and has no native vLLM or SGLang installs, so no baseline exists. Physical device-KV radix prefix reuse is M2;
-            symmetric memory and MTP remain deferred. The integrated R33 executor still supports one
-            window, not the required 20; the revised R33 candidate remains unintegrated on HOLD. The
+            symmetric memory and MTP remain deferred and are not M1 blockers. The integrated R33 executor still supports one
+            window, not the required 20; the revised R33 candidate remains unintegrated pending its final rerun. The
             integrated head-store IPC slice does not provide the absent protected service infrastructure.
             No serving endpoint,
             authenticated A/B, comparable TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification

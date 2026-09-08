@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "7d8a3f4e229a0d4a447df8003b3f19cec812a36e",
-  integrationCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
-  integrationTree: "c46263cc73b02d4f41b7c57137954ba08bda9f83",
+  siteRefreshBase: "8c561227a62112a7d2459e4fa784415fa292074f",
+  integrationCommit: "5df8c5e463cca191b142321a9b5040ed66955f06",
+  integrationTree: "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -165,15 +165,17 @@ const expectedCurrent = {
   workerSignerNarrowPreflightGreen: true,
   workerSignerNarrowPreflightLogSha256: "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
   workerSignerNarrowSourceGateTestsPassed: 33,
-  r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+  r33TwentyWindowCommit: "a305034b0e7f5ae8b204f066254601fc835592d6",
   r33TwentyWindowFollowupCommit: "94c3c88518971700498bc05b5da34fb96b23d4e1",
-  r33TwentyWindowTree: "e5c6d82c2c0fd02c60bcdafffd887f46bbb35720",
+  r33TwentyWindowTree: "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
   r33TwentyWindowImplemented: true,
-  r33TwentyWindowReviewState: "hold",
-  r33TwentyWindowReviewHasProbableHoldItems: true,
+  r33TwentyWindowReviewState: "pending-independent-review-and-transplant",
+  r33TwentyWindowReviewHasProbableHoldItems: false,
   r33TwentyWindowActive: true,
   r33TwentyWindowIntegrated: false,
-  r33TwentyWindowValidationReported: false,
+  r33TwentyWindowValidationReported: true,
+  r33TwentyWindowValidationGreen: true,
+  r33TwentyWindowEvidenceSha256: "730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c",
   r33TwentyWindowHardwareQualified: false,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
@@ -192,6 +194,13 @@ const expectedCurrent = {
   headStoreSessionGeneratorStoreImplemented: false,
   headStoreLauncherImplemented: false,
   headStoreDistinctUidExercised: false,
+  currentRecordIpcCommit: "5df8c5e463cca191b142321a9b5040ed66955f06",
+  currentRecordIpcTree: "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
+  currentRecordIpcAuthorMatrixGreen: true,
+  currentRecordIpcReviewState: "accepted",
+  currentRecordIpcIntegrated: true,
+  currentRecordIpcValidationLogSha256: "be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830",
+  currentRecordIpcDaemonAvailable: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -232,7 +241,15 @@ const expectedCurrent = {
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
   fe2o3LatestMain: "e5351640e3df3868205bc68eac8d5ff5556352ea",
   fe2o3LatestTree: "84015c274c74a4378002360cb54a4010e374e7e8",
-  fe2o3LatestMigrationActive: true,
+  fe2o3LatestMigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
+  fe2o3LatestMigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
+  fe2o3LatestMigrationTechnicallyAccepted: true,
+  fe2o3LatestMigrationFullMi300xSuiteGreen: true,
+  fe2o3LatestMigrationIntegrated: false,
+  fe2o3LatestMigrationActive: false,
+  fe2o3LatestMigrationHold: "upstream-dco",
+  fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
+  fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
   fe2o3LatestQualificationClaimed: false,
   formalVerified: 81,
   formalErrors: 0,
@@ -418,6 +435,8 @@ for (const key of [
   "headStoreFollowupCommit",
   "headStoreReplayRepairCommit",
   "headStoreTree",
+  "currentRecordIpcCommit",
+  "currentRecordIpcTree",
   "signerIpcCommit",
   "signerIpcTree",
   "workerV3LintFixCommit",
@@ -444,6 +463,10 @@ for (const key of [
   "fe2o3FerricPinTree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
+  "fe2o3LatestMigrationCommit",
+  "fe2o3LatestMigrationTree",
+  "fe2o3UnsignedUpstreamCommit1",
+  "fe2o3UnsignedUpstreamCommit2",
   "speculativeAttempt2BaseCommit",
   "speculativeAttempt3Commit",
   "speculativeAttempt3Tree",
@@ -607,11 +630,13 @@ assert(project.current.workerSignerNarrowPreflightGreen === true, "Worker and si
 assertSha256(project.current.workerSignerNarrowPreflightLogSha256, "current.workerSignerNarrowPreflightLogSha256");
 assert(project.current.workerSignerNarrowSourceGateTestsPassed === 33, "Worker and signer narrow source-gate count drifted");
 assert(project.current.r33TwentyWindowImplemented === true, "20-window R33 candidate must remain implemented");
-assert(project.current.r33TwentyWindowReviewState === "hold", "20-window R33 review state drifted");
-assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === true, "20-window R33 probable HOLD items must remain explicit");
+assert(project.current.r33TwentyWindowReviewState === "pending-independent-review-and-transplant", "20-window R33 review state drifted");
+assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === false, "resolved R33 review items must not remain probable HOLD items");
 assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work must remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
-assert(project.current.r33TwentyWindowValidationReported === false, "20-window R33 work must not claim validation");
+assert(project.current.r33TwentyWindowValidationReported === true, "20-window R33 validation result must remain explicit");
+assert(project.current.r33TwentyWindowValidationGreen === true, "20-window R33 author matrix must remain green");
+assertSha256(project.current.r33TwentyWindowEvidenceSha256, "current.r33TwentyWindowEvidenceSha256");
 assert(project.current.r33TwentyWindowHardwareQualified === false, "20-window R33 work must remain hardware-unqualified");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
@@ -626,7 +651,16 @@ assert(project.current.headStoreDurabilityImplemented === false, "head-store mus
 assert(project.current.headStoreSessionGeneratorStoreImplemented === false, "head-store must not claim a session generator store");
 assert(project.current.headStoreLauncherImplemented === false, "head-store must not claim a launcher");
 assert(project.current.headStoreDistinctUidExercised === false, "head-store must not claim distinct-UID exercise");
-assert(project.current.fe2o3LatestMigrationActive === true, "latest-fe2 migration must remain active");
+assert(project.current.currentRecordIpcAuthorMatrixGreen === true, "current-record IPC author matrix must remain green");
+assert(project.current.currentRecordIpcReviewState === "accepted", "current-record IPC review state drifted");
+assert(project.current.currentRecordIpcIntegrated === true, "accepted current-record IPC must remain integrated");
+assertSha256(project.current.currentRecordIpcValidationLogSha256, "current.currentRecordIpcValidationLogSha256");
+assert(project.current.currentRecordIpcDaemonAvailable === false, "current-record IPC must not claim a daemon");
+assert(project.current.fe2o3LatestMigrationTechnicallyAccepted === true, "latest-fe2 migration technical acceptance must remain explicit");
+assert(project.current.fe2o3LatestMigrationFullMi300xSuiteGreen === true, "latest-fe2 migration MI300X suite must remain green");
+assert(project.current.fe2o3LatestMigrationIntegrated === false, "latest-fe2 migration must remain unintegrated while held");
+assert(project.current.fe2o3LatestMigrationActive === false, "latest-fe2 migration author work must not remain active");
+assert(project.current.fe2o3LatestMigrationHold === "upstream-dco", "latest-fe2 migration hold reason drifted");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assert(project.current.signerIpcIntegrated === true, "accepted signer IPC slice must remain integrated");
 assert(project.current.signerIpcReviewDisposition === "integrate", "signer IPC review disposition drifted");
@@ -741,9 +775,9 @@ project.teams.forEach((team, index) => {
   assertState(team.state, `teams[${index}].state`);
   assert(!teamNames.has(team.name), `duplicate team ${team.name}`);
   if (team.name === "Integration") {
-    assert(team.status === "Qualification harness repair pending", "Integration must expose the active qualification blocker");
+    assert(team.status === "Authority paths under review", "Integration must expose the active authority work");
     assert(
-      team.blockedBy.startsWith("Exact combined qualification on current d05 needs the active fe2o3 migration"),
+      team.blockedBy.startsWith("Latest-fe2 integration is on HOLD pending legitimate DCO remediation"),
       "Integration blocker must remain exact",
     );
   } else {
@@ -806,7 +840,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "7d8a3f4e229a0d4a447df8003b3f19cec812a36e",
+  "8c561227a62112a7d2459e4fa784415fa292074f",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
@@ -843,6 +877,11 @@ const missingSnapshotClaims = [
   "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   "d05b2daffcc32a061f497e23db8292fb208f0e75",
   "c46263cc73b02d4f41b7c57137954ba08bda9f83",
+  "5df8c5e463cca191b142321a9b5040ed66955f06",
+  "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
+  "be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830",
+  "a305034b0e7f5ae8b204f066254601fc835592d6",
+  "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
   "d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27",
   "21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84",
   "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
@@ -862,6 +901,9 @@ const missingSnapshotClaims = [
   "6d115af5cd5285b84b7629834393d6eee6a37045",
   "e5351640e3df3868205bc68eac8d5ff5556352ea",
   "84015c274c74a4378002360cb54a4010e374e7e8",
+  "aba3f86ef14136fa73a385834d4f33f7c9416a32",
+  "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
+  "f405dfccb5b7021c417df37c0a692aead02fd071",
   "1dd3411af96a22f0ed86289b874b57fa28670ef9",
   "55c283d3b32ad31d8d06a8a5f158307ed2fa9a6e",
   "6239bdb2c0c8863c21e8fff102c69a53cfb7a035",

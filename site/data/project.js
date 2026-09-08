@@ -3,9 +3,9 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "7d8a3f4e229a0d4a447df8003b3f19cec812a36e",
-    integrationCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
-    integrationTree: "c46263cc73b02d4f41b7c57137954ba08bda9f83",
+    siteRefreshBase: "8c561227a62112a7d2459e4fa784415fa292074f",
+    integrationCommit: "5df8c5e463cca191b142321a9b5040ed66955f06",
+    integrationTree: "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
     integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
     integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
     priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -90,15 +90,17 @@ window.FERRIC_PROJECT = Object.freeze({
     workerSignerNarrowPreflightGreen: true,
     workerSignerNarrowPreflightLogSha256: "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
     workerSignerNarrowSourceGateTestsPassed: 33,
-    r33TwentyWindowCommit: "a9966134c396c9ba8b4cd4eb8e4eb2bff1833271",
+    r33TwentyWindowCommit: "a305034b0e7f5ae8b204f066254601fc835592d6",
     r33TwentyWindowFollowupCommit: "94c3c88518971700498bc05b5da34fb96b23d4e1",
-    r33TwentyWindowTree: "e5c6d82c2c0fd02c60bcdafffd887f46bbb35720",
+    r33TwentyWindowTree: "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
     r33TwentyWindowImplemented: true,
-    r33TwentyWindowReviewState: "hold",
-    r33TwentyWindowReviewHasProbableHoldItems: true,
+    r33TwentyWindowReviewState: "pending-independent-review-and-transplant",
+    r33TwentyWindowReviewHasProbableHoldItems: false,
     r33TwentyWindowActive: true,
     r33TwentyWindowIntegrated: false,
-    r33TwentyWindowValidationReported: false,
+    r33TwentyWindowValidationReported: true,
+    r33TwentyWindowValidationGreen: true,
+    r33TwentyWindowEvidenceSha256: "730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c",
     r33TwentyWindowHardwareQualified: false,
     headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
     headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
@@ -117,6 +119,13 @@ window.FERRIC_PROJECT = Object.freeze({
     headStoreSessionGeneratorStoreImplemented: false,
     headStoreLauncherImplemented: false,
     headStoreDistinctUidExercised: false,
+    currentRecordIpcCommit: "5df8c5e463cca191b142321a9b5040ed66955f06",
+    currentRecordIpcTree: "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
+    currentRecordIpcAuthorMatrixGreen: true,
+    currentRecordIpcReviewState: "accepted",
+    currentRecordIpcIntegrated: true,
+    currentRecordIpcValidationLogSha256: "be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830",
+    currentRecordIpcDaemonAvailable: false,
     signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
     signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
     signerIpcIntegrated: true,
@@ -157,7 +166,15 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
     fe2o3LatestMain: "e5351640e3df3868205bc68eac8d5ff5556352ea",
     fe2o3LatestTree: "84015c274c74a4378002360cb54a4010e374e7e8",
-    fe2o3LatestMigrationActive: true,
+    fe2o3LatestMigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
+    fe2o3LatestMigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
+    fe2o3LatestMigrationTechnicallyAccepted: true,
+    fe2o3LatestMigrationFullMi300xSuiteGreen: true,
+    fe2o3LatestMigrationIntegrated: false,
+    fe2o3LatestMigrationActive: false,
+    fe2o3LatestMigrationHold: "upstream-dco",
+    fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
+    fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
     fe2o3LatestQualificationClaimed: false,
     formalVerified: 81,
     formalErrors: 0,
@@ -299,20 +316,20 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Current integration d05b2da, tree c46263c, includes the independently accepted and integrated head-store IPC series fc5f869 plus 4d04864 plus d05b2da. Its standalone remote validation is green at log SHA d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27 and manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84. Full preflight and qualifications #7/#8 apply to prior integration a689418, tree ce9e0bc, not current d05: #7 passed all 10 strict packages before a cold KV negative exceeded 600 seconds; #8 passed all 10 strict packages, all 37 mutations, full negative/property policy, formatting, and strict Clippy before nested-TMPDIR SUN_LEN stopped root debug. No receipt was emitted. Public fe2o3 main is e535164, tree 84015c2; Ferric d05 still pins cf6faec, tree 6d115af, so migration and requalification are active and latest-fe2 qualification is not claimed. Authority is none, protected infrastructure is absent, no serving or comparable benchmark exists, and all 33 M1 gates remain open.",
+      "Accepted integration 5df8c5e, tree 7c0c4a2, adds the independently accepted current-record IPC client atop the accepted d05b2da head-store series. The exact MI300X author matrix is green at log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830; deployment infrastructure remains open. R33 candidate a305034, tree 4239027, passed targeted source policy and its full exact MI300X final matrix; evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c. It still needs independent review and transplant/requalification onto current 5df8c5e, and is not integrated or hardware-qualified. Latest-fe2 migration aba3f86 is technically accepted against e535164, tree 84015c2, after the full MI300X suite; integration is on HOLD because upstream commits f405dfc and e535164 lack required DCO signoffs. Exact Qwen diagnostics have produced four target-only tokens and one speculative correction, but no serving endpoint, comparable TTFT/TPOT, vLLM/SGLang baseline, authenticated A/B, production authority, or qualification exists. All 33 M1 gates remain open.",
   },
   readiness: [
     {
       label: "Authenticated engine lifecycle",
       state: "integration",
       detail:
-        "Current integration d05b2da, tree c46263c, contains the signed bridge, reviewed reduced-roster harness, resident continuation, generic exact-successor provider, independently accepted Worker V3 and signer IPC slices, reviewed quality fixes, and the independently accepted head-store IPC series. Full preflight and runs #7/#8 are prior-source evidence for a689418, tree ce9e0bc, and have not run on d05. Neither prior run emitted a receipt.",
+        "Current integration 5df8c5e, tree 7c0c4a2, contains the signed bridge, reviewed reduced-roster harness, resident continuation, generic exact-successor provider, independently accepted Worker V3, signer, head-store, and current-record IPC slices, plus reviewed quality fixes. Full preflight and runs #7/#8 are prior-source evidence for a689418, tree ce9e0bc, and have not run on 5df8c5e. Neither prior run emitted a receipt.",
     },
     {
       label: "R33 lifecycle",
       state: "integration",
       detail:
-        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Candidate a996613 plus follow-up 94c3c88, final tree e5c6d82, implements bounded authenticated 20-window residency but remains unintegrated and hardware-unqualified on independent-review HOLD. Additive repair must check the deadline immediately before first-round and successor scheduling, destroy-and-retain live queues on two settlement Deadline paths, and remove per-round allocation from the resident hot loop before timing. Authority is none.",
+        "Integrated c1b9590 executes exactly one preadmitted R33 row with 128 output tokens, checked-token causality, and CLOCK_MONOTONIC_RAW offsets, then retains terminal custody in Faulted and rejects a second window. Candidate a305034, tree 4239027, implements bounded authenticated 20-window residency and contains the deadline, queue-custody, allocation-free hot-loop, and final source-policy repairs. Targeted source policy and the full exact MI300X final matrix pass; evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c. Independent review and transplant/requalification onto current 5df8c5e remain. It is unintegrated and hardware-unqualified. Authority is none.",
     },
     {
       label: "Successor KV custody",
@@ -336,25 +353,31 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Worker V3 authority integration",
       state: "integration",
       detail:
-        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6; its quality fixes remain in current d05b2da. Exact full preflight and qualification runs #7/#8 apply to prior a689418, tree ce9e0bc: #7 stopped after all 10 strict packages at a cold 600-second KV negative timeout, while #8 passed all 10 strict packages, all 37 mutations, full negative/property policy, formatting, and strict Clippy before the nested-TMPDIR SUN_LEN harness failure. They have not run on d05 and neither emitted a receipt; authority remains none and all 33 M1 gates remain open.",
+        "Worker candidate c492c31, tree 9cc283b, was independently accepted and integrated through e3dc8d6; its quality fixes remain in current 5df8c5e. Exact full preflight and qualification runs #7/#8 apply to prior a689418, tree ce9e0bc: #7 stopped after all 10 strict packages at a cold 600-second KV negative timeout, while #8 passed all 10 strict packages, all 37 mutations, full negative/property policy, formatting, and strict Clippy before the nested-TMPDIR SUN_LEN harness failure. They have not run on 5df8c5e and neither emitted a receipt; authority remains none and all 33 M1 gates remain open.",
     },
     {
       label: "Generic serving provider integration",
       state: "integration",
       detail:
-        "Commit b30e7a6 binds one exact finite successor before allocation or dequeue, validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor, and preserves fail-closed custody. Independent review accepted it and current integration d05b2da carries it atop the resident series. Arbitrary cross-shape switching and hardware qualification are not claimed.",
+        "Commit b30e7a6 binds one exact finite successor before allocation or dequeue, validates an 11-allocation roster for each admitted S1/K4, S1/K8, S1/K16, and S8/K4 successor, and preserves fail-closed custody. Independent review accepted it and current integration 5df8c5e carries it atop the resident series. Arbitrary cross-shape switching and hardware qualification are not claimed.",
     },
     {
       label: "Protected signer IPC slice",
       state: "integration",
       detail:
-        "Independently accepted DCO commit dcc7c07, tree b524a9c, integrates the bounded preopened SOCK_SEQPACKET signer client. Its prior focused validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and 28/28 source-gate tests; prior a689418 full preflight passes the complete formatting, strict Clippy, source-gate, and inventory roster. Current d05 carries it but has not received full combined qualification. It adds no deployed signer, protected infrastructure, hardware qualification, receipt, or authority.",
+        "Independently accepted DCO commit dcc7c07, tree b524a9c, integrates the bounded preopened SOCK_SEQPACKET signer client. Its prior focused validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and 28/28 source-gate tests; prior a689418 full preflight passes the complete formatting, strict Clippy, source-gate, and inventory roster. Current 5df8c5e carries it but has not received full combined qualification. It adds no deployed signer, protected infrastructure, hardware qualification, receipt, or authority.",
     },
     {
       label: "Protected head-store IPC slice",
       state: "integration",
       detail:
-        "The fc5f869 plus 4d04864 plus d05b2da series, tree c46263c, is independently accepted and integrated as current d05. Standalone remote validation is green: lib 45; auth 1 passed / 2 ignored; source 2; listener 2; session 13 passed / 1 ignored; signer 3; connected 2; formatting, check, and strict Clippy pass with zero failures. Log SHA d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27; manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84. It provides no daemon, durability layer, session generator store, launcher, distinct-UID exercise, protected infrastructure, signing authority, receipt, load, launch, or serving authority.",
+        "The fc5f869 plus 4d04864 plus d05b2da series, tree c46263c, is independently accepted and remains in current 5df8c5e. Standalone remote validation is green: lib 45; auth 1 passed / 2 ignored; source 2; listener 2; session 13 passed / 1 ignored; signer 3; connected 2; formatting, check, and strict Clippy pass with zero failures. Log SHA d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27; manifest SHA 21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84. It provides no daemon, durability layer, session generator store, launcher, distinct-UID exercise, protected infrastructure, signing authority, receipt, load, launch, or serving authority.",
+    },
+    {
+      label: "Protected current-record IPC slice",
+      state: "integration",
+      detail:
+        "Signed candidate 5df8c5e, tree 7c0c4a2, implements the bounded preopened SOCK_SEQPACKET client for current-record validation. Its exact committed-tree MI300X author matrix is green with log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830. Independent review accepted it and integration fast-forwarded exactly from d05b2da to 5df8c5e. It is a client slice only: no authenticator daemon, durable policy or session store, distinct-UID exercise, live ledger, external authority, serving, or qualification follows.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -378,7 +401,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Radix prefix reuse",
       state: "integration",
       detail:
-        "Current integration d05b2da retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
+        "Current integration 5df8c5e retains bounded live-source reuse of logical committed prefixes through generational Engine custody. It does not reuse physical device KV; that work is M2. Neither hardware observation exercises physical prefix reuse or resident successor leasing.",
     },
     {
       label: "Qwen execution and serving",
@@ -394,19 +417,20 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Precision", "BF16 with FP32 accumulation"],
     ["Context", "up to 8K tokens"],
     ["Concurrency", "up to 32 sequences"],
-    ["Ferric integration", "d05b2daffcc32a061f497e23db8292fb208f0e75; tree c46263cc73b02d4f41b7c57137954ba08bda9f83; includes independently accepted head-store IPC fc5f869 plus 4d04864 plus d05b2da; full combined qualification has not run on this integration"],
+    ["Ferric integration", "5df8c5e463cca191b142321a9b5040ed66955f06; tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591; fast-forwarded from accepted d05b2da to add independently accepted current-record IPC; full combined qualification has not run on this integration"],
     ["Resident continuation integration", "commits 886a0d38480887e05cc4c4dde858ff56ad155ca4, c94c69f3a5cfd763c45747e943caf57e215d1a79, de490d6ca68bb6ebab993774c008fd8553a1895b, and exact-roster fix 68091859ce0710dc26cfb839d580e40ea0839253; integrated after no-blocker review; no resident hardware qualification"],
-    ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current d05b2da; hardware-unqualified"],
-    ["Qualification checkpoint", "prior source a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362: #7 passed all 10 strict proof packages then stopped at the cold KV negative 600-second timeout; #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy, then stopped at nested-TMPDIR SUN_LEN; neither emitted a receipt; neither ran on current d05"],
-    ["Current held slice", "R33 a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 plus 94c3c88518971700498bc05b5da34fb96b23d4e1, tree e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, is on independent-review HOLD pending deadline, queue-custody, and allocation-free resident-loop repairs; it is not integrated and grants no authority"],
+    ["Generic provider integration", "b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; tree 57bb4f66a396f1426b10726273f8c9c5f56cc0e1; exact 11-allocation successor portfolio independently accepted and carried by current 5df8c5e; hardware-unqualified"],
+    ["Qualification checkpoint", "prior source a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362: #7 passed all 10 strict proof packages then stopped at the cold KV negative 600-second timeout; #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy, then stopped at nested-TMPDIR SUN_LEN; neither emitted a receipt; neither ran on current 5df8c5e"],
+    ["R33 20-window candidate", "a305034b0e7f5ae8b204f066254601fc835592d6, tree 42390274000b3a6674fc0043ced3fdd8f8fe7c59, contains the prior deadline, queue-custody, allocation-free resident-loop, and final source-policy repairs; targeted source policy and the full exact MI300X final matrix pass at evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c; independent review and transplant/requalification onto current 5df8c5e remain; it is not integrated or hardware-qualified and grants no authority"],
     ["Head-store IPC integration", "fc5f86939cc826480aa008ddf69b044f3d63c585 plus 4d0486476c907ae681bf48d4ba57efb1394e78f5 plus d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83; independently accepted and integrated; standalone validation green; no daemon, durability, session generator store, launcher, distinct-UID exercise, protected infrastructure, or authority"],
+    ["Current-record IPC integration", "5df8c5e463cca191b142321a9b5040ed66955f06; tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591; exact committed-tree MI300X author matrix green at log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830; independently accepted and integrated; no daemon or authority"],
     ["Signer IPC integration", "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4; tree b524a9ccc981466ecde2aa31afa59e2dff672fc8; independently accepted and integrated; no deployed signer, protected infrastructure, receipt, or authority"],
     ["Speculative hardware source", "commit f18ffe2566112cb8b9518562afe2c8919577c907; tree 04d09e03af9a8257d211382a6f7c91909dda7df6; one authority-free S1/K4 diagnostic round completed; independently reviewed and integrated as ea6ef07 with proof-inventory ordering amended"],
     ["Successor KV bridge", "136a6d2ff92597c91caad3d0e33baede74cd4c9a; tree c9684e25b4fbd6737ce73307c3cdc21bde1b221e; authenticated page-less successor leasing after detach; no speculative hardware claim"],
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "e5351640e3df3868205bc68eac8d5ff5556352ea; tree 84015c274c74a4378002360cb54a4010e374e7e8; Ferric d05 still pins cf6faec, so migration and requalification are active and latest-fe2 qualification is not claimed"],
+    ["fe2o3 current public main", "e5351640e3df3868205bc68eac8d5ff5556352ea; tree 84015c274c74a4378002360cb54a4010e374e7e8; migration aba3f86ef14136fa73a385834d4f33f7c9416a32, tree ea47a88d49ea67384299d1bc3054b09ba4567dd3, is technically accepted after the full MI300X suite but integration is on HOLD because upstream f405dfccb5b7021c417df37c0a692aead02fd071 and e5351640e3df3868205bc68eac8d5ff5556352ea lack DCO signoffs; current 5df8c5e keeps the approved cf6 pin and latest-fe2 qualification is not claimed"],
   ],
   capabilities: {
     runnable: [
@@ -465,7 +489,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Authenticated R33 backend lifecycle",
         detail:
-          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window. Candidate a996613 plus 94c3c88, tree e5c6d82, implements bounded authenticated residency across 20 windows but remains unintegrated and hardware-unqualified on independent-review HOLD pending deadline, live-queue settlement, and allocation-free resident-loop repairs. No qualification evidence is claimed.",
+          "The R33 lifecycle owns admitted engine capabilities and exact start/ready/measure/stop ordering. Integrated c1b9590 executes exactly one 128-output window. Candidate a305034, tree 4239027, implements bounded authenticated residency across 20 windows and includes the prior review and source-policy repairs. Targeted source policy and the full exact MI300X final matrix pass at evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c; independent review and transplant/requalification onto current 5df8c5e remain. It is unintegrated and hardware-unqualified. No qualification evidence is claimed.",
       },
       {
         name: "Resident first-round continuation",
@@ -485,14 +509,14 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Worker V3 evidence collector integration",
         detail:
-          "The independently accepted c492 series is integrated through e3dc8d6 and correlates protected service evidence without enlarging authority; current d05b2da includes the reviewed quality fixes. Exact preflight and runs #7/#8 are prior-source evidence from a689418, not current-head qualification. No receipt was emitted and authority is none.",
+          "The independently accepted c492 series is integrated through e3dc8d6 and correlates protected service evidence without enlarging authority; current 5df8c5e includes the reviewed quality fixes. Exact preflight and runs #7/#8 are prior-source evidence from a689418, not current-head qualification. No receipt was emitted and authority is none.",
       },
     ],
     roadmap: [
       {
         name: "Run the speculative target/draft path",
         detail:
-          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and remains integrated through current head d05b2da after attempt 2 exposed the 20-versus-16 queue limit. Resident continuation and exact-successor generic provider paths are integrated; preserve custody across later rounds and run them under protected authority before making a serving or qualification claim.",
+          "The reviewed 11-allocation harness completed one S1/K4 diagnostic round and remains integrated through current head 5df8c5e after attempt 2 exposed the 20-versus-16 queue limit. Resident continuation and exact-successor generic provider paths are integrated; preserve custody across later rounds and run them under protected authority before making a serving or qualification claim.",
       },
       {
         name: "Extend the authenticated R33 run",
@@ -533,7 +557,7 @@ window.FERRIC_PROJECT = Object.freeze({
       source: "a689418a737bf0b1cf71ec3742bca5702f083187",
       result: "PARTIAL: 10 strict packages, 37 mutations, full negative/property policy, formatting, and strict Clippy passed; nested TMPDIR exceeded SUN_LEN in root debug",
       detail:
-        "On prior integration a689418, tree ce9e0bc, Qualification #8 passed all 10 strict proof packages, all 37 same-source actual-body mutations, the full negative/property policy suite, formatting, and strict Clippy. Root debug then stopped when the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; full log SHA 92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027. It emitted no receipt, and full candidate correctness is not claimed. This qualification has not run on current d05b2da and grants no hardware, serving, benchmark, or production authority.",
+        "On prior integration a689418, tree ce9e0bc, Qualification #8 passed all 10 strict proof packages, all 37 same-source actual-body mutations, the full negative/property policy suite, formatting, and strict Clippy. Root debug then stopped when the runner's nested TMPDIR made a hostile Unix socket fixture path exceed SUN_LEN; full log SHA 92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027. It emitted no receipt, and full candidate correctness is not claimed. This qualification has not run on current 5df8c5e and grants no hardware, serving, benchmark, or production authority.",
     },
     proof: {
       title: "Exact full preflight and qualification #7",
@@ -541,7 +565,7 @@ window.FERRIC_PROJECT = Object.freeze({
       source: "a689418a737bf0b1cf71ec3742bca5702f083187",
       result: "PREFLIGHT PASS; #7 passed all 10 strict proof packages before a cold KV negative exceeded the admitted 600-second timeout",
       detail:
-        "Exact full preflight at prior a689418, tree ce9e0bc, passed root and all six standalone formatting and strict Clippy rosters, 33/33 source-gate tests, byte-exact VERIFIED_MODULES and five dependency TCBs, and the exact 7,229-record curated admission identity set; log SHA 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4. Qualification #7 then passed all 10 strict packages before the cold per-package KV negative target exceeded its admitted 600-second timeout; log SHA 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4. Neither preflight nor qualification has run on current d05b2da; no receipt exists.",
+        "Exact full preflight at prior a689418, tree ce9e0bc, passed root and all six standalone formatting and strict Clippy rosters, 33/33 source-gate tests, byte-exact VERIFIED_MODULES and five dependency TCBs, and the exact 7,229-record curated admission identity set; log SHA 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4. Qualification #7 then passed all 10 strict packages before the cold per-package KV negative target exceeded its admitted 600-second timeout; log SHA 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4. Neither preflight nor qualification has run on current 5df8c5e; no receipt exists.",
     },
     hardware: {
       title: "Reduced-roster S1/K4 speculative round completes",
@@ -564,22 +588,22 @@ window.FERRIC_PROJECT = Object.freeze({
       ["Exact K draft extension", "Fail-closed successor custody", "integration"],
     ],
     limitation:
-      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised resident continuation under hardware authority. Prior-source qualification #8 reached root debug after all strict proof, mutation, policy, formatting, and Clippy stages but emitted no receipt because the nested TMPDIR exceeded SUN_LEN; it has not run on current d05. Integrated R33 supports one window; a996 plus 94c remains unintegrated and hardware-unqualified on HOLD. Head-store IPC d05 is independently accepted, validation-green, and integrated, but provides no daemon, durability, session generator store, launcher, or distinct-UID exercise. Protected infrastructure is absent. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
+      "The integrated reduced-roster harness has completed one authority-free S1/K4 round, but it has not exercised resident continuation under hardware authority. Prior-source qualification #8 reached root debug after all strict proof, mutation, policy, formatting, and Clippy stages but emitted no receipt because the nested TMPDIR exceeded SUN_LEN; it has not run on current 5df8c5e. Integrated R33 supports one window; matrix-green a305034 remains unintegrated and hardware-unqualified pending independent review and transplant/requalification onto current 5df8c5e. Current-record IPC 5df8c5e is independently accepted and integrated, but its deployment infrastructure remains open. Latest-fe2 migration aba3f86 is technically accepted but held from integration by two unsigned upstream commits. Protected infrastructure is absent. No hardware observation is serving, a benchmark, authenticated A/B, comparable TTFT/TPOT, qualification, or authority.",
   },
   teams: [
     {
       name: "Integration",
       scope: "Ferric integration, review, publication, and end-to-end evidence",
       state: "integration",
-      status: "Qualification harness repair pending",
+      status: "Authority paths under review",
       completed:
-        "Current integration d05b2da, tree c46263c, joins signed successor-KV bridge 136a6d2, independently reviewed reduced-roster speculative commit f18ffe2, the resident series, independently accepted generic provider b30e7a6, Worker V3 c492, signer IPC dcc7, reviewed quality fixes, and independently accepted head-store IPC fc5 plus 4d plus d05.",
+        "Current integration 5df8c5e, tree 7c0c4a2, joins signed successor-KV bridge 136a6d2, independently reviewed reduced-roster speculative commit f18ffe2, the resident series, independently accepted generic provider b30e7a6, Worker V3 c492, signer IPC dcc7, head-store IPC fc5 plus 4d plus d05, current-record IPC 5df8c5e, and reviewed quality fixes.",
       current:
-        "Exact full preflight and qualifications #7/#8 are green only through their stated stages on prior source a689418, tree ce9e0bc. They have not run on current d05b2da; neither emitted a receipt. Ferric d05 still pins fe2o3 cf6 while migration to current public main e535164 is active.",
+        "Current-record IPC 5df8c5e passed its exact MI300X author matrix, was independently accepted, and is integrated. R33 a305034 passes targeted source policy and its full exact MI300X final matrix; independent review and transplant/requalification onto current 5df8c5e remain. Migration aba3f86 is technically accepted against public fe2o3 e535164 after the full MI300X suite, but current 5df8c5e keeps cf6 because two upstream e535-line commits lack DCO signoffs.",
       blockedBy:
-        "Exact combined qualification on current d05 needs the active fe2o3 migration and a short mode-0700 TMPDIR for the Unix socket fixture. M1 also depends on repaired R33 deadline/queue custody and allocation-free resident loop, protected artifact admission, and matched baselines.",
+        "Latest-fe2 integration is on HOLD pending legitimate DCO remediation for upstream commits f405dfc and e535164. M1 also depends on final R33 matrix and independent review, deployment of the current-record provider and other protected services, protected artifact admission, current-head combined qualification, and matched baselines.",
       next:
-        "Complete the current-fe2 migration, rerun full combined qualification on the resulting admitted integration using a short mode-0700 TMPDIR, and continue the held R33 repairs.",
+        "Finish the R33 matrix and review, implement the missing protected service deployment, resolve the upstream DCO hold without rewriting public history implicitly, then rerun full combined qualification on the admitted integration using a short mode-0700 TMPDIR.",
       validation:
         "Prior integration e5d23e1: 711 engine target checks and 171 doctests pass; 93 adapter checks pass; engine and adapter hardware ignores are 7 and 2; source gate passes 28/28 at 168 modules and 7,874 bodies. Evidence aggregate SHA b10a6e0ef1b40c1e05d5320e5391f1c946bea1f4b8badcffef8cbe58124233ee. Worker c492 is accepted and integrated; qualification #4 passed all strict packages and both negative suites but produced no receipt.",
     },
@@ -607,13 +631,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Integration d05b2da preserves exact K draft growth and fail-closed successor custody through the first S1/K4 speculative round and adds independently accepted head-store IPC; its bootstrap presents 11 allocations against KFD's maximum of 16. Candidate a996 plus 94c implements bounded authenticated residency across the required 20 windows but remains unintegrated and hardware-unqualified on HOLD pending deadline, queue-custody, and allocation-free resident-loop repairs. No resident daemon or serving endpoint exists.",
+        "Integration 5df8c5e preserves exact K draft growth and fail-closed successor custody through the first S1/K4 speculative round and adds independently accepted head-store and current-record IPC; its bootstrap presents 11 allocations against KFD's maximum of 16. Candidate a305034 implements bounded authenticated residency across the required 20 windows and passes targeted source policy plus its full exact MI300X final matrix. Independent review and transplant/requalification onto current 5df8c5e remain; it is unintegrated and hardware-unqualified. No resident daemon or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. The 11-allocation harness clears attempt 2's pre-publication capacity failure. Comparable execution still depends on reviewed integration, protected runtime admission, repeated controlled runs, and the required 20-window R33 path.",
       next:
         "Carry authenticated custody beyond the first round and across all 20 required windows, then qualify the integrated resident and generic provider paths under protected authority.",
       validation:
-        "Prior a689 preflight is green. Prior-source qualification #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy before a nested-TMPDIR SUN_LEN harness stop. It has not run on current d05. No receipt, resident qualification, or generic-provider hardware qualification exists.",
+        "Prior a689 preflight is green. Prior-source qualification #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy before a nested-TMPDIR SUN_LEN harness stop. It has not run on current 5df8c5e. No receipt, resident qualification, or generic-provider hardware qualification exists.",
     },
     {
       name: "Formal verification",
@@ -623,13 +647,13 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "Exact prior a689 preflight covers 7,922 compiler-rooted bodies across 170 modules, passes 33/33 source-gate tests, and binds 7,229 admissions plus exact dependency TCBs. Prior-source qualification #8 passed all 10 strict packages, all 37 same-source mutations, and the full negative/property policy before the later harness-path failure. Neither has run on current d05; this is not proof closure or production authority.",
+        "Exact prior a689 preflight covers 7,922 compiler-rooted bodies across 170 modules, passes 33/33 source-gate tests, and binds 7,229 admissions plus exact dependency TCBs. Prior-source qualification #8 passed all 10 strict packages, all 37 same-source mutations, and the full negative/property policy before the later harness-path failure. Neither has run on current 5df8c5e; this is not proof closure or production authority.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
         "Regenerate and audit exact body identities, then rerun the full formal and hostile-policy matrix on the settled combined head.",
       validation:
-        "Prior full a689 preflight passes root and six standalone formatting and strict Clippy rosters plus all 33 source-gate tests at 170 modules and 7,922 bodies. Prior-source qualification #8 clears every strict proof and mutation stage, but no qualification receipt exists and current d05 is not qualified. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
+        "Prior full a689 preflight passes root and six standalone formatting and strict Clippy rosters plus all 33 source-gate tests at 170 modules and 7,922 bodies. Prior-source qualification #8 clears every strict proof and mutation stage, but no qualification receipt exists and current 5df8c5e is not qualified. Runtime paths remain covered by source admission and host tests, not a Verus refinement proof.",
     },
   ],
   boundaries: {
@@ -645,10 +669,11 @@ window.FERRIC_PROJECT = Object.freeze({
       "Integrated generic provider b30e7a6a20e4ea8a14a41e7dcb2a42927c1d68b9; exact finite-successor roster independently accepted at 11 for S1/K4, S1/K8, S1/K16, and S8/K4; hardware-unqualified",
       "Speculative smoke orchestration and its exact S1/K4 allocation roster",
       "Worker V3 protected-evidence collection and authority policy; candidate c492c3113f6d3d4f5a56366978ccdd0c3b06e6f5 was independently accepted and integrated as 61a40cad79b31124044fca198155492e6b151ef4, 2abcc47f2f5faad4a8ebd91c1eb8497adab20b1c, 57973da0c3d362446361d1db026c19040bd20bdb, 7747409db8b4f3013456d99b5e418bc12bc72494, and e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
-      "Implemented 20-window R33 candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 plus 94c3c88518971700498bc05b5da34fb96b23d4e1, tree e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, is unintegrated on HOLD pending deadline, queue-custody, and allocation-free resident-loop repair",
+      "Implemented 20-window R33 candidate a305034b0e7f5ae8b204f066254601fc835592d6, tree 42390274000b3a6674fc0043ced3fdd8f8fe7c59, includes the prior deadline, queue-custody, allocation-free resident-loop, and final source-policy repairs; targeted source policy and its full exact MI300X final matrix pass at evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c; it awaits independent review, remains unintegrated, and still requires transplant/requalification onto current 5df8c5e",
       "Protected head-store series fc5f86939cc826480aa008ddf69b044f3d63c585 plus 4d0486476c907ae681bf48d4ba57efb1394e78f5 plus d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83, is independently accepted, validation-green, and integrated; it provides no daemon, durability, session generator store, launcher, distinct-UID exercise, protected infrastructure, or authority",
+      "Protected current-record client 5df8c5e463cca191b142321a9b5040ed66955f06, tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591, passed its exact MI300X author matrix, was independently accepted, and is integrated; no authenticator daemon or external authority exists",
       "Ferric-specific Verus models, source policy, hostile mutations, and M1 evidence",
-      "Current source integration d05b2daffcc32a061f497e23db8292fb208f0e75, tree c46263cc73b02d4f41b7c57137954ba08bda9f83, includes independently accepted head-store IPC; combined qualification #8 applies to prior a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362, and has not run on current d05; no receipt exists",
+      "Current source integration 5df8c5e463cca191b142321a9b5040ed66955f06, tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591, includes independently accepted head-store and current-record IPC; combined qualification #8 applies to prior a689418a737bf0b1cf71ec3742bca5702f083187, tree ce9e0bc76238e569756473cf93ab8a4439062362, and has not run on current 5df8c5e; no receipt exists",
       "Exact v77 runtime source 254b89aa3a6e4e751c3ad81db84073a5fb26b52d predates the successor-KV bridge and produces four target-only diagnostic tokens",
       "Intermediate integration 23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b contains the audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; it is not final or public product integration",
     ],
@@ -657,8 +682,9 @@ window.FERRIC_PROJECT = Object.freeze({
       "Generic artifact, descriptor, and compiler-lineage types",
       "Direct-KFD runtime, allocations, AQL queues, completion, and bounded waits",
       "Generic protected verification transport",
-      "Current public main e5351640e3df3868205bc68eac8d5ff5556352ea, tree 84015c274c74a4378002360cb54a4010e374e7e8, is newer than Ferric's active pin",
-      "Ferric d05 still pins cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree 6d115af5cd5285b84b7629834393d6eee6a37045; exact v77 uses that pin and emits the complete authority-free aggregate with exact replay; migration and requalification to e535 are active and latest-fe2 qualification is not claimed",
+      "Current public main e5351640e3df3868205bc68eac8d5ff5556352ea, tree 84015c274c74a4378002360cb54a4010e374e7e8, is newer than Ferric's approved pin",
+      "Ferric migration aba3f86ef14136fa73a385834d4f33f7c9416a32, tree ea47a88d49ea67384299d1bc3054b09ba4567dd3, is technically accepted against exact e535 after the full MI300X suite, but integration is on HOLD because upstream commits f405dfccb5b7021c417df37c0a692aead02fd071 and e5351640e3df3868205bc68eac8d5ff5556352ea lack DCO signoffs",
+      "Ferric 5df8c5e therefore keeps approved pin cf6faec0ee3c026d3a1fc5090ab606a3b425225c, tree 6d115af5cd5285b84b7629834393d6eee6a37045; exact v77 uses that pin and latest-fe2 qualification is not claimed",
       "fe2o3's generic service queue currently admits at most 16 queue-visible allocations; Ferric attempt 2 presented 20 and failed closed before publication",
       "No Ferric model kernel or inference policy is moved upstream",
     ],
@@ -677,6 +703,27 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      commit: "5df8c5e463cca191b142321a9b5040ed66955f06",
+      title: "Integrated the accepted current-record IPC client",
+      state: "integration",
+      detail:
+        "Tree 7c0c4a203903d1515cbe1451754db8d9b1ddd591 passed formatting, locked all-target/all-feature checks, strict Clippy, the full exact committed-tree test roster, and source policy on MI300X; log SHA be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830. Independent review accepted the client and integration fast-forwarded exactly from d05b2da to 5df8c5e. This is not a daemon, authority, serving path, or qualification result.",
+    },
+    {
+      commit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
+      title: "Technically accepted the latest-fe2 migration",
+      state: "implemented",
+      detail:
+        "Migration tree ea47a88d49ea67384299d1bc3054b09ba4567dd3 binds exact public fe2o3 e5351640e3df3868205bc68eac8d5ff5556352ea, tree 84015c274c74a4378002360cb54a4010e374e7e8, and passed the full MI300X suite. Integration is on HOLD because upstream fe2o3 commits f405dfccb5b7021c417df37c0a692aead02fd071 and e5351640e3df3868205bc68eac8d5ff5556352ea lack required DCO signoffs. Ferric 5df8c5e remains the accepted integration and latest-fe2 qualification is not claimed.",
+    },
+    {
+      commit: "a305034b0e7f5ae8b204f066254601fc835592d6",
+      title: "Passed the R33 20-window final matrix",
+      state: "implemented",
+      detail:
+        "Candidate tree 42390274000b3a6674fc0043ced3fdd8f8fe7c59 contains the prior deadline, live-queue custody, allocation-free resident-loop, and final source-policy repairs. Targeted source policy and the full exact MI300X final matrix pass; evidence SHA 730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c. Independent review and transplant/requalification onto current 5df8c5e remain; no resident hardware qualification or serving claim follows.",
+    },
+    {
       commit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
       title: "Integrated the accepted protected head-store IPC series",
       state: "integration",
@@ -688,14 +735,14 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Advanced prior-source full qualification through strict Clippy",
       state: "integration",
       detail:
-        "Tree ce9e0bc76238e569756473cf93ab8a4439062362 includes independently accepted signer IPC and reviewed quality fixes. Full preflight is green at SHA 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4. #7 passed all 10 strict packages before a cold KV negative exceeded 600 seconds; log SHA 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4. #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy before nested TMPDIR caused a SUN_LEN root-debug fixture failure; log SHA 92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027. No receipt was emitted. These results apply to a689, not current d05.",
+        "Tree ce9e0bc76238e569756473cf93ab8a4439062362 includes independently accepted signer IPC and reviewed quality fixes. Full preflight is green at SHA 6a78aca1ed6c7fc5822cec74f636591631f8d129f0c123e760634cc3a1b510b4. #7 passed all 10 strict packages before a cold KV negative exceeded 600 seconds; log SHA 7200d867b34491373922bfe5399bccb66d1e6b2ee9bb99d00e1ad29175688fa4. #8 passed all 10 strict packages, all 37 same-source mutations, full negative/property policy, formatting, and strict Clippy before nested TMPDIR caused a SUN_LEN root-debug fixture failure; log SHA 92886d7b80a20fa3d7d451fc9f212cc313f5852213d6e3328eaa2923a2cc5027. No receipt was emitted. These results apply to a689, not current 5df8c5e.",
     },
     {
       commit: "94c3c88518971700498bc05b5da34fb96b23d4e1",
       title: "Held the revised 20-window R33 candidate for additive repair",
       state: "open",
       detail:
-        "Candidate a996613 plus follow-up 94c3c88, tree e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, implements bounded authenticated R33 residency across the required 20-window lifecycle. Independent rereview placed it on HOLD: deadline must be checked immediately before first-round and successor scheduling, two settlement Deadline paths must destroy-and-retain live queues instead of only quarantining them, and the resident hot loop must be allocation-free before timing. It remains unintegrated and hardware-unqualified; no qualification, serving, or authority result is claimed.",
+        "Candidate a9966134c396c9ba8b4cd4eb8e4eb2bff1833271 plus follow-up 94c3c88, tree e5c6d82c2c0fd02c60bcdafffd887f46bbb35720, implements bounded authenticated R33 residency across the required 20-window lifecycle. Independent rereview placed it on HOLD: deadline must be checked immediately before first-round and successor scheduling, two settlement Deadline paths must destroy-and-retain live queues instead of only quarantining them, and the resident hot loop must be allocation-free before timing. It remains unintegrated and hardware-unqualified; no qualification, serving, or authority result is claimed.",
     },
     {
       commit: "e3dc8d68bde6efdd9ec0f2df47daaad4db4037b0",
@@ -709,7 +756,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Integrated the accepted protected signer IPC slice",
       state: "integration",
       detail:
-        "Tree b524a9ccc981466ecde2aa31afa59e2dff672fc8 was independently accepted and remains integrated in d05b2da. Prior focused validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and 28/28 source-gate tests; log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. Prior a689 full preflight also passes the signer service and protected adapter formatting and strict Clippy. No signer deployment, protected infrastructure, hardware qualification, receipt, or authority exists.",
+        "Tree b524a9ccc981466ecde2aa31afa59e2dff672fc8 was independently accepted and remains integrated in 5df8c5e. Prior focused validation passed 58 service tests with 3 ignores, 88 adapter tests, both Clippy gates, and 28/28 source-gate tests; log SHA 0a4283731228a40a46233ed00a2bb846fcbe47ce01f764a4cfd721add1d9ac73. Prior a689 full preflight also passes the signer service and protected adapter formatting and strict Clippy. No signer deployment, protected infrastructure, hardware qualification, receipt, or authority exists.",
     },
     {
       commit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -986,7 +1033,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   evidence: {
     summary:
-      "Current integration d05b2da, tree c46263c, includes independently accepted, standalone-validation-green head-store IPC; it has not received full combined qualification. Exact preflight and #7/#8 evidence applies to prior a689418, tree ce9e0bc, and neither qualification emitted a receipt. R33 a996 plus 94c remains unintegrated on HOLD. Public fe2o3 main is e535164 while Ferric d05 still pins cf6faec; migration and requalification are active and latest-fe2 qualification is not claimed. Protected infrastructure is absent. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
+      "Accepted integration 5df8c5e, tree 7c0c4a2, adds independently accepted current-record IPC atop the accepted head-store series; it has not received full combined qualification and the provider deployment remains open. R33 a305034 passes targeted source policy and its full exact MI300X final matrix, with independent review and transplant/requalification still pending. Migration aba3f86 is technically accepted against exact public fe2o3 e535164 after the full MI300X suite, but integration is on HOLD because upstream f405dfc and e535164 lack DCO signoffs; current 5df8c5e retains cf6 and latest-fe2 qualification is not claimed. Protected infrastructure is absent. No authenticated A/B, resident daemon, physical radix prefix reuse, serving, comparable benchmark, baseline, production authority, or qualification receipt exists, and all 33 M1 exit gates remain open.",
     legend: [
       ["implemented", "The named source path exists and passes scoped checks."],
       ["integration", "Reviewed components are joined, but end-to-end authority remains open."],
