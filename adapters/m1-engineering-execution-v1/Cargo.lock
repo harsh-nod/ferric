@@ -1012,6 +1012,7 @@ dependencies = [
  "fe2o3-host",
  "fe2o3-hsaco-finalize",
  "fe2o3-kfd",
+ "fe2o3-service-host",
  "ferric-build",
  "ferric-engine",
  "ferric-non-authoritative-program-source-v1",

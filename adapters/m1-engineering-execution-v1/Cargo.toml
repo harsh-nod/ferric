@@ -31,13 +31,17 @@ path = "src/bin/ferric-r33-custody-vault-abort-probe.rs"
 [workspace]
 
 [features]
-qualification-fault-injection = ["ferric-engine/qualification-fault-injection"]
+qualification-fault-injection = [
+    "ferric-engine/qualification-fault-injection",
+    "dep:fe2o3-service-host",
+]
 
 [dependencies]
 fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d9f6bbcd089fb4bf7980f807e6550b13daed9178", version = "=0.1.0" }
 fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d9f6bbcd089fb4bf7980f807e6550b13daed9178", version = "=0.1.0" }
 fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d9f6bbcd089fb4bf7980f807e6550b13daed9178", version = "=0.1.0" }
 fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d9f6bbcd089fb4bf7980f807e6550b13daed9178", version = "=0.1.0" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d9f6bbcd089fb4bf7980f807e6550b13daed9178", version = "=0.1.0", optional = true }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }

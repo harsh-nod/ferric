@@ -67,12 +67,37 @@ fn adapter_is_an_exact_standalone_workspace() {
             .any(|entry| { entry.as_str() == Some("adapters/m1-engineering-execution-v1") })
     );
     assert!(!MANIFEST.contains("package.metadata.verus"));
-    assert!(!MANIFEST.contains("optional = true"));
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let service_host = manifest
+        .get("dependencies")
+        .and_then(toml::Value::as_table)
+        .and_then(|dependencies| dependencies.get("fe2o3-service-host"))
+        .and_then(toml::Value::as_table)
+        .unwrap();
+    assert_eq!(
+        service_host.get("optional").and_then(toml::Value::as_bool),
+        Some(true)
+    );
+    assert_eq!(
+        manifest
+            .get("features")
+            .and_then(toml::Value::as_table)
+            .and_then(|features| features.get("qualification-fault-injection"))
+            .and_then(toml::Value::as_array)
+            .unwrap()
+            .iter()
+            .map(toml::Value::as_str)
+            .collect::<Vec<_>>(),
+        vec![
+            Some("ferric-engine/qualification-fault-injection"),
+            Some("dep:fe2o3-service-host"),
+        ]
+    );
 }
 
 #[test]
 fn adapter_and_observation_schema_pin_current_fe2o3() {
-    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 4);
+    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 5);
     assert!(SOURCE.contains(FE2O3_REVISION));
 }
 
