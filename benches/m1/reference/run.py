@@ -103,7 +103,9 @@ PLAN_IDENTITIES = tuple(
 )
 
 DEPENDENCY_VERSIONS = {
+    "accelerate": "1.14.0",
     "numpy": "1.26.4",
+    "psutil": "7.2.2",
     "python": "3.12",
     "safetensors": "0.5.3",
     "tokenizers": "0.21.4",
@@ -1379,7 +1381,9 @@ def validate_dependency_provenance(modules: dict[str, Any]) -> None:
     from importlib.metadata import distribution
 
     distribution_names = {
+        "accelerate": "accelerate",
         "numpy": "numpy",
+        "psutil": "psutil",
         "safetensors": "safetensors",
         "tokenizers": "tokenizers",
         "torch": "torch",
@@ -1430,7 +1434,9 @@ def load_dependencies() -> ModelDependencies:
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     os.environ["HF_DATASETS_OFFLINE"] = "1"
     try:
+        import accelerate
         import numpy
+        import psutil
         import safetensors
         import tokenizers
         import torch
@@ -1441,7 +1447,9 @@ def load_dependencies() -> ModelDependencies:
             f"cannot import pinned reference dependency: {error}"
         ) from error
     actual = {
+        "accelerate": accelerate.__version__,
         "numpy": numpy.__version__,
+        "psutil": psutil.__version__,
         "safetensors": safetensors.__version__,
         "tokenizers": tokenizers.__version__,
         "torch": torch.__version__,
@@ -1469,7 +1477,9 @@ def load_dependencies() -> ModelDependencies:
         )
     validate_dependency_provenance(
         {
+            "accelerate": accelerate,
             "numpy": numpy,
+            "psutil": psutil,
             "safetensors": safetensors,
             "tokenizers": tokenizers,
             "torch": torch,

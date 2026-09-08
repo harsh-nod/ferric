@@ -2,19 +2,19 @@
   "authority": "source-reviewed-reference-implementation-closure-only",
   "files": [
     {
-      "bytes": 574,
+      "bytes": 621,
       "path": "pyproject.toml",
-      "sha256": "83057316ed345f2cc1ea67b5b02be572a229e42d75188dedff8de47cb99ecee3"
+      "sha256": "ca74b9a61e2c698f2b8443766b5efbf57afa69746db65122ed309e67c364e91e"
     },
     {
-      "bytes": 79062,
+      "bytes": 79377,
       "path": "run.py",
-      "sha256": "e332d3c48ee63bcf833dd47c35b021453db48e0987f875e365ffea78e3a52bc1"
+      "sha256": "720d123576f524e640c2072316465c6a16ac0bde8bf53178a390bd5f4ea7a696"
     },
     {
-      "bytes": 55157,
+      "bytes": 59174,
       "path": "uv.lock",
-      "sha256": "5cbd313db1110ef6df8099475e3fa8af2344d50ce0906eef403e0f2f4dac0076"
+      "sha256": "1307400cd3725b0d3936ce99e722b885fd05b07d0951f08d049c922520f7811c"
     }
   ],
   "format": "FERRIC-M1-REFERENCE-IMPLEMENTATION-V1",

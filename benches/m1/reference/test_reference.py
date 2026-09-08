@@ -491,6 +491,58 @@ class ManifestTests(unittest.TestCase):
                     )
 
 
+class DependencyTests(unittest.TestCase):
+    @staticmethod
+    def modules() -> dict[str, object]:
+        modules = {
+            name: SimpleNamespace(__version__=version)
+            for name, version in reference.DEPENDENCY_VERSIONS.items()
+            if name not in ("python", "triton-rocm")
+        }
+        modules["torch"].version = SimpleNamespace(hip="7.2.53211")
+        modules["triton"] = SimpleNamespace()
+        return modules
+
+    @staticmethod
+    def load(modules: dict[str, object]) -> mock.Mock:
+        with (
+            mock.patch.dict(sys.modules, modules),
+            mock.patch.object(reference, "require_isolated_python"),
+            mock.patch.object(reference, "validate_dependency_provenance") as provenance,
+            mock.patch.object(reference, "validate_gpu_target"),
+            mock.patch("importlib.metadata.version", return_value="3.7.1"),
+        ):
+            reference.load_dependencies()
+        return provenance
+
+    def test_loading_dependencies_are_versioned_and_provenance_checked(self) -> None:
+        modules = self.modules()
+        provenance = self.load(modules)
+        provenance.assert_called_once()
+        checked = provenance.call_args.args[0]
+        self.assertEqual(set(checked), set(reference.DEPENDENCY_VERSIONS) - {"python"})
+        for name in ("accelerate", "psutil"):
+            self.assertIs(checked[name], modules[name])
+
+    def test_missing_loading_dependency_fails_before_model_construction(self) -> None:
+        for name in ("accelerate", "psutil"):
+            modules = self.modules()
+            modules[name] = None
+            with self.subTest(dependency=name), self.assertRaisesRegex(
+                reference.ReferenceFailure, "cannot import pinned reference dependency"
+            ):
+                self.load(modules)
+
+    def test_loading_dependency_version_drift_is_rejected(self) -> None:
+        for name in ("accelerate", "psutil"):
+            modules = self.modules()
+            modules[name].__version__ = "0.0.0"
+            with self.subTest(dependency=name), self.assertRaisesRegex(
+                reference.ReferenceFailure, f"reference dependency {name} drifted"
+            ):
+                self.load(modules)
+
+
 class SecurityTests(unittest.TestCase):
     def test_python_isolation_flags_are_required(self) -> None:
         admitted = SimpleNamespace(

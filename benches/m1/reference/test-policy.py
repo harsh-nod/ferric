@@ -22,7 +22,9 @@ EXPECTED_FILES = {
     "uv.lock",
 }
 DIRECT_PINS = {
+    "accelerate": "1.14.0",
     "numpy": "1.26.4",
+    "psutil": "7.2.2",
     "safetensors": "0.5.3",
     "tokenizers": "0.21.4",
     "torch": "2.12.1+rocm7.2",

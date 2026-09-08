@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Pinned offline Qwen3-8B reference producer for Ferric M1 qualification"
 requires-python = "==3.12.*"
 dependencies = [
+    "accelerate==1.14.0",
     "numpy==1.26.4",
+    "psutil==7.2.2",
     "safetensors==0.5.3",
     "tokenizers==0.21.4",
     "torch==2.12.1+rocm7.2",
