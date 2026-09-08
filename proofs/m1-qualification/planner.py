@@ -173,6 +173,16 @@ FE2O3_DEPENDENCY_TOPOLOGY = (
     ("ferric-qwen-kernels", "dependencies", "fe2o3-llvm-handoff"),
     ("ferric-qwen-kernels", "dependencies", "fe2o3-llvm-text"),
     ("ferric-qwen-kernels", "dependencies", "reserved-fe2o3-symbols"),
+    (
+        "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1",
+        "dependencies",
+        "fe2o3-artifact-transaction",
+    ),
+    (
+        "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1",
+        "dependencies",
+        "fe2o3-runtime-protocol",
+    ),
 )
 FE2O3_AGGREGATE_DEVICE_WORKSPACES = (
     ("ferric-qwen3-all-kernels-device-v1", "device/qwen3-all-kernels-v1"),

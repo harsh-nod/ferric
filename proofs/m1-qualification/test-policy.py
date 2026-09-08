@@ -573,6 +573,74 @@ def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) ->
             "dependency topology does not equal the admitted root graph",
         )
 
+        promotion_manifest = (
+            "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1/"
+            "Cargo.toml"
+        )
+
+        promotion_missing_case = temporary / "promotion-topology-missing"
+        clone_at(ferric_fixture, promotion_missing_case)
+        replace_once(
+            promotion_missing_case / promotion_manifest,
+            "fe2o3-artifact-transaction.workspace = true\n",
+            "",
+        )
+        commit_fixture(
+            promotion_missing_case,
+            "delete promotion prerequisite fe2o3 root edge",
+        )
+        expect_prepare_failure(
+            promotion_missing_case / "proofs/m1-qualification/planner.py",
+            promotion_missing_case,
+            fe2o3_fixture,
+            temporary / "promotion-topology-missing-output",
+            "dependency topology does not equal the admitted root graph",
+        )
+
+        promotion_extra_case = temporary / "promotion-topology-extra"
+        clone_at(ferric_fixture, promotion_extra_case)
+        replace_once(
+            promotion_extra_case / promotion_manifest,
+            "[dependencies]\n",
+            "[dependencies]\nfe2o3-host.workspace = true\n",
+        )
+        commit_fixture(
+            promotion_extra_case,
+            "add promotion prerequisite fe2o3 root edge",
+        )
+        expect_prepare_failure(
+            promotion_extra_case / "proofs/m1-qualification/planner.py",
+            promotion_extra_case,
+            fe2o3_fixture,
+            temporary / "promotion-topology-extra-output",
+            "dependency topology does not equal the admitted root graph",
+        )
+
+        promotion_scope_case = temporary / "promotion-topology-scope"
+        clone_at(ferric_fixture, promotion_scope_case)
+        promotion_scope_manifest = promotion_scope_case / promotion_manifest
+        replace_once(
+            promotion_scope_manifest,
+            "fe2o3-runtime-protocol.workspace = true\n",
+            "",
+        )
+        replace_once(
+            promotion_scope_manifest,
+            "[dev-dependencies]\n",
+            "[dev-dependencies]\nfe2o3-runtime-protocol.workspace = true\n",
+        )
+        commit_fixture(
+            promotion_scope_case,
+            "move promotion prerequisite fe2o3 root edge",
+        )
+        expect_prepare_failure(
+            promotion_scope_case / "proofs/m1-qualification/planner.py",
+            promotion_scope_case,
+            fe2o3_fixture,
+            temporary / "promotion-topology-scope-output",
+            "dependency topology does not equal the admitted root graph",
+        )
+
         dirty_case = temporary / "dirty"
         clone_at(ferric_fixture, dirty_case)
         (dirty_case / "untracked-source-probe").write_text(
