@@ -1,8 +1,11 @@
 //! Exact finite Qwen3 token-embedding and dense GEMM/GEMV profiles owned by Ferric.
 //!
-//! A, B, and C use BF16 storage. The declared machine source widens operands
-//! to FP32, accumulates in ascending K order with separate multiply and add,
-//! optionally adds the widened BF16 residual, and narrows C with BF16 RNE.
+//! A, W, and C use BF16 storage. The activation and output are row-major
+//! `[M,K]` and `[M,N]`; the admitted identity-prepacked Qwen weight is its
+//! native row-major `[N,K]` safetensors layout. The declared machine source
+//! computes `A * W^T`, widens operands to FP32, accumulates in ascending K
+//! order with separate multiply and add, optionally adds the widened BF16
+//! residual, and narrows C with BF16 RNE.
 //! The two finite schedule classes share a 16x16 Wave64 tile. The reference
 //! source transfers one A value per K step; the vectorized-A source transfers
 //! four adjacent A values and applies their products in ascending order.
@@ -107,8 +110,8 @@ pub const QWEN3_GEMM_KERNARG_ALIGNMENT_V1: u64 = 8;
 pub const QWEN3_GEMM_LLVM_BYTES_V1: usize = 26_210;
 /// SHA-256 of the final canonical direct-LLVM module bytes.
 pub const QWEN3_GEMM_LLVM_SHA256_V1: [u8; 32] = [
-    0x68, 0xc8, 0x16, 0xdf, 0x14, 0x02, 0xb5, 0x00, 0xa7, 0xa1, 0x16, 0xa8, 0x61, 0x94, 0x97, 0x75,
-    0xe4, 0xa9, 0x35, 0x6f, 0x0c, 0xde, 0xe5, 0x0a, 0xd6, 0xef, 0x76, 0x1e, 0x55, 0x93, 0x0f, 0x62,
+    0x3d, 0x9a, 0xb7, 0x15, 0x47, 0xab, 0xb7, 0x72, 0x15, 0xf8, 0xda, 0x63, 0x7f, 0xcc, 0x31, 0xd3,
+    0x9f, 0xbf, 0xea, 0x1a, 0x93, 0x27, 0x43, 0x3f, 0xf6, 0xf2, 0x56, 0x2b, 0xad, 0xac, 0x7f, 0x6d,
 ];
 
 const PROFILE_DOMAIN: &[u8] = b"FERRIC/QWEN3/GEMM/PROFILE/V1\0";
@@ -387,7 +390,7 @@ impl Qwen3GemmProfileV1 {
         if m == 0 || n == 0 || k == 0 || !k.is_multiple_of(4) {
             return Err(Qwen3GemmCatalogErrorV1::ArithmeticInvariant);
         }
-        let strides = [k, n, n];
+        let strides = [k, k, n];
         let storage_elements = [
             u64::from(m)
                 .checked_mul(u64::from(k))
@@ -483,7 +486,7 @@ impl Qwen3GemmProfileV1 {
         self.dimensions
     }
 
-    /// Exact row-major `[lda,ldb,ldc]` strides in elements.
+    /// Exact row-major `[lda,ldw,ldc]` strides in elements.
     #[must_use]
     pub const fn strides(self) -> [u32; 3] {
         self.strides
@@ -1281,7 +1284,7 @@ pub fn qwen3_token_embedding_kernel_ir_v1(
 pub enum Qwen3GemmBufferV1 {
     /// Row-major BF16 activation A `[M,K]`.
     A = 1,
-    /// Prepared row-major BF16 weight B `[K,N]`.
+    /// Identity-prepacked row-major BF16 weight W `[N,K]`.
     B = 2,
     /// Row-major BF16 output/residual C `[M,N]`.
     C = 3,
@@ -1413,7 +1416,7 @@ impl Qwen3GemmBufferContractV1 {
 pub enum Qwen3GemmArgumentRoleV1 {
     /// BF16 activation input A.
     ActivationA = 1,
-    /// Prepared BF16 weight input B.
+    /// Identity-prepacked BF16 weight input W in `[N,K]` layout.
     PreparedWeightB = 2,
     /// BF16 output and optional residual C.
     OutputResidualC = 3,
@@ -2203,8 +2206,8 @@ fn emit_reference_reduction(output: &mut String) {
 reduce.body:
   %a.row.base = mul nuw i64 %row, %k64
   %a.index = add nuw i64 %a.row.base, %reduction
-  %b.row.base = mul nuw i64 %reduction, %n64
-  %b.index = add nuw i64 %b.row.base, %column
+  %b.row.base = mul nuw i64 %column, %k64
+  %b.index = add nuw i64 %b.row.base, %reduction
   %a.ptr = getelementptr inbounds i16, ptr addrspace(1) %a.data, i64 %a.index
   %b.ptr = getelementptr inbounds i16, ptr addrspace(1) %b.data, i64 %b.index
   %a.bf16 = load i16, ptr addrspace(1) %a.ptr, align 2
@@ -2240,7 +2243,7 @@ reduce.body:
     for index in 0..4 {
         writeln!(
             output,
-            "  %a.{index}.bf16 = extractelement <4 x i16> %a.vector, i32 {index}\n  %a.{index}.wide = zext i16 %a.{index}.bf16 to i32\n  %a.{index}.bits = shl nuw i32 %a.{index}.wide, 16\n  %a.{index}.value = bitcast i32 %a.{index}.bits to float\n  %reduction.{index} = add nuw i64 %reduction, {index}\n  %b.{index}.row.base = mul nuw i64 %reduction.{index}, %n64\n  %b.{index}.index = add nuw i64 %b.{index}.row.base, %column\n  %b.{index}.ptr = getelementptr inbounds i16, ptr addrspace(1) %b.data, i64 %b.{index}.index\n  %b.{index}.bf16 = load i16, ptr addrspace(1) %b.{index}.ptr, align 2\n  %b.{index}.wide = zext i16 %b.{index}.bf16 to i32\n  %b.{index}.bits = shl nuw i32 %b.{index}.wide, 16\n  %b.{index}.value = bitcast i32 %b.{index}.bits to float\n  %product.{index} = fmul float %a.{index}.value, %b.{index}.value"
+            "  %a.{index}.bf16 = extractelement <4 x i16> %a.vector, i32 {index}\n  %a.{index}.wide = zext i16 %a.{index}.bf16 to i32\n  %a.{index}.bits = shl nuw i32 %a.{index}.wide, 16\n  %a.{index}.value = bitcast i32 %a.{index}.bits to float\n  %reduction.{index} = add nuw i64 %reduction, {index}\n  %b.{index}.row.base = mul nuw i64 %column, %k64\n  %b.{index}.index = add nuw i64 %b.{index}.row.base, %reduction.{index}\n  %b.{index}.ptr = getelementptr inbounds i16, ptr addrspace(1) %b.data, i64 %b.{index}.index\n  %b.{index}.bf16 = load i16, ptr addrspace(1) %b.{index}.ptr, align 2\n  %b.{index}.wide = zext i16 %b.{index}.bf16 to i32\n  %b.{index}.bits = shl nuw i32 %b.{index}.wide, 16\n  %b.{index}.value = bitcast i32 %b.{index}.bits to float\n  %product.{index} = fmul float %a.{index}.value, %b.{index}.value"
         )
         .expect("writing to a String cannot fail");
         let previous = if index == 0 {
@@ -2292,6 +2295,12 @@ fn validate_canonical_llvm(module: &str) -> Result<(), PrepareQwen3GemmKernelErr
         && module.contains("%a.expected = mul nuw i64 %m64, %k64")
         && module.contains("%b.expected = mul nuw i64 %k64, %n64")
         && module.contains("%c.expected = mul nuw i64 %m64, %n64")
+        && module
+            .matches("row.base = mul nuw i64 %column, %k64")
+            .count()
+            == 5
+        && !module.contains("row.base = mul nuw i64 %reduction, %n64")
+        && !module.contains("row.base = mul nuw i64 %reduction.0, %n64")
         && module.contains("%result.bf16 = trunc i32 %result.bf16.wide to i16")
         && module.contains("%embedding.vocabulary.ok = icmp eq i32 %vocabulary, 151936")
         && module.contains("%embedding.target.hidden = icmp eq i32 %hidden, 4096")
@@ -3301,13 +3310,17 @@ mod tests {
         for profile in catalog.profiles() {
             let [rows, columns, reduction] = profile.dimensions().map(u64::from);
             let [a_elements, b_elements, c_elements] = profile.storage_elements();
+            assert_eq!(
+                profile.strides().map(u64::from),
+                [reduction, reduction, columns]
+            );
             let a_last = (rows - 1)
                 .checked_mul(reduction)
                 .and_then(|base| base.checked_add(reduction - 1))
                 .unwrap();
-            let b_last = (reduction - 1)
-                .checked_mul(columns)
-                .and_then(|base| base.checked_add(columns - 1))
+            let b_last = (columns - 1)
+                .checked_mul(reduction)
+                .and_then(|base| base.checked_add(reduction - 1))
                 .unwrap();
             let c_last = (rows - 1)
                 .checked_mul(columns)
@@ -3382,6 +3395,14 @@ mod tests {
         );
         assert_ne!(exact, residual_substitution);
         assert!(validate_canonical_llvm(&residual_substitution).is_err());
+
+        let transposed_weight_substitution = exact.replacen(
+            "%b.row.base = mul nuw i64 %column, %k64\n  %b.index = add nuw i64 %b.row.base, %reduction",
+            "%b.row.base = mul nuw i64 %reduction, %n64\n  %b.index = add nuw i64 %b.row.base, %column",
+            1,
+        );
+        assert_ne!(exact, transposed_weight_substitution);
+        assert!(validate_canonical_llvm(&transposed_weight_substitution).is_err());
 
         let vector_transfer_substitution = exact.replacen(
             "load <4 x i16>, ptr addrspace(1) %a.ptr, align 2",

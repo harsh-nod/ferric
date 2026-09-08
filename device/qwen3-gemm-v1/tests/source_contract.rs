@@ -258,7 +258,7 @@ fn matrix_roots_use_no_call_sequential_indices_after_finite_caps() {
         }
         if index == 0 {
             assert_eq!(
-                body.matches("letright_index=reduction*n+column;").count(),
+                body.matches("letright_index=column*k+reduction;").count(),
                 1
             );
             assert_eq!(body.matches("letleft_index=row_").count(), 4);
@@ -282,7 +282,7 @@ fn matrix_roots_use_no_call_sequential_indices_after_finite_caps() {
                 .find("ifreduction+3>=k{fe2o3_device::trap();}")
                 .expect("A4 matrix authenticates its full reduction group");
             let first_index = body
-                .find("letright_index_0=reduction*n+column;")
+                .find("letright_index_0=column*k+reduction;")
                 .expect("A4 matrix starts B indexing from one bounded base");
             let backedge = body
                 .find("reduction_wide+=4;")
@@ -339,7 +339,7 @@ fn reduction_ast_pins_each_load_pair_and_ascending_accumulation() {
 
     let reference_loop = reduction_loop(&reference, "reduction+=1;");
     let right_index = reference_loop
-        .find("letright_index=reduction*n+column;")
+        .find("letright_index=column*k+reduction;")
         .expect("reference computes one B index");
     let right_load = reference_loop
         .find("volatile_load(b,right_index)")
@@ -361,9 +361,9 @@ fn reduction_ast_pins_each_load_pair_and_ascending_accumulation() {
     let mut previous_right = 0;
     for offset in 0..4 {
         let index = if offset == 0 {
-            String::from("letright_index_0=reduction*n+column;")
+            String::from("letright_index_0=column*k+reduction;")
         } else {
-            format!("letright_index_{offset}=right_index_{}+n;", offset - 1)
+            format!("letright_index_{offset}=right_index_{}+1;", offset - 1)
         };
         let load = format!("volatile_load(b,right_index_{offset})");
         let index_position = vector_loop

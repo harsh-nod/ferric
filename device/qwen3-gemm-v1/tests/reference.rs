@@ -33,7 +33,7 @@ fn oracle_gemm_reference(
             let mut accumulator = 0.0_f32;
             for reduction in 0..k {
                 let left = oracle_bf16_to_f32(a[row * k + reduction]);
-                let right = oracle_bf16_to_f32(b[reduction * n + column]);
+                let right = oracle_bf16_to_f32(b[column * k + reduction]);
                 let product = left * right;
                 accumulator = accumulator + product;
             }
@@ -67,7 +67,7 @@ fn oracle_gemm_a4(
             for reduction in (0..k).step_by(4) {
                 for offset in 0..4 {
                     let left = oracle_bf16_to_f32(a[row * k + reduction + offset]);
-                    let right = oracle_bf16_to_f32(b[(reduction + offset) * n + column]);
+                    let right = oracle_bf16_to_f32(b[column * k + reduction + offset]);
                     let product = left * right;
                     accumulator = accumulator + product;
                 }
@@ -138,7 +138,7 @@ fn independent_bf16_oracle_matches_exact_rne_and_special_value_policy() {
 fn reference_oracle_has_known_ascending_fp32_and_residual_results() {
     let a = bf16_values(&[1.0, 2.0, 3.0, 4.0, -1.0, 0.5, 2.0, -2.0]);
     let b = bf16_values(&[
-        1.0, 0.0, -1.0, 0.5, 2.0, 1.0, -1.0, 1.0, 0.25, 2.0, -0.5, 0.0,
+        1.0, 0.5, -1.0, 2.0, 0.0, 2.0, 1.0, -0.5, -1.0, 1.0, 0.25, 0.0,
     ]);
     let prior_c = vec![oracle_bf16_from_f32(1.0); 6];
 
@@ -190,7 +190,7 @@ fn reference_and_a4_oracles_match_on_rounding_sensitive_tail_dimensions() {
 #[test]
 fn beta_zero_ignores_prior_nan_and_beta_one_rounds_ties_to_even() {
     let a = bf16_values(&[1.0, 0.0, 0.0, 0.0]);
-    let b = bf16_values(&[1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+    let b = bf16_values(&[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]);
 
     let nan_prior = [0x7fc1, 0xffc2];
     assert_eq!(

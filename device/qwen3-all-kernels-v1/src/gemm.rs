@@ -2,6 +2,9 @@
 #![allow(missing_docs)] // The kernel macro emits undocumented helper modules.
 
 //! Attributed Rust source for Ferric's exact Qwen3 K1 device roots.
+//!
+//! Dense projections consume row-major activations `[M,K]` and the admitted
+//! identity-prepacked row-major Qwen weights `[N,K]`, producing `A * W^T`.
 
 use fe2o3_device::{
     Bf16, DisjointSlice, Index1D, Tiled2D, WriteOnlyDisjointSlice, kernel, memory, thread,
@@ -245,7 +248,7 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     let mut accumulator_3 = 0.0_f32;
     let mut reduction = 0_usize;
     while reduction < k {
-        let right_index = reduction * n + column;
+        let right_index = column * k + reduction;
         let right = Bf16::from_bits(memory::volatile_load(b, right_index)).to_f32();
         if active_0 {
             let left_index = row_0 * k + reduction;
@@ -444,13 +447,13 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
         if reduction + 3 >= k {
             fe2o3_device::trap();
         }
-        let right_index_0 = reduction * n + column;
+        let right_index_0 = column * k + reduction;
         let right_0 = Bf16::from_bits(memory::volatile_load(b, right_index_0)).to_f32();
-        let right_index_1 = right_index_0 + n;
+        let right_index_1 = right_index_0 + 1;
         let right_1 = Bf16::from_bits(memory::volatile_load(b, right_index_1)).to_f32();
-        let right_index_2 = right_index_1 + n;
+        let right_index_2 = right_index_1 + 1;
         let right_2 = Bf16::from_bits(memory::volatile_load(b, right_index_2)).to_f32();
-        let right_index_3 = right_index_2 + n;
+        let right_index_3 = right_index_2 + 1;
         let right_3 = Bf16::from_bits(memory::volatile_load(b, right_index_3)).to_f32();
         if active_0 {
             let left_index_0 = row_0 * k + reduction;
@@ -749,26 +752,26 @@ mod tests {
                     assert!(column <= 151_935);
                     assert!(reference_reduction <= 12_287);
 
-                    let checked_reference_b = reference_reduction
-                        .checked_mul(n)
-                        .and_then(|value| value.checked_add(column))
+                    let checked_reference_b = column
+                        .checked_mul(k)
+                        .and_then(|value| value.checked_add(reference_reduction))
                         .expect("admitted reference B index must fit usize");
                     let checked_reference_a = row
                         .checked_mul(k)
                         .and_then(|value| value.checked_add(reference_reduction))
                         .expect("admitted reference A index must fit usize");
-                    assert_eq!(reference_reduction * n + column, checked_reference_b);
+                    assert_eq!(column * k + reference_reduction, checked_reference_b);
                     assert_eq!(row * k + reference_reduction, checked_reference_a);
                     assert!(checked_reference_b < k * n);
                     assert!(checked_reference_a < m * k);
 
-                    let mut sequential_b = reduction * n + column;
+                    let mut sequential_b = column * k + reduction;
                     let mut sequential_a = row * k + reduction;
                     for offset in 0..4 {
-                        let checked_b = reduction
-                            .checked_add(offset)
-                            .and_then(|value| value.checked_mul(n))
-                            .and_then(|value| value.checked_add(column))
+                        let checked_b = column
+                            .checked_mul(k)
+                            .and_then(|value| value.checked_add(reduction))
+                            .and_then(|value| value.checked_add(offset))
                             .expect("admitted B index must fit usize");
                         let checked_a = row
                             .checked_mul(k)
@@ -780,7 +783,7 @@ mod tests {
                         assert!(checked_b < k * n);
                         assert!(checked_a < m * k);
                         if offset < 3 {
-                            sequential_b += n;
+                            sequential_b += 1;
                             sequential_a += 1;
                         }
                     }
