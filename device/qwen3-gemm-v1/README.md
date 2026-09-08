@@ -17,7 +17,7 @@ reduction terms per loop iteration; hardware inspection and performance
 evidence must establish any actual vector load or throughput claim.
 
 The package pins reviewed `fe2o3-device` and generated-host source at exact
-revision `42882993b3f84d60f38e398d2018cc9302e8fe19`. That source pin and a
+revision `0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`. That source pin and a
 passing `cargo-fe2o3` host-test lane do not identify a production compiler
 occurrence or artifact. Production extraction also requires the
 compiler-authenticated semantic terminal for safe, bounds-checked

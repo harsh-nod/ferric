@@ -5,8 +5,8 @@ receipt. The 33 M1 roadmap gates remain open.
 
 | Team | Implemented And Checked | Current Work |
 | --- | --- | --- |
-| Integration and runtime | Active fe2o3 dependencies pinned to published `42882993b3f84d60f38e398d2018cc9302e8fe19`; all 15 lockfiles and regenerated dependency records pass independent review without registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates are integrated at `63e0f7f`. | Review the newer fe2o3 main `0ea54ed9` cast and worker-teardown fixes for the next pin. Measure device initialization separately when a shared GPU is available, then run the 32-token Qwen comparison. |
-| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The all-latest aggregate now emits successfully and passes independent review. | Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No K3 speedup has been measured. |
+| Integration and runtime | Active fe2o3 dependencies pinned to published `0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`; all 15 lockfiles and dependency records are refreshed without unrelated registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates are integrated at `63e0f7f`. | Complete independent review of the latest fe2o3 cast semantics, bounded worker teardown, and refreshed dependency custody; then emit a matching aggregate. Measure device initialization separately when a shared GPU is available, then run the 32-token Qwen comparison. |
+| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The `42882993` aggregate emits successfully and passes independent review. | Emit and review an aggregate for the active `0ea54ed9` pin. Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No K3 speedup has been measured. |
 | Verification | Resident same-shape settlement test measures zero allocations/reallocations for one round and 16 repeated rounds; positive control allocates. Earlier engine library: 636 passed, 9 ignored; doctests: 171 passed. Source-gate unit tests: 36 passed. All ten positive proof packages passed at cb9b5ca. The 9dcbd6e component matrix passed formatting, strict Clippy, debug/release and all-feature suites, and worker behavior tests. Stale S1/K4 policy anchors and the source-pin adapter binding were subsequently repaired and independently reviewed. | Full qualification is running on frozen `bb50d0e`, with a 1,800-second per-proof timeout. That checkpoint excludes the later SHA optimization. No complete receipt has been produced. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
 
@@ -31,7 +31,9 @@ It will support a Ferric comparison across logical KV positions 16 and 32;
 the 32-token Ferric comparison has not yet run. These short reference checks
 do not establish full-model numerical qualification.
 
-The `42882993` compiler/runtime pin and K3 artifact are ready for that comparison.
+The `42882993` compiler/runtime pin and K3 artifact remain the latest emitted
+bundle. The active `0ea54ed9` source pin is being validated; a matching artifact
+has not yet been emitted.
 All eight GPUs on the shared MI300X host became occupied by another user's
 training job before launch, so the run is waiting for a GPU window. No other
 user's process was stopped or modified.

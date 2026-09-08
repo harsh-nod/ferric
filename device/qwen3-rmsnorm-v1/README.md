@@ -22,7 +22,7 @@ result must remain finite or the kernel traps before publishing that result.
 
 The crate is intentionally outside Ferric's stable host workspace. Both
 `fe2o3-device` and `fe2o3-host` are pinned to immutable revision
-`42882993b3f84d60f38e398d2018cc9302e8fe19`. That closure supplies write-only
+`0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`. That closure supplies write-only
 generated KFD arguments and accepts empty generated-slice constructors, but its
 KFD packer does not produce the required nonnull pointer fixup for empty
 slices. Consequently pure-mode KFD packing and dispatch remain unauthorized

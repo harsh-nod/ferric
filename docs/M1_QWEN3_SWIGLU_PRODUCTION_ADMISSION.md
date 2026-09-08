@@ -38,7 +38,7 @@ checked-in V1 candidate is rejected explicitly by
 
 The standalone
 `adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
-`42882993b3f84d60f38e398d2018cc9302e8fe19`. Its raw entry point strictly
+`0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`. Its raw entry point strictly
 decodes V2 into an inert request. Its recovered entry point consumes and
 retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every
 compiler-receipt identity from that owner's carriage, checks the exact carried
