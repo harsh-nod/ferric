@@ -219,21 +219,15 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Current signed integration 2958b6915cfbbd9bbb81bdb14471fe044b203e0f,
-            tree 48de4c1fe214b9d9df2576cde735f58b0dc63b25, integrates the independently
-            accepted protected current-record client and descriptor-only provider/server. The exact
-            provider MI300X matrix passed at log SHA
-            3d9533b2482e3f8424059333495fe1384f9cd66287471755c5fce0e1528eaee0 and
-            manifest SHA
-            100ecefebf2496006c1c0603c274bdff399d63eae23a35ef44f72eede25688c1.
-            Production daemon deployment, full-envelope lookup, protected signing, a live ledger,
-            external rollback, durable replay, checker service, and Verus refinement remain open.
-
-            R33 review candidate 2ba02a8 passes its exact MI300X source matrix, but independent
-            review found that its narrow allocation tests bypass the public warmed next-window
-            path, which still allocates. Resident allocation repair remains active. Production-owner
-            source candidate c0b6c36 plus d9f repin 9cb4230 is complete and focused-gate green but
-            unintegrated. No accepted authenticated 20-window run exists.
+            Current signed integration 9886f60d7aa78ba48115f54a67d44f448837a469,
+            tree 02c3c0792b5fc21428ca7499d12f3552d26af533, includes the production owner,
+            resident allocation repair, and exact public fe2o3 d9f6bbcd active compiler/runtime pin.
+            The production-used same-shape core measures 0 allocations and 0 reallocations for one
+            round and repeated 16-round execution; a positive control confirms allocator counting.
+            The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests.
+            Integrated engine check, strict Clippy, and focused allocation validation also pass.
+            This is scoped host evidence, not a claim that the entire externally authorized public
+            entry is allocation-free. No accepted authenticated 20-window run exists.
 
             The exact canonical Qwen3-8B target, Qwen3-0.6B draft, tokenizer, weights, and numerical
             input bundle is prepared. Private review candidate a3c941cc5853c8d9d49aaa80456df82ab0672ef4,
@@ -253,8 +247,10 @@
             d9f6bbcd089fb4bf7980f807e6550b13daed9178, tree
             b5fa3750bff9df5c70e02e5acca3ec5471191762, is the current compiler and KFD baseline;
             it includes the complete pinned-nightly offline build-std vendor contract, caller-buffer
-            completed readback, and bounded Worker diagnostics. Ferric repin and artifact
-            requalification remain open. Authority is none, protected infrastructure is absent, and
+            completed readback, and bounded Worker diagnostics. Ferric active compiler/runtime
+            dependencies are pinned to that exact revision. K3 work-proportional KV-write is in
+            progress and under review; no speedup or regression has been measured. Artifact
+            requalification remains open. Authority is none, protected infrastructure is absent, and
             all 33 M1 exit gates remain open. The coherent target-only observation is not an
             authenticated Qwen accuracy evaluation. There is no serving endpoint, authenticated
             A/B, production TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification receipt, or

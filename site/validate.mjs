@@ -79,8 +79,8 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "fa24d00f37eb04c5aaabe164c7c946fbd9284472",
-  integrationCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
-  integrationTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
+  integrationCommit: "9886f60d7aa78ba48115f54a67d44f448837a469",
+  integrationTree: "02c3c0792b5fc21428ca7499d12f3552d26af533",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -191,25 +191,43 @@ const expectedCurrent = {
   r33BroaderRepairCoversSettlementAndRelease: true,
   r33BroaderRepairAddsExplicitFaultedClose: true,
   r33BroaderRepairTestsOutputBudgets: [128, 129],
-  r33CurrentCandidateAbbrev: "2ba02a8",
-  r33CurrentCandidateBaseAbbrev: "2958b69",
-  r33CurrentReviewState: "hold-allocation-free-claim-unaccepted",
-  r33CurrentMatrixGreen: true,
-  r33CurrentEngineAllTargetsPassed: 724,
-  r33CurrentEngineDoctestsPassed: 171,
-  r33CurrentAdapterAllTargetsPassed: 104,
-  r33CurrentSourceGateTestsPassed: 33,
-  r33CurrentAdmissionModules: 171,
-  r33CurrentAdmissionBodies: 8059,
-  r33CurrentNarrowZeroAllocationTestsPassed: 4,
-  r33CurrentNarrowMeasuredAllocations: 0,
-  r33CurrentNarrowMeasuredReallocations: 0,
-  r33CurrentPublicNextWindowAllocationTested: false,
-  r33CurrentPublicWarmedPathAllocationFree: false,
-  r33CurrentRepairRequired: true,
+  r33PriorCandidateAbbrev: "2ba02a8",
+  r33PriorCandidateBaseAbbrev: "2958b69",
+  r33PriorCandidateReviewState: "hold-allocation-free-claim-unaccepted",
+  r33PriorCandidateMatrixGreen: true,
+  r33PriorCandidateEngineAllTargetsPassed: 724,
+  r33PriorCandidateEngineDoctestsPassed: 171,
+  r33PriorCandidateAdapterAllTargetsPassed: 104,
+  r33PriorCandidateSourceGateTestsPassed: 33,
+  r33PriorCandidateAdmissionModules: 171,
+  r33PriorCandidateAdmissionBodies: 8059,
+  r33PriorCandidateNarrowZeroAllocationTestsPassed: 4,
+  r33PriorCandidateNarrowMeasuredAllocations: 0,
+  r33PriorCandidateNarrowMeasuredReallocations: 0,
+  r33PriorCandidatePublicNextWindowAllocationTested: false,
+  r33PriorCandidatePublicWarmedPathAllocationFree: false,
+  r33CurrentRepairRequired: false,
   r33CurrentTwentyWindowAttempted: false,
-  r33CurrentTwentyWindowBlocker: "resident-allocation-repair-unintegrated-owner-and-absent-authenticated-authority-bundle",
+  r33CurrentTwentyWindowBlocker: "absent-authenticated-authority-bundle",
   r33CurrentHardwareQualified: false,
+  residentAllocationRepairCommit: "90a2ff6777252db6b134a8200a2e60c12547d7a7",
+  residentAllocationRepairTree: "a1f68e3eea20222190c5ffe1046420bad39c6c41",
+  residentAllocationTestCommit: "684d2f64c96e549a88193e9774489e5e2ec95cac",
+  residentAllocationTestTree: "176daf27bc0c2e04444e5c6f44d2eb8076a6df44",
+  residentSameShapeCoreTested: true,
+  residentSameShapeOneRoundAllocations: 0,
+  residentSameShapeOneRoundReallocations: 0,
+  residentSameShapeRepeatedRounds: 16,
+  residentSameShapeRepeatedAllocations: 0,
+  residentSameShapeRepeatedReallocations: 0,
+  residentAllocationPositiveControlObserved: true,
+  residentWholePublicEntryAllocationFreeClaimed: false,
+  currentHostEngineTestsPassed: 636,
+  currentHostEngineHardwareIgnored: 9,
+  currentHostEngineDoctestsPassed: 171,
+  integratedEngineCheckGreen: true,
+  integratedEngineStrictClippyGreen: true,
+  integratedFocusedAllocationTestGreen: true,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -302,13 +320,16 @@ const expectedCurrent = {
   correctedControllerDurationSeconds: 34.094,
   correctedBenchmarkComparable: false,
   correctedAuthority: "none",
-  residentAllocationRepairActive: true,
+  residentAllocationRepairActive: false,
   productionOwnerRepairActive: false,
   productionOwnerCandidateComplete: true,
-  productionOwnerCandidateIntegrated: false,
+  productionOwnerCandidateIntegrated: true,
   productionOwnerSourceCommit: "c0b6c3676fbabce896a55874ef53864cb0898cfb",
   productionOwnerRepinCommit: "9cb42304bb4b647206d0d0e0e5d8a038aa2514f8",
   productionOwnerFocusedGatesGreen: true,
+  k3WorkProportionalKvWriteState: "in-progress-review",
+  k3WorkProportionalKvWriteIntegrated: false,
+  k3WorkProportionalSpeedupMeasured: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -351,8 +372,8 @@ const expectedCurrent = {
   fe2o3LatestTree: "b5fa3750bff9df5c70e02e5acca3ec5471191762",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
-  fe2o3CurrentRepinActive: true,
-  fe2o3CurrentRepinIntegrated: false,
+  fe2o3CurrentRepinActive: false,
+  fe2o3CurrentRepinIntegrated: true,
   fe2o3CurrentRepinFormalAcceptance: false,
   fe2o3PreexistingDcoAncestryConcern: true,
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
@@ -548,6 +569,10 @@ for (const key of [
   "r33RejectedCandidateTree",
   "r33TwentyWindowCommit",
   "r33TwentyWindowTree",
+  "residentAllocationRepairCommit",
+  "residentAllocationRepairTree",
+  "residentAllocationTestCommit",
+  "residentAllocationTestTree",
   "headStoreCommit",
   "headStoreFollowupCommit",
   "headStoreReplayRepairCommit",
@@ -775,25 +800,39 @@ assert(project.current.r33BroaderRepairMeasuresFullWarmedRoute === true, "R33 re
 assert(project.current.r33BroaderRepairCoversSettlementAndRelease === true, "R33 repair must include settlement and release");
 assert(project.current.r33BroaderRepairAddsExplicitFaultedClose === true, "R33 repair must include explicit faulted close");
 assert(JSON.stringify(project.current.r33BroaderRepairTestsOutputBudgets) === "[128,129]", "R33 repair budget tests drifted");
-assert(/^[0-9a-f]{7}$/.test(project.current.r33CurrentCandidateAbbrev), "current R33 candidate abbreviation drifted");
-assert(/^[0-9a-f]{7}$/.test(project.current.r33CurrentCandidateBaseAbbrev), "current R33 base abbreviation drifted");
-assert(project.current.r33CurrentReviewState === "hold-allocation-free-claim-unaccepted", "current R33 review HOLD drifted");
-assert(project.current.r33CurrentMatrixGreen === true, "current R33 matrix must remain green");
-assert(project.current.r33CurrentEngineAllTargetsPassed === 724, "current R33 engine matrix count drifted");
-assert(project.current.r33CurrentEngineDoctestsPassed === 171, "current R33 doctest count drifted");
-assert(project.current.r33CurrentAdapterAllTargetsPassed === 104, "current R33 adapter matrix count drifted");
-assert(project.current.r33CurrentSourceGateTestsPassed === 33, "current R33 source-gate count drifted");
-assert(project.current.r33CurrentAdmissionModules === 171, "current R33 admission module count drifted");
-assert(project.current.r33CurrentAdmissionBodies === 8059, "current R33 admission body count drifted");
-assert(project.current.r33CurrentNarrowZeroAllocationTestsPassed === 4, "current R33 narrow allocator test count drifted");
-assert(project.current.r33CurrentNarrowMeasuredAllocations === 0, "current R33 narrow allocation count drifted");
-assert(project.current.r33CurrentNarrowMeasuredReallocations === 0, "current R33 narrow reallocation count drifted");
-assert(project.current.r33CurrentPublicNextWindowAllocationTested === false, "R33 narrow tests must not claim public next-window coverage");
-assert(project.current.r33CurrentPublicWarmedPathAllocationFree === false, "R33 public warmed path must not claim allocation freedom");
-assert(project.current.r33CurrentRepairRequired === true, "R33 allocation repair must remain required");
+assert(/^[0-9a-f]{7}$/.test(project.current.r33PriorCandidateAbbrev), "prior R33 candidate abbreviation drifted");
+assert(/^[0-9a-f]{7}$/.test(project.current.r33PriorCandidateBaseAbbrev), "prior R33 base abbreviation drifted");
+assert(project.current.r33PriorCandidateReviewState === "hold-allocation-free-claim-unaccepted", "prior R33 review state drifted");
+assert(project.current.r33PriorCandidateMatrixGreen === true, "prior R33 matrix must remain green");
+assert(project.current.r33PriorCandidateEngineAllTargetsPassed === 724, "prior R33 engine matrix count drifted");
+assert(project.current.r33PriorCandidateEngineDoctestsPassed === 171, "prior R33 doctest count drifted");
+assert(project.current.r33PriorCandidateAdapterAllTargetsPassed === 104, "prior R33 adapter matrix count drifted");
+assert(project.current.r33PriorCandidateSourceGateTestsPassed === 33, "prior R33 source-gate count drifted");
+assert(project.current.r33PriorCandidateAdmissionModules === 171, "prior R33 admission module count drifted");
+assert(project.current.r33PriorCandidateAdmissionBodies === 8059, "prior R33 admission body count drifted");
+assert(project.current.r33PriorCandidateNarrowZeroAllocationTestsPassed === 4, "prior R33 narrow allocator test count drifted");
+assert(project.current.r33PriorCandidateNarrowMeasuredAllocations === 0, "prior R33 narrow allocation count drifted");
+assert(project.current.r33PriorCandidateNarrowMeasuredReallocations === 0, "prior R33 narrow reallocation count drifted");
+assert(project.current.r33PriorCandidatePublicNextWindowAllocationTested === false, "prior R33 narrow tests must not claim public next-window coverage");
+assert(project.current.r33PriorCandidatePublicWarmedPathAllocationFree === false, "prior R33 public warmed path must not claim allocation freedom");
+assert(project.current.r33CurrentRepairRequired === false, "integrated R33 allocation repair must remain recorded");
 assert(project.current.r33CurrentTwentyWindowAttempted === false, "R33 20-window hardware run must remain unattempted");
-assert(project.current.r33CurrentTwentyWindowBlocker === "resident-allocation-repair-unintegrated-owner-and-absent-authenticated-authority-bundle", "R33 20-window blocker drifted");
+assert(project.current.r33CurrentTwentyWindowBlocker === "absent-authenticated-authority-bundle", "R33 20-window blocker drifted");
 assert(project.current.r33CurrentHardwareQualified === false, "current R33 candidate must remain hardware-unqualified");
+assert(project.current.residentSameShapeCoreTested === true, "production-used resident same-shape core coverage must remain explicit");
+assert(project.current.residentSameShapeOneRoundAllocations === 0, "one-round allocation count drifted");
+assert(project.current.residentSameShapeOneRoundReallocations === 0, "one-round reallocation count drifted");
+assert(project.current.residentSameShapeRepeatedRounds === 16, "repeated same-shape round count drifted");
+assert(project.current.residentSameShapeRepeatedAllocations === 0, "repeated-round allocation count drifted");
+assert(project.current.residentSameShapeRepeatedReallocations === 0, "repeated-round reallocation count drifted");
+assert(project.current.residentAllocationPositiveControlObserved === true, "allocator positive control must remain explicit");
+assert(project.current.residentWholePublicEntryAllocationFreeClaimed === false, "scoped allocation evidence must not become a whole-entry claim");
+assert(project.current.currentHostEngineTestsPassed === 636, "current host engine test count drifted");
+assert(project.current.currentHostEngineHardwareIgnored === 9, "current host hardware-ignore count drifted");
+assert(project.current.currentHostEngineDoctestsPassed === 171, "current host doctest count drifted");
+assert(project.current.integratedEngineCheckGreen === true, "integrated engine check must remain green");
+assert(project.current.integratedEngineStrictClippyGreen === true, "integrated strict Clippy must remain green");
+assert(project.current.integratedFocusedAllocationTestGreen === true, "integrated focused allocation test must remain green");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
 assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
@@ -883,13 +922,16 @@ assert(project.current.correctedPostFirstSecondsPerToken === 2.7656050044, "corr
 assert(project.current.correctedControllerDurationSeconds === 34.094, "corrected controller duration drifted");
 assert(project.current.correctedBenchmarkComparable === false, "corrected observation must remain nonbenchmark");
 assert(project.current.correctedAuthority === "none", "corrected observation authority must remain none");
-assert(project.current.residentAllocationRepairActive === true, "resident allocation repair must remain active");
+assert(project.current.residentAllocationRepairActive === false, "integrated resident allocation repair must not remain active");
 assert(project.current.productionOwnerRepairActive === false, "completed production-owner repair must not remain active");
 assert(project.current.productionOwnerCandidateComplete === true, "production-owner source candidate must remain complete");
-assert(project.current.productionOwnerCandidateIntegrated === false, "production-owner source candidate must remain unintegrated");
+assert(project.current.productionOwnerCandidateIntegrated === true, "production owner must remain integrated");
 assert(project.current.productionOwnerFocusedGatesGreen === true, "production-owner focused gates must remain green");
-assert(project.current.fe2o3CurrentRepinActive === true, "current fe2o3 repin must remain active");
-assert(project.current.fe2o3CurrentRepinIntegrated === false, "current fe2o3 repin must remain unintegrated");
+assert(project.current.k3WorkProportionalKvWriteState === "in-progress-review", "K3 validation state drifted");
+assert(project.current.k3WorkProportionalKvWriteIntegrated === false, "K3 candidate must not be presented as integrated");
+assert(project.current.k3WorkProportionalSpeedupMeasured === false, "K3 must not claim a measured speedup");
+assert(project.current.fe2o3CurrentRepinActive === false, "integrated fe2o3 repin must not remain active");
+assert(project.current.fe2o3CurrentRepinIntegrated === true, "current fe2o3 repin must remain integrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
@@ -1017,7 +1059,7 @@ project.teams.forEach((team, index) => {
   if (team.name === "Integration") {
     assert(team.status === "Authority paths under review", "Integration must expose the active authority work");
     assert(
-      team.blockedBy.startsWith("Current Ferric repin is active"),
+      team.blockedBy.startsWith("R33 still needs the external authenticated authority bundle"),
       "Integration blocker must remain exact",
     );
   } else {
@@ -1385,20 +1427,23 @@ const missingSnapshotClaims = [
   "34.094s",
   "hardware completion",
   "benchmark_comparable=false",
-  "Resident allocation repair",
-  "Production-owner source candidate",
-  "complete and focused-gate green but unintegrated",
+  "9886f60d7aa78ba48115f54a67d44f448837a469",
+  "02c3c0792b5fc21428ca7499d12f3552d26af533",
+  "production-used same-shape core",
+  "repeated 16-round",
+  "positive allocator control",
+  "636 engine tests",
+  "9 hardware ignores",
+  "integrated engine check",
+  "strict Clippy",
+  "K3 work-proportional KV-write",
+  "no speedup",
   "caller-buffer completed readback",
   "bounded Worker diagnostic",
   "d7d2",
   "2ba02a8",
   "rustc-literal-escaper",
-  "724 engine targets",
-  "104 adapter targets",
-  "8,059 bodies",
-  "allocation-free claim is unaccepted",
   "public next-window path",
-  "non-test production owner",
   "current authority-free HSACO",
   "20-window run was not attempted",
   "TTFT",
