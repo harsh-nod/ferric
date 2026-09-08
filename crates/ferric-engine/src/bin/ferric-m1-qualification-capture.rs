@@ -109,15 +109,24 @@ use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
+#[path = "input_bundle.rs"]
 mod input_bundle;
+#[path = "m1_r30_canary_partial_capture.rs"]
 mod m1_r30_canary_partial_capture;
+#[path = "m1_r30_capture_composition.rs"]
 mod m1_r30_capture_composition;
+#[path = "m1_r30_exhaustion_partial_capture.rs"]
 mod m1_r30_exhaustion_partial_capture;
 #[cfg(feature = "qualification-fault-injection")]
+#[path = "m1_r30_fault_transition_partial_capture.rs"]
 mod m1_r30_fault_transition_partial_capture;
+#[path = "m1_r30_partial_capture.rs"]
 mod m1_r30_partial_capture;
+#[path = "m1_r30_rollback_partial_capture.rs"]
 mod m1_r30_rollback_partial_capture;
+#[path = "m1_r32_partial_capture.rs"]
 mod m1_r32_partial_capture;
+#[path = "m1_target_smoke.rs"]
 mod m1_target_smoke;
 
 const PLAN_FORMAT: &str = "FERRIC-M1-BENCHMARK-PLAN-V1";
@@ -127,6 +136,8 @@ const CLOSURE_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CLOSURE-V1";
 const ENVIRONMENT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-ENVIRONMENT-V1";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
 const TRANSCRIPT_FORMAT: &str = "FERRIC-M1-QUALIFICATION-CAPTURE-V2";
+const TECHNICAL_TRANSCRIPT_FORMAT: &str = "FERRIC-M1-TECHNICAL-PREQUALIFICATION-CAPTURE-V1";
+const TECHNICAL_TRANSCRIPT_NONCLAIM: &str = "Authority-none aggregate engineering observation only. This transcript authenticates no compiler origin or Worker V3 publication, selects no current protected publication, establishes no reference comparison, tolerance, numerical correctness, hardware correctness, performance, qualification, or m1.r29 closure.";
 const TARGET: &str = "gfx942:xnack-";
 const DIFFERENTIAL_NONCLAIM: &str = "Structural acceptance authenticates externally collected target-only differential records only. It does not validate a logit tolerance, prove token equality, establish numerical or hardware correctness, qualify performance, or close m1.r29.";
 const MAX_DOCUMENT_BYTES: usize = 8 * 1_024 * 1_024;
@@ -233,7 +244,52 @@ const DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES: &[(&str, &str)] = &[
     ("prefill-s8-t128", "dispatch-graph-prefill-s8-t128"),
 ];
 
-type CaptureResult<T> = Result<T, String>;
+pub(crate) type CaptureResult<T> = Result<T, String>;
+
+/// Artifact-neutral hooks shared by the protected qualification binary and the
+/// excluded authority-none engineering adapter.
+pub(crate) trait M1R29CaptureProgramSourceV1 {
+    type Artifact;
+    const CAPTURE_COMMAND: &'static str;
+    const INVOCATION_FORMAT: &'static str;
+
+    fn pre_capture(root: &Path) -> CaptureResult<()>;
+    fn reopen(root: &Path) -> CaptureResult<Self::Artifact>;
+    fn program_catalog_id(artifact: &Self::Artifact) -> Identity;
+    fn bind(
+        artifact: Self::Artifact,
+        publication: ferric_build::PublishedRunnerDeclaration,
+    ) -> CaptureResult<ferric_engine::M1PhysicalRunnerV1>;
+}
+
+pub(crate) struct PersistedM1R29CaptureProgramSourceV1;
+
+impl M1R29CaptureProgramSourceV1 for PersistedM1R29CaptureProgramSourceV1 {
+    type Artifact = ferric_engine::AdmittedPersistedM1KernelArtifactsV1;
+    const CAPTURE_COMMAND: &'static str = "ferric-m1-qualification-capture";
+    const INVOCATION_FORMAT: &'static str = input_bundle::INVOCATION_FORMAT;
+
+    fn pre_capture(root: &Path) -> CaptureResult<()> {
+        require_m1_authenticated_roster_acquisition_v1(root).map_err(|error| error.to_string())
+    }
+
+    fn reopen(root: &Path) -> CaptureResult<Self::Artifact> {
+        reopen_persisted_m1_kernel_artifacts_v1(root)
+            .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))
+    }
+
+    fn program_catalog_id(artifact: &Self::Artifact) -> Identity {
+        artifact.program_catalog_id()
+    }
+
+    fn bind(
+        artifact: Self::Artifact,
+        publication: ferric_build::PublishedRunnerDeclaration,
+    ) -> CaptureResult<ferric_engine::M1PhysicalRunnerV1> {
+        bind_structural_m1_physical_runner_v1(artifact, publication)
+            .map_err(|error| format!("cannot bind physical runner: {error:?}"))
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct R30PhysicalCaptureBindingsV1 {
@@ -4047,9 +4103,31 @@ fn run_capture(arguments: &[OsString]) -> CaptureResult<()> {
     run_capture_with_purpose(arguments, CapturePurposeV1::Qualification)
 }
 
+#[allow(dead_code)] // Instantiated by the excluded engineering adapter's shared-source module.
+pub(crate) fn generate_technical_r29_inputs<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
+    input_bundle::generate_inputs_with_source::<S>(arguments)
+}
+
+#[allow(dead_code)] // Instantiated by the excluded engineering adapter's shared-source module.
+pub(crate) fn validate_technical_r29_inputs<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
+    input_bundle::validate_inputs_with_source::<S>(arguments)
+}
+
+#[allow(dead_code)] // Instantiated by the excluded engineering adapter's shared-source module.
+pub(crate) fn run_technical_r29_capture<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
+    run_capture_with_program_source::<S>(arguments, CapturePurposeV1::TechnicalPrequalification)
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CapturePurposeV1 {
     Qualification,
+    TechnicalPrequalification,
     R30PartialCanary,
     R30PartialCancellation,
     #[cfg(feature = "qualification-fault-injection")]
@@ -4060,19 +4138,26 @@ fn run_capture_with_purpose(
     arguments: &[OsString],
     purpose: CapturePurposeV1,
 ) -> CaptureResult<()> {
+    run_capture_with_program_source::<PersistedM1R29CaptureProgramSourceV1>(arguments, purpose)
+}
+
+fn run_capture_with_program_source<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+    purpose: CapturePurposeV1,
+) -> CaptureResult<()> {
     let [plan_path, roster_path, case_id, workload_path, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
         return Err(match purpose {
             CapturePurposeV1::Qualification => "usage: ferric-m1-qualification-capture PLAN ROSTER CASE-ID WORKLOAD PREPACKED-SNAPSHOT KERNEL-ARTIFACTS CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
+            CapturePurposeV1::TechnicalPrequalification => "usage: ferric-m1-engineering-r29-capture PLAN ROSTER CASE-ID WORKLOAD PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY CLOSURE ENVIRONMENT GPU-UNIQUE-ID OUTPUT-BUNDLE".to_owned(),
             CapturePurposeV1::R30PartialCanary => "capture-r30-canary uses its independent six-argument path".to_owned(),
             CapturePurposeV1::R30PartialCancellation => "capture-r30-cancellation uses its independent six-argument path".to_owned(),
             #[cfg(feature = "qualification-fault-injection")]
             CapturePurposeV1::R30PartialFaultTransition => "capture-r30-fault-transition uses its independent six-argument path".to_owned(),
         });
     };
-    require_m1_authenticated_roster_acquisition_v1(Path::new(artifact_root))
-        .map_err(|error| error.to_string())?;
+    S::pre_capture(Path::new(artifact_root))?;
     let case_id = case_id
         .to_str()
         .ok_or_else(|| "case ID must be UTF-8".to_owned())?;
@@ -4109,9 +4194,8 @@ fn run_capture_with_purpose(
         "benchmark executable",
     )?;
 
-    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(Path::new(artifact_root))
-        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
-    let executable_catalog_id = artifacts.program_catalog_id();
+    let artifacts = S::reopen(Path::new(artifact_root))?;
+    let executable_catalog_id = S::program_catalog_id(&artifacts);
 
     let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
     let model = load_model_inputs(&snapshot)?;
@@ -4128,8 +4212,7 @@ fn run_capture_with_purpose(
     require_supported_capture(&workload)?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
-    let runner = bind_structural_m1_physical_runner_v1(artifacts, publication)
-        .map_err(|error| format!("cannot bind physical runner: {error:?}"))?;
+    let runner = S::bind(artifacts, publication)?;
 
     let memory_admission = model.authenticate()?;
     let memory_plan = model_memory_plan(memory_admission)?;
@@ -4163,7 +4246,7 @@ fn run_capture_with_purpose(
         kernel_manifest,
         program_catalog: executable_catalog_id,
     };
-    let transcript = capture_transcript(&plan, &case, &workload, &capture, identities)?;
+    let transcript = capture_transcript(&plan, &case, &workload, &capture, identities, purpose)?;
     let transcript_sha256 = sha256_hex(&transcript);
     let output_manifest = differential_output_manifest(
         &plan,
@@ -6905,7 +6988,9 @@ fn execute_prefill_capture(
         CapturePurposeV1::R30PartialCanary => {
             allocated.allocate_guarded_completion_output(selection)
         }
-        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCancellation => {
+        CapturePurposeV1::Qualification
+        | CapturePurposeV1::TechnicalPrequalification
+        | CapturePurposeV1::R30PartialCancellation => {
             allocated.allocate_completion_output(selection)
         }
         #[cfg(feature = "qualification-fault-injection")]
@@ -7484,7 +7569,9 @@ fn qualify_prefill_live_generation(
     }
     if matches!(
         purpose,
-        CapturePurposeV1::Qualification | CapturePurposeV1::R30PartialCanary
+        CapturePurposeV1::Qualification
+            | CapturePurposeV1::TechnicalPrequalification
+            | CapturePurposeV1::R30PartialCanary
     ) {
         if let Err(error) = preflight_engine_retirement(engine, &evidence.requests) {
             close_or_quarantine_prefill_live(
@@ -7509,12 +7596,15 @@ fn qualify_prefill_live_generation(
         Ok(qualified) => qualified,
         Err(failure) => match failure.retry_prefill_completion() {
             Ok(qualified) => qualified,
-            Err(failure) => close_or_quarantine_prefill_live(
-                "prefill qualification semantic join failed",
-                evidence,
-                None,
-                failure.destroy_queue_and_retain_evidence(engine),
-            ),
+            Err(failure) => {
+                eprintln!("prefill_semantic_join_diagnostic={}", failure.error());
+                close_or_quarantine_prefill_live(
+                    "prefill qualification semantic join failed",
+                    evidence,
+                    None,
+                    failure.destroy_queue_and_retain_evidence(engine),
+                )
+            }
         },
     };
     PrefillLiveGenerationOutcomeV1::Qualified {
@@ -8360,6 +8450,7 @@ fn capture_transcript(
     workload: &Workload,
     capture: &CapturedOutput,
     identities: CaptureIdentities,
+    purpose: CapturePurposeV1,
 ) -> CaptureResult<Vec<u8>> {
     let row_hashes = capture
         .logits_row_sha256
@@ -8418,7 +8509,7 @@ fn capture_transcript(
             )
         }
     };
-    canonical_bytes(&json!({
+    let mut transcript = json!({
         "authority": "observed-target-only-qualification-capture",
         "benchmark_executable_sha256": plan.identity("benchmark-executable")?,
         "benchmark_protocol_sha256": plan.identity("benchmark-protocol")?,
@@ -8444,7 +8535,21 @@ fn capture_transcript(
         "target": TARGET,
         "tokens_sha256": sha256_hex(&capture.tokens),
         "workload_sha256": sha256_hex(&workload.bytes),
-    }))
+    });
+    if purpose == CapturePurposeV1::TechnicalPrequalification {
+        let object = transcript.as_object_mut().ok_or_else(|| {
+            "internal transcript construction did not produce an object".to_owned()
+        })?;
+        object.insert("artifact_authority".to_owned(), json!("none"));
+        object.insert(
+            "authority".to_owned(),
+            json!("aggregate-engineering-observation-only"),
+        );
+        object.insert("format".to_owned(), json!(TECHNICAL_TRANSCRIPT_FORMAT));
+        object.insert("nonclaim".to_owned(), json!(TECHNICAL_TRANSCRIPT_NONCLAIM));
+        object.insert("status".to_owned(), json!("OBSERVED-NON-AUTHORITATIVE"));
+    }
+    canonical_bytes(&transcript)
 }
 
 fn differential_output_manifest(
@@ -10328,6 +10433,7 @@ mod tests {
                 kernel_manifest: Identity::new([14; 32]),
                 program_catalog: Identity::new([15; 32]),
             },
+            CapturePurposeV1::Qualification,
         )
         .unwrap();
         let value = parse_canonical(&transcript, "transcript").unwrap();
@@ -10349,6 +10455,30 @@ mod tests {
             value["execution"]["ordered_lane_bindings"][0]["token_sequence_identity_sha256"],
             hex_identity(binding.ordered_lanes[0].token_sequence_identity)
         );
+
+        let technical = capture_transcript(
+            &plan,
+            &case,
+            &workload,
+            &capture,
+            CaptureIdentities {
+                gpu_unique_id: 23,
+                runner_declaration: Identity::new([13; 32]),
+                kernel_manifest: Identity::new([14; 32]),
+                program_catalog: Identity::new([15; 32]),
+            },
+            CapturePurposeV1::TechnicalPrequalification,
+        )
+        .unwrap();
+        let technical = parse_canonical(&technical, "technical transcript").unwrap();
+        assert_eq!(technical["format"], TECHNICAL_TRANSCRIPT_FORMAT);
+        assert_eq!(technical["artifact_authority"], "none");
+        assert_eq!(
+            technical["authority"],
+            "aggregate-engineering-observation-only"
+        );
+        assert_eq!(technical["status"], "OBSERVED-NON-AUTHORITATIVE");
+        assert_eq!(technical["nonclaim"], TECHNICAL_TRANSCRIPT_NONCLAIM);
     }
 
     #[test]

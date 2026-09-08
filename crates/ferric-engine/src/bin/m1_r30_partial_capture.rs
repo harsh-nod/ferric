@@ -846,10 +846,7 @@ mod tests {
     fn protocol_is_canonical_and_partial() {
         require_protocol().unwrap();
         let protocol = protocol_bytes().unwrap();
-        let manifest = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
-        let checked_in =
-            fs::read(PathBuf::from(manifest).join("src/bin/ferric-m1-r30-partial-protocol.json"))
-                .unwrap();
+        let checked_in = include_bytes!("ferric-m1-r30-partial-protocol.json").as_slice();
         assert_eq!(protocol, checked_in);
         assert!(String::from_utf8_lossy(&protocol).contains("partial-non-evidence"));
         assert!(String::from_utf8_lossy(&protocol).contains("does not establish"));

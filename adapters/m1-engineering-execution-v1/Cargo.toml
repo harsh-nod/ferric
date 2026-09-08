@@ -15,6 +15,10 @@ name = "ferric-m1-engineering-speculative-smoke"
 path = "src/bin/ferric-m1-engineering-speculative-smoke.rs"
 
 [[bin]]
+name = "ferric-m1-engineering-r29-capture"
+path = "src/bin/ferric-m1-engineering-r29-capture.rs"
+
+[[bin]]
 name = "ferric-m1-r33-adapter"
 path = "src/bin/ferric-m1-r33-adapter.rs"
 
@@ -26,6 +30,9 @@ path = "src/bin/ferric-r33-custody-vault-abort-probe.rs"
 # verified production workspace and runtime dependency closure.
 [workspace]
 
+[features]
+qualification-fault-injection = ["ferric-engine/qualification-fault-injection"]
+
 [dependencies]
 fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
 fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
@@ -35,6 +42,7 @@ ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
 ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1", version = "=0.1.0" }
+ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["fs", "net", "process", "rand", "time"] }
 serde = { version = "=1.0.229", features = ["derive"] }

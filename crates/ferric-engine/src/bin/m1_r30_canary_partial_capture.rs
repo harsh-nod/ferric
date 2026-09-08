@@ -867,12 +867,8 @@ mod tests {
     fn exact_partial_canary_capture_and_checked_protocol_are_accepted() {
         validate_manifest(&canonical_bytes(&fixture()).unwrap(), &expected()).unwrap();
         require_protocol().unwrap();
-        let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
-        let checked_in = std::fs::read(
-            std::path::PathBuf::from(manifest_dir)
-                .join("src/bin/ferric-m1-r30-canary-partial-protocol.json"),
-        )
-        .unwrap();
+        let checked_in =
+            include_bytes!("ferric-m1-r30-canary-partial-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
     }
 

@@ -5,13 +5,13 @@ use super::{
     expect_string, field, generate_qwen3_gfx942_runner_declaration, hex_identity, integer_field,
     kind_selection, load_model_inputs, parse_canonical, parse_cases, parse_closure_document,
     parse_environment_document, parse_identities, parse_input_tokens, parse_plan_document,
-    parse_workload_document, reopen_persisted_m1_kernel_artifacts_v1, require_identity,
-    require_relative, require_sha256, require_supported_capture, rows_for_kind, secure_parent,
-    selection_json, sha256_array, sha256_hex, string_field, validate_plan_identities,
-    validate_roster_document, CaptureResult, ClosureIdentities, DifferentialPlan, ModelInputBytes,
-    PlanCase, SecureDirectory, StagingOutput, DECODE_CONTEXT_LENGTH, DIFFERENTIAL_KINDS,
-    DIFFERENTIAL_NONCLAIM, ENVIRONMENT_FORMAT, M1_QUALIFICATION_TOKENS_PER_LANE, PLAN_FORMAT,
-    ROSTER_FORMAT, TARGET, WORKLOAD_FORMAT,
+    parse_workload_document, require_identity, require_relative, require_sha256,
+    require_supported_capture, rows_for_kind, secure_parent, selection_json, sha256_array,
+    sha256_hex, string_field, validate_plan_identities, validate_roster_document, CaptureResult,
+    ClosureIdentities, DifferentialPlan, M1R29CaptureProgramSourceV1, ModelInputBytes,
+    PersistedM1R29CaptureProgramSourceV1, PlanCase, SecureDirectory, StagingOutput,
+    DECODE_CONTEXT_LENGTH, DIFFERENTIAL_KINDS, DIFFERENTIAL_NONCLAIM, ENVIRONMENT_FORMAT,
+    M1_QUALIFICATION_TOKENS_PER_LANE, PLAN_FORMAT, ROSTER_FORMAT, TARGET, WORKLOAD_FORMAT,
 };
 use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanSelection};
 use rustix::fs::Dir;
@@ -25,7 +25,7 @@ const BENCHMARK_INPUT_FORMAT: &str = "FERRIC-M1-BENCHMARK-INPUT-V1";
 const ACCEPTANCE_POLICY_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-ACCEPTANCE-POLICY-V1";
 const ACCEPTANCE_POLICY_AUTHORITY: &str = "externally-admitted-differential-threshold-policy-only";
 const ACCEPTANCE_POLICY_NONCLAIM: &str = "This artifact supplies plan-admitted differential thresholds only. It does not establish independent review, numerical correctness, hardware correctness, qualification authority, or close m1.r29.";
-const INVOCATION_FORMAT: &str = "FERRIC-M1-QUALIFICATION-INVOCATIONS-V1";
+pub(super) const INVOCATION_FORMAT: &str = "FERRIC-M1-QUALIFICATION-INVOCATIONS-V1";
 const TOKEN_ID_DOMAIN: &[u8] = b"ferric.m1.qualification-token.v1";
 const BASE_VOCABULARY_SIZE: u32 = 151_643;
 const COMPLETION_WAIT_POLICY_ID: &str = "ferric-m1-completion-progress-wait-v2";
@@ -60,6 +60,12 @@ struct ReconstructedInputs {
 }
 
 pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
+    generate_inputs_with_source::<PersistedM1R29CaptureProgramSourceV1>(arguments)
+}
+
+pub(super) fn generate_inputs_with_source<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
     let [prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, output] =
         arguments
     else {
@@ -79,7 +85,7 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
     let reference_protocol =
         measure_regular_file(Path::new(reference_protocol_path), "reference protocol")?;
     let executable = current_executable_sha256()?;
-    let reconstructed = reconstruct_inputs(
+    let reconstructed = reconstruct_inputs::<S>(
         Path::new(prepacked_root),
         Path::new(artifact_root),
         &closure,
@@ -94,7 +100,7 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
         &reconstructed,
     )?;
     let plan = validate_protocol_documents(&documents, gpu_unique_id, &closure, &reconstructed)?;
-    let invocation_map = invocation_map_bytes(
+    let invocation_map = invocation_map_bytes::<S>(
         Path::new(output),
         Path::new(prepacked_root),
         Path::new(artifact_root),
@@ -106,6 +112,12 @@ pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
 }
 
 pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
+    validate_inputs_with_source::<PersistedM1R29CaptureProgramSourceV1>(arguments)
+}
+
+pub(super) fn validate_inputs_with_source<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
     let [prepacked_root, artifact_root, closure_path, policy_path, reference_implementation_path, reference_protocol_path, gpu_unique_id, input_bundle] =
         arguments
     else {
@@ -126,7 +138,7 @@ pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
     let reference_protocol =
         measure_regular_file(Path::new(reference_protocol_path), "reference protocol")?;
     let executable = current_executable_sha256()?;
-    let reconstructed = reconstruct_inputs(
+    let reconstructed = reconstruct_inputs::<S>(
         Path::new(prepacked_root),
         Path::new(artifact_root),
         &closure,
@@ -142,7 +154,7 @@ pub(super) fn validate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
     )?;
     compare_published_documents(Path::new(input_bundle), &expected)?;
     let plan = validate_protocol_documents(&expected, gpu_unique_id, &closure, &reconstructed)?;
-    invocation_map_bytes(
+    invocation_map_bytes::<S>(
         Path::new(input_bundle),
         Path::new(prepacked_root),
         Path::new(artifact_root),
@@ -177,14 +189,13 @@ fn measure_regular_file(path: &Path, description: &str) -> CaptureResult<String>
         .sha256_snapshot(description)
 }
 
-fn reconstruct_inputs(
+fn reconstruct_inputs<S: M1R29CaptureProgramSourceV1>(
     prepacked_root: &Path,
     artifact_root: &Path,
     closure: &ClosureIdentities,
 ) -> CaptureResult<ReconstructedInputs> {
-    let artifacts = reopen_persisted_m1_kernel_artifacts_v1(artifact_root)
-        .map_err(|error| format!("cannot authenticate persisted kernel artifacts: {error}"))?;
-    let executable_catalog = artifacts.program_catalog_id();
+    let artifacts = S::reopen(artifact_root)?;
+    let executable_catalog = S::program_catalog_id(&artifacts);
     let snapshot = SecureDirectory::open(prepacked_root, "prepacked snapshot root")?;
     let model = load_model_inputs(&snapshot)?;
     let runner_admission = model.authenticate()?;
@@ -761,7 +772,7 @@ fn validate_acceptance_policy(value: &Value) -> CaptureResult<()> {
     Ok(())
 }
 
-fn invocation_map_bytes(
+fn invocation_map_bytes<S: M1R29CaptureProgramSourceV1>(
     bundle: &Path,
     prepacked_root: &Path,
     artifact_root: &Path,
@@ -796,8 +807,8 @@ fn invocation_map_bytes(
         })
         .collect::<CaptureResult<Vec<_>>>()?;
     canonical_bytes(&json!({
-        "command": "ferric-m1-qualification-capture",
-        "format": INVOCATION_FORMAT,
+        "command": S::CAPTURE_COMMAND,
+        "format": S::INVOCATION_FORMAT,
         "invocations": invocations,
         "plan_sha256": plan.sha256(),
     }))
@@ -816,10 +827,10 @@ fn path_string(path: &Path) -> CaptureResult<&str> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{
+    use super::super::{
         COMMON_IDENTITIES, DIFFERENTIAL_DISPATCH_GRAPH_IDENTITIES, DIFFERENTIAL_IDENTITIES,
     };
+    use super::*;
     use std::fs;
     use std::os::unix::fs::symlink;
     use std::path::{Component, PathBuf};
@@ -978,7 +989,7 @@ mod tests {
         let roster = parse_canonical(roster_bytes, "roster").unwrap();
         validate_roster_document(&roster, roster_bytes, &plan).unwrap();
 
-        let invocation_bytes = invocation_map_bytes(
+        let invocation_bytes = invocation_map_bytes::<PersistedM1R29CaptureProgramSourceV1>(
             Path::new("inputs.bundle"),
             Path::new("prepacked"),
             Path::new("kernel-artifacts"),

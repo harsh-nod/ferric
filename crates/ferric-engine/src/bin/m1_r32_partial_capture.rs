@@ -600,12 +600,7 @@ mod tests {
     #[test]
     fn protocol_and_exact_partial_capture_are_accepted() {
         require_protocol().unwrap();
-        let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
-        let checked_in = std::fs::read(
-            std::path::PathBuf::from(manifest_dir)
-                .join("src/bin/ferric-m1-r32-partial-protocol.json"),
-        )
-        .unwrap();
+        let checked_in = include_bytes!("ferric-m1-r32-partial-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
         let bytes = canonical_bytes(&fixture()).unwrap();
         validate_manifest(&bytes, &expected()).unwrap();

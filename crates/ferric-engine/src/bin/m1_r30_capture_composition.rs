@@ -363,11 +363,8 @@ mod tests {
 
     #[test]
     fn composition_preserves_the_native_fault_authority_gap() {
-        let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
-        let checked_in = fs::read(
-            PathBuf::from(manifest_dir).join("src/bin/ferric-m1-r30-composed-runner-protocol.json"),
-        )
-        .unwrap();
+        let checked_in =
+            include_bytes!("ferric-m1-r30-composed-runner-protocol.json").as_slice();
         assert_eq!(protocol_bytes().unwrap(), checked_in);
         let bytes = compose(&physical(), &"aa".repeat(32)).unwrap();
         let value = parse_canonical(&bytes, "test r30 composition").unwrap();

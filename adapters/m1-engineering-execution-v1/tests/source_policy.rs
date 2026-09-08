@@ -3,6 +3,8 @@ const SOURCE: &str = include_str!("../src/lib.rs");
 const CLI_SOURCE: &str = include_str!("../src/bin/ferric-m1-engineering-target-smoke.rs");
 const SPECULATIVE_CLI_SOURCE: &str =
     include_str!("../src/bin/ferric-m1-engineering-speculative-smoke.rs");
+const R29_TECHNICAL_CLI_SOURCE: &str =
+    include_str!("../src/bin/ferric-m1-engineering-r29-capture.rs");
 const BOOTSTRAP_SOURCE: &str = include_str!("../src/bin/smoke_bootstrap.rs");
 const R33_LIFECYCLE_SOURCE: &str = include_str!("../src/r33_lifecycle.rs");
 const R33_PRODUCTION_BACKEND_SOURCE: &str = include_str!("../src/r33_production_backend.rs");
@@ -173,6 +175,58 @@ fn adapter_owned_cli_is_the_only_kfd_execution_boundary() {
             );
         }
     }
+}
+
+#[test]
+fn engineering_r29_capture_is_aggregate_only_and_explicitly_non_authoritative() {
+    assert!(MANIFEST.contains("name = \"ferric-m1-engineering-r29-capture\""));
+    for required in [
+        "reopen_m1_engineering_aggregate_artifact_v1",
+        "bind_engineering_structural_m1_physical_runner_v1",
+        "run_technical_r29_capture",
+        "generate_technical_r29_inputs",
+        "validate_technical_r29_inputs",
+        "EngineeringAggregateProgramSourceV1",
+        "ferric-m1-engineering-r29-capture",
+        "../../../../crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs",
+    ] {
+        assert!(
+            R29_TECHNICAL_CLI_SOURCE.contains(required),
+            "engineering R29 capture is missing {required}"
+        );
+    }
+    for forbidden in [
+        "reopen_persisted_m1_kernel_artifacts_v1",
+        "require_m1_authenticated_roster_acquisition_v1",
+        "M1AuthenticatedWorkerV3ProgramSetV1",
+        "M1AuthenticatedPhysicalRunnerV1",
+        "AuthenticatedWorkerV3ExecutableV1",
+    ] {
+        assert!(
+            !R29_TECHNICAL_CLI_SOURCE.contains(forbidden),
+            "engineering R29 capture contains forbidden authority marker {forbidden}"
+        );
+    }
+
+    for required in [
+        "TECHNICAL_TRANSCRIPT_FORMAT",
+        "TECHNICAL_TRANSCRIPT_NONCLAIM",
+        "CapturePurposeV1::TechnicalPrequalification",
+        "ENGINEERING-OBSERVATION-DIRECTORY",
+        "\"artifact_authority\".to_owned(), json!(\"none\")",
+        "require_m1_authenticated_roster_acquisition_v1(root)",
+        "reopen_persisted_m1_kernel_artifacts_v1(root)",
+        "prefill_semantic_join_diagnostic={}",
+        "failure.destroy_queue_and_retain_evidence(engine)",
+    ] {
+        assert!(
+            ENGINE_QUALIFICATION_CAPTURE_SOURCE.contains(required),
+            "shared R29 capture is missing separation marker {required}"
+        );
+    }
+    assert!(ENGINE_QUALIFICATION_CAPTURE_SOURCE.contains(
+        "run_capture_with_program_source::<PersistedM1R29CaptureProgramSourceV1>(arguments, purpose)"
+    ));
 }
 
 #[test]
