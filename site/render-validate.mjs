@@ -225,6 +225,72 @@ const requiredClaims = [
   "fe2o3 owns",
 ];
 
+const retiredCurrentClaims = new Set([
+  "1e44a64",
+  "d9e9a38",
+  "Process status 0",
+  "3f1a68ed30f243e640f38e90fedc483bfaf8d07f3a11578e21a8569369781f84",
+  "1dc443f1c4a22570e5a997c24518c0c9dd7cc3ef11312229bb24bad6031df120",
+  "exactly one 128-output window",
+  "checked-token causality",
+  "exact dependency TCB",
+  "262edc61c9f1d4c9a474aac56f8749c34a74c557ab131eb06b0fbd263673362a",
+  "4.509687305 seconds",
+  "9.557095343 seconds",
+  "14.066782648 seconds",
+  "hardware completion",
+  "process status 0",
+  "4.227489904 seconds",
+  "15.429140005 seconds",
+  "3.733883367 seconds/token",
+  "17.076646692 seconds",
+  "1445.15 seconds",
+  "10.15 seconds above",
+  "different output length",
+  "uncontrolled cold variance",
+  "neither speedup nor regression",
+  "not speculative serving",
+  "actual full warmed route",
+  "settlement",
+  "explicit faulted Active+Resident close",
+  "128-token acceptance",
+  "129-token rejection",
+  "26m48s",
+  "QualificationFinalLogits(NonFinite { lane: 0, token: 0 })",
+  "status 134",
+  "stale 2026-08-26",
+  "cannot represent current aggregate kernels",
+  "engineering aggregate artifact exists",
+  "target smoke can bind it",
+  "obsolete seven-object artifacts",
+  "no honest identity conversion",
+  "aggregate technical-capture wiring",
+  "protected paths stay fail-closed",
+  "four target-only Qwen tokens",
+]);
+const currentRequiredClaims = [
+  ...requiredClaims.filter((claim) => !retiredCurrentClaims.has(claim)),
+  "d7d2",
+  "2ba02a8",
+  "724 engine targets",
+  "171 engine doctests",
+  "104 adapter targets",
+  "33 source-gate tests",
+  "Four narrow warmed",
+  "zero allocations and reallocations",
+  "public next-window path",
+  "still allocates",
+  "allocation-free claim is unaccepted",
+  "20-window run was not attempted",
+  "authenticated artifacts",
+  "non-test production owner",
+  "rustc-literal-escaper",
+  "No current aggregate HSACO",
+  "target smoke",
+  "S1/T128 capture",
+  "vLLM/SGLang comparison",
+];
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -341,7 +407,9 @@ try {
       result.authorityChildOverlaps.length === 0,
       `${name}: authority legend children overlap: ${JSON.stringify(result.authorityChildOverlaps)}`,
     );
-    const missingClaims = requiredClaims.filter((claim) => !result.currentText.includes(claim));
+    const missingClaims = currentRequiredClaims.filter(
+      (claim) => !result.currentText.includes(claim),
+    );
     assert(
       missingClaims.length === 0,
       `${name}: rendered current view is missing ${missingClaims.join(", ")}`,
