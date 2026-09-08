@@ -68,21 +68,39 @@ fn adapter_is_an_exact_standalone_workspace() {
     );
     assert!(!MANIFEST.contains("package.metadata.verus"));
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
-    let service_host = manifest
+    let dependencies = manifest
         .get("dependencies")
         .and_then(toml::Value::as_table)
-        .and_then(|dependencies| dependencies.get("fe2o3-service-host"))
+        .unwrap();
+    let service_host = dependencies
+        .get("fe2o3-service-host")
         .and_then(toml::Value::as_table)
         .unwrap();
     assert_eq!(
         service_host.get("optional").and_then(toml::Value::as_bool),
         Some(true)
     );
+    let mut optional_dependencies = dependencies
+        .iter()
+        .filter_map(|(name, dependency)| {
+            dependency
+                .as_table()
+                .and_then(|details| details.get("optional"))
+                .and_then(toml::Value::as_bool)
+                .filter(|optional| *optional)
+                .map(|_| name.as_str())
+        })
+        .collect::<Vec<_>>();
+    optional_dependencies.sort_unstable();
+    assert_eq!(optional_dependencies, ["fe2o3-service-host"]);
+    let features = manifest
+        .get("features")
+        .and_then(toml::Value::as_table)
+        .unwrap();
+    assert!(!features.contains_key("default"));
     assert_eq!(
-        manifest
-            .get("features")
-            .and_then(toml::Value::as_table)
-            .and_then(|features| features.get("qualification-fault-injection"))
+        features
+            .get("qualification-fault-injection")
             .and_then(toml::Value::as_array)
             .unwrap()
             .iter()
