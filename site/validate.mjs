@@ -79,8 +79,8 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "2af5494b9d2a1f75cb63722505a734ba8855b83b",
-  integrationCommit: "6ef78dc4534317384f7275115c5e77a8b1acb702",
-  integrationTree: "5fc4c38f0490ad8073b2b576c691a772e465203a",
+  integrationCommit: "bc6b3a50096854ace496b691933295930066fc04",
+  integrationTree: "8b10db06d29d0550b8ce2cadfddc007360016a92",
   sha256FastPathCommit: "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
   sha256FastPathVerusQueries: 296,
   sha256FastPathVerusErrors: 0,
@@ -392,14 +392,14 @@ const expectedCurrent = {
   fe2o3LatestTree: "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
-  fe2o3CurrentRepinActive: true,
-  fe2o3CurrentRepinIntegrated: false,
+  fe2o3CurrentRepinActive: false,
+  fe2o3CurrentRepinIntegrated: true,
   fe2o3CurrentRepinFormalAcceptance: false,
   fe2o3CurrentRepinLockfiles: 15,
   fe2o3CurrentRepinUnchangedRecordsExact: true,
   fe2o3CurrentRepinChangedTcbRecords: 3,
   fe2o3CurrentRepinElfRebuiltAndBound: true,
-  fe2o3CurrentRepinFinalHandoffPending: true,
+  fe2o3CurrentRepinFinalHandoffPending: false,
   fe2o3PreexistingDcoAncestryConcern: true,
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
   fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
@@ -412,19 +412,25 @@ const expectedCurrent = {
   currentAggregateHardwareRunPending: true,
   currentAggregateCompilerCommit: "42882993b3f84d60f38e398d2018cc9302e8fe19",
   latestFe2o3AggregateEmitted: false,
+  latestFe2o3AggregateBuildActive: true,
+  latestFe2o3HostCombinedChecksActive: true,
   currentQualificationSourceCommit: "bb50d0e0c71e44271b892120c208650bd444f684",
   currentQualificationSourceTree: "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
-  currentQualificationState: "positive-and-negative-semantic-gates-passed-quality-runtime-running",
+  currentQualificationState: "developer-qualification-passed-frozen-bb50",
   currentQualificationComponentMatrixPassed: true,
   currentQualificationFullRunStarted: true,
-  currentQualificationRunning: true,
-  currentQualificationReceiptEmitted: false,
+  currentQualificationRunning: false,
+  currentQualificationReceiptEmitted: true,
+  currentQualificationReceiptSha256: "c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b",
+  currentQualificationDeveloperOnly: true,
+  currentQualificationAppliesToLatestIntegration: false,
+  currentQualificationClosesProtectedM1Gates: false,
   currentQualificationPositivePackagesPassed: 10,
   currentQualificationPositiveQueries: 1586,
   currentQualificationPositiveErrors: 0,
   currentQualificationPositiveBodies: 694,
   currentQualificationNegativeActualBodyMutationsPassed: true,
-  currentQualificationNegativeAndQualityComplete: false,
+  currentQualificationNegativeAndQualityComplete: true,
   currentHostArtifactPreDeviceProbeSeconds: 98.23,
   currentHostArtifactPreDeviceProbeIncludesKfdAdmission: true,
   currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration: true,
@@ -690,6 +696,7 @@ assertSha256(project.current.correctedHsacoSha256, "current.correctedHsacoSha256
 assertSha256(project.current.currentAggregateContentId, "current.currentAggregateContentId");
 assertSha256(project.current.currentAggregateHsacoSha256, "current.currentAggregateHsacoSha256");
 assertSha256(project.current.currentAggregateHandoffSha256, "current.currentAggregateHandoffSha256");
+assertSha256(project.current.currentQualificationReceiptSha256, "current.currentQualificationReceiptSha256");
 assertSha256(project.current.qwenReference32ResultSha256, "current.qwenReference32ResultSha256");
 assert(project.current.successorKvPendingVerusBodies === 16, "successor-KV pending-verus body count drifted");
 assert(project.current.admissionBodiesTotal === 7922, "admission body total drifted");
@@ -999,31 +1006,36 @@ assert(project.current.productionOwnerFocusedGatesGreen === true, "production-ow
 assert(project.current.k3WorkProportionalKvWriteState === "artifact-emitted-hardware-pending", "K3 validation state drifted");
 assert(project.current.k3WorkProportionalKvWriteIntegrated === true, "K3 source must remain integrated");
 assert(project.current.k3WorkProportionalSpeedupMeasured === false, "K3 must not claim a measured speedup");
-assert(project.current.fe2o3CurrentRepinActive === true, "latest fe2o3 repin must remain in progress");
-assert(project.current.fe2o3CurrentRepinIntegrated === false, "latest fe2o3 repin must not be presented as integrated");
+assert(project.current.fe2o3CurrentRepinActive === false, "integrated fe2o3 repin must not remain active");
+assert(project.current.fe2o3CurrentRepinIntegrated === true, "latest fe2o3 repin must remain integrated");
 assert(project.current.fe2o3CurrentRepinFormalAcceptance === false, "current fe2o3 repin must not claim formal acceptance");
 assert(project.current.fe2o3CurrentRepinLockfiles === 15, "active fe2o3 lockfile pin count drifted");
 assert(project.current.fe2o3CurrentRepinUnchangedRecordsExact === true, "unchanged repin records must remain byte-exact");
 assert(project.current.fe2o3CurrentRepinChangedTcbRecords === 3, "changed repin TCB record count drifted");
 assert(project.current.fe2o3CurrentRepinElfRebuiltAndBound === true, "source-pinned ELF rebuild and binding check must remain explicit");
-assert(project.current.fe2o3CurrentRepinFinalHandoffPending === true, "latest repin final handoff must remain pending");
+assert(project.current.fe2o3CurrentRepinFinalHandoffPending === false, "integrated repin final handoff must not remain pending");
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
 assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
 assert(project.current.currentAggregateHardwareRunPending === true, "current aggregate hardware run must remain pending");
-assert(project.current.currentQualificationState === "positive-and-negative-semantic-gates-passed-quality-runtime-running", "current-source qualification state drifted");
+assert(project.current.currentQualificationState === "developer-qualification-passed-frozen-bb50", "current-source qualification state drifted");
 assert(project.current.currentQualificationComponentMatrixPassed === true, "current-source component matrix must remain passed");
 assert(project.current.currentQualificationFullRunStarted === true, "full current-source qualifier must remain started");
-assert(project.current.currentQualificationRunning === true, "full current-source qualifier must remain in progress");
-assert(project.current.currentQualificationReceiptEmitted === false, "current-source qualifier must not claim a receipt");
+assert(project.current.currentQualificationRunning === false, "completed frozen-source developer qualifier must not remain in progress");
+assert(project.current.currentQualificationReceiptEmitted === true, "frozen-source developer qualifier receipt must remain explicit");
+assert(project.current.currentQualificationDeveloperOnly === true, "bb50 qualification must remain developer-only");
+assert(project.current.currentQualificationAppliesToLatestIntegration === false, "bb50 qualification must not apply to later integration");
+assert(project.current.currentQualificationClosesProtectedM1Gates === false, "developer qualification must not close protected M1 gates");
 assert(project.current.currentQualificationPositivePackagesPassed === 10, "positive proof package count drifted");
 assert(project.current.currentQualificationPositiveQueries === 1586, "positive proof query count drifted");
 assert(project.current.currentQualificationPositiveErrors === 0, "positive proof errors must remain zero");
 assert(project.current.currentQualificationPositiveBodies === 694, "positive proof body count drifted");
 assert(project.current.currentQualificationNegativeActualBodyMutationsPassed === true, "negative actual-body semantic mutations must remain passed");
-assert(project.current.currentQualificationNegativeAndQualityComplete === false, "incomplete qualifier gates must not be presented as complete");
+assert(project.current.currentQualificationNegativeAndQualityComplete === true, "completed developer qualifier gates must remain complete");
 assert(project.current.latestFe2o3AggregateEmitted === false, "a public-0ea aggregate must not be claimed before emission");
+assert(project.current.latestFe2o3AggregateBuildActive === true, "matching public-0ea aggregate build must remain underway");
+assert(project.current.latestFe2o3HostCombinedChecksActive === true, "latest combined host checks must remain underway");
 assert(project.current.currentHostArtifactPreDeviceProbeIncludesKfdAdmission === true, "pre-device probe must retain KFD admission");
 assert(project.current.currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration === true, "pre-device probe must retain topology enumeration");
 assert(project.current.currentHostArtifactPreDeviceProbeIncludesInitialize === false, "pre-device probe must exclude initialization");
@@ -1224,11 +1236,13 @@ project.evidence.legend.forEach((entry, index) => {
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
   "2af5494b9d2a1f75cb63722505a734ba8855b83b",
+  "bc6b3a50096854ace496b691933295930066fc04",
+  "8b10db06d29d0550b8ce2cadfddc007360016a92",
   "6ef78dc4534317384f7275115c5e77a8b1acb702",
-  "5fc4c38f0490ad8073b2b576c691a772e465203a",
   "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
   "bb50d0e0c71e44271b892120c208650bd444f684",
   "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
+  "c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b",
   "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
   "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
   "42882993b3f84d60f38e398d2018cc9302e8fe19",
@@ -1251,9 +1265,12 @@ const missingSnapshotClaims = [
   "58.133 seconds",
   "three TCB",
   "source-pinned ELF",
-  "Final handoff is pending",
+  "matching engineering aggregate",
   "negative actual-body semantic mutations",
-  "remaining workspace quality and runtime checks",
+  "complete developer qualifier",
+  "197/197",
+  "711-record source-closure",
+  "protected promotion",
   "all eight shared MI300X GPUs",
   "Ferric has not run 32 tokens",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
