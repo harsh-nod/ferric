@@ -91,6 +91,7 @@ const RUNTIME_ROOTS: &[(&str, &str, &str, bool, &[&str])] = &[
         true,
         &[],
     ),
+    ("ferric-engine", "arrayvec", "=0.7.8", true, &[]),
     (
         "ferric-engine",
         "rustix",
