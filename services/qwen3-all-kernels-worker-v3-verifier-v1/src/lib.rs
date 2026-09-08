@@ -10,12 +10,24 @@
 #![deny(missing_docs)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+mod current_record_ipc;
 mod durable;
 mod head_store_ipc;
 mod listener;
 mod service;
 mod signer_ipc;
 
+pub use current_record_ipc::{
+    PREOPENED_PROTECTED_COMPILER_CURRENT_REQUEST_BYTES_V1,
+    PREOPENED_PROTECTED_COMPILER_CURRENT_RESPONSE_BYTES_V1,
+    PreopenedProtectedCompilerCurrentClientV1, ProtectedCompilerCurrentClientAdmissionErrorV1,
+    ProtectedCompilerCurrentClientAdmissionFailureV1, ProtectedCompilerCurrentClientCustodyV1,
+    ProtectedCompilerCurrentClientErrorV1, ProtectedCompilerCurrentClientFailureV1,
+    ProtectedCompilerCurrentEndpointIdentityErrorV1, ProtectedCompilerCurrentEndpointIdentityV1,
+    ProtectedCompilerCurrentPeerIdentityErrorV1, ProtectedCompilerCurrentPeerIdentityV1,
+    ProtectedCompilerCurrentProtocolErrorV1, ProtectedCompilerCurrentRequestV1,
+    ProtectedCompilerCurrentResponseStatusV1, ProtectedCompilerCurrentResponseV1,
+};
 pub use durable::{
     DurableLedgerErrorV1, DurableReplayGuardV1, DurableReservationProviderV2,
     EntropyObjectIdentityV1, LedgerObjectIdentityV1, MAX_DURABLE_LEDGER_RECORDS_V1,

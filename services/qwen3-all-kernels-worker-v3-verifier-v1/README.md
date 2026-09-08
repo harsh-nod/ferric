@@ -19,6 +19,9 @@ The foundation provides:
 - canonical V2 envelope and compiler-current-record association;
 - explicit protected current-record, independent checker, and external signer
   provider contracts;
+- a descriptor-only protected compiler-current client for one
+  supervisor-preopened connected `SOCK_SEQPACKET` endpoint, pinned to one
+  protocol, measured provider, compiler policy, and fresh admission session;
 - a descriptor-only protected-signer client for one supervisor-preopened,
   connected `SOCK_SEQPACKET` endpoint with pinned object identity, exact peer
   PID/UID/GID, provider identity, and public key;
@@ -111,9 +114,30 @@ The legacy trait boxes that typed failure; dropping a boxed `Retained` failure
 does not close the endpoint because custody remains in the client, while callers
 that need to branch on custody must downcast it or call the typed methods.
 
-These clients do not implement or provision the external signer or protected
-head-store processes, store a private key, authenticate a compiler current
-record, run an independent checker, or launch a protected deployment. Signer
+The protected compiler-current client uses fixed canonical request and response
+packets and only the absolute deadline supplied by the outer verification
+session. Its request contains the complete canonical Begin frame, the complete
+canonical compiler receipt carriage selected from the decoded envelope, and the
+complete canonical current-record frame. It also binds the exact decoded
+envelope length and digest, pinned compiler policy, measured provider, protocol,
+fresh admission-session identity, and nonzero monotonic request sequence into
+both domain-separated transcript identities. The admission identity must never
+be reused for that provider, including across supervisor, verifier, and provider
+restarts. Admission requires exclusive custody of a fresh connection with no
+prequeued packets and no descriptor duplicate retained by a supervisor or an
+earlier client. A correlated explicit provider rejection retains the synchronized
+endpoint. Deadline expiry before a send also retains it; every ambiguous
+post-send outcome, response substitution, replay, ancillary transfer, or
+truncation permanently closes and poisons it. A success token is minted only
+for an exactly correlated `Authenticated` response with a nonzero protected
+transcript. The typed failure exposes retained/poisoned custody; dropping that
+failure does not itself close a retained endpoint because the client still owns
+it.
+
+These clients do not implement or provision the external signer, protected
+head-store process, or compiler-current authenticator daemon; implement the
+compiler policy or live session store; store a private key; run an independent
+checker; or launch a protected deployment. Signer
 authority is unchanged: Its descriptor checks and wire protocol grant no production authority.
 Head-store authority exists only through its explicit unsafe supervisor admission.
 
