@@ -15,7 +15,7 @@ never a report of current evidence.
 
 The roster binds the inherited M0 `fe2o3-proof-contracts` authority and active
 compiler/runtime dependencies to current upstream commit
-`e5351640e3df3868205bc68eac8d5ff5556352ea`. It separately retains the reviewed
+`d211c9a0f0c4eebe98172cb30d09c6947f62e233`. It separately retains the reviewed
 historical M1 integration base at commit
 `a6c779f6f8052839c3a07901f9bfafa681f7b09a`, tree
 `1636cae7363b421f8850d6c455a53216f374667c`, as provenance rather than an active

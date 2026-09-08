@@ -27,10 +27,10 @@ path = "src/bin/ferric-r33-custody-vault-abort-probe.rs"
 [workspace]
 
 [dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e5351640e3df3868205bc68eac8d5ff5556352ea", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e5351640e3df3868205bc68eac8d5ff5556352ea", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e5351640e3df3868205bc68eac8d5ff5556352ea", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e5351640e3df3868205bc68eac8d5ff5556352ea", version = "=0.1.0" }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233", version = "=0.1.0" }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }

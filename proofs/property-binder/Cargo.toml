@@ -8,7 +8,7 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-proof-contracts = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e5351640e3df3868205bc68eac8d5ff5556352ea" }
+fe2o3-proof-contracts = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "d211c9a0f0c4eebe98172cb30d09c6947f62e233" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha2 = "0.10.9"
