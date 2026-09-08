@@ -756,12 +756,66 @@ enum M1R33EngineCustodyV1 {
 /// runner, raw KFD handle, or report callback.
 #[must_use = "authenticated runner and initialized model memory remain linearly owned"]
 pub struct M1R33AuthenticatedProductionBackendV1 {
+    resident_queue_close_status: Option<M1R33ResidentQueueCloseStatusV1>,
     start_deadline: Option<M1R33OperationDeadlineV1>,
     state: BackendStateMachineV1<
         M1R33AuthenticatedRunnerCustodyV1,
         M1R33AuthenticatedMemoryCustodyV1,
         M1R33EngineCustodyV1,
     >,
+}
+
+/// Opaque terminal custody produced by an explicit production-backend close.
+///
+/// A quarantined native queue and every joined physical owner remain retained
+/// by this value until the process supervisor terminates the owner process.
+#[must_use = "production backend close custody must remain retained"]
+pub struct M1R33AuthenticatedProductionBackendCloseV1 {
+    queue_status: Option<M1R33ResidentQueueCloseStatusV1>,
+    retained: Box<M1R33AuthenticatedProductionBackendV1>,
+}
+
+/// Terminal state of a resident queue observed by explicit owner close.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1R33ResidentQueueCloseStatusV1 {
+    /// Native queue destruction completed.
+    Released,
+    /// Queue destruction could not be confirmed and custody remains retained.
+    Quarantined,
+}
+
+impl fmt::Debug for M1R33AuthenticatedProductionBackendCloseV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1R33AuthenticatedProductionBackendCloseV1")
+            .field("queue_status", &self.queue_status)
+            .field("retained_phase", &self.retained.phase())
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1R33AuthenticatedProductionBackendCloseV1 {
+    /// Exact queue result when resident execution had created a native queue.
+    #[must_use]
+    pub const fn queue_status(&self) -> Option<M1R33ResidentQueueCloseStatusV1> {
+        self.queue_status
+    }
+
+    /// Whether this terminal owner confirms that no live native queue remains.
+    #[must_use]
+    pub const fn permits_process_exit(&self) -> bool {
+        !matches!(
+            self.queue_status,
+            Some(M1R33ResidentQueueCloseStatusV1::Quarantined)
+        )
+    }
+
+    /// Confirms that all terminal physical custody remains owned by this value.
+    #[must_use]
+    pub fn retains_all_custody(&self) -> bool {
+        let _ = &self.retained;
+        true
+    }
 }
 
 fn exact_resident_roster(windows: &[M1R33AuthenticatedResidentWindowBindingV1]) -> bool {
@@ -808,6 +862,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
         model_memory: M1PartitionedModelMemoryKvPoolV1,
     ) -> Self {
         Self {
+            resident_queue_close_status: None,
             start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::MissingBootstrap { _runner: runner },
@@ -827,6 +882,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
         bootstrap: M1R33AuthenticatedS1T128BootstrapBindingV1,
     ) -> Self {
         Self {
+            resident_queue_close_status: None,
             start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::Pending {
@@ -855,6 +911,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
         queue_wait_timeout: M1QueueWaitTimeoutV1,
     ) -> Self {
         Self {
+            resident_queue_close_status: None,
             start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::Pending {
@@ -895,6 +952,7 @@ impl M1R33AuthenticatedProductionBackendV1 {
             });
         }
         Ok(Self {
+            resident_queue_close_status: None,
             start_deadline: None,
             state: BackendStateMachineV1::new(
                 M1R33AuthenticatedRunnerCustodyV1::ResidentPending {
@@ -916,6 +974,129 @@ impl M1R33AuthenticatedProductionBackendV1 {
     #[must_use]
     pub fn bound_instance_sha256(&self) -> Option<&str> {
         self.state.bound_instance_sha256()
+    }
+
+    /// Explicitly closes a live resident queue and retains all terminal custody.
+    ///
+    /// This consuming fallback is intended for owner-side transport and
+    /// collector failures where the authenticated wire `stop` action cannot be
+    /// delivered. It never creates a queue and reports `None` when no resident
+    /// queue was created. A destruction failure is retained as quarantined
+    /// custody rather than being dropped or converted into success.
+    #[must_use = "explicit close custody must remain retained through process exit"]
+    pub fn close(mut self) -> M1R33AuthenticatedProductionBackendCloseV1 {
+        let state = core::mem::replace(&mut self.state.state, BackendStateV1::Transitioning);
+        let (state, queue_status) = match state {
+            BackendStateV1::Active { binding, custody } => {
+                let ActiveCustodyV1 {
+                    runner,
+                    model_memory,
+                    engine,
+                } = custody;
+                match runner {
+                    M1R33AuthenticatedRunnerCustodyV1::Resident { session, pending } => {
+                        let closed = session.close();
+                        let status = resident_close_status(&closed);
+                        (
+                            BackendStateV1::Faulted {
+                                binding,
+                                custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                    runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                        _custody: closed,
+                                        _pending: pending,
+                                    },
+                                    model_memory,
+                                    engine,
+                                }),
+                            },
+                            Some(status),
+                        )
+                    }
+                    runner => (
+                        BackendStateV1::Active {
+                            binding,
+                            custody: ActiveCustodyV1 {
+                                runner,
+                                model_memory,
+                                engine,
+                            },
+                        },
+                        None,
+                    ),
+                }
+            }
+            BackendStateV1::Faulted {
+                binding,
+                custody: FaultedCustodyV1::Active(custody),
+            } => {
+                let ActiveCustodyV1 {
+                    runner,
+                    model_memory,
+                    engine,
+                } = custody;
+                let (runner, queue_status) = match runner {
+                    M1R33AuthenticatedRunnerCustodyV1::Resident { session, pending } => {
+                        let closed = session.close();
+                        let status = resident_close_status(&closed);
+                        (
+                            M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                _custody: closed,
+                                _pending: pending,
+                            },
+                            Some(status),
+                        )
+                    }
+                    M1R33AuthenticatedRunnerCustodyV1::ResidentRejected {
+                        custody,
+                        _pending: pending,
+                    }
+                    | M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                        _custody: custody,
+                        _pending: pending,
+                    } => {
+                        let status = resident_close_status(&custody);
+                        (
+                            M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                _custody: custody,
+                                _pending: pending,
+                            },
+                            Some(status),
+                        )
+                    }
+                    runner => (runner, None),
+                };
+                (
+                    BackendStateV1::Faulted {
+                        binding,
+                        custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                            runner,
+                            model_memory,
+                            engine,
+                        }),
+                    },
+                    queue_status,
+                )
+            }
+            state => (state, None),
+        };
+        let queue_status = queue_status.or(self.resident_queue_close_status);
+        self.state.state = state;
+        self.resident_queue_close_status = queue_status;
+        self.start_deadline = None;
+        M1R33AuthenticatedProductionBackendCloseV1 {
+            queue_status,
+            retained: Box::new(self),
+        }
+    }
+}
+
+const fn resident_close_status(
+    closed: &M1AuthenticatedResidentCloseV1,
+) -> M1R33ResidentQueueCloseStatusV1 {
+    if closed.permits_stop_success() {
+        M1R33ResidentQueueCloseStatusV1::Released
+    } else {
+        M1R33ResidentQueueCloseStatusV1::Quarantined
     }
 }
 
@@ -1519,6 +1700,7 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                 }
             };
             if closed.permits_stop_success() {
+                self.resident_queue_close_status = Some(resident_close_status(&closed));
                 drop((closed, pending, model_memory, engine));
                 self.state.state = BackendStateV1::Stopped { binding };
                 self.start_deadline = None;
@@ -1535,6 +1717,7 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                     engine,
                 }),
             };
+            self.resident_queue_close_status = Some(M1R33ResidentQueueCloseStatusV1::Quarantined);
             return Err(fault(FAULT_UNHEALTHY_ENGINE));
         }
         let result = self.state.stop(instance_sha256, deadline.expired());

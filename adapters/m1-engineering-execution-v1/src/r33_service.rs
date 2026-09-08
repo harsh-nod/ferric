@@ -828,6 +828,16 @@ impl<'a, B: M1R33AuthorityFreeBackendV1> M1R33DaemonCoordinatorV1<'a, B> {
         }
     }
 
+    /// Consumes the coordinator and returns its backend to the owning process.
+    ///
+    /// This is the explicit recovery path after a listener, peer, framing, or
+    /// response-delivery failure. The service layer neither closes nor drops
+    /// backend-specific physical custody.
+    #[must_use]
+    pub fn into_backend(self) -> B {
+        self.backend
+    }
+
     fn deadline(&self) -> Result<M1R33OperationDeadlineV1, M1R33ServiceErrorV1> {
         Instant::now()
             .checked_add(self.bundle.plan().timeout())
@@ -1672,6 +1682,16 @@ mod tests {
         let path = PathBuf::from(&bundle.plan().workload_path);
         fs::write(&path, b"{}\n").unwrap();
         assert!(bundle.revalidate().is_err());
+    }
+
+    #[test]
+    fn coordinator_returns_backend_custody_to_owner() {
+        let (_root, bundle) = fixture();
+        let coordinator = M1R33DaemonCoordinatorV1::new(&bundle, TestBackend::default());
+        let backend = coordinator.into_backend();
+        assert_eq!(backend.starts, 0);
+        assert_eq!(backend.measures, 0);
+        assert_eq!(backend.stops, 0);
     }
 
     #[test]
