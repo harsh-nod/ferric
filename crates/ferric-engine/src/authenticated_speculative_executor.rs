@@ -6292,143 +6292,376 @@ mod tests {
     }
 
     #[derive(Debug)]
-    struct AllocationFreeDiagnosticV1 {
-        observation: CheckedMemberObservationV1,
+    struct ModelResidentSameShapeInputsV1 {
+        prepared: ModelPreparedQueueV1,
+        epoch: CompletionEpoch,
     }
 
-    impl M1SpeculativeRoundObservationV1 for AllocationFreeDiagnosticV1 {
-        fn preflight(
-            &self,
-            coordinator: &M1SpeculativeGenerationLoopV1,
-            binding: crate::M1SpeculativeRoundBindingV1,
-            controls: &[M1SpeculativeMemberControlV1],
-        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+    #[derive(Debug)]
+    struct ModelResidentSameShapeExecutorV1 {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        controls: std::collections::VecDeque<Vec<M1SpeculativeMemberControlV1>>,
+    }
+
+    impl crate::authenticated_resident_session::M1AuthenticatedResidentSameShapeExecutorV1<1>
+        for ModelResidentSameShapeExecutorV1
+    {
+        type Inputs = ModelResidentSameShapeInputsV1;
+        type Evidence = ModelDiagnosticV1;
+        type Failure = Box<dyn fmt::Debug>;
+
+        fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
+            mut self,
+            engine: &mut Engine<1>,
+            inputs: Self::Inputs,
+            post_submit: F,
+            deadline: &mut D,
+        ) -> Result<(Self, M1SpeculativeRoundOutcomeV1, Self::Evidence), Self::Failure>
+        where
+            F: FnOnce() -> Result<(), J>,
+            J: fmt::Debug + 'static,
+            D: FnMut(
+                crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+                crate::M1QueueWaitTimeoutV1,
+            ) -> Option<crate::M1QueueWaitTimeoutV1>,
         {
-            let epoch = binding.epoch();
-            coordinator.preflight_observed_round(
+            let roster = self.coordinator.active_roster();
+            let binding = self
+                .coordinator
+                .bind_round(self.coordinator.next_round(), inputs.epoch, &roster)
+                .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)?;
+            let mut controls = self
+                .controls
+                .pop_front()
+                .expect("preallocated model controls");
+            controls.push(M1SpeculativeMemberControlV1::continuing(roster[0]));
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core_with_post_submit_and_deadline::<
+                    ModelRearmedQueueEffectsV1,
+                    _,
+                    _,
+                    J,
+                    _,
+                    1,
+                >(
+                    engine,
+                    inputs.prepared,
+                    (self.coordinator, binding, controls, self.lineage),
+                    model_queue_wait_timeout(),
+                    post_submit,
+                    deadline,
+                )
+                .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)?;
+            let prepared = prepare_coordinator_round_core(
+                engine,
+                coordinator,
                 binding,
-                coordinator.shape().selection(),
-                epoch,
-                core::slice::from_ref(&self.observation),
+                diagnostic,
                 controls,
+                lineage,
             )
+            .map_err(|error| error as Box<dyn fmt::Debug>)?;
+            let M1PreparedCoordinatorRoundCoreV1 {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                dispositions,
+                lineage,
+            } = prepared;
+            debug_assert_eq!(
+                dispositions.as_slice(),
+                &[M1DeviceKvCompletionDispositionV1::Continue]
+            );
+            let committed = commit_coordinator_round_core(
+                engine,
+                coordinator,
+                preflighted,
+                controls,
+                diagnostic,
+                lineage,
+            )
+            .map_err(|error| error as Box<dyn fmt::Debug>)?;
+            committed.physical.queue.release_generation();
+            Ok((
+                Self {
+                    coordinator: committed.coordinator,
+                    lineage: committed.lineage,
+                    controls: self.controls,
+                },
+                committed.outcome,
+                committed.physical,
+            ))
         }
     }
 
-    fn execute_production_coordinator_boundary(
-        engine: &mut Engine<1>,
-        coordinator: M1SpeculativeGenerationLoopV1,
-        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
-        epoch: CompletionEpoch,
-        token: ferric_spec::TokenId,
-        mut controls: Vec<M1SpeculativeMemberControlV1>,
-    ) -> (
-        M1SpeculativeGenerationLoopV1,
-        M1AuthenticatedSpeculativeCausalLineageV1,
-    ) {
-        let roster = coordinator.active_roster();
-        let binding = coordinator
-            .bind_round(coordinator.next_round(), epoch, &roster)
-            .unwrap();
-        controls.push(M1SpeculativeMemberControlV1::continuing(roster[0]));
-        let diagnostic = AllocationFreeDiagnosticV1 {
-            observation: CheckedMemberObservationV1 {
-                request: roster[0],
-                semantics: CheckedCompletionSemantics::Speculative {
-                    accepted_draft_tokens: 0,
-                    correction_or_bonus: token,
-                },
-                emitted: M1SpeculativeTokenBlockV1::from_slice(&[token]).unwrap(),
+    fn resident_plan() -> crate::M1ServingPlanV1 {
+        crate::M1ServingPlanV1::new(
+            selection(Qwen3PlanBucket::SpeculativeS1K4C8192),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
             },
-        };
-        let prepared = prepare_coordinator_round_core(
-            engine,
-            coordinator,
-            binding,
-            diagnostic,
-            controls,
-            lineage,
         )
-        .unwrap();
-        let M1PreparedCoordinatorRoundCoreV1 {
-            coordinator: prepared_coordinator,
-            diagnostic: _,
-            controls,
-            preflighted,
-            dispositions,
-            lineage,
-        } = prepared;
-        assert_eq!(
-            dispositions.as_slice(),
-            &[M1DeviceKvCompletionDispositionV1::Continue]
-        );
-        let committed = commit_coordinator_round_core(
-            engine,
-            prepared_coordinator,
-            preflighted,
-            controls,
-            (),
-            lineage,
-        )
-        .unwrap();
-        assert!(!engine.is_faulted());
-        (committed.coordinator, committed.lineage)
+        .unwrap()
     }
 
-    #[test]
-    #[ignore = "must run alone because the allocator counter is process-global"]
-    fn real_coordinator_preparation_boundary_allocates_zero_times() {
+    fn advance_resident_model_registry(
+        registry: &mut crate::M1ServingRegistryV1<1>,
+        disposition: crate::M1ServingCompletionDispositionV1,
+    ) {
+        let batch = registry.plan_next().unwrap().unwrap();
+        let epoch = batch.epoch();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let identity = reservation.registry_identity();
+        registry.record_publication(reservation).unwrap();
+        registry
+            .preflight_completion_exact_for(identity, epoch, &[disposition])
+            .unwrap();
+        registry.apply_preflighted_completion(epoch, &[disposition]);
+    }
+
+    fn resident_model_fixture(
+        round_count: usize,
+    ) -> (
+        crate::M1ServingRegistryV1<1>,
+        ModelResidentSameShapeExecutorV1,
+        ModelQueueV1,
+        Vec<(M1SpeculativeRoundOutcomeV1, ModelDiagnosticV1)>,
+    ) {
+        let request = RequestId::new(0, 1);
+        let plan = resident_plan();
+        let prefill = crate::M1ServingPlanV1::new(
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+        )
+        .unwrap();
+        let mut registry = crate::M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(request, prefill).unwrap();
+        advance_resident_model_registry(
+            &mut registry,
+            crate::M1ServingCompletionDispositionV1::Continue(plan),
+        );
+        advance_resident_model_registry(
+            &mut registry,
+            crate::M1ServingCompletionDispositionV1::Continue(plan),
+        );
+
+        let queue = ModelQueueV1::new(
+            core::iter::repeat_n(None, round_count),
+            (0..round_count).map(|_| model_members(1, 0, None)),
+        );
+        let coordinator = coordinator(selection(Qwen3PlanBucket::SpeculativeS1K4C8192));
+        let lineage = model_lineage(&coordinator);
         let mut controls = std::collections::VecDeque::new();
-        controls.try_reserve_exact(18).unwrap();
-        for _ in 0..18 {
+        controls.try_reserve_exact(round_count).unwrap();
+        for _ in 0..round_count {
             let mut round = Vec::new();
             round.try_reserve_exact(1).unwrap();
             controls.push_back(round);
         }
-        let mut coordinator = coordinator(selection(Qwen3PlanBucket::SpeculativeS1K4C8192));
-        let mut lineage = model_lineage(&coordinator);
-        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
-        (coordinator, lineage) = execute_production_coordinator_boundary(
-            &mut engine,
-            coordinator,
-            lineage,
-            CompletionEpoch::new(40),
-            700,
-            controls.pop_front().unwrap(),
-        );
-
-        let one = Region::new(&INSTRUMENTED_SYSTEM);
-        (coordinator, lineage) = execute_production_coordinator_boundary(
-            &mut engine,
-            coordinator,
-            lineage,
-            CompletionEpoch::new(41),
-            701,
-            controls.pop_front().unwrap(),
-        );
-        let one = one.change();
-        assert_eq!(one.allocations, 0, "production preparation allocated");
-        assert_eq!(one.reallocations, 0, "production preparation reallocated");
-
-        let repeated = Region::new(&INSTRUMENTED_SYSTEM);
-        for (offset, token) in (702..718).enumerate() {
-            (coordinator, lineage) = execute_production_coordinator_boundary(
-                &mut engine,
+        let mut evidence = Vec::new();
+        evidence.try_reserve_exact(round_count).unwrap();
+        (
+            registry,
+            ModelResidentSameShapeExecutorV1 {
                 coordinator,
                 lineage,
-                CompletionEpoch::new(42 + u64::try_from(offset).unwrap()),
-                token,
-                controls.pop_front().unwrap(),
+                controls,
+            },
+            queue,
+            evidence,
+        )
+    }
+
+    fn execute_resident_model_round(
+        registry: crate::M1ServingRegistryV1<1>,
+        engine: &mut Engine<1>,
+        executor: ModelResidentSameShapeExecutorV1,
+        queue: &ModelQueueV1,
+        evidence: &mut Vec<(M1SpeculativeRoundOutcomeV1, ModelDiagnosticV1)>,
+    ) -> (
+        crate::M1ServingRegistryV1<1>,
+        ModelResidentSameShapeExecutorV1,
+    ) {
+        let request = RequestId::new(0, 1);
+        let success = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            engine,
+            executor,
+            request,
+            resident_plan(),
+            |_, epoch| Some(ModelResidentSameShapeInputsV1 {
+                prepared: ModelPreparedQueueV1::new(queue.clone()),
+                epoch,
+            }),
+            |outcome, diagnostic| {
+                evidence.push((outcome, diagnostic));
+                None
+            },
+            &mut |_, timeout| Some(timeout),
+        )
+        .unwrap();
+        success.into_parts()
+    }
+
+    #[test]
+    #[ignore = "must run alone because the allocator counter is process-global"]
+    fn production_used_resident_same_shape_core_allocates_zero_times() {
+        let (mut registry, mut executor, queue, mut evidence) = resident_model_fixture(18);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        (registry, executor) =
+            execute_resident_model_round(registry, &mut engine, executor, &queue, &mut evidence);
+
+        let one = Region::new(&INSTRUMENTED_SYSTEM);
+        (registry, executor) =
+            execute_resident_model_round(registry, &mut engine, executor, &queue, &mut evidence);
+        let one = one.change();
+        println!(
+            "resident-alloc-one allocations={} reallocations={}",
+            one.allocations, one.reallocations
+        );
+        assert_eq!(one.allocations, 0, "one full resident round allocated");
+        assert_eq!(one.reallocations, 0, "one full resident round reallocated");
+
+        let repeated = Region::new(&INSTRUMENTED_SYSTEM);
+        for _ in 2..18 {
+            (registry, executor) = execute_resident_model_round(
+                registry,
+                &mut engine,
+                executor,
+                &queue,
+                &mut evidence,
             );
         }
         let repeated = repeated.change();
-        assert_eq!(repeated.allocations, 0, "repeated preparation allocated");
+        println!(
+            "resident-alloc-repeated allocations={} reallocations={}",
+            repeated.allocations, repeated.reallocations
+        );
+        assert_eq!(
+            repeated.allocations, 0,
+            "repeated full resident rounds allocated"
+        );
         assert_eq!(
             repeated.reallocations, 0,
-            "repeated preparation reallocated"
+            "repeated full resident rounds reallocated"
         );
-        assert_eq!(coordinator.next_round(), 18);
-        assert_eq!(lineage.completed_rounds, 18);
+        assert_eq!(executor.coordinator.next_round(), 18);
+        assert_eq!(executor.lineage.completed_rounds, 18);
+        assert_eq!(evidence.len(), 18);
+        assert!(!engine.is_faulted());
+
+        let hostile = Region::new(&INSTRUMENTED_SYSTEM);
+        let restored_heap_roster = executor
+            .coordinator
+            .active_roster()
+            .iter()
+            .copied()
+            .collect::<Vec<_>>();
+        core::hint::black_box(restored_heap_roster);
+        let hostile = hostile.change();
+        println!(
+            "resident-alloc-hostile allocations={} reallocations={}",
+            hostile.allocations, hostile.reallocations
+        );
+        assert!(
+            hostile.allocations > 0,
+            "allocator gate did not detect restoration of a heap roster"
+        );
+    }
+
+    #[test]
+    fn resident_same_shape_core_rejects_missing_storage_before_queue_effects() {
+        let (registry, executor, queue, _evidence) = resident_model_fixture(1);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let failure = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            &mut engine,
+            executor,
+            RequestId::new(0, 1),
+            resident_plan(),
+            |_, _| None,
+            |_, _| None,
+            &mut |_, timeout| Some(timeout),
+        )
+        .unwrap_err();
+        let crate::authenticated_resident_session::M1AuthenticatedResidentSameShapeRoundCoreFailureV1::LogicalInputs {
+            registry,
+            executor,
+        } = *failure
+        else {
+            panic!("missing storage reached the wrong resident failure phase");
+        };
+        assert_eq!(executor.coordinator.next_round(), 0);
+        assert_eq!(
+            registry.plan_next().unwrap().unwrap().requests(),
+            [RequestId::new(0, 1)]
+        );
+        assert_eq!(queue.snapshot().phase, ModelQueuePhaseV1::Prepared);
+        assert_eq!(queue.snapshot().submits, 0);
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn resident_same_shape_deadline_rolls_back_reservation_and_retains_custody() {
+        use crate::authenticated_resident_session::{
+            M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary,
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1 as Failure,
+        };
+
+        let (registry, executor, queue, _evidence) = resident_model_fixture(1);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let failure = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            &mut engine,
+            executor,
+            RequestId::new(0, 1),
+            resident_plan(),
+            |_, epoch| Some(ModelResidentSameShapeInputsV1 {
+                prepared: ModelPreparedQueueV1::new(queue.clone()),
+                epoch,
+            }),
+            |_, _| None,
+            &mut |boundary, timeout| {
+                if boundary == Boundary::BeforeQueueSubmit {
+                    None
+                } else {
+                    Some(timeout)
+                }
+            },
+        )
+        .unwrap_err();
+        let Failure::Physical {
+            registry,
+            failure: retained,
+            abort,
+        } = *failure
+        else {
+            panic!("deadline reached the wrong resident failure phase");
+        };
+        assert!(abort
+            .expect("pre-submit reservation remains present")
+            .is_ok());
+        assert!(format!("{retained:?}").contains("Deadline"));
+        assert_eq!(
+            registry.plan_next().unwrap().unwrap().requests(),
+            [RequestId::new(0, 1)]
+        );
+        assert_eq!(queue.snapshot().phase, ModelQueuePhaseV1::Destroyed);
+        assert_eq!(queue.snapshot().submits, 0);
+        assert_eq!(queue.snapshot().destroys, 1);
+        assert!(engine.is_faulted());
     }
 
     impl M1RolloverRoundObservationV1 for ModelRolloverDiagnosticV1 {

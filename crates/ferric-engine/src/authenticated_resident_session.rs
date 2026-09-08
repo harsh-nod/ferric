@@ -1024,6 +1024,445 @@ fn next_round_inputs(
     )
 }
 
+pub(crate) trait M1AuthenticatedResidentSameShapeExecutorV1<const C: usize>: Sized {
+    type Inputs: fmt::Debug + 'static;
+    type Evidence: fmt::Debug + 'static;
+    type Failure: fmt::Debug + 'static;
+
+    fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: Self::Inputs,
+        post_submit: F,
+        deadline: &mut D,
+    ) -> Result<(Self, M1SpeculativeRoundOutcomeV1, Self::Evidence), Self::Failure>
+    where
+        F: FnOnce() -> Result<(), J>,
+        J: fmt::Debug + 'static,
+        D: FnMut(
+            M1AuthenticatedResidentDeadlineBoundaryV1,
+            M1QueueWaitTimeoutV1,
+        ) -> Option<M1QueueWaitTimeoutV1>;
+}
+
+impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
+    for M1AuthenticatedSpeculativePhysicalExecutorV1
+{
+    type Inputs = M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+    type Evidence = M1ObservedSpeculativeDiagnosticChoicesV1;
+    type Failure = Box<crate::M1AuthenticatedSpeculativePhysicalRoundFailureV1>;
+
+    fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: Self::Inputs,
+        post_submit: F,
+        deadline: &mut D,
+    ) -> Result<(Self, M1SpeculativeRoundOutcomeV1, Self::Evidence), Self::Failure>
+    where
+        F: FnOnce() -> Result<(), J>,
+        J: fmt::Debug + 'static,
+        D: FnMut(
+            M1AuthenticatedResidentDeadlineBoundaryV1,
+            M1QueueWaitTimeoutV1,
+        ) -> Option<M1QueueWaitTimeoutV1>,
+    {
+        M1AuthenticatedSpeculativePhysicalExecutorV1::execute_round_with_post_submit_and_deadline(
+            self,
+            engine,
+            inputs,
+            post_submit,
+            deadline,
+        )
+        .map(crate::M1AuthenticatedSpeculativePhysicalRoundSuccessV1::into_parts)
+    }
+}
+
+pub(crate) struct M1AuthenticatedResidentSameShapeRoundCoreSuccessV1<E, const C: usize>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+{
+    registry: M1ServingRegistryV1<C>,
+    executor: E,
+}
+
+impl<E, const C: usize> fmt::Debug for M1AuthenticatedResidentSameShapeRoundCoreSuccessV1<E, C>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedResidentSameShapeRoundCoreSuccessV1")
+            .finish_non_exhaustive()
+    }
+}
+
+impl<E, const C: usize> M1AuthenticatedResidentSameShapeRoundCoreSuccessV1<E, C>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+{
+    pub(crate) fn into_parts(self) -> (M1ServingRegistryV1<C>, E) {
+        (self.registry, self.executor)
+    }
+}
+
+pub(crate) enum M1AuthenticatedResidentSameShapeRoundCoreFailureV1<E, const C: usize>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+{
+    RegistryPlan {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+        observed: Result<Option<crate::M1ServingBatchPlanV1>, crate::M1ServingRegistryErrorV1>,
+    },
+    LogicalInputs {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+    },
+    RegistryReservation {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+        inputs: E::Inputs,
+        error: crate::M1ServingRegistryErrorV1,
+    },
+    Physical {
+        registry: M1ServingRegistryV1<C>,
+        failure: E::Failure,
+        abort: Option<Result<(), crate::M1ServingPublicationFailureV1>>,
+    },
+    RegistryCompletion {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+        outcome: M1SpeculativeRoundOutcomeV1,
+        evidence: E::Evidence,
+        error: Option<crate::M1ServingRegistryErrorV1>,
+    },
+    Retention {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+        outcome: M1SpeculativeRoundOutcomeV1,
+        evidence: E::Evidence,
+    },
+}
+
+impl<E, const C: usize> fmt::Debug for M1AuthenticatedResidentSameShapeRoundCoreFailureV1<E, C>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let stage = match self {
+            Self::RegistryPlan { .. } => "RegistryPlan",
+            Self::LogicalInputs { .. } => "LogicalInputs",
+            Self::RegistryReservation { .. } => "RegistryReservation",
+            Self::Physical { .. } => "Physical",
+            Self::RegistryCompletion { .. } => "RegistryCompletion",
+            Self::Retention { .. } => "Retention",
+        };
+        formatter
+            .debug_struct("M1AuthenticatedResidentSameShapeRoundCoreFailureV1")
+            .field("stage", &stage)
+            .finish_non_exhaustive()
+    }
+}
+
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+pub(crate) fn execute_m1_authenticated_resident_same_shape_round_core_v1<
+    E,
+    I,
+    R,
+    D,
+    const C: usize,
+>(
+    mut registry: M1ServingRegistryV1<C>,
+    engine: &mut Engine<C>,
+    executor: E,
+    request: RequestId,
+    plan: M1ServingPlanV1,
+    prepare_inputs: I,
+    retain: R,
+    deadline: &mut D,
+) -> Result<
+    M1AuthenticatedResidentSameShapeRoundCoreSuccessV1<E, C>,
+    Box<M1AuthenticatedResidentSameShapeRoundCoreFailureV1<E, C>>,
+>
+where
+    E: M1AuthenticatedResidentSameShapeExecutorV1<C>,
+    I: FnOnce(&E, CompletionEpoch) -> Option<E::Inputs>,
+    R: FnOnce(
+        M1SpeculativeRoundOutcomeV1,
+        E::Evidence,
+    ) -> Option<(M1SpeculativeRoundOutcomeV1, E::Evidence)>,
+    D: FnMut(
+        M1AuthenticatedResidentDeadlineBoundaryV1,
+        M1QueueWaitTimeoutV1,
+    ) -> Option<M1QueueWaitTimeoutV1>,
+{
+    let observed = registry.plan_next();
+    let batch = match observed {
+        Ok(Some(batch))
+            if batch.plan() == plan
+                && batch.requests() == [request]
+                && batch.action() == M1ServingQueueActionV1::SameShapeRearm =>
+        {
+            batch
+        }
+        observed => {
+            return Err(Box::new(
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryPlan {
+                    registry,
+                    executor,
+                    observed,
+                },
+            ));
+        }
+    };
+    let epoch = batch.epoch();
+    let Some(inputs) = prepare_inputs(&executor, epoch) else {
+        return Err(Box::new(
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1::LogicalInputs {
+                registry,
+                executor,
+            },
+        ));
+    };
+    let reservation = match registry.reserve_publication(batch) {
+        Ok(reservation) => reservation,
+        Err(error) => {
+            return Err(Box::new(
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryReservation {
+                    registry,
+                    executor,
+                    inputs,
+                    error,
+                },
+            ));
+        }
+    };
+    let registry_identity = reservation.registry_identity();
+    let mut reservation = Some(reservation);
+    let (executor, outcome, evidence) = match executor
+        .execute_same_shape_round_with_join_and_deadline(
+            engine,
+            inputs,
+            || {
+                registry.record_publication(
+                    reservation
+                        .take()
+                        .expect("post-submit registry reservation remains present"),
+                )
+            },
+            deadline,
+        ) {
+        Ok(completed) => completed,
+        Err(failure) => {
+            let abort = reservation.map(|reservation| registry.abort_publication(reservation));
+            return Err(Box::new(
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::Physical {
+                    registry,
+                    failure,
+                    abort,
+                },
+            ));
+        }
+    };
+    let [member] = outcome.members() else {
+        return Err(Box::new(
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryCompletion {
+                registry,
+                executor,
+                outcome,
+                evidence,
+                error: None,
+            },
+        ));
+    };
+    let disposition = if member.status() == M1SpeculativeMemberStatusV1::Active {
+        M1ServingCompletionDispositionV1::Continue(plan)
+    } else {
+        M1ServingCompletionDispositionV1::Retire
+    };
+    if let Err(error) =
+        registry.preflight_completion_exact_for(registry_identity, epoch, &[disposition])
+    {
+        return Err(Box::new(
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryCompletion {
+                registry,
+                executor,
+                outcome,
+                evidence,
+                error: Some(error),
+            },
+        ));
+    }
+    if let Some((outcome, evidence)) = retain(outcome, evidence) {
+        return Err(Box::new(
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1::Retention {
+                registry,
+                executor,
+                outcome,
+                evidence,
+            },
+        ));
+    }
+    registry.apply_preflighted_completion(epoch, &[disposition]);
+    Ok(M1AuthenticatedResidentSameShapeRoundCoreSuccessV1 { registry, executor })
+}
+
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+fn execute_m1_authenticated_resident_same_shape_round_v1<R, D, const C: usize>(
+    registry: M1ServingRegistryV1<C>,
+    mut engine: Engine<C>,
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    request: RequestId,
+    plan: M1ServingPlanV1,
+    plans: M1AuthenticatedResidentRoundPlansV1,
+    storage: M1AuthenticatedResidentRoundInputStorageV1,
+    mut evidence: Vec<M1AuthenticatedResidentRoundEvidenceV1>,
+    mut tokens: Vec<TokenId>,
+    retained: R,
+    deadline: &mut D,
+) -> Result<
+    (
+        M1ServingRegistryV1<C>,
+        Engine<C>,
+        M1AuthenticatedSpeculativePhysicalExecutorV1,
+        Vec<M1AuthenticatedResidentRoundEvidenceV1>,
+        Vec<TokenId>,
+        R,
+    ),
+    Box<M1AuthenticatedResidentFailureV1>,
+>
+where
+    R: fmt::Debug + 'static,
+    D: FnMut(
+        M1AuthenticatedResidentDeadlineBoundaryV1,
+        M1QueueWaitTimeoutV1,
+    ) -> Option<M1QueueWaitTimeoutV1>,
+{
+    let result = execute_m1_authenticated_resident_same_shape_round_core_v1(
+        registry,
+        &mut engine,
+        executor,
+        request,
+        plan,
+        |executor, epoch| next_round_inputs(executor, request, plan, epoch, plans, storage),
+        |outcome, choices| {
+            let [member] = outcome.members() else {
+                return Some((outcome, choices));
+            };
+            if !extend_preallocated_copy(&mut tokens, member.published().tokens()) {
+                return Some((outcome, choices));
+            }
+            let next_evidence = M1AuthenticatedResidentRoundEvidenceV1 {
+                _outcome: outcome,
+                _choices: choices,
+            };
+            push_preallocated(&mut evidence, next_evidence)
+                .err()
+                .map(|next_evidence| (next_evidence._outcome, next_evidence._choices))
+        },
+        deadline,
+    );
+    match result {
+        Ok(success) => {
+            let (registry, executor) = success.into_parts();
+            Ok((registry, engine, executor, evidence, tokens, retained))
+        }
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let (stage, teardown) = match *failure {
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryPlan {
+                    registry,
+                    executor,
+                    observed,
+                } => (
+                    M1AuthenticatedResidentStageV1::RegistryPlan,
+                    close_resident_executor(
+                        engine,
+                        executor,
+                        (registry, observed, retained, evidence, tokens),
+                    ),
+                ),
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::LogicalInputs {
+                    registry,
+                    executor,
+                } => (
+                    M1AuthenticatedResidentStageV1::LogicalInputs,
+                    close_resident_executor(
+                        engine,
+                        executor,
+                        (registry, retained, evidence, tokens),
+                    ),
+                ),
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryReservation {
+                    registry,
+                    executor,
+                    inputs,
+                    error,
+                } => (
+                    M1AuthenticatedResidentStageV1::RegistryReservation,
+                    close_resident_executor(
+                        engine,
+                        executor,
+                        (registry, inputs, error, retained, evidence, tokens),
+                    ),
+                ),
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::Physical {
+                    registry,
+                    failure,
+                    abort,
+                } => {
+                    let stage = if failure.stage()
+                        == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+                    {
+                        M1AuthenticatedResidentStageV1::Cancellation
+                    } else {
+                        M1AuthenticatedResidentStageV1::SameShapeRound
+                    };
+                    let disposition = failure.close_for_resident(&mut engine);
+                    (
+                        stage,
+                        M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(
+                            disposition,
+                        )
+                        .retain((registry, engine, abort, retained, evidence, tokens)),
+                    )
+                }
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryCompletion {
+                    registry,
+                    executor,
+                    outcome,
+                    evidence: choices,
+                    error,
+                } => (
+                    M1AuthenticatedResidentStageV1::RegistryCompletion,
+                    close_resident_executor(
+                        engine,
+                        executor,
+                        (
+                            registry, outcome, choices, error, retained, evidence, tokens,
+                        ),
+                    ),
+                ),
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::Retention {
+                    registry,
+                    executor,
+                    outcome,
+                    evidence: choices,
+                } => (
+                    M1AuthenticatedResidentStageV1::Input,
+                    close_resident_executor(
+                        engine,
+                        executor,
+                        (registry, outcome, choices, retained, evidence, tokens),
+                    ),
+                ),
+            };
+            Err(resident_failure(stage, true, teardown))
+        }
+    }
+}
+
 /// Executes the first S1/T128 window through repeated authenticated S1/K4
 /// rounds until checked policy reaches an all-terminal state.
 ///
@@ -1473,170 +1912,36 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
                 teardown,
             ));
         };
-        let batch = match registry.plan_next() {
-            Ok(Some(batch)) => batch,
-            result => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown = close_resident_executor(
-                    engine,
-                    executor,
-                    (registry, plans, rounds, evidence, tokens, result),
-                );
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::RegistryPlan,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        if batch.plan() != plan
-            || batch.requests() != [request]
-            || batch.action() != M1ServingQueueActionV1::SameShapeRearm
-        {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                executor,
-                (registry, batch, plans, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryPlan,
-                true,
-                teardown,
-            ));
-        }
-        let epoch = batch.epoch();
-        let inputs = match next_round_inputs(&executor, request, plan, epoch, plans, storage) {
-            Some(inputs) => inputs,
-            None => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown =
-                    close_resident_executor(engine, executor, (registry, rounds, evidence, tokens));
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::LogicalInputs,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        let reservation = match registry.reserve_publication(batch) {
-            Ok(reservation) => reservation,
-            Err(error) => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown = close_resident_executor(
-                    engine,
-                    executor,
-                    (registry, inputs, rounds, evidence, tokens, error),
-                );
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::RegistryReservation,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        let registry_identity = reservation.registry_identity();
-        let mut reservation = Some(reservation);
-        let physical = match executor.execute_round_with_post_submit_and_deadline(
-            &mut engine,
-            inputs,
-            || {
-                registry.record_publication(
-                    reservation
-                        .take()
-                        .expect("post-submit registry reservation remains present"),
-                )
-            },
+        match execute_m1_authenticated_resident_same_shape_round_v1(
+            registry,
+            engine,
+            executor,
+            request,
+            plan,
+            plans,
+            storage,
+            evidence,
+            tokens,
+            rounds,
             &mut deadline,
         ) {
-            Ok(physical) => physical,
-            Err(failure) => {
-                let abort = reservation.map(|reservation| registry.abort_publication(reservation));
-                let stage = if failure.stage()
-                    == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
-                {
-                    M1AuthenticatedResidentStageV1::Cancellation
-                } else {
-                    M1AuthenticatedResidentStageV1::SameShapeRound
-                };
-                let disposition = failure.close_for_resident(&mut engine);
-                return Err(resident_failure(
-                    stage,
-                    engine.is_faulted(),
-                    M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(
-                        disposition,
-                    )
-                    .retain((registry, engine, abort, rounds, evidence, tokens)),
-                ));
+            Ok((
+                next_registry,
+                next_engine,
+                next_executor,
+                next_evidence,
+                next_tokens,
+                next_rounds,
+            )) => {
+                registry = next_registry;
+                engine = next_engine;
+                executor = next_executor;
+                evidence = next_evidence;
+                tokens = next_tokens;
+                rounds = next_rounds;
             }
-        };
-        let (next_executor, outcome, choices) = physical.into_parts();
-        let [member] = outcome.members() else {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, outcome, choices, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryCompletion,
-                true,
-                teardown,
-            ));
-        };
-        let disposition = if member.status() == M1SpeculativeMemberStatusV1::Active {
-            M1ServingCompletionDispositionV1::Continue(plan)
-        } else {
-            M1ServingCompletionDispositionV1::Retire
-        };
-        if registry
-            .preflight_completion_exact_for(registry_identity, epoch, &[disposition])
-            .is_err()
-        {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, outcome, choices, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryCompletion,
-                true,
-                teardown,
-            ));
+            Err(failure) => return Err(failure),
         }
-        if !extend_preallocated_copy(&mut tokens, member.published().tokens()) {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, outcome, choices, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::Input,
-                true,
-                teardown,
-            ));
-        }
-        let next_evidence = M1AuthenticatedResidentRoundEvidenceV1 {
-            _outcome: outcome,
-            _choices: choices,
-        };
-        if let Err(next_evidence) = push_preallocated(&mut evidence, next_evidence) {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, next_evidence, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::Input,
-                true,
-                teardown,
-            ));
-        }
-        registry.apply_preflighted_completion(epoch, &[disposition]);
-        executor = next_executor;
     }
     if deadline(
         M1AuthenticatedResidentDeadlineBoundaryV1::AfterSettlement,
@@ -2803,220 +3108,37 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
                 teardown,
             ));
         };
-        let batch = match registry.plan_next() {
-            Ok(Some(batch)) => batch,
-            result => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown = close_resident_executor(
-                    engine,
-                    executor,
-                    (
-                        registry,
-                        plans,
-                        rounds,
-                        evidence,
-                        tokens,
-                        unused_plans,
-                        result,
-                    ),
-                );
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::RegistryPlan,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        if batch.plan() != plan
-            || batch.requests() != [next_request]
-            || batch.action() != M1ServingQueueActionV1::SameShapeRearm
-        {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                executor,
-                (
-                    registry,
-                    batch,
-                    plans,
-                    rounds,
-                    evidence,
-                    tokens,
-                    unused_plans,
-                ),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryPlan,
-                true,
-                teardown,
-            ));
-        }
-        let epoch = batch.epoch();
-        let inputs = match next_round_inputs(&executor, next_request, plan, epoch, plans, storage) {
-            Some(inputs) => inputs,
-            None => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown = close_resident_executor(
-                    engine,
-                    executor,
-                    (registry, rounds, evidence, tokens, unused_plans),
-                );
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::LogicalInputs,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        let reservation = match registry.reserve_publication(batch) {
-            Ok(reservation) => reservation,
-            Err(error) => {
-                engine.quarantine_m1_queue_rearm_failure();
-                let teardown = close_resident_executor(
-                    engine,
-                    executor,
-                    (
-                        registry,
-                        inputs,
-                        rounds,
-                        evidence,
-                        tokens,
-                        unused_plans,
-                        error,
-                    ),
-                );
-                return Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::RegistryReservation,
-                    true,
-                    teardown,
-                ));
-            }
-        };
-        let registry_identity = reservation.registry_identity();
-        let mut reservation = Some(reservation);
-        let physical = match executor.execute_round_with_post_submit_and_deadline(
-            &mut engine,
-            inputs,
-            || {
-                registry.record_publication(
-                    reservation
-                        .take()
-                        .expect("post-submit registry reservation remains present"),
-                )
-            },
+        match execute_m1_authenticated_resident_same_shape_round_v1(
+            registry,
+            engine,
+            executor,
+            next_request,
+            plan,
+            plans,
+            storage,
+            evidence,
+            tokens,
+            (rounds, unused_plans),
             &mut deadline,
         ) {
-            Ok(physical) => physical,
-            Err(failure) => {
-                let abort = reservation.map(|reservation| registry.abort_publication(reservation));
-                let stage = if failure.stage()
-                    == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
-                {
-                    M1AuthenticatedResidentStageV1::Cancellation
-                } else {
-                    M1AuthenticatedResidentStageV1::SameShapeRound
-                };
-                let disposition = failure.close_for_resident(&mut engine);
-                return Err(resident_failure(
-                    stage,
-                    engine.is_faulted(),
-                    M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(
-                        disposition,
-                    )
-                    .retain((
-                        registry,
-                        engine,
-                        abort,
-                        rounds,
-                        evidence,
-                        tokens,
-                        unused_plans,
-                    )),
-                ));
+            Ok((
+                next_registry,
+                next_engine,
+                next_executor,
+                next_evidence,
+                next_tokens,
+                (next_rounds, next_unused_plans),
+            )) => {
+                registry = next_registry;
+                engine = next_engine;
+                executor = next_executor;
+                evidence = next_evidence;
+                tokens = next_tokens;
+                rounds = next_rounds;
+                unused_plans = next_unused_plans;
             }
-        };
-        let (next_executor, outcome, choices) = physical.into_parts();
-        let [member] = outcome.members() else {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, outcome, choices, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryCompletion,
-                true,
-                teardown,
-            ));
-        };
-        let disposition = if member.status() == M1SpeculativeMemberStatusV1::Active {
-            M1ServingCompletionDispositionV1::Continue(plan)
-        } else {
-            M1ServingCompletionDispositionV1::Retire
-        };
-        if registry
-            .preflight_completion_exact_for(registry_identity, epoch, &[disposition])
-            .is_err()
-        {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (registry, outcome, choices, rounds, evidence, tokens),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::RegistryCompletion,
-                true,
-                teardown,
-            ));
+            Err(failure) => return Err(failure),
         }
-        if !extend_preallocated_copy(&mut tokens, member.published().tokens()) {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (
-                    registry,
-                    outcome,
-                    choices,
-                    rounds,
-                    evidence,
-                    tokens,
-                    unused_plans,
-                ),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::Input,
-                true,
-                teardown,
-            ));
-        }
-        let next_evidence = M1AuthenticatedResidentRoundEvidenceV1 {
-            _outcome: outcome,
-            _choices: choices,
-        };
-        if let Err(next_evidence) = push_preallocated(&mut evidence, next_evidence) {
-            engine.quarantine_m1_queue_rearm_failure();
-            let teardown = close_resident_executor(
-                engine,
-                next_executor,
-                (
-                    registry,
-                    next_evidence,
-                    rounds,
-                    evidence,
-                    tokens,
-                    unused_plans,
-                ),
-            );
-            return Err(resident_failure(
-                M1AuthenticatedResidentStageV1::Input,
-                true,
-                teardown,
-            ));
-        }
-        registry.apply_preflighted_completion(epoch, &[disposition]);
-        executor = next_executor;
     }
 
     if deadline(
@@ -3387,13 +3509,37 @@ mod tests {
             "M1AuthenticatedResidentDeadlineBoundaryV1::AfterQueueSubmit",
             "registry.record_publication",
             "published.complete_round_with_deadline_and_scratch",
-            "execute_round_with_post_submit_and_deadline",
+            "execute_m1_authenticated_resident_same_shape_round_v1",
         ];
         let mut tail = next;
         for needle in ordered {
             let position = tail
                 .find(needle)
                 .unwrap_or_else(|| panic!("missing hostile new-window deadline guard {needle}"));
+            tail = &tail[position + needle.len()..];
+        }
+
+        let same_shape = source
+            .split("pub(crate) fn execute_m1_authenticated_resident_same_shape_round_core_v1")
+            .nth(1)
+            .and_then(|tail| {
+                tail.split("fn execute_m1_authenticated_resident_same_shape_round_v1")
+                    .next()
+            })
+            .expect("shared resident same-shape core is present");
+        let mut tail = same_shape;
+        for needle in [
+            "registry.plan_next()",
+            "registry.reserve_publication(batch)",
+            ".execute_same_shape_round_with_join_and_deadline",
+            "registry.record_publication",
+            "registry.preflight_completion_exact_for",
+            "retain(outcome, evidence)",
+            "registry.apply_preflighted_completion",
+        ] {
+            let position = tail
+                .find(needle)
+                .unwrap_or_else(|| panic!("missing shared same-shape phase {needle}"));
             tail = &tail[position + needle.len()..];
         }
 

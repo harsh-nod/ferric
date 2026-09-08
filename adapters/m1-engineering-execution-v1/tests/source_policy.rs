@@ -594,16 +594,16 @@ fn authenticated_resident_path_is_exact_bounded_and_phase_ordered() {
         .map_or(ENGINE_AUTHENTICATED_RESIDENT_SOURCE, |(source, _)| source);
     for required in [
         "M1_MAX_AUTHENTICATED_SPECULATIVE_WINDOWS_V1",
-        "reserve_completed_window_replacement",
-        "schedule_m1_authenticated_speculative_new_window_v1",
+        "reserve_completed_window_replacement_with_storage",
+        "schedule_m1_authenticated_speculative_new_window_resident_v1",
         "submit_m1_authenticated_speculative_new_window_v1",
         "registry.record_new_window_publication",
         "M1AuthenticatedSpeculativeNewWindowMemberDispositionV1",
-        "M1SpeculativeGenerationLoopV1::new",
+        "M1SpeculativeGenerationLoopV1::new_with_storage",
         "prepare_m1_authenticated_speculative_rollover_retained_v1",
         "submit_m1_authenticated_speculative_rollover_v1",
-        "execute_round_with_post_submit_and_deadline",
-        "registry.record_publication",
+        "execute_m1_authenticated_resident_same_shape_round_core_v1",
+        "execute_same_shape_round_with_join_and_deadline",
         "clock_start.elapsed_ns()",
         "cancel_and_close",
         "quarantine_m1_queue_rearm_failure",
@@ -613,10 +613,18 @@ fn authenticated_resident_path_is_exact_bounded_and_phase_ordered() {
             "resident engine path is missing {required}"
         );
     }
-    let next = engine
-        .split_once("pub fn execute_m1_authenticated_resident_next_window_v1")
+    let (first, next) = engine
+        .split_once("pub fn execute_m1_authenticated_resident_first_window_v1")
         .unwrap()
-        .1;
+        .1
+        .split_once("pub fn execute_m1_authenticated_resident_next_window_v1")
+        .unwrap();
+    for (name, body) in [("first", first), ("next", next)] {
+        assert!(
+            body.contains("execute_m1_authenticated_resident_same_shape_round_v1("),
+            "resident {name}-window loop bypasses the shared physical settlement core"
+        );
+    }
     assert!(
         next.find("submit_m1_authenticated_speculative_new_window_v1")
             .unwrap()
@@ -648,13 +656,27 @@ fn authenticated_resident_path_is_exact_bounded_and_phase_ordered() {
             "resident backend wiring is missing {required}"
         );
     }
-    assert_eq!(
-        R33_PRODUCTION_BACKEND_SOURCE
-            .matches("resident_report(window, tokens.len(), timing),\n                            deadline.expired(),")
-            .count(),
-        2,
-        "both resident success paths must reject an expired immutable start deadline before returning a timing row"
-    );
+    for entry in [
+        "match execute_m1_authenticated_resident_first_window_v1(",
+        "match execute_m1_authenticated_resident_next_window_v1(",
+    ] {
+        let success = R33_PRODUCTION_BACKEND_SOURCE
+            .split_once(entry)
+            .unwrap()
+            .1
+            .split_once("Ok(success) =>")
+            .unwrap()
+            .1;
+        let report = success
+            .find("resident_report(window, tokens.len(), timing)")
+            .unwrap();
+        let deadline = success.find("deadline.expired()").unwrap();
+        let close = success.find("session.close()").unwrap();
+        assert!(
+            report < deadline && deadline < close,
+            "resident backend must reject an expired start deadline and close custody before reporting"
+        );
+    }
 }
 
 #[test]
