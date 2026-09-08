@@ -4,7 +4,7 @@
 //! Attributed Rust source for Ferric's exact Qwen3 K3 device roots.
 
 use fe2o3_device::{
-    kernel, memory, thread, Bf16, GridExclusive, Index1D, RowStriped2D, WriteOnlyDisjointSlice,
+    Bf16, GridExclusive, Index1D, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread,
 };
 
 pub const QWEN3_ROPE_KERNEL_SYMBOL_V1: &str = "qwen3_rope_v1";
