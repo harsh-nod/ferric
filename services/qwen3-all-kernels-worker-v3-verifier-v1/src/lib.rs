@@ -11,6 +11,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod current_record_ipc;
+mod current_record_provider;
 mod durable;
 mod head_store_ipc;
 mod listener;
@@ -27,6 +28,14 @@ pub use current_record_ipc::{
     ProtectedCompilerCurrentPeerIdentityErrorV1, ProtectedCompilerCurrentPeerIdentityV1,
     ProtectedCompilerCurrentProtocolErrorV1, ProtectedCompilerCurrentRequestV1,
     ProtectedCompilerCurrentResponseStatusV1, ProtectedCompilerCurrentResponseV1,
+};
+pub use current_record_provider::{
+    PreopenedProtectedCompilerCurrentServerV1, ProtectedCompilerCurrentAuthorityAuthenticationV1,
+    ProtectedCompilerCurrentAuthorityClaimErrorV1, ProtectedCompilerCurrentAuthorityInputV1,
+    ProtectedCompilerCurrentAuthorityV1, ProtectedCompilerCurrentServerAdmissionErrorV1,
+    ProtectedCompilerCurrentServerAdmissionFailureV1, ProtectedCompilerCurrentServerCustodyV1,
+    ProtectedCompilerCurrentServerErrorV1, ProtectedCompilerCurrentServerFailureV1,
+    ProtectedCompilerCurrentServerOutcomeV1,
 };
 pub use durable::{
     DurableLedgerErrorV1, DurableReplayGuardV1, DurableReservationProviderV2,

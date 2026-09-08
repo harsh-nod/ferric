@@ -134,8 +134,35 @@ transcript. The typed failure exposes retained/poisoned custody; dropping that
 failure does not itself close a retained endpoint because the client still owns
 it.
 
-These clients do not implement or provision the external signer, protected
-head-store process, or compiler-current authenticator daemon; implement the
+The compiler-current server complement owns one supervisor-preopened connected
+`SOCK_SEQPACKET` endpoint and one measured authority implementation. Admission
+requires a fresh empty connection, exact descriptor flags/device/inode and
+peer credentials, distinct provider/verifier UIDs, the same pinned protocol,
+provider measurement, compiler policy, and never-reused admission-session
+identity as the client. For each packet it requires the next exact sequence,
+strictly decodes the canonical Begin, carriage, and current-record frames again,
+rechecks every available digest/identity association, and verifies the nested
+current-record signature against the exact carried policy before calling its
+narrow unsafe authority interface. It emits only an exactly correlated canonical
+`Authenticated` or generic `Rejected` response under the caller-supplied absolute
+deadline. Authority rejection retains the synchronized endpoint; malformed,
+substituted, replayed, ancillary-bearing, late, or otherwise ambiguous traffic
+permanently poisons and closes it. The returned transcript binds the authority's
+nonzero transcript to the complete request, measurement, policy, admission
+session, and sequence.
+
+The request carries the complete Begin, carriage, and current-record frames but
+only the complete envelope's length and digest. A production authority must use
+those coordinates to reacquire and verify the retained full envelope; it must
+reject when those bytes are unavailable. The unsafe authority implementation
+also remains responsible for independently protected policy and signing-key
+configuration, exact live Worker-ledger lookup, external monotonic rollback
+state, and a durable admission-session/replay store that survives every process
+restart. The in-memory server sequence check supplements but does not replace
+that durable state.
+
+These IPC primitives do not implement or provision the external signer,
+protected head-store process, or compiler-current authenticator daemon; implement the
 compiler policy or live session store; store a private key; run an independent
 checker; or launch a protected deployment. Signer
 authority is unchanged: Its descriptor checks and wire protocol grant no production authority.
