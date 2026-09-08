@@ -1282,25 +1282,24 @@ pub fn execute_m1_authenticated_s1_t128_target_window_v1<const C: usize>(
         } else {
             M1DeviceKvCompletionDispositionV1::Continue
         };
-        let completion =
-            match readback.complete(&mut engine, [physical_disposition].into_iter().collect()) {
-                Ok(completion) => completion,
-                Err(error) => {
-                    return Err(fail(
-                        M1AuthenticatedTargetWindowExecutionStageV1::DecodeCompletion,
-                        M1AuthenticatedTargetWindowExecutionErrorV1::Completion,
-                        (
-                            engine,
-                            error,
-                            tokens,
-                            plans,
-                            target_pages,
-                            successor_custody,
-                            registry,
-                        ),
-                    ));
-                }
-            };
+        let completion = match readback.complete(&mut engine, vec![physical_disposition]) {
+            Ok(completion) => completion,
+            Err(error) => {
+                return Err(fail(
+                    M1AuthenticatedTargetWindowExecutionStageV1::DecodeCompletion,
+                    M1AuthenticatedTargetWindowExecutionErrorV1::Completion,
+                    (
+                        engine,
+                        error,
+                        tokens,
+                        plans,
+                        target_pages,
+                        successor_custody,
+                        registry,
+                    ),
+                ));
+            }
+        };
         let next_released = match completion.release_completed() {
             M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => released,
             error => {

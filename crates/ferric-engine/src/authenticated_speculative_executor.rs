@@ -10,10 +10,9 @@
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use arrayvec::ArrayVec;
 use ferric_spec::{
     completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
+    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs,
 };
 
 use crate::{
@@ -1641,8 +1640,7 @@ struct M1PreparedCoordinatorRoundCoreV1<D> {
     diagnostic: D,
     controls: Vec<M1SpeculativeMemberControlV1>,
     preflighted: crate::M1SpeculativePreflightedRoundV1,
-    dispositions:
-        ArrayVec<crate::M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>,
+    dispositions: Vec<crate::M1DeviceKvCompletionDispositionV1>,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
 }
 
@@ -1711,24 +1709,29 @@ where
             },
         ));
     }
-    let mut dispositions = ArrayVec::new();
-    for outcome in preflighted.members().iter().copied() {
-        if dispositions
-            .try_push(outcome.physical_disposition())
-            .is_err()
-        {
-            engine.quarantine_m1_queue_rearm_failure();
-            return Err(Box::new(
-                M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
-                    coordinator,
-                    diagnostic,
-                    controls,
-                    preflighted,
-                    lineage,
-                },
-            ));
-        }
+    let mut dispositions = Vec::new();
+    if dispositions
+        .try_reserve_exact(preflighted.members().len())
+        .is_err()
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(
+            M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                lineage,
+            },
+        ));
     }
+    dispositions.extend(
+        preflighted
+            .members()
+            .iter()
+            .copied()
+            .map(crate::M1SpeculativeMemberRoundOutcomeV1::physical_disposition),
+    );
     Ok(M1PreparedCoordinatorRoundCoreV1 {
         coordinator,
         diagnostic,
@@ -1758,7 +1761,7 @@ enum M1CommitCoordinatorRoundCoreFailureV1<P> {
     },
     CausalLineage {
         coordinator: M1SpeculativeGenerationLoopV1,
-        outcome: M1SpeculativeRoundOutcomeV1,
+        outcome: Box<M1SpeculativeRoundOutcomeV1>,
         controls: Vec<M1SpeculativeMemberControlV1>,
         physical: P,
         lineage: M1AuthenticatedSpeculativeCausalLineageV1,
@@ -1793,7 +1796,7 @@ fn commit_coordinator_round_core<P, const C: usize>(
         return Err(Box::new(
             M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
                 coordinator,
-                outcome,
+                outcome: Box::new(outcome),
                 controls,
                 physical,
                 lineage,
@@ -4056,7 +4059,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
                 custody:
                     PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
-                        Box::new((coordinator, lineage, controls, choices, physical, outcome)),
+                        Box::new((coordinator, lineage, controls, choices, physical, *outcome)),
                     ),
             }),
         })?;
@@ -4318,7 +4321,7 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
         } => Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
             stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
             custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
-                Box::new((coordinator, outcome, choices, physical)),
+                Box::new((coordinator, *outcome, choices, physical)),
             ),
             lineage: Some(lineage),
         }),

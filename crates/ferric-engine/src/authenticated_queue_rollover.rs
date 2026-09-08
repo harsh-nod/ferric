@@ -6,7 +6,6 @@
 
 use core::fmt;
 
-use arrayvec::ArrayVec;
 use fe2o3_host::{
     AuthenticatedQuarantinedServiceQueueV1, AuthenticatedServiceQueueReleaseFailureV1,
     AuthenticatedServiceQueueReleaseV1, AuthenticatedServiceQueueRetainedRolloverFailureV1,
@@ -5679,10 +5678,7 @@ enum M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1 {
     DeadlineReadback(
         Box<(
             crate::M1AuthenticatedRearmedCompletedReadbackV1,
-            ArrayVec<
-                crate::M1DeviceKvCompletionDispositionV1,
-                { ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize },
-            >,
+            Vec<crate::M1DeviceKvCompletionDispositionV1>,
             crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
         )>,
     ),
@@ -6184,17 +6180,31 @@ fn settle_authenticated_speculative_new_window_with_deadline<const C: usize>(
             dispositions,
         ));
     }
-    let physical_dispositions = dispositions
-        .iter()
-        .map(|disposition| match disposition {
-            M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue => {
-                crate::M1DeviceKvCompletionDispositionV1::Continue
-            }
-            M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire => {
-                crate::M1DeviceKvCompletionDispositionV1::Retire
-            }
-        })
-        .collect();
+    let mut physical_dispositions = Vec::new();
+    if physical_dispositions
+        .try_reserve_exact(member_count)
+        .is_err()
+    {
+        return Err(new_window_settlement_failure(
+            M1AuthenticatedSpeculativeNewWindowSettlementErrorV1::HostAllocation,
+            M1AuthenticatedSpeculativeNewWindowSettlementFailureStateV1::Observed(Box::new(
+                observed,
+            )),
+            members,
+            member_count,
+            selection,
+            epoch,
+            dispositions,
+        ));
+    }
+    physical_dispositions.extend(dispositions.iter().map(|disposition| match disposition {
+        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Continue => {
+            crate::M1DeviceKvCompletionDispositionV1::Continue
+        }
+        M1AuthenticatedSpeculativeNewWindowMemberDispositionV1::Retire => {
+            crate::M1DeviceKvCompletionDispositionV1::Retire
+        }
+    }));
     let expectations = authenticated_new_window_expectations(&members, member_count);
     if deadline_expired(Boundary::BeforeReadback) {
         return Err(new_window_settlement_failure(

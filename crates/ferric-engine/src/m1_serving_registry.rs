@@ -395,7 +395,7 @@ impl M1ServingPublicationReservationV1 {
 #[derive(Debug, Eq, PartialEq)]
 pub struct M1ServingPublicationFailureV1 {
     error: M1ServingRegistryErrorV1,
-    reservation: M1ServingPublicationReservationV1,
+    reservation: Box<M1ServingPublicationReservationV1>,
 }
 
 /// Copy-only registry evidence for one member removed by a new-window
@@ -576,7 +576,7 @@ impl M1ServingPublicationFailureV1 {
     }
 
     pub fn into_reservation(self) -> M1ServingPublicationReservationV1 {
-        self.reservation
+        *self.reservation
     }
 }
 
@@ -1324,7 +1324,10 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         reservation: M1ServingPublicationReservationV1,
     ) -> Result<(), M1ServingPublicationFailureV1> {
         if let Err(error) = self.validate_reservation(&reservation) {
-            return Err(M1ServingPublicationFailureV1 { error, reservation });
+            return Err(M1ServingPublicationFailureV1 {
+                error,
+                reservation: Box::new(reservation),
+            });
         }
         self.reservation = None;
         Ok(())
@@ -1361,7 +1364,10 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         reservation: M1ServingPublicationReservationV1,
     ) -> Result<(), M1ServingPublicationFailureV1> {
         if let Err(error) = self.validate_reservation(&reservation) {
-            return Err(M1ServingPublicationFailureV1 { error, reservation });
+            return Err(M1ServingPublicationFailureV1 {
+                error,
+                reservation: Box::new(reservation),
+            });
         }
         let batch = reservation.batch;
         for entry in &mut self.entries {

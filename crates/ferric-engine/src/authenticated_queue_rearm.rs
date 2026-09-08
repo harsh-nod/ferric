@@ -12,7 +12,6 @@
 
 use core::fmt;
 
-use arrayvec::ArrayVec;
 use fe2o3_host::{
     AuthenticatedServiceQueueDataUpdateFailureV1, AuthenticatedServiceQueueReleaseV1,
     AuthenticatedServiceQueueRetainedBindFailureV1, AuthenticatedServiceQueueSessionV1,
@@ -68,9 +67,6 @@ use crate::{
     M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
     M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
-
-type M1AuthenticatedRearmedDispositionsV1 =
-    ArrayVec<M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>;
 
 /// Authenticated scheduling rejection before or after physical queue detachment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -3503,7 +3499,7 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
     pub fn complete<const C: usize>(
         mut self,
         engine: &mut Engine<C>,
-        dispositions: M1AuthenticatedRearmedDispositionsV1,
+        dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
     ) -> Result<
         M1AuthenticatedRearmedCompletionOutcomeV1,
         M1AuthenticatedRearmedCompletionPreflightFailureV1,
@@ -3534,7 +3530,17 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
                 dispositions,
             });
         }
-        let mut members = ArrayVec::new();
+        let mut members = Vec::new();
+        if members
+            .try_reserve_exact(self.carry.selected.len())
+            .is_err()
+        {
+            return Err(M1AuthenticatedRearmedCompletionPreflightFailureV1 {
+                error: M1AuthenticatedRearmedCompletionPreflightErrorV1::HostAllocation,
+                readback: Box::new(self),
+                dispositions,
+            });
+        }
         let Self {
             readback,
             carry,
@@ -3542,19 +3548,16 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
             device,
         } = self;
         for (cache, disposition) in carry.selected.into_iter().zip(dispositions) {
-            let member = match disposition {
+            members.push(match disposition {
                 M1DeviceKvCompletionDispositionV1::Continue => {
                     M1DeviceKvCompletionMemberV1::continuing(cache)
                 }
                 M1DeviceKvCompletionDispositionV1::Retire => {
                     M1DeviceKvCompletionMemberV1::retiring(cache)
                 }
-            };
-            members
-                .try_push(member)
-                .expect("authenticated selected roster is M1-bounded");
+            });
         }
-        let roster = M1DeviceKvCompletionRosterV1::from_inline(members);
+        let roster = M1DeviceKvCompletionRosterV1::new(members);
         let outcome = crate::complete_m1_authenticated_physical_step_v1(engine, readback, roster);
         let history_entry = match carry.rollover {
             Some(rollover) => crate::M1RearmRoundHistoryEntryV1::from_queue_transition(
@@ -3665,7 +3668,7 @@ pub enum M1AuthenticatedRearmedCompletionPreflightErrorV1 {
 pub struct M1AuthenticatedRearmedCompletionPreflightFailureV1 {
     error: M1AuthenticatedRearmedCompletionPreflightErrorV1,
     readback: Box<M1AuthenticatedRearmedCompletedReadbackV1>,
-    dispositions: M1AuthenticatedRearmedDispositionsV1,
+    dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
 }
 
 impl M1AuthenticatedRearmedCompletionPreflightFailureV1 {
@@ -3686,7 +3689,7 @@ impl M1AuthenticatedRearmedCompletionPreflightFailureV1 {
     ) -> (
         M1AuthenticatedRearmedCompletionPreflightErrorV1,
         M1AuthenticatedRearmedCompletedReadbackV1,
-        M1AuthenticatedRearmedDispositionsV1,
+        Vec<M1DeviceKvCompletionDispositionV1>,
     ) {
         (self.error, *self.readback, self.dispositions)
     }
@@ -3762,7 +3765,7 @@ struct M1AuthenticatedRearmedCompletionPreflightTeardownCustodyV1 {
     checked: M1CheckedCompletionOutputV1,
     completion: ExactCompletion,
     kv: M1FullStepKvReservationCustodyV1,
-    dispositions: M1AuthenticatedRearmedDispositionsV1,
+    dispositions: Vec<M1DeviceKvCompletionDispositionV1>,
     carry: M1AuthenticatedRearmContinuationCustodyV1,
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
