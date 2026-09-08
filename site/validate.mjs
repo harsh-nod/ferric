@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "8c561227a62112a7d2459e4fa784415fa292074f",
-  integrationCommit: "5df8c5e463cca191b142321a9b5040ed66955f06",
-  integrationTree: "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
+  siteRefreshBase: "5de891d618a963d3bfe9f32fac8784a15b44789f",
+  integrationCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
+  integrationTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
   integrationFormattingFixCommit: "1addeb33664bce3f8e634c47e2fec09bb3d7cf42",
   integrationFormattingFixTree: "82826452040f8cb587df1bd88b9fb0f18668fd8e",
   priorValidatedIntegrationCommit: "e5d23e19973a01000129aaf2ec705b8993bd21c3",
@@ -165,18 +165,23 @@ const expectedCurrent = {
   workerSignerNarrowPreflightGreen: true,
   workerSignerNarrowPreflightLogSha256: "65805dc943fe8c1390e3aadbe5f1144d54af9b42756631795f18d59860e567be",
   workerSignerNarrowSourceGateTestsPassed: 33,
-  r33TwentyWindowCommit: "a305034b0e7f5ae8b204f066254601fc835592d6",
-  r33TwentyWindowFollowupCommit: "94c3c88518971700498bc05b5da34fb96b23d4e1",
-  r33TwentyWindowTree: "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
+  r33RejectedCandidateCommit: "a305034b0e7f5ae8b204f066254601fc835592d6",
+  r33RejectedCandidateTree: "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
+  r33RejectedCandidateReviewDisposition: "hold-steady-state-allocation",
+  r33TwentyWindowCommit: "1e44a64b673f8ede149686979ef759757e71369b",
+  r33TwentyWindowTree: "d9e9a381e2a23a3e948943a93abe281f7fd5a0c7",
   r33TwentyWindowImplemented: true,
-  r33TwentyWindowReviewState: "pending-independent-review-and-transplant",
+  r33TwentyWindowReviewState: "pending-independent-review",
   r33TwentyWindowReviewHasProbableHoldItems: false,
   r33TwentyWindowActive: true,
   r33TwentyWindowIntegrated: false,
   r33TwentyWindowValidationReported: true,
   r33TwentyWindowValidationGreen: true,
-  r33TwentyWindowEvidenceSha256: "730fe4b46d297eccfccc57a379bc3b43df5edae8556fa64e3772c83054f14d1c",
   r33TwentyWindowHardwareQualified: false,
+  r33TwentyWindowHardwareState: "blocked-no-production-owner-or-artifacts",
+  r33MeasuredAllocationRounds: [1, 16],
+  r33MeasuredAllocations: 0,
+  r33MeasuredReallocations: 0,
   headStoreCommit: "fc5f86939cc826480aa008ddf69b044f3d63c585",
   headStoreFollowupCommit: "4d0486476c907ae681bf48d4ba57efb1394e78f5",
   headStoreReplayRepairCommit: "d05b2daffcc32a061f497e23db8292fb208f0e75",
@@ -201,6 +206,21 @@ const expectedCurrent = {
   currentRecordIpcIntegrated: true,
   currentRecordIpcValidationLogSha256: "be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830",
   currentRecordIpcDaemonAvailable: false,
+  currentRecordProviderCommit: "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
+  currentRecordProviderTree: "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
+  currentRecordProviderReviewState: "accepted",
+  currentRecordProviderIntegrated: true,
+  currentRecordProviderValidationLogSha256: "3d9533b2482e3f8424059333495fe1384f9cd66287471755c5fce0e1528eaee0",
+  currentRecordProviderValidationManifestSha256: "100ecefebf2496006c1c0603c274bdff399d63eae23a35ef44f72eede25688c1",
+  currentRecordProviderDaemonAvailable: false,
+  r29PlanSha256: "61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c",
+  r29InputFilesGenerated: 20,
+  r29Buckets: 7,
+  r29InputsValidated: true,
+  r29FirstCaptureState: "prefill-s1-t128-active",
+  r29TechnicalPrequalificationOnly: true,
+  r29FormalQualificationBlocked: true,
+  r29ColdStartupHbmCostObserved: true,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
   signerIpcTree: "b524a9ccc981466ecde2aa31afa59e2dff672fc8",
   signerIpcIntegrated: true,
@@ -428,8 +448,9 @@ for (const key of [
   "combinedQualificationSourceTree",
   "combinedPreflightSourceCommit",
   "combinedPreflightSourceTree",
+  "r33RejectedCandidateCommit",
+  "r33RejectedCandidateTree",
   "r33TwentyWindowCommit",
-  "r33TwentyWindowFollowupCommit",
   "r33TwentyWindowTree",
   "headStoreCommit",
   "headStoreFollowupCommit",
@@ -437,6 +458,8 @@ for (const key of [
   "headStoreTree",
   "currentRecordIpcCommit",
   "currentRecordIpcTree",
+  "currentRecordProviderCommit",
+  "currentRecordProviderTree",
   "signerIpcCommit",
   "signerIpcTree",
   "workerV3LintFixCommit",
@@ -630,14 +653,18 @@ assert(project.current.workerSignerNarrowPreflightGreen === true, "Worker and si
 assertSha256(project.current.workerSignerNarrowPreflightLogSha256, "current.workerSignerNarrowPreflightLogSha256");
 assert(project.current.workerSignerNarrowSourceGateTestsPassed === 33, "Worker and signer narrow source-gate count drifted");
 assert(project.current.r33TwentyWindowImplemented === true, "20-window R33 candidate must remain implemented");
-assert(project.current.r33TwentyWindowReviewState === "pending-independent-review-and-transplant", "20-window R33 review state drifted");
+assert(project.current.r33RejectedCandidateReviewDisposition === "hold-steady-state-allocation", "rejected R33 disposition drifted");
+assert(project.current.r33TwentyWindowReviewState === "pending-independent-review", "20-window R33 review state drifted");
 assert(project.current.r33TwentyWindowReviewHasProbableHoldItems === false, "resolved R33 review items must not remain probable HOLD items");
 assert(project.current.r33TwentyWindowActive === true, "20-window R33 fix work must remain active");
 assert(project.current.r33TwentyWindowIntegrated === false, "20-window R33 work must remain unintegrated");
 assert(project.current.r33TwentyWindowValidationReported === true, "20-window R33 validation result must remain explicit");
 assert(project.current.r33TwentyWindowValidationGreen === true, "20-window R33 author matrix must remain green");
-assertSha256(project.current.r33TwentyWindowEvidenceSha256, "current.r33TwentyWindowEvidenceSha256");
 assert(project.current.r33TwentyWindowHardwareQualified === false, "20-window R33 work must remain hardware-unqualified");
+assert(project.current.r33TwentyWindowHardwareState === "blocked-no-production-owner-or-artifacts", "R33 hardware blocker drifted");
+assert(JSON.stringify(project.current.r33MeasuredAllocationRounds) === "[1,16]", "R33 measured allocation rounds drifted");
+assert(project.current.r33MeasuredAllocations === 0, "R33 warmed path must retain zero measured allocations");
+assert(project.current.r33MeasuredReallocations === 0, "R33 warmed path must retain zero measured reallocations");
 assert(project.current.headStoreReviewState === "accepted", "head-store review state drifted");
 assert(project.current.headStoreReviewDisposition === "integrate", "head-store review disposition drifted");
 assert(project.current.headStoreIntegrated === true, "accepted head-store work must remain integrated");
@@ -656,6 +683,19 @@ assert(project.current.currentRecordIpcReviewState === "accepted", "current-reco
 assert(project.current.currentRecordIpcIntegrated === true, "accepted current-record IPC must remain integrated");
 assertSha256(project.current.currentRecordIpcValidationLogSha256, "current.currentRecordIpcValidationLogSha256");
 assert(project.current.currentRecordIpcDaemonAvailable === false, "current-record IPC must not claim a daemon");
+assert(project.current.currentRecordProviderReviewState === "accepted", "current-record provider review state drifted");
+assert(project.current.currentRecordProviderIntegrated === true, "current-record provider must remain integrated");
+assertSha256(project.current.currentRecordProviderValidationLogSha256, "current.currentRecordProviderValidationLogSha256");
+assertSha256(project.current.currentRecordProviderValidationManifestSha256, "current.currentRecordProviderValidationManifestSha256");
+assert(project.current.currentRecordProviderDaemonAvailable === false, "current-record provider must not claim production daemon deployment");
+assertSha256(project.current.r29PlanSha256, "current.r29PlanSha256");
+assert(project.current.r29InputFilesGenerated === 20, "R29 input count drifted");
+assert(project.current.r29Buckets === 7, "R29 bucket count drifted");
+assert(project.current.r29InputsValidated === true, "R29 inputs must remain validated");
+assert(project.current.r29FirstCaptureState === "prefill-s1-t128-active", "R29 active capture drifted");
+assert(project.current.r29TechnicalPrequalificationOnly === true, "R29 must remain technical prequalification");
+assert(project.current.r29FormalQualificationBlocked === true, "R29 formal qualification blocker must remain explicit");
+assert(project.current.r29ColdStartupHbmCostObserved === true, "R29 cold HBM cost observation must remain explicit");
 assert(project.current.fe2o3LatestMigrationTechnicallyAccepted === true, "latest-fe2 migration technical acceptance must remain explicit");
 assert(project.current.fe2o3LatestMigrationFullMi300xSuiteGreen === true, "latest-fe2 migration MI300X suite must remain green");
 assert(project.current.fe2o3LatestMigrationIntegrated === false, "latest-fe2 migration must remain unintegrated while held");
@@ -840,7 +880,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "8c561227a62112a7d2459e4fa784415fa292074f",
+  "5de891d618a963d3bfe9f32fac8784a15b44789f",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",
@@ -880,8 +920,15 @@ const missingSnapshotClaims = [
   "5df8c5e463cca191b142321a9b5040ed66955f06",
   "7c0c4a203903d1515cbe1451754db8d9b1ddd591",
   "be88974e99748fccb5fd4e6f0c3122b3e9a1822db038fcbd3da8707b92d9d830",
+  "2958b6915cfbbd9bbb81bdb14471fe044b203e0f",
+  "48de4c1fe214b9d9df2576cde735f58b0dc63b25",
+  "3d9533b2482e3f8424059333495fe1384f9cd66287471755c5fce0e1528eaee0",
+  "100ecefebf2496006c1c0603c274bdff399d63eae23a35ef44f72eede25688c1",
   "a305034b0e7f5ae8b204f066254601fc835592d6",
   "42390274000b3a6674fc0043ced3fdd8f8fe7c59",
+  "1e44a64b673f8ede149686979ef759757e71369b",
+  "d9e9a381e2a23a3e948943a93abe281f7fd5a0c7",
+  "61fca5d4441acea3a4f5ca548b5fde142294153027b0b052b8ac32f27bd7af9c",
   "d7d68e4b4a9c9ec2951a1f849d65573f16c00a893979eb2e00d79f732a10aa27",
   "21bf7ae6a2df53c7e5c18985d1352274b224d6655d7ccc17bba98d51582fac84",
   "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
