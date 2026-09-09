@@ -78,9 +78,9 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "2af5494b9d2a1f75cb63722505a734ba8855b83b",
-  integrationCommit: "bc6b3a50096854ace496b691933295930066fc04",
-  integrationTree: "8b10db06d29d0550b8ce2cadfddc007360016a92",
+  siteRefreshBase: "042b40b4521e202766d484269d169b5ccaeaa200",
+  integrationCommit: "eb219f0f850dfa139d49c1cd303fd292539725fc",
+  integrationTree: "046029d7be3043469b41ef8614ddd26beb8d4bbf",
   sha256FastPathCommit: "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
   sha256FastPathVerusQueries: 296,
   sha256FastPathVerusErrors: 0,
@@ -312,7 +312,7 @@ const expectedCurrent = {
   r29PriorNativeTranscriptTestsPassed: 1,
   r29PriorProducerPolicyGreen: true,
   r29PriorVendorOverlayGreen: true,
-  r29CurrentAggregateBuildState: "428-aggregate-emitted-hardware-pending",
+  r29CurrentAggregateBuildState: "0ea-aggregate-emitted-target-smoke-observed",
   r29CurrentAggregateMissingPackage: null,
   r29CurrentAggregateHsaco: true,
   r29CurrentTargetSmokeCompleted: true,
@@ -347,7 +347,7 @@ const expectedCurrent = {
   productionOwnerSourceCommit: "c0b6c3676fbabce896a55874ef53864cb0898cfb",
   productionOwnerRepinCommit: "9cb42304bb4b647206d0d0e0e5d8a038aa2514f8",
   productionOwnerFocusedGatesGreen: true,
-  k3WorkProportionalKvWriteState: "artifact-emitted-hardware-pending",
+  k3WorkProportionalKvWriteState: "artifact-emitted-target-smoke-observed",
   k3WorkProportionalKvWriteIntegrated: true,
   k3WorkProportionalSpeedupMeasured: false,
   signerIpcCommit: "dcc7c07a3c21f8a3a8a6ac678987ba172c5809f4",
@@ -404,16 +404,38 @@ const expectedCurrent = {
   fe2o3UnsignedUpstreamCommit1: "f405dfccb5b7021c417df37c0a692aead02fd071",
   fe2o3UnsignedUpstreamCommit2: "e5351640e3df3868205bc68eac8d5ff5556352ea",
   fe2o3LatestQualificationClaimed: false,
-  currentAggregateContentId: "528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a",
-  currentAggregateHsacoSha256: "cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804",
-  currentAggregateHandoffSha256: "382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5",
+  currentAggregateContentId: "d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40",
+  currentAggregateHsacoSha256: "33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d",
+  currentAggregateHandoffSha256: "5d40961ec2fd365835867251330072674bdf16dc48a18c4c2bc446bcd60f28b8",
   currentAggregateGuardedStores: 26,
   currentAggregateAuthority: "none",
-  currentAggregateHardwareRunPending: true,
-  currentAggregateCompilerCommit: "42882993b3f84d60f38e398d2018cc9302e8fe19",
-  latestFe2o3AggregateEmitted: false,
-  latestFe2o3AggregateBuildActive: true,
-  latestFe2o3HostCombinedChecksActive: true,
+  currentAggregateHardwareRunPending: false,
+  currentAggregateCompilerCommit: "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
+  latestFe2o3AggregateEmitted: true,
+  latestFe2o3AggregateBuildActive: false,
+  latestFe2o3HostCombinedChecksActive: false,
+  currentAggregateSourceCommit: "939275509bffda3fa09cf6995f8762837d86966c",
+  currentAggregateSourceTree: "01bcdc62a2dba522c3c195390687629d7adfb3b2",
+  currentAggregateManifestSha256: "dd741a81befc48e19243b18f624977e5fe57f857c9ff7466d295ae11a0245814",
+  currentAggregateKernelCount: 12,
+  currentAggregateExactReplay: true,
+  currentAggregatePublicationGrant: false,
+  currentAggregateLoadGrant: false,
+  currentAggregateLaunchGrant: false,
+  latestFe2o3HostCombinedChecksPassed: true,
+  latestFe2o3HostCombinedSourceCommit: "a6a3f2e570bf5b6dfbbbec1dc004764918ffeb2d",
+  latestFe2o3HostCombinedSourceTree: "f460d6f854ea8eab4d020a386f9fe273d1e64631",
+  latestFe2o3HostCombinedSourceClosureRecords: 712,
+  latestFe2o3HostCombinedSourceGateTestsPassed: 36,
+  latestFe2o3HostCombinedGeneratedRecordsExact: 7,
+  latestFe2o3HostCombinedAdmissionModules: 171,
+  latestFe2o3HostCombinedAdmissionBodies: 8207,
+  plannerTopologySourceCommit: "eb219f0f850dfa139d49c1cd303fd292539725fc",
+  plannerTopologySourceTree: "046029d7be3043469b41ef8614ddd26beb8d4bbf",
+  plannerTopologyPolicyPassed: true,
+  plannerTopologyDeterministicSlots: 354,
+  plannerTopologyProtectedReceiptEmitted: false,
+  ferricQwen32RunActive: false,
   currentQualificationSourceCommit: "bb50d0e0c71e44271b892120c208650bd444f684",
   currentQualificationSourceTree: "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
   currentQualificationState: "developer-qualification-passed-frozen-bb50",
@@ -431,20 +453,45 @@ const expectedCurrent = {
   currentQualificationPositiveBodies: 694,
   currentQualificationNegativeActualBodyMutationsPassed: true,
   currentQualificationNegativeAndQualityComplete: true,
-  currentHostArtifactPreDeviceProbeSeconds: 98.23,
-  currentHostArtifactPreDeviceProbeIncludesKfdAdmission: true,
-  currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration: true,
-  currentHostArtifactPreDeviceProbeIncludesInitialize: false,
-  currentHostArtifactPreDeviceProbeIncludesHbm: false,
+  prior428HostArtifactPreDeviceProbeSeconds: 98.23,
+  prior428HostArtifactPreDeviceProbeIncludesKfdAdmission: true,
+  prior428HostArtifactPreDeviceProbeIncludesTopologyEnumeration: true,
+  prior428HostArtifactPreDeviceProbeIncludesInitialize: false,
+  prior428HostArtifactPreDeviceProbeIncludesHbm: false,
   latestFe2o3KfdDescriptorProbeGib: 97.313,
   latestFe2o3KfdDescriptorProbeSeconds: 58.133,
   latestFe2o3KfdDescriptorProbeIncludesGpu: false,
   mi300xGpuCount: 8,
-  mi300xGpuAvailableForFerric: false,
-  mi300xGpuOccupancy: "all-in-use-by-other-users",
+  mi300xQwen32GpuUseObserved: true,
+  mi300xQwen32GpuIndex: 3,
   qwenReference32ResultSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
   qwenReference32Available: true,
-  ferricQwen32ComparisonComplete: false,
+  ferricQwen32ComparisonComplete: true,
+  ferricQwen32Status: 0,
+  ferricQwen32PromptTokenCount: 5,
+  ferricQwen32GeneratedTokenCount: 32,
+  ferricQwen32GeneratedTokenIds: [12095, 13, 576, 6722, 315, 15344, 374, 21718, 13, 576, 6722, 315, 17689, 374, 24081, 13, 576, 6722, 315, 9856, 374, 19846, 13, 576, 6722, 315, 279, 25662, 374, 37741, 13, 576],
+  ferricQwen32MatchesBothReferencePasses: true,
+  ferricQwen32HardwareCompletion: true,
+  ferricQwen32ObservationSha256: "d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44",
+  ferricQwen32ModelBundleSha256: "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+  ferricQwen32TtftSeconds: 13.442289487,
+  ferricQwen32PostFirstSecondsPerToken: 2.769104887645161,
+  ferricQwen32PostFirstTokenGaps: 31,
+  ferricQwen32LastTokenSeconds: 99.284541004,
+  ferricQwen32ControllerSeconds: 100.370762336,
+  ferricQwen32SetupSeconds: 246.065540159,
+  ferricQwen32CpuKfdSetupSeconds: 82.938930765,
+  ferricQwen32InitializationSeconds: 163.126609394,
+  ferricQwen32WallSeconds: 346.46,
+  ferricQwen32Authority: "none",
+  ferricQwen32BenchmarkComparable: false,
+  ferricQwen32CompilerOriginAuthenticated: false,
+  ferricQwen32CurrentPublicationSelected: false,
+  ferricQwen32WorkerV3Authenticated: false,
+  ferricQwen32R33TpotCardinalityEligible: true,
+  ferricQwen32AuthenticatedR33: false,
+  ferricQwen32NumericallyQualified: false,
   fe2o3KfdInitializationGatesGreen: true,
   fe2o3KfdOneGibBeforeSeconds: 76.512,
   fe2o3KfdOneGibAfterSeconds: 6.15,
@@ -965,7 +1012,7 @@ assert(project.current.r29PriorSourcePolicyTestsPassed === 17, "prior R29 source
 assert(project.current.r29PriorNativeTranscriptTestsPassed === 1, "prior R29 transcript-test count drifted");
 assert(project.current.r29PriorProducerPolicyGreen === true, "prior R29 producer policy must remain green");
 assert(project.current.r29PriorVendorOverlayGreen === true, "prior R29 vendor overlay must remain green");
-assert(project.current.r29CurrentAggregateBuildState === "428-aggregate-emitted-hardware-pending", "current R29 aggregate state drifted");
+assert(project.current.r29CurrentAggregateBuildState === "0ea-aggregate-emitted-target-smoke-observed", "current R29 aggregate state drifted");
 assert(project.current.r29CurrentAggregateMissingPackage === null, "cleared R29 vendor blocker must remain cleared");
 for (const key of [
   "r29CurrentS1T128Captured",
@@ -1003,7 +1050,7 @@ assert(project.current.productionOwnerRepairActive === false, "completed product
 assert(project.current.productionOwnerCandidateComplete === true, "production-owner source candidate must remain complete");
 assert(project.current.productionOwnerCandidateIntegrated === true, "production owner must remain integrated");
 assert(project.current.productionOwnerFocusedGatesGreen === true, "production-owner focused gates must remain green");
-assert(project.current.k3WorkProportionalKvWriteState === "artifact-emitted-hardware-pending", "K3 validation state drifted");
+assert(project.current.k3WorkProportionalKvWriteState === "artifact-emitted-target-smoke-observed", "K3 validation state drifted");
 assert(project.current.k3WorkProportionalKvWriteIntegrated === true, "K3 source must remain integrated");
 assert(project.current.k3WorkProportionalSpeedupMeasured === false, "K3 must not claim a measured speedup");
 assert(project.current.fe2o3CurrentRepinActive === false, "integrated fe2o3 repin must not remain active");
@@ -1018,7 +1065,7 @@ assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existin
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
 assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
-assert(project.current.currentAggregateHardwareRunPending === true, "current aggregate hardware run must remain pending");
+assert(project.current.currentAggregateHardwareRunPending === false, "completed aggregate hardware run must not remain pending");
 assert(project.current.currentQualificationState === "developer-qualification-passed-frozen-bb50", "current-source qualification state drifted");
 assert(project.current.currentQualificationComponentMatrixPassed === true, "current-source component matrix must remain passed");
 assert(project.current.currentQualificationFullRunStarted === true, "full current-source qualifier must remain started");
@@ -1033,23 +1080,39 @@ assert(project.current.currentQualificationPositiveErrors === 0, "positive proof
 assert(project.current.currentQualificationPositiveBodies === 694, "positive proof body count drifted");
 assert(project.current.currentQualificationNegativeActualBodyMutationsPassed === true, "negative actual-body semantic mutations must remain passed");
 assert(project.current.currentQualificationNegativeAndQualityComplete === true, "completed developer qualifier gates must remain complete");
-assert(project.current.latestFe2o3AggregateEmitted === false, "a public-0ea aggregate must not be claimed before emission");
-assert(project.current.latestFe2o3AggregateBuildActive === true, "matching public-0ea aggregate build must remain underway");
-assert(project.current.latestFe2o3HostCombinedChecksActive === true, "latest combined host checks must remain underway");
-assert(project.current.currentHostArtifactPreDeviceProbeIncludesKfdAdmission === true, "pre-device probe must retain KFD admission");
-assert(project.current.currentHostArtifactPreDeviceProbeIncludesTopologyEnumeration === true, "pre-device probe must retain topology enumeration");
-assert(project.current.currentHostArtifactPreDeviceProbeIncludesInitialize === false, "pre-device probe must exclude initialization");
-assert(project.current.currentHostArtifactPreDeviceProbeIncludesHbm === false, "pre-device probe must exclude HBM upload");
+assert(project.current.latestFe2o3AggregateEmitted === true, "the emitted public-0ea aggregate must remain recorded");
+assert(project.current.latestFe2o3AggregateBuildActive === false, "completed public-0ea aggregate build must not remain active");
+assert(project.current.latestFe2o3HostCombinedChecksActive === false, "completed host checks must not remain active");
+assert(project.current.prior428HostArtifactPreDeviceProbeIncludesKfdAdmission === true, "pre-device probe must retain KFD admission");
+assert(project.current.prior428HostArtifactPreDeviceProbeIncludesTopologyEnumeration === true, "pre-device probe must retain topology enumeration");
+assert(project.current.prior428HostArtifactPreDeviceProbeIncludesInitialize === false, "pre-device probe must exclude initialization");
+assert(project.current.prior428HostArtifactPreDeviceProbeIncludesHbm === false, "pre-device probe must exclude HBM upload");
 assert(project.current.latestFe2o3KfdDescriptorProbeIncludesGpu === false, "descriptor CPU probe must exclude GPU work");
 assert(project.current.mi300xGpuCount === 8, "shared MI300X count drifted");
-assert(project.current.mi300xGpuAvailableForFerric === false, "site must not claim a free Ferric GPU");
+assert(project.current.mi300xQwen32GpuUseObserved === true, "the exact GPU 3 observation must remain scoped to the completed run");
 assert(project.current.sha256FastPathEndToEndGainClaimed === false, "SHA microbenchmark must not become an end-to-end gain claim");
 assert(project.current.startupDiagnosticsDefaultEnabled === false, "engineering diagnostics must remain opt-in");
 assert(project.current.startupDiagnosticsStderrOnly === true, "engineering diagnostics must remain stderr-only");
 assert(project.current.startupDiagnosticsChangesJson === false, "engineering diagnostics must not change JSON");
 assert(project.current.startupDiagnosticsChangesControllerTiming === false, "engineering diagnostics must not change controller timing");
 assert(project.current.qwenReference32Available === true, "32-token Qwen reference must remain available");
-assert(project.current.ferricQwen32ComparisonComplete === false, "Ferric 32-token comparison must remain pending");
+assert(project.current.ferricQwen32ComparisonComplete === true, "Ferric 32-token comparison must remain complete");
+assert(project.current.ferricQwen32RunActive === false, "completed 32-token run must not remain active");
+assert(project.current.latestFe2o3HostCombinedChecksPassed === true, "combined host PASS must remain explicit");
+assert(project.current.plannerTopologyPolicyPassed === true, "integrated planner PASS must remain explicit");
+assert(project.current.plannerTopologyProtectedReceiptEmitted === false, "planner policy must not become a protected receipt");
+assert(project.current.currentAggregateCompilerCommit === project.current.fe2o3LatestMain, "current aggregate must bind the actual public-0ea compiler");
+assert(project.current.currentAggregateSourceCommit !== project.current.integrationCommit, "artifact emission source must remain distinct from later integration");
+assert(project.current.latestFe2o3HostCombinedSourceCommit !== project.current.integrationCommit, "runtime host source must remain distinct from later integration");
+assert(project.current.ferricQwen32GeneratedTokenIds.length === 32, "hardware observation must retain exactly 32 IDs");
+assert(project.current.ferricQwen32PostFirstTokenGaps === project.current.ferricQwen32GeneratedTokenCount - 1, "mean gap denominator must be 31");
+assert(Math.abs((project.current.ferricQwen32LastTokenSeconds - project.current.ferricQwen32TtftSeconds) / 31 - project.current.ferricQwen32PostFirstSecondsPerToken) < 1e-12, "diagnostic post-first timing arithmetic drifted");
+assert(Math.abs(project.current.ferricQwen32CpuKfdSetupSeconds + project.current.ferricQwen32InitializationSeconds - project.current.ferricQwen32SetupSeconds) < 1e-12, "setup boundary arithmetic drifted");
+assert(project.current.ferricQwen32R33TpotCardinalityEligible === true && project.current.ferricQwen32AuthenticatedR33 === false, "arithmetic cardinality must not imply R33 authority");
+assert(project.current.ferricQwen32BenchmarkComparable === false && project.current.ferricQwen32NumericallyQualified === false, "single-prompt match must not imply a benchmark or numerical qualification");
+for (const key of ["currentAggregatePublicationGrant", "currentAggregateLoadGrant", "currentAggregateLaunchGrant", "ferricQwen32CompilerOriginAuthenticated", "ferricQwen32CurrentPublicationSelected", "ferricQwen32WorkerV3Authenticated"]) {
+  assert(project.current[key] === false, `${key} must remain false`);
+}
 assert(project.current.fe2o3KfdInitializationGatesGreen === true, "KFD initialization gates must remain green");
 assert(project.current.fe2o3KfdOneGibBeforeSeconds === 76.512, "1 GiB prior timing drifted");
 assert(project.current.fe2o3KfdOneGibAfterSeconds === 6.15, "1 GiB current timing drifted");
@@ -1198,8 +1261,8 @@ assertState(project.latestObservation.state, "latestObservation.state");
 assert(project.latestObservation.state === "observed", "current aggregate checkpoint must remain observed");
 assert(!("commit" in project.latestObservation), "unpublished Ferric source must use source status rather than a public commit link");
 assert(
-  JSON.stringify(project.latestObservation.generatedTokenIds) === "[]",
-  "artifact-only checkpoint must not invent token IDs",
+  JSON.stringify(project.latestObservation.generatedTokenIds) === JSON.stringify(project.current.ferricQwen32GeneratedTokenIds),
+  "latest hardware checkpoint must retain the exact 32 generated token IDs",
 );
 
 assert(Array.isArray(project.recentProgress) && project.recentProgress.length >= 4, "progress ledger is incomplete");
@@ -1235,7 +1298,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "2af5494b9d2a1f75cb63722505a734ba8855b83b",
+  "042b40b4521e202766d484269d169b5ccaeaa200",
   "bc6b3a50096854ace496b691933295930066fc04",
   "8b10db06d29d0550b8ce2cadfddc007360016a92",
   "6ef78dc4534317384f7275115c5e77a8b1acb702",
@@ -1243,6 +1306,15 @@ const missingSnapshotClaims = [
   "bb50d0e0c71e44271b892120c208650bd444f684",
   "7f3f23579b0adfac8ad7357fbf1246ab4b05dc95",
   "c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b",
+  "eb219f0f850dfa139d49c1cd303fd292539725fc",
+  "046029d7be3043469b41ef8614ddd26beb8d4bbf",
+  "d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40",
+  "33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d",
+  "5d40961ec2fd365835867251330072674bdf16dc48a18c4c2bc446bcd60f28b8",
+  "d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44",
+  "354 deterministic slots",
+  "712-record source closure",
+  "arithmetic cardinality only",
   "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
   "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
   "42882993b3f84d60f38e398d2018cc9302e8fe19",
@@ -1253,7 +1325,7 @@ const missingSnapshotClaims = [
   "all 15 active",
   "26 GuardedStore",
   "exact replay",
-  "hardware run is pending",
+  "32/32 tokens",
   "1.115x",
   "1.119x",
   "0.49%",
@@ -1272,7 +1344,7 @@ const missingSnapshotClaims = [
   "711-record source-closure",
   "protected promotion",
   "all eight shared MI300X GPUs",
-  "Ferric has not run 32 tokens",
+  "all 32 token IDs exactly match both frozen Hugging Face reference passes",
   "a689418a737bf0b1cf71ec3742bca5702f083187",
   "ce9e0bc76238e569756473cf93ab8a4439062362",
   "b7a8545ed00ec948942690f89b2cbe891d46f836",

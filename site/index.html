@@ -61,7 +61,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-08">Updated 2026-09-08</time>
+              <time data-updated datetime="2026-09-09">Updated 2026-09-09</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -219,7 +219,7 @@
             <h2 id="next-title">Review the remaining authority paths</h2>
           </div>
           <p>
-            Private integration bc6b3a5, tree 8b10db0, pins all 15 active compiler/runtime locks to
+            Private integration eb219f0, tree 046029d, pins all 15 active compiler/runtime locks to
             published public fe2o3 0ea54ed with no registry drift. It retains the production owner,
             resident allocation repair, K3 work-proportional KV-write, verified 63e SHA-256
             full-block updates, and 6ef opt-in engineering startup diagnostics. The diagnostics are
@@ -229,49 +229,63 @@
             end-to-end gain is claimed.
             The production-used same-shape core measures 0 allocations and 0 reallocations for one
             round and repeated 16-round execution; a positive control confirms allocator counting.
-            The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests.
+            The prior host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests.
             Integrated engine check, strict Clippy, and focused allocation validation also pass.
             This is scoped host evidence, not a claim that the entire externally authorized public
             entry is allocation-free. No accepted authenticated 20-window run exists.
 
             The exact canonical Qwen3-8B target, Qwen3-0.6B draft, tokenizer, weights, and numerical
-            input bundle is prepared. A prior target-only run generated 8/8 coherent tokens as
-            " Paris. The capital of Italy is Rome" with hardware completion. Its diagnostic timing
-            was 13.649661699s TTFT, 2.7656050044 seconds per post-first token, and 34.094s total
-            controller duration. Authority is none and benchmark_comparable=false; this remains
-            technical prequalification only. An independent Hugging Face/PyTorch reference produced
-            two identical 32-token greedy passes and retains
-            the same 8-token prefix, but Ferric has not run the 32-token comparison. The prior
-            14.36s TTFT and approximately 3.05s TPOT observation used the wrong GEMM layout and is
-            invalid and noncomparable. Authenticated R33 remains blocked on the external
-            supervisor/current-record/verifier/model/artifact authority bundle.
+            input bundle is prepared. The current target-only run completed 32/32 generated tokens
+            on MI300X GPU 3 with status 0 and hardware completion true. All 32 token IDs match both
+            frozen Hugging Face/PyTorch reference passes for the single prompt "The capital of France is".
+            Exact runtime host a6a3f2e used aggregate d33933a emitted from Ferric source 9392755;
+            later integration eb219f0 is not the runtime source. Observation SHA-256 is
+            d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.
+            Diagnostic TTFT was 13.442289487s and mean post-first gap was 2.769104887645161s over
+            31 gaps. Last-token offset was 99.284541004s and controller duration was 100.370762336s.
+            Setup was 246.065540159s: CPU/KFD preparation 82.938930765s plus
+            initialization/allocation/upload 163.126609394s. Whole-process wall was 346.46s.
+            TTFT excludes setup. Startup uses std::Instant while the controller uses MONOTONIC_RAW;
+            cross-clock sums are approximate. These boundaries are not serving latency.
+            Authority is none and benchmark_comparable=false.
+            The r33_tpot_eligible=true field reflects arithmetic cardinality only, not R33 authority.
+
+            The earlier corrected-layout observation remains historical: 8/8 coherent tokens as
+            " Paris. The capital of Italy is Rome", 13.649661699s TTFT,
+            2.7656050044 seconds per post-first token, and 34.094s controller duration.
+            The older 14.36s TTFT and approximately 3.05s TPOT observation used the wrong GEMM layout
+            and is invalid and noncomparable. None of these runs is a controlled K3 speedup comparison.
+            Authenticated R33 still needs the external supervisor/current-record/verifier/model/artifact authority bundle.
 
             Ferric owns its model-specific kernels and inference semantics, and writes those kernels
-            through fe2o3's Rust-to-KIR-to-LLVM compiler path. Published fe2o3 public main is now
+            through fe2o3's Rust-to-KIR-to-LLVM compiler path. Published fe2o3 public main is
             0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree
-            15f49dde796fe9cbf76274f7d36c7de4c25fef68. The source pin is integrated at bc6b3a5;
-            a matching engineering aggregate and combined host checks are underway, and a new
-            0ea artifact has not been emitted. The current authority-free aggregate remains built
-            with public 42882993 and emitted with 26 GuardedStore operations and exact
-            replay: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a,
-            HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804,
-            and handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5.
-            A CPU-only pre-device probe completed in 98.23 seconds after KFD admission and topology
-            enumeration; it excludes initialize_memory, HBM upload, and dispatch. An independent public-0ea descriptor probe hashed
-            97.313 GiB in 58.133 seconds and also excludes GPU work. Frozen qualifier source bb50d0e
-            passed the complete developer qualifier: all 10 positive proof packages with 1,586
-            queries, 0 errors, and 694 bodies, negative actual-body semantic mutations, workspace
-            quality/runtime checks, 197/197 receipt-file hash checks, and a 711-record source-closure
-            check. Receipt SHA-256 is
-            c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b. It excludes later
-            63e/6ef/bc6/0ea changes and protected promotion planner/test policy. At the latest
-            availability checkpoint, all eight shared MI300X
-            GPUs were occupied by other users, so the
-            Ferric 32-token run has not started and there is no new TTFT, TPOT, vLLM, or SGLang
-            comparison. Authority is none, protected infrastructure is absent, and all 33 M1
-            exit gates remain open. There is no serving endpoint, authenticated A/B, production
-            TTFT/TPOT, vLLM/SGLang comparison, benchmark, qualification receipt, or production
-            authority.
+            15f49dde796fe9cbf76274f7d36c7de4c25fef68, confirmed September 9.
+            The matching engineering aggregate emitted all 12 kernels with 26 GuardedStore operations
+            and exact replay: content ID d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40,
+            HSACO SHA-256 33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d,
+            and handoff SHA-256 5d40961ec2fd365835867251330072674bdf16dc48a18c4c2bc446bcd60f28b8.
+            This CPU-only emission opened no GPU and grants no publication, load, or launch authority.
+            The earlier 428 host plus aggregate 528 pre-device probe completed in 98.23 seconds after
+            KFD admission and topology enumeration; it excludes initialize_memory, HBM upload, and dispatch.
+            An independent public-0ea descriptor probe hashed 97.313 GiB in 58.133 seconds and also excludes GPU work.
+
+            Combined host checks at a6a3f2e passed formatting, 10 speculative tests, 17 target tests
+            with one real-GPU test ignored, 20 source-policy tests, strict Clippy, both smoke builds,
+            and 36 source-gate tests. All seven generated records matched, retaining 171 modules and
+            8,207 executable bodies; the 712-record source closure was unchanged.
+            Integrated planner policy at eb219f0 passed 354 deterministic slots and the hostile
+            pin, source, path, publication, topology, and closure-output suite.
+            These scoped checks are not a full Verus rerun or a protected M1 receipt.
+
+            Frozen qualifier source bb50d0e passed the complete developer qualifier: all 10 positive proof packages
+            with 1,586 queries, 0 errors, and 694 bodies, negative actual-body semantic mutations,
+            workspace quality/runtime checks, 197/197 receipt-file hash checks, and a 711-record source-closure check.
+            Receipt SHA-256 c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b
+            excludes all later 63e/6ef/0ea/eb219f0 changes and protected promotion planner/test policy.
+            Protected infrastructure is absent and all 33 M1 exit gates remain open. There is no serving
+            endpoint, authenticated A/B, production TTFT/TPOT, vLLM/SGLang baseline, comparable benchmark,
+            protected M1 qualification receipt, or production authority.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
             Read the full roadmap <span aria-hidden="true">→</span>
