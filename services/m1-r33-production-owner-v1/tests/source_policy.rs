@@ -59,7 +59,7 @@ fn manifest_pins_all_direct_dependencies_and_release_abort_policy() {
     let manifest = fs::read_to_string(root.join("Cargo.toml")).unwrap();
     assert!(manifest.contains("panic = \"abort\""));
     assert!(manifest.contains("rust-version = \"1.97.1\""));
-    assert!(manifest.contains("rev = \"0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71\""));
+    assert!(manifest.contains("rev = \"a8b016e14ca8c77c9e7abe4591086f7cab11ce61\""));
     for dependency in ["rustix", "serde", "serde_json", "sha2"] {
         let line = manifest
             .lines()

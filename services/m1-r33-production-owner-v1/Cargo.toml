@@ -9,8 +9,8 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "a8b016e14ca8c77c9e7abe4591086f7cab11ce61", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "a8b016e14ca8c77c9e7abe4591086f7cab11ce61", version = "=0.1.0" }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-m1-engineering-execution-v1 = { path = "../../adapters/m1-engineering-execution-v1", version = "=0.1.0" }
