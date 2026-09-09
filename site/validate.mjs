@@ -78,7 +78,32 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "042b40b4521e202766d484269d169b5ccaeaa200",
+  siteRefreshBase: "883de3732fa499de026a83b0ef98951788a3a1f5",
+  mi350DeviceObservationGpuCount: 8,
+  mi350DeviceObservationProfileSha256: "6f859b0a67f8ee2497393206930ff35bf1a9ae69d33f172106a790a0c9226667",
+  mi350DeviceObservationDescriptorCleanup: true,
+  mi350KfdUnitTestsPassed: 420,
+  mi350KfdIntegrationTestsPassed: 20,
+  mi350KfdDoctestsPassed: 27,
+  mi350QueueImplemented: false,
+  mi350QwenExecuted: false,
+  tensorParallelWorldSizes: [1, 2, 8],
+  tensorParallelSourceCommit: "3674f36ba2a12165298e6085469887152424262b",
+  tensorParallelRustTestsPassed: 9,
+  tensorParallelVerusQueries: 36,
+  tensorParallelVerusErrors: 0,
+  tensorParallelBodyMutantsRejected: 8,
+  tensorParallelCollectiveTransportImplemented: false,
+  tensorParallelQwenExecuted: false,
+  dualTargetKernelSourceCommit: "296bb98e62c3ce41c085c67aefd61ca667df8fee",
+  gfx950EngineeringContentId: "431f1e294d5018e0f057d490495921a1983bac0c25e4e900c3f72a05350b3f84",
+  gfx950HsacoSha256: "2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222",
+  gfx950HsacoBytes: 103616,
+  gfx950KernelCount: 12,
+  gfx950GuardedStoreCount: 26,
+  gfx950ExactReplayMatch: true,
+  gfx950LoaderKernelsValidated: 12,
+  gfx950ArtifactAuthority: "none",
   integrationCommit: "eb219f0f850dfa139d49c1cd303fd292539725fc",
   integrationTree: "046029d7be3043469b41ef8614ddd26beb8d4bbf",
   sha256FastPathCommit: "63e0f7fc4ed84f6c4717afc2a960e8334118c5b9",
@@ -388,8 +413,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71",
-  fe2o3LatestTree: "15f49dde796fe9cbf76274f7d36c7de4c25fef68",
+  fe2o3LatestMain: "a8b016e14ca8c77c9e7abe4591086f7cab11ce61",
+  fe2o3LatestTree: "3b14f1e5e1ce800e07ec05638d85d61100c1b04e",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: false,
@@ -1101,7 +1126,7 @@ assert(project.current.ferricQwen32RunActive === false, "completed 32-token run 
 assert(project.current.latestFe2o3HostCombinedChecksPassed === true, "combined host PASS must remain explicit");
 assert(project.current.plannerTopologyPolicyPassed === true, "integrated planner PASS must remain explicit");
 assert(project.current.plannerTopologyProtectedReceiptEmitted === false, "planner policy must not become a protected receipt");
-assert(project.current.currentAggregateCompilerCommit === project.current.fe2o3LatestMain, "current aggregate must bind the actual public-0ea compiler");
+assert(project.current.currentAggregateCompilerCommit === "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71", "historical MI300X Qwen32 aggregate must retain its actual public-0ea compiler, not latest main");
 assert(project.current.currentAggregateSourceCommit !== project.current.integrationCommit, "artifact emission source must remain distinct from later integration");
 assert(project.current.latestFe2o3HostCombinedSourceCommit !== project.current.integrationCommit, "runtime host source must remain distinct from later integration");
 assert(project.current.ferricQwen32GeneratedTokenIds.length === 32, "hardware observation must retain exactly 32 IDs");
@@ -1298,7 +1323,17 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "042b40b4521e202766d484269d169b5ccaeaa200",
+  "883de3732fa499de026a83b0ef98951788a3a1f5",
+  "All eight MI350X gfx950 devices",
+  "TP1/2/8",
+  "not MI350 Qwen execution",
+  "36 selected Verus queries with 0 errors",
+  "8 rejected actual-body mutations",
+  "a8b016e14ca8c77c9e7abe4591086f7cab11ce61",
+  "3b14f1e5e1ce800e07ec05638d85d61100c1b04e",
+  "2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222",
+  "All 12 passed host loader closure/materialization",
+  "active Ferric repin checks remain pending",
   "bc6b3a50096854ace496b691933295930066fc04",
   "8b10db06d29d0550b8ce2cadfddc007360016a92",
   "6ef78dc4534317384f7275115c5e77a8b1acb702",
