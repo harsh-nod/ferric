@@ -7,6 +7,11 @@ publish = false
 
 [workspace]
 
+[features]
+default = ["gfx942"]
+gfx942 = []
+gfx950 = []
+
 [dependencies]
 fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71", version = "=0.1.0" }
 
@@ -14,7 +19,7 @@ fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "0ea54ed9
 fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71", version = "=0.1.0" }
 
 [dev-dependencies]
-syn = { version = "2", features = ["full"] }
+syn = { version = "2", features = ["full", "visit"] }
 
 [lib]
 name = "ferric_qwen3_all_kernels_device_v1"

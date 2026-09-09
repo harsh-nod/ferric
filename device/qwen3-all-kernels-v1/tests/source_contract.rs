@@ -14,7 +14,7 @@ const FAMILY_SOURCES: [(&str, &str); 7] = [
 ];
 
 #[test]
-fn aggregate_root_owns_the_seven_canonical_sources() {
+fn aggregate_root_owns_the_seven_canonical_sources_and_target_contract() {
     let root = syn::parse_file(ROOT).expect("aggregate root parses as ordinary Rust");
     let modules = root
         .items
@@ -39,7 +39,8 @@ fn aggregate_root_owns_the_seven_canonical_sources() {
             "prefill",
             "rmsnorm",
             "rope_kv",
-            "swiglu"
+            "swiglu",
+            "target"
         ]
     );
 }
@@ -59,6 +60,11 @@ fn shared_family_sources_expose_exactly_twelve_kernel_roots() {
                         .iter()
                         .any(|attribute| attribute.path().is_ident("kernel")) =>
                 {
+                    assert!(function.attrs.iter().all(|attribute| {
+                        !attribute.path().is_ident("cfg")
+                            && !attribute.path().is_ident("cfg_attr")
+                            && !attribute.path().is_ident("target_feature")
+                    }));
                     Some((family, function.sig.ident.to_string()))
                 }
                 _ => None,
@@ -97,6 +103,60 @@ fn shared_family_sources_expose_exactly_twelve_kernel_roots() {
             ("swiglu", "qwen3_swiglu_bf16_f32_v1".to_owned()),
         ]
     );
+}
+
+#[test]
+fn both_targets_use_the_same_unconditional_kernel_bodies() {
+    use syn::visit::Visit;
+
+    struct UnconditionalSource;
+
+    impl<'ast> Visit<'ast> for UnconditionalSource {
+        fn visit_attribute(&mut self, attribute: &'ast syn::Attribute) {
+            if attribute.path().is_ident("cfg") {
+                assert!(
+                    attribute
+                        .parse_args::<syn::Path>()
+                        .is_ok_and(|path| path.is_ident("test"))
+                );
+                return;
+            }
+            for forbidden in ["cfg_attr", "target_feature"] {
+                assert!(!attribute.path().is_ident(forbidden));
+            }
+            syn::visit::visit_attribute(self, attribute);
+        }
+
+        fn visit_macro(&mut self, invocation: &'ast syn::Macro) {
+            assert!(!invocation.path.is_ident("cfg"));
+            syn::visit::visit_macro(self, invocation);
+        }
+
+        fn visit_lit_str(&mut self, literal: &'ast syn::LitStr) {
+            assert!(!literal.value().starts_with("gfx"));
+        }
+    }
+
+    for (family, source) in FAMILY_SOURCES {
+        let parsed = syn::parse_file(source)
+            .unwrap_or_else(|error| panic!("{family} source does not parse: {error}"));
+        UnconditionalSource.visit_file(&parsed);
+    }
+    for changed in [
+        "#[cfg(feature = \"gfx950\")] fn kernel() {}",
+        "#[cfg_attr(feature = \"gfx950\", inline)] fn kernel() {}",
+        "#[target_feature(enable = \"wavefrontsize32\")] fn kernel() {}",
+        "fn kernel() { let _ = cfg!(feature = \"gfx950\"); }",
+        "fn kernel() { let _ = \"gfx950:xnack-\"; }",
+    ] {
+        assert!(
+            std::panic::catch_unwind(|| {
+                UnconditionalSource.visit_file(&syn::parse_file(changed).unwrap());
+            })
+            .is_err(),
+            "accepted target-dependent source mutation: {changed}"
+        );
+    }
 }
 
 #[test]

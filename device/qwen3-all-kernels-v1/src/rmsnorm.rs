@@ -15,8 +15,8 @@ use fe2o3_device::{
 pub const QWEN3_RMSNORM_KERNEL_SYMBOL_V1: &str = "qwen3_rmsnorm_v1";
 /// Exact AMDHSA descriptor symbol retained by the authoritative artifact contract.
 pub const QWEN3_RMSNORM_KERNEL_DESCRIPTOR_SYMBOL_V1: &str = "qwen3_rmsnorm_v1.kd";
-/// Exact AMD GPU target retained by the authoritative compiler lane.
-pub const QWEN3_RMSNORM_TARGET_V1: &str = "gfx942:xnack-";
+/// Exact AMD GPU target selected by the containing compilation unit.
+pub const QWEN3_RMSNORM_TARGET_V1: &str = crate::target::QWEN3_DEVICE_TARGET_V1;
 /// Exact code-object version retained by the authoritative compiler lane.
 pub const QWEN3_RMSNORM_CODE_OBJECT_VERSION_V1: u8 = 6;
 /// Exact workgroup size in workitems.

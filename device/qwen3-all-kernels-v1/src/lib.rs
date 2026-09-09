@@ -11,6 +11,7 @@ pub mod prefill;
 pub mod rmsnorm;
 pub mod rope_kv;
 pub mod swiglu;
+pub mod target;
 
 #[cfg(not(target_arch = "amdgpu"))]
 mod host_roster {
