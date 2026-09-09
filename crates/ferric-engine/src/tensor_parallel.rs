@@ -706,5 +706,4 @@ impl Qwen3TensorParallelCollectiveStateV1 {
 } // verus!
 
 #[cfg(test)]
-#[path = "tensor_parallel_tests.rs"]
 mod tests;
