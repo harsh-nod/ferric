@@ -3,9 +3,71 @@
 Updated: 2026-09-09. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
+## MI350 And Eight-Rank Work
+
+The September 9 MI350 work is a separate, in-progress extension, not an M1
+qualification or an eight-GPU Qwen result. Compiler/runtime changes track
+[fe2o3 #274](https://github.com/harsh-nod/fe2o3/issues/274).
+
+| Team | Current Slice | Status |
+| --- | --- | --- |
+| Core runtime | Explicit gfx950 topology discovery, COV6 loader profile, and a separate checked device-observation token with no execution authority | 420 KFD unit tests, 20 integration tests, and 27 doctests pass, along with scoped strict Clippy. All eight MI350X devices pass repeated no-queue bind/currentness/drop checks without descriptor leaks. All twelve kernels in the genuine gfx950 object pass loader/materialization and both old gfx942 dispatch-path rejection tests. Independent review passes. |
+| Compiler integration | Target-bound engineering artifact production and additive AMDGPU compiler-handoff extraction; measured library function targets checked after import selection and before optimization | 518 backend, 17 CLI, 7 finalizer, 16 extractor, and 2 export-simulator tests pass. Four native-worker suites pass, including selected incompatible helper rejection with optional verification disabled. Both target emissions and exact replay pass. Published on fe2o3 main through `a8b016e14`. |
+| Ferric kernels | Explicit mutually exclusive gfx942/gfx950 aggregate features over the same twelve kernel bodies; both target helper files bound into the build source closure | 33 aggregate tests per target and 21 historical RMSNorm wrapper tests pass. Updated build/release policy tests pass. Both twelve-kernel emissions pass with the same final native worker; gfx942 bytes are unchanged by the worker fix. |
+| Tensor parallelism | Qwen3 1/2/8-rank head/weight partitioning, actual BF16 shard-row copying, and ordered collective readiness epochs | Direct Verus passes 36 obligations with zero errors. All 9 release tests and 8 actual-body mutation checks pass; strict Clippy and independent review pass. Integrated in `4afe852`. |
+
+The combined Ferric host checkpoint at `4afe852` passes 645 engine tests (9
+separately gated tests ignored), 38 source-gate tests, formatting, strict
+Clippy, and source admission. Its inventory has 172 modules and 8,228 executable
+bodies: exactly one new module and 21 directly verified bodies, with no added
+unverified bodies. Protected runtime feature resolution remains gfx942-only.
+
+The active Ferric pin is now public fe2o3
+`a8b016e14ca8c77c9e7abe4591086f7cab11ce61`, integrated locally in `c092df2`.
+All fifteen locked graphs resolve, with no registry-version drift; independently
+reviewed dependency records and the rebuilt source-pin adapter binding match.
+The final-pin remote run passes 645 engine tests (9 ignored), 38 source-gate
+tests, source-gate strict Clippy, formatting, property binding, and full source
+admission. SSH connectivity failed during the subsequent engine Clippy step.
+Its exit status, the remaining adapter/source-policy checks, four isolated
+allocation tests, and fresh engineering host release checks are not yet
+confirmed. No local build/test fallback is used.
+
+The new gfx950 engineering object is 103,616 bytes, SHA-256
+`2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222`,
+content ID `431f1e294d5018e0f057d490495921a1983bac0c25e4e900c3f72a05350b3f84`.
+It contains twelve Wave64 kernels with COV6 and exact replay; all authority
+grants are false. Component provenance remains explicit: Ferric kernel source
+`296bb98`, device dependencies `0ea54ed9`, compiler tool images `24e842d70`,
+and final native-worker source `a9ea16247`. The matching gfx942 object has
+content ID `fa6ccd9130001647932502d13092ca44f7ec78c9580984c96ce28f34710ab670`
+and is byte-identical to the pre-worker-fix regression object. Neither object
+is relabeled as a final-pin Ferric rebuild or a GPU execution observation.
+
+Compiler-wide Clippy and aggregate-kernel Clippy are not reported as clean:
+the existing backend has 344 source-attributed diagnostics, and the aggregate
+retains 104 baseline kernel-body diagnostics. The changed compiler CLI/finalizer,
+runtime, engine, source gate, and kernel build helpers pass their scoped strict
+checks; no broad lint suppression or unrelated kernel rewrite was added.
+
+The executable MI350 queue/service path, collective transport, rank-local GPU
+dispatch, and 1/2/8-GPU Qwen validation remain unimplemented. No gfx942 artifact
+or device authority may be relabeled as gfx950. Builds/tests stay on `mi300x`;
+target-specific MI350 hardware checks use `mi350`. Symmetric memory and MTP
+remain deferred.
+
+At the connectivity interruption, all completed agent-owned remote stages and
+local worktrees had been removed. The integration worktree remains active.
+Root-owned `mi300x` stages `/tmp/fe2-mi350-engineering.B01UxK` (13 GiB at the
+last check) and `/tmp/ferric-mi350-integration.2WTV7c` (1.9 GiB at the last
+check) still require final evidence recovery and cleanup. No other user's
+processes, directories, or networking settings were modified.
+
+## Historical M1 Checkpoint
+
 | Team | Implemented And Checked | Current Work |
 | --- | --- | --- |
-| Integration and runtime | Active fe2o3 dependencies pinned to published `0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`; all 15 lockfiles, dependency records, and the rebuilt source-pin adapter binding pass independent review without unrelated registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates and opt-in startup phase diagnostics are integrated. Combined host checks at `a6a3f2e` and the 32-token Qwen comparison pass. | Broaden the numerical workloads and profile remaining token latency. Authenticated serving still requires the protected authority bundle. |
+| Integration and runtime | This checkpoint used published fe2o3 `0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`; all 15 lockfiles, dependency records, and the rebuilt source-pin adapter binding passed independent review without unrelated registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates and opt-in startup phase diagnostics are integrated. Combined host checks at `a6a3f2e` and the 32-token Qwen comparison pass. | Broaden the numerical workloads and profile remaining token latency. Authenticated serving still requires the protected authority bundle. |
 | Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The matching `0ea54ed9` 12-kernel aggregate emits successfully with exact replay and passes independent review. | Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No controlled K3 speedup has been measured. |
 | Verification | The complete developer qualifier passed on frozen `bb50d0e`: 1,586 selected Verus queries, zero errors, 694 admitted bodies, actual-body negative mutations, and all listed formatting, strict Clippy, debug/release and all-feature test gates. The receipt's 197 files pass hash validation. This checkpoint excludes the later SHA optimization, diagnostics, and `0ea54ed9` repin. The separate planner repair at `eb219f0` passes the positive plan and dependency rejection cases against `0ea54ed9`. Independent review accepts the new 32-token engineering observation. | The protected M1 qualification gates remain outside the developer receipt, the planner's synthetic policy tests, and this single-prompt hardware check. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
@@ -57,7 +119,7 @@ The current Ferric run matches that reference across logical KV positions 16
 and 32. These are not physical page boundaries (the KV page size is 256).
 These short reference checks do not establish full-model numerical qualification.
 
-The current engineering artifact, compiled with `0ea54ed9`, has content ID
+The artifact used for this Qwen observation, compiled with `0ea54ed9`, has content ID
 `d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40`
 and HSACO SHA-256
 `33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d`.
