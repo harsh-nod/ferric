@@ -87,6 +87,7 @@ DEVICE_SOURCE_RELATIVES = (
     PurePosixPath("device/qwen3-all-kernels-v1/Cargo.lock"),
     PurePosixPath("device/qwen3-all-kernels-v1/Cargo.toml"),
     PurePosixPath("device/qwen3-all-kernels-v1/build.rs"),
+    PurePosixPath("device/qwen3-all-kernels-v1/build/target_contract.rs"),
     PurePosixPath("device/qwen3-all-kernels-v1/rust-toolchain.toml"),
     PurePosixPath("device/qwen3-all-kernels-v1/src/gemm.rs"),
     PurePosixPath("device/qwen3-all-kernels-v1/src/lib.rs"),
@@ -96,6 +97,7 @@ DEVICE_SOURCE_RELATIVES = (
     PurePosixPath("device/qwen3-all-kernels-v1/src/rmsnorm.rs"),
     PurePosixPath("device/qwen3-all-kernels-v1/src/rope_kv.rs"),
     PurePosixPath("device/qwen3-all-kernels-v1/src/swiglu.rs"),
+    PurePosixPath("device/qwen3-all-kernels-v1/src/target.rs"),
 )
 ADAPTER_SOURCE_RELATIVES = (
     PurePosixPath("adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.lock"),

@@ -72,6 +72,7 @@ mod step_workspace_composition;
 mod step_workspace_images;
 mod step_workspace_subleases;
 mod system;
+pub mod tensor_parallel;
 mod worker_v3_selector_manifest;
 
 pub use authenticated_kernel_acquisition::{

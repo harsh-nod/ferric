@@ -2258,6 +2258,19 @@ fn validate_local_runtime_owner_binding(
     Ok(())
 }
 
+fn validate_aggregate_runtime_features(package: &Value, node: &Value) -> GateResult<()> {
+    let expected = serde_json::json!({"default": ["gfx942"], "gfx942": [], "gfx950": []});
+    if package.get("features") != Some(&expected) {
+        return Err("aggregate runtime feature declarations drifted".to_owned());
+    }
+    if string_array(node, "features", "aggregate runtime resolved feature")?
+        != ["default", "gfx942"]
+    {
+        return Err("aggregate runtime must resolve only default gfx942 features".to_owned());
+    }
+    Ok(())
+}
+
 fn validate_local_runtime_package(
     repo: &Path,
     packages_by_id: &BTreeMap<&str, &Value>,
@@ -2379,7 +2392,7 @@ fn validate_local_runtime_package(
         || package.get("source").is_some_and(|value| !value.is_null())
         || package.get("links").is_some_and(|value| !value.is_null())
         || !publish.is_empty()
-        || !features.is_empty()
+        || (is_protected_verifier && !features.is_empty())
         || package
             .get("metadata")
             .is_some_and(|value| !value.is_null())
@@ -2536,7 +2549,9 @@ fn validate_local_runtime_package(
     let local_node = resolve_nodes
         .get(package_id)
         .ok_or_else(|| format!("local runtime package has no resolve node: {name}"))?;
-    if !string_array(local_node, "features", "local runtime resolved feature")?.is_empty() {
+    if is_protected_verifier
+        && !string_array(local_node, "features", "local runtime resolved feature")?.is_empty()
+    {
         return Err(format!(
             "local runtime package resolved features drifted: {name}"
         ));
@@ -2553,6 +2568,7 @@ fn validate_local_runtime_package(
         )?;
         return Ok(true);
     }
+    validate_aggregate_runtime_features(package, local_node)?;
     let local_edges = local_node
         .get("deps")
         .and_then(Value::as_array)
@@ -4932,6 +4948,7 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
         "rmsnorm",
         "rope_kv",
         "swiglu",
+        "target",
     ];
     let mut modules = Vec::new();
     let mut host_roster = None;
@@ -7521,6 +7538,59 @@ mod tests {
     #[test]
     fn aggregate_runtime_roster_source_is_exact() {
         assert_eq!(validate_aggregate_source(AGGREGATE_RUNTIME_SOURCE), Ok(()));
+    }
+
+    #[test]
+    fn aggregate_runtime_features_preserve_gfx942_only_admission() {
+        let package = json!({"features": {"default": ["gfx942"], "gfx942": [], "gfx950": []}});
+        let node = json!({"features": ["default", "gfx942"]});
+        assert_eq!(
+            super::validate_aggregate_runtime_features(&package, &node),
+            Ok(())
+        );
+        for declarations in [
+            json!({}),
+            json!({"default": ["gfx950"], "gfx942": [], "gfx950": []}),
+            json!({"default": ["gfx942", "gfx950"], "gfx942": [], "gfx950": []}),
+            json!({"default": ["gfx942"], "gfx942": []}),
+            json!({"default": ["gfx942"], "gfx942": ["gfx950"], "gfx950": []}),
+            json!({"default": ["gfx942"], "gfx942": [], "gfx950": ["dep:escape"]}),
+            json!({"default": ["gfx942"], "gfx942": [], "gfx950": [], "escape": []}),
+        ] {
+            assert!(super::validate_aggregate_runtime_features(
+                &json!({"features": declarations}),
+                &node
+            )
+            .is_err());
+        }
+        for resolved in [
+            json!([]),
+            json!(["gfx942"]),
+            json!(["default", "gfx950"]),
+            json!(["default", "gfx942", "gfx950"]),
+            json!(["default", "gfx942", "gfx942"]),
+        ] {
+            assert!(super::validate_aggregate_runtime_features(
+                &package,
+                &json!({"features": resolved})
+            )
+            .is_err());
+        }
+    }
+
+    #[test]
+    fn aggregate_runtime_roster_requires_exact_target_module() {
+        for replacement in [
+            "",
+            "mod target;\n",
+            "pub mod target {}\n",
+            "#[path = \"other.rs\"] pub mod target;\n",
+            "#[cfg(feature = \"gfx950\")] pub mod target;\n",
+            "pub mod target;\npub mod target;\n",
+        ] {
+            let changed = replace_once(AGGREGATE_RUNTIME_SOURCE, "pub mod target;\n", replacement);
+            assert!(validate_aggregate_source(&changed).is_err());
+        }
     }
 
     #[test]

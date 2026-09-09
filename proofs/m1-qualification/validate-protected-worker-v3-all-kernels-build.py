@@ -65,6 +65,7 @@ DEVICE_FILES = (
     "device/qwen3-all-kernels-v1/Cargo.lock",
     "device/qwen3-all-kernels-v1/Cargo.toml",
     "device/qwen3-all-kernels-v1/build.rs",
+    "device/qwen3-all-kernels-v1/build/target_contract.rs",
     "device/qwen3-all-kernels-v1/rust-toolchain.toml",
     "device/qwen3-all-kernels-v1/src/gemm.rs",
     "device/qwen3-all-kernels-v1/src/lib.rs",
@@ -74,6 +75,7 @@ DEVICE_FILES = (
     "device/qwen3-all-kernels-v1/src/rmsnorm.rs",
     "device/qwen3-all-kernels-v1/src/rope_kv.rs",
     "device/qwen3-all-kernels-v1/src/swiglu.rs",
+    "device/qwen3-all-kernels-v1/src/target.rs",
 )
 ADAPTER_FILES = (
     "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.lock",

@@ -39,6 +39,7 @@ SOURCE_FILES = (
     "Cargo.lock",
     "Cargo.toml",
     "build.rs",
+    "build/target_contract.rs",
     "rust-toolchain.toml",
     "src/gemm.rs",
     "src/lib.rs",
@@ -48,6 +49,7 @@ SOURCE_FILES = (
     "src/rmsnorm.rs",
     "src/rope_kv.rs",
     "src/swiglu.rs",
+    "src/target.rs",
 )
 ADAPTER_SOURCE_FILES = (
     "Cargo.lock",
@@ -534,6 +536,27 @@ def main() -> None:
             b"PASS: canonical aggregate protected Worker V3 build record sha256="
         ):
             fail(f"canonical validator rejected producer output: {validated.stdout!r}")
+
+        for index, relative in enumerate(("build/target_contract.rs", "src/target.rs")):
+            incomplete = copy.deepcopy(record)
+            omitted = f"device/qwen3-all-kernels-v1/{relative}"
+            incomplete["source"]["device_files"] = [
+                item for item in incomplete["source"]["device_files"]
+                if item["path"] != omitted
+            ]
+            incomplete_path = root / f"missing-target-source-{index}.json"
+            incomplete_path.write_bytes(canonical(incomplete))
+            rejected = subprocess.run(
+                [sys.executable, "-I", "-B", str(validator), str(incomplete_path)],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=30,
+            )
+            if rejected.returncode == 0 or (
+                b"FAIL: aggregate device source roster length drifted" not in rejected.stdout
+            ):
+                fail(f"validator accepted an omitted target source {relative}: {rejected.stdout!r}")
 
         old_v1 = copy.deepcopy(production_config)
         old_v1["format"] = "fe2o3-production-build-config-v1"

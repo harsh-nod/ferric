@@ -655,7 +655,7 @@ verifier-production-tcb=features=git+https://github.com/harsh-nod/pliron.git?rev
 verifier-production-tcb=features=git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487#pliron@0.17.0|default,std
 verifier-production-tcb=features=path+repo://adapters/qwen3-all-kernels-worker-v3-source-pin-v1#ferric-qwen3-all-kernels-worker-v3-source-pin-v1@0.1.0|none
 verifier-production-tcb=features=path+repo://adapters/qwen3-all-kernels-worker-v3-verifier-v1#ferric-qwen3-all-kernels-worker-v3-verifier-v1@0.1.0|none
-verifier-production-tcb=features=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|none
+verifier-production-tcb=features=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|default,gfx942
 verifier-production-tcb=features=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|perf-literal,std
 verifier-production-tcb=features=registry+https://github.com/rust-lang/crates.io-index#allocator-api2@0.2.21|alloc
 verifier-production-tcb=features=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|default,std
@@ -1182,6 +1182,7 @@ verifier-production-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qw
 verifier-production-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|ferric_qwen3_all_kernels_device_v1|lib|lib|2024|true|true|true|required-features=none|path=src/lib.rs
 verifier-production-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|marker_order|test|bin|2024|false|false|true|required-features=none|path=tests/marker_order.rs
 verifier-production-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|source_contract|test|bin|2024|false|false|true|required-features=none|path=tests/source_contract.rs
+verifier-production-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|target_contract|test|bin|2024|false|false|true|required-features=none|path=tests/target_contract.rs
 verifier-production-tcb=target=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|aho_corasick|lib|lib|2021|true|true|true|required-features=none|path=src/lib.rs
 verifier-production-tcb=target=registry+https://github.com/rust-lang/crates.io-index#allocator-api2@0.2.21|allocator_api2|lib|lib|2018|true|true|true|required-features=none|path=src/lib.rs
 verifier-production-tcb=target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|arraystring|bench|bin|2018|false|false|false|required-features=none|path=benches/arraystring.rs
@@ -2869,7 +2870,7 @@ verifier-dev-tcb=features=git+https://github.com/harsh-nod/pliron.git?rev=5bdf86
 verifier-dev-tcb=features=git+https://github.com/harsh-nod/pliron.git?rev=5bdf861bf03e7f20242b25717fb653336d02e487#pliron@0.17.0|default,std
 verifier-dev-tcb=features=path+repo://adapters/qwen3-all-kernels-worker-v3-source-pin-v1#ferric-qwen3-all-kernels-worker-v3-source-pin-v1@0.1.0|none
 verifier-dev-tcb=features=path+repo://adapters/qwen3-all-kernels-worker-v3-verifier-v1#ferric-qwen3-all-kernels-worker-v3-verifier-v1@0.1.0|none
-verifier-dev-tcb=features=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|none
+verifier-dev-tcb=features=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|default,gfx942
 verifier-dev-tcb=features=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|perf-literal,std
 verifier-dev-tcb=features=registry+https://github.com/rust-lang/crates.io-index#allocator-api2@0.2.21|alloc
 verifier-dev-tcb=features=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|default,std
@@ -3395,6 +3396,7 @@ verifier-dev-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all
 verifier-dev-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|ferric_qwen3_all_kernels_device_v1|lib|lib|2024|true|true|true|required-features=none|path=src/lib.rs
 verifier-dev-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|marker_order|test|bin|2024|false|false|true|required-features=none|path=tests/marker_order.rs
 verifier-dev-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|source_contract|test|bin|2024|false|false|true|required-features=none|path=tests/source_contract.rs
+verifier-dev-tcb=target=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|target_contract|test|bin|2024|false|false|true|required-features=none|path=tests/target_contract.rs
 verifier-dev-tcb=target=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|aho_corasick|lib|lib|2021|true|true|true|required-features=none|path=src/lib.rs
 verifier-dev-tcb=target=registry+https://github.com/rust-lang/crates.io-index#allocator-api2@0.2.21|allocator_api2|lib|lib|2018|true|true|true|required-features=none|path=src/lib.rs
 verifier-dev-tcb=target=registry+https://github.com/rust-lang/crates.io-index#arrayvec@0.7.8|arraystring|bench|bin|2018|false|false|false|required-features=none|path=benches/arraystring.rs
@@ -4155,7 +4157,7 @@ verifier-dev-tcb=declaration=path+repo://adapters/qwen3-all-kernels-worker-v3-ve
 verifier-dev-tcb=declaration=path+repo://adapters/qwen3-all-kernels-worker-v3-verifier-v1#ferric-qwen3-all-kernels-worker-v3-verifier-v1@0.1.0|toml|registry+https://github.com/rust-lang/crates.io-index|=1.1.5|dev|none|false|true|features=none|none|none|path=none
 verifier-dev-tcb=declaration=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|fe2o3-device|git+https://github.com/harsh-nod/fe2o3.git?rev=0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71|=0.1.0|normal|none|false|true|features=none|none|none|path=none
 verifier-dev-tcb=declaration=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|fe2o3-host|git+https://github.com/harsh-nod/fe2o3.git?rev=0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71|=0.1.0|normal|none|false|true|features=none|cfg(not(target_arch = "amdgpu"))|none|path=none
-verifier-dev-tcb=declaration=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|syn|registry+https://github.com/rust-lang/crates.io-index|^2|dev|none|false|true|features=full|none|none|path=none
+verifier-dev-tcb=declaration=path+repo://device/qwen3-all-kernels-v1#ferric-qwen3-all-kernels-device-v1@0.1.0|syn|registry+https://github.com/rust-lang/crates.io-index|^2|dev|none|false|true|features=full,visit|none|none|path=none
 verifier-dev-tcb=declaration=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|doc-comment|registry+https://github.com/rust-lang/crates.io-index|^0.3.3|dev|none|false|true|features=none|none|none|path=none
 verifier-dev-tcb=declaration=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|log|registry+https://github.com/rust-lang/crates.io-index|^0.4.17|normal|none|true|true|features=none|none|none|path=none
 verifier-dev-tcb=declaration=registry+https://github.com/rust-lang/crates.io-index#aho-corasick@1.1.5|memchr|registry+https://github.com/rust-lang/crates.io-index|^2.4.0|normal|none|true|false|features=none|none|none|path=none
