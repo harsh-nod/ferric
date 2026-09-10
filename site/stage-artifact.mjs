@@ -9,6 +9,7 @@ const deployableFiles = [
   "assets/architecture.svg",
   "assets/mark.svg",
   "data/project.js",
+  "data/performance.js",
   "index.html",
   "styles.css",
 ].sort();

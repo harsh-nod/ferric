@@ -18,6 +18,7 @@ const viewports = [
 ];
 const dynamicRoots = [
   "[data-readiness]",
+  "[data-performance]",
   "[data-envelope]",
   "[data-capabilities]",
   "[data-validation]",
@@ -30,6 +31,11 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "0.471982 to 0.504046",
+  "Not steady-state serving throughput",
+  "Request identities are never pooled",
+  "correctness failure under investigation",
+  "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8",
   "a689418",
   "ce9e0bc",
   "e3dc8d6",
@@ -639,6 +645,12 @@ try {
     assert(browserErrors.length === 0, `${name}: ${browserErrors.join("; ")}`);
 
     if (screenshotRoot) {
+      if (name === "desktop" || name === "mobile") {
+        await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
+        await page.locator('nav a[href="#performance"]').click();
+        await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
+        await page.evaluate(() => window.scrollTo(0, 0));
+      }
       await page.screenshot({ path: join(screenshotRoot, `${name}.png`), fullPage: true });
     }
     await page.close();

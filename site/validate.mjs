@@ -3,12 +3,17 @@ import { constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { validatePerformance, testPerformanceRejections } from "./validate-performance.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
 const project = context.window.FERRIC_PROJECT;
+const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
+vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
+validatePerformance(context.window.FERRIC_PERFORMANCE);
+testPerformanceRejections(context.window.FERRIC_PERFORMANCE);
 
 function assert(condition, message) {
   if (!condition) {
@@ -475,8 +480,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "3546d54d2c4a913f5d079701aed557d0a378bba8",
-  fe2o3LatestTree: "f88d1e6d23bcaab0be2e9cfb86c108ad3ede93c3",
+  fe2o3LatestMain: "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8",
+  fe2o3LatestTree: "74ea4163b8a16546ee40810270a8ce0351d79c10",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: false,
@@ -1982,6 +1987,7 @@ const indexSource = await readFile(join(siteRoot, "index.html"), "utf8");
 const appSource = await readFile(join(siteRoot, "app.js"), "utf8");
 for (const target of [
   "data-readiness",
+  "data-performance",
   "data-envelope",
   "data-capabilities",
   "data-validation",
@@ -1994,7 +2000,7 @@ for (const target of [
 ]) {
   assert(indexSource.includes(target), `index is missing ${target}`);
 }
-for (const asset of ["styles.css", "app.js", "data/project.js", "assets/mark.svg", "assets/architecture.svg"]) {
+for (const asset of ["styles.css", "app.js", "data/project.js", "data/performance.js", "assets/mark.svg", "assets/architecture.svg"]) {
   await access(join(siteRoot, asset), constants.R_OK);
 }
 assert(!appSource.includes("innerHTML"), "renderer must not inject status through innerHTML");

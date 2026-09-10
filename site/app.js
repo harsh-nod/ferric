@@ -69,8 +69,93 @@
   updated.dateTime = project.updated;
   updated.textContent = `Updated ${project.updated}`;
 
+  const performance = window.FERRIC_PERFORMANCE;
+  const measured = document.querySelector("[data-performance]");
+  function range(values, digits = 3) {
+    return values === null ? "n/a" : values.map((value) => value.toFixed(digits)).join(" to ");
+  }
+  function performanceTable(caption, headings, rows) {
+    const wrap = element("div", "transition-table-wrap");
+    wrap.tabIndex = 0;
+    wrap.setAttribute("role", "region");
+    wrap.setAttribute("aria-label", caption);
+    const table = element("table", "transition-table performance-table");
+    table.append(element("caption", "visually-hidden", caption));
+    const head = element("thead", "");
+    const heading = element("tr", "");
+    headings.forEach((label) => {
+      const cell = element("th", "", label);
+      cell.scope = "col";
+      heading.append(cell);
+    });
+    head.append(heading);
+    const body = element("tbody", "");
+    rows.forEach((values) => {
+      const row = element("tr", "");
+      values.forEach((value) => row.append(element("td", "", value)));
+      body.append(row);
+    });
+    table.append(head, body);
+    wrap.append(table);
+    measured.append(wrap);
+  }
+  measured.append(
+    element("p", "performance-scope", performance.scope),
+    element("p", "", performance.interpretation),
+  );
+  performanceTable("Standalone profile ranges, two repetitions each",
+    ["Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+    performance.variants.map((variant) => [
+      `${variant.name} / n=${variant.repetitions}`,
+      range(variant.outputTokensPerSecond, 6), range(variant.workloadSeconds),
+      range(variant.setupSeconds), range(variant.wholeSeconds),
+    ]));
+  measured.append(
+    element("p", "", performance.statistics),
+    element("h3", "", "Latency by request identity"),
+  );
+  performanceTable("Baseline and operational-only request latency ranges, two repetitions each",
+    ["Request / Decode Gaps per Rep", "Baseline TTFT (s)", "Operational TTFT (s)", "Baseline TPOT (s)", "Operational TPOT (s)"],
+    performance.requests.map((request) => [
+      `${request.name} / ${request.gapsPerRepetition}`,
+      range(request.baselineTtft), range(request.operationalTtft),
+      range(request.baselineTpot), range(request.operationalTpot),
+    ]));
+  measured.append(
+    element("p", "", `Pruning-only reuse-prefix: TTFT ${range(performance.pruningReuse.ttftSeconds)} s; TPOT ${range(performance.pruningReuse.tpotSeconds)} s, one decode gap per repetition. Large variation prevents an isolated speedup claim.`),
+    element("p", "", performance.correctness),
+  );
+  const definitions = element("dl", "observation-facts");
+  performance.definitions.forEach(([label, detail]) => {
+    definitions.append(element("dt", "", label), element("dd", "", detail));
+  });
+  measured.append(definitions, element("h3", "", "Fixtures and remaining ablations"));
+  const fixtures = element("dl", "observation-facts");
+  performance.fixtures.forEach(([label, detail]) => {
+    fixtures.append(element("dt", "", label), element("dd", "", detail));
+  });
+  measured.append(fixtures, element("p", "", performance.publication));
+  const provenance = element("details", "performance-identities");
+  provenance.append(element("summary", "", "Exact identities and archived evidence"));
+  provenance.append(element("p", "", performance.provenance));
+  const pins = element("dl", "observation-facts");
+  Object.entries(performance.identities).forEach(([label, digest]) => {
+    pins.append(element("dt", "", label), element("dd", "", digest));
+  });
+  performance.variants.forEach((variant) => {
+    pins.append(element("dt", "", `${variant.name} controller`), element("dd", "", variant.controllerSha256),
+      element("dt", "", `${variant.name} worker`), element("dd", "", variant.workerSha256));
+  });
+  pins.append(element("dt", "", "Operational-only profile"),
+    element("dd", "", JSON.stringify(performance.runtimeProfile)));
+  provenance.append(pins);
+  measured.append(provenance);
+
   const readiness = document.querySelector("[data-readiness]");
-  project.readiness.forEach((item) => {
+  project.readiness.forEach((item, index) => {
+    if (index === 2) {
+      readiness.append(element("h3", "", "Earlier validated checkpoints"));
+    }
     const row = element("div", "readiness-row");
     const heading = element("div", "readiness-row-heading");
     heading.append(element("strong", "", item.label), stateTag(item.state));
