@@ -144,7 +144,7 @@ fn tiled_output_and_wave_leader_ownership_cover_each_active_element_once() {
 }
 
 fn wave_sum(mut values: [f32; 64]) -> [f32; 64] {
-    for offset in [32, 16, 8, 4, 2, 1] {
+    for offset in [1, 2, 4, 8, 16, 32] {
         let previous = values;
         for lane in 0..64 {
             values[lane] = previous[lane] + previous[lane ^ offset];
