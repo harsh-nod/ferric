@@ -14,13 +14,13 @@ runs so independent teams cannot contaminate one another's measurements.
 | Runtime admission cache and checked operational validation | Runtime | Published to fe2o3; integrated opt-in controls pass host tests/Clippy | Four-policy native probe passes; two operational-only Qwen runs strictly validated |
 | Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; cumulative Qwen R1 passes but is slower than operational-only |
 | Skip intermediate-prefill output heads | Integration | Implemented with independent opt-in flag; remote tests and Clippy pass | Two strictly validated TP8 runs; substantial timing variation, no consistent win |
-| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; repeated MFMA model pair passes with a 28.63% mean workload-rate gain and a startup regression |
+| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; repeated TP8 MFMA model pair passes with a 28.63% mean workload-rate gain and a startup regression; current TP1 MFMA-only and cumulative profiles fail the fixed reference |
 | Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but both original and operational-matched model runs have the same seed mismatch as wave projection; rejected for timing claims |
 | GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Two exact-reference repetitions per variant pass; mean workload rate +13.85%, reuse TTFT -6.30%, reuse TPOT -0.59% (tiny effect) |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | First isolated model ablation passes; mixed per-request results, no repeatable gain established |
 | True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; model and source-matched host controls pass, but peer workload rate is 82.06%/97.66% lower at TP2/TP8 |
 | Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Native suites and actual 32-row Qwen cohort pass; same-image row-policy pair gains 12.56% workload rate with mixed request latency |
-| Bound comparison and performance ledger | Runtime | Implemented; 59 comparison tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA/TP1 pairs, slow peers and rejected wave cases retained |
+| Bound comparison and performance ledger | Runtime | Implemented; 59 comparison tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA/TP1 pairs, slow peers, rejected wave/TP1 MFMA cases and current-controller combinations retained |
 | Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition, strict cohort verifier and process cleanup integrated; 11 launcher tests and strict Clippy pass | All three allocations pass 64 exact outputs; observed rates 1.442/5.734/6.588 tokens/s for 1xTP8/4xTP2/8xTP1, with row-capacity and model-memory costs retained |
 | Bit-exact tiled MFMA weight transpose | Kernels/integration | Integrated setup-only raw-byte transpose; 240 full-array comparisons pass across actual TP1/2/8 shard shapes | Host helper suites improve 2.67-3.37x; first matched model pair saves 26.55 s setup (15.33%), with no causal decode-speed claim |
 
@@ -35,7 +35,7 @@ Ranges show individual repetitions, not confidence intervals or stable tails.
 | Frozen baseline | 2 | 44.2761-46.8909 | 40.6842-46.3793 | 0.033547-0.034407 |
 | Output-head pruning only | 2 | 26.9561-40.5045 | 26.2307-39.6742 | See per-run ledger; large variation |
 | Operational currentness only | 2 | 2.4190-2.4330 | 1.1400-1.1569 | 0.471980-0.504046 |
-| Current controller/runtime, all controls off | 1 | 46.5623 | 38.1315 | 0.028966 |
+| Matched ablation controller/runtime, all controls off | 1 | 46.5623 | 38.1315 | 0.028966 |
 | Operational + admission cache + sequences | 1 | 4.1125 | 2.5865 | 0.296581 |
 | Admission cache only | 1 | 46.2735 | 52.9616 | 0.032950 |
 | Sequences only | 1 | 64.6440 | 64.9780 | 0.025022 |
@@ -63,7 +63,7 @@ timing is included in accepted performance ledgers.
 
 ### Matched MFMA Pair
 
-These two single-run observations share controller `bc4a283b...`, worker
+These two TP8 single-run observations share controller `bc4a283b...`, worker
 `70572ff2...`, full-v3 image `8c81d3fe...`, operational validation enabled,
 baseline attention, and all other optimization flags disabled. Only projection
 changes. All eight expected tokens/bytes and timing/teardown records pass.
@@ -222,6 +222,57 @@ The larger budget raises the single-sample rate 12.56%, but request-00 TTFT
 worsens. Other request identities remain separate in the full table. This
 policy pair is not pooled with the earlier baseline-image allocation trio.
 Ledger SHA256: `0bd49a1c66cb297e9eb20fd502ca5c99faefbaf722bd963de3acb96b5cc6fb6e`.
+
+### Current-Controller Compatibility
+
+Five later cases use controller `44e4bd4f...`, built with the observed public
+fe2o3 `7528e734` cutoff. Worker `189b918d...` was rebuilt from `1b262ac3`, is
+byte-identical to its public-902 build, and has an unchanged source closure
+through the cutoff. The emitted images keep their original compiler/SDK
+identities. These are current-controller compatibility observations, not
+fresh current-head emissions, Verus qualification or blanket model accuracy.
+
+Three cases pass the exact reference and complete trace/teardown checks:
+
+| Profile | Reuse TTFT (s) | Reuse TPOT (s) | Output (tokens/s) | Setup (s) | Whole Run (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TP1 baseline projection, host collective | 1.890434 | 1.210212 | 0.836954 | 102.300673 | 113.705289 |
+| TP1 baseline projection, pruning + device residual | 1.785406 | 1.207198 | 0.937878 | 102.432064 | 112.809883 |
+| TP8 wide MFMA + pruning, host collective | 2.565240 | 1.604293 | 0.444870 | 148.638654 | 188.583576 |
+
+All use operational validation, the same fixed four-request/eight-output
+cache-on workload, and one run per profile. The two TP1 cases share full-v3
+image `8c81d3fe...`, 16-row/chunk limits and baseline arithmetic. Changing
+pruning and device residuals together observes +12.06% workload rate and
+-5.56% reuse TTFT, but only -0.25% TPOT. This is a cumulative two-flag result,
+not an isolated pruning/residual gain or a stable tiny TPOT improvement.
+Paired ledger SHA256:
+`89a5521453330d8726d335febcd2ea3367e71093f69a54717bb0ad93f0ea69d9`.
+
+The TP8 case is separate and unpaired, using full-v5 image `98b5fdb1...` and
+32-row/chunk capacity. Its actual completed rows are `[17,6,6,4,1]`, totaling
+34 with a maximum of 17, not 32. It exercises continuous admission, chunked
+prefill, paged causal attention and physical radix-prefix reuse. No gain is
+assigned versus older profiles or the TP1 rows. Comparison SHA256:
+`67ad69a2ec6d29f2cc03f6eabe65cfcde7837cf606a37363837d65ddadb37c59`.
+
+Both TP1 MFMA-only and TP1 MFMA + pruning + device residual are rejected:
+`seed-prefix` emits `[9856,374]` (" Germany is") instead of `[17689,374]`
+(" Spain is"). Other request summaries match, but this does not qualify the
+failed traces. No timing from either rejected run enters an accepted ledger.
+The MFMA-only failure shows that pruning and device residuals are not required
+to trigger this mismatch; the underlying numerical cause remains unproven.
+Rejection SHA256 values are
+`2402b01e3d4896d97b0546ff2da09ab23fe655d41e406e731c366d995473bd26`
+(MFMA-only) and
+`be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9`
+(cumulative). Neither the reference nor comparison rules were relaxed.
+
+The isolation queue's outer SSH connection later returned 255. Both per-case
+processes had already completed with status 0 and complete raw/teardown files;
+the strict checks above ran on those archived files. A subsequent owned-process
+inspection found no remaining controller/worker jobs and all eight GPUs were
+idle. The SSH anomaly is not relabeled as a successful queue-session exit.
 
 ### Runtime Provenance
 
