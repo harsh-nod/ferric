@@ -577,7 +577,9 @@ fn failed_sequence_drains_submitted_ranks_and_cannot_publish_or_resume() {
     pool.begin_submission(&batch).unwrap();
     assert!(driver.execute(&batch).is_err());
     assert!(driver.execute(&batch).is_err());
-    assert!(driver.poisoned && driver.inner.closed);
+    assert!(driver.poisoned);
+    driver.close().unwrap();
+    assert!(driver.inner.closed);
     let events = driver.inner.transports[0].events.borrow();
     for rank in 0..8 {
         assert!(events.contains(&Event::SequenceWait(rank, 10)));

@@ -44,9 +44,9 @@ struct Incoming {
     payload: Vec<u8>,
 }
 
-struct LoadedKernel {
-    id: u64,
-    metadata: InspectedKernel,
+pub(super) struct LoadedKernel {
+    pub(super) id: u64,
+    pub(super) metadata: InspectedKernel,
 }
 
 #[derive(Eq, PartialEq)]
@@ -604,7 +604,7 @@ fn wire_access(access: ArgumentAccess) -> BufferAccessV1 {
     }
 }
 
-fn metadata_matches(expected: &InspectedKernel, actual: &KernelMetadataV1, hash: [u8; 32]) -> bool {
+pub(super) fn metadata_matches(expected: &InspectedKernel, actual: &KernelMetadataV1, hash: [u8; 32]) -> bool {
     if expected.name() != actual.symbol
         || hash != actual.object_sha256
         || expected.kernarg_segment_size() != u64::from(actual.kernarg_bytes)
@@ -643,7 +643,7 @@ fn pointee_size_matches(value_type: Option<ExplicitValueType>, element_bytes: u3
     }
 }
 
-fn pack_dispatch(
+pub(super) fn pack_dispatch(
     loaded: &LoadedKernel,
     dispatch: &EngineeringTpDispatchV1,
     buffers: &BTreeMap<u64, usize>,
