@@ -290,6 +290,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--run", action="store_true")
+    parser.add_argument("--profile", choices=("full", "wave"), default="full")
     parser.add_argument("--helper", type=Path)
     parser.add_argument("--worker", type=Path)
     parser.add_argument("--worker-sha256")
@@ -306,9 +307,13 @@ def main():
         helper = parents[3] / "proofs/tensor-parallel-kernels-v1/probe.py"
     core = load_helper(helper)
     fixtures = self_test(core)
+    if args.profile == "wave":
+        fixtures = [case for case in fixtures if "_mfma_" not in case["symbol"]]
+        core.require(len(fixtures) == 26 and len({case["symbol"] for case in fixtures}) == 11,
+                     "wave-only probe roster")
     if args.self_test:
         core.require(not args.run, "self-test cannot launch GPU work")
-        print("PASS: 36 bounded host fixtures; no GPU worker launched")
+        print(f"PASS: {len(fixtures)} bounded host fixtures ({args.profile}); no GPU worker launched")
         return
     core.require(args.run and all(value is not None for value in
                  (args.worker, args.worker_sha256, args.artifact, args.artifact_sha256,
@@ -327,6 +332,7 @@ def main():
                      and core.identity(os.fstat(artifact_fd)) == core.identity(artifact_stat), "held identity drifted")
         core.require(source_identity == core.digest(Path(__file__).read_bytes()), "probe source drifted")
         report = {"schema": "FerricTpPerfSyntheticKernelProbeV3", "authority": "none",
+                  "profile": args.profile,
                   "model_inference": False, "benchmark": False, "source_sha256": source_identity,
                   "helper_sha256": HELPER_SHA256, "worker_sha256": args.worker_sha256,
                   "artifact_sha256": args.artifact_sha256, "device_unique_id": args.device_unique_id,
@@ -337,7 +343,7 @@ def main():
         with (args.output / "result.json").open("x", encoding="utf-8") as output:
             json.dump(report, output, sort_keys=True, indent=2)
             output.write("\n")
-        print("PASS: 36 GPU probes across 13 roots; no model/benchmark/qualification claim")
+        print(f"PASS: {len(fixtures)} GPU probes ({args.profile}); no model/benchmark/qualification claim")
     except BaseException:
         if worker is not None:
             worker.abort()

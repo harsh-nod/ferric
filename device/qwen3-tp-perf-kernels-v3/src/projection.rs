@@ -93,6 +93,8 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     } else {
         fe2o3_device::trap();
     }
+    let row = row as u16 as usize;
+    let column = column as u32 as usize;
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
     let mut step = 0_usize;
@@ -180,6 +182,8 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     } else {
         fe2o3_device::trap();
     }
+    let row = row as u16 as usize;
+    let k = k as u16 as usize;
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
     let mut step = 0_usize;
