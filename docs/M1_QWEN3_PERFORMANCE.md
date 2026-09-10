@@ -15,13 +15,14 @@ runs so independent teams cannot contaminate one another's measurements.
 | Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; cumulative Qwen R1 passes but is slower than operational-only |
 | Skip intermediate-prefill output heads | Integration | Implemented with independent opt-in flag; remote tests and Clippy pass | Two strictly validated TP8 runs; substantial timing variation, no consistent win |
 | Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; first matched MFMA model pair passes with a 27.91% workload-rate gain and a startup regression |
-| Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but first model run has the same seed mismatch as wave projection; rejected for timing claims |
-| GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Synthetic native fixtures pass; TP1 model comparison pending |
+| Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but both original and operational-matched model runs have the same seed mismatch as wave projection; rejected for timing claims |
+| GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | First exact-reference matched model pair passes; workload rate +14.19%, reuse TTFT -6.76%, reuse TPOT -0.97%; single sample only |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | First isolated model ablation passes; mixed per-request results, no repeatable gain established |
-| True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; first TP2 Qwen run passes; TP8 model measurement in progress |
+| True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; both TP2/8 Qwen runs pass, but TP8 is very slow; no speedup established |
 | Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Full32 native 30 fixtures and peer32 native 19 fixtures pass; model/replica-throughput measurements pending |
-| Bound comparison and performance ledger | Runtime | Implemented; 45 host tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA pair and rejected wave cases retained |
-| Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition and process cleanup implemented; functional host tests and strict Clippy pass | Dedicated cohort verifier in development; no GPU replica-throughput claim |
+| Bound comparison and performance ledger | Runtime | Implemented; 59 comparison tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA/TP1 pairs, slow peers and rejected wave cases retained |
+| Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition, strict cohort verifier and process cleanup integrated; 11 launcher tests and strict Clippy pass | First TP8 cohort running; TP2/TP1 allocations and accepted shared-clock measurements pending |
+| Bit-exact tiled MFMA weight transpose | Kernels/integration | Integrated setup-only raw-byte transpose; 240 full-array comparisons pass across actual TP1/2/8 shard shapes | CPU helper medians improve 2.67-3.37x in the host suite; model setup/TTFT/TPOT gain not yet measured |
 
 ## Initial Observations
 
@@ -56,8 +57,9 @@ candidate is archived and excluded from accepted timing ledgers. The isolated
 wave-attention run has the same seed mismatch. A baseline-arithmetic control
 using that same wave image passes strict comparison. Stronger mixed-sign and
 cancellation projection fixtures pass their respective serial/wave arithmetic
-orders, but those tests do not establish model-token parity. Matched
-operational-mode wave reruns remain a separate gate.
+orders, but those tests do not establish model-token parity. Both matched
+operational-mode reruns also fail with the same seed output. No failed wave
+timing is included in accepted performance ledgers.
 
 ### Matched MFMA Pair
 
@@ -87,6 +89,38 @@ is 10.162302622 seconds; setup is 220.861978648 seconds and whole run is
 285.630395408 seconds. There is no matched TP2 host control yet, so these
 observations do not establish a collective speedup. Comparison SHA256:
 `7452fafe952ead228830782e83c291a8f4d1b345b90cc50ab690114f6713e9ee`.
+
+The TP8 serial peer run also passes all strict checks, but reuse TTFT is
+141.017906811 seconds and TPOT is 138.200419385 seconds. Workload rate is
+0.011380701458 tokens/s over 702.944368538 seconds; setup is 734.921241644
+seconds and whole run is 1557.722091593 seconds. The profile is operational-only
+with baseline arithmetic, not cached admission or command sequences. This is
+a correctness result, not a performance win. Comparison SHA256:
+`e1babe489df564a1240679fd6062e148a60eac27039af3b6f47822d7d722e2bd`.
+
+### Matched TP1 Residual Pair
+
+Both runs share controller `bc4a283b...`, worker `70572ff2...`, wave-v3 image
+`306a27d8...`, baseline arithmetic and operational validation. Only the collective
+changes; all eight expected tokens and bytes pass.
+
+| Collective | Reuse TTFT (s) | Reuse TPOT (s) | Workload Output (tokens/s) | Setup (s) | Whole Run (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Host staged | 1.878017 | 1.178605 | 0.834914 | 103.902004 | 115.313311 |
+| Device TP1 residual | 1.751118 | 1.167159 | 0.953393 | 102.418670 | 112.654805 |
+
+This single pair observes +14.19% workload rate, -6.76% reuse TTFT and -0.97%
+reuse TPOT. The last difference is especially small and is not established as
+repeatable. Full per-request metrics and raw identities are retained in ledger
+SHA256 `07cae3b84184cf8fa806a3ce452a2a6959b7ad3f16bf27587abf06e0e4d1d385`.
+
+### Setup Transpose
+
+The integrated tiled transpose preserves every BF16 bit, authenticated shard
+range and upload extent. Its CPU-only 80-shape, three-repeat suite passes all
+240 full-array comparisons. Sums of per-case medians improve 3.37x/3.36x/2.67x
+for TP1/TP2/TP8 respectively. These are helper-only results, not whole-model
+setup or inference measurements. See [the benchmark contract](../adapters/m1-engineering-execution-v1/tools/transpose_benchmark.md).
 
 The operational-only runs show roughly 14-15x baseline workload output rate,
 not a serving-throughput claim. They retain admission caching, sequences,

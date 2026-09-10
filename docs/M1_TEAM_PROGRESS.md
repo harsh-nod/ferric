@@ -5,19 +5,19 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Performance Swarm
 
-The integrated runtime tracks public fe2o3 `902fef6e`; frozen benchmark
+The integrated source tracks public fe2o3 `1b262ac3`; frozen benchmark
 inputs retain their original source and binary identities. Compiler/KFD
 changes are published to fe2o3 main after review/rebase. Ferric implementation
 remains local; the Pages performance checkpoint is published separately.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Five isolated/cumulative ablations and a matched MFMA pair are archived; failed wave cases stay excluded. Wide comparator has 45 host tests and historical revalidation. | Dedicated common-clock replica cohort verifier, then repetitions and matched controls. |
-| Kernels | Full16 MFMA model pair passes: first workload-rate sample +27.91%, with startup regression. Wave projection/attention both fail exact Qwen seed reference. Full32 native 30 fixtures, peer32 native 19 fixtures and stronger arithmetic-order differential pass. | Replica launcher host qualification; repeated MFMA and exact-reference wide-model measurements. |
-| Collectives | Public `902fef6e` cached peer sequences pass genuine GPU producer-to-peer-reader TP2/8 probes including rows 17/31/32. First TP2 full-model peer run strictly passes. Replica clock/process integration has independent source review. | TP8 full-model run, source-matched host controls, current independent-worker build. |
-| Integration | Public `902fef6e` replica CLI/shared-clock/weight-accounting integration passes 166 library, 43 CLI/worker, 6 control and 22 source-policy tests plus strict Clippy and release build on mi300x. Launcher host fault tests pass separately. | Qualify exact replica outputs and shared-clock metrics, publish results, compare allocation policies on mi350. |
+| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, matched MFMA and TP1 pairs, and both slow peer cases are archived. The integrated four-request/replica checkers pass 59 host tests. | Exact common-clock replica cohort validation, repetitions and matched controls. |
+| Kernels | Full16 MFMA model pair passes: first workload-rate sample +27.91%, with startup regression. Both operational-matched wave selectors still fail exact Qwen seed reference. Full32 native 30 fixtures and peer32 native 19 fixtures pass. Bit-exact tiled setup transpose passes 240 full-array comparisons and speeds up the host helper only. | Repeated MFMA, integrated transpose setup timing and exact-reference wide-model measurements. |
+| Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both TP2/8 model peer runs strictly pass, but TP8 is very slow. TP1 device residuals pass a matched pair with a single-sample +14.19% workload rate. Current independent-worker build is archived. | Source-matched host controls, peer boundary-cost investigation and repeated TP1 measurements. |
+| Integration | Public `902fef6e` replica/transpose combination passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Real coordinator schedules cover three allocations at both 16/32-row budgets. Reviewed active `1b262ac3` repin is integrated; its combined gate is running. | Qualify exact replica outputs and shared-clock metrics, publish results, compare allocation policies on mi350. |
 
-Public fe2o3 subsequently advanced to `1b262ac3`. Its reviewed delta is
+Public fe2o3 advanced to `1b262ac3`. Its reviewed delta is
 compiler/analysis-side, with no KFD, worker, SDK or lockfile changes. Active-pin
 integration is separate from frozen `902fef6e` runtime comparisons. Old emitted images
 retain their actual compiler identities; they are never relabeled as rebuilds.

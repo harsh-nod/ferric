@@ -3,6 +3,23 @@
 These are separate, opt-in Contracted engineering profiles, not protected M1
 authority or new Verus proofs. Neither profile changes the baseline v2 image.
 
+## Follow-On Implementation
+
+The group-owner design described below is now implemented as public fe2o3
+`902fef6e` and Ferric's `device-peer-serial-v4` profile, with distinct 16/32-row
+kernel images. Genuine producer-to-peer-reader TP2/TP8 probes and both Qwen
+model cases pass. The TP8 implementation is very slow: the first model sample
+has 141.02 s reuse TTFT and 138.20 s reuse TPOT. It is serial, without compute /
+communication overlap, and is not a performance win. The earlier boundary
+analysis below is retained as historical design context, not a statement that
+the API remains absent in current source.
+
+TP1 device residuals pass a separate matched Qwen pair with a single-sample
+14.19% workload-rate increase. See [the performance checkpoint](M1_QWEN3_PERFORMANCE.md)
+for exact inputs, timing definitions, regressions and remaining gates. Active
+source dependencies have since advanced to `1b262ac3`; frozen runtime and emitted
+image identities remain unchanged.
+
 ## Implemented Profiles
 
 | Profile | Worlds | Arithmetic | Host transport | Extra dispatches per layer |
