@@ -12,9 +12,9 @@ remains local; the Pages performance checkpoint is published separately.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, matched MFMA and TP1 pairs, and both slow peer cases are archived. The integrated four-request/replica checkers pass 59 host tests. | Exact common-clock replica cohort validation, repetitions and matched controls. |
-| Kernels | Full16 MFMA model pair passes: first workload-rate sample +27.91%, with startup regression. Both operational-matched wave selectors still fail exact Qwen seed reference. Full32 native 30 fixtures and peer32 native 19 fixtures pass. Bit-exact tiled setup transpose passes 240 full-array comparisons and speeds up the host helper only. | Repeated MFMA, integrated transpose setup timing and exact-reference wide-model measurements. |
-| Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both TP2/8 model peer runs strictly pass, but TP8 is very slow. TP1 device residuals pass a matched pair with a single-sample +14.19% workload rate. Current independent-worker build is archived. | Source-matched host controls, peer boundary-cost investigation and repeated TP1 measurements. |
+| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, repeated MFMA and TP1 pairs, source-matched peers, all allocation cohorts and the 16/32-row policy pair are archived. The integrated four-request/replica checkers pass 59 host tests. | Strict comparison of three separate current-source model cases. |
+| Kernels | Full16 MFMA has two passing repetitions per variant: mean workload rate +28.63%, with startup regression. Adding pruning passes but is slower than MFMA alone. Both operational-matched wave selectors still fail exact Qwen seed reference. Full32 native 30 fixtures, peer32 native 19 fixtures and an actual 32-row model cohort pass. Tiled setup transpose passes 240 full-array comparisons and saves 15.33% setup in one matched model pair. | Current-source cumulative model qualification; retain wave rejection and setup costs. |
+| Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both peer models and source-matched host controls pass; peer workload rates are 82.06%/97.66% lower at TP2/TP8. TP1 residuals pass two runs per variant with +13.85% mean workload rate. Source inspection identifies repeated all-rank fences and serial execution, not a measured CPU profile. | Current-source cumulative TP1 correctness and timing; peer optimization remains unproven. |
 | Integration | The integrated `7528e734` source passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Separate repin gates pass 26 metadata configurations, 38 source-gate and 31 verifier-policy tests. All three allocation cohorts and the actual 32-row model policy pair pass strict GPU comparison. | Finish repeated and cumulative profiles, publish the final checkpoint, archive and remove completed build stages. |
 
 The reviewed public delta through `7528e734` is compiler/analysis-side, with no
@@ -33,6 +33,12 @@ kernel comparison. The separate same-image 16/32-row policy pair observes a
 model pair saves 26.55 s of setup (15.33%); decode variation is not attributed
 to the setup-only helper. The published Pages checkpoint retains the initial
 trio and all failed/regressing paths; further results are added separately.
+
+The completed root mi300x build stage was removed after source, logs, scripts
+and exact controller archival, reclaiming 7,314,760 KiB. No local builds were
+run. Active comparison stages remain until the final current-source GPU cases
+are checked; the unpublished integration source and required runnable model
+bundles are retained.
 
 These are short engineering workloads, not HTTP serving qualification or a
 matched vLLM/SGLang comparison. See [the live performance ledger summary](M1_QWEN3_PERFORMANCE.md).

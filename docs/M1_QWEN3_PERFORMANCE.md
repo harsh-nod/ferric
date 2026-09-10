@@ -14,9 +14,9 @@ runs so independent teams cannot contaminate one another's measurements.
 | Runtime admission cache and checked operational validation | Runtime | Published to fe2o3; integrated opt-in controls pass host tests/Clippy | Four-policy native probe passes; two operational-only Qwen runs strictly validated |
 | Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; cumulative Qwen R1 passes but is slower than operational-only |
 | Skip intermediate-prefill output heads | Integration | Implemented with independent opt-in flag; remote tests and Clippy pass | Two strictly validated TP8 runs; substantial timing variation, no consistent win |
-| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; first matched MFMA model pair passes with a 27.91% workload-rate gain and a startup regression |
+| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; repeated MFMA model pair passes with a 28.63% mean workload-rate gain and a startup regression |
 | Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but both original and operational-matched model runs have the same seed mismatch as wave projection; rejected for timing claims |
-| GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | First exact-reference matched model pair passes; workload rate +14.19%, reuse TTFT -6.76%, reuse TPOT -0.97%; single sample only |
+| GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Two exact-reference repetitions per variant pass; mean workload rate +13.85%, reuse TTFT -6.30%, reuse TPOT -0.59% (tiny effect) |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | First isolated model ablation passes; mixed per-request results, no repeatable gain established |
 | True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; model and source-matched host controls pass, but peer workload rate is 82.06%/97.66% lower at TP2/TP8 |
 | Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Native suites and actual 32-row Qwen cohort pass; same-image row-policy pair gains 12.56% workload rate with mixed request latency |
@@ -81,6 +81,28 @@ Pair ledger SHA256:
 `8660be59f4d452e3944131069c5a7824c0c72f6c3e87bfcd83f4a7d475ad3884`.
 This is not a stable serving result or a long-generation numerical qualification.
 
+The second repetition reverses candidate/control order and also passes. The
+following means cover two runs per variant, keeping the original pair above
+as a historical checkpoint:
+
+| Projection | Mean Reuse TTFT (s) | Mean Reuse TPOT (s) | Mean Output (tokens/s) | Mean Setup (s) | Mean Whole Run (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 2.662329 | 1.255301 | 0.446530 | 117.808062 | 150.352198 |
+| MFMA | 1.820656 | 0.854285 | 0.574392 | 173.023868 | 208.726455 |
+
+Mean workload rate improves 28.63%, reuse TTFT 31.61%, and reuse TPOT 31.95%.
+Setup is 46.87% longer and whole run is 38.83% longer. Two repetitions do not
+establish stable tails or statistical significance. Repeated-pair ledger SHA256:
+`6b14222502f670b4cd8a0d607777885c590b88874ad40190fbf56799528bcef2`.
+
+A separate cumulative run adds output-head pruning to this MFMA profile and
+passes every strict check, but observes no additive gain: workload rate is
+0.484514 tokens/s, reuse TTFT 2.139349 seconds, and reuse TPOT 1.167284 seconds.
+Setup is 181.212354 seconds and whole run is 219.455130 seconds. This is one
+cumulative sample, not two repetitions or an isolated kernel measurement.
+Its ledger includes the two scalar controls and two MFMA-only runs explicitly:
+`01a030080f363f83b40d9a382bd2b82b1c16ebff51810924efb5091a122994ba`.
+
 ### Peer Model Gate
 
 The first TP2 serial device-peer run passes strict reference, ownership,
@@ -129,6 +151,18 @@ This single pair observes +14.19% workload rate, -6.76% reuse TTFT and -0.97%
 reuse TPOT. The last difference is especially small and is not established as
 repeatable. Full per-request metrics and raw identities are retained in ledger
 SHA256 `07cae3b84184cf8fa806a3ce452a2a6959b7ad3f16bf27587abf06e0e4d1d385`.
+
+A second repetition reverses the order and also passes. Two-run means are:
+
+| Collective | Mean Reuse TTFT (s) | Mean Reuse TPOT (s) | Mean Output (tokens/s) | Mean Setup (s) | Mean Whole Run (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Host staged | 1.872293 | 1.177855 | 0.835986 | 104.130584 | 115.536748 |
+| Device TP1 residual | 1.754423 | 1.170921 | 0.951759 | 102.529103 | 112.775808 |
+
+Mean workload rate improves 13.85% and reuse TTFT 6.30%. The 0.59% mean TPOT
+difference remains tiny and is not a reliable decode-latency claim. Repeated
+pair ledger SHA256:
+`41b064209d601df9d733210825fd39bfee7665950e67c7fd77ff647ef64f6f32`.
 
 ### Setup Transpose
 
