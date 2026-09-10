@@ -312,6 +312,11 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     }
     // The guard makes this narrowing lossless and exposes a bounded offset.
     let tile_row = tile_row as u8 as usize;
+    if tile_column < n / 16 {
+    } else {
+        fe2o3_device::trap();
+    }
+    let tile_column = tile_column as u16 as usize;
     let row_base = tile_row * 16 + (raw % 64 / 16) * 4;
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096) else {
@@ -331,10 +336,6 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     }
     let [value_0, value_1, value_2, value_3] = accumulator.into_values();
     if output.len() < rows * n || output.len() > 32 * n {
-        fe2o3_device::trap();
-    }
-    if tile_column < n / 16 {
-    } else {
         fe2o3_device::trap();
     }
     if thread::grid_dim_x() as usize != ((rows + 15) / 16) * (n / 16) || thread::block_dim_x() != 64
@@ -456,6 +457,11 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     }
     // The guard makes this narrowing lossless and exposes a bounded offset.
     let tile_row = tile_row as u8 as usize;
+    if tile_column < 256 {
+    } else {
+        fe2o3_device::trap();
+    }
+    let tile_column = tile_column as u16 as usize;
     let row_base = tile_row * 16 + (raw % 64 / 16) * 4;
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, k, k) else {
@@ -518,10 +524,6 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     }
     let values = accumulator.into_values();
     if output.len() < rows * 4096 || output.len() > 32 * 4096 {
-        fe2o3_device::trap();
-    }
-    if tile_column < 256 {
-    } else {
         fe2o3_device::trap();
     }
     if thread::grid_dim_x() as usize != ((rows + 15) / 16) * 256 || thread::block_dim_x() != 64 {
