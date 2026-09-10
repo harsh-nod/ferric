@@ -33,6 +33,10 @@ macro_rules! batch_paged_attention_pair_v2 {
                     fe2o3_device::trap();
                 }
                 let cache_base = (physical_page * 16 + token % 16) * $columns + $kv_head * 128;
+                if cache_base < $keys.len() {
+                } else {
+                    fe2o3_device::trap();
+                }
                 if cache_base < 8388481 {
                 } else {
                     fe2o3_device::trap();
@@ -263,6 +267,10 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
                     fe2o3_device::trap();
                 }
                 let cache_base = (physical_page * 16 + token % 16) * columns + kv_head * 128;
+                if cache_base < key_cache.len() {
+                } else {
+                    fe2o3_device::trap();
+                }
                 if cache_base < 8388481 {
                 } else {
                     fe2o3_device::trap();
