@@ -41,24 +41,24 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     }
     let hidden = if model_role == 1 { 4_096 } else { 1_024 };
     let queries = if model_role == 1 && world_size == 1 {
-        32
+        4_096
     } else if model_role == 1 && world_size == 2 {
-        16
+        2_048
     } else if model_role == 1 && world_size == 8 {
-        4
+        512
     } else if model_role == 2 && world_size == 1 {
-        16
+        2_048
     } else if model_role == 2 && world_size == 2 {
-        8
+        1_024
     } else {
-        2
+        256
     };
     let keys = if world_size == 1 {
-        8
+        1_024
     } else if world_size == 2 {
-        4
+        512
     } else {
-        1
+        128
     };
     let intermediate = if model_role == 1 && world_size == 1 {
         12_288
@@ -74,8 +74,8 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
         384
     };
     if !(k == hidden
-        && ((projection == 1 && n == queries * 128)
-            || ((projection == 2 || projection == 3) && n == keys * 128)
+        && ((projection == 1 && n == queries)
+            || ((projection == 2 || projection == 3) && n == keys)
             || ((projection == 4 || projection == 5) && n == intermediate)))
         || n == 0
         || n > 12_288
@@ -148,17 +148,17 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
     }
     let hidden = if model_role == 1 { 4_096 } else { 1_024 };
     let queries = if model_role == 1 && world_size == 1 {
-        32
+        4_096
     } else if model_role == 1 && world_size == 2 {
-        16
+        2_048
     } else if model_role == 1 && world_size == 8 {
-        4
+        512
     } else if model_role == 2 && world_size == 1 {
-        16
+        2_048
     } else if model_role == 2 && world_size == 2 {
-        8
+        1_024
     } else {
-        2
+        256
     };
     let intermediate = if model_role == 1 && world_size == 1 {
         12_288
@@ -174,7 +174,7 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
         384
     };
     if !(n == hidden
-        && ((projection == 1 && k == queries * 128) || (projection == 2 && k == intermediate)))
+        && ((projection == 1 && k == queries) || (projection == 2 && k == intermediate)))
         || n == 0
         || n > 4_096
         || k == 0

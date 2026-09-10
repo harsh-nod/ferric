@@ -127,6 +127,22 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     let kv_heads = kv_heads as usize;
     let capacity = capacity as usize;
     let count = count as usize;
+    if query_heads < 33 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if kv_heads < 9 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if capacity < 8_193 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if count < 8_193 {
+    } else {
+        fe2o3_device::trap();
+    }
     let columns = kv_heads * 128;
     if query.len() != query_heads * 128
         || output.len() != query_heads * 128
@@ -139,7 +155,8 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     let raw = thread::index_1d().get();
     let query_head = raw / 64;
     let lane = raw % 64;
-    if query_head >= query_heads {
+    if query_head < query_heads {
+    } else {
         fe2o3_device::trap();
     }
     let kv_head = if model_role == 1 {
@@ -147,7 +164,8 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     } else {
         query_head / 2
     };
-    if kv_head >= kv_heads {
+    if kv_head < kv_heads {
+    } else {
         fe2o3_device::trap();
     }
     let math = Math::current();

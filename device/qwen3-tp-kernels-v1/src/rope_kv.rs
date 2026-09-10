@@ -73,6 +73,14 @@ pub fn ferric_qwen3_tp_rope_v1(
     }
     let query_heads = query_heads as usize;
     let kv_heads = kv_heads as usize;
+    if query_heads < 33 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if kv_heads < 9 {
+    } else {
+        fe2o3_device::trap();
+    }
     let query_columns = query_heads * 128;
     let key_columns = kv_heads * 128;
     if query.len() != query_columns
@@ -220,9 +228,22 @@ pub fn ferric_qwen3_tp_kv_append_v1(
     if kv_heads == 0 || kv_heads > 8 {
         fe2o3_device::trap();
     }
-    let columns = kv_heads as usize * 128;
+    let kv_heads = kv_heads as usize;
+    if kv_heads < 9 {
+    } else {
+        fe2o3_device::trap();
+    }
+    let columns = kv_heads * 128;
     let capacity = capacity as usize;
     let position = position as usize;
+    if capacity < 8_193 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if position < capacity {
+    } else {
+        fe2o3_device::trap();
+    }
     if key.len() != columns
         || value.len() != columns
         || key_cache.len() != capacity * columns
