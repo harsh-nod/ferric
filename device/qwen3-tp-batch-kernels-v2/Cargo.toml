@@ -1,0 +1,26 @@
+[package]
+name = "ferric-qwen3-tp-batch-kernels-device-v2"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx942"]
+gfx942 = []
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3546d54d2c4a913f5d079701aed557d0a378bba8", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3546d54d2c4a913f5d079701aed557d0a378bba8", version = "=0.1.0" }
+
+[dev-dependencies]
+syn = { version = "=2.0.119", features = ["full", "visit"] }
+
+[lib]
+name = "ferric_qwen3_tp_batch_kernels_device_v2"
+path = "src/lib.rs"
