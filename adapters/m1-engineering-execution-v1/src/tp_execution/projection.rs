@@ -217,11 +217,13 @@ fn transpose_tile(source: &[&[u8]], rows: usize, first: usize, output: &mut [u8]
     // Reuse a bounded set of destination cache lines before advancing columns.
     for column_start in (0..columns).step_by(TRANSPOSE_TILE) {
         let column_end = column_start + (columns - column_start).min(TRANSPOSE_TILE);
-        for (offset, row) in source.iter().enumerate() {
-            for column in column_start..column_end {
-                let destination = (column * rows + first + offset) * 2;
-                output[destination..destination + 2]
-                    .copy_from_slice(&row[column * 2..column * 2 + 2]);
+        for column in column_start..column_end {
+            let destination = (column * rows + first) * 2;
+            for (value, row) in output[destination..destination + source.len() * 2]
+                .chunks_exact_mut(2)
+                .zip(source)
+            {
+                value.copy_from_slice(&row[column * 2..column * 2 + 2]);
             }
         }
     }
