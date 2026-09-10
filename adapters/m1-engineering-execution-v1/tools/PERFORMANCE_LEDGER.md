@@ -22,6 +22,12 @@ fields and unrequested profile labels reject.
 - Additional artifact pins: `--expect-manifest-sha256`,
   `--expect-handoff-sha256`, `--expect-workload-sha256`, and
   `--expect-reference-sha256`. The frozen reference hash is always checked.
+- `--expect-collective device-peer-serial-v4` is supported only for TP2/TP8.
+  It requires all three `--expect-peer-artifact-sha256`,
+  `--expect-peer-manifest-sha256`, and `--expect-peer-handoff-sha256` pins,
+  matching the exact setup `peer_artifact` object. Both PID rosters retain one
+  entry per rank but repeat one nonzero PID. These extra pins/fields reject in
+  every other mode; legacy modes still require distinct worker PIDs.
 
 ```json
 {
@@ -40,6 +46,10 @@ Projection modes are `baseline`, `wave`, `mfma`, `auto`; attention modes are
 Rank zero executes 541 base dispatches plus three when output-head rows are
 nonzero. Each peer executes 540. `device-tp1-v3` adds 72 rank-zero dispatches.
 Totals are recomputed batch by batch, rather than multiplying one fixed count.
+`device-peer-serial-v4` uses 613 dispatches per peer rank, including its embedding
+copy and 72 ordered residual reductions. Rank zero uses 616, or 613 when
+pruning suppresses an empty output head. This is explicitly serial peer-device
+transport, not overlapped collective execution.
 
 ## Manifest And Invocation
 
@@ -91,6 +101,14 @@ or an all-default performance object must explicitly expect those values.
 Each nonbaseline variant is `standalone` or `cumulative`. Repetitions have unique
 IDs and unique canonical run directories. The maximum is 20 repetitions per
 variant, 32 variants, and 128 runs overall.
+
+Only an expectation with `collective` equal to `device-peer-serial-v4` must add
+`peer_artifact`, an exact object with `artifact_hsaco_id`,
+`artifact_manifest_id`, and `artifact_handoff_id` externally reviewed digest
+values. All three are retained in each comparison and ledger run's identities.
+Missing, unknown, zero, or mismatched peer identities reject, as does this
+object in an ordinary host or TP1 variant. The five base identities and other
+workload requirements remain unchanged.
 
 Every ledger run requires all five externally supplied component identities,
 workload/reference digests, a pinned current correctness report, status zero,

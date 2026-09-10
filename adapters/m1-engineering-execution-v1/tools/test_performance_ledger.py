@@ -182,6 +182,59 @@ class LedgerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             LEDGER.validate_manifest(value)
 
+    def test_peer_manifest_requires_exact_additional_identity_object_only_in_peer_mode(self):
+        value = manifest()
+        expected_value = value["variants"][1]["expect"]
+        expected_value.update(collective="device-peer-serial-v4", peer_artifact=dict(FIXTURE.PEER_PINS))
+        LEDGER.validate_manifest(value)
+        report = LEDGER.aggregate(value, synthetic_loader)
+        self.assertEqual(report["variants"][1]["expected"]["peer_artifact"], FIXTURE.PEER_PINS)
+        mutations = [
+            lambda expected: expected.pop("peer_artifact"),
+            lambda expected: expected.update(world=1),
+            lambda expected: expected.update(collective=None),
+            lambda expected: expected.update(collective="host-staged-reuse-v3"),
+            lambda expected: expected["peer_artifact"].pop("artifact_handoff_id"),
+            lambda expected: expected["peer_artifact"].update(extra="d" * 64),
+            lambda expected: expected["peer_artifact"].update(artifact_hsaco_id="0" * 64),
+        ]
+        for mutation in mutations:
+            changed = copy.deepcopy(value)
+            mutation(changed["variants"][1]["expect"])
+            with self.assertRaises(ValueError):
+                LEDGER.validate_manifest(changed)
+
+    def test_peer_file_loader_revalidates_shared_process_and_additional_artifact_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            reference = FIXTURE.encoded(FIXTURE.synthetic_reference())
+            workload = FIXTURE.encoded(CHECK.expected_workload())
+            records = FIXTURE.peer_fixture(pruning=True)
+            files = {"status": b"0\n", "gpu-before.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "gpu-after.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "results.jsonl": b"".join(FIXTURE.encoded(row) for row in records),
+                     "workload.json": workload, "reference.json": reference}
+            for filename, data in files.items():
+                (root / filename).write_bytes(data)
+            expectation = expected(CHECK.sha256(reference), CHECK.sha256(workload))
+            expectation.update(collective="device-peer-serial-v4", peer_artifact=dict(FIXTURE.PEER_PINS),
+                               output_head_pruning=True, performance_profile=FIXTURE.PROFILE)
+            with mock.patch.object(CHECK, "REFERENCE_SHA256", CHECK.sha256(reference)):
+                report = CHECK.compare(root, root / "workload.json", root / "reference.json", 8, PINS, True,
+                                       True, "device-peer-serial-v4", FIXTURE.PROFILE,
+                                       CHECK.sha256(workload), CHECK.sha256(reference), FIXTURE.PEER_PINS)
+                comparison = FIXTURE.encoded(report)
+                (root / "comparison.json").write_bytes(comparison)
+                run_value = {"id": "peer-r1", "run_dir": str(root), "workload": str(root / "workload.json"),
+                             "reference": str(root / "reference.json"), "comparison": str(root / "comparison.json"),
+                             "comparison_sha256": CHECK.sha256(comparison)}
+                metrics, _ = LEDGER.load_run(run_value, expectation)
+                self.assertEqual(metrics["identities"]["peer_artifact"], FIXTURE.PEER_PINS)
+                changed = copy.deepcopy(expectation)
+                changed["peer_artifact"]["artifact_handoff_id"] = "d" * 64
+                with self.assertRaises(ValueError):
+                    LEDGER.load_run(run_value, changed)
+
 
 if __name__ == "__main__":
     unittest.main()

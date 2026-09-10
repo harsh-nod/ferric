@@ -43,7 +43,9 @@ CLOSED_FIELDS = set("worker_pids all_workers_exited rank_dispatch_counts whole_s
 ROW_FIELDS = set("slot generation token position kind".split())
 OUTPUT_FIELDS = set("slot generation token index completed_ns finished".split())
 LEGACY_COLLECTIVE = "host_staged_fp32_rank_order_reduce_bf16_residual"
-COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3")
+PEER_COLLECTIVE = "device-peer-serial-v4"
+COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3", PEER_COLLECTIVE)
+PEER_ARTIFACT_FIELDS = {"artifact_hsaco_id", "artifact_manifest_id", "artifact_handoff_id"}
 PROFILE_BOOLS = {"runtime_cache_admission", "runtime_operational", "dispatch_sequences",
                  "queue_rollover", "runtime_profiling"}
 PROFILE_FIELDS = PROFILE_BOOLS | {"projection", "attention"}
@@ -57,6 +59,13 @@ def performance_profile(value):
         require(type(value[key]) is bool, f"profile {key} must be boolean")
     require(value["projection"] in ("baseline", "wave", "mfma", "auto"), "unknown projection profile")
     require(value["attention"] in ("baseline", "wave"), "unknown attention profile")
+    return value
+
+
+def peer_artifact(value):
+    fields(value, PEER_ARTIFACT_FIELDS, "peer artifact")
+    for key in PEER_ARTIFACT_FIELDS:
+        hash_value(value[key], f"peer {key}")
     return value
 
 
@@ -219,7 +228,8 @@ def timeline(cache):
 
 
 def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
-                expected_pruning=None, expected_collective=None, expected_profile=None):
+                expected_pruning=None, expected_collective=None, expected_profile=None,
+                expected_peer_artifact=None):
     extra = set()
     if expected_pruning is not None:
         require(type(expected_pruning) is bool, "expected pruning must be boolean")
@@ -231,6 +241,13 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
             "unknown expected collective")
     require(expected_collective != "device-tp1-v3" or world == 1,
             "device-tp1-v3 requires exactly one rank")
+    peer = expected_collective == PEER_COLLECTIVE
+    if peer:
+        require(world in (2, 8), "device-peer-serial-v4 requires two or eight ranks")
+        peer_artifact(expected_peer_artifact)
+        extra.add("peer_artifact")
+    else:
+        require(expected_peer_artifact is None, "peer artifact pins require device-peer-serial-v4")
     record(setup, "Setup", SETUP_FIELDS | extra)
     constants = {"model": "Qwen/Qwen3-8B", "dtype": "BF16", "target": "gfx950:xnack-",
                  "model_bundle_id": BUNDLE,
@@ -246,10 +263,14 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
     if expected_profile is not None:
         require(performance_profile(setup["performance_profile"]) == expected_profile,
                 "expected performance profile drifted")
+    if peer:
+        require(peer_artifact(setup["peer_artifact"]) == expected_peer_artifact,
+                "expected peer artifact drifted")
     require(integer(setup["tensor_parallel"], 1, 8) == world, "tensor-parallel world drifted")
     require(integer_list(setup["device_unique_ids"], 1) == gpu_ids[:world], "rank device roster drifted")
     pids = integer_list(setup["worker_pids"], 1, (1 << 31) - 1, "worker PID")
-    require(len(pids) == world and len(set(pids)) == world, "worker PID roster drifted")
+    require(len(pids) == world and len(set(pids)) == (1 if peer else world),
+            "worker PID roster drifted")
     for key in ("controller_sha256", "worker_sha256", "artifact_hsaco_id",
                 "artifact_manifest_id", "artifact_handoff_id", "session_id"):
         hash_value(setup[key], key)
@@ -272,13 +293,14 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
 
 
 def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_cache=None,
-                     expected_pruning=None, expected_collective=None, expected_profile=None):
+                     expected_pruning=None, expected_collective=None, expected_profile=None,
+                     expected_peer_artifact=None):
     require(world in (1, 2, 8) and type(world) is int, "unsupported expected world")
     require(type(records) is list and 1 < len(records) <= 64, "invalid JSONL record count")
     expected_hashes = {} if expected_hashes is None else expected_hashes
     setup = records[0]
     check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
-                expected_pruning, expected_collective, expected_profile)
+                expected_pruning, expected_collective, expected_profile, expected_peer_artifact)
     cache = setup["prefix_cache"]
     batches, order = timeline(cache)
     require(len(records) == len(order) + 2, "missing, duplicated or extra workload records")
@@ -355,6 +377,8 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             if expected_collective == "device-tp1-v3":
                 rank_zero += 72
             dispatch = [rank_zero] + [540] * (world - 1)
+            if expected_collective == PEER_COLLECTIVE:
+                dispatch = [rank_zero + 72] + [613] * (world - 1)
             require(integer_list(value["rank_dispatch_counts"], 1) == dispatch,
                     "rank dispatch schedule drifted")
             counts = [total + count for total, count in zip(counts, dispatch, strict=True)]
@@ -437,12 +461,16 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
         report["expected_execution_profile"] = {"output_head_pruning": expected_pruning,
                                                 "collective": expected_collective,
                                                 "performance_profile": expected_profile}
+    if expected_collective == PEER_COLLECTIVE:
+        report["identities"]["peer_artifact"] = dict(expected_peer_artifact)
+        report["externally_pinned_peer_artifact_identities"] = sorted(PEER_ARTIFACT_FIELDS)
+        report["expected_execution_profile"]["peer_artifact"] = dict(expected_peer_artifact)
     return report
 
 
 def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=None, expected_cache=None,
             expected_pruning=None, expected_collective=None, expected_profile=None,
-            expected_workload_hash=None, expected_reference_hash=None):
+            expected_workload_hash=None, expected_reference_hash=None, expected_peer_artifact=None):
     run_dir = Path(run_dir)
     files = {"status": read_bounded(run_dir / "status", 16),
              "gpu-before.json": read_bounded(run_dir / "gpu-before.json", 65536),
@@ -464,7 +492,7 @@ def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=Non
     require(len(lines) <= 64 and all(lines), "empty or excessive JSONL records")
     records = [json_value(line) for line in lines]
     report = validate_records(records, before, world, expected_hashes, expected_cache,
-                              expected_pruning, expected_collective, expected_profile)
+                              expected_pruning, expected_collective, expected_profile, expected_peer_artifact)
     report["input_sha256"] = {name: sha256(data) for name, data in files.items()}
     report["gpu_idle_before_and_after"] = True
     report["comparator_sha256"] = sha256(read_bounded(Path(__file__), 128 * 1024))
@@ -483,6 +511,9 @@ def main():
     parser.add_argument("--expect-artifact-sha256")
     parser.add_argument("--expect-manifest-sha256")
     parser.add_argument("--expect-handoff-sha256")
+    parser.add_argument("--expect-peer-artifact-sha256")
+    parser.add_argument("--expect-peer-manifest-sha256")
+    parser.add_argument("--expect-peer-handoff-sha256")
     parser.add_argument("--expect-workload-sha256")
     parser.add_argument("--expect-reference-sha256")
     parser.add_argument("--expect-output-head-pruning", choices=("on", "off"))
@@ -493,12 +524,15 @@ def main():
     expected = {key: value for key, value in (("controller_sha256", args.expect_controller_sha256),
                 ("worker_sha256", args.expect_worker_sha256), ("artifact_hsaco_id", args.expect_artifact_sha256),
                 ("artifact_manifest_id", args.expect_manifest_sha256), ("artifact_handoff_id", args.expect_handoff_sha256)) if value is not None}
+    peer_pins = {key: value for key, value in (("artifact_hsaco_id", args.expect_peer_artifact_sha256),
+                ("artifact_manifest_id", args.expect_peer_manifest_sha256),
+                ("artifact_handoff_id", args.expect_peer_handoff_sha256)) if value is not None}
     try:
         report = compare(args.run_dir, args.workload, args.reference, args.expect_world, expected,
                          None if args.expect_cache is None else args.expect_cache == "on",
                          None if args.expect_output_head_pruning is None else args.expect_output_head_pruning == "on",
                          args.expect_collective, None if args.expect_profile is None else performance_profile(json_value(args.expect_profile)),
-                         args.expect_workload_sha256, args.expect_reference_sha256)
+                         args.expect_workload_sha256, args.expect_reference_sha256, peer_pins or None)
         encoded = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
         if args.output is not None:
             with args.output.open("x", encoding="utf-8") as output:

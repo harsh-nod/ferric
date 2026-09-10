@@ -2,6 +2,7 @@
 
 import copy
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,8 @@ GPU_IDS = list(range(100, 108))
 PROFILE = {"runtime_cache_admission": False, "runtime_operational": False,
            "dispatch_sequences": False, "queue_rollover": False, "projection": "baseline",
            "attention": "baseline", "runtime_profiling": False}
+PEER_PINS = {"artifact_hsaco_id": "a" * 64, "artifact_manifest_id": "b" * 64,
+             "artifact_handoff_id": "c" * 64}
 
 
 def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged-v1", profile=None):
@@ -36,6 +39,137 @@ def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged
             counts = [total + count for total, count in zip(counts, row["rank_dispatch_counts"], strict=True)]
     rows[-1]["rank_dispatch_counts"] = counts
     return rows
+
+
+def peer_fixture(world=8, cache=True, pruning=False):
+    rows = extended_fixture(world, cache, pruning, "device-peer-serial-v4", PROFILE)
+    rows[0]["worker_pids"] = [1000] * world
+    rows[-1]["worker_pids"] = [1000] * world
+    rows[0]["peer_artifact"] = dict(PEER_PINS)
+    counts = [0] * world
+    for row in rows:
+        if row["schema"] == "FerricQwen3TpBatchCompletedV2":
+            row["rank_dispatch_counts"] = [616 if row["output_head_rows"] else 613] + [613] * (world - 1)
+            counts = [total + count for total, count in zip(counts, row["rank_dispatch_counts"], strict=True)]
+    rows[-1]["rank_dispatch_counts"] = counts
+    return rows
+
+
+class PeerProfileTests(unittest.TestCase):
+    def validate(self, rows, world=8, pruning=False, peer_pins=PEER_PINS):
+        return CHECK.validate_records(rows, GPU_IDS, world, PINS, None, pruning,
+                                      "device-peer-serial-v4", PROFILE, peer_pins)
+
+    def test_peer_worlds_cache_pruning_and_shared_pid_have_exact_dispatch_totals(self):
+        for world in (2, 8):
+            for cache in (False, True):
+                for pruning in (False, True):
+                    with self.subTest(world=world, cache=cache, pruning=pruning):
+                        rows = peer_fixture(world, cache, pruning)
+                        report = self.validate(rows, world, pruning)
+                        self.assertTrue(report["passed"])
+                        self.assertEqual(report["generated_tokens"], 8)
+                        self.assertEqual(report["rank_dispatch_counts"], rows[-1]["rank_dispatch_counts"])
+                        self.assertEqual(report["identities"]["peer_artifact"], PEER_PINS)
+                        self.assertEqual(report["externally_pinned_peer_artifact_identities"], sorted(PEER_PINS))
+                        self.assertEqual(rows[2]["rank_dispatch_counts"][0], 613 if pruning else 616)
+
+    def test_peer_pins_are_required_complete_nonzero_and_externally_matched(self):
+        rows = peer_fixture()
+        for pins in (None, {}, {**PEER_PINS, "extra": "d" * 64}):
+            with self.subTest(pins=pins), self.assertRaises(ValueError):
+                self.validate(rows, peer_pins=pins)
+        for key in PEER_PINS:
+            missing = dict(PEER_PINS)
+            del missing[key]
+            for pins in (missing, {**PEER_PINS, key: "0" * 64}, {**PEER_PINS, key: "d" * 64},
+                         {**PEER_PINS, key: False}):
+                with self.subTest(key=key, pins=pins), self.assertRaises(ValueError):
+                    self.validate(rows, peer_pins=pins)
+            changed = copy.deepcopy(rows)
+            changed[0]["peer_artifact"][key] = "d" * 64
+            with self.assertRaises(ValueError):
+                self.validate(changed)
+        changed = copy.deepcopy(rows)
+        changed[0]["peer_artifact"]["extra"] = "d" * 64
+        with self.assertRaises(ValueError):
+            self.validate(changed)
+
+    def test_peer_pid_roster_cannot_be_distinct_partial_zero_or_inconsistent_at_close(self):
+        for pids in ([1000], list(range(1000, 1008)), [0] * 8, [True] * 8):
+            rows = peer_fixture()
+            rows[0]["worker_pids"] = pids
+            rows[-1]["worker_pids"] = pids
+            with self.subTest(pids=pids), self.assertRaises(ValueError):
+                self.validate(rows)
+        rows = peer_fixture()
+        rows[-1]["worker_pids"] = [1001] * 8
+        with self.assertRaises(ValueError):
+            self.validate(rows)
+
+    def test_peer_world_label_or_fields_cannot_relabel_old_transport(self):
+        with self.assertRaises(ValueError):
+            self.validate(peer_fixture(1), 1)
+        rows = peer_fixture()
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(rows, GPU_IDS, 8, PINS)
+        for label in (None, "host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3"):
+            ordinary = fixture() if label is None else extended_fixture(collective=label)
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                CHECK.validate_records(ordinary, GPU_IDS, 8, PINS,
+                                       expected_collective=label, expected_peer_artifact=PEER_PINS)
+        ordinary = fixture()
+        ordinary[0]["peer_artifact"] = PEER_PINS
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(ordinary, GPU_IDS, 8, PINS)
+        ordinary = fixture()
+        ordinary[0]["worker_pids"] = [1000] * 8
+        ordinary[-1]["worker_pids"] = [1000] * 8
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(ordinary, GPU_IDS, 8, PINS)
+
+    def test_peer_dispatch_count_and_live_worker_hash_mutations_reject(self):
+        for counts in ([544] + [540] * 7, [616] + [612] * 7, [613] * 8):
+            rows = peer_fixture()
+            rows[2]["rank_dispatch_counts"] = counts
+            with self.subTest(counts=counts), self.assertRaises(ValueError):
+                self.validate(rows)
+        rows = peer_fixture()
+        rows[0]["running_worker_sha256"] = [PINS["worker_sha256"]]
+        with self.assertRaises(ValueError):
+            self.validate(rows)
+
+    def test_peer_cli_requires_and_forwards_all_three_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference = encoded(synthetic_reference())
+            for filename, data in {
+                "status": b"0\n", "gpu-before.json": encoded(snapshots()),
+                "gpu-after.json": encoded(snapshots()), "reference.json": reference,
+                "workload.json": encoded(CHECK.expected_workload()),
+                "results.jsonl": b"".join(encoded(row) for row in peer_fixture()),
+            }.items():
+                (root / filename).write_bytes(data)
+            base = ["compare_tp_batch.py", "--run-dir", str(root),
+                    "--reference", str(root / "reference.json"), "--workload", str(root / "workload.json"),
+                    "--expect-world", "8", "--expect-cache", "on", "--expect-output-head-pruning", "off",
+                    "--expect-collective", "device-peer-serial-v4", "--expect-profile", json.dumps(PROFILE),
+                    "--expect-controller-sha256", PINS["controller_sha256"],
+                    "--expect-worker-sha256", PINS["worker_sha256"],
+                    "--expect-artifact-sha256", PINS["artifact_hsaco_id"]]
+            flags = ["--expect-peer-artifact-sha256", PEER_PINS["artifact_hsaco_id"],
+                     "--expect-peer-manifest-sha256", PEER_PINS["artifact_manifest_id"],
+                     "--expect-peer-handoff-sha256", PEER_PINS["artifact_handoff_id"]]
+            with mock.patch.object(CHECK, "REFERENCE_SHA256", CHECK.sha256(reference)):
+                with mock.patch("sys.argv", base + flags), mock.patch("sys.stdout", new_callable=io.StringIO) as output:
+                    self.assertEqual(CHECK.main(), 0)
+                    report = json.loads(output.getvalue())
+                    self.assertEqual(report["identities"]["peer_artifact"], PEER_PINS)
+                for count in (0, 2, 4):
+                    with mock.patch("sys.argv", base + flags[:count]), mock.patch("sys.stderr", new_callable=io.StringIO):
+                        with self.assertRaises(SystemExit) as error:
+                            CHECK.main()
+                        self.assertEqual(error.exception.code, 1)
 
 
 class ExtendedProfileTests(unittest.TestCase):
