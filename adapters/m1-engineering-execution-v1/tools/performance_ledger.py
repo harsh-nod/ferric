@@ -51,7 +51,9 @@ def validate_manifest(value):
         CHECK.require((variant["kind"] == "baseline") == (identifier == baseline), "baseline kind mismatch")
         expected = variant["expect"]
         peer = type(expected) is dict and expected.get("collective") == CHECK.PEER_COLLECTIVE
-        CHECK.fields(expected, EXPECT_FIELDS | ({"peer_artifact"} if peer else set()), "variant expectation")
+        wide = type(expected) is dict and "wide_kernel_profile" in expected
+        extra = ({"peer_artifact"} if peer else set()) | ({"wide_kernel_profile"} if wide else set())
+        CHECK.fields(expected, EXPECT_FIELDS | extra, "variant expectation")
         CHECK.require(type(expected["world"]) is int and expected["world"] in (1, 2, 8), "expected world")
         CHECK.require(type(expected["prefix_cache"]) is bool, "expected cache flag")
         CHECK.require(expected["output_head_pruning"] is None or type(expected["output_head_pruning"]) is bool,
@@ -63,6 +65,8 @@ def validate_manifest(value):
             CHECK.peer_artifact(expected["peer_artifact"])
         if expected["performance_profile"] is not None:
             CHECK.performance_profile(expected["performance_profile"])
+        if wide:
+            CHECK.wide_kernel_profile(expected["wide_kernel_profile"], expected["performance_profile"])
         for field in CHECK.IDENTITY_FIELDS | {"workload_sha256", "reference_sha256"}:
             CHECK.hash_value(expected[field], field)
         CHECK.require(expected["reference_sha256"] == CHECK.REFERENCE_SHA256, "frozen reference pin")
@@ -151,7 +155,8 @@ def load_run(run, expected):
     report = CHECK.compare(run["run_dir"], run["workload"], run["reference"], expected["world"],
                            {key: expected[key] for key in CHECK.IDENTITY_FIELDS}, expected["prefix_cache"],
                            expected["output_head_pruning"], expected["collective"], expected["performance_profile"],
-                           expected["workload_sha256"], expected["reference_sha256"], expected.get("peer_artifact"))
+                           expected["workload_sha256"], expected["reference_sha256"], expected.get("peer_artifact"),
+                           expected.get("wide_kernel_profile"))
     CHECK.require(report["passed"] is True and report["gpu_idle_before_and_after"] is True,
                   "current comparison did not pass pinned idle evidence")
     CHECK.require(canonical(prior) == canonical(report), "correctness report is stale or differs from current raw validation")

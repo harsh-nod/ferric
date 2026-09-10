@@ -51,6 +51,38 @@ copy and 72 ordered residual reductions. Rank zero uses 616, or 613 when
 pruning suppresses an empty output head. This is explicitly serial peer-device
 transport, not overlapped collective execution.
 
+## Wide Kernel Profiles
+
+`--expect-wide-kernel-profile v5-wave32|v5-mfma32` explicitly opts into a
+32-row-capable image. It requires setup fields `kernel_profile` matching that
+expectation and integer `kernel_row_capacity` equal to 32, as well as the exact
+seven-key `--expect-profile` object. Neither setup field is accepted without
+this flag. `v5-wave32` permits only `baseline` or `wave` projection;
+`v5-mfma32` also permits `mfma` and `auto`. Attention remains `baseline` or
+`wave`. Artifact hashes must still be independently pinned.
+
+For the same fixed four-request workload, wide profiles support batch-token
+budgets and prefill chunks from 16 through 32, with the chunk no larger than
+the batch budget and with 16-token pages. The checker
+validates the exact corresponding admission, row, output, retirement,
+generation, and cache timeline. In particular, processing the seed's 17-token
+prompt in one batch changes its completion tick and subsequent slot reuse;
+this is not accepted as an arbitrary reordered trace. Budgets below 16 and
+different workloads remain unsupported.
+
+The report distinguishes `kernel_row_capacity` from
+`maximum_batch_rows_observed`. Capacity 32 does not imply a 32-row batch was
+executed: this cache-on workload reaches at most 17 rows and its cache-off
+version reaches at most 20. Legacy reports retain their original shape.
+
+A wide ledger expectation must add `wide_kernel_profile` with the explicit
+profile string. Omit this key for legacy images; `null` is not an opt-out.
+Peer artifact pins and pruning expectations remain independently required
+when those extensions are selected. Batch and chunk budgets remain strict
+ledger equivalence fields: do not pool budget-16 and budget-32 runs in one
+optimization comparison. Use separately matched controls and clearly label
+any separate policy comparison.
+
 ## Manifest And Invocation
 
 `performance_ledger.py --manifest MANIFEST.json --json-output LEDGER.json

@@ -46,6 +46,7 @@ LEGACY_COLLECTIVE = "host_staged_fp32_rank_order_reduce_bf16_residual"
 PEER_COLLECTIVE = "device-peer-serial-v4"
 COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3", PEER_COLLECTIVE)
 PEER_ARTIFACT_FIELDS = {"artifact_hsaco_id", "artifact_manifest_id", "artifact_handoff_id"}
+WIDE_KERNEL_PROFILES = ("v5-wave32", "v5-mfma32")
 PROFILE_BOOLS = {"runtime_cache_admission", "runtime_operational", "dispatch_sequences",
                  "queue_rollover", "runtime_profiling"}
 PROFILE_FIELDS = PROFILE_BOOLS | {"projection", "attention"}
@@ -66,6 +67,14 @@ def peer_artifact(value):
     fields(value, PEER_ARTIFACT_FIELDS, "peer artifact")
     for key in PEER_ARTIFACT_FIELDS:
         hash_value(value[key], f"peer {key}")
+    return value
+
+
+def wide_kernel_profile(value, profile):
+    require(type(value) is str and value in WIDE_KERNEL_PROFILES, "unknown wide kernel profile")
+    performance_profile(profile)
+    require(value == "v5-mfma32" or profile["projection"] in ("baseline", "wave"),
+            "wide wave image does not contain MFMA projection")
     return value
 
 
@@ -227,9 +236,45 @@ def timeline(cache):
     return batches, order
 
 
+def wide_timeline(cache, budget, chunk):
+    # This fixed workload retains cancellation/prefix semantics only at 16+ rows.
+    integer(budget, 16, 32, "wide fixed-workload row budget")
+    integer(chunk, 16, 32, "wide fixed-workload prefill chunk")
+    require(chunk <= budget, "wide prefill chunk exceeds batch-token budget")
+    seed_rows = min(budget, chunk, 17)
+    early_seed = seed_rows == 17
+    reuse_rows = 3 if cache else min(budget - 1, chunk, 19)
+    batches = [[(0, 0, seed_rows)],
+               [(0, 17, 1), (1, 0, 5)] if early_seed else [(1, 0, 5), (0, 16, 1)],
+               [(1, 5, 1), (2, 0, 5)] if early_seed else [(0, 17, 1), (1, 5, 1), (2, 0, 5)],
+               [(1, 6, 1), (3, 16 if cache else 0, reuse_rows)]]
+    reuse_complete = cache or reuse_rows == 19
+    batches.append([(3, 19, 1)] if reuse_complete else [(3, reuse_rows, 19 - reuse_rows)])
+    if not reuse_complete:
+        batches.append([(3, 19, 1)])
+    order = [("admit", 0), ("batch", 0), ("admit", 1), ("batch", 1)]
+    if early_seed:
+        order.append(("retire", 0))
+    order.extend([("admit", 2), ("batch", 2)])
+    if not early_seed:
+        order.append(("retire", 0))
+    order.extend([("admit", 3), ("retire", 2), ("batch", 3), ("retire", 1), ("batch", 4)])
+    if not reuse_complete:
+        order.append(("batch", 5))
+    order.append(("retire", 3))
+    ids = [(0, 1), (1, 1), (0, 2), (2, 1)] if early_seed else REQUEST_IDS
+    retained = [2 if early_seed else 1, 3,
+                (3 if cache else 2) if early_seed else 4,
+                3 if cache else 1 + (reuse_rows + 15) // 16, 2]
+    if not reuse_complete:
+        retained.append(2)
+    cache_nodes = [int(cache and tick >= (2 if early_seed else 3)) for tick in range(len(batches))]
+    return batches, order, ids, retained, cache_nodes
+
+
 def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
                 expected_pruning=None, expected_collective=None, expected_profile=None,
-                expected_peer_artifact=None):
+                expected_peer_artifact=None, expected_wide_kernel_profile=None):
     extra = set()
     if expected_pruning is not None:
         require(type(expected_pruning) is bool, "expected pruning must be boolean")
@@ -237,6 +282,9 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
     if expected_profile is not None:
         performance_profile(expected_profile)
         extra.add("performance_profile")
+    if expected_wide_kernel_profile is not None:
+        wide_kernel_profile(expected_wide_kernel_profile, expected_profile)
+        extra.update(("kernel_profile", "kernel_row_capacity"))
     require(expected_collective is None or expected_collective in COLLECTIVES,
             "unknown expected collective")
     require(expected_collective != "device-tp1-v3" or world == 1,
@@ -249,6 +297,11 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
     else:
         require(expected_peer_artifact is None, "peer artifact pins require device-peer-serial-v4")
     record(setup, "Setup", SETUP_FIELDS | extra)
+    if expected_wide_kernel_profile is not None:
+        require(setup["kernel_profile"] == expected_wide_kernel_profile,
+                "expected wide kernel profile drifted")
+        require(integer(setup["kernel_row_capacity"], 32, 32) == 32,
+                "wide kernel row capacity drifted")
     constants = {"model": "Qwen/Qwen3-8B", "dtype": "BF16", "target": "gfx950:xnack-",
                  "model_bundle_id": BUNDLE,
                  "collective": LEGACY_COLLECTIVE if expected_collective is None else expected_collective,
@@ -280,13 +333,19 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
     for key, expected in expected_hashes.items():
         require(key in IDENTITY_FIELDS, "unknown expected identity")
         require(setup[key] == hash_value(expected, key), f"expected {key} drifted")
-    for key in ("batch_tokens", "prefill_chunk", "page_tokens"):
-        require(integer(setup[key], 1, 16) == 16, f"fixed profile {key} drifted")
+    for key in ("batch_tokens", "prefill_chunk"):
+        if expected_wide_kernel_profile is not None:
+            integer(setup[key], 16, 32, f"wide fixed-workload {key}")
+        else:
+            require(integer(setup[key], 1, 16) == 16, f"fixed profile {key} drifted")
+    require(integer(setup["page_tokens"], 1, 16) == 16, "fixed profile page_tokens drifted")
     integer(setup["physical_pages"], 4, 512, "physical page capacity")
     integer(setup["context_tokens"], 20, 8192, "context capacity")
     integer(setup["cache_ttl_ticks"], 6, U64_MAX, "cache TTL")
     require(type(setup["prefix_cache"]) is bool, "cache switch must be boolean")
-    integer(setup["max_batches"], 5 if setup["prefix_cache"] else 6, 240, "batch budget")
+    minimum_batches = (len(wide_timeline(setup["prefix_cache"], setup["batch_tokens"], setup["prefill_chunk"])[0])
+                       if expected_wide_kernel_profile is not None else 5 if setup["prefix_cache"] else 6)
+    integer(setup["max_batches"], minimum_batches, 240, "batch budget")
     if expected_cache is not None:
         require(setup["prefix_cache"] is expected_cache, "expected cache profile drifted")
     positive_seconds(setup["setup_seconds"], "setup time")
@@ -294,15 +353,21 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
 
 def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_cache=None,
                      expected_pruning=None, expected_collective=None, expected_profile=None,
-                     expected_peer_artifact=None):
+                     expected_peer_artifact=None, expected_wide_kernel_profile=None):
     require(world in (1, 2, 8) and type(world) is int, "unsupported expected world")
     require(type(records) is list and 1 < len(records) <= 64, "invalid JSONL record count")
     expected_hashes = {} if expected_hashes is None else expected_hashes
     setup = records[0]
     check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
-                expected_pruning, expected_collective, expected_profile, expected_peer_artifact)
+                expected_pruning, expected_collective, expected_profile, expected_peer_artifact,
+                expected_wide_kernel_profile)
     cache = setup["prefix_cache"]
     batches, order = timeline(cache)
+    ids = REQUEST_IDS
+    retained = [1, 3, 4, 3, 2] if cache else [1, 3, 4, 2, 2, 2]
+    cache_nodes = [int(cache and tick >= 3) for tick in range(len(batches))]
+    if expected_wide_kernel_profile is not None:
+        batches, order, ids, retained, cache_nodes = wide_timeline(cache, setup["batch_tokens"], setup["prefill_chunk"])
     require(len(records) == len(order) + 2, "missing, duplicated or extra workload records")
     prompts = [PROMPT_IDS + REFERENCE_IDS[:prefix] for prefix in PREFIX_LENGTHS]
     expected_outputs = [REFERENCE_IDS[prefix:prefix + length]
@@ -312,9 +377,9 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
     last_time, row_count, mixed, full_batch, boundary = 0, 0, False, False, False
     counts = [0] * world
     batch_durations = []
-    retained = [1, 3, 4, 3, 2] if cache else [1, 3, 4, 2, 2, 2]
+    max_observed_rows = 0
     for value, (action, index) in zip(records[1:-1], order, strict=True):
-        slot, generation = REQUEST_IDS[index] if action != "batch" else (None, None)
+        slot, generation = ids[index] if action != "batch" else (None, None)
         if action == "admit":
             record(value, "Admission", ADMISSION_FIELDS)
             require(value["name"] == NAMES[index] and integer(value["slot"], 0, 31) == slot
@@ -344,19 +409,19 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
                     kind = ("PrefillIntermediate" if position + 1 < len(prompt) else
                             "PrefillFinal" if position < len(prompt) else "Decode")
                     token = prompt[position] if position < len(prompt) else generated[request][-1]
-                    expected_rows.append({"slot": REQUEST_IDS[request][0], "generation": REQUEST_IDS[request][1],
+                    expected_rows.append({"slot": ids[request][0], "generation": ids[request][1],
                                           "token": token, "position": position, "kind": kind})
                     if kind != "PrefillIntermediate":
                         ordinal = len(generated[request])
                         choice = expected_outputs[request][ordinal]
                         generated[request].append(choice)
                         timestamps[request].append(end)
-                        expected_events.append({"slot": REQUEST_IDS[request][0], "generation": REQUEST_IDS[request][1],
+                        expected_events.append({"slot": ids[request][0], "generation": ids[request][1],
                                                 "token": choice, "index": ordinal, "completed_ns": end,
                                                 "finished": ordinal + 1 == REQUESTED_LENGTHS[request]})
                     boundary |= position == 16 and request in (0, 3)
                 progress[request] += count
-            require(type(value["rows"]) is list and 1 <= len(value["rows"]) <= 16, "invalid row count")
+            require(type(value["rows"]) is list and 1 <= len(value["rows"]) <= setup["batch_tokens"], "invalid row count")
             for row in value["rows"]:
                 fields(row, ROW_FIELDS, "row")
                 for key, high in (("slot", 31), ("generation", U64_MAX), ("token", 151935), ("position", 8191)):
@@ -371,7 +436,7 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             require(value["outputs"] == expected_events, "published output tokens/order/completion drifted")
             head_rows = len(expected_events) if expected_pruning else len(expected_rows)
             if expected_pruning is not None:
-                require(integer(value["output_head_rows"], 0, 16) == head_rows,
+                require(integer(value["output_head_rows"], 0, setup["batch_tokens"]) == head_rows,
                         "output-head row count drifted")
             rank_zero = 541 + (3 if head_rows else 0)
             if expected_collective == "device-tp1-v3":
@@ -384,12 +449,13 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             counts = [total + count for total, count in zip(counts, dispatch, strict=True)]
             hits = 1 if cache and index >= 3 else 0
             expected_stats = {"retained_pages": retained[index], "free_pages": setup["physical_pages"] - retained[index],
-                              "cached_pages": hits, "prefix_hits": hits, "hit_tokens": hits * 16, "evicted_pages": 0}
+                              "cached_pages": cache_nodes[index], "prefix_hits": hits, "hit_tokens": hits * 16, "evicted_pages": 0}
             for key, expected in expected_stats.items():
                 require(integer(value[key]) == expected, f"committed {key} accounting drifted")
             kinds = {row["kind"] for row in expected_rows}
             mixed |= "Decode" in kinds and bool(kinds & {"PrefillIntermediate", "PrefillFinal"})
             full_batch |= len(expected_rows) == 16
+            max_observed_rows = max(max_observed_rows, len(expected_rows))
             row_count += len(expected_rows)
             batch_durations.append(end - start)
             last_time = end
@@ -426,7 +492,8 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
                                       "generated_text": text, "cached_prefix_tokens": admission["cached_tokens"],
                                       "ttft_ns": ttft, "decode_intervals_ns": intervals,
                                       "tpot_ns": value["tpot_ns"]}
-    require(mixed and full_batch and boundary, "required mixed/full/page-crossing execution not observed")
+    require(mixed and (full_batch or expected_wide_kernel_profile is not None) and boundary,
+            "required mixed/full/page-crossing execution not observed")
     require(row_count == (34 if cache else 50), "total physical token rows drifted")
     closed = records[-1]
     record(closed, "Closed", CLOSED_FIELDS)
@@ -465,12 +532,17 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
         report["identities"]["peer_artifact"] = dict(expected_peer_artifact)
         report["externally_pinned_peer_artifact_identities"] = sorted(PEER_ARTIFACT_FIELDS)
         report["expected_execution_profile"]["peer_artifact"] = dict(expected_peer_artifact)
+    if expected_wide_kernel_profile is not None:
+        report["expected_execution_profile"]["wide_kernel_profile"] = expected_wide_kernel_profile
+        report["kernel_row_capacity"] = 32
+        report["maximum_batch_rows_observed"] = max_observed_rows
     return report
 
 
 def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=None, expected_cache=None,
             expected_pruning=None, expected_collective=None, expected_profile=None,
-            expected_workload_hash=None, expected_reference_hash=None, expected_peer_artifact=None):
+            expected_workload_hash=None, expected_reference_hash=None, expected_peer_artifact=None,
+            expected_wide_kernel_profile=None):
     run_dir = Path(run_dir)
     files = {"status": read_bounded(run_dir / "status", 16),
              "gpu-before.json": read_bounded(run_dir / "gpu-before.json", 65536),
@@ -492,7 +564,8 @@ def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=Non
     require(len(lines) <= 64 and all(lines), "empty or excessive JSONL records")
     records = [json_value(line) for line in lines]
     report = validate_records(records, before, world, expected_hashes, expected_cache,
-                              expected_pruning, expected_collective, expected_profile, expected_peer_artifact)
+                              expected_pruning, expected_collective, expected_profile, expected_peer_artifact,
+                              expected_wide_kernel_profile)
     report["input_sha256"] = {name: sha256(data) for name, data in files.items()}
     report["gpu_idle_before_and_after"] = True
     report["comparator_sha256"] = sha256(read_bounded(Path(__file__), 128 * 1024))
@@ -519,6 +592,7 @@ def main():
     parser.add_argument("--expect-output-head-pruning", choices=("on", "off"))
     parser.add_argument("--expect-collective", choices=COLLECTIVES)
     parser.add_argument("--expect-profile", help="Exact allowlisted performance-profile JSON object")
+    parser.add_argument("--expect-wide-kernel-profile", choices=WIDE_KERNEL_PROFILES)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     expected = {key: value for key, value in (("controller_sha256", args.expect_controller_sha256),
@@ -532,7 +606,8 @@ def main():
                          None if args.expect_cache is None else args.expect_cache == "on",
                          None if args.expect_output_head_pruning is None else args.expect_output_head_pruning == "on",
                          args.expect_collective, None if args.expect_profile is None else performance_profile(json_value(args.expect_profile)),
-                         args.expect_workload_sha256, args.expect_reference_sha256, peer_pins or None)
+                         args.expect_workload_sha256, args.expect_reference_sha256, peer_pins or None,
+                         args.expect_wide_kernel_profile)
         encoded = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
         if args.output is not None:
             with args.output.open("x", encoding="utf-8") as output:

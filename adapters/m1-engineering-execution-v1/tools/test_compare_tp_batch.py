@@ -23,8 +23,11 @@ PEER_PINS = {"artifact_hsaco_id": "a" * 64, "artifact_manifest_id": "b" * 64,
              "artifact_handoff_id": "c" * 64}
 
 
-def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged-v1", profile=None):
-    rows = fixture(world, cache)
+def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged-v1", profile=None,
+                     wide=None, budget=16, chunk=16):
+    rows = fixture(world, cache, None if wide is None else (budget, chunk))
+    if wide is not None:
+        rows[0].update(kernel_profile=wide, kernel_row_capacity=32)
     rows[0]["output_head_pruning"] = pruning
     rows[0]["collective"] = collective
     if profile is not None:
@@ -41,8 +44,9 @@ def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged
     return rows
 
 
-def peer_fixture(world=8, cache=True, pruning=False):
-    rows = extended_fixture(world, cache, pruning, "device-peer-serial-v4", PROFILE)
+def peer_fixture(world=8, cache=True, pruning=False, wide=None, budget=16, chunk=16):
+    rows = extended_fixture(world, cache, pruning, "device-peer-serial-v4", PROFILE,
+                            wide, budget, chunk)
     rows[0]["worker_pids"] = [1000] * world
     rows[-1]["worker_pids"] = [1000] * world
     rows[0]["peer_artifact"] = dict(PEER_PINS)
@@ -239,11 +243,149 @@ class ExtendedProfileTests(unittest.TestCase):
             CHECK.validate_records(rows, GPU_IDS, expected_hashes={**pins, "artifact_manifest_id": "9" * 64})
 
 
+class WideProfileTests(unittest.TestCase):
+    def validate(self, rows, profile=PROFILE, wide="v5-wave32", world=8):
+        return CHECK.validate_records(rows, GPU_IDS, world, PINS, None, False,
+                                      "host-staged-v1", profile, None, wide)
+
+    def test_all_fixed_wide_budgets_and_chunks_preserve_exact_reference_and_rows(self):
+        for budget in range(16, 33):
+            for chunk in range(16, 33):
+                for cache in (False, True):
+                    with self.subTest(budget=budget, chunk=chunk, cache=cache):
+                        rows = extended_fixture(cache=cache, profile=PROFILE,
+                                                wide="v5-wave32", budget=budget, chunk=chunk)
+                        if chunk > budget:
+                            with self.assertRaises(ValueError):
+                                self.validate(rows)
+                            continue
+                        report = self.validate(rows)
+                        self.assertTrue(report["passed"])
+                        self.assertEqual(report["physical_token_rows"], 34 if cache else 50)
+                        self.assertEqual(report["kernel_row_capacity"], 32)
+                        actual_max = max(len(row["rows"]) for row in rows if "rows" in row)
+                        self.assertEqual(report["maximum_batch_rows_observed"], actual_max)
+                        self.assertLessEqual(actual_max, 20)
+
+    def test_wide32_schedule_retires_seed_early_and_reuses_slots_without_early_hit(self):
+        rows = extended_fixture(profile=PROFILE, wide="v5-wave32", budget=32, chunk=32)
+        batches = [row for row in rows if "rows" in row]
+        admissions = [row for row in rows if row["schema"].endswith("AdmissionV2")]
+        self.assertEqual([len(row["rows"]) for row in batches], [17, 6, 6, 4, 1])
+        self.assertEqual([(row["slot"], row["generation"]) for row in admissions], [(0, 1), (1, 1), (0, 2), (2, 1)])
+        self.assertEqual([row["retained_pages"] for row in batches], [2, 3, 3, 3, 2])
+        self.assertEqual([row["cached_pages"] for row in batches], [0, 0, 1, 1, 1])
+        self.assertEqual([row["prefix_hits"] for row in batches], [0, 0, 0, 1, 1])
+        report = self.validate(rows)
+        self.assertFalse(report["sixteen_row_batch_observed"])
+        self.assertEqual(report["maximum_batch_rows_observed"], 17)
+        for change in (lambda values: values[0].update(batch_tokens=16),
+                       lambda values: next(row for row in values if row.get("name") == "cancel-between-batches").update(slot=2, generation=1),
+                       lambda values: next(row for row in values if row.get("batch_id") == 3).update(prefix_hits=1),
+                       lambda values: next(row for row in values if row.get("batch_id") == 3).update(cached_pages=0)):
+            changed = copy.deepcopy(rows)
+            change(changed)
+            with self.assertRaises(ValueError):
+                self.validate(changed)
+
+    def test_wide_peer_pruning_composition_keeps_exact_counts_and_shared_process(self):
+        for world in (2, 8):
+            for cache in (False, True):
+                for pruning in (False, True):
+                    for budget in (16, 17, 20, 32):
+                        with self.subTest(world=world, cache=cache, pruning=pruning, budget=budget):
+                            rows = peer_fixture(world, cache, pruning, "v5-wave32", budget, budget)
+                            report = CHECK.validate_records(rows, GPU_IDS, world, PINS, cache, pruning,
+                                                            "device-peer-serial-v4", PROFILE,
+                                                            PEER_PINS, "v5-wave32")
+                            self.assertTrue(report["passed"])
+                            self.assertEqual(report["rank_dispatch_counts"], rows[-1]["rank_dispatch_counts"])
+                            self.assertEqual(report["identities"]["peer_artifact"], PEER_PINS)
+                            for row in (value for value in rows if "rows" in value):
+                                expected_head = len(row["outputs"]) if pruning else len(row["rows"])
+                                self.assertEqual(row["output_head_rows"], expected_head)
+                                self.assertEqual(row["rank_dispatch_counts"],
+                                                 [616 if expected_head else 613] + [613] * (world - 1))
+                            rows[-1]["worker_pids"][-1] = 1001
+                            with self.assertRaises(ValueError):
+                                CHECK.validate_records(rows, GPU_IDS, world, PINS, cache, pruning,
+                                                       "device-peer-serial-v4", PROFILE,
+                                                       PEER_PINS, "v5-wave32")
+
+    def test_wide_metadata_requires_explicit_profile_and_exact_capacity(self):
+        rows = extended_fixture(profile=PROFILE, wide="v5-wave32")
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(rows, GPU_IDS, 8, PINS, None, False, "host-staged-v1", PROFILE)
+        with self.assertRaises(ValueError):
+            self.validate(rows, profile=None)
+        for key in ("kernel_profile", "kernel_row_capacity"):
+            changed = copy.deepcopy(rows)
+            del changed[0][key]
+            with self.assertRaises(ValueError):
+                self.validate(changed)
+        for key, value in (("kernel_profile", "v5-mfma32"), ("kernel_row_capacity", 16),
+                           ("kernel_row_capacity", True), ("kernel_row_capacity", "32"),
+                           ("batch_tokens", 15), ("batch_tokens", 33), ("prefill_chunk", 0),
+                           ("prefill_chunk", 33), ("page_tokens", 32)):
+            changed = copy.deepcopy(rows)
+            changed[0][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                self.validate(changed)
+        for key in ("kernel_profile", "kernel_row_capacity"):
+            ordinary = extended_fixture(profile=PROFILE)
+            ordinary[0][key] = rows[0][key]
+            with self.assertRaises(ValueError):
+                CHECK.validate_records(ordinary, GPU_IDS, 8, PINS, None, False, "host-staged-v1", PROFILE)
+
+    def test_wide_profile_projection_combinations_and_legacy_bounds_are_closed(self):
+        for world in (1, 2, 8):
+            for wide in CHECK.WIDE_KERNEL_PROFILES:
+                for projection in ("baseline", "wave", "mfma", "auto"):
+                    profile = {**PROFILE, "projection": projection, "attention": "wave"}
+                    rows = extended_fixture(world, profile=profile, wide=wide)
+                    if wide == "v5-wave32" and projection in ("mfma", "auto"):
+                        with self.assertRaises(ValueError):
+                            self.validate(rows, profile, wide, world)
+                    else:
+                        self.assertTrue(self.validate(rows, profile, wide, world)["passed"])
+        for wide in (None, "v3-wave", "v5-wave64", False):
+            with self.assertRaises(ValueError):
+                self.validate(extended_fixture(profile=PROFILE, wide="v5-wave32"), wide=wide)
+        rows = extended_fixture(profile=PROFILE)
+        rows[0]["batch_tokens"] = 32
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(rows, GPU_IDS, 8, PINS, None, False, "host-staged-v1", PROFILE)
+
+    def test_wide_cli_requires_the_explicit_image_profile(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference = encoded(synthetic_reference())
+            rows = extended_fixture(profile=PROFILE, wide="v5-mfma32", budget=32, chunk=32)
+            for filename, data in {"status": b"0\n", "gpu-before.json": encoded(snapshots()),
+                                   "gpu-after.json": encoded(snapshots()), "reference.json": reference,
+                                   "workload.json": encoded(CHECK.expected_workload()),
+                                   "results.jsonl": b"".join(encoded(row) for row in rows)}.items():
+                (root / filename).write_bytes(data)
+            argv = ["compare_tp_batch.py", "--run-dir", str(root), "--workload", str(root / "workload.json"),
+                    "--reference", str(root / "reference.json"), "--expect-world", "8",
+                    "--expect-output-head-pruning", "off", "--expect-collective", "host-staged-v1",
+                    "--expect-profile", json.dumps(PROFILE), "--expect-controller-sha256", PINS["controller_sha256"],
+                    "--expect-worker-sha256", PINS["worker_sha256"], "--expect-artifact-sha256", PINS["artifact_hsaco_id"]]
+            with mock.patch.object(CHECK, "REFERENCE_SHA256", CHECK.sha256(reference)):
+                with mock.patch("sys.argv", argv + ["--expect-wide-kernel-profile", "v5-mfma32"]), mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+                    self.assertEqual(CHECK.main(), 0)
+                    self.assertEqual(json.loads(out.getvalue())["maximum_batch_rows_observed"], 17)
+                with mock.patch("sys.argv", argv), mock.patch("sys.stderr", new_callable=io.StringIO):
+                    with self.assertRaises(SystemExit) as error:
+                        CHECK.main()
+                    self.assertEqual(error.exception.code, 1)
+
+
 def encoded(value):
     return (json.dumps(value, sort_keys=True) + "\n").encode()
 
 
-def fixture(world=8, cache=True):
+def fixture(world=8, cache=True, wide_geometry=None):
     """Independent fixed trace in the CLI's schema, with invented host times."""
     pids = list(range(1000, 1000 + world))
     setup = {"schema": "FerricQwen3TpBatchSetupV2", "authority": "none",
@@ -265,6 +407,15 @@ def fixture(world=8, cache=True):
     choices = [[17689, 374], [12095, 13, 576], [12095], [24081, 13]]
     texts = [" Spain is", " Paris. The", " Paris", " Madrid."]
     ids = [(0, 1), (1, 1), (2, 1), (0, 2)]
+    budget, chunk = (16, 16) if wide_geometry is None else wide_geometry
+    early = min(budget, chunk) > 16
+    if early:
+        ids = [(0, 1), (1, 1), (0, 2), (2, 1)]
+    setup.update(batch_tokens=budget, prefill_chunk=chunk)
+    initial_reuse = min(19, chunk, budget - 1)
+    reuse_finishes = cache or initial_reuse == 19
+    retained_pages = [2 if early else 1, 3, (3 if cache else 2) if early else 4,
+                      3 if cache else 1 + (initial_reuse + 15) // 16, 2, 2]
     arrival = [index * 1_000_000_000 + 1_000_000 for index in range(4)]
     times = [[] for _ in range(4)]
     outputs = [[] for _ in range(4)]
@@ -307,31 +458,34 @@ def fixture(world=8, cache=True):
                     events.append({"slot": ids[index][0], "generation": ids[index][1], "token": token,
                                    "index": ordinal, "completed_ns": end,
                                    "finished": index != 2 and ordinal + 1 == len(choices[index])})
-        retained = ([1, 3, 4, 3, 2] if cache else [1, 3, 4, 2, 2, 2])[tick]
+        retained = retained_pages[tick]
         hits = 1 if cache and tick >= 3 else 0
         result.append({"schema": "FerricQwen3TpBatchCompletedV2", "authority": "none",
                        "tick": tick, "batch_id": tick + 1, "pool_batch_id": tick + 1,
                        "rows": rows, "outputs": events, "started_ns": start, "completed_ns": end,
                        "rank_dispatch_counts": [544] + [540] * (world - 1), "free_pages": 8 - retained,
-                       "retained_pages": retained, "cached_pages": hits, "prefix_hits": hits,
+                       "retained_pages": retained, "cached_pages": int(cache and tick >= (2 if early else 3)), "prefix_hits": hits,
                        "hit_tokens": hits * 16, "evicted_pages": 0})
 
     admit(0)
-    batch(0, [(0, 0, 16)])
+    batch(0, [(0, 0, 17 if early else 16)])
     admit(1)
-    batch(1, [(1, 0, 5), (0, 16, 1)])
+    batch(1, [(0, 17, 1), (1, 0, 5)] if early else [(1, 0, 5), (0, 16, 1)])
+    if early:
+        retire(0)
     admit(2)
-    batch(2, [(0, 17, 1), (1, 5, 1), (2, 0, 5)])
-    retire(0)
+    batch(2, [(1, 5, 1), (2, 0, 5)] if early else [(0, 17, 1), (1, 5, 1), (2, 0, 5)])
+    if not early:
+        retire(0)
     admit(3)
     retire(2)
-    batch(3, [(1, 6, 1), (3, 16, 3)] if cache else [(1, 6, 1), (3, 0, 15)])
+    batch(3, [(1, 6, 1), (3, 16, 3)] if cache else [(1, 6, 1), (3, 0, initial_reuse)])
     retire(1)
-    batch(4, [(3, 19, 1)] if cache else [(3, 15, 4)])
-    if not cache:
+    batch(4, [(3, 19, 1)] if reuse_finishes else [(3, initial_reuse, 19 - initial_reuse)])
+    if not reuse_finishes:
         batch(5, [(3, 19, 1)])
     retire(3)
-    count = 5 if cache else 6
+    count = 5 if reuse_finishes else 6
     result.append({"schema": "FerricQwen3TpBatchClosedV2", "authority": "none",
                    "worker_pids": pids, "all_workers_exited": True,
                    "rank_dispatch_counts": [544 * count] + [540 * count] * (world - 1),

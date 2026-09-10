@@ -58,6 +58,76 @@ def synthetic_loader(run_value, _expected):
 
 
 class LedgerTests(unittest.TestCase):
+    def test_wide_manifest_requires_explicit_supported_profile_without_changing_peer_pins(self):
+        value = manifest()
+        expectation = value["variants"][1]["expect"]
+        expectation.update(wide_kernel_profile="v5-wave32", performance_profile=dict(FIXTURE.PROFILE))
+        LEDGER.validate_manifest(value)
+        expectation.update(collective="device-peer-serial-v4", peer_artifact=dict(FIXTURE.PEER_PINS))
+        LEDGER.validate_manifest(value)
+        report = LEDGER.aggregate(value, synthetic_loader)
+        self.assertEqual(report["variants"][1]["expected"]["wide_kernel_profile"], "v5-wave32")
+        for mutate in (lambda item: item.update(wide_kernel_profile=None),
+                       lambda item: item.update(wide_kernel_profile="v3-wave"),
+                       lambda item: item.update(performance_profile=None),
+                       lambda item: item["performance_profile"].update(projection="auto"),
+                       lambda item: item["peer_artifact"].pop("artifact_manifest_id")):
+            changed = copy.deepcopy(value)
+            mutate(changed["variants"][1]["expect"])
+            with self.assertRaises(ValueError):
+                LEDGER.validate_manifest(changed)
+
+    def test_wide_row_and_chunk_policies_cannot_be_pooled_with_different_controls(self):
+        for field in ("batch_tokens", "prefill_chunk"):
+            def different_budget(run_value, expectation):
+                metrics, equivalence = synthetic_loader(run_value, expectation)
+                equivalence[field] = 32 if run_value["id"].startswith("optimized") else 16
+                return metrics, equivalence
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "equivalence"):
+                LEDGER.aggregate(manifest(), different_budget)
+
+    def test_wide_file_loader_revalidates_profile_capacity_and_actual_geometry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            reference = FIXTURE.encoded(FIXTURE.synthetic_reference())
+            workload = FIXTURE.encoded(CHECK.expected_workload())
+            rows = FIXTURE.extended_fixture(profile=FIXTURE.PROFILE, wide="v5-mfma32", budget=32, chunk=32)
+            files = {"status": b"0\n", "gpu-before.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "gpu-after.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "results.jsonl": b"".join(FIXTURE.encoded(row) for row in rows),
+                     "workload.json": workload, "reference.json": reference}
+            for filename, data in files.items():
+                (root / filename).write_bytes(data)
+            expectation = expected(CHECK.sha256(reference), CHECK.sha256(workload))
+            expectation.update(collective="host-staged-v1", output_head_pruning=False,
+                               performance_profile=dict(FIXTURE.PROFILE), wide_kernel_profile="v5-mfma32")
+            item = {"id": "wide-r1", "run_dir": str(root), "workload": str(root / "workload.json"),
+                    "reference": str(root / "reference.json"), "comparison": str(root / "comparison.json"),
+                    "comparison_sha256": "8" * 64}
+            with mock.patch.object(CHECK, "REFERENCE_SHA256", CHECK.sha256(reference)):
+                report = CHECK.compare(root, root / "workload.json", root / "reference.json", 8, PINS, True,
+                                       False, "host-staged-v1", FIXTURE.PROFILE,
+                                       CHECK.sha256(workload), CHECK.sha256(reference), None, "v5-mfma32")
+                encoded = FIXTURE.encoded(report)
+                (root / "comparison.json").write_bytes(encoded)
+                item["comparison_sha256"] = CHECK.sha256(encoded)
+                metrics, equivalence = LEDGER.load_run(item, expectation)
+                self.assertEqual(metrics["output_tokens"], 8)
+                self.assertEqual(equivalence["batch_tokens"], 32)
+                self.assertEqual(metrics["requests"]["cancel-between-batches"]["slot"], 0)
+                for bad in (None, "v5-wave32"):
+                    changed = copy.deepcopy(expectation)
+                    if bad is None:
+                        del changed["wide_kernel_profile"]
+                    else:
+                        changed["wide_kernel_profile"] = bad
+                    with self.assertRaises(ValueError):
+                        LEDGER.load_run(item, changed)
+                rows[0]["kernel_row_capacity"] = 16
+                (root / "results.jsonl").write_bytes(b"".join(FIXTURE.encoded(row) for row in rows))
+                with self.assertRaises(ValueError):
+                    LEDGER.load_run(item, expectation)
+
     def test_nearest_rank_is_explicit_and_small_p95_is_worst(self):
         stats = LEDGER.statistics([4.0, 1.0, 3.0, 2.0])
         self.assertEqual(stats, {"n": 4, "mean": 2.5, "min": 1.0, "max": 4.0, "p50": 2.0, "p95": 4.0})
