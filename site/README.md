@@ -15,10 +15,13 @@ When implementation or qualification state changes:
    Update performance values only from current, externally pinned correctness
    reports and ledgers. Keep n=1 ablations separate from repeated profiles,
    never pool request identities, exclude rejected numerical runs, and retain
-   the exact controller/worker/artifact/ledger identities. The present queue
-   contains five accepted n=1 profiles; both wave model profiles are rejected.
+   the exact controller/worker/artifact/ledger identities. The historical
+   ablation queue contains five accepted n=1 profiles; both wave model profiles
+   are rejected.
    Keep the later matched MFMA pair separate, including its startup regression.
-   Serial-peer TP2/TP8 observations have no matched host controls. The CPU
+   Initial serial-peer TP2/TP8 observations had no matched host controls; later
+   source-matched controls use deliberately distinct worker executables and
+   show large regressions on the peer path. The CPU
    transpose-helper benchmark is not a model latency or throughput result.
 3. Install the pinned browser harness and run both the structural and rendered
    checks:
