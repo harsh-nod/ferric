@@ -207,6 +207,24 @@ def held_executable(path, expected):
         raise
 
 
+def freeze_executable(source, output, expected):
+    source_fd = held_executable(source, expected)
+    try:
+        os.lseek(source_fd, 0, os.SEEK_SET)
+        destination = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        with os.fdopen(destination, "wb") as frozen:
+            size = 0
+            while block := os.read(source_fd, 1024 * 1024):
+                size += len(block)
+                require(size <= 256 * 1024**2, "executable copy exceeds bound")
+                frozen.write(block)
+            frozen.flush()
+            os.fchmod(frozen.fileno(), 0o500)
+    finally:
+        os.close(source_fd)
+    return held_executable(output, expected)
+
+
 def child_status(child):
     # WNOWAIT reserves the controller PID until every owned group is cleaned up.
     if child.returncode is not None:
@@ -221,7 +239,7 @@ def process_identity(pid):
     with Path(f"/proc/{pid}/stat").open("rb") as source:
         data = source.read(16_385)
     require(0 < len(data) <= 16_384, "process stat byte bound exceeded")
-    raw = data.decode("ascii")
+    raw = data.decode("utf-8", errors="surrogateescape")
     fields = raw.rsplit(") ", 1)[1].split()
     return {"pid": pid, "state": fields[0], "pgid": int(fields[2]),
             "session": int(fields[3]), "start_ticks": int(fields[19])}
@@ -266,13 +284,15 @@ def abort_and_reap(children):
         except ProcessLookupError:
             pass
     until = time.monotonic() + 2
-    while time.monotonic() < until and live_owned_groups(active):
-        time.sleep(0.01)
-    for child in active:
-        try:
-            os.killpg(child.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
+    try:
+        while time.monotonic() < until and live_owned_groups(active):
+            time.sleep(0.01)
+    finally:
+        for child in active:
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
     receipt = quiet_groups(active, 5)
     return [child.wait(timeout=5) for child in children], receipt
 
@@ -511,7 +531,9 @@ class Cohort:
 def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, source, artifact,
         snapshot_command, settings, reserve, snapshot_fn=snapshot, memory_raw=None):
     global _interrupted
-    require(output.is_absolute() and output.stat().st_mode & 0o777 == 0o700, "private absolute cohort output required")
+    metadata = output.lstat()
+    require(output.is_absolute() and stat.S_ISDIR(metadata.st_mode) and metadata.st_mode & 0o777 == 0o700
+            and metadata.st_uid == os.getuid(), "owned private absolute cohort output required")
     controller_fd, worker_fd, cohort = None, None, None
     result = {"schema": "FerricReplicaCohortV1", "authority": "none", "status": "failed",
               "model_parity_qualified": False, "controller_sha256": controller_sha,
@@ -523,18 +545,24 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
     try:
         validate_plan(cohort_plan)
         validate_settings(settings)
+        require(source.is_absolute() and artifact.is_absolute(), "absolute source/artifact paths required")
         raw = Path("/proc/meminfo").read_bytes() if memory_raw is None else memory_raw
         write_new(output / "meminfo-before.txt", raw)
         write_new(output / "plan.json", encoded(cohort_plan))
         memory = memory_check(raw, cohort_plan["retained_target_bytes"], reserve)
         write_new(output / "memory-headroom.json", encoded(memory))
-        controller_fd = held_executable(controller, controller_sha)
-        worker_fd = held_executable(worker, worker_sha)
+        executable_directory = output / "launch-artifacts"
+        executable_directory.mkdir(mode=0o700)
+        frozen_controller, frozen_worker = executable_directory / "controller", executable_directory / "worker"
+        controller_fd = freeze_executable(controller, frozen_controller, controller_sha)
+        worker_fd = freeze_executable(worker, frozen_worker, worker_sha)
+        result["executables"] = {"controller": str(frozen_controller), "worker": str(frozen_worker),
+                                 "source_controller": str(controller), "source_worker": str(worker)}
         pre_taken = True
         snapshot_fn(snapshot_command, output, "before", cohort_plan["device_unique_ids"])
         check_interrupted()
         cohort = Cohort(cohort_plan, output, settings)
-        cohort.launch(controller, controller_fd, worker, source, artifact)
+        cohort.launch(frozen_controller, controller_fd, frozen_worker, source, artifact)
         cohort.supervise()
         result["group_termination"] = quiet_groups(cohort.children, 1)
         check_interrupted()
