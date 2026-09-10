@@ -47,6 +47,11 @@ const requiredClaims = [
   "CPU transpose helper only",
   "TP1 device residual pair",
   "Eight-GPU allocation cohorts: 64 outputs",
+  "True 32-row execution: a latency tradeoff",
+  "Source-matched peer controls: a regression",
+  "Setup transpose: full-model observation",
+  "not a causal decode-speed claim",
+  "admission TTFT worsens",
   "not a sum of instance rates",
   "240 full-array equality checks",
   "a689418",
@@ -662,6 +667,16 @@ try {
 
     const replicaDisclosure = page.getByText("All replica-cohort request latencies", { exact: true });
     await replicaDisclosure.click();
+    const wideDisclosure = page.getByText("All wide-policy request latencies", { exact: true });
+    await wideDisclosure.click();
+    const peerDisclosure = page.getByText("All source-matched peer request latencies", { exact: true });
+    await peerDisclosure.click();
+    assert(await page.getByRole("region", { name: "Source-matched peer controls: per-request latency", exact: true })
+      .locator("tbody tr").count() === 16, `${name}: missing source-matched peer request identities`);
+    await peerDisclosure.click();
+    assert(await page.getByRole("region", { name: "Wide row-policy pair: eight named requests per policy", exact: true })
+      .locator("tbody tr").count() === 16, `${name}: missing wide-policy request identities`);
+    await wideDisclosure.click();
     const cohortCount = await page.evaluate(() => window.FERRIC_PERFORMANCE.replicaCohorts.profiles.length);
     assert(await page.getByRole("region", { name: "Replica cohorts: eight named requests per layout", exact: true })
       .locator("tbody tr").count() === 8 * cohortCount, `${name}: missing replica request identities`);
@@ -669,6 +684,7 @@ try {
 
     for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
       ["Matched TP1 residual pair: process windows", 2], ["Matched TP1 residual pair: request latencies", 8],
+      ["Setup transpose model pair: process windows", 2], ["Setup transpose model pair: request latencies", 8],
       ["Matched MFMA pair: request latencies", 8], ["Unmatched peer observations: process windows", 2],
       ["Unmatched peer observations: request latencies", 8], ["CPU-only transpose helper, sums of per-case medians", 3]]) {
       assert(await page.getByRole("region", { name: caption, exact: true }).locator("tbody tr").count() === rows,
@@ -685,6 +701,9 @@ try {
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [heading, suffix] of [["MFMA: faster requests, slower startup", "mfma"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
+          ["True 32-row execution: a latency tradeoff", "wide"],
+          ["Source-matched peer controls: a regression", "peer-controls"],
+          ["Setup transpose: full-model observation", "transpose-model"],
           ["Peer transport: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
           await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
             const headerHeight = document.querySelector("header").getBoundingClientRect().height;

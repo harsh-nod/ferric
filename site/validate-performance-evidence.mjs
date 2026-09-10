@@ -111,6 +111,49 @@ for (const [mode, hash] of [["projection", "ad9ecdbc5e35a7013a1e3dd68fcaba5344ed
   assert.equal(data.identities[`wave${mode[0].toUpperCase()}${mode.slice(1)}OperationalRejectionSha256`], hash);
 }
 const host = data.hostTranspose;
+const sourcePeer = data.peerSourceControls;
+const transposeModel = data.transposeModelPair;
+const transposeLedger = await pinned(join(measurementRoot, "transpose-source-paired-r1.json"),
+  "389c7b8ee88fb443e2f3396cb0978e92509142e58c3087321de43bc097d0b191");
+assert.equal(transposeModel.pins.ledgerFileSha256, "389c7b8ee88fb443e2f3396cb0978e92509142e58c3087321de43bc097d0b191");
+assert.equal(transposeLedger.variants.length, 2);
+for (const [index, profile] of transposeModel.profiles.entries()) {
+  const variant = transposeLedger.variants[index];
+  assert.equal(variant.name, profile.id);
+  assert.equal(variant.repetitions, 1);
+  common(variant.expected, 8, "mfma");
+  assert.equal(variant.expected.controller_sha256, profile.controllerSha256);
+  for (const [target, source] of basePins.slice(1)) assert.equal(transposeModel.pins[target], variant.expected[source]);
+  requests(profile, variant.runs[0]);
+  checkedReport(await pinned(join(measurementRoot, `transpose-${index === 0 ? "untiled" : "tiled"}-mfma-tp8-r1-comparison.json`), profile.comparisonSha256), 8);
+  console.log("EXACT TRANSPOSE MODEL OBSERVATION", profile.id);
+}
+for (const [key, percentage] of [["setupSeconds", "15.33"], ["wholeSeconds", "13.78"]]) {
+  const [control, candidate] = transposeModel.profiles;
+  assert.equal(((1 - candidate[key] / control[key]) * 100).toFixed(2), percentage);
+  assert(transposeModel.interpretation.includes(`${percentage}%`));
+}
+for (const [index, control] of sourcePeer.controls.entries()) {
+  const hash = ["d59696cb6616994677e42db34aab16cd33396a99a90a29f29965392b135f5a85",
+    "886a3d29d7555cda2de47ab3ea305f0567bab235a7d1384ee2700b0259ab1ccc"][index];
+  const ledger = await pinned(join(measurementRoot, `peer-source-matched-tp${control.world}-r1.json`), hash);
+  assert.equal(control.ledgerFileSha256, hash);
+  assert.equal(ledger.variants.length, 2);
+  for (const [variantIndex, profile] of [control, data.peerObservations.profiles[index]].entries()) {
+    const variant = ledger.variants[variantIndex];
+    assert.equal(variant.repetitions, 1);
+    common(variant.expected, control.world);
+    assert.equal(variant.expected.controller_sha256, sourcePeer.controllerSha256);
+    assert.equal(variant.expected.worker_sha256, variantIndex === 0 ? sourcePeer.hostWorkerSha256 : sourcePeer.peerWorkerSha256);
+    assert.equal(variant.expected.collective, variantIndex === 0 ? null : "device-peer-serial-v4");
+    for (const [target, source] of basePins.slice(2)) assert.equal(variant.expected[source], data.identities[target]);
+    requests(profile, variant.runs[0]);
+  }
+  checkedReport(await pinned(join(measurementRoot, `host-source-control-tp${control.world}-r1-comparison.json`), control.comparisonSha256), control.world);
+  const reduction = ((1 - data.peerObservations.profiles[index].outputTokensPerSecond / control.outputTokensPerSecond) * 100).toFixed(2);
+  assert(sourcePeer.interpretation.includes(`${reduction}%`));
+  console.log("EXACT SOURCE-MATCHED PEER CONTROL", control.world);
+}
 for (const [section, rateGain, ttftGain, tpotGain] of [[data.mfmaPair, "27.91", "30.85", "32.21"],
   [data.deviceTp1Pair, "14.19", "6.76", "0.97"]]) {
   const [control, candidate] = section.profiles;
@@ -195,4 +238,52 @@ for (const profile of cohorts.profiles.slice(1)) {
   const ratio = (profile.outputTokensPerSecond / cohorts.profiles[0].outputTokensPerSecond).toFixed(3);
   assert(cohorts.interpretation.includes(`${ratio}x`));
 }
-console.log("PASS: six model observations, cohort timing/custody, rejected wave pins, CPU helper aggregates and historical measurements match frozen evidence");
+const wide = data.wideRowPair;
+const widePair = await pinned(join(replicaRoot, "replica-wide-policy-r1-pair.json"),
+  "0bd49a1c66cb297e9eb20fd502ca5c99faefbaf722bd963de3acb96b5cc6fb6e");
+assert.equal(widePair.passed, true);
+assert.equal(widePair.authority, "none");
+assert.equal(widePair.all_cohort_intervals_serialized, true);
+assert.equal(wide.pins.pairComparisonSha256, "0bd49a1c66cb297e9eb20fd502ca5c99faefbaf722bd963de3acb96b5cc6fb6e");
+for (const [target, source] of basePins) assert.equal(wide.pins[target], widePair.common_policy[source]);
+assert.deepEqual(widePair.common_policy.performance_profile, data.runtimeProfile);
+assert.equal(widePair.common_policy.kernel_profile, "v5-mfma32");
+assert.equal(widePair.common_policy.layout, "1xTP8");
+const wideHashes = ["01a6e3579689a7bf9c219f5dcc00480bfd3540f237127065d495ee76c26ab5a7",
+  "0f67a449f4d17a5ec7012d551e899c4b9303d880c7ce06f6f0a55ecec9e026b7"];
+for (const [index, profile] of wide.profiles.entries()) {
+  const report = await pinned(join(replicaRoot, `replica-wide${profile.rows}-operational-r1-comparison.json`), wideHashes[index]);
+  assert.equal(report.passed, true);
+  assert.equal(report.authority, "none");
+  assert.equal(report.global_before_after_idle, true);
+  assert.equal(report.all_controllers_reaped, true);
+  assert.equal(report.global_output_tokens, 64);
+  assert.equal(report.replica_count, 1);
+  assert.equal(report.physical_token_rows, 96);
+  assert.equal(report.repetition_count, profile.repetitions);
+  assert.equal(report.expectation.batch_tokens, profile.rows);
+  assert.equal(report.expectation.prefill_chunk, profile.prefillChunk);
+  assert.equal(report.expectation_sha256, profile.expectationSha256);
+  assert.equal(report.workload_sha256, cohorts.pins.workloadSha256);
+  assert.deepEqual(report.weight_payload_bytes, { device_base: 16385728512, device_transposed: 0, host_target: 16381470720 });
+  for (const [target, source] of basePins) assert.equal(wide.pins[target], report.expectation[source]);
+  assert.deepEqual(profile.actualBatchRows, widePair.policies[index].actual_batch_rows);
+  assert.equal(profile.comparisonSha256, wideHashes[index]);
+  assert.equal(widePair.policies[index].report_sha256, profile.comparisonSha256);
+  for (const [target, source] of [["outputTokensPerSecond", "global_output_tokens_per_second"],
+    ["releaseToLastOutputNs", "release_to_last_output_ns"], ["barrierSetupNs", "barrier_setup_ns"],
+    ["spawnToReapNs", "whole_cohort_spawn_to_reap_ns"], ["releaseEpochNs", "global_release_epoch_ns"]]) {
+    assert.equal(profile[target], report[source]);
+  }
+  assert.equal(profile.maximumLatenessNs, report.replicas[0].lateness_ns);
+  for (const [requestIndex, values] of profile.requestLatencies.entries()) {
+    const actual = report.requests[`replica-request-${String(requestIndex).padStart(2, "0")}`];
+    assert.equal(actual.output_tokens, 8);
+    assert.equal(actual.decode_interval_count, 7);
+    assert.deepEqual(values, [actual.admission_ttft_ns, actual.release_to_first_token_ns, actual.tpot_seconds]);
+  }
+  console.log("EXACT WIDE ROW POLICY", profile.rows);
+}
+assert.equal(((wide.profiles[1].outputTokensPerSecond / wide.profiles[0].outputTokensPerSecond - 1) * 100).toFixed(2), "12.56");
+assert(wide.interpretation.includes("12.56%"));
+console.log("PASS: model observations, allocation and wide cohorts, rejected wave pins, CPU helper aggregates and historical measurements match frozen evidence");

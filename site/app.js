@@ -140,8 +140,47 @@
       (values[1] / 1e9).toFixed(3), (values[2] / 1e9).toFixed(3), values[3].toFixed(3),
     ])), replicaLatencies);
   measured.append(replicaLatencies, element("p", "", cohorts.limits));
+  const wide = performance.wideRowPair;
+  measured.append(element("h3", "", "True 32-row execution: a latency tradeoff"), element("p", "", wide.scope));
+  performanceTable("Wide row-policy pair: common-release process windows",
+    ["Row / Chunk Policy / Reps", "Output tok/s", "Release to Last Output (s)", "Barrier Setup (s)", "Spawn to Reap (s)"],
+    wide.profiles.map((profile) => [`${profile.rows} / ${profile.prefillChunk} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+      (profile.releaseToLastOutputNs / 1e9).toFixed(3), (profile.barrierSetupNs / 1e9).toFixed(3),
+      (profile.spawnToReapNs / 1e9).toFixed(3)]));
+  measured.append(element("p", "", wide.interpretation));
+  performanceTable("Wide row-policy pair: observed batch rows",
+    ["Policy", "Actual Batch Rows / 96 Total"],
+    wide.profiles.map((profile) => [profile.name, profile.actualBatchRows.join(", ")]));
+  const wideLatencies = element("details", "performance-identities");
+  wideLatencies.append(element("summary", "", "All wide-policy request latencies"));
+  performanceTable("Wide row-policy pair: eight named requests per policy",
+    ["Policy / Request", "Admission TTFT (s)", "Release to First Token (s)", "TPOT (s) / 7 Gaps"],
+    wide.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+      `${profile.rows} rows / replica-request-${String(index).padStart(2, "0")}`,
+      (values[0] / 1e9).toFixed(3), (values[1] / 1e9).toFixed(3), values[2].toFixed(3),
+    ])), wideLatencies);
+  measured.append(wideLatencies, element("p", "", wide.timing));
   singleRunTables(performance.mfmaPair, "MFMA: faster requests, slower startup", "Matched MFMA pair");
   singleRunTables(performance.deviceTp1Pair, "TP1 device residual pair", "Matched TP1 residual pair");
+  const peerControls = performance.peerSourceControls;
+  measured.append(element("h3", "", "Source-matched peer controls: a regression"),
+    element("p", "", peerControls.scope), element("p", "", peerControls.interpretation));
+  performanceTable("Source-matched peer controls: workload and process windows",
+    ["World / Path / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+    peerControls.controls.flatMap((control, index) => [control, performance.peerObservations.profiles[index]].map((profile) => [
+      `${profile.name} / n=1`, profile.outputTokensPerSecond.toFixed(6), profile.workloadSeconds.toFixed(3),
+      profile.setupSeconds.toFixed(3), profile.wholeSeconds.toFixed(3),
+    ])));
+  const peerControlLatencies = element("details", "performance-identities");
+  peerControlLatencies.append(element("summary", "", "All source-matched peer request latencies"));
+  performanceTable("Source-matched peer controls: per-request latency",
+    ["World / Path / Request", "TTFT (s)", "TPOT (s)"],
+    peerControls.controls.flatMap((control, index) => [control, performance.peerObservations.profiles[index]].flatMap((profile) =>
+      profile.requestLatencies.map((values, requestIndex) => [
+        `${profile.name} / ${performance.requests[requestIndex].name}`,
+        values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+      ]))), peerControlLatencies);
+  measured.append(peerControlLatencies);
   singleRunTables(performance.peerObservations, "Peer transport: correctness, not a speedup", "Unmatched peer observations");
   measured.append(element("h3", "", "CPU transpose helper only"), element("p", "", performance.hostTranspose.scope));
   performanceTable("CPU-only transpose helper, sums of per-case medians",
@@ -150,8 +189,9 @@
       `TP${group.world} / ${group.cases}`, group.baselineSeconds.toFixed(6),
       group.tiledSeconds.toFixed(6), `${group.helperSpeedup.toFixed(3)}x`,
     ]));
-  measured.append(element("p", "", performance.hostTranspose.interpretation),
-    element("h3", "", "Historical repeated profiles"));
+  measured.append(element("p", "", performance.hostTranspose.interpretation));
+  singleRunTables(performance.transposeModelPair, "Setup transpose: full-model observation", "Setup transpose model pair");
+  measured.append(element("h3", "", "Historical repeated profiles"));
   performanceTable("Standalone profile ranges, two repetitions each",
     ["Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
     performance.variants.map((variant) => [
@@ -252,6 +292,31 @@
     for (const key of ["comparisonSha256", "expectationSha256", "releaseEpochNs", "maximumLatenessNs"]) {
       const label = key === "expectationSha256" ? "canonical expectation SHA-256" : key;
       pins.append(element("dt", "", `${profile.layout} ${label}`), element("dd", "", profile[key]));
+    }
+  });
+  Object.entries(wide.pins).forEach(([key, value]) => {
+    pins.append(element("dt", "", `Wide row policy ${key}`), element("dd", "", value));
+  });
+  wide.profiles.forEach((profile) => {
+    for (const key of ["comparisonSha256", "expectationSha256", "releaseEpochNs", "maximumLatenessNs"]) {
+      const label = key === "expectationSha256" ? "canonical expectation SHA-256" : key;
+      pins.append(element("dt", "", `${profile.name} ${label}`), element("dd", "", profile[key]));
+    }
+  });
+  for (const key of ["sourceRevision", "controllerSha256", "hostWorkerSha256", "peerWorkerSha256"]) {
+    pins.append(element("dt", "", `Source-matched peer ${key}`), element("dd", "", peerControls[key]));
+  }
+  peerControls.controls.forEach((control) => {
+    for (const key of ["comparisonSha256", "ledgerFileSha256"]) {
+      pins.append(element("dt", "", `${control.name} ${key}`), element("dd", "", control[key]));
+    }
+  });
+  Object.entries(performance.transposeModelPair.pins).forEach(([key, value]) => {
+    pins.append(element("dt", "", `Transpose model pair ${key}`), element("dd", "", value));
+  });
+  performance.transposeModelPair.profiles.forEach((profile) => {
+    for (const key of ["controllerSha256", "comparisonSha256"]) {
+      pins.append(element("dt", "", `${profile.name} ${key}`), element("dd", "", profile[key]));
     }
   });
   provenance.append(pins);

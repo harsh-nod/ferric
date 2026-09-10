@@ -19,7 +19,8 @@ function digest(value) {
 export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
-    "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "hostTranspose", "replicaCohorts"]);
+    "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "peerSourceControls",
+    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair"]);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
   assert(data.scope.includes("Not steady-state serving throughput"));
   assert(data.scope.includes("eight output tokens including one from the cancelled request"));
@@ -189,6 +190,23 @@ export function validatePerformance(data) {
     assert.equal(profile.id, `peer-tp${profile.world}-operational-r1`);
     digest(profile.metricsFileSha256);
   });
+  const peerControls = data.peerSourceControls;
+  keys(peerControls, ["scope", "interpretation", "sourceRevision", "controllerSha256", "hostWorkerSha256", "peerWorkerSha256", "controls"]);
+  assert.equal(peerControls.sourceRevision, "902fef6e1478b3ac677e5456b2a2d1f917456fba");
+  for (const key of ["controllerSha256", "hostWorkerSha256", "peerWorkerSha256"]) digest(peerControls[key]);
+  assert.equal(peerControls.controllerSha256, peer.pins.controllerSha256);
+  assert.equal(peerControls.peerWorkerSha256, peer.pins.workerSha256);
+  assert.notEqual(peerControls.hostWorkerSha256, peerControls.peerWorkerSha256);
+  assert(peerControls.scope.includes("not byte-identical workers"));
+  assert(peerControls.interpretation.includes("not counted as new repetitions"));
+  assert.equal(peerControls.controls.length, 2);
+  peerControls.controls.forEach((control, index) => {
+    singleProfile(control, ["world", "ledgerFileSha256"]);
+    assert.equal(control.world, [2, 8][index]);
+    assert.equal(control.id, `host-source-matched-tp${control.world}`);
+    digest(control.ledgerFileSha256);
+    assert(control.outputTokensPerSecond > peer.profiles[index].outputTokensPerSecond);
+  });
   const host = data.hostTranspose;
   keys(host, ["scope", "interpretation", "modelTiming", "allocationHashUploadIncluded", "repetitions",
     "fullArrayComparisons", "source", "summarySha256", "rawLogSha256", "groups"]);
@@ -208,6 +226,21 @@ export function validatePerformance(data) {
     assert(group.baselineSeconds > 0 && group.tiledSeconds > 0);
     assert(Math.abs(group.baselineSeconds / group.tiledSeconds - group.helperSpeedup) < 1e-12);
   });
+  const transposeModel = data.transposeModelPair;
+  keys(transposeModel, ["scope", "interpretation", "causalDecodeSpeedupClaimed", "pins", "profiles"]);
+  assert.equal(transposeModel.causalDecodeSpeedupClaimed, false);
+  assert(transposeModel.interpretation.includes("not a causal decode-speed claim"));
+  keys(transposeModel.pins, ["workerSha256", "hsacoSha256", "manifestSha256", "handoffSha256", "ledgerFileSha256"]);
+  Object.values(transposeModel.pins).forEach(digest);
+  assert.equal(transposeModel.pins.hsacoSha256, mfma.pins.hsacoSha256);
+  assert.notEqual(transposeModel.pins.workerSha256, mfma.pins.workerSha256);
+  assert.equal(transposeModel.profiles.length, 2);
+  transposeModel.profiles.forEach((profile, index) => {
+    singleProfile(profile, ["controllerSha256"]);
+    assert.equal(profile.id, ["transpose-untiled", "transpose-tiled"][index]);
+    digest(profile.controllerSha256);
+  });
+  assert.notEqual(transposeModel.profiles[0].controllerSha256, transposeModel.profiles[1].controllerSha256);
   const cohorts = data.replicaCohorts;
   keys(cohorts, ["scope", "interpretation", "clockScope", "limits", "pins", "profiles"]);
   assert(cohorts.scope.includes("64 total outputs") && cohorts.scope.includes("not steady-state serving"));
@@ -255,6 +288,41 @@ export function validatePerformance(data) {
       assert(Number.isFinite(values[3]) && values[3] > 0);
     });
   });
+  const wide = data.wideRowPair;
+  keys(wide, ["scope", "interpretation", "timing", "pins", "profiles"]);
+  assert(wide.scope.includes("Batch budget and prefill chunk change together"));
+  assert(wide.scope.includes("selectors are baseline"));
+  assert(wide.interpretation.includes("admission TTFT worsens"));
+  keys(wide.pins, ["controllerSha256", "workerSha256", "hsacoSha256", "manifestSha256", "handoffSha256", "pairComparisonSha256"]);
+  Object.values(wide.pins).forEach(digest);
+  assert.equal(wide.pins.controllerSha256, cohorts.pins.controllerSha256);
+  assert.equal(wide.pins.workerSha256, cohorts.pins.workerSha256);
+  assert.notEqual(wide.pins.hsacoSha256, cohorts.pins.hsacoSha256);
+  assert.equal(wide.profiles.length, 2);
+  wide.profiles.forEach((profile, index) => {
+    keys(profile, ["name", "rows", "prefillChunk", "repetitions", "outputTokensPerSecond", "releaseToLastOutputNs",
+      "barrierSetupNs", "spawnToReapNs", "releaseEpochNs", "maximumLatenessNs", "actualBatchRows", "requestLatencies",
+      "comparisonSha256", "expectationSha256"]);
+    assert.equal(profile.rows, [16, 32][index]);
+    assert.equal(profile.prefillChunk, profile.rows);
+    assert.equal(profile.repetitions, 1);
+    for (const key of ["releaseToLastOutputNs", "barrierSetupNs", "spawnToReapNs", "releaseEpochNs", "maximumLatenessNs"]) {
+      assert(Number.isSafeInteger(profile[key]) && profile[key] > 0);
+    }
+    assert(profile.maximumLatenessNs <= 100000000);
+    assert(Math.abs(profile.outputTokensPerSecond * profile.releaseToLastOutputNs / 1e9 - 64) < 1e-9);
+    assert(profile.spawnToReapNs > profile.barrierSetupNs + profile.releaseToLastOutputNs);
+    assert.deepEqual([...profile.actualBatchRows], index === 0 ? [16, 16, 16, 8, 8, 8, 8, 8, 5, 3] : [32, 14, 8, 8, 8, 8, 8, 8, 2]);
+    digest(profile.comparisonSha256);
+    digest(profile.expectationSha256);
+    assert.equal(profile.requestLatencies.length, 8);
+    profile.requestLatencies.forEach((values) => {
+      assert(Array.isArray(values) && values.length === 3);
+      assert(Number.isSafeInteger(values[0]) && values[0] > 0);
+      assert(Number.isSafeInteger(values[1]) && values[1] >= values[0] && values[1] < profile.releaseToLastOutputNs);
+      assert(Number.isFinite(values[2]) && values[2] > 0);
+    });
+  });
 }
 
 export function testPerformanceRejections(data) {
@@ -298,6 +366,17 @@ export function testPerformanceRejections(data) {
     (copy) => { copy.replicaCohorts.profiles[0].requestLatencies[0][0] = 1; },
     (copy) => { copy.replicaCohorts.profiles[0].maximumLatenessNs = 100000001; },
     (copy) => { copy.replicaCohorts.pins.workloadSha256 = copy.identities.workloadSha256; },
+    (copy) => { copy.wideRowPair.profiles[1].prefillChunk = 16; },
+    (copy) => { copy.wideRowPair.profiles[1].actualBatchRows[0] = 16; },
+    (copy) => { copy.wideRowPair.profiles[0].outputTokensPerSecond *= 2; },
+    (copy) => { copy.wideRowPair.profiles[1].requestLatencies[0][0] = -1; },
+    (copy) => { copy.wideRowPair.interpretation = "Latency always improves"; },
+    (copy) => { copy.peerSourceControls.hostWorkerSha256 = copy.peerSourceControls.peerWorkerSha256; },
+    (copy) => { copy.peerSourceControls.controls[0].world = 8; },
+    (copy) => { copy.peerSourceControls.controls[1].repetitions = 2; },
+    (copy) => { copy.transposeModelPair.causalDecodeSpeedupClaimed = true; },
+    (copy) => { copy.transposeModelPair.profiles[1].repetitions = 2; },
+    (copy) => { copy.transposeModelPair.profiles[1].controllerSha256 = copy.transposeModelPair.profiles[0].controllerSha256; },
   ];
   for (const mutate of mutations) {
     const copy = JSON.parse(JSON.stringify(data));

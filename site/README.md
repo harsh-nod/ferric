@@ -41,7 +41,7 @@ overflow at the desktop, breakpoint-edge, and mobile widths; its exhaustive mode
 checks every width from 320px through 1440px. `stage-artifact.mjs` creates and
 validates the seven-file static deployment roster so `node_modules`, dependency
 metadata, documentation, and test-only files cannot enter the Pages artifact.
-`validate-performance.mjs` checks the closed performance schema and thirty-nine
+`validate-performance.mjs` checks the closed performance schema and fifty
 negative mutations, including incorrect repetition counts, throughput windows,
 runtime profiles, ledger identities, and cancelled-request TPOT. A Pages-only
 publication must not include Ferric implementation, model files, or raw logs.
@@ -54,3 +54,9 @@ use a distinct 64-output workload and common RAW release clock, not summed
 instance rates or the earlier eight-output window. Publish the per-instance
 row policy, actual loaded weight bytes and every request's separate admission
 TTFT, release-to-first-token and seven-gap TPOT.
+
+Keep the later wide16/32 row-policy pair, source-matched peer controls and
+full-model transpose observation separate. Wide row and chunk budgets change
+together; request00 TTFT regresses. Peer worker executables differ deliberately
+on the same core source. The transpose production change is setup-only, so
+observed decode-rate differences are not attributed to that change.
