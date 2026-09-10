@@ -65,6 +65,23 @@ class ReplicaTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             launch.validate_settings(settings)
 
+    def test_executable_copy_pin_is_independent_and_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory(prefix="frpin-") as temporary:
+            parent = Path(temporary)
+            source, destination = parent / "source", parent / "frozen"
+            original = b"#!/bin/sh\nexit 0\n"
+            source.write_bytes(original)
+            source.chmod(0o700)
+            fd = launch.freeze_executable(source, destination, launch.sha(original))
+            try:
+                source.write_bytes(b"replacement")
+                self.assertEqual(destination.read_bytes(), original)
+                self.assertEqual(destination.stat().st_mode & 0o777, 0o500)
+            finally:
+                os.close(fd)
+            with self.assertRaises(ValueError):
+                launch.freeze_executable(source, parent / "invalid", launch.sha(original))
+
     @staticmethod
     def settings():
         return {"ready_timeout_ns": 1_000_000_000, "run_timeout_ns": 1_000_000_000,
