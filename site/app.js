@@ -207,7 +207,7 @@
         values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
       ]))), peerControlLatencies);
   measured.append(peerControlLatencies);
-  singleRunTables(performance.peerObservations, "Peer transport: correctness, not a speedup", "Unmatched peer observations");
+  singleRunTables(performance.peerObservations, "Original peer checkpoint: correctness, not a speedup", "Original peer checkpoint");
   measured.append(element("h3", "", "CPU transpose helper only"), element("p", "", performance.hostTranspose.scope));
   performanceTable("CPU-only transpose helper, sums of per-case medians",
     ["Shard World / Cases", "Baseline Helper (s)", "Tiled Helper (s)", "Helper Speedup"],

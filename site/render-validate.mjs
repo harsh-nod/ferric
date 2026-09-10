@@ -701,8 +701,8 @@ try {
       ["Cumulative MFMA and pruning: process windows", 1], ["Cumulative MFMA and pruning: request latencies", 4],
       ["Matched TP1 residual pair: process windows", 2], ["Matched TP1 residual pair: request latencies", 8],
       ["Setup transpose model pair: process windows", 2], ["Setup transpose model pair: request latencies", 8],
-      ["Matched MFMA pair: request latencies", 8], ["Unmatched peer observations: process windows", 2],
-      ["Unmatched peer observations: request latencies", 8], ["CPU-only transpose helper, sums of per-case medians", 3]]) {
+      ["Matched MFMA pair: request latencies", 8], ["Original peer checkpoint: process windows", 2],
+      ["Original peer checkpoint: request latencies", 8], ["CPU-only transpose helper, sums of per-case medians", 3]]) {
       assert(await page.getByRole("region", { name: caption, exact: true }).locator("tbody tr").count() === rows,
         `${name}: missing measurement rows: ${caption}`);
     }
@@ -721,7 +721,7 @@ try {
           ["MFMA repeated: request gains, startup cost", "mfma-repeated"],
           ["Source-matched peer controls: a regression", "peer-controls"],
           ["Setup transpose: full-model observation", "transpose-model"],
-          ["Peer transport: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
+          ["Original peer checkpoint: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
           await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
             const headerHeight = document.querySelector("header").getBoundingClientRect().height;
             window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);

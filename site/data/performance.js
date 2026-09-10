@@ -255,8 +255,8 @@ window.FERRIC_PERFORMANCE = {
     ],
   },
   peerObservations: {
-    scope: "Serial device-peer transport passes the same fixed four-request/eight-output Qwen workload at TP2 and TP8, n=1 each. Prefix cache on, pruning off, operational runtime on, baseline projection/attention and all other performance flags off. Each run passes exact token/byte, dispatch, close/reap and all-eight-card idle checks.",
-    interpretation: "No matched same-worker host control exists for either peer run, so no collective speedup is established. The TP8 sample is very slow: a 702.944 s workload window and 1557.722 s whole process. It is retained as negative performance evidence, not hidden behind correctness success. Historical host runs are not a causal transport comparison.",
+    scope: "Original peer checkpoint: serial device-peer transport passed the fixed four-request/eight-output Qwen workload at TP2 and TP8, n=1 each. Prefix cache on, pruning off, operational runtime on, baseline projection/attention and all other performance flags off. Each run passed exact token/byte, dispatch, close/reap and all-eight-card idle checks. These are the same candidate observations reused by the later source-matched comparison above.",
+    interpretation: "No matched host control was available at this original checkpoint. Later source-matched controls, using different worker executables on the same core source, now expose large peer-path regressions above. The original TP8 sample remains very slow: a 702.944 s workload window and 1557.722 s whole process. It is retained as negative performance evidence, not hidden behind correctness success. Older version-mixed host runs are not a causal transport comparison, and no peer speedup is established.",
     matchedControl: null,
     speedupClaimed: false,
     collective: "device-peer-serial-v4",
