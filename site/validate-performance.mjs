@@ -109,7 +109,9 @@ export function validatePerformance(data) {
   assert(ablations.profiles[3].outputTokensPerSecond < ablations.profiles[0].outputTokensPerSecond);
   assert(ablations.profiles[1].outputTokensPerSecond < data.variants[2].outputTokensPerSecond[0]);
   keys(data.identities, ["hsacoSha256", "manifestSha256", "handoffSha256", "workloadSha256",
-    "referenceSha256", "operationalLedgerSha256", "pruningLedgerSha256"]);
+    "referenceSha256", "operationalLedgerSha256", "pruningLedgerSha256",
+    "waveImageControlHsacoSha256", "waveImageControlManifestSha256",
+    "waveImageControlHandoffSha256", "waveImageControlComparisonSha256"]);
   Object.values(data.identities).forEach(digest);
   assert.equal(data.definitions.length, 5);
   assert.equal(data.fixtures.length, 4);
