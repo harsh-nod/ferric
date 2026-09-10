@@ -67,6 +67,7 @@ assertExactKeys(
     "validation",
     "teams",
     "boundaries",
+    "engineeringObservations",
     "latestObservation",
     "recentProgress",
     "evidence",
@@ -83,7 +84,11 @@ const expectedCurrent = {
   fe2o3A8LockedMetadataGraphsPassed: 15,
   fe2o3A8DependencyRecordsChecked: 7,
   mi350MemoryQueueLifecycleObserved: true,
-  mi350KernelDispatchObserved: false,
+  mi350MemoryQueueLifecycleGpuCount: 8,
+  mi350KernelDispatchObserved: true,
+  mi350SingleRmsNormObserved: true,
+  mi350EngineeringRuntimeTestsPassed: 433,
+  mi350ExecutableIdentity: "live_proc_exe_sha256",
   mi350DeviceObservationGpuCount: 8,
   mi350DeviceObservationProfileSha256: "6f859b0a67f8ee2497393206930ff35bf1a9ae69d33f172106a790a0c9226667",
   mi350DeviceObservationDescriptorCleanup: true,
@@ -91,7 +96,7 @@ const expectedCurrent = {
   mi350KfdIntegrationTestsPassed: 20,
   mi350KfdDoctestsPassed: 27,
   mi350QueueImplemented: true,
-  mi350QwenExecuted: false,
+  mi350QwenExecuted: true,
   tensorParallelWorldSizes: [1, 2, 8],
   tensorParallelSourceCommit: "3674f36ba2a12165298e6085469887152424262b",
   tensorParallelRustTestsPassed: 9,
@@ -104,13 +109,27 @@ const expectedCurrent = {
   tensorParallelExecutionVerusQueries: 8,
   tensorParallelExecutionVerusErrors: 0,
   tensorParallelExecutionBodyMutantsRejected: 8,
+  tensorParallelCursorSourceSha256: "86c2cb263cd87027bfd8ef66d4b66da640301a6637c9b6ca8a5f7794503af66e",
+  tensorParallelCursorReceiptSha256: "a80aaed9bd9c7811c75b9935ac29214f33132da96c87de521263f8ed6fde9470",
+  tensorParallelIntegratedHostTestsPassed: 648,
+  tensorParallelIntegratedHostTestsIgnored: 9,
+  tensorParallelIntegratedStrictClippyPassed: true,
   tensorParallelHostReductionImplemented: true,
-  tensorParallelKernelSourceCommit: "59b0a9a42d3c29bf5fef29024913db1029d4c133",
+  tensorParallelControllerIntegrated: true,
+  tensorParallelExecutionRadixCacheEnabled: false,
+  tensorParallelKernelSourceCommit: "8cdde149643446b20730bc60206669c5bab1ca8d",
   tensorParallelKernelCount: 13,
-  tensorParallelKernelTestsPassedPerTarget: 30,
-  tensorParallelKernelEmissionComplete: false,
-  tensorParallelCollectiveTransportImplemented: false,
-  tensorParallelQwenExecuted: false,
+  tensorParallelKernelTestsPassedPerTarget: 31,
+  tensorParallelKernelEmissionComplete: true,
+  tensorParallelGfx950HsacoSha256: "7c0b1934a27569a97cf535c96a8a56dd57babb63a6d1becad1c7be3a3d26edec",
+  tensorParallelGfx950ContentId: "994c81cde99c63de824ef53d29b2878e97d9a02d71901815039048da58c3c83c",
+  tensorParallelSyntheticGpuProbesPassed: 6,
+  tensorParallelSyntheticProbeResultSha256: "609e2b2afa40228fb112f7b4eb5afd35e5ff0523d15e293a434c5cc0459a09e7",
+  tensorParallelProbeHostTestsPassed: 8,
+  tensorParallelCollectiveTransportImplemented: true,
+  tensorParallelMultiRankCollectiveObserved: true,
+  tensorParallelQwenExecuted: true,
+  tensorParallelFull32QwenExecuted: true,
   dualTargetKernelSourceCommit: "296bb98e62c3ce41c085c67aefd61ca667df8fee",
   gfx950EngineeringContentId: "431f1e294d5018e0f057d490495921a1983bac0c25e4e900c3f72a05350b3f84",
   gfx950HsacoSha256: "2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222",
@@ -429,8 +448,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "a8b016e14ca8c77c9e7abe4591086f7cab11ce61",
-  fe2o3LatestTree: "3b14f1e5e1ce800e07ec05638d85d61100c1b04e",
+  fe2o3LatestMain: "3546d54d2c4a913f5d079701aed557d0a378bba8",
+  fe2o3LatestTree: "f88d1e6d23bcaab0be2e9cfb86c108ad3ede93c3",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: false,
@@ -1293,6 +1312,46 @@ for (const key of ["ferric", "fe2o3"]) {
   assert(Array.isArray(project.boundaries[key]) && project.boundaries[key].length >= 5, `${key} boundary is incomplete`);
 }
 
+const engineering = project.engineeringObservations;
+assertExactKeys(engineering, ["title", "scope", "prompt", "promptTokenIds", "generatedTokenIds",
+  "generatedText", "controllerSha256", "workerSha256", "hsacoSha256", "timing", "authority",
+  "smokes", "single32"], "engineeringObservations");
+const single32 = engineering.single32;
+assertExactKeys(single32, ["ttftSeconds", "tpotSeconds", "setupSeconds", "generationSeconds",
+  "wholeSeconds", "decodeIntervalCount", "measuredRuns", "warmupRuns", "kvTokensProcessed",
+  "rankDispatchCounts", "generatedTokenIds", "generatedText", "resultSha256", "comparisonSha256"], "single32");
+assert(single32.ttftSeconds === 163.647853495 && single32.tpotSeconds === 40.25950984674194
+  && single32.setupSeconds === 193.519502061 && single32.generationSeconds === 1411.692658744
+  && single32.wholeSeconds === 1619.848894496, "single32 measured timings drifted");
+assert(single32.decodeIntervalCount === 31 && single32.measuredRuns === 1
+  && single32.warmupRuns === 0 && single32.kvTokensProcessed === 36, "single32 profile drifted");
+assert(JSON.stringify(single32.rankDispatchCounts) === "[19584,19440,19440,19440,19440,19440,19440,19440]", "single32 rank counts drifted");
+assert(JSON.stringify(single32.generatedTokenIds) === "[12095,13,576,6722,315,15344,374,21718,13,576,6722,315,17689,374,24081,13,576,6722,315,9856,374,19846,13,576,6722,315,279,25662,374,37741,13,576]", "single32 reference token match drifted");
+assert(single32.generatedText === " Paris. The capital of Italy is Rome. The capital of Spain is Madrid. The capital of Germany is Berlin. The capital of the Netherlands is Amsterdam. The", "single32 reference text match drifted");
+assert(single32.resultSha256 === "d69dc3e61c12a8663c28f1af0451e8e382244620b158249adfbf8bc54e9ebe63"
+  && single32.comparisonSha256 === "a2474d0a29355c2120977d6b34b1418f309b0236cf0a2947f192dc2db12b816c", "single32 evidence identity drifted");
+assert(engineering.prompt === "The capital of France is", "smoke prompt text drifted");
+assert(JSON.stringify(engineering.promptTokenIds) === "[785,6722,315,9625,374]", "smoke prompt IDs drifted");
+assert(JSON.stringify(engineering.generatedTokenIds) === "[12095,13]" && engineering.generatedText === " Paris.", "smoke output drifted");
+assert(engineering.controllerSha256 === "6b49356f4abeed632ef7a5416122d16f234b535a32b43edbe45f5372d2fc6e46", "smoke controller drifted");
+assert(engineering.workerSha256 === "77a53d18b56e4ee7a67a434feffa8ac18a4fe60f8c9e5daace351f502c72e1da", "smoke worker drifted");
+assert(engineering.hsacoSha256 === project.current.tensorParallelGfx950HsacoSha256, "smoke image drifted");
+const smokeFacts = [
+  [1, 23.216413234, 4.636949036, 154.806338899, "a2339e7385630298124bc662e59c260225531135dc36b37107d1f8ea126d709c"],
+  [2, 75.114170435, 14.674596102, 162.321828177, "6f403aa20ded7fd7d8253090e8fcdbad840e4efa4c9df6567169386e8b51ef47"],
+  [8, 160.644607963, 24.711778123, 186.586377561, "f088c54f3be4f3cc03bee00b9920e2db9afe2744ca2aa3e52b3206c2ab95e262"],
+];
+assert(engineering.smokes.length === smokeFacts.length, "exact smoke roster drifted");
+engineering.smokes.forEach((smoke, index) => {
+  assertExactKeys(smoke, ["worldSize", "ttftSeconds", "singleDecodeIntervalSeconds", "setupSeconds",
+    "rankDispatchCounts", "resultSha256"], `smoke[${index}]`);
+  const [world, ttft, interval, setup, hash] = smokeFacts[index];
+  assert(smoke.worldSize === world && smoke.ttftSeconds === ttft && smoke.singleDecodeIntervalSeconds === interval
+    && smoke.setupSeconds === setup && smoke.resultSha256 === hash, `smoke[${index}] frozen evidence drifted`);
+  assert(JSON.stringify(smoke.rankDispatchCounts) === JSON.stringify([3264, ...Array(world - 1).fill(3240)]), "smoke dispatch roster drifted");
+});
+assert(engineering.scope.includes("one unwarmed run") && engineering.authority.includes("benchmark_comparable=false"), "smoke nonclaims drifted");
+
 assertExactKeys(
   project.latestObservation,
   ["title", "state", "sourceStatus", "environment", "result", "buildId", "generatedTokenIds", "authority"],
@@ -1353,7 +1412,18 @@ const missingSnapshotClaims = [
   "strict Verus 8 verified / 0 errors",
   "8 rejected cursor-body mutations",
   "30 host/source tests per target",
-  "No MI350 Qwen or TP8 latency numbers exist yet",
+  "One unwarmed TP8 sequence matches all 32 output IDs",
+  "one post-first interval each",
+  "not a controlled speed comparison",
+  "3546d54d2c4a913f5d079701aed557d0a378bba8",
+  "433 runtime tests",
+  "All six synthetic GPU probes pass",
+  "31 host/source tests per target",
+  "648 tests with 9 ignored",
+  "754-file source closure",
+  "not a full-model result or TP8 latency measurement",
+  "a real single RMSNorm dispatch",
+  "no radix prefix cache in this execution profile",
   "bc6b3a50096854ace496b691933295930066fc04",
   "8b10db06d29d0550b8ce2cadfddc007360016a92",
   "6ef78dc4534317384f7275115c5e77a8b1acb702",

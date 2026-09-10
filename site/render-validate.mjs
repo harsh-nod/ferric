@@ -25,6 +25,7 @@ const dynamicRoots = [
   "[data-teams]",
   "[data-boundaries]",
   "[data-observation]",
+  "[data-tp-observations]",
   "[data-progress]",
   "[data-gates]",
 ];
@@ -314,10 +315,24 @@ const currentRequiredClaims = [
   "final Ferric a8 repin checks passed",
   "strict Verus 8 verified / 0 errors",
   "8 rejected cursor-body mutations",
-  "30 host/source tests per target",
-  "No MI350 Qwen or TP8 latency numbers exist yet",
+  "One unwarmed TP8 sequence matches all 32 output IDs",
+  "one post-first interval each",
+  "not a controlled speed comparison",
+  "3546d54d2c4a913f5d079701aed557d0a378bba8",
+  "433 runtime tests",
+  "All six synthetic GPU probes pass",
+  "31 host/source tests per target",
+  "648 tests with 9 ignored",
+  "754-file source closure",
+  "These fixtures are not full Qwen validation",
+  "a real single RMSNorm dispatch",
+  "no radix prefix cache in this execution profile",
   "not MI350 Qwen execution",
-  "hardware transport and full TP Qwen execution are not yet validated",
+  "two-token TP1/2/8 Qwen smokes",
+  "TP8: 32-token single-sequence result",
+  "163.648 s",
+  "40.260 s (mean of 31 intervals)",
+  "One unwarmed sequence, no repeated-run statistics or controlled speed comparison.",
   "same twelve kernel bodies",
   "Existing MI300X Qwen32 observations remain separate and unchanged",
   ...requiredClaims.filter((claim) => !retiredCurrentClaims.has(claim)),
@@ -449,6 +464,15 @@ try {
       (selectors) => selectors.every((selector) => document.querySelector(selector)?.children.length),
       dynamicRoots,
     );
+    for (const privateCommit of [
+      "8cdde149643446b20730bc60206669c5bab1ca8d",
+      "f83efafad755ae69abadb2304806415b28d44057",
+      "3924efcbc93ae3c25ba649e7dc7ee8fc4dba543d",
+      "59b0a9a42d3c29bf5fef29024913db1029d4c133",
+    ]) {
+      assert(await page.locator(`a[href*="${privateCommit}"]`).count() === 0,
+        `${name}: unpublished source ${privateCommit} must not be a public commit link`);
+    }
 
     const result = await page.evaluate((selectors) => {
       function visibleBox(element) {

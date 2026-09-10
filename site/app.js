@@ -199,11 +199,67 @@
     boundaries.append(section);
   });
 
+  const tpObservations = document.querySelector("[data-tp-observations]");
+  const tp = project.engineeringObservations;
+  tpObservations.append(
+    element("div", "observation-label", "Engineering Qwen observations"),
+    element("h3", "", tp.title),
+    element("p", "", tp.scope),
+  );
+  if (tp.single32) {
+    const sequence = tp.single32;
+    const facts = element("dl", "observation-facts tp-facts");
+    [["TTFT", `${sequence.ttftSeconds.toFixed(3)} s`],
+      ["Single-sequence TPOT", `${sequence.tpotSeconds.toFixed(3)} s (mean of 31 intervals)`],
+      ["Setup", `${sequence.setupSeconds.toFixed(3)} s, excluded from TTFT`],
+      ["Dispatches by rank", sequence.rankDispatchCounts.join(", ")],
+      ["KV positions", `${sequence.kvTokensProcessed}; all eight workers closed and reaped`],
+      ["Generated IDs", sequence.generatedTokenIds.join(", ")],
+      ["Generated text", sequence.generatedText],
+      ["JSONL SHA-256", sequence.resultSha256],
+      ["Comparison SHA-256", sequence.comparisonSha256]]
+      .forEach(([name, value]) => facts.append(element("dt", "", name), element("dd", "", value)));
+    tpObservations.append(
+      element("h4", "", "TP8: 32-token single-sequence result"),
+      element("p", "", "32/32 IDs and decoded text match both frozen reference passes. One unwarmed sequence, no repeated-run statistics or controlled speed comparison."),
+      facts,
+    );
+  }
+  tpObservations.append(element("h4", "", "Separate two-token smokes"));
+  const smokeWrap = element("div", "transition-table-wrap");
+  const smokeTable = element("table", "transition-table");
+  const smokeHead = element("thead", "");
+  const smokeHeading = element("tr", "");
+  ["Mode", "Output", "TTFT", "Single Decode Interval", "Setup"].forEach((label) => {
+    const cell = element("th", "", label);
+    cell.scope = "col";
+    smokeHeading.append(cell);
+  });
+  smokeHead.append(smokeHeading);
+  const smokeBody = element("tbody", "");
+  tp.smokes.forEach((smoke) => {
+    const row = element("tr", "");
+    [`TP${smoke.worldSize}`, "2/2 IDs match", `${smoke.ttftSeconds.toFixed(3)} s`,
+      `${smoke.singleDecodeIntervalSeconds.toFixed(3)} s`, `${smoke.setupSeconds.toFixed(3)} s`]
+      .forEach((value) => row.append(element("td", "", value)));
+    smokeBody.append(row);
+  });
+  smokeTable.append(smokeHead, smokeBody);
+  smokeWrap.append(smokeTable);
+  tpObservations.append(smokeWrap, element("p", "", tp.timing));
+  const tpFacts = element("dl", "observation-facts tp-facts");
+  [["Shared prompt", tp.prompt], ["Smoke token IDs", tp.generatedTokenIds.join(", ")],
+    ["Smoke text", tp.generatedText], ["Controller SHA-256", tp.controllerSha256],
+    ["Worker SHA-256", tp.workerSha256], ["HSACO SHA-256", tp.hsacoSha256],
+    ...tp.smokes.map((smoke) => [`TP${smoke.worldSize} JSONL SHA-256`, smoke.resultSha256])]
+    .forEach(([name, value]) => tpFacts.append(element("dt", "", name), element("dd", "", value)));
+  tpObservations.append(tpFacts, element("p", "authority-note", tp.authority));
+
   const observation = document.querySelector("[data-observation]");
   const observationHeader = element("div", "observation-heading");
   const observationTitle = element("div", "");
   observationTitle.append(
-    element("div", "observation-label", "Latest Qwen hardware observation"),
+    element("div", "observation-label", "Historical MI300X Qwen observation"),
     element("h3", "", project.latestObservation.title),
   );
   observationHeader.append(observationTitle, stateTag(project.latestObservation.state));

@@ -820,6 +820,20 @@ h3 {
   background: var(--paper-alt);
 }
 
+.tp-observations {
+  margin-bottom: 32px;
+}
+
+.tp-observations h3 {
+  margin: 8px 0 12px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.tp-observations > p {
+  margin: 16px 0;
+}
+
 .observation {
   margin-bottom: 48px;
   padding: 24px;
@@ -847,6 +861,10 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
+.tp-facts {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
 .observation-facts dt,
 .observation-facts dd {
   margin: 0;
@@ -865,6 +883,11 @@ h3 {
   overflow-wrap: anywhere;
   color: var(--ink-soft);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.tp-facts dt {
+  padding-right: 12px;
+  overflow-wrap: anywhere;
 }
 
 .authority-note {
