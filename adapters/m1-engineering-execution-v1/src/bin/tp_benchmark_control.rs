@@ -66,7 +66,7 @@ pub(super) struct ControlConfig {
 }
 
 #[derive(Serialize)]
-struct Ready<'a> {
+struct ReplicaReady<'a> {
     schema: &'static str,
     authority: &'static str,
     identity: &'a ControlIdentity,
@@ -207,9 +207,15 @@ fn read_file(path: &Path, limit: u64, private: bool) -> Result<Vec<u8>, String> 
 }
 
 fn digest(data: &[u8]) -> String {
+    const DIGITS: &[u8; 16] = b"0123456789abcdef";
     Sha256::digest(data)
         .iter()
-        .map(|byte| format!("{byte:02x}"))
+        .flat_map(|byte| {
+            [
+                char::from(DIGITS[usize::from(byte >> 4)]),
+                char::from(DIGITS[usize::from(byte & 15)]),
+            ]
+        })
         .collect()
 }
 
@@ -291,7 +297,7 @@ impl ControlConfig {
         let ready_ns = monotonic_raw_ns()?;
         send(
             &mut stream,
-            &Ready {
+            &ReplicaReady {
                 schema: "FerricReplicaReadyV1",
                 authority: "none",
                 identity: &self.identity,
@@ -428,7 +434,7 @@ fn connect(path: &Path, timeout_ms: u64) -> Result<UnixStream, String> {
                 return Ok(stream);
             }
             Err(rustix::io::Errno::AGAIN) => {
-                std::thread::sleep(remaining(end)?.min(Duration::from_millis(1)))
+                std::thread::sleep(remaining(end)?.min(Duration::from_millis(1)));
             }
             Err(failure) => return Err(error(failure)),
         }
