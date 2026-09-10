@@ -9,8 +9,10 @@ use std::time::Instant;
 
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_batch_runtime::EngineeringTpBatchRuntimeV2;
-use ferric_m1_engineering_execution_v1::tp_execution::EngineeringTpReductionModeV3;
 use ferric_m1_engineering_execution_v1::tp_execution::batched::EngineeringTpBatchExecutionV2;
+use ferric_m1_engineering_execution_v1::tp_execution::{
+    EngineeringTpProjectionModeV3 as ProjectionMode, EngineeringTpReductionModeV3,
+};
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use ferric_m1_engineering_execution_v1::tp_paged::{
     EngineeringTpPagedLimitsV1, EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
@@ -23,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tp_worker::{RuntimeOptions, Worker};
 
-const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3]";
+const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3] [--kernel-profile v2|v3-wave|v3-mfma] [--projection baseline|wave|mfma|auto] [--attention baseline|wave]";
 
 struct Options {
     source: PathBuf,
@@ -41,6 +43,17 @@ struct Options {
     prune_output_head: bool,
     runtime: RuntimeOptions,
     collective: EngineeringTpReductionModeV3,
+    kernel_profile: KernelProfile,
+    projection: ProjectionMode,
+    wave_attention: bool,
+}
+
+#[derive(Clone, Copy, Default, Eq, PartialEq)]
+enum KernelProfile {
+    #[default]
+    V2,
+    Wave,
+    Mfma,
 }
 
 impl Options {
@@ -55,6 +68,9 @@ impl Options {
         let mut prune_output_head = false;
         let mut runtime = RuntimeOptions::default();
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
+        let mut kernel_profile = KernelProfile::V2;
+        let mut projection = ProjectionMode::Baseline;
+        let mut wave_attention = false;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -118,7 +134,32 @@ impl Options {
                     collective = match value.as_str() {
                         "host-staged-v1" => EngineeringTpReductionModeV3::HostStagedV1,
                         "host-staged-reuse-v3" => EngineeringTpReductionModeV3::HostStagedReuseV3,
-                        _ => return Err("unsupported collective for the admitted v2 image".into()),
+                        "device-tp1-v3" => EngineeringTpReductionModeV3::DeviceTp1V3,
+                        _ => return Err("unsupported collective".into()),
+                    }
+                }
+                "--kernel-profile" => {
+                    kernel_profile = match value.as_str() {
+                        "v2" => KernelProfile::V2,
+                        "v3-wave" => KernelProfile::Wave,
+                        "v3-mfma" => KernelProfile::Mfma,
+                        _ => return Err("unknown closed kernel profile".into()),
+                    }
+                }
+                "--projection" => {
+                    projection = match value.as_str() {
+                        "baseline" => ProjectionMode::Baseline,
+                        "wave" => ProjectionMode::Wave,
+                        "mfma" => ProjectionMode::Mfma,
+                        "auto" => ProjectionMode::Auto,
+                        _ => return Err("unknown projection mode".into()),
+                    }
+                }
+                "--attention" => {
+                    wave_attention = match value.as_str() {
+                        "baseline" => false,
+                        "wave" => true,
+                        _ => return Err("unknown attention mode".into()),
                     }
                 }
                 _ => return Err(format!("unknown option {flag}")),
@@ -134,13 +175,31 @@ impl Options {
         {
             return Err("devices require 1, 2 or 8 distinct nonzero physical IDs".into());
         }
+        if (kernel_profile == KernelProfile::V2
+            && (projection != ProjectionMode::Baseline
+                || wave_attention
+                || collective == EngineeringTpReductionModeV3::DeviceTp1V3))
+            || (projection.requires_mfma() && kernel_profile != KernelProfile::Mfma)
+            || (collective == EngineeringTpReductionModeV3::DeviceTp1V3 && devices.len() != 1)
+        {
+            return Err(
+                "selected optimization is unavailable in the exact kernel profile or world size"
+                    .into(),
+            );
+        }
+        let packets_per_batch = 36 * (15 + collective.extra_dispatches_per_layer()) + 4;
+        if !seen.contains("--max-batches") && !runtime.rollover {
+            max_batches = max_batches.min(
+                fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 / packets_per_batch,
+            );
+        }
         if !(1..=16).contains(&rows)
             || !(1..=rows).contains(&chunk)
             || max_batches == 0
             || max_batches > 1_000_000
             || (!runtime.rollover
                 && max_batches
-                    .checked_mul(544)
+                    .checked_mul(packets_per_batch)
                     .is_none_or(|n| n > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1))
         {
             return Err("batch, chunk, or conservative packet bound exceeded".into());
@@ -163,6 +222,9 @@ impl Options {
             prune_output_head,
             runtime,
             collective,
+            kernel_profile,
+            projection,
+            wave_attention,
         })
     }
 }
@@ -418,10 +480,19 @@ fn run(options: &Options) -> Result<(), String> {
     let workload = Workload::open(&options.requests)?;
     let worker_hash = hash_file(&options.worker)?;
     let controller_hash = hash_file(Path::new("/proc/self/exe"))?;
-    let artifact = EngineeringTpArtifactV1::open_batch(
-        &options.artifact,
-        &ferric_qwen3_tp_batch_kernels_device_v2::compiler_expectation_roster_v2(),
-    )
+    let artifact = if options.kernel_profile == KernelProfile::V2 {
+        EngineeringTpArtifactV1::open_batch(
+            &options.artifact,
+            &ferric_qwen3_tp_batch_kernels_device_v2::compiler_expectation_roster_v2(),
+        )
+    } else {
+        let mfma = options.kernel_profile == KernelProfile::Mfma;
+        let mut expected = ferric_qwen3_tp_perf_kernels_device_v3::compiler_expectation_roster_v3();
+        if !mfma {
+            expected.retain(|entry| !entry.export_name().contains("_mfma_"));
+        }
+        EngineeringTpArtifactV1::open_performance(&options.artifact, &expected, mfma)
+    }
     .map_err(|e| e.to_string())?;
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let prompts = workload
@@ -480,6 +551,12 @@ fn run(options: &Options) -> Result<(), String> {
     gpu.configure_output_head_pruning(options.prune_output_head)?;
     gpu.configure_reduction(options.collective)?;
     gpu.configure_dispatch_sequences(options.runtime.sequences)?;
+    gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
+    gpu.configure_wave_attention(options.wave_attention)?;
+    eprintln!(
+        "additional resident transposed weight bytes: {}",
+        gpu.transposed_weight_bytes()
+    );
     let mut runtime =
         EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, options.rows, options.cache)?;
     let result = (|| {
@@ -500,7 +577,7 @@ fn run(options: &Options) -> Result<(), String> {
                 "runtime_operational":options.runtime.operational,
                 "dispatch_sequences":options.runtime.sequences,
                 "queue_rollover":options.runtime.rollover,
-                "projection":"baseline", "attention":"baseline", "runtime_profiling":false
+                "projection":options.projection.label(), "attention":if options.wave_attention { "wave" } else { "baseline" }, "runtime_profiling":false
             },
             "collective":if options.collective == EngineeringTpReductionModeV3::HostStagedV1 {
                 "host_staged_fp32_rank_order_reduce_bf16_residual"
@@ -597,5 +674,78 @@ mod tests {
             assert!(Workload::parse(&serde_json::to_vec(&bad).unwrap()).is_err());
         }
         assert!(Workload::parse(&vec![0; 1_048_577]).is_err());
+    }
+
+    #[test]
+    fn performance_modes_require_exact_artifact_capability_and_world() {
+        for options in [
+            vec!["--projection", "wave"],
+            vec!["--attention", "wave"],
+            vec!["--kernel-profile", "v3-wave", "--projection", "auto"],
+            vec!["--kernel-profile", "v3-wave", "--projection", "mfma"],
+            vec!["--kernel-profile", "unknown"],
+            vec!["--kernel-profile", "v3-wave", "--attention", "unknown"],
+            vec!["--collective", "device-tp1-v3"],
+        ] {
+            let mut supplied = vec!["--devices", "1"];
+            supplied.extend(options);
+            assert!(args(&supplied).is_err());
+        }
+        assert!(
+            args(&[
+                "--devices",
+                "1,2",
+                "--kernel-profile",
+                "v3-wave",
+                "--collective",
+                "device-tp1-v3"
+            ])
+            .is_err()
+        );
+        let valid = args(&[
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-wave",
+            "--collective",
+            "device-tp1-v3",
+            "--projection",
+            "wave",
+            "--attention",
+            "wave",
+        ])
+        .unwrap();
+        assert_eq!(valid.max_batches, 212);
+        assert!(
+            args(&[
+                "--devices",
+                "1,2",
+                "--kernel-profile",
+                "v3-mfma",
+                "--projection",
+                "auto"
+            ])
+            .is_ok()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1,2",
+                "--queue-rollover",
+                "--max-batches",
+                "1000000"
+            ])
+            .is_ok()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1,2",
+                "--queue-rollover",
+                "--max-batches",
+                "1000001"
+            ])
+            .is_err()
+        );
     }
 }

@@ -1023,6 +1023,7 @@ dependencies = [
  "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
  "ferric-qwen3-tp-batch-kernels-device-v2",
  "ferric-qwen3-tp-kernels-device-v1",
+ "ferric-qwen3-tp-perf-kernels-device-v3",
  "ferric-spec",
  "rustix",
  "serde",
@@ -1100,6 +1101,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-tp-kernels-device-v1"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-perf-kernels-device-v3"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",

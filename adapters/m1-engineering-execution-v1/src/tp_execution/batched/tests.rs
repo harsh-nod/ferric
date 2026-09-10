@@ -247,14 +247,14 @@ impl EngineeringTpRankTransportV1 for Recording {
                     .to_le_bytes()
                     .to_vec()
             }),
-            GEMM => self.output(
+            GEMM | "ferric_qwen3_tp_wave_gemv_bf16_v3" => self.output(
                 &command,
                 2,
                 scalar(&command, 3),
                 scalar(&command, 4),
                 |_| vec![0; 2],
             ),
-            PARTIAL => {
+            PARTIAL | "ferric_qwen3_tp_wave_gemv_partial_f32_v3" => {
                 let rank = self.rank;
                 let nonfinite = self.failure == Some(Failure::NonfinitePartial);
                 self.output(
@@ -314,7 +314,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                 }
                 assert_eq!(command.grid_workgroups, 1);
             }
-            ATTENTION => {
+            ATTENTION | "ferric_qwen3_tp_wave_paged_gqa_bf16_v3" => {
                 let rows = scalar(&command, 6);
                 let world = scalar(&command, 7);
                 let context = scalar(&command, 10);
@@ -456,6 +456,9 @@ fn fixture(
         completed_batches: 0,
         poisoned: false,
         prune_output_head: false,
+        projection: super::super::projection::ProjectionPolicy::default(),
+        projection_configured: false,
+        wave_attention: false,
     }
 }
 
@@ -565,6 +568,46 @@ fn sequences_preserve_collective_barriers_counts_and_submit_all_ranks_first() {
         assert!(driver.configure_dispatch_sequences(false).is_err());
         driver.close().unwrap();
     }
+}
+
+#[test]
+fn wave_modes_select_all_projection_attention_roots_without_host_transposes() {
+    let mut pool = pool();
+    let mut driver = fixture(8, &pool);
+    driver.projection.mode = super::super::EngineeringTpProjectionModeV3::Wave;
+    driver.configure_wave_attention(true).unwrap();
+    driver.configure_dispatch_sequences(true).unwrap();
+    let batch = prepare(&mut pool, 3);
+    pool.begin_submission(&batch).unwrap();
+    let result = driver.execute(&batch).unwrap();
+    assert_eq!(result.choices, [42, 43, 44]);
+    assert_eq!(driver.transposed_weight_bytes(), 0);
+    assert_eq!(driver.dispatch_counts(), driver.expected_dispatch_counts(3));
+    for transport in &driver.inner.transports {
+        assert!(
+            !transport
+                .commands
+                .iter()
+                .any(|command| matches!(command.kernel, GEMM | PARTIAL | ATTENTION))
+        );
+        let attention = transport
+            .commands
+            .iter()
+            .filter(|command| command.kernel == "ferric_qwen3_tp_wave_paged_gqa_bf16_v3")
+            .count();
+        assert_eq!(attention, 36);
+        for command in &transport.commands {
+            if command.kernel.contains("_wave_gemv_") {
+                assert_eq!(
+                    command.grid_workgroups,
+                    scalar(command, 3) * scalar(command, 4)
+                );
+            }
+        }
+    }
+    pool.commit_batch(&batch, result.completion).unwrap();
+    assert!(driver.configure_wave_attention(false).is_err());
+    driver.close().unwrap();
 }
 
 #[test]

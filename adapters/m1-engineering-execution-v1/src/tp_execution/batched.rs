@@ -21,7 +21,7 @@ const MAX_ROWS: usize = 16;
 const PAGE_TOKENS: u32 = 16;
 const EMBEDDING: &str = "ferric_qwen3_tp_batch_embedding_bf16_v2";
 const GEMM: &str = "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2";
-const PARTIAL: &str = "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2";
+pub(super) const PARTIAL: &str = "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2";
 const SWIGLU: &str = "ferric_qwen3_tp_batch_swiglu_bf16_f32_v2";
 const ROPE: &str = "ferric_qwen3_tp_batch_rope_v2";
 const APPEND: &str = "ferric_qwen3_tp_batch_paged_kv_append_v2";
@@ -37,6 +37,8 @@ pub struct EngineeringTpBatchOutputV2 {
 }
 
 /// One resident weight set and physical KV pool for a bounded request stream.
+// Lifecycle state and independent, explicitly selected ablations are orthogonal.
+#[allow(clippy::struct_excessive_bools)]
 pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     inner: EngineeringTpExecutionV1<R>,
     positions: Vec<Tensor>,
@@ -50,6 +52,9 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     completed_batches: u64,
     poisoned: bool,
     prune_output_head: bool,
+    projection: super::projection::ProjectionPolicy,
+    projection_configured: bool,
+    wave_attention: bool,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -121,6 +126,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             completed_batches: 0,
             poisoned: false,
             prune_output_head: false,
+            projection: super::projection::ProjectionPolicy::default(),
+            projection_configured: false,
+            wave_attention: false,
         })
     }
 
@@ -167,6 +175,53 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Err("output-head policy must be configured before execution".into());
         }
         self.prune_output_head = enabled;
+        Ok(())
+    }
+
+    /// Selects admitted projection roots and prepares transposed weights once.
+    /// The caller must admit the exact corresponding v3 image before selection.
+    /// # Errors
+    /// Rejects changes after setup/execution, source drift, or allocation failure.
+    pub fn configure_projection(
+        &mut self,
+        mode: super::EngineeringTpProjectionModeV3,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+    ) -> TpResult<()> {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.projection_configured
+        {
+            return Err("projection policy must be configured once before execution".into());
+        }
+        match super::projection::ProjectionPolicy::prepare(mode, &mut self.inner, weights, layout) {
+            Ok(policy) => {
+                self.projection = policy;
+                self.projection_configured = true;
+                Ok(())
+            }
+            Err(error) => {
+                self.poisoned = true;
+                Err(match self.inner.close() {
+                    Ok(()) => error,
+                    Err(close) => format!("{error}; projection setup close: {close}"),
+                })
+            }
+        }
+    }
+
+    /// Extra resident bytes for the setup-only transposed layout.
+    #[must_use]
+    pub const fn transposed_weight_bytes(&self) -> u64 {
+        self.projection.bytes
+    }
+
+    /// Selects the admitted wave-cooperative attention root before execution.
+    /// # Errors
+    /// Rejects a started, poisoned, or closed execution.
+    pub fn configure_wave_attention(&mut self, enabled: bool) -> TpResult<()> {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+            return Err("attention policy must be configured before execution".into());
+        }
+        self.wave_attention = enabled;
         Ok(())
     }
 
@@ -355,6 +410,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         use EngineeringTpArgumentV1::U32;
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
+        let projection = &self.projection;
+        let attention = if self.wave_attention {
+            "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
+        } else {
+            ATTENTION
+        };
         let rows = u32::try_from(batch.rows().len()).map_err(|_| "batch row conversion")?;
         let head_rows = u32::try_from(self.output_head_rows(batch.rows().len(), output_rows.len()))
             .map_err(|_| "output row conversion")?;
@@ -446,7 +507,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     } else {
                         (r.v, r.geometry.kv_channels.count)
                     };
-                    matrix(
+                    projection.command(
+                        r.geometry.rank as usize,
                         GEMM,
                         r.normalized,
                         r.layers[li].weight(kind),
@@ -516,7 +578,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             })?;
             self.inner.dispatch_each(|r| {
                 dispatch(
-                    ATTENTION,
+                    attention,
                     rows * r.geometry.query_heads.count,
                     vec![
                         r.q_rotated.read(),
@@ -534,7 +596,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 )
             })?;
             self.inner.dispatch_each(|r| {
-                matrix(
+                projection.command(
+                    r.geometry.rank as usize,
                     PARTIAL,
                     r.attention,
                     r.layers[li].weight(Qwen3TensorKind::OutputProjection),
@@ -565,7 +628,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 (Qwen3TensorKind::UpProjection, 5),
             ] {
                 self.inner.dispatch_each(|r| {
-                    matrix(
+                    projection.command(
+                        r.geometry.rank as usize,
                         GEMM,
                         r.normalized,
                         r.layers[li].weight(kind),
@@ -594,7 +658,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 )
             })?;
             self.inner.dispatch_each(|r| {
-                matrix(
+                projection.command(
+                    r.geometry.rank as usize,
                     PARTIAL,
                     r.activation,
                     r.layers[li].weight(Qwen3TensorKind::DownProjection),
@@ -631,7 +696,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             model.hidden_size,
         ))?;
         let r = &self.inner.ranks[0];
-        self.inner.dispatch_zero(&matrix(
+        self.inner.dispatch_zero(&projection.command(
+            0,
             GEMM,
             r.normalized,
             r.global(Qwen3TensorKind::LanguageModelHead),
@@ -686,7 +752,7 @@ fn norm(
     )
 }
 
-fn matrix(
+pub(super) fn matrix(
     kernel: &'static str,
     input: Tensor,
     weight: Tensor,

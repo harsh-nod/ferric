@@ -13,6 +13,10 @@ mod reduction;
 
 #[cfg(feature = "tp-batch-engineering")]
 pub mod batched;
+#[cfg(feature = "tp-batch-engineering")]
+mod projection;
+#[cfg(feature = "tp-batch-engineering")]
+pub use projection::EngineeringTpProjectionModeV3;
 
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
 pub use reduction::EngineeringTpReductionModeV3;

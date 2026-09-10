@@ -27,6 +27,7 @@ const EXIT_TIMEOUT: Duration = Duration::from_secs(5);
 const DISPATCH_TIMEOUT_MS: u32 = 60_000;
 
 #[derive(Clone, Copy, Default)]
+#[allow(clippy::struct_excessive_bools)] // Independent ablation flags, not lifecycle state.
 pub struct RuntimeOptions {
     pub cache_admission: bool,
     pub operational: bool,
@@ -604,7 +605,11 @@ fn wire_access(access: ArgumentAccess) -> BufferAccessV1 {
     }
 }
 
-pub(super) fn metadata_matches(expected: &InspectedKernel, actual: &KernelMetadataV1, hash: [u8; 32]) -> bool {
+pub(super) fn metadata_matches(
+    expected: &InspectedKernel,
+    actual: &KernelMetadataV1,
+    hash: [u8; 32],
+) -> bool {
     if expected.name() != actual.symbol
         || hash != actual.object_sha256
         || expected.kernarg_segment_size() != u64::from(actual.kernarg_bytes)

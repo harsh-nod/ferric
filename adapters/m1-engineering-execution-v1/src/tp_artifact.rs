@@ -56,6 +56,16 @@ pub const ENGINEERING_TP_BATCH_EXPORTS_V2: [&str; 9] = [
     "ferric_qwen3_tp_batch_argmax_bf16_v2",
 ];
 
+/// Closed additional roots in the full v3 profile; the wave profile omits MFMA only.
+pub const ENGINEERING_TP_PERFORMANCE_EXPORTS_V3: [&str; 6] = [
+    "ferric_qwen3_tp_wave_gemv_bf16_v3",
+    "ferric_qwen3_tp_wave_gemv_partial_f32_v3",
+    "ferric_qwen3_tp_mfma_gemm_bf16_v3",
+    "ferric_qwen3_tp_mfma_gemm_partial_f32_v3",
+    "ferric_qwen3_tp_wave_paged_gqa_bf16_v3",
+    "ferric_qwen3_tp_batch_residual_bf16_v3",
+];
+
 /// Exact content-addressed engineering bytes and independently inspected metadata.
 pub struct EngineeringTpArtifactV1 {
     bytes: Arc<[u8]>,
@@ -101,6 +111,29 @@ impl EngineeringTpArtifactV1 {
             expected,
             ENGINEERING_TP_BATCH_CRATE_V2,
             &ENGINEERING_TP_BATCH_EXPORTS_V2,
+        )
+    }
+
+    /// Opens one exact v3 profile: thirteen wave roots or fifteen including MFMA.
+    /// # Errors
+    /// Rejects any missing/additional root, target, descriptor, source or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_performance(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+        mfma: bool,
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        let mut exports = ENGINEERING_TP_BATCH_EXPORTS_V2.to_vec();
+        exports.extend(
+            ENGINEERING_TP_PERFORMANCE_EXPORTS_V3
+                .into_iter()
+                .filter(|name| mfma || !name.contains("_mfma_")),
+        );
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_perf_kernels_device_v3",
+            &exports,
         )
     }
 
