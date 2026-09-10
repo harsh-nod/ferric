@@ -58,6 +58,12 @@ instance rates or the earlier eight-output window. Publish the per-instance
 row policy, actual loaded weight bytes and every request's separate admission
 TTFT, release-to-first-token and seven-gap TPOT.
 
+The legacy MFMA data key `ledgerCanonicalId` retains its historical name and
+value, but its source field `ledger_sha256` hashes the ledger generator script,
+not a canonical report. Render it as `ledger generator source SHA-256`.
+The separate ledger-file SHA-256 and actual canonical replica-expectation
+digests keep their existing meanings and labels.
+
 Keep the later wide16/32 row-policy pair, source-matched peer controls and
 full-model transpose observation separate. Wide row and chunk budgets change
 together; request00 TTFT regresses. Peer worker executables differ deliberately

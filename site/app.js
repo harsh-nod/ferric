@@ -324,7 +324,8 @@
   for (const [label, section] of [["Matched MFMA", performance.mfmaPair],
     ["Matched TP1 residual", performance.deviceTp1Pair], ["Serial peer", performance.peerObservations]]) {
     Object.entries(section.pins).forEach(([key, value]) => {
-      pins.append(element("dt", "", `${label} ${key}`), element("dd", "", value));
+      const caption = key === "ledgerCanonicalId" ? "ledger generator source SHA-256" : key;
+      pins.append(element("dt", "", `${label} ${caption}`), element("dd", "", value));
     });
     section.profiles.forEach((profile) => {
       pins.append(element("dt", "", `${profile.name} comparison SHA-256`), element("dd", "", profile.comparisonSha256));

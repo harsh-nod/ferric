@@ -64,6 +64,7 @@ for (const [section, file, hash, reports, world] of [
   const ledger = await pinned(join(measurementRoot, file), hash);
   assert.equal(section.pins.ledgerFileSha256, hash);
   assert.equal(section.pins.comparatorSha256, ledger.comparator_sha256);
+  // The legacy key holds the generator-script digest, not a canonical report ID.
   if (section.pins.ledgerCanonicalId) assert.equal(section.pins.ledgerCanonicalId, ledger.ledger_sha256);
   assert.equal(ledger.variants.length, 2);
   for (const [index, profile] of section.profiles.entries()) {

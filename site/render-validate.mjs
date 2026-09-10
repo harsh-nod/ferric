@@ -668,6 +668,19 @@ try {
     assert(!/\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i.test(result.currentText), `${name}: rendered a current-dependency claim`);
     assert(browserErrors.length === 0, `${name}: ${browserErrors.join("; ")}`);
 
+    const provenanceDisclosure = page.getByText("Exact identities and archived evidence", { exact: true });
+    await provenanceDisclosure.click();
+    const generatorLabel = page.getByText("Matched MFMA ledger generator source SHA-256", { exact: true });
+    assert(await generatorLabel.count() === 1 && await generatorLabel.isVisible(), `${name}: missing generator-source label`);
+    assert(await page.getByText("Matched MFMA ledgerCanonicalId", { exact: true }).count() === 0,
+      `${name}: misleading canonical-ledger label remains`);
+    assert(await generatorLabel.evaluate((node) => node.nextElementSibling.textContent)
+      === "8719cb980590c41c7c8751b95117a858b04c42912964c811bebf7e2c4d69bbea",
+    `${name}: generator digest changed`);
+    assert(await page.getByText("1xTP8 canonical expectation SHA-256", { exact: true }).isVisible(),
+      `${name}: canonical replica-expectation label changed`);
+    await provenanceDisclosure.click();
+
     const latencyDisclosure = page.getByText("All single-run request latencies", { exact: true });
     await latencyDisclosure.click();
 
