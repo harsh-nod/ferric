@@ -184,3 +184,20 @@ fn missing_causally_required_page_traps() {
 fn attention_scale_preserves_the_prior_exact_bits() {
     assert_eq!(ATTENTION_SCALE.to_bits(), 0x3db5_04f3);
 }
+
+#[test]
+fn admitted_geometry_narrowing_is_value_preserving() {
+    for world in [1_usize, 2, 8] {
+        let heads = 8 / world;
+        let columns = heads * 128;
+        assert!(columns < 1025);
+        assert_eq!(columns, columns as u16 as usize);
+        for head in 0..heads {
+            assert_eq!(head, head as u16 as usize);
+        }
+    }
+    let loose_page_token_bound = u64::from(u32::MAX) * 16 + 15;
+    let loose_index_bound =
+        loose_page_token_bound * u64::from(u16::MAX) + u64::from(u16::MAX) * 128 + 127;
+    assert!(loose_index_bound < 1_u64 << 53);
+}

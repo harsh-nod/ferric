@@ -205,6 +205,8 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
     } else {
         fe2o3_device::trap();
     }
+    // The validated TP geometry fits u16; retain that bound in loop fragments.
+    let columns = columns as u16 as usize;
     let invocation = thread::index_1d();
     let raw = invocation.get();
     let head_row = raw / 64;
@@ -236,6 +238,7 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
     } else {
         fe2o3_device::trap();
     }
+    let kv_head = kv_head as u16 as usize;
     let position = memory::volatile_load(positions, row) as usize;
     if position < max_context_tokens {
     } else {
