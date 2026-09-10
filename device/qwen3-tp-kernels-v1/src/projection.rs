@@ -87,6 +87,14 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     }
     let n = n as usize;
     let k = k as usize;
+    if n < 12_289 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if k < 12_289 {
+    } else {
+        fe2o3_device::trap();
+    }
     if a.len() != k
         || weights.len() != n * k
         || output.len() != n
@@ -96,7 +104,8 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     }
     let invocation = thread::index_1d();
     let column = invocation.get();
-    if column >= n {
+    if column < n {
+    } else {
         fe2o3_device::trap();
     }
     // BEGIN tp_gemv_sum_v1
@@ -176,6 +185,14 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
     }
     let n = n as usize;
     let k = k as usize;
+    if n < 4_097 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if k < 12_289 {
+    } else {
+        fe2o3_device::trap();
+    }
     if a.len() != k
         || weights.len() != n * k
         || output.len() != n
@@ -185,7 +202,8 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
     }
     let invocation = thread::index_1d();
     let column = invocation.get();
-    if column >= n {
+    if column < n {
+    } else {
         fe2o3_device::trap();
     }
     // BEGIN tp_gemv_sum_v1
