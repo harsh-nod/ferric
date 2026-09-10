@@ -1,4 +1,4 @@
-use fe2o3_device::{Bf16, Gfx950Subgroup, Index1D, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread};
+use fe2o3_device::{Bf16, Gfx950Subgroup, Index1D, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel, thread};
 #[cfg(feature = "mfma")]
 use fe2o3_device::{Bf16MfmaAMatrix, Bf16MfmaBMatrix, DeviceMatrix, F32AccumulatorFragment, Tiled2D, Wave64, WaveLane};
 
@@ -56,6 +56,12 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     {
         fe2o3_device::trap();
     }
+    let Ok(left_view) = StridedReadView2D::from_shared_slice(a, 0, rows, 4096, 4096) else {
+        fe2o3_device::trap();
+    };
+    let Ok(right_view) = StridedReadView2D::from_shared_slice(weights, 0, n, 4096, 4096) else {
+        fe2o3_device::trap();
+    };
     let invocation = thread::index_1d();
     let raw = invocation.get();
     let element = thread::block_idx_x() as usize;
@@ -101,8 +107,8 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     let mut step = 0_usize;
     while step < 64 {
         let inner = step * 64 + lane;
-        let left = Bf16::from_bits(memory::volatile_load(a, row * 4096 + inner)).to_f32();
-        let right = Bf16::from_bits(memory::volatile_load(weights, column * 4096 + inner)).to_f32();
+        let left = Bf16::from_bits(left_view.load_or(row, inner, 0)).to_f32();
+        let right = Bf16::from_bits(right_view.load_or(column, inner, 0)).to_f32();
         let product = left * right;
         partial += product;
         finite &= product.is_finite() & partial.is_finite();
@@ -168,6 +174,12 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     {
         fe2o3_device::trap();
     }
+    let Ok(left_view) = StridedReadView2D::from_shared_slice(a, 0, rows, k, k) else {
+        fe2o3_device::trap();
+    };
+    let Ok(right_view) = StridedReadView2D::from_shared_slice(weights, 0, 4096, k, k) else {
+        fe2o3_device::trap();
+    };
     let invocation = thread::index_1d();
     let raw = invocation.get();
     let element = thread::block_idx_x() as usize;
@@ -193,8 +205,8 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
         let inner = step * 64 + lane;
         if inner < k {
             let inner = inner as u16 as usize;
-            let left = Bf16::from_bits(memory::volatile_load(a, row * k + inner)).to_f32();
-            let right = Bf16::from_bits(memory::volatile_load(weights, column * k + inner)).to_f32();
+            let left = Bf16::from_bits(left_view.load_or(row, inner, 0)).to_f32();
+            let right = Bf16::from_bits(right_view.load_or(column, inner, 0)).to_f32();
             let product = left * right;
             partial += product;
             finite &= product.is_finite() & partial.is_finite();
