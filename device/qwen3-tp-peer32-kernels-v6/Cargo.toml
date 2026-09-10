@@ -1,0 +1,25 @@
+[package]
+name = "ferric-qwen3-tp-peer32-kernels-device-v6"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+
+[dev-dependencies]
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_tp_peer32_kernels_device_v6"
+path = "src/lib.rs"
