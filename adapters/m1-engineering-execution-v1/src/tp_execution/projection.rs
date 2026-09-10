@@ -5,9 +5,9 @@ use super::{
     EngineeringTpRankTransportV1, QWEN3_NO_LAYER, Qwen3TensorKind, Tensor, TpResult,
     UPLOAD_CHUNK_BYTES, allocate_tensor, section_bytes,
 };
+use ferric_engine::tensor_parallel::Qwen3TensorParallelTensorV1;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use ferric_engine::tensor_parallel::Qwen3TensorParallelTensorV1;
 
 /// Independently selected arithmetic profile; no unsupported-mode fallback.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -194,8 +194,12 @@ fn transpose_shard(
                 .map_err(|error| format!("transposed BF16 row: {error:?}"))?;
             let start = usize::try_from(start).map_err(|_| "transposed offset overflow")?;
             let length = usize::try_from(length).map_err(|_| "transposed row length overflow")?;
-            let end = start.checked_add(length).ok_or("transposed row end overflow")?;
-            *row = source.get(start..end).ok_or("transposed source row extent")?;
+            let end = start
+                .checked_add(length)
+                .ok_or("transposed row end overflow")?;
+            *row = source
+                .get(start..end)
+                .ok_or("transposed source row extent")?;
         }
         transpose_tile(&source_rows[..count], rows, first, output)?;
     }
@@ -271,9 +275,20 @@ mod tests {
 
     #[test]
     fn tiled_transpose_preserves_every_bf16_pattern_and_tile_tails() {
-        for (rows, columns) in [(1, 1), (1, 65), (65, 1), (31, 33), (32, 32), (33, 63), (65, 65), (256, 256)] {
+        for (rows, columns) in [
+            (1, 1),
+            (1, 65),
+            (65, 1),
+            (31, 33),
+            (32, 32),
+            (33, 63),
+            (65, 65),
+            (256, 256),
+        ] {
             let source = if rows == 256 {
-                (0..=u16::MAX).flat_map(u16::to_le_bytes).collect::<Vec<_>>()
+                (0..=u16::MAX)
+                    .flat_map(u16::to_le_bytes)
+                    .collect::<Vec<_>>()
             } else {
                 patterned_bytes(rows * columns)
             };
@@ -293,8 +308,10 @@ mod tests {
         }
         let mut output = [0xa5; 24];
         for (tile, rows, first) in [
-            (vec![], 3, 0), (vec![&[0_u8; 8][..]], 3, 3),
-            (vec![&[0_u8; 7][..]], 3, 0), (vec![&[0_u8; 6][..]], 3, 0),
+            (vec![], 3, 0),
+            (vec![&[0_u8; 8][..]], 3, 3),
+            (vec![&[0_u8; 7][..]], 3, 0),
+            (vec![&[0_u8; 6][..]], 3, 0),
             (vec![&[0_u8; 8][..], &[0_u8; 6][..]], 3, 0),
             (vec![&[0_u8; 8][..]], usize::MAX, 0),
             (vec![&[0_u8; 8][..]], 3, usize::MAX),
@@ -308,13 +325,23 @@ mod tests {
     #[ignore = "explicit host-only full production arrays and setup-helper microbenchmark"]
     fn production_shard_transpose_exactness_and_host_microbenchmark() {
         use ferric_engine::tensor_parallel::Qwen3TensorParallelPlanV1;
-        use ferric_spec::{Identity, ModelConfig, Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
+        use ferric_spec::{
+            Identity, ModelConfig, Qwen3ModelRole, Qwen3TensorMetadata, TensorDType,
+        };
         use std::time::Instant;
         let model = ModelConfig {
-            role: Qwen3ModelRole::Target8B, model_id: Identity::new([1; 32]),
-            config_id: Identity::new([2; 32]), vocabulary_size: 151_936, layers: 36,
-            hidden_size: 4096, intermediate_size: 12_288, query_heads: 32, kv_heads: 8,
-            head_dim: 128, max_position_embeddings: 40_960, rope_theta: 1_000_000,
+            role: Qwen3ModelRole::Target8B,
+            model_id: Identity::new([1; 32]),
+            config_id: Identity::new([2; 32]),
+            vocabulary_size: 151_936,
+            layers: 36,
+            hidden_size: 4096,
+            intermediate_size: 12_288,
+            query_heads: 32,
+            kv_heads: 8,
+            head_dim: 128,
+            max_position_embeddings: 40_960,
+            rope_theta: 1_000_000,
             tie_word_embeddings: false,
         };
         for (kind, source_rows, source_columns) in [
@@ -329,14 +356,24 @@ mod tests {
         ] {
             let source = patterned_bytes(source_rows as usize * source_columns as usize);
             let metadata = Qwen3TensorMetadata {
-                role: model.role, kind,
-                layer: if kind == Qwen3TensorKind::LanguageModelHead { QWEN3_NO_LAYER } else { 0 },
-                dtype: TensorDType::Bf16, rank: 2, dimension_0: source_rows, dimension_1: source_columns,
+                role: model.role,
+                kind,
+                layer: if kind == Qwen3TensorKind::LanguageModelHead {
+                    QWEN3_NO_LAYER
+                } else {
+                    0
+                },
+                dtype: TensorDType::Bf16,
+                rank: 2,
+                dimension_0: source_rows,
+                dimension_1: source_columns,
             };
             for world in [1, 2, 8] {
                 let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
                 for rank in 0..world {
-                    if kind == Qwen3TensorKind::LanguageModelHead && rank != 0 { continue; }
+                    if kind == Qwen3TensorKind::LanguageModelHead && rank != 0 {
+                        continue;
+                    }
                     let shard = plan.tensor(metadata, rank).unwrap();
                     let n = shard.rows().count as usize;
                     let k = shard.columns().count as usize;
@@ -347,7 +384,13 @@ mod tests {
                         let mut baseline = || {
                             let start = Instant::now();
                             for index in 0..n {
-                                shard.copy_bf16_row_into(&source, u32::try_from(index).unwrap(), &mut row).unwrap();
+                                shard
+                                    .copy_bf16_row_into(
+                                        &source,
+                                        u32::try_from(index).unwrap(),
+                                        &mut row,
+                                    )
+                                    .unwrap();
                                 transpose_row(&row, n, index, &mut expected).unwrap();
                             }
                             start.elapsed().as_nanos()
@@ -364,12 +407,19 @@ mod tests {
                             (baseline(), tiled_ns)
                         };
                         assert_eq!(actual, expected, "{kind:?} TP{world} rank{rank}");
-                        println!("{{\"schema\":\"FerricHostTransposeMicrobenchmarkV1\",\"kind\":\"{kind:?}\",\"tp\":{world},\"rank\":{rank},\"n\":{n},\"k\":{k},\"repeat\":{repeat},\"bytes\":{},\"baseline_ns\":{baseline_ns},\"tiled_ns\":{tiled_ns},\"full_array_exact\":true,\"model_timing\":false}}", actual.len());
+                        println!(
+                            "{{\"schema\":\"FerricHostTransposeMicrobenchmarkV1\",\"kind\":\"{kind:?}\",\"tp\":{world},\"rank\":{rank},\"n\":{n},\"k\":{k},\"repeat\":{repeat},\"bytes\":{},\"baseline_ns\":{baseline_ns},\"tiled_ns\":{tiled_ns},\"full_array_exact\":true,\"model_timing\":false}}",
+                            actual.len()
+                        );
                     }
                     let before = actual.clone();
-                    assert!(transpose_shard(&source[..source.len() - 1], &shard, &mut actual).is_err());
+                    assert!(
+                        transpose_shard(&source[..source.len() - 1], &shard, &mut actual).is_err()
+                    );
                     assert_eq!(actual, before);
-                    assert!(transpose_shard(&source, &shard, &mut actual[..before.len() - 1]).is_err());
+                    assert!(
+                        transpose_shard(&source, &shard, &mut actual[..before.len() - 1]).is_err()
+                    );
                     assert_eq!(actual, before);
                 }
             }
