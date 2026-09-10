@@ -5,7 +5,7 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Performance Swarm
 
-The integrated source tracks public fe2o3 `1b262ac3`; frozen benchmark
+The integrated source tracks the observed public fe2o3 `7528e734` cutoff; frozen benchmark
 inputs retain their original source and binary identities. Compiler/KFD
 changes are published to fe2o3 main after review/rebase. Ferric implementation
 remains local; the Pages performance checkpoint is published separately.
@@ -15,12 +15,24 @@ remains local; the Pages performance checkpoint is published separately.
 | Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, matched MFMA and TP1 pairs, and both slow peer cases are archived. The integrated four-request/replica checkers pass 59 host tests. | Exact common-clock replica cohort validation, repetitions and matched controls. |
 | Kernels | Full16 MFMA model pair passes: first workload-rate sample +27.91%, with startup regression. Both operational-matched wave selectors still fail exact Qwen seed reference. Full32 native 30 fixtures and peer32 native 19 fixtures pass. Bit-exact tiled setup transpose passes 240 full-array comparisons and speeds up the host helper only. | Repeated MFMA, integrated transpose setup timing and exact-reference wide-model measurements. |
 | Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both TP2/8 model peer runs strictly pass, but TP8 is very slow. TP1 device residuals pass a matched pair with a single-sample +14.19% workload rate. Current independent-worker build is archived. | Source-matched host controls, peer boundary-cost investigation and repeated TP1 measurements. |
-| Integration | Public `902fef6e` replica/transpose combination passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Real coordinator schedules cover three allocations at both 16/32-row budgets. Reviewed active `1b262ac3` repin is integrated; its combined gate is running. | Qualify exact replica outputs and shared-clock metrics, publish results, compare allocation policies on mi350. |
+| Integration | The integrated `7528e734` source passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Separate repin gates pass 26 metadata configurations, 38 source-gate and 31 verifier-policy tests. All three allocation cohorts and the actual 32-row model policy pair pass strict GPU comparison. | Finish repeated and cumulative profiles, publish the final checkpoint, archive and remove completed build stages. |
 
-Public fe2o3 advanced to `1b262ac3`. Its reviewed delta is
-compiler/analysis-side, with no KFD, worker, SDK or lockfile changes. Active-pin
-integration is separate from frozen `902fef6e` runtime comparisons. Old emitted images
+The reviewed public delta through `7528e734` is compiler/analysis-side, with no
+KFD, worker, SDK or lockfile changes. A freshly built `1b262ac3` independent
+worker is byte-identical to the frozen `902fef6e` worker; its relevant source
+closure is unchanged at the `7528e734` cutoff. Active-pin integration is
+separate from frozen runtime comparisons. Old emitted images
 retain their actual compiler identities; they are never relabeled as rebuilds.
+
+The allocation cohort observes 1.442/5.734/6.588 output tokens/s for
+1xTP8/4xTP2/8xTP1 respectively, at one sample each and a 16-row per-instance
+budget. All 64 outputs and 96 physical token rows match. Replication increases
+aggregate row capacity and duplicates model storage; this is not an isolated
+kernel comparison. The separate same-image 16/32-row policy pair observes a
+12.56% workload-rate increase, but request-00 TTFT worsens. The tiled transpose
+model pair saves 26.55 s of setup (15.33%); decode variation is not attributed
+to the setup-only helper. The published Pages checkpoint retains the initial
+trio and all failed/regressing paths; further results are added separately.
 
 These are short engineering workloads, not HTTP serving qualification or a
 matched vLLM/SGLang comparison. See [the live performance ledger summary](M1_QWEN3_PERFORMANCE.md).

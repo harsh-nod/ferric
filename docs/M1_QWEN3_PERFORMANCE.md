@@ -18,11 +18,11 @@ runs so independent teams cannot contaminate one another's measurements.
 | Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but both original and operational-matched model runs have the same seed mismatch as wave projection; rejected for timing claims |
 | GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | First exact-reference matched model pair passes; workload rate +14.19%, reuse TTFT -6.76%, reuse TPOT -0.97%; single sample only |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | First isolated model ablation passes; mixed per-request results, no repeatable gain established |
-| True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; both TP2/8 Qwen runs pass, but TP8 is very slow; no speedup established |
-| Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Full32 native 30 fixtures and peer32 native 19 fixtures pass; model/replica-throughput measurements pending |
+| True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; model and source-matched host controls pass, but peer workload rate is 82.06%/97.66% lower at TP2/TP8 |
+| Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Native suites and actual 32-row Qwen cohort pass; same-image row-policy pair gains 12.56% workload rate with mixed request latency |
 | Bound comparison and performance ledger | Runtime | Implemented; 59 comparison tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA/TP1 pairs, slow peers and rejected wave cases retained |
-| Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition, strict cohort verifier and process cleanup integrated; 11 launcher tests and strict Clippy pass | First TP8 cohort running; TP2/TP1 allocations and accepted shared-clock measurements pending |
-| Bit-exact tiled MFMA weight transpose | Kernels/integration | Integrated setup-only raw-byte transpose; 240 full-array comparisons pass across actual TP1/2/8 shard shapes | CPU helper medians improve 2.67-3.37x in the host suite; model setup/TTFT/TPOT gain not yet measured |
+| Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition, strict cohort verifier and process cleanup integrated; 11 launcher tests and strict Clippy pass | All three allocations pass 64 exact outputs; observed rates 1.442/5.734/6.588 tokens/s for 1xTP8/4xTP2/8xTP1, with row-capacity and model-memory costs retained |
+| Bit-exact tiled MFMA weight transpose | Kernels/integration | Integrated setup-only raw-byte transpose; 240 full-array comparisons pass across actual TP1/2/8 shard shapes | Host helper suites improve 2.67-3.37x; first matched model pair saves 26.55 s setup (15.33%), with no causal decode-speed claim |
 
 ## Initial Observations
 
@@ -86,8 +86,7 @@ This is not a stable serving result or a long-generation numerical qualification
 The first TP2 serial device-peer run passes strict reference, ownership,
 dispatch-count and teardown checks. Reuse TTFT is 11.040452221 seconds and TPOT
 is 10.162302622 seconds; setup is 220.861978648 seconds and whole run is
-285.630395408 seconds. There is no matched TP2 host control yet, so these
-observations do not establish a collective speedup. Comparison SHA256:
+285.630395408 seconds. Comparison SHA256:
 `7452fafe952ead228830782e83c291a8f4d1b345b90cc50ab690114f6713e9ee`.
 
 The TP8 serial peer run also passes all strict checks, but reuse TTFT is
@@ -97,6 +96,23 @@ seconds and whole run is 1557.722091593 seconds. The profile is operational-only
 with baseline arithmetic, not cached admission or command sequences. This is
 a correctness result, not a performance win. Comparison SHA256:
 `e1babe489df564a1240679fd6062e148a60eac27039af3b6f47822d7d722e2bd`.
+
+Later host controls use the same `d03089ba...` controller, public-902 runtime
+source, baseline image, workload and operational profile. The intentional
+worker programs differ: independent `189b918d...` versus peer `6891fb58...`.
+Each comparison has one run per implementation, not new peer repetitions.
+
+| World | Host Output (tokens/s) | Peer Output (tokens/s) | Peer Window / Host Window |
+| --- | ---: | ---: | ---: |
+| TP2 | 0.816745 | 0.146494 | 5.5753x |
+| TP8 | 0.485641 | 0.011381 | 42.6724x |
+
+The host controls strictly pass. Peer rates are 82.06%/97.66% lower at TP2/TP8.
+Source inspection identifies repeated all-rank full-currentness fences and
+serial child execution; this is a mechanism hypothesis, not a captured CPU
+profile. No checks were weakened to make this path faster. Paired ledger hashes:
+`d59696cb6616994677e42db34aab16cd33396a99a90a29f29965392b135f5a85` (TP2),
+`886a3d29d7555cda2de47ab3ea305f0567bab235a7d1384ee2700b0259ab1ccc` (TP8).
 
 ### Matched TP1 Residual Pair
 
@@ -121,6 +137,59 @@ range and upload extent. Its CPU-only 80-shape, three-repeat suite passes all
 240 full-array comparisons. Sums of per-case medians improve 3.37x/3.36x/2.67x
 for TP1/TP2/TP8 respectively. These are helper-only results, not whole-model
 setup or inference measurements. See [the benchmark contract](../adapters/m1-engineering-execution-v1/tools/transpose_benchmark.md).
+
+A later model pair changes only production transpose code (`bef12d57...` to
+`c5d8cda0...` controller), with the same public-902 worker, full-v3 image,
+operational checks, MFMA projection and fixed four-request workload. Both pass.
+Setup falls from 173.194680 to 146.643121 seconds, saving 26.551560
+seconds (15.33%). Whole run falls from 212.744133 to 183.431643 seconds.
+Decode timings also vary, but a setup-only change does not justify attributing
+that variation to a faster decoding algorithm. This is a single matched pair.
+Ledger SHA256: `389c7b8ee88fb443e2f3396cb0978e92509142e58c3087321de43bc097d0b191`.
+
+### Replica Allocation
+
+This is a separate cache-off workload: eight named five-token prompts, eight
+outputs each, 64 outputs and 96 processed rows in total. Each layout uses all
+eight physical GPUs, the same `bef12d57...` controller, `189b918d...` worker and
+baseline image. The strict common-RAW-clock checker verifies all outputs,
+preselected identity/epoch, actual loaded payloads, disjoint device assignments,
+owned-process cleanup and global idle observations. Cohorts do not overlap.
+
+| Layout | Output (tokens/s) | Request-00 TTFT (s) | Request-00 TPOT (s) | Aggregate Row Budget | Loaded Host Model Bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1xTP8 | 1.441585 | 6.365368 | 4.625090 | 16 | 16,381,470,720 |
+| 4xTP2 | 5.733503 | 2.142079 | 1.212193 | 64 | 65,525,882,880 |
+| 8xTP1 | 6.587693 | 1.877833 | 1.119589 | 128 | 131,051,765,760 |
+
+Rate is 64 divided by common release to last output, not a sum of replica
+rates. Rows are budgeted at 16 per instance. Replication duplicates weights
+and increases aggregate row capacity; these 3.9772x/4.5698x rate observations
+are allocation-policy results, not isolated kernel gains. There is one sample
+per layout. All eight request identities retain separate latencies and seven
+decode intervals; the table selects request-00 rather than pooling them.
+Payload bytes exclude KV, activation/scratch, allocator rounding and process
+RSS. Ledger SHA256: `47d98300668c31db0dd8f91846a4d6a7b361e353c419d7d17a911c7625ec7b32`.
+
+### Actual 32-Row Policy
+
+The separate same-image TP8 cohort pair uses full-v5 image `98b5fdb1...`,
+the same replica controller/worker and baseline arithmetic. Only row/chunk
+budgets change. The completed row schedules are `[16,16,16,8,8,8,8,8,5,3]`
+and `[32,14,8,8,8,8,8,8,2]`: an actual 32-row model batch, not just capacity.
+Both match all 64 outputs and process 96 rows.
+
+| Row/Chunk Budget | Output (tokens/s) | Request-00 TTFT (s) | Request-00 TPOT (s) |
+| --- | ---: | ---: | ---: |
+| 16 | 1.322906 | 6.511720 | 5.084949 |
+| 32 | 1.489117 | 9.640646 | 4.414652 |
+
+The larger budget raises the single-sample rate 12.56%, but request-00 TTFT
+worsens. Other request identities remain separate in the full table. This
+policy pair is not pooled with the earlier baseline-image allocation trio.
+Ledger SHA256: `0bd49a1c66cb297e9eb20fd502ca5c99faefbaf722bd963de3acb96b5cc6fb6e`.
+
+### Runtime Provenance
 
 The operational-only runs show roughly 14-15x baseline workload output rate,
 not a serving-throughput claim. They retain admission caching, sequences,
