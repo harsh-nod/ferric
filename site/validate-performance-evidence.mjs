@@ -173,6 +173,64 @@ for (const [mode, hash] of [["projection", "ad9ecdbc5e35a7013a1e3dd68fcaba5344ed
   await pinned(join(measurementRoot, `wave-${mode}-operational-r1-rejection.json`), hash);
   assert.equal(data.identities[`wave${mode[0].toUpperCase()}${mode.slice(1)}OperationalRejectionSha256`], hash);
 }
+const current = data.currentCompatibility;
+const currentAcceptedHashes = [
+  ["f7f25c01e5b7d99350fbb15fee0c35b73d20ab8188cdfb89e350b04ffe961ce7", "37122de41dabe0287976f572627bce042e9a3be4e9820b143124371a8aa88400"],
+  ["67ad69a2ec6d29f2cc03f6eabe65cfcde7837cf606a37363837d65ddadb37c59", "8f395b5dbfa30b276efaeacec155ce6b033c1c612e1c64e4fa843752154c8c93"],
+];
+for (const [index, profile] of current.accepted.entries()) {
+  const [comparisonHash, metricsHash] = currentAcceptedHashes[index];
+  const report = await pinned(join(measurementRoot, `${profile.id}-comparison.json`), comparisonHash);
+  const record = await pinned(join(measurementRoot, `${profile.id}-metrics.json`), metricsHash);
+  assert.equal(profile.comparisonSha256, comparisonHash);
+  assert.equal(profile.metricsFileSha256, metricsHash);
+  checkedReport(report, profile.world);
+  assert.equal(record.passed, true);
+  assert.equal(record.case, profile.id);
+  assert.equal(record.repetitions, 1);
+  assert.equal(record.output_head_pruning, profile.outputHeadPruning);
+  assert.equal(record.collective, profile.collective);
+  assert.deepEqual(record.performance_profile, { ...data.runtimeProfile, projection: profile.projection });
+  assert.deepEqual(report.expected_execution_profile.performance_profile, record.performance_profile);
+  assert.equal(report.expected_execution_profile.output_head_pruning, profile.outputHeadPruning);
+  assert.equal(report.expected_execution_profile.collective, profile.collective);
+  assert.deepEqual(profile.actualBatchRows, record.actual_completed_rows);
+  assert.equal(Math.max(...profile.actualBatchRows), record.max_observed_rows);
+  if (profile.imageProfile === "v5-mfma32") {
+    assert.equal(report.kernel_row_capacity, 32);
+    assert.equal(report.maximum_batch_rows_observed, 17);
+  }
+  assert.equal(report.physical_token_rows, 34);
+  const imagePins = profile.imageProfile === "v5-mfma32" ? data.wideRowPair.pins : data.mfmaPair.pins;
+  for (const [target, source] of basePins) {
+    assert.equal(report.identities[source], target.startsWith("controller") || target.startsWith("worker")
+      ? current.pins[target] : imagePins[target]);
+  }
+  requests(profile, { ...record.metrics, comparison_sha256: record.comparison_sha256 });
+  console.log("EXACT CURRENT-CONTROLLER ACCEPTED", profile.id);
+}
+for (const profile of current.rejected) {
+  const rejection = await pinned(join(measurementRoot, `${profile.id}-rejection.json`),
+    "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9");
+  assert.equal(profile.rejectionSha256, "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9");
+  assert.equal(rejection.passed, false);
+  assert.equal(rejection.case, profile.id);
+  assert.equal(rejection.repetitions, 1);
+  assert.equal(Object.hasOwn(rejection, "metrics"), false);
+  assert.equal(rejection.output_head_pruning, profile.outputHeadPruning);
+  assert.equal(rejection.collective, profile.collective);
+  assert.deepEqual(rejection.performance_profile, { ...data.runtimeProfile, projection: profile.projection });
+  for (const [target, source] of basePins) {
+    assert.equal(rejection.expected_identities[source], target.startsWith("controller") || target.startsWith("worker")
+      ? current.pins[target] : data.mfmaPair.pins[target]);
+  }
+  assert.equal(rejection.mismatches.length, 1);
+  const mismatch = rejection.mismatches[0];
+  assert.equal(mismatch.name, profile.requestName);
+  assert.deepEqual(mismatch.expected_tokens, profile.expectedTokens);
+  assert.deepEqual(mismatch.observed_tokens, profile.observedTokens);
+  console.log("EXACT CURRENT-CONTROLLER REJECTION", profile.id);
+}
 const host = data.hostTranspose;
 const sourcePeer = data.peerSourceControls;
 const transposeModel = data.transposeModelPair;

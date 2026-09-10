@@ -119,6 +119,31 @@
         values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
       ])));
   }
+  const current = performance.currentCompatibility;
+  measured.append(element("h3", "", "Current-controller combinations: mixed correctness"),
+    element("p", "", current.scope), element("p", "", current.interpretation));
+  performanceTable("Current-controller compatibility: rejected profiles",
+    ["Rejected Profile / Reps", "Request", "Expected Token IDs", "Observed Token IDs"],
+    current.rejected.map((profile) => [`${profile.name} / n=1`, profile.requestName,
+      profile.expectedTokens.join(", "), profile.observedTokens.join(", ")]));
+  performanceTable("Current-controller compatibility: accepted process windows",
+    ["Accepted Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+    current.accepted.map((profile) => [`${profile.name} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+      profile.workloadSeconds.toFixed(3), profile.setupSeconds.toFixed(3), profile.wholeSeconds.toFixed(3)]));
+  performanceTable("Current-controller compatibility: observed rows and profiles",
+    ["Profile", "Image / Projection / Pruning / Collective", "Row Capacity / Actual Batch Rows"],
+    current.accepted.map((profile) => [profile.name,
+      `${profile.imageProfile} / ${profile.projection} / ${profile.outputHeadPruning ? "on" : "off"} / ${profile.collective ?? "host-staged"}`,
+      `${profile.rowCapacity} / ${profile.actualBatchRows.join(", ")}`]));
+  const currentLatencies = element("details", "performance-identities");
+  currentLatencies.append(element("summary", "", "All accepted current-controller request latencies"));
+  performanceTable("Current-controller compatibility: accepted named request latencies",
+    ["Profile / Request / Gaps", "TTFT (s)", "TPOT (s)"],
+    current.accepted.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+      `${profile.name} / ${performance.requests[index].name} / ${performance.requests[index].gapsPerRepetition}`,
+      values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+    ])), currentLatencies);
+  measured.append(currentLatencies);
   const cohorts = performance.replicaCohorts;
   measured.append(element("h3", "", "Eight-GPU allocation cohorts: 64 outputs"), element("p", "", cohorts.scope));
   performanceTable("Replica cohorts: common-release throughput and process windows",
@@ -349,6 +374,17 @@
   pins.append(element("dt", "", "Repeated TP1 residual ledger SHA-256"), element("dd", "", performance.deviceTp1Repeated.ledgerFileSha256));
   performance.deviceTp1Repeated.secondProfiles.forEach((profile) => {
     pins.append(element("dt", "", `${profile.name} comparison SHA-256`), element("dd", "", profile.comparisonSha256));
+  });
+  Object.entries(current.pins).forEach(([key, value]) => {
+    pins.append(element("dt", "", `Current-controller ${key}`), element("dd", "", value));
+  });
+  current.accepted.forEach((profile) => {
+    for (const key of ["comparisonSha256", "metricsFileSha256"]) {
+      pins.append(element("dt", "", `${profile.name} ${key}`), element("dd", "", profile[key]));
+    }
+  });
+  current.rejected.forEach((profile) => {
+    pins.append(element("dt", "", `${profile.name} rejection SHA-256`), element("dd", "", profile.rejectionSha256));
   });
   performance.transposeModelPair.profiles.forEach((profile) => {
     for (const key of ["controllerSha256", "comparisonSha256"]) {

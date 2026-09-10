@@ -42,6 +42,9 @@ const requiredClaims = [
   "MFMA repeated: request gains, startup cost",
   "MFMA plus pruning: no additive gain observed",
   "TP1 residual repeated: small decode change",
+  "Current-controller combinations: mixed correctness",
+  "at most 17 rows, not 32",
+  "no rejected-run timing is published",
   "Startup regresses",
   "0.575054",
   "209.070",
@@ -670,6 +673,11 @@ try {
 
     const replicaDisclosure = page.getByText("All replica-cohort request latencies", { exact: true });
     await replicaDisclosure.click();
+    const currentDisclosure = page.getByText("All accepted current-controller request latencies", { exact: true });
+    await currentDisclosure.click();
+    assert(await page.getByRole("region", { name: "Current-controller compatibility: accepted named request latencies", exact: true })
+      .locator("tbody tr").count() === 8, `${name}: missing accepted current-controller request identities`);
+    await currentDisclosure.click();
     const repeatedDisclosure = page.getByText("All repeated MFMA request latencies", { exact: true });
     await repeatedDisclosure.click();
     const tp1RepeatedDisclosure = page.getByText("All repeated TP1 residual request latencies", { exact: true });
@@ -698,6 +706,9 @@ try {
     for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
       ["Repeated MFMA pair: mean and observed range", 2],
       ["Repeated TP1 residual pair: mean and observed range", 2],
+      ["Current-controller compatibility: rejected profiles", 1],
+      ["Current-controller compatibility: accepted process windows", 2],
+      ["Current-controller compatibility: observed rows and profiles", 2],
       ["Cumulative MFMA and pruning: process windows", 1], ["Cumulative MFMA and pruning: request latencies", 4],
       ["Matched TP1 residual pair: process windows", 2], ["Matched TP1 residual pair: request latencies", 8],
       ["Setup transpose model pair: process windows", 2], ["Setup transpose model pair: request latencies", 8],
@@ -718,6 +729,7 @@ try {
         for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
           ["True 32-row execution: a latency tradeoff", "wide"],
+          ["Current-controller combinations: mixed correctness", "current"],
           ["MFMA repeated: request gains, startup cost", "mfma-repeated"],
           ["Source-matched peer controls: a regression", "peer-controls"],
           ["Setup transpose: full-model observation", "transpose-model"],

@@ -44,7 +44,7 @@ overflow at the desktop, breakpoint-edge, and mobile widths; its exhaustive mode
 checks every width from 320px through 1440px. `stage-artifact.mjs` creates and
 validates the seven-file static deployment roster so `node_modules`, dependency
 metadata, documentation, and test-only files cannot enter the Pages artifact.
-`validate-performance.mjs` checks the closed performance schema and sixty-two
+`validate-performance.mjs` checks the closed performance schema and sixty-nine
 negative mutations, including incorrect repetition counts, throughput windows,
 runtime profiles, ledger identities, and cancelled-request TPOT. A Pages-only
 publication must not include Ferric implementation, model files, or raw logs.

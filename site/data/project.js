@@ -659,7 +659,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Repeated TP8 performance checks",
       state: "observed",
       detail:
-        "The matched MFMA pair passes exact Qwen tokens and bytes twice per profile: mean output rate rises 0.447 to 0.574 tok/s, reuse-prefix TTFT falls 2.662 to 1.821 s and TPOT 1.255 to 0.854 s, but setup worsens 117.808 to 173.024 s. MFMA plus pruning passes once but shows no additive gain. A later, separately pinned tiled-transpose model pair reduces setup 173.195 to 146.643 s; no decode-speed gain is attributed to that setup-only change. Source-matched TP2/TP8 host controls expose large serial-peer regressions. True wide-row and allocation-policy pairs use a distinct 64-output workload. Those later comparisons have n=1 per profile. Historical tables remain preserved and both wave profiles remain rejected. Ferric implementation stays local; only the site is published.",
+        "The matched MFMA pair passes exact Qwen tokens and bytes twice per profile: mean output rate rises 0.447 to 0.574 tok/s, reuse-prefix TTFT falls 2.662 to 1.821 s and TPOT 1.255 to 0.854 s, but setup worsens 117.808 to 173.024 s. MFMA plus pruning passes once but shows no additive gain. A later, separately pinned tiled-transpose model pair reduces setup 173.195 to 146.643 s; no decode-speed gain is attributed to that setup-only change. Source-matched TP2/TP8 host controls expose large serial-peer regressions. True wide-row and allocation-policy pairs use a distinct 64-output workload. Those later comparisons have n=1 per profile. Historical tables remain preserved and both wave profiles remain rejected. Current-controller TP1 MFMA plus pruning plus device residual also fails the exact reference and has no accepted timing; separate TP1 baseline and TP8 wide-capacity smokes pass. Ferric implementation stays local; only the site is published.",
     },
     {
       label: "Opt-in runtime performance controls",
@@ -1254,6 +1254,12 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      sourceStatus: "cb31075",
+      title: "Current-controller compatibility is mixed, not blanket qualification",
+      state: "observed",
+      detail: "The public-7528-built controller 44e4 passes a TP1 baseline control and an unpaired TP8 MFMA-plus-pruning cached smoke, n=1 each. The worker was rebuilt on 1b262 and is byte-identical to its earlier public-902 build; emitted images retain their frozen provenance. TP8 uses capacity 32 but actual maximum 17 rows, not a 32-row batch. TP1 MFMA plus pruning plus device residual fails the exact seed reference, emitting Germany is instead of Spain is, and has no accepted timing. This does not invalidate the older separately pinned MFMA and TP1-residual pairs or establish current-source Verus, emission, serving or protected M1 qualification. Two TP1 isolation cases remain pending.",
+    },
     {
       sourceStatus: "818e6cf",
       title: "MFMA request gains repeat; pruning adds no observed gain",

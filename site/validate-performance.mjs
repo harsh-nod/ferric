@@ -20,7 +20,7 @@ export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
     "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "peerSourceControls",
-    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated"]);
+    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated", "currentCompatibility"]);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
   assert(data.scope.includes("Not steady-state serving throughput"));
   assert(data.scope.includes("eight output tokens including one from the cancelled request"));
@@ -141,6 +141,44 @@ export function validatePerformance(data) {
       else assert(Number.isFinite(values[1]) && values[1] > 0);
     });
   };
+  const current = data.currentCompatibility;
+  keys(current, ["scope", "interpretation", "pins", "accepted", "rejected"]);
+  keys(current.pins, ["controllerSha256", "workerSha256", "controllerFe2o3Revision", "workerRebuildFe2o3Revision"]);
+  digest(current.pins.controllerSha256);
+  digest(current.pins.workerSha256);
+  assert.equal(current.pins.workerSha256, data.replicaCohorts.pins.workerSha256);
+  assert.equal(current.pins.controllerFe2o3Revision, "7528e7345cef0158d7034cdbae23011e3c6fb5d2");
+  assert.equal(current.pins.workerRebuildFe2o3Revision, "1b262ac3dd23ee63067e40587d62a124f40b9fc9");
+  assert(current.scope.includes("byte-identical"));
+  assert(current.interpretation.includes("at most 17 rows, not 32"));
+  assert(current.interpretation.includes("no rejected-run timing"));
+  assert.equal(current.accepted.length, 2);
+  current.accepted.forEach((profile, index) => {
+    singleProfile(profile, ["world", "imageProfile", "projection", "outputHeadPruning", "collective", "rowCapacity", "actualBatchRows", "metricsFileSha256"]);
+    assert.equal(profile.id, ["latest-tp1-control-r1", "latest-tp8-wide-cumulative-r1"][index]);
+    assert.equal(profile.world, [1, 8][index]);
+    assert.equal(profile.imageProfile, ["v3-mfma", "v5-mfma32"][index]);
+    assert.equal(profile.projection, ["baseline", "mfma"][index]);
+    assert.equal(profile.outputHeadPruning, index === 1);
+    assert.equal(profile.collective, null);
+    assert.equal(profile.rowCapacity, [16, 32][index]);
+    assert.deepEqual([...profile.actualBatchRows], index === 0 ? [16, 6, 7, 4, 1] : [17, 6, 6, 4, 1]);
+    digest(profile.metricsFileSha256);
+  });
+  assert.equal(current.rejected.length, 1);
+  current.rejected.forEach((profile) => {
+    keys(profile, ["id", "name", "repetitions", "world", "projection", "outputHeadPruning", "collective", "requestName", "expectedTokens", "observedTokens", "rejectionSha256"]);
+    assert.equal(profile.id, "latest-tp1-cumulative-r1");
+    assert.equal(profile.repetitions, 1);
+    assert.equal(profile.world, 1);
+    assert.equal(profile.projection, "mfma");
+    assert.equal(profile.outputHeadPruning, true);
+    assert.equal(profile.collective, "device-tp1-v3");
+    assert.equal(profile.requestName, "seed-prefix");
+    assert.deepEqual([...profile.expectedTokens], [17689, 374]);
+    assert.deepEqual([...profile.observedTokens], [9856, 374]);
+    digest(profile.rejectionSha256);
+  });
   const mfma = data.mfmaPair;
   keys(mfma, ["scope", "interpretation", "pins", "profiles"]);
   assert(mfma.scope.includes("Only projection selection changes"));
@@ -365,6 +403,13 @@ export function validatePerformance(data) {
 
 export function testPerformanceRejections(data) {
   const mutations = [
+    (copy) => { copy.currentCompatibility.accepted[1].actualBatchRows[0] = 32; },
+    (copy) => { copy.currentCompatibility.accepted[1].repetitions = 2; },
+    (copy) => { copy.currentCompatibility.rejected[0].outputTokensPerSecond = 1; },
+    (copy) => { copy.currentCompatibility.rejected[0].observedTokens = [17689, 374]; },
+    (copy) => { copy.currentCompatibility.rejected[0].collective = null; },
+    (copy) => { copy.currentCompatibility.pins.workerRebuildFe2o3Revision = copy.currentCompatibility.pins.controllerFe2o3Revision; },
+    (copy) => { copy.currentCompatibility.interpretation = "All combinations qualified"; },
     (copy) => { copy.deviceTp1Repeated.repetitions = 4; },
     (copy) => { copy.deviceTp1Repeated.secondProfiles[1].collective = "device-peer-serial-v4"; },
     (copy) => { copy.deviceTp1Repeated.secondProfiles[0].comparisonSha256 = copy.deviceTp1Pair.profiles[0].comparisonSha256; },
