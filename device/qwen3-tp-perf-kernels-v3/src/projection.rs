@@ -257,9 +257,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     } else {
         fe2o3_device::trap();
     }
-    let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
-        fe2o3_device::trap();
-    };
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096) else {
         fe2o3_device::trap();
@@ -277,6 +274,9 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
+        fe2o3_device::trap();
+    };
     if row_base < rows {
         let value = Bf16::from_f32(values[0]);
         if !values[0].is_finite()
@@ -367,9 +367,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     } else {
         fe2o3_device::trap();
     }
-    let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
-        fe2o3_device::trap();
-    };
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, k, k) else {
         fe2o3_device::trap();
@@ -387,6 +384,9 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
+        fe2o3_device::trap();
+    };
     if row_base < rows
         && (!values[0].is_finite() || !output.write_tiled_2d(&tile, 0, rows, 4096, 4096, values[0]))
     {

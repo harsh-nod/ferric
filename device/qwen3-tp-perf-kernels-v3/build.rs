@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#[allow(dead_code, unexpected_cfgs)]
 #[path = "../qwen3-all-kernels-v1/src/target.rs"]
 mod target;
 #[path = "../qwen3-all-kernels-v1/build/target_contract.rs"]
