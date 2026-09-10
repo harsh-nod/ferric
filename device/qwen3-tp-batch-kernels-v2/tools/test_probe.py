@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 import struct
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -100,6 +102,24 @@ class BatchProbeTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "grew beyond byte limit"):
                 PROBE.load_helper(HELPER)
             self.assertEqual([call.args[1] for call in reader.call_args_list], [128 * 1024 + 1, 1])
+
+    def test_shallow_deployment_help_does_not_resolve_default_helper(self):
+        with tempfile.TemporaryDirectory(prefix="ferric-batch-probe-host-", dir="/tmp") as temporary:
+            source = Path(temporary) / "probe.py"
+            source.write_bytes(SOURCE.read_bytes())
+            result = subprocess.run([sys.executable, str(source), "--help"],
+                                    capture_output=True, text=True, timeout=30, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("--helper", result.stdout)
+
+    def test_shallow_deployment_explicit_helper_self_test(self):
+        with tempfile.TemporaryDirectory(prefix="ferric-batch-probe-host-", dir="/tmp") as temporary:
+            source = Path(temporary) / "probe.py"
+            source.write_bytes(SOURCE.read_bytes())
+            result = subprocess.run([sys.executable, str(source), "--helper", str(HELPER), "--self-test"],
+                                    capture_output=True, text=True, timeout=30, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("no GPU worker launched", result.stdout)
 
 
 if __name__ == "__main__":

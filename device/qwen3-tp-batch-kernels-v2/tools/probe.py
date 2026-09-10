@@ -193,8 +193,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--run", action="store_true")
-    parser.add_argument("--helper", type=Path,
-                        default=Path(__file__).resolve().parents[3] / "proofs/tensor-parallel-kernels-v1/probe.py")
+    parser.add_argument("--helper", type=Path)
     parser.add_argument("--worker", type=Path)
     parser.add_argument("--worker-sha256")
     parser.add_argument("--artifact", type=Path)
@@ -202,7 +201,13 @@ def main():
     parser.add_argument("--device-unique-id", type=int)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    core = load_helper(args.helper)
+    helper = args.helper
+    if helper is None:
+        parents = Path(__file__).resolve().parents
+        if len(parents) < 4:
+            parser.error("--helper is required outside the Ferric source tree")
+        helper = parents[3] / "proofs/tensor-parallel-kernels-v1/probe.py"
+    core = load_helper(helper)
     fixtures = self_test(core)
     if args.self_test:
         core.require(not args.run, "self-test cannot launch GPU work")
