@@ -556,3 +556,305 @@ fn missing_internal_binding_aborts_scheduler_reservation_and_stops_reuse() {
     assert!(state.borrow().calls.is_empty());
     runtime.close().unwrap();
 }
+
+fn fixed_workload_prompts() -> [Vec<u32>; 4] {
+    let base = [785, 6722, 315, 9625, 374];
+    let continuation = [
+        12095, 13, 576, 6722, 315, 15344, 374, 21718, 13, 576, 6722, 315, 17689, 374,
+    ];
+    [12, 0, 0, 14].map(|length| {
+        base.iter()
+            .chain(&continuation[..length])
+            .copied()
+            .collect()
+    })
+}
+
+fn fixed_workload_chunks(budget: usize, chunk: usize, cache: bool) -> Vec<Vec<(usize, u32, u32)>> {
+    let mut batches = if chunk == 16 {
+        vec![
+            vec![(0, 0, 16)],
+            vec![(1, 0, 5), (0, 16, 1)],
+            vec![(0, 17, 1), (1, 5, 1), (2, 0, 5)],
+        ]
+    } else {
+        vec![
+            vec![(0, 0, 17)],
+            vec![(0, 17, 1), (1, 0, 5)],
+            vec![(1, 5, 1), (2, 0, 5)],
+        ]
+    };
+    if cache {
+        batches.extend([vec![(1, 6, 1), (3, 16, 3)], vec![(3, 19, 1)]]);
+    } else {
+        let first = u32::try_from((budget - 1).min(chunk).min(19)).unwrap();
+        batches.push(vec![(1, 6, 1), (3, 0, first)]);
+        if first < 19 {
+            batches.push(vec![(3, first, 19 - first)]);
+        }
+        batches.push(vec![(3, 19, 1)]);
+    }
+    batches
+}
+
+fn fixed_workload_retire(
+    runtime: &mut EngineeringTpBatchRuntimeV2<FakeRunner>,
+    active: &mut Vec<(usize, TpRequestIdV1)>,
+    records: &mut [Option<TpRequestRecordV1>; 4],
+    tick: u64,
+) {
+    let mut done = Vec::new();
+    for &(index, id) in active.iter() {
+        if matches!(
+            runtime.request(id).unwrap().state(),
+            TpRequestStateV1::Completed | TpRequestStateV1::Cancelled
+        ) {
+            assert!(records[index].is_none());
+            records[index] = Some(runtime.retire(id, tick).unwrap());
+            assert!(runtime.request(id).is_err());
+            done.push(id);
+        }
+    }
+    active.retain(|(_, id)| !done.contains(id));
+    assert_eq!(runtime.retained_requests(), active.len());
+    assert_eq!(runtime.page_stats().sequences as usize, active.len());
+}
+
+fn fixed_workload_run(budget: usize, chunk: usize, cache: bool, cancelled_limit: u32) {
+    let limits = EngineeringTpPagedLimitsV1::new(128, 32, 64, 1000).unwrap();
+    let scope = EngineeringTpPoolScopeV1 {
+        model: [1; 32],
+        session: [2; 32],
+    };
+    let pool = if budget == 16 {
+        EngineeringTpPagedPoolV1::new(scope, limits)
+    } else {
+        EngineeringTpPagedPoolV1::new_wide32(scope, limits)
+    }
+    .unwrap();
+    let (gpu, state) = fake(&pool, 8);
+    let scheduler = if budget == 16 {
+        EngineeringTpSchedulerV1::new(151_936, 128, budget, chunk)
+    } else {
+        EngineeringTpSchedulerV1::new_wide32(151_936, 128, budget, chunk)
+    }
+    .unwrap();
+    let mut runtime = if budget == 16 {
+        EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, budget, cache)
+    } else {
+        EngineeringTpBatchRuntimeV2::new_wide32(gpu, pool, scheduler, budget, cache)
+    }
+    .unwrap();
+    let prompts = fixed_workload_prompts();
+    let requested = [2, 3, cancelled_limit, 2];
+    let expected = fixed_workload_chunks(budget, chunk, cache);
+    let expected_ids = if chunk == 16 {
+        [(0, 1), (1, 1), (2, 1), (0, 2)]
+    } else {
+        [(0, 1), (1, 1), (0, 2), (2, 1)]
+    };
+    let mut ids = [None; 4];
+    let mut active = Vec::new();
+    let mut records = [None, None, None, None];
+    let mut observed_stats = Vec::new();
+    let mut observed_outputs = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+
+    // Match the controller: admit, cancel, retire, step, snapshot, retire.
+    for tick in 0..=expected.len() {
+        let time = u64::try_from(tick).unwrap();
+        if tick < prompts.len() {
+            let hit = runtime
+                .admit(
+                    input(&prompts[tick], requested[tick], time),
+                    time,
+                    time * 10,
+                )
+                .unwrap();
+            assert_eq!(
+                (hit.request.slot, hit.request.generation),
+                expected_ids[tick]
+            );
+            assert_eq!(hit.cached_tokens, if cache && tick == 3 { 16 } else { 0 });
+            assert_eq!(hit.cached_pages, u32::from(cache && tick == 3));
+            ids[tick] = Some(hit.request);
+            active.push((tick, hit.request));
+        }
+        for &(index, id) in &active {
+            if index == 2 && tick >= 3 {
+                runtime.cancel(id, time * 10).unwrap();
+            }
+        }
+        fixed_workload_retire(&mut runtime, &mut active, &mut records, time);
+        if active.is_empty() {
+            assert_eq!(tick, expected.len());
+            break;
+        }
+        let rows = expected[tick]
+            .iter()
+            .flat_map(|&(index, start, count)| {
+                (start..start + count).map(move |position| (index, position))
+            })
+            .collect::<Vec<_>>();
+        let report = step(&mut runtime, time);
+        assert_eq!(report.rows.len(), rows.len());
+        assert!(report.rows.len() <= budget);
+        assert_eq!(report.started_ns, time * 10);
+        assert_eq!(report.completed_ns, time * 10 + 1);
+        assert_eq!(report.batch_id, time + 1);
+        assert_eq!(report.pool_batch_id, time + 1);
+        assert_eq!(
+            report.rank_dispatch_counts,
+            [544, 540, 540, 540, 540, 540, 540, 540]
+        );
+        let mut output_index = 0;
+        for (row, &(index, position)) in report.rows.iter().zip(&rows) {
+            let position_index = usize::try_from(position).unwrap();
+            let prompt = &prompts[index];
+            let kind = if position_index + 1 < prompt.len() {
+                TpBatchRowKindV1::PrefillIntermediate
+            } else if position_index < prompt.len() {
+                TpBatchRowKindV1::PrefillFinal
+            } else {
+                TpBatchRowKindV1::Decode
+            };
+            let token = if position_index < prompt.len() {
+                prompt[position_index]
+            } else {
+                observed_outputs[index][position_index - prompt.len()]
+            };
+            assert_eq!(
+                (row.request, row.absolute_position, row.kind, row.token_id),
+                (ids[index].unwrap(), position, kind, token)
+            );
+            if kind != TpBatchRowKindV1::PrefillIntermediate {
+                let output = &report.outputs[output_index];
+                assert_eq!(output.request, ids[index].unwrap());
+                assert_eq!(
+                    usize::try_from(output.output_index).unwrap(),
+                    observed_outputs[index].len()
+                );
+                assert_eq!(output.completed_ns, time * 10 + 1);
+                observed_outputs[index].push(output.token_id);
+                assert_eq!(
+                    output.finished,
+                    observed_outputs[index].len() == requested[index] as usize
+                );
+                output_index += 1;
+            }
+        }
+        assert_eq!(report.outputs.len(), output_index);
+        let fake_state = state.borrow();
+        assert_eq!(fake_state.calls.len(), tick + 1);
+        let call = &fake_state.calls[tick];
+        assert_eq!(call.len(), rows.len());
+        for ((token, position, pages), row) in call.iter().zip(&report.rows) {
+            assert_eq!((*token, *position), (row.token_id, row.absolute_position));
+            assert!(pages.len() > usize::try_from(position / 16).unwrap());
+        }
+        if cache && tick == 3 {
+            assert_eq!(call[1].2[0], fake_state.calls[0][0].2[0]);
+        }
+        drop(fake_state);
+        observed_stats.push(runtime.page_stats());
+        fixed_workload_retire(&mut runtime, &mut active, &mut records, time);
+    }
+
+    let mut retained = if chunk == 16 {
+        vec![1, 3, 4]
+    } else {
+        vec![2, 3, 2 + u32::from(cache)]
+    };
+    retained.push(if cache || (budget == 32 && chunk == 32) {
+        3
+    } else {
+        2
+    });
+    retained.resize(expected.len(), 2);
+    for (tick, (stats, retained)) in observed_stats.iter().zip(retained).enumerate() {
+        let cached = u32::from(cache && tick >= if chunk == 16 { 3 } else { 2 });
+        let hit = u64::from(cache && tick >= 3);
+        assert_eq!(
+            (stats.retained_pages, stats.free_pages, stats.cached_pages),
+            (retained, 64 - retained, cached)
+        );
+        assert_eq!(
+            (stats.prefix_hits, stats.hit_tokens, stats.hit_pages),
+            (hit, hit * 16, hit)
+        );
+        assert_eq!((stats.evicted_pages, stats.quarantined_pages), (0, 0));
+    }
+    for (index, record) in records.into_iter().enumerate() {
+        let record = record.unwrap();
+        let count = [2, 3, 1, 2][index];
+        let mut choice = prompts[index]
+            .iter()
+            .fold(0, |value, token| (value * 31 + token) % 997);
+        let mut fake_choices = Vec::new();
+        for _ in 0..count {
+            fake_choices.push(choice);
+            choice = (choice * 32) % 997;
+        }
+        assert_eq!(record.generated_tokens, fake_choices);
+        assert_eq!(record.generated_tokens, observed_outputs[index]);
+        assert_eq!(
+            record.committed_position as usize,
+            prompts[index].len() + count - 1
+        );
+        let timestamps = expected
+            .iter()
+            .enumerate()
+            .filter(|(_, chunks)| {
+                chunks.iter().any(|&(request, start, length)| {
+                    request == index && (start + length) as usize >= prompts[index].len()
+                })
+            })
+            .map(|(tick, _)| tick as u64 * 10 + 1)
+            .collect::<Vec<_>>();
+        assert_eq!(record.output_timestamps_ns, timestamps);
+        assert_eq!(record.arrival_tick, index as u64);
+        assert_eq!(record.arrival_ns, index as u64 * 10);
+        assert_eq!(
+            record.cached_prefix_tokens,
+            if cache && index == 3 { 16 } else { 0 }
+        );
+        assert_eq!(
+            record.cancelled_ns,
+            if index == 2 { Some(30) } else { None }
+        );
+        assert_eq!(
+            record.state(),
+            if index == 2 {
+                TpRequestStateV1::Cancelled
+            } else {
+                TpRequestStateV1::Completed
+            }
+        );
+    }
+    assert_eq!(runtime.retained_requests(), 0);
+    let page_snapshot = runtime.page_stats();
+    assert_eq!(page_snapshot.sequences, 0);
+    assert_eq!(page_snapshot.cached_pages, u32::from(cache));
+    assert_eq!(page_snapshot.retained_pages, u32::from(cache));
+    assert_eq!(page_snapshot.free_pages, 64 - u32::from(cache));
+    assert_eq!(
+        state.borrow().calls.iter().map(Vec::len).sum::<usize>(),
+        if cache { 34 } else { 50 }
+    );
+    assert!(runtime.step(20, 200, || 201).unwrap().is_none());
+    runtime.close().unwrap();
+    assert_eq!(state.borrow().close_calls, 1);
+    assert!(runtime.step(21, 210, || 211).is_err());
+}
+
+#[test]
+fn fixed_workload_actual_coordinator_matches_cache_and_wide_schedules() {
+    for (budget, chunk) in [(16, 16), (17, 17), (32, 16), (32, 32)] {
+        for cache in [false, true] {
+            // The controller's existing requested-four cancellation has the
+            // same schedule as the requested-three variant: both cancel at 3.
+            for cancelled_limit in [3, 4] {
+                fixed_workload_run(budget, chunk, cache, cancelled_limit);
+            }
+        }
+    }
+}
