@@ -28,6 +28,7 @@ enum Failure {
     Write,
     BadChoice,
     NonfinitePartial,
+    ResidualWait,
 }
 
 struct Recording {
@@ -169,6 +170,45 @@ impl EngineeringTpRankTransportV1 for Recording {
             return Err("injected partial completion failure".into());
         }
         match command.kernel {
+            "ferric_qwen3_tp_batch_residual_bf16_v3" => {
+                if self.failure == Some(Failure::ResidualWait) {
+                    return Err("injected residual completion failure".into());
+                }
+                let elements = scalar(&command, 3) as usize * 4096;
+                let input = buffer(&command, 0);
+                let residual = buffer(&command, 1);
+                let output = buffer(&command, 2);
+                assert_ne!(input.0, residual.0);
+                assert_ne!(input.0, output.0);
+                assert_ne!(residual.0, output.0);
+                assert_eq!(
+                    (input.2, residual.2, output.2),
+                    (elements, elements, elements)
+                );
+                assert_eq!((input.3, residual.3, output.3), (4, 2, 2));
+                let partial = self.buffers[&input.0][..elements * 4]
+                    .chunks_exact(4)
+                    .map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap()))
+                    .collect::<Vec<_>>();
+                let residual = self.buffers[&residual.0][..elements * 2]
+                    .chunks_exact(2)
+                    .map(|bytes| u16::from_le_bytes(bytes.try_into().unwrap()))
+                    .collect::<Vec<_>>();
+                let result = reduce_residual_bf16_v1(
+                    1,
+                    &[HostStagedPartialV1 {
+                        rank: 0,
+                        values: &partial,
+                    }],
+                    &residual,
+                )?;
+                for (bytes, value) in self.buffers.get_mut(&output.0).unwrap()[..elements * 2]
+                    .chunks_exact_mut(2)
+                    .zip(result)
+                {
+                    bytes.copy_from_slice(&value.to_le_bytes());
+                }
+            }
             EMBEDDING => self.output(&command, 2, scalar(&command, 3), 4096, |row| {
                 u16::try_from(exact_f32(row + 1).to_bits() >> 16)
                     .unwrap()
@@ -366,6 +406,7 @@ fn fixture(
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
         hidden: vec![0; 4096 * 16],
+        reduction: super::super::ReductionWorkspace::default(),
         closed: false,
     };
     EngineeringTpBatchExecutionV2 {
@@ -455,6 +496,70 @@ fn selected_output_rows_move_together_with_positions_tokens_and_page_tables() {
 }
 
 #[test]
+fn device_tp1_has_no_hidden_or_partial_host_copies_and_matches_host_result() {
+    for rows in [1, 3, 16] {
+        let mut baseline_pool = pool();
+        let mut baseline = fixture(1, &baseline_pool);
+        let baseline_batch = prepare(&mut baseline_pool, rows);
+        baseline_pool.begin_submission(&baseline_batch).unwrap();
+        let baseline_result = baseline.execute(&baseline_batch).unwrap();
+
+        let mut device_pool = pool();
+        let mut device = fixture(1, &device_pool);
+        device
+            .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+            .unwrap();
+        let device_batch = prepare(&mut device_pool, rows);
+        device_pool.begin_submission(&device_batch).unwrap();
+        let result = device.execute(&device_batch).unwrap();
+        assert_eq!(result.choices, baseline_result.choices);
+        assert_eq!(device.dispatch_counts(), [616]);
+        let transport = &device.inner.transports[0];
+        assert_eq!(
+            transport.reads,
+            [(device.inner.ranks[0].choice.id, rows as usize * 4)]
+        );
+        let residual_commands = transport
+            .commands
+            .iter()
+            .filter(|command| command.kernel == "ferric_qwen3_tp_batch_residual_bf16_v3")
+            .collect::<Vec<_>>();
+        assert_eq!(residual_commands.len(), 72);
+        for command in residual_commands {
+            for argument in &command.arguments[..3] {
+                let EngineeringTpArgumentV1::Buffer { id, .. } = argument else {
+                    unreachable!()
+                };
+                assert!(!transport.writes.iter().any(|(written, _)| written == id));
+            }
+        }
+        let hidden = device.inner.ranks[0].hidden;
+        let bytes = &transport.buffers[&hidden.id];
+        let expected = &baseline.inner.hidden;
+        for (actual, expected) in bytes[..rows as usize * 4096 * 2]
+            .chunks_exact(2)
+            .zip(expected)
+        {
+            assert_eq!(u16::from_le_bytes(actual.try_into().unwrap()), *expected);
+        }
+        assert!(
+            bytes[rows as usize * 4096 * 2..]
+                .iter()
+                .all(|&byte| byte == 0xa5)
+        );
+        device_pool
+            .commit_batch(&device_batch, result.completion)
+            .unwrap();
+        assert!(
+            device
+                .configure_reduction(EngineeringTpReductionModeV3::HostStagedV1)
+                .is_err()
+        );
+        device.close().unwrap();
+    }
+}
+
+#[test]
 fn prefill_only_batch_skips_final_norm_head_and_argmax_but_commits_all_kv_rows() {
     let mut pool = pool();
     let mut driver = fixture(8, &pool);
@@ -519,6 +624,217 @@ fn output_selection_rejects_invalid_indices_before_submission_and_preserves_base
         .unwrap();
     assert_eq!(scalar(head, 3), 4);
     pool.commit_batch(&batch, result.completion).unwrap();
+}
+
+#[test]
+fn reused_host_workspace_preserves_tp1_tp2_tp8_values_dispatches_and_copy_extents() {
+    for world in [1, 2, 8] {
+        let mut baseline_pool = pool();
+        let mut baseline = fixture(world, &baseline_pool);
+        let baseline_batch = prepare(&mut baseline_pool, 3);
+        baseline_pool.begin_submission(&baseline_batch).unwrap();
+        let baseline_result = baseline.execute(&baseline_batch).unwrap();
+
+        let mut reused_pool = pool();
+        let mut reused = fixture(world, &reused_pool);
+        reused
+            .configure_reduction(EngineeringTpReductionModeV3::HostStagedReuseV3)
+            .unwrap();
+        let reused_batch = prepare(&mut reused_pool, 3);
+        reused_pool.begin_submission(&reused_batch).unwrap();
+        let result = reused.execute(&reused_batch).unwrap();
+        assert_eq!(result.choices, baseline_result.choices);
+        assert_eq!(reused.inner.hidden, baseline.inner.hidden);
+        assert_eq!(reused.dispatch_counts(), baseline.dispatch_counts());
+        for (left, right) in reused
+            .inner
+            .transports
+            .iter()
+            .zip(&baseline.inner.transports)
+        {
+            assert_eq!(left.reads, right.reads);
+            assert_eq!(left.writes, right.writes);
+            assert_eq!(left.commands, right.commands);
+            assert_eq!(left.buffers, right.buffers);
+        }
+        reused_pool
+            .commit_batch(&reused_batch, result.completion)
+            .unwrap();
+        reused.close().unwrap();
+    }
+}
+
+#[test]
+fn device_mode_rejects_peer_worlds_without_allocating_or_dispatching() {
+    for world in [2, 8] {
+        let pool = pool();
+        let mut driver = fixture(world, &pool);
+        let counts = driver
+            .inner
+            .transports
+            .iter()
+            .map(|t| t.next)
+            .collect::<Vec<_>>();
+        assert!(
+            driver
+                .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+                .unwrap_err()
+                .contains("peer collectives are unsupported")
+        );
+        assert_eq!(
+            driver.reduction_mode(),
+            EngineeringTpReductionModeV3::HostStagedV1
+        );
+        assert_eq!(
+            driver
+                .inner
+                .transports
+                .iter()
+                .map(|t| t.next)
+                .collect::<Vec<_>>(),
+            counts
+        );
+        assert!(
+            driver
+                .inner
+                .transports
+                .iter()
+                .all(|t| t.commands.is_empty())
+        );
+        driver.close().unwrap();
+    }
+}
+
+#[test]
+fn optimized_reduction_failures_poison_without_successful_completion() {
+    for (mode, failure) in [
+        (
+            EngineeringTpReductionModeV3::HostStagedReuseV3,
+            Failure::NonfinitePartial,
+        ),
+        (
+            EngineeringTpReductionModeV3::DeviceTp1V3,
+            Failure::NonfinitePartial,
+        ),
+        (
+            EngineeringTpReductionModeV3::DeviceTp1V3,
+            Failure::ResidualWait,
+        ),
+    ] {
+        let mut pool = pool();
+        let mut driver = fixture(1, &pool);
+        driver.configure_reduction(mode).unwrap();
+        driver.inner.transports[0].failure = Some(failure);
+        let batch = prepare(&mut pool, 3);
+        pool.begin_submission(&batch).unwrap();
+        assert!(driver.execute(&batch).is_err());
+        assert_eq!(driver.completed_batches(), 0);
+        assert!(driver.poisoned);
+        assert!(driver.execute(&batch).err().unwrap().contains("poisoned"));
+        driver.close().unwrap();
+    }
+}
+
+#[test]
+fn device_extra_packets_and_destination_alias_are_rejected_before_submission() {
+    let mut pool = pool();
+    let mut driver = fixture(1, &pool);
+    driver
+        .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+        .unwrap();
+    let batch = prepare(&mut pool, 1);
+    driver.completed_batches = fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 / 616;
+    assert!(driver.execute(&batch).err().unwrap().contains("ring"));
+    assert!(driver.inner.transports[0].commands.is_empty());
+    assert!(driver.inner.transports[0].reads.is_empty());
+    assert!(driver.inner.transports[0].writes.is_empty());
+    driver.inner.reduction =
+        super::super::ReductionWorkspace::DeviceTp1(driver.inner.ranks[0].hidden);
+    assert!(
+        driver
+            .inner
+            .reduce_device_tp1(0, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)
+            .unwrap_err()
+            .contains("ownership")
+    );
+    assert!(driver.inner.transports[0].commands.is_empty());
+    driver.close().unwrap();
+}
+
+#[test]
+fn reused_host_arithmetic_keeps_rank_order_and_fails_before_broadcast_on_nonfinite() {
+    let cases = [
+        (
+            [
+                16_777_216.0_f32,
+                1.0,
+                -16_777_216.0,
+                2.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            0_u16,
+        ),
+        ([1.0, 0.003_906_25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0),
+        ([0.0; 8], 0x8000),
+        ([f32::MAX; 8], 0),
+        ([f32::NAN; 8], 0),
+        ([0.0; 8], 0x7fc0),
+    ];
+    for (values, residual) in cases {
+        let pool = pool();
+        let mut driver = fixture(8, &pool);
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::HostStagedReuseV3)
+            .unwrap();
+        driver.inner.hidden = vec![residual; 4096];
+        for (rank, transport) in driver.inner.ranks.iter().zip(&mut driver.inner.transports) {
+            for bytes in
+                transport.buffers.get_mut(&rank.partial.id).unwrap()[..4096 * 4].chunks_exact_mut(4)
+            {
+                bytes.copy_from_slice(&values[rank.geometry.rank as usize].to_le_bytes());
+            }
+        }
+        let vectors = values.map(|value| [value]);
+        let partials = vectors
+            .iter()
+            .enumerate()
+            .map(|(rank, values)| HostStagedPartialV1 {
+                rank: u32::try_from(rank).unwrap(),
+                values,
+            })
+            .collect::<Vec<_>>();
+        let expected = reduce_residual_bf16_v1(8, &partials, &[residual]);
+        let result = driver
+            .inner
+            .reduce_host_reused(0, Qwen3TensorParallelCollectiveV1::AttentionOutputSum);
+        match expected {
+            Ok(expected) => {
+                result.unwrap();
+                assert!(
+                    driver
+                        .inner
+                        .hidden
+                        .iter()
+                        .all(|value| *value == expected[0])
+                );
+            }
+            Err(expected) => {
+                assert_eq!(result.unwrap_err(), expected);
+                assert!(
+                    driver
+                        .inner
+                        .transports
+                        .iter()
+                        .all(|transport| transport.writes.is_empty())
+                );
+                assert!(driver.inner.hidden.iter().all(|value| *value == residual));
+            }
+        }
+        driver.close().unwrap();
+    }
 }
 
 #[test]

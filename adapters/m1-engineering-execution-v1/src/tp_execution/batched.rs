@@ -6,8 +6,9 @@
 
 use super::{
     EngineeringTpArgumentV1, EngineeringTpDispatchV1, EngineeringTpExecutionV1,
-    EngineeringTpRankTransportV1, Qwen3TensorKind, Qwen3TensorParallelCollectiveV1, Rank, Tensor,
-    TpResult, allocate_tensor, decode_bf16, dispatch, rmsnorm, rope_bytes,
+    EngineeringTpRankTransportV1, EngineeringTpReductionModeV3, Qwen3TensorKind,
+    Qwen3TensorParallelCollectiveV1, Rank, Tensor, TpResult, allocate_tensor, dispatch, rmsnorm,
+    rope_bytes,
 };
 use crate::tp_paged::{
     EngineeringTpBatchCompletionV1, EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
@@ -123,6 +124,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         })
     }
 
+    /// Selects an explicit reduction ablation before the first batch.
+    /// `DeviceTp1V3` requires a transport admitting the separate v3 image.
+    ///
+    /// # Errors
+    /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
+    pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
+        if self.poisoned || self.last_batch != 0 || self.completed_batches != 0 {
+            return Err("reduction mode requires a fresh batch stream".into());
+        }
+        self.inner.configure_reduction(mode)
+    }
+
+    /// Active reduction profile, for identity-bound measurement receipts.
+    #[must_use]
+    pub const fn reduction_mode(&self) -> EngineeringTpReductionModeV3 {
+        self.inner.reduction.mode()
+    }
+
     /// Executes a prepared batch once, without committing reusable page ownership.
     ///
     /// Call `pool.begin_submission` first. On any error after submission the
@@ -169,8 +188,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         } else {
             3
         };
+        let extra = u64::from(self.inner.plan.model().layers)
+            * self.reduction_mode().extra_dispatches_per_layer();
         (0..self.inner.plan.world_size())
-            .map(|rank| 540 + if rank == 0 { 1 + head } else { 0 })
+            .map(|rank| 540 + extra + if rank == 0 { 1 + head } else { 0 })
             .collect()
     }
 
@@ -190,7 +211,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         {
             return Err("output rows must be unique, ascending, and within the batch".into());
         }
-        let per_rank = u64::from(self.inner.plan.model().layers) * 15 + 4;
+        let per_rank = u64::from(self.inner.plan.model().layers)
+            * (15 + self.reduction_mode().extra_dispatches_per_layer())
+            + 4;
         let next = self
             .completed_batches
             .checked_add(1)
@@ -360,10 +383,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 U32(rows),
             ],
         ))?;
-        let mut hidden = vec![0; self.inner.hidden.len() * 2];
-        self.inner.transports[0].read(self.inner.ranks[0].hidden.id, 0, &mut hidden)?;
-        self.inner.hidden = decode_bf16(&hidden)?;
-        self.inner.broadcast_hidden(&hidden)?;
+        self.inner.initialize_hidden_from_embedding()?;
 
         for layer in 0..model.layers {
             let li = layer as usize;

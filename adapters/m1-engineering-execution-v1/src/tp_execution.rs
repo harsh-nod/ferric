@@ -2,16 +2,20 @@
 //!
 //! Each transport is one independent GPU child process. Rank-local projections,
 //! normalization, rotary embedding, KV append, attention and logits execute on
-//! those devices. Only FP32 row reductions, residual rounding, rotary-table
-//! construction and byte transport run on the host. This path is Contracted,
-//! not protected M1 execution or a source-to-device correctness proof.
+//! those devices. Baseline FP32 row reductions, residual rounding, rotary-table
+//! construction and byte transport run on the host; batched execution also
+//! offers explicit reduction ablations. These paths are Contracted, not
+//! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+mod reduction;
 
 #[cfg(feature = "tp-batch-engineering")]
 pub mod batched;
 
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
+pub use reduction::EngineeringTpReductionModeV3;
+use reduction::ReductionWorkspace;
 
 use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_engine::tensor_parallel::{
@@ -209,6 +213,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     collective: Qwen3TensorParallelCollectiveStateV1,
     capacity: u32,
     hidden: Vec<u16>,
+    reduction: ReductionWorkspace,
     closed: bool,
 }
 
@@ -344,6 +349,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             collective,
             capacity,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
+            reduction: ReductionWorkspace::default(),
             closed: false,
         })
     }
@@ -455,10 +461,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 U32(model.vocabulary_size),
             ],
         ))?;
-        let mut hidden = vec![0; model.hidden_size as usize * 2];
-        self.transports[0].read(self.ranks[0].hidden.id, 0, &mut hidden)?;
-        self.hidden = decode_bf16(&hidden)?;
-        self.broadcast_hidden(&hidden)?;
+        self.initialize_hidden_from_embedding()?;
         let (cos, sin) = rope_bytes(position, model.rope_theta);
         for (rank, transport) in self.ranks.iter().zip(&mut self.transports) {
             transport.write(rank.cos.id, 0, &cos)?;
@@ -754,6 +757,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn reduce(&mut self, layer: u32, operation: Qwen3TensorParallelCollectiveV1) -> TpResult<()> {
+        match self.reduction.mode() {
+            EngineeringTpReductionModeV3::HostStagedReuseV3 => {
+                return self.reduce_host_reused(layer, operation);
+            }
+            EngineeringTpReductionModeV3::DeviceTp1V3 => {
+                return self.reduce_device_tp1(layer, operation);
+            }
+            EngineeringTpReductionModeV3::HostStagedV1 => {}
+        }
         let key = self.collective.expected();
         if key.layer != layer || key.operation != operation {
             return Err("collective operation reordered".into());
