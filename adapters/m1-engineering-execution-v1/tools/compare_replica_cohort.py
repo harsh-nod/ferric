@@ -368,6 +368,8 @@ def compare(cohort_dir, reference_path, expect):
         "replica_count": len(replicas), "requests": requests, "replicas": replicas,
         "global_output_tokens": 64, "physical_token_rows": 96, "repetition_count": 1,
         "latency_scope": "seven decode intervals per request; never pool different request identities as repetitions",
+        "controller_duration_scope": "per-replica setup_seconds and whole_seconds are controller-reported diagnostics; "
+                                     "finite positive and setup < whole checked, not cross-clock RAW bounds",
         "row_policy": expect["row_policy"], "per_instance_row_budget": expect["batch_tokens"],
         "total_row_budget": plan["total_row_budget"], "weight_payload_bytes": payload,
         "weight_payload_scope": "loaded BF16 payload only; excludes KV, activations, scratch, allocator and page rounding",

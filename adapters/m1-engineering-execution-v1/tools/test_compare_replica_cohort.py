@@ -235,6 +235,7 @@ class CohortTests(unittest.TestCase):
                 self.assertTrue(result["passed"])
                 self.assertEqual(result["global_output_tokens"], 64)
                 self.assertEqual(result["physical_token_rows"], 96)
+                self.assertIn("controller-reported diagnostics", result["controller_duration_scope"])
                 self.assertEqual(result["weight_payload_bytes"], {"host_target": host, "device_base": gpu, "device_transposed": 0})
                 self.assertEqual(result["global_output_tokens_per_second"], 64e9 / result["release_to_last_output_ns"])
                 self.assertEqual(len(result["requests"]), 8)

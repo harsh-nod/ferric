@@ -127,7 +127,11 @@ Each report describes exactly one cohort, not a distribution of repetitions:
   The controller's integer-floor mean is checked; the report preserves the
   fractional mean in seconds. Never treat different requests as repetitions.
 - Barrier setup: `all_ready - first_spawn`; whole cohort: `final_reap - first_spawn`.
-  Controller setup/whole times and release-to-all-closed are also kept separate.
+  Release-to-all-closed is also kept separate. Per-controller `setup_seconds`
+  and `whole_seconds` are controller-reported diagnostics, checked only for
+  finite positivity and setup less than whole. They are not sanity-bounded
+  against the RAW-clock receipts because no cross-clock drift/rounding contract
+  has been established. Use the RAW cohort intervals for bounded timing claims.
 
 The report verifies all 64 output tokens and exact UTF-8, actual loaded payload
 counters, externally pinned Setup and running-worker hashes, control frame
