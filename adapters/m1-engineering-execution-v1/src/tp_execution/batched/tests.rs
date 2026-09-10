@@ -16,6 +16,8 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Event {
+    SequenceSubmit(u32, usize),
+    SequenceWait(u32, usize),
     Submit(u32, &'static str),
     Wait(u32, &'static str),
     Close(u32),
@@ -36,6 +38,7 @@ struct Recording {
     buffers: BTreeMap<u64, Vec<u8>>,
     next: u64,
     pending: Option<EngineeringTpDispatchV1>,
+    pending_sequence: Option<Vec<EngineeringTpDispatchV1>>,
     events: Rc<RefCell<Vec<Event>>>,
     commands: Vec<EngineeringTpDispatchV1>,
     reads: Vec<(u64, usize)>,
@@ -108,6 +111,33 @@ impl Recording {
 }
 
 impl EngineeringTpRankTransportV1 for Recording {
+    fn supports_sequences(&self) -> bool {
+        true
+    }
+
+    fn submit_sequence(&mut self, commands: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        assert!(self.pending.is_none() && self.pending_sequence.is_none());
+        assert!((1..=16).contains(&commands.len()));
+        self.events
+            .borrow_mut()
+            .push(Event::SequenceSubmit(self.rank, commands.len()));
+        self.pending_sequence = Some(commands.to_vec());
+        Ok(())
+    }
+
+    fn wait_sequence(&mut self, count: usize) -> TpResult<()> {
+        let commands = self.pending_sequence.take().expect("pending sequence");
+        assert_eq!(commands.len(), count);
+        self.events
+            .borrow_mut()
+            .push(Event::SequenceWait(self.rank, count));
+        for command in commands {
+            self.submit(&command)?;
+            self.wait()?;
+        }
+        Ok(())
+    }
+
     fn allocate(&mut self, byte_len: usize) -> TpResult<u64> {
         assert!(self.pending.is_none());
         let id = self.next;
@@ -117,6 +147,7 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn write(&mut self, id: u64, offset: usize, bytes: &[u8]) -> TpResult<()> {
+        assert!(self.pending_sequence.is_none());
         assert!(self.pending.is_none());
         if self.failure == Some(Failure::Write) {
             return Err("injected metadata write failure".into());
@@ -127,6 +158,7 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn read(&mut self, id: u64, offset: usize, bytes: &mut [u8]) -> TpResult<()> {
+        assert!(self.pending_sequence.is_none());
         assert!(self.pending.is_none());
         bytes.copy_from_slice(&self.buffers[&id][offset..offset + bytes.len()]);
         self.reads.push((id, bytes.len()));
@@ -352,6 +384,7 @@ fn fixture(
             buffers: BTreeMap::new(),
             next: 1,
             pending: None,
+            pending_sequence: None,
             events: events.clone(),
             commands: Vec::new(),
             reads: Vec::new(),
@@ -407,6 +440,7 @@ fn fixture(
         capacity: 64,
         hidden: vec![0; 4096 * 16],
         reduction: super::super::ReductionWorkspace::default(),
+        sequences: None,
         closed: false,
     };
     EngineeringTpBatchExecutionV2 {
@@ -493,6 +527,69 @@ fn selected_output_rows_move_together_with_positions_tokens_and_page_tables() {
         assert!(driver.configure_output_head_pruning(false).is_err());
         pool.commit_batch(&batch, result.completion).unwrap();
     }
+}
+
+#[test]
+fn sequences_preserve_collective_barriers_counts_and_submit_all_ranks_first() {
+    for world in [1, 2, 8] {
+        let mut pool = pool();
+        let mut driver = fixture(world, &pool);
+        driver.configure_dispatch_sequences(true).unwrap();
+        driver.configure_output_head_pruning(true).unwrap();
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::HostStagedReuseV3)
+            .unwrap();
+        let batch = prepare(&mut pool, 3);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver.execute_selected(&batch, &[2]).unwrap();
+        assert_eq!(result.choices, [42]);
+        assert_eq!(driver.dispatch_counts(), driver.expected_dispatch_counts(1));
+        let events = driver.inner.transports[0].events.borrow();
+        let sequence_events = events
+            .iter()
+            .filter(|event| matches!(event, Event::SequenceSubmit(..) | Event::SequenceWait(..)))
+            .collect::<Vec<_>>();
+        assert_eq!(sequence_events.len(), 72 * world as usize * 2);
+        for (segment, group) in sequence_events.chunks(world as usize * 2).enumerate() {
+            let count = if segment % 2 == 0 { 10 } else { 5 };
+            for rank in 0..world {
+                assert_eq!(*group[rank as usize], Event::SequenceSubmit(rank, count));
+                assert_eq!(
+                    *group[world as usize + rank as usize],
+                    Event::SequenceWait(rank, count)
+                );
+            }
+        }
+        drop(events);
+        pool.commit_batch(&batch, result.completion).unwrap();
+        assert!(driver.configure_dispatch_sequences(false).is_err());
+        driver.close().unwrap();
+    }
+}
+
+#[test]
+fn failed_sequence_drains_submitted_ranks_and_cannot_publish_or_resume() {
+    let mut pool = pool();
+    let mut driver = fixture(8, &pool);
+    driver.configure_dispatch_sequences(true).unwrap();
+    driver.inner.transports[3].failure = Some(Failure::Wait);
+    let batch = prepare(&mut pool, 3);
+    pool.begin_submission(&batch).unwrap();
+    assert!(driver.execute(&batch).is_err());
+    assert!(driver.execute(&batch).is_err());
+    assert!(driver.poisoned && driver.inner.closed);
+    let events = driver.inner.transports[0].events.borrow();
+    for rank in 0..8 {
+        assert!(events.contains(&Event::SequenceWait(rank, 10)));
+        assert!(events.contains(&Event::Close(rank)));
+    }
+    assert!(
+        driver
+            .inner
+            .transports
+            .iter()
+            .all(|rank| rank.pending_sequence.is_none())
+    );
 }
 
 #[test]

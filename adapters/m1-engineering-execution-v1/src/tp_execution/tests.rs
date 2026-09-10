@@ -222,6 +222,7 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<RecordingTransport> {
         capacity: 2,
         hidden: vec![0; 4096],
         reduction: ReductionWorkspace::default(),
+        sequences: None,
         closed: false,
     }
 }

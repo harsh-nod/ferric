@@ -13,6 +13,7 @@ use fe2o3_hsaco::{
 };
 use fe2o3_kfd::engineering_wire::{
     self as wire, BufferAccessV1, CommandV1, KernelMetadataV1, PointerFixupV1, ResponseV1,
+    SequenceDispatchV1,
 };
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
@@ -24,6 +25,14 @@ use sha2::{Digest, Sha256};
 const OP_TIMEOUT: Duration = Duration::from_mins(2);
 const EXIT_TIMEOUT: Duration = Duration::from_secs(5);
 const DISPATCH_TIMEOUT_MS: u32 = 60_000;
+
+#[derive(Clone, Copy, Default)]
+pub struct RuntimeOptions {
+    pub cache_admission: bool,
+    pub operational: bool,
+    pub sequences: bool,
+    pub rollover: bool,
+}
 
 struct Outgoing {
     header: CommandV1,
@@ -44,6 +53,7 @@ struct LoadedKernel {
 enum PendingRequest {
     Other,
     Dispatch,
+    Sequence(usize),
 }
 
 pub struct Worker {
@@ -58,13 +68,27 @@ pub struct Worker {
     failed: bool,
     exited: bool,
     timeout: Duration,
+    options: RuntimeOptions,
+    queue_epoch: u64,
+    queue_packets: u64,
 }
 
 impl Worker {
+    // Shared with the legacy token-at-a-time executable.
+    #[allow(dead_code)]
     pub fn spawn(
         executable: &Path,
         unique_id: u64,
         artifact: &EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        Self::spawn_with_options(executable, unique_id, artifact, RuntimeOptions::default())
+    }
+
+    pub fn spawn_with_options(
+        executable: &Path,
+        unique_id: u64,
+        artifact: &EngineeringTpArtifactV1,
+        options: RuntimeOptions,
     ) -> TpResult<Self> {
         let child = Command::new(executable)
             .arg("--device-unique-id")
@@ -76,6 +100,20 @@ impl Worker {
             .spawn()
             .map_err(|error| format!("spawn GPU worker: {error}"))?;
         let mut worker = Self::connect(child, unique_id, OP_TIMEOUT)?;
+        worker.options = options;
+        if options.cache_admission || options.operational {
+            worker.send(
+                CommandV1::ConfigurePerformance {
+                    cache_kernel_admission: options.cache_admission,
+                    operational_currentness: options.operational,
+                    profile: false,
+                },
+                vec![],
+            )?;
+            if !matches!(worker.receive()?.header, ResponseV1::PerformanceConfigured) {
+                return worker.reject("runtime performance configuration was not acknowledged");
+            }
+        }
         worker.load_artifact(artifact)?;
         Ok(worker)
     }
@@ -131,6 +169,9 @@ impl Worker {
             failed: false,
             exited: false,
             timeout,
+            options: RuntimeOptions::default(),
+            queue_epoch: 0,
+            queue_packets: 0,
         };
         let ready = worker.receive()?;
         if !matches!(ready.header, ResponseV1::Ready { protocol, target, device_unique_id, authority }
@@ -201,10 +242,12 @@ impl Worker {
         if header.payload_bytes().map_err(|error| error.to_string())? != payload.len() {
             return self.reject("outgoing payload length mismatch");
         }
-        self.pending = Some(if matches!(header, CommandV1::Dispatch { .. }) {
-            PendingRequest::Dispatch
-        } else {
-            PendingRequest::Other
+        self.pending = Some(match &header {
+            CommandV1::Dispatch { .. } => PendingRequest::Dispatch,
+            CommandV1::DispatchSequence { dispatches } => {
+                PendingRequest::Sequence(dispatches.len())
+            }
+            _ => PendingRequest::Other,
         });
         let Some(writer) = &self.writer else {
             return self.reject("worker writer closed");
@@ -387,6 +430,117 @@ impl EngineeringTpRankTransportV1 for Worker {
         if !matches!(self.receive()?.header, ResponseV1::Dispatched { .. }) {
             return self.reject("dispatch completion response mismatch");
         }
+        self.queue_packets = self
+            .queue_packets
+            .checked_add(1)
+            .ok_or("queue packet overflow")?;
+        Ok(())
+    }
+
+    fn supports_sequences(&self) -> bool {
+        self.options.sequences
+    }
+
+    fn submit_sequence(&mut self, dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        if !self.options.sequences || !(1..=16).contains(&dispatches.len()) {
+            return self.reject("dispatch sequence policy or bound mismatch");
+        }
+        let mut entries = Vec::with_capacity(dispatches.len());
+        let mut payload = Vec::new();
+        for dispatch in dispatches {
+            let loaded = self
+                .kernels
+                .get(dispatch.kernel)
+                .ok_or("unloaded sequence kernel")?;
+            let (header, bytes) = pack_dispatch(loaded, dispatch, &self.buffers)?;
+            let CommandV1::Dispatch {
+                kernel,
+                payload_bytes,
+                workgroup,
+                grid,
+                pointers,
+                timeout_ms,
+            } = header
+            else {
+                return self.reject("sequence dispatch packing drifted");
+            };
+            let timeout_ms = timeout_ms.min(
+                600_000
+                    / u32::try_from(dispatches.len()).map_err(|_| "sequence length overflow")?,
+            );
+            entries.push(SequenceDispatchV1 {
+                kernel,
+                payload_bytes,
+                workgroup,
+                grid,
+                pointers,
+                timeout_ms,
+            });
+            payload.extend_from_slice(&bytes);
+        }
+        self.send(
+            CommandV1::DispatchSequence {
+                dispatches: entries,
+            },
+            payload,
+        )
+    }
+
+    fn wait_sequence(&mut self, count: usize) -> TpResult<()> {
+        if self.pending != Some(PendingRequest::Sequence(count)) {
+            return self.reject("pending sequence count mismatch");
+        }
+        match self.receive()?.header {
+            ResponseV1::DispatchSequenceCompleted { elapsed_ns } if elapsed_ns.len() == count => {
+                self.queue_packets = self
+                    .queue_packets
+                    .checked_add(count as u64)
+                    .ok_or("queue packet overflow")?;
+                Ok(())
+            }
+            response => self.reject(format!(
+                "dispatch sequence failed or completion drifted: {response:?}"
+            )),
+        }
+    }
+
+    fn supports_queue_rollover(&self) -> bool {
+        self.options.rollover
+    }
+
+    fn prepare_packets(&mut self, count: u64) -> TpResult<()> {
+        let limit = wire::MAX_UNRETIRED_RING_PACKETS_V1;
+        if count == 0 || count > limit {
+            return self.reject("invalid next packet reservation");
+        }
+        if self
+            .queue_packets
+            .checked_add(count)
+            .is_some_and(|end| end <= limit)
+        {
+            return Ok(());
+        }
+        if !self.options.rollover {
+            return self.reject("queue requires explicitly enabled rollover");
+        }
+        let next = self
+            .queue_epoch
+            .checked_add(1)
+            .ok_or("queue epoch overflow")?;
+        self.send(
+            CommandV1::RolloverQueue {
+                expected_epoch: self.queue_epoch,
+                expected_completed_packets: self.queue_packets,
+            },
+            vec![],
+        )?;
+        if !matches!(self.receive()?.header, ResponseV1::QueueRolledOver { retired_packets, queue_epoch }
+            if retired_packets == self.queue_packets && queue_epoch == next)
+        {
+            return self.reject("queue rollover receipt mismatch");
+        }
+        self.queue_epoch = next;
+        self.queue_packets = 0;
         Ok(())
     }
 
@@ -399,6 +553,8 @@ impl EngineeringTpRankTransportV1 for Worker {
         }
         if self.pending == Some(PendingRequest::Dispatch) {
             self.wait()?;
+        } else if let Some(PendingRequest::Sequence(count)) = self.pending {
+            self.wait_sequence(count)?;
         }
         self.send(CommandV1::Close, vec![])?;
         if !matches!(self.receive()?.header, ResponseV1::Closed) {
@@ -645,7 +801,7 @@ def send(value, payload=b''):
     sys.stdout.buffer.flush()
 send({'op':'ready','protocol':1,'target':'gfx950:xnack-',
       'device_unique_id':2 if mode == 'wrong' else 1,'authority':'none'})
-if mode != 'normal':
+if mode in ('wrong', 'stall'):
     time.sleep(60)
 buffers = {}
 while True:
@@ -670,6 +826,13 @@ while True:
     elif op == 'close':
         send({'op':'closed'})
         sys.exit(0)
+    elif op == 'rollover_queue':
+        send({'op':'queue_rolled_over', 'retired_packets':command['expected_completed_packets'],
+              'queue_epoch':command['expected_epoch'] + (2 if mode == 'badrollover' else 1)})
+    elif op == 'dispatch_sequence':
+        entries = command['dispatches']
+        sys.stdin.buffer.read(sum(entry['payload_bytes'] for entry in entries))
+        send({'op':'dispatch_sequence_completed', 'elapsed_ns':[1] * (len(entries) - (1 if mode == 'shortsequence' else 0))})
     else:
         sys.exit(5)
 ";
@@ -773,5 +936,60 @@ while True:
         assert!(!pointee_size_matches(Some(ExplicitValueType::F32), 2));
         assert!(!pointee_size_matches(Some(ExplicitValueType::Struct), 4));
         assert!(!pointee_size_matches(None, 0));
+    }
+
+    #[test]
+    fn rollover_requires_exact_receipt_and_retains_owned_buffers() {
+        for mode in ["normal", "badrollover"] {
+            let mut worker = Worker::connect(fake(mode), 1, Duration::from_secs(5)).unwrap();
+            worker.options.rollover = true;
+            let buffer = worker.allocate(16).unwrap();
+            worker.write(buffer, 0, &[7; 16]).unwrap();
+            worker.queue_packets = wire::MAX_UNRETIRED_RING_PACKETS_V1 - 10;
+            worker.prepare_packets(10).unwrap();
+            assert_eq!(worker.queue_epoch, 0);
+            let result = worker.prepare_packets(11);
+            if mode == "badrollover" {
+                assert!(result.is_err());
+                assert!(worker.failed && worker.exited);
+            } else {
+                result.unwrap();
+                assert_eq!((worker.queue_epoch, worker.queue_packets), (1, 0));
+                let mut bytes = [0; 16];
+                worker.read(buffer, 0, &mut bytes).unwrap();
+                assert_eq!(bytes, [7; 16]);
+                worker.close().unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn sequence_completion_is_counted_only_when_exact() {
+        for mode in ["normal", "shortsequence"] {
+            let mut worker = Worker::connect(fake(mode), 1, Duration::from_secs(5)).unwrap();
+            let dispatches = (0..2)
+                .map(|_| SequenceDispatchV1 {
+                    kernel: 1,
+                    payload_bytes: 0,
+                    workgroup: [64, 1, 1],
+                    grid: [64, 1, 1],
+                    pointers: vec![],
+                    timeout_ms: 1000,
+                })
+                .collect();
+            worker
+                .send(CommandV1::DispatchSequence { dispatches }, vec![])
+                .unwrap();
+            let result = worker.wait_sequence(2);
+            if mode == "shortsequence" {
+                assert!(result.is_err());
+                assert_eq!(worker.queue_packets, 0);
+                assert!(worker.failed && worker.exited);
+            } else {
+                result.unwrap();
+                assert_eq!(worker.queue_packets, 2);
+                worker.close().unwrap();
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@
 //! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+mod performance;
 mod reduction;
 
 #[cfg(feature = "tp-batch-engineering")]
@@ -103,6 +104,32 @@ pub trait EngineeringTpRankTransportV1 {
     /// # Errors
     /// Rejects absent pending work, timeout, or failed completion.
     fn wait(&mut self) -> TpResult<()>;
+    /// Whether bounded ordered command sequences are explicitly enabled.
+    fn supports_sequences(&self) -> bool {
+        false
+    }
+    /// Submits one bounded ordered sequence without waiting for completion.
+    /// # Errors
+    /// Rejects unsupported operation or invalid sequence/ownership.
+    fn submit_sequence(&mut self, _dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        Err("transport does not support dispatch sequences".into())
+    }
+    /// Confirms exact completion of every command in the pending sequence.
+    /// # Errors
+    /// Rejects missing/partial/failed completion.
+    fn wait_sequence(&mut self, _count: usize) -> TpResult<()> {
+        Err("transport does not support dispatch sequences".into())
+    }
+    /// Whether checked queue destruction and recreation are explicitly enabled.
+    fn supports_queue_rollover(&self) -> bool {
+        false
+    }
+    /// Ensures capacity for the next complete batch, retaining user allocations.
+    /// # Errors
+    /// Rejects exhaustion or any ambiguous rollover transition.
+    fn prepare_packets(&mut self, _count: u64) -> TpResult<()> {
+        Ok(())
+    }
     /// Deterministically tears down the child, including any failed request.
     /// # Errors
     /// Reports any teardown whose completion could not be confirmed.
@@ -214,6 +241,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     capacity: u32,
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
+    sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
     closed: bool,
 }
 
@@ -350,6 +378,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             capacity,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
+            sequences: None,
             closed: false,
         })
     }
@@ -716,6 +745,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        self.flush_sequences()?;
         if self.ranks[0].dispatches == u64::MAX {
             return Err("dispatch counter overflow".into());
         }
@@ -729,6 +759,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         &mut self,
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
+        if let Some(pending) = &mut self.sequences {
+            if pending.len() != self.ranks.len() || pending.iter().any(|rank| rank.len() >= 16) {
+                return Err("pending rank sequence bound drifted".into());
+            }
+            for (rank, commands) in self.ranks.iter().zip(pending) {
+                commands.push(command(rank));
+            }
+            return Ok(());
+        }
         if self.ranks.iter().any(|rank| rank.dispatches == u64::MAX) {
             return Err("dispatch counter overflow".into());
         }
@@ -757,6 +796,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn reduce(&mut self, layer: u32, operation: Qwen3TensorParallelCollectiveV1) -> TpResult<()> {
+        self.flush_sequences()?;
         match self.reduction.mode() {
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
                 return self.reduce_host_reused(layer, operation);

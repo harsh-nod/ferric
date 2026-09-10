@@ -170,6 +170,26 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
+    /// Enables ordered IPC sequences between existing collective barriers.
+    /// # Errors
+    /// Rejects unsupported transports, execution already begun, or closed state.
+    pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || (enabled
+                && self
+                    .inner
+                    .transports
+                    .iter()
+                    .any(|rank| !rank.supports_sequences()))
+        {
+            return Err("dispatch sequence policy requires fresh supported ranks".into());
+        }
+        self.inner.sequences = enabled.then(|| vec![Vec::new(); self.inner.ranks.len()]);
+        Ok(())
+    }
+
     /// Actual projected rows, distinct from all physical transformer/KV rows.
     #[must_use]
     pub const fn output_head_rows(&self, physical: usize, published: usize) -> usize {
@@ -218,10 +238,26 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             .completed_batches
             .checked_add(1)
             .ok_or("batch counter overflow")?;
-        if next.checked_mul(per_rank).is_none_or(|packets| {
-            packets > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
-        }) {
+        let rollover = self
+            .inner
+            .transports
+            .iter()
+            .all(EngineeringTpRankTransportV1::supports_queue_rollover);
+        if !rollover
+            && next.checked_mul(per_rank).is_none_or(|packets| {
+                packets > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
+            })
+        {
             return Err("batched stream exceeds the conservative no-ring-rollover budget".into());
+        }
+        for index in 0..self.inner.transports.len() {
+            if let Err(error) = self.inner.transports[index].prepare_packets(per_rank) {
+                self.poisoned = true;
+                return Err(match self.inner.close() {
+                    Ok(()) => error,
+                    Err(close) => format!("{error}; queue preparation close: {close}"),
+                });
+            }
         }
         self.last_batch = batch.id();
         match self.forward(batch, output_rows) {

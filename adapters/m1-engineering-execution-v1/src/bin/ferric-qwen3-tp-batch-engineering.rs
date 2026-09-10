@@ -9,6 +9,7 @@ use std::time::Instant;
 
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_batch_runtime::EngineeringTpBatchRuntimeV2;
+use ferric_m1_engineering_execution_v1::tp_execution::EngineeringTpReductionModeV3;
 use ferric_m1_engineering_execution_v1::tp_execution::batched::EngineeringTpBatchExecutionV2;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use ferric_m1_engineering_execution_v1::tp_paged::{
@@ -20,9 +21,9 @@ use ferric_m1_engineering_execution_v1::tp_scheduler::{
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use tp_worker::Worker;
+use tp_worker::{RuntimeOptions, Worker};
 
-const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head]";
+const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3]";
 
 struct Options {
     source: PathBuf,
@@ -38,6 +39,8 @@ struct Options {
     max_batches: u64,
     cache: bool,
     prune_output_head: bool,
+    runtime: RuntimeOptions,
+    collective: EngineeringTpReductionModeV3,
 }
 
 impl Options {
@@ -50,6 +53,8 @@ impl Options {
             (16, 16, 128, 64, 1024, 240);
         let (mut consent, mut cache) = (false, true);
         let mut prune_output_head = false;
+        let mut runtime = RuntimeOptions::default();
+        let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -65,6 +70,22 @@ impl Options {
                 }
                 "--prune-output-head" => {
                     prune_output_head = true;
+                    continue;
+                }
+                "--runtime-cache-admission" => {
+                    runtime.cache_admission = true;
+                    continue;
+                }
+                "--runtime-operational" => {
+                    runtime.operational = true;
+                    continue;
+                }
+                "--dispatch-sequences" => {
+                    runtime.sequences = true;
+                    continue;
+                }
+                "--queue-rollover" => {
+                    runtime.rollover = true;
                     continue;
                 }
                 "--help" => return Err(USAGE.into()),
@@ -93,6 +114,13 @@ impl Options {
                 "--pages" => pages = value.parse::<u32>().map_err(|e| e.to_string())?,
                 "--cache-ttl" => ttl = value.parse::<u64>().map_err(|e| e.to_string())?,
                 "--max-batches" => max_batches = value.parse::<u64>().map_err(|e| e.to_string())?,
+                "--collective" => {
+                    collective = match value.as_str() {
+                        "host-staged-v1" => EngineeringTpReductionModeV3::HostStagedV1,
+                        "host-staged-reuse-v3" => EngineeringTpReductionModeV3::HostStagedReuseV3,
+                        _ => return Err("unsupported collective for the admitted v2 image".into()),
+                    }
+                }
                 _ => return Err(format!("unknown option {flag}")),
             }
         }
@@ -109,9 +137,11 @@ impl Options {
         if !(1..=16).contains(&rows)
             || !(1..=rows).contains(&chunk)
             || max_batches == 0
-            || max_batches
-                .checked_mul(544)
-                .is_none_or(|n| n > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1)
+            || max_batches > 1_000_000
+            || (!runtime.rollover
+                && max_batches
+                    .checked_mul(544)
+                    .is_none_or(|n| n > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1))
         {
             return Err("batch, chunk, or conservative packet bound exceeded".into());
         }
@@ -131,6 +161,8 @@ impl Options {
             max_batches,
             cache,
             prune_output_head,
+            runtime,
+            collective,
         })
     }
 }
@@ -428,7 +460,7 @@ fn run(options: &Options) -> Result<(), String> {
     let workers = options
         .devices
         .iter()
-        .map(|&id| Worker::spawn(&options.worker, id, &artifact))
+        .map(|&id| Worker::spawn_with_options(&options.worker, id, &artifact, options.runtime))
         .collect::<Result<Vec<_>, _>>()?;
     let pids = workers.iter().map(Worker::pid).collect::<Vec<_>>();
     let running_hashes = pids
@@ -446,6 +478,8 @@ fn run(options: &Options) -> Result<(), String> {
         &pool,
     )?;
     gpu.configure_output_head_pruning(options.prune_output_head)?;
+    gpu.configure_reduction(options.collective)?;
+    gpu.configure_dispatch_sequences(options.runtime.sequences)?;
     let mut runtime =
         EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, options.rows, options.cache)?;
     let result = (|| {
@@ -461,7 +495,16 @@ fn run(options: &Options) -> Result<(), String> {
             "physical_pages":options.pages, "context_tokens":options.context, "cache_ttl_ticks":options.ttl,
             "prefix_cache":options.cache, "max_batches":options.max_batches, "setup_seconds":whole.elapsed().as_secs_f64(),
             "output_head_pruning":options.prune_output_head,
-            "collective":"host_staged_fp32_rank_order_reduce_bf16_residual",
+            "performance_profile": {
+                "runtime_cache_admission":options.runtime.cache_admission,
+                "runtime_operational":options.runtime.operational,
+                "dispatch_sequences":options.runtime.sequences,
+                "queue_rollover":options.runtime.rollover,
+                "projection":"baseline", "attention":"baseline", "runtime_profiling":false
+            },
+            "collective":if options.collective == EngineeringTpReductionModeV3::HostStagedV1 {
+                "host_staged_fp32_rank_order_reduce_bf16_residual"
+            } else { options.collective.label() },
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
             "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"}),
