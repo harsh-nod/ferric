@@ -59,7 +59,7 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
         || n > 12_288
         || k == 0
         || k > 12_288
-        || n % 64 != 0
+        || n & 63 != 0
     {
         fe2o3_device::trap();
     }
@@ -136,7 +136,7 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
         || n > 4_096
         || k == 0
         || k > 12_288
-        || n % 64 != 0
+        || n & 63 != 0
     {
         fe2o3_device::trap();
     }

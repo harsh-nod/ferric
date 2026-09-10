@@ -1,0 +1,193 @@
+use ferric_qwen3_tp_kernels_device_v1::contract;
+use std::collections::BTreeMap;
+use syn::{BinOp, Expr, Item, Lit, Pat, Stmt, UnOp};
+
+type Values = BTreeMap<String, i64>;
+
+fn evaluate(expression: &Expr, values: &Values) -> i64 {
+    match expression {
+        Expr::Paren(value) => evaluate(&value.expr, values),
+        Expr::Group(value) => evaluate(&value.expr, values),
+        Expr::Cast(value) => evaluate(&value.expr, values),
+        Expr::Lit(value) => match &value.lit {
+            Lit::Int(value) => value.base10_parse().unwrap(),
+            Lit::Bool(value) => i64::from(value.value),
+            _ => panic!("unsupported literal"),
+        },
+        Expr::Path(value) => values[&value.path.get_ident().unwrap().to_string()],
+        Expr::Unary(value) => match value.op {
+            UnOp::Not(_) => i64::from(evaluate(&value.expr, values) == 0),
+            _ => panic!("unsupported unary operation"),
+        },
+        Expr::If(value) => {
+            let branch = if evaluate(&value.cond, values) != 0 {
+                &value.then_branch
+            } else {
+                let Expr::Block(block) = value.else_branch.as_ref().unwrap().1.as_ref() else {
+                    panic!("else block")
+                };
+                &block.block
+            };
+            let [Stmt::Expr(expression, None)] = branch.stmts.as_slice() else {
+                panic!("scalar branch")
+            };
+            evaluate(expression, values)
+        }
+        Expr::Binary(value) => {
+            let left = evaluate(&value.left, values);
+            if matches!(value.op, BinOp::And(_)) && left == 0 {
+                return 0;
+            }
+            if matches!(value.op, BinOp::Or(_)) && left != 0 {
+                return 1;
+            }
+            let right = evaluate(&value.right, values);
+            match value.op {
+                BinOp::Add(_) => left.checked_add(right).unwrap(),
+                BinOp::Mul(_) => left.checked_mul(right).unwrap(),
+                BinOp::Div(_) => left.checked_div(right).unwrap(),
+                BinOp::BitAnd(_) => left & right,
+                BinOp::Eq(_) => i64::from(left == right),
+                BinOp::Ne(_) => i64::from(left != right),
+                BinOp::Lt(_) => i64::from(left < right),
+                BinOp::Le(_) => i64::from(left <= right),
+                BinOp::Gt(_) => i64::from(left > right),
+                BinOp::Ge(_) => i64::from(left >= right),
+                BinOp::And(_) | BinOp::Or(_) => i64::from(right != 0),
+                _ => panic!("unsupported binary operation"),
+            }
+        }
+        _ => panic!("unsupported geometry expression"),
+    }
+}
+
+fn kernel(source: &str, name: &str) -> syn::ItemFn {
+    syn::parse_file(source)
+        .unwrap()
+        .items
+        .into_iter()
+        .find_map(|item| {
+            let Item::Fn(function) = item else {
+                return None;
+            };
+            (function.sig.ident == name).then_some(function)
+        })
+        .unwrap()
+}
+
+fn admits(function: &syn::ItemFn, inputs: &[(&str, u32)]) -> bool {
+    let mut values: Values = inputs
+        .iter()
+        .map(|(key, value)| ((*key).into(), i64::from(*value)))
+        .collect();
+    for statement in &function.block.stmts {
+        match statement {
+            Stmt::Local(local) => {
+                let expression = &local.init.as_ref().unwrap().expr;
+                if matches!(expression.as_ref(), Expr::Cast(_)) {
+                    return true;
+                }
+                let Pat::Ident(name) = &local.pat else {
+                    panic!("geometry binding")
+                };
+                values.insert(name.ident.to_string(), evaluate(expression, &values));
+            }
+            Stmt::Expr(Expr::If(guard), None) => {
+                assert!(guard.else_branch.is_none());
+                let [Stmt::Expr(Expr::Call(call), Some(_))] = guard.then_branch.stmts.as_slice()
+                else {
+                    panic!("trap guard")
+                };
+                let Expr::Path(path) = call.func.as_ref() else {
+                    panic!("trap path")
+                };
+                assert_eq!(path.path.segments.last().unwrap().ident, "trap");
+                if evaluate(&guard.cond, &values) != 0 {
+                    return false;
+                }
+            }
+            _ => panic!("unrecognized geometry prefix"),
+        }
+    }
+    panic!("missing geometry-to-buffer boundary")
+}
+
+#[test]
+fn actual_projection_prefixes_match_contracted_axes() {
+    let source = include_str!("../src/projection.rs");
+    let column = kernel(source, "ferric_qwen3_tp_gemv_bf16_f32_bf16_v1");
+    let partial = kernel(source, "ferric_qwen3_tp_gemv_partial_bf16_f32_v1");
+    for role in [0, 1, 2, 3] {
+        for world in [0, 1, 2, 3, 4, 8, 16] {
+            for operation in 0..7 {
+                for n in [
+                    0, 128, 256, 384, 512, 1024, 1536, 2048, 3072, 4096, 6144, 12288, 12289,
+                ] {
+                    for k in [
+                        0, 128, 256, 384, 512, 1024, 1536, 2048, 3072, 4096, 6144, 12288,
+                    ] {
+                        let inputs = [
+                            ("n", n),
+                            ("k", k),
+                            ("model_role", role),
+                            ("world_size", world),
+                            ("projection", operation),
+                        ];
+                        assert_eq!(
+                            admits(&column, &inputs),
+                            contract::column_shape(n, k, role, world, operation)
+                        );
+                        assert_eq!(
+                            admits(&partial, &inputs),
+                            contract::partial_shape(n, k, role, world, operation)
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn actual_cache_rope_and_activation_prefixes_reject_unknown_geometry() {
+    let source = include_str!("../src/rope_kv.rs");
+    let rope = kernel(source, "ferric_qwen3_tp_rope_v1");
+    let append = kernel(source, "ferric_qwen3_tp_kv_append_v1");
+    let attention = kernel(
+        include_str!("../src/attention.rs"),
+        "ferric_qwen3_tp_gqa_decode_bf16_f32_v1",
+    );
+    let activation = kernel(
+        include_str!("../src/activation.rs"),
+        "ferric_qwen3_tp_swiglu_bf16_f32_v1",
+    );
+    for role in [0, 1, 2, 3] {
+        for world in [0, 1, 2, 3, 4, 8, 16] {
+            let valid = contract::geometry(role, world).is_some();
+            for capacity in [0, 1, 8192, 8193] {
+                for position in [0, 1, 8191, 8192, 8193] {
+                    let inputs = [
+                        ("model_role", role),
+                        ("world_size", world),
+                        ("position", position),
+                        ("capacity", capacity),
+                        ("count", position),
+                    ];
+                    assert_eq!(admits(&rope, &inputs), valid && position < 8192);
+                    assert_eq!(
+                        admits(&append, &inputs),
+                        valid && contract::append_position(position, capacity)
+                    );
+                    assert_eq!(
+                        admits(&attention, &inputs),
+                        valid && contract::attention_prefix(position, capacity)
+                    );
+                }
+            }
+            assert_eq!(
+                admits(&activation, &[("model_role", role), ("world_size", world)]),
+                valid
+            );
+        }
+    }
+}

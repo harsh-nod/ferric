@@ -74,7 +74,8 @@ fn new_signatures() -> Vec<(String, Vec<(String, String)>)> {
 
 #[test]
 fn six_new_roots_have_exact_element_units_and_scalar_order() {
-    let expected: [(&str, &[(&str, &str)], u32); 6] = [
+    type ExpectedAbi = (&'static str, &'static [(&'static str, &'static str)], u32);
+    let expected: [ExpectedAbi; 6] = [
         (
             "ferric_qwen3_tp_gemv_bf16_f32_bf16_v1",
             &[

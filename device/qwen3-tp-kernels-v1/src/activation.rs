@@ -36,10 +36,16 @@ pub fn ferric_qwen3_tp_swiglu_bf16_f32_v1(
     model_role: u32,
     world_size: u32,
 ) {
-    if !tp_role_world_valid_v1!(model_role, world_size) {
+    if !((model_role == 1 || model_role == 2)
+        && (world_size == 1 || world_size == 2 || world_size == 8))
+    {
         fe2o3_device::trap();
     }
-    let (_, _, _, elements) = tp_sizes_v1!(model_role, world_size);
+    let elements = if model_role == 1 {
+        12_288 / world_size
+    } else {
+        3_072 / world_size
+    };
     if elements == 0 || elements > 12_288 {
         fe2o3_device::trap();
     }

@@ -50,7 +50,7 @@ fn fp32_partials_are_not_bf16_rounded_before_reduction() {
     let input = [bf(1.0), bf(1.0)];
     let weights = [bf(1.0), bf(0.00390625)];
     let partial = tp_gemv_sum_v1!(&input, &weights, 0, 2);
-    assert_eq!(partial, 1.00390625);
+    assert_eq!(partial, 1.0 + 1.0 / 256.0);
     assert_ne!(
         partial.to_bits(),
         Bf16::from_f32(partial).to_f32().to_bits()
