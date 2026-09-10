@@ -221,27 +221,29 @@ def markdown(report):
     lines = ["# Ferric Performance Ledger", "",
              "Fixed four-request logical-tick workload; eight output tokens including one from the cancelled request.",
              "Not steady-state serving throughput. Percentiles use nearest rank; small-sample p95 is not a stable tail.", "",
-             "| Variant | Kind | Reps | Output tok/s p50 | vs Baseline | Window s p50 | Setup s p50 | Whole s p50 |",
+             "| Variant | Kind | Reps | Output tok/s p50 / p95 | vs Baseline p50 | Window s p50 | Setup s p50 | Whole s p50 |",
              "|---|---|---:|---:|---:|---:|---:|---:|"]
     for variant in report["variants"]:
         metrics = variant["metrics"]
         improvement = variant["baseline_relative"]["output_tokens_per_second"]["p50"]["improvement_percent"]
         lines.append(f"| {variant['name']} | {variant['kind']} | {variant['repetitions']} | "
-                     f"{metrics['output_tokens_per_second']['p50']:.6f} | {improvement:+.2f}% | "
+                     f"{metrics['output_tokens_per_second']['p50']:.6f} / {metrics['output_tokens_per_second']['p95']:.6f} | {improvement:+.2f}% | "
                      f"{metrics['workload_window_seconds']['p50']:.6f} | {metrics['setup_seconds']['p50']:.6f} | "
                      f"{metrics['whole_seconds']['p50']:.6f} |")
     for request_name in CHECK.NAMES:
         lines += ["", f"## {request_name}", "",
-                  "| Variant | Reps | Decode Gaps/Rep | TTFT s p50 / p95 | TTFT Improvement p50 | TPOT s p50 / p95 | TPOT Improvement p50 |",
-                  "|---|---:|---:|---:|---:|---:|---:|"]
+                  "| Variant | Reps | Decode Gaps/Rep | TTFT s p50 / p95 | TTFT Improvement p50 | TPOT s p50 / p95 | TPOT Improvement p50 | Output tok/s p50 / p95 |",
+                  "|---|---:|---:|---:|---:|---:|---:|---:|"]
         for variant in report["variants"]:
             request = variant["requests"][request_name]
             ttft, tpot = request["metrics"]["ttft_seconds"], request["metrics"]["tpot_seconds"]
             ttft_relative = request["baseline_relative"]["ttft_seconds"]["p50"]["improvement_percent"]
             tpot_text = "n/a" if tpot is None else f"{tpot['p50']:.6f} / {tpot['p95']:.6f}"
             tpot_relative = "n/a" if tpot is None else f"{request['baseline_relative']['tpot_seconds']['p50']['improvement_percent']:+.2f}%"
+            rate = request["metrics"]["output_tokens_per_second"]
             lines.append(f"| {variant['name']} | {variant['repetitions']} | {request['decode_interval_count']} | "
-                         f"{ttft['p50']:.6f} / {ttft['p95']:.6f} | {ttft_relative:+.2f}% | {tpot_text} | {tpot_relative} |")
+                         f"{ttft['p50']:.6f} / {ttft['p95']:.6f} | {ttft_relative:+.2f}% | {tpot_text} | {tpot_relative} | "
+                         f"{rate['p50']:.6f} / {rate['p95']:.6f} |")
     return "\n".join(lines) + "\n"
 
 

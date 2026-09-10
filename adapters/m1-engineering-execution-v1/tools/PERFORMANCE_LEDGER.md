@@ -125,6 +125,9 @@ same request and metric. Different request latencies or individual decode gaps
 are never pooled. With two or three repetitions, p95 is simply the worst
 observation and does not establish a stable serving tail or SLO. Reports show
 repetition counts and decode gaps per repetition alongside the results.
+Statistics are computed independently per metric, not selected from a single
+"median run"; reciprocal throughput/window percentiles need not refer to the
+same repetition.
 
 Ratios are variant/baseline for each mean, p50, and p95. Positive improvement
 means lower latency or higher output rate. These are descriptive comparisons,
