@@ -309,6 +309,11 @@ fn hostile_completion_never_partially_publishes_an_earlier_request() {
         ],
     ] {
         assert_eq!(
+            scheduler.validate_completion(batch.id(), &invalid, 20),
+            Err(TpSchedulerErrorV1::InvalidChoices)
+        );
+        assert_eq!(snapshot(&scheduler), before);
+        assert_eq!(
             scheduler.complete(batch.id(), &invalid, 20),
             Err(TpSchedulerErrorV1::InvalidChoices)
         );
@@ -328,6 +333,36 @@ fn hostile_completion_never_partially_publishes_an_earlier_request() {
     );
     assert_eq!(scheduler.request(first).unwrap().generated_tokens, [7]);
     assert_eq!(scheduler.request(second).unwrap().generated_tokens, [8]);
+}
+
+#[test]
+fn completion_preflight_is_read_only_and_shares_commit_validation() {
+    let mut scheduler = scheduler(2, 2);
+    assert_eq!(scheduler.context_limit(), 8192);
+    assert_eq!(scheduler.max_batch_rows(), 2);
+    let id = scheduler.admit(admission(&[1, 2], 1), 0).unwrap();
+    let batch = scheduler.prepare(0, 10, 2).unwrap().unwrap();
+    let choices = choices(&batch);
+    let before = snapshot(&scheduler);
+    assert_eq!(
+        scheduler.validate_completion(batch.id(), &choices, 9),
+        Err(TpSchedulerErrorV1::InvalidClock)
+    );
+    assert_eq!(
+        scheduler.validate_completion(batch.id() + 1, &choices, 20),
+        Err(TpSchedulerErrorV1::StaleBatch)
+    );
+    scheduler
+        .validate_completion(batch.id(), &choices, 20)
+        .unwrap();
+    assert_eq!(snapshot(&scheduler), before);
+    assert_eq!(scheduler.request(id).unwrap().committed_position, 0);
+    assert!(scheduler.request(id).unwrap().generated_tokens.is_empty());
+    scheduler.complete(batch.id(), &choices, 20).unwrap();
+    assert_eq!(
+        scheduler.validate_completion(batch.id(), &choices, 20),
+        Err(TpSchedulerErrorV1::StaleBatch)
+    );
 }
 
 #[test]

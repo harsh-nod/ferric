@@ -365,6 +365,18 @@ impl EngineeringTpSchedulerV1 {
             .count()
     }
 
+    /// Admitted per-request KV bound for checking the joined physical pool.
+    #[must_use]
+    pub const fn context_limit(&self) -> u32 {
+        self.context_limit
+    }
+
+    /// Admitted physical token-row limit for checking the coordinator budget.
+    #[must_use]
+    pub const fn max_batch_rows(&self) -> usize {
+        self.max_rows
+    }
+
     /// Whether any submitted failure permanently prohibited reuse.
     #[must_use]
     pub fn is_poisoned(&self) -> bool {
@@ -478,6 +490,24 @@ impl EngineeringTpSchedulerV1 {
         Ok(Some(batch))
     }
 
+    /// Validates the exact completion without changing any scheduler state.
+    ///
+    /// Call before committing the pool transaction, then call `complete` while
+    /// the same batch and request membership remain frozen. This does not
+    /// authenticate GPU completion or grant page-release authority.
+    ///
+    /// # Errors
+    /// Rejects the same invalid generation, time, and choice roster as `complete`.
+    pub fn validate_completion(
+        &self,
+        batch_id: u64,
+        choices: &[TpRowChoiceV1],
+        completed_ns: u64,
+    ) -> Result<(), TpSchedulerErrorV1> {
+        self.completion_data(batch_id, choices, completed_ns)
+            .map(|_| ())
+    }
+
     /// Commits all rows atomically after the caller's successful GPU and pool transaction.
     ///
     /// # Errors
@@ -489,6 +519,32 @@ impl EngineeringTpSchedulerV1 {
         choices: &[TpRowChoiceV1],
         completed_ns: u64,
     ) -> Result<Vec<TpOutputEventV1>, TpSchedulerErrorV1> {
+        let (advances, events) = self.completion_data(batch_id, choices, completed_ns)?;
+        // Every fallible check precedes publication; membership is frozen while pending.
+        let pending = self.pending.take().ok_or(TpSchedulerErrorV1::StaleBatch)?;
+        for (index, slot) in self.slots.iter_mut().enumerate() {
+            if let Some(request) = slot.request.as_mut() {
+                request.committed_position += advances[index];
+                for event in events.iter().filter(|event| event.request == request.id) {
+                    request.generated_tokens.push(event.token_id);
+                    request.output_timestamps_ns.push(event.completed_ns);
+                }
+            }
+        }
+        self.decode_cursor = pending.decode_cursor;
+        self.prefill_cursor = pending.prefill_cursor;
+        self.single_row_prefill = pending.single_row_prefill;
+        self.last_tick = pending.batch.tick;
+        self.last_time_ns = completed_ns;
+        Ok(events)
+    }
+
+    fn completion_data(
+        &self,
+        batch_id: u64,
+        choices: &[TpRowChoiceV1],
+        completed_ns: u64,
+    ) -> Result<([u32; TP_MAX_REQUESTS_V1], Vec<TpOutputEventV1>), TpSchedulerErrorV1> {
         let pending = self.pending(batch_id)?;
         if completed_ns < pending.batch.prepared_ns {
             return Err(TpSchedulerErrorV1::InvalidClock);
@@ -535,23 +591,7 @@ impl EngineeringTpSchedulerV1 {
                 });
             }
         }
-        // Every fallible check precedes publication; membership is frozen while pending.
-        let pending = self.pending.take().ok_or(TpSchedulerErrorV1::StaleBatch)?;
-        for (index, slot) in self.slots.iter_mut().enumerate() {
-            if let Some(request) = slot.request.as_mut() {
-                request.committed_position += advances[index];
-                for event in events.iter().filter(|event| event.request == request.id) {
-                    request.generated_tokens.push(event.token_id);
-                    request.output_timestamps_ns.push(event.completed_ns);
-                }
-            }
-        }
-        self.decode_cursor = pending.decode_cursor;
-        self.prefill_cursor = pending.prefill_cursor;
-        self.single_row_prefill = pending.single_row_prefill;
-        self.last_tick = pending.batch.tick;
-        self.last_time_ns = completed_ns;
-        Ok(events)
+        Ok((advances, events))
     }
 
     /// Aborts before any GPU submission, preserving request progress and fairness turns.
