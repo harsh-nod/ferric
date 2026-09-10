@@ -100,12 +100,26 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     {
         fe2o3_device::trap();
     }
-    let query_heads = if model_role == 1 {
-        32 / world_size
+    let query_heads = if model_role == 1 && world_size == 1 {
+        32
+    } else if model_role == 1 && world_size == 2 {
+        16
+    } else if model_role == 1 && world_size == 8 {
+        4
+    } else if model_role == 2 && world_size == 1 {
+        16
+    } else if model_role == 2 && world_size == 2 {
+        8
     } else {
-        16 / world_size
+        2
     };
-    let kv_heads = 8 / world_size;
+    let kv_heads = if world_size == 1 {
+        8
+    } else if world_size == 2 {
+        4
+    } else {
+        1
+    };
     if query_heads == 0 || query_heads > 32 || kv_heads == 0 || kv_heads > 8 {
         fe2o3_device::trap();
     }
@@ -128,8 +142,11 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     if query_head >= query_heads {
         fe2o3_device::trap();
     }
-    let ratio = if model_role == 1 { 4 } else { 2 };
-    let kv_head = query_head / ratio;
+    let kv_head = if model_role == 1 {
+        query_head / 4
+    } else {
+        query_head / 2
+    };
     if kv_head >= kv_heads {
         fe2o3_device::trap();
     }

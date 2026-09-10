@@ -4,6 +4,13 @@ use syn::{BinOp, Expr, Item, Lit, Pat, Stmt, UnOp};
 
 type Values = BTreeMap<String, i64>;
 
+fn evaluate_block(block: &syn::Block, values: &Values) -> i64 {
+    let [Stmt::Expr(expression, None)] = block.stmts.as_slice() else {
+        panic!("scalar branch")
+    };
+    evaluate(expression, values)
+}
+
 fn evaluate(expression: &Expr, values: &Values) -> i64 {
     match expression {
         Expr::Paren(value) => evaluate(&value.expr, values),
@@ -20,19 +27,13 @@ fn evaluate(expression: &Expr, values: &Values) -> i64 {
             _ => panic!("unsupported unary operation"),
         },
         Expr::If(value) => {
-            let branch = if evaluate(&value.cond, values) != 0 {
-                &value.then_branch
+            if evaluate(&value.cond, values) != 0 {
+                evaluate_block(&value.then_branch, values)
             } else {
-                let Expr::Block(block) = value.else_branch.as_ref().unwrap().1.as_ref() else {
-                    panic!("else block")
-                };
-                &block.block
-            };
-            let [Stmt::Expr(expression, None)] = branch.stmts.as_slice() else {
-                panic!("scalar branch")
-            };
-            evaluate(expression, values)
+                evaluate(&value.else_branch.as_ref().unwrap().1, values)
+            }
         }
+        Expr::Block(value) => evaluate_block(&value.block, values),
         Expr::Binary(value) => {
             let left = evaluate(&value.left, values);
             if matches!(value.op, BinOp::And(_)) && left == 0 {

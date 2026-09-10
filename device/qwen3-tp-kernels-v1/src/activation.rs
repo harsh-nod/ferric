@@ -41,10 +41,18 @@ pub fn ferric_qwen3_tp_swiglu_bf16_f32_v1(
     {
         fe2o3_device::trap();
     }
-    let elements = if model_role == 1 {
-        12_288 / world_size
+    let elements = if model_role == 1 && world_size == 1 {
+        12_288
+    } else if model_role == 1 && world_size == 2 {
+        6_144
+    } else if model_role == 1 && world_size == 8 {
+        1_536
+    } else if model_role == 2 && world_size == 1 {
+        3_072
+    } else if model_role == 2 && world_size == 2 {
+        1_536
     } else {
-        3_072 / world_size
+        384
     };
     if elements == 0 || elements > 12_288 {
         fe2o3_device::trap();

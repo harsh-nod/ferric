@@ -40,16 +40,38 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
         fe2o3_device::trap();
     }
     let hidden = if model_role == 1 { 4_096 } else { 1_024 };
-    let queries = if model_role == 1 {
-        32 / world_size
+    let queries = if model_role == 1 && world_size == 1 {
+        32
+    } else if model_role == 1 && world_size == 2 {
+        16
+    } else if model_role == 1 && world_size == 8 {
+        4
+    } else if model_role == 2 && world_size == 1 {
+        16
+    } else if model_role == 2 && world_size == 2 {
+        8
     } else {
-        16 / world_size
+        2
     };
-    let keys = 8 / world_size;
-    let intermediate = if model_role == 1 {
-        12_288 / world_size
+    let keys = if world_size == 1 {
+        8
+    } else if world_size == 2 {
+        4
     } else {
-        3_072 / world_size
+        1
+    };
+    let intermediate = if model_role == 1 && world_size == 1 {
+        12_288
+    } else if model_role == 1 && world_size == 2 {
+        6_144
+    } else if model_role == 1 && world_size == 8 {
+        1_536
+    } else if model_role == 2 && world_size == 1 {
+        3_072
+    } else if model_role == 2 && world_size == 2 {
+        1_536
+    } else {
+        384
     };
     if !(k == hidden
         && ((projection == 1 && n == queries * 128)
@@ -116,15 +138,31 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
         fe2o3_device::trap();
     }
     let hidden = if model_role == 1 { 4_096 } else { 1_024 };
-    let queries = if model_role == 1 {
-        32 / world_size
+    let queries = if model_role == 1 && world_size == 1 {
+        32
+    } else if model_role == 1 && world_size == 2 {
+        16
+    } else if model_role == 1 && world_size == 8 {
+        4
+    } else if model_role == 2 && world_size == 1 {
+        16
+    } else if model_role == 2 && world_size == 2 {
+        8
     } else {
-        16 / world_size
+        2
     };
-    let intermediate = if model_role == 1 {
-        12_288 / world_size
+    let intermediate = if model_role == 1 && world_size == 1 {
+        12_288
+    } else if model_role == 1 && world_size == 2 {
+        6_144
+    } else if model_role == 1 && world_size == 8 {
+        1_536
+    } else if model_role == 2 && world_size == 1 {
+        3_072
+    } else if model_role == 2 && world_size == 2 {
+        1_536
     } else {
-        3_072 / world_size
+        384
     };
     if !(n == hidden
         && ((projection == 1 && k == queries * 128) || (projection == 2 && k == intermediate)))
