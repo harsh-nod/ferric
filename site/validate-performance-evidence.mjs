@@ -80,6 +80,69 @@ for (const [section, file, hash, reports, world] of [
     console.log("EXACT MODEL PAIR", profile.id);
   }
 }
+async function repeatedPair(repeated, first, file, hash, world) {
+  const repeatedLedger = await pinned(join(measurementRoot, file), hash);
+  assert.equal(repeated.ledgerFileSha256, hash);
+  assert.equal(repeatedLedger.variants.length, 2);
+  assert.equal(repeatedLedger.comparator_sha256, first.pins.comparatorSha256);
+  for (const [index, second] of repeated.secondProfiles.entries()) {
+    const variant = repeatedLedger.variants[index];
+    assert.equal(variant.repetitions, repeated.repetitions);
+    assert.equal(variant.runs.length, 2);
+    common(variant.expected, world, second.projection ?? "baseline");
+    assert.equal(variant.expected.collective, world === 1 && index === 1 ? "device-tp1-v3" : null);
+    for (const [target, source] of basePins) assert.equal(first.pins[target], variant.expected[source]);
+    const runs = [first.profiles[index], second];
+    runs.forEach((profile, runIndex) => requests(profile, variant.runs[runIndex]));
+    for (const [target, source] of metricNames) {
+      const values = runs.map((run) => run[target]);
+      assert.equal(variant.metrics[source].mean, (values[0] + values[1]) / 2);
+      assert.equal(variant.metrics[source].p50, Math.min(...values));
+      assert.equal(variant.metrics[source].p95, Math.max(...values));
+    }
+    data.requests.forEach((request, requestIndex) => {
+      for (const [valueIndex, source] of ["ttft_seconds", "tpot_seconds"].entries()) {
+        const metrics = variant.requests[request.name].metrics[source];
+        const values = runs.map((run) => run.requestLatencies[requestIndex][valueIndex]);
+        if (values[0] === null) assert.equal(metrics, null);
+        else {
+          assert.equal(metrics.mean, (values[0] + values[1]) / 2);
+          assert.equal(metrics.p50, Math.min(...values));
+          assert.equal(metrics.p95, Math.max(...values));
+        }
+      }
+    });
+    checkedReport(await pinned(join(measurementRoot, `${variant.runs[1].id}-comparison.json`), second.comparisonSha256), world);
+    console.log("EXACT REPEATED MODEL PAIR", variant.name);
+  }
+  const [control, candidate] = repeatedLedger.variants;
+  const percentage = (base, value, lower) => ((lower ? 1 - value / base : value / base - 1) * 100).toFixed(2);
+  for (const [base, value, lower] of [
+    [control.metrics.output_tokens_per_second.mean, candidate.metrics.output_tokens_per_second.mean, false],
+    ...["ttft_seconds", "tpot_seconds"].map((key) =>
+      [control.requests["reuse-prefix"].metrics[key].mean, candidate.requests["reuse-prefix"].metrics[key].mean, true]),
+  ]) assert(repeated.interpretation.includes(`${percentage(base, value, lower)}%`));
+  return repeatedLedger;
+}
+const repeatedLedger = await repeatedPair(data.mfmaRepeated, data.mfmaPair, "mfma-paired-2reps.json",
+  "6b14222502f670b4cd8a0d607777885c590b88874ad40190fbf56799528bcef2", 8);
+await repeatedPair(data.deviceTp1Repeated, data.deviceTp1Pair, "device-tp1-paired-2reps.json",
+  "41b064209d601df9d733210825fd39bfee7665950e67c7fd77ff647ef64f6f32", 1);
+const cumulative = data.mfmaPruning;
+const cumulativeLedger = await pinned(join(measurementRoot, "mfma-pruning-cumulative-r1.json"),
+  "01a030080f363f83b40d9a382bd2b82b1c16ebff51810924efb5091a122994ba");
+assert.equal(cumulative.ledgerFileSha256, "01a030080f363f83b40d9a382bd2b82b1c16ebff51810924efb5091a122994ba");
+assert.equal(cumulativeLedger.variants.length, 3);
+assert.deepEqual(cumulativeLedger.variants.slice(0, 2).map((variant) => variant.runs), repeatedLedger.variants.map((variant) => variant.runs));
+const cumulativeVariant = cumulativeLedger.variants[2];
+assert.equal(cumulativeVariant.repetitions, 1);
+assert.equal(cumulativeVariant.runs.length, 1);
+assert.equal(cumulativeVariant.expected.output_head_pruning, true);
+common({ ...cumulativeVariant.expected, output_head_pruning: false }, 8, "mfma");
+for (const [target, source] of basePins) assert.equal(data.mfmaPair.pins[target], cumulativeVariant.expected[source]);
+requests(cumulative.profiles[0], cumulativeVariant.runs[0]);
+checkedReport(await pinned(join(measurementRoot, "mfma-pruning-tp8-cache-r1-comparison.json"), cumulative.profiles[0].comparisonSha256), 8);
+console.log("EXACT CUMULATIVE MFMA AND PRUNING");
 for (const [index, world] of [2, 8].entries()) {
   const profile = data.peerObservations.profiles[index];
   const hashes = ["b7b5af6dea6b681b054a7bc664395c2992705df5cf39ad44c5a027d11dea4004",

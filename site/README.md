@@ -41,7 +41,7 @@ overflow at the desktop, breakpoint-edge, and mobile widths; its exhaustive mode
 checks every width from 320px through 1440px. `stage-artifact.mjs` creates and
 validates the seven-file static deployment roster so `node_modules`, dependency
 metadata, documentation, and test-only files cannot enter the Pages artifact.
-`validate-performance.mjs` checks the closed performance schema and fifty
+`validate-performance.mjs` checks the closed performance schema and sixty-two
 negative mutations, including incorrect repetition counts, throughput windows,
 runtime profiles, ledger identities, and cancelled-request TPOT. A Pages-only
 publication must not include Ferric implementation, model files, or raw logs.
@@ -60,3 +60,10 @@ full-model transpose observation separate. Wide row and chunk budgets change
 together; request00 TTFT regresses. Peer worker executables differ deliberately
 on the same core source. The transpose production change is setup-only, so
 observed decode-rate differences are not attributed to that change.
+
+The two-repetition MFMA and TP1 residual tables reuse their published R1
+observations plus one new run per profile. Preserve those R1 tables and pins;
+do not count them twice. Means and ranges remain per profile and request, with
+n=2 nearest-rank p50/p95 equal to the minimum/maximum, not stable tails. The
+single MFMA-plus-pruning observation is a distinct cumulative profile and does
+not show an additive pruning gain.

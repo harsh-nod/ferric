@@ -38,7 +38,10 @@ const requiredClaims = [
   "902fef6e1478b3ac677e5456b2a2d1f917456fba",
   "1b262ac3dd23ee63067e40587d62a124f40b9fc9",
   "7528e7345cef0158d7034cdbae23011e3c6fb5d2",
-  "MFMA: faster requests, slower startup",
+  "MFMA R1 checkpoint: faster requests, slower startup",
+  "MFMA repeated: request gains, startup cost",
+  "MFMA plus pruning: no additive gain observed",
+  "TP1 residual repeated: small decode change",
   "Startup regresses",
   "0.575054",
   "209.070",
@@ -667,6 +670,16 @@ try {
 
     const replicaDisclosure = page.getByText("All replica-cohort request latencies", { exact: true });
     await replicaDisclosure.click();
+    const repeatedDisclosure = page.getByText("All repeated MFMA request latencies", { exact: true });
+    await repeatedDisclosure.click();
+    const tp1RepeatedDisclosure = page.getByText("All repeated TP1 residual request latencies", { exact: true });
+    await tp1RepeatedDisclosure.click();
+    assert(await page.getByRole("region", { name: "Repeated TP1 residual pair: named request means and ranges", exact: true })
+      .locator("tbody tr").count() === 8, `${name}: missing repeated TP1 residual request identities`);
+    await tp1RepeatedDisclosure.click();
+    assert(await page.getByRole("region", { name: "Repeated MFMA pair: named request means and ranges", exact: true })
+      .locator("tbody tr").count() === 8, `${name}: missing repeated MFMA request identities`);
+    await repeatedDisclosure.click();
     const wideDisclosure = page.getByText("All wide-policy request latencies", { exact: true });
     await wideDisclosure.click();
     const peerDisclosure = page.getByText("All source-matched peer request latencies", { exact: true });
@@ -683,6 +696,9 @@ try {
     await replicaDisclosure.click();
 
     for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
+      ["Repeated MFMA pair: mean and observed range", 2],
+      ["Repeated TP1 residual pair: mean and observed range", 2],
+      ["Cumulative MFMA and pruning: process windows", 1], ["Cumulative MFMA and pruning: request latencies", 4],
       ["Matched TP1 residual pair: process windows", 2], ["Matched TP1 residual pair: request latencies", 8],
       ["Setup transpose model pair: process windows", 2], ["Setup transpose model pair: request latencies", 8],
       ["Matched MFMA pair: request latencies", 8], ["Unmatched peer observations: process windows", 2],
@@ -699,9 +715,10 @@ try {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
-        for (const [heading, suffix] of [["MFMA: faster requests, slower startup", "mfma"],
+        for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
           ["True 32-row execution: a latency tradeoff", "wide"],
+          ["MFMA repeated: request gains, startup cost", "mfma-repeated"],
           ["Source-matched peer controls: a regression", "peer-controls"],
           ["Setup transpose: full-model observation", "transpose-model"],
           ["Peer transport: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {

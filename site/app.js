@@ -160,7 +160,33 @@
       (values[0] / 1e9).toFixed(3), (values[1] / 1e9).toFixed(3), values[2].toFixed(3),
     ])), wideLatencies);
   measured.append(wideLatencies, element("p", "", wide.timing));
-  singleRunTables(performance.mfmaPair, "MFMA: faster requests, slower startup", "Matched MFMA pair");
+  const repeated = performance.mfmaRepeated;
+  const summaryRange = (values, digits = 3) => values[0] === null ? "n/a"
+    : `${((values[0] + values[1]) / 2).toFixed(digits)} [${Math.min(...values).toFixed(digits)}, ${Math.max(...values).toFixed(digits)}]`;
+  function repeatedTables(section, firstProfiles, title, label) {
+    const groups = firstProfiles.map((first, index) => [first, section.secondProfiles[index]]);
+    measured.append(element("h3", "", title), element("p", "", section.scope));
+    performanceTable(`Repeated ${label} pair: mean and observed range`,
+      ["Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+      groups.map((runs) => [`${runs[0].name} / n=2`,
+        ...["outputTokensPerSecond", "workloadSeconds", "setupSeconds", "wholeSeconds"].map((key, index) =>
+          summaryRange(runs.map((run) => run[key]), index === 0 ? 6 : 3))]));
+    measured.append(element("p", "", section.interpretation));
+    const latencies = element("details", "performance-identities");
+    latencies.append(element("summary", "", `All repeated ${label} request latencies`));
+    performanceTable(`Repeated ${label} pair: named request means and ranges`,
+      ["Profile / Request / Gaps Per Run", "TTFT (s)", "TPOT (s)"],
+      groups.flatMap((runs) => performance.requests.map((request, index) => [
+        `${runs[0].name} / ${request.name} / ${request.gapsPerRepetition}`,
+        summaryRange(runs.map((run) => run.requestLatencies[index][0])),
+        summaryRange(runs.map((run) => run.requestLatencies[index][1])),
+      ])), latencies);
+    measured.append(latencies);
+  }
+  repeatedTables(repeated, performance.mfmaPair.profiles, "MFMA repeated: request gains, startup cost", "MFMA");
+  singleRunTables(performance.mfmaPruning, "MFMA plus pruning: no additive gain observed", "Cumulative MFMA and pruning");
+  singleRunTables(performance.mfmaPair, "MFMA R1 checkpoint: faster requests, slower startup", "Matched MFMA pair");
+  repeatedTables(performance.deviceTp1Repeated, performance.deviceTp1Pair.profiles, "TP1 residual repeated: small decode change", "TP1 residual");
   singleRunTables(performance.deviceTp1Pair, "TP1 device residual pair", "Matched TP1 residual pair");
   const peerControls = performance.peerSourceControls;
   measured.append(element("h3", "", "Source-matched peer controls: a regression"),
@@ -313,6 +339,16 @@
   });
   Object.entries(performance.transposeModelPair.pins).forEach(([key, value]) => {
     pins.append(element("dt", "", `Transpose model pair ${key}`), element("dd", "", value));
+  });
+  pins.append(element("dt", "", "Repeated MFMA ledger SHA-256"), element("dd", "", repeated.ledgerFileSha256));
+  pins.append(element("dt", "", "Cumulative MFMA/pruning ledger SHA-256"), element("dd", "", performance.mfmaPruning.ledgerFileSha256),
+    element("dt", "", "Cumulative MFMA/pruning comparison SHA-256"), element("dd", "", performance.mfmaPruning.profiles[0].comparisonSha256));
+  repeated.secondProfiles.forEach((profile) => {
+    pins.append(element("dt", "", `${profile.name} comparison SHA-256`), element("dd", "", profile.comparisonSha256));
+  });
+  pins.append(element("dt", "", "Repeated TP1 residual ledger SHA-256"), element("dd", "", performance.deviceTp1Repeated.ledgerFileSha256));
+  performance.deviceTp1Repeated.secondProfiles.forEach((profile) => {
+    pins.append(element("dt", "", `${profile.name} comparison SHA-256`), element("dd", "", profile.comparisonSha256));
   });
   performance.transposeModelPair.profiles.forEach((profile) => {
     for (const key of ["controllerSha256", "comparisonSha256"]) {

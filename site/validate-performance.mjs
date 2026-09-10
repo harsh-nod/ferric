@@ -20,7 +20,7 @@ export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
     "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "peerSourceControls",
-    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair"]);
+    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated"]);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
   assert(data.scope.includes("Not steady-state serving throughput"));
   assert(data.scope.includes("eight output tokens including one from the cancelled request"));
@@ -159,6 +159,31 @@ export function validatePerformance(data) {
   assert(mfma.profiles[1].setupSeconds > mfma.profiles[0].setupSeconds);
   assert(mfma.profiles[1].wholeSeconds > mfma.profiles[0].wholeSeconds);
   assert(mfma.profiles[1].outputTokensPerSecond > mfma.profiles[0].outputTokensPerSecond);
+  const repeated = data.mfmaRepeated;
+  keys(repeated, ["scope", "interpretation", "repetitions", "ledgerFileSha256", "secondProfiles"]);
+  assert.equal(repeated.repetitions, 2);
+  digest(repeated.ledgerFileSha256);
+  assert(repeated.scope.includes("R1 is the previously published pair"));
+  assert(repeated.interpretation.includes("not a stable tail"));
+  assert(repeated.interpretation.includes("Request identities are never pooled"));
+  assert.equal(repeated.secondProfiles.length, 2);
+  repeated.secondProfiles.forEach((profile, index) => {
+    singleProfile(profile, ["projection"]);
+    assert.equal(profile.id, `${mfma.profiles[index].id}-r2`);
+    assert.equal(profile.projection, mfma.profiles[index].projection);
+    assert.notEqual(profile.comparisonSha256, mfma.profiles[index].comparisonSha256);
+  });
+  assert(repeated.secondProfiles[1].setupSeconds > repeated.secondProfiles[0].setupSeconds);
+  const cumulative = data.mfmaPruning;
+  keys(cumulative, ["scope", "interpretation", "ledgerFileSha256", "profiles"]);
+  digest(cumulative.ledgerFileSha256);
+  assert(cumulative.scope.includes("adds pruning to MFMA"));
+  assert(cumulative.interpretation.includes("does not show an additive pruning gain"));
+  assert.equal(cumulative.profiles.length, 1);
+  singleProfile(cumulative.profiles[0], ["projection", "outputHeadPruning"]);
+  assert.equal(cumulative.profiles[0].projection, "mfma");
+  assert.equal(cumulative.profiles[0].outputHeadPruning, true);
+  assert.equal(cumulative.profiles[0].id, "mfma-and-pruning");
   const tp1 = data.deviceTp1Pair;
   keys(tp1, ["scope", "interpretation", "pins", "profiles"]);
   keys(tp1.pins, ["controllerSha256", "workerSha256", "hsacoSha256", "manifestSha256",
@@ -172,6 +197,19 @@ export function validatePerformance(data) {
     singleProfile(profile, ["collective"]);
     assert.equal(profile.id, ["device-tp1-control", "device-tp1-residual"][index]);
     assert.equal(profile.collective, ["host_staged_fp32_rank_order_reduce_bf16_residual", "device-tp1-v3"][index]);
+  });
+  const tp1Repeated = data.deviceTp1Repeated;
+  keys(tp1Repeated, ["scope", "interpretation", "repetitions", "ledgerFileSha256", "secondProfiles"]);
+  assert.equal(tp1Repeated.repetitions, 2);
+  digest(tp1Repeated.ledgerFileSha256);
+  assert(tp1Repeated.scope.includes("R1 is the previously published pair"));
+  assert(tp1Repeated.interpretation.includes("not a stable tail"));
+  assert.equal(tp1Repeated.secondProfiles.length, 2);
+  tp1Repeated.secondProfiles.forEach((profile, index) => {
+    singleProfile(profile, ["collective"]);
+    assert.equal(profile.id, `${tp1.profiles[index].id}-r2`);
+    assert.equal(profile.collective, tp1.profiles[index].collective);
+    assert.notEqual(profile.comparisonSha256, tp1.profiles[index].comparisonSha256);
   });
   const peer = data.peerObservations;
   keys(peer, ["scope", "interpretation", "matchedControl", "speedupClaimed", "collective", "pins", "profiles"]);
@@ -327,6 +365,18 @@ export function validatePerformance(data) {
 
 export function testPerformanceRejections(data) {
   const mutations = [
+    (copy) => { copy.deviceTp1Repeated.repetitions = 4; },
+    (copy) => { copy.deviceTp1Repeated.secondProfiles[1].collective = "device-peer-serial-v4"; },
+    (copy) => { copy.deviceTp1Repeated.secondProfiles[0].comparisonSha256 = copy.deviceTp1Pair.profiles[0].comparisonSha256; },
+    (copy) => { copy.deviceTp1Repeated.interpretation = "Stable p95 established"; },
+    (copy) => { copy.mfmaPruning.profiles[0].outputHeadPruning = false; },
+    (copy) => { copy.mfmaPruning.profiles[0].repetitions = 2; },
+    (copy) => { copy.mfmaPruning.interpretation = "Pruning gives an additive gain"; },
+    (copy) => { copy.mfmaRepeated.repetitions = 4; },
+    (copy) => { copy.mfmaRepeated.secondProfiles[1].requestLatencies[2][1] = 1; },
+    (copy) => { copy.mfmaRepeated.secondProfiles[0].comparisonSha256 = copy.mfmaPair.profiles[0].comparisonSha256; },
+    (copy) => { copy.mfmaRepeated.secondProfiles[1].projection = "wave"; },
+    (copy) => { copy.mfmaRepeated.interpretation = "Stable p95 established"; },
     (copy) => { copy.variants[0].repetitions = 20; },
     (copy) => { copy.variants[0].outputTokensPerSecond[0] *= 2; },
     (copy) => { copy.variants[2].outputHeadPruning = true; },
