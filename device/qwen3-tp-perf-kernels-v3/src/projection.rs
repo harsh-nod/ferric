@@ -1,6 +1,12 @@
-use fe2o3_device::{Bf16, Gfx950Subgroup, Index1D, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel, thread};
+use fe2o3_device::{
+    Bf16, Gfx950Subgroup, Index1D, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel,
+    thread,
+};
 #[cfg(feature = "mfma")]
-use fe2o3_device::{Bf16MfmaAMatrix, Bf16MfmaBMatrix, DeviceMatrix, F32AccumulatorFragment, Tiled2D, Wave64, WaveLane};
+use fe2o3_device::{
+    Bf16MfmaAMatrix, Bf16MfmaBMatrix, DeviceMatrix, F32AccumulatorFragment, Tiled2D, Wave64,
+    WaveLane,
+};
 
 /// One Wave64 cooperatively computes each row/output-column dot product.
 /// Weights are the unchanged v2 row-major [n,k] layout.

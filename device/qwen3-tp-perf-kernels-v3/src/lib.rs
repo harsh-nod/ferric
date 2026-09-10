@@ -71,8 +71,12 @@ pub fn compiler_expectation_roster_v3()
     ];
     #[cfg(feature = "mfma")]
     {
-        entries.push(Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_bf16_v3_gpu::Marker>());
-        entries.push(Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_partial_f32_v3_gpu::Marker>());
+        entries.push(Entry::for_marker::<
+            projection::ferric_qwen3_tp_mfma_gemm_bf16_v3_gpu::Marker,
+        >());
+        entries.push(Entry::for_marker::<
+            projection::ferric_qwen3_tp_mfma_gemm_partial_f32_v3_gpu::Marker,
+        >());
     }
     entries.sort_by_key(Entry::kernel_binding_id);
     entries

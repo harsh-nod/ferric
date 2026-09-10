@@ -15,7 +15,11 @@ fn exact_closed_roster_keeps_all_baseline_symbols() {
             .all(|p| p[0].kernel_binding_id() < p[1].kernel_binding_id())
     );
     let mut expected = contract::NEW_ROOTS.to_vec();
-    expected.extend(contract::PERFORMANCE_ROOTS.into_iter().filter(|root| cfg!(feature = "mfma") || !root.contains("mfma")));
+    expected.extend(
+        contract::PERFORMANCE_ROOTS
+            .into_iter()
+            .filter(|root| cfg!(feature = "mfma") || !root.contains("mfma")),
+    );
     expected.push("qwen3_rmsnorm_v1");
     expected.sort();
     let mut actual: Vec<_> = roster

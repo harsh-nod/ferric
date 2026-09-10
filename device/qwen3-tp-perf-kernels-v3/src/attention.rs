@@ -1,6 +1,6 @@
 use fe2o3_device::{
-    Bf16, Gfx950Subgroup, Index1D, Math, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel,
-    thread,
+    Bf16, Gfx950Subgroup, Index1D, Math, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice,
+    kernel, thread,
 };
 
 const ATTENTION_SCALE: f32 = f32::from_bits(0x3db5_04f3);
@@ -103,16 +103,26 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
     let Ok(query_view) = StridedReadView2D::from_shared_slice(query, 0, head_rows, 128, 128) else {
         fe2o3_device::trap();
     };
-    let Ok(key_view) = StridedReadView2D::from_shared_slice(key_cache, 0, physical_pages * 16, columns, columns) else {
+    let Ok(key_view) =
+        StridedReadView2D::from_shared_slice(key_cache, 0, physical_pages * 16, columns, columns)
+    else {
         fe2o3_device::trap();
     };
-    let Ok(value_view) = StridedReadView2D::from_shared_slice(value_cache, 0, physical_pages * 16, columns, columns) else {
+    let Ok(value_view) =
+        StridedReadView2D::from_shared_slice(value_cache, 0, physical_pages * 16, columns, columns)
+    else {
         fe2o3_device::trap();
     };
     let Ok(position_view) = StridedReadView2D::from_shared_slice(positions, 0, rows, 1, 1) else {
         fe2o3_device::trap();
     };
-    let Ok(table_view) = StridedReadView2D::from_shared_slice(page_table, 0, rows, max_pages_per_sequence, max_pages_per_sequence) else {
+    let Ok(table_view) = StridedReadView2D::from_shared_slice(
+        page_table,
+        0,
+        rows,
+        max_pages_per_sequence,
+        max_pages_per_sequence,
+    ) else {
         fe2o3_device::trap();
     };
     let invocation = thread::index_1d();
@@ -150,8 +160,8 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
     let subgroup = Gfx950Subgroup::current();
     // Valid metadata is below 8192, so f32 broadcast preserves every valid value.
     // Larger u32 values remain outside the checked bounds after conversion.
-    let position = subgroup
-        .broadcast_f32::<64>(position_view.load_or(row, 0, u32::MAX) as f32, 0) as usize;
+    let position =
+        subgroup.broadcast_f32::<64>(position_view.load_or(row, 0, u32::MAX) as f32, 0) as usize;
     if position < max_context_tokens {
     } else {
         fe2o3_device::trap();
@@ -178,10 +188,8 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                     fe2o3_device::trap();
                 }
                 let physical_page = subgroup
-                    .broadcast_f32::<64>(
-                        table_view.load_or(row, token / 16, u32::MAX) as f32,
-                        0,
-                    ) as usize;
+                    .broadcast_f32::<64>(table_view.load_or(row, token / 16, u32::MAX) as f32, 0)
+                    as usize;
                 if physical_page < physical_pages {
                 } else {
                     fe2o3_device::trap();
@@ -200,7 +208,8 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                 let query_0 = Bf16::from_bits(query_view.load_or(head_row, lane, 0)).to_f32();
                 let query_1 = Bf16::from_bits(query_view.load_or(head_row, lane + 64, 0)).to_f32();
                 let key_0 = Bf16::from_bits(key_view.load_or(cache_row, cache_column, 0)).to_f32();
-                let key_1 = Bf16::from_bits(key_view.load_or(cache_row, cache_column + 64, 0)).to_f32();
+                let key_1 =
+                    Bf16::from_bits(key_view.load_or(cache_row, cache_column + 64, 0)).to_f32();
                 let product_0 = query_0 * key_0;
                 let product_1 = query_1 * key_1;
                 let partial = product_0 + product_1;
@@ -210,8 +219,10 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                     fe2o3_device::trap();
                 }
                 let score = dot * ATTENTION_SCALE;
-                let value_0 = Bf16::from_bits(value_view.load_or(cache_row, cache_column, 0)).to_f32();
-                let value_1 = Bf16::from_bits(value_view.load_or(cache_row, cache_column + 64, 0)).to_f32();
+                let value_0 =
+                    Bf16::from_bits(value_view.load_or(cache_row, cache_column, 0)).to_f32();
+                let value_1 =
+                    Bf16::from_bits(value_view.load_or(cache_row, cache_column + 64, 0)).to_f32();
                 finite &= score.is_finite() & value_0.is_finite() & value_1.is_finite();
                 if token == 0 {
                     maximum = score;
