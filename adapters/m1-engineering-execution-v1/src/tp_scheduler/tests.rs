@@ -1,5 +1,22 @@
 use super::*;
 
+#[test]
+fn explicit_wide_scheduler_emits_one_thirty_two_row_physical_batch() {
+    assert!(EngineeringTpSchedulerV1::new(1000, 64, 32, 32).is_err());
+    assert!(EngineeringTpSchedulerV1::new_wide32(1000, 64, 33, 32).is_err());
+    let mut scheduler = EngineeringTpSchedulerV1::new_wide32(1000, 64, 32, 32).unwrap();
+    scheduler.admit(admission(&[1; 32], 2), 0).unwrap();
+    let (batch, outputs) = step(&mut scheduler, 0, 32);
+    assert_eq!(batch.rows().len(), 32);
+    assert_eq!(outputs.len(), 1);
+    assert_eq!(batch.rows()[31].kind, TpBatchRowKindV1::PrefillFinal);
+    assert!(
+        batch.rows()[..31]
+            .iter()
+            .all(|row| row.kind == TpBatchRowKindV1::PrefillIntermediate)
+    );
+}
+
 fn scheduler(rows: usize, chunk: usize) -> EngineeringTpSchedulerV1 {
     EngineeringTpSchedulerV1::new(1000, 8192, rows, chunk).unwrap()
 }

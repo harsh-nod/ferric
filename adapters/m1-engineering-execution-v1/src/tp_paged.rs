@@ -356,6 +356,7 @@ pub struct EngineeringTpPagedPoolV1 {
     identity: u64,
     scope: EngineeringTpPoolScopeV1,
     limits: EngineeringTpPagedLimitsV1,
+    row_capacity: usize,
     state: State,
     pending: Option<Pending>,
     next_batch: u64,
@@ -370,6 +371,24 @@ impl EngineeringTpPagedPoolV1 {
         scope: EngineeringTpPoolScopeV1,
         limits: EngineeringTpPagedLimitsV1,
     ) -> Result<Self> {
+        Self::new_bounded(scope, limits, ENGINEERING_TP_MAX_BATCH_ROWS_V1)
+    }
+
+    /// Creates a separately selected 32-row metadata envelope for the v5 image.
+    /// # Errors
+    /// Rejects empty scope identities or exhausted process-local pool IDs.
+    pub fn new_wide32(
+        scope: EngineeringTpPoolScopeV1,
+        limits: EngineeringTpPagedLimitsV1,
+    ) -> Result<Self> {
+        Self::new_bounded(scope, limits, 32)
+    }
+
+    fn new_bounded(
+        scope: EngineeringTpPoolScopeV1,
+        limits: EngineeringTpPagedLimitsV1,
+        row_capacity: usize,
+    ) -> Result<Self> {
         if scope.model == [0; 32] || scope.session == [0; 32] {
             return Err(Error::InvalidLimits);
         }
@@ -380,6 +399,7 @@ impl EngineeringTpPagedPoolV1 {
             identity,
             scope,
             limits,
+            row_capacity,
             state: State {
                 pages: vec![PhysicalPage::default(); limits.physical_pages as usize],
                 nodes: vec![None; limits.physical_pages as usize],
@@ -410,6 +430,11 @@ impl EngineeringTpPagedPoolV1 {
     #[must_use]
     pub const fn limits(&self) -> EngineeringTpPagedLimitsV1 {
         self.limits
+    }
+    /// Maximum rows in one physical transaction, independent of page size.
+    #[must_use]
+    pub const fn row_capacity(&self) -> usize {
+        self.row_capacity
     }
     /// True only before any admission/reservation, suitable for fresh driver construction.
     #[must_use]
@@ -509,7 +534,7 @@ impl EngineeringTpPagedPoolV1 {
         rows: &[EngineeringTpPageRowV1],
     ) -> Result<EngineeringTpPreparedBatchV1> {
         self.require_idle()?;
-        if rows.is_empty() || rows.len() > ENGINEERING_TP_MAX_BATCH_ROWS_V1 {
+        if rows.is_empty() || rows.len() > self.row_capacity {
             return Err(Error::InvalidRows);
         }
         let next_batch = self.next_batch.checked_add(1).ok_or(Error::Exhausted)?;

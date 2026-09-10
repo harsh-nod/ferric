@@ -253,9 +253,37 @@ impl EngineeringTpSchedulerV1 {
         max_rows: usize,
         prefill_chunk: usize,
     ) -> Result<Self, TpSchedulerErrorV1> {
+        Self::new_bounded(
+            vocabulary,
+            context_limit,
+            max_rows,
+            prefill_chunk,
+            TP_MAX_BATCH_ROWS_V1,
+        )
+    }
+
+    /// Explicitly admits up to 32 rows for a separately selected v5 GPU profile.
+    /// # Errors
+    /// Rejects invalid vocabulary/context or chunk/row limits outside 1..=32.
+    pub fn new_wide32(
+        vocabulary: u32,
+        context_limit: u32,
+        max_rows: usize,
+        prefill_chunk: usize,
+    ) -> Result<Self, TpSchedulerErrorV1> {
+        Self::new_bounded(vocabulary, context_limit, max_rows, prefill_chunk, 32)
+    }
+
+    fn new_bounded(
+        vocabulary: u32,
+        context_limit: u32,
+        max_rows: usize,
+        prefill_chunk: usize,
+        row_capacity: usize,
+    ) -> Result<Self, TpSchedulerErrorV1> {
         if vocabulary == 0
             || !(1..=TP_MAX_CONTEXT_V1).contains(&context_limit)
-            || !(1..=TP_MAX_BATCH_ROWS_V1).contains(&max_rows)
+            || !(1..=row_capacity).contains(&max_rows)
             || !(1..=max_rows).contains(&prefill_chunk)
         {
             return Err(TpSchedulerErrorV1::InvalidConfiguration);

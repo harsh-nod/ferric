@@ -11,6 +11,7 @@ mod collective;
 mod peer_reduction;
 mod performance;
 mod reduction;
+mod row_profile;
 
 #[cfg(feature = "tp-batch-engineering")]
 pub mod batched;
@@ -255,6 +256,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     sequence: TensorParallelSequenceV1,
     collective: Qwen3TensorParallelCollectiveStateV1,
     capacity: u32,
+    row_capacity: u32,
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
@@ -288,7 +290,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         rows: u32,
     ) -> TpResult<Self> {
         let prepared = (|| {
-            if !(1..=16).contains(&rows) {
+            if !(1..=32).contains(&rows) {
                 return Err("TP storage row bound exceeded".into());
             }
             let world = u32::try_from(transports.len()).map_err(|_| "too many TP ranks")?;
@@ -392,6 +394,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             sequence,
             collective,
             capacity,
+            row_capacity: rows,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
             sequences: None,
@@ -761,6 +764,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        let bound = if self.row_capacity == 32 {
+            Some(row_profile::bind(32, command.clone())?)
+        } else {
+            None
+        };
+        let command = bound.as_ref().unwrap_or(command);
         self.flush_sequences()?;
         if self.ranks[0].dispatches == u64::MAX {
             return Err("dispatch counter overflow".into());
@@ -780,17 +789,35 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 return Err("pending rank sequence bound drifted".into());
             }
             for (rank, commands) in self.ranks.iter().zip(pending) {
-                commands.push(command(rank));
+                commands.push(row_profile::bind(self.row_capacity, command(rank))?);
             }
             return Ok(());
         }
         if self.ranks.iter().any(|rank| rank.dispatches == u64::MAX) {
             return Err("dispatch counter overflow".into());
         }
+        // A wide-profile routing failure must precede publication on every rank.
+        let bound = if self.row_capacity == 32 {
+            Some(
+                self.ranks
+                    .iter()
+                    .map(|rank| row_profile::bind(32, command(rank)))
+                    .collect::<TpResult<Vec<_>>>()?,
+            )
+        } else {
+            None
+        };
         let mut submitted = 0;
         let mut error = None;
-        for (rank, transport) in self.ranks.iter().zip(&mut self.transports) {
-            match transport.submit(&command(rank)) {
+        for (index, (rank, transport)) in self.ranks.iter().zip(&mut self.transports).enumerate() {
+            let owned;
+            let next = if let Some(commands) = &bound {
+                &commands[index]
+            } else {
+                owned = command(rank);
+                &owned
+            };
+            match transport.submit(next) {
                 Ok(()) => submitted += 1,
                 Err(message) => {
                     error = Some(message);
@@ -964,7 +991,7 @@ fn allocate_rank_storage<R: EngineeringTpRankTransportV1>(
     capacity: u32,
     rows: u32,
 ) -> TpResult<Rank> {
-    if !(1..=16).contains(&rows) {
+    if !(1..=32).contains(&rows) {
         return Err("TP storage row bound exceeded".into());
     }
     let geometry = plan

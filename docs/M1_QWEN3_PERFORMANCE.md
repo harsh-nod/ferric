@@ -12,14 +12,14 @@ runs so independent teams cannot contaminate one another's measurements.
 | --- | --- | --- | --- |
 | Fresh unchanged baseline | Integration | Frozen existing controller/image/worker | Two TP8 cache-on runs strictly validated |
 | Runtime admission cache and checked operational validation | Runtime | Published to fe2o3; integrated opt-in controls pass host tests/Clippy | Four-policy native probe passes; two operational-only Qwen runs strictly validated |
-| Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; Qwen ablations pending |
+| Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; cumulative Qwen R1 passes but is slower than operational-only |
 | Skip intermediate-prefill output heads | Integration | Implemented with independent opt-in flag; remote tests and Clippy pass | Two strictly validated TP8 runs; substantial timing variation, no consistent win |
-| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave image emitted; generic MFMA fixes published; full MFMA image in progress | Wave projection fixtures pass; model comparison pending |
+| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference, so no wave speedup is accepted; MFMA model comparison pending |
 | Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Included in 26-fixture native wave probe; model comparison pending |
 | GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Synthetic native fixtures pass; TP1 model comparison pending |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | Isolated model ablation pending |
-| True device-resident TP2/8 collective | Collectives/runtime | Peer owner published; separate serial peer child/transport host-tested; v4 image emitted | TP2 8-case and TP8 128-case ownership probes and 13 arithmetic fixtures pass; GPU-producer visibility and Qwen comparison pending |
-| Larger row envelope and TP allocation tuning | Integration/kernels | Follow kernel bounds and queue lifecycle work | Pending |
+| True device-resident TP2/8 collective | Collectives/runtime | Peer owner published; separate serial peer child/transport integrated and host-tested; v4 image emitted | TP2 8-case and TP8 128-case ownership probes, 13 arithmetic fixtures, and GPU-producer TP2/8 6/24 observations pass; Qwen comparison pending |
+| Larger row envelope and TP allocation tuning | Integration/kernels | Independent 32-row source profile and matching explicit host envelopes in progress; 16-row defaults retained | No 32-row GPU or replica-throughput claim yet |
 | Bound comparison and performance ledger | Runtime | Implemented; 36 host tests and real archived-run checks pass | Baseline, pruning, and two operational runs recorded |
 
 ## Initial Observations
@@ -33,6 +33,20 @@ Ranges show individual repetitions, not confidence intervals or stable tails.
 | Frozen baseline | 2 | 44.2761-46.8909 | 40.6842-46.3793 | 0.033547-0.034407 |
 | Output-head pruning only | 2 | 26.9561-40.5045 | 26.2307-39.6742 | See per-run ledger; large variation |
 | Operational currentness only | 2 | 2.4190-2.4330 | 1.1400-1.1569 | 0.471980-0.504046 |
+| Current controller/runtime, all controls off | 1 | 46.5623 | 38.1315 | 0.028966 |
+| Operational + admission cache + sequences | 1 | 4.1125 | 2.5865 | 0.296581 |
+
+The final two rows use the same controller `bc4a283b...` and worker `70572ff2...`.
+Their single-run cumulative ratio is 10.2391x output rate. The cumulative
+profile is slower than the separately measured operational-only profile;
+there is no established incremental cache/sequence benefit. Standalone
+cache, sequences, host scratch reuse, and wave attention are queued separately.
+
+The wave-projection candidate completed but failed strict model comparison:
+`seed-prefix` generated `[9856, 374]` (" Germany is") instead of `[17689, 374]`
+(" Spain is"). The other three request summaries matched. This failed
+candidate is archived, excluded from accepted timing ledgers, and remains
+unqualified while stronger arithmetic differential tests are performed.
 
 The operational-only runs show roughly 14-15x baseline workload output rate,
 not a serving-throughput claim. They retain admission caching, sequences,

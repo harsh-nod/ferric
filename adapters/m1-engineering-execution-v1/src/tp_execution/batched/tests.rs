@@ -438,6 +438,7 @@ fn fixture(
         sequence: TensorParallelSequenceV1::new(64, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
+        row_capacity: 16,
         hidden: vec![0; 4096 * 16],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
@@ -445,6 +446,7 @@ fn fixture(
     };
     EngineeringTpBatchExecutionV2 {
         inner,
+        row_capacity: 16,
         positions,
         page_tables,
         scope: pool.scope(),

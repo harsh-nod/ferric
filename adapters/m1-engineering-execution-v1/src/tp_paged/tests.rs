@@ -1,5 +1,55 @@
 use super::*;
 
+#[test]
+fn explicit_wide_pool_commits_thirty_two_distinct_causal_slots_once() {
+    let limits = EngineeringTpPagedLimitsV1::new(64, 32, 4, 100).unwrap();
+    let mut wide = EngineeringTpPagedPoolV1::new_wide32(scope(), limits).unwrap();
+    let prompt = (0..32).collect::<Vec<_>>();
+    let sequence = wide.open_sequence(scope(), &prompt, 0).unwrap().sequence();
+    let rows = prompt
+        .iter()
+        .enumerate()
+        .map(|(index, &token)| row(sequence, u32::try_from(index).unwrap(), token))
+        .collect::<Vec<_>>();
+    let prepared = wide.reserve_batch(&rows).unwrap();
+    assert_eq!(prepared.rows().len(), 32);
+    assert_eq!(
+        prepared
+            .rows()
+            .iter()
+            .map(|row| (row.writable_physical_page(), row.writable_token_offset()))
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        32
+    );
+    assert_eq!(wide.committed_position(sequence).unwrap(), 0);
+    wide.begin_submission(&prepared).unwrap();
+    wide.commit_batch(
+        &prepared,
+        EngineeringTpBatchCompletionV1::after_all_ranks(&prepared),
+    )
+    .unwrap();
+    assert_eq!(wide.committed_position(sequence).unwrap(), 32);
+    wide.check_invariants().unwrap();
+
+    let mut legacy = pool(4);
+    let old_sequence = legacy
+        .open_sequence(scope(), &prompt, 0)
+        .unwrap()
+        .sequence();
+    let old_rows = prompt
+        .iter()
+        .enumerate()
+        .map(|(index, &token)| row(old_sequence, u32::try_from(index).unwrap(), token))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        legacy.reserve_batch(&old_rows).unwrap_err(),
+        Error::InvalidRows
+    );
+    assert_eq!(legacy.committed_position(old_sequence).unwrap(), 0);
+    assert!(wide.reserve_batch(&vec![row(sequence, 32, 1); 33]).is_err());
+}
+
 fn scope() -> EngineeringTpPoolScopeV1 {
     EngineeringTpPoolScopeV1 {
         model: [1; 32],

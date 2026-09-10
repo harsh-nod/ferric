@@ -204,6 +204,7 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<Transport> {
         sequence: TensorParallelSequenceV1::new(64, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
+        row_capacity: 16,
         hidden: vec![0; 4096 * 16],
         reduction: ReductionWorkspace::Baseline,
         sequences: None,

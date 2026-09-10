@@ -220,6 +220,7 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<RecordingTransport> {
         sequence: TensorParallelSequenceV1::new(2, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 2,
+        row_capacity: 1,
         hidden: vec![0; 4096],
         reduction: ReductionWorkspace::default(),
         sequences: None,

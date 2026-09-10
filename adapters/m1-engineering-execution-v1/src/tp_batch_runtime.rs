@@ -18,6 +18,10 @@ use crate::tp_scheduler::{
 
 /// Actual GPU work boundary; external code cannot fabricate the pool completion token.
 pub trait EngineeringTpBatchRunnerV2 {
+    /// Physical workspace and admitted kernel row envelope, never a logical hint.
+    fn row_capacity(&self) -> usize {
+        16
+    }
     /// Executes every layer and rank for the supplied immutable prepared batch.
     /// # Errors
     /// Rejects invalid metadata, exhausted budgets, or incomplete device work.
@@ -49,6 +53,9 @@ pub trait EngineeringTpBatchRunnerV2 {
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     for EngineeringTpBatchExecutionV2<R>
 {
+    fn row_capacity(&self) -> usize {
+        self.row_capacity()
+    }
     fn execute_batch(
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
@@ -120,24 +127,52 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
     /// # Errors
     /// Rejects preexisting request/cache metadata or an unsupported row budget.
     pub fn new(
-        mut gpu: G,
+        gpu: G,
         pool: EngineeringTpPagedPoolV1,
         scheduler: EngineeringTpSchedulerV1,
         row_budget: usize,
         retain_prefixes: bool,
     ) -> TpResult<Self> {
+        Self::new_bounded(gpu, pool, scheduler, row_budget, retain_prefixes, 16)
+    }
+
+    /// Joins an explicit 32-row pool, driver and scheduler without microbatch splitting.
+    /// # Errors
+    /// Rejects mismatched physical capacities or preexisting request/cache metadata.
+    pub fn new_wide32(
+        gpu: G,
+        pool: EngineeringTpPagedPoolV1,
+        scheduler: EngineeringTpSchedulerV1,
+        row_budget: usize,
+        retain_prefixes: bool,
+    ) -> TpResult<Self> {
+        Self::new_bounded(gpu, pool, scheduler, row_budget, retain_prefixes, 32)
+    }
+
+    fn new_bounded(
+        mut gpu: G,
+        pool: EngineeringTpPagedPoolV1,
+        scheduler: EngineeringTpSchedulerV1,
+        row_budget: usize,
+        retain_prefixes: bool,
+        row_capacity: usize,
+    ) -> TpResult<Self> {
         let counts = gpu.dispatch_counts();
         if !pool.is_empty()
             || scheduler.retained_requests() != 0
             || scheduler.is_poisoned()
-            || !(1..=16).contains(&row_budget)
+            || !(1..=row_capacity).contains(&row_budget)
+            || pool.row_capacity() != row_capacity
+            || gpu.row_capacity() != row_capacity
             || scheduler.context_limit() != pool.limits().context_tokens()
             || row_budget > scheduler.max_batch_rows()
             || !matches!(counts.len(), 1 | 2 | 8)
             || counts.iter().any(|&count| count != 0)
         {
             let _ = gpu.close();
-            return Err("batch runtime requires fresh state and a row budget in 1..=16".into());
+            return Err(
+                "batch runtime requires fresh state and matching physical row envelopes".into(),
+            );
         }
         Ok(Self {
             gpu,

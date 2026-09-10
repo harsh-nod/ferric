@@ -176,7 +176,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         let rank = &self.ranks[0];
         if self.plan.world_size() != 1
             || elements != rows * 4096
-            || !(1..=16).contains(&rows)
+            || !(1..=self.row_capacity as usize).contains(&rows)
             || elements > scratch.elements
             || elements > rank.hidden.elements
             || elements > rank.partial.elements

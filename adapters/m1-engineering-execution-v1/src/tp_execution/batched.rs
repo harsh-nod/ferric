@@ -41,6 +41,7 @@ pub struct EngineeringTpBatchOutputV2 {
 #[allow(clippy::struct_excessive_bools)]
 pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     inner: EngineeringTpExecutionV1<R>,
+    row_capacity: usize,
     positions: Vec<Tensor>,
     page_tables: Vec<Tensor>,
     scope: EngineeringTpPoolScopeV1,
@@ -66,13 +67,40 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects unsupported model/storage, a nonempty pool, or any transport failure.
     pub fn new(
-        mut transports: Vec<R>,
+        transports: Vec<R>,
         model: ModelConfig,
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
         pool: &EngineeringTpPagedPoolV1,
     ) -> TpResult<Self> {
-        if model.role != Qwen3ModelRole::Target8B || !pool.is_empty() {
+        Self::new_bounded(transports, model, weights, layout, pool, MAX_ROWS)
+    }
+
+    /// Allocates genuine 32-row workspaces for transports admitting the separate v5 image.
+    /// # Errors
+    /// Rejects incompatible model/pool geometry or any transport failure.
+    pub fn new_wide32(
+        transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+    ) -> TpResult<Self> {
+        Self::new_bounded(transports, model, weights, layout, pool, 32)
+    }
+
+    fn new_bounded(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        row_capacity: usize,
+    ) -> TpResult<Self> {
+        if model.role != Qwen3ModelRole::Target8B
+            || !pool.is_empty()
+            || pool.row_capacity() != row_capacity
+        {
             for transport in &mut transports {
                 let _ = transport.close();
             }
@@ -88,16 +116,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             weights,
             layout,
             physical_pages * PAGE_TOKENS,
-            u32::try_from(MAX_ROWS).map_err(|_| "row limit conversion")?,
+            u32::try_from(row_capacity).map_err(|_| "row limit conversion")?,
         )?;
         let metadata = (|| {
             let mut positions = Vec::new();
             let mut page_tables = Vec::new();
             for transport in &mut inner.transports {
-                positions.push(allocate_tensor(transport, MAX_ROWS, 4)?);
+                positions.push(allocate_tensor(transport, row_capacity, 4)?);
                 page_tables.push(allocate_tensor(
                     transport,
-                    MAX_ROWS * table_stride as usize,
+                    row_capacity * table_stride as usize,
                     4,
                 )?);
             }
@@ -115,6 +143,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         };
         Ok(Self {
             inner,
+            row_capacity,
             positions,
             page_tables,
             scope: pool.scope(),
@@ -132,12 +161,21 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         })
     }
 
+    /// Maximum physical rows supported by this allocation and kernel profile.
+    #[must_use]
+    pub const fn row_capacity(&self) -> usize {
+        self.row_capacity
+    }
+
     /// Selects an explicit reduction ablation before the first batch.
     /// `DeviceTp1V3` requires a transport admitting the separate v3 image.
     ///
     /// # Errors
     /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
     pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
+        if self.row_capacity == 32 && mode == EngineeringTpReductionModeV3::DevicePeerV4 {
+            return Err("the v4 peer image is limited to the separate 16-row profile".into());
+        }
         if self.poisoned || self.last_batch != 0 || self.completed_batches != 0 {
             return Err("reduction mode requires a fresh batch stream".into());
         }
@@ -364,7 +402,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || batch.page_table_stride() != self.table_stride
             || batch.id() <= self.last_batch
             || batch.rows().is_empty()
-            || batch.rows().len() > MAX_ROWS
+            || batch.rows().len() > self.row_capacity
         {
             return Err("foreign, stale, or invalid prepared GPU batch".into());
         }

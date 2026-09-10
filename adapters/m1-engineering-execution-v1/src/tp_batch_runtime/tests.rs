@@ -33,10 +33,14 @@ struct FakeState {
 
 struct FakeRunner {
     pool: u64,
+    row_capacity: usize,
     state: Rc<RefCell<FakeState>>,
 }
 
 impl EngineeringTpBatchRunnerV2 for FakeRunner {
+    fn row_capacity(&self) -> usize {
+        self.row_capacity
+    }
     fn execute_batch(
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
@@ -147,6 +151,7 @@ fn fake(pool: &EngineeringTpPagedPoolV1, ranks: usize) -> (FakeRunner, Rc<RefCel
     (
         FakeRunner {
             pool: pool.identity(),
+            row_capacity: pool.row_capacity(),
             state: Rc::clone(&state),
         },
         state,
@@ -177,6 +182,41 @@ fn input(prompt: &[u32], new_tokens: u32, tick: u64) -> TpRequestAdmissionV1 {
         cached_prefix_tokens: 0,
         arrival_tick: tick,
         arrival_ns: tick * 10,
+    }
+}
+
+#[test]
+fn wide_runtime_checks_physical_capacity_and_executes_one_transaction() {
+    for physical_capacity in [16, 32] {
+        let pool = EngineeringTpPagedPoolV1::new_wide32(
+            EngineeringTpPoolScopeV1 {
+                model: [1; 32],
+                session: [2; 32],
+            },
+            EngineeringTpPagedLimitsV1::new(64, 32, 4, 1000).unwrap(),
+        )
+        .unwrap();
+        let (mut gpu, state) = fake(&pool, 8);
+        gpu.row_capacity = physical_capacity;
+        let scheduler = EngineeringTpSchedulerV1::new_wide32(1000, 64, 32, 32).unwrap();
+        let runtime = EngineeringTpBatchRuntimeV2::new_wide32(gpu, pool, scheduler, 32, true);
+        if physical_capacity == 16 {
+            assert!(runtime.is_err());
+            assert_eq!(state.borrow().close_calls, 1);
+            continue;
+        }
+        let mut runtime = runtime.unwrap();
+        runtime.admit(input(&[1; 32], 2, 0), 0, 0).unwrap();
+        let report = step(&mut runtime, 0);
+        assert_eq!(report.rows.len(), 32);
+        assert_eq!(report.outputs.len(), 1);
+        assert_eq!(state.borrow().calls.len(), 1);
+        assert_eq!(state.borrow().calls[0].len(), 32);
+        assert_eq!(
+            report.rank_dispatch_counts,
+            [544, 540, 540, 540, 540, 540, 540, 540]
+        );
+        runtime.close().unwrap();
     }
 }
 
