@@ -259,6 +259,13 @@ class Worker:
         self.stderr.close()
 
 
+def pointer_matches_source(pointer, offset, record):
+    return (pointer["offset"] == offset and pointer["bytes"] == 8
+            and pointer["global_buffer"] is True
+            and pointer["pointee_alignment"] in (None, record["element_bytes"])
+            and pointer["access"] in (None, record["access"]))
+
+
 def probe(worker, case, artifact, artifact_hash):
     loaded, payload = worker.command({"op": "load_kernel", "payload_bytes": len(artifact),
                                      "object_sha256": list(bytes.fromhex(artifact_hash)),
@@ -280,9 +287,8 @@ def probe(worker, case, artifact, artifact_hash):
     offset = 0
     for index, record in enumerate(case["buffers"]):
         pointer, count = args[index * 2:index * 2 + 2]
-        require(pointer["offset"] == offset and pointer["bytes"] == 8 and pointer["global_buffer"]
-                and pointer["pointee_alignment"] == record["element_bytes"]
-                and pointer["access"] == record["access"], "buffer metadata differs from exact source ABI")
+        require(pointer_matches_source(pointer, offset, record),
+                "buffer metadata differs from exact source ABI")
         require(count["offset"] == offset + 8 and count["bytes"] == 8 and not count["global_buffer"], "slice length metadata")
         identifier = worker.allocate(GUARD + record["data"] + GUARD)
         require(identifier not in allocated, "allocation ID reused")

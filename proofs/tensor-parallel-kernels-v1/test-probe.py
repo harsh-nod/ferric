@@ -41,6 +41,17 @@ class ProbeTests(unittest.TestCase):
     def test_fixtures(self):
         probe.self_test()
 
+    def test_optional_pointer_metadata_never_overrides_source_abi(self):
+        record = {"element_bytes": 2, "access": "read"}
+        pointer = {"offset": 16, "bytes": 8, "global_buffer": True,
+                   "pointee_alignment": None, "access": None}
+        self.assertTrue(probe.pointer_matches_source(pointer, 16, record))
+        self.assertTrue(probe.pointer_matches_source(
+            {**pointer, "pointee_alignment": 2, "access": "read"}, 16, record))
+        for key, value in [("offset", 0), ("bytes", 4), ("global_buffer", False),
+                           ("pointee_alignment", 4), ("access", "write")]:
+            self.assertFalse(probe.pointer_matches_source({**pointer, key: value}, 16, record))
+
     def test_header_bounds_and_duplicate_keys(self):
         for size in [0, 65537, (1 << 32) - 1]:
             with self.assertRaisesRegex(RuntimeError, "header limit"):

@@ -21,6 +21,9 @@ directory. The worker executes a held inode and its PID/start time/executable
 identity are checked. Protocol operations have byte and time bounds. Each input
 and output has 64-byte guards on both sides, every input is reread unchanged,
 all output bytes are checked, and successful close/reaping is required.
+The source ABI supplies element units and pointer access roles. Optional AMDHSA
+pointee alignment/access fields may be absent; any present value must agree
+with that source ABI. Their absence is not interpreted as metadata assurance.
 
 The six fixtures exercise Qwen3-8B TP8 geometry: column GEMV, FP32 partial GEMV
 retaining `1.00390625`, zero-input SwiGLU, identity-position RoPE, KV append
