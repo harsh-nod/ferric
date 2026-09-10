@@ -1274,7 +1274,7 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       sourceStatus: "d863c53",
-      title: "Latest public compiler/runtime repin passes combined host checks",
+      title: "Compiler/runtime repin passes combined host checks",
       state: "implemented",
       detail: "Private repin d863c53 on Ferric e277e1d targets public fe2o3 1b262ac, tree 6d7cf46, and is integrated privately as e1f614a. Its isolated checkpoint passes 26 locked metadata configurations over 22 manifests, release workspace closure, 164 library tests plus one existing ignore, 22 batch CLI tests, 11 legacy CLI tests, five peer child/probe tests, strict Clippy and release builds. Source gates cover 173 modules and 8,235 bodies. The later combined latest-pin gate also passes: 168 library tests with two explicit ignores, 32 batch CLI, 11 legacy CLI, six control, 22 source-policy, 59 comparison and 11 launcher tests, plus strict Clippy and release. This is not a public Ferric implementation push, new GPU result, compiler emission, behavioral harness, Verus receipt or protected M1 qualification. Frozen model binaries retain their older pins.",
     },
