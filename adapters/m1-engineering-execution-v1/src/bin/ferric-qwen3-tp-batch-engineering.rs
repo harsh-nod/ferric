@@ -1,5 +1,7 @@
 //! Bounded, explicitly non-authoritative continuous Qwen workload runner.
 
+mod tp_peer_worker;
+mod tp_rank_worker;
 mod tp_worker;
 
 use std::collections::BTreeSet;
@@ -23,13 +25,16 @@ use ferric_m1_engineering_execution_v1::tp_scheduler::{
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use tp_peer_worker::PeerWorker;
+use tp_rank_worker::RankWorker;
 use tp_worker::{RuntimeOptions, Worker};
 
-const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3] [--kernel-profile v2|v3-wave|v3-mfma] [--projection baseline|wave|mfma|auto] [--attention baseline|wave]";
+const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4] [--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma] [--projection baseline|wave|mfma|auto] [--attention baseline|wave]";
 
 struct Options {
     source: PathBuf,
     artifact: PathBuf,
+    peer_artifact: Option<PathBuf>,
     worker: PathBuf,
     requests: PathBuf,
     devices: Vec<u64>,
@@ -71,6 +76,7 @@ impl Options {
         let mut kernel_profile = KernelProfile::V2;
         let mut projection = ProjectionMode::Baseline;
         let mut wave_attention = false;
+        let mut peer_artifact = None;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -113,6 +119,7 @@ impl Options {
             match flag.as_str() {
                 "--source" => source = Some(PathBuf::from(value)),
                 "--artifact" => artifact = Some(PathBuf::from(value)),
+                "--peer-artifact" => peer_artifact = Some(PathBuf::from(value)),
                 "--worker" => worker = Some(PathBuf::from(value)),
                 "--requests" => requests = Some(PathBuf::from(value)),
                 "--devices" => {
@@ -135,6 +142,7 @@ impl Options {
                         "host-staged-v1" => EngineeringTpReductionModeV3::HostStagedV1,
                         "host-staged-reuse-v3" => EngineeringTpReductionModeV3::HostStagedReuseV3,
                         "device-tp1-v3" => EngineeringTpReductionModeV3::DeviceTp1V3,
+                        "device-peer-serial-v4" => EngineeringTpReductionModeV3::DevicePeerV4,
                         _ => return Err("unsupported collective".into()),
                     }
                 }
@@ -187,6 +195,17 @@ impl Options {
                     .into(),
             );
         }
+        let peer = collective == EngineeringTpReductionModeV3::DevicePeerV4;
+        if peer != peer_artifact.is_some()
+            || (peer && !matches!(devices.len(), 2 | 8))
+            || (peer
+                && (runtime.cache_admission
+                    || runtime.operational
+                    || runtime.sequences
+                    || runtime.rollover))
+        {
+            return Err("serial peer transport requires TP2/8 and --peer-artifact; independent runtime controls are not supported".into());
+        }
         let packets_per_batch = 36 * (15 + collective.extra_dispatches_per_layer()) + 4;
         if !seen.contains("--max-batches") && !runtime.rollover {
             max_batches = max_batches.min(
@@ -209,6 +228,7 @@ impl Options {
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
+            peer_artifact,
             worker: worker.ok_or("--worker is required")?,
             requests: requests.ok_or("--requests is required")?,
             devices,
@@ -363,7 +383,7 @@ fn emit_request(
 }
 
 fn run_workload(
-    runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<Worker>>,
+    runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<RankWorker>>,
     model: &EngineeringQwenModelV1,
     workload: &Workload,
     prompts: &[Vec<u32>],
@@ -454,7 +474,7 @@ fn run_workload(
 }
 
 fn retire_finished(
-    runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<Worker>>,
+    runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<RankWorker>>,
     active: &mut Vec<(usize, TpRequestIdV1)>,
     workload: &Workload,
     model: &EngineeringQwenModelV1,
@@ -494,6 +514,17 @@ fn run(options: &Options) -> Result<(), String> {
         EngineeringTpArtifactV1::open_performance(&options.artifact, &expected, mfma)
     }
     .map_err(|e| e.to_string())?;
+    let peer_artifact = options
+        .peer_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_peer(
+                path,
+                &ferric_qwen3_tp_peer_kernels_device_v4::compiler_expectation_roster_v4(),
+            )
+            .map_err(|error| error.to_string())
+        })
+        .transpose()?;
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let prompts = workload
         .requests
@@ -528,12 +559,22 @@ fn run(options: &Options) -> Result<(), String> {
         options.chunk,
     )
     .map_err(|e| format!("scheduler: {e:?}"))?;
-    let workers = options
-        .devices
-        .iter()
-        .map(|&id| Worker::spawn_with_options(&options.worker, id, &artifact, options.runtime))
-        .collect::<Result<Vec<_>, _>>()?;
-    let pids = workers.iter().map(Worker::pid).collect::<Vec<_>>();
+    let workers = if let Some(peer) = &peer_artifact {
+        PeerWorker::spawn(&options.worker, &options.devices, &[&artifact, peer])?
+            .into_iter()
+            .map(RankWorker::Peer)
+            .collect::<Vec<_>>()
+    } else {
+        options
+            .devices
+            .iter()
+            .map(|&id| {
+                Worker::spawn_with_options(&options.worker, id, &artifact, options.runtime)
+                    .map(RankWorker::Independent)
+            })
+            .collect::<Result<Vec<_>, _>>()?
+    };
+    let pids = workers.iter().map(RankWorker::pid).collect::<Vec<_>>();
     let running_hashes = pids
         .iter()
         .map(|pid| hash_file(&PathBuf::from(format!("/proc/{pid}/exe"))))
@@ -560,8 +601,7 @@ fn run(options: &Options) -> Result<(), String> {
     let mut runtime =
         EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, options.rows, options.cache)?;
     let result = (|| {
-        emit(
-            &serde_json::json!({"schema":"FerricQwen3TpBatchSetupV2", "authority":"none",
+        let mut setup = serde_json::json!({"schema":"FerricQwen3TpBatchSetupV2", "authority":"none",
             "model":"Qwen/Qwen3-8B", "dtype":"BF16", "target":"gfx950:xnack-",
             "tensor_parallel":options.devices.len(), "device_unique_ids":options.devices,
             "worker_pids":pids, "worker_sha256":worker_hash, "running_worker_sha256":running_hashes,
@@ -584,8 +624,15 @@ fn run(options: &Options) -> Result<(), String> {
             } else { options.collective.label() },
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
-            "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"}),
-        )?;
+            "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"});
+        if let Some(peer) = &peer_artifact {
+            setup["peer_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(peer.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(peer.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(peer.handoff_id().as_bytes())
+            });
+        }
+        emit(&setup)?;
         run_workload(&mut runtime, &model, &workload, &prompts, options)
     })();
     let close = runtime.close();
@@ -674,6 +721,45 @@ mod tests {
             assert!(Workload::parse(&serde_json::to_vec(&bad).unwrap()).is_err());
         }
         assert!(Workload::parse(&vec![0; 1_048_577]).is_err());
+    }
+
+    #[test]
+    fn peer_mode_requires_its_own_image_world_and_supported_transport_options() {
+        let base = [
+            "--devices",
+            "1,2",
+            "--collective",
+            "device-peer-serial-v4",
+            "--peer-artifact",
+            "/peer",
+        ];
+        let options = args(&base).unwrap();
+        assert_eq!(options.max_batches, 212);
+        assert_eq!(options.peer_artifact, Some(PathBuf::from("/peer")));
+        for flag in [
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--dispatch-sequences",
+            "--queue-rollover",
+        ] {
+            let mut supplied = base.to_vec();
+            supplied.push(flag);
+            assert!(args(&supplied).is_err());
+        }
+        for supplied in [
+            vec![
+                "--devices",
+                "1",
+                "--collective",
+                "device-peer-serial-v4",
+                "--peer-artifact",
+                "/peer",
+            ],
+            vec!["--devices", "1,2", "--collective", "device-peer-serial-v4"],
+            vec!["--devices", "1,2", "--peer-artifact", "/peer"],
+        ] {
+            assert!(args(&supplied).is_err());
+        }
     }
 
     #[test]

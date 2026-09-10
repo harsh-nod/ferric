@@ -1,4 +1,4 @@
-//! Strict, non-authoritative admission for the separate thirteen-kernel TP image.
+//! Strict, non-authoritative admission for independently closed TP kernel images.
 //!
 //! This does not convert an old M1 program catalog, rewrite a target label, or
 //! authenticate machine-code origin. It retains the exact observed bytes for
@@ -64,6 +64,12 @@ pub const ENGINEERING_TP_PERFORMANCE_EXPORTS_V3: [&str; 6] = [
     "ferric_qwen3_tp_mfma_gemm_partial_f32_v3",
     "ferric_qwen3_tp_wave_paged_gqa_bf16_v3",
     "ferric_qwen3_tp_batch_residual_bf16_v3",
+];
+
+/// Independent two-root image for ordered peer reduction and embedding copy.
+pub const ENGINEERING_TP_PEER_EXPORTS_V4: [&str; 2] = [
+    "ferric_qwen3_tp_peer_ordered_residual_bf16_v4",
+    "ferric_qwen3_tp_peer_copy_bf16_v4",
 ];
 
 /// Exact content-addressed engineering bytes and independently inspected metadata.
@@ -134,6 +140,22 @@ impl EngineeringTpArtifactV1 {
             expected,
             "ferric_qwen3_tp_perf_kernels_device_v3",
             &exports,
+        )
+    }
+
+    /// Opens the exact separate peer image, never a replacement for the base image.
+    /// # Errors
+    /// Rejects any missing/additional root, target, descriptor, source or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_peer(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_peer_kernels_device_v4",
+            &ENGINEERING_TP_PEER_EXPORTS_V4,
         )
     }
 
@@ -348,6 +370,33 @@ mod tests {
         assert!(!exact_roster(
             duplicate.into_iter(),
             &ENGINEERING_TP_BATCH_EXPORTS_V2
+        ));
+    }
+
+    #[test]
+    fn peer_roster_cannot_substitute_or_extend_the_base_image() {
+        use super::{
+            ENGINEERING_TP_BATCH_EXPORTS_V2, ENGINEERING_TP_PEER_EXPORTS_V4, exact_roster,
+        };
+        assert!(exact_roster(
+            ENGINEERING_TP_PEER_EXPORTS_V4.into_iter().rev(),
+            &ENGINEERING_TP_PEER_EXPORTS_V4
+        ));
+        assert!(!exact_roster(
+            ENGINEERING_TP_BATCH_EXPORTS_V2.into_iter(),
+            &ENGINEERING_TP_PEER_EXPORTS_V4
+        ));
+        assert!(!exact_roster(
+            ENGINEERING_TP_PEER_EXPORTS_V4.into_iter(),
+            &ENGINEERING_TP_BATCH_EXPORTS_V2
+        ));
+        assert!(!exact_roster(
+            ENGINEERING_TP_PEER_EXPORTS_V4.into_iter().take(1),
+            &ENGINEERING_TP_PEER_EXPORTS_V4
+        ));
+        assert!(!exact_roster(
+            [ENGINEERING_TP_PEER_EXPORTS_V4[0]; 2].into_iter(),
+            &ENGINEERING_TP_PEER_EXPORTS_V4
         ));
     }
 }

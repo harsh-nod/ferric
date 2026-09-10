@@ -101,6 +101,7 @@ fn adapter_is_an_exact_standalone_workspace() {
             "fe2o3-service-host",
             "ferric-qwen3-tp-batch-kernels-device-v2",
             "ferric-qwen3-tp-kernels-device-v1",
+            "ferric-qwen3-tp-peer-kernels-device-v4",
             "ferric-qwen3-tp-perf-kernels-device-v3"
         ]
     );
@@ -135,7 +136,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
         vec![
             Some("tp-engineering"),
             Some("dep:ferric-qwen3-tp-batch-kernels-device-v2"),
-            Some("dep:ferric-qwen3-tp-perf-kernels-device-v3")
+            Some("dep:ferric-qwen3-tp-perf-kernels-device-v3"),
+            Some("dep:ferric-qwen3-tp-peer-kernels-device-v4")
         ]
     );
     let bin = manifest["bin"]
