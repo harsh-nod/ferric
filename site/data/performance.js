@@ -129,7 +129,7 @@ window.FERRIC_PERFORMANCE = {
   },
   currentCompatibility: {
     scope: "Current-controller source compatibility, not blanket combination qualification. Ferric controller 44e4 is built on public fe2o3 7528; worker 189 was freshly rebuilt on 1b262 and is byte-identical to its public-902 build, with the worker closure unchanged through 7528. The emitted kernel images remain frozen to their original compiler/SDK provenance. These are independent n=1 four-request/eight-output cache-on observations, operational runtime on, not the 64-output allocation workload or a current-head compiler-emission/Verus receipt.",
-    interpretation: "The TP1 baseline control and TP8 wide-capacity MFMA-plus-pruning smoke pass exact reference and teardown checks. The TP8 smoke is unpaired and observed at most 17 rows, not 32: its capacity is 32 and actual batches are [17, 6, 6, 4, 1]. No gain is assigned against older profiles. The TP1 MFMA-plus-pruning-plus-device-residual combination is rejected: seed-prefix emits [9856, 374] (Germany is) instead of [17689, 374] (Spain is). Matching other request summaries does not qualify that trace; no rejected-run timing is published. Further TP1 isolation cases are pending.",
+    interpretation: "The TP1 baseline control and TP8 wide-capacity MFMA-plus-pruning smoke pass exact reference and teardown checks. The TP8 smoke is unpaired and observed at most 17 rows, not 32: its capacity is 32 and actual batches are [17, 6, 6, 4, 1]. No gain is assigned against older profiles. Current TP1 baseline projection plus pruning and device residual also passes: workload rate improves 12.06% versus its same-current control and reuse-prefix TTFT 5.56%, but TPOT changes only 0.25%. This is n=1 each with two flags changed, not an isolated pruning or residual gain. TP1 MFMA plus pruning plus device residual is rejected, and MFMA-only also fails: seed-prefix emits [9856, 374] (Germany is) instead of [17689, 374] (Spain is). The mismatch occurs without pruning or device residual, but its underlying numerical cause is not proven. Matching other request summaries does not qualify either rejected trace; no rejected-run timing is published. The outer diagnostic SSH session exited 255 after completed case receipts; per-case status/idle checks and absence of owned workers were confirmed separately, with the anomaly retained.",
     pins: {
       controllerSha256: "44e4bd4f1717a585fe955904f2b7f762f41ef59766007c1c46c3a4d7e403a0d9",
       workerSha256: "189b918dcd3f7104767404c636eb08490a3b1714a6f78123ea3a1fa06f21babb",
@@ -159,13 +159,32 @@ window.FERRIC_PERFORMANCE = {
         comparisonSha256: "67ad69a2ec6d29f2cc03f6eabe65cfcde7837cf606a37363837d65ddadb37c59",
         metricsFileSha256: "8f395b5dbfa30b276efaeacec155ce6b033c1c612e1c64e4fa843752154c8c93",
       },
+      {
+        id: "latest-tp1-residual-pruning-r1", name: "Current TP1 baseline + pruning + residual", repetitions: 1,
+        world: 1, imageProfile: "v3-mfma", projection: "baseline", outputHeadPruning: true, collective: "device-tp1-v3",
+        rowCapacity: 16, actualBatchRows: [16, 6, 7, 4, 1],
+        outputTokensPerSecond: 0.9378775166561548, workloadSeconds: 8.529898476,
+        setupSeconds: 102.432063554, wholeSeconds: 112.809883404,
+        requestLatencies: [[3.712036679, 1.825208929], [1.809598966, 1.8053320195],
+          [1.82516135, null], [1.785405941, 1.207197758]],
+        comparisonSha256: "66649461712577c7df2cef26cad9449beb288f7b34eb5156154925acb27eca06",
+        metricsFileSha256: "89a5521453330d8726d335febcd2ea3367e71093f69a54717bb0ad93f0ea69d9",
+      },
     ],
-    rejected: [{
-      id: "latest-tp1-cumulative-r1", name: "Current TP1 MFMA + pruning + device residual", repetitions: 1,
-      world: 1, projection: "mfma", outputHeadPruning: true, collective: "device-tp1-v3",
-      requestName: "seed-prefix", expectedTokens: [17689, 374], observedTokens: [9856, 374],
-      rejectionSha256: "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9",
-    }],
+    rejected: [
+      {
+        id: "latest-tp1-cumulative-r1", name: "Current TP1 MFMA + pruning + device residual", repetitions: 1,
+        world: 1, projection: "mfma", outputHeadPruning: true, collective: "device-tp1-v3",
+        requestName: "seed-prefix", expectedTokens: [17689, 374], observedTokens: [9856, 374],
+        rejectionSha256: "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9",
+      },
+      {
+        id: "latest-tp1-mfma-only-r1", name: "Current TP1 MFMA only", repetitions: 1,
+        world: 1, projection: "mfma", outputHeadPruning: false, collective: null,
+        requestName: "seed-prefix", expectedTokens: [17689, 374], observedTokens: [9856, 374],
+        rejectionSha256: "2402b01e3d4896d97b0546ff2da09ab23fe655d41e406e731c366d995473bd26",
+      },
+    ],
   },
   mfmaPair: {
     scope: "Matched TP8 MFMA projection pair, n=1 each: same controller, worker, full fifteen-root image, exact physical roster, model/reference and four-request/eight-output workload. Prefix cache on, pruning off, legacy host-staged rank-order collective, row/chunk budget 16. Only projection selection changes; operational runtime is on and all other performance flags are off. This is not the separate 64-output replica workload.",

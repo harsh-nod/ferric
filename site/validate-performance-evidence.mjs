@@ -177,11 +177,31 @@ const current = data.currentCompatibility;
 const currentAcceptedHashes = [
   ["f7f25c01e5b7d99350fbb15fee0c35b73d20ab8188cdfb89e350b04ffe961ce7", "37122de41dabe0287976f572627bce042e9a3be4e9820b143124371a8aa88400"],
   ["67ad69a2ec6d29f2cc03f6eabe65cfcde7837cf606a37363837d65ddadb37c59", "8f395b5dbfa30b276efaeacec155ce6b033c1c612e1c64e4fa843752154c8c93"],
+  ["66649461712577c7df2cef26cad9449beb288f7b34eb5156154925acb27eca06", "89a5521453330d8726d335febcd2ea3367e71093f69a54717bb0ad93f0ea69d9"],
 ];
 for (const [index, profile] of current.accepted.entries()) {
   const [comparisonHash, metricsHash] = currentAcceptedHashes[index];
   const report = await pinned(join(measurementRoot, `${profile.id}-comparison.json`), comparisonHash);
-  const record = await pinned(join(measurementRoot, `${profile.id}-metrics.json`), metricsHash);
+  let record;
+  if (index < 2) {
+    record = await pinned(join(measurementRoot, `${profile.id}-metrics.json`), metricsHash);
+  } else {
+    const ledger = await pinned(join(measurementRoot, "latest-tp1-residual-pruning-pair-r1.json"), metricsHash);
+    assert.equal(ledger.variants.length, 2);
+    requests(current.accepted[0], ledger.variants[0].runs[0]);
+    const variant = ledger.variants[1];
+    assert.equal(variant.runs.length, 1);
+    common({ ...variant.expected, output_head_pruning: false }, 1);
+    const bytes = await pinned(join(measurementRoot, `${profile.id}-results.jsonl`), report.input_sha256["results.jsonl"], false);
+    const rows = bytes.toString("utf8").trimEnd().split("\n").map((line) => JSON.parse(line))
+      .filter((item) => item.schema === "FerricQwen3TpBatchCompletedV2").map((item) => item.rows.length);
+    record = {
+      passed: report.passed, case: variant.runs[0].id, repetitions: variant.repetitions,
+      output_head_pruning: variant.expected.output_head_pruning, collective: variant.expected.collective,
+      performance_profile: variant.expected.performance_profile, actual_completed_rows: rows,
+      max_observed_rows: Math.max(...rows), metrics: variant.runs[0], comparison_sha256: variant.runs[0].comparison_sha256,
+    };
+  }
   assert.equal(profile.comparisonSha256, comparisonHash);
   assert.equal(profile.metricsFileSha256, metricsHash);
   checkedReport(report, profile.world);
@@ -209,10 +229,11 @@ for (const [index, profile] of current.accepted.entries()) {
   requests(profile, { ...record.metrics, comparison_sha256: record.comparison_sha256 });
   console.log("EXACT CURRENT-CONTROLLER ACCEPTED", profile.id);
 }
-for (const profile of current.rejected) {
-  const rejection = await pinned(join(measurementRoot, `${profile.id}-rejection.json`),
-    "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9");
-  assert.equal(profile.rejectionSha256, "be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9");
+for (const [index, profile] of current.rejected.entries()) {
+  const hash = ["be835327607d5a88c4b421327f87378c57c8513947881e1747044fe9ccf7a5b9",
+    "2402b01e3d4896d97b0546ff2da09ab23fe655d41e406e731c366d995473bd26"][index];
+  const rejection = await pinned(join(measurementRoot, `${profile.id}-rejection.json`), hash);
+  assert.equal(profile.rejectionSha256, hash);
   assert.equal(rejection.passed, false);
   assert.equal(rejection.case, profile.id);
   assert.equal(rejection.repetitions, 1);
@@ -231,6 +252,12 @@ for (const profile of current.rejected) {
   assert.deepEqual(mismatch.observed_tokens, profile.observedTokens);
   console.log("EXACT CURRENT-CONTROLLER REJECTION", profile.id);
 }
+const currentControl = current.accepted[0];
+const currentCumulative = current.accepted[2];
+for (const percentage of [
+  ((currentCumulative.outputTokensPerSecond / currentControl.outputTokensPerSecond - 1) * 100).toFixed(2),
+  ...[0, 1].map((index) => ((1 - currentCumulative.requestLatencies[3][index] / currentControl.requestLatencies[3][index]) * 100).toFixed(2)),
+]) assert(current.interpretation.includes(`${percentage}%`));
 const host = data.hostTranspose;
 const sourcePeer = data.peerSourceControls;
 const transposeModel = data.transposeModelPair;

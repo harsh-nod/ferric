@@ -152,28 +152,28 @@ export function validatePerformance(data) {
   assert(current.scope.includes("byte-identical"));
   assert(current.interpretation.includes("at most 17 rows, not 32"));
   assert(current.interpretation.includes("no rejected-run timing"));
-  assert.equal(current.accepted.length, 2);
+  assert.equal(current.accepted.length, 3);
   current.accepted.forEach((profile, index) => {
     singleProfile(profile, ["world", "imageProfile", "projection", "outputHeadPruning", "collective", "rowCapacity", "actualBatchRows", "metricsFileSha256"]);
-    assert.equal(profile.id, ["latest-tp1-control-r1", "latest-tp8-wide-cumulative-r1"][index]);
-    assert.equal(profile.world, [1, 8][index]);
-    assert.equal(profile.imageProfile, ["v3-mfma", "v5-mfma32"][index]);
-    assert.equal(profile.projection, ["baseline", "mfma"][index]);
-    assert.equal(profile.outputHeadPruning, index === 1);
-    assert.equal(profile.collective, null);
-    assert.equal(profile.rowCapacity, [16, 32][index]);
-    assert.deepEqual([...profile.actualBatchRows], index === 0 ? [16, 6, 7, 4, 1] : [17, 6, 6, 4, 1]);
+    assert.equal(profile.id, ["latest-tp1-control-r1", "latest-tp8-wide-cumulative-r1", "latest-tp1-residual-pruning-r1"][index]);
+    assert.equal(profile.world, [1, 8, 1][index]);
+    assert.equal(profile.imageProfile, index === 1 ? "v5-mfma32" : "v3-mfma");
+    assert.equal(profile.projection, index === 1 ? "mfma" : "baseline");
+    assert.equal(profile.outputHeadPruning, index !== 0);
+    assert.equal(profile.collective, index === 2 ? "device-tp1-v3" : null);
+    assert.equal(profile.rowCapacity, index === 1 ? 32 : 16);
+    assert.deepEqual([...profile.actualBatchRows], index === 1 ? [17, 6, 6, 4, 1] : [16, 6, 7, 4, 1]);
     digest(profile.metricsFileSha256);
   });
-  assert.equal(current.rejected.length, 1);
-  current.rejected.forEach((profile) => {
+  assert.equal(current.rejected.length, 2);
+  current.rejected.forEach((profile, index) => {
     keys(profile, ["id", "name", "repetitions", "world", "projection", "outputHeadPruning", "collective", "requestName", "expectedTokens", "observedTokens", "rejectionSha256"]);
-    assert.equal(profile.id, "latest-tp1-cumulative-r1");
+    assert.equal(profile.id, ["latest-tp1-cumulative-r1", "latest-tp1-mfma-only-r1"][index]);
     assert.equal(profile.repetitions, 1);
     assert.equal(profile.world, 1);
     assert.equal(profile.projection, "mfma");
-    assert.equal(profile.outputHeadPruning, true);
-    assert.equal(profile.collective, "device-tp1-v3");
+    assert.equal(profile.outputHeadPruning, index === 0);
+    assert.equal(profile.collective, index === 0 ? "device-tp1-v3" : null);
     assert.equal(profile.requestName, "seed-prefix");
     assert.deepEqual([...profile.expectedTokens], [17689, 374]);
     assert.deepEqual([...profile.observedTokens], [9856, 374]);
@@ -403,6 +403,9 @@ export function validatePerformance(data) {
 
 export function testPerformanceRejections(data) {
   const mutations = [
+    (copy) => { copy.currentCompatibility.accepted[2].collective = null; },
+    (copy) => { copy.currentCompatibility.accepted[2].projection = "mfma"; },
+    (copy) => { copy.currentCompatibility.rejected[1].outputHeadPruning = true; },
     (copy) => { copy.currentCompatibility.accepted[1].actualBatchRows[0] = 32; },
     (copy) => { copy.currentCompatibility.accepted[1].repetitions = 2; },
     (copy) => { copy.currentCompatibility.rejected[0].outputTokensPerSecond = 1; },
