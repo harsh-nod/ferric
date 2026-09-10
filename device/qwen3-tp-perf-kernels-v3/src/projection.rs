@@ -64,17 +64,26 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     } else {
         fe2o3_device::trap();
     }
-    let (row, column) = match n {
-        128 => (element / 128, element % 128),
-        512 => (element / 512, element % 512),
-        1024 => (element / 1024, element % 1024),
-        1536 => (element / 1536, element % 1536),
-        2048 => (element / 2048, element % 2048),
-        4096 => (element / 4096, element % 4096),
-        6144 => (element / 6144, element % 6144),
-        12288 => (element / 12288, element % 12288),
-        151936 => (element / 151936, element % 151936),
-        _ => fe2o3_device::trap(),
+    let (row, column) = if n == 128 {
+        (element / 128, element % 128)
+    } else if n == 512 {
+        (element / 512, element % 512)
+    } else if n == 1024 {
+        (element / 1024, element % 1024)
+    } else if n == 1536 {
+        (element / 1536, element % 1536)
+    } else if n == 2048 {
+        (element / 2048, element % 2048)
+    } else if n == 4096 {
+        (element / 4096, element % 4096)
+    } else if n == 6144 {
+        (element / 6144, element % 6144)
+    } else if n == 12288 {
+        (element / 12288, element % 12288)
+    } else if n == 151936 {
+        (element / 151936, element % 151936)
+    } else {
+        fe2o3_device::trap()
     };
     if row < 16 {
     } else {
