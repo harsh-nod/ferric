@@ -18,6 +18,9 @@ import compare_tp_batch as reference
 
 CLOCK = "CLOCK_MONOTONIC_RAW"
 TARGET_BYTES = 16_381_470_720
+PARTITIONED_GPU_BYTES = 13_891_534_848
+PER_RANK_GPU_BYTES = 608_256
+RANK_ZERO_GPU_BYTES = 2_489_327_616
 FRAME_LIMIT = 4096
 LAYOUTS = {"1xTP8": 8, "4xTP2": 2, "8xTP1": 1}
 NAMES = [f"replica-request-{i:02}" for i in range(8)]
@@ -27,6 +30,16 @@ FLAG_OPTIONS = {"--prune-output-head", "--runtime-cache-admission", "--runtime-o
                 "--dispatch-sequences", "--queue-rollover"}
 require = reference.require
 integer = reference.integer
+_interrupted = None
+
+
+def request_abort(signum, _frame):
+    global _interrupted
+    _interrupted = signum
+
+
+def check_interrupted():
+    require(_interrupted is None, f"launcher interrupted by signal {_interrupted}")
 
 
 def now_ns():
@@ -64,6 +77,10 @@ def partitions(devices, layout):
 
 def fixed_workload(reference_bytes):
     reference.load_reference(reference_bytes)
+    return workload_spec()
+
+
+def workload_spec():
     return {"schema": "FerricReplicaFixedWorkloadV1", "model_bundle_id": reference.BUNDLE,
             "reference_sha256": reference.REFERENCE_SHA256, "dtype": "BF16", "greedy": True,
             "prefix_cache": False, "arrival_offset_ns": 0, "cancellation": False,
@@ -105,13 +122,50 @@ def plan(devices, layout, reference_bytes, options):
             "device_unique_ids": devices, "tensor_parallel": LAYOUTS[layout], "replicas": replicas,
             "workload": workload, "workload_sha256": sha(encoded(workload)), "controller_options": options,
             "collective": "host-staged-v1", "retained_target_bytes": len(groups) * TARGET_BYTES,
+            "per_instance_base_gpu_weight_bytes": PARTITIONED_GPU_BYTES + LAYOUTS[layout] * PER_RANK_GPU_BYTES + RANK_ZERO_GPU_BYTES,
+            "aggregate_base_gpu_weight_bytes": len(groups) * (PARTITIONED_GPU_BYTES + LAYOUTS[layout] * PER_RANK_GPU_BYTES + RANK_ZERO_GPU_BYTES),
             "host_headroom_rule": "three times retained target bytes plus explicit reserve",
-            "per_instance_row_budget": option_value(options, "--batch-tokens", "16"),
+            "per_instance_row_budget": integer(int(option_value(options, "--batch-tokens", "16")), 1, 32),
+            "total_row_budget": len(groups) * integer(int(option_value(options, "--batch-tokens", "16")), 1, 32),
             "model_parity_qualified": False}
 
 
 def option_value(values, option, default):
     return values[values.index(option) + 1] if option in values else default
+
+
+def validate_plan(value):
+    groups = partitions(value["device_unique_ids"], value["layout"])
+    require(encoded(value["workload"]) == encoded(workload_spec())
+            and value["workload_sha256"] == sha(encoded(value["workload"])), "fixed workload differs")
+    require(type(value["replicas"]) is list and len(value["replicas"]) == len(groups), "missing replica")
+    names = []
+    for index, replica in enumerate(value["replicas"]):
+        expected_names = NAMES[index::len(groups)]
+        expected = {"schema": "FerricQwen3TpWorkloadV2", "requests": [
+            {"name": name, "prompt": reference.PROMPT, "new_tokens": 8, "arrival_tick": 0}
+            for name in expected_names]}
+        require(replica["replica_id"] == f"replica-{index:02}" and replica["device_unique_ids"] == groups[index]
+                and replica["request_names"] == expected_names and encoded(replica["requests"]) == encoded(expected)
+                and replica["requests_sha256"] == sha(encoded(expected)), "replica assignment differs")
+        names.extend(replica["request_names"])
+    require(sorted(names) == NAMES and len(set(names)) == 8, "global requests missing or duplicated")
+    controller_options(value["controller_options"])
+    rows = integer(int(option_value(value["controller_options"], "--batch-tokens", "16")), 1, 32)
+    require(value["retained_target_bytes"] == len(groups) * TARGET_BYTES
+            and value["per_instance_row_budget"] == rows and value["total_row_budget"] == rows * len(groups)
+            and value["collective"] == "host-staged-v1", "replica resource contract differs")
+    gpu_bytes = PARTITIONED_GPU_BYTES + LAYOUTS[value["layout"]] * PER_RANK_GPU_BYTES + RANK_ZERO_GPU_BYTES
+    require(value["per_instance_base_gpu_weight_bytes"] == gpu_bytes
+            and value["aggregate_base_gpu_weight_bytes"] == gpu_bytes * len(groups), "GPU weight allocation differs")
+
+
+def validate_settings(value):
+    reference.fields(value, {"ready_timeout_ns", "run_timeout_ns", "start_lead_ns", "max_lateness_ns"}, "settings")
+    integer(value["ready_timeout_ns"], 1_000_000, 3_600_000_000_000)
+    integer(value["run_timeout_ns"], 1_000_000, 14_400_000_000_000)
+    integer(value["start_lead_ns"], 10_000_000, 10_000_000_000)
+    integer(value["max_lateness_ns"], 1, 1_000_000_000)
 
 
 def memory_check(raw, retained, reserve):
@@ -163,6 +217,47 @@ def child_status(child):
     return status.si_status if status.si_code == os.CLD_EXITED else -status.si_status
 
 
+def process_identity(pid):
+    with Path(f"/proc/{pid}/stat").open("rb") as source:
+        data = source.read(16_385)
+    require(0 < len(data) <= 16_384, "process stat byte bound exceeded")
+    raw = data.decode("ascii")
+    fields = raw.rsplit(") ", 1)[1].split()
+    return {"pid": pid, "state": fields[0], "pgid": int(fields[2]),
+            "session": int(fields[3]), "start_ticks": int(fields[19])}
+
+
+def live_owned_groups(children):
+    groups = {child.pid for child in children if child.returncode is None}
+    live = []
+    with os.scandir("/proc") as entries:
+        for count, entry in enumerate(entries):
+            require(count < 200_000, "process inventory exceeds cleanup bound")
+            if not entry.name.isdecimal():
+                continue
+            try:
+                item = process_identity(int(entry.name))
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            if item["pgid"] in groups:
+                require(item["session"] == item["pgid"], "owned process group session differs")
+                if item["state"] not in ("Z", "X"):
+                    live.append(item)
+    return live
+
+
+def quiet_groups(children, seconds):
+    deadline = time.monotonic() + seconds
+    while True:
+        live = live_owned_groups(children)
+        if not live:
+            return {"schema": "FerricReplicaGroupTerminationV1", "observed_ns": now_ns(),
+                    "controller_pids": [child.pid for child in children], "live_group_members": [],
+                    "scope": "owned process groups; descendants must not detach", "confirmed": True}
+        require(time.monotonic() < deadline, f"owned group members still live: {live}")
+        time.sleep(0.01)
+
+
 def abort_and_reap(children):
     active = [child for child in children if child.returncode is None]
     for child in active:
@@ -171,14 +266,15 @@ def abort_and_reap(children):
         except ProcessLookupError:
             pass
     until = time.monotonic() + 2
-    while time.monotonic() < until and any(child_status(child) is None for child in active):
+    while time.monotonic() < until and live_owned_groups(active):
         time.sleep(0.01)
     for child in active:
         try:
             os.killpg(child.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-    return [child.wait(timeout=5) for child in children]
+    receipt = quiet_groups(active, 5)
+    return [child.wait(timeout=5) for child in children], receipt
 
 
 def snapshot(command, output, phase, devices):
@@ -191,11 +287,13 @@ def snapshot(command, output, phase, devices):
         deadline = time.monotonic() + 30
         try:
             while child_status(child) is None:
+                check_interrupted()
                 require(time.monotonic() < deadline and out.tell() <= 1_048_576 and err.tell() <= 1_048_576,
                         "snapshot exceeded bound")
                 time.sleep(0.01)
             code = child_status(child)
             require(code == 0, "snapshot process failed")
+            quiet_groups([child], 1)
             child.wait(timeout=5)
         except BaseException:
             abort_and_reap([child])
@@ -219,14 +317,14 @@ def peer_pid(stream):
 class Cohort:
     def __init__(self, cohort_plan, output, settings):
         self.plan, self.output, self.settings = cohort_plan, output, settings
+        self.socket_path = output / "control.sock"
+        require(len(os.fsencode(self.socket_path)) <= 100, "Unix socket path exceeds bound")
         self.domain, self.nonce = domain(), os.urandom(32).hex()
         self.children, self.states, self.streams = [], {}, {}
         self.selector = selectors.DefaultSelector()
         self.epoch, self.first_spawn, self.all_ready = None, None, None
         self.events = (output / "control-events.jsonl").open("xb")
         self.listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.socket_path = output / "control.sock"
-        require(len(os.fsencode(self.socket_path)) <= 100, "Unix socket path exceeds bound")
         self.listener.bind(str(self.socket_path))
         os.chmod(self.socket_path, 0o600)
         self.listener.listen(8)
@@ -246,6 +344,7 @@ class Cohort:
 
     def launch(self, controller, controller_fd, worker, source, artifact):
         for replica in self.plan["replicas"]:
+            check_interrupted()
             directory = self.output / replica["replica_id"]
             directory.mkdir(mode=0o700)
             requests = directory / "requests.json"
@@ -271,8 +370,13 @@ class Cohort:
             self.children.append(child)
             self.states[child.pid] = {"replica": replica, "identity": config["identity"], "pid": child.pid,
                                       "spawned_ns": spawned, "argv": argv, "ready": None,
-                                      "started": None, "closed": None, "stream": None}
-            write_new(directory / "launch.json", encoded({"pid": child.pid, "spawned_ns": spawned, "argv": argv}))
+                                      "started": None, "closed": None, "eof_ns": None, "stream": None}
+            process = process_identity(child.pid)
+            require(process["pgid"] == child.pid and process["session"] == child.pid, "controller session differs")
+            self.states[child.pid]["process_identity"] = process
+            write_new(directory / "launch.json", encoded({"pid": child.pid, "spawned_ns": spawned,
+                                                           "process_identity": process, "argv": argv}))
+            check_interrupted()
 
     def send(self, state, schema, extra):
         value = {"schema": schema, "authority": "none", "identity": state["identity"], **extra}
@@ -302,9 +406,15 @@ class Cohort:
         chunk = stream.recv(FRAME_LIMIT + 1)
         if not chunk:
             require(self.states[pid]["closed"] is not None and not self.streams[stream], "early replica EOF")
+            self.states[pid]["eof_ns"] = now_ns()
             self.selector.unregister(stream)
             return
         pending = self.streams[stream]
+        wire = self.output / self.states[pid]["replica"]["replica_id"] / "control-received.bin"
+        require((wire.stat().st_size if wire.exists() else 0) + len(chunk) <= 4 * FRAME_LIMIT,
+                "total control byte bound exceeded")
+        with wire.open("ab") as raw:
+            raw.write(chunk)
         pending.extend(chunk)
         while b"\n" in pending:
             end = pending.index(10) + 1
@@ -329,6 +439,8 @@ class Cohort:
             state["ready"] = message
         elif kind == "FerricReplicaStartedV1":
             reference.fields(message, base | {"ready_ns", "start_received_ns", "epoch_ns", "started_ns", "lateness_ns"}, "Started")
+            integer(message["ready_ns"], label="echoed Ready timestamp")
+            integer(message["epoch_ns"], label="echoed start epoch")
             require(self.epoch is not None and state["ready"] is not None and state["started"] is None
                     and message["epoch_ns"] == self.epoch and message["ready_ns"] == state["ready"]["ready_ns"],
                     "unexpected Started or epoch")
@@ -339,6 +451,7 @@ class Cohort:
             state["started"] = message
         elif kind == "FerricReplicaClosedV1":
             reference.fields(message, base | {"epoch_ns", "closed_ns"}, "Closed")
+            integer(message["epoch_ns"], label="echoed close epoch")
             require(state["started"] is not None and state["closed"] is None and message["epoch_ns"] == self.epoch,
                     "unexpected Closed or epoch")
             integer(message["closed_ns"], state["started"]["started_ns"], observed, "close timestamp")
@@ -352,6 +465,7 @@ class Cohort:
     def supervise(self):
         require(len(self.children) == len(self.plan["replicas"]), "incomplete cohort launch")
         while True:
+            check_interrupted()
             for key, _ in self.selector.select(0.01):
                 if key.fileobj is self.listener:
                     self.accept()
@@ -374,7 +488,7 @@ class Cohort:
                         state["start_sent_ns"] = self.send(state, "FerricReplicaStartV1", {"epoch_ns": self.epoch})
             else:
                 require(now_ns() <= self.epoch + self.settings["run_timeout_ns"], "cohort run deadline exceeded")
-                if all(state["closed"] is not None for state in self.states.values()) and all(
+                if all(state["closed"] is not None and state["eof_ns"] is not None for state in self.states.values()) and all(
                         child_status(child) == 0 for child in self.children):
                     require(domain() == self.domain, "launcher close clock domain changed")
                     return
@@ -396,39 +510,56 @@ class Cohort:
 
 def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, source, artifact,
         snapshot_command, settings, reserve, snapshot_fn=snapshot, memory_raw=None):
+    global _interrupted
     require(output.is_absolute() and output.stat().st_mode & 0o777 == 0o700, "private absolute cohort output required")
-    raw = Path("/proc/meminfo").read_bytes() if memory_raw is None else memory_raw
-    write_new(output / "meminfo-before.txt", raw)
-    memory = memory_check(raw, cohort_plan["retained_target_bytes"], reserve)
-    write_new(output / "memory-headroom.json", encoded(memory))
-    write_new(output / "plan.json", encoded(cohort_plan))
     controller_fd, worker_fd, cohort = None, None, None
     result = {"schema": "FerricReplicaCohortV1", "authority": "none", "status": "failed",
               "model_parity_qualified": False, "controller_sha256": controller_sha,
               "worker_sha256": worker_sha, "snapshot_command": snapshot_command,
               "workload_sha256": cohort_plan["workload_sha256"], "error": None}
     pre_taken = False
+    _interrupted = None
+    previous_signals = {sig: signal.signal(sig, request_abort) for sig in (signal.SIGINT, signal.SIGTERM)}
     try:
+        validate_plan(cohort_plan)
+        validate_settings(settings)
+        raw = Path("/proc/meminfo").read_bytes() if memory_raw is None else memory_raw
+        write_new(output / "meminfo-before.txt", raw)
+        write_new(output / "plan.json", encoded(cohort_plan))
+        memory = memory_check(raw, cohort_plan["retained_target_bytes"], reserve)
+        write_new(output / "memory-headroom.json", encoded(memory))
         controller_fd = held_executable(controller, controller_sha)
         worker_fd = held_executable(worker, worker_sha)
         pre_taken = True
         snapshot_fn(snapshot_command, output, "before", cohort_plan["device_unique_ids"])
+        check_interrupted()
         cohort = Cohort(cohort_plan, output, settings)
         cohort.launch(controller, controller_fd, worker, source, artifact)
         cohort.supervise()
+        result["group_termination"] = quiet_groups(cohort.children, 1)
+        check_interrupted()
         result["exit_codes"] = [child.wait(timeout=5) for child in cohort.children]
         result["final_reap_ns"] = now_ns()
         # Already reaped children must not enter process-group abort handling.
         cohort.children.clear()
         pre_taken = False
         snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
+        check_interrupted()
         result["status"] = "unvalidated-complete"
     except BaseException as failure:
+        for sig in previous_signals:
+            signal.signal(sig, signal.SIG_IGN)
+        _interrupted = None
         result["error"] = str(failure)
         if cohort is not None:
-            result["exit_codes"] = abort_and_reap(cohort.children)
-            result["final_reap_ns"] = now_ns()
-            cohort.children.clear()
+            try:
+                codes, receipt = abort_and_reap(cohort.children)
+                if cohort.children:
+                    result["exit_codes"], result["group_termination"] = codes, receipt
+                    result["final_reap_ns"] = now_ns()
+                    cohort.children.clear()
+            except Exception as cleanup_error:
+                result["teardown_uncertain"] = str(cleanup_error)
         if pre_taken:
             try:
                 snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
@@ -441,7 +572,12 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         for fd in (controller_fd, worker_fd):
             if fd is not None:
                 os.close(fd)
-        write_new(output / "cohort.json", encoded(result))
+        try:
+            write_new(output / "cohort.json", encoded(result))
+        finally:
+            for sig, handler in previous_signals.items():
+                signal.signal(sig, handler)
+            _interrupted = None
     return result
 
 

@@ -219,6 +219,13 @@ fn valid_hash(value: &str) -> bool {
 }
 
 impl ControlConfig {
+    pub(super) fn verify_loaded_requests_sha256(&self, sha: &str) -> Result<(), String> {
+        if !valid_hash(sha) || sha != self.identity.requests_sha256 {
+            return Err("parsed workload bytes differ from replica control identity".into());
+        }
+        Ok(())
+    }
+
     pub(super) fn open(path: &Path, requests: &Path, devices: &[u64]) -> Result<Self, String> {
         if !path.is_absolute() {
             return Err("control path must be absolute".into());
@@ -512,6 +519,9 @@ mod tests {
         let before = monotonic_raw_ns().unwrap();
         assert!(monotonic_raw_ns().unwrap() >= before);
         let mut value = config(PathBuf::from("/tmp/private/control.sock"));
+        assert!(value.verify_loaded_requests_sha256(&digest(b"requests")).is_ok());
+        assert!(value.verify_loaded_requests_sha256(&digest(b"changed")).is_err());
+        assert!(value.verify_loaded_requests_sha256("invalid").is_err());
         assert!(value.validate(&[1, 2], &digest(b"requests")).is_ok());
         assert!(value.validate(&[2, 1], &digest(b"requests")).is_err());
         assert!(value.validate(&[1, 1], &digest(b"requests")).is_err());
