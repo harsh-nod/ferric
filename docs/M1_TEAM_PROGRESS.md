@@ -15,7 +15,7 @@ remains local; the Pages performance checkpoint is published separately.
 | Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, repeated MFMA and TP1 pairs, source-matched peers, allocation cohorts and the 16/32-row policy pair are archived. The integrated four-request/replica checkers pass 59 host tests. All five final current-controller cases have strict accepted/rejected dispositions. | Broader workloads and repetitions; no serving-throughput or stable-tail claim yet. |
 | Kernels | Full16 TP8 MFMA has two passing repetitions per variant: mean workload rate +28.63%, with startup regression. Adding pruning passes but is slower than MFMA alone. Both wave selectors and current TP1 MFMA-only/cumulative profiles fail the exact seed reference. Full32 native 30 fixtures, peer32 native 19 fixtures and actual 32-row model execution pass. Tiled transpose passes 240 full-array comparisons and saves 15.33% setup in one matched model pair. | Numerical diagnosis of rejected wave/TP1 MFMA profiles; no reference relaxation. |
 | Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both peer models and source-matched host controls pass; peer workload rates are 82.06%/97.66% lower at TP2/TP8. TP1 residuals pass two runs per variant with +13.85% mean workload rate. Current scalar-projection pruning + residual passes, observing +12.06% workload rate in one cumulative pair. | Profile repeated all-rank fences/serial execution before further peer changes; overlap remains unimplemented. |
-| Integration | The integrated `7528e734` source passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Separate repin gates pass 26 metadata configurations, 38 source-gate and 31 verifier-policy tests. Final current-controller TP1 control, scalar pruning/residual and TP8 wide MFMA/pruning cases pass. Pages checkpoint `196ae50` is live and byte-verified; completed team stages/worktrees are removed. | Broader numerical/performance qualification and protected M1 gates; retain the active local integration and replay evidence. |
+| Integration | The integrated `7528e734` source passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Separate repin gates pass 26 metadata configurations, 38 source-gate and 31 verifier-policy tests. Final current-controller TP1 control, scalar pruning/residual and TP8 wide MFMA/pruning cases pass. Pages checkpoint `f4664dc` is live and byte-verified; completed team stages/worktrees are removed after archival. | Broader numerical/performance qualification and protected M1 gates; retain the active local integration and replay evidence. |
 
 The reviewed public delta from `902fef6e` through `7528e734` is compiler/analysis-side, with no
 KFD, worker, SDK or lockfile changes. A freshly built `1b262ac3` independent
@@ -32,9 +32,12 @@ kernel comparison. The separate same-image 16/32-row policy pair observes a
 12.56% workload-rate increase, but request-00 TTFT worsens. The tiled transpose
 model pair saves 26.55 s of setup (15.33%); decode variation is not attributed
 to the setup-only helper. The [published Pages checkpoint](https://harsh-nod.github.io/ferric/#performance)
-at `196ae50` retains the initial trio, repeated and cumulative measurements,
+retains the `196ae50` measurement data: the initial trio, repeated and cumulative measurements,
 all five final current-controller outcomes, and all failed/regressing paths.
-Its deployment `34533071403` succeeded; all seven live assets match exactly.
+Its deployment `34533071403` succeeded. Caption-only follow-up `f4664dc` fixes
+the legacy ledger-generator hash label without changing any measurements or
+hashes; deployment `34533902613` also succeeded and all seven live assets were
+byte-verified. Canonical replica-expectation labels retain their actual meaning.
 The site passes 72 negative schema cases, eight named browser viewports and
 every width from 320 through 1440 pixels.
 
