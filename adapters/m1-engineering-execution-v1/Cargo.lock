@@ -1021,6 +1021,7 @@ dependencies = [
  "ferric-non-authoritative-program-source-v1",
  "ferric-qwen3-all-kernels-device-v1",
  "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
+ "ferric-qwen3-tp-batch-kernels-device-v2",
  "ferric-qwen3-tp-kernels-device-v1",
  "ferric-spec",
  "rustix",
@@ -1087,6 +1088,14 @@ dependencies = [
  "libc",
  "rustix",
  "sha2 0.11.0",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-batch-kernels-device-v2"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
 ]
 
 [[package]]

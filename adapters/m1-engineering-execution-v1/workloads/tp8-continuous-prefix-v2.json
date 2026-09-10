@@ -1,0 +1,30 @@
+{
+  "schema": "FerricQwen3TpWorkloadV2",
+  "requests": [
+    {
+      "name": "seed-prefix",
+      "prompt": "The capital of France is Paris. The capital of Italy is Rome. The capital of",
+      "new_tokens": 2,
+      "arrival_tick": 0
+    },
+    {
+      "name": "arriving-short",
+      "prompt": "The capital of France is",
+      "new_tokens": 3,
+      "arrival_tick": 1
+    },
+    {
+      "name": "cancel-between-batches",
+      "prompt": "The capital of France is",
+      "new_tokens": 4,
+      "arrival_tick": 2,
+      "cancel_tick": 3
+    },
+    {
+      "name": "reuse-prefix",
+      "prompt": "The capital of France is Paris. The capital of Italy is Rome. The capital of Spain is",
+      "new_tokens": 2,
+      "arrival_tick": 3
+    }
+  ]
+}

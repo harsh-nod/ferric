@@ -99,6 +99,7 @@ fn adapter_is_an_exact_standalone_workspace() {
         [
             "fe2o3-hsaco",
             "fe2o3-service-host",
+            "ferric-qwen3-tp-batch-kernels-device-v2",
             "ferric-qwen3-tp-kernels-device-v1"
         ]
     );
@@ -120,6 +121,36 @@ fn adapter_is_an_exact_standalone_workspace() {
             Some("dep:fe2o3-service-host"),
         ]
     );
+}
+
+#[test]
+fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let feature = manifest["features"]["tp-batch-engineering"]
+        .as_array()
+        .unwrap();
+    assert_eq!(
+        feature.iter().map(toml::Value::as_str).collect::<Vec<_>>(),
+        vec![
+            Some("tp-engineering"),
+            Some("dep:ferric-qwen3-tp-batch-kernels-device-v2")
+        ]
+    );
+    let bin = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|bin| bin["name"].as_str() == Some("ferric-qwen3-tp-batch-engineering"))
+        .unwrap();
+    assert_eq!(
+        bin["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    for module in ["tp_paged", "tp_scheduler", "tp_batch_runtime"] {
+        assert!(SOURCE.contains(&format!(
+            "#[cfg(feature = \"tp-batch-engineering\")]\npub mod {module};"
+        )));
+    }
 }
 
 #[test]

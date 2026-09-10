@@ -41,6 +41,21 @@ pub const ENGINEERING_TP_EXPORTS_V1: [&str; 13] = [
     "ferric_qwen3_tp_gqa_decode_bf16_f32_v1",
 ];
 
+/// Independent compilation unit for bounded multi-row, paged TP execution.
+pub const ENGINEERING_TP_BATCH_CRATE_V2: &str = "ferric_qwen3_tp_batch_kernels_device_v2";
+/// Closed additive roster; old single-sequence artifacts are not reinterpreted.
+pub const ENGINEERING_TP_BATCH_EXPORTS_V2: [&str; 9] = [
+    "qwen3_rmsnorm_v1",
+    "ferric_qwen3_tp_batch_embedding_bf16_v2",
+    "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2",
+    "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2",
+    "ferric_qwen3_tp_batch_swiglu_bf16_f32_v2",
+    "ferric_qwen3_tp_batch_rope_v2",
+    "ferric_qwen3_tp_batch_paged_kv_append_v2",
+    "ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2",
+    "ferric_qwen3_tp_batch_argmax_bf16_v2",
+];
+
 /// Exact content-addressed engineering bytes and independently inspected metadata.
 pub struct EngineeringTpArtifactV1 {
     bytes: Arc<[u8]>,
@@ -63,6 +78,37 @@ impl EngineeringTpArtifactV1 {
     pub fn open(
         root: &Path,
         expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            ENGINEERING_TP_CRATE_V1,
+            &ENGINEERING_TP_EXPORTS_V1,
+        )
+    }
+
+    /// Opens only the separate nine-root multi-row and paged engineering image.
+    ///
+    /// # Errors
+    /// Rejects any target, source roster, identity, argument, or file drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_batch(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            ENGINEERING_TP_BATCH_CRATE_V2,
+            &ENGINEERING_TP_BATCH_EXPORTS_V2,
+        )
+    }
+
+    fn open_profile(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+        source_crate: &str,
+        exports: &[&str],
     ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
         use M1EngineeringAggregateArtifactOpenErrorV1 as Error;
         if root
@@ -100,18 +146,16 @@ impl EngineeringTpArtifactV1 {
         if canonical != raw_manifest {
             return Err(Error::NonCanonicalManifest);
         }
-        let facts = validate_manifest_profile(
-            &manifest,
-            ENGINEERING_TP_CRATE_V1,
-            ENGINEERING_TP_TARGET_V1,
-        )?;
-        if !exact_exports(manifest.hsaco.kernel_names.iter().map(String::as_str))
-            || !exact_exports(
-                expected
-                    .iter()
-                    .map(CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
-            )
-        {
+        let facts = validate_manifest_profile(&manifest, source_crate, ENGINEERING_TP_TARGET_V1)?;
+        if !exact_roster(
+            manifest.hsaco.kernel_names.iter().map(String::as_str),
+            exports,
+        ) || !exact_roster(
+            expected
+                .iter()
+                .map(CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            exports,
+        ) {
             return Err(Error::MetadataKernelRoster);
         }
         let hsaco_len = usize::try_from(facts.hsaco.byte_len)
@@ -223,9 +267,14 @@ impl EngineeringTpArtifactV1 {
     }
 }
 
+#[cfg(test)]
 fn exact_exports<'a>(actual: impl Iterator<Item = &'a str>) -> bool {
+    exact_roster(actual, &ENGINEERING_TP_EXPORTS_V1)
+}
+
+fn exact_roster<'a>(actual: impl Iterator<Item = &'a str>, expected: &[&str]) -> bool {
     let mut actual = actual.collect::<Vec<_>>();
-    let mut expected = ENGINEERING_TP_EXPORTS_V1.to_vec();
+    let mut expected = expected.to_vec();
     actual.sort_unstable();
     expected.sort_unstable();
     actual == expected
@@ -247,5 +296,25 @@ mod tests {
         ));
         names[0] = "qwen3_rope_v1";
         assert!(!exact_exports(names.into_iter()));
+    }
+
+    #[test]
+    fn batch_roster_is_closed_and_distinct_from_single_sequence() {
+        use super::{ENGINEERING_TP_BATCH_EXPORTS_V2, exact_roster};
+        assert!(exact_roster(
+            ENGINEERING_TP_BATCH_EXPORTS_V2.into_iter().rev(),
+            &ENGINEERING_TP_BATCH_EXPORTS_V2
+        ));
+        assert!(!exact_roster(
+            ENGINEERING_TP_EXPORTS_V1.into_iter(),
+            &ENGINEERING_TP_BATCH_EXPORTS_V2
+        ));
+        assert!(!exact_exports(ENGINEERING_TP_BATCH_EXPORTS_V2.into_iter()));
+        let mut duplicate = ENGINEERING_TP_BATCH_EXPORTS_V2;
+        duplicate[1] = duplicate[0];
+        assert!(!exact_roster(
+            duplicate.into_iter(),
+            &ENGINEERING_TP_BATCH_EXPORTS_V2
+        ));
     }
 }

@@ -636,7 +636,7 @@ fn put_scalar(
 mod tests {
     use super::*;
 
-    const FAKE_WORKER: &str = r#"
+    const FAKE_WORKER: &str = r"
 import json, struct, sys, time
 mode = sys.argv[1]
 def send(value, payload=b''):
@@ -672,7 +672,7 @@ while True:
         sys.exit(0)
     else:
         sys.exit(5)
-"#;
+";
 
     fn fake(mode: &str) -> Child {
         Command::new("python3")

@@ -8,6 +8,9 @@
 
 mod collective;
 
+#[cfg(feature = "tp-batch-engineering")]
+pub mod batched;
+
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
 
 use ferric_build::AuthenticatedModelWeightLayout;
@@ -218,13 +221,27 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     /// # Errors
     /// Rejects geometry, weight identity/range drift, or any transport failure.
     pub fn new(
-        mut transports: Vec<R>,
+        transports: Vec<R>,
         model: ModelConfig,
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
         capacity: u32,
     ) -> TpResult<Self> {
+        Self::new_with_storage(transports, model, weights, layout, capacity, 1)
+    }
+
+    fn new_with_storage(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        capacity: u32,
+        rows: u32,
+    ) -> TpResult<Self> {
         let prepared = (|| {
+            if !(1..=16).contains(&rows) {
+                return Err("TP storage row bound exceeded".into());
+            }
             let world = u32::try_from(transports.len()).map_err(|_| "too many TP ranks")?;
             let plan = Qwen3TensorParallelPlanV1::new(model, world)
                 .map_err(|error| format!("TP geometry: {error:?}"))?;
@@ -249,7 +266,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             let mut ranks = Vec::with_capacity(transports.len());
             for (index, transport) in transports.iter_mut().enumerate() {
                 let index = u32::try_from(index).map_err(|_| "rank index overflow")?;
-                ranks.push(allocate_rank(transport, &plan, index, capacity)?);
+                ranks.push(allocate_rank_storage(
+                    transport, &plan, index, capacity, rows,
+                )?);
             }
             for ordinal in 0..layout.section_count(model.role) {
                 let binding = layout
@@ -324,7 +343,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             sequence,
             collective,
             capacity,
-            hidden: vec![0; model.hidden_size as usize],
+            hidden: vec![0; model.hidden_size as usize * rows as usize],
             closed: false,
         })
     }
@@ -857,21 +876,36 @@ fn allocate_tensor<R: EngineeringTpRankTransportV1>(
     })
 }
 
+#[cfg(test)]
 fn allocate_rank<R: EngineeringTpRankTransportV1>(
     transport: &mut R,
     plan: &Qwen3TensorParallelPlanV1,
     index: u32,
     capacity: u32,
 ) -> TpResult<Rank> {
+    allocate_rank_storage(transport, plan, index, capacity, 1)
+}
+
+fn allocate_rank_storage<R: EngineeringTpRankTransportV1>(
+    transport: &mut R,
+    plan: &Qwen3TensorParallelPlanV1,
+    index: u32,
+    capacity: u32,
+    rows: u32,
+) -> TpResult<Rank> {
+    if !(1..=16).contains(&rows) {
+        return Err("TP storage row bound exceeded".into());
+    }
     let geometry = plan
         .rank(index)
         .map_err(|e| format!("rank geometry: {e:?}"))?;
     let model = plan.model();
-    let hidden = model.hidden_size as usize;
-    let q = geometry.query_channels.count as usize;
-    let kv = geometry.kv_channels.count as usize;
-    let intermediate = geometry.intermediate.count as usize;
-    let cache = kv
+    let rows = rows as usize;
+    let hidden = model.hidden_size as usize * rows;
+    let q = geometry.query_channels.count as usize * rows;
+    let kv = geometry.kv_channels.count as usize * rows;
+    let intermediate = geometry.intermediate.count as usize * rows;
+    let cache = (geometry.kv_channels.count as usize)
         .checked_mul(capacity as usize)
         .ok_or("KV cache size overflow")?;
     let mut layers = Vec::new();
@@ -902,20 +936,20 @@ fn allocate_rank<R: EngineeringTpRankTransportV1>(
         up: allocate_tensor(transport, intermediate, 2)?,
         activation: allocate_tensor(transport, intermediate, 2)?,
         partial: allocate_tensor(transport, hidden, 4)?,
-        cos: allocate_tensor(transport, 64, 4)?,
-        sin: allocate_tensor(transport, 64, 4)?,
+        cos: allocate_tensor(transport, 64 * rows, 4)?,
+        sin: allocate_tensor(transport, 64 * rows, 4)?,
         empty,
-        token: allocate_tensor(transport, 1, 4)?,
+        token: allocate_tensor(transport, rows, 4)?,
         logits: allocate_tensor(
             transport,
             if index == 0 {
-                model.vocabulary_size as usize
+                model.vocabulary_size as usize * rows
             } else {
                 1
             },
             2,
         )?,
-        choice: allocate_tensor(transport, 1, 4)?,
+        choice: allocate_tensor(transport, rows, 4)?,
         dispatches: 0,
     })
 }

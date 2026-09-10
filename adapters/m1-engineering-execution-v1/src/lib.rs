@@ -14,8 +14,14 @@ pub(crate) mod r33_resident_session;
 pub mod r33_service;
 pub mod r33_wire;
 pub mod tp_artifact;
+#[cfg(feature = "tp-batch-engineering")]
+pub mod tp_batch_runtime;
 pub mod tp_execution;
 pub mod tp_model;
+#[cfg(feature = "tp-batch-engineering")]
+pub mod tp_paged;
+#[cfg(feature = "tp-batch-engineering")]
+pub mod tp_scheduler;
 
 use std::error::Error;
 use std::ffi::OsStr;
