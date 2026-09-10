@@ -3,8 +3,8 @@ set -eu
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 repo=$(CDPATH='' cd -- "$script_dir/../../../.." && pwd)
-expected_fe2o3_commit=3546d54d2c4a913f5d079701aed557d0a378bba8
-expected_fe2o3_tree=f88d1e6d23bcaab0be2e9cfb86c108ad3ede93c3
+expected_fe2o3_commit=1b262ac3dd23ee63067e40587d62a124f40b9fc9
+expected_fe2o3_tree=6d7cf46ae19fc922c4ca39a919294e68f8ee8df3
 
 for tool in cargo cp git mkdir mktemp patch python3 rm; do
     command -v "$tool" >/dev/null 2>&1 || {
