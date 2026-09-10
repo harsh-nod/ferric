@@ -7,6 +7,7 @@ use super::{
 };
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use ferric_engine::tensor_parallel::Qwen3TensorParallelTensorV1;
 
 /// Independently selected arithmetic profile; no unsupported-mode fallback.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -112,17 +113,7 @@ impl ProjectionPolicy {
                 }
                 let mut transposed =
                     vec![0; elements.checked_mul(2).ok_or("transposed byte overflow")?];
-                let mut row = vec![0; k * 2];
-                for output in 0..n {
-                    shard
-                        .copy_bf16_row_into(
-                            source,
-                            u32::try_from(output).map_err(|_| "transposed row overflow")?,
-                            &mut row,
-                        )
-                        .map_err(|error| format!("transposed BF16 row: {error:?}"))?;
-                    transpose_row(&row, n, output, &mut transposed)?;
-                }
+                transpose_shard(source, &shard, &mut transposed)?;
                 let tensor = allocate_tensor(transport, elements, 2)?;
                 for (chunk, bytes) in transposed.chunks(UPLOAD_CHUNK_BYTES).enumerate() {
                     transport.write(tensor.id, chunk * UPLOAD_CHUNK_BYTES, bytes)?;
@@ -183,6 +174,61 @@ impl ProjectionPolicy {
     }
 }
 
+const TRANSPOSE_TILE: usize = 32;
+
+fn transpose_shard(
+    source: &[u8],
+    shard: &Qwen3TensorParallelTensorV1,
+    output: &mut [u8],
+) -> TpResult<()> {
+    let rows = shard.rows().count as usize;
+    for first in (0..rows).step_by(TRANSPOSE_TILE) {
+        let count = (rows - first).min(TRANSPOSE_TILE);
+        let mut source_rows: [&[u8]; TRANSPOSE_TILE] = [&[]; TRANSPOSE_TILE];
+        for (offset, row) in source_rows[..count].iter_mut().enumerate() {
+            let (start, length) = shard
+                .source_row_bytes(
+                    u32::try_from(first + offset).map_err(|_| "transposed row overflow")?,
+                    u64::try_from(source.len()).map_err(|_| "transposed source overflow")?,
+                )
+                .map_err(|error| format!("transposed BF16 row: {error:?}"))?;
+            let start = usize::try_from(start).map_err(|_| "transposed offset overflow")?;
+            let length = usize::try_from(length).map_err(|_| "transposed row length overflow")?;
+            let end = start.checked_add(length).ok_or("transposed row end overflow")?;
+            *row = source.get(start..end).ok_or("transposed source row extent")?;
+        }
+        transpose_tile(&source_rows[..count], rows, first, output)?;
+    }
+    Ok(())
+}
+
+fn transpose_tile(source: &[&[u8]], rows: usize, first: usize, output: &mut [u8]) -> TpResult<()> {
+    let row_bytes = source.first().map_or(0, |row| row.len());
+    if row_bytes == 0
+        || !row_bytes.is_multiple_of(2)
+        || source.len() > TRANSPOSE_TILE
+        || first.checked_add(source.len()).is_none_or(|end| end > rows)
+        || rows.checked_mul(row_bytes) != Some(output.len())
+        || source.iter().any(|row| row.len() != row_bytes)
+    {
+        return Err("transposed tile extent mismatch".into());
+    }
+    let columns = row_bytes / 2;
+    // Reuse a bounded set of destination cache lines before advancing columns.
+    for column_start in (0..columns).step_by(TRANSPOSE_TILE) {
+        let column_end = column_start + (columns - column_start).min(TRANSPOSE_TILE);
+        for (offset, row) in source.iter().enumerate() {
+            for column in column_start..column_end {
+                let destination = (column * rows + first + offset) * 2;
+                output[destination..destination + 2]
+                    .copy_from_slice(&row[column * 2..column * 2 + 2]);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
 fn transpose_row(row: &[u8], rows: usize, index: usize, output: &mut [u8]) -> TpResult<()> {
     if row.is_empty()
         || !row.len().is_multiple_of(2)
@@ -202,6 +248,122 @@ fn transpose_row(row: &[u8], rows: usize, index: usize, output: &mut [u8]) -> Tp
 mod tests {
     use super::*;
     use crate::tp_execution::EngineeringTpArgumentV1;
+
+    fn patterned_bytes(elements: usize) -> Vec<u8> {
+        (0..elements)
+            .flat_map(|index| {
+                let mixed = index.wrapping_mul(17) ^ (index >> 12) ^ (index >> 24);
+                u16::try_from(mixed & 0xffff).unwrap().to_le_bytes()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn tiled_transpose_preserves_every_bf16_pattern_and_tile_tails() {
+        for (rows, columns) in [(1, 1), (1, 65), (65, 1), (31, 33), (32, 32), (33, 63), (65, 65), (256, 256)] {
+            let source = if rows == 256 {
+                (0..=u16::MAX).flat_map(u16::to_le_bytes).collect::<Vec<_>>()
+            } else {
+                patterned_bytes(rows * columns)
+            };
+            let mut expected = vec![0; source.len()];
+            let mut actual = vec![0xa5; source.len()];
+            for (index, row) in source.chunks_exact(columns * 2).enumerate() {
+                transpose_row(row, rows, index, &mut expected).unwrap();
+            }
+            for first in (0..rows).step_by(TRANSPOSE_TILE) {
+                let count = (rows - first).min(TRANSPOSE_TILE);
+                let tile = (first..first + count)
+                    .map(|row| &source[row * columns * 2..(row + 1) * columns * 2])
+                    .collect::<Vec<_>>();
+                transpose_tile(&tile, rows, first, &mut actual).unwrap();
+            }
+            assert_eq!(actual, expected, "{rows}x{columns}");
+        }
+        let mut output = [0xa5; 24];
+        for (tile, rows, first) in [
+            (vec![], 3, 0), (vec![&[0_u8; 8][..]], 3, 3),
+            (vec![&[0_u8; 7][..]], 3, 0), (vec![&[0_u8; 6][..]], 3, 0),
+            (vec![&[0_u8; 8][..], &[0_u8; 6][..]], 3, 0),
+            (vec![&[0_u8; 8][..]], usize::MAX, 0),
+            (vec![&[0_u8; 8][..]], 3, usize::MAX),
+        ] {
+            assert!(transpose_tile(&tile, rows, first, &mut output).is_err());
+            assert_eq!(output, [0xa5; 24]);
+        }
+    }
+
+    #[test]
+    #[ignore = "explicit host-only full production arrays and setup-helper microbenchmark"]
+    fn production_shard_transpose_exactness_and_host_microbenchmark() {
+        use ferric_engine::tensor_parallel::Qwen3TensorParallelPlanV1;
+        use ferric_spec::{Identity, ModelConfig, Qwen3ModelRole, Qwen3TensorMetadata, TensorDType};
+        use std::time::Instant;
+        let model = ModelConfig {
+            role: Qwen3ModelRole::Target8B, model_id: Identity::new([1; 32]),
+            config_id: Identity::new([2; 32]), vocabulary_size: 151_936, layers: 36,
+            hidden_size: 4096, intermediate_size: 12_288, query_heads: 32, kv_heads: 8,
+            head_dim: 128, max_position_embeddings: 40_960, rope_theta: 1_000_000,
+            tie_word_embeddings: false,
+        };
+        for (kind, source_rows, source_columns) in [
+            (Qwen3TensorKind::QueryProjection, 4096, 4096),
+            (Qwen3TensorKind::KeyProjection, 1024, 4096),
+            (Qwen3TensorKind::ValueProjection, 1024, 4096),
+            (Qwen3TensorKind::OutputProjection, 4096, 4096),
+            (Qwen3TensorKind::GateProjection, 12_288, 4096),
+            (Qwen3TensorKind::UpProjection, 12_288, 4096),
+            (Qwen3TensorKind::DownProjection, 4096, 12_288),
+            (Qwen3TensorKind::LanguageModelHead, 151_936, 4096),
+        ] {
+            let source = patterned_bytes(source_rows as usize * source_columns as usize);
+            let metadata = Qwen3TensorMetadata {
+                role: model.role, kind,
+                layer: if kind == Qwen3TensorKind::LanguageModelHead { QWEN3_NO_LAYER } else { 0 },
+                dtype: TensorDType::Bf16, rank: 2, dimension_0: source_rows, dimension_1: source_columns,
+            };
+            for world in [1, 2, 8] {
+                let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
+                for rank in 0..world {
+                    if kind == Qwen3TensorKind::LanguageModelHead && rank != 0 { continue; }
+                    let shard = plan.tensor(metadata, rank).unwrap();
+                    let n = shard.rows().count as usize;
+                    let k = shard.columns().count as usize;
+                    let mut expected = vec![0xa5; n * k * 2];
+                    let mut actual = vec![0xa5; n * k * 2];
+                    let mut row = vec![0; k * 2];
+                    for repeat in 0..3 {
+                        let mut baseline = || {
+                            let start = Instant::now();
+                            for index in 0..n {
+                                shard.copy_bf16_row_into(&source, u32::try_from(index).unwrap(), &mut row).unwrap();
+                                transpose_row(&row, n, index, &mut expected).unwrap();
+                            }
+                            start.elapsed().as_nanos()
+                        };
+                        let mut tiled = || {
+                            let start = Instant::now();
+                            transpose_shard(&source, &shard, &mut actual).unwrap();
+                            start.elapsed().as_nanos()
+                        };
+                        let (baseline_ns, tiled_ns) = if repeat % 2 == 0 {
+                            (baseline(), tiled())
+                        } else {
+                            let tiled_ns = tiled();
+                            (baseline(), tiled_ns)
+                        };
+                        assert_eq!(actual, expected, "{kind:?} TP{world} rank{rank}");
+                        println!("{{\"schema\":\"FerricHostTransposeMicrobenchmarkV1\",\"kind\":\"{kind:?}\",\"tp\":{world},\"rank\":{rank},\"n\":{n},\"k\":{k},\"repeat\":{repeat},\"bytes\":{},\"baseline_ns\":{baseline_ns},\"tiled_ns\":{tiled_ns},\"full_array_exact\":true,\"model_timing\":false}}", actual.len());
+                    }
+                    let before = actual.clone();
+                    assert!(transpose_shard(&source[..source.len() - 1], &shard, &mut actual).is_err());
+                    assert_eq!(actual, before);
+                    assert!(transpose_shard(&source, &shard, &mut actual[..before.len() - 1]).is_err());
+                    assert_eq!(actual, before);
+                }
+            }
+        }
+    }
 
     #[test]
     fn transposed_rows_preserve_bf16_bits_and_use_k_by_n_order() {
