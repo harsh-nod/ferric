@@ -575,6 +575,7 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         take_snapshot("before")
         check_interrupted()
         cohort = Cohort(cohort_plan, output, settings)
+        require(cohort.domain == result["clock_domain"], "cohort clock domain changed before launch")
         cohort.launch(frozen_controller, controller_fd, frozen_worker, source, artifact)
         cohort.supervise()
         result["group_termination"] = quiet_groups(cohort.children, 1)
