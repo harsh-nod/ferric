@@ -103,96 +103,100 @@ pub fn ferric_qwen3_tp_rope_v1(
         fe2o3_device::trap();
     };
     let mut head = 0_usize;
-    while head < query_heads {
-        let index = head * 128 + lane;
-        let first = memory::volatile_load(query, index);
-        let second = memory::volatile_load(query, index + 64);
-        // BEGIN tp_rope_pair_v1
-        let first = Bf16::from_bits(first).to_f32();
-        let second = Bf16::from_bits(second).to_f32();
-        let cos = cosine;
-        let sin = sine;
-        let rotated_first = first * cos - second * sin;
-        let rotated_second = second * cos + first * sin;
-        let first_out = Bf16::from_f32(rotated_first);
-        let second_out = Bf16::from_f32(rotated_second);
-        if !first.is_finite()
-            || !second.is_finite()
-            || !cos.is_finite()
-            || !sin.is_finite()
-            || !rotated_first.is_finite()
-            || !rotated_second.is_finite()
-            || !first_out.is_finite()
-            || !second_out.is_finite()
-        {
-            fe2o3_device::trap();
-        }
-        let first_out = first_out.to_bits();
-        let second_out = second_out.to_bits();
-        // END tp_rope_pair_v1
-        if !rotated_query.write_row_striped_2d(
-            &stripe,
-            head * 2,
-            1,
-            query_columns,
-            query_columns,
-            first_out,
-        ) || !rotated_query.write_row_striped_2d(
-            &stripe,
-            head * 2 + 1,
-            1,
-            query_columns,
-            query_columns,
-            second_out,
-        ) {
-            fe2o3_device::trap();
+    while head < 32 {
+        if head < query_heads {
+            let index = head * 128 + lane;
+            let first = memory::volatile_load(query, index);
+            let second = memory::volatile_load(query, index + 64);
+            // BEGIN tp_rope_pair_v1
+            let first = Bf16::from_bits(first).to_f32();
+            let second = Bf16::from_bits(second).to_f32();
+            let cos = cosine;
+            let sin = sine;
+            let rotated_first = first * cos - second * sin;
+            let rotated_second = second * cos + first * sin;
+            let first_out = Bf16::from_f32(rotated_first);
+            let second_out = Bf16::from_f32(rotated_second);
+            if !first.is_finite()
+                || !second.is_finite()
+                || !cos.is_finite()
+                || !sin.is_finite()
+                || !rotated_first.is_finite()
+                || !rotated_second.is_finite()
+                || !first_out.is_finite()
+                || !second_out.is_finite()
+            {
+                fe2o3_device::trap();
+            }
+            let first_out = first_out.to_bits();
+            let second_out = second_out.to_bits();
+            // END tp_rope_pair_v1
+            if !rotated_query.write_row_striped_2d(
+                &stripe,
+                head * 2,
+                1,
+                query_columns,
+                query_columns,
+                first_out,
+            ) || !rotated_query.write_row_striped_2d(
+                &stripe,
+                head * 2 + 1,
+                1,
+                query_columns,
+                query_columns,
+                second_out,
+            ) {
+                fe2o3_device::trap();
+            }
         }
         head += 1;
     }
     let mut head = 0_usize;
-    while head < kv_heads {
-        let index = head * 128 + lane;
-        let first = memory::volatile_load(key, index);
-        let second = memory::volatile_load(key, index + 64);
-        // BEGIN tp_rope_pair_v1
-        let first = Bf16::from_bits(first).to_f32();
-        let second = Bf16::from_bits(second).to_f32();
-        let cos = cosine;
-        let sin = sine;
-        let rotated_first = first * cos - second * sin;
-        let rotated_second = second * cos + first * sin;
-        let first_out = Bf16::from_f32(rotated_first);
-        let second_out = Bf16::from_f32(rotated_second);
-        if !first.is_finite()
-            || !second.is_finite()
-            || !cos.is_finite()
-            || !sin.is_finite()
-            || !rotated_first.is_finite()
-            || !rotated_second.is_finite()
-            || !first_out.is_finite()
-            || !second_out.is_finite()
-        {
-            fe2o3_device::trap();
-        }
-        let first_out = first_out.to_bits();
-        let second_out = second_out.to_bits();
-        // END tp_rope_pair_v1
-        if !rotated_key.write_row_striped_2d(
-            &stripe,
-            head * 2,
-            1,
-            key_columns,
-            key_columns,
-            first_out,
-        ) || !rotated_key.write_row_striped_2d(
-            &stripe,
-            head * 2 + 1,
-            1,
-            key_columns,
-            key_columns,
-            second_out,
-        ) {
-            fe2o3_device::trap();
+    while head < 8 {
+        if head < kv_heads {
+            let index = head * 128 + lane;
+            let first = memory::volatile_load(key, index);
+            let second = memory::volatile_load(key, index + 64);
+            // BEGIN tp_rope_pair_v1
+            let first = Bf16::from_bits(first).to_f32();
+            let second = Bf16::from_bits(second).to_f32();
+            let cos = cosine;
+            let sin = sine;
+            let rotated_first = first * cos - second * sin;
+            let rotated_second = second * cos + first * sin;
+            let first_out = Bf16::from_f32(rotated_first);
+            let second_out = Bf16::from_f32(rotated_second);
+            if !first.is_finite()
+                || !second.is_finite()
+                || !cos.is_finite()
+                || !sin.is_finite()
+                || !rotated_first.is_finite()
+                || !rotated_second.is_finite()
+                || !first_out.is_finite()
+                || !second_out.is_finite()
+            {
+                fe2o3_device::trap();
+            }
+            let first_out = first_out.to_bits();
+            let second_out = second_out.to_bits();
+            // END tp_rope_pair_v1
+            if !rotated_key.write_row_striped_2d(
+                &stripe,
+                head * 2,
+                1,
+                key_columns,
+                key_columns,
+                first_out,
+            ) || !rotated_key.write_row_striped_2d(
+                &stripe,
+                head * 2 + 1,
+                1,
+                key_columns,
+                key_columns,
+                second_out,
+            ) {
+                fe2o3_device::trap();
+            }
         }
         head += 1;
     }
@@ -257,13 +261,15 @@ pub fn ferric_qwen3_tp_kv_append_v1(
     };
     let base = position * columns;
     let mut component = 0_usize;
-    while component < columns {
-        let key_value = memory::volatile_load(key, component);
-        let value_value = memory::volatile_load(value, component);
-        if !key_cache.write_exclusive(&leader, base + component, key_value)
-            || !value_cache.write_exclusive(&leader, base + component, value_value)
-        {
-            fe2o3_device::trap();
+    while component < 1024 {
+        if component < columns {
+            let key_value = memory::volatile_load(key, component);
+            let value_value = memory::volatile_load(value, component);
+            if !key_cache.write_exclusive(&leader, base + component, key_value)
+                || !value_cache.write_exclusive(&leader, base + component, value_value)
+            {
+                fe2o3_device::trap();
+            }
         }
         component += 1;
     }

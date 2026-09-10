@@ -192,3 +192,89 @@ fn actual_cache_rope_and_activation_prefixes_reject_unknown_geometry() {
         }
     }
 }
+
+fn literal_loop_guard_matches(
+    loop_: &syn::ExprWhile,
+    counter: &str,
+    bound: &str,
+    maximum: i64,
+) -> bool {
+    let [
+        Stmt::Expr(Expr::If(active), None),
+        Stmt::Expr(Expr::Binary(increment), Some(_)),
+    ] = loop_.body.stmts.as_slice()
+    else {
+        return false;
+    };
+    if active.else_branch.is_some() || !matches!(increment.op, BinOp::AddAssign(_)) {
+        return false;
+    }
+    let Expr::Path(left) = increment.left.as_ref() else {
+        return false;
+    };
+    if !left.path.is_ident(counter) || evaluate(&increment.right, &Values::new()) != 1 {
+        return false;
+    }
+    for extent in [1, 2, 4, 8, 16, 32, 128, 512, 1024] {
+        if extent > maximum {
+            continue;
+        }
+        for index in 0..=maximum {
+            let values = Values::from([(counter.into(), index), (bound.into(), extent)]);
+            if (evaluate(&loop_.cond, &values) != 0) != (index < maximum)
+                || (evaluate(&active.cond, &values) != 0) != (index < extent)
+            {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+#[test]
+fn literal_maximum_loops_guard_every_memory_and_numeric_statement() {
+    let source = include_str!("../src/rope_kv.rs");
+    for (name, expected) in [
+        (
+            "ferric_qwen3_tp_rope_v1",
+            vec![("head", "query_heads", 32), ("head", "kv_heads", 8)],
+        ),
+        (
+            "ferric_qwen3_tp_kv_append_v1",
+            vec![("component", "columns", 1024)],
+        ),
+    ] {
+        let function = kernel(source, name);
+        let loops: Vec<_> = function
+            .block
+            .stmts
+            .iter()
+            .filter_map(|statement| {
+                let Stmt::Expr(Expr::While(loop_), None) = statement else {
+                    return None;
+                };
+                Some(loop_)
+            })
+            .collect();
+        assert_eq!(loops.len(), expected.len());
+        for (loop_, (counter, bound, maximum)) in loops.into_iter().zip(expected) {
+            assert!(literal_loop_guard_matches(loop_, counter, bound, maximum));
+            let mut mutant = loop_.clone();
+            let Stmt::Expr(Expr::If(guard), None) = &mut mutant.body.stmts[0] else {
+                unreachable!()
+            };
+            guard.cond = Box::new(syn::parse_quote!(true));
+            assert!(!literal_loop_guard_matches(
+                &mutant, counter, bound, maximum
+            ));
+            let mut mutant = loop_.clone();
+            mutant
+                .body
+                .stmts
+                .insert(0, syn::parse_quote!(memory::volatile_load(key, component);));
+            assert!(!literal_loop_guard_matches(
+                &mutant, counter, bound, maximum
+            ));
+        }
+    }
+}
