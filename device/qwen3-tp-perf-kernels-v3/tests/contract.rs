@@ -98,7 +98,7 @@ fn actual_sources_keep_finite_causal_and_active_row_checks() {
         PROJECTION
             .matches("matrix.multiply_accumulate(a_fragment, b_fragment, accumulator)")
             .count(),
-        2
+        7
     );
     assert!(PROJECTION.contains("Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096)"));
     assert!(PROJECTION.contains("Bf16MfmaAMatrix::row_major(a, 0, rows, k, k)"));

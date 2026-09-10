@@ -282,8 +282,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     if a.len() < rows * 4096
         || a.len() > 16 * 4096
         || weights_kn.len() != n * 4096
-        || output.len() < rows * n
-        || output.len() > 16 * n
     {
         fe2o3_device::trap();
     }
@@ -307,20 +305,23 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
         step += 1;
     }
-    let values = accumulator.into_values();
+    let [value_0, value_1, value_2, value_3] = accumulator.into_values();
+    if output.len() < rows * n || output.len() > 16 * n {
+        fe2o3_device::trap();
+    }
     if tile_column < n / 16 {
     } else {
         fe2o3_device::trap();
     }
-    if thread::launch_extent_1d() != (n / 16) * 64 {
+    if thread::grid_dim_x() as usize != n / 16 || thread::block_dim_x() != 64 {
         fe2o3_device::trap();
     }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
     if row_base < rows {
-        let value = Bf16::from_f32(values[0]);
-        if !values[0].is_finite()
+        let value = Bf16::from_f32(value_0);
+        if !value_0.is_finite()
             || !value.is_finite()
             || !output.write_tiled_2d(&tile, 0, rows, n, n, value.to_bits())
         {
@@ -328,8 +329,8 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         }
     }
     if row_base + 1 < rows {
-        let value = Bf16::from_f32(values[1]);
-        if !values[1].is_finite()
+        let value = Bf16::from_f32(value_1);
+        if !value_1.is_finite()
             || !value.is_finite()
             || !output.write_tiled_2d(&tile, 1, rows, n, n, value.to_bits())
         {
@@ -337,8 +338,8 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         }
     }
     if row_base + 2 < rows {
-        let value = Bf16::from_f32(values[2]);
-        if !values[2].is_finite()
+        let value = Bf16::from_f32(value_2);
+        if !value_2.is_finite()
             || !value.is_finite()
             || !output.write_tiled_2d(&tile, 2, rows, n, n, value.to_bits())
         {
@@ -346,8 +347,8 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         }
     }
     if row_base + 3 < rows {
-        let value = Bf16::from_f32(values[3]);
-        if !values[3].is_finite()
+        let value = Bf16::from_f32(value_3);
+        if !value_3.is_finite()
             || !value.is_finite()
             || !output.write_tiled_2d(&tile, 3, rows, n, n, value.to_bits())
         {
@@ -358,7 +359,7 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
 
 /// MFMA FP32 partial projection over exactly the rank-local reduction width.
 #[cfg(feature = "mfma")]
-#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [256, 1, 1]), control_flow(loop_bounds(768)))]
+#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [256, 1, 1]), control_flow(loop_bounds(32, 96, 128, 256, 384, 768)))]
 #[allow(clippy::too_many_arguments)]
 pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     a: &[u16],
@@ -383,6 +384,7 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
         fe2o3_device::trap();
     }
     let rows = rows as usize;
+    let n = n as usize;
     let k = k as usize;
     if rows < 17 {
     } else {
@@ -392,11 +394,13 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     } else {
         fe2o3_device::trap();
     }
+    if n == 4096 {
+    } else {
+        fe2o3_device::trap();
+    }
     if a.len() < rows * k
         || a.len() > 16 * k
         || weights_kn.len() != 4096 * k
-        || output.len() < rows * 4096
-        || output.len() > 16 * 4096
     {
         fe2o3_device::trap();
     }
@@ -413,41 +417,87 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     };
     let matrix = DeviceMatrix::current();
     let mut accumulator = F32AccumulatorFragment::zero(&lane);
-    let mut step = 0_usize;
-    while step < k / 16 {
-        let a_fragment = left.load_m16k16(&lane, 0, step * 16);
-        let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
-        accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
-        step += 1;
+    // Static loops expose both termination and uniform control for each TP shape.
+    if k == 512 {
+        let mut step = 0_usize;
+        while step < 32 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
+    } else if k == 1536 {
+        let mut step = 0_usize;
+        while step < 96 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
+    } else if k == 2048 {
+        let mut step = 0_usize;
+        while step < 128 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
+    } else if k == 4096 {
+        let mut step = 0_usize;
+        while step < 256 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
+    } else if k == 6144 {
+        let mut step = 0_usize;
+        while step < 384 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
+    } else {
+        let mut step = 0_usize;
+        while step < 768 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
     }
     let values = accumulator.into_values();
+    if output.len() < rows * 4096 || output.len() > 16 * 4096 {
+        fe2o3_device::trap();
+    }
     if tile_column < 256 {
     } else {
         fe2o3_device::trap();
     }
-    if thread::launch_extent_1d() != 256 * 64 {
+    if thread::grid_dim_x() != 256 || thread::block_dim_x() != 64 {
         fe2o3_device::trap();
     }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
     if row_base < rows
-        && (!values[0].is_finite() || !output.write_tiled_2d(&tile, 0, rows, 4096, 4096, values[0]))
+        && (!values[0].is_finite() || !output.write_tiled_2d(&tile, 0, rows, n, n, values[0]))
     {
         fe2o3_device::trap();
     }
     if row_base + 1 < rows
-        && (!values[1].is_finite() || !output.write_tiled_2d(&tile, 1, rows, 4096, 4096, values[1]))
+        && (!values[1].is_finite() || !output.write_tiled_2d(&tile, 1, rows, n, n, values[1]))
     {
         fe2o3_device::trap();
     }
     if row_base + 2 < rows
-        && (!values[2].is_finite() || !output.write_tiled_2d(&tile, 2, rows, 4096, 4096, values[2]))
+        && (!values[2].is_finite() || !output.write_tiled_2d(&tile, 2, rows, n, n, values[2]))
     {
         fe2o3_device::trap();
     }
     if row_base + 3 < rows
-        && (!values[3].is_finite() || !output.write_tiled_2d(&tile, 3, rows, 4096, 4096, values[3]))
+        && (!values[3].is_finite() || !output.write_tiled_2d(&tile, 3, rows, n, n, values[3]))
     {
         fe2o3_device::trap();
     }
