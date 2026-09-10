@@ -33,10 +33,6 @@ macro_rules! batch_paged_attention_pair_v2 {
                     fe2o3_device::trap();
                 }
                 let cache_base = (physical_page * 16 + token % 16) * $columns + $kv_head * 128;
-                if cache_base < $keys.len() {
-                } else {
-                    fe2o3_device::trap();
-                }
                 if cache_base < 8388481 {
                 } else {
                     fe2o3_device::trap();
@@ -44,6 +40,10 @@ macro_rules! batch_paged_attention_pair_v2 {
                 let mut dot = 0.0_f32;
                 let mut dimension = 0_usize;
                 while dimension < 128 {
+                    if cache_base < 8388481 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
                     let query =
                         Bf16::from_bits(memory::volatile_load($query, $query_base + dimension))
                             .to_f32();
@@ -55,6 +55,10 @@ macro_rules! batch_paged_attention_pair_v2 {
                         fe2o3_device::trap();
                     }
                     dimension += 1;
+                }
+                if cache_base < 8388481 {
+                } else {
+                    fe2o3_device::trap();
                 }
                 let score = dot * ATTENTION_SCALE;
                 let value_0 =
@@ -267,10 +271,6 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
                     fe2o3_device::trap();
                 }
                 let cache_base = (physical_page * 16 + token % 16) * columns + kv_head * 128;
-                if cache_base < key_cache.len() {
-                } else {
-                    fe2o3_device::trap();
-                }
                 if cache_base < 8388481 {
                 } else {
                     fe2o3_device::trap();
@@ -278,6 +278,10 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
                 let mut dot = 0.0_f32;
                 let mut dimension = 0_usize;
                 while dimension < 128 {
+                    if cache_base < 8388481 {
+                    } else {
+                        fe2o3_device::trap();
+                    }
                     let query =
                         Bf16::from_bits(memory::volatile_load(query, query_base + dimension))
                             .to_f32();
@@ -290,6 +294,10 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
                         fe2o3_device::trap();
                     }
                     dimension += 1;
+                }
+                if cache_base < 8388481 {
+                } else {
+                    fe2o3_device::trap();
                 }
                 let score = dot * ATTENTION_SCALE;
                 let value_0 =

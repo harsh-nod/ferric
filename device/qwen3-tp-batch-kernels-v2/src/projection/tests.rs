@@ -67,8 +67,8 @@ fn partial_outputs_preserve_information_before_host_reduction() {
     let a = [0x3f80, 0x3b80, 0x3f80, 0x3b80];
     let w = [0x3f80, 0x3f80];
     let sums = batch_four_dots_v2!(&a, &w, 2, 0, 0, 2);
-    assert_eq!(sums.0, 1.00390625);
-    assert_eq!(sums.1, 1.00390625);
+    assert_eq!(sums.0, 1.0 + 1.0 / 256.0);
+    assert_eq!(sums.1, 1.0 + 1.0 / 256.0);
     assert_ne!(sums.0, Bf16::from_f32(sums.0).to_f32());
 }
 
@@ -92,8 +92,8 @@ fn bf16_output_macro_performs_one_final_narrowing() {
     }
     let tile = ();
     let mut output = Capture(0);
-    batch_write_bf16_v2!(output, tile, 0, 1, 1, 1.00390625);
-    assert_eq!(output.0, Bf16::from_f32(1.00390625).to_bits());
+    batch_write_bf16_v2!(output, tile, 0, 1, 1, 1.0 + 1.0 / 256.0);
+    assert_eq!(output.0, Bf16::from_f32(1.0 + 1.0 / 256.0).to_bits());
 }
 
 #[test]
