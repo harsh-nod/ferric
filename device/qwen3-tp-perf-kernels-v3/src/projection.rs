@@ -188,23 +188,17 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
     let mut step = 0_usize;
-    while step < k / 64 {
-        if step < 192 {
-        } else {
-            fe2o3_device::trap();
-        }
+    while step < 192 {
         let inner = step * 64 + lane;
         if inner < k {
-        } else {
-            fe2o3_device::trap();
-        }
-        let inner = inner as u16 as usize;
-        let left = Bf16::from_bits(memory::volatile_load(a, row * k + inner)).to_f32();
-        let right = Bf16::from_bits(memory::volatile_load(weights, column * k + inner)).to_f32();
-        let product = left * right;
-        partial += product;
-        if !product.is_finite() || !partial.is_finite() {
-            fe2o3_device::trap();
+            let inner = inner as u16 as usize;
+            let left = Bf16::from_bits(memory::volatile_load(a, row * k + inner)).to_f32();
+            let right = Bf16::from_bits(memory::volatile_load(weights, column * k + inner)).to_f32();
+            let product = left * right;
+            partial += product;
+            if !product.is_finite() || !partial.is_finite() {
+                fe2o3_device::trap();
+            }
         }
         step += 1;
     }
