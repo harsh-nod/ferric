@@ -5,17 +5,22 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Performance Swarm
 
-The active implementation tracks public fe2o3 `3e74a932`; frozen benchmark
+The integrated runtime tracks public fe2o3 `902fef6e`; frozen benchmark
 inputs retain their original source and binary identities. Compiler/KFD
 changes are published to fe2o3 main after review/rebase. Ferric implementation
 remains local; the Pages performance checkpoint is published separately.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Admission-only is mixed; sequences-only is slower in its first matched run. Bound raw receipts and per-request TTFT/TPOT remain separate from setup and workload throughput. | Complete isolated ablations and repetitions; validate wider fixed-workload schedules. |
-| Kernels | Full16 MFMA and wave images pass native fixtures; wave projection fails exact Qwen reference and is not accepted. Separate full32 and peer32 images emit successfully. | Stronger projection differential, full-model MFMA, and native32-row tests. |
-| Collectives | Genuine GPU producer-to-peer-reader TP2/8 probes pass without host tensor staging. Cached same-rank peer sequences pass host review/tests. | Native sequence gate before core publication, then full-model peer measurements. |
-| Integration | Explicit32-row pool/scheduler/driver/admission and v6 peer routing pass 163 library, 33 CLI/worker, and 22 source-policy tests plus strict Clippy on mi300x. Tests cover actual command extents, second row tiles, and partial-failure cleanup. | Integrate native-gated artifacts; compare exact profiles and allocation policies on mi350. |
+| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Five isolated/cumulative ablations and a matched MFMA pair are archived; failed wave cases stay excluded. Wide comparator has 45 host tests and historical revalidation. | Dedicated common-clock replica cohort verifier, then repetitions and matched controls. |
+| Kernels | Full16 MFMA model pair passes: first workload-rate sample +27.91%, with startup regression. Wave projection/attention both fail exact Qwen seed reference. Full32 native 30 fixtures, peer32 native 19 fixtures and stronger arithmetic-order differential pass. | Replica launcher host qualification; repeated MFMA and exact-reference wide-model measurements. |
+| Collectives | Public `902fef6e` cached peer sequences pass genuine GPU producer-to-peer-reader TP2/8 probes including rows 17/31/32. First TP2 full-model peer run strictly passes. Replica clock/process integration has independent source review. | TP8 full-model run, source-matched host controls, current independent-worker build. |
+| Integration | Public `902fef6e` replica CLI/shared-clock/weight-accounting integration passes 166 library, 43 CLI/worker, 6 control and 22 source-policy tests plus strict Clippy and release build on mi300x. Launcher host fault tests pass separately. | Qualify exact replica outputs and shared-clock metrics, publish results, compare allocation policies on mi350. |
+
+Public fe2o3 subsequently advanced to `1b262ac3`. Its reviewed delta is
+compiler/analysis-side, with no KFD, worker, SDK or lockfile changes. Active-pin
+integration is separate from frozen `902fef6e` runtime comparisons. Old emitted images
+retain their actual compiler identities; they are never relabeled as rebuilds.
 
 These are short engineering workloads, not HTTP serving qualification or a
 matched vLLM/SGLang comparison. See [the live performance ledger summary](M1_QWEN3_PERFORMANCE.md).

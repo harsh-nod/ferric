@@ -14,13 +14,14 @@ runs so independent teams cannot contaminate one another's measurements.
 | Runtime admission cache and checked operational validation | Runtime | Published to fe2o3; integrated opt-in controls pass host tests/Clippy | Four-policy native probe passes; two operational-only Qwen runs strictly validated |
 | Checked command sequences and safe queue rollover | Runtime | Published to fe2o3; integrated 10/5-command segments and exact queue receipts | Native retained-buffer rollover and dependent sequences pass; cumulative Qwen R1 passes but is slower than operational-only |
 | Skip intermediate-prefill output heads | Integration | Implemented with independent opt-in flag; remote tests and Clippy pass | Two strictly validated TP8 runs; substantial timing variation, no consistent win |
-| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference, so no wave speedup is accepted; MFMA model comparison pending |
-| Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Included in 26-fixture native wave probe; model comparison pending |
+| Cooperative decode GEMV and BF16 MFMA GEMM | Kernels | Wave and full MFMA images emitted; stronger numerical differential probe added | 26 wave and 36 full fixtures pass; wave Qwen seed differs from reference; first matched MFMA model pair passes with a 27.91% workload-rate gain and a startup regression |
+| Cooperative paged attention | Kernels | Closed wave image emitted; driver mode passes host tests and strict Clippy | Native fixtures pass, but first model run has the same seed mismatch as wave projection; rejected for timing claims |
 | GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Synthetic native fixtures pass; TP1 model comparison pending |
-| Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | Isolated model ablation pending |
-| True device-resident TP2/8 collective | Collectives/runtime | Peer owner published; separate serial peer child/transport integrated and host-tested; v4 image emitted | TP2 8-case and TP8 128-case ownership probes, 13 arithmetic fixtures, and GPU-producer TP2/8 6/24 observations pass; Qwen comparison pending |
-| Larger row envelope and TP allocation tuning | Integration/kernels | Independent full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit host envelopes, admission, routing and failure tests pass; 16-row defaults retained | Native 32-row validation pending; no replica-throughput claim yet |
-| Bound comparison and performance ledger | Runtime | Implemented; 36 host tests and real archived-run checks pass | Baseline, pruning, and two operational runs recorded |
+| Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | First isolated model ablation passes; mixed per-request results, no repeatable gain established |
+| True device-resident TP2/8 collective | Collectives/runtime | Public `902fef6e` peer runtime and child, explicit operational/cache/sequence controls, separate v4/v6 images | Native GPU-producer and cached-sequence probes pass at TP2/8, including rows 17/31/32; first TP2 Qwen run passes; TP8 model measurement in progress |
+| Larger row envelope and TP allocation tuning | Integration/kernels | Full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit admission/routing and real coordinator schedule tests pass; default remains 16 | Full32 native 30 fixtures and peer32 native 19 fixtures pass; model/replica-throughput measurements pending |
+| Bound comparison and performance ledger | Runtime | Implemented; 45 host tests and historical-run revalidation pass; wide capacity and observed rows are distinct | Baseline, pruning, operational, isolated ablations, matched MFMA pair and rejected wave cases retained |
+| Same-host replica cohorts | Kernels/measurement/integration | Identity-bound shared RAW-clock control, exact workload partition and process cleanup implemented; functional host tests and strict Clippy pass | Dedicated cohort verifier in development; no GPU replica-throughput claim |
 
 ## Initial Observations
 
@@ -37,21 +38,55 @@ Ranges show individual repetitions, not confidence intervals or stable tails.
 | Operational + admission cache + sequences | 1 | 4.1125 | 2.5865 | 0.296581 |
 | Admission cache only | 1 | 46.2735 | 52.9616 | 0.032950 |
 | Sequences only | 1 | 64.6440 | 64.9780 | 0.025022 |
+| Host scratch reuse only | 1 | 46.7256 | 40.0161 | 0.034571 |
 
-The final four rows use the same controller `bc4a283b...` and worker `70572ff2...`.
+The final five rows use the same controller `bc4a283b...` and worker `70572ff2...`.
 The cumulative/control single-run ratio is 10.2391x output rate. The cumulative
 profile is slower than the separately measured operational-only profile;
 there is no established incremental cache/sequence benefit. Admission-only
 has mixed throughput/TPOT results, and sequence-only has 13.61% lower workload
-output rate than the matched control. Host scratch reuse and wave attention
-are queued separately. These single observations do not establish repeatable
-gains or regressions.
+output rate than the matched control. Host scratch reuse improves global rate
+in one sample but slightly worsens reuse-request TTFT/TPOT. These single
+observations do not establish repeatable gains or regressions.
 
 The wave-projection candidate completed but failed strict model comparison:
 `seed-prefix` generated `[9856, 374]` (" Germany is") instead of `[17689, 374]`
 (" Spain is"). The other three request summaries matched. This failed
-candidate is archived, excluded from accepted timing ledgers, and remains
-unqualified while stronger arithmetic differential tests are performed.
+candidate is archived and excluded from accepted timing ledgers. The isolated
+wave-attention run has the same seed mismatch. A baseline-arithmetic control
+using that same wave image passes strict comparison. Stronger mixed-sign and
+cancellation projection fixtures pass their respective serial/wave arithmetic
+orders, but those tests do not establish model-token parity. Matched
+operational-mode wave reruns remain a separate gate.
+
+### Matched MFMA Pair
+
+These two single-run observations share controller `bc4a283b...`, worker
+`70572ff2...`, full-v3 image `8c81d3fe...`, operational validation enabled,
+baseline attention, and all other optimization flags disabled. Only projection
+changes. All eight expected tokens/bytes and timing/teardown records pass.
+
+| Projection | Reuse TTFT (s) | Reuse TPOT (s) | Workload Output (tokens/s) | Setup (s) | Whole Run (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 2.630847 | 1.261079 | 0.449565 | 119.146961 | 151.628723 |
+| MFMA | 1.819253 | 0.854889 | 0.575054 | 173.301530 | 209.070221 |
+
+The candidate lowers these TTFT/TPOT observations by 30.85%/32.21% and raises
+global workload rate 27.91%, but setup and whole-run time regress. It allocates
+15,136,194,560 extra resident transposed-weight bytes. The timing change is
+consistent with added setup work; no separate setup-cost attribution is claimed.
+Pair ledger SHA256:
+`8660be59f4d452e3944131069c5a7824c0c72f6c3e87bfcd83f4a7d475ad3884`.
+This is not a stable serving result or a long-generation numerical qualification.
+
+### Peer Model Gate
+
+The first TP2 serial device-peer run passes strict reference, ownership,
+dispatch-count and teardown checks. Reuse TTFT is 11.040452221 seconds and TPOT
+is 10.162302622 seconds; setup is 220.861978648 seconds and whole run is
+285.630395408 seconds. There is no matched TP2 host control yet, so these
+observations do not establish a collective speedup. Comparison SHA256:
+`7452fafe952ead228830782e83c291a8f4d1b345b90cc50ab690114f6713e9ee`.
 
 The operational-only runs show roughly 14-15x baseline workload output rate,
 not a serving-throughput claim. They retain admission caching, sequences,

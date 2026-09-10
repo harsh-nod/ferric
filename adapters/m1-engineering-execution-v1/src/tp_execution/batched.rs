@@ -249,6 +249,37 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.projection.bytes
     }
 
+    /// Resident base weight payload, excluding transposes, page rounding, and workspaces.
+    /// # Errors
+    /// Rejects inconsistent tensor extents or an overflowing byte count.
+    pub fn resident_weight_bytes(&self) -> TpResult<u64> {
+        let mut total = 0_u64;
+        for rank in &self.inner.ranks {
+            // Independent ranks may reuse the same transport-local buffer ID.
+            let mut seen = std::collections::BTreeMap::new();
+            for (_, tensor) in rank
+                .globals
+                .iter()
+                .chain(rank.layers.iter().flat_map(|layer| &layer.weights))
+            {
+                let bytes = u64::try_from(tensor.elements)
+                    .ok()
+                    .and_then(|n| n.checked_mul(u64::from(tensor.element_bytes)))
+                    .ok_or("base weight byte count overflow")?;
+                if let Some(previous) = seen.insert(tensor.id, bytes) {
+                    if previous != bytes {
+                        return Err("inconsistent base weight buffer extent".into());
+                    }
+                    continue;
+                }
+                total = total
+                    .checked_add(bytes)
+                    .ok_or("base weight total overflow")?;
+            }
+        }
+        Ok(total)
+    }
+
     /// Selects the admitted wave-cooperative attention root before execution.
     /// # Errors
     /// Rejects a started, poisoned, or closed execution.

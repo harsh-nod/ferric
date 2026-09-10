@@ -1,5 +1,6 @@
 //! Bounded, explicitly non-authoritative continuous Qwen workload runner.
 
+mod tp_benchmark_control;
 mod tp_peer_worker;
 mod tp_rank_worker;
 mod tp_worker;
@@ -25,6 +26,7 @@ use ferric_m1_engineering_execution_v1::tp_scheduler::{
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use tp_benchmark_control::{BenchmarkClock, ControlConfig};
 use tp_peer_worker::PeerWorker;
 use tp_rank_worker::RankWorker;
 use tp_worker::{RuntimeOptions, Worker};
@@ -37,7 +39,8 @@ const USAGE: &str = concat!(
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
-    "[--projection baseline|wave|mfma|auto] [--attention baseline|wave]"
+    "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
+    "[--benchmark-control FILE]"
 );
 
 struct Options {
@@ -46,6 +49,7 @@ struct Options {
     peer_artifact: Option<PathBuf>,
     worker: PathBuf,
     requests: PathBuf,
+    benchmark_control: Option<PathBuf>,
     devices: Vec<u64>,
     rows: usize,
     chunk: usize,
@@ -97,6 +101,7 @@ impl Options {
         let mut projection = ProjectionMode::Baseline;
         let mut wave_attention = false;
         let mut peer_artifact = None;
+        let mut benchmark_control = None;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -142,6 +147,7 @@ impl Options {
                 "--peer-artifact" => peer_artifact = Some(PathBuf::from(value)),
                 "--worker" => worker = Some(PathBuf::from(value)),
                 "--requests" => requests = Some(PathBuf::from(value)),
+                "--benchmark-control" => benchmark_control = Some(PathBuf::from(value)),
                 "--devices" => {
                     devices = Some(
                         value
@@ -249,6 +255,7 @@ impl Options {
             peer_artifact,
             worker: worker.ok_or("--worker is required")?,
             requests: requests.ok_or("--requests is required")?,
+            benchmark_control,
             devices,
             rows,
             chunk,
@@ -314,7 +321,7 @@ impl Workload {
         }
         Ok(workload)
     }
-    fn open(path: &Path) -> Result<Self, String> {
+    fn open(path: &Path) -> Result<(Self, String), String> {
         let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
         let metadata = file.metadata().map_err(|e| e.to_string())?;
         if !metadata.is_file() || metadata.len() > 1_048_576 {
@@ -324,7 +331,8 @@ impl Workload {
         file.take(1_048_577)
             .read_to_end(&mut bytes)
             .map_err(|e| e.to_string())?;
-        Self::parse(&bytes)
+        let workload = Self::parse(&bytes)?;
+        Ok((workload, hex(&Sha256::digest(&bytes))))
     }
 }
 
@@ -367,8 +375,29 @@ fn hash_file(path: &Path) -> Result<String, String> {
     Ok(hex(&hash.finalize()))
 }
 
-fn elapsed_ns(start: Instant) -> u64 {
-    u64::try_from(start.elapsed().as_nanos()).unwrap_or(u64::MAX)
+fn elapsed_ns(start: Instant) -> Result<u64, String> {
+    u64::try_from(start.elapsed().as_nanos()).map_err(|_| "elapsed clock overflow".into())
+}
+
+fn timed_step<T>(
+    mut clock: impl FnMut() -> Result<u64, String>,
+    step: impl FnOnce(u64, &mut dyn FnMut() -> u64) -> Result<T, String>,
+) -> Result<T, String> {
+    let started = clock()?;
+    let mut completion_error = None;
+    let result = step(started, &mut || match clock() {
+        Ok(now) => now,
+        Err(error) => {
+            // The coordinator completion callback cannot return a Result.
+            // Discard its report before publication if the clock failed.
+            completion_error = Some(error);
+            started
+        }
+    });
+    if let Some(error) = completion_error {
+        return Err(error);
+    }
+    result
 }
 
 fn emit_request(
@@ -406,8 +435,10 @@ fn run_workload(
     workload: &Workload,
     prompts: &[Vec<u32>],
     options: &Options,
+    benchmark_clock: Option<&BenchmarkClock>,
 ) -> Result<(), String> {
     let clock = Instant::now();
+    let now = || benchmark_clock.map_or_else(|| elapsed_ns(clock), BenchmarkClock::elapsed_ns);
     let mut active: Vec<(usize, TpRequestIdV1)> = Vec::new();
     let mut admitted = vec![false; workload.requests.len()];
     let (mut tick, mut batches) = (0, 0);
@@ -416,7 +447,7 @@ fn run_workload(
             if admitted[index] || request.arrival_tick > tick {
                 continue;
             }
-            let now = elapsed_ns(clock);
+            let now = now()?;
             let hit = runtime.admit(
                 TpRequestAdmissionV1 {
                     prompt_tokens: prompts[index].clone(),
@@ -442,7 +473,7 @@ fn run_workload(
                 .cancel_tick
                 .is_some_and(|cancel| cancel <= tick)
             {
-                runtime.cancel(id, elapsed_ns(clock))?;
+                runtime.cancel(id, now()?)?;
             }
         }
         retire_finished(runtime, &mut active, workload, model, tick)?;
@@ -463,9 +494,10 @@ fn run_workload(
         if batches >= options.max_batches {
             return Err("workload exhausted its conservative batch/packet budget".into());
         }
-        let report = runtime
-            .step(tick, elapsed_ns(clock), || elapsed_ns(clock))?
-            .ok_or("active requests produced no batch")?;
+        let report = timed_step(now, |started, completed| {
+            runtime.step(tick, started, completed)
+        })?
+        .ok_or("active requests produced no batch")?;
         let rows = report.rows.iter().map(|row| serde_json::json!({
             "slot":row.request.slot, "generation":row.request.generation, "token":row.token_id,
             "position":row.absolute_position, "kind":format!("{:?}", row.kind)
@@ -515,7 +547,16 @@ fn retire_finished(
 
 fn run(options: &Options) -> Result<(), String> {
     let whole = Instant::now();
-    let workload = Workload::open(&options.requests)?;
+    let (workload, loaded_requests_sha256) = Workload::open(&options.requests)?;
+    let control = options
+        .benchmark_control
+        .as_ref()
+        .map(|path| {
+            let config = ControlConfig::open(path, &options.requests, &options.devices)?;
+            config.verify_loaded_requests_sha256(&loaded_requests_sha256)?;
+            Ok::<_, String>(config)
+        })
+        .transpose()?;
     let worker_hash = hash_file(&options.worker)?;
     let controller_hash = hash_file(Path::new("/proc/self/exe"))?;
     let artifact = if options.kernel_profile == KernelProfile::V2 {
@@ -651,13 +692,27 @@ fn run(options: &Options) -> Result<(), String> {
         "additional resident transposed weight bytes: {}",
         gpu.transposed_weight_bytes()
     );
+    let weight_payload_bytes = if control.is_some() {
+        Some(serde_json::json!({
+            "host_target":u64::try_from(model.target_weights().len()).map_err(|_| "host weight byte count overflow")?,
+            "device_base":gpu.resident_weight_bytes()?,
+            "device_transposed":gpu.transposed_weight_bytes()
+        }))
+    } else {
+        None
+    };
     let runtime_constructor = if options.kernel_profile.wide32() {
         EngineeringTpBatchRuntimeV2::new_wide32
     } else {
         EngineeringTpBatchRuntimeV2::new
     };
     let mut runtime = runtime_constructor(gpu, pool, scheduler, options.rows, options.cache)?;
+    let mut benchmark_clock = None;
     let result = (|| {
+        let setup_seconds = whole.elapsed().as_secs_f64();
+        if let Some(config) = control {
+            benchmark_clock = Some(config.ready_and_wait()?);
+        }
         let mut setup = serde_json::json!({"schema":"FerricQwen3TpBatchSetupV2", "authority":"none",
             "model":"Qwen/Qwen3-8B", "dtype":"BF16", "target":"gfx950:xnack-",
             "tensor_parallel":options.devices.len(), "device_unique_ids":options.devices,
@@ -667,7 +722,7 @@ fn run(options: &Options) -> Result<(), String> {
             "artifact_handoff_id":hex(artifact.handoff_id().as_bytes()), "session_id":hex(&session),
             "batch_tokens":options.rows, "prefill_chunk":options.chunk, "page_tokens":16,
             "physical_pages":options.pages, "context_tokens":options.context, "cache_ttl_ticks":options.ttl,
-            "prefix_cache":options.cache, "max_batches":options.max_batches, "setup_seconds":whole.elapsed().as_secs_f64(),
+            "prefix_cache":options.cache, "max_batches":options.max_batches, "setup_seconds":setup_seconds,
             "output_head_pruning":options.prune_output_head,
             "performance_profile": {
                 "runtime_cache_admission":options.runtime.cache_admission,
@@ -682,6 +737,12 @@ fn run(options: &Options) -> Result<(), String> {
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
             "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"});
+        if let Some(clock) = &benchmark_clock {
+            setup["replica_benchmark"] =
+                serde_json::to_value(clock.metadata()).map_err(|e| e.to_string())?;
+            setup["weight_payload_bytes"] =
+                weight_payload_bytes.ok_or("missing replica weight accounting")?;
+        }
         if options.kernel_profile.wide32() {
             setup["kernel_profile"] = serde_json::json!(if options.kernel_profile.mfma() {
                 "v5-mfma32"
@@ -698,15 +759,28 @@ fn run(options: &Options) -> Result<(), String> {
             });
         }
         emit(&setup)?;
-        run_workload(&mut runtime, &model, &workload, &prompts, options)
+        run_workload(
+            &mut runtime,
+            &model,
+            &workload,
+            &prompts,
+            options,
+            benchmark_clock.as_ref(),
+        )
     })();
     let close = runtime.close();
     match (result, close) {
-        (Ok(()), Ok(())) => emit(
-            &serde_json::json!({"schema":"FerricQwen3TpBatchClosedV2", "authority":"none",
+        (Ok(()), Ok(())) => {
+            let replica_closed = benchmark_clock.map(BenchmarkClock::finish).transpose()?;
+            let mut closed = serde_json::json!({"schema":"FerricQwen3TpBatchClosedV2", "authority":"none",
             "worker_pids":pids, "all_workers_exited":true, "rank_dispatch_counts":runtime.dispatch_counts(),
-            "whole_seconds":whole.elapsed().as_secs_f64()}),
-        ),
+            "whole_seconds":whole.elapsed().as_secs_f64()});
+            if let Some(receipt) = replica_closed {
+                closed["replica_benchmark"] =
+                    serde_json::to_value(receipt).map_err(|e| e.to_string())?;
+            }
+            emit(&closed)
+        }
         (Err(error), Ok(())) => Err(error),
         (Ok(()), Err(error)) => Err(format!("worker teardown: {error}")),
         (Err(error), Err(close)) => Err(format!("{error}; worker teardown: {close}")),
@@ -764,6 +838,86 @@ mod tests {
         }
         assert!(Options::parse(["--devices".into(), "1".into()].into_iter()).is_err());
     }
+
+    #[test]
+    fn replica_control_is_explicit_and_single_valued() {
+        assert!(
+            args(&["--devices", "1"])
+                .unwrap()
+                .benchmark_control
+                .is_none()
+        );
+        assert_eq!(
+            args(&[
+                "--devices",
+                "1",
+                "--benchmark-control",
+                "/private/control.json"
+            ])
+            .unwrap()
+            .benchmark_control,
+            Some(PathBuf::from("/private/control.json"))
+        );
+        assert!(args(&["--devices", "1", "--benchmark-control"]).is_err());
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--benchmark-control",
+                "/a",
+                "--benchmark-control",
+                "/b"
+            ])
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn timed_step_uses_both_clock_samples_without_changing_origin() {
+        let mut samples = [Ok(101), Ok(203)].into_iter();
+        let result = timed_step(
+            || samples.next().unwrap(),
+            |started, completed| Ok((started, completed())),
+        )
+        .unwrap();
+        assert_eq!(result, (101, 203));
+        assert!(samples.next().is_none());
+    }
+
+    #[test]
+    fn timed_step_rejects_start_clock_failure_before_dispatch() {
+        let mut called = false;
+        let result = timed_step(
+            || Err("start clock failed".into()),
+            |_, _| {
+                called = true;
+                Ok(())
+            },
+        );
+        assert_eq!(result.unwrap_err(), "start clock failed");
+        assert!(!called);
+    }
+
+    #[test]
+    fn timed_step_never_accepts_a_report_after_completion_clock_failure() {
+        for step_succeeds in [false, true] {
+            let mut samples = [Ok(101), Err("completion clock failed".into())].into_iter();
+            let result = timed_step(
+                || samples.next().unwrap(),
+                |_, completed| {
+                    let value = completed();
+                    if step_succeeds {
+                        Ok(value)
+                    } else {
+                        Err("coordinator failed".into())
+                    }
+                },
+            );
+            assert_eq!(result.unwrap_err(), "completion clock failed");
+            assert!(samples.next().is_none());
+        }
+    }
+
     #[test]
     fn workload_schema_and_request_bounds_are_closed() {
         let valid = serde_json::json!({"schema":"FerricQwen3TpWorkloadV2","requests":[

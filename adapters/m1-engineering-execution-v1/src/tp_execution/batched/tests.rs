@@ -489,6 +489,43 @@ fn fixture(
     }
 }
 
+#[test]
+fn resident_weight_bytes_counts_rank_local_allocations_not_aliases_or_workspaces() {
+    for world in [1, 2, 8] {
+        let mut driver = fixture(world, &pool());
+        assert_eq!(
+            driver.resident_weight_bytes().unwrap(),
+            u64::from(world) * 2
+        );
+        let extra = allocate_tensor(&mut driver.inner.transports[0], 7, 4).unwrap();
+        driver.inner.ranks[0]
+            .globals
+            .push((Qwen3TensorKind::FinalNorm, extra));
+        assert_eq!(
+            driver.resident_weight_bytes().unwrap(),
+            u64::from(world) * 2 + 28
+        );
+        driver.projection.bytes = 4096;
+        assert_eq!(
+            driver.resident_weight_bytes().unwrap(),
+            u64::from(world) * 2 + 28
+        );
+        driver.inner.ranks[0].globals.last_mut().unwrap().1.elements = 8;
+        driver.inner.ranks[0].layers[0]
+            .weights
+            .push((Qwen3TensorKind::InputLayerNorm, extra));
+        assert!(driver.resident_weight_bytes().is_err());
+    }
+}
+
+#[test]
+fn resident_weight_bytes_rejects_overflow() {
+    let mut driver = fixture(1, &pool());
+    driver.inner.ranks[0].globals[0].1.elements = usize::MAX;
+    driver.inner.ranks[0].globals[0].1.element_bytes = 4;
+    assert!(driver.resident_weight_bytes().is_err());
+}
+
 fn prepare(pool: &mut EngineeringTpPagedPoolV1, rows: u32) -> EngineeringTpPreparedBatchV1 {
     let prompt = (0..rows).collect::<Vec<_>>();
     let sequence = pool
