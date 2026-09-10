@@ -101,7 +101,7 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
         fe2o3_device::trap();
     }
     let query_heads = if model_role == 1 && world_size == 1 {
-        32
+        32_u32
     } else if model_role == 1 && world_size == 2 {
         16
     } else if model_role == 1 && world_size == 8 {
@@ -114,7 +114,7 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
         2
     };
     let kv_heads = if world_size == 1 {
-        8
+        8_u32
     } else if world_size == 2 {
         4
     } else {
