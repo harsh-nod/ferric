@@ -105,8 +105,10 @@ fn actual_sources_keep_finite_causal_and_active_row_checks() {
     assert!(ATTENTION.contains("product_0 + product_1"));
     assert!(ATTENTION.contains("reduce_sum_f32::<64>(partial)"));
     assert!(!ATTENTION.contains("while dimension"));
-    assert!(ATTENTION.contains("!product_0.is_finite()"));
-    assert!(ATTENTION.contains("!denominator.is_finite()"));
+    assert!(ATTENTION.contains("product_0.is_finite() & product_1.is_finite()"));
+    assert!(ATTENTION.contains("& denominator.is_finite()"));
+    assert!(ATTENTION.contains("if !finite"));
+    assert_eq!(ATTENTION.matches("broadcast_f32::<64>").count(), 2);
     assert!(ATTENTION.contains("!narrowed_1.is_finite()"));
 }
 
@@ -174,4 +176,15 @@ fn attention_cooperative_128_dimensions_do_not_drop_the_second_half() {
     }
     let result = wave_sum(partials);
     assert!(result.iter().all(|value| *value == -93.0));
+}
+
+#[test]
+fn deferred_projection_nonfinite_values_reach_every_lane_before_store() {
+    for bad_lane in 0..64 {
+        for invalid in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY, f32::MAX * 2.0] {
+            let mut partials = [0.25_f32; 64];
+            partials[bad_lane] = invalid;
+            assert!(wave_sum(partials).iter().all(|sum| !sum.is_finite()));
+        }
+    }
 }
