@@ -41,8 +41,10 @@ Scalar and wave weights remain NxK; MFMA weights remain separately resident KxN.
 The host must explicitly select this source/profile and its independently
 admitted artifact, allocate 32-row workspaces/metadata/trig tables, and enable
 32-row scheduler/chunk admission. Frozen V4 peer kernels still cap rows at 16
-and must be rejected with this profile until a separate peer32 image exists.
-Host-staged TP8 and device-local TP1 residual are valid integration choices.
+and must be rejected with this profile. The separate V6 peer32 source has an
+independent two-root roster and requires its own artifact admission and native
+qualification. Host-staged TP8 and device-local TP1 residual remain valid
+integration choices.
 
 Output ownership, page bounds, per-row causality, distinct append slots,
 input finiteness and final narrowing checks remain in source. Scalar order
@@ -52,3 +54,6 @@ and performance are separate evidence stages; none is implied by this README.
 
 The four tiled projection kernels keep the bounded `((rows + 15) / 16)`
 arithmetic explicit for ranked/MIR admission, with a focused Clippy allowance.
+MFMA tile coordinates derive from authenticated WG64 invocation indices. The
+row/column guards precede lossless u8/u16 narrowing, exposing bounded offset
+arithmetic without changing the accepted coordinates or weakening checks.

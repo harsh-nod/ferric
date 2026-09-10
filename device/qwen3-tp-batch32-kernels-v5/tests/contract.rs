@@ -183,6 +183,35 @@ fn tiled_output_and_wave_leader_ownership_cover_each_active_element_once() {
     }
 }
 
+#[test]
+fn wide_mfma_checked_narrowings_preserve_every_supported_tile_coordinate() {
+    assert_eq!(PROJECTION.matches("let tile_row = tile_row as u8 as usize;").count(), 2);
+    assert_eq!(
+        PROJECTION.matches("let tile_column = tile_column as u16 as usize;").count(),
+        2
+    );
+    assert_eq!(PROJECTION.matches("let tile_index = raw / 64;").count(), 2);
+    for rows in 1..=32_usize {
+        for columns in [128, 512, 1024, 1536, 2048, 4096, 6144, 12288, 151936] {
+            let columns_per_tile_row = columns / 16;
+            for tile in 0..rows.div_ceil(16) * columns_per_tile_row {
+                let tile_row = tile / columns_per_tile_row;
+                let tile_column = tile % columns_per_tile_row;
+                assert!(tile_row < 2 && tile_column < columns_per_tile_row);
+                assert_eq!(tile_row as u8 as usize, tile_row);
+                assert_eq!(tile_column as u16 as usize, tile_column);
+                assert!(tile_column * 16 <= 151920);
+                for lane in [0, 15, 16, 31, 32, 47, 48, 63] {
+                    let raw = tile * 64 + lane;
+                    assert_eq!(raw / 64, tile);
+                    let row_base = (tile_row as u8 as usize) * 16 + (raw % 64 / 16) * 4;
+                    assert!(row_base <= 28 && row_base + 3 <= 31);
+                }
+            }
+        }
+    }
+}
+
 fn wave_sum(mut values: [f32; 64]) -> [f32; 64] {
     for offset in [1, 2, 4, 8, 16, 32] {
         let previous = values;

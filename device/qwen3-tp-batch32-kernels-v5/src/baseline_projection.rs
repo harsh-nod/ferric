@@ -167,7 +167,7 @@ pub fn ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let tile_index = thread::block_idx_x() as usize;
+    let tile_index = raw / 64;
     let (tile_row, tile_column) = if n == 128 {
         (tile_index / 8, tile_index % 8)
     } else if n == 512 {
@@ -193,17 +193,20 @@ pub fn ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5(
     } else {
         fe2o3_device::trap();
     }
+    let tile_row = tile_row as u8 as usize;
     let lane = raw % 64;
     if tile_column < n / 16 {
     } else {
         fe2o3_device::trap();
     }
+    let tile_column = tile_column as u16 as usize;
     let column = tile_column * 16 + lane % 16;
     let row_base = tile_row * 16 + (lane / 16) * 4;
     if row_base < 29 {
     } else {
         fe2o3_device::trap();
     }
+    let row_base = row_base as u8 as usize;
     if column < n {
     } else {
         fe2o3_device::trap();
@@ -368,7 +371,7 @@ pub fn ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let tile_index = thread::block_idx_x() as usize;
+    let tile_index = raw / 64;
     let (tile_row, tile_column) = if n == 128 {
         (tile_index / 8, tile_index % 8)
     } else if n == 512 {
@@ -394,17 +397,20 @@ pub fn ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5(
     } else {
         fe2o3_device::trap();
     }
+    let tile_row = tile_row as u8 as usize;
     let lane = raw % 64;
     if tile_column < 256 {
     } else {
         fe2o3_device::trap();
     }
+    let tile_column = tile_column as u16 as usize;
     let column = tile_column * 16 + lane % 16;
     let row_base = tile_row * 16 + (lane / 16) * 4;
     if row_base < 29 {
     } else {
         fe2o3_device::trap();
     }
+    let row_base = row_base as u8 as usize;
     if column < n {
     } else {
         fe2o3_device::trap();
