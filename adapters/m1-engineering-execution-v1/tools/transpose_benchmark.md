@@ -17,7 +17,8 @@ This is host setup optimization only; it does not change an emitted kernel.
 
 Run only on the designated remote build host, with an owned private target and
 at most two build jobs. The full-array test is ignored during ordinary tests
-because its largest case requires just under 5 GB of host memory.
+because its largest case contains about 5 GB of array payloads. Reserve at least
+6 GiB for the process; this is not a measured peak-RSS bound.
 
 ```sh
 CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=1 cargo +1.97.1 test --locked --release \
