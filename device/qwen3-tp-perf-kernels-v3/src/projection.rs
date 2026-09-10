@@ -189,6 +189,10 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     let mut partial = 0.0_f32;
     let mut step = 0_usize;
     while step < k / 64 {
+        if step < 192 {
+        } else {
+            fe2o3_device::trap();
+        }
         let inner = step * 64 + lane;
         if inner < k {
         } else {
