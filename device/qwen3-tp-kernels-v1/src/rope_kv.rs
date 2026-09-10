@@ -94,7 +94,8 @@ pub fn ferric_qwen3_tp_rope_v1(
         fe2o3_device::trap();
     }
     let lane = thread::index_1d().get();
-    if lane >= 64 {
+    if lane < 64 {
+    } else {
         fe2o3_device::trap();
     }
     let cosine = memory::volatile_load(cos, lane);
@@ -106,6 +107,10 @@ pub fn ferric_qwen3_tp_rope_v1(
     while head < 32 {
         if head < query_heads {
             let index = head * 128 + lane;
+            if index < 4_096 {
+            } else {
+                fe2o3_device::trap();
+            }
             let first = memory::volatile_load(query, index);
             let second = memory::volatile_load(query, index + 64);
             // BEGIN tp_rope_pair_v1
@@ -155,6 +160,10 @@ pub fn ferric_qwen3_tp_rope_v1(
     while head < 8 {
         if head < kv_heads {
             let index = head * 128 + lane;
+            if index < 1_024 {
+            } else {
+                fe2o3_device::trap();
+            }
             let first = memory::volatile_load(key, index);
             let second = memory::volatile_load(key, index + 64);
             // BEGIN tp_rope_pair_v1

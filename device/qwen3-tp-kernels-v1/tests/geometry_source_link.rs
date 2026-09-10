@@ -263,7 +263,7 @@ fn literal_maximum_loops_guard_every_memory_and_numeric_statement() {
             let Stmt::Expr(Expr::If(guard), None) = &mut mutant.body.stmts[0] else {
                 unreachable!()
             };
-            guard.cond = Box::new(syn::parse_quote!(true));
+            *guard.cond = syn::parse_quote!(true);
             assert!(!literal_loop_guard_matches(
                 &mutant, counter, bound, maximum
             ));
