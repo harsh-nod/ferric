@@ -2,6 +2,8 @@ use fe2o3_device::{
     Bf16, Index1D, Math, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread,
 };
 
+const ATTENTION_SCALE: f32 = f32::from_bits(0x3db5_04f3);
+
 // A lane retains two outputs while replaying the same dot/online-softmax order.
 #[cfg(test)]
 macro_rules! tp_attention_pair_v1 {
@@ -29,7 +31,7 @@ macro_rules! tp_attention_pair_v1 {
                 }
                 dimension += 1;
             }
-            let score = dot * f32::from_bits(0x3db5_04f3);
+            let score = dot * ATTENTION_SCALE;
             let value_0 =
                 Bf16::from_bits(memory::volatile_load($values, cache_base + $lane)).to_f32();
             let value_1 =
@@ -192,7 +194,7 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
             }
             dimension += 1;
         }
-        let score = dot * f32::from_bits(0x3db5_04f3);
+        let score = dot * ATTENTION_SCALE;
         let value_0 =
             Bf16::from_bits(memory::volatile_load(value_cache, cache_base + lane)).to_f32();
         let value_1 =
