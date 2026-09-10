@@ -15,6 +15,94 @@ CHECK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECK)
 PINS = {"controller_sha256": "1" * 64, "worker_sha256": "2" * 64, "artifact_hsaco_id": "3" * 64}
 GPU_IDS = list(range(100, 108))
+PROFILE = {"runtime_cache_admission": False, "runtime_operational": False,
+           "dispatch_sequences": False, "queue_rollover": False, "projection": "baseline",
+           "attention": "baseline", "runtime_profiling": False}
+
+
+def extended_fixture(world=8, cache=True, pruning=False, collective="host-staged-v1", profile=None):
+    rows = fixture(world, cache)
+    rows[0]["output_head_pruning"] = pruning
+    rows[0]["collective"] = collective
+    if profile is not None:
+        rows[0]["performance_profile"] = copy.deepcopy(profile)
+    counts = [0] * world
+    for row in rows:
+        if row["schema"] == "FerricQwen3TpBatchCompletedV2":
+            head = len(row["outputs"]) if pruning else len(row["rows"])
+            row["output_head_rows"] = head
+            rank_zero = 541 + (3 if head else 0) + (72 if collective == "device-tp1-v3" else 0)
+            row["rank_dispatch_counts"] = [rank_zero] + [540] * (world - 1)
+            counts = [total + count for total, count in zip(counts, row["rank_dispatch_counts"], strict=True)]
+    rows[-1]["rank_dispatch_counts"] = counts
+    return rows
+
+
+class ExtendedProfileTests(unittest.TestCase):
+    def validate(self, rows, world=8, pruning=False, collective="host-staged-v1", profile=None):
+        return CHECK.validate_records(rows, GPU_IDS, world, PINS, None, pruning, collective, profile)
+
+    def test_new_fields_require_explicit_expected_profile_and_old_stays_strict(self):
+        rows = extended_fixture()
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(rows, GPU_IDS, 8, PINS)
+        with self.assertRaises(ValueError):
+            self.validate(fixture())
+        self.assertTrue(self.validate(rows)["passed"])
+
+    def test_pruned_head_counts_and_outputs_are_independently_checked(self):
+        for world in (1, 2, 8):
+            for cache in (False, True):
+                rows = extended_fixture(world, cache, pruning=True)
+                report = self.validate(rows, world, pruning=True)
+                self.assertTrue(report["passed"])
+                self.assertEqual(report["generated_tokens"], 8)
+                self.assertEqual(rows[2]["output_head_rows"], 0)
+                self.assertEqual(rows[2]["rank_dispatch_counts"][0], 541)
+                for field, bad in (("output_head_rows", 1), ("output_head_rows", False),
+                                   ("rank_dispatch_counts", [544] + [540] * (world - 1))):
+                    changed = copy.deepcopy(rows)
+                    changed[2][field] = bad
+                    with self.assertRaises(ValueError):
+                        self.validate(changed, world, pruning=True)
+
+    def test_explicit_collective_modes_do_not_relabel_host_or_other_worlds(self):
+        for collective in ("host-staged-v1", "host-staged-reuse-v3"):
+            self.assertTrue(self.validate(extended_fixture(collective=collective), collective=collective)["passed"])
+        rows = extended_fixture(1, pruning=True, collective="device-tp1-v3")
+        report = self.validate(rows, 1, True, "device-tp1-v3")
+        self.assertEqual(rows[2]["rank_dispatch_counts"], [613])
+        self.assertEqual(report["rank_dispatch_counts"], rows[-1]["rank_dispatch_counts"])
+        for world in (2, 8):
+            with self.assertRaises(ValueError):
+                self.validate(extended_fixture(world, collective="device-tp1-v3"), world, False, "device-tp1-v3")
+        with self.assertRaises(ValueError):
+            self.validate(extended_fixture(collective="device-tp1-v3"), collective="untrusted-peer-label")
+
+    def test_performance_profile_must_be_externally_expected_and_exact(self):
+        profile = {**PROFILE, "projection": "mfma", "attention": "wave", "runtime_operational": True}
+        rows = extended_fixture(profile=profile)
+        self.assertTrue(self.validate(rows, profile=profile)["passed"])
+        with self.assertRaises(ValueError):
+            self.validate(rows)
+        for key, bad in (("projection", "unknown"), ("runtime_operational", 1), ("attention", "paged")):
+            changed = copy.deepcopy(rows)
+            changed[0]["performance_profile"][key] = bad
+            with self.assertRaises(ValueError):
+                self.validate(changed, profile=profile)
+        changed = copy.deepcopy(profile)
+        changed["extra"] = True
+        with self.assertRaises(ValueError):
+            self.validate(rows, profile=changed)
+
+    def test_manifest_and_handoff_pins_are_optional_but_exact(self):
+        rows = fixture()
+        pins = {**PINS, "artifact_manifest_id": "4" * 64, "artifact_handoff_id": "5" * 64}
+        report = CHECK.validate_records(rows, GPU_IDS, expected_hashes=pins)
+        self.assertTrue(report["passed"])
+        self.assertIn("externally pinned", report["manifest_handoff_identity_scope"])
+        with self.assertRaises(ValueError):
+            CHECK.validate_records(rows, GPU_IDS, expected_hashes={**pins, "artifact_manifest_id": "9" * 64})
 
 
 def encoded(value):

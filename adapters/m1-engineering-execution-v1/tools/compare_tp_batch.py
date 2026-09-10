@@ -42,6 +42,22 @@ REQUEST_FIELDS = set("name slot generation state prompt_tokens generated_tokens 
 CLOSED_FIELDS = set("worker_pids all_workers_exited rank_dispatch_counts whole_seconds".split())
 ROW_FIELDS = set("slot generation token position kind".split())
 OUTPUT_FIELDS = set("slot generation token index completed_ns finished".split())
+LEGACY_COLLECTIVE = "host_staged_fp32_rank_order_reduce_bf16_residual"
+COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3")
+PROFILE_BOOLS = {"runtime_cache_admission", "runtime_operational", "dispatch_sequences",
+                 "queue_rollover", "runtime_profiling"}
+PROFILE_FIELDS = PROFILE_BOOLS | {"projection", "attention"}
+IDENTITY_FIELDS = {"controller_sha256", "worker_sha256", "artifact_hsaco_id",
+                   "artifact_manifest_id", "artifact_handoff_id"}
+
+
+def performance_profile(value):
+    fields(value, PROFILE_FIELDS, "expected performance profile")
+    for key in PROFILE_BOOLS:
+        require(type(value[key]) is bool, f"profile {key} must be boolean")
+    require(value["projection"] in ("baseline", "wave", "mfma", "auto"), "unknown projection profile")
+    require(value["attention"] in ("baseline", "wave"), "unknown attention profile")
+    return value
 
 
 def require(condition, message):
@@ -202,17 +218,34 @@ def timeline(cache):
     return batches, order
 
 
-def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache):
-    record(setup, "Setup", SETUP_FIELDS)
+def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
+                expected_pruning=None, expected_collective=None, expected_profile=None):
+    extra = set()
+    if expected_pruning is not None:
+        require(type(expected_pruning) is bool, "expected pruning must be boolean")
+        extra.add("output_head_pruning")
+    if expected_profile is not None:
+        performance_profile(expected_profile)
+        extra.add("performance_profile")
+    require(expected_collective is None or expected_collective in COLLECTIVES,
+            "unknown expected collective")
+    require(expected_collective != "device-tp1-v3" or world == 1,
+            "device-tp1-v3 requires exactly one rank")
+    record(setup, "Setup", SETUP_FIELDS | extra)
     constants = {"model": "Qwen/Qwen3-8B", "dtype": "BF16", "target": "gfx950:xnack-",
                  "model_bundle_id": BUNDLE,
-                 "collective": "host_staged_fp32_rank_order_reduce_bf16_residual",
+                 "collective": LEGACY_COLLECTIVE if expected_collective is None else expected_collective,
                  "prefill": "true_multirow_chunked", "attention": "paged_causal_gqa",
                  "cache": "complete_page_radix_after_retirement",
                  "arrival_policy": "logical batch ticks; elapsed latency starts at admission",
                  "numerical_status": "Contracted; independently compare emitted token IDs; not a serving qualification"}
     for key, expected in constants.items():
         require(setup[key] == expected, f"setup {key} drifted")
+    if expected_pruning is not None:
+        require(setup["output_head_pruning"] is expected_pruning, "expected output-head pruning drifted")
+    if expected_profile is not None:
+        require(performance_profile(setup["performance_profile"]) == expected_profile,
+                "expected performance profile drifted")
     require(integer(setup["tensor_parallel"], 1, 8) == world, "tensor-parallel world drifted")
     require(integer_list(setup["device_unique_ids"], 1) == gpu_ids[:world], "rank device roster drifted")
     pids = integer_list(setup["worker_pids"], 1, (1 << 31) - 1, "worker PID")
@@ -224,7 +257,7 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache):
     require(type(running) is list and running == [setup["worker_sha256"]] * world,
             "live worker executable hashes drifted")
     for key, expected in expected_hashes.items():
-        require(key in ("controller_sha256", "worker_sha256", "artifact_hsaco_id"), "unknown expected identity")
+        require(key in IDENTITY_FIELDS, "unknown expected identity")
         require(setup[key] == hash_value(expected, key), f"expected {key} drifted")
     for key in ("batch_tokens", "prefill_chunk", "page_tokens"):
         require(integer(setup[key], 1, 16) == 16, f"fixed profile {key} drifted")
@@ -238,12 +271,14 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache):
     positive_seconds(setup["setup_seconds"], "setup time")
 
 
-def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_cache=None):
+def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_cache=None,
+                     expected_pruning=None, expected_collective=None, expected_profile=None):
     require(world in (1, 2, 8) and type(world) is int, "unsupported expected world")
     require(type(records) is list and 1 < len(records) <= 64, "invalid JSONL record count")
     expected_hashes = {} if expected_hashes is None else expected_hashes
     setup = records[0]
-    check_setup(setup, world, gpu_ids, expected_hashes, expected_cache)
+    check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
+                expected_pruning, expected_collective, expected_profile)
     cache = setup["prefix_cache"]
     batches, order = timeline(cache)
     require(len(records) == len(order) + 2, "missing, duplicated or extra workload records")
@@ -253,7 +288,7 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
     admissions, generated, timestamps, summaries = {}, [[] for _ in NAMES], [[] for _ in NAMES], {}
     progress = [0, 0, 0, 16 if cache else 0]
     last_time, row_count, mixed, full_batch, boundary = 0, 0, False, False, False
-    dispatch = [544] + [540] * (world - 1)
+    counts = [0] * world
     batch_durations = []
     retained = [1, 3, 4, 3, 2] if cache else [1, 3, 4, 2, 2, 2]
     for value, (action, index) in zip(records[1:-1], order, strict=True):
@@ -272,14 +307,13 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             admissions[index] = value
             last_time = now
         elif action == "batch":
-            record(value, "Completed", BATCH_FIELDS)
+            record(value, "Completed", BATCH_FIELDS | ({"output_head_rows"} if expected_pruning is not None else set()))
             require(integer(value["tick"], 0, 10000) == index
                     and integer(value["batch_id"], 1) == index + 1
                     and integer(value["pool_batch_id"], 1) == index + 1,
                     "committed batch tick/generation drifted")
             start = integer(value["started_ns"], last_time, U64_MAX, "batch start")
             end = integer(value["completed_ns"], start + 1, U64_MAX, "batch completion")
-            require(integer_list(value["rank_dispatch_counts"], 1) == dispatch, "rank dispatch schedule drifted")
             expected_rows, expected_events = [], []
             for request, begin, count in batches[index]:
                 require(request in admissions and progress[request] == begin, "internal expected schedule drifted")
@@ -313,6 +347,17 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
                     integer(event[key], 1 if key == "generation" else 0, high, key)
                 require(type(event["finished"]) is bool, "output completion flag must be boolean")
             require(value["outputs"] == expected_events, "published output tokens/order/completion drifted")
+            head_rows = len(expected_events) if expected_pruning else len(expected_rows)
+            if expected_pruning is not None:
+                require(integer(value["output_head_rows"], 0, 16) == head_rows,
+                        "output-head row count drifted")
+            rank_zero = 541 + (3 if head_rows else 0)
+            if expected_collective == "device-tp1-v3":
+                rank_zero += 72
+            dispatch = [rank_zero] + [540] * (world - 1)
+            require(integer_list(value["rank_dispatch_counts"], 1) == dispatch,
+                    "rank dispatch schedule drifted")
+            counts = [total + count for total, count in zip(counts, dispatch, strict=True)]
             hits = 1 if cache and index >= 3 else 0
             expected_stats = {"retained_pages": retained[index], "free_pages": setup["physical_pages"] - retained[index],
                               "cached_pages": hits, "prefix_hits": hits, "hit_tokens": hits * 16, "evicted_pages": 0}
@@ -363,13 +408,12 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
     record(closed, "Closed", CLOSED_FIELDS)
     require(integer_list(closed["worker_pids"], 1, (1 << 31) - 1) == setup["worker_pids"]
             and closed["all_workers_exited"] is True, "worker close/reap record drifted")
-    counts = [count * len(batches) for count in dispatch]
     require(integer_list(closed["rank_dispatch_counts"], 1) == counts, "final dispatch totals drifted")
     whole = positive_seconds(closed["whole_seconds"], "whole-run time")
     require(whole + 0.000001 >= setup["setup_seconds"] + last_time / 1_000_000_000,
             "whole/setup/workload timing inconsistent")
-    pinned = set(expected_hashes) == {"controller_sha256", "worker_sha256", "artifact_hsaco_id"}
-    return {"schema": "FerricQwen3TpBatchComparisonV2", "authority": "none",
+    pinned = {"controller_sha256", "worker_sha256", "artifact_hsaco_id"} <= set(expected_hashes)
+    report = {"schema": "FerricQwen3TpBatchComparisonV2", "authority": "none",
             "validation": "passed_bound_evidence" if pinned else "unpinned_not_pass",
             "passed": pinned, "tensor_parallel": world, "prefix_cache": cache,
             "model_bundle_id": BUNDLE, "batch_count": len(batches), "physical_token_rows": row_count,
@@ -379,7 +423,9 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             "identities": {key: setup[key] for key in ("controller_sha256", "worker_sha256", "artifact_hsaco_id",
                                                        "artifact_manifest_id", "artifact_handoff_id", "session_id")},
             "externally_pinned_identities": sorted(expected_hashes),
-            "manifest_handoff_identity_scope": "self-reported; externally pin the admitted artifact receipt separately",
+            "manifest_handoff_identity_scope": ("externally pinned manifest and handoff identities; not an authority attestation"
+                if {"artifact_manifest_id", "artifact_handoff_id"} <= set(expected_hashes)
+                else "self-reported; externally pin the admitted artifact receipt separately"),
             "all_reference_tokens_and_bytes_match": True, "mixed_decode_prefill_observed": mixed,
             "sixteen_row_batch_observed": full_batch, "page_boundary_observed": boundary,
             "clean_teardown_recorded": True,
@@ -387,9 +433,16 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             "nonclaims": ["not a repeated or controlled benchmark", "no cache speedup claim",
                           "not HTTP serving or protected qualification", "not a numerical error bound",
                           "GPU idle snapshots and CLI close records are observations, not authenticated attestations"]}
+    if expected_pruning is not None or expected_collective is not None or expected_profile is not None:
+        report["expected_execution_profile"] = {"output_head_pruning": expected_pruning,
+                                                "collective": expected_collective,
+                                                "performance_profile": expected_profile}
+    return report
 
 
-def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=None, expected_cache=None):
+def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=None, expected_cache=None,
+            expected_pruning=None, expected_collective=None, expected_profile=None,
+            expected_workload_hash=None, expected_reference_hash=None):
     run_dir = Path(run_dir)
     files = {"status": read_bounded(run_dir / "status", 16),
              "gpu-before.json": read_bounded(run_dir / "gpu-before.json", 65536),
@@ -400,6 +453,9 @@ def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=Non
     require(files["status"] == b"0\n", "run did not exit successfully")
     load_reference(files["reference.json"])
     load_workload(files["workload.json"])
+    for name, expected in (("workload.json", expected_workload_hash), ("reference.json", expected_reference_hash)):
+        if expected is not None:
+            require(sha256(files[name]) == hash_value(expected, name), f"externally pinned {name} drifted")
     before = gpu_roster(files["gpu-before.json"])
     require(before == gpu_roster(files["gpu-after.json"]), "physical GPU roster changed after run")
     raw = files["results.jsonl"]
@@ -407,7 +463,8 @@ def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=Non
     lines = raw.splitlines()
     require(len(lines) <= 64 and all(lines), "empty or excessive JSONL records")
     records = [json_value(line) for line in lines]
-    report = validate_records(records, before, world, expected_hashes, expected_cache)
+    report = validate_records(records, before, world, expected_hashes, expected_cache,
+                              expected_pruning, expected_collective, expected_profile)
     report["input_sha256"] = {name: sha256(data) for name, data in files.items()}
     report["gpu_idle_before_and_after"] = True
     report["comparator_sha256"] = sha256(read_bounded(Path(__file__), 128 * 1024))
@@ -424,13 +481,24 @@ def main():
     parser.add_argument("--expect-controller-sha256")
     parser.add_argument("--expect-worker-sha256")
     parser.add_argument("--expect-artifact-sha256")
+    parser.add_argument("--expect-manifest-sha256")
+    parser.add_argument("--expect-handoff-sha256")
+    parser.add_argument("--expect-workload-sha256")
+    parser.add_argument("--expect-reference-sha256")
+    parser.add_argument("--expect-output-head-pruning", choices=("on", "off"))
+    parser.add_argument("--expect-collective", choices=COLLECTIVES)
+    parser.add_argument("--expect-profile", help="Exact allowlisted performance-profile JSON object")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     expected = {key: value for key, value in (("controller_sha256", args.expect_controller_sha256),
-                ("worker_sha256", args.expect_worker_sha256), ("artifact_hsaco_id", args.expect_artifact_sha256)) if value is not None}
+                ("worker_sha256", args.expect_worker_sha256), ("artifact_hsaco_id", args.expect_artifact_sha256),
+                ("artifact_manifest_id", args.expect_manifest_sha256), ("artifact_handoff_id", args.expect_handoff_sha256)) if value is not None}
     try:
         report = compare(args.run_dir, args.workload, args.reference, args.expect_world, expected,
-                         None if args.expect_cache is None else args.expect_cache == "on")
+                         None if args.expect_cache is None else args.expect_cache == "on",
+                         None if args.expect_output_head_pruning is None else args.expect_output_head_pruning == "on",
+                         args.expect_collective, None if args.expect_profile is None else performance_profile(json_value(args.expect_profile)),
+                         args.expect_workload_sha256, args.expect_reference_sha256)
         encoded = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
         if args.output is not None:
             with args.output.open("x", encoding="utf-8") as output:
