@@ -188,3 +188,15 @@ fn deferred_projection_nonfinite_values_reach_every_lane_before_store() {
         }
     }
 }
+
+#[test]
+fn metadata_float_carrier_preserves_valid_values_and_rejects_invalid_bounds() {
+    for value in 0..8192_u32 {
+        assert_eq!(value as f32 as usize, value as usize);
+    }
+    for limit in [1_u32, 16, 128, 512, 8192] {
+        for value in [limit, limit + 1, 65535, 1 << 24, (1 << 24) + 1, u32::MAX] {
+            assert!(value as f32 as usize >= limit as usize);
+        }
+    }
+}
