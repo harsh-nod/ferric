@@ -58,8 +58,10 @@ pub fn compiler_expectation_roster_v5()
         >(),
         Entry::for_marker::<logits::ferric_qwen3_tp_batch32_argmax_bf16_v5_gpu::Marker>(),
         Entry::for_marker::<projection::ferric_qwen3_tp_batch32_wave_gemv_bf16_v5_gpu::Marker>(),
-        Entry::for_marker::<projection::ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5_gpu::Marker>(),
-        Entry::for_marker::<attention::ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5_gpu::Marker>(),
+        Entry::for_marker::<projection::ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5_gpu::Marker>(
+        ),
+        Entry::for_marker::<attention::ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5_gpu::Marker>(
+        ),
         Entry::for_marker::<collective::ferric_qwen3_tp_batch32_residual_bf16_v5_gpu::Marker>(),
     ];
     #[cfg(feature = "mfma")]

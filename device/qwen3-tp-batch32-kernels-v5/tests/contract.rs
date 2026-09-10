@@ -36,7 +36,12 @@ fn independent_row32_profile_retains_page_and_model_geometry() {
         assert!(source.contains("((rows + 15) / 16)"));
         assert!(source.contains("tile_row < 2"));
     }
-    assert_eq!(PROJECTION.matches("left.load_m16k16(&lane, tile_row * 16,").count(), 7);
+    assert_eq!(
+        PROJECTION
+            .matches("left.load_m16k16(&lane, tile_row * 16,")
+            .count(),
+        7
+    );
     assert!(include_str!("../src/rope_kv.rs").contains("loop_bounds(32, 32, 32, 1024)"));
 }
 

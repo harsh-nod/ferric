@@ -279,10 +279,7 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     } else {
         fe2o3_device::trap();
     }
-    if a.len() < rows * 4096
-        || a.len() > 32 * 4096
-        || weights_kn.len() != n * 4096
-    {
+    if a.len() < rows * 4096 || a.len() > 32 * 4096 || weights_kn.len() != n * 4096 {
         fe2o3_device::trap();
     }
     let invocation = thread::index_1d();
@@ -338,7 +335,8 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     } else {
         fe2o3_device::trap();
     }
-    if thread::grid_dim_x() as usize != ((rows + 15) / 16) * (n / 16) || thread::block_dim_x() != 64 {
+    if thread::grid_dim_x() as usize != ((rows + 15) / 16) * (n / 16) || thread::block_dim_x() != 64
+    {
         fe2o3_device::trap();
     }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
@@ -423,10 +421,7 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     } else {
         fe2o3_device::trap();
     }
-    if a.len() < rows * k
-        || a.len() > 32 * k
-        || weights_kn.len() != 4096 * k
-    {
+    if a.len() < rows * k || a.len() > 32 * k || weights_kn.len() != 4096 * k {
         fe2o3_device::trap();
     }
     let invocation = thread::index_1d();
