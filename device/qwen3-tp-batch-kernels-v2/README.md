@@ -98,3 +98,31 @@ The source closure includes this entire crate plus the unchanged imports
 `qwen3-all-kernels-v1/build/target_contract.rs`. The old protected build policy
 does not admit this unit. Builds, formatting and host tests run only on the
 owned `mi300x` stage; hardware execution is coordinated separately on `mi350`.
+
+## Bounded GPU Probe
+
+`tools/probe.py` is an explicit opt-in engineering runner. Its eleven cases
+exercise seven roots: projections and FP32 partials at 1/3/16 rows, three-row
+SwiGLU and RoPE, noncontiguous append across token 15/16, independent mixed-row
+causal attention with nonzero Q/K and stale NaN storage, and per-row argmax
+with a lowest-index tie. Every allocation has 64-byte prefix/suffix guards;
+all inputs and untouched output/cache regions are read back. The dense
+attention fixture uses an independent host stable-softmax reference, not
+zero-score averaging. It is a smoke fixture, not a numerical error bound.
+
+The runner hashes the existing V1 worker/IPC helper before executing those
+exact bytes. It retains the helper's ELF/PID identity checks, inspected ABI
+packing, optional-metadata handling, bounded IPC, and successful close/reap
+requirement. The helper is part of the probe source closure at
+`proofs/tensor-parallel-kernels-v1/probe.py`; it is not changed by this unit.
+Embedding's full 1.2 GB fixed weight shape and the unchanged RMSNorm root are
+explicitly not executed by this bounded suite. All nine image identities must
+still pass the host's separate exact-roster admission.
+
+On the authorized remote host, `python3 tools/probe.py --self-test` validates
+fixtures without launching a worker, and `python3 tools/test_probe.py` checks
+the fixture/guard/identity contracts. Actual hardware execution requires
+`--run`, exact worker and artifact paths and SHA-256 values,
+`--device-unique-id`, and a fresh absolute `--output` directory. The integration
+lead coordinates an idle GPU before invocation. The result records synthetic
+dispatch observations only, with no model, benchmark, proof, or serving claim.
