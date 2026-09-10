@@ -310,6 +310,8 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     } else {
         fe2o3_device::trap();
     }
+    // The guard makes this narrowing lossless and exposes a bounded offset.
+    let tile_row = tile_row as u8 as usize;
     let row_base = tile_row * 16 + (raw % 64 / 16) * 4;
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096) else {
@@ -452,6 +454,8 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     } else {
         fe2o3_device::trap();
     }
+    // The guard makes this narrowing lossless and exposes a bounded offset.
+    let tile_row = tile_row as u8 as usize;
     let row_base = tile_row * 16 + (raw % 64 / 16) * 4;
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, k, k) else {
