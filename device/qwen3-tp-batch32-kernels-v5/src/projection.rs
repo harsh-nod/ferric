@@ -284,7 +284,7 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let tile_index = thread::block_idx_x() as usize;
+    let tile_index = raw / 64;
     let (tile_row, tile_column) = if n == 128 {
         (tile_index / 8, tile_index % 8)
     } else if n == 512 {
@@ -429,7 +429,7 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let tile_index = thread::block_idx_x() as usize;
+    let tile_index = raw / 64;
     let (tile_row, tile_column) = if n == 128 {
         (tile_index / 8, tile_index % 8)
     } else if n == 512 {
