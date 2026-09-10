@@ -10,6 +10,9 @@ use crate::tp_execution::{
 use ferric_spec::{Identity, ModelConfig, Qwen3ModelRole};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
+const COPY32: &str = "ferric_qwen3_tp_batch32_peer_copy_bf16_v6";
+const REDUCE32: &str = "ferric_qwen3_tp_batch32_peer_ordered_residual_bf16_v6";
+
 #[derive(Default)]
 struct Memory {
     next: u64,
@@ -106,13 +109,13 @@ impl EngineeringTpRankTransportV1 for Transport {
             return Err("injected peer completion failure".into());
         }
         let (output, values) = match command.kernel {
-            COPY => {
+            COPY | COPY32 => {
                 let input = tensor(&command, 0);
                 let output = tensor(&command, 1);
                 assert_ne!(input.0, output.0);
                 (output, memory.buffers[&input.0].2[..input.1 * 2].to_vec())
             }
-            REDUCE => {
+            REDUCE | REDUCE32 => {
                 let EngineeringTpArgumentV1::U32(world) = command.arguments[11] else {
                     panic!()
                 };
@@ -162,6 +165,10 @@ impl EngineeringTpRankTransportV1 for Transport {
 }
 
 fn fixture(world: u32) -> EngineeringTpExecutionV1<Transport> {
+    fixture_with_capacity(world, 16)
+}
+
+fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutionV1<Transport> {
     let model = ModelConfig {
         role: Qwen3ModelRole::Target8B,
         model_id: Identity::new([1; 32]),
@@ -194,7 +201,14 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<Transport> {
         .iter_mut()
         .enumerate()
         .map(|(rank, transport)| {
-            allocate_rank_storage(transport, &plan, u32::try_from(rank).unwrap(), 1, 16).unwrap()
+            allocate_rank_storage(
+                transport,
+                &plan,
+                u32::try_from(rank).unwrap(),
+                1,
+                row_capacity,
+            )
+            .unwrap()
         })
         .collect();
     EngineeringTpExecutionV1 {
@@ -204,8 +218,8 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<Transport> {
         sequence: TensorParallelSequenceV1::new(64, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
-        row_capacity: 16,
-        hidden: vec![0; 4096 * 16],
+        row_capacity,
+        hidden: vec![0; 4096 * row_capacity as usize],
         reduction: ReductionWorkspace::Baseline,
         sequences: None,
         closed: false,
@@ -246,8 +260,16 @@ fn initialize(execution: &mut EngineeringTpExecutionV1<Transport>, rows: usize) 
 #[test]
 fn exact_rank_order_single_residual_active_extents_and_completed_embedding_without_host_copies() {
     for world in [2, 8] {
-        for rows in [1, 3, 16] {
-            let mut execution = fixture(world);
+        for (capacity, rows) in [
+            (16, 1),
+            (16, 3),
+            (16, 16),
+            (32, 1),
+            (32, 17),
+            (32, 31),
+            (32, 32),
+        ] {
+            let mut execution = fixture_with_capacity(world, capacity);
             execution
                 .configure_reduction(super::super::EngineeringTpReductionModeV3::DevicePeerV4)
                 .unwrap();
@@ -268,10 +290,31 @@ fn exact_rank_order_single_residual_active_extents_and_completed_embedding_witho
                 assert!(bytes[rows * 8192..].iter().all(|&b| b == 0xa5));
                 assert_eq!(rank.dispatches, if rank.geometry.rank == 0 { 1 } else { 2 });
             }
+            let (copy, reduce) = if capacity == 32 {
+                (COPY32, REDUCE32)
+            } else {
+                (COPY, REDUCE)
+            };
+            assert_eq!(memory.commands.len(), 2 * world as usize - 1);
+            for (rank, command) in &memory.commands {
+                assert_eq!(command.grid_workgroups, u32::try_from(rows).unwrap() * 64);
+                assert!(command.kernel == copy || command.kernel == reduce);
+                if command.kernel == copy {
+                    assert_ne!(*rank, 0);
+                    assert_eq!(tensor(command, 0).1, rows * 4096);
+                    assert_eq!(tensor(command, 1).1, rows * 4096);
+                } else {
+                    for index in 0..world as usize {
+                        assert_eq!(tensor(command, index).1, rows * 4096);
+                    }
+                    assert_eq!(tensor(command, 8).1, rows * 4096);
+                    assert_eq!(tensor(command, 9).1, rows * 4096);
+                }
+            }
             let reductions = memory
                 .events
                 .iter()
-                .filter(|event| event.2 == REDUCE)
+                .filter(|event| event.2 == reduce)
                 .copied()
                 .collect::<Vec<_>>();
             assert!(reductions[..world as usize].iter().all(|event| event.0));
@@ -303,48 +346,50 @@ fn group_mismatch_and_world_one_reject_before_allocating_peer_buffers() {
 
 #[test]
 fn partial_submit_or_wait_failure_drains_prior_ranks_without_swapping_hidden() {
-    for submission in [false, true] {
-        let mut execution = fixture(8);
-        execution
-            .configure_reduction(super::super::EngineeringTpReductionModeV3::DevicePeerV4)
-            .unwrap();
-        initialize(&mut execution, 1);
-        execution.initialize_hidden_from_embedding().unwrap();
-        let previous = execution
-            .ranks
-            .iter()
-            .map(|rank| rank.hidden.id)
-            .collect::<Vec<_>>();
-        execution.transports[3].fail_submit = submission;
-        execution.transports[3].fail_wait = !submission;
-        assert!(
+    for (capacity, rows) in [(16, 1), (32, 32)] {
+        for submission in [false, true] {
+            let mut execution = fixture_with_capacity(8, capacity);
             execution
-                .reduce(0, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)
-                .is_err()
-        );
-        assert_eq!(
-            previous,
-            execution
+                .configure_reduction(super::super::EngineeringTpReductionModeV3::DevicePeerV4)
+                .unwrap();
+            initialize(&mut execution, rows);
+            execution.initialize_hidden_from_embedding().unwrap();
+            let previous = execution
                 .ranks
                 .iter()
                 .map(|rank| rank.hidden.id)
-                .collect::<Vec<_>>()
-        );
-        assert!(
-            execution
-                .transports
-                .iter()
-                .all(|transport| transport.pending.is_none())
-        );
-        assert_eq!(
-            execution.collective.expected().operation,
-            Qwen3TensorParallelCollectiveV1::AttentionOutputSum
-        );
-        execution.close().unwrap();
-        assert_eq!(
-            execution.transports[0].memory.borrow().closed,
-            (0..8).collect::<Vec<_>>()
-        );
+                .collect::<Vec<_>>();
+            execution.transports[3].fail_submit = submission;
+            execution.transports[3].fail_wait = !submission;
+            assert!(
+                execution
+                    .reduce(0, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)
+                    .is_err()
+            );
+            assert_eq!(
+                previous,
+                execution
+                    .ranks
+                    .iter()
+                    .map(|rank| rank.hidden.id)
+                    .collect::<Vec<_>>()
+            );
+            assert!(
+                execution
+                    .transports
+                    .iter()
+                    .all(|transport| transport.pending.is_none())
+            );
+            assert_eq!(
+                execution.collective.expected().operation,
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum
+            );
+            execution.close().unwrap();
+            assert_eq!(
+                execution.transports[0].memory.borrow().closed,
+                (0..8).collect::<Vec<_>>()
+            );
+        }
     }
 }
 

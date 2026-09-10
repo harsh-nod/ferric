@@ -29,7 +29,16 @@ use tp_peer_worker::PeerWorker;
 use tp_rank_worker::RankWorker;
 use tp_worker::{RuntimeOptions, Worker};
 
-const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] [--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] [--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4] [--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma] [--projection baseline|wave|mfma|auto] [--attention baseline|wave]";
+const USAGE: &str = concat!(
+    "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE ",
+    "--devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code ",
+    "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
+    "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
+    "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
+    "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4] ",
+    "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
+    "[--projection baseline|wave|mfma|auto] [--attention baseline|wave]"
+);
 
 struct Options {
     source: PathBuf,
@@ -59,6 +68,17 @@ enum KernelProfile {
     V2,
     Wave,
     Mfma,
+    WideWave,
+    WideMfma,
+}
+
+impl KernelProfile {
+    fn wide32(self) -> bool {
+        matches!(self, Self::WideWave | Self::WideMfma)
+    }
+    fn mfma(self) -> bool {
+        matches!(self, Self::Mfma | Self::WideMfma)
+    }
 }
 
 impl Options {
@@ -151,6 +171,8 @@ impl Options {
                         "v2" => KernelProfile::V2,
                         "v3-wave" => KernelProfile::Wave,
                         "v3-mfma" => KernelProfile::Mfma,
+                        "v5-wave32" => KernelProfile::WideWave,
+                        "v5-mfma32" => KernelProfile::WideMfma,
                         _ => return Err("unknown closed kernel profile".into()),
                     }
                 }
@@ -187,7 +209,7 @@ impl Options {
             && (projection != ProjectionMode::Baseline
                 || wave_attention
                 || collective == EngineeringTpReductionModeV3::DeviceTp1V3))
-            || (projection.requires_mfma() && kernel_profile != KernelProfile::Mfma)
+            || (projection.requires_mfma() && !kernel_profile.mfma())
             || (collective == EngineeringTpReductionModeV3::DeviceTp1V3 && devices.len() != 1)
         {
             return Err(
@@ -212,7 +234,7 @@ impl Options {
                 fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 / packets_per_batch,
             );
         }
-        if !(1..=16).contains(&rows)
+        if !(1..=if kernel_profile.wide32() { 32 } else { 16 }).contains(&rows)
             || !(1..=rows).contains(&chunk)
             || max_batches == 0
             || max_batches > 1_000_000
@@ -505,8 +527,16 @@ fn run(options: &Options) -> Result<(), String> {
             &options.artifact,
             &ferric_qwen3_tp_batch_kernels_device_v2::compiler_expectation_roster_v2(),
         )
+    } else if options.kernel_profile.wide32() {
+        let mfma = options.kernel_profile.mfma();
+        let mut expected =
+            ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5();
+        if !mfma {
+            expected.retain(|entry| !entry.export_name().contains("_mfma_"));
+        }
+        EngineeringTpArtifactV1::open_batch32(&options.artifact, &expected, mfma)
     } else {
-        let mfma = options.kernel_profile == KernelProfile::Mfma;
+        let mfma = options.kernel_profile.mfma();
         let mut expected = ferric_qwen3_tp_perf_kernels_device_v3::compiler_expectation_roster_v3();
         if !mfma {
             expected.retain(|entry| !entry.export_name().contains("_mfma_"));
@@ -518,10 +548,17 @@ fn run(options: &Options) -> Result<(), String> {
         .peer_artifact
         .as_ref()
         .map(|path| {
-            EngineeringTpArtifactV1::open_peer(
-                path,
-                &ferric_qwen3_tp_peer_kernels_device_v4::compiler_expectation_roster_v4(),
-            )
+            if options.kernel_profile.wide32() {
+                EngineeringTpArtifactV1::open_peer32(
+                    path,
+                    &ferric_qwen3_tp_peer32_kernels_device_v6::compiler_expectation_roster_v6(),
+                )
+            } else {
+                EngineeringTpArtifactV1::open_peer(
+                    path,
+                    &ferric_qwen3_tp_peer_kernels_device_v4::compiler_expectation_roster_v4(),
+                )
+            }
             .map_err(|error| error.to_string())
         })
         .transpose()?;
@@ -543,7 +580,12 @@ fn run(options: &Options) -> Result<(), String> {
     std::fs::File::open("/dev/urandom")
         .and_then(|mut file| file.read_exact(&mut session))
         .map_err(|e| e.to_string())?;
-    let pool = EngineeringTpPagedPoolV1::new(
+    let pool_constructor = if options.kernel_profile.wide32() {
+        EngineeringTpPagedPoolV1::new_wide32
+    } else {
+        EngineeringTpPagedPoolV1::new
+    };
+    let pool = pool_constructor(
         EngineeringTpPoolScopeV1 {
             model: *model.bundle_id().as_bytes(),
             session,
@@ -552,7 +594,12 @@ fn run(options: &Options) -> Result<(), String> {
             .map_err(|e| format!("page limits: {e:?}"))?,
     )
     .map_err(|e| format!("page pool: {e:?}"))?;
-    let scheduler = EngineeringTpSchedulerV1::new(
+    let scheduler_constructor = if options.kernel_profile.wide32() {
+        EngineeringTpSchedulerV1::new_wide32
+    } else {
+        EngineeringTpSchedulerV1::new
+    };
+    let scheduler = scheduler_constructor(
         model.config().vocabulary_size,
         options.context,
         options.rows,
@@ -582,7 +629,12 @@ fn run(options: &Options) -> Result<(), String> {
     if running_hashes.iter().any(|hash| hash != &worker_hash) {
         return Err("running worker file identity drifted".into());
     }
-    let mut gpu = EngineeringTpBatchExecutionV2::new(
+    let driver_constructor = if options.kernel_profile.wide32() {
+        EngineeringTpBatchExecutionV2::new_wide32
+    } else {
+        EngineeringTpBatchExecutionV2::new
+    };
+    let mut gpu = driver_constructor(
         workers,
         model.config(),
         model.target_weights(),
@@ -598,8 +650,12 @@ fn run(options: &Options) -> Result<(), String> {
         "additional resident transposed weight bytes: {}",
         gpu.transposed_weight_bytes()
     );
-    let mut runtime =
-        EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, options.rows, options.cache)?;
+    let runtime_constructor = if options.kernel_profile.wide32() {
+        EngineeringTpBatchRuntimeV2::new_wide32
+    } else {
+        EngineeringTpBatchRuntimeV2::new
+    };
+    let mut runtime = runtime_constructor(gpu, pool, scheduler, options.rows, options.cache)?;
     let result = (|| {
         let mut setup = serde_json::json!({"schema":"FerricQwen3TpBatchSetupV2", "authority":"none",
             "model":"Qwen/Qwen3-8B", "dtype":"BF16", "target":"gfx950:xnack-",
@@ -625,6 +681,14 @@ fn run(options: &Options) -> Result<(), String> {
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
             "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"});
+        if options.kernel_profile.wide32() {
+            setup["kernel_profile"] = serde_json::json!(if options.kernel_profile.mfma() {
+                "v5-mfma32"
+            } else {
+                "v5-wave32"
+            });
+            setup["kernel_row_capacity"] = serde_json::json!(32);
+        }
         if let Some(peer) = &peer_artifact {
             setup["peer_artifact"] = serde_json::json!({
                 "artifact_hsaco_id":hex(peer.hsaco_id().as_bytes()),
@@ -760,6 +824,73 @@ mod tests {
         ] {
             assert!(args(&supplied).is_err());
         }
+    }
+
+    #[test]
+    fn thirty_two_rows_require_the_separate_image_profile() {
+        for profile in ["v5-wave32", "v5-mfma32"] {
+            let options = args(&[
+                "--devices",
+                "1,2,3,4,5,6,7,8",
+                "--kernel-profile",
+                profile,
+                "--batch-tokens",
+                "32",
+                "--prefill-chunk",
+                "32",
+            ])
+            .unwrap();
+            assert!(options.kernel_profile.wide32());
+            assert_eq!(options.rows, 32);
+            assert!(
+                args(&[
+                    "--devices",
+                    "1",
+                    "--kernel-profile",
+                    profile,
+                    "--batch-tokens",
+                    "33"
+                ])
+                .is_err()
+            );
+        }
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--kernel-profile",
+                "v3-mfma",
+                "--batch-tokens",
+                "32"
+            ])
+            .is_err()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--kernel-profile",
+                "v5-wave32",
+                "--projection",
+                "mfma"
+            ])
+            .is_err()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1,2",
+                "--kernel-profile",
+                "v5-wave32",
+                "--collective",
+                "device-peer-serial-v4",
+                "--peer-artifact",
+                "/peer32",
+                "--batch-tokens",
+                "32"
+            ])
+            .is_ok()
+        );
     }
 
     #[test]

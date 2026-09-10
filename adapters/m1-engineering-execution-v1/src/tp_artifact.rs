@@ -72,6 +72,31 @@ pub const ENGINEERING_TP_PEER_EXPORTS_V4: [&str; 2] = [
     "ferric_qwen3_tp_peer_copy_bf16_v4",
 ];
 
+/// Exact separate image required for peer arithmetic with the 32-row profile.
+pub const ENGINEERING_TP_PEER32_EXPORTS_V6: [&str; 2] = [
+    "ferric_qwen3_tp_batch32_peer_ordered_residual_bf16_v6",
+    "ferric_qwen3_tp_batch32_peer_copy_bf16_v6",
+];
+
+/// Closed full v5 image; the wave-only form omits exactly the two MFMA roots.
+pub const ENGINEERING_TP_BATCH32_EXPORTS_V5: [&str; 15] = [
+    "qwen3_rmsnorm_v1",
+    "ferric_qwen3_tp_batch32_embedding_bf16_v5",
+    "ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5",
+    "ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5",
+    "ferric_qwen3_tp_batch32_swiglu_bf16_f32_v5",
+    "ferric_qwen3_tp_batch32_rope_v5",
+    "ferric_qwen3_tp_batch32_paged_kv_append_v5",
+    "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5",
+    "ferric_qwen3_tp_batch32_argmax_bf16_v5",
+    "ferric_qwen3_tp_batch32_residual_bf16_v5",
+    "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5",
+    "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5",
+    "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5",
+    "ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5",
+    "ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5",
+];
+
 /// Exact content-addressed engineering bytes and independently inspected metadata.
 pub struct EngineeringTpArtifactV1 {
     bytes: Arc<[u8]>,
@@ -156,6 +181,43 @@ impl EngineeringTpArtifactV1 {
             expected,
             "ferric_qwen3_tp_peer_kernels_device_v4",
             &ENGINEERING_TP_PEER_EXPORTS_V4,
+        )
+    }
+
+    /// Opens one exact independent 32-row profile; old images cannot substitute.
+    /// # Errors
+    /// Rejects any missing/additional root, target, descriptor, source or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_batch32(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+        mfma: bool,
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        let exports = ENGINEERING_TP_BATCH32_EXPORTS_V5
+            .into_iter()
+            .filter(|name| mfma || !name.contains("_mfma_"))
+            .collect::<Vec<_>>();
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_batch32_kernels_device_v5",
+            &exports,
+        )
+    }
+
+    /// Opens only the separate 32-row peer image, never the earlier v4 image.
+    /// # Errors
+    /// Rejects any missing/additional root, target, descriptor, source or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_peer32(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_peer32_kernels_device_v6",
+            &ENGINEERING_TP_PEER32_EXPORTS_V6,
         )
     }
 

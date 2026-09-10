@@ -67,8 +67,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         self.check_peer_group()?;
         let elements = self.hidden.len();
         let rows = elements / 4096;
-        if elements != rows * 4096 || !(1..=16).contains(&rows) {
-            return Err("peer active row extent is outside the v4 contract".into());
+        if elements != rows * 4096 || !(1..=self.row_capacity as usize).contains(&rows) {
+            return Err("peer active row extent is outside its admitted profile".into());
         }
         Ok((
             elements,
@@ -207,6 +207,18 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         first_rank: usize,
         commands: &[EngineeringTpDispatchV1],
     ) -> TpResult<()> {
+        let bound = if self.row_capacity == 32 {
+            Some(
+                commands
+                    .iter()
+                    .cloned()
+                    .map(|command| super::row_profile::bind(32, command))
+                    .collect::<TpResult<Vec<_>>>()?,
+            )
+        } else {
+            None
+        };
+        let commands = bound.as_deref().unwrap_or(commands);
         if first_rank + commands.len() != self.ranks.len()
             || self.ranks[first_rank..]
                 .iter()

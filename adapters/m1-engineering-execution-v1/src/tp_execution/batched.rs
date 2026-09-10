@@ -173,9 +173,6 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
     pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
-        if self.row_capacity == 32 && mode == EngineeringTpReductionModeV3::DevicePeerV4 {
-            return Err("the v4 peer image is limited to the separate 16-row profile".into());
-        }
         if self.poisoned || self.last_batch != 0 || self.completed_batches != 0 {
             return Err("reduction mode requires a fresh batch stream".into());
         }

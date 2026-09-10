@@ -10,6 +10,11 @@ pub(super) fn bind(
         return Ok(command);
     }
     let (kernel, tiled_projection) = match command.kernel {
+        "ferric_qwen3_tp_peer_ordered_residual_bf16_v4" => (
+            "ferric_qwen3_tp_batch32_peer_ordered_residual_bf16_v6",
+            false,
+        ),
+        "ferric_qwen3_tp_peer_copy_bf16_v4" => ("ferric_qwen3_tp_batch32_peer_copy_bf16_v6", false),
         "qwen3_rmsnorm_v1" => ("qwen3_rmsnorm_v1", false),
         "ferric_qwen3_tp_batch_embedding_bf16_v2" => {
             ("ferric_qwen3_tp_batch32_embedding_bf16_v5", false)

@@ -35,7 +35,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5";
+const FE2O3_REVISION: &str = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8";
 
 #[test]
 fn adapter_is_an_exact_standalone_workspace() {
@@ -100,8 +100,10 @@ fn adapter_is_an_exact_standalone_workspace() {
             "fe2o3-hsaco",
             "fe2o3-service-host",
             "ferric-qwen3-tp-batch-kernels-device-v2",
+            "ferric-qwen3-tp-batch32-kernels-device-v5",
             "ferric-qwen3-tp-kernels-device-v1",
             "ferric-qwen3-tp-peer-kernels-device-v4",
+            "ferric-qwen3-tp-peer32-kernels-device-v6",
             "ferric-qwen3-tp-perf-kernels-device-v3"
         ]
     );
@@ -137,7 +139,9 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("tp-engineering"),
             Some("dep:ferric-qwen3-tp-batch-kernels-device-v2"),
             Some("dep:ferric-qwen3-tp-perf-kernels-device-v3"),
-            Some("dep:ferric-qwen3-tp-peer-kernels-device-v4")
+            Some("dep:ferric-qwen3-tp-peer-kernels-device-v4"),
+            Some("dep:ferric-qwen3-tp-batch32-kernels-device-v5"),
+            Some("dep:ferric-qwen3-tp-peer32-kernels-device-v6")
         ]
     );
     let bin = manifest["bin"]

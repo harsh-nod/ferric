@@ -3,6 +3,23 @@
 Updated: 2026-09-10. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
+## Performance Swarm
+
+The active implementation tracks public fe2o3 `3e74a932`; frozen benchmark
+inputs retain their original source and binary identities. Compiler/KFD
+changes are published to fe2o3 main after review/rebase. Ferric implementation
+remains local; the Pages performance checkpoint is published separately.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Admission-only is mixed; sequences-only is slower in its first matched run. Bound raw receipts and per-request TTFT/TPOT remain separate from setup and workload throughput. | Complete isolated ablations and repetitions; validate wider fixed-workload schedules. |
+| Kernels | Full16 MFMA and wave images pass native fixtures; wave projection fails exact Qwen reference and is not accepted. Separate full32 and peer32 images emit successfully. | Stronger projection differential, full-model MFMA, and native32-row tests. |
+| Collectives | Genuine GPU producer-to-peer-reader TP2/8 probes pass without host tensor staging. Cached same-rank peer sequences pass host review/tests. | Native sequence gate before core publication, then full-model peer measurements. |
+| Integration | Explicit32-row pool/scheduler/driver/admission and v6 peer routing pass 163 library, 33 CLI/worker, and 22 source-policy tests plus strict Clippy on mi300x. Tests cover actual command extents, second row tiles, and partial-failure cleanup. | Integrate native-gated artifacts; compare exact profiles and allocation policies on mi350. |
+
+These are short engineering workloads, not HTTP serving qualification or a
+matched vLLM/SGLang comparison. See [the live performance ledger summary](M1_QWEN3_PERFORMANCE.md).
+
 ## TP8 Batching Integration
 
 September 10 follow-on work is integrated and GPU-checked on the engineering path. The existing

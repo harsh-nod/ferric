@@ -51,6 +51,8 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-batch-kernels-device-v2",
     "dep:ferric-qwen3-tp-perf-kernels-device-v3",
     "dep:ferric-qwen3-tp-peer-kernels-device-v4",
+    "dep:ferric-qwen3-tp-batch32-kernels-device-v5",
+    "dep:ferric-qwen3-tp-peer32-kernels-device-v6",
 ]
 qualification-fault-injection = [
     "ferric-engine/qualification-fault-injection",
@@ -58,12 +60,12 @@ qualification-fault-injection = [
 ]
 
 [dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0" }
-fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0", optional = true }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0" }
-fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "7abce5c161389e93cd92f9d4748c34f2b21ba7d5", version = "=0.1.0", optional = true }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0", optional = true }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8", version = "=0.1.0", optional = true }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
@@ -72,6 +74,8 @@ ferric-qwen3-tp-kernels-device-v1 = { path = "../../device/qwen3-tp-kernels-v1",
 ferric-qwen3-tp-batch-kernels-device-v2 = { path = "../../device/qwen3-tp-batch-kernels-v2", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-perf-kernels-device-v3 = { path = "../../device/qwen3-tp-perf-kernels-v3", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
 ferric-qwen3-tp-peer-kernels-device-v4 = { path = "../../device/qwen3-tp-peer-kernels-v4", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-batch32-kernels-device-v5 = { path = "../../device/qwen3-tp-batch32-kernels-v5", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
+ferric-qwen3-tp-peer32-kernels-device-v6 = { path = "../../device/qwen3-tp-peer32-kernels-v6", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["fs", "net", "process", "rand", "time"] }

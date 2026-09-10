@@ -198,10 +198,28 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.events
             .borrow_mut()
             .push(Event::Wait(self.rank, command.kernel));
-        if self.failure == Some(Failure::Wait) && command.kernel == PARTIAL {
+        // Reuse only the synthetic byte writer; retain the real v5 names/grids in receipts.
+        let kernel = match command.kernel {
+            "ferric_qwen3_tp_batch32_embedding_bf16_v5" => EMBEDDING,
+            "ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5"
+            | "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
+            | "ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5" => GEMM,
+            "ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5"
+            | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5"
+            | "ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5" => PARTIAL,
+            "ferric_qwen3_tp_batch32_swiglu_bf16_f32_v5" => SWIGLU,
+            "ferric_qwen3_tp_batch32_rope_v5" => ROPE,
+            "ferric_qwen3_tp_batch32_paged_kv_append_v5" => APPEND,
+            "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+            | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5" => ATTENTION,
+            "ferric_qwen3_tp_batch32_argmax_bf16_v5" => ARGMAX,
+            "ferric_qwen3_tp_batch32_residual_bf16_v5" => "ferric_qwen3_tp_batch_residual_bf16_v3",
+            name => name,
+        };
+        if self.failure == Some(Failure::Wait) && kernel == PARTIAL {
             return Err("injected partial completion failure".into());
         }
-        match command.kernel {
+        match kernel {
             "ferric_qwen3_tp_batch_residual_bf16_v3" => {
                 if self.failure == Some(Failure::ResidualWait) {
                     return Err("injected residual completion failure".into());
@@ -377,6 +395,7 @@ fn fixture(
     world: u32,
     pool: &EngineeringTpPagedPoolV1,
 ) -> EngineeringTpBatchExecutionV2<Recording> {
+    let row_capacity = pool.row_capacity();
     let events = Rc::new(RefCell::new(Vec::new()));
     let mut transports = (0..world)
         .map(|rank| Recording {
@@ -398,8 +417,14 @@ fn fixture(
     let mut positions = Vec::new();
     let mut page_tables = Vec::new();
     for (index, transport) in transports.iter_mut().enumerate() {
-        let mut rank =
-            allocate_rank_storage(transport, &plan, u32::try_from(index).unwrap(), 64, 16).unwrap();
+        let mut rank = allocate_rank_storage(
+            transport,
+            &plan,
+            u32::try_from(index).unwrap(),
+            64,
+            u32::try_from(row_capacity).unwrap(),
+        )
+        .unwrap();
         // Weight intake is tested separately; this fixture does not emulate a
         // dense model or assert that synthetic outputs are GPU computations.
         let placeholder = allocate_tensor(transport, 1, 2).unwrap();
@@ -428,8 +453,8 @@ fn fixture(
             ];
         }
         ranks.push(rank);
-        positions.push(allocate_tensor(transport, 16, 4).unwrap());
-        page_tables.push(allocate_tensor(transport, 16 * 4, 4).unwrap());
+        positions.push(allocate_tensor(transport, row_capacity, 4).unwrap());
+        page_tables.push(allocate_tensor(transport, row_capacity * 4, 4).unwrap());
     }
     let inner = EngineeringTpExecutionV1 {
         transports,
@@ -438,15 +463,15 @@ fn fixture(
         sequence: TensorParallelSequenceV1::new(64, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
-        row_capacity: 16,
-        hidden: vec![0; 4096 * 16],
+        row_capacity: u32::try_from(row_capacity).unwrap(),
+        hidden: vec![0; 4096 * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
         closed: false,
     };
     EngineeringTpBatchExecutionV2 {
         inner,
-        row_capacity: 16,
+        row_capacity,
         positions,
         page_tables,
         scope: pool.scope(),
@@ -480,6 +505,61 @@ fn prepare(pool: &mut EngineeringTpPagedPoolV1, rows: u32) -> EngineeringTpPrepa
         })
         .collect::<Vec<_>>();
     pool.reserve_batch(&selected).unwrap()
+}
+
+#[test]
+fn wide_driver_uses_one_real_grid_per_root_with_exact_active_extents() {
+    use super::super::EngineeringTpProjectionModeV3;
+    for (world, rows, wave, prune) in [
+        (8, 17, false, false),
+        (8, 32, true, true),
+        (1, 31, false, true),
+    ] {
+        let limits = EngineeringTpPagedLimitsV1::new(64, 32, 4, 100).unwrap();
+        let mut pool = EngineeringTpPagedPoolV1::new_wide32(pool().scope(), limits).unwrap();
+        let mut driver = fixture(world, &pool);
+        driver.configure_output_head_pruning(prune).unwrap();
+        driver.configure_dispatch_sequences(wave).unwrap();
+        if wave {
+            driver.projection.mode = EngineeringTpProjectionModeV3::Wave;
+            driver.configure_wave_attention(true).unwrap();
+        }
+        if world == 1 {
+            driver
+                .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+                .unwrap();
+        }
+        let batch = prepare(&mut pool, rows);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver
+            .execute_selected(&batch, &[(rows - 1) as usize])
+            .unwrap();
+        assert_eq!(result.choices.len(), 1);
+        assert_eq!(driver.dispatch_counts(), driver.expected_dispatch_counts(1));
+        for transport in &driver.inner.transports {
+            for command in &transport.commands {
+                assert!(
+                    command.kernel == RMSNORM
+                        || command.kernel.starts_with("ferric_qwen3_tp_batch32_")
+                );
+                if command.kernel.contains("_gemm_") {
+                    assert_eq!(
+                        command.grid_workgroups,
+                        scalar(command, 3).div_ceil(16) * (scalar(command, 4) / 16)
+                    );
+                } else if command.kernel.contains("_wave_gemv_") {
+                    assert_eq!(
+                        command.grid_workgroups,
+                        scalar(command, 3) * scalar(command, 4)
+                    );
+                }
+            }
+            assert_eq!(transport.commands.iter().filter(|command| command.kernel == "ferric_qwen3_tp_batch32_paged_kv_append_v5").count(), 36);
+        }
+        pool.commit_batch(&batch, result.completion).unwrap();
+        pool.check_invariants().unwrap();
+        driver.close().unwrap();
+    }
 }
 
 #[test]

@@ -19,7 +19,7 @@ runs so independent teams cannot contaminate one another's measurements.
 | GPU-resident TP1 residuals | Collectives | Implemented; driver and explicit v3 admission integrated | Synthetic native fixtures pass; TP1 model comparison pending |
 | Reusable host collective scratch | Collectives | Integrated and host tested; still host-staged TP1/2/8 | Isolated model ablation pending |
 | True device-resident TP2/8 collective | Collectives/runtime | Peer owner published; separate serial peer child/transport integrated and host-tested; v4 image emitted | TP2 8-case and TP8 128-case ownership probes, 13 arithmetic fixtures, and GPU-producer TP2/8 6/24 observations pass; Qwen comparison pending |
-| Larger row envelope and TP allocation tuning | Integration/kernels | Independent 32-row source profile and matching explicit host envelopes in progress; 16-row defaults retained | No 32-row GPU or replica-throughput claim yet |
+| Larger row envelope and TP allocation tuning | Integration/kernels | Independent full 32-row and peer32 images emitted on public fe2o3 `3e74a932`; explicit host envelopes, admission, routing and failure tests pass; 16-row defaults retained | Native 32-row validation pending; no replica-throughput claim yet |
 | Bound comparison and performance ledger | Runtime | Implemented; 36 host tests and real archived-run checks pass | Baseline, pruning, and two operational runs recorded |
 
 ## Initial Observations
@@ -35,12 +35,17 @@ Ranges show individual repetitions, not confidence intervals or stable tails.
 | Operational currentness only | 2 | 2.4190-2.4330 | 1.1400-1.1569 | 0.471980-0.504046 |
 | Current controller/runtime, all controls off | 1 | 46.5623 | 38.1315 | 0.028966 |
 | Operational + admission cache + sequences | 1 | 4.1125 | 2.5865 | 0.296581 |
+| Admission cache only | 1 | 46.2735 | 52.9616 | 0.032950 |
+| Sequences only | 1 | 64.6440 | 64.9780 | 0.025022 |
 
-The final two rows use the same controller `bc4a283b...` and worker `70572ff2...`.
-Their single-run cumulative ratio is 10.2391x output rate. The cumulative
+The final four rows use the same controller `bc4a283b...` and worker `70572ff2...`.
+The cumulative/control single-run ratio is 10.2391x output rate. The cumulative
 profile is slower than the separately measured operational-only profile;
-there is no established incremental cache/sequence benefit. Standalone
-cache, sequences, host scratch reuse, and wave attention are queued separately.
+there is no established incremental cache/sequence benefit. Admission-only
+has mixed throughput/TPOT results, and sequence-only has 13.61% lower workload
+output rate than the matched control. Host scratch reuse and wave attention
+are queued separately. These single observations do not establish repeatable
+gains or regressions.
 
 The wave-projection candidate completed but failed strict model comparison:
 `seed-prefix` generated `[9856, 374]` (" Germany is") instead of `[17689, 374]`
