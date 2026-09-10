@@ -104,7 +104,7 @@ macro_rules! batch_write_bf16_v5 {
 
 /// Q1/K2/V3/Gate4/Up5/LM6; weights are contiguous row-major [n,k].
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [18992, 1, 1]), control_flow(loop_bounds(12288)))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::manual_div_ceil)]
 pub fn ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5(
     a: &[u16],
     weights: &[u16],
@@ -314,7 +314,7 @@ pub fn ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5(
 
 /// O1/Down2 FP32 partials: no residual addition and no BF16 narrowing.
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [512, 1, 1]), control_flow(loop_bounds(12288)))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::manual_div_ceil)]
 pub fn ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5(
     a: &[u16],
     weights: &[u16],

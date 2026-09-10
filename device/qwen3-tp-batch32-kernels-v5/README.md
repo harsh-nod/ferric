@@ -13,12 +13,12 @@ flattened hidden/head rows. All argument byte layouts match their V2/V3 roles.
 
 ## Geometry
 
-Rows 1..32, world sizes 1/2/8, hidden width4096, intermediate width12288,
-vocabulary151936, head dimension128. Physical pages remain512 with16 tokens
-per page and8192 maximum context tokens. Page-table/trig/position and activation
-capacities grow to32 rows, not the page size or model dimensions.
+Rows 1..32, world sizes 1/2/8, hidden width 4096, intermediate width 12288,
+vocabulary 151936, head dimension 128. Physical pages remain 512 with 16 tokens
+per page and 8192 maximum context tokens. Page-table/trig/position and activation
+capacities grow to 32 rows, not the page size or model dimensions.
 
-Every workgroup has64 lanes. Grid workgroup counts:
+Every workgroup has 64 lanes. Grid workgroup counts:
 
 | Root Role | Workgroups |
 | --- | --- |
@@ -31,7 +31,7 @@ Every workgroup has64 lanes. Grid workgroup counts:
 | Paged append | `1` |
 
 Scalar/MFMA projections use real two-dimensional row tiles in one launch.
-Tile16 geometry is preserved: tile rows0/1 own activation rows0..15/16..31.
+Tile16 geometry is preserved: tile rows 0/1 own activation rows 0..15/16..31.
 There are no hidden serial16 host microbatches. MFMA loads zero for inactive
 rows through checked matrix views; no padded activation reads are required.
 Scalar and wave weights remain NxK; MFMA weights remain separately resident KxN.
@@ -39,8 +39,8 @@ Scalar and wave weights remain NxK; MFMA weights remain separately resident KxN.
 ## Admission
 
 The host must explicitly select this source/profile and its independently
-admitted artifact, allocate32-row workspaces/metadata/trig tables, and enable
-32-row scheduler/chunk admission. Frozen V4 peer kernels still cap rows at16
+admitted artifact, allocate 32-row workspaces/metadata/trig tables, and enable
+32-row scheduler/chunk admission. Frozen V4 peer kernels still cap rows at 16
 and must be rejected with this profile until a separate peer32 image exists.
 Host-staged TP8 and device-local TP1 residual are valid integration choices.
 
@@ -49,3 +49,6 @@ input finiteness and final narrowing checks remain in source. Scalar order
 matches V2 per row. Wave and MFMA reassociation still require independent
 numerical and end-to-end model qualification. Emission, native GPU tests,
 and performance are separate evidence stages; none is implied by this README.
+
+The four tiled projection kernels keep the bounded `((rows + 15) / 16)`
+arithmetic explicit for ranked/MIR admission, with a focused Clippy allowance.

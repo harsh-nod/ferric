@@ -237,7 +237,7 @@ pub fn ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5(
 /// `weights_kn` is a separately resident row-major [k,n] transpose of v2 weights.
 #[cfg(feature = "mfma")]
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [18992, 1, 1]), control_flow(loop_bounds(256)))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::manual_div_ceil)]
 pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
     a: &[u16],
     weights_kn: &[u16],
@@ -383,7 +383,7 @@ pub fn ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5(
 /// MFMA FP32 partial projection over exactly the rank-local reduction width.
 #[cfg(feature = "mfma")]
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [512, 1, 1]), control_flow(loop_bounds(32, 96, 128, 256, 384, 768)))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::manual_div_ceil)]
 pub fn ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5(
     a: &[u16],
     weights_kn: &[u16],
