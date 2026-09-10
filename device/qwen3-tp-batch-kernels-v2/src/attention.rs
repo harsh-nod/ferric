@@ -28,6 +28,10 @@ macro_rules! batch_paged_attention_pair_v2 {
                 } else {
                     fe2o3_device::trap();
                 }
+                if physical_page < 512 {
+                } else {
+                    fe2o3_device::trap();
+                }
                 let cache_base = (physical_page * 16 + token % 16) * $columns + $kv_head * 128;
                 if cache_base < 8388481 {
                 } else {
@@ -189,6 +193,10 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
     {
         fe2o3_device::trap();
     }
+    if columns < 1025 {
+    } else {
+        fe2o3_device::trap();
+    }
     let invocation = thread::index_1d();
     let raw = invocation.get();
     let head_row = raw / 64;
@@ -247,6 +255,10 @@ pub fn ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2(
                 }
                 let physical_page = memory::volatile_load(page_table, table_index) as usize;
                 if physical_page < physical_pages {
+                } else {
+                    fe2o3_device::trap();
+                }
+                if physical_page < 512 {
                 } else {
                     fe2o3_device::trap();
                 }

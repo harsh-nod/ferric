@@ -87,6 +87,78 @@ fn local_grouped_query_mapping_covers_all_tp1_tp2_tp8_heads() {
 }
 
 #[test]
+fn mixed_positions_nonzero_qk_match_independent_dense_softmax() {
+    let columns = 128_usize;
+    let mut query = vec![0_u16; 2 * 4 * 128];
+    query[0] = Bf16::from_f32(1.0).to_bits();
+    query[4 * 128] = Bf16::from_f32(-1.5).to_bits();
+    let mut keys = vec![0x7fc0_u16; 4 * 16 * columns];
+    let mut values = vec![0x7fc0_u16; keys.len()];
+    let tables = [2_u32, u32::MAX, 1, 3];
+    for (row, position) in [(0_usize, 1_usize), (1, 16)] {
+        let mut dense_scores = vec![];
+        let mut dense_values = vec![];
+        for token in 0..=position {
+            let page = tables[row * 2 + token / 16] as usize;
+            let base = (page * 16 + token % 16) * columns;
+            let key = if row == 0 {
+                token as f32 * 8.0
+            } else {
+                (token as f32 - 8.0) * 0.25
+            };
+            let value = if row == 0 {
+                1.0 + token as f32 * 2.0
+            } else {
+                token as f32 * 0.0625
+            };
+            keys[base..base + columns].fill(0);
+            keys[base] = Bf16::from_f32(key).to_bits();
+            values[base..base + columns].fill(Bf16::from_f32(value).to_bits());
+            let q = f64::from(Bf16::from_bits(query[row * 4 * 128]).to_f32());
+            dense_scores.push(q * f64::from(key) * f64::from(ATTENTION_SCALE));
+            dense_values.push(f64::from(value));
+        }
+        let maximum = dense_scores
+            .iter()
+            .copied()
+            .fold(f64::NEG_INFINITY, f64::max);
+        let denominator: f64 = dense_scores
+            .iter()
+            .map(|score| (score - maximum).exp())
+            .sum();
+        let numerator: f64 = dense_scores
+            .iter()
+            .zip(&dense_values)
+            .map(|(score, value)| (score - maximum).exp() * value)
+            .sum();
+        let expected = Bf16::from_f32((numerator / denominator) as f32).to_bits();
+        let uniform =
+            Bf16::from_f32((dense_values.iter().sum::<f64>() / dense_values.len() as f64) as f32)
+                .to_bits();
+        assert_ne!(expected, uniform);
+        for lane in 0..64 {
+            let pair = batch_paged_attention_pair_v2!(
+                &query,
+                &keys,
+                &values,
+                &tables,
+                row,
+                row * 4 * 128,
+                0,
+                columns,
+                lane,
+                position,
+                17,
+                2,
+                4,
+                HostMath
+            );
+            assert_eq!(pair, (expected, expected));
+        }
+    }
+}
+
+#[test]
 #[should_panic]
 fn missing_causally_required_page_traps() {
     let data = vec![0_u16; 16 * 128];
