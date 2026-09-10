@@ -1,4 +1,4 @@
-use fe2o3_device::{Bf16, Blocked, Index1D, WriteOnlyDisjointSlice, kernel, memory, thread};
+use fe2o3_device::{Bf16, WriteOnlyDisjointSlice, kernel, memory, thread};
 
 // Both output formats and the host numerical checks execute this accumulation.
 #[cfg(test)]
@@ -27,7 +27,7 @@ macro_rules! tp_gemv_sum_v1 {
 pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     a: &[u16],
     weights: &[u16],
-    mut output: WriteOnlyDisjointSlice<u16, Blocked<Index1D, 1, 1>>,
+    mut output: WriteOnlyDisjointSlice<u16>,
     n: u32,
     k: u32,
     model_role: u32,
@@ -72,12 +72,8 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     {
         fe2o3_device::trap();
     }
-    let Some(block) = thread::index_1d().checked_block::<1, 1>() else {
-        fe2o3_device::trap();
-    };
-    let Some(column) = block.component_index(0) else {
-        fe2o3_device::trap();
-    };
+    let invocation = thread::index_1d();
+    let column = invocation.get();
     if column >= n {
         fe2o3_device::trap();
     }
@@ -96,7 +92,7 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
     }
     // END tp_gemv_sum_v1
     let narrowed = Bf16::from_f32(sum);
-    if !narrowed.is_finite() || !output.write_block(&block, 0, narrowed.to_bits()) {
+    if !narrowed.is_finite() || !output.write(invocation, narrowed.to_bits()) {
         fe2o3_device::trap();
     }
 }
@@ -107,7 +103,7 @@ pub fn ferric_qwen3_tp_gemv_bf16_f32_bf16_v1(
 pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
     a: &[u16],
     weights: &[u16],
-    mut output: WriteOnlyDisjointSlice<f32, Blocked<Index1D, 1, 1>>,
+    mut output: WriteOnlyDisjointSlice<f32>,
     n: u32,
     k: u32,
     model_role: u32,
@@ -149,12 +145,8 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
     {
         fe2o3_device::trap();
     }
-    let Some(block) = thread::index_1d().checked_block::<1, 1>() else {
-        fe2o3_device::trap();
-    };
-    let Some(column) = block.component_index(0) else {
-        fe2o3_device::trap();
-    };
+    let invocation = thread::index_1d();
+    let column = invocation.get();
     if column >= n {
         fe2o3_device::trap();
     }
@@ -172,7 +164,7 @@ pub fn ferric_qwen3_tp_gemv_partial_bf16_f32_v1(
         inner += 1;
     }
     // END tp_gemv_sum_v1
-    if !output.write_block(&block, 0, sum) {
+    if !output.write(invocation, sum) {
         fe2o3_device::trap();
     }
 }

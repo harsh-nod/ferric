@@ -1,4 +1,4 @@
-use fe2o3_device::{Bf16, Blocked, Index1D, Math, WriteOnlyDisjointSlice, kernel, memory, thread};
+use fe2o3_device::{Bf16, Math, WriteOnlyDisjointSlice, kernel, memory, thread};
 
 macro_rules! tp_swiglu_element_v1 {
     ($gate:expr, $up:expr, $math:expr) => {{
@@ -32,7 +32,7 @@ macro_rules! tp_swiglu_element_v1 {
 pub fn ferric_qwen3_tp_swiglu_bf16_f32_v1(
     gate: &[u16],
     up: &[u16],
-    mut output: WriteOnlyDisjointSlice<u16, Blocked<Index1D, 1, 1>>,
+    mut output: WriteOnlyDisjointSlice<u16>,
     model_role: u32,
     world_size: u32,
 ) {
@@ -57,12 +57,8 @@ pub fn ferric_qwen3_tp_swiglu_bf16_f32_v1(
     {
         fe2o3_device::trap();
     }
-    let Some(block) = thread::index_1d().checked_block::<1, 1>() else {
-        fe2o3_device::trap();
-    };
-    let Some(index) = block.component_index(0) else {
-        fe2o3_device::trap();
-    };
+    let invocation = thread::index_1d();
+    let index = invocation.get();
     if index >= elements {
         fe2o3_device::trap();
     }
@@ -70,7 +66,7 @@ pub fn ferric_qwen3_tp_swiglu_bf16_f32_v1(
     let up_value = memory::volatile_load(up, index);
     let math = Math::current();
     let value = tp_swiglu_element_v1!(gate_value, up_value, math);
-    if !output.write_block(&block, 0, value) {
+    if !output.write(invocation, value) {
         fe2o3_device::trap();
     }
 }
