@@ -157,6 +157,10 @@ pub fn ferric_qwen3_tp_gqa_decode_bf16_f32_v1(
     let raw = thread::index_1d().get();
     let query_head = raw / 64;
     let lane = raw % 64;
+    if lane < 64 {
+    } else {
+        fe2o3_device::trap();
+    }
     if query_head < query_heads {
     } else {
         fe2o3_device::trap();

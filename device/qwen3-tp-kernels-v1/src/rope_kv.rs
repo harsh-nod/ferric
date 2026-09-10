@@ -249,6 +249,10 @@ pub fn ferric_qwen3_tp_kv_append_v1(
     let columns = kv_heads * 128;
     let capacity = capacity as usize;
     let position = position as usize;
+    if columns < 1_025 {
+    } else {
+        fe2o3_device::trap();
+    }
     if capacity < 8_193 {
     } else {
         fe2o3_device::trap();

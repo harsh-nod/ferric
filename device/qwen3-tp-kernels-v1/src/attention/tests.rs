@@ -17,6 +17,7 @@ fn values(length: usize, seed: usize) -> Vec<u16> {
 
 #[test]
 fn all_rank_local_gqa_heads_match_full_same_source_attention() {
+    assert_eq!(ATTENTION_SCALE.to_bits(), 0x3db5_04f3);
     let math = HostMath;
     for role in [1, 2] {
         let full = geometry(role, 1).unwrap();
