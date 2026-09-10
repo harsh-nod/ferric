@@ -1,7 +1,40 @@
 # M1 Team Progress
 
-Updated: 2026-09-09. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-10. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
+
+## TP8 Batching Integration
+
+September 10 follow-on work is integrated and GPU-checked on the engineering path. The existing
+single-sequence results below remain frozen and are not measurements of these
+new features. Public fe2o3 main was rechecked at `3546d54` before this work.
+
+| Team | Owned Slice | Status |
+| --- | --- | --- |
+| Kernels | Additive multi-row projection, RoPE, paged KV append, causal paged GQA, and output kernels | 32 host/source tests per target pass; independent indexing/numerics review passes. Both nine-root target emissions and eleven genuine gfx950 GPU probes pass. The old thirteen-root image remains unchanged. |
+| KV and radix | Bounded physical page pool, immutable complete-page prefix retention, exact radix lookup, cancellation, eviction, and failure quarantine | Integrated. 18 release tests, strict Clippy, eight actual-body mutations, and four external privacy negatives pass. Independently reviewed; completed stage/worktree removed after archival. |
+| Scheduling | Continuous request admission, decode/prefill fairness, bounded prefill chunks, generational request IDs, and completion-gated publication | Integrated. 17 release tests, strict Clippy, and eight actual-body mutations pass. Completion preflight is shared with commit validation. |
+| Integration | One resident weight set, true multi-row GPU dispatch, atomic all-rank completion, workload CLI, and combined numerical checks | 139 library tests (one prior real-image ignore), 17 CLI/worker tests, 22 source policies, all-targets strict Clippy, and release build pass. TP1 cached and TP8 cached/uncached mixed Qwen workloads each match all eight expected output tokens/bytes. TP8 checks physical prefix reuse, chunked prefill, continuous admission, paged causal attention, and cancellation; independent paired receipt review passes. |
+
+The initial envelope is Qwen3-8B BF16, TP1/2/8, up to 16 token rows per GPU
+batch, 16 tokens per physical page, and up to 32 resident requests. The
+engineering profile remains explicitly opted in and does not create protected
+M1 execution authority or an HTTP serving endpoint.
+
+The TP8 cache-on/off pair uses 34/50 physical token rows and 5/6 GPU batches:
+retaining the sixteen-token prefix avoids sixteen rows and one full forward.
+This is a work-reduction result, not a timing speedup: whole-run times are
+466.414/461.166 seconds in these single unrepeated logical-tick workloads.
+All seventeen workers across the three model runs were confirmed absent and
+all eight GPUs idle afterward. The three implementation team worktrees and
+their completed remote build stages were removed after evidence archival;
+the small integration source workspace and runnable model bundles are retained.
+
+The new modules and numerical kernels are explicitly Contracted engineering
+code. Host invariants, negative tests, and independent review are not a new
+Verus proof of the scheduler, paged allocator, GPU math, or end-to-end execution.
+See [the batching runbook](M1_QWEN3_TP_BATCHING.md) for the actual workload
+interface, limits, and remaining validation boundaries.
 
 ## MI350 And Eight-Rank Work
 
