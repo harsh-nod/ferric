@@ -185,6 +185,188 @@ fn input(prompt: &[u32], new_tokens: u32, tick: u64) -> TpRequestAdmissionV1 {
     }
 }
 
+fn replica_schedule_chunks(requests: usize, budget: usize) -> Vec<Vec<(usize, usize)>> {
+    let decode = |slots: &[usize]| slots.iter().map(|&slot| (slot, 1)).collect::<Vec<_>>();
+    if requests <= 2 {
+        let slots = (0..requests).collect::<Vec<_>>();
+        let mut batches = vec![slots.iter().map(|&slot| (slot, 5)).collect()];
+        batches.extend(vec![decode(&slots); 7]);
+        return batches;
+    }
+    assert_eq!(requests, 8);
+    if budget == 16 {
+        // A partial prefill advances the round-robin cursor past that request.
+        let mut batches = vec![
+            vec![(0, 5), (1, 5), (2, 5), (3, 1)],
+            vec![(0, 1), (1, 1), (2, 1), (4, 5), (5, 5), (6, 3)],
+            vec![
+                (4, 1),
+                (5, 1),
+                (0, 1),
+                (1, 1),
+                (2, 1),
+                (7, 5),
+                (3, 4),
+                (6, 2),
+            ],
+        ];
+        batches.extend(vec![decode(&[3, 4, 5, 6, 7, 0, 1, 2]); 5]);
+        batches.push(decode(&[3, 4, 5, 6, 7]));
+        batches.push(decode(&[3, 6, 7]));
+        batches
+    } else {
+        assert_eq!(budget, 32);
+        let mut batches = vec![
+            vec![(0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 2)],
+            vec![
+                (0, 1),
+                (1, 1),
+                (2, 1),
+                (3, 1),
+                (4, 1),
+                (5, 1),
+                (7, 5),
+                (6, 3),
+            ],
+        ];
+        batches.extend(vec![decode(&[6, 7, 0, 1, 2, 3, 4, 5]); 6]);
+        batches.push(decode(&[6, 7]));
+        batches
+    }
+}
+
+#[test]
+fn replica_cohorts_preserve_fixed_work_and_exact_real_coordinator_schedules() {
+    let prompt = [2, 3, 5, 7, 11];
+    let mut choice = prompt
+        .iter()
+        .fold(0, |value, token| (value * 31 + token) % 997);
+    let mut reference = Vec::new();
+    for _ in 0..8 {
+        reference.push(choice);
+        choice = (choice * 32) % 997;
+    }
+    for (world, requests) in [(8, 8), (2, 2), (1, 1)] {
+        for budget in [16, 32] {
+            let limits = EngineeringTpPagedLimitsV1::new(64, 32, 16, 1000).unwrap();
+            let scope = EngineeringTpPoolScopeV1 {
+                model: [1; 32],
+                session: [2; 32],
+            };
+            let pool = if budget == 32 {
+                EngineeringTpPagedPoolV1::new_wide32(scope, limits)
+            } else {
+                EngineeringTpPagedPoolV1::new(scope, limits)
+            }
+            .unwrap();
+            let (gpu, state) = fake(&pool, world);
+            let scheduler = if budget == 32 {
+                EngineeringTpSchedulerV1::new_wide32(1000, 64, budget, budget)
+            } else {
+                EngineeringTpSchedulerV1::new(1000, 64, budget, budget)
+            }
+            .unwrap();
+            let mut runtime = if budget == 32 {
+                EngineeringTpBatchRuntimeV2::new_wide32(gpu, pool, scheduler, budget, false)
+            } else {
+                EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, budget, false)
+            }
+            .unwrap();
+            let ids = (0..requests)
+                .map(|index| {
+                    let hit = runtime.admit(input(&prompt, 8, 0), 0, 0).unwrap();
+                    assert_eq!(
+                        (hit.request.slot, hit.request.generation),
+                        (u8::try_from(index).unwrap(), 1)
+                    );
+                    assert_eq!((hit.cached_tokens, hit.cached_pages), (0, 0));
+                    hit.request
+                })
+                .collect::<Vec<_>>();
+            let schedule = replica_schedule_chunks(requests, budget);
+            let mut positions = vec![0; requests];
+            let mut outputs = vec![Vec::new(); requests];
+            let mut retired = vec![false; requests];
+            let mut total_rows = 0;
+            for (tick, chunks) in schedule.iter().enumerate() {
+                let report = step(&mut runtime, u64::try_from(tick).unwrap());
+                let expected = chunks
+                    .iter()
+                    .flat_map(|&(slot, count)| vec![slot; count])
+                    .collect::<Vec<_>>();
+                assert_eq!(report.rows.len(), expected.len());
+                assert!(report.rows.len() <= budget);
+                total_rows += report.rows.len();
+                let mut produced = report.outputs.iter();
+                for (row, slot) in report.rows.iter().zip(expected) {
+                    let position = positions[slot];
+                    assert_eq!(row.request, ids[slot]);
+                    assert_eq!(usize::try_from(row.absolute_position).unwrap(), position);
+                    let (token, kind) = match position {
+                        0..=3 => (prompt[position], TpBatchRowKindV1::PrefillIntermediate),
+                        4 => (prompt[position], TpBatchRowKindV1::PrefillFinal),
+                        _ => (reference[position - 5], TpBatchRowKindV1::Decode),
+                    };
+                    assert_eq!((row.token_id, row.kind), (token, kind));
+                    if kind != TpBatchRowKindV1::PrefillIntermediate {
+                        let output = produced.next().unwrap();
+                        let index = outputs[slot].len();
+                        assert_eq!(output.request, ids[slot]);
+                        assert_eq!(usize::try_from(output.output_index).unwrap(), index);
+                        assert_eq!(output.token_id, reference[index]);
+                        assert_eq!(output.completed_ns, u64::try_from(tick).unwrap() * 10 + 1);
+                        assert_eq!(output.finished, index == 7);
+                        outputs[slot].push(output.completed_ns);
+                    }
+                    positions[slot] += 1;
+                }
+                assert!(produced.next().is_none());
+                assert_eq!(report.rank_dispatch_counts.len(), world);
+                assert_eq!(report.rank_dispatch_counts[0], 544);
+                assert!(
+                    report.rank_dispatch_counts[1..]
+                        .iter()
+                        .all(|&count| count == 540)
+                );
+                for index in 0..requests {
+                    if !retired[index] && outputs[index].len() == 8 {
+                        let record = runtime
+                            .retire(ids[index], u64::try_from(tick).unwrap())
+                            .unwrap();
+                        assert_eq!(record.state(), TpRequestStateV1::Completed);
+                        assert_eq!(record.generated_tokens, reference);
+                        assert_eq!(record.output_timestamps_ns, outputs[index]);
+                        assert_eq!(record.cached_prefix_tokens, 0);
+                        assert_eq!(record.cancelled_ns, None);
+                        retired[index] = true;
+                    }
+                }
+            }
+            assert_eq!(positions, vec![12; requests]);
+            assert_eq!(total_rows * (8 / requests), 96);
+            assert_eq!(
+                outputs.iter().map(Vec::len).sum::<usize>() * (8 / requests),
+                64
+            );
+            assert!(retired.iter().all(|value| *value));
+            let page_totals = runtime.page_stats();
+            assert_eq!(
+                (
+                    page_totals.free_pages,
+                    page_totals.cached_pages,
+                    page_totals.retained_pages
+                ),
+                (16, 0, 0)
+            );
+            assert_eq!((page_totals.prefix_hits, page_totals.hit_tokens), (0, 0));
+            assert!(runtime.step(20, 200, || 201).unwrap().is_none());
+            runtime.close().unwrap();
+            assert_eq!(state.borrow().close_calls, 1);
+            assert_eq!(state.borrow().calls.len(), schedule.len());
+        }
+    }
+}
+
 #[test]
 fn wide_runtime_checks_physical_capacity_and_executes_one_transaction() {
     for physical_capacity in [16, 32] {
