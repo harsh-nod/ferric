@@ -41,6 +41,10 @@ impl TensorParallelSequenceV1 {
             self.running, self.poisoned)
     }
 
+    /// Creates an idle bounded sequence.
+    ///
+    /// # Errors
+    /// Rejects a zero vocabulary or capacity outside `1..=8192`.
     pub fn new(capacity: u32, vocabulary: u32)
         -> (result: Result<Self, TensorParallelSequenceErrorV1>)
         ensures match result {
@@ -56,14 +60,22 @@ impl TensorParallelSequenceV1 {
             running: false, poisoned: false })
     }
 
+    /// Returns the number of completed token positions in this sequence.
+    #[must_use]
     pub fn position(&self) -> (position: u32)
         ensures position == self.view().2,
     { self.position }
 
+    /// Returns the current reset epoch.
+    #[must_use]
     pub fn epoch(&self) -> (epoch: u64)
         ensures epoch == self.view().3,
     { self.epoch }
 
+    /// Reserves the current position for one token.
+    ///
+    /// # Errors
+    /// Rejects poisoned or busy state, an invalid token, or exhausted capacity.
     pub fn begin(&mut self, token: u32)
         -> (result: Result<u32, TensorParallelSequenceErrorV1>)
         requires old(self).valid(),
@@ -84,6 +96,10 @@ impl TensorParallelSequenceV1 {
         Ok(self.position)
     }
 
+    /// Records the caller's successful step and advances once.
+    ///
+    /// # Errors
+    /// Rejects poisoned state or the absence of a running step.
     pub fn complete(&mut self) -> (result: Result<(), TensorParallelSequenceErrorV1>)
         requires old(self).valid(),
         ensures final(self).valid(), match result {
@@ -101,12 +117,17 @@ impl TensorParallelSequenceV1 {
         Ok(())
     }
 
+    /// Permanently prohibits further execution and reset.
     pub fn poison(&mut self)
         requires old(self).valid(),
         ensures final(self).valid(), final(self).view() == (old(self).view().0, old(self).view().1,
             old(self).view().2, old(self).view().3, old(self).view().4, true),
     { self.poisoned = true; }
 
+    /// Starts a new sequence while preserving capacity and vocabulary.
+    ///
+    /// # Errors
+    /// Rejects poisoned or busy state, or an exhausted epoch counter.
     pub fn reset(&mut self) -> (result: Result<(), TensorParallelSequenceErrorV1>)
         requires old(self).valid(),
         ensures final(self).valid(), match result {
