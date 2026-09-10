@@ -220,13 +220,9 @@ impl Options {
         let peer = collective == EngineeringTpReductionModeV3::DevicePeerV4;
         if peer != peer_artifact.is_some()
             || (peer && !matches!(devices.len(), 2 | 8))
-            || (peer
-                && (runtime.cache_admission
-                    || runtime.operational
-                    || runtime.sequences
-                    || runtime.rollover))
+            || (peer && runtime.rollover)
         {
-            return Err("serial peer transport requires TP2/8 and --peer-artifact; independent runtime controls are not supported".into());
+            return Err("serial peer transport requires TP2/8 and --peer-artifact; peer queue rollover is not supported".into());
         }
         let packets_per_batch = 36 * (15 + collective.extra_dispatches_per_layer()) + 4;
         if !seen.contains("--max-batches") && !runtime.rollover {
@@ -607,10 +603,15 @@ fn run(options: &Options) -> Result<(), String> {
     )
     .map_err(|e| format!("scheduler: {e:?}"))?;
     let workers = if let Some(peer) = &peer_artifact {
-        PeerWorker::spawn(&options.worker, &options.devices, &[&artifact, peer])?
-            .into_iter()
-            .map(RankWorker::Peer)
-            .collect::<Vec<_>>()
+        PeerWorker::spawn_with_options(
+            &options.worker,
+            &options.devices,
+            &[&artifact, peer],
+            options.runtime,
+        )?
+        .into_iter()
+        .map(RankWorker::Peer)
+        .collect::<Vec<_>>()
     } else {
         options
             .devices
@@ -804,12 +805,14 @@ mod tests {
             "--runtime-cache-admission",
             "--runtime-operational",
             "--dispatch-sequences",
-            "--queue-rollover",
         ] {
             let mut supplied = base.to_vec();
             supplied.push(flag);
-            assert!(args(&supplied).is_err());
+            assert!(args(&supplied).is_ok());
         }
+        let mut rollover = base.to_vec();
+        rollover.push("--queue-rollover");
+        assert!(args(&rollover).is_err());
         for supplied in [
             vec![
                 "--devices",

@@ -329,14 +329,6 @@ pub struct PeerWorker {
 }
 
 impl PeerWorker {
-    pub fn spawn(
-        executable: &Path,
-        unique_ids: &[u64],
-        artifacts: &[&EngineeringTpArtifactV1],
-    ) -> TpResult<Vec<Self>> {
-        Self::spawn_with_options(executable, unique_ids, artifacts, RuntimeOptions::default())
-    }
-
     pub fn spawn_with_options(
         executable: &Path,
         unique_ids: &[u64],
