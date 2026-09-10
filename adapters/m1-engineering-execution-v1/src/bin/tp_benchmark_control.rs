@@ -532,8 +532,16 @@ mod tests {
         let before = monotonic_raw_ns().unwrap();
         assert!(monotonic_raw_ns().unwrap() >= before);
         let mut value = config(PathBuf::from("/tmp/private/control.sock"));
-        assert!(value.verify_loaded_requests_sha256(&digest(b"requests")).is_ok());
-        assert!(value.verify_loaded_requests_sha256(&digest(b"changed")).is_err());
+        assert!(
+            value
+                .verify_loaded_requests_sha256(&digest(b"requests"))
+                .is_ok()
+        );
+        assert!(
+            value
+                .verify_loaded_requests_sha256(&digest(b"changed"))
+                .is_err()
+        );
         assert!(value.verify_loaded_requests_sha256("invalid").is_err());
         assert!(value.validate(&[1, 2], &digest(b"requests")).is_ok());
         assert!(value.validate(&[2, 1], &digest(b"requests")).is_err());
