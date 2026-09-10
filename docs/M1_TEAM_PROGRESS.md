@@ -5,8 +5,9 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## MI350 And Eight-Rank Work
 
-The September 9 MI350 work is a separate, in-progress extension, not an M1
-qualification or an eight-GPU Qwen result. Compiler/runtime changes track
+The initial September 9 MI350 foundation checkpoint below did not yet run
+eight-GPU Qwen. The follow-on execution results appear later in this section;
+neither checkpoint is M1 qualification. Compiler/runtime changes track
 [fe2o3 #274](https://github.com/harsh-nod/fe2o3/issues/274).
 
 | Team | Current Slice | Status |
@@ -50,7 +51,7 @@ retains 104 baseline kernel-body diagnostics. The changed compiler CLI/finalizer
 runtime, engine, source gate, and kernel build helpers pass their scoped strict
 checks; no broad lint suppression or unrelated kernel rewrite was added.
 
-The follow-on execution batch is in progress against published fe2o3 main
+The follow-on engineering execution batch uses published fe2o3 main
 `3546d54d2c4a913f5d079701aed557d0a378bba8`. Its release gfx950 worker passes
 433 library tests, a genuine single-device RMSNorm dispatch with exact BF16
 output and unchanged guards, and eight concurrent isolated memory/queue
@@ -59,26 +60,52 @@ child teardown. The eight-worker lifecycle fixture does not dispatch kernels
 and is not a Qwen result.
 
 The new thirteen-root TP crate includes six rank-local kernels and seven
-unchanged imported helpers. It passes 30 host/source tests per target; actual
-new-artifact emission and numerical checks remain pending. The rank driver,
-bounded child-process transport, authenticated model intake, and measurement
-command are integrated and undergoing final published-pin checks. The new
-sequence cursor has a same-source Verus proof and eight actual-body negative
-mutations; its final integrated replay is in progress. Measurements use a
-release controller and worker, host-staged FP32 ordered collectives, contiguous
-rank-local KV, and token-at-a-time prompt processing. Setup is reported
-separately. Full 1/2/8-GPU Qwen validation and timing results are not yet
-available. No gfx942 artifact
-or device authority may be relabeled as gfx950. Builds/tests stay on `mi300x`;
-target-specific MI350 hardware checks use `mi350`. Symmetric memory and MTP
-remain deferred.
+unchanged imported helpers. Its frozen `8cdde149` source passes 31 host/source
+tests per target, genuine gfx950/gfx942 emission and exact replay, and six real
+gfx950 numerical probes with unchanged inputs/guards and clean teardown.
+Eight probe-harness tests pass. The integrated driver, bounded child transport,
+authenticated intake, and release controller pass 95 library/client tests,
+21 source policies, and scoped strict Clippy. Combined source admission passes
+with 173 modules and 8,235 executable bodies, alongside 648 engine tests
+(9 ignored) and strict Clippy. The final annotated sequence cursor has an
+exact same-source replay: eight Verus obligations, zero errors, three tests,
+and an unchanged 754-file frozen closure. Its earlier actual-body mutation
+checks remain separately scoped; none of this proves whole-driver numerics.
 
-At the connectivity interruption, all completed agent-owned remote stages and
-local worktrees had been removed. The integration worktree remains active.
-Root-owned `mi300x` stages `/tmp/fe2-mi350-engineering.B01UxK` (13 GiB at the
-last check) and `/tmp/ferric-mi350-integration.2WTV7c` (1.9 GiB at the last
-check) still require final evidence recovery and cleanup. No other user's
-processes, directories, or networking settings were modified.
+Real Qwen3-8B two-token smokes now pass on one, two, and eight MI350X GPUs.
+All generate `[12095, 13]` (` Paris.`), matching both frozen reference prefixes,
+with exact rank dispatch counts, KV position six, confirmed worker teardown,
+and idle GPU observations afterward. The eight-rank smoke measures
+160.644607963 seconds TTFT and one 24.711778123-second decode interval, with
+186.586377561 seconds of setup excluded. These smoke intervals are not
+repeated TPOT measurements or serving qualification.
+
+The extended single unwarmed TP8 run also passes: all 32 generated IDs and
+decoded bytes match both reference passes and argmax arrays. TTFT is
+163.647853495 seconds; the mean of 31 post-first intervals is
+40.25950984674194 seconds, with 193.519502061 seconds of setup excluded.
+All eight workers close/reap, exact dispatch counts and KV position 36 match,
+and GPU observations are idle afterward. This is a single-prompt engineering
+observation, not repeated statistics or a controlled framework comparison.
+See [the engineering runbook](M1_QWEN3_TP_ENGINEERING.md) for identities,
+all four results, reproduction, and performance limitations.
+
+Measurements use release binaries, host-staged FP32 ordered collectives,
+contiguous rank-local KV, and token-at-a-time prompt processing. The initial
+path scales poorly. Substantial system-call pressure was observed; repeated
+full runtime currentness scans are the leading bottleneck hypothesis.
+No gfx942 artifact or device authority is relabeled as
+gfx950. Builds/tests stay on `mi300x`; execution uses `mi350`. Symmetric memory
+and MTP remain deferred.
+
+The core and kernel worktrees and roughly 36 GiB of completed build/proof
+stages have been removed after evidence archival. This includes the final
+core stage `mi300x:/tmp/fe2-mi350-engineering.B01UxK` and integration build
+stage `mi300x:/tmp/ferric-mi350-integration.2WTV7c`. The small local integration
+worktree remains the source workspace for the unpublished implementation.
+The needed `mi350:/tmp/ferric-qwen8.TRNKht` model/runtime bundle is retained
+for reproduction, with no workers left running. No other user's processes,
+directories, or networking settings were modified.
 
 ## Historical M1 Checkpoint
 
@@ -89,9 +116,9 @@ processes, directories, or networking settings were modified.
 | Verification | The complete developer qualifier passed on frozen `bb50d0e`: 1,586 selected Verus queries, zero errors, 694 admitted bodies, actual-body negative mutations, and all listed formatting, strict Clippy, debug/release and all-feature test gates. The receipt's 197 files pass hash validation. This checkpoint excludes the later SHA optimization, diagnostics, and `0ea54ed9` repin. The separate planner repair at `eb219f0` passes the positive plan and dependency rejection cases against `0ea54ed9`. Independent review accepts the new 32-token engineering observation. | The protected M1 qualification gates remain outside the developer receipt, the planner's synthetic policy tests, and this single-prompt hardware check. |
 | Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
 
-## Qwen Observations
+## Historical MI300X Qwen Observations
 
-The current Qwen3-8B target-only run completed 32 generated tokens from the
+The historical Qwen3-8B target-only run completed 32 generated tokens from the
 five-token prompt `The capital of France is`. Every generated ID matched both
 frozen Hugging Face reference passes and both reference argmax arrays. The
 decoded output continues through Paris, Rome, Madrid, Berlin, and Amsterdam.
@@ -132,7 +159,7 @@ been measured.
 An independent offline Hugging Face Qwen3-8B run using the same canonical model
 produced exactly the same eight token IDs on two passes. A separate 32-token
 reference also repeated identically and preserves that eight-token prefix.
-The current Ferric run matches that reference across logical KV positions 16
+That historical Ferric run matches the reference across logical KV positions 16
 and 32. These are not physical page boundaries (the KV page size is 256).
 These short reference checks do not establish full-model numerical qualification.
 
@@ -218,9 +245,10 @@ The new optimized prepack reproduces canonical bundle ID
 - Authenticated serving qualification still requires the protected current
   record, verifier, model, and artifact authority bundle.
 - Kernel performance work still includes matrix instructions for dense
-  projections, attention, normalization, and logits reductions. Source analysis
-  found 545 dispatch packets per target decode token; this is not a measured
-  attribution of GPU time.
+  projections, attention, normalization, and logits reductions. Historical
+  MI300X target-only source analysis found 545 dispatch packets per target
+  decode token; this is not the new TP schedule or a measured attribution of
+  GPU time.
 - Physical radix prefix reuse belongs to M2. Symmetric memory and MTP remain
   deferred.
 
