@@ -74,7 +74,7 @@
   function range(values, digits = 3) {
     return values === null ? "n/a" : values.map((value) => value.toFixed(digits)).join(" to ");
   }
-  function performanceTable(caption, headings, rows) {
+  function performanceTable(caption, headings, rows, parent = measured) {
     const wrap = element("div", "transition-table-wrap");
     wrap.tabIndex = 0;
     wrap.setAttribute("role", "region");
@@ -97,7 +97,7 @@
     });
     table.append(head, body);
     wrap.append(table);
-    measured.append(wrap);
+    parent.append(wrap);
   }
   measured.append(
     element("p", "performance-scope", performance.scope),
@@ -123,8 +123,31 @@
     ]));
   measured.append(
     element("p", "", `Pruning-only reuse-prefix: TTFT ${range(performance.pruningReuse.ttftSeconds)} s; TPOT ${range(performance.pruningReuse.tpotSeconds)} s, one decode gap per repetition. Large variation prevents an isolated speedup claim.`),
-    element("p", "", performance.correctness),
+    element("h3", "", "Single-repetition ablations"),
+    element("p", "", performance.ablations.scope),
   );
+  performanceTable("Single-repetition ablations, throughput and process windows",
+    ["Profile / Kind / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+    performance.ablations.profiles.map((profile) => [
+      `${profile.name} / ${profile.kind} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+      profile.workloadSeconds.toFixed(3), profile.setupSeconds.toFixed(3), profile.wholeSeconds.toFixed(3),
+    ]));
+  performanceTable("Single-repetition reuse-prefix latency, one decode gap per run",
+    ["Profile / Reps", "Reuse TTFT (s)", "Reuse TPOT (s)", "Workload Rate / Control"],
+    performance.ablations.profiles.map((profile) => [
+      `${profile.name} / n=1`, ...profile.requestLatencies[3].map((value) => value.toFixed(3)),
+      `${(profile.outputTokensPerSecond / performance.ablations.profiles[0].outputTokensPerSecond).toFixed(3)}x`,
+    ]));
+  measured.append(element("p", "", performance.ablations.interpretation));
+  const allLatencies = element("details", "performance-identities");
+  allLatencies.append(element("summary", "", "All single-run request latencies"));
+  performanceTable("Single-run ablation latencies by request identity",
+    ["Profile", "Request / Decode Gaps", "TTFT (s)", "TPOT (s)"],
+    performance.ablations.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+      `${profile.name} / n=1`, `${performance.requests[index].name} / ${performance.requests[index].gapsPerRepetition}`,
+      values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+    ])), allLatencies);
+  measured.append(allLatencies, element("p", "", performance.correctness));
   const definitions = element("dl", "observation-facts");
   performance.definitions.forEach(([label, detail]) => {
     definitions.append(element("dt", "", label), element("dd", "", detail));
@@ -148,6 +171,16 @@
   });
   pins.append(element("dt", "", "Operational-only profile"),
     element("dd", "", JSON.stringify(performance.runtimeProfile)));
+  for (const key of ["controllerSha256", "workerSha256", "comparatorSha256", "baselineLedgerSha256", "controlLedgerSha256"]) {
+    pins.append(element("dt", "", `Single-run ablations ${key}`), element("dd", "", performance.ablations[key]));
+  }
+  performance.ablations.profiles.forEach((profile) => {
+    const flags = { ...performance.runtimeProfile, runtime_operational: profile.operationalCurrentness,
+      runtime_cache_admission: profile.admissionCache, dispatch_sequences: profile.dispatchSequences };
+    pins.append(element("dt", "", `${profile.name} profile`), element("dd", "", JSON.stringify(flags)),
+      element("dt", "", `${profile.name} collective`), element("dd", "", profile.hostWorkspaceReuse
+        ? "host-staged-reuse-v3" : "host_staged_fp32_rank_order_reduce_bf16_residual"));
+  });
   provenance.append(pins);
   measured.append(provenance);
 

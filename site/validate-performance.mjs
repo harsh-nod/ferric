@@ -19,7 +19,7 @@ function digest(value) {
 export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
-    "provenance", "publication"]);
+    "provenance", "publication", "ablations"]);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
   assert(data.scope.includes("Not steady-state serving throughput"));
   assert(data.scope.includes("eight output tokens including one from the cancelled request"));
@@ -70,6 +70,44 @@ export function validatePerformance(data) {
     dispatch_sequences: false, queue_rollover: false,
     projection: "baseline", attention: "baseline", runtime_profiling: false,
   });
+  const ablations = data.ablations;
+  keys(ablations, ["scope", "interpretation", "controllerSha256", "workerSha256", "comparatorSha256",
+    "baselineLedgerSha256", "controlLedgerSha256", "profiles"]);
+  assert(ablations.scope.includes("one repetition each") && ablations.scope.includes("row/chunk budget 16"));
+  assert(ablations.interpretation.includes("Sequence-only is slower") && ablations.interpretation.includes("limit attribution"));
+  for (const key of ["controllerSha256", "workerSha256", "comparatorSha256", "baselineLedgerSha256", "controlLedgerSha256"]) {
+    digest(ablations[key]);
+  }
+  assert.equal(ablations.workerSha256, data.variants[2].workerSha256);
+  assert.notEqual(ablations.controllerSha256, data.variants[2].controllerSha256);
+  assert.equal(ablations.profiles.length, 5);
+  const ids = ["runtime-control", "runtime-combined", "admission-cache", "sequences", "host-reuse"];
+  ablations.profiles.forEach((profile, index) => {
+    keys(profile, ["id", "name", "kind", "repetitions", "admissionCache", "operationalCurrentness",
+      "dispatchSequences", "hostWorkspaceReuse", "outputTokensPerSecond", "workloadSeconds",
+      "setupSeconds", "wholeSeconds", "requestLatencies"]);
+    assert.equal(profile.id, ids[index]);
+    assert.equal(profile.repetitions, 1);
+    assert.equal(profile.kind, index === 0 ? "control" : index === 1 ? "cumulative" : "standalone");
+    assert.equal(profile.admissionCache, index === 1 || index === 2);
+    assert.equal(profile.operationalCurrentness, index === 1);
+    assert.equal(profile.dispatchSequences, index === 1 || index === 3);
+    assert.equal(profile.hostWorkspaceReuse, index === 4);
+    for (const key of ["outputTokensPerSecond", "workloadSeconds", "setupSeconds", "wholeSeconds"]) {
+      assert(Number.isFinite(profile[key]) && profile[key] > 0);
+    }
+    assert(Math.abs(profile.outputTokensPerSecond * profile.workloadSeconds - 8) < 1e-9);
+    assert(profile.wholeSeconds > profile.workloadSeconds + profile.setupSeconds);
+    assert.equal(profile.requestLatencies.length, 4);
+    profile.requestLatencies.forEach((values, requestIndex) => {
+      assert(Array.isArray(values) && values.length === 2);
+      assert(Number.isFinite(values[0]) && values[0] > 0);
+      if (requestIndex === 2) assert.equal(values[1], null);
+      else assert(Number.isFinite(values[1]) && values[1] > 0);
+    });
+  });
+  assert(ablations.profiles[3].outputTokensPerSecond < ablations.profiles[0].outputTokensPerSecond);
+  assert(ablations.profiles[1].outputTokensPerSecond < data.variants[2].outputTokensPerSecond[0]);
   keys(data.identities, ["hsacoSha256", "manifestSha256", "handoffSha256", "workloadSha256",
     "referenceSha256", "operationalLedgerSha256", "pruningLedgerSha256"]);
   Object.values(data.identities).forEach(digest);
@@ -79,6 +117,7 @@ export function validatePerformance(data) {
     assert(Array.isArray(pair) && pair.length === 2 && pair.every((text) => typeof text === "string" && text.length > 0));
   }
   assert(data.fixtures[1][1].includes("correctness failure"));
+  assert(data.fixtures[1][1].includes("both wave-projection-only and wave-attention-only"));
   assert(data.fixtures[2][1].includes("No peer-transport Qwen model result"));
 }
 
@@ -94,6 +133,13 @@ export function testPerformanceRejections(data) {
     (copy) => { copy.identities.referenceSha256 = "0".repeat(64); },
     (copy) => { copy.fixtures[1][1] = "Wave model performance passed"; },
     (copy) => { copy.extra = true; },
+    (copy) => { copy.ablations.profiles[0].repetitions = 2; },
+    (copy) => { copy.ablations.profiles[1].kind = "standalone"; },
+    (copy) => { copy.ablations.profiles[2].outputTokensPerSecond *= 2; },
+    (copy) => { copy.ablations.profiles[3].requestLatencies[2][1] = 0; },
+    (copy) => { copy.ablations.profiles[4].id = "wave-attention"; },
+    (copy) => { copy.ablations.profiles[0].dispatchSequences = true; },
+    (copy) => { copy.ablations.controlLedgerSha256 = "0".repeat(64); },
   ];
   for (const mutate of mutations) {
     const copy = JSON.parse(JSON.stringify(data));

@@ -35,7 +35,7 @@ const requiredClaims = [
   "Not steady-state serving throughput",
   "Request identities are never pooled",
   "correctness failure under investigation",
-  "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8",
+  "902fef6e1478b3ac677e5456b2a2d1f917456fba",
   "a689418",
   "ce9e0bc",
   "e3dc8d6",
@@ -312,7 +312,7 @@ const currentRequiredClaims = [
   "Continuous batching and paged TP attention",
   "Persistent resident radix prefixes",
   "Batched Qwen with resident prefix reuse",
-  "Single logical-tick observations only",
+  "no isolated cache-speedup claim follows",
   "The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover",
   "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
   "113.271 s",
@@ -644,11 +644,19 @@ try {
     assert(!/\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i.test(result.currentText), `${name}: rendered a current-dependency claim`);
     assert(browserErrors.length === 0, `${name}: ${browserErrors.join("; ")}`);
 
+    const latencyDisclosure = page.getByText("All single-run request latencies", { exact: true });
+    await latencyDisclosure.click();
+    assert(await page.getByRole("region", { name: "Single-run ablation latencies by request identity", exact: true })
+      .locator("tbody tr").count() === 20, `${name}: missing single-run per-request latencies`);
+    await latencyDisclosure.click();
+
     if (screenshotRoot) {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
+        await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();
+        await page.screenshot({ path: join(screenshotRoot, `${name}-ablations.png`) });
         await page.evaluate(() => window.scrollTo(0, 0));
       }
       await page.screenshot({ path: join(screenshotRoot, `${name}.png`), fullPage: true });
