@@ -525,6 +525,10 @@ mod tests {
     }
     #[test]
     fn checked_clock_and_exact_config_identity() {
+        assert_eq!(
+            digest(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
         let before = monotonic_raw_ns().unwrap();
         assert!(monotonic_raw_ns().unwrap() >= before);
         let mut value = config(PathBuf::from("/tmp/private/control.sock"));
