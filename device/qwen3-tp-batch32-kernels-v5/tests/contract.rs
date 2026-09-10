@@ -185,9 +185,16 @@ fn tiled_output_and_wave_leader_ownership_cover_each_active_element_once() {
 
 #[test]
 fn wide_mfma_checked_narrowings_preserve_every_supported_tile_coordinate() {
-    assert_eq!(PROJECTION.matches("let tile_row = tile_row as u8 as usize;").count(), 2);
     assert_eq!(
-        PROJECTION.matches("let tile_column = tile_column as u16 as usize;").count(),
+        PROJECTION
+            .matches("let tile_row = tile_row as u8 as usize;")
+            .count(),
+        2
+    );
+    assert_eq!(
+        PROJECTION
+            .matches("let tile_column = tile_column as u16 as usize;")
+            .count(),
         2
     );
     assert_eq!(PROJECTION.matches("let tile_index = raw / 64;").count(), 2);
