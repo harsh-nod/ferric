@@ -207,7 +207,10 @@ fn read_file(path: &Path, limit: u64, private: bool) -> Result<Vec<u8>, String> 
 }
 
 fn digest(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    Sha256::digest(data)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 fn valid_hash(value: &str) -> bool {
