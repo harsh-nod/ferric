@@ -35,7 +35,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "a8b016e14ca8c77c9e7abe4591086f7cab11ce61";
+const FE2O3_REVISION: &str = "3546d54d2c4a913f5d079701aed557d0a378bba8";
 
 #[test]
 fn adapter_is_an_exact_standalone_workspace() {
@@ -94,7 +94,14 @@ fn adapter_is_an_exact_standalone_workspace() {
         })
         .collect::<Vec<_>>();
     optional_dependencies.sort_unstable();
-    assert_eq!(optional_dependencies, ["fe2o3-service-host"]);
+    assert_eq!(
+        optional_dependencies,
+        [
+            "fe2o3-hsaco",
+            "fe2o3-service-host",
+            "ferric-qwen3-tp-kernels-device-v1"
+        ]
+    );
     let features = manifest
         .get("features")
         .and_then(toml::Value::as_table)
@@ -117,8 +124,35 @@ fn adapter_is_an_exact_standalone_workspace() {
 
 #[test]
 fn adapter_and_observation_schema_pin_current_fe2o3() {
-    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 5);
+    assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 6);
     assert!(SOURCE.contains(FE2O3_REVISION));
+}
+
+#[test]
+fn tensor_parallel_runtime_is_opt_in_and_confined_to_its_engineering_binary() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let feature = manifest["features"]["tp-engineering"].as_array().unwrap();
+    assert_eq!(
+        feature.iter().map(toml::Value::as_str).collect::<Vec<_>>(),
+        vec![
+            Some("fe2o3-kfd/engineering-gfx950"),
+            Some("dep:fe2o3-hsaco"),
+            Some("dep:ferric-qwen3-tp-kernels-device-v1"),
+        ]
+    );
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-tp-engineering"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap()[0].as_str(),
+        Some("tp-engineering")
+    );
+    assert!(!SOURCE.contains("engineering_wire"));
+    assert!(!ENGINE_MANIFEST.contains("engineering-gfx950"));
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-tp-kernels-device-v1"));
 }
 
 #[test]

@@ -8,7 +8,7 @@
 
 mod collective;
 
-pub use collective::{reduce_residual_bf16_v1, HostStagedPartialV1};
+pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
 
 use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_engine::tensor_parallel::{
@@ -16,7 +16,7 @@ use ferric_engine::tensor_parallel::{
     Qwen3TensorParallelPlanV1, Qwen3TensorParallelRankV1,
 };
 use ferric_engine::tensor_parallel_execution::TensorParallelSequenceV1;
-use ferric_spec::{ModelConfig, Qwen3ModelRole, Qwen3TensorKind, QWEN3_NO_LAYER};
+use ferric_spec::{ModelConfig, QWEN3_NO_LAYER, Qwen3ModelRole, Qwen3TensorKind};
 use sha2::{Digest, Sha256};
 
 /// Engineering errors carry context without conferring runtime authority.

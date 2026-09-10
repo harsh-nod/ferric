@@ -1,4 +1,4 @@
-use super::{reduce_residual_bf16_v1 as reduce, HostStagedPartialV1 as Partial};
+use super::{HostStagedPartialV1 as Partial, reduce_residual_bf16_v1 as reduce};
 
 #[test]
 fn exact_rank_order_residual_once_and_single_rounding() {
@@ -68,38 +68,44 @@ fn rank_and_shape_errors_never_mutate_inputs() {
 #[test]
 fn rejects_nonfinite_inputs_intermediates_and_bf16_overflow() {
     for value in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY, f32::MAX] {
-        assert!(reduce(
+        assert!(
+            reduce(
+                1,
+                &[Partial {
+                    rank: 0,
+                    values: &[value]
+                }],
+                &[0]
+            )
+            .is_err()
+        );
+    }
+    assert!(
+        reduce(
             1,
             &[Partial {
                 rank: 0,
-                values: &[value]
+                values: &[0.0]
             }],
+            &[0x7fc0]
+        )
+        .is_err()
+    );
+    assert!(
+        reduce(
+            2,
+            &[
+                Partial {
+                    rank: 0,
+                    values: &[f32::MAX]
+                },
+                Partial {
+                    rank: 1,
+                    values: &[f32::MAX]
+                }
+            ],
             &[0]
         )
-        .is_err());
-    }
-    assert!(reduce(
-        1,
-        &[Partial {
-            rank: 0,
-            values: &[0.0]
-        }],
-        &[0x7fc0]
-    )
-    .is_err());
-    assert!(reduce(
-        2,
-        &[
-            Partial {
-                rank: 0,
-                values: &[f32::MAX]
-            },
-            Partial {
-                rank: 1,
-                values: &[f32::MAX]
-            }
-        ],
-        &[0]
-    )
-    .is_err());
+        .is_err()
+    );
 }

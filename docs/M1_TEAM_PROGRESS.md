@@ -22,16 +22,16 @@ Clippy, and source admission. Its inventory has 172 modules and 8,228 executable
 bodies: exactly one new module and 21 directly verified bodies, with no added
 unverified bodies. Protected runtime feature resolution remains gfx942-only.
 
-The active Ferric pin is now public fe2o3
+The preceding Ferric pin checkpoint used public fe2o3
 `a8b016e14ca8c77c9e7abe4591086f7cab11ce61`, integrated locally in `c092df2`.
 All fifteen locked graphs resolve, with no registry-version drift; independently
 reviewed dependency records and the rebuilt source-pin adapter binding match.
 The final-pin remote run passes 645 engine tests (9 ignored), 38 source-gate
 tests, source-gate strict Clippy, formatting, property binding, and full source
-admission. SSH connectivity failed during the subsequent engine Clippy step.
-Its exit status, the remaining adapter/source-policy checks, four isolated
-allocation tests, and fresh engineering host release checks are not yet
-confirmed. No local build/test fallback is used.
+admission. Connectivity has recovered. The interrupted engine Clippy log was
+recovered with exit status zero; the remaining adapter/source-policy checks,
+four isolated allocation tests, and both fresh engineering host release
+builds now pass. No local build/test fallback was used.
 
 The new gfx950 engineering object is 103,616 bytes, SHA-256
 `2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222`,
@@ -50,8 +50,25 @@ retains 104 baseline kernel-body diagnostics. The changed compiler CLI/finalizer
 runtime, engine, source gate, and kernel build helpers pass their scoped strict
 checks; no broad lint suppression or unrelated kernel rewrite was added.
 
-The executable MI350 queue/service path, collective transport, rank-local GPU
-dispatch, and 1/2/8-GPU Qwen validation remain unimplemented. No gfx942 artifact
+The follow-on execution batch is in progress against published fe2o3 main
+`3546d54d2c4a913f5d079701aed557d0a378bba8`. Its release gfx950 worker passes
+433 library tests, a genuine single-device RMSNorm dispatch with exact BF16
+output and unchanged guards, and eight concurrent isolated memory/queue
+lifecycles with distinct device IDs, live executable hashes, and confirmed
+child teardown. The eight-worker lifecycle fixture does not dispatch kernels
+and is not a Qwen result.
+
+The new thirteen-root TP crate includes six rank-local kernels and seven
+unchanged imported helpers. It passes 30 host/source tests per target; actual
+new-artifact emission and numerical checks remain pending. The rank driver,
+bounded child-process transport, authenticated model intake, and measurement
+command are integrated and undergoing final published-pin checks. The new
+sequence cursor has a same-source Verus proof and eight actual-body negative
+mutations; its final integrated replay is in progress. Measurements use a
+release controller and worker, host-staged FP32 ordered collectives, contiguous
+rank-local KV, and token-at-a-time prompt processing. Setup is reported
+separately. Full 1/2/8-GPU Qwen validation and timing results are not yet
+available. No gfx942 artifact
 or device authority may be relabeled as gfx950. Builds/tests stay on `mi300x`;
 target-specific MI350 hardware checks use `mi350`. Symmetric memory and MTP
 remain deferred.

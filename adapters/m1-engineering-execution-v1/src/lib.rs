@@ -13,6 +13,9 @@ pub mod r33_production_backend;
 pub(crate) mod r33_resident_session;
 pub mod r33_service;
 pub mod r33_wire;
+pub mod tp_artifact;
+pub mod tp_execution;
+pub mod tp_model;
 
 use std::error::Error;
 use std::ffi::OsStr;
@@ -42,7 +45,7 @@ use sha2::{Digest, Sha256};
 /// Exact manifest schema emitted by `cargo fe2o3 engineering hsaco`.
 ///
 /// The private decoder is frozen against fe2o3 commit
-/// `a8b016e14ca8c77c9e7abe4591086f7cab11ce61` and rejects canonical-shape drift.
+/// `3546d54d2c4a913f5d079701aed557d0a378bba8` and rejects canonical-shape drift.
 pub const M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1: &str = "EngineeringHsacoObservationV1";
 /// Exact manifest filename in one fe2o3 engineering observation directory.
 pub const M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1: &str = "observation.json";
@@ -661,6 +664,16 @@ fn decode_manifest(
 fn validate_manifest(
     manifest: &EngineeringManifestV1,
 ) -> Result<ValidatedManifestFactsV1, M1EngineeringAggregateArtifactOpenErrorV1> {
+    let facts = validate_manifest_profile(manifest, AGGREGATE_CRATE_NAME_V1, GFX942_XNACK_MINUS)?;
+    validate_manifest_kernel_roster(&manifest.hsaco.kernel_names)?;
+    Ok(facts)
+}
+
+fn validate_manifest_profile(
+    manifest: &EngineeringManifestV1,
+    crate_name: &str,
+    target: &str,
+) -> Result<ValidatedManifestFactsV1, M1EngineeringAggregateArtifactOpenErrorV1> {
     require(
         manifest.schema == M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1,
         "schema",
@@ -671,8 +684,8 @@ fn validate_manifest(
         manifest.artifact == M1_ENGINEERING_AGGREGATE_ARTIFACT_FILENAME_V1,
         "artifact",
     )?;
-    require(manifest.crate_name == AGGREGATE_CRATE_NAME_V1, "crate_name")?;
-    require(manifest.target == GFX942_XNACK_MINUS, "target")?;
+    require(manifest.crate_name == crate_name, "crate_name")?;
+    require(manifest.target == target, "target")?;
     require(manifest.code_object_version == 6, "code_object_version")?;
 
     let compiler_handoff = decode_identity(
@@ -702,8 +715,6 @@ fn validate_manifest(
         &manifest.hsaco.canonical_descriptor_sha256,
         "hsaco.canonical_descriptor_sha256",
     )?;
-    validate_manifest_kernel_roster(&manifest.hsaco.kernel_names)?;
-
     Ok(ValidatedManifestFactsV1 {
         compiler_handoff,
         hsaco,
@@ -1963,6 +1974,41 @@ mod tests {
         assert!(!artifact.grants_publication_authority());
         assert!(!artifact.grants_load_authority());
         assert!(!artifact.grants_launch_authority());
+    }
+
+    #[test]
+    fn tp_profile_does_not_broaden_original_aggregate_admission() {
+        use crate::tp_artifact::{ENGINEERING_TP_CRATE_V1, ENGINEERING_TP_TARGET_V1};
+        let mut candidate = manifest(b"profile-test");
+        assert!(validate_manifest(&candidate).is_ok());
+        assert!(
+            validate_manifest_profile(
+                &candidate,
+                ENGINEERING_TP_CRATE_V1,
+                ENGINEERING_TP_TARGET_V1
+            )
+            .is_err()
+        );
+        candidate.crate_name = ENGINEERING_TP_CRATE_V1.to_owned();
+        candidate.target = ENGINEERING_TP_TARGET_V1.to_owned();
+        assert!(
+            validate_manifest_profile(
+                &candidate,
+                ENGINEERING_TP_CRATE_V1,
+                ENGINEERING_TP_TARGET_V1
+            )
+            .is_ok()
+        );
+        assert!(validate_manifest(&candidate).is_err());
+        candidate.grants.launch = true;
+        assert!(
+            validate_manifest_profile(
+                &candidate,
+                ENGINEERING_TP_CRATE_V1,
+                ENGINEERING_TP_TARGET_V1
+            )
+            .is_err()
+        );
     }
 
     fn manifest(hsaco: &[u8]) -> EngineeringManifestV1 {

@@ -346,10 +346,12 @@ fn byte_geometry_and_rope_tables_are_exact() {
     assert!(decode_bf16(&[0x80, 0x7f]).is_err());
     let (cos, sin) = rope_bytes(0, 1_000_000);
     assert_eq!(cos.len(), 256);
-    assert!(cos
-        .chunks_exact(4)
-        .all(|bits| bits == 1.0_f32.to_le_bytes()));
-    assert!(sin
-        .chunks_exact(4)
-        .all(|bits| bits == 0.0_f32.to_le_bytes()));
+    assert!(
+        cos.chunks_exact(4)
+            .all(|bits| bits == 1.0_f32.to_le_bytes())
+    );
+    assert!(
+        sin.chunks_exact(4)
+            .all(|bits| bits == 0.0_f32.to_le_bytes())
+    );
 }

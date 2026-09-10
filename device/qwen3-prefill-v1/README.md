@@ -19,6 +19,6 @@ back stores completed by other workitems.
 This package is outside Ferric's host workspace and carries no artifact,
 publication, load, dispatch, numerical-qualification, whole-Qwen, or M1
 authority. The package pins exact reviewed fe2o3 revision
-`a8b016e14ca8c77c9e7abe4591086f7cab11ce61`; that source pin grants none of
+`3546d54d2c4a913f5d079701aed557d0a378bba8`; that source pin grants none of
 those authorities, and the package still must be compiled into current
 artifacts and qualified on MI300X.

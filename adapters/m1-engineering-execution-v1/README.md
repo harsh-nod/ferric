@@ -117,3 +117,48 @@ required 20-window R33 run and is not a qualification result.
 Neither authenticated constructor routes through the structural physical
 runner. The legacy constructor observes no clock or token and never constructs
 a measurement report.
+
+## Eight-GPU Engineering Execution
+
+The optional `tp-engineering` feature builds `ferric-qwen3-tp-engineering`.
+It is a separate engineering command, not an HTTP server or protected M1
+admission. Ferric authenticates canonical model bytes, inspects the closed
+thirteen-kernel TP artifact, and sends owned bytes to one isolated fe2o3 KFD
+worker per distinct physical gfx950 device. No unsafe Rust is added to Ferric.
+The operator must explicitly trust the machine code through
+`--allow-unauthenticated-machine-code`; structural inspection alone is not a
+source-to-device correctness proof.
+
+```sh
+ferric-qwen3-tp-engineering \
+  --source /private/models \
+  --artifact /private/output/fe2o3-engineering-v1/CONTENT_ID \
+  --worker /private/fe2o3-gfx950-engineering-worker \
+  --devices ID0,ID1,ID2,ID3,ID4,ID5,ID6,ID7 \
+  --allow-unauthenticated-machine-code \
+  --prompt 'The capital of France is' \
+  --new-tokens 32 --repetitions 3 --warmup 1 --capacity 128
+```
+
+Supported world sizes are exactly 1, 2, and 8. Q/K/V, attention, and MLP
+projections run on rank-local GPUs. O/down outputs are FP32 partials reduced
+in rank order on the host, with one residual addition and BF16 rounding.
+Embedding and final logits run on rank zero. This changes floating-point
+grouping and is Contracted, not bitwise-equivalence or numerical qualification.
+Prompt priming is token-at-a-time m=1 execution, not optimized batched prefill.
+The current sequence owns contiguous rank-local KV, not a radix prefix cache.
+
+JSONL setup records separate model intake and upload/setup from generation.
+Each run records the raw prompt/output IDs, decoded output, controller-clock
+TTFT, every decode interval, mean TPOT, and exact completed dispatch counts
+for every rank. Warmup runs are explicitly marked. Fixed-length greedy output
+does not stop early at EOS; raw decoded bytes are retained even if the final
+token ends mid-UTF8. The command preflights all runs against the conservative
+131,072-packet per-rank ring limit; queue rollover is not implemented here.
+Timings include IPC and host collectives and must
+not be presented as a controlled vLLM/SGLang comparison. A final close record
+is emitted only after every worker reports successful teardown and exits.
+Timeouts or malformed responses poison the instance; they cannot count as a
+successful measurement. Binary/artifact identities are observations, not
+publication or launch authority. Actual hardware results are tracked in
+`docs/M1_TEAM_PROGRESS.md`.
