@@ -135,6 +135,12 @@ class ReplicaTests(unittest.TestCase):
         self.assertLess(control["all_ready_ns"], control["epoch_ns"])
         self.assertEqual(result["exit_codes"], [0] * 8)
         self.assertTrue(result["group_termination"]["confirmed"])
+        before, after = result["gpu_snapshot_intervals"]
+        self.assertEqual((before["phase"], after["phase"]), ("before", "after"))
+        self.assertTrue(before["completed"] and after["completed"])
+        self.assertLessEqual(before["end_ns"], control["first_spawn_ns"])
+        self.assertLessEqual(result["group_termination"]["observed_ns"], result["final_reap_ns"])
+        self.assertLessEqual(result["final_reap_ns"], after["start_ns"])
         for replica in control["replicas"]:
             self.assertEqual(replica["started"]["epoch_ns"], control["epoch_ns"])
             self.assertGreaterEqual(replica["eof_ns"], replica["closed"]["closed_ns"])

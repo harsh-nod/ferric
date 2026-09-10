@@ -538,7 +538,20 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
     result = {"schema": "FerricReplicaCohortV1", "authority": "none", "status": "failed",
               "model_parity_qualified": False, "controller_sha256": controller_sha,
               "worker_sha256": worker_sha, "snapshot_command": snapshot_command,
-              "workload_sha256": cohort_plan["workload_sha256"], "error": None}
+              "workload_sha256": cohort_plan["workload_sha256"], "error": None,
+              "clock_domain": domain(), "gpu_snapshot_intervals": []}
+
+    def take_snapshot(phase):
+        receipt = {"phase": phase, "start_ns": now_ns(), "end_ns": None, "completed": False}
+        result["gpu_snapshot_intervals"].append(receipt)
+        try:
+            require(domain() == result["clock_domain"], "snapshot clock domain changed")
+            snapshot_fn(snapshot_command, output, phase, cohort_plan["device_unique_ids"])
+            require(domain() == result["clock_domain"], "snapshot clock domain changed")
+            receipt["completed"] = True
+        finally:
+            receipt["end_ns"] = now_ns()
+
     pre_taken = False
     _interrupted = None
     previous_signals = {sig: signal.signal(sig, request_abort) for sig in (signal.SIGINT, signal.SIGTERM)}
@@ -559,7 +572,7 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         result["executables"] = {"controller": str(frozen_controller), "worker": str(frozen_worker),
                                  "source_controller": str(controller), "source_worker": str(worker)}
         pre_taken = True
-        snapshot_fn(snapshot_command, output, "before", cohort_plan["device_unique_ids"])
+        take_snapshot("before")
         check_interrupted()
         cohort = Cohort(cohort_plan, output, settings)
         cohort.launch(frozen_controller, controller_fd, frozen_worker, source, artifact)
@@ -571,7 +584,7 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         # Already reaped children must not enter process-group abort handling.
         cohort.children.clear()
         pre_taken = False
-        snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
+        take_snapshot("after")
         check_interrupted()
         result["status"] = "unvalidated-complete"
     except BaseException as failure:
@@ -590,7 +603,7 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
                 result["teardown_uncertain"] = str(cleanup_error)
         if pre_taken:
             try:
-                snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
+                take_snapshot("after")
             except Exception as snapshot_error:
                 result["post_snapshot_error"] = str(snapshot_error)
     finally:
