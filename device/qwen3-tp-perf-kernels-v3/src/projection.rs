@@ -1,8 +1,6 @@
-use fe2o3_device::{
-    Bf16, Bf16MfmaAMatrix, Bf16MfmaBMatrix, DeviceMatrix, F32AccumulatorFragment, Gfx950Subgroup,
-    Index1D, RowStriped2D, Tiled2D, Wave64, WaveLane, WriteOnlyDisjointSlice, kernel, memory,
-    thread,
-};
+use fe2o3_device::{Bf16, Gfx950Subgroup, Index1D, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread};
+#[cfg(feature = "mfma")]
+use fe2o3_device::{Bf16MfmaAMatrix, Bf16MfmaBMatrix, DeviceMatrix, F32AccumulatorFragment, Tiled2D, Wave64, WaveLane};
 
 /// One Wave64 cooperatively computes each row/output-column dot product.
 /// Weights are the unchanged v2 row-major [n,k] layout.
@@ -197,6 +195,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
 
 /// One Wave64 owns a 16x16 tile, with zero-filled inactive activation rows.
 /// `weights_kn` is a separately resident row-major [k,n] transpose of v2 weights.
+#[cfg(feature = "mfma")]
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [9496, 1, 1]), control_flow(loop_bounds(256)))]
 #[allow(clippy::too_many_arguments)]
 pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
@@ -318,6 +317,7 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
 }
 
 /// MFMA FP32 partial projection over exactly the rank-local reduction width.
+#[cfg(feature = "mfma")]
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [256, 1, 1]), control_flow(loop_bounds(768)))]
 #[allow(clippy::too_many_arguments)]
 pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(

@@ -66,11 +66,14 @@ pub fn compiler_expectation_roster_v3()
         Entry::for_marker::<logits::ferric_qwen3_tp_batch_argmax_bf16_v2_gpu::Marker>(),
         Entry::for_marker::<projection::ferric_qwen3_tp_wave_gemv_bf16_v3_gpu::Marker>(),
         Entry::for_marker::<projection::ferric_qwen3_tp_wave_gemv_partial_f32_v3_gpu::Marker>(),
-        Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_bf16_v3_gpu::Marker>(),
-        Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_partial_f32_v3_gpu::Marker>(),
         Entry::for_marker::<attention::ferric_qwen3_tp_wave_paged_gqa_bf16_v3_gpu::Marker>(),
         Entry::for_marker::<collective::ferric_qwen3_tp_batch_residual_bf16_v3_gpu::Marker>(),
     ];
+    #[cfg(feature = "mfma")]
+    {
+        entries.push(Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_bf16_v3_gpu::Marker>());
+        entries.push(Entry::for_marker::<projection::ferric_qwen3_tp_mfma_gemm_partial_f32_v3_gpu::Marker>());
+    }
     entries.sort_by_key(Entry::kernel_binding_id);
     entries
 }

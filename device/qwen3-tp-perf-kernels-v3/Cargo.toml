@@ -8,8 +8,9 @@ publish = false
 [workspace]
 
 [features]
-default = ["gfx950"]
+default = ["gfx950", "mfma"]
 gfx950 = []
+mfma = []
 
 [dependencies]
 fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3546d54d2c4a913f5d079701aed557d0a378bba8", version = "=0.1.0" }

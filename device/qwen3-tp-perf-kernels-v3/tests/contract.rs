@@ -8,14 +8,14 @@ const COLLECTIVE: &str = include_str!("../src/collective.rs");
 #[test]
 fn exact_closed_roster_keeps_all_baseline_symbols() {
     let roster = compiler_expectation_roster_v3();
-    assert_eq!(roster.len(), 15);
+    assert_eq!(roster.len(), if cfg!(feature = "mfma") { 15 } else { 13 });
     assert!(
         roster
             .windows(2)
             .all(|p| p[0].kernel_binding_id() < p[1].kernel_binding_id())
     );
     let mut expected = contract::NEW_ROOTS.to_vec();
-    expected.extend(contract::PERFORMANCE_ROOTS);
+    expected.extend(contract::PERFORMANCE_ROOTS.into_iter().filter(|root| cfg!(feature = "mfma") || !root.contains("mfma")));
     expected.push("qwen3_rmsnorm_v1");
     expected.sort();
     let mut actual: Vec<_> = roster
