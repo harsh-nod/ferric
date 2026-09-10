@@ -8,6 +8,7 @@
 //! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+mod peer_reduction;
 mod performance;
 mod reduction;
 
@@ -88,6 +89,17 @@ pub struct EngineeringTpDispatchV1 {
 /// exact artifact, scalar ABI, allocation extents and pointer-fixup ownership.
 /// These are external Contracted prerequisites, not proved by this driver.
 pub trait EngineeringTpRankTransportV1 {
+    /// Explicit shared-process peer identity: child PID, logical rank and world.
+    /// Independent rank workers return `None`; no capability is inferred.
+    fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
+        None
+    }
+    /// Allocates owner-local memory mapped for read-only argument binding on peers.
+    /// # Errors
+    /// Rejects unsupported mappings or any ambiguous group transition.
+    fn allocate_peer_readable(&mut self, _byte_len: usize) -> TpResult<u64> {
+        Err("transport does not support owned peer-readable allocations".into())
+    }
     /// Allocates one child-owned, bounded device buffer.
     /// # Errors
     /// Rejects allocation limits, closed state, or child failure.
@@ -807,6 +819,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             }
             EngineeringTpReductionModeV3::DeviceTp1V3 => {
                 return self.reduce_device_tp1(layer, operation);
+            }
+            EngineeringTpReductionModeV3::DevicePeerV4 => {
+                return self.reduce_device_peer(layer, operation);
             }
             EngineeringTpReductionModeV3::HostStagedV1 => {}
         }

@@ -18,6 +18,8 @@ pub enum EngineeringTpReductionModeV3 {
     HostStagedReuseV3,
     /// TP1 only: GPU residual addition with no hidden/partial host transport.
     DeviceTp1V3,
+    /// TP2/8: ordered device reduction in one serial shared-process peer owner.
+    DevicePeerV4,
 }
 
 impl EngineeringTpReductionModeV3 {
@@ -28,6 +30,7 @@ impl EngineeringTpReductionModeV3 {
             Self::HostStagedV1 => "host-staged-v1",
             Self::HostStagedReuseV3 => "host-staged-reuse-v3",
             Self::DeviceTp1V3 => "device-tp1-v3",
+            Self::DevicePeerV4 => "device-peer-serial-v4",
         }
     }
 
@@ -35,8 +38,18 @@ impl EngineeringTpReductionModeV3 {
     #[must_use]
     pub const fn extra_dispatches_per_layer(self) -> u64 {
         match self {
-            Self::DeviceTp1V3 => 2,
+            Self::DeviceTp1V3 | Self::DevicePeerV4 => 2,
             Self::HostStagedV1 | Self::HostStagedReuseV3 => 0,
+        }
+    }
+
+    /// Explicit embedding broadcast copy on every nonzero peer rank.
+    #[must_use]
+    pub const fn extra_dispatches_per_forward(self, rank: u32) -> u64 {
+        if matches!(self, Self::DevicePeerV4) && rank != 0 {
+            1
+        } else {
+            0
         }
     }
 }
@@ -47,6 +60,7 @@ pub(super) enum ReductionWorkspace {
     Baseline,
     Host(HostWorkspace),
     DeviceTp1(Tensor),
+    DevicePeer(Vec<Tensor>),
 }
 
 impl ReductionWorkspace {
@@ -55,6 +69,7 @@ impl ReductionWorkspace {
             Self::Baseline => EngineeringTpReductionModeV3::HostStagedV1,
             Self::Host(_) => EngineeringTpReductionModeV3::HostStagedReuseV3,
             Self::DeviceTp1(_) => EngineeringTpReductionModeV3::DeviceTp1V3,
+            Self::DevicePeer(_) => EngineeringTpReductionModeV3::DevicePeerV4,
         }
     }
 }
@@ -97,6 +112,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             return Err("reduction mode is already configured".into());
         }
         match mode {
+            EngineeringTpReductionModeV3::DevicePeerV4 => {
+                self.configure_device_peer()?;
+            }
             EngineeringTpReductionModeV3::HostStagedV1 => {}
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
                 self.reduction = ReductionWorkspace::Host(HostWorkspace::new(
@@ -129,6 +147,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     pub(super) fn initialize_hidden_from_embedding(&mut self) -> TpResult<()> {
+        if matches!(self.reduction, ReductionWorkspace::DevicePeer(_)) {
+            return self.initialize_peer_hidden();
+        }
         if matches!(self.reduction, ReductionWorkspace::DeviceTp1(_)) {
             return Ok(());
         }

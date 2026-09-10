@@ -266,7 +266,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let extra = u64::from(self.inner.plan.model().layers)
             * self.reduction_mode().extra_dispatches_per_layer();
         (0..self.inner.plan.world_size())
-            .map(|rank| 540 + extra + if rank == 0 { 1 + head } else { 0 })
+            .map(|rank| {
+                540 + extra
+                    + if rank == 0 { 1 + head } else { 0 }
+                    + self.reduction_mode().extra_dispatches_per_forward(rank)
+            })
             .collect()
     }
 
