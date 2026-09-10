@@ -184,6 +184,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     }
     let row = row as u16 as usize;
     let k = k as u16 as usize;
+    let column = column as u16 as usize;
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
     let mut step = 0_usize;
@@ -193,6 +194,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
         } else {
             fe2o3_device::trap();
         }
+        let inner = inner as u16 as usize;
         let left = Bf16::from_bits(memory::volatile_load(a, row * k + inner)).to_f32();
         let right = Bf16::from_bits(memory::volatile_load(weights, column * k + inner)).to_f32();
         let product = left * right;
@@ -274,10 +276,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     let raw = invocation.get();
     let tile_column = raw / 64;
     let row_base = (raw % 64 / 16) * 4;
-    if tile_column < n / 16 {
-    } else {
-        fe2o3_device::trap();
-    }
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096) else {
         fe2o3_device::trap();
@@ -295,6 +293,10 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    if tile_column < n / 16 {
+    } else {
+        fe2o3_device::trap();
+    }
     if thread::launch_extent_1d() != (n / 16) * 64 {
         fe2o3_device::trap();
     }
@@ -387,10 +389,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     let raw = invocation.get();
     let tile_column = raw / 64;
     let row_base = (raw % 64 / 16) * 4;
-    if tile_column < 256 {
-    } else {
-        fe2o3_device::trap();
-    }
     let lane = WaveLane::<Wave64>::current();
     let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, rows, k, k) else {
         fe2o3_device::trap();
@@ -408,6 +406,10 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    if tile_column < 256 {
+    } else {
+        fe2o3_device::trap();
+    }
     if thread::launch_extent_1d() != 256 * 64 {
         fe2o3_device::trap();
     }
