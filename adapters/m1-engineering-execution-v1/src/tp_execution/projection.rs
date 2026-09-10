@@ -214,16 +214,25 @@ fn transpose_tile(source: &[&[u8]], rows: usize, first: usize, output: &mut [u8]
         return Err("transposed tile extent mismatch".into());
     }
     let columns = row_bytes / 2;
-    // Reuse a bounded set of destination cache lines before advancing columns.
+    let mut tile = [0_u8; TRANSPOSE_TILE * TRANSPOSE_TILE * 2];
+    // Stage compact rows so both the source fetches and destination stores use
+    // contiguous cache lines even when either matrix stride aliases cache sets.
     for column_start in (0..columns).step_by(TRANSPOSE_TILE) {
         let column_end = column_start + (columns - column_start).min(TRANSPOSE_TILE);
+        let tile_columns = column_end - column_start;
+        for (offset, row) in source.iter().enumerate() {
+            let start = offset * TRANSPOSE_TILE * 2;
+            tile[start..start + tile_columns * 2]
+                .copy_from_slice(&row[column_start * 2..column_end * 2]);
+        }
         for column in column_start..column_end {
             let destination = (column * rows + first) * 2;
+            let tile_column = (column - column_start) * 2;
             for (value, row) in output[destination..destination + source.len() * 2]
                 .chunks_exact_mut(2)
-                .zip(source)
+                .zip(tile.chunks_exact(TRANSPOSE_TILE * 2))
             {
-                value.copy_from_slice(&row[column * 2..column * 2 + 2]);
+                value.copy_from_slice(&row[tile_column..tile_column + 2]);
             }
         }
     }
