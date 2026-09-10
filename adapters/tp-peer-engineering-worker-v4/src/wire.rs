@@ -22,11 +22,8 @@ impl Request {
         if self.id == 0
             || self.rank >= 8
             || self.peer_readable && !matches!(self.command, CommandV1::Allocate { .. })
-            || matches!(self.command, CommandV1::DispatchSequence { .. })
         {
-            return Err(io::Error::other(
-                "peer request scope or unsupported sequence",
-            ));
+            return Err(io::Error::other("peer request scope"));
         }
         self.command.payload_bytes()
     }
@@ -108,6 +105,30 @@ pub fn write_response(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sequences_reuse_count_payload_and_aggregate_timeout_bounds() {
+        let entry = base::SequenceDispatchV1 {
+            kernel: 1,
+            payload_bytes: 4,
+            workgroup: [64, 1, 1],
+            grid: [64, 1, 1],
+            pointers: vec![],
+            timeout_ms: 300_000,
+        };
+        let request = |entries| Request {
+            id: 1,
+            rank: 1,
+            peer_readable: false,
+            command: CommandV1::DispatchSequence {
+                dispatches: entries,
+            },
+        };
+        assert_eq!(request(vec![entry.clone(); 2]).payload_bytes().unwrap(), 8);
+        assert!(request(vec![entry.clone(); 3]).payload_bytes().is_err());
+        assert!(request(vec![]).payload_bytes().is_err());
+        assert!(request(vec![entry; 17]).payload_bytes().is_err());
+    }
 
     #[test]
     fn rejects_invalid_scope_before_reading_binary_payload() {

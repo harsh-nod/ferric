@@ -5,8 +5,8 @@
 #[allow(dead_code)]
 mod peer_wire;
 
-use super::tp_worker::{LoadedKernel, metadata_matches, pack_dispatch};
-use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1};
+use super::tp_worker::{LoadedKernel, RuntimeOptions, metadata_matches, pack_dispatch};
+use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1, SequenceDispatchV1};
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpArgumentV1, EngineeringTpBufferAccessV1, EngineeringTpDispatchV1,
@@ -239,6 +239,26 @@ impl Connection {
         Ok(())
     }
 
+    fn configure_performance(&mut self, cache: bool, operational: bool) -> TpResult<()> {
+        if !cache && !operational {
+            return Ok(());
+        }
+        let (response, payload) = self.sync(
+            0,
+            CommandV1::ConfigurePerformance {
+                cache_kernel_admission: cache,
+                operational_currentness: operational,
+                profile: false,
+            },
+            false,
+            vec![],
+        )?;
+        if !matches!(response, ResponseV1::PerformanceConfigured) || !payload.is_empty() {
+            return self.reject("peer performance configuration receipt mismatch");
+        }
+        Ok(())
+    }
+
     fn terminate(&mut self) -> TpResult<()> {
         self.writer.take();
         if self.exited {
@@ -294,11 +314,18 @@ impl Drop for Connection {
     }
 }
 
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum PendingDispatch {
+    Single,
+    Sequence(usize),
+}
+
 pub struct PeerWorker {
     connection: Rc<RefCell<Connection>>,
     rank: usize,
     kernels: BTreeMap<String, LoadedKernel>,
-    dispatch_pending: bool,
+    pending: Option<PendingDispatch>,
+    sequences: bool,
 }
 
 impl PeerWorker {
@@ -307,6 +334,18 @@ impl PeerWorker {
         unique_ids: &[u64],
         artifacts: &[&EngineeringTpArtifactV1],
     ) -> TpResult<Vec<Self>> {
+        Self::spawn_with_options(executable, unique_ids, artifacts, RuntimeOptions::default())
+    }
+
+    pub fn spawn_with_options(
+        executable: &Path,
+        unique_ids: &[u64],
+        artifacts: &[&EngineeringTpArtifactV1],
+        options: RuntimeOptions,
+    ) -> TpResult<Vec<Self>> {
+        if options.rollover {
+            return Err("serial peer queue rollover is unsupported".into());
+        }
         if !matches!(unique_ids.len(), 2 | 8)
             || unique_ids.contains(&0)
             || unique_ids.iter().copied().collect::<BTreeSet<_>>().len() != unique_ids.len()
@@ -332,13 +371,17 @@ impl PeerWorker {
         let connection = Rc::new(RefCell::new(Connection::connect(
             child, unique_ids, TIMEOUT,
         )?));
+        connection
+            .borrow_mut()
+            .configure_performance(options.cache_admission, options.operational)?;
         let mut workers = Vec::new();
         for rank in 0..unique_ids.len() {
             let mut worker = Self {
                 connection: Rc::clone(&connection),
                 rank,
                 kernels: BTreeMap::new(),
-                dispatch_pending: false,
+                pending: None,
+                sequences: options.sequences,
             };
             for artifact in artifacts {
                 worker.load_artifact(artifact)?;
@@ -393,6 +436,27 @@ impl PeerWorker {
 
     pub fn pid(&self) -> u32 {
         self.connection.borrow().child.id()
+    }
+
+    fn pack(
+        &self,
+        connection: &Connection,
+        dispatch: &EngineeringTpDispatchV1,
+    ) -> TpResult<(CommandV1, Vec<u8>)> {
+        for argument in &dispatch.arguments {
+            if let EngineeringTpArgumentV1::Buffer { id, access, .. } = argument
+                && !connection.ownership.get(id).is_some_and(|&(owner, peers)| {
+                    owner == self.rank || peers && *access == EngineeringTpBufferAccessV1::Read
+                })
+            {
+                return Err("peer dispatch attempted foreign or writable peer access".into());
+            }
+        }
+        let kernel = self
+            .kernels
+            .get(dispatch.kernel)
+            .ok_or("peer kernel not admitted")?;
+        pack_dispatch(kernel, dispatch, &connection.capacities)
     }
 
     fn allocate_inner(&mut self, bytes: usize, peers: bool) -> TpResult<u64> {
@@ -488,41 +552,93 @@ impl EngineeringTpRankTransportV1 for PeerWorker {
 
     fn submit(&mut self, dispatch: &EngineeringTpDispatchV1) -> TpResult<()> {
         let mut connection = self.connection.borrow_mut();
-        if self.dispatch_pending {
+        if self.pending.is_some() {
             return connection.reject("peer dispatch already pending");
         }
-        for argument in &dispatch.arguments {
-            if let EngineeringTpArgumentV1::Buffer { id, access, .. } = argument
-                && !connection.ownership.get(id).is_some_and(|&(owner, peers)| {
-                    owner == self.rank || peers && *access == EngineeringTpBufferAccessV1::Read
-                })
-            {
-                return connection
-                    .reject("peer dispatch attempted foreign or writable peer access");
-            }
-        }
-        let Some(kernel) = self.kernels.get(dispatch.kernel) else {
-            return connection.reject("peer kernel not admitted");
-        };
-        let (command, payload) = match pack_dispatch(kernel, dispatch, &connection.capacities) {
+        let (command, payload) = match self.pack(&connection, dispatch) {
             Ok(value) => value,
             Err(error) => return connection.reject(error),
         };
         connection.send(self.rank, command, false, payload)?;
-        self.dispatch_pending = true;
+        self.pending = Some(PendingDispatch::Single);
         Ok(())
     }
 
     fn wait(&mut self) -> TpResult<()> {
         let mut connection = self.connection.borrow_mut();
-        if !self.dispatch_pending {
+        if self.pending != Some(PendingDispatch::Single) {
             return connection.reject("peer rank has no pending dispatch");
         }
         let (response, payload) = connection.receive(self.rank)?;
         if !matches!(response, ResponseV1::Dispatched { .. }) || !payload.is_empty() {
             return connection.reject("peer dispatch completion mismatch");
         }
-        self.dispatch_pending = false;
+        self.pending = None;
+        Ok(())
+    }
+
+    fn supports_sequences(&self) -> bool {
+        self.sequences
+    }
+
+    fn submit_sequence(&mut self, dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        let mut connection = self.connection.borrow_mut();
+        if !self.sequences || self.pending.is_some() || !(1..=16).contains(&dispatches.len()) {
+            return connection.reject("peer sequence policy, pending state or count mismatch");
+        }
+        let count = u32::try_from(dispatches.len()).map_err(|_| "peer sequence count overflow")?;
+        let mut entries = Vec::with_capacity(dispatches.len());
+        let mut payload = Vec::new();
+        for dispatch in dispatches {
+            let (command, bytes) = match self.pack(&connection, dispatch) {
+                Ok(value) => value,
+                Err(error) => return connection.reject(error),
+            };
+            let CommandV1::Dispatch {
+                kernel,
+                payload_bytes,
+                workgroup,
+                grid,
+                pointers,
+                timeout_ms,
+            } = command
+            else {
+                return connection.reject("peer sequence packing drift");
+            };
+            entries.push(SequenceDispatchV1 {
+                kernel,
+                payload_bytes,
+                workgroup,
+                grid,
+                pointers,
+                timeout_ms: timeout_ms.min(600_000 / count),
+            });
+            payload.extend_from_slice(&bytes);
+        }
+        connection.send(
+            self.rank,
+            CommandV1::DispatchSequence {
+                dispatches: entries,
+            },
+            false,
+            payload,
+        )?;
+        self.pending = Some(PendingDispatch::Sequence(dispatches.len()));
+        Ok(())
+    }
+
+    fn wait_sequence(&mut self, count: usize) -> TpResult<()> {
+        let mut connection = self.connection.borrow_mut();
+        if self.pending != Some(PendingDispatch::Sequence(count)) {
+            return connection.reject("peer pending sequence count mismatch");
+        }
+        let (response, payload) = connection.receive(self.rank)?;
+        if !matches!(response, ResponseV1::DispatchSequenceCompleted { elapsed_ns } if elapsed_ns.len() == count)
+            || !payload.is_empty()
+        {
+            return connection.reject("peer sequence completion mismatch");
+        }
+        self.pending = None;
         Ok(())
     }
 
@@ -575,7 +691,8 @@ while True:
     if not prefix: break
     header = json.loads(sys.stdin.buffer.read(struct.unpack('<I', prefix)[0]))
     command = header['command']
-    payload = sys.stdin.buffer.read(command.get('payload_bytes',0))
+    payload = sys.stdin.buffer.read(sum(entry['payload_bytes'] for entry in command['dispatches'])
+        if command['op'] == 'dispatch_sequence' else command.get('payload_bytes',0))
     if mode == 'stall': time.sleep(60)
     op = command['op']
     out = b''
@@ -590,6 +707,12 @@ while True:
         out = bytes(buffers[command['buffer']][command['offset']:command['offset']+command['bytes']])
         response = {'op':'read','payload_bytes':len(out)}
     elif op == 'dispatch': response = {'op':'dispatched','elapsed_ns':1}
+    elif op == 'dispatch_sequence':
+        count = len(command['dispatches'])
+        response = {'op':'dispatch_sequence_completed','elapsed_ns':[1]*(count-1 if mode == 'short_sequence' else count)}
+    elif op == 'configure_performance':
+        assert header['rank'] == 0 and not command['profile']
+        response = {'op':'written' if mode == 'bad_config' else 'performance_configured'}
     elif op == 'close': response = {'op':'closed'}
     else: response = {'op':'error','message':'unsupported fake command','fatal':True}
     rank = 1-header['rank'] if mode == 'wrong' else header['rank']
@@ -613,7 +736,8 @@ while True:
                 connection: Rc::clone(&connection),
                 rank,
                 kernels: BTreeMap::new(),
-                dispatch_pending: false,
+                pending: None,
+                sequences: false,
             })
             .collect()
     }
@@ -657,13 +781,100 @@ while True:
                 .borrow_mut()
                 .send(rank, empty_dispatch(), false, vec![])
                 .unwrap();
-            worker.dispatch_pending = true;
+            worker.pending = Some(PendingDispatch::Single);
         }
         workers[1].wait().unwrap();
         workers[0].wait().unwrap();
         for worker in &mut workers {
             worker.close().unwrap();
         }
+    }
+
+    #[test]
+    fn sequence_completion_is_exact_and_partial_receipts_poison_every_rank() {
+        for mode in ["normal", "short_sequence"] {
+            let mut workers = fixture(mode);
+            let entries = (0..2)
+                .map(|_| SequenceDispatchV1 {
+                    kernel: 1,
+                    payload_bytes: 0,
+                    workgroup: [64, 1, 1],
+                    grid: [64, 1, 1],
+                    pointers: vec![],
+                    timeout_ms: 1000,
+                })
+                .collect();
+            workers[0]
+                .connection
+                .borrow_mut()
+                .send(
+                    0,
+                    CommandV1::DispatchSequence {
+                        dispatches: entries,
+                    },
+                    false,
+                    vec![],
+                )
+                .unwrap();
+            workers[0].pending = Some(PendingDispatch::Sequence(2));
+            assert_eq!(workers[0].wait_sequence(2).is_ok(), mode == "normal");
+            if mode == "normal" {
+                for worker in &mut workers {
+                    worker.close().unwrap();
+                }
+            } else {
+                assert!(workers[0].connection.borrow().failed);
+                assert!(workers[1].allocate(4).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn sequence_opt_in_and_pending_kind_are_not_silently_ignored() {
+        let mut workers = fixture("normal");
+        assert!(!workers[0].supports_sequences());
+        assert!(workers[0].submit_sequence(&[]).is_err());
+        assert!(workers[1].connection.borrow().exited);
+        let mut workers = fixture("normal");
+        workers[0]
+            .connection
+            .borrow_mut()
+            .send(0, empty_dispatch(), false, vec![])
+            .unwrap();
+        workers[0].pending = Some(PendingDispatch::Single);
+        assert!(workers[0].wait_sequence(1).is_err());
+        assert!(workers[1].connection.borrow().failed);
+    }
+
+    #[test]
+    fn configuration_requires_exact_receipt_and_rollover_rejects_before_spawn() {
+        for mode in ["normal", "bad_config"] {
+            let mut workers = fixture(mode);
+            let configured = workers[0]
+                .connection
+                .borrow_mut()
+                .configure_performance(true, true);
+            assert_eq!(configured.is_ok(), mode == "normal");
+            if mode == "normal" {
+                for worker in &mut workers {
+                    worker.close().unwrap();
+                }
+            } else {
+                assert!(workers[1].connection.borrow().exited);
+            }
+        }
+        let result = PeerWorker::spawn_with_options(
+            Path::new("/nonexistent-peer-worker"),
+            &[1, 2],
+            &[],
+            RuntimeOptions {
+                rollover: true,
+                ..RuntimeOptions::default()
+            },
+        );
+        assert!(
+            matches!(result, Err(error) if error == "serial peer queue rollover is unsupported")
+        );
     }
 
     #[test]
