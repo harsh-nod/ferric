@@ -380,6 +380,7 @@ fn fixture(
         last_batch: 0,
         completed_batches: 0,
         poisoned: false,
+        prune_output_head: false,
     }
 }
 
@@ -399,6 +400,125 @@ fn prepare(pool: &mut EngineeringTpPagedPoolV1, rows: u32) -> EngineeringTpPrepa
         })
         .collect::<Vec<_>>();
     pool.reserve_batch(&selected).unwrap()
+}
+
+#[test]
+fn selected_output_rows_move_together_with_positions_tokens_and_page_tables() {
+    for world in [1, 8] {
+        let mut pool = pool();
+        let mut driver = fixture(world, &pool);
+        driver.configure_output_head_pruning(true).unwrap();
+        let batch = prepare(&mut pool, 4);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver.execute_selected(&batch, &[1, 3]).unwrap();
+        assert_eq!(result.choices, [42, 43]);
+        assert_eq!(driver.dispatch_counts(), driver.expected_dispatch_counts(2));
+        for (index, transport) in driver.inner.transports.iter().enumerate() {
+            assert_eq!(
+                transport.u32_values(driver.positions[index].id, 4),
+                [1, 3, 0, 2]
+            );
+            let table = transport.u32_values(driver.page_tables[index].id, 16);
+            for (gpu_row, source_row) in [1, 3, 0, 2].into_iter().enumerate() {
+                assert_eq!(
+                    table[gpu_row * 4],
+                    batch.rows()[source_row].physical_pages()[0]
+                );
+            }
+        }
+        let transport = &driver.inner.transports[0];
+        assert_eq!(
+            transport.u32_values(driver.inner.ranks[0].token.id, 4),
+            [1, 3, 0, 2]
+        );
+        let head = transport
+            .commands
+            .iter()
+            .find(|command| command.kernel == GEMM && scalar(command, 7) == 6)
+            .unwrap();
+        assert_eq!(scalar(head, 3), 2);
+        assert!(
+            transport
+                .commands
+                .iter()
+                .filter(|command| command.kernel == ATTENTION)
+                .all(|command| scalar(command, 6) == 4)
+        );
+        assert!(
+            transport
+                .reads
+                .contains(&(driver.inner.ranks[0].choice.id, 8))
+        );
+        assert!(driver.configure_output_head_pruning(false).is_err());
+        pool.commit_batch(&batch, result.completion).unwrap();
+    }
+}
+
+#[test]
+fn prefill_only_batch_skips_final_norm_head_and_argmax_but_commits_all_kv_rows() {
+    let mut pool = pool();
+    let mut driver = fixture(8, &pool);
+    driver.configure_output_head_pruning(true).unwrap();
+    let batch = prepare(&mut pool, 16);
+    pool.begin_submission(&batch).unwrap();
+    let result = driver.execute_selected(&batch, &[]).unwrap();
+    assert!(result.choices.is_empty());
+    assert_eq!(
+        driver.dispatch_counts(),
+        [541, 540, 540, 540, 540, 540, 540, 540]
+    );
+    let transport = &driver.inner.transports[0];
+    assert!(
+        !transport
+            .commands
+            .iter()
+            .any(|command| command.kernel == ARGMAX
+                || (command.kernel == GEMM && scalar(command, 7) == 6))
+    );
+    assert!(
+        !transport
+            .reads
+            .iter()
+            .any(|(id, _)| *id == driver.inner.ranks[0].choice.id)
+    );
+    assert_eq!(
+        transport
+            .commands
+            .iter()
+            .filter(|command| command.kernel == APPEND)
+            .count(),
+        36
+    );
+    assert_eq!(
+        transport
+            .commands
+            .iter()
+            .filter(|command| command.kernel == RMSNORM)
+            .count(),
+        144
+    );
+    pool.commit_batch(&batch, result.completion).unwrap();
+}
+
+#[test]
+fn output_selection_rejects_invalid_indices_before_submission_and_preserves_baseline() {
+    let mut pool = pool();
+    let mut driver = fixture(1, &pool);
+    let batch = prepare(&mut pool, 4);
+    pool.begin_submission(&batch).unwrap();
+    for selection in [&[4][..], &[1, 1][..], &[3, 1][..]] {
+        assert!(driver.execute_selected(&batch, selection).is_err());
+        assert!(driver.inner.transports[0].commands.is_empty());
+    }
+    let result = driver.execute_selected(&batch, &[1, 3]).unwrap();
+    assert_eq!(result.choices, [43, 45]);
+    let head = driver.inner.transports[0]
+        .commands
+        .iter()
+        .find(|command| command.kernel == GEMM && scalar(command, 7) == 6)
+        .unwrap();
+    assert_eq!(scalar(head, 3), 4);
+    pool.commit_batch(&batch, result.completion).unwrap();
 }
 
 #[test]

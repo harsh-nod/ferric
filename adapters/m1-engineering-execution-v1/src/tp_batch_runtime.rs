@@ -24,7 +24,20 @@ pub trait EngineeringTpBatchRunnerV2 {
     fn execute_batch(
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
+        output_rows: &[usize],
     ) -> TpResult<EngineeringTpBatchOutputV2>;
+    /// Independently expected kernel increments, before accepting completion.
+    fn expected_dispatch_counts(&self, _published: usize) -> Vec<u64> {
+        self.dispatch_counts()
+            .iter()
+            .enumerate()
+            .map(|(rank, _)| if rank == 0 { 544 } else { 540 })
+            .collect()
+    }
+    /// Number of physical rows sent through the vocabulary projection.
+    fn output_head_rows(&self, physical: usize, _published: usize) -> usize {
+        physical
+    }
     /// Successful dispatch counts, in rank order.
     fn dispatch_counts(&self) -> Vec<u64>;
     /// Confirms all child processes were closed and reaped.
@@ -39,8 +52,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     fn execute_batch(
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
+        output_rows: &[usize],
     ) -> TpResult<EngineeringTpBatchOutputV2> {
-        self.execute(batch)
+        self.execute_selected(batch, output_rows)
+    }
+    fn expected_dispatch_counts(&self, published: usize) -> Vec<u64> {
+        self.expected_dispatch_counts(published)
+    }
+    fn output_head_rows(&self, physical: usize, published: usize) -> usize {
+        self.output_head_rows(physical, published)
     }
     fn dispatch_counts(&self) -> Vec<u64> {
         self.dispatch_counts()
@@ -78,6 +98,8 @@ pub struct EngineeringTpBatchReportV2 {
     pub completed_ns: u64,
     /// Per-rank dispatch increments for this batch.
     pub rank_dispatch_counts: Vec<u64>,
+    /// Physical rows whose logits were computed, including any baseline discarded rows.
+    pub output_head_rows: usize,
 }
 
 /// Resident scheduler, shared physical KV ownership, and one GPU group.
@@ -242,6 +264,17 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
             }
         };
         let before = self.gpu.dispatch_counts();
+        let output_rows = scheduled
+            .rows()
+            .iter()
+            .enumerate()
+            .filter(|(_, row)| row.kind != TpBatchRowKindV1::PrefillIntermediate)
+            .map(|(index, _)| index)
+            .collect::<Vec<_>>();
+        let expected_counts = self.gpu.expected_dispatch_counts(output_rows.len());
+        let output_head_rows = self
+            .gpu
+            .output_head_rows(scheduled.rows().len(), output_rows.len());
         if let Err(error) = self.pool.begin_submission(&prepared) {
             let aborted = self.pool.abort_batch(&prepared);
             let scheduled_abort = self.scheduler.abort(scheduled.id());
@@ -253,19 +286,17 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
             ));
         }
         let committed = (|| {
-            let output = self.gpu.execute_batch(&prepared)?;
+            let output = self.gpu.execute_batch(&prepared, &output_rows)?;
             let completed_ns = completion_clock();
-            if output.choices.len() != scheduled.rows().len() || completed_ns < now_ns {
+            if output.choices.len() != output_rows.len() || completed_ns < now_ns {
                 return Err("GPU row count or completion clock drifted".into());
             }
-            let choices = scheduled
-                .rows()
+            let choices = output_rows
                 .iter()
-                .enumerate()
-                .filter(|(_, row)| row.kind != TpBatchRowKindV1::PrefillIntermediate)
-                .map(|(row_index, _)| TpRowChoiceV1 {
+                .zip(output.choices)
+                .map(|(&row_index, token_id)| TpRowChoiceV1 {
                     row_index,
-                    token_id: output.choices[row_index],
+                    token_id,
                 })
                 .collect::<Vec<_>>();
             let after = self.gpu.dispatch_counts();
@@ -281,11 +312,7 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
                         .ok_or_else(|| "rank dispatch count regressed".to_owned())
                 })
                 .collect::<TpResult<Vec<_>>>()?;
-            if rank_dispatch_counts
-                .iter()
-                .enumerate()
-                .any(|(rank, &count)| count != 540 + if rank == 0 { 4 } else { 0 })
-            {
+            if expected_counts.len() != self.world_size || rank_dispatch_counts != expected_counts {
                 return Err("rank did not complete the exact Qwen3-8B batch schedule".into());
             }
             self.scheduler
@@ -306,6 +333,7 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
                 started_ns: now_ns,
                 completed_ns,
                 rank_dispatch_counts,
+                output_head_rows,
             })
         })();
         match committed {

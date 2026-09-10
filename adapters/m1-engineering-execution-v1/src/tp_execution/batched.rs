@@ -29,7 +29,7 @@ const ARGMAX: &str = "ferric_qwen3_tp_batch_argmax_bf16_v2";
 
 /// Successful all-layer/all-rank work, still awaiting pool and scheduler commit.
 pub struct EngineeringTpBatchOutputV2 {
-    /// One greedy choice per physical token row; callers discard intermediate prefill choices.
+    /// Greedy choices in the order of the explicitly requested output rows.
     pub choices: Vec<u32>,
     /// Pool-specific completion token created only after successful rank completion.
     pub completion: EngineeringTpBatchCompletionV1,
@@ -48,6 +48,7 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     last_batch: u64,
     completed_batches: u64,
     poisoned: bool,
+    prune_output_head: bool,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -118,6 +119,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             last_batch: 0,
             completed_batches: 0,
             poisoned: false,
+            prune_output_head: false,
         })
     }
 
@@ -134,7 +136,60 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
     ) -> TpResult<EngineeringTpBatchOutputV2> {
+        let output_rows = (0..batch.rows().len()).collect::<Vec<_>>();
+        self.execute_selected(batch, &output_rows)
+    }
+
+    /// Enables output-head pruning before the first batch; baseline is unchanged by default.
+    /// # Errors
+    /// Rejects changes after submission, failure, or closure.
+    pub fn configure_output_head_pruning(&mut self, enabled: bool) -> TpResult<()> {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+            return Err("output-head policy must be configured before execution".into());
+        }
+        self.prune_output_head = enabled;
+        Ok(())
+    }
+
+    /// Actual projected rows, distinct from all physical transformer/KV rows.
+    #[must_use]
+    pub const fn output_head_rows(&self, physical: usize, published: usize) -> usize {
+        if self.prune_output_head {
+            published
+        } else {
+            physical
+        }
+    }
+
+    /// Expected per-rank dispatch increments under the frozen execution policy.
+    #[must_use]
+    pub fn expected_dispatch_counts(&self, published: usize) -> Vec<u64> {
+        let head = if self.prune_output_head && published == 0 {
+            0
+        } else {
+            3
+        };
+        (0..self.inner.plan.world_size())
+            .map(|rank| 540 + if rank == 0 { 1 + head } else { 0 })
+            .collect()
+    }
+
+    /// Executes all physical rows but returns only the requested, ascending output rows.
+    /// With pruning enabled these rows are stably moved to the front of the GPU
+    /// batch, so existing row-prefix kernels need no gather or host hidden-state read.
+    /// # Errors
+    /// Rejects duplicate/out-of-range selections before any GPU submission.
+    pub fn execute_selected(
+        &mut self,
+        batch: &EngineeringTpPreparedBatchV1,
+        output_rows: &[usize],
+    ) -> TpResult<EngineeringTpBatchOutputV2> {
         self.validate(batch)?;
+        if output_rows.iter().any(|&row| row >= batch.rows().len())
+            || output_rows.windows(2).any(|pair| pair[0] >= pair[1])
+        {
+            return Err("output rows must be unique, ascending, and within the batch".into());
+        }
         let per_rank = u64::from(self.inner.plan.model().layers) * 15 + 4;
         let next = self
             .completed_batches
@@ -146,7 +201,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Err("batched stream exceeds the conservative no-ring-rollover budget".into());
         }
         self.last_batch = batch.id();
-        match self.forward(batch) {
+        match self.forward(batch, output_rows) {
             Ok(choices) => {
                 self.completed_batches = next;
                 Ok(EngineeringTpBatchOutputV2 {
@@ -233,11 +288,25 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
-    fn forward(&mut self, batch: &EngineeringTpPreparedBatchV1) -> TpResult<Vec<u32>> {
+    fn forward(
+        &mut self,
+        batch: &EngineeringTpPreparedBatchV1,
+        output_rows: &[usize],
+    ) -> TpResult<Vec<u32>> {
         use EngineeringTpArgumentV1::U32;
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
         let rows = u32::try_from(batch.rows().len()).map_err(|_| "batch row conversion")?;
+        let head_rows = u32::try_from(self.output_head_rows(batch.rows().len(), output_rows.len()))
+            .map_err(|_| "output row conversion")?;
+        let mut execution_order = Vec::with_capacity(batch.rows().len());
+        if self.prune_output_head {
+            execution_order.extend_from_slice(output_rows);
+        }
+        execution_order.extend(
+            (0..batch.rows().len())
+                .filter(|row| !self.prune_output_head || output_rows.binary_search(row).is_err()),
+        );
         let expected = self.inner.collective.expected();
         if expected.epoch != self.completed_batches
             || expected.layer != 0
@@ -252,7 +321,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let mut cos = Vec::with_capacity(rows as usize * 256);
         let mut sin = Vec::with_capacity(rows as usize * 256);
         let mut max_context = 0;
-        for (index, row) in batch.rows().iter().enumerate() {
+        for (index, &source_row) in execution_order.iter().enumerate() {
+            let row = &batch.rows()[source_row];
             tokens.extend_from_slice(&row.token().to_le_bytes());
             positions.extend_from_slice(&row.position().to_le_bytes());
             let start = index * self.table_stride as usize;
@@ -492,13 +562,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         {
             return Err("batch completed before every layer collective".into());
         }
+        if head_rows == 0 {
+            return Ok(Vec::new());
+        }
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&norm(
             r,
             r.hidden,
             r.global(Qwen3TensorKind::FinalNorm),
             r.normalized,
-            rows,
+            head_rows,
             model.hidden_size,
         ))?;
         let r = &self.inner.ranks[0];
@@ -507,15 +580,21 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             r.normalized,
             r.global(Qwen3TensorKind::LanguageModelHead),
             r.logits,
-            [rows, model.vocabulary_size, model.hidden_size, world, 6],
+            [
+                head_rows,
+                model.vocabulary_size,
+                model.hidden_size,
+                world,
+                6,
+            ],
         ))?;
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&dispatch(
             ARGMAX,
-            rows,
-            vec![r.logits.read(), r.choice.write(), U32(rows)],
+            head_rows,
+            vec![r.logits.read(), r.choice.write(), U32(head_rows)],
         ))?;
-        let mut bytes = vec![0; rows as usize * 4];
+        let mut bytes = vec![0; head_rows as usize * 4];
         self.inner.transports[0].read(self.inner.ranks[0].choice.id, 0, &mut bytes)?;
         let choices = bytes
             .chunks_exact(4)
@@ -524,7 +603,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if choices.iter().any(|&token| token >= model.vocabulary_size) {
             return Err("batched GPU choice outside vocabulary".into());
         }
-        Ok(choices)
+        if self.prune_output_head {
+            Ok(choices)
+        } else {
+            Ok(output_rows.iter().map(|&row| choices[row]).collect())
+        }
     }
 }
 

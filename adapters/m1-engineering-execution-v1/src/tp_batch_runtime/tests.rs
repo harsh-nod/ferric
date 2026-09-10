@@ -40,6 +40,7 @@ impl EngineeringTpBatchRunnerV2 for FakeRunner {
     fn execute_batch(
         &mut self,
         batch: &EngineeringTpPreparedBatchV1,
+        output_rows: &[usize],
     ) -> TpResult<EngineeringTpBatchOutputV2> {
         if batch.pool_identity() != self.pool {
             return Err("fake runner pool binding mismatch".into());
@@ -72,6 +73,10 @@ impl EngineeringTpBatchRunnerV2 for FakeRunner {
             }
             choices.push(choice);
         }
+        let mut choices = output_rows
+            .iter()
+            .map(|&row| choices[row])
+            .collect::<Vec<_>>();
         for (rank, count) in state.counts.iter_mut().enumerate() {
             *count += if rank == 0 { 544 } else { 540 };
         }

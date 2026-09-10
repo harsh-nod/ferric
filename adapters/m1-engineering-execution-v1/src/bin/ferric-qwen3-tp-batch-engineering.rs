@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tp_worker::Worker;
 
-const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache]";
+const USAGE: &str = "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code [--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] [--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head]";
 
 struct Options {
     source: PathBuf,
@@ -37,6 +37,7 @@ struct Options {
     ttl: u64,
     max_batches: u64,
     cache: bool,
+    prune_output_head: bool,
 }
 
 impl Options {
@@ -48,6 +49,7 @@ impl Options {
         let (mut rows, mut chunk, mut context, mut pages, mut ttl, mut max_batches) =
             (16, 16, 128, 64, 1024, 240);
         let (mut consent, mut cache) = (false, true);
+        let mut prune_output_head = false;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -59,6 +61,10 @@ impl Options {
                 }
                 "--disable-prefix-cache" => {
                     cache = false;
+                    continue;
+                }
+                "--prune-output-head" => {
+                    prune_output_head = true;
                     continue;
                 }
                 "--help" => return Err(USAGE.into()),
@@ -124,6 +130,7 @@ impl Options {
             ttl,
             max_batches,
             cache,
+            prune_output_head,
         })
     }
 }
@@ -341,6 +348,7 @@ fn run_workload(
             "tick":tick, "batch_id":report.batch_id, "pool_batch_id":report.pool_batch_id,
             "rows":rows, "outputs":outputs, "started_ns":report.started_ns, "completed_ns":report.completed_ns,
             "rank_dispatch_counts":report.rank_dispatch_counts,
+            "output_head_rows":report.output_head_rows,
             "free_pages":stats.free_pages, "retained_pages":stats.retained_pages,
             "cached_pages":stats.cached_pages, "prefix_hits":stats.prefix_hits,
             "hit_tokens":stats.hit_tokens, "evicted_pages":stats.evicted_pages}),
@@ -430,13 +438,14 @@ fn run(options: &Options) -> Result<(), String> {
     if running_hashes.iter().any(|hash| hash != &worker_hash) {
         return Err("running worker file identity drifted".into());
     }
-    let gpu = EngineeringTpBatchExecutionV2::new(
+    let mut gpu = EngineeringTpBatchExecutionV2::new(
         workers,
         model.config(),
         model.target_weights(),
         model.layout(),
         &pool,
     )?;
+    gpu.configure_output_head_pruning(options.prune_output_head)?;
     let mut runtime =
         EngineeringTpBatchRuntimeV2::new(gpu, pool, scheduler, options.rows, options.cache)?;
     let result = (|| {
@@ -451,6 +460,7 @@ fn run(options: &Options) -> Result<(), String> {
             "batch_tokens":options.rows, "prefill_chunk":options.chunk, "page_tokens":16,
             "physical_pages":options.pages, "context_tokens":options.context, "cache_ttl_ticks":options.ttl,
             "prefix_cache":options.cache, "max_batches":options.max_batches, "setup_seconds":whole.elapsed().as_secs_f64(),
+            "output_head_pruning":options.prune_output_head,
             "collective":"host_staged_fp32_rank_order_reduce_bf16_residual",
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
