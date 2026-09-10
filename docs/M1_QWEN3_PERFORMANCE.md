@@ -251,8 +251,9 @@ Paired ledger SHA256:
 
 The TP8 case is separate and unpaired, using full-v5 image `98b5fdb1...` and
 32-row/chunk capacity. Its actual completed rows are `[17,6,6,4,1]`, totaling
-34 with a maximum of 17, not 32. It exercises continuous admission, chunked
-prefill, paged causal attention and physical radix-prefix reuse. No gain is
+34 with a maximum of 17, not 32. It exercises continuous admission, multirow
+prefill, paged causal attention and physical radix-prefix reuse. This prompt
+fits one prefill batch; earlier 16-row cases exercise chunk splitting. No gain is
 assigned versus older profiles or the TP1 rows. Comparison SHA256:
 `67ad69a2ec6d29f2cc03f6eabe65cfcde7837cf606a37363837d65ddadb37c59`.
 
