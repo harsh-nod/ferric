@@ -307,6 +307,7 @@ const currentRequiredClaims = [
   "Persistent resident radix prefixes",
   "Batched Qwen with resident prefix reuse",
   "Single logical-tick observations only",
+  "The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover",
   "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
   "113.271 s",
   "47.326 s",

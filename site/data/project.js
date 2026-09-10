@@ -7,6 +7,8 @@ window.FERRIC_PROJECT = Object.freeze({
     tensorParallelBatchImplementationPrivate: true,
     tensorParallelBatchRows: 16,
     tensorParallelBatchMaxSequences: 32,
+    tensorParallelBatchMaxBatches: 240,
+    tensorParallelBatchMaxRequestedOutputs: 256,
     tensorParallelBatchPageTokens: 16,
     tensorParallelBatchMaxPhysicalPages: 512,
     tensorParallelBatchMaxContextTokens: 8192,
@@ -657,7 +659,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Continuous batching and paged TP attention",
       state: "observed",
       detail:
-        "A bounded four-request workload passes on TP1 and TP8: a 16-row prefill, later request arrivals, mixed decode/prefill, page-boundary continuation, cancellation after one output, and generational slot reuse. Cached TP1/TP8 use 34 rows and five forwards; uncached TP8 uses 50 rows and six forwards. All eight output IDs and bytes match the frozen reference subsequences in every run. The real model workload exercises all nine kernel roots. Every worker closes and is reaped, and all GPUs are idle before and after each workload. Single logical-tick observations only, with no repeated benchmark or cache-speedup claim.",
+        "A bounded four-request workload passes on TP1 and TP8: a 16-row prefill, later request arrivals, mixed decode/prefill, page-boundary continuation, cancellation after one output, and generational slot reuse. Cached TP1/TP8 use 34 rows and five forwards; uncached TP8 uses 50 rows and six forwards. All eight output IDs and bytes match the frozen reference subsequences in every run. The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover. The real model workload exercises all nine kernel roots. Every worker closes and is reaped, and all GPUs are idle before and after each workload. Single logical-tick observations only, with no repeated benchmark or cache-speedup claim.",
     },
     {
       label: "Persistent resident radix prefixes",
@@ -1149,7 +1151,7 @@ window.FERRIC_PROJECT = Object.freeze({
   batchEngineeringObservations: {
     title: "Batched Qwen with resident prefix reuse",
     scope:
-      "Qwen3-8B BF16 on MI350, direct fe2o3/KFD, host-staged FP32 collectives. One fixed four-request logical-tick workload per profile, up to 16 rows per batch. TTFT starts at actual admission and excludes model setup; decode gaps are committed output intervals, not batch duration. All eight expected tokens and UTF-8 bytes match frozen reference subsequences. Cached TP8 processes 34 rows/five forwards versus 50 rows/six forwards without cache. This is work reduction only: whole runs were 466.414s cached versus 461.166s uncached, with varying system conditions. These are not repeated or controlled benchmarks, a cache-speedup claim, or protected serving qualification. Historical 32-token observations below are unchanged and use a different profile.",
+      "Qwen3-8B BF16 on MI350, direct fe2o3/KFD, host-staged FP32 collectives. One fixed four-request logical-tick workload per profile, up to 16 rows per batch. The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover. TTFT starts at actual admission and excludes model setup; decode gaps are committed output intervals, not batch duration. All eight expected tokens and UTF-8 bytes match frozen reference subsequences. Cached TP8 processes 34 rows/five forwards versus 50 rows/six forwards without cache. This is work reduction only: whole runs were 466.414s cached versus 461.166s uncached, with varying system conditions. These are not repeated or controlled benchmarks, a cache-speedup claim, or protected serving qualification. Historical 32-token observations below are unchanged and use a different profile.",
     authority: "none",
     implementationSource: "7224c33deba9dea0fcd82f94dcd2a07db0ca5319",
     comparatorSource: "65cb43532e265e9dcf02b36aebeb857779f81ceb",
