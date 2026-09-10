@@ -3,14 +3,19 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "883de3732fa499de026a83b0ef98951788a3a1f5",
+    siteRefreshBase: "eb8c087897645100f82901c840a20d708d0fed84",
+    fe2o3A8RepinValidated: true,
+    fe2o3A8LockedMetadataGraphsPassed: 15,
+    fe2o3A8DependencyRecordsChecked: 7,
+    mi350MemoryQueueLifecycleObserved: true,
+    mi350KernelDispatchObserved: false,
     mi350DeviceObservationGpuCount: 8,
     mi350DeviceObservationProfileSha256: "6f859b0a67f8ee2497393206930ff35bf1a9ae69d33f172106a790a0c9226667",
     mi350DeviceObservationDescriptorCleanup: true,
     mi350KfdUnitTestsPassed: 420,
     mi350KfdIntegrationTestsPassed: 20,
     mi350KfdDoctestsPassed: 27,
-    mi350QueueImplemented: false,
+    mi350QueueImplemented: true,
     mi350QwenExecuted: false,
     tensorParallelWorldSizes: [1, 2, 8],
     tensorParallelSourceCommit: "3674f36ba2a12165298e6085469887152424262b",
@@ -18,6 +23,17 @@ window.FERRIC_PROJECT = Object.freeze({
     tensorParallelVerusQueries: 36,
     tensorParallelVerusErrors: 0,
     tensorParallelBodyMutantsRejected: 8,
+    tensorParallelExecutionSourceCommit: "3924efcbc93ae3c25ba649e7dc7ee8fc4dba543d",
+    tensorParallelExecutionDriverTestsPassed: 8,
+    tensorParallelExecutionCursorTestsPassed: 3,
+    tensorParallelExecutionVerusQueries: 8,
+    tensorParallelExecutionVerusErrors: 0,
+    tensorParallelExecutionBodyMutantsRejected: 8,
+    tensorParallelHostReductionImplemented: true,
+    tensorParallelKernelSourceCommit: "59b0a9a42d3c29bf5fef29024913db1029d4c133",
+    tensorParallelKernelCount: 13,
+    tensorParallelKernelTestsPassedPerTarget: 30,
+    tensorParallelKernelEmissionComplete: false,
     tensorParallelCollectiveTransportImplemented: false,
     tensorParallelQwenExecuted: false,
     dualTargetKernelSourceCommit: "296bb98e62c3ce41c085c67aefd61ca667df8fee",
@@ -592,20 +608,32 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "MI300X target-only Qwen completed 32/32 tokens matching both reference passes for one prompt; its existing measurements remain unchanged. New TP1/2/8 host planning and BF16 shard-copy bodies pass direct Verus and Rust checks. All eight MI350X devices pass separate identity-only observation, and the shared kernel source now selects gfx942 or gfx950. MI350 queues, collective transport, distributed KV, and TP Qwen execution remain open. The earlier eb219f0 integration retains 63e SHA updates and 6ef opt-in diagnostics. All 33 M1 gates remain open; no serving, comparable benchmark, or vLLM/SGLang baseline exists.",
+      "MI300X target-only Qwen completed 32/32 tokens matching both reference passes for one prompt; those historical measurements remain unchanged. The TP1/2/8 driver now orchestrates rank-local Qwen dispatches and deterministic host-staged FP32 reduction, with focused host tests and closed cursor proofs. The new thirteen-root kernel set passes host checks; its actual gfx950 emission remains pending. MI350 memory and queue lifecycle checks passed, while kernel dispatch is still being diagnosed. Final public-a8 compiler repin checks passed. No MI350 Qwen or TP8 latency numbers exist yet. All 33 M1 gates remain open; no serving, comparable benchmark, or vLLM/SGLang baseline exists.",
   },
   readiness: [
     {
-      label: "MI350 device observations",
+      label: "MI350 runtime bring-up",
       state: "observed",
       detail:
-        "All eight MI350X gfx950 devices passed separate checked identity binding, repeated currentness checks, and descriptor cleanup. The exact MI350 profile does not reuse gfx942 authority. Remote KFD checks passed 420 unit tests, 20 integration tests, and 27 doctests. No explicit VM acquisition, GPU memory allocation, queue, or dispatch occurred; this is not MI350 Qwen execution.",
+        "All eight MI350X gfx950 devices passed separate checked identity binding, repeated currentness checks, and descriptor cleanup. The earlier no-queue KFD checkpoint passed 420 unit tests, 20 integration tests, and 27 doctests. New engineering memory and queue lifecycle checks have now passed on hardware, including teardown. Actual kernel dispatch is still being diagnosed; this is not MI350 Qwen execution. The exact MI350 profile does not reuse gfx942 authority.",
     },
     {
       label: "Tensor parallel host planning",
       state: "integration",
       detail:
-        "Private source c43d004, with test-layout follow-up 3674f36, adds TP1/2/8 planning for Qwen3-8B and Qwen3-0.6B, exact BF16 shard-row copying into caller-owned storage, and ordered rank-readiness checks. The final production host bodies passed 9 release tests, 36 selected Verus queries with 0 errors, strict Clippy, and 8 rejected actual-body mutations. Collective transport, physical rank ownership, distributed KV, and TP Qwen execution remain unimplemented.",
+        "Private source c43d004, with test-layout follow-up 3674f36, adds TP1/2/8 planning for Qwen3-8B and Qwen3-0.6B, exact BF16 shard-row copying into caller-owned storage, and ordered rank-readiness checks. These production host bodies passed 9 release tests, 36 selected Verus queries with 0 errors, strict Clippy, and 8 rejected actual-body mutations. The new execution driver consumes this plan; hardware transport and full TP Qwen execution are not yet validated.",
+    },
+    {
+      label: "Tensor parallel execution driver",
+      state: "integration",
+      detail:
+        "Private Ferric source 3924efc adds rank-local Qwen forward/decode orchestration, contiguous per-rank KV, sequential m=1 prompt priming, and actual host-staged FP32 reduction in rank order. Residual is added once and BF16 rounding happens once before broadcast. Repeated prompts reset the logical KV prefix while retaining weights; partial-rank failures drain submitted peers and poison reuse. The driver passed 8 host tests and the cursor passed 3 tests, strict Verus 8 verified / 0 errors, and 8 rejected cursor-body mutations. Numerical arithmetic and transport remain Contracted, not proved or GPU-qualified.",
+    },
+    {
+      label: "Sharded Qwen kernel set",
+      state: "integration",
+      detail:
+        "A separate engineering thirteen-root kernel set implements local projections, GQA attention, RoPE, KV append, SwiGLU, and FP32 O/down partials, reusing existing normalization, embedding, and logits roots. Source 59b0a9a passed 30 host/source tests per target for gfx942 and gfx950, plus missing/dual-target rejection checks. The first extraction exposed a compiler layout overflow; a narrow adaptation is under emission retry. No thirteen-root HSACO or GPU numerical result is claimed. The protected twelve-root aggregate remains unchanged.",
     },
     {
       label: "Dual-target kernel build",
@@ -683,7 +711,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 KFD model initialization",
       state: "implemented",
       detail:
-        "Published public fe2o3 main is a8b016e, tree 3b14f1e, confirmed on September 9. It adds target-explicit engineering emission, the gfx950 COV6 loader, and a separate no-queue MI350 observation token; active Ferric repin validation is still pending. The historical MI300X integration eb219f0 pins all 15 active compiler/runtime locks to 0ea54ed with no registry drift. Review found unchanged records byte-exact; three TCB records changed only for the revision and declared float-casts test target, and the source-pinned ELF was rebuilt and binding-checked. Public fe2o3 0ea54ed compiled the matching engineering aggregate d33933a from Ferric 9392755 with all 12 kernels, 26 GuardedStore operations, exact replay, no providers, authority none, and all publication/load/launch grants false. An independent descriptor-only CPU probe on public 0ea hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution and is not request latency. Formal M1 qualification remains open.",
+        "Published public fe2o3 main is a8b016e, tree 3b14f1e, confirmed on September 9. It adds target-explicit engineering emission, the gfx950 COV6 loader, and a separate no-queue MI350 observation token. Final Ferric a8 repin checks passed: all 15 locked metadata graphs, rebuilt source-pinned ELF bindings, seven dependency records, and combined host checks, with no registry drift. Only three TCB records changed for the revision and declared gfx950 identity example; four records stayed byte-exact. New engineering memory/queue bring-up is a separate later runtime slice. The historical MI300X integration eb219f0 used public 0ea54ed; its matching aggregate d33933a from Ferric 9392755 contains all 12 kernels, 26 GuardedStore operations, exact replay, no providers, authority none, and all publication/load/launch grants false. An independent descriptor-only CPU probe on public 0ea hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution and is not request latency. Formal M1 qualification remains open.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -750,7 +778,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "Published a8b016e14ca8c77c9e7abe4591086f7cab11ce61; tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e; confirmed September 9. Includes separate gfx950 compiler/loader and no-queue device observations; active Ferric repin checks remain pending. The historical MI300X Qwen32 aggregate stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68, and is not reattributed to the new compiler"],
+    ["fe2o3 current public main", "Published a8b016e14ca8c77c9e7abe4591086f7cab11ce61; tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e; confirmed September 9. Includes separate gfx950 compiler/loader and no-queue device observations; final Ferric a8 repin checks passed. Later engineering memory/queue work is tracked separately. The historical MI300X Qwen32 aggregate stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68, and is not reattributed to the new compiler"],
     ["Historical public-428 aggregate", "Historical authority-free aggregate 528: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. This prior 428/528 artifact is not the current public-0ea artifact"],
     ["CPU pre-device observations", "428 host plus aggregate 528 completed its CPU pre-device probe in 98.23s after KFD admission and topology enumeration, excluding initialize_memory, HBM upload, and dispatch. An independent public-0ea KFD descriptor probe hashed 97.313 GiB in 58.133s, excluding GPU work. Neither is request latency"],
     ["32-token engineering run", "The target-only Ferric run completed 32/32 tokens on MI300X GPU 3 with status 0 and hardware completion true; all 32 token IDs exactly match both frozen Hugging Face reference passes for this one prompt."],
@@ -805,6 +833,11 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     experimental: [
       {
+        name: "Host-staged tensor parallel execution",
+        detail:
+          "The isolated engineering driver constructs rank-local GPU dispatches, sums actual host-visible FP32 partial vectors in deterministic rank order, adds residual once, rounds once to BF16, and broadcasts the result. It retains per-rank KV and weights across prompt resets. Host tests exercise 1/2/8 ranks and failure cleanup; real distributed Qwen execution remains unvalidated.",
+      },
+      {
         name: "Ordered collective readiness",
         detail:
           "The production host state checks group, model, epoch, layer, operation, and each rank's unique arrival before advancement. Invalid arrivals and overflow leave state unchanged. It does not perform a floating-point sum, authenticate a physical rank, enqueue transport, or establish device completion.",
@@ -849,7 +882,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "MI350 and multi-GPU execution",
         detail:
-          "Implement target-aware device/VM ownership, gfx950 queue resources and dispatch, collective transport, rank-local kernel integration, and distributed KV before 1/2/8-GPU Qwen validation. No MI350 queue, tensor-parallel Qwen result, or new TTFT/TPOT measurement is claimed. Symmetric memory and MTP remain deferred.",
+          "Complete actual gfx950 kernel dispatch and emission of the thirteen-root sharded kernel set, then connect the engineering driver and child transports for 1/2/8-GPU Qwen validation. Memory and queue lifecycle have passed, but no MI350 Qwen or TP8 latency numbers exist yet. Compare raw token IDs before collecting repeated TTFT/TPOT; host-staged collectives and sequential prompt priming must remain disclosed. Symmetric memory and MTP remain deferred.",
       },
       {
         name: "Run the speculative target/draft path",
@@ -941,7 +974,7 @@ window.FERRIC_PROJECT = Object.freeze({
       blockedBy:
         "R33 still needs the external authenticated authority bundle and a 20-window hardware run. M1 also depends on protected services, current-head qualification, authenticated Qwen accuracy, and matched baselines.",
       next:
-        "Integrate the separate MI350 compiler/runtime and Ferric TP slices without relabeling gfx942 authority. Next implement target-aware MI350 VM/memory/queues and rank-local dispatch, then collective transport and TP Qwen checks. Separately extend MI300X prompts, supply protected authority, and collect matched baselines.",
+        "Finish actual MI350 kernel dispatch, emit the sharded kernel artifact, and connect the implemented TP driver and safe child transports. Then compare raw Qwen tokens and measure repeated 1/2/8-GPU runs with setup and host-staged communication disclosed. Separately extend MI300X prompts, supply protected authority, and collect matched baselines.",
       validation:
         "Combined host checks at a6a3f2e passed formatting, 10 speculative tests, 17 target tests with one real-GPU test ignored, 20 source-policy tests, strict Clippy, both smoke builds, and 36 source-gate tests. All seven generated records matched, preserving 171 modules and 8,207 executable bodies; the 712-record source closure was unchanged. Integrated planner policy at eb219f0 passed 354 deterministic slots and the hostile pin, source, path, publication, topology, and closure-output suite. This focused result is not a protected M1 receipt. These scoped later checks do not extend the frozen bb50 developer receipt.",
     },
@@ -957,7 +990,7 @@ window.FERRIC_PROJECT = Object.freeze({
       blockedBy:
         "No team-local blocker. Candidate review and authenticated R33 execution remain; artifact authority is none and the diagnostic timing is not a benchmark.",
       next:
-        "Genuine gfx950 aggregate emission and all twelve loader checks passed. Next wire rank-local sharded kernels only after target-specific VM/memory/queue support exists. Preserve the separately observed MI300X Qwen32 path.",
+        "The thirteen-root engineering TP source passes 30 host/source tests per target. Complete its actual gfx950 emission retry, then validate the sharded GPU operators through the isolated runtime. Earlier twelve-root gfx950 emission and loader checks remain a separate artifact; preserve the historical MI300X Qwen32 path.",
       validation:
         "The exact prompt \"The capital of France is\" produced \" Paris. The capital of Italy is Rome\" in 8/8 tokens. Hardware completion is true; fe2o3 is d9f6bbcd; model bundle is 6dfba0ac. Timing is diagnostic, benchmark_comparable=false, and authority is none.",
     },
@@ -969,11 +1002,11 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Private source c43d004 adds production TP1/2/8 host planning, exact BF16 shard-row copies into caller-owned buffers, and ordered collective readiness. No physical rank binding, collective transport, distributed KV, or TP Qwen runner exists. Separately, source 9dcbd6e preserves exact K draft growth and fail-closed successor custody; its production-used same-shape core measures 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive control. No authenticated 20-window run, resident daemon, or serving endpoint exists.",
+        "Private source 3924efc consumes the proved TP1/2/8 shard plan in a rank-local Qwen driver with per-rank KV, deterministic host-staged FP32 reduction, residual/BF16-once broadcast, prompt reset, and failed-rank cleanup. It passes 8 host driver tests plus 3 cursor tests; no full TP Qwen hardware run is claimed. Separately, source 9dcbd6e preserves exact K draft growth and fail-closed successor custody; its production-used same-shape core measures 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive control. No authenticated 20-window run, resident daemon, or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. Authenticated R33 execution depends on supplying the external authority bundle; whole-entry allocation freedom is not claimed by the scoped same-shape tests.",
       next:
-        "Connect the checked host partition plans to actual rank-local runtime ownership, collective transport, and distributed KV. Carry authenticated custody across all 20 required windows only under protected authority.",
+        "Connect the implemented driver to completed MI350 kernel dispatch and the emitted sharded artifact, then validate all ranks against the independent Qwen token reference. Carry authenticated custody across all 20 required windows only under protected authority.",
       validation:
         "The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests. One-round and repeated 16-round production-core allocation tests pass at 0 allocations and 0 reallocations, and the allocator positive control fires. Integrated check, strict Clippy, and focused allocation validation pass. These results grant no resident qualification or hardware authority.",
     },
@@ -985,7 +1018,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "The new production TP host bodies at c43d004 passed 36 selected Verus queries with 0 errors and 8 rejected actual-body mutations. These prove host partition, copy, and readiness behavior, not distributed execution. Separately, frozen source bb50d0e passed the complete developer qualifier: all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, plus negative mutations and remaining workspace checks. That older receipt does not cover the new TP source.",
+        "The production TP planner at c43d004 passed 36 selected Verus queries with 0 errors and 8 rejected actual-body mutations. The new execution cursor at 3924efc adds strict Verus 8 verified / 0 errors and 8 rejected cursor-body mutations, covering bounded positions, in-flight exclusion, poison, and reset epochs. Numerical reduction, transport, and GPU completion remain outside those proofs. Separately, frozen source bb50d0e passed the complete developer qualifier: all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, plus negative mutations and remaining workspace checks. That older receipt does not cover the new TP source.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
@@ -996,7 +1029,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   boundaries: {
     ferric: [
-      "TP1/2/8 Qwen model partitioning, exact BF16 shard-row copying, and host collective readiness; GPU rank binding, transport, distributed KV, and TP execution remain open",
+      "TP1/2/8 Qwen model partitioning, exact BF16 shard-row copying, rank-local execution and KV orchestration, and actual host-staged FP32 reduction; complete distributed GPU execution remains unvalidated",
       "Qwen model, tokenizer, weight, graph, plan, and artifact admission policy",
       "All model-specific kernels and inference semantics; Ferric kernels are authored through fe2o3's Rust-to-KIR-to-LLVM compiler path and remain in Ferric",
       "Scheduling, speculative coordination, paged KV ownership, and queue lifecycle composition",
@@ -1052,6 +1085,28 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      commit: "3924efcbc93ae3c25ba649e7dc7ee8fc4dba543d",
+      title: "TP execution driver and cursor checks complete",
+      state: "integration",
+      detail:
+        "The new rank-local Qwen driver performs host-staged FP32 sums in rank order, adds residual once, rounds once to BF16, and broadcasts to every rank. All 8 driver tests and 3 cursor tests pass; strict cursor Verus closes 8 obligations with 0 errors and rejects all 8 actual-body mutants. Reset reuses weights without reading stale KV prefixes, and failed groups cannot be reused. A target token has 544 rank-zero dispatches and 540 on each other rank; these remain host schedule checks, not evidence of completed TP GPU execution.",
+    },
+    {
+      commit: "59b0a9a42d3c29bf5fef29024913db1029d4c133",
+      title: "Thirteen-root TP kernel source passes host checks",
+      state: "integration",
+      detail:
+        "The engineering TP kernel set passes 30 host/source tests for each selected target, gfx942 and gfx950, and rejects missing or dual target selection. New source Clippy is clean; unchanged imported-body warnings remain. A compiler layout issue found during the first extraction has a narrow source adaptation under retry. Actual thirteen-root gfx950 emission is pending, and no GPU numerical result is claimed.",
+    },
+    {
+      repository: "https://github.com/harsh-nod/fe2o3",
+      commit: "a8b016e14ca8c77c9e7abe4591086f7cab11ce61",
+      title: "Final Ferric a8 repin validation passes",
+      state: "verified",
+      detail:
+        "All 15 locked dependency metadata graphs, the rebuilt source-pin adapter and checked bindings, seven generated dependency records, and combined host checks passed. The source-pinned ELF was rebuilt and binding-checked; three TCB records changed for the revision and declared gfx950 identity example, while four records stayed byte-exact. Registry dependencies did not drift. Separately, later engineering MI350 memory and queue lifecycle checks passed while actual kernel dispatch remains under diagnosis. This does not retag the historical MI300X Qwen32 result or close any protected M1 gate.",
+    },
     {
       repository: "https://github.com/harsh-nod/fe2o3",
       commit: "a8b016e14ca8c77c9e7abe4591086f7cab11ce61",
