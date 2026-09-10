@@ -103,6 +103,55 @@
     element("p", "performance-scope", performance.scope),
     element("p", "", performance.interpretation),
   );
+  function singleRunTables(section, title, caption) {
+    measured.append(element("h3", "", title), element("p", "", section.scope));
+    performanceTable(`${caption}: process windows`,
+      ["Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
+      section.profiles.map((profile) => [
+        `${profile.name} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+        profile.workloadSeconds.toFixed(3), profile.setupSeconds.toFixed(3), profile.wholeSeconds.toFixed(3),
+      ]));
+    measured.append(element("p", "", section.interpretation));
+    performanceTable(`${caption}: request latencies`,
+      ["Profile", "Request / Decode Gaps", "TTFT (s)", "TPOT (s)"],
+      section.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+        `${profile.name} / n=1`, `${performance.requests[index].name} / ${performance.requests[index].gapsPerRepetition}`,
+        values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+      ])));
+  }
+  const cohorts = performance.replicaCohorts;
+  measured.append(element("h3", "", "Eight-GPU allocation cohorts: 64 outputs"), element("p", "", cohorts.scope));
+  performanceTable("Replica cohorts: common-release throughput and process windows",
+    ["Layout / Reps", "Output tok/s", "Release to Last Output (s)", "Barrier Setup (s)", "Spawn to Reap (s)"],
+    cohorts.profiles.map((profile) => [`${profile.layout} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+      (profile.releaseToLastOutputNs / 1e9).toFixed(3), (profile.barrierSetupNs / 1e9).toFixed(3),
+      (profile.spawnToReapNs / 1e9).toFixed(3)]));
+  measured.append(element("p", "", cohorts.interpretation), element("p", "", cohorts.clockScope));
+  performanceTable("Replica cohorts: row policy and loaded weight payloads",
+    ["Layout", "Rows / Instance / Total", "Physical Token Rows", "Host Weight Bytes", "GPU Base Weight Bytes", "GPU Transposed Bytes"],
+    cohorts.profiles.map((profile) => [profile.layout, `${profile.perInstanceRows} / ${profile.totalRowBudget}`,
+      profile.physicalTokenRows, profile.hostWeightBytes, profile.gpuBaseWeightBytes, profile.gpuTransposedWeightBytes]));
+  const replicaLatencies = element("details", "performance-identities");
+  replicaLatencies.append(element("summary", "", "All replica-cohort request latencies"));
+  performanceTable("Replica cohorts: eight named requests per layout",
+    ["Layout / Request / Instance", "Admission TTFT (s)", "Release to First Token (s)", "TPOT (s) / 7 Gaps"],
+    cohorts.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+      `${profile.layout} / replica-request-${String(index).padStart(2, "0")} / replica-${String(values[0]).padStart(2, "0")}`,
+      (values[1] / 1e9).toFixed(3), (values[2] / 1e9).toFixed(3), values[3].toFixed(3),
+    ])), replicaLatencies);
+  measured.append(replicaLatencies, element("p", "", cohorts.limits));
+  singleRunTables(performance.mfmaPair, "MFMA: faster requests, slower startup", "Matched MFMA pair");
+  singleRunTables(performance.deviceTp1Pair, "TP1 device residual pair", "Matched TP1 residual pair");
+  singleRunTables(performance.peerObservations, "Peer transport: correctness, not a speedup", "Unmatched peer observations");
+  measured.append(element("h3", "", "CPU transpose helper only"), element("p", "", performance.hostTranspose.scope));
+  performanceTable("CPU-only transpose helper, sums of per-case medians",
+    ["Shard World / Cases", "Baseline Helper (s)", "Tiled Helper (s)", "Helper Speedup"],
+    performance.hostTranspose.groups.map((group) => [
+      `TP${group.world} / ${group.cases}`, group.baselineSeconds.toFixed(6),
+      group.tiledSeconds.toFixed(6), `${group.helperSpeedup.toFixed(3)}x`,
+    ]));
+  measured.append(element("p", "", performance.hostTranspose.interpretation),
+    element("h3", "", "Historical repeated profiles"));
   performanceTable("Standalone profile ranges, two repetitions each",
     ["Profile / Reps", "Output tok/s", "Workload Window (s)", "Setup (s)", "Whole Process (s)"],
     performance.variants.map((variant) => [
@@ -180,6 +229,29 @@
     pins.append(element("dt", "", `${profile.name} profile`), element("dd", "", JSON.stringify(flags)),
       element("dt", "", `${profile.name} collective`), element("dd", "", profile.hostWorkspaceReuse
         ? "host-staged-reuse-v3" : "host_staged_fp32_rank_order_reduce_bf16_residual"));
+  });
+  for (const [label, section] of [["Matched MFMA", performance.mfmaPair],
+    ["Matched TP1 residual", performance.deviceTp1Pair], ["Serial peer", performance.peerObservations]]) {
+    Object.entries(section.pins).forEach(([key, value]) => {
+      pins.append(element("dt", "", `${label} ${key}`), element("dd", "", value));
+    });
+    section.profiles.forEach((profile) => {
+      pins.append(element("dt", "", `${profile.name} comparison SHA-256`), element("dd", "", profile.comparisonSha256));
+      if (profile.metricsFileSha256) {
+        pins.append(element("dt", "", `${profile.name} metrics file SHA-256`), element("dd", "", profile.metricsFileSha256));
+      }
+    });
+  }
+  for (const key of ["source", "summarySha256", "rawLogSha256"]) {
+    pins.append(element("dt", "", `CPU transpose ${key}`), element("dd", "", performance.hostTranspose[key]));
+  }
+  Object.entries(cohorts.pins).forEach(([key, value]) => {
+    pins.append(element("dt", "", `Replica cohorts ${key}`), element("dd", "", value));
+  });
+  cohorts.profiles.forEach((profile) => {
+    for (const key of ["comparisonSha256", "expectationSha256", "releaseEpochNs", "maximumLatenessNs"]) {
+      pins.append(element("dt", "", `${profile.layout} ${key}`), element("dd", "", profile[key]));
+    }
   });
   provenance.append(pins);
   measured.append(provenance);

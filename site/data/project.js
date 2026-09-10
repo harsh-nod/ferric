@@ -399,8 +399,8 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
     fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
     fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-    fe2o3LatestMain: "902fef6e1478b3ac677e5456b2a2d1f917456fba",
-    fe2o3LatestTree: "f62bdf2e0203a9e090958e2324553cb440e8668e",
+    fe2o3LatestMain: "1b262ac3dd23ee63067e40587d62a124f40b9fc9",
+    fe2o3LatestTree: "6d7cf46ae19fc922c4ca39a919294e68f8ee8df3",
     fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
     fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
     fe2o3CurrentRepinActive: false,
@@ -659,7 +659,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Repeated TP8 performance checks",
       state: "observed",
       detail:
-        "Two baseline, two pruning-only, and two operational-only runs pass strict checks on the same four-request, eight-output workload. Operational output rate is 0.472-0.504 tok/s versus 0.0335-0.0344 tok/s baseline over the workload window, excluding setup. A separate queue adds five accepted n=1 control/combined/cache/sequence/host-reuse profiles. Combined runtime is faster than its control but slower than earlier operational-only samples; no added cache or sequence gain is established. Both wave-projection-only and wave-attention-only model runs fail the frozen reference. Native TP2/TP8 peer probes pass separately; full-model MFMA and peer ablations remain pending. Ferric implementation stays local; only the site is published.",
+        "The matched MFMA pair passes exact Qwen tokens and bytes, n=1 per profile: output rate rises 0.450 to 0.575 tok/s, reuse-prefix TTFT falls 2.631 to 1.819 s and TPOT 1.261 to 0.855 s, but setup worsens 119.147 to 173.302 s. Whole-process time also regresses. Separate TP2/TP8 serial-peer runs pass correctness but are slow and have no matched host controls. Historical two-repetition baseline, pruning and operational profiles and five n=1 runtime ablations remain preserved below. Both wave kernel model profiles remain rejected. Ferric implementation stays local; only the site is published.",
     },
     {
       label: "Opt-in runtime performance controls",
@@ -791,7 +791,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "fe2o3 KFD model initialization",
       state: "implemented",
       detail:
-        "Public fe2o3 main was checked at 902fef6e, tree f62bdf2, on September 10. It includes reviewed runtime performance controls, checked peer ownership and opt-in cached sequences, two generic MFMA analysis fixes, and the per-context peer allocation budget correction. The peer sequence API passes separate native TP2/TP8 producer probes, not a Qwen model comparison. Existing workload receipts retain their frozen worker/artifact identities, not this later source. Historical public 3546d54 supplied the isolated gfx950 worker, bounded owned-buffer IPC, and single RMSNorm dispatch; 433 runtime tests passed at that checkpoint. The final Ferric a8 repin checks passed all 15 locked metadata graphs, rebuilt source-pinned ELF bindings, seven dependency records, and combined host checks, with no registry drift. Those checks do not qualify later runtime source. Historical MI300X integration eb219f0 used public 0ea54ed and aggregate d33933a from Ferric 9392755. An independent descriptor-only CPU probe on public 0ea hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution and is not request latency. Formal M1 qualification remains open.",
+        "Public fe2o3 main was checked at 1b262ac3, tree 6d7cf46, on September 10. It includes reviewed runtime performance controls, checked peer ownership and opt-in cached sequences, generic MFMA analysis fixes, and newer compiler inventory work. A separate private repin host checkpoint passes on this source; no current-head GPU, compiler-emission, behavioral-harness or Verus qualification is claimed. Existing workload receipts retain their frozen worker/artifact identities, not this later source. Historical public 3546d54 supplied the isolated gfx950 worker, bounded owned-buffer IPC, and single RMSNorm dispatch; 433 runtime tests passed at that checkpoint. The final Ferric a8 repin checks passed all 15 locked metadata graphs, rebuilt source-pinned ELF bindings, seven dependency records, and combined host checks, with no registry drift. Those checks do not qualify later runtime source. Historical MI300X integration eb219f0 used public 0ea54ed and aggregate d33933a from Ferric 9392755. An independent descriptor-only CPU probe on public 0ea hashed 97.313 GiB in 58.133 seconds; it excludes GPU execution and is not request latency. Formal M1 qualification remains open.",
     },
     {
       label: "Engineering Qwen smoke path",
@@ -858,7 +858,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "Checked September 10: 902fef6e1478b3ac677e5456b2a2d1f917456fba; tree f62bdf2e0203a9e090958e2324553cb440e8668e. Runtime, peer ownership/cached sequences, and generic compiler fixes are public. Model results retain their exact older worker/artifact pins. Historical public 3546d54d2c4a913f5d079701aed557d0a378bba8 passed 433 runtime tests, a real single RMSNorm dispatch, and eight lifecycle checks. The preceding a8 checkpoint remains a8b016e14ca8c77c9e7abe4591086f7cab11ce61, tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e. Historical MI300X Qwen32 stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68"],
+    ["fe2o3 current public main", "Checked September 10: 1b262ac3dd23ee63067e40587d62a124f40b9fc9; tree 6d7cf46ae19fc922c4ca39a919294e68f8ee8df3. Runtime, peer ownership/cached sequences, and generic compiler fixes are public. The previous public-head observation was 902fef6e1478b3ac677e5456b2a2d1f917456fba, tree f62bdf2e0203a9e090958e2324553cb440e8668e. Model results retain their exact older worker/artifact pins. Historical public 3546d54d2c4a913f5d079701aed557d0a378bba8 passed 433 runtime tests, a real single RMSNorm dispatch, and eight lifecycle checks. The preceding a8 checkpoint remains a8b016e14ca8c77c9e7abe4591086f7cab11ce61, tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e. Historical MI300X Qwen32 stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68"],
     ["Historical public-428 aggregate", "Historical authority-free aggregate 528: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. This prior 428/528 artifact is not the current public-0ea artifact"],
     ["CPU pre-device observations", "428 host plus aggregate 528 completed its CPU pre-device probe in 98.23s after KFD admission and topology enumeration, excluding initialize_memory, HBM upload, and dispatch. An independent public-0ea KFD descriptor probe hashed 97.313 GiB in 58.133s, excluding GPU work. Neither is request latency"],
     ["32-token engineering run", "The target-only Ferric run completed 32/32 tokens on MI300X GPU 3 with status 0 and hardware completion true; all 32 token IDs exactly match both frozen Hugging Face reference passes for this one prompt."],
@@ -1060,7 +1060,7 @@ window.FERRIC_PROJECT = Object.freeze({
       blockedBy:
         "R33 still needs the external authenticated authority bundle and a 20-window hardware run. M1 also depends on protected services, current-head qualification, authenticated Qwen accuracy, and matched baselines.",
       next:
-        "Two baseline and two operational-only repetitions pass the strict checker; the performance section records the standalone gain and remaining setup cost. Two pruning repetitions vary substantially. Five additional n=1 profiles, including combined runtime, pass separately; cache, sequences, and host reuse do not establish isolated gains. Both wave model profiles fail the reference. Resolve those failures and finish MFMA/peer model ablations, retaining per-request identity and small-sample limits. Broaden prompts and output lengths before matched baselines. Separately supply protected authority.",
+        "Historical baseline and operational-only repetitions and five runtime ablations remain recorded. The new same-image MFMA pair passes, n=1 each, with lower request latency but worse setup and whole-process time. TP2 and TP8 serial-peer Qwen runs pass but provide no collective speedup evidence. Both wave model profiles fail the reference, including a later operational-matched projection rejection. Repeat MFMA and setup measurements, diagnose peer cost, and validate true wide-model and shared-clock replica cohorts. Broaden prompts and output lengths before matched baselines. Separately supply protected authority.",
       validation:
         "Combined host checks at a6a3f2e passed formatting, 10 speculative tests, 17 target tests with one real-GPU test ignored, 20 source-policy tests, strict Clippy, both smoke builds, and 36 source-gate tests. All seven generated records matched, preserving 171 modules and 8,207 executable bodies; the 712-record source closure was unchanged. Integrated planner policy at eb219f0 passed 354 deterministic slots and the hostile pin, source, path, publication, topology, and closure-output suite. This focused result is not a protected M1 receipt. These scoped later checks do not extend the frozen bb50 developer receipt.",
     },
@@ -1077,7 +1077,7 @@ window.FERRIC_PROJECT = Object.freeze({
       blockedBy:
         "No team-local blocker. Candidate review and authenticated R33 execution remain; artifact authority is none and the diagnostic timing is not a benchmark.",
       next:
-        "Twenty-six native wave fixtures pass, but both wave-projection-only and wave-attention-only Qwen runs emit seed token 9856 instead of reference token 17689. A stronger projection differential passes 14 shapes/28 dispatches with exact sampled own-order checks and intact inputs, guards, and tails. Reduction-order differences are observed but wave Qwen parity remains unresolved. Same-image baseline arithmetic with operational runtime enabled now passes the strict fixed-workload comparison; the runtime flag differs from failed candidates, so it is not an isolated arithmetic timing comparison. The full MFMA image emits on frozen backend/SDK 3546 and passes 36 native fixtures, excluding embedding and RMSNorm; full-model validation remains pending. Thirteen v4 peer arithmetic fixtures pass separately. Wider-image V5 and V6 suites pass 30/19 native fixtures, not wide Qwen. Preserve earlier artifact identities and historical MI300X Qwen32.",
+        "Twenty-six native wave fixtures pass, but both wave-projection-only and wave-attention-only Qwen runs emit seed token 9856 instead of reference token 17689. A stronger projection differential passes 14 shapes/28 dispatches with exact sampled own-order checks and intact inputs, guards, and tails. Reduction-order differences do not clear wave parity. A later projection-only run with operational runtime enabled still fails against the same-image operational baseline control. The full MFMA image uses frozen backend/SDK 3546, passes 36 native fixtures excluding embedding and RMSNorm, and now has a passing n=1 model pair with a startup regression. The later bit-exact tiled transpose passes 240 full-array checks across 80 production shard matrices; its measured gain is CPU-helper-only. Thirteen v4 peer arithmetic fixtures and separate V5/V6 30/19 wider fixtures pass; V5 omits embedding and exercises 14/15 roots. None establishes wide Qwen. Preserve earlier artifact identities and historical MI300X Qwen32.",
       validation:
         "The exact prompt \"The capital of France is\" produced \" Paris. The capital of Italy is Rome\" in 8/8 tokens. Hardware completion is true; fe2o3 is d9f6bbcd; model bundle is 6dfba0ac. Timing is diagnostic, benchmark_comparable=false, and authority is none.",
     },
@@ -1093,7 +1093,7 @@ window.FERRIC_PROJECT = Object.freeze({
       blockedBy:
         "No team-local blocker. Authenticated R33 execution depends on supplying the external authority bundle; whole-entry allocation freedom is not claimed by the scoped same-shape tests.",
       next:
-        "Operational-only model repetitions pass with unchanged outputs and frozen kernels. Admission cache, sequences, combined runtime, and host workspace reuse now have accepted n=1 model observations; none establishes an incremental win over operational-only. Rollover retains separate lifecycle evidence. GPU-producer TP2/TP8 peer probes pass 6/24 observations, and the opt-in cached-sequence API passes separate native probes; complete peer-transport Qwen before assigning collective gains. The cached/uncached result establishes work reduction, not a cache speedup. Authenticated 20-window custody still requires protected authority.",
+        "Operational-only model repetitions pass with unchanged outputs and frozen kernels. Admission cache, sequences, combined runtime, and host workspace reuse have accepted n=1 model observations; none establishes an incremental win over operational-only. Rollover retains separate lifecycle evidence. Serial-peer Qwen now passes at TP2/TP8, but is slow with no matched host control. Native producer probes and two-dispatch cached sequences also pass at 17/31/32 rows; wide-model performance is not measured. Shared-clock replica launch/control and fixed 64-output workload checks are implemented, not a completed GPU cohort. The cached/uncached result establishes work reduction, not a cache speedup. Authenticated 20-window custody still requires protected authority.",
       validation:
         "The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests. One-round and repeated 16-round production-core allocation tests pass at 0 allocations and 0 reallocations, and the allocator positive control fires. Integrated check, strict Clippy, and focused allocation validation pass. These results grant no resident qualification or hardware authority.",
     },
@@ -1255,6 +1255,24 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      sourceStatus: "818e6cf",
+      title: "MFMA model pair passes, with startup regression",
+      state: "observed",
+      detail: "The exact same-image TP8 control and MFMA projection run both pass eight reference tokens and bytes, n=1 each. Workload rate improves 27.91%, reuse-prefix TTFT 30.85%, and TPOT 32.21%; setup and whole-process time worsen. The full performance section retains every request identity, process window and binary/report pin. Separate TP2/TP8 serial-peer observations pass correctness but are slow and do not establish a collective speedup. Both wave model profiles remain rejected.",
+    },
+    {
+      sourceStatus: "4049ad5",
+      title: "Bit-exact tiled transpose and bounded replica groundwork",
+      state: "implemented",
+      detail: "The setup-only 32-by-32 BF16 transpose preserves complete production arrays over 80 TP1/TP2/TP8 shard matrices and three repeats: 240 exact comparisons. Shared-host CPU helper medians improve 2.665-3.374x across shard suites, excluding allocation, hashing, upload and inference. No model latency improvement is assigned to this helper. Separately, shared-clock replica control has real coordinator schedule checks at row budgets 16/32; its 64-output workload is distinct from the eight-output model observations. The first 1xTP8 GPU cohort passes exact comparison; the allocation comparison remains incomplete.",
+    },
+    {
+      sourceStatus: "d863c53",
+      title: "Latest public compiler/runtime repin passes isolated host checks",
+      state: "implemented",
+      detail: "Private repin d863c53 on Ferric e277e1d targets public fe2o3 1b262ac, tree 6d7cf46, and is integrated privately as e1f614a. The isolated checkpoint passes 26 locked metadata configurations over 22 manifests, release workspace closure, 164 library tests plus one existing ignore, 22 batch CLI tests, 11 legacy CLI tests, five peer child/probe tests, strict Clippy and release builds. Source gates cover 173 modules and 8,235 bodies. Combined latest-pin validation is still pending. This is not a public Ferric implementation push, new GPU result, compiler emission, behavioral harness, Verus receipt or protected M1 qualification. Frozen model binaries retain their older pins.",
+    },
+    {
       sourceStatus: "040e64e",
       title: "Six-case ablation queue closes, with two wave model profiles rejected",
       state: "observed",
@@ -1271,7 +1289,7 @@ window.FERRIC_PROJECT = Object.freeze({
       repository: "https://github.com/harsh-nod/fe2o3",
       title: "Runtime controls, peer ownership, and generic MFMA fixes are public",
       state: "observed",
-      detail: "Reviewed opt-in operational validation, admission caching, timing counters, checked sequences, and safe queue rollover preserve mutable authority/lifetime checks. Twenty native dispatches and three zero-dispatch fatal negatives pass. The separate d854 peer owner passes TP2/TP8 native checks; these are not collective model results. Two generic MFMA compiler fixes admit an unchanged model-free repro through formal/ranked checks and LLVM to HSACO. Separately, the full Ferric MFMA image emits using the frozen backend/SDK 3546 and passes 36 native fixtures, not the new compiler. Model validation remains pending. No existing proof receipt or production authority is extended by these engineering checks.",
+      detail: "Reviewed opt-in operational validation, admission caching, timing counters, checked sequences, and safe queue rollover preserve mutable authority/lifetime checks. Twenty native dispatches and three zero-dispatch fatal negatives pass. The separate d854 peer owner passes TP2/TP8 native checks; these are not collective model results. Two generic MFMA compiler fixes admit an unchanged model-free repro through formal/ranked checks and LLVM to HSACO. Separately, the full Ferric MFMA image emits using the frozen backend/SDK 3546 and passes 36 native fixtures, not the new compiler. Model validation was pending at this checkpoint; later separately pinned observations appear above. No existing proof receipt or production authority is extended by these engineering checks.",
     },
     {
       sourceStatus: "7224c33",

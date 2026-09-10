@@ -36,6 +36,18 @@ const requiredClaims = [
   "Request identities are never pooled",
   "correctness failure under investigation",
   "902fef6e1478b3ac677e5456b2a2d1f917456fba",
+  "1b262ac3dd23ee63067e40587d62a124f40b9fc9",
+  "MFMA: faster requests, slower startup",
+  "Startup regresses",
+  "0.575054",
+  "209.070",
+  "negative performance evidence",
+  "1557.722",
+  "CPU transpose helper only",
+  "TP1 device residual pair",
+  "Eight-GPU allocation cohorts: 64 outputs",
+  "not a sum of instance rates",
+  "240 full-array equality checks",
   "a689418",
   "ce9e0bc",
   "e3dc8d6",
@@ -646,6 +658,21 @@ try {
 
     const latencyDisclosure = page.getByText("All single-run request latencies", { exact: true });
     await latencyDisclosure.click();
+
+    const replicaDisclosure = page.getByText("All replica-cohort request latencies", { exact: true });
+    await replicaDisclosure.click();
+    const cohortCount = await page.evaluate(() => window.FERRIC_PERFORMANCE.replicaCohorts.profiles.length);
+    assert(await page.getByRole("region", { name: "Replica cohorts: eight named requests per layout", exact: true })
+      .locator("tbody tr").count() === 8 * cohortCount, `${name}: missing replica request identities`);
+    await replicaDisclosure.click();
+
+    for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
+      ["Matched TP1 residual pair: process windows", 2], ["Matched TP1 residual pair: request latencies", 8],
+      ["Matched MFMA pair: request latencies", 8], ["Unmatched peer observations: process windows", 2],
+      ["Unmatched peer observations: request latencies", 8], ["CPU-only transpose helper, sums of per-case medians", 3]]) {
+      assert(await page.getByRole("region", { name: caption, exact: true }).locator("tbody tr").count() === rows,
+        `${name}: missing measurement rows: ${caption}`);
+    }
     assert(await page.getByRole("region", { name: "Single-run ablation latencies by request identity", exact: true })
       .locator("tbody tr").count() === 20, `${name}: missing single-run per-request latencies`);
     await latencyDisclosure.click();
@@ -655,6 +682,12 @@ try {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
+        for (const [heading, suffix] of [["MFMA: faster requests, slower startup", "mfma"],
+          ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
+          ["Peer transport: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
+          await page.getByRole("heading", { name: heading, exact: true }).scrollIntoViewIfNeeded();
+          await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
+        }
         await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();
         await page.screenshot({ path: join(screenshotRoot, `${name}-ablations.png`) });
         await page.evaluate(() => window.scrollTo(0, 0));

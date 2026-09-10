@@ -80,7 +80,7 @@
           <div class="section-heading">
             <div>
               <div class="section-label">Measured engineering progress</div>
-              <h2 id="performance-title">Qwen3-8B on eight GPUs</h2>
+              <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
             <p>Fixed short workload. Repeated profiles and single-run ablations, not production serving.</p>
           </div>
@@ -235,8 +235,8 @@
             <h2 id="next-title">Validate each performance change end to end</h2>
           </div>
           <p>
-            Next: resolve the wave model correctness failure, finish MFMA numerical/model ablations,
-            and validate peer-transport Qwen execution. Measure standalone and cumulative profiles with
+            Next: resolve the wave model correctness failure, repeat the MFMA pair and measure setup changes,
+            and profile the slow peer-transport runs. Measure standalone and cumulative profiles with
             the strict checker before assigning gains. Broaden prompts, output lengths, and
             concurrency before matched vLLM/SGLang comparisons. Production serving still needs
             protected authority and qualification. The following production-path evidence is
