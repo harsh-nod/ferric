@@ -58,7 +58,7 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let element = raw / 64;
+    let element = thread::block_idx_x() as usize;
     let lane = raw % 64;
     if element < rows * n {
     } else {
@@ -97,6 +97,7 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
     let column = column as u32 as usize;
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
+    let mut finite = true;
     let mut step = 0_usize;
     while step < 64 {
         let inner = step * 64 + lane;
@@ -104,14 +105,13 @@ pub fn ferric_qwen3_tp_wave_gemv_bf16_v3(
         let right = Bf16::from_bits(memory::volatile_load(weights, column * 4096 + inner)).to_f32();
         let product = left * right;
         partial += product;
-        if !product.is_finite() || !partial.is_finite() {
-            fe2o3_device::trap();
-        }
+        finite &= product.is_finite() & partial.is_finite();
         step += 1;
     }
     let sum = subgroup.reduce_sum_f32::<64>(partial);
     let narrowed = Bf16::from_f32(sum);
-    if !sum.is_finite() || !narrowed.is_finite() {
+    // Keep every lane active until the collective; reject before any store.
+    if !finite || !sum.is_finite() || !narrowed.is_finite() {
         fe2o3_device::trap();
     }
     if lane == 0 {
@@ -170,7 +170,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let element = raw / 64;
+    let element = thread::block_idx_x() as usize;
     let lane = raw % 64;
     if element < rows * 4096 {
     } else {
@@ -187,6 +187,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
     let column = column as u16 as usize;
     let subgroup = Gfx950Subgroup::current();
     let mut partial = 0.0_f32;
+    let mut finite = true;
     let mut step = 0_usize;
     while step < 192 {
         let inner = step * 64 + lane;
@@ -196,14 +197,12 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
             let right = Bf16::from_bits(memory::volatile_load(weights, column * k + inner)).to_f32();
             let product = left * right;
             partial += product;
-            if !product.is_finite() || !partial.is_finite() {
-                fe2o3_device::trap();
-            }
+            finite &= product.is_finite() & partial.is_finite();
         }
         step += 1;
     }
     let sum = subgroup.reduce_sum_f32::<64>(partial);
-    if !sum.is_finite() {
+    if !finite || !sum.is_finite() {
         fe2o3_device::trap();
     }
     if lane == 0 {
