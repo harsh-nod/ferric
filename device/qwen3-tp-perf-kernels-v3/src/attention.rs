@@ -133,10 +133,10 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
     }
     let kv_head = kv_head as u16 as usize;
     let subgroup = Gfx950Subgroup::current();
-    // Broadcast exact bits so metadata guards are explicitly Wave64-uniform.
+    // Valid metadata is below 8192, so f32 broadcast preserves every valid value.
+    // Larger u32 values remain outside the checked bounds after conversion.
     let position = subgroup
-        .broadcast_f32::<64>(f32::from_bits(memory::volatile_load(positions, row)), 0)
-        .to_bits() as usize;
+        .broadcast_f32::<64>(memory::volatile_load(positions, row) as f32, 0) as usize;
     if position < max_context_tokens {
     } else {
         fe2o3_device::trap();
@@ -164,10 +164,9 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                 }
                 let physical_page = subgroup
                     .broadcast_f32::<64>(
-                        f32::from_bits(memory::volatile_load(page_table, table_index)),
+                        memory::volatile_load(page_table, table_index) as f32,
                         0,
-                    )
-                    .to_bits() as usize;
+                    ) as usize;
                 if physical_page < physical_pages {
                 } else {
                     fe2o3_device::trap();

@@ -39,8 +39,9 @@ collective convergence without exposing raw-pointer reads.
 Paged attention computes two QK products per lane and shares the reduced score,
 replacing 64 repeated serial 128-dimensional dot products. Its existing causal
 position checks, physical-page bounds, online softmax and disjoint two-component
-output ownership remain in place. Position and page metadata are broadcast as
-exact bits before guarded accesses, making their control explicitly uniform.
+output ownership remain in place. Position and page metadata are broadcast
+before guarded accesses, making their control explicitly uniform. Their valid
+bounded integer values are exactly representable in the f32 broadcast carrier.
 All physical lanes participate in reductions. Numeric predicates accumulate
 without lane exits until the final collective and reject before output stores.
 
