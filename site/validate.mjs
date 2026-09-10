@@ -67,6 +67,7 @@ assertExactKeys(
     "validation",
     "teams",
     "boundaries",
+    "batchEngineeringObservations",
     "engineeringObservations",
     "latestObservation",
     "recentProgress",
@@ -79,7 +80,31 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "eb8c087897645100f82901c840a20d708d0fed84",
+  siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+  tensorParallelBatchImplementationPrivate: true,
+  tensorParallelBatchRows: 16,
+  tensorParallelBatchMaxSequences: 32,
+  tensorParallelBatchPageTokens: 16,
+  tensorParallelBatchMaxPhysicalPages: 512,
+  tensorParallelBatchMaxContextTokens: 8192,
+  tensorParallelBatchPoolTestsPassed: 18,
+  tensorParallelBatchCoordinatorClosureTestsPassed: 46,
+  tensorParallelBatchDriverTestsPassed: 6,
+  tensorParallelBatchIntegratedLibraryTestsPassed: 139,
+  tensorParallelBatchIntegratedLibraryTestsIgnored: 1,
+  tensorParallelBatchIntegratedNewCliTestsPassed: 8,
+  tensorParallelBatchIntegratedOldCliTestsPassed: 9,
+  tensorParallelBatchIntegratedSourcePoliciesPassed: 22,
+  tensorParallelBatchHostCheckScope: "private-integration-kernel-2048c10",
+  tensorParallelBatchIntegratedStrictClippyPassed: true,
+  tensorParallelBatchKernelTargetsEmitted: ["gfx942:xnack-", "gfx950:xnack-"],
+  tensorParallelBatchRadixImplemented: true,
+  tensorParallelBatchGpuObserved: true,
+  tensorParallelBatchMetricsObserved: true,
+  tensorParallelBatchBenchmarkComparable: false,
+  tensorParallelBatchCacheSpeedupClaimed: false,
+  tensorParallelBatchUncachedObserved: true,
+  tensorParallelBatchAssurance: "Contracted",
   fe2o3A8RepinValidated: true,
   fe2o3A8LockedMetadataGraphsPassed: 15,
   fe2o3A8DependencyRecordsChecked: 7,
@@ -1244,6 +1269,18 @@ assert(project.current.r33TpotEligible === false, "four-token smoke must not bec
 assertExactKeys(project.milestone, ["name", "label", "state", "summary"], "milestone");
 assert(project.milestone.name === "M1", "milestone must remain M1");
 assertState(project.milestone.state, "milestone.state");
+assert(project.current.tensorParallelBatchGpuObserved === true,
+  "bounded GPU observation must remain recorded");
+assert(project.current.tensorParallelBatchBenchmarkComparable === false
+  && project.current.tensorParallelBatchCacheSpeedupClaimed === false,
+  "single logical-tick observations must not become a benchmark or cache speedup");
+assert(project.current.tensorParallelBatchAssurance === "Contracted",
+  "new host tests do not extend prior Verus or protected authority");
+for (const [title, state] of [["Continuous batching and paged TP attention", "observed"],
+  ["Persistent resident radix prefixes", "observed"], ["Batched host checks", "integration"]]) {
+  assert(project.readiness.some((item) => item.label === title && item.state === state),
+    `new private batch status drifted: ${title}`);
+}
 
 assert(Array.isArray(project.readiness) && project.readiness.length >= 5, "readiness roster is incomplete");
 project.readiness.forEach((item, index) => {
@@ -1311,6 +1348,59 @@ assertExactKeys(project.boundaries, ["ferric", "fe2o3"], "boundaries");
 for (const key of ["ferric", "fe2o3"]) {
   assert(Array.isArray(project.boundaries[key]) && project.boundaries[key].length >= 5, `${key} boundary is incomplete`);
 }
+
+const batch = project.batchEngineeringObservations;
+assertExactKeys(batch, ["title", "scope", "authority", "implementationSource", "comparatorSource",
+  "kernelSource", "controllerSha256", "workerSha256", "hsacoSha256", "referenceSha256",
+  "workloadSha256", "cacheOffPending", "outputs", "runs"], "batchEngineeringObservations");
+assert(batch.authority === "none" && batch.cacheOffPending === false,
+  "bounded cached/uncached observation must not claim protected authority");
+const batchIdentities = {
+  implementationSource: "7224c33deba9dea0fcd82f94dcd2a07db0ca5319",
+  comparatorSource: "65cb43532e265e9dcf02b36aebeb857779f81ceb",
+  kernelSource: "2048c103ca6f62162f9d4e02b7cefa340bf0f8a8",
+  controllerSha256: "098be2f8425bffcc46545ba66f313a3c63090eb01360eccafb276d887350e151",
+  workerSha256: "77a53d18b56e4ee7a67a434feffa8ac18a4fe60f8c9e5daace351f502c72e1da",
+  hsacoSha256: "af5019d3cfc4e860b33ebf0d97a82439f870a9e4e893c730118a97d8735c2d6a",
+  referenceSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+  workloadSha256: "23882e195cf578b987c72fc5703fffb51541708e5431d4166e55e0fe7e2f137f",
+};
+for (const [key, value] of Object.entries(batchIdentities)) {
+  assert(batch[key] === value, `batch observation ${key} drifted`);
+}
+assert(JSON.stringify(batch.outputs) === JSON.stringify([
+  { name: "seed-prefix", state: "Completed", tokenIds: [17689, 374], text: " Spain is" },
+  { name: "arriving-short", state: "Completed", tokenIds: [12095, 13, 576], text: " Paris. The" },
+  { name: "cancel-between-batches", state: "Cancelled after one output", tokenIds: [12095], text: " Paris" },
+  { name: "reuse-prefix", state: "Completed", tokenIds: [24081, 13], text: " Madrid." },
+]), "fixed batched workload output IDs, bytes or cancellation drifted");
+const batchRuns = [
+  [1, true, 11569919014, 5433362703, 4794532333, 156.218936794, 185.472480546,
+    "d22bc4b35fe40e4f41614e760ea44083ce8f55affdf146be183c767e601c0b73",
+    "e88cc980e6e7911575c0d2cf9d8a964a45526f0df961ae1b20cd3f261f412d5e"],
+  [8, true, 113270822031, 47325504628, 47801794108, 189.758860743, 466.414186138,
+    "562cf9d5fd8dbb737ddc92ef928913f06625f6f6992ddac66796e90b80595981",
+    "340b2bd61a8b05bbdca45f4ed9151b28acd8a2f1ee4351b7310e76ccfc456460"],
+  [8, false, 85731951175, 86270679460, 37697434748, 192.698331733, 461.166303364,
+    "d7d7d646374b7ec07e190d8f17d06772829a30c1c6089ef566f45e9e0e57ca87",
+    "a13146920a0ad686b7f477e4605fc5af29c3d1988b31d862f5448e51036b44ac"],
+];
+assert(batch.runs.length === batchRuns.length, "batch observation count drifted");
+batch.runs.forEach((run, index) => {
+  assertExactKeys(run, ["worldSize", "prefixCache", "batches", "physicalTokenRows", "cachedTokens",
+    "seedTtftNs", "reuseTtftNs", "reuseDecodeIntervalNs", "setupSeconds", "wholeSeconds",
+    "rankDispatchCounts", "resultSha256", "comparisonSha256"], `batch.runs[${index}]`);
+  const [world, cache, seed, reuse, gap, setup, whole, result, comparison] = batchRuns[index];
+  const batches = cache ? 5 : 6;
+  assert(run.worldSize === world && run.prefixCache === cache && run.batches === batches
+    && run.physicalTokenRows === (cache ? 34 : 50) && run.cachedTokens === (cache ? 16 : 0),
+  "batch geometry or exact prefix hit drifted");
+  assert(run.seedTtftNs === seed && run.reuseTtftNs === reuse && run.reuseDecodeIntervalNs === gap
+    && run.setupSeconds === setup && run.wholeSeconds === whole, "batch timing receipt drifted");
+  assert(run.resultSha256 === result && run.comparisonSha256 === comparison, "batch receipt hashes drifted");
+  assert(JSON.stringify(run.rankDispatchCounts) === JSON.stringify([544 * batches, ...Array(world - 1).fill(540 * batches)]),
+    "batch per-rank dispatch schedule drifted");
+});
 
 const engineering = project.engineeringObservations;
 assertExactKeys(engineering, ["title", "scope", "prompt", "promptTokenIds", "generatedTokenIds",
@@ -1398,7 +1488,17 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "eb8c087897645100f82901c840a20d708d0fed84",
+  "3589d9e112afe3217500b50bc84a7be1af394c49",
+  "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
+  "Single logical-tick observations only",
+  "113.270822031s",
+  "47.325504628s",
+  "47.801794108s",
+  "86.270679460s",
+  "37.697434748s",
+  "139 library tests with one preexisting ignore",
+  "Earlier planner/cursor Verus receipts do not cover the new pool",
+  "Persistence means across requests, not disk or process restart",
   "All eight MI350X gfx950 devices",
   "TP1/2/8",
   "not MI350 Qwen execution",
@@ -1725,7 +1825,7 @@ const missingSnapshotClaims = [
   "independently accepted",
   "58 service tests",
   "88 adapter tests",
-  "Physical device-KV prefix reuse is M2",
+  "The new private TP pool and batched driver implement persistent resident physical-page prefix reuse separately",
   "Authority is none",
   "608 verified and 0 errors",
   "S1/T128",

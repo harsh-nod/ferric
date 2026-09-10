@@ -200,6 +200,67 @@
   });
 
   const tpObservations = document.querySelector("[data-tp-observations]");
+  const batch = project.batchEngineeringObservations;
+  tpObservations.append(
+    element("div", "observation-label", "Batched engineering observation"),
+    element("h3", "", batch.title),
+    element("p", "", batch.scope),
+  );
+  for (const [headings, rows] of [
+    [["Profile", "Rows / Batches", "Cached Tokens", "Seed TTFT", "Reuse TTFT", "Reuse Decode Gap", "Setup"],
+      batch.runs.map((run) => [
+        `TP${run.worldSize}, cache ${run.prefixCache ? "on" : "off"}`,
+        `${run.physicalTokenRows} / ${run.batches}`, String(run.cachedTokens),
+        `${(run.seedTtftNs / 1e9).toFixed(3)} s`, `${(run.reuseTtftNs / 1e9).toFixed(3)} s`,
+        `${(run.reuseDecodeIntervalNs / 1e9).toFixed(3)} s`, `${run.setupSeconds.toFixed(3)} s`,
+      ])],
+    [["Request", "Terminal State", "Exact Output IDs", "Decoded Text"],
+      batch.outputs.map((output) => [output.name, output.state, output.tokenIds.join(", "), output.text])],
+  ]) {
+    const wrap = element("div", "transition-table-wrap");
+    const table = element("table", "transition-table");
+    const head = element("thead", "");
+    const heading = element("tr", "");
+    headings.forEach((label) => {
+      const cell = element("th", "", label);
+      cell.scope = "col";
+      heading.append(cell);
+    });
+    head.append(heading);
+    const body = element("tbody", "");
+    rows.forEach((values) => {
+      const row = element("tr", "");
+      values.forEach((value) => row.append(element("td", "", value)));
+      body.append(row);
+    });
+    table.append(head, body);
+    wrap.append(table);
+    tpObservations.append(wrap);
+  }
+  const batchFacts = element("dl", "observation-facts tp-facts");
+  const batchIdentities = [
+    ["Authority", `${batch.authority}; Contracted engineering observation only`],
+    ["Private implementation", `${batch.implementationSource}; comparator ${batch.comparatorSource}`],
+    ["Private kernel source", batch.kernelSource],
+    ["Controller SHA-256", batch.controllerSha256],
+    ["KFD worker SHA-256", batch.workerSha256],
+    ["Nine-root HSACO SHA-256", batch.hsacoSha256],
+    ["Frozen reference SHA-256", batch.referenceSha256],
+    ["Fixed workload SHA-256", batch.workloadSha256],
+  ];
+  batch.runs.forEach((run) => {
+    const name = `TP${run.worldSize} cache ${run.prefixCache ? "on" : "off"}`;
+    batchIdentities.push(
+      [`${name} dispatches`, `${run.rankDispatchCounts.join(", ")}; workers closed and reaped`],
+      [`${name} whole run`, `${run.wholeSeconds.toFixed(3)} s, including setup and teardown`],
+      [`${name} JSONL SHA-256`, run.resultSha256],
+      [`${name} comparison SHA-256`, run.comparisonSha256],
+    );
+  });
+  batchIdentities.forEach(([name, value]) => {
+    batchFacts.append(element("dt", "", name), element("dd", "", value));
+  });
+  tpObservations.append(batchFacts);
   const tp = project.engineeringObservations;
   tpObservations.append(
     element("div", "observation-label", "Engineering Qwen observations"),

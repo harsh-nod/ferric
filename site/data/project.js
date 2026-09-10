@@ -1,9 +1,33 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-09-09",
+  updated: "2026-09-10",
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "eb8c087897645100f82901c840a20d708d0fed84",
+    siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+    tensorParallelBatchImplementationPrivate: true,
+    tensorParallelBatchRows: 16,
+    tensorParallelBatchMaxSequences: 32,
+    tensorParallelBatchPageTokens: 16,
+    tensorParallelBatchMaxPhysicalPages: 512,
+    tensorParallelBatchMaxContextTokens: 8192,
+    tensorParallelBatchPoolTestsPassed: 18,
+    tensorParallelBatchCoordinatorClosureTestsPassed: 46,
+    tensorParallelBatchDriverTestsPassed: 6,
+    tensorParallelBatchIntegratedLibraryTestsPassed: 139,
+    tensorParallelBatchIntegratedLibraryTestsIgnored: 1,
+    tensorParallelBatchIntegratedNewCliTestsPassed: 8,
+    tensorParallelBatchIntegratedOldCliTestsPassed: 9,
+    tensorParallelBatchIntegratedSourcePoliciesPassed: 22,
+    tensorParallelBatchHostCheckScope: "private-integration-kernel-2048c10",
+    tensorParallelBatchIntegratedStrictClippyPassed: true,
+    tensorParallelBatchKernelTargetsEmitted: ["gfx942:xnack-", "gfx950:xnack-"],
+    tensorParallelBatchRadixImplemented: true,
+    tensorParallelBatchGpuObserved: true,
+    tensorParallelBatchMetricsObserved: true,
+    tensorParallelBatchBenchmarkComparable: false,
+    tensorParallelBatchCacheSpeedupClaimed: false,
+    tensorParallelBatchUncachedObserved: true,
+    tensorParallelBatchAssurance: "Contracted",
     fe2o3A8RepinValidated: true,
     fe2o3A8LockedMetadataGraphsPassed: 15,
     fe2o3A8DependencyRecordsChecked: 7,
@@ -626,9 +650,27 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric now runs Qwen3-8B across eight MI350 GPUs with genuine tensor-parallel sharding: all 32 generated tokens match both frozen reference passes. The single unwarmed TP8 sequence measured 163.648s TTFT and 40.260s per post-first token, with setup excluded. Separate two-token smokes also match on TP1, TP2, and TP8. These are engineering observations, not repeated statistics or a controlled speed comparison. The profile uses host-staged FP32 collectives, token-at-a-time m=1 prompt priming, and no radix prefix cache. Historical MI300X measurements remain unchanged. All 33 M1 gates remain open; no serving or vLLM/SGLang baseline exists.",
+      "Ferric now completes a four-request Qwen3-8B workload on eight MI350 GPUs with true multirow chunked prefill, mixed decode, paged attention, cancellation, and a later 16-token radix-prefix hit. Cached and uncached TP8 runs match all eight output tokens and decoded bytes. Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards. TP1 also passes the cached workload. These are single logical-tick observations, not a repeated benchmark or cache-speedup claim. Earlier MI350 and MI300X 32-token measurements remain unchanged and separate. All 33 M1 gates remain open; no serving or vLLM/SGLang baseline exists.",
   },
   readiness: [
+    {
+      label: "Continuous batching and paged TP attention",
+      state: "observed",
+      detail:
+        "A bounded four-request workload passes on TP1 and TP8: a 16-row prefill, later request arrivals, mixed decode/prefill, page-boundary continuation, cancellation after one output, and generational slot reuse. Cached TP1/TP8 use 34 rows and five forwards; uncached TP8 uses 50 rows and six forwards. All eight output IDs and bytes match the frozen reference subsequences in every run. The real model workload exercises all nine kernel roots. Every worker closes and is reaped, and all GPUs are idle before and after each workload. Single logical-tick observations only, with no repeated benchmark or cache-speedup claim.",
+    },
+    {
+      label: "Persistent resident radix prefixes",
+      state: "observed",
+      detail:
+        "The later reuse-prefix request observes an exact 16-token physical prefix hit after seed retirement on both TP1 and TP8, then emits [24081, 13], decoded as \" Madrid.\". The Contracted pool retains only complete immutable pages within one model and resident session; exact ancestors, refcounts, expiry, and leaf eviction preserve live pages. Partial pages stay exclusive, the final prompt token executes, reservation is atomic, and submitted uncertainty quarantines the pool. Limits are 512 physical pages and 8192 context tokens. Persistence means across requests, not disk or process restart. Eighteen host tests, eight actual-body negatives, and four privacy negatives do not constitute a new Verus proof.",
+    },
+    {
+      label: "Batched host checks",
+      state: "integration",
+      detail:
+        "The actual pool, scheduler, and coordinator closure passes 46 host tests and strict Clippy; six actual coordinator mutations are rejected. Final private integration passes 139 library tests with one preexisting ignore, all six new driver tests, 8 new CLI tests, 9 existing CLI tests, and 22 source policies, plus adapter all-targets strict Clippy and the release controller build. Kernel source 2048c10 emits both gfx942 and gfx950 images through unchanged public fe2o3 3546d54. Eleven synthetic GPU cases cover seven roots; full Qwen exercises all nine. Numerical kernels, completion, and transport remain Contracted. Earlier planner/cursor Verus receipts do not cover the new pool, scheduler, or batched driver.",
+    },
     {
       label: "MI350 runtime bring-up",
       state: "observed",
@@ -857,6 +899,11 @@ window.FERRIC_PROJECT = Object.freeze({
     ],
     experimental: [
       {
+        name: "Continuous batches with resident prefix retention",
+        detail:
+          "The private engineering batch profile combines generational request scheduling, bounded chunked prefill, multirow TP dispatch, causal page tables, and a resident complete-page radix cache. Cached TP1/TP8 and uncached TP8 workloads observe exact reference tokens, cancellation, and clean worker teardown; the cached runs retain and reuse one complete physical page. Pre-submit rollback, OOM eviction/backoff, and poisoned-group quarantine also have focused host tests. Single logical-tick results remain separate from the older token-at-a-time profile; no cache speedup or protected-serving qualification is claimed.",
+      },
+      {
         name: "Host-staged tensor parallel execution",
         detail:
           "The isolated engineering driver constructs rank-local GPU dispatches, sums actual host-visible FP32 partial vectors in deterministic rank order, adds residual once, rounds once to BF16, and broadcasts the result. It retains per-rank KV and weights across prompt resets. This is token-at-a-time m=1 prompt priming with no radix prefix cache in this execution profile. Host tests exercise 1/2/8 ranks and failure cleanup; actual two-token Qwen smokes pass on all three world sizes, and one unwarmed TP8 sequence matches all 32 reference tokens. Broader numerical coverage and repeated performance experiments remain open.",
@@ -934,9 +981,9 @@ window.FERRIC_PROJECT = Object.freeze({
           "Restore Docker permission or provide approved native vLLM and SGLang installs, then launch and authenticate the exact baseline configurations. The account currently lacks Docker access, the host has no native framework installs, no baseline was launched, and no comparison result exists.",
       },
       {
-        name: "Extend prefix caching after first execution",
+        name: "Broaden paged batching validation",
         detail:
-          "The integrated radix slice covers live-source logical page sharing only. Physical device-KV prefix reuse is M2; persistent caching, symmetric memory, and MTP remain deferred and do not delay the initial single-GPU smoke.",
+          "The new private TP pool and batched driver implement persistent resident physical-page prefix reuse separately from the protected live-source logical radix slice. Cached TP1/TP8 and uncached TP8 workloads pass exact reference comparison; prefix reuse skips 16 physical token rows and one forward in this fixed workload. Broader numerical workloads, controlled repetitions, and authenticated serving remain open. Disk persistence, symmetric memory, and MTP remain deferred.",
       },
       {
         name: "Close M1 evidence",
@@ -994,7 +1041,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Private integration eb219f0 joins the production owner, resident same-shape allocation repair, K3 source, verified SHA-256 full-block updates, opt-in startup diagnostics, integrated planner policy, and exact public-0ea pins across all 15 active compiler/runtime locks.",
       current:
-        "Current engineering integration uses public fe2o3 3546d54 and has completed matching two-token Qwen smokes on TP1, TP2, and TP8, plus all 32 reference tokens in one unwarmed TP8 sequence. All eight ranks complete the exact dispatch schedule and close/reap. All 16 locked graphs preserve registry versions, and protected active features remain unchanged. " +
+        "Private implementation 7224c33 plus comparator 65cb435 completes the four-request cached workload on TP1 and TP8, with all eight expected output tokens/bytes, 34 physical rows, five forwards, a 16-token prefix hit, and clean teardown. Uncached TP8 matches the same outputs with 50 rows and six forwards. This is a work-count reduction, not a measured speedup; the separate single-run timing table includes both profiles. These bounded results remain separate from the earlier measured token-at-a-time profile. Current engineering integration uses public fe2o3 3546d54 and has completed matching two-token Qwen smokes on TP1, TP2, and TP8, plus all 32 reference tokens in one unwarmed TP8 sequence. All eight ranks complete the exact dispatch schedule and close/reap. All 16 locked graphs preserve registry versions, and protected active features remain unchanged. " +
         "Frozen bb50d0e passed its complete developer qualifier: 10 positive proof packages, 1,586 queries, 0 errors, 694 bodies, negative actual-body semantic mutations, 197/197 receipt-file hash checks, and a 711-record source-closure check. Receipt SHA-256 c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b excludes all later 63e/6ef/0ea/eb219f0 changes and protected promotion policy. Public fe2o3 0ea54ed compiled the matching engineering aggregate d33933a from Ferric 9392755 with all 12 kernels, 26 GuardedStore operations, exact replay, no providers, authority none, and all publication/load/launch grants false. Combined host checks passed at a6a3f2e, and integrated planner policy passed at eb219f0. The target-only Ferric run completed 32/32 tokens on MI300X GPU 3 with status 0 and hardware completion true; all 32 token IDs exactly match both frozen Hugging Face reference passes for this one prompt.",
       blockedBy:
         "R33 still needs the external authenticated authority bundle and a 20-window hardware run. M1 also depends on protected services, current-head qualification, authenticated Qwen accuracy, and matched baselines.",
@@ -1011,7 +1058,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21. Historical exact v77 emits all 12 Ferric-owned kernels through fe2o3 with 26 GuardedStore operations and exact replay.",
       current:
-        "Frozen TP source 8cdde149 emits the thirteen-root gfx950 image and passes six synthetic GPU probes, including FP32 partial precision and stale-prefix exclusion. All 31 host/source tests pass per target; kernel/probe build stages are cleaned after evidence capture. " +
+        "Separate nine-root batch images emit for gfx942 and gfx950 from private source 2048c10 through unchanged fe2o3 3546d54. Eleven synthetic GPU cases pass across seven roots, including multirow projections, distinct-position RoPE, guarded paged append, nonzero-Q/K causal attention, and argmax; full Qwen exercises all nine roots. Frozen TP source 8cdde149 emits the earlier thirteen-root gfx950 image and passes six synthetic GPU probes, including FP32 partial precision and stale-prefix exclusion. All 31 host/source tests pass per target; earlier kernel/probe build stages are cleaned after evidence capture. " +
         "The prior d9f target-only run generated 8/8 coherent tokens with hardware completion; HSACO SHA-256 is 068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3. K3 source is integrated, and public fe2o3 0ea54ed emitted aggregate d33933a with exact replay. The target-only Ferric run completed 32/32 tokens on MI300X GPU 3 with status 0 and hardware completion true; all 32 token IDs exactly match both frozen Hugging Face reference passes for this one prompt. No K3 speedup has been measured.",
       blockedBy:
         "No team-local blocker. Candidate review and authenticated R33 execution remain; artifact authority is none and the diagnostic timing is not a benchmark.",
@@ -1028,11 +1075,11 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Authenticated rollover, paired-prefill execution, live-source logical radix reuse, one checked target window, page-less successor KV leasing after detach, resident tail-page materialization, registry reconciliation, first-round continuation, and the exact 11-allocation S1/K4 bootstrap roster are integrated.",
       current:
-        "Private source 3924efc consumes the proved TP1/2/8 shard plan in a rank-local Qwen driver with per-rank KV, deterministic host-staged FP32 reduction, residual/BF16-once broadcast, prompt reset, and failed-rank cleanup. It passes 8 host driver tests plus 3 cursor tests; actual two-token TP1/2/8 Qwen smokes and all 32 tokens of one unwarmed TP8 sequence match the reference. Separately, source 9dcbd6e preserves exact K draft growth and fail-closed successor custody; its production-used same-shape core measures 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive control. No authenticated 20-window run, resident daemon, or serving endpoint exists.",
+        "New private code adds continuous scheduling, chunked prefill, transactional paged KV, and a complete-page resident radix cache; the 46-test coordinator closure and six actual batched-driver tests pass. Cached TP1 and TP8 four-request model workloads now match every expected token and byte, including later-request prefix reuse and cancellation. Earlier private source 3924efc consumes the proved TP1/2/8 shard plan in a rank-local Qwen driver with per-rank KV, deterministic host-staged FP32 reduction, residual/BF16-once broadcast, prompt reset, and failed-rank cleanup. It passes 8 host driver tests plus 3 cursor tests; actual two-token TP1/2/8 Qwen smokes and all 32 tokens of one unwarmed TP8 sequence match the reference. Separately, source 9dcbd6e preserves exact K draft growth and fail-closed successor custody; its production-used same-shape core measures 0 allocations and 0 reallocations for one and repeated 16 rounds, with a positive control. No authenticated 20-window run, resident daemon, or serving endpoint exists.",
       blockedBy:
         "No team-local blocker. Authenticated R33 execution depends on supplying the external authority bundle; whole-entry allocation freedom is not claimed by the scoped same-shape tests.",
       next:
-        "Broaden the one-prompt numerical coverage and investigate runtime/IPC cost before repeated performance measurements. Report this profile's host-staged collectives, m=1 priming, and lack of radix caching. Carry authenticated custody across all 20 required windows only under protected authority.",
+        "Broaden numerical workloads and address runtime/IPC cost before controlled repetitions. The cached/uncached result establishes 16 fewer rows and one fewer forward, not a latency speedup. Keep the bounded batch results separate from the measured m=1 profile, whose timings include no radix cache. Carry authenticated custody across all 20 required windows only under protected authority.",
       validation:
         "The host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests. One-round and repeated 16-round production-core allocation tests pass at 0 allocations and 0 reallocations, and the allocator positive control fires. Integrated check, strict Clippy, and focused allocation validation pass. These results grant no resident qualification or hardware authority.",
     },
@@ -1044,7 +1091,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "Earlier scoped proof results remain strict Verus 81 verified / 0 errors, proof tests 26/26, source gate passes 28/28, and radix Verus 608 verified and 0 errors. Current source and TCB admission gates are green.",
       current:
-        "The production TP planner at c43d004 passed 36 selected Verus queries with 0 errors and 8 rejected actual-body mutations. The new execution cursor at 3924efc adds strict Verus 8 verified / 0 errors and 8 rejected cursor-body mutations, covering bounded positions, in-flight exclusion, poison, and reset epochs. Numerical reduction, transport, and GPU completion remain outside those proofs. Separately, frozen source bb50d0e passed the complete developer qualifier: all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, plus negative mutations and remaining workspace checks. That older receipt does not cover the new TP source.",
+        "The new paged pool, scheduler, and batched driver are explicitly Contracted. Their ordinary host and mutation tests do not extend any older Verus receipt. The production TP planner at c43d004 passed 36 selected Verus queries with 0 errors and 8 rejected actual-body mutations. The earlier execution cursor at 3924efc adds strict Verus 8 verified / 0 errors and 8 rejected cursor-body mutations, covering bounded positions, in-flight exclusion, poison, and reset epochs. Numerical reduction, transport, and GPU completion remain outside those proofs. Separately, frozen source bb50d0e passed the complete developer qualifier: all 10 selected positive proof packages completed 1,586 verification queries with 0 errors over 694 admitted executable bodies, plus negative mutations and remaining workspace checks. That older receipt does not cover the new TP source.",
       blockedBy:
         "No team-local blocker. Final inventory identity depends on the combined kernel and executor head; runtime refinement remains explicitly unproved.",
       next:
@@ -1055,6 +1102,7 @@ window.FERRIC_PROJECT = Object.freeze({
   ],
   boundaries: {
     ferric: [
+      "Private continuous scheduler, transactional paged pool, resident complete-page radix cache, batched TP driver, and all model-specific batch kernels; exact bounded cached TP1/8 and uncached TP8 workloads observed, Contracted rather than protected authority",
       "TP1/2/8 Qwen model partitioning, exact BF16 shard-row copying, rank-local execution and KV orchestration, and actual host-staged FP32 reduction; matching two-token smokes and one complete 32-token TP8 sequence are observed, while broader numerical and repeated performance validation remains open",
       "Qwen model, tokenizer, weight, graph, plan, and artifact admission policy",
       "All model-specific kernels and inference semantics; Ferric kernels are authored through fe2o3's Rust-to-KIR-to-LLVM compiler path and remain in Ferric",
@@ -1096,6 +1144,53 @@ window.FERRIC_PROJECT = Object.freeze({
       "The current corrected HSACO has an authority-free target-only observation but no authenticated R33 result",
       "fe2o3's generic service queue currently admits at most 16 queue-visible allocations; Ferric attempt 2 presented 20 and failed closed before publication",
       "No Ferric model kernel or inference policy is moved upstream",
+    ],
+  },
+  batchEngineeringObservations: {
+    title: "Batched Qwen with resident prefix reuse",
+    scope:
+      "Qwen3-8B BF16 on MI350, direct fe2o3/KFD, host-staged FP32 collectives. One fixed four-request logical-tick workload per profile, up to 16 rows per batch. TTFT starts at actual admission and excludes model setup; decode gaps are committed output intervals, not batch duration. All eight expected tokens and UTF-8 bytes match frozen reference subsequences. Cached TP8 processes 34 rows/five forwards versus 50 rows/six forwards without cache. This is work reduction only: whole runs were 466.414s cached versus 461.166s uncached, with varying system conditions. These are not repeated or controlled benchmarks, a cache-speedup claim, or protected serving qualification. Historical 32-token observations below are unchanged and use a different profile.",
+    authority: "none",
+    implementationSource: "7224c33deba9dea0fcd82f94dcd2a07db0ca5319",
+    comparatorSource: "65cb43532e265e9dcf02b36aebeb857779f81ceb",
+    kernelSource: "2048c103ca6f62162f9d4e02b7cefa340bf0f8a8",
+    controllerSha256: "098be2f8425bffcc46545ba66f313a3c63090eb01360eccafb276d887350e151",
+    workerSha256: "77a53d18b56e4ee7a67a434feffa8ac18a4fe60f8c9e5daace351f502c72e1da",
+    hsacoSha256: "af5019d3cfc4e860b33ebf0d97a82439f870a9e4e893c730118a97d8735c2d6a",
+    referenceSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+    workloadSha256: "23882e195cf578b987c72fc5703fffb51541708e5431d4166e55e0fe7e2f137f",
+    cacheOffPending: false,
+    outputs: [
+      { name: "seed-prefix", state: "Completed", tokenIds: [17689, 374], text: " Spain is" },
+      { name: "arriving-short", state: "Completed", tokenIds: [12095, 13, 576], text: " Paris. The" },
+      { name: "cancel-between-batches", state: "Cancelled after one output", tokenIds: [12095], text: " Paris" },
+      { name: "reuse-prefix", state: "Completed", tokenIds: [24081, 13], text: " Madrid." },
+    ],
+    runs: [
+      {
+        worldSize: 1, prefixCache: true, batches: 5, physicalTokenRows: 34,
+        cachedTokens: 16, seedTtftNs: 11569919014, reuseTtftNs: 5433362703,
+        reuseDecodeIntervalNs: 4794532333, setupSeconds: 156.218936794,
+        wholeSeconds: 185.472480546, rankDispatchCounts: [2720],
+        resultSha256: "d22bc4b35fe40e4f41614e760ea44083ce8f55affdf146be183c767e601c0b73",
+        comparisonSha256: "e88cc980e6e7911575c0d2cf9d8a964a45526f0df961ae1b20cd3f261f412d5e",
+      },
+      {
+        worldSize: 8, prefixCache: true, batches: 5, physicalTokenRows: 34,
+        cachedTokens: 16, seedTtftNs: 113270822031, reuseTtftNs: 47325504628,
+        reuseDecodeIntervalNs: 47801794108, setupSeconds: 189.758860743,
+        wholeSeconds: 466.414186138, rankDispatchCounts: [2720, 2700, 2700, 2700, 2700, 2700, 2700, 2700],
+        resultSha256: "562cf9d5fd8dbb737ddc92ef928913f06625f6f6992ddac66796e90b80595981",
+        comparisonSha256: "340b2bd61a8b05bbdca45f4ed9151b28acd8a2f1ee4351b7310e76ccfc456460",
+      },
+      {
+        worldSize: 8, prefixCache: false, batches: 6, physicalTokenRows: 50,
+        cachedTokens: 0, seedTtftNs: 85731951175, reuseTtftNs: 86270679460,
+        reuseDecodeIntervalNs: 37697434748, setupSeconds: 192.698331733,
+        wholeSeconds: 461.166303364, rankDispatchCounts: [3264, 3240, 3240, 3240, 3240, 3240, 3240, 3240],
+        resultSha256: "d7d7d646374b7ec07e190d8f17d06772829a30c1c6089ef566f45e9e0e57ca87",
+        comparisonSha256: "a13146920a0ad686b7f477e4605fc5af29c3d1988b31d862f5448e51036b44ac",
+      },
     ],
   },
   engineeringObservations: {
@@ -1145,6 +1240,27 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      sourceStatus: "7224c33",
+      title: "TP8 runs continuous batches with a physical prefix hit",
+      state: "observed",
+      detail:
+        "The cached four-request workload passes on TP8 and TP1: five forwards, 34 physical token rows, all eight exact reference-subsequence tokens and bytes, later arrivals, mixed decode/prefill, page crossing, a 16-token retained prefix hit, cancellation after one output, and clean teardown. Uncached TP8 matches with 50 rows/six forwards and no hit. Cached TP8 seed TTFT is 113.270822031s; reuse TTFT is 47.325504628s with one 47.801794108s decode interval. Uncached reuse TTFT is 86.270679460s with one 37.697434748s interval. Whole runs were 466.414s cached and 461.166s uncached; these single logical-tick observations establish work reduction, not cache speedup. Private source and model kernels stay in Ferric; core remains public fe2o3 3546d54.",
+    },
+    {
+      sourceStatus: "2048c10",
+      title: "Nine-root batched kernel image reaches emission",
+      state: "integration",
+      detail:
+        "Private Ferric kernel source 2048c10 emits separate nine-root gfx942 and gfx950 batch images through unchanged public fe2o3 3546d54. Eleven synthetic GPU cases exercise seven roots with exact output, input immutability, and guards; the full Qwen workload exercises all nine roots. The initial probe packaging failure occurred before worker launch and is retained separately. The earlier thirteen-root TP profile remains unchanged. Artifact emission and synthetic probes alone do not establish model accuracy or a performance result.",
+    },
+    {
+      sourceStatus: "c29cfed",
+      title: "Transactional paged KV and resident radix retention implemented",
+      state: "integration",
+      detail:
+        "The model/session-scoped host pool keeps complete immutable 16-token pages across request retirement. Exact ancestors, refcounts, expiry, eviction, partial-page isolation, fail-atomic reservation, and permanent submitted-failure quarantine pass 18 release tests and strict Clippy. Eight actual-body mutants and four external-crate privacy negatives are rejected. A separate 46-test pool/scheduler/coordinator closure and six coordinator mutants also pass. These are Contracted host checks, not Verus evidence, physical GPU reuse, disk persistence, or a performance claim.",
+    },
     {
       sourceStatus: "60cedea",
       title: "Eight-GPU Qwen matches all 32 reference tokens",
