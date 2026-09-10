@@ -143,7 +143,9 @@ def held_executable(path, expected):
             require(count <= 256 * 1024**2, "executable grew")
             digest.update(block)
         after = os.fstat(fd)
-        require(before == after and count == before.st_size and digest.hexdigest() == expected,
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_size,
+                                  value.st_mtime_ns, value.st_ctime_ns)
+        require(identity(before) == identity(after) and count == before.st_size and digest.hexdigest() == expected,
                 "executable identity differs")
         return fd
     except BaseException:
@@ -153,6 +155,8 @@ def held_executable(path, expected):
 
 def child_status(child):
     # WNOWAIT reserves the controller PID until every owned group is cleaned up.
+    if child.returncode is not None:
+        return child.returncode
     status = os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
     if status is None:
         return None
@@ -160,15 +164,16 @@ def child_status(child):
 
 
 def abort_and_reap(children):
-    for child in children:
+    active = [child for child in children if child.returncode is None]
+    for child in active:
         try:
             os.killpg(child.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
     until = time.monotonic() + 2
-    while time.monotonic() < until and any(child_status(child) is None for child in children):
+    while time.monotonic() < until and any(child_status(child) is None for child in active):
         time.sleep(0.01)
-    for child in children:
+    for child in active:
         try:
             os.killpg(child.pid, signal.SIGKILL)
         except ProcessLookupError:
@@ -311,9 +316,10 @@ class Cohort:
 
     def handle(self, state, message):
         observed = now_ns()
-        require(type(message) is dict and message.get("identity") == state["identity"]
+        require(type(message) is dict and encoded(message.get("identity")) == encoded(state["identity"])
                 and message.get("authority") == "none" and message.get("pid") == state["pid"],
                 "replica frame identity differs")
+        integer(message["pid"], 1, label="replica PID")
         base = {"schema", "authority", "identity", "pid"}
         kind = message["schema"]
         if kind == "FerricReplicaReadyV1":
@@ -414,8 +420,8 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         result["final_reap_ns"] = now_ns()
         # Already reaped children must not enter process-group abort handling.
         cohort.children.clear()
-        snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
         pre_taken = False
+        snapshot_fn(snapshot_command, output, "after", cohort_plan["device_unique_ids"])
         result["status"] = "unvalidated-complete"
     except BaseException as failure:
         result["error"] = str(failure)

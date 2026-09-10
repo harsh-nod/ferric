@@ -313,3 +313,113 @@ fn receive<T: DeserializeOwned>(stream: &mut UnixStream, timeout_ms: u64) -> Res
     }
     Err("oversized control frame".into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+    use std::os::unix::net::UnixListener;
+
+    struct PrivateDir(PathBuf);
+    impl PrivateDir {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!("frctl-{}-{}", std::process::id(), monotonic_raw_ns().unwrap()));
+            std::fs::DirBuilder::new().mode(0o700).create(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for PrivateDir {
+        fn drop(&mut self) { std::fs::remove_dir_all(&self.0).unwrap(); }
+    }
+    fn config(path: PathBuf) -> ControlConfig {
+        ControlConfig { schema: "FerricReplicaControlConfigV1".into(), socket_path: path,
+            launcher_pid: std::process::id(), identity: ControlIdentity { nonce: "a".repeat(64),
+                replica_id: "replica-00".into(), workload_sha256: "b".repeat(64),
+                requests_sha256: digest(b"requests"), device_unique_ids: vec![1, 2],
+                clock_domain: ClockDomain::current().unwrap() }, io_timeout_ms: 1000,
+            min_start_lead_ns: 1_000_000, max_start_lead_ns: 1_000_000_000,
+            max_lateness_ns: 500_000_000 }
+    }
+    #[test]
+    fn checked_clock_and_exact_config_identity() {
+        let before = monotonic_raw_ns().unwrap();
+        assert!(monotonic_raw_ns().unwrap() >= before);
+        let mut value = config(PathBuf::from("/tmp/private/control.sock"));
+        assert!(value.validate(&[1, 2], &digest(b"requests")).is_ok());
+        assert!(value.validate(&[2, 1], &digest(b"requests")).is_err());
+        assert!(value.validate(&[1, 1], &digest(b"requests")).is_err());
+        assert!(value.validate(&[1, 2], &digest(b"changed")).is_err());
+        value.identity.clock_domain.time_namespace_ino += 1;
+        assert!(value.validate(&[1, 2], &digest(b"requests")).is_err());
+    }
+    #[test]
+    fn start_rejects_wrong_nonce_epoch_and_unknown_fields() {
+        let config = config(PathBuf::from("/tmp/private/control.sock"));
+        let mut start = Start { schema: "FerricReplicaStartV1".into(), authority: "none".into(),
+            identity: config.identity.clone(), epoch_ns: 10_000_000 };
+        assert!(config.validate_start(&start, 1_000_000).is_ok());
+        assert!(config.validate_start(&start, start.epoch_ns).is_err());
+        assert!(config.validate_start(&start, start.epoch_ns + 1).is_err());
+        start.identity.nonce = "c".repeat(64);
+        assert!(config.validate_start(&start, 1_000_000).is_err());
+        assert!(serde_json::from_str::<Start>("{\"unexpected\":true}").is_err());
+        assert!(serde_json::from_str::<Start>("{\"schema\":\"a\",\"schema\":\"a\"}").is_err());
+    }
+    #[test]
+    fn framing_bounds_eof_timeout_and_duplicate_keys() {
+        let (mut reader, mut writer) = UnixStream::pair().unwrap();
+        writer.write_all(b"{\"schema\":\"a\",\"schema\":\"a\"}\n").unwrap();
+        assert!(receive::<Start>(&mut reader, 10).is_err());
+        assert!(receive::<Start>(&mut reader, 10).is_err());
+        writer.write_all(&vec![b'x'; FRAME_LIMIT]).unwrap();
+        assert!(receive::<Start>(&mut reader, 100).is_err());
+        drop(writer);
+        assert!(receive::<Start>(&mut reader, 10).is_err());
+    }
+    #[test]
+    fn private_file_hash_and_socket_admission() {
+        let directory = PrivateDir::new();
+        let endpoint = directory.0.join("control.sock");
+        let _listener = UnixListener::bind(&endpoint).unwrap();
+        std::fs::set_permissions(&endpoint, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let value = config(endpoint);
+        let path = directory.0.join("control.json");
+        let requests = directory.0.join("requests.json");
+        OpenOptions::new().write(true).create_new(true).mode(0o600).open(&requests).unwrap().write_all(b"requests").unwrap();
+        OpenOptions::new().write(true).create_new(true).mode(0o600).open(&path).unwrap().write_all(&serde_json::to_vec(&value).unwrap()).unwrap();
+        assert!(ControlConfig::open(&path, &requests, &[1, 2]).is_ok());
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(ControlConfig::open(&path, &requests, &[1, 2]).is_err());
+        let symlink = directory.0.join("alias");
+        std::os::unix::fs::symlink(&requests, &symlink).unwrap();
+        assert!(read_file(&symlink, 1024, false).is_err());
+    }
+    #[test]
+    fn ready_future_release_and_acknowledged_close_use_one_clock() { roundtrip(false); }
+    #[test]
+    fn wrong_close_ack_is_a_failed_run() { roundtrip(true); }
+    fn roundtrip(wrong_ack: bool) {
+        let directory = PrivateDir::new();
+        let endpoint = directory.0.join("control.sock");
+        let listener = UnixListener::bind(&endpoint).unwrap();
+        let value = config(endpoint);
+        let launcher = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let ready: serde_json::Value = receive(&mut stream, 1000).unwrap();
+            let epoch = monotonic_raw_ns().unwrap() + 20_000_000;
+            send(&mut stream, &serde_json::json!({"schema":"FerricReplicaStartV1", "authority":"none",
+                "identity":ready["identity"], "epoch_ns":epoch}), 1000).unwrap();
+            let started: serde_json::Value = receive(&mut stream, 1000).unwrap();
+            assert_eq!(started["epoch_ns"], epoch);
+            let closed: serde_json::Value = receive(&mut stream, 1000).unwrap();
+            assert_eq!(closed["epoch_ns"], epoch);
+            send(&mut stream, &serde_json::json!({"schema":"FerricReplicaCloseAckV1", "authority":"none",
+                "identity":ready["identity"], "epoch_ns":epoch + u64::from(wrong_ack)}), 1000).unwrap();
+        });
+        let clock = value.ready_and_wait().unwrap();
+        assert!(clock.elapsed_ns().is_ok());
+        assert_eq!(clock.metadata().identity.replica_id, "replica-00");
+        assert_eq!(clock.finish().is_err(), wrong_ack);
+        launcher.join().unwrap();
+    }
+}
