@@ -111,6 +111,18 @@ for (const [mode, hash] of [["projection", "ad9ecdbc5e35a7013a1e3dd68fcaba5344ed
   assert.equal(data.identities[`wave${mode[0].toUpperCase()}${mode.slice(1)}OperationalRejectionSha256`], hash);
 }
 const host = data.hostTranspose;
+for (const [section, rateGain, ttftGain, tpotGain] of [[data.mfmaPair, "27.91", "30.85", "32.21"],
+  [data.deviceTp1Pair, "14.19", "6.76", "0.97"]]) {
+  const [control, candidate] = section.profiles;
+  assert.equal(((candidate.outputTokensPerSecond / control.outputTokensPerSecond - 1) * 100).toFixed(2), rateGain);
+  assert.equal(((1 - candidate.requestLatencies[3][0] / control.requestLatencies[3][0]) * 100).toFixed(2), ttftGain);
+  assert.equal(((1 - candidate.requestLatencies[3][1] / control.requestLatencies[3][1]) * 100).toFixed(2), tpotGain);
+  for (const number of [rateGain, ttftGain, tpotGain]) assert(section.interpretation.includes(`${number}%`));
+}
+for (const profile of data.mfmaPair.profiles) {
+  assert(data.mfmaPair.interpretation.includes(profile.setupSeconds.toFixed(3)));
+  assert(data.mfmaPair.interpretation.includes(profile.wholeSeconds.toFixed(3)));
+}
 const summary = await pinned(join(transposeRoot, "remote/tiled-v3/summary.json"),
   "bec975d68a204c7073204f6e5851475d249047564d7352269ebcc2fa5e47e40e");
 await pinned(join(transposeRoot, "remote/tiled-v3/benchmark.log"),
@@ -127,10 +139,19 @@ assert.deepEqual(host.groups, summary.groups.map((group) => ({
 })));
 const cohorts = data.replicaCohorts;
 const cohortHashes = ["8891e3d384f97030446d232e8ba24dac3128e192829c755f8747fd9d4ef42951",
-  "67ef374b3d6419b780a9f7281a9b1696fd9967de4d3ba1efeb09b8d7547ecb7d"];
+  "67ef374b3d6419b780a9f7281a9b1696fd9967de4d3ba1efeb09b8d7547ecb7d",
+  "729d282edf92ac0418f9f501afee60143382dab64dbf04537240ba8983257856"];
+const allocation = await pinned(join(replicaRoot, "replica-allocation-r1-3-cases.json"),
+  "47d98300668c31db0dd8f91846a4d6a7b361e353c419d7d17a911c7625ec7b32");
+assert.equal(cohorts.pins.allocationComparisonSha256, "47d98300668c31db0dd8f91846a4d6a7b361e353c419d7d17a911c7625ec7b32");
+assert.equal(allocation.all_cohort_intervals_serialized, true);
+assert.equal(allocation.authority, "none");
+assert.equal(allocation.layouts.length, 3);
 for (const [index, profile] of cohorts.profiles.entries()) {
   const report = await pinned(join(replicaRoot, `replica-${profile.layout.toLowerCase()}-operational-r1-comparison.json`), cohortHashes[index]);
   assert.equal(profile.comparisonSha256, cohortHashes[index]);
+  assert.equal(allocation.layouts[index].comparison_sha256, profile.comparisonSha256);
+  assert.equal(allocation.layouts[index].global_output_tokens_per_second, profile.outputTokensPerSecond);
   assert.equal(report.passed, true);
   assert.equal(report.authority, "none");
   assert.equal(report.global_before_after_idle, true);
@@ -169,5 +190,9 @@ for (const [index, profile] of cohorts.profiles.entries()) {
     assert.deepEqual(values, [instance, actual.admission_ttft_ns, actual.release_to_first_token_ns, actual.tpot_seconds]);
   }
   console.log("EXACT COMMON-CLOCK COHORT", profile.layout);
+}
+for (const profile of cohorts.profiles.slice(1)) {
+  const ratio = (profile.outputTokensPerSecond / cohorts.profiles[0].outputTokensPerSecond).toFixed(3);
+  assert(cohorts.interpretation.includes(`${ratio}x`));
 }
 console.log("PASS: six model observations, cohort timing/custody, rejected wave pins, CPU helper aggregates and historical measurements match frozen evidence");

@@ -212,14 +212,17 @@ export function validatePerformance(data) {
   keys(cohorts, ["scope", "interpretation", "clockScope", "limits", "pins", "profiles"]);
   assert(cohorts.scope.includes("64 total outputs") && cohorts.scope.includes("not steady-state serving"));
   assert(cohorts.clockScope.includes("not a sum of instance rates"));
+  assert(cohorts.clockScope.includes("first spawn to all Ready, excluding the one-second release lead"));
   assert(cohorts.interpretation.includes("16-row budget is per instance"));
   assert(cohorts.limits.includes("not host RSS or full GPU usage"));
+  assert(cohorts.limits.includes("canonical JSON, not original file bytes"));
   keys(cohorts.pins, ["controllerSha256", "workerSha256", "hsacoSha256", "manifestSha256", "handoffSha256",
-    "workloadSha256", "referenceSha256", "cohortComparatorSha256", "traceComparatorSha256", "batchComparatorSha256"]);
+    "workloadSha256", "referenceSha256", "cohortComparatorSha256", "traceComparatorSha256", "batchComparatorSha256",
+    "allocationComparisonSha256"]);
   Object.values(cohorts.pins).forEach(digest);
   assert.notEqual(cohorts.pins.workloadSha256, data.identities.workloadSha256);
   assert.equal(cohorts.pins.referenceSha256, data.identities.referenceSha256);
-  assert(cohorts.profiles.length >= 1 && cohorts.profiles.length <= 3);
+  assert.equal(cohorts.profiles.length, 3);
   cohorts.profiles.forEach((profile, index) => {
     keys(profile, ["layout", "replicas", "world", "repetitions", "perInstanceRows", "totalRowBudget",
       "outputTokensPerSecond", "releaseToLastOutputNs", "barrierSetupNs", "spawnToReapNs", "releaseEpochNs",

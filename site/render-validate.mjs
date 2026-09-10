@@ -37,6 +37,7 @@ const requiredClaims = [
   "correctness failure under investigation",
   "902fef6e1478b3ac677e5456b2a2d1f917456fba",
   "1b262ac3dd23ee63067e40587d62a124f40b9fc9",
+  "7528e7345cef0158d7034cdbae23011e3c6fb5d2",
   "MFMA: faster requests, slower startup",
   "Startup regresses",
   "0.575054",
@@ -685,7 +686,10 @@ try {
         for (const [heading, suffix] of [["MFMA: faster requests, slower startup", "mfma"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
           ["Peer transport: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
-          await page.getByRole("heading", { name: heading, exact: true }).scrollIntoViewIfNeeded();
+          await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
+            const headerHeight = document.querySelector("header").getBoundingClientRect().height;
+            window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
+          });
           await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
         }
         await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();

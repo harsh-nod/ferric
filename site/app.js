@@ -250,7 +250,8 @@
   });
   cohorts.profiles.forEach((profile) => {
     for (const key of ["comparisonSha256", "expectationSha256", "releaseEpochNs", "maximumLatenessNs"]) {
-      pins.append(element("dt", "", `${profile.layout} ${key}`), element("dd", "", profile[key]));
+      const label = key === "expectationSha256" ? "canonical expectation SHA-256" : key;
+      pins.append(element("dt", "", `${profile.layout} ${label}`), element("dd", "", profile[key]));
     }
   });
   provenance.append(pins);

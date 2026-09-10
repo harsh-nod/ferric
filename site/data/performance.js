@@ -1,6 +1,6 @@
 window.FERRIC_PERFORMANCE = {
   updated: "2026-09-10",
-  scope: "Fixed four-request logical-tick Qwen3-8B workload on MI350X, BF16, prefix cache enabled: eight output tokens including one from the cancelled request. Historical repeated TP8 profiles have n=2; separate TP8 ablations and the MFMA pair have n=1 per profile. Peer observations explicitly separate TP2 and TP8. Not steady-state serving throughput, a serving SLO, protected M1 qualification, or a vLLM/SGLang comparison.",
+  scope: "Two separate Qwen3-8B workloads are reported on MI350X. Allocation cohorts use eight requests and 64 outputs with cache off. The other tables use a fixed four-request logical-tick BF16 workload with prefix cache enabled: eight output tokens including one from the cancelled request. Historical repeated TP8 profiles have n=2; subsequent model pairs and peer observations have n=1 per profile. Not steady-state serving throughput, a serving SLO, protected M1 qualification, or a vLLM/SGLang comparison.",
   interpretation: "Operational-only runtime validation is consistently faster in its two repetitions. Pruning varies substantially. The new combined runtime sample is faster than its same-controller control, but slower than the earlier operational-only samples; no extra gain from caching or sequences is established. Standalone admission caching, sequences, and host workspace reuse do not establish reliable isolated gains. Both wave-projection-only and wave-attention-only model runs fail the frozen token reference and are excluded from performance results.",
   correctness: "Every included four-request run exits with status 0, matches all eight reference-subsequence token IDs and decoded bytes, completes the exact rank dispatch schedule, closes and reaps workers, and binds before/after physical-idle checks for all eight GPUs. The separate replica cohorts check 64 outputs under their own common-clock protocol. The checker binds externally pinned controller, live worker, artifact, workload, and reference identities. Numerical kernels and transport remain Contracted; authority is none.",
   statistics: "Ranges show both observations (n=2). Nearest-rank p50 is the smaller observation and p95 the larger, calculated independently for each metric, not one median run. Small-sample p95 is not a stable tail. Request identities are never pooled.",
@@ -244,9 +244,9 @@ window.FERRIC_PERFORMANCE = {
   },
   replicaCohorts: {
     scope: "Separate eight-GPU allocation experiment: eight globally named identical five-token prompts, eight greedy outputs each, 64 total outputs and seven decode intervals per request. All arrivals at zero, cache off, no cancellation, baseline projection/attention, operational runtime on, legacy host-staged reduction and no pruning. One cohort per layout, n=1; not the four-request/eight-output workload and not steady-state serving.",
-    interpretation: "The 1xTP8 and 4xTP2 cohorts pass; 8xTP1 is pending strict comparison, so the full allocation comparison is not complete. The 16-row budget is per instance, so aggregate row capacity changes with replica count. Replication also duplicates loaded weights: four host model payloads at 4xTP2. These one-sample results do not establish a stable tail or an allocation rule for longer workloads.",
-    clockScope: "CLOCK_MONOTONIC_RAW on one verified host, boot and time namespace. Primary rate is 64 divided by common future release to last output, not a sum of instance rates. Admission TTFT excludes the small release-to-admission interval; release-to-first-token includes it. Barrier setup is first spawn to release; whole cohort is first spawn to last reap. Global idle snapshots bracket the cohort, not individual replicas.",
-    limits: "Weight bytes are loaded BF16 payloads only, not host RSS or full GPU usage; they exclude KV, activations, scratch and allocator/page rounding. Retained control frames, domain/nonce/epoch, executable hashes, exact outputs, close/EOF and owned-group reap are checked. This is not execution attestation or a cgroup-wide proof against detached descendants. No serving SLO or protected qualification is granted.",
+    interpretation: "All three serialized cohorts pass exact comparison. The highest observed workload rate is 8xTP1 at 6.588 tok/s, versus 5.734 for 4xTP2 and 1.442 for 1xTP8. Relative to 1xTP8, the samples are 3.977x and 4.570x faster for 4xTP2 and 8xTP1. The 16-row budget is per instance: aggregate capacity is 16, 64 and 128 rows, and host model payloads are duplicated 1x, 4x and 8x. This is an allocation-policy comparison, not a pure kernel speedup or a rule for longer workloads. Setup dominates whole-process time; 4xTP2 has the shortest observed spawn-to-reap window. Each layout has n=1, with no stable-tail claim.",
+    clockScope: "CLOCK_MONOTONIC_RAW on one verified host, boot and time namespace. Primary rate is 64 divided by common future release to last output, not a sum of instance rates. Admission TTFT excludes the small release-to-admission interval; release-to-first-token includes it. Barrier setup is first spawn to all Ready, excluding the one-second release lead; whole cohort is first spawn to last reap. Global idle snapshots bracket the cohort, not individual replicas.",
+    limits: "Weight bytes are loaded BF16 payloads only, not host RSS or full GPU usage; they exclude KV, activations, scratch and allocator/page rounding. Retained control frames, domain/nonce/epoch, executable hashes, exact outputs, close/EOF and owned-group reap are checked. Expectation digests identify canonical JSON, not original file bytes. This is not execution attestation or a cgroup-wide proof against detached descendants. No serving SLO or protected qualification is granted.",
     pins: {
       controllerSha256: "bef12d573a77741cd0a3719d8b5aa65d1630085d98df5ba54b244b2e7a33893b",
       workerSha256: "189b918dcd3f7104767404c636eb08490a3b1714a6f78123ea3a1fa06f21babb",
@@ -258,6 +258,7 @@ window.FERRIC_PERFORMANCE = {
       cohortComparatorSha256: "14f046beffcdf717b7ade89204a416b86cfc1e48614c895cd69f6431bd5ec797",
       traceComparatorSha256: "f1850669bb2ff4860b99ef2b250a7a9f029602700801993afe413772c8496a80",
       batchComparatorSha256: "0885d2f183d7e280db1b5bda6ad16b73388965ab98c786f7fd6d8d61d3ac4416",
+      allocationComparisonSha256: "47d98300668c31db0dd8f91846a4d6a7b361e353c419d7d17a911c7625ec7b32",
     },
     profiles: [
       {
@@ -288,6 +289,20 @@ window.FERRIC_PERFORMANCE = {
         comparisonSha256: "67ef374b3d6419b780a9f7281a9b1696fd9967de4d3ba1efeb09b8d7547ecb7d",
         expectationSha256: "a956f090185d750fbcbafc0efa9b07ab3463d17fc620474b07425524738b40bf",
       },
+      {
+        layout: "8xTP1", replicas: 8, world: 1, repetitions: 1, perInstanceRows: 16, totalRowBudget: 128,
+        outputTokensPerSecond: 6.587693123582852, releaseToLastOutputNs: 9715085205,
+        barrierSetupNs: 121681735042, spawnToReapNs: 162828117278,
+        releaseEpochNs: 695113518642993, maximumLatenessNs: 52300, physicalTokenRows: 96,
+        hostWeightBytes: 131051765760, gpuBaseWeightBytes: 131051765760, gpuTransposedWeightBytes: 0,
+        requestLatencies: [[0, 1877832702, 1877965702, 1.1195885004285715],
+          [1, 1872439565, 1872569965, 1.1129982595714285], [2, 1866916799, 1867059449, 1.1160228717142857],
+          [3, 1865435667, 1865867807, 1.109606644], [4, 1848108396, 1848269916, 1.111447492],
+          [5, 1840283436, 1840427716, 1.1090357577142855], [6, 1846690034, 1846817934, 1.1014082227142856],
+          [7, 1861816752, 1861957042, 1.110052346]],
+        comparisonSha256: "729d282edf92ac0418f9f501afee60143382dab64dbf04537240ba8983257856",
+        expectationSha256: "3959eb6cf6df17be6e42fc7fc6fac3401d1b3cad1870bc53a62b3772aa3192eb",
+      },
     ],
   },
   fixtures: [
@@ -312,5 +327,5 @@ window.FERRIC_PERFORMANCE = {
     waveAttentionOperationalRejectionSha256: "494a2a258ed6df34a5f86c4f216b1032eed5f383757dc3ce6b83f029e171756c",
   },
   provenance: "Historical two-repetition ledger hashes remain preserved above. The six-completed queue ledgers recheck all eleven accepted runs with integrated comparator 0885d2f1 (45 host tests pass), preserving old report contents except checker hash. Both rejected wave profiles remain excluded. Exact baseline-relative and same-controller-control ledger hashes are listed separately. The later numerical image control uses the queue's bc4a controller and 70572 worker, the operational-only profile, and the separately pinned thirteen-root wave image; its accepted comparison is listed but no timing is added to these historical ledgers. Raw receipts remain local. Baseline and pruning use the frozen worker and nine-root artifact; operational and the queue use reviewed 7abce5c runtime with that same artifact. Newer public compiler fixes do not retroactively change binary identities.",
-  publication: "Ferric model kernels, inference changes, raw receipts, and model data remain implementation-local. This publication changes the site only. Generic compiler/runtime changes are public in fe2o3; public main was checked at 1b262ac3dd23ee63067e40587d62a124f40b9fc9 on September 10. Frozen measured binaries are not relabeled as this newer source. No production endpoint, matched vLLM/SGLang baseline, or protected M1 qualification is available.",
+  publication: "Ferric model kernels, inference changes, raw receipts, and model data remain implementation-local. This publication changes the site only. Generic compiler/runtime changes are public in fe2o3; public main was checked at 7528e7345cef0158d7034cdbae23011e3c6fb5d2 on September 10. The completed combined host gate is on earlier 1b262; frozen measured binaries are not relabeled as either newer source. No production endpoint, matched vLLM/SGLang baseline, or protected M1 qualification is available.",
 };
