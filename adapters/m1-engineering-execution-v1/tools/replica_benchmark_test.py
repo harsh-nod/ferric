@@ -87,7 +87,8 @@ class ReplicaTests(unittest.TestCase):
         return {"ready_timeout_ns": 1_000_000_000, "run_timeout_ns": 1_000_000_000,
                 "start_lead_ns": 50_000_000, "max_lateness_ns": 100_000_000}
 
-    def run_fixture(self, mode="ok", layout="8xTP1", memory=None, failed_post=False):
+    def run_fixture(self, mode="ok", layout="8xTP1", memory=None, failed_post=False,
+                    nonce=None, expected_domain=None):
         directory = tempfile.TemporaryDirectory(prefix="frc-")
         self.addCleanup(directory.cleanup)
         parent = Path(directory.name)
@@ -109,7 +110,8 @@ class ReplicaTests(unittest.TestCase):
             result = launch.run(self.plan(layout), output, controller, launch.sha(controller.read_bytes()),
                                 controller, launch.sha(controller.read_bytes()), parent, parent, ["test-only-snapshot"],
                                 self.settings(), 32 * 1024**3, snapshot_fn=snapshot,
-                                memory_raw=b"MemAvailable: 2000000000 kB\n" if memory is None else memory)
+                                memory_raw=b"MemAvailable: 2000000000 kB\n" if memory is None else memory,
+                                nonce=nonce, expected_domain=expected_domain)
         for replica in result.get("control", {}).get("replicas", []):
             with self.assertRaises(ChildProcessError):
                 os.waitpid(replica["pid"], os.WNOHANG)
@@ -144,6 +146,24 @@ class ReplicaTests(unittest.TestCase):
         for replica in control["replicas"]:
             self.assertEqual(replica["started"]["epoch_ns"], control["epoch_ns"])
             self.assertGreaterEqual(replica["eof_ns"], replica["closed"]["closed_ns"])
+
+    def test_preselected_nonce_and_clock_domain_bind_before_launch(self):
+        nonce = "b" * 64
+        result, calls = self.run_fixture(layout="1xTP8", nonce=nonce, expected_domain=launch.domain())
+        self.assertEqual(result["status"], "unvalidated-complete", result)
+        self.assertEqual(result["control"]["nonce"], nonce)
+        self.assertEqual(calls, ["before", "after"])
+        for bad in ("", "0" * 64, "A" * 64, "b" * 63, True, 42):
+            with self.subTest(nonce=bad), mock.patch.object(launch.subprocess, "Popen") as spawn:
+                with self.assertRaises(ValueError):
+                    self.run_fixture(nonce=bad)
+                spawn.assert_not_called()
+        changed = launch.domain()
+        changed["time_namespace_ino"] += 1
+        with mock.patch.object(launch.subprocess, "Popen") as spawn:
+            with self.assertRaises(ValueError):
+                self.run_fixture(nonce=nonce, expected_domain=changed)
+            spawn.assert_not_called()
 
     def test_ready_run_close_failures_abort_and_reap_entire_cohort(self):
         for mode in ("early_exit", "no_ready", "wrong_nonce", "duplicate_ready", "oversized",

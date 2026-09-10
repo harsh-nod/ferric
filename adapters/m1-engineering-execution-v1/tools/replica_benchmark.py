@@ -335,11 +335,12 @@ def peer_pid(stream):
 
 
 class Cohort:
-    def __init__(self, cohort_plan, output, settings):
+    def __init__(self, cohort_plan, output, settings, nonce=None):
         self.plan, self.output, self.settings = cohort_plan, output, settings
         self.socket_path = output / "control.sock"
         require(len(os.fsencode(self.socket_path)) <= 100, "Unix socket path exceeds bound")
-        self.domain, self.nonce = domain(), os.urandom(32).hex()
+        self.domain = domain()
+        self.nonce = reference.hash_value(os.urandom(32).hex() if nonce is None else nonce, "cohort nonce")
         self.children, self.states, self.streams = [], {}, {}
         self.selector = selectors.DefaultSelector()
         self.epoch, self.first_spawn, self.all_ready = None, None, None
@@ -529,7 +530,8 @@ class Cohort:
 
 
 def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, source, artifact,
-        snapshot_command, settings, reserve, snapshot_fn=snapshot, memory_raw=None):
+        snapshot_command, settings, reserve, snapshot_fn=snapshot, memory_raw=None,
+        nonce=None, expected_domain=None):
     global _interrupted
     metadata = output.lstat()
     require(output.is_absolute() and stat.S_ISDIR(metadata.st_mode) and metadata.st_mode & 0o777 == 0o700
@@ -540,6 +542,10 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
               "worker_sha256": worker_sha, "snapshot_command": snapshot_command,
               "workload_sha256": cohort_plan["workload_sha256"], "error": None,
               "clock_domain": domain(), "gpu_snapshot_intervals": []}
+    if nonce is not None:
+        reference.hash_value(nonce, "preflight cohort nonce")
+    if expected_domain is not None:
+        require(encoded(expected_domain) == encoded(result["clock_domain"]), "preflight clock domain differs")
 
     def take_snapshot(phase):
         receipt = {"phase": phase, "start_ns": now_ns(), "end_ns": None, "completed": False}
@@ -574,7 +580,7 @@ def run(cohort_plan, output, controller, controller_sha, worker, worker_sha, sou
         pre_taken = True
         take_snapshot("before")
         check_interrupted()
-        cohort = Cohort(cohort_plan, output, settings)
+        cohort = Cohort(cohort_plan, output, settings, nonce)
         require(cohort.domain == result["clock_domain"], "cohort clock domain changed before launch")
         cohort.launch(frozen_controller, controller_fd, frozen_worker, source, artifact)
         cohort.supervise()
@@ -637,6 +643,8 @@ def main():
         parser.add_argument("--" + key, type=Path)
     parser.add_argument("--controller-sha256")
     parser.add_argument("--worker-sha256")
+    parser.add_argument("--nonce", help="Preselected nonzero lowercase 64-hex cohort identity")
+    parser.add_argument("--clock-domain", type=Path, help="Exact preflight RAW clock-domain JSON")
     parser.add_argument("--ready-timeout-seconds", type=int, default=900)
     parser.add_argument("--run-timeout-seconds", type=int, default=1800)
     parser.add_argument("--start-lead-ms", type=int, default=250)
@@ -658,9 +666,10 @@ def main():
                 "start_lead_ns": integer(args.start_lead_ms, 10, 10_000) * 1_000_000,
                 "max_lateness_ns": integer(args.max_lateness_ms, 1, 1000) * 1_000_000}
     command = reference.json_value(reference.read_bounded(args.snapshot_command, 16_384))
+    expected_domain = None if args.clock_domain is None else reference.json_value(reference.read_bounded(args.clock_domain, 4096))
     result = run(cohort_plan, args.output, args.controller, args.controller_sha256,
                  args.worker, args.worker_sha256, args.source, args.artifact, command,
-                 settings, args.host_memory_reserve_bytes)
+                 settings, args.host_memory_reserve_bytes, nonce=args.nonce, expected_domain=expected_domain)
     return 0 if result["status"] == "unvalidated-complete" else 1
 
 

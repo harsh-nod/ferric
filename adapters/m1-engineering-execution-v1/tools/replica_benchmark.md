@@ -84,6 +84,12 @@ by `--controller-options`; controlled assignment, cache, workload, and collectiv
 flags cannot be overridden. Output directories must be new absolute paths;
 the Unix socket path must fit the explicit 100-byte bound.
 
+For measured runs, prepare the external verifier expectation before launch and
+pass its fresh nonzero 64-hex identity with `--nonce` and exact RAW domain JSON
+with `--clock-domain`. The launcher rejects a changed domain or malformed nonce
+before opening workers or taking GPU snapshots. Omitting these arguments keeps
+the exploratory launcher behavior; it does not create a qualified result.
+
 Controller and worker executables are hashed, copied into private
 `launch-artifacts`, made read/execute-only, rehashed, and held open. The
 controller is executed through its held descriptor; its worker path points to
