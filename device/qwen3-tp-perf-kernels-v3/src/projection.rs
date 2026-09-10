@@ -245,7 +245,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         || weights_kn.len() != n * 4096
         || output.len() < rows * n
         || output.len() > 16 * n
-        || thread::launch_extent_1d() != (n / 16) * 64
     {
         fe2o3_device::trap();
     }
@@ -274,6 +273,9 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    if thread::launch_extent_1d() != (n / 16) * 64 {
+        fe2o3_device::trap();
+    }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
@@ -355,7 +357,6 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
         || weights_kn.len() != 4096 * k
         || output.len() < rows * 4096
         || output.len() > 16 * 4096
-        || thread::launch_extent_1d() != 256 * 64
     {
         fe2o3_device::trap();
     }
@@ -384,6 +385,9 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
         step += 1;
     }
     let values = accumulator.into_values();
+    if thread::launch_extent_1d() != 256 * 64 {
+        fe2o3_device::trap();
+    }
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };

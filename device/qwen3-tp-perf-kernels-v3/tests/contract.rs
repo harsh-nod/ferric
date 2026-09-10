@@ -34,10 +34,10 @@ fn exact_six_new_typed_abi_widths() {
     let mut roots = Vec::new();
     for source in [PROJECTION, ATTENTION, COLLECTIVE] {
         for item in syn::parse_file(source).unwrap().items {
-            if let Item::Fn(function) = item {
-                if function.attrs.iter().any(|a| a.path().is_ident("kernel")) {
-                    roots.push(function);
-                }
+            if let Item::Fn(function) = item
+                && function.attrs.iter().any(|a| a.path().is_ident("kernel"))
+            {
+                roots.push(function);
             }
         }
     }
@@ -167,10 +167,10 @@ fn cooperative_dense_dot_handles_all_supported_reduction_widths() {
 #[test]
 fn attention_cooperative_128_dimensions_do_not_drop_the_second_half() {
     let mut partials = [0_f32; 64];
-    for lane in 0..64 {
+    for (lane, partial) in partials.iter_mut().enumerate() {
         let product_0 = (lane as f32 - 7.0) * 0.0625;
         let product_1 = (lane as f32 + 64.0) * -0.03125;
-        partials[lane] = product_0 + product_1;
+        *partial = product_0 + product_1;
     }
     let result = wave_sum(partials);
     assert!(result.iter().all(|value| *value == -93.0));
