@@ -35,10 +35,25 @@ completed, a GPU copy initializes every other rank's hidden state. Each layer
 then performs two rank-ordered FP32 reductions, adds its local residual once,
 and rounds to BF16 once. Hidden IDs swap only after all ranks complete.
 
-This initial worker serializes individual rank dispatches and retains full
-group currentness checks. Dispatch sequences, queue rollover, operational
-currentness and cached admission are unsupported here and must be explicitly
-rejected by the CLI, not silently ignored. It makes no overlap or speedup claim.
+This worker serializes rank dispatches. Explicit parent runtime options can
+configure immutable admission caching and operational currentness exactly once
+before loading artifacts. Same-rank sequences contain 1..16 prevalidated
+dispatches with a checked aggregate timeout of at most 600000 ms. Full all-group
+checks bracket every sequence; operational currentness and observed idle checks
+cover every participant before and after each synchronous kernel. Mapping,
+host access and teardown retain full checks. Sequence failures poison all ranks
+without returning partial success. Queue rollover remains unsupported and must
+be rejected, not silently ignored. No rank overlap or speedup is claimed.
+
+The producer qualification executable accepts optional final
+`--cached-sequences`. This enables cache/currentness options and repeats each
+fixture operation as a two-command sequence before checking exact GPU-produced
+BF16 peer copies, FP32 peer reductions, active extents and guards. Repetition is
+an explicit native API qualification fixture, not a performance benchmark.
+An independent optional final `--wide32` selects the exact v5 projection/v6
+peer symbols and rows 17, 31 and 32 with 32-row guarded capacities. It requires
+separately admitted/digest-bound wide images; it does not relax the v4 image's
+16-row limits. Both options can be combined, and duplicate options reject.
 
 Evidence must bind both artifacts, the child executable, source and environment
 identities, the exact ordered device roster, and the shared child PID. The

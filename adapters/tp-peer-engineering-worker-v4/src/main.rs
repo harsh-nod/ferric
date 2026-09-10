@@ -4,14 +4,37 @@
 #[allow(dead_code)] // The same module is also compiled by the safe parent.
 mod wire;
 
-use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1};
+use fe2o3_kfd::engineering_wire::{CommandV1, PointerFixupV1, ResponseV1};
 use fe2o3_kfd::{
-    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerGroupV1 as Group,
-    Gfx950EngineeringPeerKernelV1 as Kernel,
+    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerDispatchV1 as Dispatch,
+    Gfx950EngineeringPeerGroupV1 as Group, Gfx950EngineeringPeerKernelV1 as Kernel,
+    Gfx950EngineeringPeerPointerV1 as Pointer,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
 type Result<T> = std::result::Result<T, String>;
+
+fn resolve_pointers(
+    buffers: &BTreeMap<u64, Buffer>,
+    pointers: &[PointerFixupV1],
+) -> Result<Vec<Pointer>> {
+    pointers
+        .iter()
+        .map(|pointer| {
+            buffers
+                .get(&pointer.buffer)
+                .map(|buffer| {
+                    buffer.pointer(
+                        pointer.kernarg_offset,
+                        pointer.buffer_offset,
+                        pointer.extent_bytes,
+                        pointer.access,
+                    )
+                })
+                .ok_or_else(|| "peer dispatch references an unknown buffer".into())
+        })
+        .collect()
+}
 
 struct Worker {
     group: Group,
@@ -46,6 +69,15 @@ impl Worker {
             .ok_or("request identity exhausted")?;
         let rank = request.rank as usize;
         let response = match request.command {
+            CommandV1::ConfigurePerformance {
+                cache_kernel_admission,
+                operational_currentness,
+                profile,
+            } if rank == 0 && !profile => {
+                self.group
+                    .configure_performance(cache_kernel_admission, operational_currentness)?;
+                ResponseV1::PerformanceConfigured
+            }
             CommandV1::Allocate { bytes } => {
                 let peers = (0..self.world)
                     .filter(|&peer| request.peer_readable && peer != rank)
@@ -110,22 +142,7 @@ impl Worker {
                     .get(&kernel)
                     .filter(|kernel| kernel.rank() == rank)
                     .ok_or("peer kernel rank or identity mismatch")?;
-                let pointers = pointers
-                    .iter()
-                    .map(|pointer| {
-                        self.buffers
-                            .get(&pointer.buffer)
-                            .map(|buffer| {
-                                buffer.pointer(
-                                    pointer.kernarg_offset,
-                                    pointer.buffer_offset,
-                                    pointer.extent_bytes,
-                                    pointer.access,
-                                )
-                            })
-                            .ok_or_else(|| "peer dispatch references an unknown buffer".into())
-                    })
-                    .collect::<Result<Vec<_>>>()?;
+                let pointers = resolve_pointers(&self.buffers, &pointers)?;
                 // SAFETY: the explicit CLI opt-in authorizes unauthenticated code.
                 // This single-threaded disposable process owns the entire group;
                 // the runtime checks each token, extent, access and completion.
@@ -134,6 +151,43 @@ impl Worker {
                         .dispatch_unchecked(kernel, payload, workgroup, grid, &pointers, timeout_ms)
                 }?;
                 ResponseV1::Dispatched { elapsed_ns }
+            }
+            CommandV1::DispatchSequence { dispatches } => {
+                let mut offset = 0_usize;
+                let commands = dispatches
+                    .into_iter()
+                    .map(|dispatch| {
+                        let kernel = self
+                            .kernels
+                            .get(&dispatch.kernel)
+                            .filter(|kernel| kernel.rank() == rank)
+                            .ok_or("peer sequence kernel rank or identity mismatch")?;
+                        let end = offset
+                            .checked_add(dispatch.payload_bytes as usize)
+                            .ok_or("peer sequence payload overflow")?;
+                        let bytes = payload
+                            .get(offset..end)
+                            .ok_or("peer sequence payload truncated")?
+                            .to_vec();
+                        offset = end;
+                        Ok(Dispatch {
+                            kernel,
+                            bytes,
+                            workgroup: dispatch.workgroup,
+                            grid: dispatch.grid,
+                            pointers: resolve_pointers(&self.buffers, &dispatch.pointers)?,
+                            timeout_ms: dispatch.timeout_ms,
+                        })
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                if offset != payload.len() {
+                    return Err("peer sequence payload trailing bytes".into());
+                }
+                // SAFETY: the mandatory process opt-in covers each retained kernel;
+                // the group prevalidates the whole bounded sequence before publishing
+                // and observes every completion with all participant owners retained.
+                let elapsed_ns = unsafe { self.group.dispatch_sequence_unchecked(commands) }?;
+                ResponseV1::DispatchSequenceCompleted { elapsed_ns }
             }
             CommandV1::Close if rank == 0 => {
                 self.group.close()?;

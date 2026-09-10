@@ -2,19 +2,43 @@
 
 use fe2o3_kfd::engineering_wire::{BufferAccessV1 as Access, KernelMetadataV1};
 use fe2o3_kfd::{
-    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerGroupV1 as Group,
-    Gfx950EngineeringPeerKernelV1 as Kernel,
+    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerDispatchV1 as Dispatch,
+    Gfx950EngineeringPeerGroupV1 as Group, Gfx950EngineeringPeerKernelV1 as Kernel,
 };
 use sha2::{Digest, Sha256};
 use std::io::Read;
 
 type Result<T> = std::result::Result<T, String>;
 const WIDTH: usize = 4096;
-const ROWS: usize = 16;
 const GUARD: usize = 64;
 const COPY: &str = "ferric_qwen3_tp_peer_copy_bf16_v4";
 const REDUCE: &str = "ferric_qwen3_tp_peer_ordered_residual_bf16_v4";
 const PARTIAL: &str = "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2";
+const COPY32: &str = "ferric_qwen3_tp_batch32_peer_copy_bf16_v6";
+const REDUCE32: &str = "ferric_qwen3_tp_batch32_peer_ordered_residual_bf16_v6";
+const PARTIAL32: &str = "ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5";
+
+#[derive(Default)]
+struct Options {
+    cached_sequences: bool,
+    wide32: bool,
+}
+
+fn parse_options(args: &mut Vec<String>) -> Result<Options> {
+    let mut options = Options::default();
+    loop {
+        let flag = match args.last().map(String::as_str) {
+            Some("--cached-sequences") => &mut options.cached_sequences,
+            Some("--wide32") => &mut options.wide32,
+            _ => return Ok(options),
+        };
+        if *flag {
+            return Err("duplicate producer fixture option".into());
+        }
+        *flag = true;
+        args.pop();
+    }
+}
 
 fn artifact(path: &str, expected: &str) -> Result<(Vec<u8>, [u8; 32])> {
     if expected.len() != 64 || !expected.is_ascii() {
@@ -93,6 +117,7 @@ fn dispatch(
     slices: &[(Buffer, usize, usize, Access)],
     scalars: &[u32],
     groups: u32,
+    cached_sequences: bool,
 ) -> Result<()> {
     let mut payload = vec![0; kernel.metadata().kernarg_bytes as usize];
     let mut pointers = Vec::new();
@@ -108,6 +133,26 @@ fn dispatch(
     for (index, value) in scalars.iter().enumerate() {
         let offset = slices.len() * 16 + index * 4;
         payload[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    if cached_sequences {
+        let commands = (0..2)
+            .map(|_| Dispatch {
+                kernel,
+                bytes: payload.clone(),
+                workgroup: [64, 1, 1],
+                grid: [groups * 64, 1, 1],
+                pointers: pointers.clone(),
+                timeout_ms: 60_000,
+            })
+            .collect();
+        // SAFETY: both commands repeat the same digest-bound checked fixture;
+        // no inputs alias its output, and the retained group observes each
+        // completion before the next write and before any peer consumes it.
+        let elapsed = unsafe { group.dispatch_sequence_unchecked(commands) }?;
+        if elapsed.len() != 2 {
+            return Err("peer fixture sequence completion count".into());
+        }
+        return Ok(());
     }
     // SAFETY: the operator opts into exact digest-bound fixture code. Every
     // binding uses a retained typed group token, declared extent and access;
@@ -187,7 +232,9 @@ fn check_buffer(
 }
 
 fn run() -> Result<()> {
-    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let mut args = std::env::args().skip(1).collect::<Vec<_>>();
+    let options = parse_options(&mut args)?;
+    let cached_sequences = options.cached_sequences;
     if args.len() < 7 || args[0] != "--allow-unauthenticated-machine-code" {
         return Err("usage: probe --allow-unauthenticated-machine-code BASE_HSACO BASE_SHA PEER_HSACO PEER_SHA UID UID [six more]".into());
     }
@@ -200,11 +247,19 @@ fn run() -> Result<()> {
     }
     let world = ids.len();
     let k = WIDTH / world;
+    let (row_capacity, phases, copy_symbol, reduce_symbol, partial_symbol) = if options.wide32 {
+        (32, [17_usize, 31, 32], COPY32, REDUCE32, PARTIAL32)
+    } else {
+        (16, [1_usize, 3, 16], COPY, REDUCE, PARTIAL)
+    };
     let (base, base_hash) = artifact(&args[1], &args[2])?;
     let (peer, peer_hash) = artifact(&args[3], &args[4])?;
     // SAFETY: this explicitly opted-in, single-threaded disposable fixture owns
     // all GPU activity in this process. Any error returns directly to exit(1).
     let mut group = unsafe { Group::open_unchecked(&ids) }?;
+    if cached_sequences {
+        group.configure_performance(true, true)?;
+    }
     let mut copies = Vec::new();
     let mut reductions = Vec::new();
     let mut projections = Vec::new();
@@ -214,16 +269,23 @@ fn run() -> Result<()> {
     let mut hidden = Vec::new();
     let mut output = Vec::new();
     for rank in 0..world {
-        let copy = group.load_kernel(rank, peer.clone(), peer_hash, COPY.into())?;
-        check_metadata(copy.metadata(), COPY, peer_hash, 2, 1)?;
+        let copy = group.load_kernel(rank, peer.clone(), peer_hash, copy_symbol.into())?;
+        check_metadata(copy.metadata(), copy_symbol, peer_hash, 2, 1)?;
         copies.push(copy);
-        let reduce = group.load_kernel(rank, peer.clone(), peer_hash, REDUCE.into())?;
-        check_metadata(reduce.metadata(), REDUCE, peer_hash, 10, 2)?;
+        let reduce = group.load_kernel(rank, peer.clone(), peer_hash, reduce_symbol.into())?;
+        check_metadata(reduce.metadata(), reduce_symbol, peer_hash, 10, 2)?;
         reductions.push(reduce);
-        let projection = group.load_kernel(rank, base.clone(), base_hash, PARTIAL.into())?;
-        check_metadata(projection.metadata(), PARTIAL, base_hash, 3, 5)?;
+        let projection = group.load_kernel(rank, base.clone(), base_hash, partial_symbol.into())?;
+        check_metadata(projection.metadata(), partial_symbol, base_hash, 3, 5)?;
         projections.push(projection);
-        inputs.push(allocation(&mut group, rank, world, ROWS * k, 2, false)?);
+        inputs.push(allocation(
+            &mut group,
+            rank,
+            world,
+            row_capacity * k,
+            2,
+            false,
+        )?);
         let weight = allocation(&mut group, rank, world, WIDTH * k, 2, false)?;
         let mut values = guarded(WIDTH * k, 2);
         values[GUARD..GUARD + WIDTH * k * 2].fill(0);
@@ -234,25 +296,50 @@ fn run() -> Result<()> {
         }
         upload(&mut group, weight, &values)?;
         weights.push(weight);
-        partials.push(allocation(&mut group, rank, world, ROWS * WIDTH, 4, true)?);
-        hidden.push(allocation(&mut group, rank, world, ROWS * WIDTH, 2, true)?);
-        output.push(allocation(&mut group, rank, world, ROWS * WIDTH, 2, false)?);
+        partials.push(allocation(
+            &mut group,
+            rank,
+            world,
+            row_capacity * WIDTH,
+            4,
+            true,
+        )?);
+        hidden.push(allocation(
+            &mut group,
+            rank,
+            world,
+            row_capacity * WIDTH,
+            2,
+            true,
+        )?);
+        output.push(allocation(
+            &mut group,
+            rank,
+            world,
+            row_capacity * WIDTH,
+            2,
+            false,
+        )?);
     }
-    let seed = allocation(&mut group, 0, world, ROWS * WIDTH, 2, false)?;
+    let seed = allocation(&mut group, 0, world, row_capacity * WIDTH, 2, false)?;
     let mut observations = Vec::new();
-    for (phase, rows) in [1_usize, 3, 16].into_iter().enumerate() {
+    for (phase, rows) in phases.into_iter().enumerate() {
         eprintln!("peer producer fixture phase {phase} rows {rows} world {world}");
         let scale = (phase + 1) as f32;
-        let mut source = guarded(ROWS * WIDTH, 2);
+        let mut source = guarded(row_capacity * WIDTH, 2);
         write_bf16(&mut source, rows * WIDTH, scale);
         upload(&mut group, seed, &source)?;
         for rank in 0..world {
-            let mut input = guarded(ROWS * k, 2);
+            let mut input = guarded(row_capacity * k, 2);
             write_bf16(&mut input, rows * k, scale);
             upload(&mut group, inputs[rank], &input)?;
-            upload(&mut group, partials[rank], &guarded(ROWS * WIDTH, 4))?;
-            upload(&mut group, hidden[rank], &guarded(ROWS * WIDTH, 2))?;
-            upload(&mut group, output[rank], &guarded(ROWS * WIDTH, 2))?;
+            upload(
+                &mut group,
+                partials[rank],
+                &guarded(row_capacity * WIDTH, 4),
+            )?;
+            upload(&mut group, hidden[rank], &guarded(row_capacity * WIDTH, 2))?;
+            upload(&mut group, output[rank], &guarded(row_capacity * WIDTH, 2))?;
         }
         // GPU-written BF16 source is consumed on every peer after its completion.
         dispatch(
@@ -264,6 +351,7 @@ fn run() -> Result<()> {
             ],
             &[rows as u32],
             (rows * 64) as u32,
+            cached_sequences,
         )?;
         for rank in 1..world {
             dispatch(
@@ -275,6 +363,7 @@ fn run() -> Result<()> {
                 ],
                 &[rows as u32],
                 (rows * 64) as u32,
+                cached_sequences,
             )?;
         }
         // Genuine FP32 output allocations are written by the baseline GEMM;
@@ -289,7 +378,8 @@ fn run() -> Result<()> {
                     (partials[rank], rows * WIDTH, 4, Access::Write),
                 ],
                 &[rows as u32, WIDTH as u32, k as u32, world as u32, 1],
-                (WIDTH / 16) as u32,
+                (rows.div_ceil(16) * WIDTH / 16) as u32,
+                cached_sequences,
             )?;
         }
         for rank in 0..world {
@@ -312,13 +402,14 @@ fn run() -> Result<()> {
                 &arguments,
                 &[rows as u32, world as u32],
                 (rows * 64) as u32,
+                cached_sequences,
             )?;
             let sum = (world * (world + 1) / 2 + 1) as f32 * scale;
             let output_bits = (sum.to_bits() >> 16) as u16;
             check_buffer(
                 &mut group,
                 output[rank],
-                ROWS * WIDTH,
+                row_capacity * WIDTH,
                 rows * WIDTH,
                 2,
                 &output_bits.to_le_bytes(),
@@ -327,7 +418,7 @@ fn run() -> Result<()> {
             check_buffer(
                 &mut group,
                 hidden[rank],
-                ROWS * WIDTH,
+                row_capacity * WIDTH,
                 rows * WIDTH,
                 2,
                 &input_bits.to_le_bytes(),
@@ -336,7 +427,7 @@ fn run() -> Result<()> {
             check_buffer(
                 &mut group,
                 partials[rank],
-                ROWS * WIDTH,
+                row_capacity * WIDTH,
                 rows * WIDTH,
                 4,
                 &partial.to_le_bytes(),
@@ -347,7 +438,7 @@ fn run() -> Result<()> {
         check_buffer(
             &mut group,
             seed,
-            ROWS * WIDTH,
+            row_capacity * WIDTH,
             rows * WIDTH,
             2,
             &((scale.to_bits() >> 16) as u16).to_le_bytes(),
@@ -356,9 +447,11 @@ fn run() -> Result<()> {
     group.close()?;
     println!(
         "{}",
-        serde_json::json!({"profile":"gpu-producer-peer-consumer-v4", "authority":"none",
+        serde_json::json!({"profile":if options.wide32 {"gpu-producer-peer-consumer-v6"} else {"gpu-producer-peer-consumer-v4"}, "authority":"none",
         "pid":std::process::id(), "device_unique_ids":ids, "base_sha256":args[2], "peer_sha256":args[4],
-        "observations":observations,"gpu_bf16_producer_to_peer_reader":true,
+        "observations":observations,"cached_sequences":cached_sequences,"row_capacity":row_capacity,
+        "sequence_length":if cached_sequences {2} else {1},
+        "gpu_bf16_producer_to_peer_reader":true,
         "gpu_f32_projection_to_peer_reduction":true,"all_guards_and_active_outputs_exact":true,
         "all_peer_unmaps_before_owner_free":true,"all_closed":true})
     );
@@ -369,5 +462,34 @@ fn main() {
     if let Err(error) = run() {
         eprintln!("peer producer fixture failed: {error}");
         std::process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn explicit_options_preserve_roster_and_reject_duplicates() {
+        for flags in [
+            vec![],
+            vec!["--wide32"],
+            vec!["--cached-sequences"],
+            vec!["--cached-sequences", "--wide32"],
+            vec!["--wide32", "--cached-sequences"],
+        ] {
+            let mut args = vec!["1".into(), "2".into()];
+            args.extend(flags.iter().map(|flag| (*flag).to_string()));
+            let options = parse_options(&mut args).unwrap();
+            assert_eq!(options.wide32, flags.contains(&"--wide32"));
+            assert_eq!(
+                options.cached_sequences,
+                flags.contains(&"--cached-sequences")
+            );
+            assert_eq!(args, ["1", "2"]);
+        }
+        for flag in ["--wide32", "--cached-sequences"] {
+            assert!(parse_options(&mut vec![flag.into(), flag.into()]).is_err());
+        }
     }
 }
