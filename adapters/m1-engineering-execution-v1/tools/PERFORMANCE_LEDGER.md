@@ -156,6 +156,14 @@ chunk sizes, cache TTL, batch budget, arrival policy, and warmup policy must
 match. Component hashes intentionally may differ between optimization variants.
 Use separate ledgers for TP1, TP2, TP8, or cache-on/cache-off experiments.
 
+The output's `ledger_sha256` field identifies the `performance_ledger.py`
+generator source bytes, not the generated report or canonical report content.
+`comparator_sha256` identifies comparator source and `manifest_sha256` identifies
+the input manifest bytes. Separately hash the serialized output file to bind a
+particular ledger result; keep that report-file digest distinct from these
+tool/input digests. The generator source digest is expected to repeat across
+different reports produced by the same script.
+
 ## Metric Definitions
 
 - TTFT: first committed output minus actual admission, per request identity.
