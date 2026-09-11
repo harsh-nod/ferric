@@ -383,7 +383,7 @@ python3 -I -B \
 ```
 
 The command admits only public fe2o3 main revision
-`5110577a6d8c45390dfb353386cde748efd5d76c`, verifies both aggregate Cargo
+`6f6a67bb2f6de70a1c5533bbcde1b09449c37359`, verifies both aggregate Cargo
 pins and the lockfile, reconstructs the exact protected-release environment,
 and invokes `cargo-fe2o3 authority release build --locked`. It fails before
 spawning Cargo unless the fixed root-owned compiler client profile at
