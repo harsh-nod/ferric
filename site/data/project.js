@@ -1148,7 +1148,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Launch the comparison baselines",
         detail:
-          "Cached baseline image identities are recorded for this sprint, but launches await explicit approval. Run identical canonical Qwen/tokenizer inputs, raw greedy prompts, output lengths and client timing boundaries before comparing Ferric with vLLM or SGLang. The earlier Docker/native-install access observations are historical, not the current deployment decision. No matched baseline result or competitive claim exists.",
+          "Cached baseline image identities are recorded for this sprint, but launches await explicit approval. Run identical canonical Qwen/tokenizer inputs, raw greedy prompts, output lengths and client timing boundaries before comparing Ferric with vLLM or SGLang. An earlier checkpoint recorded unavailable Docker permission and no native framework installs; those observations are historical, not the current deployment decision. No matched baseline result or competitive claim exists.",
       },
       {
         name: "Broaden paged batching validation",
