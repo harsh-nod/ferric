@@ -35,14 +35,14 @@ alone schedules GPU probes on mi350.
 nine-case roster covers append and attention at rows 1/16/17/32, page counts
 513/8192/16384, physical pages 511/512 and the last page, the final physical
 slot, reverse page placement, all active outputs and untouched tails/guards.
-Append uses a final logical position8191; only the one-row attention case
-traverses the full logical8192 context. Other attention cases use at most17
+Append uses a final logical position 8191; only the one-row attention case
+traverses the full logical 8192 context. Other attention cases use at most 17
 causal tokens, with future table entries and cache data intentionally invalid
 but unreachable. Invalid required accesses and nonfinite traps are host-only.
 
-The largest live device cache pair is1GiB; inputs/output/guards are additional.
+The largest live device cache pair is 1 GiB; inputs/output/guards are additional.
 Full-byte readback and reference custody can transiently use several GiB of
-host memory, so the harness requires at least12GiB available host headroom.
+host memory, so the harness requires at least 12 GiB available host headroom.
 Root must independently check actual GPU memory headroom, global idleness and
 owned-process teardown. No deliberate GPU trap or performance claim is made.
 
