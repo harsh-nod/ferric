@@ -204,6 +204,8 @@ def paired_bootstrap(pairs, samples, seed):
 
 def analyze(frozen, manifest, root, plan_sha):
     frozen = plan(frozen)
+    require(hashlib.sha256(Path(client.__file__).read_bytes()).hexdigest() == frozen['client_sha256'],
+            'local replay client implementation differs from frozen plan')
     fields(manifest, {'schema', 'plan_sha256', 'runs'}, 'run manifest')
     require(manifest['schema'] == 'FerricCompetitiveSeriesRunsV1'
             and manifest['plan_sha256'] == plan_sha, 'run manifest plan mismatch')
@@ -212,6 +214,7 @@ def analyze(frozen, manifest, root, plan_sha):
     expected_order = [(engine, index) for index, order in enumerate(frozen['engine_order']) for engine in order]
     seen_starts, seen_hashes = set(), set()
     results, reasons = {}, []
+    invalid_comparison = []
     total_bytes = 0
     previous_run_end = 0
     observed_prompt_counts = {}
@@ -251,7 +254,9 @@ def analyze(frozen, manifest, root, plan_sha):
         seen_starts.add(instance)
         seen_hashes.add(entry['start_evidence']['sha256'])
         if not observations(data['observations']):
-            reasons.append(f'{engine}/{start_index}: external fault, gate or drift check failed')
+            reason = f'{engine}/{start_index}: external fault, gate or drift check failed'
+            reasons.append(reason)
+            invalid_comparison.append(reason)
         run = data['run']
         require(run.get('schema') == 'FerricCompetitiveStreamingRunV2' and run.get('authority') == 'none'
                 and run.get('qualification') is False and run.get('engine') == engine,
@@ -270,8 +275,11 @@ def analyze(frozen, manifest, root, plan_sha):
                                    2**64 - 1, 'run wall completion')
         require(run.get('ttft_semantics') == 'intended-arrival-to-first-nonempty-text-chunk'
                 and run.get('e2e_semantics') == 'intended-arrival-to-DONE'
+                and run.get('deadline_semantics') == 'soft-absolute-checks-with-per-read-socket-timeout'
                 and run.get('tpot_semantics') == 'first-to-last-text-chunk-divided-by-usage-tokens-minus-one'
                 and run.get('token_itl_available') is False, 'timing semantics drifted')
+        require(type(run.get('response_budget_exhausted')) is bool, 'missing response-budget status')
+        client_budget_fault = run['response_budget_exhausted']
         require(run.get('window_semantics') == 'finite-arrival-cohort-including-drain-not-steady-state',
                 'window semantics drifted')
         values = client.workload(data['workload'])
@@ -287,6 +295,7 @@ def analyze(frozen, manifest, root, plan_sha):
                 require(record['started_ns'] >= previous_end, 'overlapping or reordered windows')
                 goodput, ok = window(record, index, values, settings, offsets)
                 for request in record['requests']:
+                    client_budget_fault = client_budget_fault or request.get('failure_kind') == 'client_budget'
                     if request['success']:
                         count = request['usage']['prompt_tokens']
                         expected = observed_prompt_counts.setdefault(request['id'], count)
@@ -297,6 +306,10 @@ def analyze(frozen, manifest, root, plan_sha):
                     goodputs.append(goodput)
         if not all_ok:
             reasons.append(f'{engine}/{start_index}: request failures retained at zero window goodput')
+        if client_budget_fault:
+            reason = f'{engine}/{start_index}: client response-evidence budget exhausted; not engine performance'
+            reasons.append(reason)
+            invalid_comparison.append(reason)
         mean = statistics.mean(goodputs)
         cv = statistics.pstdev(goodputs) / mean if mean > 0 else None
         if cv is None or cv > .05:
@@ -310,12 +323,17 @@ def analyze(frozen, manifest, root, plan_sha):
     if len({tuple(order) for order in frozen['engine_order']}) < 2:
         reasons.append('engine order did not rotate')
     # Cohort windows and text-chunk TPOT cannot establish the release steady-state/ITL gates.
-    method_failures = ['finite arrival cohorts do not establish steady-state windows or token-level ITL SLOs']
+    method_failures = ['finite arrival cohorts do not establish steady-state windows or token-level ITL SLOs',
+                       'soft HTTP read deadlines do not establish hard timeout qualification']
     return {'schema': 'FerricCompetitivePairedSeriesReportV1', 'authority': 'none',
             'qualification': False, 'framework_win_claim': False, 'cell': frozen['cell'],
             'baseline': frozen['baseline'], 'plan_sha256': plan_sha,
+            'aggregator_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'comparison_valid': not invalid_comparison,
+            'comparison_invalid_reasons': invalid_comparison,
             'statistic': 'median per-window SLO-filtered output tokens/s; failed windows contribute zero',
-            'paired': paired_bootstrap(pairs, frozen['bootstrap_samples'], frozen['bootstrap_seed']),
+            'paired': paired_bootstrap(pairs, frozen['bootstrap_samples'], frozen['bootstrap_seed'])
+                      if not invalid_comparison else None,
             'windows': [{'engine': engine, 'start_index': index, **result}
                         for (engine, index), result in results.items()],
             'sampling_preconditions_satisfied': not reasons,

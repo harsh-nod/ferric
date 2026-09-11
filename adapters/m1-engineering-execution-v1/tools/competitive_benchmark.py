@@ -196,6 +196,8 @@ def request_one(url, model, item, timeout, deadline_ns=None, budget=None):
         deadline_ns = started + int(timeout * 1e9) if deadline_ns is None else deadline_ns
         remaining = (deadline_ns - started) / 1e9
         require(remaining > 0, "request deadline exceeded before send")
+        # This timeout is per socket read, not a watchdog for an in-progress
+        # readline. V2 reports explicitly retain soft-deadline semantics.
         with build_opener(ProxyHandler({})).open(request, timeout=min(timeout, remaining)) as response:
             require(response.status == 200, "non-success HTTP response")
             require(response.headers.get_content_type() == "text/event-stream",
@@ -435,6 +437,7 @@ def main():
                       timeout_seconds=args.timeout, completed=False,
                       ttft_semantics="intended-arrival-to-first-nonempty-text-chunk",
                       e2e_semantics="intended-arrival-to-DONE",
+                      deadline_semantics="soft-absolute-checks-with-per-read-socket-timeout",
                       window_semantics="finite-arrival-cohort-including-drain-not-steady-state",
                       failure_policy="retain-all-planned-windows-including-overload",
                       start_evidence=None, start_evidence_sha256=None,

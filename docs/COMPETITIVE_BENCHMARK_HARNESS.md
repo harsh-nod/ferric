@@ -43,7 +43,7 @@ Each V2 record preserves `started_ns`, the actual client send-attempt start, and
 adds `intended_arrival_ns`, `send_started_ns`, and `send_delay_ns`. V2 `ttft_ns`
 and `e2e_ns` begin at intended arrival, including both client scheduling and
 pending-queue delay. `wire_ttft_ns` and `wire_e2e_ns` retain the send-attempt-based
-durations. Request deadlines also begin at intended arrival. An unsent request
+durations. Request deadline accounting also begins at intended arrival. An unsent request
 has null send timestamps and explicit `client_overload`, `queue_timeout`, or
 `client_budget` failure; sent failures are `deadline`, `request_error`, or
 `client_budget`. No overload is silently retried or dropped from the records.
@@ -51,7 +51,10 @@ has null send timestamps and explicit `client_overload`, `queue_timeout`, or
 The shared open-loop raw SSE byte budget is 64 MiB per whole invocation, including
 warmups. Individual responses remain limited to 16 MiB, lines to 1 MiB and parsed
 chunks to 16,384. Exhaustion becomes failed evidence, and subsequent requests do
-not reach the server. The client retains every planned window after ordinary
+not reach the server once they observe exhaustion. A legitimate large run can
+exhaust this budget, and different engines can emit different amounts of SSE
+metadata. Such a run is an invalid comparison, not an engine-performance loss.
+The client retains every planned window after ordinary
 request failures. Interrupted invocations retain a partial report marked
 incomplete; aggregation rejects it. Output paths are exclusive and cannot
 overwrite earlier runs.
@@ -68,6 +71,16 @@ nonempty text-chunk duration divided by final completion usage minus one; it is
 not a distribution of token ITLs. Usage must honor the fixed requested output
 length and the stream must finish with `length` and `[DONE]`. Raw SSE events and
 receive timestamps remain available. No token ITL is invented from chunk timing.
+
+V2 explicitly records
+`deadline_semantics: soft-absolute-checks-with-per-read-socket-timeout`. Absolute
+clock checks reject late reads when they return, but urllib's socket timeout is
+per blocking read; it does not interrupt an in-progress line that stalls or
+slowly drips bytes across the absolute deadline. Queue expiry is checked before
+send. HTTP timeout accounting is not a hard wall-clock termination guarantee,
+and these reports cannot establish hard-timeout qualification. Operators must
+retain their separately owned process-level cancellation/supervision policy for
+a server or client that does not return; this tool starts no supervisor.
 
 ## Frozen Paired Series
 
@@ -159,6 +172,19 @@ any request failure remains in its pair with **zero accepted goodput**, while it
 observed partial-success metrics remain in the raw report. Missing data is never
 invented as a successful sample.
 
+Before replay, the analyzer hashes the actual imported
+`competitive_benchmark.py` and requires it to match the frozen plan's client
+hash. It also records its own `aggregator_sha256`, so future implementations
+cannot silently reinterpret older runs under an unchanged claimed client hash.
+
+Any `client_budget` record, `response_budget_exhausted: true`, or externally
+recorded fault, environment/clock/thermal drift or failed admission gate makes
+`comparison_valid: false` and `paired: null`. Raw per-window metrics remain for
+diagnosis, but no ratio, difference or confidence interval is emitted from such
+a comparison. Declared offered-load `client_overload` outcomes are distinct from
+client evidence-budget faults: ordinary overload windows retain zero accepted
+goodput within their pairs.
+
 The statistic is median per-window SLO-filtered output tokens/second. Bootstrap
 resampling first selects paired starts, then paired windows within each selected
 start. The same sampled indices are used for both engines. The report includes
@@ -175,6 +201,6 @@ still needs human review.
 
 `qualification` and `framework_win_claim` are always false. Full
 `qualification_preconditions_satisfied` is also false for these cohort reports:
-the steady-state and token-ITL requirements remain unmet. `--require-preconditions`
+the steady-state, token-ITL and hard-timeout requirements remain unmet. `--require-preconditions`
 therefore writes the diagnostic report and exits unsuccessfully. It must not be
 used to relabel a 3-by-10 cohort series as qualified serving evidence.

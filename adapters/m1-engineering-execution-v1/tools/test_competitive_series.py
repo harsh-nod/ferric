@@ -57,7 +57,8 @@ def fixture(root, starts=3, windows=10, warmups=10):
                 'arrival_seed': 0, 'timeout_seconds': 1.0, 'ttft_slo_ms': 100, 'tpot_slo_ms': 100}
     order = [['ferric', 'vllm'] if index % 2 == 0 else ['vllm', 'ferric'] for index in range(starts)]
     frozen = {'schema': 'FerricCompetitiveSeriesPlanV1', 'cell': 'test', 'comparison_scope': scope,
-              'workload_sha256': workload_binding['sha256'], 'client_sha256': 'c' * 64,
+              'workload_sha256': workload_binding['sha256'],
+              'client_sha256': hashlib.sha256(Path(client.__file__).read_bytes()).hexdigest(),
               'tuning_policy_sha256': tuning_binding['sha256'], 'settings': settings,
               'engines': {engine: binding['sha256'] for engine, binding in identities.items()},
               'baseline': 'vllm', 'starts': starts, 'windows': windows, 'warmups': warmups,
@@ -84,6 +85,8 @@ def fixture(root, starts=3, windows=10, warmups=10):
                       'ttft_semantics': 'intended-arrival-to-first-nonempty-text-chunk',
                       'tpot_semantics': 'first-to-last-text-chunk-divided-by-usage-tokens-minus-one',
                       'e2e_semantics': 'intended-arrival-to-DONE', 'token_itl_available': False,
+                      'deadline_semantics': 'soft-absolute-checks-with-per-read-socket-timeout',
+                      'response_budget_exhausted': False,
                       'window_semantics': 'finite-arrival-cohort-including-drain-not-steady-state',
                       'arrival_offsets_ns': [0], 'started_unix_ns': wall,
                       'completed_unix_ns': wall + (warmups + windows) * (duration + 1)}
@@ -128,6 +131,43 @@ class SeriesTests(unittest.TestCase):
         self.assertFalse(result['framework_win_claim'])
         self.assertEqual(result['paired']['ratio_ci95'], [2, 2])
         self.assertEqual(result['paired']['median_ratio'], 2)
+        self.assertTrue(result['comparison_valid'])
+        self.assertEqual(result['aggregator_sha256'], hashlib.sha256(Path(series.__file__).read_bytes()).hexdigest())
+
+    def test_local_replay_implementation_must_match_frozen_client(self):
+        self.plan['client_sha256'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'local replay client'):
+            self.analyze()
+
+    def test_response_budget_failure_invalidates_ratios_instead_of_ranking_engine(self):
+        self.mutate_run(lambda run: run.update(response_budget_exhausted=True))
+        result = self.analyze()
+        self.assertFalse(result['comparison_valid'])
+        self.assertIsNone(result['paired'])
+        self.assertTrue(any('client response-evidence budget' in reason
+                            for reason in result['comparison_invalid_reasons']))
+
+    def test_client_budget_record_alone_also_invalidates_comparison(self):
+        def fail(run):
+            window = run['samples'][0]
+            item = run['workload']['requests'][0]
+            record = client.arrival_failure(item, window['started_ns'], window['started_ns'] + 1, 'client_budget')
+            window['requests'] = [record]
+            window['metrics'] = client.aggregate([record], window['started_ns'], window['completed_ns'], 100, 100)
+            window['metrics']['failure_counts'] = {kind: int(kind == 'client_budget') for kind in client.FAILURE_KINDS}
+        self.mutate_run(fail)
+        result = self.analyze()
+        self.assertFalse(result['comparison_valid'])
+        self.assertIsNone(result['paired'])
+
+    def test_external_fault_or_drift_invalidates_comparison(self):
+        entry = self.manifest['runs'][0]
+        value = json.loads((self.root / entry['observations']['path']).read_bytes())
+        value['clock_drift_percent'] = 4
+        entry['observations'] = save(self.root, 'drifted-observations.json', value)
+        result = self.analyze()
+        self.assertFalse(result['comparison_valid'])
+        self.assertIsNone(result['paired'])
 
     def test_missing_start_and_missing_window_fail_closed(self):
         self.manifest['runs'].pop()

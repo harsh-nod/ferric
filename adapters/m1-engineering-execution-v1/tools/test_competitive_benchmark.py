@@ -101,6 +101,18 @@ class StreamingTests(unittest.TestCase):
             list(bench.sse_events(io.BytesIO(b': heartbeat\n: heartbeat\n'),
                                   lambda: next(ticks), deadline_ns=10))
 
+    def test_soft_deadline_detects_late_read_only_after_it_returns(self):
+        now = [1]
+
+        class LateRead:
+            def readline(self, _bound):
+                now[0] = 20
+                return b': late heartbeat\n'
+
+        with self.assertRaisesRegex(ValueError, 'deadline'):
+            list(bench.sse_events(LateRead(), lambda: now[0], deadline_ns=10))
+        self.assertEqual(now[0], 20)
+
     def test_partial_chunks_remain_available_after_rejection(self):
         chunks = []
         with self.assertRaisesRegex(ValueError, "incomplete"):
@@ -243,6 +255,7 @@ class ArrivalTests(unittest.TestCase):
             self.assertFalse(result['qualification'])
             self.assertEqual(len(result['samples']), 2)
             self.assertEqual(result['samples'][0]['metrics']['failure_counts']['client_overload'], 1)
+            self.assertEqual(result['deadline_semantics'], 'soft-absolute-checks-with-per-read-socket-timeout')
 
     def test_closed_loop_cli_preserves_v1_default_and_send_semantics(self):
         with tempfile.TemporaryDirectory() as directory:
