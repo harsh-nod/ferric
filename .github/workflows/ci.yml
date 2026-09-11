@@ -46,7 +46,7 @@ jobs:
       - run: python3 -I -B proofs/check-device-binding.py --self-test
       - name: Check exact M1 planner and fe2o3 integration policy
         env:
-          FE2O3_REVISION: 7528e7345cef0158d7034cdbae23011e3c6fb5d2
+          FE2O3_REVISION: 4fbc0a34c7938474406d37a45e7972ea8b1ec277
         run: |
           git clone --quiet --no-checkout https://github.com/harsh-nod/fe2o3.git "$RUNNER_TEMP/fe2o3"
           git -C "$RUNNER_TEMP/fe2o3" checkout --quiet --detach "$FE2O3_REVISION"
@@ -76,7 +76,7 @@ jobs:
         run: >-
           cargo install --locked
           --git https://github.com/harsh-nod/fe2o3.git
-          --rev 7528e7345cef0158d7034cdbae23011e3c6fb5d2
+          --rev 4fbc0a34c7938474406d37a45e7972ea8b1ec277
           --root "$RUNNER_TEMP/cargo-fe2o3"
           cargo-fe2o3
       - run: cargo fmt --all -- --check
