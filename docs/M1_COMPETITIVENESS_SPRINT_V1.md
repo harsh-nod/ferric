@@ -530,8 +530,17 @@ The reviewed initial plan `15faf5c6` binds that reference, controller source
 Docker's local log driver rejects compression with a one-file rotation limit.
 The exact owned container was removed, no numerical/timing output was produced,
 and all eight GPUs stayed idle. The failed receipt is retained; a separately
-versioned launch-only correction is in progress. Native framework API/observer
-validation and measured comparisons remain outstanding.
+versioned launch-only correction disables compression without changing log
+limits. Its 80-test gate passes. The corrected vLLM attempt reached a healthy
+endpoint, but the startup observer targeted the unused legacy runner instead
+of this image's default V2 runner. No diagnostic or timed request ran. Its
+container was removed; the immediate idle check failed on activity counters,
+and a later all-eight-GPU sample was idle. Both failed attempts remain retained.
+The next revision will bind the actual runner, use a bounded graceful shutdown,
+and retain bounded post-close idle samples without weakening identity checks.
+Ferric's unchanged 128/128 cell is running separately while that baseline-only
+correction is prepared. Native framework API/observer validation and measured
+comparisons remain outstanding.
 
 ## Published Checkpoint
 
@@ -543,4 +552,17 @@ ordered-submission observations without changing frozen historical performance
 data or claiming a baseline win. It predates the model ordered-submission
 regression above. Its private build stage and completed worktree were removed
 after archive verification. Ferric implementation commits remain local;
-fe2o3 main was independently rechecked at `f85bb375e`.
+fe2o3 main was independently rechecked at `f85bb375e` at that earlier checkpoint.
+
+The subsequent Pages-only update is published at
+`4200318970ddd0edebf24761cccdb4bb18c22794`. Workflow `34659538722` succeeded;
+all seven live files match the validated artifact exactly. It adds ordered
+regression/recovery and fresh serial controls, standalone/native draft results,
+the consumed-input host driver, exact aggregate and V3 measurement checks, and
+the independent 128-output reference. Historical performance data are unchanged.
+The final browser gate passes eight named viewports, every width from 320 to
+1440 pixels, and 101 scope-mutation checks. Live receipt SHA-256:
+`d56134f1a90773ed39f0dfa7ff7bff2a74946b6f25be8555cd7a435e80ff9d35`.
+After archiving, the owned Pages worktree and remote stage (1,390,612 KiB) were
+removed. No implementation files were pushed. Public fe2o3 main was freshly
+rechecked at `216822284` during this update.
