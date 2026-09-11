@@ -24,6 +24,8 @@ struct RecordingTransport {
     events: Rc<RefCell<Vec<Event>>>,
     fail_submit: bool,
     fail_wait: bool,
+    fail_close: bool,
+    commands: Vec<EngineeringTpDispatchV1>,
 }
 
 impl RecordingTransport {
@@ -86,6 +88,7 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
         self.events
             .borrow_mut()
             .push(Event::Submit(self.rank, command.kernel));
+        self.commands.push(command.clone());
         self.pending = Some(command.clone());
         Ok(())
     }
@@ -145,7 +148,11 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
     fn close(&mut self) -> TpResult<()> {
         self.pending = None;
         self.events.borrow_mut().push(Event::Close(self.rank));
-        Ok(())
+        if self.fail_close {
+            Err("injected close failure".into())
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -169,6 +176,14 @@ fn target() -> ModelConfig {
 }
 
 fn fixture(world: u32) -> EngineeringTpExecutionV1<RecordingTransport> {
+    fixture_model(world, target(), 2)
+}
+
+fn fixture_model(
+    world: u32,
+    model: ModelConfig,
+    capacity: u32,
+) -> EngineeringTpExecutionV1<RecordingTransport> {
     let events = Rc::new(RefCell::new(Vec::new()));
     let mut transports = (0..world)
         .map(|rank| RecordingTransport {
@@ -179,13 +194,15 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<RecordingTransport> {
             events: events.clone(),
             fail_submit: false,
             fail_wait: false,
+            fail_close: false,
+            commands: Vec::new(),
         })
         .collect::<Vec<_>>();
-    let model = target();
     let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
     let mut ranks = Vec::new();
     for (index, transport) in transports.iter_mut().enumerate() {
-        let mut rank = allocate_rank(transport, &plan, u32::try_from(index).unwrap(), 2).unwrap();
+        let mut rank =
+            allocate_rank(transport, &plan, u32::try_from(index).unwrap(), capacity).unwrap();
         let placeholder = allocate_tensor(transport, 1, 2).unwrap();
         for layer in &mut rank.layers {
             for kind in [
@@ -217,18 +234,125 @@ fn fixture(world: u32) -> EngineeringTpExecutionV1<RecordingTransport> {
         transports,
         ranks,
         plan,
-        sequence: TensorParallelSequenceV1::new(2, model.vocabulary_size).unwrap(),
+        sequence: TensorParallelSequenceV1::new(capacity, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
-        capacity: 2,
+        capacity,
         row_capacity: 1,
         large_kv: false,
-        hidden: vec![0; 4096],
+        hidden: vec![0; model.hidden_size as usize],
         reduction: ReductionWorkspace::default(),
         sequences: None,
         ordered_batches: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }
+}
+
+fn draft() -> ModelConfig {
+    ModelConfig {
+        role: Qwen3ModelRole::Draft06B,
+        layers: 28,
+        hidden_size: 1024,
+        intermediate_size: 3072,
+        query_heads: 16,
+        tie_word_embeddings: true,
+        ..target()
+    }
+}
+
+#[test]
+fn actual_draft_driver_six_steps_have_exact_role_shapes_packets_and_clean_close() {
+    let mut driver = fixture_model(1, draft(), 32);
+    for (position, token) in [1, 2, 3, 4, 5, 42].into_iter().enumerate() {
+        assert_eq!(driver.step(token).unwrap(), 42);
+        assert_eq!(driver.position(), u32::try_from(position + 1).unwrap());
+        assert_eq!(
+            driver.dispatch_counts(),
+            [u64::try_from(position + 1).unwrap() * 424]
+        );
+    }
+    assert_eq!(driver.hidden.len(), 1024);
+    assert_eq!(driver.ranks[0].layers.len(), 28);
+    assert_eq!(driver.ranks[0].geometry.query_channels.count, 2048);
+    assert_eq!(driver.ranks[0].geometry.kv_channels.count, 1024);
+    assert_eq!(driver.ranks[0].geometry.intermediate.count, 3072);
+    for command in &driver.transports[0].commands {
+        let scalar = |index| RecordingTransport::scalar(command, index);
+        match command.kernel {
+            EMBEDDING => {
+                assert_eq!(scalar(4), 1024);
+                assert_eq!(scalar(5), 151_936);
+            }
+            GEMV => {
+                let n = scalar(3);
+                let k = scalar(4);
+                let role = scalar(5);
+                let world = scalar(6);
+                let op = scalar(7);
+                assert_eq!((role, world, k), (2, 1, 1024));
+                assert_eq!(
+                    n,
+                    match op {
+                        1 => 2048,
+                        2 | 3 => 1024,
+                        4 | 5 => 3072,
+                        _ => panic!("operation"),
+                    }
+                );
+            }
+            PARTIAL => {
+                assert_eq!((scalar(3), scalar(5), scalar(6)), (1024, 2, 1));
+                assert_eq!(scalar(4), if scalar(7) == 1 { 2048 } else { 3072 });
+            }
+            ROPE => {
+                assert!(scalar(6) < 6);
+                assert_eq!((scalar(7), scalar(8)), (2, 1));
+            }
+            KV_APPEND | ATTENTION => {
+                assert_eq!((scalar(6), scalar(7)), (2, 1));
+            }
+            SWIGLU => {
+                assert_eq!((scalar(3), scalar(4)), (2, 1));
+            }
+            LM_HEAD => {
+                assert_eq!((scalar(3), scalar(4), scalar(5)), (1, 151_936, 1024));
+            }
+            RMSNORM | ARGMAX => {}
+            _ => panic!("unexpected draft kernel"),
+        }
+    }
+    assert_eq!(driver.transports[0].commands.len(), 2544);
+    driver.close().unwrap();
+    assert!(driver.step(42).is_err());
+    assert!(driver.reset_sequence().is_err());
+    assert_eq!(
+        driver.transports[0]
+            .events
+            .borrow()
+            .iter()
+            .filter(|event| **event == Event::Close(0))
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn draft_submission_wait_and_close_failures_remain_terminal() {
+    for wait in [false, true] {
+        let mut driver = fixture_model(1, draft(), 32);
+        driver.transports[0].fail_submit = !wait;
+        driver.transports[0].fail_wait = wait;
+        assert!(driver.step(1).is_err());
+        assert!(driver.step(1).is_err());
+        assert!(driver.reset_sequence().is_err());
+        assert_eq!(driver.position(), 0);
+        driver.close().unwrap();
+        assert!(driver.transports[0].pending.is_none());
+    }
+    let mut driver = fixture_model(1, draft(), 32);
+    driver.transports[0].fail_close = true;
+    assert!(driver.close().unwrap_err().contains("close"));
+    assert!(driver.step(1).is_err());
 }
 
 #[test]

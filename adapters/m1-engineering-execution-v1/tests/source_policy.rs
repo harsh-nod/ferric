@@ -174,6 +174,27 @@ fn adapter_and_observation_schema_pin_current_fe2o3() {
 }
 
 #[test]
+fn standalone_draft_canary_is_separately_opted_in_without_new_kernel_dependencies() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-draft-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    let canary = include_str!("../src/bin/ferric-qwen3-draft-canary.rs");
+    assert!(canary.contains("EngineeringQwenModelV1::open_with_draft"));
+    assert!(canary.contains("compiler_expectation_roster_v1()"));
+    assert!(!canary.contains("configure_projection"));
+    assert!(!canary.contains("configure_ordered_batches"));
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-draft-canary"));
+}
+
+#[test]
 fn tensor_parallel_runtime_is_opt_in_and_confined_to_its_engineering_binary() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
     let feature = manifest["features"]["tp-engineering"].as_array().unwrap();

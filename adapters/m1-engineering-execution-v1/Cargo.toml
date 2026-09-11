@@ -36,6 +36,11 @@ name = "ferric-qwen3-tp-batch-engineering"
 path = "src/bin/ferric-qwen3-tp-batch-engineering.rs"
 required-features = ["tp-batch-engineering"]
 
+[[bin]]
+name = "ferric-qwen3-draft-canary"
+path = "src/bin/ferric-qwen3-draft-canary.rs"
+required-features = ["tp-batch-engineering"]
+
 # This non-authoritative engineering tool is intentionally outside Ferric's
 # verified production workspace and runtime dependency closure.
 [workspace]
