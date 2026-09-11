@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const expected = {
-  source: "47e32bdd36e54f7dbef6fd8a4ba2aae9b9ebf319",
+  source: "4f215bc92588fc521a1b7425b64e3cc246822e21",
   core: "21682228486f7186cc3c37ddf165fffc438d8b6a",
   currentReadinessCount: 14,
   fixedRequests: 4, fixedOutputTokens: 8, repetitionsPerMode: 2,
@@ -31,6 +31,11 @@ const expected = {
     fastNativeReportSha256: "573256efddc1686a861c50dc9eedc23894a4b6f44571a57a5f5d9307c3a5c7d0",
     fastNativeWrapperSha256: "d4faeaf840c2e83d56641510026307ccad21a8bc6325b14c088d6a5a54c2b49f",
     pagedModelQualified: false, speculativeServingImplemented: false,
+    consumedInputDriverSource: "58ed5c56227068130c7a4c84743bde56e125b8ba",
+    consumedInputHostSha256: "12590c09eb3d359b99b1fded99ccb700a766b20c2f7d924777822cd1d3cf6536",
+    consumedInputHostInvocations: 526, consumedInputHostIgnores: 19,
+    consumedInputDoctests: 6, consumedInputImageTests: 1,
+    consumedInputCompletionSealImplemented: true, automaticProposalsImplemented: false,
   },
   aggregate: {
     source: "656edb2bd043b191541b0ad48b74dc827e3255ee",
@@ -48,6 +53,14 @@ const expected = {
     minimumFreshPairsForDescriptiveIntervals: 3, gpuMeasurementQualified: false,
   },
   sequentialBaselineLaunchesApproved: true,
+  target128Reference: {
+    independent: true, promptTokens: 128, outputTokens: 128, repetitions: 2,
+    decoder: "BF16 eager", head: "explicit FP32 operands and output",
+    rawSha256: "fa725662e8ec9e7ab4f30c981c048167a5b63a4fda972d4fe570527b80fcf314",
+    adaptedSha256: "cd7f512537e44d677244c606cba919e57747e8c26caf3c0df4a0aca7acc0eb8b",
+    wrapperSha256: "b4f7f97fe6ed3141dbfc66d529633b42cdde67e0e997bfcf64b97716f11cf365",
+    ferricMatched: false, baselineServingRun: false, performanceQualified: false,
+  },
   matchedExternalComparisonAvailable: false, sustainedServingQualified: false,
   competitiveWinClaimed: false, m1Complete: false, authority: "none",
 };
@@ -67,6 +80,10 @@ export function testRecoveryRejections(value) {
     ["draft", "controllerSource"], ["draft", "rawFerricSha256"],
     ["draft", "fastNativeReportSha256"], ["draft", "fastKernelNativeCases"],
     ["draft", "pagedModelQualified"], ["draft", "speculativeServingImplemented"],
+    ["draft", "consumedInputHostInvocations"], ["draft", "consumedInputCompletionSealImplemented"],
+    ["draft", "automaticProposalsImplemented"], ["target128Reference", "rawSha256"],
+    ["target128Reference", "head"], ["target128Reference", "ferricMatched"],
+    ["target128Reference", "baselineServingRun"], ["target128Reference", "performanceQualified"],
     ["aggregate", "source"], ["aggregate", "adapterTestInvocations"],
     ["aggregate", "explicitIgnores"], ["aggregate", "gpuExecution"], ["aggregate", "newVerusProof"],
     ["continuousV3", "drainBetweenWindows"], ["continuousV3", "failedWindowsRetained"],
@@ -227,6 +244,41 @@ async function validateEvidence(root, value) {
   }
   assert(native.results.some((result) => result.name === "attention_logical8191_physical511"));
   checkWrapper(await json(join(root, "native-v10-wrapper.json"), draft.fastNativeWrapperSha256));
+  const paged = await json(join(root, "draft-paged-host.json"), draft.consumedInputHostSha256);
+  assert.equal(paged.ferric_commit, draft.consumedInputDriverSource);
+  assert.equal(paged.core_commit, value.core);
+  assert.equal(paged.adapter_tests.passed, draft.consumedInputHostInvocations);
+  assert.equal(paged.adapter_tests.ignored, draft.consumedInputHostIgnores);
+  assert.equal(paged.doctests.passed, draft.consumedInputDoctests);
+  assert.equal(paged.image_admission.passed, draft.consumedInputImageTests);
+  assert.equal(paged.image_hsaco_sha256, draft.fastImageSha256);
+  for (const field of ["native_model_qualified", "performance_qualified", "new_verus_proof"]) assert.equal(paged[field], false);
+  assert.deepEqual(paged.gate_steps, ["fmt", "metadata", "tests", "doctests", "image-admission", "clippy", "release", "source-unchanged"]);
+  const target = value.target128Reference;
+  const targetRaw = await json(join(root, "target128-torch-raw.json"), target.rawSha256);
+  const targetReference = await json(join(root, "target128-reference.json"), target.adaptedSha256);
+  const targetWrapper = await json(join(root, "target128-wrapper.json"), target.wrapperSha256);
+  checkWrapper(targetWrapper);
+  assert.equal(targetWrapper.container.absent, true);
+  assert.equal(targetWrapper.container.forced_stop, false);
+  assert.equal(targetWrapper.raw_sha256, target.rawSha256);
+  assert.equal(targetRaw.authority, "independent-target-reference-only");
+  assert.equal(targetRaw.model, "Qwen/Qwen3-8B");
+  assert.equal(targetRaw.performance_qualified, false);
+  assert.equal(targetRaw.policy.prompt_tokens, 128);
+  assert.equal(targetRaw.policy.output_tokens, 128);
+  assert.equal(targetRaw.policy.decoder_dtype, "bfloat16");
+  assert.equal(targetRaw.policy.attention, "eager");
+  assert.equal(targetRaw.policy.head_compute, "torch.nn.functional.linear-explicit-float32-operands-and-output");
+  assert.equal(targetRaw.passes.length, 2);
+  assert.equal(targetReference.generated_token_ids.length, 128);
+  assert.equal(targetReference.prompt_token_ids.length, 128);
+  assert.equal(targetReference.producer_evidence_sha256, target.rawSha256);
+  for (const pass of targetRaw.passes) {
+    assert.deepEqual(pass.generated_token_ids, targetReference.generated_token_ids);
+    assert.equal(pass.steps.length, 128);
+  }
+  assert.equal(targetRaw.repeated_output_exact, true);
   const aggregate = await json(join(root, "aggregate.json"), value.aggregate.sha256);
   assert.equal(aggregate.source_commit, value.aggregate.source);
   assert.equal(aggregate.fe2o3.commit, value.core);
@@ -252,7 +304,7 @@ async function validateEvidence(root, value) {
   const approval = await json(join(root, "baseline-approval.json"), "ad503bec4a26871af284f4d2bd177e023c7076f8c57194a5a4d71a9cc7a288e2");
   assert.equal(approval.launch_approved, true);
   assert.equal(approval.performance_claim_approved_or_established, false);
-  console.log("PASS: ordered cohorts, independent draft/reference, native36, exact656 CPU gate and V3 logs; no promotion.");
+  console.log("PASS: ordered cohorts, independent draft/target references, native36, consumed-input host gate, exact656 and V3 logs; no promotion.");
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const site = dirname(fileURLToPath(import.meta.url));

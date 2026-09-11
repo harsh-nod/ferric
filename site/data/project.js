@@ -851,7 +851,7 @@ window.FERRIC_PROJECT = Object.freeze({
     competitiveWinClaimed: false, newVerusClaimed: false, authority: "none",
   },
   competitivenessRecovery: {
-    source: "47e32bdd36e54f7dbef6fd8a4ba2aae9b9ebf319",
+    source: "4f215bc92588fc521a1b7425b64e3cc246822e21",
     core: "21682228486f7186cc3c37ddf165fffc438d8b6a",
     currentReadinessCount: 14,
     fixedRequests: 4, fixedOutputTokens: 8, repetitionsPerMode: 2,
@@ -876,6 +876,11 @@ window.FERRIC_PROJECT = Object.freeze({
       fastNativeReportSha256: "573256efddc1686a861c50dc9eedc23894a4b6f44571a57a5f5d9307c3a5c7d0",
       fastNativeWrapperSha256: "d4faeaf840c2e83d56641510026307ccad21a8bc6325b14c088d6a5a54c2b49f",
       pagedModelQualified: false, speculativeServingImplemented: false,
+      consumedInputDriverSource: "58ed5c56227068130c7a4c84743bde56e125b8ba",
+      consumedInputHostSha256: "12590c09eb3d359b99b1fded99ccb700a766b20c2f7d924777822cd1d3cf6536",
+      consumedInputHostInvocations: 526, consumedInputHostIgnores: 19,
+      consumedInputDoctests: 6, consumedInputImageTests: 1,
+      consumedInputCompletionSealImplemented: true, automaticProposalsImplemented: false,
     },
     aggregate: {
       source: "656edb2bd043b191541b0ad48b74dc827e3255ee",
@@ -893,6 +898,14 @@ window.FERRIC_PROJECT = Object.freeze({
       minimumFreshPairsForDescriptiveIntervals: 3, gpuMeasurementQualified: false,
     },
     sequentialBaselineLaunchesApproved: true,
+    target128Reference: {
+      independent: true, promptTokens: 128, outputTokens: 128, repetitions: 2,
+      decoder: "BF16 eager", head: "explicit FP32 operands and output",
+      rawSha256: "fa725662e8ec9e7ab4f30c981c048167a5b63a4fda972d4fe570527b80fcf314",
+      adaptedSha256: "cd7f512537e44d677244c606cba919e57747e8c26caf3c0df4a0aca7acc0eb8b",
+      wrapperSha256: "b4f7f97fe6ed3141dbfc66d529633b42cdde67e0e997bfcf64b97716f11cf365",
+      ferricMatched: false, baselineServingRun: false, performanceQualified: false,
+    },
     matchedExternalComparisonAvailable: false, sustainedServingQualified: false,
     competitiveWinClaimed: false, m1Complete: false, authority: "none",
   },
@@ -901,7 +914,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric's bounded target path runs Qwen with resident JSONL and loopback HTTP, FP32 heads, paged attention and radix reuse. Corrected opt-in ordered submission raises mean rate 22.19% against a fresh same-worker serial control on the four-request/eight-output canary, n=2 per mode; the earlier 35.40% regression remains recorded. This is not sustained serving or a framework comparison. Standalone Qwen3-0.6B matches an independent two-output reference; its separate fast kernel family passes 36 native fixtures, not a paged-model or speculative-serving test. Exact source 656edb2 passes its CPU integration gate on public fe2o3 216822284. Continuous V3 measurement tooling is implemented and CPU-tested; matched vLLM/SGLang launches and sustained-load qualification remain open. All historical performance evidence is retained. No competitive win, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
+      "Ferric's bounded target path runs Qwen with resident JSONL and loopback HTTP, FP32 heads, paged attention and radix reuse. Corrected opt-in ordered submission raises mean rate 22.19% against a fresh same-worker serial control on the four-request/eight-output canary, n=2 per mode; the earlier 35.40% regression remains recorded. This is not sustained serving or a framework comparison. Standalone Qwen3-0.6B matches an independent two-output reference; its separate fast kernel family passes 36 native fixtures and the consumed-input paged driver passes host checks, not a paged-model or speculative-serving test. Exact source 656edb2 passes its CPU integration gate on public fe2o3 216822284. Continuous V3 tooling is CPU-tested, and an independent 128-input/128-output target reference is ready. Sequential baseline launches are approved, but matched vLLM/SGLang results and sustained-load qualification remain open. All historical performance evidence is retained. No competitive win, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
   },
   readiness: [
     {
@@ -914,7 +927,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Standalone draft reference and fast-kernel fixtures",
       state: "observed",
       detail:
-        "An independent offline PyTorch BF16/SDPA reference repeats all six cached-forward choices exactly, checking all 151,936 logits for finiteness at every step. Standalone Ferric Qwen3-0.6B then matches the six choices and final IDs [12095, 13], bytes for \" Paris.\", over 2,544 packets with clean close and all eight GPUs idle. Controller e84b104e was built at 346d588, not the later 656 aggregate; its frozen baseline image retains compiler/SDK 3546 provenance. Separately, the new Draft06B TP1/32-row closed14 family emits with compiler 216822284 and passes 36 native full-buffer/guard fixtures, including Q16/KV8, physical page 511 and logical position 8,191. That is synthetic kernel evidence, not paged draft model qualification. Accepted-prefix KV settlement and a sealed target result are implemented, but the production paged-draft completion join remains open. No speculative serving or draft performance claim is made.",
+        "An independent offline PyTorch BF16/SDPA reference repeats all six cached-forward choices exactly, checking all 151,936 logits for finiteness at every step. Standalone Ferric Qwen3-0.6B then matches the six choices and final IDs [12095, 13], bytes for \" Paris.\", over 2,544 packets with clean close and all eight GPUs idle. Controller e84b104e was built at 346d588, not the later 656 aggregate; its frozen baseline image retains compiler/SDK 3546 provenance. Separately, the new Draft06B TP1/32-row closed14 family emits with compiler 216822284 and passes 36 native full-buffer/guard fixtures, including Q16/KV8, physical page 511 and logical position 8,191. That is synthetic kernel evidence, not paged draft model qualification. The role-checked paged consumed-input driver now seals completion for externally supplied, untrusted proposals and last-proposal catch-up. Source 58ed5c5 passes 526 host test invocations, 19 explicit ignores, six doctests and one exact-v10 image admission test, plus strict Clippy, formatting and release. Recording outputs are synthetic: no automatic proposal generation, paged native model or speculative serving is qualified.",
     },
     {
       label: "Exact 656 CPU integration checkpoint",
@@ -926,13 +939,13 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Continuous V3 measurement, not a serving result",
       state: "implemented",
       detail:
-        "The V3 collector supports constant or seeded-Poisson arrivals through warmup, adjacent fixed measurement windows and a loaded guard, followed by one bounded drain. There is no drain between windows. Completion-window usage and arrival-cohort failures remain separate; failed windows are retained. The paired analyzer replays pinned plans and raw records, checks source and wall-clock custody, and requires at least three fresh pairs for descriptive whole-start bootstrap intervals. Collector checks pass 90 tests; the paired-series gate passes 109, including 19 new methods. These are CPU tooling checks, not a sustained GPU measurement, stable-tail guarantee or matched vLLM/SGLang result. Independent long-output references, inter-token latency/stationarity checks, equal tuning and the held-out primary workload remain open.",
+        "The V3 collector supports constant or seeded-Poisson arrivals through warmup, adjacent fixed measurement windows and a loaded guard, followed by one bounded drain. There is no drain between windows. Completion-window usage and arrival-cohort failures remain separate; failed windows are retained. The paired analyzer replays pinned plans and raw records, checks source and wall-clock custody, and requires at least three fresh pairs for descriptive whole-start bootstrap intervals. Collector checks pass 90 tests; the paired-series gate passes 109, including 19 new methods. Separately, an independent target reference passes two repeated 128-input/128-output runs with a BF16 eager decoder and explicit FP32-head operands/output, clean owned-container removal and all-eight-GPU idle checks. It is not a stock-BF16-head reference, Ferric matching result or baseline serving run. Sequential baseline launches are approved; actual matched comparisons, inter-token latency/stationarity checks, equal tuning and the held-out primary workload remain open. CPU tooling and reference generation do not qualify sustained serving.",
     },
     {
       label: "Sustained ingress and loopback HTTP",
       state: "observed",
       detail:
-        "Private Ferric source integrates resident JSONL submit/cancel/drain/shutdown, bounded queues, worst-case KV reservations and queue-inclusive arrivals. The 127.0.0.1 adapter streams greedy raw completions with exact tokenizer byte pieces and incremental UTF-8. A real GPU smoke passes four sequential requests and nine frozen-reference outputs, including a repeat, with prefix caching off, exact client usage/token bytes, clean controller/worker close and all eight GPUs idle before/after. Receipt 3bfc4e93 and controller events e3e2131a bind this bounded observation. No endpoint remains active; this is not concurrent or sustained-load qualification, a physical queue-rollover test or a performance comparison. The scoped public-3e3 host gate passes 206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 HTTP tests, with three explicit ignores, strict Clippy and release. Sequential baseline launches are now approved. No matched vLLM/SGLang result exists; independent reference and native matching remain pending.",
+        "Private Ferric source integrates resident JSONL submit/cancel/drain/shutdown, bounded queues, worst-case KV reservations and queue-inclusive arrivals. The 127.0.0.1 adapter streams greedy raw completions with exact tokenizer byte pieces and incremental UTF-8. A real GPU smoke passes four sequential requests and nine frozen-reference outputs, including a repeat, with prefix caching off, exact client usage/token bytes, clean controller/worker close and all eight GPUs idle before/after. Receipt 3bfc4e93 and controller events e3e2131a bind this bounded observation. No endpoint remains active; this is not concurrent or sustained-load qualification, a physical queue-rollover test or a performance comparison. The scoped public-3e3 host gate passes 206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 HTTP tests, with three explicit ignores, strict Clippy and release. Sequential baseline launches are now approved, and the independent 128-input/128-output FP32-head target reference passes. No matched vLLM/SGLang result exists; Ferric/native reference matching remains pending.",
     },
     {
       label: "32-row FP32 head: bounded model passes",
@@ -1325,7 +1338,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Expand aggregate KV and integrate fast-path speculation",
         detail:
-          "The implemented large-kv-v9 envelope reaches 16,384 pages/36 GiB of KV alone; its tiny model canary does not qualify the 32-request, 4,096-input/256-output primary workload, which needs 8,704 reserved pages. Accepted-prefix settlement and a sealed target result are implemented. The production paged-draft completion join, multi-round numerical checks and speculative serving integration remain open. No new proof or protected authority follows from these engineering checkpoints.",
+          "The implemented large-kv-v9 envelope reaches 16,384 pages/36 GiB of KV alone; its tiny model canary does not qualify the 32-request, 4,096-input/256-output primary workload, which needs 8,704 reserved pages. Accepted-prefix settlement, sealed target results and the role-checked paged consumed-input draft join are implemented and host-tested. Automatic proposals, paged native model matching, multi-round numerical checks and speculative serving integration remain open. No new proof or protected authority follows from these engineering checkpoints.",
       },
       {
         name: "MI350 and multi-GPU execution",
@@ -1632,7 +1645,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Matched the standalone draft to an independent reference",
       state: "observed",
       detail:
-        "Independent PyTorch repeats six finite full-vocabulary argmax steps. Ferric's authenticated Draft06B BF16 token-at-a-time route matches all six choices and final [12095, 13] / \" Paris.\" over 2,544 packets, with unforced close and all eight GPUs idle. The original baseline image is not relabeled. Separate v10 source 79ba4ea emits closed14 on compiler 216822284 and passes 36 synthetic native fixtures; its production paged-model join and speculative serving remain open.",
+        "Independent PyTorch repeats six finite full-vocabulary argmax steps. Ferric's authenticated Draft06B BF16 token-at-a-time route matches all six choices and final [12095, 13] / \" Paris.\" over 2,544 packets, with unforced close and all eight GPUs idle. The original baseline image is not relabeled. Separate v10 source 79ba4ea emits closed14 on compiler 216822284 and passes 36 synthetic native fixtures. The later 58ed5c5 consumed-input paged join passes its separately pinned host gate; automatic proposals, paged model matching and speculative serving remain open.",
     },
     {
       commit: "656edb2bd043b191541b0ad48b74dc827e3255ee",
@@ -1646,7 +1659,7 @@ window.FERRIC_PROJECT = Object.freeze({
       title: "Added continuous-window and paired-series measurement checks",
       state: "implemented",
       detail:
-        "V3 keeps adjacent windows under continuous load, separates completion usage from arrival cohorts, retains failures and drains only after the loaded guard. The 90-test collector and 109-test paired-series gates pass on CPU. Pinned replay and descriptive whole-start intervals do not themselves qualify a sustained GPU measurement. Matched framework launches, independent long-output references, stationarity and held-out primary workloads remain open.",
+        "V3 keeps adjacent windows under continuous load, separates completion usage from arrival cohorts, retains failures and drains only after the loaded guard. The 90-test collector and 109-test paired-series gates pass on CPU. A separate independent 128-input/128-output target reference now repeats exactly with BF16 eager decoder and explicit FP32 head. No Ferric or framework serving match is implied. Baseline launches are approved; actual comparisons, stationarity and held-out primary workloads remain open.",
     },
     {
       commit: "f85bb375e7d6f4b8193e697293d29a8888439f0b",

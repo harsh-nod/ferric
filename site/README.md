@@ -82,7 +82,12 @@ choices/two final outputs. Its controller was built at 346d588, not the later
 exact 656edb2 CPU aggregate. The frozen baseline image retains compiler/SDK 3546
 provenance. The separate closed14 v10 image emits on compiler 216822284 and
 passes 36 native full-buffer fixtures; it does not establish paged draft model
-execution, speculative serving or draft performance. The 656 aggregate has
+execution, speculative serving or draft performance. The later role-checked
+consumed-input driver at 58ed5c5 seals completed externally supplied, untrusted
+proposal inputs and last-proposal catch-up. Its separate host gate passes 526
+invocations, 19 ignores, six doctests and one exact-v10 image admission check.
+Recording outputs are synthetic; automatic proposals, paged native model
+matching and complete speculative serving remain unqualified. The 656 aggregate has
 516 test invocations, not a deduplicated count of unique tests; its 18 explicit
 ignores and prior failed attempts are retained. No new Verus claim follows.
 
@@ -92,11 +97,16 @@ collector and 109-test paired-series gates are CPU-only. Descriptive bootstrap
 intervals require at least three fresh start pairs; this is not evidence of
 stationarity, stable tails or equal framework tuning. The approved sequential
 baseline launches remain without a matched performance result at this cutoff.
+The independent target reference now passes two repeated 128-input/128-output
+runs with a BF16 eager decoder and explicit FP32-head operands/output. It is
+not the stock-BF16-head cell, a Ferric matching result or a baseline serving run.
+Its raw, adapted reference and clean-container/idle wrapper receipts are separately pinned.
 
 `validate-competitiveness-recovery.mjs` checks the closed new snapshot, negative
 scope mutations, all twelve independently pinned ordered reports/raw traces,
 per-mode means, standalone reference/trace custody, native36 output/guard
-receipts, exact 656 aggregate and the two V3 CPU logs:
+receipts, consumed-input driver host gate, independent target128 reference,
+exact 656 aggregate and the two V3 CPU logs:
 
 ```sh
 node validate-competitiveness-recovery.mjs /private/recovery-evidence
