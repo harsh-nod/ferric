@@ -32,13 +32,16 @@ const dynamicRoots = [
 ];
 const requiredClaims = [
   "Sustained ingress and loopback HTTP",
-  "32-row FP32 head: native only",
+  "32-row FP32 head: bounded model passes",
   "Shared peer currentness: native only",
   "Admission cache: frozen TP1 canary",
   "Long-context capacity and speculation remain open",
   "3e3a77284a61654134211f8145dd0ddeebb2ff91",
   "All 15 native fixtures pass at rows 1/16/17/31/32",
-  "This native checkpoint excludes later v8 model results",
+  "actual maximum rows are 16 and 17, not 32",
+  "rates 2.678148 and 2.665643 output tokens/s are effectively flat",
+  "four sequential requests and nine frozen-reference outputs",
+  "No endpoint remains active",
   "No matched vLLM/SGLang result exists",
   "baseline launches await explicit approval",
   "kernel-admission caching, not radix prefix caching",

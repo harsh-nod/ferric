@@ -707,11 +707,39 @@ window.FERRIC_PROJECT = Object.freeze({
     aggregateQualificationClaimed: false,
     head32: {
       world: 1, capacity: 32, nativeRows: [1, 16, 17, 31, 32], nativeCases: 15,
-      nativePassed: true, allEightGpusIdle: true, modelEvidenceIncluded: false,
+      nativePassed: true, allEightGpusIdle: true, modelEvidenceIncluded: true,
       fp32WorkspaceBytes: 19447808,
       imageSha256: "5f19b3ba59035a5f0ebc90cdf3a40466f9910908a45e082d146cb674028da6cb",
       nativeReportSha256: "5e27c9f5175321c570954b601d7d1cd0d5d14fd330ab347a4f9376ec1cf0a85a",
       nativeReviewSha256: "2dc850dd23d8f08fb88cdc7691ecea4ca99f1670ae664da8d98b1824b6414bab",
+      model: {
+        repetitionsPerBudget: 1, budgets: [16, 32], maximumRowsObserved: [16, 17],
+        requestsPerRun: 4, outputTokensPerRun: 8, physicalRowsPerRun: 34,
+        exactReferencePassed: true, allEightGpusIdle: true,
+        outputTokensPerSecond: [2.678148, 2.665643], speedupClaimed: false,
+        controllerSha256: "cd90bba6f5d9f9e5cd7763c543a633db0bab420eb8fe0ecc5d696482223f0dc9",
+        workerSha256: "933d73d25b0db7001cf9522215436b0c97157dd0d2e3ad4e034e7f1986b4b322",
+        frozenBaseImageSha256: "98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502",
+        reportSha256: [
+          "8e81053717b9db8ff5fb489a4c1ac54aea3a92b5a8fc0be7f9eb7df57ae8fb19",
+          "c852f93a221cfd5894ac86efc6c7b35b94b0d87d5dce06fa1ef03f86c55feec9",
+        ],
+      },
+    },
+    httpSmoke: {
+      requests: 4, outputTokens: 9, sequential: true, prefixCache: false,
+      exactReferencePassed: true, cleanTeardown: true, allEightGpusIdle: true,
+      activeEndpoint: false, sustainedLoadQualified: false, performanceQualified: false,
+      physicalQueueRolloverQualified: false,
+      receiptSha256: "3bfc4e938f32ea21ad4800e2645072072e1660502e3eda8168aeffdecd293bb8",
+      controllerEventsSha256: "e3e2131acc6eeec26bedffd07a0d0a814e5225e03a7b50b3b92b4bb9d60e80f7",
+      teardownSha256: "b85a78071ce4028f3d3afe1c513b1f0da826c8f6e44d1200d923f6c6511ac531",
+      clientSha256: [
+        "c90adbe82e1d9bb7f6497988525219b7d298565a0ad85fff3e087c7de6131cfc",
+        "a68001d4abe8be0f5bf0827b210a9489a9bbb870e60cfd3a82c988d7a7657e48",
+        "77a1631506e7575ecf1f54a1783ccb97c687c6ce2fa65b346ba62b7483cd96ec",
+        "fcc35eac6b2b105627421d3c76b413745814a645e18a415eb3ee59537104054a",
+      ],
     },
     sharedCurrentness: { defaultEnabled: false, worlds: [2, 8], nativeCases: 4, nativePassed: true, modelSpeedClaimed: false },
     admissionCacheCanary: {
@@ -742,20 +770,20 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The competitiveness sprint integrates bounded sustained JSONL ingress and a loopback HTTP completion adapter in private Ferric source. The opt-in TP1 32-row FP32 head passes all 15 native fixtures; this checkpoint includes no v8 model or HTTP GPU result. Public fe2o3 3e3 adds opt-in shared peer currentness; four TP2/TP8 producer probes pass without establishing model speed. A separate frozen-511 TP1 admission-cache canary passes two observations per mode with lower request latency, not a serving comparison. Current KV capacity is only 8,192 aggregate slots; larger pools and speculative fast-path integration remain unimplemented. Matched vLLM/SGLang launches await explicit approval. Historical model results and rejected cases retain their exact provenance. No competitive win, deployed serving qualification, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
+      "The competitiveness sprint integrates bounded sustained JSONL ingress and a loopback HTTP completion adapter in private Ferric source. A real GPU HTTP smoke passes four sequential requests and nine exact-reference outputs with clean teardown; no endpoint remains active. The opt-in TP1 32-row FP32 head passes all 15 native fixtures and both tiny model canaries at budgets 16/32, with actual maximum rows 16/17 and effectively flat rates, not a speedup. Public fe2o3 3e3 adds opt-in shared peer currentness; four TP2/TP8 producer probes pass without establishing model speed. A separate frozen-511 TP1 admission-cache canary passes twice per mode with lower request latency, not a serving comparison. Current KV capacity is only 8,192 aggregate slots; larger pools and speculative fast-path integration remain unimplemented. Matched vLLM/SGLang launches await explicit approval. Historical results and rejected cases retain exact provenance. No competitive win, sustained-load qualification, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
   },
   readiness: [
     {
       label: "Sustained ingress and loopback HTTP",
-      state: "implemented",
-      detail:
-        "Private Ferric source integrates resident JSONL submit/cancel/drain/shutdown, bounded queues, worst-case KV reservations and queue-inclusive arrival timing. A 127.0.0.1-only HTTP adapter streams greedy raw completions with exact tokenizer byte pieces, incremental UTF-8, cancellation and bounded owned-child teardown. The scoped public-3e3 host gate passes 206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 fake-child HTTP tests, with three explicit ignores, strict Clippy and a release build. These are host/protocol checks, not a GPU serving soak or deployed endpoint qualification. No matched vLLM/SGLang result exists; baseline launches await explicit approval.",
-    },
-    {
-      label: "32-row FP32 head: native only",
       state: "observed",
       detail:
-        "The separate v8 TP1 image preserves BF16 weights/hidden states and writes final logits plus argmax in FP32. All 15 native fixtures pass at rows 1/16/17/31/32, covering scalar head, MFMA head and argmax with exact outputs, active/tail checks, unchanged guards and clean teardown; all eight GPUs are idle afterward. Image 5f19b3ba and report 5e27c9f5 bind fresh public-3e3 emission and worker provenance. The opt-in capacity32 route adds 19,447,808 workspace bytes; its BF16 control adds none. This native checkpoint excludes later v8 model results: native success is not a model repair, speedup or broader numerical qualification. Historical 16-row v7 model passes remain separate.",
+        "Private Ferric source integrates resident JSONL submit/cancel/drain/shutdown, bounded queues, worst-case KV reservations and queue-inclusive arrivals. The 127.0.0.1 adapter streams greedy raw completions with exact tokenizer byte pieces and incremental UTF-8. A real GPU smoke passes four sequential requests and nine frozen-reference outputs, including a repeat, with prefix caching off, exact client usage/token bytes, clean controller/worker close and all eight GPUs idle before/after. Receipt 3bfc4e93 and controller events e3e2131a bind this bounded observation. No endpoint remains active; this is not concurrent or sustained-load qualification, a physical queue-rollover test or a performance comparison. The scoped public-3e3 host gate passes 206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 HTTP tests, with three explicit ignores, strict Clippy and release. Baseline launches await explicit approval.",
+    },
+    {
+      label: "32-row FP32 head: bounded model passes",
+      state: "observed",
+      detail:
+        "All 15 native fixtures pass at rows 1/16/17/31/32 with exact outputs, active/tail bounds, unchanged guards and clean teardown. Separate TP1 MFMA+FP32-v8 model canaries pass the complete four-request/eight-output reference at row/chunk budgets 16 and 32, n=1 each: actual maximum rows are 16 and 17, not 32. Both complete 34 physical rows; rates 2.678148 and 2.665643 output tokens/s are effectively flat, with no speedup claim. Current-3e3 controller cd90bba6 and worker 933d73d2 use frozen v5 base image 98b5fdb1 plus fresh v8 image 5f19b3ba; old emission provenance is unchanged. All eight GPUs are idle after both. The capacity32 route adds 19,447,808 FP32 workspace bytes; BF16 control adds none. These tiny canaries do not establish sustained serving or broad numerical qualification; historical v7 results remain separate.",
     },
     {
       label: "Shared peer currentness: native only",
@@ -1009,7 +1037,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Bounded resident JSONL and loopback HTTP",
         detail:
-          "Private target-only source keeps model/runtime state resident across submit, cancel, drain and shutdown. Wall-clock arrivals include queue wait. The 127.0.0.1 HTTP adapter supports greedy raw streaming completions and final usage, rejects unsupported modes, validates token-byte concatenation and bounds child cleanup. Host fake-child checks pass; a deployed GPU endpoint and sustained serving qualification remain open.",
+          "Private target-only source keeps model/runtime state resident across submit, cancel, drain and shutdown. Wall-clock arrivals include queue wait. The 127.0.0.1 HTTP adapter supports greedy raw streaming completions and final usage, rejects unsupported modes, validates token-byte concatenation and bounds child cleanup. Host checks and a four-sequential-request/nine-output GPU smoke pass. No endpoint remains active; concurrent and sustained serving qualification remain open.",
       },
       {
         name: "TP1/2/8 host shard planning",
@@ -1113,7 +1141,7 @@ window.FERRIC_PROJECT = Object.freeze({
       {
         name: "Qualify the competitiveness serving path",
         detail:
-          "Bind separately validated v8 model canaries, then complete sustained ingress/HTTP GPU soak and identical client-boundary workloads after explicit deployment approval. Kernel native success and frozen short-canary changes are not a matched vLLM/SGLang result or a new default.",
+          "Extend the passing v8 model canaries and sequential HTTP smoke with sustained ingress/HTTP GPU soak and identical client-boundary workloads after explicit deployment approval. Native success, tiny model passes and frozen short-canary changes are not a matched vLLM/SGLang result or a new default.",
       },
       {
         name: "Expand aggregate KV and integrate fast-path speculation",
@@ -1412,6 +1440,12 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      sourceStatus: "6148e61",
+      title: "Real HTTP smoke and both v8 model budgets retain exact outputs",
+      state: "observed",
+      detail: "Four sequential HTTP requests, including a repeat, produce nine exact-reference outputs with prefix caching disabled, correct client usage/token bytes, clean owned teardown and all-eight-GPU idle checks. Receipt SHA-256 3bfc4e938f32ea21ad4800e2645072072e1660502e3eda8168aeffdecd293bb8; controller-events SHA-256 e3e2131acc6eeec26bedffd07a0d0a814e5225e03a7b50b3b92b4bb9d60e80f7. Separately, v8 TP1 model budgets 16/32 each pass four requests/eight outputs, actual maxima 16/17 and rates 2.678148/2.665643 tokens/s, n=1 each. Report SHA-256 8e81053717b9db8ff5fb489a4c1ac54aea3a92b5a8fc0be7f9eb7df57ae8fb19 and c852f93a221cfd5894ac86efc6c7b35b94b0d87d5dce06fa1ef03f86c55feec9. Current-3e3 controller/worker and v8 image do not relabel the frozen v5 base emission. No endpoint remains active; no faster32, sustained-load, external-baseline or M1 claim follows.",
+    },
     {
       sourceStatus: "121609f",
       title: "Current source and dependency inventories pass their scoped gate",

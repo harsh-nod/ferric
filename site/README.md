@@ -9,18 +9,25 @@ locally, and remove the private stage after archiving evidence.
 
 The competitiveness checkpoint is unpublished until separately approved.
 `competitivenessSprint` in `data/project.js` records private integrated JSONL
-and loopback HTTP source, scoped host/protocol tests, native-only v8 and shared
-peer-currentness results, and the frozen-511 two-per-mode admission-cache
-canary. Implemented HTTP is not a deployed or qualified serving endpoint.
-Later v8 model/HTTP GPU results are outside this checkpoint. V8 native fixtures
-are not a model pass; the speculative fast path and larger
+and loopback HTTP source, scoped host/protocol tests, v8 native fixtures and
+separate exact-reference model canaries at budgets 16/32 (actual maxima 16/17,
+n=1 each, effectively flat rates). The real HTTP smoke has four sequential
+requests/nine outputs with prefix caching off, exact token bytes and usage,
+clean teardown and all-eight-GPU idle checks. No endpoint remains active;
+the smoke is not concurrent or sustained-load qualification and provides no
+HTTP performance claim. Shared peer-currentness results remain native-only;
+the frozen-511 two-per-mode admission-cache canary remains separate. Native
+fixtures alone are not model evidence; the speculative fast path and larger
 KV envelopes remain unimplemented. Baseline launches require explicit approval.
 No serving-comparison or competitive-win claim follows from the canary.
 
-`validate-competitiveness.mjs` validates the closed snapshot and rejects 20
+`validate-competitiveness.mjs` validates the closed snapshot and rejects 30
 scope/promotion mutations. Its optional evidence route, run only on mi300x,
 rehashes the root-reviewed native/host receipts and all four exact-reference
-cache reports, then recomputes the caption's per-mode mean changes:
+cache reports, then recomputes the caption's per-mode mean changes. It also
+rehashes both v8 model reports/raw traces and checks actual row maxima and
+rates, plus HTTP receipt/controller events/clients/teardown without deriving
+HTTP performance metrics:
 
 ```sh
 node validate-competitiveness.mjs /private/compete-evidence /private/serving-evidence

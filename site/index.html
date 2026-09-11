@@ -47,7 +47,8 @@
               A Rust inference engine building an authority-bound path from authenticated model
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
-              Bounded resident JSONL and loopback HTTP are implemented in private source.
+              Bounded resident JSONL and loopback HTTP are implemented in private source;
+              a four-request GPU smoke passes with clean teardown.
               Repeated short-workload measurements exist; sustained GPU serving qualification,
               matched vLLM/SGLang comparisons, and protected qualification remain open.
             </p>
