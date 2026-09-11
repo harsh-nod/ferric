@@ -22,6 +22,7 @@ use serde_json::{Value, json};
 const COMMAND_SCHEMA: &str = "FerricQwen3TpLiveCommandV1";
 const EVENT_SCHEMA: &str = "FerricQwen3TpLiveEventV1";
 const MAX_LINE_BYTES: usize = 524_288;
+const MAX_PROMPT_BYTES: usize = ferric_build::MAX_TOKENIZER_INPUT_BYTES;
 const MAX_PENDING: usize = 32;
 const INPUT_CAPACITY: usize = 8;
 const INPUTS_PER_BATCH: usize = 32;
@@ -82,7 +83,7 @@ impl Command {
                 || name.is_empty()
                 || name.len() > 64
                 || prompt.is_empty()
-                || prompt.len() > 65_536
+                || prompt.len() > MAX_PROMPT_BYTES
                 || !(1..=8192).contains(new_tokens) =>
             {
                 return Err("invalid request identity, prompt, or output bound".into());
@@ -585,11 +586,12 @@ impl<G: EngineeringTpBatchRunnerV2, M: TokenCodec, E: FnMut(Value) -> Result<(),
                 .iter()
                 .find(|r| r.id == output.request)
                 .ok_or("live output has no admitted request")?;
+            let decoded = self.codec.decode(&[output.token_id])?;
             self.event(
                 "token",
                 json!({"request_id":active.request_id,"name":active.name,
                 "slot":output.request.slot,"generation":output.request.generation,
-                "token":output.token_id,"index":output.output_index,
+                "token":output.token_id,"index":output.output_index,"decoded_bytes":decoded,
                 "completed_ns":output.completed_ns,"finished":output.finished}),
             )?;
         }
@@ -655,6 +657,7 @@ pub fn run<G: EngineeringTpBatchRunnerV2>(
             "arrival_policy":"complete command received; includes input and pending queue wait",
             "max_active_requests":TP_MAX_REQUESTS_V1,"max_pending_requests":MAX_PENDING,
             "input_channel_capacity":INPUT_CAPACITY,"max_command_bytes":MAX_LINE_BYTES,
+            "max_prompt_bytes":MAX_PROMPT_BYTES,
             "max_batches":max_batches,"context_tokens":context,"physical_pages":pages,
             "admission_policy":"FIFO with worst-case private KV reservation",
             "cancellation_policy":"between completed GPU batches","eos_policy":"fixed output count",
@@ -822,7 +825,7 @@ mod tests {
             ("new_tokens", json!(0)),
             ("new_tokens", json!(8193)),
             ("extra", json!(true)),
-            ("prompt", json!("a".repeat(65_537))),
+            ("prompt", json!("a".repeat(MAX_PROMPT_BYTES + 1))),
         ] {
             let mut invalid = valid.clone();
             invalid[field] = value;
@@ -930,6 +933,27 @@ mod tests {
         assert_eq!(request["ttft_ns"], 54);
         assert_eq!(request["output_timestamps_ns"], json!([60]));
         assert_eq!(request["generated_tokens"], json!([3]));
+    }
+
+    #[test]
+    fn streamed_token_bytes_concatenate_to_the_final_decoded_bytes() {
+        let mut runtime = runtime(1, false);
+        let events = RefCell::new(Vec::new());
+        let mut session = session(&mut runtime, &events, 1);
+        session.command(submit(1, "a", 3), 1, 1).unwrap();
+        session.admit(2).unwrap();
+        for now in 3..=5 {
+            session.step(|| Ok(now), &HostTiming::default()).unwrap();
+        }
+        let events = events.borrow();
+        let bytes = events
+            .iter()
+            .filter(|e| e["event"] == "token")
+            .flat_map(|e| e["decoded_bytes"].as_array().unwrap().iter().cloned())
+            .collect::<Vec<_>>();
+        let request = events.iter().find(|e| e["event"] == "request").unwrap();
+        assert_eq!(json!(bytes), request["generated_utf8_bytes"]);
+        assert_eq!(bytes.len(), 3);
     }
 
     #[test]
