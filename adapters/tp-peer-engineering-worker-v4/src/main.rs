@@ -45,6 +45,7 @@ struct Worker {
     next_request: u64,
     world: usize,
     concurrent_rounds: bool,
+    shared_full_currentness: bool,
 }
 
 impl Worker {
@@ -65,6 +66,12 @@ impl Worker {
             return Err("peer request identity or rank drift".into());
         }
         request.payload_bytes().map_err(|error| error.to_string())?;
+        if self.shared_full_currentness
+            && self.next_request == 1
+            && !matches!(request.command, CommandV1::ConfigurePerformance { .. })
+        {
+            return Err("shared full currentness requires explicit initial configuration".into());
+        }
         let round = !request.round_ranks.is_empty();
         if round
             && (!self.concurrent_rounds
@@ -92,8 +99,11 @@ impl Worker {
                 operational_currentness,
                 profile,
             } if rank == 0 && !profile => {
-                self.group
-                    .configure_performance(cache_kernel_admission, operational_currentness)?;
+                self.group.configure_performance_v2(
+                    cache_kernel_admission,
+                    operational_currentness,
+                    self.shared_full_currentness,
+                )?;
                 ResponseV1::PerformanceConfigured
             }
             CommandV1::Allocate { bytes } => {
@@ -252,13 +262,28 @@ fn parse_args(args: &[String]) -> Result<Vec<u64>> {
     Ok(ids)
 }
 
-fn run() -> Result<()> {
-    let mut args = std::env::args().skip(1).collect::<Vec<_>>();
-    let concurrent_rounds = args.last().is_some_and(|arg| arg == "--concurrent-rounds");
-    if concurrent_rounds {
-        args.pop();
+fn parse_launch(args: &[String]) -> Result<(Vec<u64>, bool, bool)> {
+    if args.len() < 3 {
+        return Err("peer launch requires the explicit device roster".into());
     }
-    let ids = parse_args(&args)?;
+    let ids = parse_args(&args[..3])?;
+    let mut concurrent_rounds = false;
+    let mut shared_full_currentness = false;
+    for argument in &args[3..] {
+        match argument.as_str() {
+            "--concurrent-rounds" if !concurrent_rounds => concurrent_rounds = true,
+            "--shared-full-currentness" if !shared_full_currentness => {
+                shared_full_currentness = true
+            }
+            _ => return Err("unknown or duplicate peer launch profile".into()),
+        }
+    }
+    Ok((ids, concurrent_rounds, shared_full_currentness))
+}
+
+fn run() -> Result<()> {
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let (ids, concurrent_rounds, shared_full_currentness) = parse_launch(&args)?;
     // SAFETY: this dedicated entry has no threads or independent GPU clients.
     // Its mandatory opt-in is checked before opening KFD. Any error exits main.
     let group = unsafe { Group::open_unchecked(&ids) }?;
@@ -271,6 +296,7 @@ fn run() -> Result<()> {
         next_request: 1,
         world: ids.len(),
         concurrent_rounds,
+        shared_full_currentness,
     };
     let mut input = std::io::stdin().lock();
     let mut output = std::io::stdout().lock();
@@ -288,6 +314,7 @@ fn run() -> Result<()> {
             unique_ids: ids,
             process_id: std::process::id(),
             authority: "none".into(),
+            shared_full_currentness,
         },
         &[],
     )
@@ -357,6 +384,49 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn launch_profiles_are_explicit_independent_and_not_repeatable() {
+        let base = [
+            "--allow-unauthenticated-machine-code",
+            "--device-unique-ids",
+            "1,2",
+        ];
+        for (flags, expected) in [
+            (vec![], (false, false)),
+            (vec!["--concurrent-rounds"], (true, false)),
+            (vec!["--shared-full-currentness"], (false, true)),
+            (
+                vec!["--concurrent-rounds", "--shared-full-currentness"],
+                (true, true),
+            ),
+            (
+                vec!["--shared-full-currentness", "--concurrent-rounds"],
+                (true, true),
+            ),
+        ] {
+            let args = base
+                .iter()
+                .chain(&flags)
+                .map(|arg| (*arg).into())
+                .collect::<Vec<_>>();
+            let (ids, round, shared) = parse_launch(&args).unwrap();
+            assert_eq!(ids, [1, 2]);
+            assert_eq!((round, shared), expected);
+        }
+        for flags in [
+            vec!["--unknown"],
+            vec!["--shared-full-currentness", "--shared-full-currentness"],
+            vec!["--concurrent-rounds", "--concurrent-rounds"],
+        ] {
+            let args = base
+                .iter()
+                .chain(&flags)
+                .map(|arg| (*arg).into())
+                .collect::<Vec<_>>();
+            assert!(parse_launch(&args).is_err());
+        }
+    }
 
     #[test]
     fn mandatory_opt_in_and_exact_device_roster_precede_gpu_open() {

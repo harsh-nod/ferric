@@ -22,6 +22,7 @@ const PARTIAL32: &str = "ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5";
 struct Options {
     cached_sequences: bool,
     wide32: bool,
+    shared_full_currentness: bool,
 }
 
 fn parse_options(args: &mut Vec<String>) -> Result<Options> {
@@ -30,6 +31,7 @@ fn parse_options(args: &mut Vec<String>) -> Result<Options> {
         let flag = match args.last().map(String::as_str) {
             Some("--cached-sequences") => &mut options.cached_sequences,
             Some("--wide32") => &mut options.wide32,
+            Some("--shared-full-currentness") => &mut options.shared_full_currentness,
             _ => return Ok(options),
         };
         if *flag {
@@ -257,8 +259,12 @@ fn run() -> Result<()> {
     // SAFETY: this explicitly opted-in, single-threaded disposable fixture owns
     // all GPU activity in this process. Any error returns directly to exit(1).
     let mut group = unsafe { Group::open_unchecked(&ids) }?;
-    if cached_sequences {
-        group.configure_performance(true, true)?;
+    if cached_sequences || options.shared_full_currentness {
+        group.configure_performance_v2(
+            cached_sequences,
+            cached_sequences,
+            options.shared_full_currentness,
+        )?;
     }
     let mut copies = Vec::new();
     let mut reductions = Vec::new();
@@ -445,16 +451,17 @@ fn run() -> Result<()> {
         )?;
     }
     group.close()?;
-    println!(
-        "{}",
-        serde_json::json!({"profile":if options.wide32 {"gpu-producer-peer-consumer-v6"} else {"gpu-producer-peer-consumer-v4"}, "authority":"none",
+    let mut receipt = serde_json::json!({"profile":if options.wide32 {"gpu-producer-peer-consumer-v6"} else {"gpu-producer-peer-consumer-v4"}, "authority":"none",
         "pid":std::process::id(), "device_unique_ids":ids, "base_sha256":args[2], "peer_sha256":args[4],
         "observations":observations,"cached_sequences":cached_sequences,"row_capacity":row_capacity,
         "sequence_length":if cached_sequences {2} else {1},
         "gpu_bf16_producer_to_peer_reader":true,
         "gpu_f32_projection_to_peer_reduction":true,"all_guards_and_active_outputs_exact":true,
-        "all_peer_unmaps_before_owner_free":true,"all_closed":true})
-    );
+        "all_peer_unmaps_before_owner_free":true,"all_closed":true});
+    if options.shared_full_currentness {
+        receipt["shared_full_currentness"] = true.into();
+    }
+    println!("{receipt}");
     Ok(())
 }
 
@@ -477,6 +484,12 @@ mod tests {
             vec!["--cached-sequences"],
             vec!["--cached-sequences", "--wide32"],
             vec!["--wide32", "--cached-sequences"],
+            vec!["--shared-full-currentness"],
+            vec![
+                "--shared-full-currentness",
+                "--cached-sequences",
+                "--wide32",
+            ],
         ] {
             let mut args = vec!["1".into(), "2".into()];
             args.extend(flags.iter().map(|flag| (*flag).to_string()));
@@ -487,8 +500,16 @@ mod tests {
                 flags.contains(&"--cached-sequences")
             );
             assert_eq!(args, ["1", "2"]);
+            assert_eq!(
+                options.shared_full_currentness,
+                flags.contains(&"--shared-full-currentness")
+            );
         }
-        for flag in ["--wide32", "--cached-sequences"] {
+        for flag in [
+            "--wide32",
+            "--cached-sequences",
+            "--shared-full-currentness",
+        ] {
             assert!(parse_options(&mut vec![flag.into(), flag.into()]).is_err());
         }
     }

@@ -32,6 +32,8 @@ enum Failure {
     NonfinitePartial,
     ResidualWait,
     Close,
+    RuntimeSnapshot,
+    RuntimeCounter,
 }
 
 struct Recording {
@@ -112,6 +114,16 @@ impl Recording {
 }
 
 impl EngineeringTpRankTransportV1 for Recording {
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
+        if self.failure == Some(Failure::RuntimeSnapshot) {
+            return Err("injected runtime snapshot failure".into());
+        }
+        assert!(self.pending.is_none() && self.pending_sequence.is_none());
+        Ok(
+            serde_json::json!({"counters":{"dispatches":self.commands.len()
+            + usize::from(self.failure == Some(Failure::RuntimeCounter))}}),
+        )
+    }
     fn supports_sequences(&self) -> bool {
         true
     }
@@ -546,6 +558,35 @@ fn resident_weight_bytes_rejects_overflow() {
     driver.inner.ranks[0].globals[0].1.elements = usize::MAX;
     driver.inner.ranks[0].globals[0].1.element_bytes = 4;
     assert!(driver.resident_weight_bytes().is_err());
+}
+
+#[test]
+fn runtime_snapshots_bind_completed_dispatch_counts_and_poison_on_failure() {
+    let mut pool = pool();
+    let mut driver = fixture(2, &pool);
+    let before = driver.runtime_diagnostic_snapshot().unwrap();
+    assert_eq!(before.len(), 2);
+    assert_eq!(before[0]["counters"]["dispatches"], 0);
+    let prepared = prepare(&mut pool, 3);
+    driver.execute_selected(&prepared, &[0, 1, 2]).unwrap();
+    let after = driver.runtime_diagnostic_snapshot().unwrap();
+    assert_eq!(after[0]["counters"]["dispatches"], 544);
+    assert_eq!(after[1]["counters"]["dispatches"], 540);
+    driver.close().unwrap();
+    assert!(driver.runtime_diagnostic_snapshot().is_err());
+    for failure in [Failure::RuntimeSnapshot, Failure::RuntimeCounter] {
+        let mut driver = fixture(2, &pool);
+        driver.inner.transports[1].failure = Some(failure);
+        assert!(driver.runtime_diagnostic_snapshot().is_err());
+        assert!(driver.poisoned);
+        assert!(driver.runtime_diagnostic_snapshot().is_err());
+        driver.close().unwrap();
+    }
+    let mut mismatched = fixture(2, &pool);
+    mismatched.inner.transports.pop();
+    assert!(mismatched.runtime_diagnostic_snapshot().is_err());
+    assert!(mismatched.poisoned);
+    mismatched.close().unwrap();
 }
 
 #[test]

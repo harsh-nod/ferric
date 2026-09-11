@@ -34,6 +34,8 @@ pub struct RuntimeOptions {
     pub operational: bool,
     pub sequences: bool,
     pub rollover: bool,
+    pub shared_full_currentness: bool,
+    pub profile: bool,
 }
 
 struct Outgoing {
@@ -80,6 +82,9 @@ pub struct Worker {
     queue_epoch: u64,
     queue_packets: u64,
     timing: Option<Box<WorkerTiming>>,
+    diagnostic_identity: (u64, u32),
+    diagnostic_snapshots: u32,
+    last_diagnostic: Option<Box<wire::PerformanceCountersV1>>,
 }
 
 impl Worker {
@@ -117,6 +122,9 @@ impl Worker {
         timing: HostTiming,
         rank: u32,
     ) -> TpResult<Self> {
+        if options.shared_full_currentness {
+            return Err("shared full currentness requires the explicit peer worker".into());
+        }
         let child = Command::new(executable)
             .arg("--device-unique-id")
             .arg(unique_id.to_string())
@@ -127,22 +135,27 @@ impl Worker {
             .spawn()
             .map_err(|error| format!("spawn GPU worker: {error}"))?;
         let mut worker = Self::connect_with_timing(child, unique_id, OP_TIMEOUT, timing, rank)?;
-        worker.options = options;
-        if options.cache_admission || options.operational {
-            worker.send(
+        worker.configure_options(options)?;
+        worker.load_artifact(artifact)?;
+        Ok(worker)
+    }
+
+    fn configure_options(&mut self, options: RuntimeOptions) -> TpResult<()> {
+        self.options = options;
+        if options.cache_admission || options.operational || options.profile {
+            self.send(
                 CommandV1::ConfigurePerformance {
                     cache_kernel_admission: options.cache_admission,
                     operational_currentness: options.operational,
-                    profile: false,
+                    profile: options.profile,
                 },
                 vec![],
             )?;
-            if !matches!(worker.receive()?.header, ResponseV1::PerformanceConfigured) {
-                return worker.reject("runtime performance configuration was not acknowledged");
+            if !matches!(self.receive()?.header, ResponseV1::PerformanceConfigured) {
+                return self.reject("runtime performance configuration was not acknowledged");
             }
         }
-        worker.load_artifact(artifact)?;
-        Ok(worker)
+        Ok(())
     }
 
     #[cfg(test)]
@@ -210,6 +223,9 @@ impl Worker {
             options: RuntimeOptions::default(),
             queue_epoch: 0,
             queue_packets: 0,
+            diagnostic_identity: (unique_id, timing_rank),
+            diagnostic_snapshots: 0,
+            last_diagnostic: None,
             timing: timing.is_enabled().then(|| {
                 Box::new(WorkerTiming {
                     timing,
@@ -476,6 +492,49 @@ impl Worker {
 }
 
 impl EngineeringTpRankTransportV1 for Worker {
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
+        if !self.options.profile
+            || self.failed
+            || self.exited
+            || self.pending.is_some()
+            || self.diagnostic_snapshots >= 2
+        {
+            return self.reject("runtime diagnostic snapshot is disabled or unavailable");
+        }
+        self.send(CommandV1::PerformanceSnapshot, vec![])?;
+        let incoming = self.receive()?;
+        let ResponseV1::PerformanceSnapshot { counters } = incoming.header else {
+            return self.reject("runtime diagnostic snapshot response mismatch");
+        };
+        if !incoming.payload.is_empty() {
+            return self.reject("runtime diagnostic snapshot has an unexpected payload");
+        }
+        let values = serde_json::to_value(&counters).map_err(|error| error.to_string())?;
+        if let Some(previous) = &self.last_diagnostic {
+            let before = serde_json::to_value(previous).map_err(|error| error.to_string())?;
+            if before.as_object().is_none_or(|object| {
+                object.iter().any(|(key, value)| {
+                    values.get(key).and_then(serde_json::Value::as_u64) < value.as_u64()
+                })
+            }) {
+                return self.reject("runtime diagnostic counters regressed");
+            }
+        }
+        let ordinal = self.diagnostic_snapshots;
+        self.diagnostic_snapshots += 1;
+        self.last_diagnostic = Some(Box::new(counters));
+        Ok(serde_json::json!({
+            "schema": "FerricRuntimeDiagnosticSnapshotV1",
+            "authority": "none",
+            "performance_qualified": false,
+            "scope": "cumulative overlapping worker host-wall counters, not GPU timestamps",
+            "process_id": self.child.id(),
+            "device_unique_id": self.diagnostic_identity.0,
+            "rank": self.diagnostic_identity.1,
+            "ordinal": ordinal,
+            "counters": values,
+        }))
+    }
     fn allocate(&mut self, byte_len: usize) -> TpResult<u64> {
         if byte_len == 0 {
             return self.reject("zero allocation");
@@ -708,6 +767,10 @@ impl Drop for Worker {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "tp_worker_diagnostics_tests.rs"]
+mod diagnostic_tests;
 
 fn read_response(input: &mut impl Read) -> TpResult<Incoming> {
     let header = wire::read_header_v1(input)

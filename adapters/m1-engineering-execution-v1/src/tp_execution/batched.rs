@@ -581,6 +581,42 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.inner.dispatch_counts()
     }
 
+    /// Returns explicitly enabled, cumulative host counters between completed batches.
+    /// # Errors
+    /// Rejects closed/poisoned state, unsupported transports or counter/receipt drift.
+    pub fn runtime_diagnostic_snapshot(&mut self) -> TpResult<Vec<serde_json::Value>> {
+        if self.inner.closed || self.poisoned {
+            return Err("batched execution is closed or poisoned".into());
+        }
+        let expected = self.inner.dispatch_counts();
+        if expected.len() != self.inner.transports.len() {
+            self.poisoned = true;
+            return Err("runtime diagnostic rank roster mismatch".into());
+        }
+        let result: TpResult<Vec<serde_json::Value>> = self
+            .inner
+            .transports
+            .iter_mut()
+            .zip(expected)
+            .map(|(transport, count)| {
+                let receipt = transport.runtime_diagnostic_snapshot()?;
+                if receipt
+                    .get("counters")
+                    .and_then(|counters| counters.get("dispatches"))
+                    .and_then(serde_json::Value::as_u64)
+                    != Some(count)
+                {
+                    return Err("runtime diagnostic dispatch counter mismatch".into());
+                }
+                Ok(receipt)
+            })
+            .collect();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
+
     /// Number of complete GPU batches, not number of request tokens.
     #[must_use]
     pub const fn completed_batches(&self) -> u64 {

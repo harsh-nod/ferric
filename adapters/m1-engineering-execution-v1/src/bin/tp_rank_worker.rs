@@ -32,6 +32,9 @@ impl RankWorker {
 }
 
 impl EngineeringTpRankTransportV1 for RankWorker {
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
+        self.transport_mut().runtime_diagnostic_snapshot()
+    }
     fn supports_concurrent_rounds(&self) -> bool {
         self.transport().supports_concurrent_rounds()
     }

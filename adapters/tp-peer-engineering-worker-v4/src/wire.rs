@@ -8,6 +8,11 @@ pub const PROTOCOL: u32 = 4;
 pub const MODE: &str = "device-peer-serial-v4";
 pub const ROUND_MODE: &str = "device-peer-concurrent-round-v1";
 
+#[allow(clippy::trivially_copy_pass_by_ref)] // Serde predicates require a borrowed field.
+fn is_false(value: &bool) -> bool {
+    !value
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
@@ -63,6 +68,8 @@ pub enum Response {
         unique_ids: Vec<u64>,
         process_id: u32,
         authority: String,
+        #[serde(default, skip_serializing_if = "is_false")]
+        shared_full_currentness: bool,
     },
     Done {
         request: u64,
@@ -156,6 +163,33 @@ pub fn write_response(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shared_fence_handshake_is_explicit_and_legacy_bytes_stay_unchanged() {
+        let ready = |shared_full_currentness| Response::Ready {
+            protocol: PROTOCOL,
+            mode: MODE.into(),
+            target: "gfx950:xnack-".into(),
+            unique_ids: vec![1, 2],
+            process_id: 42,
+            authority: "none".into(),
+            shared_full_currentness,
+        };
+        let legacy = serde_json::to_value(ready(false)).unwrap();
+        assert!(legacy.get("shared_full_currentness").is_none());
+        assert_eq!(
+            serde_json::to_value(ready(true)).unwrap()["shared_full_currentness"],
+            true
+        );
+        for shared in [false, true] {
+            let mut bytes = Vec::new();
+            write_response(&mut bytes, &ready(shared), &[]).unwrap();
+            let (decoded, _) = read_response(&mut &bytes[..]).unwrap();
+            assert!(
+                matches!(decoded, Response::Ready { shared_full_currentness, .. } if shared_full_currentness == shared)
+            );
+        }
+    }
 
     #[test]
     fn concurrent_round_checks_roster_shape_before_payload() {

@@ -18,6 +18,12 @@ use crate::tp_scheduler::{
 
 /// Actual GPU work boundary; external code cannot fabricate the pool completion token.
 pub trait EngineeringTpBatchRunnerV2 {
+    /// Explicit diagnostic-only counters; no snapshot is taken by normal execution.
+    /// # Errors
+    /// Rejects unsupported profiling or unavailable/poisoned worker state.
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<Vec<serde_json::Value>> {
+        Err("runner does not support runtime diagnostic snapshots".into())
+    }
     /// Optional diagnostic binding within the same submission transaction.
     /// # Errors
     /// Rejects stale selected diagnostic row identities.
@@ -65,6 +71,9 @@ pub trait EngineeringTpBatchRunnerV2 {
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     for EngineeringTpBatchExecutionV2<R>
 {
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<Vec<serde_json::Value>> {
+        self.runtime_diagnostic_snapshot()
+    }
     fn bind_numerical_rows(&mut self, batch: u64, rows: &[TpBatchRowV1]) -> TpResult<()> {
         self.bind_numerical_rows(batch, rows)
     }
@@ -475,6 +484,18 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
     #[must_use]
     pub fn dispatch_counts(&self) -> Vec<u64> {
         self.gpu.dispatch_counts()
+    }
+
+    /// Collects explicitly enabled worker diagnostics only while the runtime is ready.
+    /// # Errors
+    /// Any snapshot failure poisons this runtime and permits teardown only.
+    pub fn runtime_diagnostic_snapshot(&mut self) -> TpResult<Vec<serde_json::Value>> {
+        self.require_ready()?;
+        let result = self.gpu.runtime_diagnostic_snapshot();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
     }
 
     /// Closes the resident group; no subsequent admission or reuse is permitted.

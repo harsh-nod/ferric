@@ -91,6 +91,12 @@ pub struct EngineeringTpDispatchV1 {
 /// exact artifact, scalar ABI, allocation extents and pointer-fixup ownership.
 /// These are external Contracted prerequisites, not proved by this driver.
 pub trait EngineeringTpRankTransportV1 {
+    /// Explicit diagnostic-only cumulative worker host-wall counters, never GPU timestamps.
+    /// # Errors
+    /// Rejects disabled profiling, pending work, closed/poisoned state or malformed receipts.
+    fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
+        Err("transport does not support runtime diagnostic snapshots".into())
+    }
     /// Explicit checked mixed-rank publication support; never inferred from PID.
     fn supports_concurrent_rounds(&self) -> bool {
         false

@@ -56,6 +56,7 @@ impl Connection {
         ids: &[u64],
         timeout: Duration,
         concurrent_rounds: bool,
+        shared_full_currentness: bool,
         timing: HostTiming,
     ) -> TpResult<Self> {
         let Some(mut input) = child.stdin.take() else {
@@ -113,8 +114,9 @@ impl Connection {
         };
         let ready = connection.reader.recv_timeout(timeout);
         if !matches!(ready, Ok(Ok((peer_wire::Response::Ready { protocol, mode, target,
-            unique_ids, process_id, authority }, payload))) if protocol == peer_wire::PROTOCOL
+            unique_ids, process_id, authority, shared_full_currentness: observed_shared }, payload))) if protocol == peer_wire::PROTOCOL
                 && mode == if concurrent_rounds { peer_wire::ROUND_MODE } else { peer_wire::MODE }
+                && observed_shared == shared_full_currentness
                 && target == "gfx950:xnack-" && unique_ids == ids
                 && process_id == connection.child.id() && authority == "none" && payload.is_empty())
         {
@@ -441,8 +443,13 @@ impl Connection {
         Ok(())
     }
 
-    fn configure_performance(&mut self, cache: bool, operational: bool) -> TpResult<()> {
-        if !cache && !operational {
+    fn configure_performance(
+        &mut self,
+        cache: bool,
+        operational: bool,
+        shared: bool,
+    ) -> TpResult<()> {
+        if !cache && !operational && !shared {
             return Ok(());
         }
         let (response, payload) = self.sync(
@@ -539,6 +546,9 @@ impl PeerWorker {
         concurrent_rounds: bool,
         timing: HostTiming,
     ) -> TpResult<Vec<Self>> {
+        if options.profile {
+            return Err("peer runtime diagnostic profiling is unsupported".into());
+        }
         if options.rollover || concurrent_rounds && options.sequences {
             return Err("peer rollover and concurrent same-rank sequences are unsupported".into());
         }
@@ -563,6 +573,9 @@ impl PeerWorker {
         if concurrent_rounds {
             command.arg("--concurrent-rounds");
         }
+        if options.shared_full_currentness {
+            command.arg("--shared-full-currentness");
+        }
         let child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -574,11 +587,14 @@ impl PeerWorker {
             unique_ids,
             TIMEOUT,
             concurrent_rounds,
+            options.shared_full_currentness,
             timing,
         )?));
-        connection
-            .borrow_mut()
-            .configure_performance(options.cache_admission, options.operational)?;
+        connection.borrow_mut().configure_performance(
+            options.cache_admission,
+            options.operational,
+            options.shared_full_currentness,
+        )?;
         let mut workers = Vec::new();
         for rank in 0..unique_ids.len() {
             let mut worker = Self {
@@ -895,8 +911,10 @@ def send(response, payload=b''):
     header = json.dumps(response).encode()
     sys.stdout.buffer.write(struct.pack('<I', len(header)) + header + payload)
     sys.stdout.buffer.flush()
-send({'peer_op':'ready','protocol':4,'mode':'device-peer-concurrent-round-v1' if mode.startswith('round') else 'device-peer-serial-v4',
-      'target':'gfx950:xnack-','unique_ids':[1,2], 'process_id':os.getpid(), 'authority':'none'})
+ready = {'peer_op':'ready','protocol':4,'mode':'device-peer-concurrent-round-v1' if mode.startswith('round') else 'device-peer-serial-v4',
+      'target':'gfx950:xnack-','unique_ids':[1,2], 'process_id':os.getpid(), 'authority':'none'}
+if 'shared' in mode: ready['shared_full_currentness'] = mode != 'shared_false'
+send(ready)
 buffers = {}
 while True:
     prefix = sys.stdin.buffer.read(4)
@@ -943,7 +961,7 @@ while True:
     if op == 'close': break
 ";
 
-    fn fixture(mode: &str) -> Vec<PeerWorker> {
+    fn fixture_connection(mode: &str, shared: bool) -> TpResult<Connection> {
         let child = Command::new("python3")
             .args(["-u", "-c", FAKE, mode])
             .stdin(Stdio::piped())
@@ -951,16 +969,18 @@ while True:
             .stderr(Stdio::inherit())
             .spawn()
             .unwrap();
-        let connection = Rc::new(RefCell::new(
-            Connection::connect_profile(
-                child,
-                &[1, 2],
-                Duration::from_millis(250),
-                mode.starts_with("round"),
-                HostTiming::default(),
-            )
-            .unwrap(),
-        ));
+        Connection::connect_profile(
+            child,
+            &[1, 2],
+            Duration::from_millis(250),
+            mode.starts_with("round"),
+            shared,
+            HostTiming::default(),
+        )
+    }
+
+    fn fixture(mode: &str) -> Vec<PeerWorker> {
+        let connection = Rc::new(RefCell::new(fixture_connection(mode, false).unwrap()));
         (0..2)
             .map(|rank| PeerWorker {
                 connection: Rc::clone(&connection),
@@ -970,6 +990,17 @@ while True:
                 sequences: false,
             })
             .collect()
+    }
+
+    #[test]
+    fn shared_fence_handshake_rejects_missing_unrequested_or_false_acknowledgments() {
+        for (mode, expected) in [("normal", true), ("shared", false), ("shared_false", true)] {
+            assert!(fixture_connection(mode, expected).is_err());
+        }
+        let mut shared = fixture_connection("shared", true).unwrap();
+        shared.configure_performance(false, false, true).unwrap();
+        assert_eq!(shared.next_request, 2);
+        shared.terminate().unwrap();
     }
 
     fn empty_dispatch() -> CommandV1 {
@@ -1234,7 +1265,7 @@ while True:
             let configured = workers[0]
                 .connection
                 .borrow_mut()
-                .configure_performance(true, true);
+                .configure_performance(true, true, false);
             assert_eq!(configured.is_ok(), mode == "normal");
             if mode == "normal" {
                 for worker in &mut workers {
@@ -1257,6 +1288,24 @@ while True:
         );
         assert!(
             matches!(result, Err(error) if error == "peer rollover and concurrent same-rank sequences are unsupported")
+        );
+    }
+
+    #[test]
+    fn peer_runtime_profiling_rejects_before_process_spawn() {
+        let result = PeerWorker::spawn_with_timing(
+            Path::new("/nonexistent-peer-worker"),
+            &[1, 2],
+            &[],
+            RuntimeOptions {
+                profile: true,
+                ..RuntimeOptions::default()
+            },
+            false,
+            HostTiming::default(),
+        );
+        assert!(
+            matches!(result, Err(error) if error == "peer runtime diagnostic profiling is unsupported")
         );
     }
 

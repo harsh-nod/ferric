@@ -175,6 +175,18 @@ fn runtime(
     )
 }
 
+#[test]
+fn unsupported_diagnostic_snapshot_poison_stops_runtime_but_allows_close() {
+    let (mut runtime, state) = runtime(4, 16, false);
+    assert!(runtime.runtime_diagnostic_snapshot().is_err());
+    assert!(runtime.poisoned);
+    assert!(runtime.admit(input(&[1], 1, 0), 0, 0).is_err());
+    assert!(state.borrow().calls.is_empty());
+    runtime.close().unwrap();
+    assert_eq!(state.borrow().close_calls, 1);
+    assert!(runtime.runtime_diagnostic_snapshot().is_err());
+}
+
 fn input(prompt: &[u32], new_tokens: u32, tick: u64) -> TpRequestAdmissionV1 {
     TpRequestAdmissionV1 {
         prompt_tokens: prompt.to_vec(),
