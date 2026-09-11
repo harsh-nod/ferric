@@ -8,10 +8,10 @@ protected M1 qualification receipt. Prior measurements remain frozen in
 
 | Team | Deliverable | State | Acceptance Gate |
 | --- | --- | --- | --- |
-| Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Implemented; initial scoped host tests, doctests and Clippy pass. Independent review found no blocker; added pending-identity negatives are in the incremental gate. | Genuine TP2/TP8 producer/reader probes before model use; fresh rebase before main publication |
+| Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Published on main at `79706b43a177a2fd3fa43ec328221fa3e5041af5` after a fresh no-op rebase. 469 KFD tests, 31 doctests, strict scoped Clippy and independent review pass. Genuine TP2/TP8 producer/reader gates pass. | Model performance comparison; engineering execution is not protected qualification |
 | Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | 23 host tools tests pass. Native TP1 suite passes all 15 diagnostic cases and 30 dispatches, including exact full-output layout checks. Offline analysis finds accumulation differences, not an established layout/narrowing defect. | Actual model operands/logit margins; no reference relaxation or unverified fix claim |
-| Measurement | Opt-in full-path host timing and strict profile summaries | Timing module, CLI sidecar, driver/IPC hooks and strict summary checks implemented; combined remote host gate in progress. | Timings correctly attributed, failures excluded from performance comparisons, default behavior unchanged |
-| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active dependencies refreshed to public `4fbc0a34c7938474406d37a45e7972ea8b1ec277`; pure-repin baseline passes 239 Rust tests, strict Clippy, release build and 70 Python tests. Concurrent transport integrated for combined testing. | Exact model output checks, matched baseline/candidate runs, archival and cleanup |
+| Measurement | Opt-in full-path host timing and strict profile summaries | Integrated. 256 Rust passes (two existing ignores), strict Clippy/release and 75 Python tests run (one skip). TP2 host control passes exact-reference and native sidecar checks. | Matched variant runs; failures excluded from performance comparisons |
+| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active dependencies refreshed to public `79706b43`; combined final-pin host gates pending. The preceding `4fbc0a34` pure-repin baseline has 239 Rust passes (two existing ignores), strict Clippy/release success and 70 Python tests run (one skip). | Exact model output checks, matched baseline/candidate runs, archival and cleanup |
 
 ## Constraints
 
@@ -34,6 +34,21 @@ The first integration targets runtime overhead, real rank concurrency and
 numerical diagnosis. Fusion, broader batch/chunk tuning and persistent serving
 lifetime changes follow measured attribution; they are not implicitly complete
 because the profiling hooks exist. Symmetric memory and MTP remain deferred.
+
+## Concurrent-Round Native Gate
+
+The frozen candidate child (`2032e31b`), built from the now-public core `79706b43`
+using a recorded private Cargo path patch, passes both TP2 and TP8 probes. Each
+checks 12 real mixed-rank rounds at one, three and sixteen rows: GPU BF16 producers
+feed peer readers, and GPU FP32 producers feed ordered peer reductions. All
+outputs, guards and tails match; close acknowledgements, zero exits, child reap
+and all-eight-card idle snapshots pass. These are correctness checks, not device
+overlap timestamps or Qwen benchmarks.
+
+The first TP2 probe stopped before dispatch because its harness incorrectly
+required optional pointer metadata omitted by the frozen image. Its failed receipt
+is preserved. The revised harness requires the exact absent-field contract and
+rejects non-null annotations and ABI mutations; runtime admission was unchanged.
 
 ## Numerical Checkpoint
 
