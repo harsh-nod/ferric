@@ -243,7 +243,8 @@ def validate_raw(value, producer_sha):
     exact(value["device"], ("index", "name", "gcn_arch", "torch_hip"), "device")
     integer(value["device"]["index"], 0, 0, "device index")
     for key in ("name", "gcn_arch", "torch_hip"):
-        require(type(value["device"][key]) is str and 0 < len(value["device"][key]) <= 256, f"device metadata {key}")
+        minimum = 0 if key == "name" else 1
+        require(type(value["device"][key]) is str and minimum <= len(value["device"][key]) <= 256, f"device metadata {key}")
     require(value["device"]["gcn_arch"].split(":")[0] == "gfx950", "reference target")
     require(value["loading_info"] == {name: [] for name in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")}, "checkpoint loading gaps")
     require(value["tied_weights"] is True and value["repeated_exact"] is True, "tie/repeated result")
@@ -283,9 +284,11 @@ def publish(path, value):
 def device_metadata(properties, hip_version):
     values = {"name": properties.name, "gcn_arch": properties.gcnArchName, "torch_hip": hip_version}
     for name, value in values.items():
-        require(isinstance(value, str) and 0 < len(value) <= 256,
+        minimum = 0 if name == "name" else 1
+        require(isinstance(value, str) and minimum <= len(value) <= 256,
                 f"runtime device metadata {name}: {type(value).__name__} {str(value)[:256]!r}")
     require(values["gcn_arch"].split(":")[0] == "gfx950", "only root-selected gfx950 supported")
+    # A missing display name is preserved; architecture and wrapper physical IDs bind the GPU.
     # PyTorch version metadata can be a str subclass; JSON receipts use plain strings.
     return {"index": 0, **{name: str(value) for name, value in values.items()}}
 

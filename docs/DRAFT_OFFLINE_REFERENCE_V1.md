@@ -33,6 +33,14 @@ checkpoint/producer mount, private output, overridden Python entrypoint,
 `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, and exactly one visible gfx950 GPU.
 Do not use the default `vllm serve` entrypoint. Do not expose a server port.
 
+The cached runtime can return an empty GPU display name. Preserve that empty
+label rather than inventing a product name; the nonempty gfx950 architecture
+and wrapper's frozen physical-device/PCI identity checks remain mandatory.
+String-subclass runtime metadata is normalized to plain JSON strings before
+model loading. Numeric UID containers also need explicit USER/LOGNAME and
+bounded writable compiler caches; these are environment accommodations, not
+changes to numerical policy or model files.
+
 Inside that wrapper, the producer arguments are:
 
 ```bash

@@ -54,6 +54,11 @@ class DraftReferenceTests(unittest.TestCase):
         device = reference.device_metadata(properties, Version("7.2.fixture"))
         self.assertIs(type(device["torch_hip"]), str)
         self.assertEqual(device["torch_hip"], "7.2.fixture")
+        properties.name = ""
+        self.assertEqual(reference.device_metadata(properties, "fixture")["name"], "")
+        raw = fixture()
+        raw["device"]["name"] = ""
+        reference.validate_raw(raw, PRODUCER)
         for invalid in (None, False, 7.2, "", "x" * 257):
             with self.assertRaises(ValueError):
                 reference.device_metadata(properties, invalid)
