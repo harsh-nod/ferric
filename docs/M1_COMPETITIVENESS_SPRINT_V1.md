@@ -12,14 +12,20 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Continuous-window V3 collector and independent paired replay integrated; 109 combined measurement tests pass; matched baseline launch approval still pending |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
-| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft CLI and independent-reference producer integrated; paired KV host settlement and opaque target completion integrated at `228df11`; paged draft kernels/driver and end-to-end execution remain incomplete |
-| Dispatch batching | Distinct bounded ordered submission in core runtime | Currentness fix published at `216822284`; native counters/lifecycle and four model/reference gates pass, recovering the old ordered regression; fresh serial comparison pending, not a performance default |
+| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft passes independent GPU reference; paired KV host settlement and opaque target completion integrated at `228df11`; closed 14-root draft family emitted on `216822284`, native and paged-driver gates pending; no end-to-end speculation yet |
+| Dispatch batching | Distinct bounded ordered submission in core runtime | Currentness fix published at `216822284`; native counters/lifecycle and model/reference gates pass; fresh same-worker ABBA shows 22.19% mean rate gain over serial in this short canary, not a performance default |
 
 ## Frozen Comparison Contract
 
 Start with Qwen/Qwen3-8B BF16, raw completion prompts, greedy decoding, fixed
 output lengths, no chat-template transformation, target-only execution, and
 prefix caching disabled. Use the identical canonical checkpoint/tokenizer.
+The first frozen 128/128 cell explicitly uses BF16 weights/decoder and FP32
+output-head computation in all engines. The baseline switches were selected
+before generating reference outputs: vLLM `head_dtype=float32` and SGLang
+`--enable-fp32-lm-head`. Their operand-conversion implementations differ and
+must be recorded. A stock BF16-head cell is separate; this FP32-head cell cannot
+establish a win over default baseline configurations.
 First compare one GPU; separately compare the best allocation of eight GPUs,
 including replicas rather than requiring TP8 for every engine. Do not compare
 the old tick-driven four-request canary rate to a different serving workload.
@@ -386,15 +392,38 @@ Mean rate improves 85.60%, reuse TTFT falls 48.21%, and TPOT falls 51.56%
 against the old, regressed ordered path only. This is not an 85.60% gain over
 Ferric serial, steady-state throughput, or a framework comparison. Every run
 passes all eight reference outputs, five batches, 34 rows, 3,077 packets,
-unforced cleanup and idle checks. A fresh serial/ordered comparison with the
-same new worker remains required before considering default adoption.
+unforced cleanup and idle checks.
+
+A fresh serial/ordered/ordered/serial comparison then uses the same new worker
+`b91ddef7` in all four cases, leaving controller, images and every other profile
+setting fixed. All four pass the same reference, packet and cleanup gates:
+
+| Submission | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Serial | 1 | 4.110346 | 372.971 | 337.001 |
+| Ordered | 1 | 5.486351 | 264.471 | 227.896 |
+| Ordered | 2 | 5.588073 | 258.208 | 226.036 |
+| Serial | 2 | 4.952575 | 295.475 | 265.160 |
+
+Mean rate is 4.531460 versus 5.537212 tokens/s, a 22.19% gain; reuse TTFT falls
+21.81% and TPOT falls 24.62%. The serial controls vary substantially. Two
+observations per mode do not provide confidence intervals, steady-state load,
+a framework comparison or sufficient evidence for default adoption. Raw runs
+remain `ordered-final-{serial,ordered}-r{1,2}` in the root evidence archive.
 
 After these gates, a fresh fetch/rebase and non-forced push published
 `21682228486f7186cc3c37ddf165fffc438d8b6a` to fe2o3 main. Its only delta from
 the exact tested `c110ac55c` source is native-result documentation. Active
 Ferric dependencies are repinned at `3c554d9`, with only two separately audited
-verifier Cargo raw hashes refreshed. The combined latest-pin gate is pending;
-older receipts retain their original source and policy identities.
+verifier Cargo raw hashes refreshed. The paired source-tree identity is fixed
+at `346d588`, and formatting at `656edb2`. The exact `656edb2` aggregate passes
+all 28 steps: 516 adapter test invocations, 18 existing ignores, five doctests,
+38 source-gate tests, 31 verifier-source-policy tests, 29 metadata configurations,
+five unchanged inventories, strict Clippy/formatting and negative/release gates.
+Aggregate SHA-256:
+`c0819d39d6a9a882bac2f6da3b6050fac8231a60ab915fd0032a31915da46f4b`.
+Earlier failed identity/format/summary-recorder attempts are retained. This is
+not a new Verus proof; older receipts keep their actual source identities.
 
 Separate fresh serial and ordered HTTP smoke runs also pass all nine reference
 outputs, client text/usage, process cleanup and idle checks. Their corrected
@@ -412,9 +441,21 @@ speculative numerical execution are not established by the bounded fixtures.
 The standalone fixed-envelope draft CLI is integrated at `24dddba` and its
 host gate passes 291 tests plus retained-image admission, Clippy and release
 build. It consumes five prompt inputs and produces two outputs through six
-baseline forwards; it has not yet passed a native independent-reference gate.
-The separate offline PyTorch reference producer passes 15 CPU tests. Neither
-host fixture values nor target-model outputs are treated as draft references.
+baseline forwards. The current independent PyTorch producer passes 16 CPU
+tests and its bounded GPU run repeats all six results exactly, producing IDs
+`[12095, 13]` and text `" Paris."`. All 151,936 logits are finite at every step;
+the reference records runner/source/checkpoint identities and token tie policy.
+Neither host fixture values nor target-model outputs are draft references.
+
+Ferric's standalone draft GPU canary now passes that independently pinned
+reference: six forwards, 2,544 packets, matching step choices, final IDs/bytes,
+unforced close and identity-bound idle checks across all eight GPUs. It uses
+controller `e84b104e` built from `346d588`, worker `b91ddef7`, and the retained
+13-root baseline image `7c0b1934` with its original compiler provenance. The
+later `656edb2` build does not relabel this binary. Raw Ferric receipt SHA-256:
+`bf9da61e5c2a4fbec0a3779aac1f40a3de8f13833b245ba0e9bb27860e56e770`.
+This is a tiny BF16-head, token-at-a-time draft correctness canary, not paged
+draft execution, speculative serving or a performance measurement.
 
 Paired accepted-prefix KV support is integrated at `228df11`: it requires an
 opaque target-driver result, derives acceptance from every K+1 target choice,
@@ -425,9 +466,15 @@ can currently be minted only inside test fixtures; production cannot complete
 a paired round until the real paged Draft06B driver is implemented. This is
 engineering support, not a new Verus proof or protected token publication.
 
-The isolated 32-row draft kernel family is in progress. Resident paged draft
-generation, its completion-bound driver join, multi-round numerical validation,
-serving integration and speculative load measurements remain required.
+The isolated 32-row draft family is integrated at `85a450a` (source `79ba4ea`):
+14 distinct roots for Draft06B's 28-layer, hidden-1024, Q16/KV8 geometry,
+scalar/MFMA projections and FP32 head, paged append/attention, and remaining
+decoder operations. It passes 27 CPU tests and strict Clippy. Fresh `216822284`
+compiler emission produces image `3a308c9c`, with exact closed-root and replay
+checks; native fixture validation is pending. This does not modify target
+kernel geometry. Resident paged draft generation, its completion-bound driver
+join, multi-round numerical validation, serving integration and speculative
+load measurements remain required.
 
 ## Continuous Measurement
 
@@ -446,6 +493,14 @@ adjacent-window correlation. Structural gate checks are not performance
 qualification: token ITL, stationarity, equal baseline tuning and held-out
 primary-suite comparisons are still outstanding. No matched vLLM/SGLang run
 has occurred.
+
+The separate 128/128 baseline driver is frozen with 79 CPU tests and 12 syntax
+checks passing. It binds the exact cached images, tokenizer/workload, resource
+limits, owned cleanup, startup dtype observations and unchanged timed client.
+These are synthetic/source-inspection gates only. User launch confirmation,
+the independent target 128/128 reference, final Ferric executable/Setup bindings
+and native framework API/observer validation remain outstanding. No baseline
+server has been started by this preparation.
 
 ## Published Checkpoint
 
