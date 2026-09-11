@@ -189,6 +189,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
 
     /// Selects the separate TP1 v8 head on genuine 32-row allocations, or its BF16 control.
     /// The existing v7 profile remains restricted to sixteen-row allocations.
+    /// Baseline or wave attention must be selected before this configuration.
     /// # Errors
     /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
     pub fn configure_head_precision_v8(&mut self, fp32: bool) -> TpResult<()> {
@@ -202,7 +203,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.closed
             || self.row_capacity != capacity
             || self.inner.ranks.len() != 1
-            || self.wave_attention
+            || (self.wave_attention && capacity != 32)
             || self.inner.sequences.is_some()
             || self.numerical.is_some()
             || !matches!(
@@ -212,7 +213,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             )
         {
             return Err(format!(
-                "FP32 head profile requires fresh TP1/{capacity} rows, baseline or MFMA, no wave attention, sequences or numerical capture"
+                "FP32 head profile requires fresh TP1/{capacity} rows, baseline or MFMA projection, wave attention only with 32 rows, no sequences or numerical capture"
             ));
         }
         if fp32 {
@@ -456,7 +457,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.poisoned
             || self.inner.closed
             || self.numerical.is_some()
-            || (enabled && self.head_profile_configured)
+            || (self.head_profile_configured && (enabled || self.wave_attention))
         {
             return Err("attention policy must be configured before execution".into());
         }

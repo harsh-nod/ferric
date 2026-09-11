@@ -372,13 +372,13 @@ impl Options {
                 devices.len() != 1
                     || kernel_profile.wide32() != precision.wide32()
                     || runtime.sequences
-                    || wave_attention
+                    || (wave_attention && !precision.wide32())
                     || numerical.is_some()
                     || benchmark_control.is_some()
                     || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)
             })
         {
-            return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA, no wave attention, sequences, numerical capture or replicas".into());
+            return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA projection, wave attention only for v8, no sequences, numerical capture or replicas".into());
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -1294,9 +1294,11 @@ mod tests {
                 assert_eq!(head.label(), mode);
                 assert!(head.wide32());
                 assert_eq!(head.fp32(), mode == "fp32-v8");
+                let mut wave = base.to_vec();
+                wave.extend(["--attention", "wave"]);
+                assert!(args(&wave).unwrap().wave_attention);
                 for extra in [
                     vec!["--dispatch-sequences"],
-                    vec!["--attention", "wave"],
                     vec!["--projection", "wave"],
                     vec!["--projection", "auto"],
                     vec!["--benchmark-control", "/control"],
@@ -1318,6 +1320,23 @@ mod tests {
                     mode,
                     "--fp32-head-artifact",
                     "/v8"
+                ])
+                .is_ok()
+            );
+            assert!(
+                args(&[
+                    "--devices",
+                    "1",
+                    "--kernel-profile",
+                    "v5-mfma32",
+                    "--projection",
+                    "mfma",
+                    "--attention",
+                    "wave",
+                    "--head-precision",
+                    mode,
+                    "--fp32-head-artifact",
+                    "/v8",
                 ])
                 .is_ok()
             );
