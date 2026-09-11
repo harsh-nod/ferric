@@ -1023,6 +1023,7 @@ dependencies = [
  "ferric-qwen3-all-kernels-worker-v3-verifier-v1",
  "ferric-qwen3-tp-batch-kernels-device-v2",
  "ferric-qwen3-tp-batch32-kernels-device-v5",
+ "ferric-qwen3-tp-fp32-head-kernels-device-v7",
  "ferric-qwen3-tp-kernels-device-v1",
  "ferric-qwen3-tp-peer-kernels-device-v4",
  "ferric-qwen3-tp-peer32-kernels-device-v6",
@@ -1104,6 +1105,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-tp-batch32-kernels-device-v5"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-fp32-head-kernels-device-v7"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",

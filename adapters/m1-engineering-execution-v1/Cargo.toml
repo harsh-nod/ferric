@@ -53,6 +53,7 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-peer-kernels-device-v4",
     "dep:ferric-qwen3-tp-batch32-kernels-device-v5",
     "dep:ferric-qwen3-tp-peer32-kernels-device-v6",
+    "dep:ferric-qwen3-tp-fp32-head-kernels-device-v7",
 ]
 qualification-fault-injection = [
     "ferric-engine/qualification-fault-injection",
@@ -76,6 +77,7 @@ ferric-qwen3-tp-perf-kernels-device-v3 = { path = "../../device/qwen3-tp-perf-ke
 ferric-qwen3-tp-peer-kernels-device-v4 = { path = "../../device/qwen3-tp-peer-kernels-v4", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-batch32-kernels-device-v5 = { path = "../../device/qwen3-tp-batch32-kernels-v5", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
 ferric-qwen3-tp-peer32-kernels-device-v6 = { path = "../../device/qwen3-tp-peer32-kernels-v6", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-fp32-head-kernels-device-v7 = { path = "../../device/qwen3-tp-fp32-head-kernels-v7", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["fs", "net", "process", "rand", "time"] }

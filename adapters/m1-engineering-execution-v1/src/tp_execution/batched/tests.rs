@@ -275,6 +275,13 @@ impl EngineeringTpRankTransportV1 for Recording {
                     |_| vec![0; 2],
                 );
             }
+            FP32_HEAD | FP32_MFMA_HEAD => self.output(
+                &command,
+                2,
+                scalar(&command, 3),
+                scalar(&command, 4),
+                |_| vec![0; 4],
+            ),
             PARTIAL
             | "ferric_qwen3_tp_wave_gemv_partial_f32_v3"
             | "ferric_qwen3_tp_mfma_gemm_partial_f32_v3" => {
@@ -346,7 +353,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                 assert_eq!(command.grid_workgroups, rows * 32 / world);
                 self.output(&command, 5, rows, 4096 / world, |_| vec![0; 2]);
             }
-            ARGMAX => {
+            ARGMAX | FP32_ARGMAX => {
                 let bad = self.failure == Some(Failure::BadChoice);
                 self.output(&command, 1, scalar(&command, 2), 1, |row| {
                     (if bad { 151_936 } else { 42 + row })
@@ -496,6 +503,8 @@ fn fixture(
         projection_configured: false,
         wave_attention: false,
         numerical: None,
+        head_profile_configured: false,
+        fp32_logits: None,
     }
 }
 
@@ -644,6 +653,169 @@ fn diagnostic_projection_roster_matches_every_actual_selected_dispatch() {
             );
         }
     }
+}
+
+#[test]
+fn v7_head_only_changes_final_kernels_and_dtype_with_exact_row_pruning() {
+    for fp32 in [false, true] {
+        for mfma in [false, true] {
+            for prune in [false, true] {
+                let mut pool = pool();
+                let mut driver = fixture(1, &pool);
+                driver.configure_output_head_pruning(prune).unwrap();
+                if mfma {
+                    let original = driver.inner.ranks[0].global(Qwen3TensorKind::LanguageModelHead);
+                    let transposed =
+                        allocate_tensor(&mut driver.inner.transports[0], 1, 2).unwrap();
+                    driver.projection =
+                        super::super::projection::ProjectionPolicy::synthetic_mfma_for_recording(
+                            original.id,
+                            transposed,
+                        );
+                }
+                let original_logits = driver.inner.ranks[0].logits;
+                let before = driver.inner.transports[0].buffers.len();
+                driver.configure_head_precision_v7(fp32).unwrap();
+                assert_eq!(
+                    driver.fp32_head_workspace_bytes(),
+                    if fp32 { 9_723_904 } else { 0 }
+                );
+                assert_eq!(
+                    driver.inner.transports[0].buffers.len(),
+                    before + usize::from(fp32)
+                );
+                assert_eq!(driver.inner.ranks[0].logits.id, original_logits.id);
+                assert!(driver.configure_head_precision_v7(fp32).is_err());
+                assert!(driver.configure_wave_attention(true).is_err());
+                assert!(driver.configure_dispatch_sequences(true).is_err());
+                let batch = prepare(&mut pool, 4);
+                pool.begin_submission(&batch).unwrap();
+                let result = driver.execute_selected(&batch, &[1, 3]).unwrap();
+                assert_eq!(
+                    result.choices,
+                    if prune { vec![42, 43] } else { vec![43, 45] }
+                );
+                let commands = &driver.inner.transports[0].commands;
+                assert_eq!(commands.len(), 544);
+                let head = &commands[commands.len() - 2];
+                let argmax = &commands[commands.len() - 1];
+                let head_rows = if prune { 2 } else { 4 };
+                assert_eq!(
+                    head.kernel,
+                    if fp32 {
+                        if mfma { FP32_MFMA_HEAD } else { FP32_HEAD }
+                    } else if mfma {
+                        "ferric_qwen3_tp_mfma_gemm_bf16_v3"
+                    } else {
+                        GEMM
+                    }
+                );
+                assert_eq!(argmax.kernel, if fp32 { FP32_ARGMAX } else { ARGMAX });
+                assert_eq!(head.grid_workgroups, 9496);
+                assert_eq!(argmax.grid_workgroups, head_rows);
+                assert_eq!(buffer(head, 2).3, if fp32 { 4 } else { 2 });
+                assert_eq!(buffer(head, 2), buffer(argmax, 0));
+                assert_eq!(buffer(head, 2).2, 16 * 151_936);
+                assert_eq!(
+                    driver.inner.transports[0].u32_values(driver.inner.ranks[0].token.id, 4),
+                    if prune {
+                        vec![1, 3, 0, 2]
+                    } else {
+                        vec![0, 1, 2, 3]
+                    }
+                );
+                if fp32 {
+                    let tensor = driver.fp32_logits.unwrap();
+                    let storage = &driver.inner.transports[0].buffers[&tensor.id];
+                    assert!(
+                        storage[head_rows as usize * 151_936 * 4..]
+                            .iter()
+                            .all(|&byte| byte == 0xa5)
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn v7_head_rejects_unsupported_geometry_modes_and_lifecycle() {
+    for world in [2, 8] {
+        assert!(
+            fixture(world, &pool())
+                .configure_head_precision_v7(true)
+                .is_err()
+        );
+    }
+    let mut driver = fixture(1, &pool());
+    driver.wave_attention = true;
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    driver.wave_attention = false;
+    driver.inner.sequences = Some(vec![vec![]]);
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    driver.inner.sequences = None;
+    for mode in [
+        super::super::EngineeringTpProjectionModeV3::Wave,
+        super::super::EngineeringTpProjectionModeV3::Auto,
+    ] {
+        driver.projection.mode = mode;
+        assert!(driver.configure_head_precision_v7(true).is_err());
+    }
+    driver.projection.mode = super::super::EngineeringTpProjectionModeV3::Baseline;
+    driver.row_capacity = 32;
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    driver.row_capacity = 16;
+    driver.last_batch = 1;
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    driver.last_batch = 0;
+    driver.poisoned = true;
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    driver.poisoned = false;
+    driver.inner.closed = true;
+    assert!(driver.configure_head_precision_v7(true).is_err());
+}
+
+#[test]
+fn fp32_candidate_preserves_every_non_head_dispatch_and_prefill_only_skip() {
+    let mut recorded = Vec::new();
+    for fp32 in [false, true] {
+        let mut pool = pool();
+        let mut driver = fixture(1, &pool);
+        driver.configure_head_precision_v7(fp32).unwrap();
+        let batch = prepare(&mut pool, 3);
+        pool.begin_submission(&batch).unwrap();
+        driver.execute(&batch).unwrap();
+        recorded.push(driver.inner.transports[0].commands.clone());
+    }
+    assert_eq!(&recorded[0][..542], &recorded[1][..542]);
+    let mut pool = pool();
+    let mut driver = fixture(1, &pool);
+    driver.configure_output_head_pruning(true).unwrap();
+    driver.configure_head_precision_v7(true).unwrap();
+    let batch = prepare(&mut pool, 3);
+    pool.begin_submission(&batch).unwrap();
+    assert!(
+        driver
+            .execute_selected(&batch, &[])
+            .unwrap()
+            .choices
+            .is_empty()
+    );
+    assert_eq!(driver.inner.transports[0].commands.len(), 541);
+    assert!(
+        !driver.inner.transports[0].commands.iter().any(|command| [
+            FP32_HEAD,
+            FP32_MFMA_HEAD,
+            FP32_ARGMAX
+        ]
+        .contains(&command.kernel))
+    );
+    let logits = driver.fp32_logits.unwrap();
+    assert!(
+        driver.inner.transports[0].buffers[&logits.id]
+            .iter()
+            .all(|&byte| byte == 0xa5)
+    );
 }
 
 fn prepare(pool: &mut EngineeringTpPagedPoolV1, rows: u32) -> EngineeringTpPreparedBatchV1 {

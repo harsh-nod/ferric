@@ -30,6 +30,9 @@ const ROPE: &str = "ferric_qwen3_tp_batch_rope_v2";
 const APPEND: &str = "ferric_qwen3_tp_batch_paged_kv_append_v2";
 const ATTENTION: &str = "ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2";
 const ARGMAX: &str = "ferric_qwen3_tp_batch_argmax_bf16_v2";
+const FP32_HEAD: &str = "ferric_qwen3_tp_head_bf16_f32_v7";
+const FP32_MFMA_HEAD: &str = "ferric_qwen3_tp_mfma_head_f32_v7";
+const FP32_ARGMAX: &str = "ferric_qwen3_tp_argmax_f32_v7";
 
 /// Successful all-layer/all-rank work, still awaiting pool and scheduler commit.
 pub struct EngineeringTpBatchOutputV2 {
@@ -60,6 +63,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     projection_configured: bool,
     wave_attention: bool,
     numerical: Option<Box<EngineeringTpNumericalCaptureV1>>,
+    head_profile_configured: bool,
+    fp32_logits: Option<Tensor>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -163,6 +168,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             projection_configured: false,
             wave_attention: false,
             numerical: None,
+            head_profile_configured: false,
+            fp32_logits: None,
         })
     }
 
@@ -170,6 +177,54 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     #[must_use]
     pub const fn row_capacity(&self) -> usize {
         self.row_capacity
+    }
+
+    /// Selects the separately admitted TP1 v7 head or its explicit BF16 control.
+    /// The original BF16 logits allocation and all non-head arithmetic are retained.
+    /// # Errors
+    /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
+    pub fn configure_head_precision_v7(&mut self, fp32: bool) -> TpResult<()> {
+        if self.head_profile_configured
+            || self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.row_capacity != 16
+            || self.inner.ranks.len() != 1
+            || self.wave_attention
+            || self.inner.sequences.is_some()
+            || self.numerical.is_some()
+            || !matches!(
+                self.projection.mode,
+                super::EngineeringTpProjectionModeV3::Baseline
+                    | super::EngineeringTpProjectionModeV3::Mfma
+            )
+        {
+            return Err("v7 head requires fresh TP1/16 rows, baseline or MFMA, no wave attention, sequences or numerical capture".into());
+        }
+        if fp32 {
+            match allocate_tensor(&mut self.inner.transports[0], 16 * 151_936, 4) {
+                Ok(tensor) => self.fp32_logits = Some(tensor),
+                Err(error) => {
+                    self.poisoned = true;
+                    return Err(match self.inner.close() {
+                        Ok(()) => error,
+                        Err(close) => format!("{error}; FP32 head setup close: {close}"),
+                    });
+                }
+            }
+        }
+        self.head_profile_configured = true;
+        Ok(())
+    }
+
+    /// Additional workspace payload; unchanged BF16 storage is not counted twice.
+    #[must_use]
+    pub const fn fp32_head_workspace_bytes(&self) -> u64 {
+        if self.fp32_logits.is_some() {
+            16 * 151_936 * 4
+        } else {
+            0
+        }
     }
 
     /// Enables bounded diagnostic readbacks on a fresh, nonsequenced TP1 stream.
@@ -183,6 +238,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.poisoned
             || self.inner.closed
             || self.numerical.is_some()
+            || self.head_profile_configured
             || self.row_capacity != 16
             || self.inner.ranks.len() != 1
             || self.inner.sequences.is_some()
@@ -317,6 +373,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.closed
             || self.projection_configured
             || self.numerical.is_some()
+            || self.head_profile_configured
         {
             return Err("projection policy must be configured once before execution".into());
         }
@@ -377,7 +434,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects a started, poisoned, or closed execution.
     pub fn configure_wave_attention(&mut self, enabled: bool) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.numerical.is_some() {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.numerical.is_some()
+            || (enabled && self.head_profile_configured)
+        {
             return Err("attention policy must be configured before execution".into());
         }
         self.wave_attention = enabled;
@@ -389,7 +451,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects unsupported transports, execution already begun, or closed state.
     pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
-            || (enabled && self.numerical.is_some())
+            || (enabled && (self.numerical.is_some() || self.head_profile_configured))
             || self.poisoned
             || self.inner.closed
             || (enabled
@@ -924,12 +986,13 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             model.hidden_size,
         ))?;
         let r = &self.inner.ranks[0];
-        self.inner.dispatch_zero(&projection.command(
+        let logits = self.fp32_logits.unwrap_or(r.logits);
+        let mut head = projection.command(
             0,
             GEMM,
             r.normalized,
             r.global(Qwen3TensorKind::LanguageModelHead),
-            r.logits,
+            logits,
             [
                 head_rows,
                 model.vocabulary_size,
@@ -937,12 +1000,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 world,
                 6,
             ],
-        ))?;
+        );
+        if self.fp32_logits.is_some() {
+            head.kernel = if self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma {
+                FP32_MFMA_HEAD
+            } else {
+                FP32_HEAD
+            };
+        }
+        self.inner.dispatch_zero(&head)?;
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&dispatch(
-            ARGMAX,
+            if self.fp32_logits.is_some() {
+                FP32_ARGMAX
+            } else {
+                ARGMAX
+            },
             head_rows,
-            vec![r.logits.read(), r.choice.write(), U32(head_rows)],
+            vec![logits.read(), r.choice.write(), U32(head_rows)],
         ))?;
         drop(head_timing);
         let _readback_timing = self.inner.timing.scope("output_readback");

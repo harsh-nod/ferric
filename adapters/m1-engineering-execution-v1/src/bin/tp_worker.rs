@@ -228,6 +228,48 @@ impl Worker {
         Ok(worker)
     }
 
+    /// Adds a disjoint admitted image only before any buffer allocation or dispatch.
+    #[allow(dead_code)] // The legacy single-sequence controller shares this module.
+    pub fn load_additional_artifact(&mut self, artifact: &EngineeringTpArtifactV1) -> TpResult<()> {
+        let names = artifact
+            .inspection()
+            .hsaco()
+            .kernels()
+            .iter()
+            .map(InspectedKernel::name)
+            .collect::<Vec<_>>();
+        self.with_additional_image(&names, |worker| worker.load_artifact(artifact))
+    }
+
+    fn with_additional_image(
+        &mut self,
+        names: &[&str],
+        load: impl FnOnce(&mut Self) -> TpResult<()>,
+    ) -> TpResult<()> {
+        if self.failed
+            || self.exited
+            || self.pending.is_some()
+            || !self.buffers.is_empty()
+            || self.queue_packets != 0
+            || self.queue_epoch != 0
+            || names.is_empty()
+            || names.iter().any(|name| self.kernels.contains_key(*name))
+            || names
+                .iter()
+                .enumerate()
+                .any(|(index, name)| names[..index].contains(name))
+        {
+            return Err(
+                "additional artifact requires a fresh worker and disjoint kernel symbols".into(),
+            );
+        }
+        let result = load(self);
+        if result.is_err() {
+            self.failed = true;
+        }
+        result
+    }
+
     fn load_artifact(&mut self, artifact: &EngineeringTpArtifactV1) -> TpResult<()> {
         let hash: [u8; 32] = Sha256::digest(artifact.bytes()).into();
         for metadata in artifact.inspection().hsaco().kernels() {
@@ -941,6 +983,153 @@ while True:
             .stderr(Stdio::inherit())
             .spawn()
             .unwrap()
+    }
+
+    #[test]
+    #[ignore = "requires FERRIC_V7_TEST_ARTIFACT pointing to a separately emitted closed image; no GPU"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn actual_v7_image_fake_worker_loads_rejects_duplicates_and_reaps_partial_failures() {
+        let path = std::env::var_os("FERRIC_V7_TEST_ARTIFACT").expect("explicit v7 artifact path");
+        let artifact = EngineeringTpArtifactV1::open_fp32_head(
+            Path::new(&path),
+            &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
+        )
+        .unwrap();
+        let hash: [u8; 32] = Sha256::digest(artifact.bytes()).into();
+        let metadata = artifact.inspection().hsaco().kernels().iter().map(|kernel| {
+            let arguments = kernel.explicit_arguments().iter().map(|arg| serde_json::json!({
+                "offset":arg.offset(), "bytes":arg.size(),
+                "global_buffer":arg.value_kind() == ExplicitValueKind::GlobalBuffer,
+                "pointee_alignment":arg.pointee_alignment(), "access":arg.access().map(wire_access)
+            })).collect::<Vec<_>>();
+            (kernel.name().to_owned(), serde_json::json!({
+                "symbol":kernel.name(), "object_sha256":hash,
+                "kernarg_bytes":kernel.kernarg_segment_size(), "kernarg_alignment":kernel.kernarg_segment_alignment(),
+                "group_segment_bytes":kernel.group_segment_fixed_size(), "private_segment_bytes":kernel.private_segment_fixed_size(),
+                "wavefront_size":kernel.wavefront_size(), "implicit_argument_offset":kernel.implicit_argument_offset(),
+                "implicit_argument_bytes":kernel.implicit_argument_size(), "explicit_arguments":arguments
+            }))
+        }).collect::<serde_json::Map<_, _>>();
+        let script = r"
+import copy, json, struct, sys
+metadata, mode = json.loads(sys.argv[1]), sys.argv[2]
+def send(value):
+    data = json.dumps(value, separators=(',', ':')).encode()
+    sys.stdout.buffer.write(struct.pack('<I', len(data)) + data)
+    sys.stdout.buffer.flush()
+send({'op':'ready','protocol':1,'target':'gfx950:xnack-','device_unique_id':1,'authority':'none'})
+count = 0
+while True:
+    prefix = sys.stdin.buffer.read(4)
+    if len(prefix) != 4: sys.exit(3)
+    command = json.loads(sys.stdin.buffer.read(struct.unpack('<I', prefix)[0]))
+    payload = sys.stdin.buffer.read(command.get('payload_bytes', 0))
+    if len(payload) != command.get('payload_bytes', 0): sys.exit(4)
+    if command['op'] == 'load_kernel':
+        count += 1
+        item = copy.deepcopy(metadata[command['symbol']])
+        if mode == 'metadata' and count == 2: item['wavefront_size'] = 32
+        send({'op':'loaded_kernel','kernel':1 if mode == 'duplicate_id' and count == 2 else count,'metadata':item})
+    elif command['op'] == 'close':
+        send({'op':'closed'})
+        sys.exit(0)
+    else: sys.exit(5)
+";
+        for mode in ["normal", "duplicate_id", "metadata"] {
+            let child = Command::new("python3")
+                .args([
+                    "-u",
+                    "-c",
+                    script,
+                    &serde_json::to_string(&metadata).unwrap(),
+                    mode,
+                ])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit())
+                .spawn()
+                .unwrap();
+            let mut worker = Worker::connect(child, 1, Duration::from_secs(5)).unwrap();
+            let result = worker.load_additional_artifact(&artifact);
+            if mode == "normal" {
+                result.unwrap();
+                assert_eq!(worker.kernels.len(), 3);
+                assert!(!worker.failed);
+                assert!(worker.load_additional_artifact(&artifact).is_err());
+                assert!(!worker.failed);
+            } else {
+                assert!(result.is_err() && worker.failed);
+                assert_eq!(worker.kernels.len(), 1);
+                assert!(worker.load_additional_artifact(&artifact).is_err());
+            }
+            worker.close().unwrap();
+            assert!(worker.exited && worker.io_threads.is_empty());
+            assert!(worker.child.try_wait().unwrap().is_some());
+        }
+    }
+
+    #[test]
+    fn additional_image_is_fresh_only_and_partial_failure_poisoned_and_reaped() {
+        let mut worker = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+        assert!(
+            worker
+                .with_additional_image(&[], |_| panic!("empty roster loaded"))
+                .is_err()
+        );
+        assert!(
+            worker
+                .with_additional_image(&["new", "new"], |_| panic!("duplicate loaded"))
+                .is_err()
+        );
+        worker.queue_packets = 1;
+        assert!(
+            worker
+                .with_additional_image(&["new"], |_| panic!("post-dispatch load"))
+                .is_err()
+        );
+        worker.queue_packets = 0;
+        worker.queue_epoch = 1;
+        assert!(
+            worker
+                .with_additional_image(&["new"], |_| panic!("post-rollover load"))
+                .is_err()
+        );
+        worker.queue_epoch = 0;
+        worker.pending = Some(PendingRequest::Other);
+        assert!(
+            worker
+                .with_additional_image(&["new"], |_| panic!("pending load"))
+                .is_err()
+        );
+        worker.pending = None;
+        worker.with_additional_image(&["new"], |_| Ok(())).unwrap();
+        let result = worker.with_additional_image(&["another"], |worker| {
+            // An acknowledged IPC operation precedes the injected later load failure.
+            worker.allocate(4)?;
+            Err("injected second-symbol descriptor failure".into())
+        });
+        assert!(result.is_err() && worker.failed);
+        assert!(
+            worker
+                .with_additional_image(&["later"], |_| panic!("poisoned load"))
+                .is_err()
+        );
+        worker.close().unwrap();
+        assert!(worker.exited && worker.io_threads.is_empty());
+        assert!(worker.child.try_wait().unwrap().is_some());
+        let mut allocated = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+        allocated.allocate(1).unwrap();
+        assert!(
+            allocated
+                .with_additional_image(&["new"], |_| panic!("allocated load"))
+                .is_err()
+        );
+        allocated.close().unwrap();
+        assert!(
+            allocated
+                .with_additional_image(&["new"], |_| panic!("closed load"))
+                .is_err()
+        );
     }
 
     #[test]

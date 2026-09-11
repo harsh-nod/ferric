@@ -44,6 +44,7 @@ const USAGE: &str = concat!(
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
+    "[--head-precision bf16-v7-control|fp32-v7 --fp32-head-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
 );
@@ -52,6 +53,8 @@ struct Options {
     source: PathBuf,
     artifact: PathBuf,
     peer_artifact: Option<PathBuf>,
+    fp32_head_artifact: Option<PathBuf>,
+    head_precision: Option<HeadPrecision>,
     worker: PathBuf,
     requests: PathBuf,
     benchmark_control: Option<PathBuf>,
@@ -78,6 +81,21 @@ struct NumericalOptions {
     batch: u64,
     layer: u32,
     role: NumericalRole,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum HeadPrecision {
+    Bf16Control,
+    Fp32,
+}
+
+impl HeadPrecision {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Bf16Control => "bf16-v7-control",
+            Self::Fp32 => "fp32-v7",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -115,6 +133,8 @@ impl Options {
         let mut projection = ProjectionMode::Baseline;
         let mut wave_attention = false;
         let mut peer_artifact = None;
+        let mut fp32_head_artifact = None;
+        let mut head_precision = None;
         let mut benchmark_control = None;
         let mut host_timing = None;
         let (mut numerical_directory, mut numerical_batch, mut numerical_layer, mut numerical_role) =
@@ -162,6 +182,14 @@ impl Options {
                 "--source" => source = Some(PathBuf::from(value)),
                 "--artifact" => artifact = Some(PathBuf::from(value)),
                 "--peer-artifact" => peer_artifact = Some(PathBuf::from(value)),
+                "--fp32-head-artifact" => fp32_head_artifact = Some(PathBuf::from(value)),
+                "--head-precision" => {
+                    head_precision = Some(match value.as_str() {
+                        "bf16-v7-control" => HeadPrecision::Bf16Control,
+                        "fp32-v7" => HeadPrecision::Fp32,
+                        _ => return Err("unknown explicit head precision profile".into()),
+                    });
+                }
                 "--worker" => worker = Some(PathBuf::from(value)),
                 "--requests" => requests = Some(PathBuf::from(value)),
                 "--benchmark-control" => benchmark_control = Some(PathBuf::from(value)),
@@ -290,10 +318,24 @@ impl Options {
                 Some(NumericalOptions { directory, batch, layer, role }),
             _ => return Err("numerical capture requires all four selection options, TP1/16 rows, baseline or MFMA, no wave attention, sequencing, timing or replica benchmark".into()),
         };
+        if head_precision.is_some() != fp32_head_artifact.is_some()
+            || (head_precision.is_some()
+                && (devices.len() != 1
+                    || kernel_profile.wide32()
+                    || runtime.sequences
+                    || wave_attention
+                    || numerical.is_some()
+                    || benchmark_control.is_some()
+                    || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)))
+        {
+            return Err("v7 head requires both explicit options, TP1/16 rows, baseline or MFMA, no wave attention, sequences, numerical capture or replicas".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
             peer_artifact,
+            fp32_head_artifact,
+            head_precision,
             worker: worker.ok_or("--worker is required")?,
             requests: requests.ok_or("--requests is required")?,
             benchmark_control,
@@ -666,6 +708,17 @@ fn run_with_timing(
             .map_err(|error| error.to_string())
         })
         .transpose()?;
+    let fp32_head_artifact = options
+        .fp32_head_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_fp32_head(
+                path,
+                &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
+            )
+            .map_err(|error| error.to_string())
+        })
+        .transpose()?;
     drop(admission_timing);
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
@@ -734,15 +787,18 @@ fn run_with_timing(
             .iter()
             .enumerate()
             .map(|(rank, &id)| {
-                Worker::spawn_with_timing(
+                let mut worker = Worker::spawn_with_timing(
                     &options.worker,
                     id,
                     &artifact,
                     options.runtime,
                     timing.clone(),
                     u32::try_from(rank).map_err(|_| "timing rank overflow")?,
-                )
-                .map(RankWorker::Independent)
+                )?;
+                if let Some(head) = &fp32_head_artifact {
+                    worker.load_additional_artifact(head)?;
+                }
+                Ok::<_, String>(RankWorker::Independent(worker))
             })
             .collect::<Result<Vec<_>, _>>()?
     };
@@ -779,6 +835,10 @@ fn run_with_timing(
         gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
     }
     gpu.configure_wave_attention(options.wave_attention)?;
+    if let Some(precision) = options.head_precision {
+        gpu.configure_head_precision_v7(precision == HeadPrecision::Fp32)?;
+    }
+    let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
         let identity = serde_json::json!({
             "controller_sha256":controller_hash,"worker_sha256":worker_hash,
@@ -882,6 +942,20 @@ fn run_with_timing(
                 "artifact_handoff_id":hex(peer.handoff_id().as_bytes())
             });
         }
+        if let Some(head) = &fp32_head_artifact {
+            setup["head_precision"] = serde_json::json!(
+                options
+                    .head_precision
+                    .ok_or("missing head precision")?
+                    .label()
+            );
+            setup["fp32_head_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(head.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(head.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(head.handoff_id().as_bytes())
+            });
+            setup["fp32_head_workspace_bytes"] = serde_json::json!(fp32_head_workspace_bytes);
+        }
         if timing.is_enabled() {
             diagnostics.setup = Some(setup.clone());
         }
@@ -953,6 +1027,75 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn fp32_head_and_explicit_control_require_closed_supported_profiles() {
+        assert!(args(&["--devices", "1"]).unwrap().head_precision.is_none());
+        for mode in ["fp32-v7", "bf16-v7-control"] {
+            let base = [
+                "--devices",
+                "1",
+                "--head-precision",
+                mode,
+                "--fp32-head-artifact",
+                "/v7",
+            ];
+            let options = args(&base).unwrap();
+            assert_eq!(options.head_precision.unwrap().label(), mode);
+            assert_eq!(options.fp32_head_artifact, Some(PathBuf::from("/v7")));
+            assert!(args(&["--devices", "1", "--head-precision", mode]).is_err());
+            for extra in [
+                vec!["--dispatch-sequences"],
+                vec!["--benchmark-control", "/replica"],
+                vec!["--kernel-profile", "v3-mfma", "--projection", "auto"],
+                vec!["--kernel-profile", "v3-wave", "--projection", "wave"],
+                vec!["--kernel-profile", "v3-wave", "--attention", "wave"],
+                vec!["--kernel-profile", "v5-mfma32"],
+                vec![
+                    "--numerical-capture",
+                    "/capture",
+                    "--numerical-batch",
+                    "2",
+                    "--numerical-layer",
+                    "0",
+                    "--numerical-projection",
+                    "q",
+                ],
+            ] {
+                let mut values = base.to_vec();
+                values.extend(extra);
+                assert!(args(&values).is_err());
+            }
+            for devices in ["1,2", "1,2,3,4,5,6,7,8"] {
+                assert!(
+                    args(&[
+                        "--devices",
+                        devices,
+                        "--head-precision",
+                        mode,
+                        "--fp32-head-artifact",
+                        "/v7"
+                    ])
+                    .is_err()
+                );
+            }
+            let mut mfma = base.to_vec();
+            mfma.extend(["--kernel-profile", "v3-mfma", "--projection", "mfma"]);
+            assert!(args(&mfma).is_ok());
+        }
+        assert!(args(&["--devices", "1", "--fp32-head-artifact", "/v7"]).is_err());
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--head-precision",
+                "fp64",
+                "--fp32-head-artifact",
+                "/v7"
+            ])
+            .is_err()
+        );
     }
 
     #[test]
