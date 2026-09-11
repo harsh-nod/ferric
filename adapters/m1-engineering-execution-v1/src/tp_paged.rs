@@ -11,6 +11,8 @@ use crate::tp_artifact::{EngineeringTpArtifactV1, LargeKvBindingV9};
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+pub mod speculative;
+
 /// Tokens per physical page, shared across every rank and layer.
 pub const ENGINEERING_TP_PAGE_TOKENS_V1: u32 = 16;
 /// Maximum token rows in one prepared GPU batch.

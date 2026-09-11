@@ -5,6 +5,7 @@
 
 mod large_kv;
 mod ordered_batches;
+mod speculative;
 
 use super::super::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,

@@ -392,6 +392,32 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.execute_selected(batch, &output_rows)
     }
 
+    /// Seals every target verification choice to one opaque submitted round ticket.
+    /// Ordinary mutable outputs cannot be supplied to paired speculative settlement.
+    /// # Errors
+    /// Rejects malformed/foreign work and any incomplete execution. The owner must
+    /// terminalize submitted uncertainty; this method does not commit paged KV.
+    pub fn execute_speculative_target(
+        &mut self,
+        work: crate::tp_paged::speculative::EngineeringTpSpeculativeTargetWorkV1<'_>,
+    ) -> TpResult<crate::tp_paged::speculative::EngineeringTpSpeculativeTargetResultV1> {
+        if !work.validate()
+            || self.numerical.is_some()
+            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
+        {
+            return Err(
+                "speculative target requires exact target rows and no diagnostic capture".into(),
+            );
+        }
+        let output_rows = (0..work.batch().rows().len()).collect::<Vec<_>>();
+        let output = self.execute_selected(work.batch(), &output_rows)?;
+        work.seal(output.completion, output.choices, output_rows)
+            .map_err(|error| {
+                self.poisoned = true;
+                format!("speculative target output binding: {error:?}")
+            })
+    }
+
     /// Enables output-head pruning before the first batch; baseline is unchanged by default.
     /// # Errors
     /// Rejects changes after submission, failure, or closure.
