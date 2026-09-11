@@ -80,7 +80,7 @@ ferric-qwen3-tp-peer32-kernels-device-v6 = { path = "../../device/qwen3-tp-peer3
 ferric-qwen3-tp-fp32-head-kernels-device-v7 = { path = "../../device/qwen3-tp-fp32-head-kernels-v7", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
-rustix = { version = "=1.1.4", features = ["fs", "net", "process", "rand", "time"] }
+rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process", "rand", "time"] }
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 sha2 = "=0.11.0"

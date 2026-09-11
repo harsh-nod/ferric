@@ -20,6 +20,7 @@ use ferric_m1_engineering_execution_v1::tp_execution::numerical::{
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpProjectionModeV3 as ProjectionMode, EngineeringTpReductionModeV3,
 };
+use ferric_m1_engineering_execution_v1::tp_live_ingress;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use ferric_m1_engineering_execution_v1::tp_paged::{
     EngineeringTpPagedLimitsV1, EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
@@ -37,7 +38,7 @@ use tp_worker::{RuntimeOptions, Worker};
 
 const USAGE: &str = concat!(
     "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE ",
-    "--devices ID[,ID...] --requests FILE --allow-unauthenticated-machine-code ",
+    "--devices ID[,ID...] (--requests FILE | --live-stdin --queue-rollover) --allow-unauthenticated-machine-code ",
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
@@ -56,7 +57,7 @@ struct Options {
     fp32_head_artifact: Option<PathBuf>,
     head_precision: Option<HeadPrecision>,
     worker: PathBuf,
-    requests: PathBuf,
+    requests: Option<PathBuf>,
     benchmark_control: Option<PathBuf>,
     host_timing: Option<PathBuf>,
     numerical: Option<NumericalOptions>,
@@ -118,6 +119,10 @@ impl KernelProfile {
 }
 
 impl Options {
+    fn live_stdin(&self) -> bool {
+        self.requests.is_none()
+    }
+
     fn parse(args: impl Iterator<Item = String>) -> Result<Self, String> {
         let mut args = args.peekable();
         let mut seen = BTreeSet::new();
@@ -127,6 +132,7 @@ impl Options {
             (16, 16, 128, 64, 1024, 240);
         let (mut consent, mut cache) = (false, true);
         let mut prune_output_head = false;
+        let mut live_stdin = false;
         let mut runtime = RuntimeOptions::default();
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
         let mut kernel_profile = KernelProfile::V2;
@@ -154,6 +160,10 @@ impl Options {
                 }
                 "--prune-output-head" => {
                     prune_output_head = true;
+                    continue;
+                }
+                "--live-stdin" => {
+                    live_stdin = true;
                     continue;
                 }
                 "--runtime-cache-admission" => {
@@ -308,6 +318,14 @@ impl Options {
         }
         EngineeringTpPagedLimitsV1::new(context, 32, pages, ttl)
             .map_err(|e| format!("page limits: {e:?}"))?;
+        if live_stdin == requests.is_some()
+            || (live_stdin
+                && (!runtime.rollover
+                    || benchmark_control.is_some()
+                    || numerical_directory.is_some()))
+        {
+            return Err("exactly one of --requests or --live-stdin is required; live stdin requires --queue-rollover and excludes replica/numerical capture".into());
+        }
         let numerical = match (numerical_directory, numerical_batch, numerical_layer, numerical_role) {
             (None, None, None, None) => None,
             (Some(directory), Some(batch), Some(layer), Some(role))
@@ -337,7 +355,7 @@ impl Options {
             fp32_head_artifact,
             head_precision,
             worker: worker.ok_or("--worker is required")?,
-            requests: requests.ok_or("--requests is required")?,
+            requests,
             benchmark_control,
             host_timing,
             numerical,
@@ -653,16 +671,34 @@ fn run_with_timing(
     let setup_timing = timing.scope("setup");
     let whole = Instant::now();
     let admission_timing = timing.scope("setup_admission");
-    let (workload, loaded_requests_sha256) = Workload::open(&options.requests)?;
+    let loaded = options
+        .requests
+        .as_deref()
+        .map(Workload::open)
+        .transpose()?;
+    let (workload, loaded_requests_sha256) = loaded.map_or((None, None), |(workload, hash)| {
+        (Some(workload), Some(hash))
+    });
     if timing.is_enabled() {
-        diagnostics.workload_sha256 = Some(loaded_requests_sha256.clone());
+        diagnostics.workload_sha256.clone_from(&loaded_requests_sha256);
     }
     let control = options
         .benchmark_control
         .as_ref()
         .map(|path| {
-            let config = ControlConfig::open(path, &options.requests, &options.devices)?;
-            config.verify_loaded_requests_sha256(&loaded_requests_sha256)?;
+            let config = ControlConfig::open(
+                path,
+                options
+                    .requests
+                    .as_deref()
+                    .ok_or("replica workload missing")?,
+                &options.devices,
+            )?;
+            config.verify_loaded_requests_sha256(
+                loaded_requests_sha256
+                    .as_deref()
+                    .ok_or("replica workload hash missing")?,
+            )?;
             Ok::<_, String>(config)
         })
         .transpose()?;
@@ -723,8 +759,9 @@ fn run_with_timing(
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let prompts = workload
-        .requests
-        .iter()
+        .as_ref()
+        .into_iter()
+        .flat_map(|workload| &workload.requests)
         .map(|r| {
             let tokens = model.encode(&r.prompt)?;
             if tokens.is_empty()
@@ -919,6 +956,12 @@ fn run_with_timing(
             setup["weight_payload_bytes"] =
                 weight_payload_bytes.ok_or("missing replica weight accounting")?;
         }
+        if options.live_stdin() {
+            setup["arrival_policy"] =
+                serde_json::json!("live monotonic ingress timestamps; includes pending wait");
+            setup["live_protocol"] =
+                serde_json::json!("FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1");
+        }
         if let Some(selection) = &options.numerical {
             setup["numerical_capture"] = serde_json::json!({"schema":"FerricTpNumericalSelectionV1",
                 "batch_ordinal":selection.batch,"layer":selection.layer,"role":format!("{:?}",selection.role),
@@ -961,15 +1004,27 @@ fn run_with_timing(
         }
         emit(&setup)?;
         let _workload_timing = timing.scope("workload");
-        run_workload(
-            &mut runtime,
-            &model,
-            &workload,
-            &prompts,
-            options,
-            benchmark_clock.as_ref(),
-            &timing,
-        )
+        if options.live_stdin() {
+            tp_live_ingress::run(
+                &mut runtime,
+                &model,
+                options.context,
+                options.pages,
+                options.max_batches,
+                &timing,
+                emit,
+            )
+        } else {
+            run_workload(
+                &mut runtime,
+                &model,
+                workload.as_ref().ok_or("static workload missing")?,
+                &prompts,
+                options,
+                benchmark_clock.as_ref(),
+                &timing,
+            )
+        }
     })();
     let close = {
         let _close_timing = timing.scope("close");
@@ -1027,6 +1082,68 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn live_stdin_is_explicit_exclusive_and_requires_rollover() {
+        let parse = |extra: &[&str]| {
+            let mut base = vec![
+                "--source",
+                "/models",
+                "--artifact",
+                "/artifact",
+                "--worker",
+                "/worker",
+                "--devices",
+                "1",
+                "--allow-unauthenticated-machine-code",
+            ];
+            base.extend(extra);
+            Options::parse(base.into_iter().map(str::to_owned))
+        };
+        let live = parse(&[
+            "--live-stdin",
+            "--queue-rollover",
+            "--max-batches",
+            "1000000",
+        ])
+        .unwrap();
+        assert!(live.live_stdin());
+        assert!(live.requests.is_none());
+        assert_eq!(live.max_batches, 1_000_000);
+        for extra in [
+            vec![],
+            vec!["--live-stdin"],
+            vec![
+                "--live-stdin",
+                "--queue-rollover",
+                "--requests",
+                "/requests",
+            ],
+            vec![
+                "--live-stdin",
+                "--queue-rollover",
+                "--benchmark-control",
+                "/control",
+            ],
+            vec![
+                "--live-stdin",
+                "--queue-rollover",
+                "--numerical-capture",
+                "/capture",
+            ],
+            vec![
+                "--live-stdin",
+                "--queue-rollover",
+                "--max-batches",
+                "1000001",
+            ],
+        ] {
+            assert!(parse(&extra).is_err());
+        }
+        let ordinary = args(&["--devices", "1"]).unwrap();
+        assert!(!ordinary.live_stdin());
+        assert_eq!(ordinary.requests.as_deref(), Some(Path::new("/requests")));
     }
 
     #[test]

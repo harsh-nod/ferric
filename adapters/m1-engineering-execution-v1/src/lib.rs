@@ -18,6 +18,8 @@ pub mod tp_artifact;
 #[cfg(feature = "tp-batch-engineering")]
 pub mod tp_batch_runtime;
 pub mod tp_execution;
+#[cfg(feature = "tp-batch-engineering")]
+pub mod tp_live_ingress;
 pub mod tp_model;
 #[cfg(feature = "tp-batch-engineering")]
 pub mod tp_paged;
