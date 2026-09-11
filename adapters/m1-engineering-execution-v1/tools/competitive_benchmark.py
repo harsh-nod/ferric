@@ -4,6 +4,7 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
+from http.client import HTTPException
 import json
 import math
 from pathlib import Path
@@ -74,11 +75,15 @@ def endpoint(value):
     return value
 
 
-def sse_events(response, clock=time.monotonic_ns):
+def sse_events(response, clock=time.monotonic_ns, deadline_ns=None):
     """Read complete SSE frames, bounding both individual lines and the response."""
     data, total = [], 0
     while True:
+        if deadline_ns is not None:
+            require(clock() <= deadline_ns, "stream deadline exceeded")
         line = response.readline(LINE_LIMIT + 1)
+        if deadline_ns is not None:
+            require(clock() <= deadline_ns, "stream deadline exceeded")
         total += len(line)
         require(len(line) <= LINE_LIMIT and total <= RESPONSE_LIMIT, "oversized SSE response")
         if not line:
@@ -93,8 +98,9 @@ def sse_events(response, clock=time.monotonic_ns):
             data.append(line[5:].removeprefix(b" "))
 
 
-def summarize_stream(events, started_ns, max_tokens):
-    chunks, texts, content_times = [], [], []
+def summarize_stream(events, started_ns, max_tokens, chunks=None):
+    chunks = [] if chunks is None else chunks
+    texts, content_times = [], []
     usage = None
     finished = None
     done_ns = None
@@ -152,16 +158,18 @@ def request_one(url, model, item, timeout):
     request = Request(url, data=json.dumps(body).encode(),
                       headers={"Content-Type": "application/json", "Accept": "text/event-stream"})
     started = time.monotonic_ns()
+    chunks = []
     try:
         with build_opener(ProxyHandler({})).open(request, timeout=timeout) as response:
             require(response.status == 200, "non-success HTTP response")
             require(response.headers.get_content_type() == "text/event-stream",
                     "endpoint did not return an SSE stream")
-            record = summarize_stream(sse_events(response), started, item["max_tokens"])
+            events = sse_events(response, deadline_ns=started + int(timeout * 1e9))
+            record = summarize_stream(events, started, item["max_tokens"], chunks)
         return {"id": item["id"], "success": True, **record}
-    except (OSError, ValueError, TypeError, KeyError) as error:
+    except (OSError, ValueError, TypeError, KeyError, HTTPException) as error:
         return {"id": item["id"], "success": False, "started_ns": started,
-                "completed_ns": time.monotonic_ns(), "error": str(error)}
+                "completed_ns": time.monotonic_ns(), "error": str(error), "chunks": chunks}
 
 
 def percentile(values, fraction):
@@ -228,10 +236,12 @@ def main():
     integer(args.samples, 1, 100, "samples")
     for number in (args.timeout, args.ttft_slo_ms, args.tpot_slo_ms):
         require(math.isfinite(number) and number > 0, "timeout/SLO must be finite and positive")
-    raw = args.workload.read_bytes()
+    with args.workload.open("rb") as source:
+        raw = source.read(1024 * 1024 + 1)
     require(len(raw) <= 1024 * 1024, "oversized workload")
     value = workload(json_value(raw))
-    identity_raw = args.identity.read_bytes()
+    with args.identity.open("rb") as source:
+        identity_raw = source.read(1024 * 1024 + 1)
     require(len(identity_raw) <= 1024 * 1024, "oversized identity")
     identity = json_value(identity_raw)
     require(type(identity) is dict and identity.get("engine") == args.engine,

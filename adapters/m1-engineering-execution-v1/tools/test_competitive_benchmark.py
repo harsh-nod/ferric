@@ -82,6 +82,19 @@ class StreamingTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 bench.json_value(raw)
 
+    def test_heartbeat_cannot_extend_absolute_deadline(self):
+        ticks = iter([1, 2, 3, 11])
+        with self.assertRaisesRegex(ValueError, "deadline"):
+            list(bench.sse_events(io.BytesIO(b': heartbeat\n: heartbeat\n'),
+                                  lambda: next(ticks), deadline_ns=10))
+
+    def test_partial_chunks_remain_available_after_rejection(self):
+        chunks = []
+        with self.assertRaisesRegex(ValueError, "incomplete"):
+            bench.summarize_stream(self.stream()[:-1], 100, 4, chunks)
+        self.assertEqual(len(chunks), 3)
+        self.assertEqual(chunks[0]["event"]["choices"][0]["text"], " one")
+
 
 class ContractTests(unittest.TestCase):
     def test_loopback_only(self):

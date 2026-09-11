@@ -7,10 +7,10 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 
 | Track | Deliverable | State |
 | --- | --- | --- |
-| Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Implementing; fe2o3 owns reusable runtime code |
+| Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Reviewed and published3e3a77284;475 library tests+31 doctests and scoped Clippy pass; native gate pending |
 | Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Implementing; Ferric owns kernels and inference |
-| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Implementing; engineering interface, not HTTP or production qualification |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Implementing; baseline launch approval requested |
+| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Foundation integrated7a84682; preliminary host tests pass including65 admissions and prefix reuse; loopback HTTP adapter in progress |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Client implemented, initial18 tests pass; deadline/partial-failure additions in test; baseline launch approval requested |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
 
 ## Frozen Comparison Contract
@@ -45,11 +45,13 @@ removing owned stages/worktrees. Ferric implementation remains local; only
 separately reviewed Pages content may be published. fe2o3 updates must rebase
 onto freshly fetched main before their authorized non-forced push.
 
-At intake, both hosts had approximately85GiB free. Cached baseline images:
+At intake, both hosts had approximately 85GiB free. Cached baseline images:
 
-- vLLM0.28.0: `sha256:c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba`.
-- SGLang0.5.15.post1 ROCm720 MI35x: `sha256:cb8089ca16bd9182698b1bb5a915e6982bf9eeff63d2f6d027a9c31d8d6279d3`.
+- vLLM 0.28.0+rocm723: `sha256:c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba`.
+- SGLang 0.5.15.post1.dev20260715+g495ae9aaa6: `sha256:cb8089ca16bd9182698b1bb5a915e6982bf9eeff63d2f6d027a9c31d8d6279d3`.
 
-Fresh fe2o3 origin/main at intake: `310ce7b8c`; its delta from the current
-Ferric pin `6f6a67bb2` is test-only cleanup. Aggregate repin and validation are
-pending; previous GPU results are not relabeled.
+Fresh fe2o3 origin/main at intake was `310ce7b8c`; its delta from the previous
+Ferric pin `6f6a67bb2` was test-only cleanup. Root repinned to310 at7c6edeb,
+then to the reviewed published runtime3e3a77284 at1ba3e01. Combined validation
+and structural dependency-inventory regeneration are pending. Preliminary
+host gates and frozen511 GPU ablations retain their actual provenance.
