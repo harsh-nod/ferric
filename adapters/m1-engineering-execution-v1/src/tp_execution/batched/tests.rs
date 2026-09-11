@@ -3,6 +3,8 @@
 //! evidence. These tests exercise scheduling, active extents, ownership handoff,
 //! host reductions, and terminal failure behavior without a physical device.
 
+mod large_kv;
+
 use super::super::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,
     Qwen3TensorParallelPlanV1, RMSNORM, TensorParallelSequenceV1, allocate_rank_storage,
@@ -222,8 +224,10 @@ impl EngineeringTpRankTransportV1 for Recording {
             | "ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5" => PARTIAL,
             "ferric_qwen3_tp_batch32_swiglu_bf16_f32_v5" => SWIGLU,
             "ferric_qwen3_tp_batch32_rope_v5" => ROPE,
-            "ferric_qwen3_tp_batch32_paged_kv_append_v5" => APPEND,
+            "ferric_qwen3_tp_batch32_paged_kv_append_v5"
+            | "ferric_qwen3_tp_batch32_large_kv_append_v9" => APPEND,
             "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+            | "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9"
             | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5" => ATTENTION,
             "ferric_qwen3_tp_batch32_argmax_bf16_v5" => ARGMAX,
             "ferric_qwen3_tp_batch32_head_bf16_f32_v8" => FP32_HEAD,
@@ -494,6 +498,7 @@ fn fixture(
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
         row_capacity: u32::try_from(row_capacity).unwrap(),
+        large_kv: pool.large_kv_binding().is_some(),
         hidden: vec![0; 4096 * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,

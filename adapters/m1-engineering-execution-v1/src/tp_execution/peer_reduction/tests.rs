@@ -219,6 +219,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
         capacity: 64,
         row_capacity,
+        large_kv: false,
         hidden: vec![0; 4096 * row_capacity as usize],
         reduction: ReductionWorkspace::Baseline,
         sequences: None,

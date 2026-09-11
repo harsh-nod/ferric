@@ -7,6 +7,7 @@
 //! Submitted uncertainty permanently quarantines the entire pool. Host storage
 //! is bounded by the admitted limits; host allocation failure may abort.
 
+use crate::tp_artifact::{EngineeringTpArtifactV1, LargeKvBindingV9};
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -64,7 +65,17 @@ use EngineeringTpPagedErrorV1 as Error;
 
 /// Independently bounded host metadata and physical allocation geometry.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EngineeringTpKvPoolProfileV1 {
+    /// Frozen v2/v5 physical bound, at most 512 pages.
+    Legacy,
+    /// Explicit v9 TP1 physical bound, at most 16384 pages.
+    LargeV9,
+}
+
+/// Independently bounded host metadata and physical allocation geometry.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct EngineeringTpPagedLimitsV1 {
+    profile: EngineeringTpKvPoolProfileV1,
     context_tokens: u32,
     sequences: u32,
     physical_pages: u32,
@@ -81,19 +92,86 @@ impl EngineeringTpPagedLimitsV1 {
         physical_pages: u32,
         cache_ttl: u64,
     ) -> Result<Self> {
+        Self::new_bounded(
+            context_tokens,
+            sequences,
+            physical_pages,
+            cache_ttl,
+            EngineeringTpKvPoolProfileV1::Legacy,
+        )
+    }
+
+    /// Explicit larger physical pool; logical context and sequence bounds are unchanged.
+    /// # Errors
+    /// Rejects context/sequences/pages outside 1..8192/1..32/1..16384, or zero TTL.
+    pub fn new_large_kv32(
+        context_tokens: u32,
+        sequences: u32,
+        physical_pages: u32,
+        cache_ttl: u64,
+    ) -> Result<Self> {
+        Self::new_bounded(
+            context_tokens,
+            sequences,
+            physical_pages,
+            cache_ttl,
+            EngineeringTpKvPoolProfileV1::LargeV9,
+        )
+    }
+
+    fn new_bounded(
+        context_tokens: u32,
+        sequences: u32,
+        physical_pages: u32,
+        cache_ttl: u64,
+        profile: EngineeringTpKvPoolProfileV1,
+    ) -> Result<Self> {
+        let maximum = match profile {
+            EngineeringTpKvPoolProfileV1::Legacy => 512,
+            EngineeringTpKvPoolProfileV1::LargeV9 => 16384,
+        };
         if !(1..=8192).contains(&context_tokens)
             || !(1..=32).contains(&sequences)
-            || !(1..=512).contains(&physical_pages)
+            || !(1..=maximum).contains(&physical_pages)
             || cache_ttl == 0
         {
             return Err(Error::InvalidLimits);
         }
         Ok(Self {
+            profile,
             context_tokens,
             sequences,
             physical_pages,
             cache_ttl,
         })
+    }
+
+    /// Explicit physical kernel envelope, even when the actual page count is small.
+    #[must_use]
+    pub const fn profile(self) -> EngineeringTpKvPoolProfileV1 {
+        self.profile
+    }
+
+    /// Exact physical token allocation extent; never a logical sequence capacity.
+    /// # Errors
+    /// Rejects arithmetic overflow rather than using a truncated physical extent.
+    pub fn physical_token_capacity(self) -> Result<u32> {
+        self.physical_pages
+            .checked_mul(ENGINEERING_TP_PAGE_TOKENS_V1)
+            .ok_or(Error::Exhausted)
+    }
+
+    /// Exact TP1 target-Qwen3-8B K/V array payload, excluding other allocations.
+    /// # Errors
+    /// Rejects an arithmetic overflow instead of truncating allocation geometry.
+    pub fn target_kv_payload_bytes(self) -> Result<u64> {
+        u64::from(self.physical_pages)
+            .checked_mul(16)
+            .and_then(|v| v.checked_mul(36))
+            .and_then(|v| v.checked_mul(2))
+            .and_then(|v| v.checked_mul(1024))
+            .and_then(|v| v.checked_mul(2))
+            .ok_or(Error::Exhausted)
     }
 
     /// Maximum initialized logical token prefix per request.
@@ -357,6 +435,7 @@ pub struct EngineeringTpPagedPoolV1 {
     scope: EngineeringTpPoolScopeV1,
     limits: EngineeringTpPagedLimitsV1,
     row_capacity: usize,
+    large_kv: Option<LargeKvBindingV9>,
     state: State,
     pending: Option<Pending>,
     next_batch: u64,
@@ -371,7 +450,7 @@ impl EngineeringTpPagedPoolV1 {
         scope: EngineeringTpPoolScopeV1,
         limits: EngineeringTpPagedLimitsV1,
     ) -> Result<Self> {
-        Self::new_bounded(scope, limits, ENGINEERING_TP_MAX_BATCH_ROWS_V1)
+        Self::new_bounded(scope, limits, ENGINEERING_TP_MAX_BATCH_ROWS_V1, None)
     }
 
     /// Creates a separately selected 32-row metadata envelope for the v5 image.
@@ -381,15 +460,44 @@ impl EngineeringTpPagedPoolV1 {
         scope: EngineeringTpPoolScopeV1,
         limits: EngineeringTpPagedLimitsV1,
     ) -> Result<Self> {
-        Self::new_bounded(scope, limits, 32)
+        Self::new_bounded(scope, limits, 32, None)
+    }
+
+    /// Binds an explicitly larger metadata pool to an independently admitted v9 image.
+    /// # Errors
+    /// Rejects legacy limits/images, invalid scope, or exhausted pool identities.
+    pub fn new_large_kv32(
+        scope: EngineeringTpPoolScopeV1,
+        limits: EngineeringTpPagedLimitsV1,
+        artifact: &EngineeringTpArtifactV1,
+    ) -> Result<Self> {
+        let binding = artifact.large_kv_binding().ok_or(Error::InvalidLimits)?;
+        Self::new_bounded(scope, limits, 32, Some(binding))
+    }
+
+    pub(crate) const fn large_kv_binding(&self) -> Option<LargeKvBindingV9> {
+        self.large_kv
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_large_kv32_recording(
+        scope: EngineeringTpPoolScopeV1,
+        limits: EngineeringTpPagedLimitsV1,
+    ) -> Result<Self> {
+        Self::new_bounded(scope, limits, 32, Some(LargeKvBindingV9::recording()))
     }
 
     fn new_bounded(
         scope: EngineeringTpPoolScopeV1,
         limits: EngineeringTpPagedLimitsV1,
         row_capacity: usize,
+        large_kv: Option<LargeKvBindingV9>,
     ) -> Result<Self> {
-        if scope.model == [0; 32] || scope.session == [0; 32] {
+        if scope.model == [0; 32]
+            || scope.session == [0; 32]
+            || (limits.profile == EngineeringTpKvPoolProfileV1::LargeV9) != large_kv.is_some()
+            || (large_kv.is_some() && row_capacity != 32)
+        {
             return Err(Error::InvalidLimits);
         }
         let identity = NEXT_POOL_ID
@@ -400,6 +508,7 @@ impl EngineeringTpPagedPoolV1 {
             scope,
             limits,
             row_capacity,
+            large_kv,
             state: State {
                 pages: vec![PhysicalPage::default(); limits.physical_pages as usize],
                 nodes: vec![None; limits.physical_pages as usize],

@@ -2,6 +2,32 @@
 
 use super::{EngineeringTpArgumentV1, EngineeringTpDispatchV1, TpResult};
 
+pub(super) fn bind_storage(
+    capacity: u32,
+    large_kv: bool,
+    command: EngineeringTpDispatchV1,
+) -> TpResult<EngineeringTpDispatchV1> {
+    if large_kv && capacity != 32 {
+        return Err("large KV routing requires the separately admitted 32-row profile".into());
+    }
+    let mut command = bind(capacity, command)?;
+    if large_kv {
+        command.kernel = match command.kernel {
+            "ferric_qwen3_tp_batch32_paged_kv_append_v5" => {
+                "ferric_qwen3_tp_batch32_large_kv_append_v9"
+            }
+            "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5" => {
+                "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9"
+            }
+            name if name.contains("_wave_") || name.contains("_peer_") => {
+                return Err("large KV does not support wave or peer dispatches".into());
+            }
+            name => name,
+        };
+    }
+    Ok(command)
+}
+
 pub(super) fn bind(
     capacity: u32,
     mut command: EngineeringTpDispatchV1,

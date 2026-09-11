@@ -1,6 +1,195 @@
 use super::*;
 
 #[test]
+fn large_kv_limits_are_explicit_and_do_not_change_logical_or_legacy_bounds() {
+    for pages in [1, 512, 513, 8192, 8704, 16384] {
+        let limits = EngineeringTpPagedLimitsV1::new_large_kv32(8192, 32, pages, 100).unwrap();
+        assert_eq!(limits.context_tokens(), 8192);
+        assert_eq!(limits.page_table_stride(), 512);
+        assert_eq!(limits.physical_token_capacity().unwrap(), pages * 16);
+        assert_eq!(
+            limits.target_kv_payload_bytes().unwrap(),
+            u64::from(pages) * 2_359_296
+        );
+        assert!(EngineeringTpPagedPoolV1::new(scope(), limits).is_err());
+        assert!(EngineeringTpPagedPoolV1::new_wide32(scope(), limits).is_err());
+        let pool = EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), limits).unwrap();
+        assert_eq!(pool.row_capacity(), 32);
+        assert_eq!(
+            pool.limits().profile(),
+            EngineeringTpKvPoolProfileV1::LargeV9
+        );
+        pool.check_invariants().unwrap();
+        if pages > 512 {
+            assert!(EngineeringTpPagedLimitsV1::new(8192, 32, pages, 100).is_err());
+        }
+    }
+    assert_eq!(
+        EngineeringTpPagedLimitsV1::new_large_kv32(8192, 32, 16384, 100)
+            .unwrap()
+            .target_kv_payload_bytes(),
+        Ok(38_654_705_664)
+    );
+    for (context, sequences, pages, ttl) in [
+        (0, 1, 1, 1),
+        (8193, 1, 1, 1),
+        (8192, 33, 1, 1),
+        (1, 1, 0, 1),
+        (1, 1, 16385, 1),
+        (1, 1, u32::MAX, 1),
+        (1, 1, 1, 0),
+    ] {
+        assert!(
+            EngineeringTpPagedLimitsV1::new_large_kv32(context, sequences, pages, ttl).is_err()
+        );
+    }
+    let legacy = EngineeringTpPagedLimitsV1::new(8192, 32, 512, 100).unwrap();
+    assert!(EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), legacy).is_err());
+}
+
+#[test]
+fn large_kv_actual_reservations_cross_page_512_and_remain_fail_atomic() {
+    let limits = EngineeringTpPagedLimitsV1::new_large_kv32(288, 32, 544, 100).unwrap();
+    let mut pool = EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), limits).unwrap();
+    let mut sequences = Vec::new();
+    for token in 1..=32 {
+        let sequence = pool
+            .open_sequence(scope(), &[token; 272], 0)
+            .unwrap()
+            .sequence();
+        append(&mut pool, sequence, &[token; 272]);
+        sequences.push(sequence);
+    }
+    assert_eq!(
+        pool.state.sequences[&32].pages,
+        (527..544).collect::<Vec<_>>()
+    );
+    assert_eq!(
+        pool.state
+            .pages
+            .iter()
+            .filter(|page| page.refs != 0)
+            .count(),
+        544
+    );
+    pool.check_invariants().unwrap();
+    let before = pool.state.clone();
+    assert_eq!(
+        pool.reserve_batch(&[row(sequences[31], 272, 1)])
+            .unwrap_err(),
+        Error::OutOfPages
+    );
+    assert_eq!(pool.state, before);
+    for sequence in sequences {
+        pool.cancel_sequence(sequence).unwrap();
+    }
+    assert!(pool.state.pages.iter().all(|page| page.refs == 0));
+    pool.check_invariants().unwrap();
+}
+
+#[test]
+fn large_kv_final_physical_slot_preserves_logical_8192_and_quarantine() {
+    let limits = EngineeringTpPagedLimitsV1::new_large_kv32(8192, 32, 16384, 100).unwrap();
+    let mut pool = EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), limits).unwrap();
+    // Construct a complete invariant-checked boundary state without 8192 setup transactions.
+    for serial in 1_u64..=32 {
+        let first = u32::try_from(serial - 1).unwrap() * 512;
+        pool.state.sequences.insert(
+            serial,
+            Sequence {
+                tokens: vec![7; if serial == 32 { 8191 } else { 8192 }],
+                pages: (first..first + 512).collect(),
+            },
+        );
+    }
+    pool.state.next_sequence = 33;
+    for page in &mut pool.state.pages {
+        page.refs = 1;
+    }
+    pool.check_invariants().unwrap();
+    let sequence = EngineeringTpSequenceIdV1 {
+        pool: pool.identity,
+        serial: 32,
+    };
+    let before = pool.state.clone();
+    let batch = pool.reserve_batch(&[row(sequence, 8191, 8)]).unwrap();
+    assert_eq!(batch.rows()[0].writable_physical_page(), 16383);
+    assert_eq!(batch.rows()[0].writable_token_offset(), 15);
+    assert_eq!(batch.rows()[0].physical_pages().len(), 512);
+    pool.abort_batch(&batch).unwrap();
+    assert_eq!(pool.state, before);
+    let batch = pool.reserve_batch(&[row(sequence, 8191, 8)]).unwrap();
+    pool.begin_submission(&batch).unwrap();
+    pool.commit_batch(
+        &batch,
+        EngineeringTpBatchCompletionV1::after_all_ranks(&batch),
+    )
+    .unwrap();
+    assert_eq!(pool.committed_position(sequence), Ok(8192));
+    assert_eq!(
+        pool.reserve_batch(&[row(sequence, 8192, 8)]).unwrap_err(),
+        Error::InvalidRows
+    );
+    pool.check_invariants().unwrap();
+    pool.cancel_sequence(sequence).unwrap();
+    let fresh = pool.open_sequence(scope(), &[9], 1).unwrap().sequence();
+    let batch = pool.reserve_batch(&[row(fresh, 0, 9)]).unwrap();
+    pool.begin_submission(&batch).unwrap();
+    assert!(pool.abort_batch(&batch).is_err());
+    pool.quarantine_batch(&batch).unwrap();
+    assert_eq!(
+        pool.open_sequence(scope(), &[9], 2).unwrap_err(),
+        Error::Poisoned
+    );
+}
+
+#[test]
+fn large_kv_high_cached_page_is_immutable_and_partial_pages_stay_exclusive() {
+    let limits = EngineeringTpPagedLimitsV1::new_large_kv32(64, 32, 16384, 100).unwrap();
+    let mut pool = EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), limits).unwrap();
+    pool.state.pages[16383].cached = true;
+    pool.state.pages[16383].refs = 1;
+    pool.state.nodes[16383] = Some(RadixNode {
+        parent: None,
+        edge: [7; 16],
+        page: 16383,
+        touched: 0,
+        expires: 100,
+    });
+    pool.check_invariants().unwrap();
+    let a = pool.open_sequence(scope(), &[7; 17], 1).unwrap();
+    let b = pool.open_sequence(scope(), &[7; 17], 2).unwrap();
+    assert_eq!(a.physical_pages(), [16383]);
+    assert_eq!(b.physical_pages(), [16383]);
+    assert_eq!(pool.state.pages[16383].refs, 3);
+    let batch = pool
+        .reserve_batch(&[row(a.sequence(), 16, 7), row(b.sequence(), 16, 7)])
+        .unwrap();
+    assert_eq!(batch.rows()[0].physical_pages(), [16383, 0]);
+    assert_eq!(batch.rows()[1].physical_pages(), [16383, 1]);
+    assert_ne!(
+        batch.rows()[0].writable_physical_page(),
+        batch.rows()[1].writable_physical_page()
+    );
+    let mut foreign = EngineeringTpPagedPoolV1::new_large_kv32_recording(scope(), limits).unwrap();
+    assert_eq!(foreign.begin_submission(&batch), Err(Error::UnknownBatch));
+    pool.begin_submission(&batch).unwrap();
+    pool.commit_batch(
+        &batch,
+        EngineeringTpBatchCompletionV1::after_all_ranks(&batch),
+    )
+    .unwrap();
+    pool.cancel_sequence(a.sequence()).unwrap();
+    assert_eq!(pool.state.pages[16383].refs, 2);
+    pool.retire_sequence(b.sequence(), true, 3).unwrap();
+    assert_eq!(pool.state.pages[16383].refs, 1);
+    assert!(pool.state.pages[16383].cached);
+    pool.open_sequence(scope(), &[9], 104).unwrap();
+    assert!(!pool.state.pages[16383].cached);
+    pool.check_invariants().unwrap();
+}
+
+#[test]
 fn explicit_wide_pool_commits_thirty_two_distinct_causal_slots_once() {
     let limits = EngineeringTpPagedLimitsV1::new(64, 32, 4, 100).unwrap();
     let mut wide = EngineeringTpPagedPoolV1::new_wide32(scope(), limits).unwrap();

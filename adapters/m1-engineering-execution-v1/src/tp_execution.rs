@@ -91,6 +91,12 @@ pub struct EngineeringTpDispatchV1 {
 /// exact artifact, scalar ABI, allocation extents and pointer-fixup ownership.
 /// These are external Contracted prerequisites, not proved by this driver.
 pub trait EngineeringTpRankTransportV1 {
+    /// Checks retained successful load receipts before any allocation or dispatch.
+    /// # Errors
+    /// Rejects unsupported transport, non-fresh state, or any image/root mismatch.
+    fn require_loaded_image(&mut self, _image: [u8; 32], _kernels: &[&str]) -> TpResult<()> {
+        Err("transport cannot bind a fresh additional kernel image".into())
+    }
     /// Explicit diagnostic-only cumulative worker host-wall counters, never GPU timestamps.
     /// # Errors
     /// Rejects disabled profiling, pending work, closed/poisoned state or malformed receipts.
@@ -268,11 +274,20 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     collective: Qwen3TensorParallelCollectiveStateV1,
     capacity: u32,
     row_capacity: u32,
+    large_kv: bool,
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
     timing: crate::host_timing::HostTiming,
     closed: bool,
+}
+
+#[derive(Clone, Copy)]
+struct StorageGeometry {
+    logical_tokens: u32,
+    physical_tokens: u32,
+    rows: u32,
+    large_kv: bool,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
@@ -290,7 +305,18 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         layout: &AuthenticatedModelWeightLayout,
         capacity: u32,
     ) -> TpResult<Self> {
-        Self::new_with_storage(transports, model, weights, layout, capacity, 1)
+        Self::new_with_storage(
+            transports,
+            model,
+            weights,
+            layout,
+            StorageGeometry {
+                logical_tokens: capacity,
+                physical_tokens: capacity,
+                rows: 1,
+                large_kv: false,
+            },
+        )
     }
 
     fn new_with_storage(
@@ -298,11 +324,20 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         model: ModelConfig,
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
-        capacity: u32,
-        rows: u32,
+        storage: StorageGeometry,
     ) -> TpResult<Self> {
+        let StorageGeometry {
+            logical_tokens: capacity,
+            physical_tokens,
+            rows,
+            large_kv,
+        } = storage;
         let prepared = (|| {
-            if !(1..=32).contains(&rows) {
+            if !(1..=32).contains(&rows)
+                || physical_tokens == 0
+                || physical_tokens > if large_kv { 262_144 } else { 8192 }
+                || (large_kv && (rows != 32 || transports.len() != 1))
+            {
                 return Err("TP storage row bound exceeded".into());
             }
             let world = u32::try_from(transports.len()).map_err(|_| "too many TP ranks")?;
@@ -330,7 +365,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             for (index, transport) in transports.iter_mut().enumerate() {
                 let index = u32::try_from(index).map_err(|_| "rank index overflow")?;
                 ranks.push(allocate_rank_storage(
-                    transport, &plan, index, capacity, rows,
+                    transport,
+                    &plan,
+                    index,
+                    physical_tokens,
+                    rows,
                 )?);
             }
             for ordinal in 0..layout.section_count(model.role) {
@@ -407,6 +446,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             collective,
             capacity,
             row_capacity: rows,
+            large_kv,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
             sequences: None,
@@ -779,7 +819,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_zero", None);
         let bound = if self.row_capacity == 32 {
-            Some(row_profile::bind(32, command.clone())?)
+            Some(row_profile::bind_storage(
+                32,
+                self.large_kv,
+                command.clone(),
+            )?)
         } else {
             None
         };
@@ -804,7 +848,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 return Err("pending rank sequence bound drifted".into());
             }
             for (rank, commands) in self.ranks.iter().zip(pending) {
-                commands.push(row_profile::bind(self.row_capacity, command(rank))?);
+                commands.push(row_profile::bind_storage(
+                    self.row_capacity,
+                    self.large_kv,
+                    command(rank),
+                )?);
             }
             return Ok(());
         }
@@ -816,7 +864,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             Some(
                 self.ranks
                     .iter()
-                    .map(|rank| row_profile::bind(32, command(rank)))
+                    .map(|rank| row_profile::bind_storage(32, self.large_kv, command(rank)))
                     .collect::<TpResult<Vec<_>>>()?,
             )
         } else {

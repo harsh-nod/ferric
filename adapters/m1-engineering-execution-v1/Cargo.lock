@@ -1026,6 +1026,7 @@ dependencies = [
  "ferric-qwen3-tp-fp32-head-kernels-device-v7",
  "ferric-qwen3-tp-fp32-head32-kernels-device-v8",
  "ferric-qwen3-tp-kernels-device-v1",
+ "ferric-qwen3-tp-large-kv-kernels-device-v9",
  "ferric-qwen3-tp-peer-kernels-device-v4",
  "ferric-qwen3-tp-peer32-kernels-device-v6",
  "ferric-qwen3-tp-perf-kernels-device-v3",
@@ -1130,6 +1131,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-tp-kernels-device-v1"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-large-kv-kernels-device-v9"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",

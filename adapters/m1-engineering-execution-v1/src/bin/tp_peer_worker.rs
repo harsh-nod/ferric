@@ -648,6 +648,7 @@ impl PeerWorker {
                 metadata.name().into(),
                 LoadedKernel {
                     id: kernel,
+                    image: hash,
                     metadata: metadata.clone(),
                 },
             );

@@ -92,6 +92,34 @@ pub const ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8: [&str; 3] = [
     "ferric_qwen3_tp_batch32_argmax_f32_v8",
 ];
 
+/// Closed TP1 image extending physical KV storage without extending logical context.
+pub const ENGINEERING_TP_LARGE_KV_EXPORTS_V9: [&str; 2] = [
+    "ferric_qwen3_tp_batch32_large_kv_append_v9",
+    "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9",
+];
+#[cfg(feature = "tp-batch-engineering")]
+const LARGE_KV_CRATE_V9: &str = "ferric_qwen3_tp_large_kv_kernels_device_v9";
+
+/// Structural image binding minted only by exact v9 artifact admission.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) struct LargeKvBindingV9 {
+    pub(crate) hsaco: [u8; 32],
+    manifest: [u8; 32],
+    handoff: [u8; 32],
+}
+
+#[cfg(all(test, feature = "tp-batch-engineering"))]
+impl LargeKvBindingV9 {
+    pub(crate) const fn recording() -> Self {
+        Self {
+            hsaco: [19; 32],
+            manifest: [20; 32],
+            handoff: [21; 32],
+        }
+    }
+}
+
 /// Closed full v5 image; the wave-only form omits exactly the two MFMA roots.
 pub const ENGINEERING_TP_BATCH32_EXPORTS_V5: [&str; 15] = [
     "qwen3_rmsnorm_v1",
@@ -113,6 +141,8 @@ pub const ENGINEERING_TP_BATCH32_EXPORTS_V5: [&str; 15] = [
 
 /// Exact content-addressed engineering bytes and independently inspected metadata.
 pub struct EngineeringTpArtifactV1 {
+    #[cfg(feature = "tp-batch-engineering")]
+    source_crate: &'static str,
     bytes: Arc<[u8]>,
     inspection: FinalizedDescriptorInspection,
     manifest_id: Identity,
@@ -267,10 +297,35 @@ impl EngineeringTpArtifactV1 {
         )
     }
 
+    /// Opens the separately compiled two-root TP1 large-physical-KV image.
+    /// # Errors
+    /// Rejects any source, target, descriptor, roster, file or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_large_kv32(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            LARGE_KV_CRATE_V9,
+            &ENGINEERING_TP_LARGE_KV_EXPORTS_V9,
+        )
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    pub(crate) fn large_kv_binding(&self) -> Option<LargeKvBindingV9> {
+        (self.source_crate == LARGE_KV_CRATE_V9).then(|| LargeKvBindingV9 {
+            hsaco: *self.hsaco_id.as_bytes(),
+            manifest: *self.manifest_id.as_bytes(),
+            handoff: *self.handoff_id.as_bytes(),
+        })
+    }
+
     fn open_profile(
         root: &Path,
         expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
-        source_crate: &str,
+        source_crate: &'static str,
         exports: &[&str],
     ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
         use M1EngineeringAggregateArtifactOpenErrorV1 as Error;
@@ -391,6 +446,8 @@ impl EngineeringTpArtifactV1 {
             return Err(Error::CurrentFerricDescriptorRoster);
         }
         Ok(Self {
+            #[cfg(feature = "tp-batch-engineering")]
+            source_crate,
             bytes: bytes.into(),
             inspection,
             manifest_id: Identity::new(digest(&raw_manifest)),

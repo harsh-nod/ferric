@@ -82,7 +82,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         layout: &AuthenticatedModelWeightLayout,
         pool: &EngineeringTpPagedPoolV1,
     ) -> TpResult<Self> {
-        Self::new_bounded(transports, model, weights, layout, pool, MAX_ROWS)
+        Self::new_bounded(transports, model, weights, layout, pool, MAX_ROWS, false)
     }
 
     /// Allocates genuine 32-row workspaces for transports admitting the separate v5 image.
@@ -95,7 +95,22 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         layout: &AuthenticatedModelWeightLayout,
         pool: &EngineeringTpPagedPoolV1,
     ) -> TpResult<Self> {
-        Self::new_bounded(transports, model, weights, layout, pool, 32)
+        Self::new_bounded(transports, model, weights, layout, pool, 32, false)
+    }
+
+    /// Allocates TP1 physical KV only after checking the pool's exact admitted v9 image.
+    /// Logical context remains bounded by the existing verified sequence constructor.
+    /// # Errors
+    /// Rejects legacy or stale pools, missing/mismatched loaded roots, non-TP1 transports,
+    /// invalid checked geometry, or any allocation/upload failure.
+    pub fn new_large_kv32(
+        transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+    ) -> TpResult<Self> {
+        Self::new_bounded(transports, model, weights, layout, pool, 32, true)
     }
 
     fn new_bounded(
@@ -105,27 +120,34 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         layout: &AuthenticatedModelWeightLayout,
         pool: &EngineeringTpPagedPoolV1,
         row_capacity: usize,
+        large_kv: bool,
     ) -> TpResult<Self> {
-        if model.role != Qwen3ModelRole::Target8B
-            || !pool.is_empty()
-            || pool.row_capacity() != row_capacity
+        if let Err(error) =
+            validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
         {
             for transport in &mut transports {
                 let _ = transport.close();
             }
-            return Err("batched execution requires Qwen3-8B and a fresh page pool".into());
+            return Err(error);
         }
         let limits = pool.limits();
         let physical_pages = limits.physical_page_count();
         let context_tokens = limits.context_tokens();
         let table_stride = context_tokens.div_ceil(PAGE_TOKENS);
+        let physical_tokens = limits
+            .physical_token_capacity()
+            .map_err(|error| format!("physical KV extent: {error:?}"))?;
         let mut inner = EngineeringTpExecutionV1::new_with_storage(
             transports,
             model,
             weights,
             layout,
-            physical_pages * PAGE_TOKENS,
-            u32::try_from(row_capacity).map_err(|_| "row limit conversion")?,
+            super::StorageGeometry {
+                logical_tokens: context_tokens,
+                physical_tokens,
+                rows: u32::try_from(row_capacity).map_err(|_| "row limit conversion")?,
+                large_kv,
+            },
         )?;
         let metadata = (|| {
             let mut positions = Vec::new();
@@ -337,6 +359,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.last_batch != 0
             || self.completed_batches != 0
             || self.numerical.is_some()
+            || (self.inner.large_kv && mode.is_peer())
         {
             return Err("reduction mode requires a fresh batch stream".into());
         }
@@ -393,6 +416,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.projection_configured
             || self.numerical.is_some()
             || self.head_profile_configured
+            || (self.inner.large_kv
+                && !matches!(
+                    mode,
+                    super::EngineeringTpProjectionModeV3::Baseline
+                        | super::EngineeringTpProjectionModeV3::Mfma
+                ))
         {
             return Err("projection policy must be configured once before execution".into());
         }
@@ -458,6 +487,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.closed
             || self.numerical.is_some()
             || (self.head_profile_configured && (enabled || self.wave_attention))
+            || (enabled && self.inner.large_kv)
         {
             return Err("attention policy must be configured before execution".into());
         }
@@ -470,7 +500,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects unsupported transports, execution already begun, or closed state.
     pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
-            || (enabled && (self.numerical.is_some() || self.head_profile_configured))
+            || (enabled
+                && (self.numerical.is_some()
+                    || self.head_profile_configured
+                    || self.inner.large_kv))
             || self.poisoned
             || self.inner.closed
             || (enabled
@@ -636,14 +669,21 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     }
 
     fn validate(&self, batch: &EngineeringTpPreparedBatchV1) -> TpResult<()> {
-        if self.inner.closed || self.poisoned {
-            return Err("batched execution is closed or poisoned".into());
+        if self.inner.closed
+            || self.poisoned
+            || (self.inner.large_kv && !self.head_profile_configured)
+        {
+            return Err(
+                "batched execution is closed, poisoned, or missing its v8 head profile".into(),
+            );
         }
         if batch.pool_identity() != self.pool_identity
             || batch.scope() != self.scope
             || batch.context_tokens() != self.context_tokens
             || batch.physical_page_count() != self.physical_pages
             || batch.page_table_stride() != self.table_stride
+            || (batch.limits().profile() == crate::tp_paged::EngineeringTpKvPoolProfileV1::LargeV9)
+                != self.inner.large_kv
             || batch.id() <= self.last_batch
             || batch.rows().is_empty()
             || batch.rows().len() > self.row_capacity
@@ -1270,3 +1310,34 @@ pub(super) fn matrix(
 
 #[cfg(test)]
 mod tests;
+
+fn validate_pool_binding<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    model: ModelConfig,
+    pool: &EngineeringTpPagedPoolV1,
+    row_capacity: usize,
+    large_kv: bool,
+) -> TpResult<()> {
+    if model.role != Qwen3ModelRole::Target8B
+        || !pool.is_empty()
+        || pool.row_capacity() != row_capacity
+        || pool.large_kv_binding().is_some() != large_kv
+        || (large_kv
+            && (transports.len() != 1
+                || transports
+                    .iter()
+                    .any(|rank| rank.peer_group_rank().is_some())))
+    {
+        return Err(
+            "batched execution requires Qwen3-8B, a fresh matching pool and supported transport"
+                .into(),
+        );
+    }
+    if let Some(binding) = pool.large_kv_binding() {
+        transports[0].require_loaded_image(
+            binding.hsaco,
+            &crate::tp_artifact::ENGINEERING_TP_LARGE_KV_EXPORTS_V9,
+        )?;
+    }
+    Ok(())
+}

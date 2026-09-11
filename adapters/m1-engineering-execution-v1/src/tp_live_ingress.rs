@@ -936,6 +936,97 @@ mod tests {
     }
 
     #[test]
+    fn large_pool_primary_concurrency_reserves_private_pages_without_cache_credit() {
+        struct AdmissionOnly;
+        impl EngineeringTpBatchRunnerV2 for AdmissionOnly {
+            fn row_capacity(&self) -> usize {
+                32
+            }
+            fn execute_batch(
+                &mut self,
+                _: &EngineeringTpPreparedBatchV1,
+                _: &[usize],
+            ) -> Result<EngineeringTpBatchOutputV2, String> {
+                Err("admission-only test must not execute".into())
+            }
+            fn dispatch_counts(&self) -> Vec<u64> {
+                vec![0]
+            }
+            fn close(&mut self) -> Result<(), String> {
+                Ok(())
+            }
+        }
+        for (pages, prompt_len, outputs, accepted) in [
+            (8192, 4096, 256, 30),
+            (8704, 4096, 256, 32),
+            (16384, 4096, 256, 32),
+            (16384, 8192, 1, 32),
+        ] {
+            for cache in [false, true] {
+                let pool = EngineeringTpPagedPoolV1::new_large_kv32_recording(
+                    EngineeringTpPoolScopeV1 {
+                        model: [1; 32],
+                        session: [2; 32],
+                    },
+                    EngineeringTpPagedLimitsV1::new_large_kv32(8192, 32, pages, 1000).unwrap(),
+                )
+                .unwrap();
+                let mut runtime = EngineeringTpBatchRuntimeV2::new_wide32(
+                    AdmissionOnly,
+                    pool,
+                    EngineeringTpSchedulerV1::new_wide32(100, 8192, 32, 32).unwrap(),
+                    32,
+                    cache,
+                )
+                .unwrap();
+                let mut session = Session {
+                    runtime: &mut runtime,
+                    codec: &FakeCodec,
+                    emit: |_: Value| Ok(()),
+                    pending: VecDeque::new(),
+                    active: Vec::new(),
+                    context: 8192,
+                    pages,
+                    last_request_id: 0,
+                    tick: 0,
+                    batches: 0,
+                    draining: false,
+                };
+                for request in 1..=32 {
+                    session
+                        .command(submit(request, &"a".repeat(prompt_len), outputs), 1, 1)
+                        .unwrap();
+                }
+                session.admit(2).unwrap();
+                assert_eq!(session.active.len(), accepted);
+                assert_eq!(session.pending.len(), 32 - accepted);
+                let private = (u32::try_from(prompt_len).unwrap() + outputs - 1).div_ceil(16);
+                assert_eq!(
+                    session
+                        .active
+                        .iter()
+                        .map(|request| request.pages)
+                        .sum::<u32>(),
+                    u32::try_from(accepted).unwrap() * private
+                );
+                session.command(cancel(1), 3, 3).unwrap();
+                session.admit(4).unwrap();
+                assert!(
+                    session
+                        .active
+                        .iter()
+                        .map(|request| request.pages)
+                        .sum::<u32>()
+                        <= pages
+                );
+                assert_eq!(session.pending.len(), (32 - accepted).saturating_sub(1));
+                drop(session);
+                runtime.close().unwrap();
+            }
+        }
+    }
+
+    #[test]
     fn streamed_token_bytes_concatenate_to_the_final_decoded_bytes() {
         let mut runtime = runtime(1, false);
         let events = RefCell::new(Vec::new());

@@ -50,6 +50,7 @@ struct Incoming {
 
 pub(super) struct LoadedKernel {
     pub(super) id: u64,
+    pub(super) image: [u8; 32],
     pub(super) metadata: InspectedKernel,
 }
 
@@ -317,6 +318,7 @@ impl Worker {
                 metadata.name().into(),
                 LoadedKernel {
                     id: kernel,
+                    image: hash,
                     metadata: metadata.clone(),
                 },
             );
@@ -492,6 +494,28 @@ impl Worker {
 }
 
 impl EngineeringTpRankTransportV1 for Worker {
+    fn require_loaded_image(&mut self, image: [u8; 32], kernels: &[&str]) -> TpResult<()> {
+        if self.failed
+            || self.exited
+            || self.pending.is_some()
+            || !self.buffers.is_empty()
+            || self.queue_packets != 0
+            || self.queue_epoch != 0
+            || image == [0; 32]
+            || kernels.is_empty()
+            || kernels.len() > 32
+            || kernels.iter().enumerate().any(|(index, name)| {
+                kernels[..index].contains(name)
+                    || self
+                        .kernels
+                        .get(*name)
+                        .is_none_or(|loaded| loaded.image != image)
+            })
+        {
+            return self.reject("additional image binding is not fresh or complete");
+        }
+        Ok(())
+    }
     fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
         if !self.options.profile
             || self.failed
@@ -1058,6 +1082,36 @@ while True:
             &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
         )
         .unwrap();
+        actual_image_fake_worker(&artifact, false);
+    }
+
+    #[test]
+    #[ignore = "requires FERRIC_V9_TEST_ARTIFACT pointing to the emitted v9 image; no GPU"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn actual_v9_image_binding_is_fresh_exact_and_precedes_allocation() {
+        use ferric_m1_engineering_execution_v1::tp_paged::{
+            EngineeringTpPagedLimitsV1, EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
+        };
+        let path = std::env::var_os("FERRIC_V9_TEST_ARTIFACT").expect("explicit v9 image");
+        let expected = ferric_qwen3_tp_large_kv_kernels_device_v9::compiler_expectation_roster_v9();
+        let artifact =
+            EngineeringTpArtifactV1::open_large_kv32(Path::new(&path), &expected).unwrap();
+        assert!(EngineeringTpArtifactV1::open_fp32_head32(Path::new(&path), &expected).is_err());
+        let scope = EngineeringTpPoolScopeV1 {
+            model: [1; 32],
+            session: [2; 32],
+        };
+        for pages in [1, 512, 513, 16384] {
+            let limits = EngineeringTpPagedLimitsV1::new_large_kv32(8192, 32, pages, 100).unwrap();
+            assert!(EngineeringTpPagedPoolV1::new_wide32(scope, limits).is_err());
+            let pool = EngineeringTpPagedPoolV1::new_large_kv32(scope, limits, &artifact).unwrap();
+            assert_eq!(pool.limits(), limits);
+        }
+        actual_image_fake_worker(&artifact, true);
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    fn actual_image_fake_worker(artifact: &EngineeringTpArtifactV1, large: bool) {
         let hash: [u8; 32] = Sha256::digest(artifact.bytes()).into();
         let metadata = artifact.inspection().hsaco().kernels().iter().map(|kernel| {
             let arguments = kernel.explicit_arguments().iter().map(|arg| serde_json::json!({
@@ -1098,7 +1152,24 @@ while True:
         sys.exit(0)
     else: sys.exit(5)
 ";
-        for mode in ["normal", "duplicate_id", "metadata"] {
+        let modes: &[&str] = if large {
+            &[
+                "normal",
+                "duplicate_id",
+                "metadata",
+                "wrong_image",
+                "missing_root",
+                "duplicate_root",
+                "allocated",
+                "pending",
+                "used_queue",
+                "old_epoch",
+                "failed",
+            ]
+        } else {
+            &["normal", "duplicate_id", "metadata"]
+        };
+        for &mode in modes {
             let child = Command::new("python3")
                 .args([
                     "-u",
@@ -1113,17 +1184,47 @@ while True:
                 .spawn()
                 .unwrap();
             let mut worker = Worker::connect(child, 1, Duration::from_secs(5)).unwrap();
-            let result = worker.load_additional_artifact(&artifact);
-            if mode == "normal" {
-                result.unwrap();
-                assert_eq!(worker.kernels.len(), 3);
-                assert!(!worker.failed);
-                assert!(worker.load_additional_artifact(&artifact).is_err());
-                assert!(!worker.failed);
-            } else {
+            let result = worker.load_additional_artifact(artifact);
+            if matches!(mode, "duplicate_id" | "metadata") {
                 assert!(result.is_err() && worker.failed);
                 assert_eq!(worker.kernels.len(), 1);
-                assert!(worker.load_additional_artifact(&artifact).is_err());
+                assert!(worker.load_additional_artifact(artifact).is_err());
+            } else {
+                result.unwrap();
+                assert_eq!(worker.kernels.len(), if large { 2 } else { 3 });
+                assert!(!worker.failed);
+                if large {
+                    use ferric_m1_engineering_execution_v1::tp_artifact::ENGINEERING_TP_LARGE_KV_EXPORTS_V9;
+                    let mut names = ENGINEERING_TP_LARGE_KV_EXPORTS_V9;
+                    let mut expected = hash;
+                    match mode {
+                        "wrong_image" => expected[0] ^= 1,
+                        "missing_root" => names[0] = "missing",
+                        "duplicate_root" => names[1] = names[0],
+                        "allocated" => {
+                            worker.buffers.insert(999, 4);
+                        }
+                        "pending" => worker.pending = Some(PendingRequest::Other),
+                        "used_queue" => worker.queue_packets = 1,
+                        "old_epoch" => worker.queue_epoch = 1,
+                        "failed" => worker.failed = true,
+                        _ => {}
+                    }
+                    assert_eq!(
+                        worker.require_loaded_image(expected, &names).is_ok(),
+                        mode == "normal"
+                    );
+                    if mode != "normal" {
+                        assert!(worker.failed);
+                        worker.pending = None;
+                        worker.buffers.clear();
+                        worker.close().unwrap();
+                        assert!(worker.exited && worker.child.try_wait().unwrap().is_some());
+                        continue;
+                    }
+                }
+                assert!(worker.load_additional_artifact(artifact).is_err());
+                assert!(!worker.failed);
             }
             worker.close().unwrap();
             assert!(worker.exited && worker.io_threads.is_empty());

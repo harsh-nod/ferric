@@ -32,6 +32,9 @@ impl RankWorker {
 }
 
 impl EngineeringTpRankTransportV1 for RankWorker {
+    fn require_loaded_image(&mut self, image: [u8; 32], kernels: &[&str]) -> TpResult<()> {
+        self.transport_mut().require_loaded_image(image, kernels)
+    }
     fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
         self.transport_mut().runtime_diagnostic_snapshot()
     }

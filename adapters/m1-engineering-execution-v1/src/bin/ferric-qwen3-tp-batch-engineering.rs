@@ -47,6 +47,7 @@ const USAGE: &str = concat!(
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
+    "[--kv-pool-profile large-kv-v9 --large-kv-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
 );
@@ -57,6 +58,7 @@ struct Options {
     peer_artifact: Option<PathBuf>,
     fp32_head_artifact: Option<PathBuf>,
     head_precision: Option<HeadPrecision>,
+    large_kv_artifact: Option<PathBuf>,
     worker: PathBuf,
     requests: Option<PathBuf>,
     benchmark_control: Option<PathBuf>,
@@ -132,6 +134,15 @@ impl KernelProfile {
 }
 
 impl Options {
+    fn paged_limits(&self) -> Result<EngineeringTpPagedLimitsV1, String> {
+        let constructor = if self.large_kv_artifact.is_some() {
+            EngineeringTpPagedLimitsV1::new_large_kv32
+        } else {
+            EngineeringTpPagedLimitsV1::new
+        };
+        constructor(self.context, 32, self.pages, self.ttl)
+            .map_err(|e| format!("page limits: {e:?}"))
+    }
     fn live_stdin(&self) -> bool {
         self.requests.is_none()
     }
@@ -154,6 +165,8 @@ impl Options {
         let mut peer_artifact = None;
         let mut fp32_head_artifact = None;
         let mut head_precision = None;
+        let mut large_kv = false;
+        let mut large_kv_artifact = None;
         let mut benchmark_control = None;
         let mut host_timing = None;
         let (mut numerical_directory, mut numerical_batch, mut numerical_layer, mut numerical_role) =
@@ -288,6 +301,13 @@ impl Options {
                         _ => return Err("unknown attention mode".into()),
                     }
                 }
+                "--kv-pool-profile" => {
+                    if value != "large-kv-v9" {
+                        return Err("unknown physical KV pool profile".into());
+                    }
+                    large_kv = true;
+                }
+                "--large-kv-artifact" => large_kv_artifact = Some(PathBuf::from(value)),
                 _ => return Err(format!("unknown option {flag}")),
             }
         }
@@ -344,8 +364,12 @@ impl Options {
         {
             return Err("batch, chunk, or conservative packet bound exceeded".into());
         }
-        EngineeringTpPagedLimitsV1::new(context, 32, pages, ttl)
-            .map_err(|e| format!("page limits: {e:?}"))?;
+        let limits_constructor = if large_kv {
+            EngineeringTpPagedLimitsV1::new_large_kv32
+        } else {
+            EngineeringTpPagedLimitsV1::new
+        };
+        limits_constructor(context, 32, pages, ttl).map_err(|e| format!("page limits: {e:?}"))?;
         if runtime.profile && (benchmark_control.is_some() || numerical_directory.is_some()) {
             return Err("--runtime-profile is diagnostic only and excludes replica benchmarks and numerical capture".into());
         }
@@ -380,12 +404,27 @@ impl Options {
         {
             return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA projection, wave attention only for v8, no sequences, numerical capture or replicas".into());
         }
+        if large_kv != large_kv_artifact.is_some()
+            || (large_kv
+                && (devices.len() != 1
+                    || !kernel_profile.wide32()
+                    || !head_precision.is_some_and(HeadPrecision::wide32)
+                    || wave_attention
+                    || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)
+                    || runtime.sequences
+                    || peer
+                    || benchmark_control.is_some()
+                    || numerical.is_some()))
+        {
+            return Err("large-kv-v9 requires both explicit pool/image options, TP1/capacity32 with v8 head, baseline attention and baseline/MFMA projection; peers, sequences, capture and replicas are unsupported".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
             peer_artifact,
             fp32_head_artifact,
             head_precision,
+            large_kv_artifact,
             worker: worker.ok_or("--worker is required")?,
             requests,
             benchmark_control,
@@ -810,6 +849,17 @@ fn run_with_timing(
             .map_err(|error| error.to_string())
         })
         .transpose()?;
+    let large_kv_artifact = options
+        .large_kv_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_large_kv32(
+                path,
+                &ferric_qwen3_tp_large_kv_kernels_device_v9::compiler_expectation_roster_v9(),
+            )
+            .map_err(|error| error.to_string())
+        })
+        .transpose()?;
     drop(admission_timing);
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
@@ -833,19 +883,21 @@ fn run_with_timing(
     std::fs::File::open("/dev/urandom")
         .and_then(|mut file| file.read_exact(&mut session))
         .map_err(|e| e.to_string())?;
-    let pool_constructor = if options.kernel_profile.wide32() {
-        EngineeringTpPagedPoolV1::new_wide32
-    } else {
-        EngineeringTpPagedPoolV1::new
+    let limits = options.paged_limits()?;
+    let kv_pool_payload_bytes = limits
+        .target_kv_payload_bytes()
+        .map_err(|e| format!("KV payload: {e:?}"))?;
+    let scope = EngineeringTpPoolScopeV1 {
+        model: *model.bundle_id().as_bytes(),
+        session,
     };
-    let pool = pool_constructor(
-        EngineeringTpPoolScopeV1 {
-            model: *model.bundle_id().as_bytes(),
-            session,
-        },
-        EngineeringTpPagedLimitsV1::new(options.context, 32, options.pages, options.ttl)
-            .map_err(|e| format!("page limits: {e:?}"))?,
-    )
+    let pool = if let Some(large) = &large_kv_artifact {
+        EngineeringTpPagedPoolV1::new_large_kv32(scope, limits, large)
+    } else if options.kernel_profile.wide32() {
+        EngineeringTpPagedPoolV1::new_wide32(scope, limits)
+    } else {
+        EngineeringTpPagedPoolV1::new(scope, limits)
+    }
     .map_err(|e| format!("page pool: {e:?}"))?;
     let scheduler_constructor = if options.kernel_profile.wide32() {
         EngineeringTpSchedulerV1::new_wide32
@@ -890,6 +942,9 @@ fn run_with_timing(
                 if let Some(head) = &fp32_head_artifact {
                     worker.load_additional_artifact(head)?;
                 }
+                if let Some(large) = &large_kv_artifact {
+                    worker.load_additional_artifact(large)?;
+                }
                 Ok::<_, String>(RankWorker::Independent(worker))
             })
             .collect::<Result<Vec<_>, _>>()?
@@ -904,7 +959,9 @@ fn run_with_timing(
     }
     drop(workers_timing);
     let resident_timing = timing.scope("setup_resident_weights");
-    let driver_constructor = if options.kernel_profile.wide32() {
+    let driver_constructor = if options.large_kv_artifact.is_some() {
+        EngineeringTpBatchExecutionV2::new_large_kv32
+    } else if options.kernel_profile.wide32() {
         EngineeringTpBatchExecutionV2::new_wide32
     } else {
         EngineeringTpBatchExecutionV2::new
@@ -1023,6 +1080,16 @@ fn run_with_timing(
         }
         if options.runtime.shared_full_currentness {
             setup["peer_shared_full_currentness"] = serde_json::json!(true);
+        }
+        if let Some(large) = &large_kv_artifact {
+            setup["kv_pool_profile"] = serde_json::json!("large-kv-v9");
+            setup["kv_pool_max_physical_pages"] = serde_json::json!(16384);
+            setup["kv_pool_payload_bytes"] = serde_json::json!(kv_pool_payload_bytes);
+            setup["kv_pool_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(large.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(large.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(large.handoff_id().as_bytes())
+            });
         }
         if options.runtime.profile {
             setup["runtime_diagnostic_status"] = serde_json::json!(
@@ -1161,6 +1228,83 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn large_kv_profile_is_explicit_bounded_and_excludes_unsupported_combinations() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v5-mfma32",
+            "--head-precision",
+            "fp32-v8",
+            "--fp32-head-artifact",
+            "/head",
+            "--kv-pool-profile",
+            "large-kv-v9",
+            "--large-kv-artifact",
+            "/large",
+        ];
+        for pages in ["1", "512", "513", "8192", "8704", "16384"] {
+            let mut flags = base.to_vec();
+            flags.extend(["--pages", pages, "--context", "8192"]);
+            let parsed = args(&flags).unwrap();
+            assert!(parsed.large_kv_artifact.is_some());
+            assert_eq!(
+                parsed
+                    .paged_limits()
+                    .unwrap()
+                    .physical_page_count()
+                    .to_string(),
+                pages
+            );
+            assert_eq!(parsed.paged_limits().unwrap().context_tokens(), 8192);
+        }
+        for extra in [
+            vec!["--pages", "0"],
+            vec!["--pages", "16385"],
+            vec!["--pages", "4294967295"],
+            vec!["--context", "8193"],
+            vec!["--attention", "wave"],
+            vec!["--projection", "wave"],
+            vec!["--projection", "auto"],
+            vec!["--dispatch-sequences"],
+            vec!["--benchmark-control", "/replica"],
+            vec!["--peer-artifact", "/peer"],
+            vec!["--numerical-capture", "/capture"],
+        ] {
+            let mut flags = base.to_vec();
+            flags.extend(extra);
+            assert!(args(&flags).is_err());
+        }
+        for (index, replacement) in [
+            (1, "1,2"),
+            (1, "1,2,3,4,5,6,7,8"),
+            (3, "v3-mfma"),
+            (5, "fp32-v7"),
+            (9, "unknown"),
+        ] {
+            let mut flags = base;
+            flags[index] = replacement;
+            assert!(args(&flags).is_err());
+        }
+        let mut mfma = base.to_vec();
+        mfma.extend([
+            "--projection",
+            "mfma",
+            "--collective",
+            "device-tp1-v3",
+            "--queue-rollover",
+        ]);
+        assert!(args(&mfma).is_ok());
+        assert!(args(&base[..10]).is_err());
+        let mut missing_profile = base[..8].to_vec();
+        missing_profile.extend(["--large-kv-artifact", "/large"]);
+        assert!(args(&missing_profile).is_err());
+        let mut legacy = base[..8].to_vec();
+        legacy.extend(["--pages", "513"]);
+        assert!(args(&legacy).is_err());
     }
 
     #[test]
