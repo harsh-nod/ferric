@@ -31,6 +31,12 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Checked concurrent-rank rounds",
+  "Host timing and numerical diagnosis",
+  "79706b43a177a2fd3fa43ec328221fa3e5041af5",
+  "Physical GPU overlap and Qwen performance improvement are not measured by these probes",
+  "the model token mismatch's cause is not proven",
+  "host intervals, not GPU timestamps",
   "0.471982 to 0.504046",
   "Not steady-state serving throughput",
   "Request identities are never pooled",

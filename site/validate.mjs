@@ -86,6 +86,19 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+  performanceSprintV2Source: "140f969a41db2007fa7a2c68eaf4c27573a6fa95",
+  performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
+  performanceSprintV2CoreHostTests: 469,
+  performanceSprintV2CoreDoctests: 31,
+  performanceSprintV2NativeWorlds: [2, 8],
+  performanceSprintV2NativeRows: [1, 3, 16],
+  performanceSprintV2RoundsPerProbe: 12,
+  performanceSprintV2NativeDispatches: [24, 96],
+  performanceSprintV2AllOutputsExact: true,
+  performanceSprintV2HostTimingOptIn: true,
+  performanceSprintV2OverlapMeasured: false,
+  performanceSprintV2MfmaCauseProven: false,
+  performanceSprintV2ModelGainAccepted: false,
   tensorParallelBatchImplementationPrivate: true,
   tensorParallelBatchRows: 16,
   tensorParallelBatchMaxSequences: 32,
@@ -480,8 +493,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "7528e7345cef0158d7034cdbae23011e3c6fb5d2",
-  fe2o3LatestTree: "897f21b7affba51b29103de55adde90cfc10f0dc",
+  fe2o3LatestMain: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
+  fe2o3LatestTree: "45f230ccc6fe2eb7400c68f20d68abafdc2f1b82",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3CurrentRepinActive: false,
@@ -736,6 +749,8 @@ for (const [key, value] of Object.entries(expectedCurrent)) {
   assert(matches, `current.${key} drifted`);
 }
 for (const key of [
+  "performanceSprintV2Source",
+  "performanceSprintV2CoreCommit",
   "siteRefreshBase",
   "integrationCommit",
   "integrationTree",
@@ -1290,6 +1305,11 @@ for (const [title, state] of [["Continuous batching and paged TP attention", "ob
 }
 
 assert(Array.isArray(project.readiness) && project.readiness.length >= 5, "readiness roster is incomplete");
+assert(project.readiness[0].label === "Checked concurrent-rank rounds"
+  && project.readiness[0].state === "observed"
+  && project.readiness[1].label === "Host timing and numerical diagnosis"
+  && project.readiness[1].state === "implemented",
+  "latest sprint status must precede historical checkpoints without claiming a gain");
 project.readiness.forEach((item, index) => {
   assertExactKeys(item, ["label", "state", "detail"], `readiness[${index}]`);
   assertState(item.state, `readiness[${index}].state`);
