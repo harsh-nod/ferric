@@ -121,9 +121,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             return Err("reduction mode is already configured".into());
         }
         match mode {
-            EngineeringTpReductionModeV3::DevicePeerV4 | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
+            EngineeringTpReductionModeV3::DevicePeerV4
+            | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
                 let concurrent = mode == EngineeringTpReductionModeV3::DevicePeerConcurrentV1;
-                if self.transports.iter().any(|transport| transport.supports_concurrent_rounds() != concurrent) {
+                if self
+                    .transports
+                    .iter()
+                    .any(|transport| transport.supports_concurrent_rounds() != concurrent)
+                {
                     return Err("peer execution profile does not match transport capability".into());
                 }
                 self.configure_device_peer(mode)?;

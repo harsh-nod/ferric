@@ -31,7 +31,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         Ok(())
     }
 
-    pub(super) fn configure_device_peer(&mut self, mode: super::EngineeringTpReductionModeV3) -> TpResult<()> {
+    pub(super) fn configure_device_peer(
+        &mut self,
+        mode: super::EngineeringTpReductionModeV3,
+    ) -> TpResult<()> {
         self.check_peer_group()?;
         let result = (|| {
             let mut scratch = Vec::with_capacity(self.ranks.len());

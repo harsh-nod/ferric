@@ -66,10 +66,18 @@ impl Worker {
         }
         request.payload_bytes().map_err(|error| error.to_string())?;
         let round = !request.round_ranks.is_empty();
-        if round && (!self.concurrent_rounds
-            || request.round_ranks.iter().any(|&rank| rank as usize >= self.world))
-            || self.concurrent_rounds && !round
-                && matches!(request.command, CommandV1::Dispatch { .. } | CommandV1::DispatchSequence { .. })
+        if round
+            && (!self.concurrent_rounds
+                || request
+                    .round_ranks
+                    .iter()
+                    .any(|&rank| rank as usize >= self.world))
+            || self.concurrent_rounds
+                && !round
+                && matches!(
+                    request.command,
+                    CommandV1::Dispatch { .. } | CommandV1::DispatchSequence { .. }
+                )
         {
             return Err("dispatch does not match the explicit peer execution profile".into());
         }
@@ -168,7 +176,11 @@ impl Worker {
                     .into_iter()
                     .enumerate()
                     .map(|(index, dispatch)| {
-                        let rank = if round { request.round_ranks[index] as usize } else { rank };
+                        let rank = if round {
+                            request.round_ranks[index] as usize
+                        } else {
+                            rank
+                        };
                         let kernel = self
                             .kernels
                             .get(&dispatch.kernel)
@@ -266,7 +278,12 @@ fn run() -> Result<()> {
         &mut output,
         &wire::Response::Ready {
             protocol: wire::PROTOCOL,
-            mode: if concurrent_rounds { wire::ROUND_MODE } else { wire::MODE }.into(),
+            mode: if concurrent_rounds {
+                wire::ROUND_MODE
+            } else {
+                wire::MODE
+            }
+            .into(),
             target: "gfx950:xnack-".into(),
             unique_ids: ids,
             process_id: std::process::id(),
@@ -287,9 +304,15 @@ fn run() -> Result<()> {
             Err(message) => {
                 let _ = wire::write_response(
                     &mut output,
-                    &completion(id, rank, round_ranks, ResponseV1::Error {
-                        message: message.clone(), fatal: true,
-                    }),
+                    &completion(
+                        id,
+                        rank,
+                        round_ranks,
+                        ResponseV1::Error {
+                            message: message.clone(),
+                            fatal: true,
+                        },
+                    ),
                     &[],
                 );
                 return Err(message);
@@ -310,9 +333,17 @@ fn run() -> Result<()> {
 
 fn completion(request: u64, rank: u32, ranks: Vec<u32>, response: ResponseV1) -> wire::Response {
     if ranks.is_empty() {
-        wire::Response::Done { request, rank, response }
+        wire::Response::Done {
+            request,
+            rank,
+            response,
+        }
     } else {
-        wire::Response::RoundDone { request, ranks, response }
+        wire::Response::RoundDone {
+            request,
+            ranks,
+            response,
+        }
     }
 }
 
