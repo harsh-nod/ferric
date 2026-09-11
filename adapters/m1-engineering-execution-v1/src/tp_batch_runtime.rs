@@ -18,6 +18,18 @@ use crate::tp_scheduler::{
 
 /// Actual GPU work boundary; external code cannot fabricate the pool completion token.
 pub trait EngineeringTpBatchRunnerV2 {
+    /// Optional diagnostic binding within the same submission transaction.
+    /// # Errors
+    /// Rejects stale selected diagnostic row identities.
+    fn bind_numerical_rows(&mut self, _batch: u64, _rows: &[TpBatchRowV1]) -> TpResult<()> {
+        Ok(())
+    }
+    /// Optional diagnostic manifest, never a performance qualification.
+    /// # Errors
+    /// Rejects incomplete selected captures or failed teardown.
+    fn finish_numerical_capture(&mut self) -> TpResult<Option<serde_json::Value>> {
+        Ok(None)
+    }
     /// Physical workspace and admitted kernel row envelope, never a logical hint.
     fn row_capacity(&self) -> usize {
         16
@@ -53,6 +65,12 @@ pub trait EngineeringTpBatchRunnerV2 {
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     for EngineeringTpBatchExecutionV2<R>
 {
+    fn bind_numerical_rows(&mut self, batch: u64, rows: &[TpBatchRowV1]) -> TpResult<()> {
+        self.bind_numerical_rows(batch, rows)
+    }
+    fn finish_numerical_capture(&mut self) -> TpResult<Option<serde_json::Value>> {
+        self.finish_numerical_capture()
+    }
     fn row_capacity(&self) -> usize {
         self.row_capacity()
     }
@@ -321,6 +339,8 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
             ));
         }
         let committed = (|| {
+            self.gpu
+                .bind_numerical_rows(scheduled.id(), scheduled.rows())?;
             let output = self.gpu.execute_batch(&prepared, &output_rows)?;
             let completed_ns = completion_clock();
             if output.choices.len() != output_rows.len() || completed_ns < now_ns {
@@ -463,6 +483,13 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
     pub fn close(&mut self) -> TpResult<()> {
         self.closed = true;
         self.gpu.close()
+    }
+
+    /// Publishes optional complete diagnostic artifacts after clean model teardown.
+    /// # Errors
+    /// Rejects incomplete or failed captures.
+    pub fn finish_numerical_capture(&mut self) -> TpResult<Option<serde_json::Value>> {
+        self.gpu.finish_numerical_capture()
     }
 
     fn sequence(&self, id: TpRequestIdV1) -> TpResult<EngineeringTpSequenceIdV1> {

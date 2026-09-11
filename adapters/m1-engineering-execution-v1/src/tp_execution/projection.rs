@@ -50,6 +50,15 @@ pub(super) struct ProjectionPolicy {
 }
 
 impl ProjectionPolicy {
+    #[cfg(test)]
+    pub(super) fn synthetic_mfma_for_recording(original: u64, transposed: Tensor) -> Self {
+        Self {
+            mode: EngineeringTpProjectionModeV3::Mfma,
+            transposed: vec![BTreeMap::from([(original, transposed)])],
+            bytes: 0,
+        }
+    }
+
     pub(super) fn prepare<R: EngineeringTpRankTransportV1>(
         mode: EngineeringTpProjectionModeV3,
         inner: &mut EngineeringTpExecutionV1<R>,

@@ -14,6 +14,9 @@ use std::time::Instant;
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_batch_runtime::EngineeringTpBatchRuntimeV2;
 use ferric_m1_engineering_execution_v1::tp_execution::batched::EngineeringTpBatchExecutionV2;
+use ferric_m1_engineering_execution_v1::tp_execution::numerical::{
+    EngineeringTpNumericalCaptureV1, EngineeringTpNumericalProjectionV1 as NumericalRole,
+};
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpProjectionModeV3 as ProjectionMode, EngineeringTpReductionModeV3,
 };
@@ -41,7 +44,8 @@ const USAGE: &str = concat!(
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
-    "[--benchmark-control FILE] [--host-timing FILE]"
+    "[--benchmark-control FILE] [--host-timing FILE] ",
+    "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
 );
 
 struct Options {
@@ -52,6 +56,7 @@ struct Options {
     requests: PathBuf,
     benchmark_control: Option<PathBuf>,
     host_timing: Option<PathBuf>,
+    numerical: Option<NumericalOptions>,
     devices: Vec<u64>,
     rows: usize,
     chunk: usize,
@@ -66,6 +71,13 @@ struct Options {
     kernel_profile: KernelProfile,
     projection: ProjectionMode,
     wave_attention: bool,
+}
+
+struct NumericalOptions {
+    directory: PathBuf,
+    batch: u64,
+    layer: u32,
+    role: NumericalRole,
 }
 
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -105,6 +117,8 @@ impl Options {
         let mut peer_artifact = None;
         let mut benchmark_control = None;
         let mut host_timing = None;
+        let (mut numerical_directory, mut numerical_batch, mut numerical_layer, mut numerical_role) =
+            (None, None, None, None);
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -152,6 +166,14 @@ impl Options {
                 "--requests" => requests = Some(PathBuf::from(value)),
                 "--benchmark-control" => benchmark_control = Some(PathBuf::from(value)),
                 "--host-timing" => host_timing = Some(PathBuf::from(value)),
+                "--numerical-capture" => numerical_directory = Some(PathBuf::from(value)),
+                "--numerical-batch" => {
+                    numerical_batch = Some(value.parse::<u64>().map_err(|e| e.to_string())?);
+                }
+                "--numerical-layer" => {
+                    numerical_layer = Some(value.parse::<u32>().map_err(|e| e.to_string())?);
+                }
+                "--numerical-projection" => numerical_role = Some(NumericalRole::parse(&value)?),
                 "--devices" => {
                     devices = Some(
                         value
@@ -258,6 +280,16 @@ impl Options {
         }
         EngineeringTpPagedLimitsV1::new(context, 32, pages, ttl)
             .map_err(|e| format!("page limits: {e:?}"))?;
+        let numerical = match (numerical_directory, numerical_batch, numerical_layer, numerical_role) {
+            (None, None, None, None) => None,
+            (Some(directory), Some(batch), Some(layer), Some(role))
+                if devices.len() == 1 && !kernel_profile.wide32() && !runtime.sequences
+                    && !wave_attention && matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)
+                    && benchmark_control.is_none() && host_timing.is_none()
+                    && (1..=64).contains(&batch) && batch <= max_batches && layer < 36 =>
+                Some(NumericalOptions { directory, batch, layer, role }),
+            _ => return Err("numerical capture requires all four selection options, TP1/16 rows, baseline or MFMA, no wave attention, sequencing, timing or replica benchmark".into()),
+        };
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -266,6 +298,7 @@ impl Options {
             requests: requests.ok_or("--requests is required")?,
             benchmark_control,
             host_timing,
+            numerical,
             devices,
             rows,
             chunk,
@@ -746,6 +779,28 @@ fn run_with_timing(
         gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
     }
     gpu.configure_wave_attention(options.wave_attention)?;
+    if let Some(selection) = &options.numerical {
+        let identity = serde_json::json!({
+            "controller_sha256":controller_hash,"worker_sha256":worker_hash,
+            "artifact_hsaco_id":hex(artifact.hsaco_id().as_bytes()),
+            "artifact_manifest_id":hex(artifact.manifest_id().as_bytes()),
+            "artifact_handoff_id":hex(artifact.handoff_id().as_bytes()),
+            "model_bundle_id":hex(model.bundle_id().as_bytes()),"requests_sha256":loaded_requests_sha256,
+            "session_id":hex(&session),"tensor_parallel":1,"device_unique_id":options.devices[0],
+            "projection":options.projection.label(),"output_head_pruning":options.prune_output_head,
+            "runtime_operational":options.runtime.operational,"runtime_cache_admission":options.runtime.cache_admission,
+            "queue_rollover":options.runtime.rollover,"collective":options.collective.label(),
+            "running_worker_sha256":running_hashes,"batch_tokens":options.rows,"prefill_chunk":options.chunk,
+            "prefix_cache":options.cache
+        });
+        gpu.configure_numerical_capture(EngineeringTpNumericalCaptureV1::new(
+            &selection.directory,
+            selection.batch,
+            selection.layer,
+            selection.role,
+            identity,
+        )?)?;
+    }
     drop(policies_timing);
     eprintln!(
         "additional resident transposed weight bytes: {}",
@@ -804,6 +859,14 @@ fn run_with_timing(
             setup["weight_payload_bytes"] =
                 weight_payload_bytes.ok_or("missing replica weight accounting")?;
         }
+        if let Some(selection) = &options.numerical {
+            setup["numerical_capture"] = serde_json::json!({"schema":"FerricTpNumericalSelectionV1",
+                "batch_ordinal":selection.batch,"layer":selection.layer,"role":format!("{:?}",selection.role),
+                "directory":selection.directory,"performance_qualified":false});
+            setup["numerical_status"] = serde_json::json!(
+                "Diagnostic readback run; all timings unqualified; fixed-reference token checks remain unchanged"
+            );
+        }
         if options.kernel_profile.wide32() {
             setup["kernel_profile"] = serde_json::json!(if options.kernel_profile.mfma() {
                 "v5-mfma32"
@@ -840,6 +903,7 @@ fn run_with_timing(
     };
     match (result, close) {
         (Ok(()), Ok(())) => {
+            let numerical_closed = runtime.finish_numerical_capture()?;
             let replica_closed = benchmark_clock.map(BenchmarkClock::finish).transpose()?;
             let mut closed = serde_json::json!({"schema":"FerricQwen3TpBatchClosedV2", "authority":"none",
             "worker_pids":pids, "all_workers_exited":true, "rank_dispatch_counts":runtime.dispatch_counts(),
@@ -847,6 +911,9 @@ fn run_with_timing(
             if let Some(receipt) = replica_closed {
                 closed["replica_benchmark"] =
                     serde_json::to_value(receipt).map_err(|e| e.to_string())?;
+            }
+            if let Some(receipt) = numerical_closed {
+                closed["numerical_capture"] = receipt;
             }
             if timing.is_enabled() {
                 diagnostics.closed = Some(closed.clone());
@@ -924,6 +991,48 @@ mod tests {
             ])
             .is_err()
         );
+    }
+
+    #[test]
+    fn numerical_capture_requires_explicit_bounded_selection_and_no_performance_modes() {
+        assert!(args(&["--devices", "1"]).unwrap().numerical.is_none());
+        let flags = [
+            "--numerical-capture",
+            "/tmp/capture",
+            "--numerical-batch",
+            "2",
+            "--numerical-layer",
+            "0",
+            "--numerical-projection",
+            "q",
+            "--devices",
+            "1",
+        ];
+        let selected = args(&flags).unwrap();
+        assert_eq!(selected.numerical.unwrap().batch, 2);
+        for extra in [
+            vec!["--host-timing", "/tmp/timing"],
+            vec!["--benchmark-control", "/tmp/control"],
+            vec!["--dispatch-sequences"],
+            vec!["--kernel-profile", "v5-mfma32"],
+        ] {
+            let mut input = flags.to_vec();
+            input.extend(extra);
+            assert!(args(&input).is_err());
+        }
+        for invalid in [
+            vec!["--numerical-capture", "/tmp/capture"],
+            vec!["--numerical-batch", "2"],
+            vec!["--numerical-layer", "0"],
+            vec!["--numerical-projection", "q"],
+        ] {
+            assert!(args(&invalid).is_err());
+        }
+        for (index, value) in [(3, "0"), (3, "65"), (5, "36"), (7, "unknown")] {
+            let mut input = flags.to_vec();
+            input[index] = value;
+            assert!(args(&input).is_err());
+        }
     }
     #[test]
     fn options_enforce_physical_roster_rows_and_ring_bound() {

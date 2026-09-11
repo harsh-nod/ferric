@@ -15,6 +15,7 @@ mod row_profile;
 
 #[cfg(feature = "tp-batch-engineering")]
 pub mod batched;
+pub mod numerical;
 #[cfg(feature = "tp-batch-engineering")]
 mod projection;
 #[cfg(feature = "tp-batch-engineering")]

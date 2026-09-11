@@ -4,6 +4,9 @@
 //! from the transactional pool; intermediate prompt rows remain causal but do
 //! not publish output tokens. Arithmetic and transport remain Contracted.
 
+use super::numerical::{
+    EngineeringTpNumericalCaptureV1, EngineeringTpNumericalProjectionV1 as NumericalRole,
+};
 use super::{
     EngineeringTpArgumentV1, EngineeringTpDispatchV1, EngineeringTpExecutionV1,
     EngineeringTpRankTransportV1, EngineeringTpReductionModeV3, Qwen3TensorKind,
@@ -56,6 +59,7 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     projection: super::projection::ProjectionPolicy,
     projection_configured: bool,
     wave_attention: bool,
+    numerical: Option<Box<EngineeringTpNumericalCaptureV1>>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -158,6 +162,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             projection: super::projection::ProjectionPolicy::default(),
             projection_configured: false,
             wave_attention: false,
+            numerical: None,
         })
     }
 
@@ -167,6 +172,68 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.row_capacity
     }
 
+    /// Enables bounded diagnostic readbacks on a fresh, nonsequenced TP1 stream.
+    /// # Errors
+    /// Rejects unsupported geometry, lifecycle, or repeated configuration.
+    pub fn configure_numerical_capture(
+        &mut self,
+        capture: EngineeringTpNumericalCaptureV1,
+    ) -> TpResult<()> {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.numerical.is_some()
+            || self.row_capacity != 16
+            || self.inner.ranks.len() != 1
+            || self.inner.sequences.is_some()
+            || self.inner.timing.is_enabled()
+            || self.wave_attention
+            || !capture.matches_profile(self.projection.mode.label(), self.prune_output_head)
+        {
+            return Err(
+                "numerical capture requires a fresh TP1/16-row nonsequenced diagnostic stream"
+                    .into(),
+            );
+        }
+        self.numerical = Some(Box::new(capture));
+        Ok(())
+    }
+
+    /// Copies scheduler identities only for the explicitly selected diagnostic batch.
+    /// # Errors
+    /// Rejects stale or repeated selected bindings.
+    pub fn bind_numerical_rows(
+        &mut self,
+        scheduler_batch: u64,
+        rows: &[crate::tp_scheduler::TpBatchRowV1],
+    ) -> TpResult<()> {
+        if let Some(capture) = &mut self.numerical {
+            capture.bind_rows(
+                self.completed_batches
+                    .checked_add(1)
+                    .ok_or("numerical ordinal overflow")?,
+                scheduler_batch,
+                rows,
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Finalizes complete diagnostics only after successful owned-worker close.
+    /// # Errors
+    /// Rejects failed, incomplete, unclosed, or repeated captures.
+    pub fn finish_numerical_capture(&mut self) -> TpResult<Option<serde_json::Value>> {
+        self.numerical
+            .as_mut()
+            .map(|capture| {
+                if !self.inner.closed || self.poisoned {
+                    return Err("numerical finish requires a clean closed driver".into());
+                }
+                capture.finish()
+            })
+            .transpose()
+    }
+
     /// Attaches opt-in host diagnostics before execution, without altering GPU policy.
     /// # Errors
     /// Rejects a started, closed or failed stream.
@@ -174,7 +241,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         &mut self,
         timing: crate::host_timing::HostTiming,
     ) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || (self.numerical.is_some() && timing.is_enabled())
+        {
             return Err("host timing requires a fresh batch stream".into());
         }
         self.inner.timing = timing;
@@ -187,7 +258,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
     pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
-        if self.poisoned || self.last_batch != 0 || self.completed_batches != 0 {
+        if self.poisoned
+            || self.last_batch != 0
+            || self.completed_batches != 0
+            || self.numerical.is_some()
+        {
             return Err("reduction mode requires a fresh batch stream".into());
         }
         self.inner.configure_reduction(mode)
@@ -220,7 +295,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects changes after submission, failure, or closure.
     pub fn configure_output_head_pruning(&mut self, enabled: bool) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.numerical.is_some() {
             return Err("output-head policy must be configured before execution".into());
         }
         self.prune_output_head = enabled;
@@ -237,7 +312,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
     ) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.projection_configured
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.projection_configured
+            || self.numerical.is_some()
         {
             return Err("projection policy must be configured once before execution".into());
         }
@@ -298,7 +377,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects a started, poisoned, or closed execution.
     pub fn configure_wave_attention(&mut self, enabled: bool) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.numerical.is_some() {
             return Err("attention policy must be configured before execution".into());
         }
         self.wave_attention = enabled;
@@ -310,6 +389,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects unsupported transports, execution already begun, or closed state.
     pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || (enabled && self.numerical.is_some())
             || self.poisoned
             || self.inner.closed
             || (enabled
@@ -431,7 +511,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Reports any teardown whose completion cannot be confirmed.
     pub fn close(&mut self) -> TpResult<()> {
-        self.inner.close()
+        let result = self.inner.close();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
     }
 
     fn validate(&self, batch: &EngineeringTpPreparedBatchV1) -> TpResult<()> {
@@ -513,6 +597,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             (0..batch.rows().len())
                 .filter(|row| !self.prune_output_head || output_rows.binary_search(row).is_err()),
         );
+        let ordinal = self.completed_batches + 1;
+        if let Some(capture) = &mut self.numerical {
+            capture.begin_batch(ordinal, batch, &execution_order, output_rows)?;
+        }
         let expected = self.inner.collective.expected();
         if expected.epoch != self.completed_batches
             || expected.layer != 0
@@ -606,6 +694,21 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                         [rows, n, model.hidden_size, world, tag],
                     )
                 })?;
+                capture_projection(
+                    &mut self.numerical,
+                    &mut self.inner,
+                    projection,
+                    ordinal,
+                    layer,
+                    if tag == 1 {
+                        NumericalRole::Query
+                    } else if tag == 2 {
+                        NumericalRole::Key
+                    } else {
+                        NumericalRole::Value
+                    },
+                    rows,
+                )?;
             }
             self.inner.dispatch_each(|r| {
                 norm(
@@ -702,6 +805,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 )
             })?;
             drop(attention_timing);
+            capture_projection(
+                &mut self.numerical,
+                &mut self.inner,
+                projection,
+                ordinal,
+                layer,
+                NumericalRole::AttentionOutput,
+                rows,
+            )?;
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
             let feed_forward_timing = self.inner.timing.scope("feed_forward");
@@ -735,6 +847,19 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                         ],
                     )
                 })?;
+                capture_projection(
+                    &mut self.numerical,
+                    &mut self.inner,
+                    projection,
+                    ordinal,
+                    layer,
+                    if tag == 4 {
+                        NumericalRole::Gate
+                    } else {
+                        NumericalRole::Up
+                    },
+                    rows,
+                )?;
             }
             self.inner.dispatch_each(|r| {
                 dispatch(
@@ -766,6 +891,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 )
             })?;
             drop(feed_forward_timing);
+            capture_projection(
+                &mut self.numerical,
+                &mut self.inner,
+                projection,
+                ordinal,
+                layer,
+                NumericalRole::Down,
+                rows,
+            )?;
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::FeedForwardDownSum)?;
         }
@@ -821,12 +955,144 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if choices.iter().any(|&token| token >= model.vocabulary_size) {
             return Err("batched GPU choice outside vocabulary".into());
         }
+        if let Some(capture) = &mut self.numerical
+            && capture.selects(ordinal)
+        {
+            let rank = &self.inner.ranks[0];
+            let weight = rank.global(Qwen3TensorKind::LanguageModelHead);
+            let command = projection.command(
+                0,
+                GEMM,
+                rank.normalized,
+                weight,
+                rank.logits,
+                [
+                    head_rows,
+                    model.vocabulary_size,
+                    model.hidden_size,
+                    world,
+                    6,
+                ],
+            );
+            capture.capture_head(
+                ordinal,
+                &command,
+                weight.read(),
+                &choices,
+                &mut self.inner.transports[0],
+            )?;
+        }
         if self.prune_output_head {
             Ok(choices)
         } else {
             Ok(output_rows.iter().map(|&row| choices[row]).collect())
         }
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn capture_projection<R: EngineeringTpRankTransportV1>(
+    capture: &mut Option<Box<EngineeringTpNumericalCaptureV1>>,
+    inner: &mut EngineeringTpExecutionV1<R>,
+    policy: &super::projection::ProjectionPolicy,
+    ordinal: u64,
+    layer: u32,
+    role: NumericalRole,
+    rows: u32,
+) -> TpResult<()> {
+    let Some(capture) = capture
+        .as_mut()
+        .filter(|capture| capture.selects_projection(ordinal, layer, role))
+    else {
+        return Ok(());
+    };
+    let (command, original) =
+        numerical_projection_command(&inner.ranks[0], policy, layer, role, rows);
+    capture.capture_projection(
+        ordinal,
+        layer,
+        role,
+        &command,
+        original,
+        &mut inner.transports[0],
+    )
+}
+
+fn numerical_projection_command(
+    rank: &Rank,
+    policy: &super::projection::ProjectionPolicy,
+    layer: u32,
+    role: NumericalRole,
+    rows: u32,
+) -> (EngineeringTpDispatchV1, EngineeringTpArgumentV1) {
+    let (kind, input, output, n, k, tag, kernel) = match role {
+        NumericalRole::Query => (
+            Qwen3TensorKind::QueryProjection,
+            rank.normalized,
+            rank.q,
+            4096,
+            4096,
+            1,
+            GEMM,
+        ),
+        NumericalRole::Key => (
+            Qwen3TensorKind::KeyProjection,
+            rank.normalized,
+            rank.k,
+            1024,
+            4096,
+            2,
+            GEMM,
+        ),
+        NumericalRole::Value => (
+            Qwen3TensorKind::ValueProjection,
+            rank.normalized,
+            rank.v,
+            1024,
+            4096,
+            3,
+            GEMM,
+        ),
+        NumericalRole::AttentionOutput => (
+            Qwen3TensorKind::OutputProjection,
+            rank.attention,
+            rank.partial,
+            4096,
+            4096,
+            1,
+            PARTIAL,
+        ),
+        NumericalRole::Gate => (
+            Qwen3TensorKind::GateProjection,
+            rank.normalized,
+            rank.gate,
+            12288,
+            4096,
+            4,
+            GEMM,
+        ),
+        NumericalRole::Up => (
+            Qwen3TensorKind::UpProjection,
+            rank.normalized,
+            rank.up,
+            12288,
+            4096,
+            5,
+            GEMM,
+        ),
+        NumericalRole::Down => (
+            Qwen3TensorKind::DownProjection,
+            rank.activation,
+            rank.partial,
+            4096,
+            12288,
+            2,
+            PARTIAL,
+        ),
+    };
+    let original = rank.layers[layer as usize].weight(kind);
+    let command = policy.command(0, kernel, input, original, output, [rows, n, k, 1, tag]);
+    (command, original.read())
 }
 
 fn norm(
