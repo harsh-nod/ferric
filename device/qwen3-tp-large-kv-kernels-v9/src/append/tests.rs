@@ -13,7 +13,10 @@ fn complete_physical_page_range_preserves_logical_slot_mapping() {
             );
         }
     }
-    assert_eq!(batch_paged_slot_v9!(&positions, &tables, 3, 512, 16384), 262143);
+    assert_eq!(
+        batch_paged_slot_v9!(&positions, &tables, 3, 512, 16384),
+        262143
+    );
 }
 
 #[test]
@@ -39,15 +42,21 @@ fn invalid_mapping_and_duplicate_final_slot_trap_before_append() {
         (0, 512, 1, 512),
     ] {
         let table = std::vec![page; stride];
-        assert!(std::panic::catch_unwind(|| {
-            batch_paged_slot_v9!(&[position], &table, 0, stride, pages)
-        }).is_err());
+        assert!(
+            std::panic::catch_unwind(|| {
+                batch_paged_slot_v9!(&[position], &table, 0, stride, pages)
+            })
+            .is_err()
+        );
     }
     let positions = [15_u32, 8191];
     let mut tables = std::vec![u32::MAX; 1024];
     tables[0] = 16383;
     tables[1023] = 16383;
-    assert!(std::panic::catch_unwind(|| {
-        batch_distinct_slots_v9!(&positions, &tables, 2, 512, 16384);
-    }).is_err());
+    assert!(
+        std::panic::catch_unwind(|| {
+            batch_distinct_slots_v9!(&positions, &tables, 2, 512, 16384);
+        })
+        .is_err()
+    );
 }

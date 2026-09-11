@@ -27,7 +27,9 @@ pub fn compiler_expectation_roster_v9()
     use fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1 as Entry;
     let mut entries = alloc::vec![
         Entry::for_marker::<append::ferric_qwen3_tp_batch32_large_kv_append_v9_gpu::Marker>(),
-        Entry::for_marker::<attention::ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9_gpu::Marker>(),
+        Entry::for_marker::<
+            attention::ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9_gpu::Marker,
+        >(),
     ];
     entries.sort_by_key(Entry::kernel_binding_id);
     entries
