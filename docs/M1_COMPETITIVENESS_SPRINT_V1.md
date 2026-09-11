@@ -8,8 +8,8 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission and 15 native fixtures pass; full model canary in progress |
-| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | JSONL and loopback HTTP integrated; combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real HTTP smoke pending |
+| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass |
+| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | 20 client tests and 7 candidate-checker tests pass, including checksum drift rejection; baseline launch approval requested |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
 
@@ -80,14 +80,55 @@ identity-bound idle checks across all eight GPUs.
 The new HTTP path is loopback-only raw-prompt greedy streaming, with bounded
 admission, cancellation, backpressure, deadlines and owned worker cleanup.
 The common client passes fake-child ordinary and split-UTF8 streams. The real
-smoke uses three complete reference cases and repeats the first, nine outputs
-total, sequentially with prefix caching off. It is not the static cancellation
+smoke passes three complete reference cases and repeats the first, nine outputs
+total, sequentially with prefix caching off. Every client-visible text/usage and
+backend prompt/output token/byte check matches the frozen reference. Worker,
+controller, process group and threads exit cleanly; all eight GPUs are idle.
+Receipt SHA-256 is
+`3bfc4e938f32ea21ad4800e2645072072e1660502e3eda8168aeffdecd293bb8`.
+Observed client TTFT is 453-1,261 ms and TPOT 265-300 ms for these four short
+requests. These ranges are not distributions or sustained-load estimates.
+No persistent server is left running. This is not the static cancellation
 workload, a concurrent load test or a physical queue-rollover qualification.
 
 The physical KV pool remains capped at 512 pages. Conservative reservations
 allow at most 32, 6 and 1 active requests at ISL/OSL 128/128, 1024/256 and
 4096/256 respectively. The [large-pool plan](M1_LARGE_KV_POOL_PLAN_V1.md) describes
 the required coordinated host/kernel expansion; it is not implemented.
+
+## Current Wide-Head Canary
+
+Both cases use controller `cd90bba6`, worker `933d73d2`, frozen v5 image
+`98b5fdb1` and new v8 head `5f19b3ba`; only the scheduling budget and prefill
+chunk change. Both pass the entire reference and cleanup gate. Both still use
+five batches, 34 physical rows and 2,720 dispatches. There is one observation
+per case, not a repeated comparison; the wider policy does not demonstrate a
+gain on this tiny workload or full 32-row utilization.
+
+| Budget / Chunk | Maximum Rows Observed | Output Tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| 16 / 16 | 16 | 2.678148 | 446.273 | 295.175 |
+| 32 / 32 | 17 | 2.665643 | 446.964 | 295.290 |
+
+The first attempt was rejected before execution because the staged v8 artifact
+lacked its required `fe2o3-engineering-v1` parent directory. The failed receipt
+is retained; correcting the directory layout changed no image or runtime code.
+
+## Runtime Diagnostics
+
+A separate 16-row instrumented run passes the same full reference and cleanup
+checks. Its two snapshots are validated by `runtime_diagnostic_report.py`;
+49 combined diagnostic/candidate/semantic tests pass. Raw records remain
+unchanged, and diagnostic runs never enter the ordinary performance ledger.
+
+The workload deltas include 2,720 dispatches and 3,481 commands. Host reads
+transfer 40,386,696 bytes in 370 calls and record 1.482 seconds; dispatch waits
+record 1.469 seconds. Full-currentness and immutable admission deltas are zero,
+while operational checks record 0.112 seconds. Counter durations overlap,
+include instrumentation overhead, and are not GPU timestamps or an exclusive
+time breakdown. The earlier snapshot command is included in command deltas.
+These observations motivate testing device-side TP1 reductions to eliminate
+hidden/partial host copies before pursuing further runtime changes.
 
 ## First Target-Path Ablation
 
