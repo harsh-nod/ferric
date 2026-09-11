@@ -11,9 +11,9 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Bounded open-loop client and paired-series tooling integrated; 105 combined measurement tests pass; baseline launch approval still pending |
-| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 kernels emitted on exact `3e3`; host integrated at `f0cd55f`, 315 ordinary tests plus four emitted-image checks pass; native/model qualification in progress |
+| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; model qualification in progress |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Authenticated optional draft retention integrated at `8d6418f`; speculative execution and transactional KV settlement are not complete |
-| Dispatch batching | Distinct bounded ordered submission in core runtime | Implemented in an unpublished fe2o3 branch; host tests pass, root review/native qualification pending |
+| Dispatch batching | Distinct bounded ordered submission in core runtime | Published `f85bb375e` after full/operational native dependency-chain and rollover gates; Ferric opt-in integration in progress |
 
 ## Frozen Comparison Contract
 
@@ -71,6 +71,14 @@ change. Coverage remains 173 modules and 8,235 executable bodies. This is not a
 new Verus proof or model qualification. Preliminary host gates and frozen `511`
 GPU ablations retain their actual provenance.
 
+During the sprint, upstream advanced to `c94e2101a` with a source-order
+uniformity-analysis construction change. Active Ferric dependencies were
+repinned at `2b58dde`, with only the two audited verifier Cargo raw hashes
+refreshed at `b0c4086`. The five reviewed verifier Rust sources are unchanged.
+The newer generic ordered-batch runtime is now published at `f85bb375e`;
+the next active pin update is in progress. No completed `3e3` measurement is
+relabelled as a newer source revision.
+
 ## Native And Serving Gates
 
 The additive v8 image passes scalar head, MFMA head and FP32 argmax fixtures at
@@ -108,6 +116,18 @@ per-request context. Maximum target K/V payload is 36 GiB, excluding weights
 and workspace. It requires a separately admitted v9 image before allocation;
 the legacy profile still rejects more than 512 pages. CPU capacity tests are
 not a long-context model or 32-concurrent-request performance qualification.
+
+The exact-`3e3` v9 image `592034c8` passes all nine native fixtures: append at
+rows 1/16/17/32 and physical capacities 513/8192/16384, attention at those
+capacities plus one row with 8,192 logical tokens. High physical pages, reverse
+page placement, inaccessible NaN data, inactive tails, full outputs, immutable
+inputs and surrounding guards are checked. Worker close and all-eight-GPU idle
+checks pass. Result SHA-256:
+`4b9791bf859236a031c56f2de197068ebfd3ec86c5591ebedba348a9c9ef7ceb`.
+The independent model canary comparator validates actual pool conservation
+before translating only unused capacity in memory for the unchanged frozen
+semantic checker. Its four test methods and existing suites pass 50 tests.
+Model traces do not expose physical addresses; native evidence is separate.
 
 ## Current Wide-Head Canary
 
@@ -249,9 +269,45 @@ Mean output rate falls 18.35%, reuse TTFT rises 28.70%, and TPOT rises 20.79%.
 Candidate worker `5372f002` is built from unpublished core `0052fe181`; it is
 not published or adopted. A separate follow-up capped at 50 us passes 477
 library tests, 31 doctests, strict engineering/default Clippy and a release
-build at `4491b6b70`; its GPU measurement is still pending. Raw failed-format
-and successful test receipts are retained. Neither experiment changes the
-public `3e3` pin or the general-purpose wait defaults.
+build at `4491b6b70`. Raw failed-format and successful test receipts are retained.
+Neither wait experiment is published or changes general-purpose wait defaults.
+
+The capped follow-up also passes all four model/reference/cleanup gates:
+
+| Worker wait | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Fixed control | 1 | 4.109710 | 373.165 | 338.128 |
+| Adaptive 50-us cap | 1 | 4.957867 | 293.963 | 262.582 |
+| Adaptive 50-us cap | 2 | 4.652421 | 300.650 | 272.097 |
+| Fixed control | 2 | 4.158887 | 370.264 | 337.031 |
+
+Mean rate improves 16.23%, reuse TTFT falls 20.02%, and TPOT falls 20.81% within
+this pair. These controls are slower than those in the uncapped matrix;
+cross-matrix ranking is therefore not a valid attribution. Candidate worker
+`2320594d` is not adopted from two observations per mode, and no serving or
+confidence-interval qualification is claimed.
+
+## Ordered Submission
+
+The generic KFD worker now offers a separate `DispatchOrderedBatch` operation
+for 1..16 ordered packets, with distinct retained argument/signal slots, one
+publication and wait phase, all-signal completion validation, bounded aggregate
+deadline and terminal failure handling. Serial `DispatchSequence` is unchanged.
+Core main `f85bb375e7d6f4b8193e697293d29a8888439f0b` was published after a fresh
+fetch/rebase and non-forced push. No inference/kernel implementation was pushed
+to fe2o3 and no Ferric implementation was published.
+
+Each native mode (full and operational currentness) passes 184 packets across
+26 serial/ordered dependency chains at counts 1/2/16 and rows 1/3, including
+repeated storage reuse and a real queue rollover with live buffers. Every full
+output/input/guard check, worker close/reap and all-eight-GPU idle check passes.
+Worker `761027c5` was built/tested at `f64c86e0c` on upstream `c94e2101a`; the
+published commit adds only native-result documentation to those code bytes.
+Root review SHA-256:
+`5754053d21a8de9e5f79c1ce2cfbdd70859c1c0db9179bff0232587046c2cd42`.
+This is runtime dependency/lifecycle evidence, not model speed qualification.
+Ferric's separate opt-in adapter is in progress, using the existing 36 pairs
+of 10-kernel attention and 5-kernel FFN groups, with explicit host-I/O barriers.
 
 ## Draft Intake
 
