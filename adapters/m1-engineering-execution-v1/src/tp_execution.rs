@@ -154,6 +154,22 @@ pub trait EngineeringTpRankTransportV1 {
     fn wait_sequence(&mut self, _count: usize) -> TpResult<()> {
         Err("transport does not support dispatch sequences".into())
     }
+    /// Explicit dependent packet-batch support, distinct from synchronous sequences.
+    fn supports_ordered_batches(&self) -> bool {
+        false
+    }
+    /// Publishes one bounded dependent batch with a single aggregate deadline.
+    /// # Errors
+    /// Rejects unsupported operation, invalid bindings, or pending work.
+    fn submit_ordered_batch(&mut self, _dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        Err("transport does not support ordered dispatch batches".into())
+    }
+    /// Confirms the exact completed dispatch count, not per-kernel timing.
+    /// # Errors
+    /// Rejects missing, partial, failed, or wrong-kind completion.
+    fn wait_ordered_batch(&mut self, _count: usize) -> TpResult<()> {
+        Err("transport does not support ordered dispatch batches".into())
+    }
     /// Whether checked queue destruction and recreation are explicitly enabled.
     fn supports_queue_rollover(&self) -> bool {
         false
@@ -278,6 +294,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
+    ordered_batches: Option<Vec<EngineeringTpDispatchV1>>,
     timing: crate::host_timing::HostTiming,
     closed: bool,
 }
@@ -450,6 +467,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
             sequences: None,
+            ordered_batches: None,
             timing: crate::host_timing::HostTiming::default(),
             closed: false,
         })
@@ -828,7 +846,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             None
         };
         let command = bound.as_ref().unwrap_or(command);
-        self.flush_sequences()?;
+        self.flush_dispatch_groups()?;
         if self.ranks[0].dispatches == u64::MAX {
             return Err("dispatch counter overflow".into());
         }
@@ -843,6 +861,17 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_each", None);
+        if let Some(pending) = &mut self.ordered_batches {
+            if self.ranks.len() != 1 || self.sequences.is_some() || pending.len() >= 16 {
+                return Err("pending ordered dispatch batch bound drifted".into());
+            }
+            pending.push(row_profile::bind_storage(
+                self.row_capacity,
+                self.large_kv,
+                command(&self.ranks[0]),
+            )?);
+            return Ok(());
+        }
         if let Some(pending) = &mut self.sequences {
             if pending.len() != self.ranks.len() || pending.iter().any(|rank| rank.len() >= 16) {
                 return Err("pending rank sequence bound drifted".into());
@@ -906,7 +935,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             Qwen3TensorParallelCollectiveV1::AttentionOutputSum => "collective_attention",
             Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => "collective_feed_forward",
         });
-        self.flush_sequences()?;
+        self.flush_dispatch_groups()?;
         match self.reduction.mode() {
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
                 return self.reduce_host_reused(layer, operation);

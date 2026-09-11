@@ -3,6 +3,37 @@
 use super::{EngineeringTpExecutionV1, EngineeringTpRankTransportV1, TpResult};
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
+    pub(super) fn flush_dispatch_groups(&mut self) -> TpResult<()> {
+        self.flush_ordered_batches()?;
+        self.flush_sequences()
+    }
+
+    fn flush_ordered_batches(&mut self) -> TpResult<()> {
+        let Some(pending) = &mut self.ordered_batches else {
+            return Ok(());
+        };
+        if pending.is_empty() {
+            return Ok(());
+        }
+        let _timing = self.timing.span("flush_ordered_batches", None);
+        let count = pending.len();
+        if !(1..=16).contains(&count)
+            || self.ranks.len() != 1
+            || self.transports.len() != 1
+            || self.sequences.is_some()
+            || self.ranks[0].dispatches.checked_add(count as u64).is_none()
+        {
+            return Err("ordered dispatch batch geometry/count overflow".into());
+        }
+        let result = self.transports[0]
+            .submit_ordered_batch(pending)
+            .and_then(|()| self.transports[0].wait_ordered_batch(count));
+        pending.clear();
+        result?;
+        self.ranks[0].dispatches += count as u64;
+        Ok(())
+    }
+
     pub(super) fn flush_sequences(&mut self) -> TpResult<()> {
         let Some(pending) = &mut self.sequences else {
             return Ok(());

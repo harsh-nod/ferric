@@ -71,6 +71,15 @@ impl EngineeringTpRankTransportV1 for RankWorker {
     fn wait_sequence(&mut self, count: usize) -> TpResult<()> {
         self.transport_mut().wait_sequence(count)
     }
+    fn supports_ordered_batches(&self) -> bool {
+        self.transport().supports_ordered_batches()
+    }
+    fn submit_ordered_batch(&mut self, dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        self.transport_mut().submit_ordered_batch(dispatches)
+    }
+    fn wait_ordered_batch(&mut self, count: usize) -> TpResult<()> {
+        self.transport_mut().wait_ordered_batch(count)
+    }
     fn supports_queue_rollover(&self) -> bool {
         self.transport().supports_queue_rollover()
     }

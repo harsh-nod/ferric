@@ -4,6 +4,7 @@
 //! host reductions, and terminal failure behavior without a physical device.
 
 mod large_kv;
+mod ordered_batches;
 
 use super::super::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,
@@ -20,6 +21,8 @@ use std::rc::Rc;
 enum Event {
     SequenceSubmit(u32, usize),
     SequenceWait(u32, usize),
+    OrderedSubmit(u32, usize),
+    OrderedWait(u32, usize),
     Submit(u32, &'static str),
     Wait(u32, &'static str),
     Close(u32),
@@ -36,6 +39,8 @@ enum Failure {
     Close,
     RuntimeSnapshot,
     RuntimeCounter,
+    OrderedSubmit,
+    OrderedWait,
 }
 
 struct Recording {
@@ -44,6 +49,8 @@ struct Recording {
     next: u64,
     pending: Option<EngineeringTpDispatchV1>,
     pending_sequence: Option<Vec<EngineeringTpDispatchV1>>,
+    pending_ordered: Option<Vec<EngineeringTpDispatchV1>>,
+    ordered_supported: bool,
     events: Rc<RefCell<Vec<Event>>>,
     commands: Vec<EngineeringTpDispatchV1>,
     reads: Vec<(u64, usize)>,
@@ -120,7 +127,11 @@ impl EngineeringTpRankTransportV1 for Recording {
         if self.failure == Some(Failure::RuntimeSnapshot) {
             return Err("injected runtime snapshot failure".into());
         }
-        assert!(self.pending.is_none() && self.pending_sequence.is_none());
+        assert!(
+            self.pending.is_none()
+                && self.pending_sequence.is_none()
+                && self.pending_ordered.is_none()
+        );
         Ok(
             serde_json::json!({"counters":{"dispatches":self.commands.len()
             + usize::from(self.failure == Some(Failure::RuntimeCounter))}}),
@@ -153,8 +164,49 @@ impl EngineeringTpRankTransportV1 for Recording {
         Ok(())
     }
 
+    fn supports_ordered_batches(&self) -> bool {
+        self.ordered_supported
+    }
+
+    fn submit_ordered_batch(&mut self, commands: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        assert!(
+            self.pending.is_none()
+                && self.pending_sequence.is_none()
+                && self.pending_ordered.is_none()
+        );
+        assert!((1..=16).contains(&commands.len()));
+        self.events
+            .borrow_mut()
+            .push(Event::OrderedSubmit(self.rank, commands.len()));
+        if self.failure == Some(Failure::OrderedSubmit) {
+            return Err("injected ordered publication failure".into());
+        }
+        self.pending_ordered = Some(commands.to_vec());
+        Ok(())
+    }
+
+    fn wait_ordered_batch(&mut self, count: usize) -> TpResult<()> {
+        let commands = self.pending_ordered.take().expect("pending ordered batch");
+        assert_eq!(commands.len(), count);
+        self.events
+            .borrow_mut()
+            .push(Event::OrderedWait(self.rank, count));
+        if self.failure == Some(Failure::OrderedWait) {
+            return Err("injected ordered aggregate completion failure".into());
+        }
+        for command in commands {
+            self.submit(&command)?;
+            self.wait()?;
+        }
+        Ok(())
+    }
+
     fn allocate(&mut self, byte_len: usize) -> TpResult<u64> {
-        assert!(self.pending.is_none());
+        assert!(
+            self.pending.is_none()
+                && self.pending_sequence.is_none()
+                && self.pending_ordered.is_none()
+        );
         let id = self.next;
         self.next += 1;
         self.buffers.insert(id, vec![0xa5; byte_len]);
@@ -162,7 +214,7 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn write(&mut self, id: u64, offset: usize, bytes: &[u8]) -> TpResult<()> {
-        assert!(self.pending_sequence.is_none());
+        assert!(self.pending_sequence.is_none() && self.pending_ordered.is_none());
         assert!(self.pending.is_none());
         if self.failure == Some(Failure::Write) {
             return Err("injected metadata write failure".into());
@@ -173,7 +225,7 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn read(&mut self, id: u64, offset: usize, bytes: &mut [u8]) -> TpResult<()> {
-        assert!(self.pending_sequence.is_none());
+        assert!(self.pending_sequence.is_none() && self.pending_ordered.is_none());
         assert!(self.pending.is_none());
         bytes.copy_from_slice(&self.buffers[&id][offset..offset + bytes.len()]);
         self.reads.push((id, bytes.len()));
@@ -438,6 +490,8 @@ fn fixture(
             next: 1,
             pending: None,
             pending_sequence: None,
+            pending_ordered: None,
+            ordered_supported: true,
             events: events.clone(),
             commands: Vec::new(),
             reads: Vec::new(),
@@ -502,6 +556,7 @@ fn fixture(
         hidden: vec![0; 4096 * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
+        ordered_batches: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     };

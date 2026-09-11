@@ -227,6 +227,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.ranks.len() != 1
             || (self.wave_attention && capacity != 32)
             || self.inner.sequences.is_some()
+            || self.inner.ordered_batches.is_some()
             || self.numerical.is_some()
             || !matches!(
                 self.projection.mode,
@@ -283,6 +284,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.row_capacity != 16
             || self.inner.ranks.len() != 1
             || self.inner.sequences.is_some()
+            || self.inner.ordered_batches.is_some()
             || self.inner.timing.is_enabled()
             || self.wave_attention
             || !capture.matches_profile(self.projection.mode.label(), self.prune_output_head)
@@ -359,6 +361,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.last_batch != 0
             || self.completed_batches != 0
             || self.numerical.is_some()
+            || self.inner.ordered_batches.is_some()
             || (self.inner.large_kv && mode.is_peer())
         {
             return Err("reduction mode requires a fresh batch stream".into());
@@ -393,7 +396,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects changes after submission, failure, or closure.
     pub fn configure_output_head_pruning(&mut self, enabled: bool) -> TpResult<()> {
-        if self.last_batch != 0 || self.poisoned || self.inner.closed || self.numerical.is_some() {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.numerical.is_some()
+            || self.inner.ordered_batches.is_some()
+        {
             return Err("output-head policy must be configured before execution".into());
         }
         self.prune_output_head = enabled;
@@ -416,6 +424,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.projection_configured
             || self.numerical.is_some()
             || self.head_profile_configured
+            || self.inner.ordered_batches.is_some()
             || (self.inner.large_kv
                 && !matches!(
                     mode,
@@ -486,6 +495,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.poisoned
             || self.inner.closed
             || self.numerical.is_some()
+            || self.inner.ordered_batches.is_some()
             || (self.head_profile_configured && (enabled || self.wave_attention))
             || (enabled && self.inner.large_kv)
         {
@@ -500,6 +510,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects unsupported transports, execution already begun, or closed state.
     pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || self.inner.ordered_batches.is_some()
             || (enabled
                 && (self.numerical.is_some()
                     || self.head_profile_configured
@@ -516,6 +527,40 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Err("dispatch sequence policy requires fresh supported ranks".into());
         }
         self.inner.sequences = enabled.then(|| vec![Vec::new(); self.inner.ranks.len()]);
+        Ok(())
+    }
+
+    /// Enables dependent packet batches at the existing attention/FFN barriers.
+    /// Configure this last; singleton embedding, residual and head calls stay synchronous.
+    /// # Errors
+    /// Rejects incompatible profiles, unsupported transports or any late policy change.
+    pub fn configure_ordered_batches(&mut self, enabled: bool) -> TpResult<()> {
+        if self.last_batch != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.inner.ordered_batches.is_some()
+        {
+            return Err("ordered batch policy requires a fresh unconfigured stream".into());
+        }
+        if enabled {
+            if self.row_capacity != 32
+                || self.inner.ranks.len() != 1
+                || self.inner.transports.len() != 1
+                || self.inner.transports[0].peer_group_rank().is_some()
+                || !self.inner.transports[0].supports_ordered_batches()
+                || self.inner.sequences.is_some()
+                || self.inner.large_kv
+                || self.numerical.is_some()
+                || self.wave_attention
+                || !self.head_profile_configured
+                || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
+                || !self.prune_output_head
+                || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+            {
+                return Err("ordered batches require TP1/capacity32, v8 head, MFMA, baseline attention, device TP1, pruning, legacy pool and no sequences/capture/peers".into());
+            }
+            self.inner.ordered_batches = Some(Vec::with_capacity(16));
+        }
         Ok(())
     }
 

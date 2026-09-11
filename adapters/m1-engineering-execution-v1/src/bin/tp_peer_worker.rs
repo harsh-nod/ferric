@@ -549,6 +549,9 @@ impl PeerWorker {
         if options.profile {
             return Err("peer runtime diagnostic profiling is unsupported".into());
         }
+        if options.ordered_batches {
+            return Err("peer runtime ordered batches are unsupported".into());
+        }
         if options.rollover || concurrent_rounds && options.sequences {
             return Err("peer rollover and concurrent same-rank sequences are unsupported".into());
         }
@@ -1307,6 +1310,24 @@ while True:
         );
         assert!(
             matches!(result, Err(error) if error == "peer runtime diagnostic profiling is unsupported")
+        );
+    }
+
+    #[test]
+    fn peer_ordered_batches_reject_before_process_spawn() {
+        let result = PeerWorker::spawn_with_timing(
+            Path::new("/nonexistent-peer-worker"),
+            &[1, 2],
+            &[],
+            RuntimeOptions {
+                ordered_batches: true,
+                ..RuntimeOptions::default()
+            },
+            false,
+            HostTiming::default(),
+        );
+        assert!(
+            matches!(result, Err(error) if error == "peer runtime ordered batches are unsupported")
         );
     }
 

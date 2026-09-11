@@ -12,8 +12,8 @@ use fe2o3_hsaco::{
     ArgumentAccess, ExplicitArgument, ExplicitValueKind, ExplicitValueType, InspectedKernel,
 };
 use fe2o3_kfd::engineering_wire::{
-    self as wire, BufferAccessV1, CommandV1, KernelMetadataV1, PointerFixupV1, ResponseV1,
-    SequenceDispatchV1,
+    self as wire, BufferAccessV1, CommandV1, KernelMetadataV1, OrderedBatchDispatchV1,
+    PointerFixupV1, ResponseV1, SequenceDispatchV1,
 };
 use ferric_m1_engineering_execution_v1::host_timing::{HostTiming, IpcTiming};
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
@@ -33,6 +33,7 @@ pub struct RuntimeOptions {
     pub cache_admission: bool,
     pub operational: bool,
     pub sequences: bool,
+    pub ordered_batches: bool,
     pub rollover: bool,
     pub shared_full_currentness: bool,
     pub profile: bool,
@@ -59,6 +60,7 @@ enum PendingRequest {
     Other,
     Dispatch,
     Sequence(usize),
+    OrderedBatch(usize),
 }
 
 struct WorkerTiming {
@@ -126,6 +128,9 @@ impl Worker {
         if options.shared_full_currentness {
             return Err("shared full currentness requires the explicit peer worker".into());
         }
+        if options.sequences && options.ordered_batches {
+            return Err("ordered batches and legacy dispatch sequences are distinct modes".into());
+        }
         let child = Command::new(executable)
             .arg("--device-unique-id")
             .arg(unique_id.to_string())
@@ -142,6 +147,9 @@ impl Worker {
     }
 
     fn configure_options(&mut self, options: RuntimeOptions) -> TpResult<()> {
+        if options.sequences && options.ordered_batches {
+            return self.reject("ordered batches and legacy dispatch sequences are incompatible");
+        }
         self.options = options;
         if options.cache_admission || options.operational || options.profile {
             self.send(
@@ -355,6 +363,9 @@ impl Worker {
             CommandV1::DispatchSequence { dispatches } => {
                 ("dispatch_sequence", dispatches.len() as u64)
             }
+            CommandV1::DispatchOrderedBatch { dispatches, .. } => {
+                ("dispatch_ordered_batch", dispatches.len() as u64)
+            }
             CommandV1::Allocate { .. } => ("allocate", 0),
             CommandV1::Write { .. } => ("write", 0),
             CommandV1::Read { .. } => ("read", 0),
@@ -376,6 +387,9 @@ impl Worker {
             CommandV1::Dispatch { .. } => PendingRequest::Dispatch,
             CommandV1::DispatchSequence { dispatches } => {
                 PendingRequest::Sequence(dispatches.len())
+            }
+            CommandV1::DispatchOrderedBatch { dispatches, .. } => {
+                PendingRequest::OrderedBatch(dispatches.len())
             }
             _ => PendingRequest::Other,
         });
@@ -718,6 +732,89 @@ impl EngineeringTpRankTransportV1 for Worker {
         }
     }
 
+    fn supports_ordered_batches(&self) -> bool {
+        self.options.ordered_batches
+    }
+
+    fn submit_ordered_batch(&mut self, dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        if !self.options.ordered_batches
+            || self.options.sequences
+            || !(1..=wire::MAX_ORDERED_BATCH_DISPATCHES_V1).contains(&dispatches.len())
+            || self
+                .queue_packets
+                .checked_add(dispatches.len() as u64)
+                .is_none_or(|end| end > wire::MAX_UNRETIRED_RING_PACKETS_V1)
+        {
+            return self.reject("ordered batch policy, count or packet budget mismatch");
+        }
+        // Every existing metadata, ownership and scalar pack check precedes publication.
+        let prepared = (|| -> TpResult<_> {
+            let mut entries = Vec::with_capacity(dispatches.len());
+            let mut payload = Vec::new();
+            for dispatch in dispatches {
+                let loaded = self
+                    .kernels
+                    .get(dispatch.kernel)
+                    .ok_or("unloaded ordered batch kernel")?;
+                let (header, bytes) = pack_dispatch(loaded, dispatch, &self.buffers)?;
+                let CommandV1::Dispatch {
+                    kernel,
+                    payload_bytes,
+                    workgroup,
+                    grid,
+                    pointers,
+                    ..
+                } = header
+                else {
+                    return Err("ordered batch dispatch packing drifted".into());
+                };
+                entries.push(OrderedBatchDispatchV1 {
+                    kernel,
+                    payload_bytes,
+                    workgroup,
+                    grid,
+                    pointers,
+                });
+                payload.extend_from_slice(&bytes);
+            }
+            let header = CommandV1::DispatchOrderedBatch {
+                dispatches: entries,
+                timeout_ms: DISPATCH_TIMEOUT_MS,
+            };
+            if header.payload_bytes().map_err(|error| error.to_string())? != payload.len() {
+                return Err("ordered batch cumulative payload mismatch".into());
+            }
+            Ok((header, payload))
+        })();
+        let (header, payload) = match prepared {
+            Ok(value) => value,
+            Err(error) => return self.reject(error),
+        };
+        self.send(header, payload)
+    }
+
+    fn wait_ordered_batch(&mut self, count: usize) -> TpResult<()> {
+        if !(1..=wire::MAX_ORDERED_BATCH_DISPATCHES_V1).contains(&count)
+            || self.pending != Some(PendingRequest::OrderedBatch(count))
+        {
+            return self.reject("pending ordered batch count mismatch");
+        }
+        let next = match self.queue_packets.checked_add(count as u64) {
+            Some(value) if value <= wire::MAX_UNRETIRED_RING_PACKETS_V1 => value,
+            _ => return self.reject("ordered batch completed packet count overflow"),
+        };
+        let response = self.receive()?;
+        if !response.payload.is_empty()
+            || !matches!(response.header, ResponseV1::DispatchOrderedBatchCompleted {
+                completed_dispatches, ..
+            } if completed_dispatches as usize == count)
+        {
+            return self.reject("ordered batch failed or aggregate completion drifted");
+        }
+        self.queue_packets = next;
+        Ok(())
+    }
+
     fn supports_queue_rollover(&self) -> bool {
         self.options.rollover
     }
@@ -769,6 +866,8 @@ impl EngineeringTpRankTransportV1 for Worker {
             self.wait()?;
         } else if let Some(PendingRequest::Sequence(count)) = self.pending {
             self.wait_sequence(count)?;
+        } else if let Some(PendingRequest::OrderedBatch(count)) = self.pending {
+            self.wait_ordered_batch(count)?;
         }
         self.send(CommandV1::Close, vec![])?;
         if !matches!(self.receive()?.header, ResponseV1::Closed) {
@@ -1055,6 +1154,20 @@ while True:
         entries = command['dispatches']
         sys.stdin.buffer.read(sum(entry['payload_bytes'] for entry in entries))
         send({'op':'dispatch_sequence_completed', 'elapsed_ns':[1] * (len(entries) - (1 if mode == 'shortsequence' else 0))})
+    elif op == 'dispatch_ordered_batch':
+        entries = command['dispatches']
+        if command['timeout_ms'] != 60000 or not 1 <= len(entries) <= 16: sys.exit(6)
+        if any('timeout_ms' in entry for entry in entries): sys.exit(7)
+        size = sum(entry['payload_bytes'] for entry in entries)
+        if len(sys.stdin.buffer.read(size)) != size: sys.exit(4)
+        if mode == 'orderederror': send({'op':'error','message':'injected','fatal':True})
+        elif mode == 'orderedsequence': send({'op':'dispatch_sequence_completed','elapsed_ns':[1]*len(entries)})
+        elif mode == 'orderedpayload': send({'op':'read','payload_bytes':1}, b'x')
+        elif mode == 'orderedstall': time.sleep(60)
+        else:
+            send({'op':'dispatch_ordered_batch_completed',
+                  'completed_dispatches':len(entries) - (1 if mode == 'orderedshort' else 0),
+                  'elapsed_ns':7})
     else:
         sys.exit(5)
 ";
@@ -1494,6 +1607,174 @@ while True:
             } else {
                 result.unwrap();
                 assert_eq!(worker.queue_packets, 2);
+                worker.close().unwrap();
+            }
+        }
+    }
+
+    fn ordered_header(count: usize) -> CommandV1 {
+        CommandV1::DispatchOrderedBatch {
+            dispatches: vec![
+                OrderedBatchDispatchV1 {
+                    kernel: 1,
+                    payload_bytes: 0,
+                    workgroup: [64, 1, 1],
+                    grid: [64, 1, 1],
+                    pointers: vec![],
+                };
+                count
+            ],
+            timeout_ms: DISPATCH_TIMEOUT_MS,
+        }
+    }
+
+    #[test]
+    fn ordered_completion_is_distinct_exact_and_terminal_on_failure() {
+        for mode in [
+            "normal",
+            "orderedshort",
+            "orderedsequence",
+            "orderedpayload",
+            "orderederror",
+            "orderedstall",
+        ] {
+            let mut worker = Worker::connect(fake(mode), 1, Duration::from_secs(5)).unwrap();
+            if mode == "orderedstall" {
+                worker.timeout = Duration::from_millis(100);
+            }
+            worker.send(ordered_header(10), vec![]).unwrap();
+            let result = worker.wait_ordered_batch(10);
+            if mode == "normal" {
+                result.unwrap();
+                assert_eq!(worker.queue_packets, 10);
+                worker.close().unwrap();
+            } else {
+                assert!(result.is_err());
+                assert_eq!(worker.queue_packets, 0);
+                assert!(worker.failed && worker.exited);
+                assert!(worker.send(ordered_header(1), vec![]).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_pending_rejects_mismatched_wait_and_host_commands() {
+        for operation in 0..5 {
+            let mut worker = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+            let buffer = worker.allocate(4).unwrap();
+            worker.send(ordered_header(5), vec![]).unwrap();
+            let result = match operation {
+                0 => worker.wait_ordered_batch(4),
+                1 => worker.wait_sequence(5),
+                2 => worker.write(buffer, 0, &[0; 4]),
+                3 => worker.read(buffer, 0, &mut [0; 4]),
+                _ => worker.runtime_diagnostic_snapshot().map(|_| ()),
+            };
+            assert!(result.is_err());
+            assert!(worker.failed && worker.exited);
+            assert_eq!(worker.queue_packets, 0);
+        }
+    }
+
+    #[test]
+    fn ordered_packets_not_groups_are_retired_and_pending_close_is_drained() {
+        let mut worker = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+        worker.options.rollover = true;
+        worker.queue_packets = wire::MAX_UNRETIRED_RING_PACKETS_V1 - 15;
+        for count in [10, 5] {
+            worker.send(ordered_header(count), vec![]).unwrap();
+            worker.wait_ordered_batch(count).unwrap();
+        }
+        assert_eq!(worker.queue_packets, wire::MAX_UNRETIRED_RING_PACKETS_V1);
+        worker.prepare_packets(616).unwrap();
+        assert_eq!((worker.queue_epoch, worker.queue_packets), (1, 0));
+        worker.send(ordered_header(10), vec![]).unwrap();
+        worker.close().unwrap();
+        assert_eq!(worker.queue_packets, 10);
+        assert!(worker.exited);
+    }
+
+    #[test]
+    fn ordered_pack_rejects_disabled_empty_oversized_and_unloaded_before_publication() {
+        for (enabled, count) in [(false, 1), (true, 0), (true, 17), (true, 1)] {
+            let mut worker = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+            worker.options.ordered_batches = enabled;
+            let commands = vec![
+                EngineeringTpDispatchV1 {
+                    kernel: "not_loaded",
+                    grid_workgroups: 1,
+                    workgroup_size: 64,
+                    arguments: vec![],
+                };
+                count
+            ];
+            assert!(worker.submit_ordered_batch(&commands).is_err());
+            assert_eq!(worker.queue_packets, 0);
+            assert!(worker.failed && worker.exited);
+        }
+    }
+
+    #[test]
+    #[ignore = "requires FERRIC_V8_TEST_ARTIFACT; real metadata packing with a CPU fake worker, no GPU"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn actual_v8_metadata_ordered_pack_preserves_bounds_and_aggregate_timeout() {
+        let path = std::env::var_os("FERRIC_V8_TEST_ARTIFACT").expect("explicit v8 artifact path");
+        let artifact = EngineeringTpArtifactV1::open_fp32_head32(
+            Path::new(&path),
+            &ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8(),
+        )
+        .unwrap();
+        let symbol = "ferric_qwen3_tp_batch32_argmax_f32_v8";
+        let metadata = artifact
+            .inspection()
+            .hsaco()
+            .kernels()
+            .iter()
+            .find(|kernel| kernel.name() == symbol)
+            .unwrap();
+        for malformed in [false, true] {
+            let mut worker = Worker::connect(fake("normal"), 1, Duration::from_secs(5)).unwrap();
+            worker.options.ordered_batches = true;
+            worker.kernels.insert(
+                symbol.into(),
+                LoadedKernel {
+                    id: 1,
+                    image: *artifact.hsaco_id().as_bytes(),
+                    metadata: metadata.clone(),
+                },
+            );
+            let logits = worker.allocate(32 * 151_936 * 4).unwrap();
+            let choice = worker.allocate(32 * 4).unwrap();
+            let command = EngineeringTpDispatchV1 {
+                kernel: symbol,
+                grid_workgroups: 1,
+                workgroup_size: 64,
+                arguments: vec![
+                    EngineeringTpArgumentV1::Buffer {
+                        id: logits,
+                        offset: 0,
+                        elements: 32 * 151_936,
+                        element_bytes: 4,
+                        access: EngineeringTpBufferAccessV1::Read,
+                    },
+                    EngineeringTpArgumentV1::Buffer {
+                        id: choice,
+                        offset: 0,
+                        elements: if malformed { 33 } else { 32 },
+                        element_bytes: 4,
+                        access: EngineeringTpBufferAccessV1::Write,
+                    },
+                    EngineeringTpArgumentV1::U32(1),
+                ],
+            };
+            let result = worker.submit_ordered_batch(&vec![command; 16]);
+            if malformed {
+                assert!(result.is_err() && worker.failed && worker.exited);
+                assert_eq!(worker.queue_packets, 0);
+            } else {
+                result.unwrap();
+                worker.wait_ordered_batch(16).unwrap();
+                assert_eq!(worker.queue_packets, 16);
                 worker.close().unwrap();
             }
         }

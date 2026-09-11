@@ -42,7 +42,7 @@ const USAGE: &str = concat!(
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
-    "[--runtime-profile] [--peer-shared-full-currentness] ",
+    "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
@@ -202,6 +202,10 @@ impl Options {
                 }
                 "--dispatch-sequences" => {
                     runtime.sequences = true;
+                    continue;
+                }
+                "--runtime-ordered-batches" => {
+                    runtime.ordered_batches = true;
                     continue;
                 }
                 "--queue-rollover" => {
@@ -417,6 +421,22 @@ impl Options {
                     || numerical.is_some()))
         {
             return Err("large-kv-v9 requires both explicit pool/image options, TP1/capacity32 with v8 head, baseline attention and baseline/MFMA projection; peers, sequences, capture and replicas are unsupported".into());
+        }
+        if runtime.ordered_batches
+            && (devices.len() != 1
+                || kernel_profile != KernelProfile::WideMfma
+                || !head_precision.is_some_and(HeadPrecision::wide32)
+                || projection != ProjectionMode::Mfma
+                || wave_attention
+                || collective != EngineeringTpReductionModeV3::DeviceTp1V3
+                || !prune_output_head
+                || runtime.sequences
+                || runtime.shared_full_currentness
+                || large_kv
+                || numerical.is_some()
+                || benchmark_control.is_some())
+        {
+            return Err("--runtime-ordered-batches requires TP1/v5-mfma32 with v8 head, MFMA projection, baseline attention, device-tp1-v3 and pruning; legacy sequences, large KV, peers, numerical capture and replicas are unsupported".into());
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -991,6 +1011,7 @@ fn run_with_timing(
             gpu.configure_head_precision_v7(precision.fp32())?;
         }
     }
+    gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
     let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
         let identity = serde_json::json!({
@@ -1080,6 +1101,9 @@ fn run_with_timing(
         }
         if options.runtime.shared_full_currentness {
             setup["peer_shared_full_currentness"] = serde_json::json!(true);
+        }
+        if options.runtime.ordered_batches {
+            setup["runtime_ordered_batches"] = serde_json::json!(true);
         }
         if let Some(large) = &large_kv_artifact {
             setup["kv_pool_profile"] = serde_json::json!("large-kv-v9");
@@ -1228,6 +1252,74 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn ordered_batch_policy_is_distinct_explicit_and_narrow() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v5-mfma32",
+            "--head-precision",
+            "fp32-v8",
+            "--fp32-head-artifact",
+            "/head",
+            "--projection",
+            "mfma",
+            "--collective",
+            "device-tp1-v3",
+            "--prune-output-head",
+        ];
+        assert!(!args(&base).unwrap().runtime.ordered_batches);
+        let mut enabled = base.to_vec();
+        enabled.push("--runtime-ordered-batches");
+        let parsed = args(&enabled).unwrap();
+        assert!(parsed.runtime.ordered_batches);
+        assert!(!parsed.runtime.sequences);
+        let mut rollover = enabled.clone();
+        rollover.push("--queue-rollover");
+        assert!(args(&rollover).unwrap().runtime.rollover);
+        for extra in [
+            vec!["--dispatch-sequences"],
+            vec!["--attention", "wave"],
+            vec!["--benchmark-control", "/replica"],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/kv",
+            ],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut flags = enabled.clone();
+            flags.extend(extra);
+            assert!(args(&flags).is_err());
+        }
+        for (flag, bad) in [
+            ("--devices", "1,2"),
+            ("--kernel-profile", "v5-wave32"),
+            ("--head-precision", "fp32-v7"),
+            ("--projection", "baseline"),
+            ("--projection", "wave"),
+            ("--collective", "host-staged-v1"),
+        ] {
+            let mut flags = enabled.clone();
+            let index = flags.iter().position(|item| *item == flag).unwrap();
+            flags[index + 1] = bad;
+            assert!(args(&flags).is_err());
+        }
+        enabled.retain(|flag| *flag != "--prune-output-head");
+        assert!(args(&enabled).is_err());
     }
 
     #[test]
