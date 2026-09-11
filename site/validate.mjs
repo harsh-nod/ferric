@@ -4,12 +4,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { validatePerformance, testPerformanceRejections } from "./validate-performance.mjs";
+import { validateCompetitiveness, testCompetitivenessRejections } from "./validate-competitiveness.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
 const project = context.window.FERRIC_PROJECT;
+validateCompetitiveness(project.competitivenessSprint);
+testCompetitivenessRejections(project.competitivenessSprint);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -65,6 +68,7 @@ assertExactKeys(
     "repository",
     "fe2o3Repository",
     "current",
+    "competitivenessSprint",
     "milestone",
     "readiness",
     "envelope",
@@ -85,7 +89,8 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+  siteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
+  previousSiteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
   performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
@@ -506,8 +511,9 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
-  fe2o3LatestTree: "5674a7078440e445010d3b5d58c8bc4a34b6fe94",
+  fe2o3LatestMain: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
+  fe2o3LatestTree: "a8dc6ede1fcc9ce89d26b818bb93244e1a00bcaa",
+  fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
   fe2o3LegacyRepinScope: "Historical a8b016e1 only: fe2o3CurrentRepin counters and ELF rebuild flags are retained receipts, not latest-source qualification.",
@@ -1329,11 +1335,26 @@ for (const [title, state] of [["Continuous batching and paged TP attention", "ob
 }
 
 assert(Array.isArray(project.readiness) && project.readiness.length >= 5, "readiness roster is incomplete");
-assert(project.readiness[0].label === "Checked concurrent-rank rounds"
-  && project.readiness[0].state === "observed"
-  && project.readiness[1].label === "Host timing and numerical diagnosis"
+assert(project.readiness[0].label === "Sustained ingress and loopback HTTP"
+  && project.readiness[0].state === "implemented"
+  && project.readiness[1].label === "32-row FP32 head: native only"
   && project.readiness[1].state === "observed",
   "latest scoped sprint observations must precede historical checkpoints");
+assert(project.readiness[project.competitivenessSprint.currentReadinessCount].label === "Checked concurrent-rank rounds",
+  "history separator must follow all current sprint readiness entries");
+assert(project.current.fe2o3LatestHostGateCore !== project.current.fe2o3LatestMain,
+  "the historical 6f6 host receipt must not be relabeled as current 3e3");
+for (const [title, state, claim] of [
+  ["Sustained ingress and loopback HTTP", "implemented", "206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 fake-child HTTP tests"],
+  ["32-row FP32 head: native only", "observed", "This native checkpoint excludes later v8 model results"],
+  ["Shared peer currentness: native only", "observed", "four native cases, not a model-speed"],
+  ["Admission cache: frozen TP1 canary", "observed", "not steady-state serving"],
+  ["Long-context capacity and speculation remain open", "open", "planned, not implemented or proved"],
+]) {
+  const row = project.readiness.find((item) => item.label === title);
+  assert(row && row.state === state, `competitiveness status drifted: ${title}`);
+  assert(row.detail.includes(claim), `competitiveness qualification boundary missing: ${title}`);
+}
 project.readiness.forEach((item, index) => {
   assertExactKeys(item, ["label", "state", "detail"], `readiness[${index}]`);
   assertState(item.state, `readiness[${index}].state`);

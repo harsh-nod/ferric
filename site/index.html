@@ -47,8 +47,9 @@
               A Rust inference engine building an authority-bound path from authenticated model
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
-              Repeated short-workload measurements exist; production serving, matched
-              vLLM/SGLang comparisons, and protected qualification remain open.
+              Bounded resident JSONL and loopback HTTP are implemented in private source.
+              Repeated short-workload measurements exist; sustained GPU serving qualification,
+              matched vLLM/SGLang comparisons, and protected qualification remain open.
             </p>
             <div class="milestone-line">
               <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
@@ -308,8 +309,9 @@
             workspace quality/runtime checks, 197/197 receipt-file hash checks, and a 711-record source-closure check.
             Receipt SHA-256 c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b
             excludes all later 63e/6ef/0ea/eb219f0 changes and protected promotion planner/test policy.
-            Protected infrastructure is absent and all 33 M1 exit gates remain open. There is no serving
-            endpoint, authenticated A/B, production TTFT/TPOT, vLLM/SGLang baseline, comparable benchmark,
+            Protected infrastructure is absent and all 33 M1 exit gates remain open. Implemented loopback
+            HTTP is not a qualified deployed serving endpoint. There is no authenticated A/B,
+            production TTFT/TPOT, vLLM/SGLang baseline, comparable benchmark,
             protected M1 qualification receipt, or production authority.
           </p>
           <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>

@@ -7,6 +7,35 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
+The competitiveness checkpoint is unpublished until separately approved.
+`competitivenessSprint` in `data/project.js` records private integrated JSONL
+and loopback HTTP source, scoped host/protocol tests, native-only v8 and shared
+peer-currentness results, and the frozen-511 two-per-mode admission-cache
+canary. Implemented HTTP is not a deployed or qualified serving endpoint.
+Later v8 model/HTTP GPU results are outside this checkpoint. V8 native fixtures
+are not a model pass; the speculative fast path and larger
+KV envelopes remain unimplemented. Baseline launches require explicit approval.
+No serving-comparison or competitive-win claim follows from the canary.
+
+`validate-competitiveness.mjs` validates the closed snapshot and rejects 20
+scope/promotion mutations. Its optional evidence route, run only on mi300x,
+rehashes the root-reviewed native/host receipts and all four exact-reference
+cache reports, then recomputes the caption's per-mode mean changes:
+
+```sh
+node validate-competitiveness.mjs /private/compete-evidence /private/serving-evidence
+```
+
+Include the separately hashed source-gate `check.log` and
+`metadata-summary.json` under `compete-evidence/source-gate/`. The 38 source
+tests, 31 verifier-policy tests, 28 metadata configurations and coverage counts
+describe compiler-rooted dependency/source checks, not new Verus or GPU proof.
+
+This route does not replace the original native or token checkers. Historical
+`performance.js` values, rejected cases and frozen source pins are unchanged.
+The 6f6 host receipt is explicitly historical; fresh 3e3 source and native
+evidence must not relabel 511 model or cache-canary measurements.
+
 When implementation or qualification state changes:
 
 1. Update `updated`, `readiness`, `validation`, `latestObservation`, and

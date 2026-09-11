@@ -31,6 +31,21 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Sustained ingress and loopback HTTP",
+  "32-row FP32 head: native only",
+  "Shared peer currentness: native only",
+  "Admission cache: frozen TP1 canary",
+  "Long-context capacity and speculation remain open",
+  "3e3a77284a61654134211f8145dd0ddeebb2ff91",
+  "All 15 native fixtures pass at rows 1/16/17/31/32",
+  "This native checkpoint excludes later v8 model results",
+  "No matched vLLM/SGLang result exists",
+  "baseline launches await explicit approval",
+  "kernel-admission caching, not radix prefix caching",
+  "Mean workload rate rises 27.72%",
+  "mean whole-process time is 1.14% worse",
+  "The primary 32-request workload needs 8,704 pages",
+  "planned, not implemented or proved",
   "Checked concurrent-rank rounds",
   "Host timing and numerical diagnosis",
   "79706b43a177a2fd3fa43ec328221fa3e5041af5",
@@ -809,6 +824,7 @@ try {
         await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();
         await page.screenshot({ path: join(screenshotRoot, `${name}-ablations.png`) });
         await page.evaluate(() => window.scrollTo(0, 0));
+        await page.screenshot({ path: join(screenshotRoot, `${name}-overview.png`) });
       }
       await page.screenshot({ path: join(screenshotRoot, `${name}.png`), fullPage: true });
     }
