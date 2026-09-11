@@ -106,7 +106,10 @@ fn canonical_geometry_role_tie_and_payload_are_required_without_allocating_weigh
     );
     assert_eq!(u64::from(model.layers) * 15 + 4, 424);
     assert_eq!(u64::from(STEPS) * 424, PACKETS);
-    assert!(PACKETS <= fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1);
+    assert!(
+        u64::from(STEPS) * (u64::from(model.layers) * 15 + 4)
+            <= fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
+    );
     for length in [
         0,
         QWEN3_DRAFT_TENSOR_DATA_BYTES - 1,
@@ -165,6 +168,8 @@ fn tied_weight_check_uses_exact_bytes_and_each_authenticated_digest() {
     assert!(validate_tied_pair(&bytes, &[1, 0, 254, 255, 0x80, 0x3f], hash, hash).is_err());
     assert!(validate_tied_pair(&bytes, &bytes, [0; 32], hash).is_err());
     assert!(validate_tied_pair(&bytes, &bytes, [0; 32], [0; 32]).is_err());
+    let empty_hash: [u8; 32] = Sha256::digest([]).into();
+    assert!(validate_tied_pair(&[], &[], empty_hash, empty_hash).is_err());
 }
 
 #[test]
@@ -173,12 +178,12 @@ fn reference_requires_external_digest_exact_schema_and_draft_identity() {
     let bytes = serde_json::to_vec(&expected).unwrap();
     let parsed = Reference::parse(&bytes, &digest(&bytes)).unwrap();
     parsed.bind(&identity(), &[1, 2, 3, 4, 5]).unwrap();
-    assert!(parsed.matches(&[6, 7], b"fixture"));
-    assert!(!parsed.matches(&[7, 6], b"fixture"));
-    assert!(!parsed.matches(&[6, 7], b"changed"));
+    assert!(parsed.matches([6, 7], b"fixture"));
+    assert!(!parsed.matches([7, 6], b"fixture"));
+    assert!(!parsed.matches([6, 7], b"changed"));
     assert!(Reference::parse(&bytes, &"00".repeat(32)).is_err());
     assert!(Reference::parse(&[], &digest(&[])).is_err());
-    let oversized = vec![b' '; MAX_REFERENCE_BYTES as usize + 1];
+    let oversized = vec![b' '; usize::try_from(MAX_REFERENCE_BYTES).unwrap() + 1];
     assert!(Reference::parse(&oversized, &digest(&oversized)).is_err());
     let mut wrong_identity = identity();
     wrong_identity.draft_model_id = "05".repeat(32);
@@ -191,7 +196,7 @@ fn reference_requires_external_digest_exact_schema_and_draft_identity() {
         ("schema", serde_json::json!("FerricQwen3TpBatchReferenceV1")),
         ("producer", serde_json::json!("")),
         ("prompt_tokens", serde_json::json!([1, 2, 3, 4])),
-        ("generated_tokens", serde_json::json!([6, 151936])),
+        ("generated_tokens", serde_json::json!([6, 151_936])),
         ("extra", serde_json::json!(true)),
     ] {
         let mut changed = original.clone();

@@ -1,4 +1,4 @@
-//! Bounded standalone Draft06B diagnostic. No target CLI or fast profile changes.
+//! Bounded standalone `Draft06B` diagnostic. No target CLI or fast profile changes.
 
 #![recursion_limit = "256"]
 
@@ -142,7 +142,7 @@ fn hash_file(path: &Path) -> Result<String, String> {
         return Err("executable file bound".into());
     }
     let mut hasher = Sha256::new();
-    let mut bytes = [0; 65_536];
+    let mut bytes = vec![0; 65_536];
     let mut total = 0_u64;
     loop {
         let count = file.read(&mut bytes).map_err(|e| e.to_string())?;
@@ -190,7 +190,8 @@ fn validate_tied_pair(
     embedding_sha: [u8; 32],
     head_sha: [u8; 32],
 ) -> Result<(), String> {
-    if embedding.len() != head.len()
+    if embedding.is_empty()
+        || embedding.len() != head.len()
         || embedding_sha != head_sha
         || embedding != head
         || Sha256::digest(embedding).as_slice() != embedding_sha
@@ -277,7 +278,7 @@ struct Reference {
 impl Reference {
     fn parse(bytes: &[u8], expected_sha256: &str) -> Result<Self, String> {
         if bytes.is_empty()
-            || bytes.len() > MAX_REFERENCE_BYTES as usize
+            || u64::try_from(bytes.len()).map_err(|_| "reference length")? > MAX_REFERENCE_BYTES
             || digest(bytes) != expected_sha256
         {
             return Err("reference bytes exceed bounds or differ from external SHA-256".into());
@@ -332,8 +333,8 @@ impl Reference {
         Ok(())
     }
 
-    fn matches(&self, tokens: &[u32; OUTPUT_TOKENS], bytes: &[u8]) -> bool {
-        self.generated_tokens == *tokens && self.generated_utf8_bytes == bytes
+    fn matches(&self, tokens: [u32; OUTPUT_TOKENS], bytes: &[u8]) -> bool {
+        self.generated_tokens == tokens && self.generated_utf8_bytes == bytes
     }
 }
 
@@ -364,8 +365,9 @@ fn run_steps<R: EngineeringTpRankTransportV1>(
     let mut next = 0;
     let mut generated = [0; OUTPUT_TOKENS];
     for ordinal in 0..STEPS {
-        let input_token = if ordinal < PROMPT_TOKENS as u32 {
-            prompt[ordinal as usize]
+        let ordinal_index = usize::try_from(ordinal).map_err(|_| "canary ordinal")?;
+        let input_token = if ordinal_index < PROMPT_TOKENS {
+            prompt[ordinal_index]
         } else {
             next
         };
@@ -383,8 +385,8 @@ fn run_steps<R: EngineeringTpRankTransportV1>(
             next_token: next,
             completed_dispatches: expected,
         });
-        if ordinal >= PROMPT_TOKENS as u32 - 1 {
-            generated[ordinal as usize + 1 - PROMPT_TOKENS] = next;
+        if ordinal_index >= PROMPT_TOKENS - 1 {
+            generated[ordinal_index + 1 - PROMPT_TOKENS] = next;
         }
     }
     Ok((generated, rows))
@@ -449,7 +451,7 @@ fn run(options: &Options) -> Result<(), String> {
             "model": DRAFT_REPOSITORY, "model_revision": DRAFT_REVISION, "model_role": "Draft06B",
             "identity": identity, "dtype": "BF16", "head_precision": "bf16", "target": "gfx950:xnack-",
             "layers": 28, "hidden": 1024, "intermediate": 3072, "query_heads": 16, "kv_heads": 8,
-            "head_dimension": 128, "vocabulary": 151936, "tie_word_embeddings": true,
+            "head_dimension": 128, "vocabulary": 151_936, "tie_word_embeddings": true,
             "tensor_parallel": 1, "capacity": CAPACITY, "prompt": options.prompt, "prompt_tokens": prompt,
             "new_tokens": OUTPUT_TOKENS, "expected_steps": STEPS, "expected_dispatches": PACKETS,
             "draft_payload_bytes": draft.weights().len(), "retained_target_payload_bytes": model.target_weights().len(),
@@ -469,7 +471,7 @@ fn run(options: &Options) -> Result<(), String> {
         let bytes = model.decode(&tokens)?;
         let reference_passed = reference
             .as_ref()
-            .map(|expected| expected.matches(&tokens, &bytes));
+            .map(|expected| expected.matches(tokens, &bytes));
         emit(&serde_json::json!({
             "schema": "FerricDraftCanaryObservationV1", "authority": "none", "performance_qualified": false,
             "steps": steps, "generated_tokens": tokens, "generated_utf8_bytes": bytes,
