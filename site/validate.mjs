@@ -1336,8 +1336,8 @@ for (const [title, state] of [["Continuous batching and paged TP attention", "ob
 
 assert(Array.isArray(project.readiness) && project.readiness.length >= 5, "readiness roster is incomplete");
 assert(project.readiness[0].label === "Sustained ingress and loopback HTTP"
-  && project.readiness[0].state === "implemented"
-  && project.readiness[1].label === "32-row FP32 head: native only"
+  && project.readiness[0].state === "observed"
+  && project.readiness[1].label === "32-row FP32 head: bounded model passes"
   && project.readiness[1].state === "observed",
   "latest scoped sprint observations must precede historical checkpoints");
 assert(project.readiness[project.competitivenessSprint.currentReadinessCount].label === "Checked concurrent-rank rounds",
@@ -1345,8 +1345,8 @@ assert(project.readiness[project.competitivenessSprint.currentReadinessCount].la
 assert(project.current.fe2o3LatestHostGateCore !== project.current.fe2o3LatestMain,
   "the historical 6f6 host receipt must not be relabeled as current 3e3");
 for (const [title, state, claim] of [
-  ["Sustained ingress and loopback HTTP", "implemented", "206 library, 55 batch CLI, 6 replica-control, 22 policy and 16 fake-child HTTP tests"],
-  ["32-row FP32 head: native only", "observed", "This native checkpoint excludes later v8 model results"],
+  ["Sustained ingress and loopback HTTP", "observed", "four sequential requests and nine frozen-reference outputs"],
+  ["32-row FP32 head: bounded model passes", "observed", "actual maximum rows are 16 and 17, not 32"],
   ["Shared peer currentness: native only", "observed", "four native cases, not a model-speed"],
   ["Admission cache: frozen TP1 canary", "observed", "not steady-state serving"],
   ["Long-context capacity and speculation remain open", "open", "planned, not implemented or proved"],
