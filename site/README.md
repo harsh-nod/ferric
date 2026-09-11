@@ -7,8 +7,8 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-The competitiveness checkpoint is unpublished until separately approved.
-`competitivenessSprint` in `data/project.js` records private integrated JSONL
+The follow-up checkpoint is unpublished until separately approved. The prior
+`competitivenessSprint` snapshot in `data/project.js` is preserved verbatim and records private integrated JSONL
 and loopback HTTP source, scoped host/protocol tests, v8 native fixtures and
 separate exact-reference model canaries at budgets 16/32 (actual maxima 16/17,
 n=1 each, effectively flat rates). The real HTTP smoke has four sequential
@@ -17,9 +17,33 @@ clean teardown and all-eight-GPU idle checks. No endpoint remains active;
 the smoke is not concurrent or sustained-load qualification and provides no
 HTTP performance claim. Shared peer-currentness results remain native-only;
 the frozen-511 two-per-mode admission-cache canary remains separate. Native
-fixtures alone are not model evidence; the speculative fast path and larger
-KV envelopes remain unimplemented. Baseline launches require explicit approval.
+fixtures alone are not model evidence. Its then-unimplemented larger-KV flag
+is historical, not the current implementation status. Baseline launches require explicit approval.
 No serving-comparison or competitive-win claim follows from the canary.
+
+The additive `competitivenessFollowup` records the exact-reference wave/v8
+canary (two observations per attention mode, four requests/eight outputs per
+run), both the performance-rejected 1-ms-backoff experiment and the separate
+unpublished 50-us-cap follow-up, host/native v9 physical-capacity extension,
+published ordered-batch native checks, and optional authenticated draft intake.
+Neither v9 nor ordered native fixtures establish model or 32-request serving
+qualification. Separately, the actual 36-GiB v9 allocation and legacy control
+both pass the tiny eight-output model reference, n=1 each, at most 16 observed
+rows; these remain frozen 3e3 observations, not long-context, 32-request or
+speed claims. Draft intake is not speculative execution. The logical context
+limit remains 8,192 tokens; 36 GiB refers only to the maximum TP1 KV payload, excluding model
+weights and workspaces. The old BF16 wave failures and all `performance.js`
+observations remain unchanged.
+
+`validate-competitiveness-followup.mjs` enforces the closed new snapshot,
+rejects scope/promotion mutations, rehashes twelve separate canary reports and
+raw traces, and recomputes each paired mean independently. It also checks the
+nine v9 fixtures, two bounded model-allocation reports and two ordered-native receipts, their root reviews, and scoped
+host test receipts. All validation remains remote-only:
+
+```sh
+node validate-competitiveness-followup.mjs /private/compete-evidence
+```
 
 `validate-competitiveness.mjs` validates the closed snapshot and rejects 30
 scope/promotion mutations. Its optional evidence route, run only on mi300x,
@@ -40,8 +64,9 @@ describe compiler-rooted dependency/source checks, not new Verus or GPU proof.
 
 This route does not replace the original native or token checkers. Historical
 `performance.js` values, rejected cases and frozen source pins are unchanged.
-The 6f6 host receipt is explicitly historical; fresh 3e3 source and native
-evidence must not relabel 511 model or cache-canary measurements.
+The 6f6 host receipt is explicitly historical. Current public f85 ordered
+source must not relabel frozen 3e3 emissions/wave models or 511 head/cache
+measurements. The polling branches are unpublished and are not part of f85.
 
 When implementation or qualification state changes:
 

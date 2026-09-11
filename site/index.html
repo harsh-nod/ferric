@@ -49,6 +49,8 @@
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
               Bounded resident JSONL and loopback HTTP are implemented in private source;
               a four-request GPU smoke passes with clean teardown.
+              Wave attention with an FP32 head passes a separate short canary; larger-KV
+              and ordered-dispatch native checks do not yet establish model speed.
               Repeated short-workload measurements exist; sustained GPU serving qualification,
               matched vLLM/SGLang comparisons, and protected qualification remain open.
             </p>
@@ -237,7 +239,7 @@
             <h2 id="next-title">Validate each performance change end to end</h2>
           </div>
           <p>
-            Next: resolve the wave model correctness failure, broaden MFMA and setup measurements,
+            Next: qualify the larger-KV and ordered-dispatch model paths, broaden measurements,
             and profile the slow peer-transport runs. Repeat standalone and cumulative profiles with
             the strict checker before assigning gains. Broaden prompts, output lengths, and
             concurrency before matched vLLM/SGLang comparisons. Production serving still needs

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { validatePerformance, testPerformanceRejections } from "./validate-performance.mjs";
 import { validateCompetitiveness, testCompetitivenessRejections } from "./validate-competitiveness.mjs";
+import { validateFollowup, testFollowupRejections } from "./validate-competitiveness-followup.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -13,6 +14,8 @@ vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
 const project = context.window.FERRIC_PROJECT;
 validateCompetitiveness(project.competitivenessSprint);
 testCompetitivenessRejections(project.competitivenessSprint);
+validateFollowup(project.competitivenessFollowup);
+testFollowupRejections(project.competitivenessFollowup);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -69,6 +72,7 @@ assertExactKeys(
     "fe2o3Repository",
     "current",
     "competitivenessSprint",
+    "competitivenessFollowup",
     "milestone",
     "readiness",
     "envelope",
@@ -89,8 +93,8 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
-  previousSiteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+  siteRefreshBase: "0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76",
+  previousSiteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
   performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
@@ -511,8 +515,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
-  fe2o3LatestTree: "a8dc6ede1fcc9ce89d26b818bb93244e1a00bcaa",
+  fe2o3LatestMain: "f85bb375e7d6f4b8193e697293d29a8888439f0b",
+  fe2o3LatestTree: "9d7eb4adec87c057c12757ac39dd0610c8cbb200",
   fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -1340,16 +1344,20 @@ assert(project.readiness[0].label === "Sustained ingress and loopback HTTP"
   && project.readiness[1].label === "32-row FP32 head: bounded model passes"
   && project.readiness[1].state === "observed",
   "latest scoped sprint observations must precede historical checkpoints");
-assert(project.readiness[project.competitivenessSprint.currentReadinessCount].label === "Checked concurrent-rank rounds",
+assert(project.readiness[project.competitivenessFollowup.currentReadinessCount].label === "Checked concurrent-rank rounds",
   "history separator must follow all current sprint readiness entries");
 assert(project.current.fe2o3LatestHostGateCore !== project.current.fe2o3LatestMain,
-  "the historical 6f6 host receipt must not be relabeled as current 3e3");
+  "the historical 6f6 host receipt must not be relabeled as current ordered-batch source");
 for (const [title, state, claim] of [
   ["Sustained ingress and loopback HTTP", "observed", "four sequential requests and nine frozen-reference outputs"],
   ["32-row FP32 head: bounded model passes", "observed", "actual maximum rows are 16 and 17, not 32"],
   ["Shared peer currentness: native only", "observed", "four native cases, not a model-speed"],
   ["Admission cache: frozen TP1 canary", "observed", "not steady-state serving"],
-  ["Long-context capacity and speculation remain open", "open", "planned, not implemented or proved"],
+  ["Large KV pool: bounded model pass", "observed", "Long-context and 32-request concurrency remain unqualified"],
+  ["Wave attention with FP32 head: tiny canary", "observed", "not a steady-state HTTP test"],
+  ["Ordered GPU batches: native qualification only", "observed", "Legacy serial DispatchSequence behavior is unchanged"],
+  ["Polling experiments: regression retained", "observed", "lowers mean fixed-canary rate 18.35%"],
+  ["Authenticated draft intake, not speculation", "implemented", "no model-backed success fixture was run"],
 ]) {
   const row = project.readiness.find((item) => item.label === title);
   assert(row && row.state === state, `competitiveness status drifted: ${title}`);
@@ -1563,7 +1571,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "3589d9e112afe3217500b50bc84a7be1af394c49",
+  "635a005edfdc564b784e724c3191ffa2e225b788",
   "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
   "no isolated cache-speedup claim follows",
   "The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover",

@@ -478,7 +478,7 @@
 
   const readiness = document.querySelector("[data-readiness]");
   project.readiness.forEach((item, index) => {
-    if (index === project.competitivenessSprint.currentReadinessCount) {
+    if (index === project.competitivenessFollowup.currentReadinessCount) {
       readiness.append(element("h3", "", "Earlier validated checkpoints"));
     }
     const row = element("div", "readiness-row");

@@ -3,8 +3,8 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
-    previousSiteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
+    siteRefreshBase: "0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76",
+    previousSiteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
     performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
     performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
     performanceSprintV2CoreHostTests: 469,
@@ -426,8 +426,8 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
     fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
     fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-    fe2o3LatestMain: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
-    fe2o3LatestTree: "a8dc6ede1fcc9ce89d26b818bb93244e1a00bcaa",
+    fe2o3LatestMain: "f85bb375e7d6f4b8193e697293d29a8888439f0b",
+    fe2o3LatestTree: "9d7eb4adec87c057c12757ac39dd0610c8cbb200",
     fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
     fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
     fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -765,12 +765,97 @@ window.FERRIC_PROJECT = Object.freeze({
     newVerusClaimed: false,
     authority: "none",
   },
+  competitivenessFollowup: {
+    currentReadinessCount: 10,
+    core: "f85bb375e7d6f4b8193e697293d29a8888439f0b",
+    historicalCheckpointPreserved: true,
+    fixedRequests: 4, fixedOutputTokens: 8, repetitionsPerMode: 2,
+    wave: {
+      core: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
+      exactReferencePassed: true, rateChangePercent: 8.70,
+      reuseTtftChangePercent: -9.08, reuseTpotChangePercent: -10.51,
+      headPrecision: "fp32-v8", batchTokens: 16, prefillChunk: 16,
+      largeKvSupported: false, newDefault: false,
+      reportSha256: [
+        "a45e36d09a3ceba55c44925ee9612b35ec11c18a3b79e00e37459362c9a6d28c",
+        "45839772c5641b78dc38cd7269706fc4846de9269c57790756919ec244c7a239",
+        "1369d31bf3c42ea8ee6154cf06f5d1b7b7a07dd00711acc6df550da73e007a22",
+        "1723b73813c5a03908cd185718031f088a90c841732074582f993f2483ab5045",
+      ],
+    },
+    polling: {
+      publicDefaultChanged: false, candidatesPublished: false,
+      adaptive: {
+        maximumBackoffMicroseconds: 1000, exactReferencePassed: true,
+        performanceRejected: true, rateChangePercent: -18.35,
+        reportSha256: [
+          "f5cc20a8ec0642c3769838e667c537a3c3a9b4f884659da70efce0ee80a94525",
+          "bc455411a2d41c54c66679da68f67d0a8bf42e77d01b5491c68fb8efdfeef962",
+          "503950606239232b2e2ad54ee282d74fa9a525e25abbc3db8ba80172cdd7606f",
+          "7286420a7f3e078736483e80d9ee72fb68c2bbcaff89063e6881dc9089fe374a",
+        ],
+      },
+      capped: {
+        maximumBackoffMicroseconds: 50, exactReferencePassed: true,
+        rateChangePercent: 16.23, adopted: false,
+        reportSha256: [
+          "c8f8ac9a01f5801ed23e1c1148dca9722abf530d7b5b0ca72f3065425357c8d5",
+          "58ff35325490b60f7ea7f8c87752716eff42520e9fbce70866787f3ac5a3491c",
+          "8e03ca8a93fb3e7245dc19c3ab38a2c84f649e10eae7958c374bfa080e6369cb",
+          "7999203e03ebe6e7114a5ff8e105f50c3fa65d79d3e23eb59911eb2310517ce6",
+        ],
+      },
+    },
+    largeKv: {
+      hostImplemented: true, source: "77c9aa4f28102e43e7c089db3850d430947cd54f",
+      profile: "large-kv-v9", world: 1, rowCapacity: 32,
+      maximumPhysicalPages: 16384, maximumKvPayloadBytes: 38654705664,
+      logicalContextTokens: 8192, legacyPhysicalPages: 512,
+      nativeCases: 9, nativePassed: true, allEightGpusIdle: true,
+      maximumPhysicalPageExercised: 16383, maximumLogicalPositionExercised: 8191,
+      modelQualified: false, concurrency32Qualified: false,
+      hostAggregateSha256: "726864fdc14b1d4ad44e74f0abc93e8c540db68d0d8b518ba42cda125cc6e618",
+      nativeReportSha256: "4b9791bf859236a031c56f2de197068ebfd3ec86c5591ebedba348a9c9ef7ceb",
+      nativeReviewSha256: "d69a9d9ab627661ee7dfddd662783b5911bb0eeff4dd05aff88f762f9a7428f2",
+      modelCanary: {
+        core: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
+        repetitionsPerMode: 1, physicalPages: [512, 16384],
+        outputTokensPerRun: 8, physicalRowsPerRun: 34, batchesPerRun: 5,
+        maximumRowsObserved: 16, dispatchesPerRun: 3077,
+        exactReferencePassed: true, fullMaximumKvAllocationObserved: true,
+        allEightGpusIdle: true, speedupClaimed: false,
+        reportSha256: [
+          "f7392fd154fcd77ae186387d4da3018e7315826d29be9da9ed2ec71cc2d5dd4d",
+          "bf372d42f51dffdf8144cee96b9a3f68c5105ee60a96406272c541cead250fb4",
+        ],
+      },
+    },
+    orderedBatches: {
+      published: true, maximumPackets: 16, nativeModes: ["full", "operational"],
+      packetsPerMode: 184, chainsPerMode: 26, actualRolloversPerMode: 1,
+      nativePassed: true, allEightGpusIdle: true, serialSequenceUnchanged: true,
+      modelSpeedQualified: false,
+      nativeReportSha256: [
+        "376d2fb2adc88af1481fe3c89c8e768dd01f68fa50065cd95a6615230a770a4e",
+        "0cf0c74446e9d1945076aec74d33bb9dad0dfee849ee1a5ce5c5d3e58fc272fc",
+      ],
+      nativeReviewSha256: "5754053d21a8de9e5f79c1ce2cfbdd70859c1c0db9179bff0232587046c2cd42",
+    },
+    draftIntake: {
+      source: "8d6418f", optIn: true, authenticatedPayloadBytes: 1503264768,
+      defaultRetainsDraftPayload: false, hostTests: 305,
+      testsSha256: "9045a562cf3f4fbc58e7be1f97e868a6c76ad2247dd6f949d4232723cf6514e1",
+      modelBackedSuccessTest: false, speculativeFastPathImplemented: false,
+    },
+    matchedExternalComparisonAvailable: false, sustainedServingQualified: false,
+    competitiveWinClaimed: false, newVerusClaimed: false, authority: "none",
+  },
   milestone: {
     name: "M1",
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "The competitiveness sprint integrates bounded sustained JSONL ingress and a loopback HTTP completion adapter in private Ferric source. A real GPU HTTP smoke passes four sequential requests and nine exact-reference outputs with clean teardown; no endpoint remains active. The opt-in TP1 32-row FP32 head passes all 15 native fixtures and both tiny model canaries at budgets 16/32, with actual maximum rows 16/17 and effectively flat rates, not a speedup. Public fe2o3 3e3 adds opt-in shared peer currentness; four TP2/TP8 producer probes pass without establishing model speed. A separate frozen-511 TP1 admission-cache canary passes twice per mode with lower request latency, not a serving comparison. Current KV capacity is only 8,192 aggregate slots; larger pools and speculative fast-path integration remain unimplemented. Matched vLLM/SGLang launches await explicit approval. Historical results and rejected cases retain exact provenance. No competitive win, sustained-load qualification, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
+      "Private Ferric source now includes bounded resident JSONL and loopback HTTP, an opt-in 32-row FP32 head, and a separate large-KV profile. The real HTTP smoke remains four sequential requests and nine exact outputs, not sustained-load qualification. Wave attention with FP32-v8 passes the fixed four-request/eight-output reference twice per mode: mean rate rises 8.70%, reuse TTFT falls 9.08% and TPOT falls 10.51%; historical BF16 wave rejections remain unchanged. V9 passes nine native high-page fixtures and a tiny exact-reference model canary with an actual 16,384-page/36-GiB KV allocation; long-context and 32-request concurrency remain unqualified. Public fe2o3 f85bb375 adds bounded ordered GPU submission with native dependency-chain and real-rollover checks; model speed is not established. Optional authenticated draft intake is implemented, not speculative execution. Polling experiments retain both a rejected regression and a separate unpublished improvement. Matched vLLM/SGLang launches await explicit approval. No competitive win, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
   },
   readiness: [
     {
@@ -798,16 +883,40 @@ window.FERRIC_PROJECT = Object.freeze({
         "The frozen public-511 TP1 MFMA plus FP32-head profile passes the exact four-request/eight-output reference twice per mode, in control/cache/cache/control order. Only immutable kernel-admission caching changes. Mean workload rate rises 27.72%; reuse-prefix TTFT falls 26.09% and TPOT falls 37.16%, while mean whole-process time is 1.14% worse. This is kernel-admission caching, not radix prefix caching. The same-controller/image/worker canary is not steady-state serving, a confidence interval, a new default or a vLLM/SGLang performance win. Its old compiler/runtime provenance is not relabeled as current 3e3.",
     },
     {
-      label: "Long-context capacity and speculation remain open",
-      state: "open",
+      label: "Large KV pool: bounded model pass",
+      state: "observed",
       detail:
-        "The current 512-page pool provides 8,192 aggregate KV slots across live requests, not per request. At 4,096 input plus 256 output tokens, each request reserves 272 pages, so the current pool admits only one active request. The primary 32-request workload needs 8,704 pages. An intermediate 8,192-page/18-GiB KV envelope and a full 16,384-page/36-GiB envelope are planned, not implemented or proved; weights and workspaces are additional. Draft execution, target verification and accepted-prefix KV integration into this fast path are also unimplemented. Older speculative source and diagnostic evidence do not qualify this target-only serving path.",
+        "The explicit TP1 large-kv-v9 profile implements up to 16,384 physical pages and 38,654,705,664 bytes (36 GiB) of KV payload; weights and workspaces are additional. Logical context remains 8,192 tokens and row capacity remains 32. Nine native fixtures pass exact outputs, immutable inputs and guards, including physical page 16,383 and logical position 8,191. Separately, both the legacy control and actual full-size v9 model allocation pass the fixed eight-output reference, n=1 each: five batches, 34 physical rows, 3,077 dispatches and at most 16 observed rows, with clean close and all eight GPUs idle. Controller 489e1751 and worker 933d73d2 remain frozen on 3e3, not current f85. The host gate passes 315 ordinary tests plus four image-bound tests. Long-context and 32-request concurrency remain unqualified. The primary 32-request workload needs 8,704 pages. Legacy behavior remains available; wave attention is excluded from v9. No speedup or new Verus proof is claimed.",
     },
     {
       label: "Current source and dependency checks",
       state: "integration",
       detail:
         "Source 121609f passes 38 source-gate tests, 31 verifier-policy tests, 28 metadata configurations across 24 manifests, five byte-identical regenerated inventories, negative policies and protected release policy on public 3e3. Compiler-rooted coverage remains 173 modules and 8,235 executable bodies. This is a source/dependency policy gate, not a new Verus proof, GPU qualification or M1 receipt. Historical 6f6 host and 511 model receipts remain separately bound.",
+    },
+    {
+      label: "Wave attention with FP32 head: tiny canary",
+      state: "observed",
+      detail:
+        "The TP1 MFMA/FP32-v8 path with device residuals, pruning and admission caching passes all fixed reference tokens and bytes twice per attention mode. With identical controller, worker and images, mean workload rate rises 8.70%; reuse-prefix TTFT falls 9.08% and TPOT falls 10.51%. Order is control/wave/wave/control, with four requests and eight output tokens per run at a 16-row budget. This is not a steady-state HTTP test, stable-tail estimate, new default or vLLM/SGLang win. Frozen 3e3 model provenance remains separate from current public core; the old BF16 wave failures remain rejected. The v9 large-pool combination is not supported.",
+    },
+    {
+      label: "Ordered GPU batches: native qualification only",
+      state: "observed",
+      detail:
+        "Public fe2o3 f85bb375 adds a distinct opt-in path for 1 to 16 dependent packets on one context: every packet waits for prior work, retains separate arguments and signals, and completes under one bounded aggregate deadline. Final completion validates every signal, frontier, currentness and exceptions; preparation and terminal failure checks remain intact. Full and operational native modes each pass 184 packets over 26 exact producer/consumer chains, repeated reuse and one actual queue rollover, with clean close and all eight GPUs idle. Legacy serial DispatchSequence behavior is unchanged. Ferric model integration and model-speed qualification are separate; no per-kernel timing or serving gain is claimed.",
+    },
+    {
+      label: "Polling experiments: regression retained",
+      state: "observed",
+      detail:
+        "The adaptive wait reaching 1 ms passes correctness but lowers mean fixed-canary rate 18.35% and is rejected for performance. A separate follow-up capped at 50 us passes correctness and raises mean rate 16.23% against its own matched control. Both have two observations per mode on the four-request/eight-output workload; they are not pooled or treated as HTTP/framework results. These core experiments remain unpublished and are not adopted; public wait defaults are unchanged. The retained regression prevents presenting the follow-up as an unconditional runtime improvement.",
+    },
+    {
+      label: "Authenticated draft intake, not speculation",
+      state: "implemented",
+      detail:
+        "Opt-in open_with_draft retains the authenticated 1,503,264,768-byte draft payload and exposes borrowed config, layout and weight views without cloning weights. Default open retains no draft payload. The scoped intake gate passes 305 ordinary host tests, strict Clippy and formatting; no model-backed success fixture was run. Resident draft execution, K+1 target verification, accepted-prefix KV commit/rollback and correction/bonus handling in this fast target path remain unimplemented. Historical speculative diagnostic evidence does not qualify this target-only path.",
     },
     {
       label: "Checked concurrent-rank rounds",
@@ -1026,7 +1135,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "Checked September 11: 3e3a77284a61654134211f8145dd0ddeebb2ff91; tree a8dc6ede1fcc9ce89d26b818bb93244e1a00bcaa. Published opt-in shared peer currentness retains per-rank mutable checks. Off/on direct-producer probes pass at TP2/TP8, with no model-speed claim. Scoped serving/CLI host checks pass on this source; broader aggregate qualification remains unclaimed. Fresh v8 emission and its 15 native fixtures are pinned to 3e3. The cache canary and earlier v7 model results remain frozen on public 511. The separate historical 6f6 host receipt below does not qualify this new source."],
+    ["fe2o3 current public main", "Checked September 11: f85bb375e7d6f4b8193e697293d29a8888439f0b; tree 9d7eb4adec87c057c12757ac39dd0610c8cbb200. Published opt-in ordered batches preserve legacy serial sequences. Full/operational native probes pass exact dependent chains and real queue rollover, not model speed. Earlier shared-currentness probes, v8/v9 emissions and wave model canaries retain their frozen 3e3 provenance; polling experiments are unpublished. The cache canary and earlier v7 model results remain frozen on public 511. Historical host receipts do not qualify this newer source or establish M1 authority."],
     ["fe2o3 historical 6f6 host checkpoint", "Checked September 11: 6f6a67bb2f6de70a1c5533bbcde1b09449c37359; tree 5674a7078440e445010d3b5d58c8bc4a34b6fe94. Uniformity-report constructor refactoring and ownership-test cleanup do not change KFD/SDK/device/Cargo.lock. The separately bound 29d756a freshness host gate passes; controller 80fab5d4 has no model run. Receipt SHA-256 b2e5d5b107f3b1fc51bb9d472a0c98259f03fc904ffd315583d3b4db67c4a852. Frozen FP32 model/native runs retain actual public 511 and controller 3d039 identities. Historical source 5110577a6d8c45390dfb353386cde748efd5d76c, tree 7f1329b68e00f3325d3ed2b977a4b6ba7cc20542, supplies their v7 image; it is reused only in host fake-worker tests on 6f6. Historical runtime implementation: 79706b43a177a2fd3fa43ec328221fa3e5041af5, tree 45f230ccc6fe2eb7400c68f20d68abafdc2f1b82. Concurrent-rank native TP2/TP8 gates and the separately frozen six-case instrumented model matrix pass; no physical GPU overlap is measured and rounds remain slower than host staging. Earlier check, September 10: 7528e7345cef0158d7034cdbae23011e3c6fb5d2; tree 897f21b7affba51b29103de55adde90cfc10f0dc. Combined private source cb31075 passes 239 Rust tests, two explicit ignores, 70 Python tests, strict Clippy and release builds on this pin; narrow follow-up 54e79c3 separately passes 31 verifier-policy tests. The earlier combined checkpoint remains 1b262ac3dd23ee63067e40587d62a124f40b9fc9, tree 6d7cf46ae19fc922c4ca39a919294e68f8ee8df3. Runtime, peer ownership/cached sequences, and generic compiler fixes are public. The preceding public-head observation was 902fef6e1478b3ac677e5456b2a2d1f917456fba, tree f62bdf2e0203a9e090958e2324553cb440e8668e. Model results retain their exact older worker/artifact pins. Historical public 3546d54d2c4a913f5d079701aed557d0a378bba8 passed 433 runtime tests, a real single RMSNorm dispatch, and eight lifecycle checks. The preceding a8 checkpoint remains a8b016e14ca8c77c9e7abe4591086f7cab11ce61, tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e. Historical MI300X Qwen32 stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68"],
     ["Historical public-428 aggregate", "Historical authority-free aggregate 528: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. This prior 428/528 artifact is not the current public-0ea artifact"],
     ["CPU pre-device observations", "428 host plus aggregate 528 completed its CPU pre-device probe in 98.23s after KFD admission and topology enumeration, excluding initialize_memory, HBM upload, and dispatch. An independent public-0ea KFD descriptor probe hashed 97.313 GiB in 58.133s, excluding GPU work. Neither is request latency"],
@@ -1440,6 +1549,37 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      commit: "f85bb375e7d6f4b8193e697293d29a8888439f0b",
+      repository: "https://github.com/harsh-nod/fe2o3",
+      title: "Published bounded ordered submission passes native dependency chains",
+      state: "observed",
+      detail: "A distinct one-context 1-to-16-packet API retains per-packet arguments/signals, fail-atomic preparation and terminal failure handling, and validates all completions after one aggregate wait. Both full and operational modes pass 184 packets/26 chains and actual queue rollover. Native result SHA-256 376d2fb2adc88af1481fe3c89c8e768dd01f68fa50065cd95a6615230a770a4e and 0cf0c74446e9d1945076aec74d33bb9dad0dfee849ee1a5ce5c5d3e58fc272fc; root review 5754053d21a8de9e5f79c1ce2cfbdd70859c1c0db9179bff0232587046c2cd42. Clean close and all-eight-GPU idle checks pass. Serial DispatchSequence is unchanged; model speed and serving qualification remain pending.",
+    },
+    {
+      sourceStatus: "3a89091",
+      title: "Wave attention plus FP32-v8 passes two matched tiny canaries",
+      state: "observed",
+      detail: "Only attention changes in control/wave/wave/control order on the TP1 MFMA/v8/device-residual/pruning/cache path. All four requests/eight outputs, bytes, schedules and teardown checks pass each run. Mean workload rate is 8.70% higher; reuse TTFT is 9.08% lower and TPOT 10.51% lower, n=2 per mode. Frozen 3e3 controller a0dbe7d9 and worker 933d73d2 use unchanged v5/v8 images. This is not HTTP serving, a stable-tail estimate, a new default, broad numerical qualification or a framework win. Earlier BF16 wave rejections remain intact.",
+    },
+    {
+      sourceStatus: "77c9aa4",
+      title: "Larger KV profile passes high-page fixtures and a full-allocation model canary",
+      state: "observed",
+      detail: "TP1 large-kv-v9 separates physical capacity up to 16,384 pages/36 GiB of KV payload from the unchanged 8,192-token logical limit and 32-row capacity. Host aggregate SHA-256 726864fdc14b1d4ad44e74f0abc93e8c540db68d0d8b518ba42cda125cc6e618 records 315 ordinary plus four explicit image tests. Nine high-page native fixtures pass under report 4b9791bf859236a031c56f2de197068ebfd3ec86c5591ebedba348a9c9ef7ceb. Separate actual 36-GiB and legacy model allocations both match all eight reference outputs, with five batches, 34 rows, 3,077 dispatches, at most 16 rows and clean teardown, n=1 each. Reports f7392fd154fcd77ae186387d4da3018e7315826d29be9da9ed2ec71cc2d5dd4d and bf372d42f51dffdf8144cee96b9a3f68c5105ee60a96406272c541cead250fb4 remain bound to controller 489e and worker 933 on older 3e3. No long-context, 32-request concurrency, speed or broad numerical qualification is claimed.",
+    },
+    {
+      sourceStatus: "4491b6b",
+      title: "Polling follow-up retains the rejected predecessor",
+      state: "observed",
+      detail: "The unpublished 1-ms-backoff candidate passes reference correctness but loses 18.35% mean canary rate; it is rejected for performance. The separate 50-us-cap candidate gains 16.23% against its own control, n=2 per mode, with the same fixed four-request/eight-output workload. Neither is adopted or published; the general wait defaults are unchanged. No pooled result, steady-state inference, HTTP or framework claim is made.",
+    },
+    {
+      sourceStatus: "8d6418f",
+      title: "Optional authenticated draft payload intake is implemented",
+      state: "implemented",
+      detail: "The opt-in model opener retains the authenticated 1,503,264,768-byte draft and exposes borrowed views; the default retains none. The scoped gate passes 305 ordinary host tests plus strict Clippy/formatting, without a model-backed success fixture. Draft execution, target verification, accepted-prefix commit/rollback and speculative correction/bonus handling in the fast path remain unimplemented. Intake alone is not speculative serving or a speculative speedup.",
+    },
     {
       sourceStatus: "6148e61",
       title: "Real HTTP smoke and both v8 model budgets retain exact outputs",
