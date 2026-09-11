@@ -35,6 +35,7 @@ const requiredClaims = [
   "Host timing and numerical diagnosis",
   "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   "5110577a6d8c45390dfb353386cde748efd5d76c",
+  "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
   "FP32 head on TP1: faster requests, slower startup",
   "slower fresh full process",
   "not broad numerical qualification",
