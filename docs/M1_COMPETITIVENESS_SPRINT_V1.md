@@ -10,9 +10,9 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
 | Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Continuous-window V3 collector and independent paired replay integrated; 109 combined measurement tests pass; matched baseline launch approval still pending |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Continuous-window V3 collector and independent paired replay integrated; 109 combined measurement tests pass; user approved sequential matched baseline launches, independent target reference and native runs pending |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
-| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft passes independent GPU reference; paired KV host settlement and opaque target completion integrated at `228df11`; closed 14-root draft family emitted on `216822284`, native and paged-driver gates pending; no end-to-end speculation yet |
+| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft passes independent GPU reference; paired KV host settlement and opaque target completion integrated at `228df11`; closed 14-root draft family emitted on `216822284` passes 36 native fixtures, paged-driver gates pending; no end-to-end speculation yet |
 | Dispatch batching | Distinct bounded ordered submission in core runtime | Currentness fix published at `216822284`; native counters/lifecycle and model/reference gates pass; fresh same-worker ABBA shows 22.19% mean rate gain over serial in this short canary, not a performance default |
 
 ## Frozen Comparison Contract
@@ -471,8 +471,15 @@ The isolated 32-row draft family is integrated at `85a450a` (source `79ba4ea`):
 scalar/MFMA projections and FP32 head, paged append/attention, and remaining
 decoder operations. It passes 27 CPU tests and strict Clippy. Fresh `216822284`
 compiler emission produces image `3a308c9c`, with exact closed-root and replay
-checks; native fixture validation is pending. This does not modify target
-kernel geometry. Resident paged draft generation, its completion-bound driver
+checks. All 36 native fixtures now pass, spanning all 14 roots: scalar/MFMA
+projection shapes, FP32 head/argmax at rows 1/17/32, Q16/KV8 mapping, append at
+page boundary 15/16 and physical page 511, attention through logical position
+8,191, full outputs, immutable inputs, inactive tails and surrounding guards.
+The worker closes unforced and all eight GPUs are idle before/after. Native
+result SHA-256 is
+`573256efddc1686a861c50dc9eedc23894a4b6f44571a57a5f5d9307c3a5c7d0`.
+These synthetic fixtures do not modify or qualify target kernel geometry.
+Resident paged draft generation, its completion-bound driver
 join, multi-round numerical validation, serving integration and speculative
 load measurements remain required.
 
@@ -497,10 +504,11 @@ has occurred.
 The separate 128/128 baseline driver is frozen with 79 CPU tests and 12 syntax
 checks passing. It binds the exact cached images, tokenizer/workload, resource
 limits, owned cleanup, startup dtype observations and unchanged timed client.
-These are synthetic/source-inspection gates only. User launch confirmation,
-the independent target 128/128 reference, final Ferric executable/Setup bindings
-and native framework API/observer validation remain outstanding. No baseline
-server has been started by this preparation.
+These are synthetic/source-inspection gates only. The user approved the two
+sequential baseline launches on September 11. The independent target 128/128
+reference, final Ferric executable/Setup bindings and native framework
+API/observer validation remain outstanding. No baseline server has yet been
+started by this preparation.
 
 ## Published Checkpoint
 
