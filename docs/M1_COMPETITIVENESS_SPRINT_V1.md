@@ -11,7 +11,7 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Bounded open-loop client and paired-series tooling integrated; 105 combined measurement tests pass; baseline launch approval still pending |
-| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; model qualification in progress |
+| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Authenticated optional draft retention integrated at `8d6418f`; speculative execution and transactional KV settlement are not complete |
 | Dispatch batching | Distinct bounded ordered submission in core runtime | Published `f85bb375e` after full/operational native dependency-chain and rollover gates; Ferric opt-in integration in progress |
 
@@ -75,9 +75,13 @@ During the sprint, upstream advanced to `c94e2101a` with a source-order
 uniformity-analysis construction change. Active Ferric dependencies were
 repinned at `2b58dde`, with only the two audited verifier Cargo raw hashes
 refreshed at `b0c4086`. The five reviewed verifier Rust sources are unchanged.
-The newer generic ordered-batch runtime is now published at `f85bb375e`;
-the next active pin update is in progress. No completed `3e3` measurement is
-relabelled as a newer source revision.
+The c94 aggregate passes all 22 gate steps, including 320 ordinary adapter
+tests, strict Clippy, 38 source-gate tests, 31 protected-verifier policies,
+unchanged generated inventories and negative/release policy checks. The newer
+generic ordered-batch runtime is now published at `f85bb375e`; active dependencies
+are repinned at `d8c8990` with two separately audited Cargo hashes at `663f780`.
+The final combined f85 gate awaits ordered-adapter integration. No completed
+`3e3` measurement is relabelled as a newer source revision.
 
 ## Native And Serving Gates
 
@@ -128,6 +132,18 @@ The independent model canary comparator validates actual pool conservation
 before translating only unused capacity in memory for the unchanged frozen
 semantic checker. Its four test methods and existing suites pass 50 tests.
 Model traces do not expose physical addresses; native evidence is separate.
+
+The full-allocation model canary also passes: the same controller `489e1751`,
+worker `933d73d2`, v5/v8 images and fixed workload run first with 8 legacy pages
+and then with 16,384 v9 pages (38,654,705,664 bytes of target K/V payload).
+Both match all eight reference outputs and bytes, including cancellation and
+prefix reuse; both execute five batches, 34 physical rows and 3,077 dispatches.
+Maximum observed batch occupancy is 16 rows. Both close without forced cleanup
+and leave all eight GPUs idle. Comparison hashes are
+`f7392fd154fcd77ae186387d4da3018e7315826d29be9da9ed2ec71cc2d5dd4d`
+and `bf372d42f51dffdf8144cee96b9a3f68c5105ee60a96406272c541cead250fb4`.
+This small model test establishes allocation/profile integration, not high-page
+model access, long-context correctness, 32-request concurrency or a speed gain.
 
 ## Current Wide-Head Canary
 
