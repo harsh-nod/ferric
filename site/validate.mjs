@@ -6,6 +6,7 @@ import vm from "node:vm";
 import { validatePerformance, testPerformanceRejections } from "./validate-performance.mjs";
 import { validateCompetitiveness, testCompetitivenessRejections } from "./validate-competitiveness.mjs";
 import { validateFollowup, testFollowupRejections } from "./validate-competitiveness-followup.mjs";
+import { validateRecovery, testRecoveryRejections } from "./validate-competitiveness-recovery.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -16,6 +17,8 @@ validateCompetitiveness(project.competitivenessSprint);
 testCompetitivenessRejections(project.competitivenessSprint);
 validateFollowup(project.competitivenessFollowup);
 testFollowupRejections(project.competitivenessFollowup);
+validateRecovery(project.competitivenessRecovery);
+testRecoveryRejections(project.competitivenessRecovery);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -73,6 +76,7 @@ assertExactKeys(
     "current",
     "competitivenessSprint",
     "competitivenessFollowup",
+    "competitivenessRecovery",
     "milestone",
     "readiness",
     "envelope",
@@ -93,8 +97,8 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76",
-  previousSiteRefreshBase: "635a005edfdc564b784e724c3191ffa2e225b788",
+  siteRefreshBase: "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
+  previousSiteRefreshBase: "0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76",
   performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
@@ -515,8 +519,8 @@ const expectedCurrent = {
   fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
   fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
-  fe2o3LatestMain: "f85bb375e7d6f4b8193e697293d29a8888439f0b",
-  fe2o3LatestTree: "9d7eb4adec87c057c12757ac39dd0610c8cbb200",
+  fe2o3LatestMain: "21682228486f7186cc3c37ddf165fffc438d8b6a",
+  fe2o3LatestTree: "e87e1433b7a519d3acd78859520549edd58bcfc0",
   fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -1339,12 +1343,12 @@ for (const [title, state] of [["Continuous batching and paged TP attention", "ob
 }
 
 assert(Array.isArray(project.readiness) && project.readiness.length >= 5, "readiness roster is incomplete");
-assert(project.readiness[0].label === "Sustained ingress and loopback HTTP"
+assert(project.readiness[0].label === "Ordered batches: recovery with a fresh serial control"
   && project.readiness[0].state === "observed"
-  && project.readiness[1].label === "32-row FP32 head: bounded model passes"
+  && project.readiness[1].label === "Standalone draft reference and fast-kernel fixtures"
   && project.readiness[1].state === "observed",
   "latest scoped sprint observations must precede historical checkpoints");
-assert(project.readiness[project.competitivenessFollowup.currentReadinessCount].label === "Checked concurrent-rank rounds",
+assert(project.readiness[project.competitivenessRecovery.currentReadinessCount].label === "Checked concurrent-rank rounds",
   "history separator must follow all current sprint readiness entries");
 assert(project.current.fe2o3LatestHostGateCore !== project.current.fe2o3LatestMain,
   "the historical 6f6 host receipt must not be relabeled as current ordered-batch source");
@@ -1355,9 +1359,13 @@ for (const [title, state, claim] of [
   ["Admission cache: frozen TP1 canary", "observed", "not steady-state serving"],
   ["Large KV pool: bounded model pass", "observed", "Long-context and 32-request concurrency remain unqualified"],
   ["Wave attention with FP32 head: tiny canary", "observed", "not a steady-state HTTP test"],
-  ["Ordered GPU batches: native qualification only", "observed", "Legacy serial DispatchSequence behavior is unchanged"],
+  ["Ordered batches: recovery with a fresh serial control", "observed", "Serial controls vary substantially"],
+  ["Standalone draft reference and fast-kernel fixtures", "observed", "not paged draft model qualification"],
+  ["Exact 656 CPU integration checkpoint", "integration", "adds no GPU, emission, numerical, new Verus"],
+  ["Continuous V3 measurement, not a serving result", "implemented", "There is no drain between windows"],
+  ["Earlier ordered-batch native checkpoint", "observed", "Legacy serial DispatchSequence behavior is unchanged"],
   ["Polling experiments: regression retained", "observed", "lowers mean fixed-canary rate 18.35%"],
-  ["Authenticated draft intake, not speculation", "implemented", "no model-backed success fixture was run"],
+  ["Earlier authenticated draft-intake checkpoint", "implemented", "no model-backed success fixture was run"],
 ]) {
   const row = project.readiness.find((item) => item.label === title);
   assert(row && row.state === state, `competitiveness status drifted: ${title}`);
@@ -1370,7 +1378,7 @@ project.readiness.forEach((item, index) => {
 
 assert(Array.isArray(project.envelope) && project.envelope.length >= 8, "M1 envelope is incomplete");
 const publicHeadRow = project.envelope.find(([label]) => label === "fe2o3 current public main");
-assert(publicHeadRow && publicHeadRow[1].startsWith(`Checked September 11: ${project.current.fe2o3LatestMain}; tree ${project.current.fe2o3LatestTree}.`),
+assert(publicHeadRow && publicHeadRow[1].startsWith(`Observed cutoff: ${project.current.fe2o3LatestMain}; tree ${project.current.fe2o3LatestTree}.`),
   "public-main evidence row must agree with the exact current commit/tree fields");
 const envelopeNames = new Set();
 project.envelope.forEach((entry, index) => {

@@ -49,8 +49,9 @@
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
               Bounded resident JSONL and loopback HTTP are implemented in private source;
               a four-request GPU smoke passes with clean teardown.
-              Wave attention with an FP32 head passes a separate short canary; larger-KV
-              and ordered-dispatch native checks do not yet establish model speed.
+              Corrected ordered submission improves a separate short canary against fresh serial
+              controls; standalone draft outputs match an independent reference.
+              Native fast-draft kernels do not yet establish speculative serving.
               Repeated short-workload measurements exist; sustained GPU serving qualification,
               matched vLLM/SGLang comparisons, and protected qualification remain open.
             </p>

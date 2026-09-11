@@ -7,7 +7,7 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-The follow-up checkpoint is unpublished until separately approved. The prior
+The new recovery checkpoint is unpublished until separately approved. The prior
 `competitivenessSprint` snapshot in `data/project.js` is preserved verbatim and records private integrated JSONL
 and loopback HTTP source, scoped host/protocol tests, v8 native fixtures and
 separate exact-reference model canaries at budgets 16/32 (actual maxima 16/17,
@@ -18,10 +18,11 @@ the smoke is not concurrent or sustained-load qualification and provides no
 HTTP performance claim. Shared peer-currentness results remain native-only;
 the frozen-511 two-per-mode admission-cache canary remains separate. Native
 fixtures alone are not model evidence. Its then-unimplemented larger-KV flag
-is historical, not the current implementation status. Baseline launches require explicit approval.
+is historical, not the current implementation status. Sequential baseline launches
+are now explicitly approved; no matched result is available at this cutoff.
 No serving-comparison or competitive-win claim follows from the canary.
 
-The additive `competitivenessFollowup` records the exact-reference wave/v8
+The preserved historical `competitivenessFollowup` records the exact-reference wave/v8
 canary (two observations per attention mode, four requests/eight outputs per
 run), both the performance-rejected 1-ms-backoff experiment and the separate
 unpublished 50-us-cap follow-up, host/native v9 physical-capacity extension,
@@ -64,9 +65,42 @@ describe compiler-rooted dependency/source checks, not new Verus or GPU proof.
 
 This route does not replace the original native or token checkers. Historical
 `performance.js` values, rejected cases and frozen source pins are unchanged.
-The 6f6 host receipt is explicitly historical. Current public f85 ordered
-source must not relabel frozen 3e3 emissions/wave models or 511 head/cache
-measurements. The polling branches are unpublished and are not part of f85.
+The 6f6 host receipt is explicitly historical. Neither the earlier f85 ordered
+checkpoint nor current public 216822284 relabels frozen 3e3 emissions/wave models
+or 511 head/cache measurements. The polling branches remain unpublished.
+
+The additive `competitivenessRecovery` preserves both older data objects and
+all of `performance.js`. It records three distinct ordered cohorts, each with
+two observations per mode on the same four-request/eight-output logical-tick
+canary: the original -35.40% serial-relative regression; +85.60% recovery against
+the old regressed ordered worker; and +22.19% against a fresh same-new-worker
+serial control. Serial controls vary substantially. None is a steady-state
+HTTP result, confidence interval, default adoption or framework win.
+
+Standalone Draft06B matches an independent offline PyTorch reference for six
+choices/two final outputs. Its controller was built at 346d588, not the later
+exact 656edb2 CPU aggregate. The frozen baseline image retains compiler/SDK 3546
+provenance. The separate closed14 v10 image emits on compiler 216822284 and
+passes 36 native full-buffer fixtures; it does not establish paged draft model
+execution, speculative serving or draft performance. The 656 aggregate has
+516 test invocations, not a deduplicated count of unique tests; its 18 explicit
+ignores and prior failed attempts are retained. No new Verus claim follows.
+
+Continuous V3 tooling has no drain between adjacent windows, retains failures,
+and separates completion-window usage from arrival cohorts. The 90-test
+collector and 109-test paired-series gates are CPU-only. Descriptive bootstrap
+intervals require at least three fresh start pairs; this is not evidence of
+stationarity, stable tails or equal framework tuning. The approved sequential
+baseline launches remain without a matched performance result at this cutoff.
+
+`validate-competitiveness-recovery.mjs` checks the closed new snapshot, negative
+scope mutations, all twelve independently pinned ordered reports/raw traces,
+per-mode means, standalone reference/trace custody, native36 output/guard
+receipts, exact 656 aggregate and the two V3 CPU logs:
+
+```sh
+node validate-competitiveness-recovery.mjs /private/recovery-evidence
+```
 
 When implementation or qualification state changes:
 
