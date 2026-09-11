@@ -274,6 +274,13 @@ class ContinuousSeriesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'invalid window'):
             series.paired_start_bootstrap([[(None, 0)]] * 3, 1000, 7)
 
+    def test_hash_rebound_nonoverlapping_one_ns_wall_run_cannot_hide_collection(self):
+        self.mutate_run(lambda report: report.update(completed_unix_ns=report['started_unix_ns'] + 1))
+        with mock.patch.object(series, 'paired_start_bootstrap') as bootstrap:
+            with self.assertRaisesRegex(ValueError, 'wall interval is shorter than monotonic'):
+                self.analyze()
+            bootstrap.assert_not_called()
+
     def test_file_aggregate_hash_and_path_bounds(self):
         budget = series.EvidenceBudget(self.root)
         binding = old_fixture.save(self.root, 'bounded.json', {'a': 'b' * 20})

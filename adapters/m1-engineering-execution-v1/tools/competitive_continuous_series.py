@@ -206,6 +206,9 @@ def analyze(frozen, manifest, root, plan_sha):
         require(wall_start >= previous_wall_end, 'engine run order overlapped or drifted')
         previous_wall_end = integer(run.get('completed_unix_ns'), wall_start + 1, 2**64 - 1,
                                     'run wall completion')
+        collection_duration = run['run']['completed_ns'] - run['run']['origin_ns']
+        require(previous_wall_end - wall_start >= collection_duration,
+                'wall interval is shorter than monotonic collection duration')
         for original, count in reduction['prompt_token_counts_by_original'].items():
             require(observed_prompt_counts.setdefault(original, count) == count,
                     'original prompt token usage changed across paired starts/engines')

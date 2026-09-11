@@ -56,8 +56,10 @@ original files and hashes.
 Existing `FerricCompetitiveServerStartEvidenceV1` and
 `FerricCompetitiveExternalObservationsV1` contracts apply. Each boot-ID/PID/start-
 tick tuple and start receipt hash must be distinct. Raw run hashes must also be
-distinct. Readiness precedes each run, and wall-clock intervals must not overlap
-or contradict the frozen engine order. These are hash-bound operator receipts,
+distinct. Readiness precedes each run, and wall-clock intervals must contain the
+full monotonic collection duration, not overlap, and follow the frozen engine
+order. A backwards clock step that shortens the wall interval invalidates replay.
+These are hash-bound operator receipts,
 not authenticated or independently proved observations. An operator's
 `steady_state_windows` boolean does not upgrade qualification.
 
