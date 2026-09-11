@@ -9,9 +9,9 @@ protected M1 qualification receipt. Prior measurements remain frozen in
 | Team | Deliverable | State | Acceptance Gate |
 | --- | --- | --- | --- |
 | Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Published on main at `79706b43a177a2fd3fa43ec328221fa3e5041af5` after a fresh no-op rebase. 469 KFD tests, 31 doctests, strict scoped Clippy and independent review pass. Native TP2/TP8 and all six matched model profiles pass. | This sprint's comparison is complete; peer setup/teardown remain follow-ups, and engineering execution is not protected qualification |
-| Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. The separate FP32 head has latest-compiler emission, nine passing native fixtures and three passing fixed-reference TP1 model profiles. FP32+MFMA resolves the observed seed mismatch; the historical BF16 MFMA rejection remains unchanged. | This short-workload gate is complete; broader numerical coverage remains necessary |
+| Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. The separate FP32 head has a `5110577a` compiler emission, nine passing native fixtures and three passing fixed-reference TP1 model profiles. FP32+MFMA resolves the observed seed mismatch; the historical BF16 MFMA rejection remains unchanged. | This short-workload gate is complete; broader numerical coverage remains necessary |
 | Measurement | Opt-in full-path host timing and strict profile summaries | All six TP2/TP8 transport profiles and all three TP1 head profiles pass fixed-reference, original-sidecar, identity and teardown checks. Only the two approved v7 pairs are compared; historical ledgers remain separate. | Completed n=1 matrices; repetitions and larger workloads remain follow-ups |
-| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins follow public `5110577a`. The latest combined gate passes 273 adapter Rust tests, nine kernel tests, strict Clippy/release, 27 metadata configurations, exact inventories/source/negative gates and 31 verifier policies. Both image-bound loader tests and the matched FP32 model runs pass. The rebuilt KFD worker is byte-identical to public797. | Final Pages checkpoint, archival and cleanup; protected M1 qualification remains open |
+| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins follow public `6f6a67bb`. The fresh gate passes 273 adapter Rust tests, nine kernel tests, strict Clippy/release, 27 metadata configurations, exact inventories/source/negative gates and 31 verifier policies. Fresh KFD tests and both host image-loader tests pass; its worker is byte-identical to the measured worker. Native/model evidence retains its recorded511 or earlier cutoff. | Implementation, measured comparisons and current-source host validation complete; protected M1 qualification remains open |
 
 ## Constraints
 
@@ -149,20 +149,46 @@ Isolated serial-to-round performance ledger:
 
 ## Latest Source
 
+After the model runs, public fe2o3 advanced to
+`6f6a67bb2f6de70a1c5533bbcde1b09449c37359`, tree
+`5674a7078440e445010d3b5d58c8bc4a34b6fe94`. Its two changes only relocate
+identical analysis-report initialization and simplify ownership test fixtures.
+Independent review found no semantic, runtime, KFD, SDK or lockfile change.
+Ferric `29d756a` updates the active pin and paired compiler tree, preserves the
+exact dependency graph, and rebinds only the two changed verifier Cargo digests.
+The separate fresh remote host gate passes without source corrections: 273
+adapter Rust tests, nine v7 kernel tests, seven peer tests including its doctest,
+strict Clippy/release, 27 metadata configurations, 38 source-gate tests, all five
+exact generated inventories, negative policies and 31 verifier policies.
+Coverage remains 173 modules and 8,235 executable bodies. Python suites run
+80 comparison tests (one skip), eleven launcher, four replay and four pair tests.
+
+The freshly built KFD worker passes 469 library tests (one existing ignore) and
+31 doctests, plus scoped strict Clippy/release. Its bytes still equal `aaa0216a`.
+The fresh controller is `80fab5d4`, not the frozen model controller `3d039c49`.
+Both image-bound CLI tests and four native-harness host tests plus self-test
+pass using the explicitly reused511 image. Existing native and model receipts
+remain bound to their actual511 or earlier sources; no `6f6a67bb` compiler
+emission, GPU execution, new Verus result or protected M1 qualification is claimed.
+The separate host-gate receipt is SHA-256
+`b2e5d5b107f3b1fc51bb9d472a0c98259f03fc904ffd315583d3b4db67c4a852`.
+
+### Frozen511 Compiler and Model Cutoff
+
 Public fe2o3 advanced to `5110577a6d8c45390dfb353386cde748efd5d76c` during
 the matrix. Its only delta is shuffle-uniformity analysis and one new regression
-target; runtime, device SDK and lockfile sources are unchanged. Active Ferric
-pins and the compiler commit/tree pair follow this revision; frozen matrix
-artifacts retain their actual identities. A separately rebuilt latest KFD worker
+target; runtime, device SDK and lockfile sources are unchanged. The model
+controller and separate v7 image use this revision; frozen matrix
+artifacts retain their actual identities. A separately rebuilt 511 KFD worker
 is byte-identical to `aaa0216a`. The v7 head image was separately re-emitted
-with the latest compiler and exact replay, HSACO `d6086650`; its earlier public797
+with compiler511 and exact replay, HSACO `d6086650`; its earlier public797
 emission is retained as history. Native arithmetic/custody checks and the three
 fixed-reference TP1 model cases below pass; broader numerical qualification is
 not established.
 
 Independent repin review found one stale compiler tree in the promotion
-behavioral harness. Its commit/tree pair was corrected at public797 and now
-matches public511 tree `7f1329b68e00f3325d3ed2b977a4b6ba7cc20542`; the remote repin gate checks
+behavioral harness. Its commit/tree pair was corrected at public797 and then
+matched public511 tree `7f1329b68e00f3325d3ed2b977a4b6ba7cc20542`; the remote repin gate checks
 both together. This narrow identity correction does not claim a full rerun
 of that behavioral harness.
 
