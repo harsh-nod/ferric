@@ -3,6 +3,8 @@
 import copy
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 import unittest
 from unittest import mock
 
@@ -139,6 +141,23 @@ class CandidateTests(unittest.TestCase):
                 mutate(changed)
                 with self.assertRaises(ValueError):
                     candidate.expectation(changed)
+
+    def test_cli_rejects_checker_or_extractor_pin_drift_before_reading_results(self):
+        tools = Path(candidate.__file__).parent
+        for changed, error in (("compare_tp_batch.py", "frozen semantic checker source"),
+                               ("performance_ledger.py", "frozen metric extractor source")):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for name in ("compare_competitiveness_candidate.py", "compare_tp_batch.py", "performance_ledger.py"):
+                    raw = (tools / name).read_bytes()
+                    (root / name).write_bytes(raw + (b"\n# drift\n" if name == changed else b""))
+                command = [sys.executable, "-B", str(root / "compare_competitiveness_candidate.py")]
+                for name in ("run-dir", "workload", "reference", "expect", "output"):
+                    command.extend(["--" + name, str(root / name)])
+                result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(error, result.stderr)
+                self.assertFalse((root / "output").exists())
 
 
 if __name__ == "__main__":

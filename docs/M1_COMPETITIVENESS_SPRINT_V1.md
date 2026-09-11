@@ -8,9 +8,9 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Reviewed and published3e3a77284;475 library tests+31 doctests and scoped Clippy pass; native gate pending |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Implementing; Ferric owns kernels and inference |
+| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact3e3 emission,9 kernel tests,191 adapter tests+2ignored,22 policy tests and scoped Clippy pass;15 native fixtures running |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Foundation integrated7a84682; preliminary host tests pass including65 admissions and prefix reuse; loopback HTTP adapter in progress |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Client implemented, initial18 tests pass; deadline/partial-failure additions in test; baseline launch approval requested |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates |20 client tests pass;6 candidate-checker tests pass, pin-drift followup in test; baseline launch approval requested |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
 
 ## Frozen Comparison Contract
@@ -55,3 +55,29 @@ Ferric pin `6f6a67bb2` was test-only cleanup. Root repinned to310 at7c6edeb,
 then to the reviewed published runtime3e3a77284 at1ba3e01. Combined validation
 and structural dependency-inventory regeneration are pending. Preliminary
 host gates and frozen511 GPU ablations retain their actual provenance.
+
+## First Target-Path Ablation
+
+The existing immutable kernel-admission cache was tested with the now-working
+TP1 MFMA plus FP32-head profile. The earlier cache experiments used TP8 and
+did not establish this combination's effect. These runs keep the identical
+controller, images, worker, four-request/eight-output canary, scheduling and
+physical GPU. Only `--runtime-cache-admission` changes. Run order was control1,
+cache1, cache2, control2. All four pass unchanged full token/byte references,
+worker exit and identity-bound all-eight-GPU idle checks.
+
+| Mode | Run | Output tokens/s | Workload s | Reuse TTFT ms | Reuse TPOT ms | Whole process s |
+| --- | --- | --- | --- | --- | --- | --- |
+| Control |1|2.005281|3.989466|639.762|493.493|131.580225|
+| Cache |1|2.481748|3.223534|485.988|316.198|135.195576|
+| Cache |2|2.635293|3.035715|462.558|303.700|128.176270|
+| Control |2|2.001220|3.997561|643.552|492.986|128.812970|
+
+Across the two observations per mode, mean output rate improves27.72%, reuse
+TTFT falls26.09% and reuse TPOT falls37.16%. Mean whole-process time is1.14%
+slower because setup varies. These are short engineering observations, not
+steady-state serving, confidence intervals, a new default or a vLLM/SGLang win.
+The frozen controller is3d039c49 (Ferric00fa58d/public511), worker aaa0216a,
+base image8c81d3fe and separate head image d6086650. They are not relabeled as
+the active3e3 source. Raw receipts are retained in the root-owned
+`ferric-compete-evidence-v1/tp1-mfma-{control,cache}-r{1,2}` evidence directories.

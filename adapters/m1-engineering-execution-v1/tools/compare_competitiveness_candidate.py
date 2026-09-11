@@ -11,6 +11,7 @@ import compare_tp_batch as check
 import performance_ledger as ledger
 
 SEMANTIC_SHA256 = "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a"
+METRIC_EXTRACTOR_SHA256 = "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e"
 SCHEMA = "FerricCompetitivenessCandidateExpectationV1"
 COMMON = check.IDENTITY_FIELDS | {
     "schema", "candidate", "world", "workload_sha256", "reference_sha256",
@@ -127,6 +128,8 @@ def main():
     args = parser.parse_args()
     exact(hashlib.sha256(check.read_bounded(Path(check.__file__), 128 * 1024)).hexdigest(),
           SEMANTIC_SHA256, "frozen semantic checker source")
+    exact(check.sha256(check.read_bounded(Path(ledger.__file__), 128 * 1024)),
+          METRIC_EXTRACTOR_SHA256, "frozen metric extractor source")
     expected_raw = check.read_bounded(args.expect, 65536)
     report = compare(args.run_dir, args.workload, args.reference, check.json_value(expected_raw))
     report["expectation_sha256"] = check.sha256(expected_raw)
