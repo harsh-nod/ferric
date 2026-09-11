@@ -2,8 +2,8 @@
 //!
 //! Both pools are owned so ordinary full-batch commits cannot bypass settlement.
 //! Candidate IDs are untrusted proposals. Only an opaque target-driver result
-//! supplies verification choices. The paged `Draft06B` driver join is deliberately
-//! absent: production callers cannot mint draft/catch-up success yet.
+//! supplies verification choices. Draft consumed-input completion is sealed only
+//! inside the separately admitted paged `Draft06B` driver, never by a caller claim.
 
 use super::{
     EngineeringTpBatchCompletionV1, EngineeringTpPageRowV1, EngineeringTpPagedErrorV1,
@@ -134,14 +134,14 @@ pub struct EngineeringTpSpeculativeTargetResultV1 {
     completion: EngineeringTpBatchCompletionV1,
 }
 
-/// Exact draft input work. No production paged draft success mint exists yet.
+/// Exact draft input work, consumed only by the role-checked paged draft driver.
 pub struct EngineeringTpSpeculativeDraftWorkV1<'a> {
     identity: WorkIdentity,
     batch: &'a EngineeringTpPreparedBatchV1,
 }
 
 impl EngineeringTpSpeculativeDraftWorkV1<'_> {
-    /// Read-only prepared inputs for the future role-checked paged draft driver.
+    /// Read-only prepared inputs for the role-checked paged draft driver.
     #[must_use]
     pub const fn batch(&self) -> &EngineeringTpPreparedBatchV1 {
         self.batch
@@ -151,6 +151,34 @@ impl EngineeringTpSpeculativeDraftWorkV1<'_> {
     #[must_use]
     pub const fn is_catch_up(&self) -> bool {
         self.identity.catch_up
+    }
+
+    pub(crate) fn validate(&self) -> bool {
+        self.identity.role == Qwen3ModelRole::Draft06B
+            && self.identity.pool == self.batch.pool
+            && self.identity.batch == self.batch.id
+            && if self.identity.catch_up {
+                self.batch.rows.len() == 1
+            } else {
+                matches!(self.batch.rows.len(), 4 | 8 | 16)
+            }
+    }
+
+    pub(crate) fn seal(
+        self,
+        completion: EngineeringTpBatchCompletionV1,
+    ) -> Result<EngineeringTpSpeculativeDraftResultV1> {
+        if !self.validate()
+            || completion.pool != self.identity.pool
+            || completion.batch != self.identity.batch
+        {
+            return Err(Error::Completion);
+        }
+        Ok(EngineeringTpSpeculativeDraftResultV1 {
+            identity: self.identity,
+            rows: inputs(self.batch),
+            completion,
+        })
     }
 
     #[cfg(test)]
@@ -163,8 +191,9 @@ impl EngineeringTpSpeculativeDraftWorkV1<'_> {
     }
 }
 
-/// Opaque draft completion. There is intentionally no public or production mint.
-/// A future paged `Draft06B` driver must bind exact consumed inputs before minting.
+/// Opaque consumed-input completion sealed only by the paged `Draft06B` driver.
+/// No public constructor or ordinary batch-output conversion exists. Candidate
+/// IDs remain untrusted proposals; this does not certify draft argmax choices.
 ///
 /// ```compile_fail
 /// use ferric_m1_engineering_execution_v1::tp_paged::speculative::EngineeringTpSpeculativeDraftWorkV1;

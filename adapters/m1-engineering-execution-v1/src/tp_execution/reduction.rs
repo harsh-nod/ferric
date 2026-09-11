@@ -190,10 +190,21 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             return Err("device residual workspace unavailable".into());
         };
         let elements = self.hidden.len();
-        let rows = elements / 4096;
+        let width = if self.draft_v10 {
+            if self.plan.model().role != ferric_spec::Qwen3ModelRole::Draft06B
+                || self.plan.model().hidden_size != 1024
+                || self.row_capacity != 32
+            {
+                return Err("draft v10 residual model binding drifted".into());
+            }
+            1024
+        } else {
+            4096
+        };
+        let rows = elements / width;
         let rank = &self.ranks[0];
         if self.plan.world_size() != 1
-            || elements != rows * 4096
+            || elements != rows * width
             || !(1..=self.row_capacity as usize).contains(&rows)
             || elements > scratch.elements
             || elements > rank.hidden.elements

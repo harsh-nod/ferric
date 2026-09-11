@@ -220,6 +220,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         capacity: 64,
         row_capacity,
         large_kv: false,
+        draft_v10: false,
         hidden: vec![0; 4096 * row_capacity as usize],
         reduction: ReductionWorkspace::Baseline,
         sequences: None,

@@ -438,6 +438,40 @@ fn target_seal_rejects_incomplete_choices_selection_and_foreign_completion() {
 }
 
 #[test]
+fn draft_seal_and_record_reject_foreign_completion_and_stale_bound_inputs() {
+    for mutation in 0..8 {
+        let mut owner = owner(15, 4);
+        let before = (owner.target.state.clone(), owner.draft.state.clone());
+        owner.reserve_round(&index(15, 1, 4, 77)).unwrap();
+        let work = owner.draft_work().unwrap();
+        let completion = EngineeringTpBatchCompletionV1::after_all_ranks(work.batch());
+        let mut result = work.seal(completion).unwrap();
+        match mutation {
+            0 => result.identity.role = Qwen3ModelRole::Target8B,
+            1 => result.identity.request = RequestId::new(2, 4),
+            2 => result.identity.epoch = CompletionEpoch::new(2),
+            3 => result.identity.batch += 1,
+            4 => result.identity.catch_up = true,
+            5 => result.rows[0].token += 1,
+            6 => result.rows[0].position += 1,
+            _ => result.completion.pool += 1,
+        }
+        assert!(owner.record_draft(result).is_err());
+        assert_eq!(owner.phase(), EngineeringTpSpeculativePhaseV1::Terminal);
+        assert_eq!(
+            (owner.target.state.clone(), owner.draft.state.clone()),
+            before
+        );
+    }
+    let mut owner = owner(0, 4);
+    owner.reserve_round(&index(0, 1, 4, 77)).unwrap();
+    let work = owner.draft_work().unwrap();
+    let mut completion = EngineeringTpBatchCompletionV1::after_all_ranks(work.batch());
+    completion.batch += 1;
+    assert!(work.seal(completion).is_err());
+}
+
+#[test]
 fn successful_round_replay_cannot_rewrite_committed_tokens() {
     let mut owner = owner(15, 4);
     let index = index(15, 1, 4, 77);

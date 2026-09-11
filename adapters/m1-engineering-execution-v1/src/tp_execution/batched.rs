@@ -20,6 +20,15 @@ use crate::tp_paged::{
 use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_spec::{ModelConfig, Qwen3ModelRole};
 
+mod draft;
+pub use draft::EngineeringTpDraftBatchExecutionV10;
+
+#[derive(Clone, Copy)]
+enum BatchedProfile {
+    Target { rows: usize, large_kv: bool },
+    Draft(crate::tp_artifact::DraftBindingV10),
+}
+
 const MAX_ROWS: usize = 16;
 const PAGE_TOKENS: u32 = 16;
 const EMBEDDING: &str = "ferric_qwen3_tp_batch_embedding_bf16_v2";
@@ -114,7 +123,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     }
 
     fn new_bounded(
-        mut transports: Vec<R>,
+        transports: Vec<R>,
         model: ModelConfig,
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
@@ -122,9 +131,40 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         row_capacity: usize,
         large_kv: bool,
     ) -> TpResult<Self> {
-        if let Err(error) =
-            validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
-        {
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: row_capacity,
+                large_kv,
+            },
+        )
+    }
+
+    fn new_profile(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        profile: BatchedProfile,
+    ) -> TpResult<Self> {
+        let (row_capacity, large_kv, draft_v10) = match profile {
+            BatchedProfile::Target { rows, large_kv } => (rows, large_kv, false),
+            BatchedProfile::Draft(_) => (32, false, true),
+        };
+        let binding = match profile {
+            BatchedProfile::Target { .. } => {
+                validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
+            }
+            BatchedProfile::Draft(image) => {
+                draft::validate_binding(&mut transports, model, pool, image)
+            }
+        };
+        if let Err(error) = binding {
             for transport in &mut transports {
                 let _ = transport.close();
             }
@@ -149,6 +189,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv,
             },
         )?;
+        inner.draft_v10 = draft_v10;
         let metadata = (|| {
             let mut positions = Vec::new();
             let mut page_tables = Vec::new();
@@ -612,7 +653,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             * self.reduction_mode().extra_dispatches_per_layer();
         (0..self.inner.plan.world_size())
             .map(|rank| {
-                540 + extra
+                u64::from(self.inner.plan.model().layers) * 15
+                    + extra
                     + if rank == 0 { 1 + head } else { 0 }
                     + self.reduction_mode().extra_dispatches_per_forward(rank)
             })

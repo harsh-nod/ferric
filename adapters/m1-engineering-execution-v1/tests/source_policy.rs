@@ -99,6 +99,7 @@ fn adapter_is_an_exact_standalone_workspace() {
         [
             "fe2o3-hsaco",
             "fe2o3-service-host",
+            "ferric-qwen3-draft-batch32-kernels-device-v10",
             "ferric-qwen3-tp-batch-kernels-device-v2",
             "ferric-qwen3-tp-batch32-kernels-device-v5",
             "ferric-qwen3-tp-fp32-head-kernels-device-v7",
@@ -147,7 +148,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("dep:ferric-qwen3-tp-peer32-kernels-device-v6"),
             Some("dep:ferric-qwen3-tp-fp32-head-kernels-device-v7"),
             Some("dep:ferric-qwen3-tp-fp32-head32-kernels-device-v8"),
-            Some("dep:ferric-qwen3-tp-large-kv-kernels-device-v9")
+            Some("dep:ferric-qwen3-tp-large-kv-kernels-device-v9"),
+            Some("dep:ferric-qwen3-draft-batch32-kernels-device-v10")
         ]
     );
     let bin = manifest["bin"]

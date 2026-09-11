@@ -291,6 +291,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     capacity: u32,
     row_capacity: u32,
     large_kv: bool,
+    draft_v10: bool,
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
@@ -464,6 +465,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             capacity,
             row_capacity: rows,
             large_kv,
+            draft_v10: false,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
             sequences: None,
@@ -837,7 +839,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_zero", None);
         let bound = if self.row_capacity == 32 {
-            Some(row_profile::bind_storage(
+            Some(row_profile::bind_mode(
+                self.draft_v10,
                 32,
                 self.large_kv,
                 command.clone(),
@@ -865,7 +868,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             if self.ranks.len() != 1 || self.sequences.is_some() || pending.len() >= 16 {
                 return Err("pending ordered dispatch batch bound drifted".into());
             }
-            pending.push(row_profile::bind_storage(
+            pending.push(row_profile::bind_mode(
+                self.draft_v10,
                 self.row_capacity,
                 self.large_kv,
                 command(&self.ranks[0]),
@@ -877,7 +881,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 return Err("pending rank sequence bound drifted".into());
             }
             for (rank, commands) in self.ranks.iter().zip(pending) {
-                commands.push(row_profile::bind_storage(
+                commands.push(row_profile::bind_mode(
+                    self.draft_v10,
                     self.row_capacity,
                     self.large_kv,
                     command(rank),
@@ -893,7 +898,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             Some(
                 self.ranks
                     .iter()
-                    .map(|rank| row_profile::bind_storage(32, self.large_kv, command(rank)))
+                    .map(|rank| {
+                        row_profile::bind_mode(self.draft_v10, 32, self.large_kv, command(rank))
+                    })
                     .collect::<TpResult<Vec<_>>>()?,
             )
         } else {

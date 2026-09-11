@@ -2,6 +2,27 @@
 
 use super::{EngineeringTpArgumentV1, EngineeringTpDispatchV1, TpResult};
 
+#[cfg(feature = "tp-batch-engineering")]
+mod draft;
+
+pub(super) fn bind_mode(
+    draft_v10: bool,
+    capacity: u32,
+    large_kv: bool,
+    command: EngineeringTpDispatchV1,
+) -> TpResult<EngineeringTpDispatchV1> {
+    if draft_v10 {
+        if capacity != 32 || large_kv {
+            return Err("draft v10 requires independent legacy-storage 32-row routing".into());
+        }
+        #[cfg(feature = "tp-batch-engineering")]
+        return draft::bind(command);
+        #[cfg(not(feature = "tp-batch-engineering"))]
+        return Err("draft v10 requires explicit batched engineering support".into());
+    }
+    bind_storage(capacity, large_kv, command)
+}
+
 pub(super) fn bind_storage(
     capacity: u32,
     large_kv: bool,

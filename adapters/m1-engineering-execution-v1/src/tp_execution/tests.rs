@@ -239,6 +239,7 @@ fn fixture_model(
         capacity,
         row_capacity: 1,
         large_kv: false,
+        draft_v10: false,
         hidden: vec![0; model.hidden_size as usize],
         reduction: ReductionWorkspace::default(),
         sequences: None,

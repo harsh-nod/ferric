@@ -3,6 +3,7 @@
 //! evidence. These tests exercise scheduling, active extents, ownership handoff,
 //! host reductions, and terminal failure behavior without a physical device.
 
+mod draft;
 mod large_kv;
 mod ordered_batches;
 mod speculative;
@@ -52,6 +53,7 @@ struct Recording {
     pending_sequence: Option<Vec<EngineeringTpDispatchV1>>,
     pending_ordered: Option<Vec<EngineeringTpDispatchV1>>,
     ordered_supported: bool,
+    sequences_supported: bool,
     events: Rc<RefCell<Vec<Event>>>,
     commands: Vec<EngineeringTpDispatchV1>,
     reads: Vec<(u64, usize)>,
@@ -139,7 +141,7 @@ impl EngineeringTpRankTransportV1 for Recording {
         )
     }
     fn supports_sequences(&self) -> bool {
-        true
+        self.sequences_supported
     }
 
     fn submit_sequence(&mut self, commands: &[EngineeringTpDispatchV1]) -> TpResult<()> {
@@ -267,26 +269,45 @@ impl EngineeringTpRankTransportV1 for Recording {
             .borrow_mut()
             .push(Event::Wait(self.rank, command.kernel));
         // Reuse only the synthetic byte writer; retain the real v5 names/grids in receipts.
+        let is_draft = command.kernel.starts_with("ferric_qwen3_draft_batch32_");
+        let hidden = if is_draft { 1024 } else { 4096 };
+        let query = if is_draft { 2048 } else { 4096 };
+        let intermediate = if is_draft { 3072 } else { 12_288 };
         let kernel = match command.kernel {
-            "ferric_qwen3_tp_batch32_embedding_bf16_v5" => EMBEDDING,
+            "ferric_qwen3_draft_batch32_rmsnorm_v10" => RMSNORM,
+            "ferric_qwen3_draft_batch32_embedding_bf16_v10"
+            | "ferric_qwen3_tp_batch32_embedding_bf16_v5" => EMBEDDING,
             "ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5"
             | "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
+            | "ferric_qwen3_draft_batch32_gemm_bf16_f32_bf16_v10"
+            | "ferric_qwen3_draft_batch32_mfma_gemm_bf16_v10"
             | "ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5" => GEMM,
             "ferric_qwen3_tp_batch32_gemm_partial_bf16_f32_v5"
             | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5"
+            | "ferric_qwen3_draft_batch32_gemm_partial_bf16_f32_v10"
+            | "ferric_qwen3_draft_batch32_mfma_gemm_partial_f32_v10"
             | "ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5" => PARTIAL,
-            "ferric_qwen3_tp_batch32_swiglu_bf16_f32_v5" => SWIGLU,
-            "ferric_qwen3_tp_batch32_rope_v5" => ROPE,
+            "ferric_qwen3_draft_batch32_swiglu_bf16_f32_v10"
+            | "ferric_qwen3_tp_batch32_swiglu_bf16_f32_v5" => SWIGLU,
+            "ferric_qwen3_draft_batch32_rope_v10" | "ferric_qwen3_tp_batch32_rope_v5" => ROPE,
             "ferric_qwen3_tp_batch32_paged_kv_append_v5"
+            | "ferric_qwen3_draft_batch32_paged_kv_append_v10"
             | "ferric_qwen3_tp_batch32_large_kv_append_v9" => APPEND,
             "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+            | "ferric_qwen3_draft_batch32_paged_gqa_bf16_f32_v10"
             | "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9"
             | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5" => ATTENTION,
             "ferric_qwen3_tp_batch32_argmax_bf16_v5" => ARGMAX,
-            "ferric_qwen3_tp_batch32_head_bf16_f32_v8" => FP32_HEAD,
-            "ferric_qwen3_tp_batch32_mfma_head_f32_v8" => FP32_MFMA_HEAD,
-            "ferric_qwen3_tp_batch32_argmax_f32_v8" => FP32_ARGMAX,
-            "ferric_qwen3_tp_batch32_residual_bf16_v5" => "ferric_qwen3_tp_batch_residual_bf16_v3",
+            "ferric_qwen3_draft_batch32_head_bf16_f32_v10"
+            | "ferric_qwen3_tp_batch32_head_bf16_f32_v8" => FP32_HEAD,
+            "ferric_qwen3_draft_batch32_mfma_head_f32_v10"
+            | "ferric_qwen3_tp_batch32_mfma_head_f32_v8" => FP32_MFMA_HEAD,
+            "ferric_qwen3_draft_batch32_argmax_f32_v10"
+            | "ferric_qwen3_tp_batch32_argmax_f32_v8" => FP32_ARGMAX,
+            "ferric_qwen3_draft_batch32_residual_bf16_v10"
+            | "ferric_qwen3_tp_batch32_residual_bf16_v5" => {
+                "ferric_qwen3_tp_batch_residual_bf16_v3"
+            }
             name => name,
         };
         if self.failure == Some(Failure::Wait) && kernel == PARTIAL {
@@ -297,7 +318,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                 if self.failure == Some(Failure::ResidualWait) {
                     return Err("injected residual completion failure".into());
                 }
-                let elements = scalar(&command, 3) as usize * 4096;
+                let elements = scalar(&command, 3) as usize * hidden as usize;
                 let input = buffer(&command, 0);
                 let residual = buffer(&command, 1);
                 let output = buffer(&command, 2);
@@ -332,7 +353,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                     bytes.copy_from_slice(&value.to_le_bytes());
                 }
             }
-            EMBEDDING => self.output(&command, 2, scalar(&command, 3), 4096, |row| {
+            EMBEDDING => self.output(&command, 2, scalar(&command, 3), hidden, |row| {
                 u16::try_from(exact_f32(row + 1).to_bits() >> 16)
                     .unwrap()
                     .to_le_bytes()
@@ -391,13 +412,13 @@ impl EngineeringTpRankTransportV1 for Recording {
                 &command,
                 2,
                 scalar(&command, 3),
-                12_288 / scalar(&command, 4),
+                intermediate / scalar(&command, 4),
                 |_| vec![0; 2],
             ),
             ROPE => {
                 let rows = scalar(&command, 7);
                 let world = scalar(&command, 8);
-                self.output(&command, 5, rows, 4096 / world, |_| vec![0; 2]);
+                self.output(&command, 5, rows, query / world, |_| vec![0; 2]);
                 self.output(&command, 6, rows, 1024 / world, |_| vec![0; 2]);
             }
             APPEND => {
@@ -422,8 +443,8 @@ impl EngineeringTpRankTransportV1 for Recording {
                 let context = scalar(&command, 10);
                 let positions = self.u32_values(buffer(&command, 3).0, rows as usize);
                 assert_eq!(context, positions.iter().max().unwrap() + 1);
-                assert_eq!(command.grid_workgroups, rows * 32 / world);
-                self.output(&command, 5, rows, 4096 / world, |_| vec![0; 2]);
+                assert_eq!(command.grid_workgroups, rows * (query / 128) / world);
+                self.output(&command, 5, rows, query / world, |_| vec![0; 2]);
             }
             ARGMAX | FP32_ARGMAX => {
                 let bad = self.failure == Some(Failure::BadChoice);
@@ -482,6 +503,14 @@ fn fixture(
     world: u32,
     pool: &EngineeringTpPagedPoolV1,
 ) -> EngineeringTpBatchExecutionV2<Recording> {
+    fixture_for_model(world, pool, target())
+}
+
+fn fixture_for_model(
+    world: u32,
+    pool: &EngineeringTpPagedPoolV1,
+    model: ModelConfig,
+) -> EngineeringTpBatchExecutionV2<Recording> {
     let row_capacity = pool.row_capacity();
     let events = Rc::new(RefCell::new(Vec::new()));
     let mut transports = (0..world)
@@ -493,6 +522,7 @@ fn fixture(
             pending_sequence: None,
             pending_ordered: None,
             ordered_supported: true,
+            sequences_supported: true,
             events: events.clone(),
             commands: Vec::new(),
             reads: Vec::new(),
@@ -500,7 +530,6 @@ fn fixture(
             failure: None,
         })
         .collect::<Vec<_>>();
-    let model = target();
     let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
     let mut ranks = Vec::new();
     let mut positions = Vec::new();
@@ -554,7 +583,8 @@ fn fixture(
         capacity: 64,
         row_capacity: u32::try_from(row_capacity).unwrap(),
         large_kv: pool.large_kv_binding().is_some(),
-        hidden: vec![0; 4096 * row_capacity],
+        draft_v10: false,
+        hidden: vec![0; model.hidden_size as usize * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
         ordered_batches: None,

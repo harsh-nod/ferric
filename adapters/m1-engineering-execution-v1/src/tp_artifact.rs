@@ -100,6 +100,47 @@ pub const ENGINEERING_TP_LARGE_KV_EXPORTS_V9: [&str; 2] = [
 #[cfg(feature = "tp-batch-engineering")]
 const LARGE_KV_CRATE_V9: &str = "ferric_qwen3_tp_large_kv_kernels_device_v9";
 
+/// Independent, closed `Draft06B` roster; no target image can substitute.
+#[cfg(feature = "tp-batch-engineering")]
+pub const ENGINEERING_DRAFT_BATCH32_EXPORTS_V10: [&str; 14] = [
+    "ferric_qwen3_draft_batch32_rmsnorm_v10",
+    "ferric_qwen3_draft_batch32_embedding_bf16_v10",
+    "ferric_qwen3_draft_batch32_gemm_bf16_f32_bf16_v10",
+    "ferric_qwen3_draft_batch32_mfma_gemm_bf16_v10",
+    "ferric_qwen3_draft_batch32_gemm_partial_bf16_f32_v10",
+    "ferric_qwen3_draft_batch32_mfma_gemm_partial_f32_v10",
+    "ferric_qwen3_draft_batch32_swiglu_bf16_f32_v10",
+    "ferric_qwen3_draft_batch32_rope_v10",
+    "ferric_qwen3_draft_batch32_paged_kv_append_v10",
+    "ferric_qwen3_draft_batch32_paged_gqa_bf16_f32_v10",
+    "ferric_qwen3_draft_batch32_residual_bf16_v10",
+    "ferric_qwen3_draft_batch32_head_bf16_f32_v10",
+    "ferric_qwen3_draft_batch32_mfma_head_f32_v10",
+    "ferric_qwen3_draft_batch32_argmax_f32_v10",
+];
+#[cfg(feature = "tp-batch-engineering")]
+const DRAFT_BATCH32_CRATE_V10: &str = "ferric_qwen3_draft_batch32_kernels_device_v10";
+
+/// Structural identity minted only by the exact v10 admission path.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) struct DraftBindingV10 {
+    pub(crate) hsaco: [u8; 32],
+    manifest: [u8; 32],
+    handoff: [u8; 32],
+}
+
+#[cfg(all(test, feature = "tp-batch-engineering"))]
+impl DraftBindingV10 {
+    pub(crate) const fn recording() -> Self {
+        Self {
+            hsaco: [110; 32],
+            manifest: [111; 32],
+            handoff: [112; 32],
+        }
+    }
+}
+
 /// Structural image binding minted only by exact v9 artifact admission.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(feature = "tp-batch-engineering")]
@@ -322,6 +363,28 @@ impl EngineeringTpArtifactV1 {
         })
     }
 
+    /// Opens the complete independent draft32 image against its own compiled roster.
+    /// # Errors
+    /// Rejects every target, descriptor, root, file or source-identity mismatch.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_draft32(root: &Path) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            &ferric_qwen3_draft_batch32_kernels_device_v10::compiler_expectation_roster_v10(),
+            DRAFT_BATCH32_CRATE_V10,
+            &ENGINEERING_DRAFT_BATCH32_EXPORTS_V10,
+        )
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    pub(crate) fn draft_binding(&self) -> Option<DraftBindingV10> {
+        (self.source_crate == DRAFT_BATCH32_CRATE_V10).then(|| DraftBindingV10 {
+            hsaco: *self.hsaco_id.as_bytes(),
+            manifest: *self.manifest_id.as_bytes(),
+            handoff: *self.handoff_id.as_bytes(),
+        })
+    }
+
     fn open_profile(
         root: &Path,
         expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
@@ -503,6 +566,54 @@ fn exact_roster<'a>(actual: impl Iterator<Item = &'a str>, expected: &[&str]) ->
 #[cfg(test)]
 mod tests {
     use super::{ENGINEERING_TP_EXPORTS_V1, exact_exports};
+
+    #[test]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn draft32_roster_is_exact_closed14_and_disjoint_from_target_images() {
+        use super::{ENGINEERING_DRAFT_BATCH32_EXPORTS_V10 as DRAFT, exact_roster};
+        assert!(exact_roster(
+            ferric_qwen3_draft_batch32_kernels_device_v10::compiler_expectation_roster_v10()
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            &DRAFT,
+        ));
+        assert!(exact_roster(
+            DRAFT.into_iter(),
+            &ferric_qwen3_draft_batch32_kernels_device_v10::contract::ROOTS_V10
+        ));
+        assert!(!exact_roster(DRAFT.into_iter().take(13), &DRAFT));
+        assert!(!exact_roster([DRAFT[0]; 14].into_iter(), &DRAFT));
+        for root in super::ENGINEERING_TP_BATCH32_EXPORTS_V5
+            .into_iter()
+            .chain(super::ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8)
+            .chain(super::ENGINEERING_TP_LARGE_KV_EXPORTS_V9)
+        {
+            assert!(!DRAFT.contains(&root));
+        }
+    }
+
+    #[test]
+    #[ignore = "requires an independently emitted canonical v10 image; host admission only"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn draft32_image_bound_admission_uses_its_compiler_roster() {
+        let root = std::path::PathBuf::from(
+            std::env::var_os("FERRIC_TEST_DRAFT32_ARTIFACT").expect("explicit v10 image"),
+        );
+        let artifact = super::EngineeringTpArtifactV1::open_draft32(&root).unwrap();
+        let binding = artifact.draft_binding().unwrap();
+        assert_eq!(binding.hsaco, *artifact.hsaco_id().as_bytes());
+        assert_eq!(binding.manifest, *artifact.manifest_id().as_bytes());
+        assert_eq!(binding.handoff, *artifact.handoff_id().as_bytes());
+        assert!(artifact.large_kv_binding().is_none());
+        assert!(
+            super::EngineeringTpArtifactV1::open_batch32(
+                &root,
+                &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
+                true
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     fn fp32_head_roster_is_closed_and_disjoint_from_every_base_profile() {

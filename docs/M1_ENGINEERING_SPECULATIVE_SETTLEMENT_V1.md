@@ -2,7 +2,8 @@
 
 This is bounded engineering host support, not a speculative serving engine,
 protected publication, verified physical refinement, GPU qualification, or a
-performance result. The production paged Draft06B driver join is still missing.
+performance result. The additive paged Draft06B driver join is described in
+`DRAFT_PAGED_DRIVER_V10.md`; native paired-round qualification remains separate.
 
 ## Boundary
 
@@ -41,13 +42,14 @@ accepted count or choice vector: it applies the existing `verify_greedy_round`
 to the sealed choices and the exact retained index proposals. Both target and
 draft role completions are required before settlement.
 
-The current batched target driver rejects Draft06B geometry. Therefore
-`EngineeringTpSpeculativeDraftResultV1` has no public constructor and no production
-success mint. A future role-checked paged draft driver must consume
-`EngineeringTpSpeculativeDraftWorkV1` and bind its exact completed inputs inside
-that driver before returning this result. The only current draft completion
-fixture is inside `cfg(test)`; the standalone contiguous draft canary does not
-satisfy this join. Production code cannot currently complete a paired round.
+The ordinary batched target constructors still reject Draft06B geometry.
+The distinct `EngineeringTpDraftBatchExecutionV10` admits the complete independent
+v10 image and exact loaded Draft06B scope before allocation. Its
+`execute_speculative_draft` consumes `EngineeringTpSpeculativeDraftWorkV1` and
+seals the exact completed inputs inside the driver. This includes the separately
+identified catch-up work. `EngineeringTpSpeculativeDraftResultV1` still has no
+public constructor or conversion from ordinary output. Standalone contiguous
+draft canary outputs do not satisfy this join.
 
 ## Retained Prefixes
 
@@ -105,10 +107,11 @@ Host tests cover every A for K4/K8/K16, page boundaries including15->16, exact
 page conservation, stale role/epoch/request-generation/batch/row/choice binding,
 failed GPU-step simulation, paired failure atomicity, shared cached prefix
 framing, and two rounds separated by full-acceptance draft catch-up. Recording
-transport tests exercise the real target driver mint without GPU arithmetic.
+transport tests exercise both real role-driver mints and completion-bound
+catch-up without GPU arithmetic.
 
-Remaining obligations include: a real paged Draft06B completion join; binding
-model/session scopes to authenticated resident drivers; refining engineering
+Remaining obligations include: composing authenticated target/draft lifetimes
+with the full serving loop and draft-proposal generation; refining engineering
 page/refcount transitions to the protected isolated KV model; proving that
 completed GPU writes match exact row/address bounds; composing the settlement
 with `StepPublication` without independently mutable token publication; and
