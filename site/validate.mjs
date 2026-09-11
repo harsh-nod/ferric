@@ -86,7 +86,7 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
-  performanceSprintV2Source: "80ca447a25484a8c9240538fcaaba630e897b1fd",
+  performanceSprintV2Source: "049549817533b1f34d0c7c4e8c920dbb0a33ccc0",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
   performanceSprintV2CoreDoctests: 31,
@@ -98,7 +98,11 @@ const expectedCurrent = {
   performanceSprintV2HostTimingOptIn: true,
   performanceSprintV2OverlapMeasured: false,
   performanceSprintV2Bf16TieObserved: true,
-  performanceSprintV2Fp32ModelQualified: false,
+  performanceSprintV2Fp32FixedWorkloadPassed: true,
+  performanceSprintV2Fp32BroadNumericalQualification: false,
+  performanceSprintV2Fp32ModelObservations: 3,
+  performanceSprintV2Fp32ModelRepetitions: 1,
+  performanceSprintV2Fp32ModelReportSha256: "38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a",
   performanceSprintV2RoundVsSerialGainObserved: true,
   performanceSprintV2PeerBeatsHost: false,
   performanceSprintV2MatrixRepetitions: 1,
@@ -1181,6 +1185,7 @@ assert(project.current.fe2o3CurrentRepinFinalHandoffPending === false, "integrat
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
 assertSha256(project.current.performanceSprintV2Fp32NativeReportSha256, "current.performanceSprintV2Fp32NativeReportSha256");
+assertSha256(project.current.performanceSprintV2Fp32ModelReportSha256, "current.performanceSprintV2Fp32ModelReportSha256");
 assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
 assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
 assert(project.current.currentAggregateHardwareRunPending === false, "completed aggregate hardware run must not remain pending");

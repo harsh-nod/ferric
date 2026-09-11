@@ -9,9 +9,9 @@ protected M1 qualification receipt. Prior measurements remain frozen in
 | Team | Deliverable | State | Acceptance Gate |
 | --- | --- | --- | --- |
 | Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Published on main at `79706b43a177a2fd3fa43ec328221fa3e5041af5` after a fresh no-op rebase. 469 KFD tests, 31 doctests, strict scoped Clippy and independent review pass. Native TP2/TP8 and all six matched model profiles pass. | This sprint's comparison is complete; peer setup/teardown remain follow-ups, and engineering execution is not protected qualification |
-| Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | Synthetic and actual-model captures pass integrity checks. The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. Baseline still passes the fixed reference; MFMA BF16 still fails. The opt-in FP32-head candidate has fresh latest-compiler emission and nine passing native fixtures. | Full fixed-reference model validation; no reference relaxation |
-| Measurement | Opt-in full-path host timing and strict profile summaries | Integrated. All six TP2/TP8 host, serial and round profiles pass fixed-reference, sidecar, identity and teardown checks. Separate explicit v7 comparison/timing tools pass 66 combined host tests. | FP32 candidate runs; failures excluded from performance comparisons |
-| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins follow public `5110577a`. The latest combined gate passes 273 adapter Rust tests, nine kernel tests, strict Clippy/release, 27 metadata configurations, exact inventories/source/negative gates and 31 verifier policies. Both image-bound loader tests explicitly pass. The separately rebuilt KFD worker is byte-identical to public797. | Matched FP32 model checks, final archival and cleanup |
+| Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. The separate FP32 head has latest-compiler emission, nine passing native fixtures and three passing fixed-reference TP1 model profiles. FP32+MFMA resolves the observed seed mismatch; the historical BF16 MFMA rejection remains unchanged. | This short-workload gate is complete; broader numerical coverage remains necessary |
+| Measurement | Opt-in full-path host timing and strict profile summaries | All six TP2/TP8 transport profiles and all three TP1 head profiles pass fixed-reference, original-sidecar, identity and teardown checks. Only the two approved v7 pairs are compared; historical ledgers remain separate. | Completed n=1 matrices; repetitions and larger workloads remain follow-ups |
+| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins follow public `5110577a`. The latest combined gate passes 273 adapter Rust tests, nine kernel tests, strict Clippy/release, 27 metadata configurations, exact inventories/source/negative gates and 31 verifier policies. Both image-bound loader tests and the matched FP32 model runs pass. The rebuilt KFD worker is byte-identical to public797. | Final Pages checkpoint, archival and cleanup; protected M1 qualification remains open |
 
 ## Constraints
 
@@ -156,8 +156,9 @@ pins and the compiler commit/tree pair follow this revision; frozen matrix
 artifacts retain their actual identities. A separately rebuilt latest KFD worker
 is byte-identical to `aaa0216a`. The v7 head image was separately re-emitted
 with the latest compiler and exact replay, HSACO `d6086650`; its earlier public797
-emission is retained as history. Native arithmetic/custody checks pass; full-model
-qualification is still pending.
+emission is retained as history. Native arithmetic/custody checks and the three
+fixed-reference TP1 model cases below pass; broader numerical qualification is
+not established.
 
 Independent repin review found one stale compiler tree in the promotion
 behavioral harness. Its commit/tree pair was corrected at public797 and now
@@ -201,12 +202,68 @@ both CLI image-bound tests pass, including duplicate roots, invalid second-load
 metadata and partial-load poison/child reap. Four native-harness host tests and
 its CPU-only self-test also pass. The failed receipt is retained separately.
 
-The three matched model cases will use release controller
+The three matched model cases use release controller
 `3d039c49bf4a4610f3b704d52c17cc46398f0c0f010c060af66c369b8ea48192`,
 built from `00fa58d` on latest511, the same latest worker and separately admitted
-v7 image. BF16 control, FP32 baseline and FP32 MFMA remain unqualified until
-their full fixed-reference runs and timing/custody checks pass.
+v7 image. BF16 control, FP32 baseline and FP32 MFMA all pass their full
+fixed-reference runs and original timing/custody checks for this workload.
 
-Completed core, numerical and v7 kernel worktrees/build stages have been removed
-after checksum-verified archival. Root integration, measurement and Pages stages
-remain active; shared models, caches and user worktrees are untouched.
+Completed core, numerical, v7 kernel and measurement worktrees/build stages have
+been removed after checksum-verified archival. The root CPU integration stage,
+including its 6 GB target, is also removed; its archive is SHA-256
+`434492c9cf1df9dd8fa7dbd30d5fed4261337d3b3bb5e27f65c4f3234270b0cd`.
+Nine performance-case directories and both actual-model captures were verified
+against local hashes before remote deletion. A 46.3 MB GPU rerun/native-receipt
+bundle and the active Ferric integration checkout remain intentionally retained.
+Pages has its own scoped publication/cleanup receipts. Shared models, caches and
+user worktrees are untouched; no inference worker is left running.
+
+## Matched FP32 Head Results
+
+The approved prelaunch plan is SHA-256
+`4cfe035142fdd4751106cef6781d2238a1316c25f9e22625bd3975eb1daeb199`.
+All three cases keep TP1, the same controller/worker/base/v7 images, four fixed
+requests, eight outputs, prefix caching, sixteen-row/chunk budgets and operational
+validation. Each executes rows `[16,6,7,4,1]`, five batches and 2,720 dispatches.
+Complete token IDs and decoded bytes match the unchanged reference; close/reap
+and before/after all-eight-card idle checks pass. Independent review reproduces
+the three strict comparison reports exactly and checks the logical traces and
+intended workspace/profile changes separately.
+
+| Profile | Output Tokens/s | Workload Seconds | Setup Seconds | Whole Seconds | Reuse TTFT Seconds | Reuse TPOT Seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BF16 head control / baseline projections | 0.833118 | 9.602485 | 101.510401 | 112.979126 | 1.884560 | 1.191099 |
+| FP32 head / baseline projections | 0.810583 | 9.869445 | 103.747054 | 115.498046 | 2.119207 | 1.375666 |
+| FP32 head / MFMA projections | 2.059318 | 3.884780 | 122.058354 | 128.706665 | 0.626952 | 0.487188 |
+
+Each row is one short observation, not steady-state serving or a stable tail.
+The precision-only pair observes 2.70% lower workload output rate, not a gain.
+Under the same FP32 head, MFMA improves workload rate 154.05% (2.5405x).
+It also increases setup and whole-process time: projection preparation takes
+18.936 seconds, so this fresh-process run is slower overall. Selected host
+attention/FFN spans fall from 4.408/4.132 to 1.691/0.759 seconds; these are not
+isolated GPU kernel durations.
+
+The previously failing seed now produces `[17689,374]` (` Spain is`) under
+FP32+MFMA, and all four request traces match. This establishes a working opt-in
+path for this fixed workload, not a generic numerical fix, new default, HTTP
+serving readiness or a vLLM/SGLang comparison. No rejected historical BF16
+profile is retroactively repaired or admitted into a performance ledger.
+
+Three-case/two-pair timing report:
+`38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a`.
+Precision-only pair:
+`4ab3737b072c6aa52a84c313614ab22d38cc4fc62c5a4cff4ddcb9f2033581a6`.
+MFMA-under-FP32 pair:
+`6622bd900a2ab97fbdb6314b3840498bb1c7064ddef85cd02a65e7302f62d4f7`.
+Independent review:
+`f602265a2be148c59ac80f37bc7bf427ea66109c29f9e3da1a2a7f38f7828a8a`.
+
+## Remaining Work
+
+These implementation and comparison gates are complete, not all performance
+work or M1. Priorities from the observed costs are persistent serving lifetime,
+peer resident-upload/teardown overhead, and further phase-level profiling before
+fusion or batching changes. Repeat and broaden the accepted profiles before
+changing defaults. All 33 protected M1 gates remain open; symmetric memory and
+MTP are still deferred.

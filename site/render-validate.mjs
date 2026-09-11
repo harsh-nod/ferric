@@ -35,7 +35,9 @@ const requiredClaims = [
   "Host timing and numerical diagnosis",
   "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   "5110577a6d8c45390dfb353386cde748efd5d76c",
-  "Full-model FP32 validation is still pending",
+  "FP32 head on TP1: faster requests, slower startup",
+  "slower fresh full process",
+  "not broad numerical qualification",
   "passes nine native scalar/MFMA-head and argmax fixtures",
   "Physical GPU overlap is not measured",
   "the immediate BF16 tie mechanism is established",
@@ -690,6 +692,16 @@ try {
       === "8719cb980590c41c7c8751b95117a858b04c42912964c811bebf7e2c4d69bbea",
     `${name}: generator digest changed`);
     const roundGenerator = page.getByText("Concurrent matrix performance-ledger generator source SHA-256", { exact: true });
+    const headGenerator = page.getByText("FP32 head summary generator source SHA-256", { exact: true });
+    assert(await headGenerator.isVisible(), `${name}: missing FP32 summary-source label`);
+    assert(await headGenerator.evaluate((node) => node.nextElementSibling.textContent)
+      === "1d0cecc87021798aa7aba7dca2fa4085a8c92fed66da5bb230f06e6e017ae6d0",
+    `${name}: FP32 generator digest changed`);
+    const headReport = page.getByText("FP32 head generated three-case summary SHA-256", { exact: true });
+    assert(await headReport.isVisible(), `${name}: missing FP32 generated-summary label`);
+    assert(await headReport.evaluate((node) => node.nextElementSibling.textContent)
+      === "38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a",
+    `${name}: FP32 summary digest changed`);
     assert(await roundGenerator.isVisible(), `${name}: missing concurrent generator-source label`);
     assert(await roundGenerator.evaluate((node) => node.nextElementSibling.textContent)
       === "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
@@ -711,6 +723,15 @@ try {
     const currentDisclosure = page.getByText("All accepted current-controller request latencies", { exact: true });
     await currentDisclosure.click();
     const roundDisclosure = page.getByText("All concurrent-matrix request latencies", { exact: true });
+    const headDisclosure = page.getByText("All FP32-head request latencies", { exact: true });
+    await headDisclosure.click();
+    for (const [caption, count] of [["FP32 head: three separate process-window observations", 3],
+      ["FP32 head: only the two approved candidate-to-baseline pairs", 2],
+      ["FP32 head: all 12 named request latencies", 12]]) {
+      assert(await page.getByRole("region", { name: caption, exact: true }).locator("tbody tr").count() === count,
+        `${name}: FP32 table cardinality: ${caption}`);
+    }
+    await headDisclosure.click();
     await roundDisclosure.click();
     assert(await page.getByRole("region", { name: "Concurrent peer matrix: all 24 named request latencies", exact: true })
       .locator("tbody tr").count() === 24, `${name}: missing concurrent matrix request identities`);
@@ -769,6 +790,7 @@ try {
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
+          ["FP32 head on TP1: faster requests, slower startup", "fp32-head"],
           ["Concurrent peer rounds: matched TP2 and TP8", "concurrent-matrix"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
           ["True 32-row execution: a latency tradeoff", "wide"],

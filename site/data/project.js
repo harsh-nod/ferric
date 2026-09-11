@@ -4,7 +4,7 @@ window.FERRIC_PROJECT = Object.freeze({
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
     siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
-    performanceSprintV2Source: "80ca447a25484a8c9240538fcaaba630e897b1fd",
+    performanceSprintV2Source: "049549817533b1f34d0c7c4e8c920dbb0a33ccc0",
     performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
     performanceSprintV2CoreHostTests: 469,
     performanceSprintV2CoreDoctests: 31,
@@ -16,7 +16,11 @@ window.FERRIC_PROJECT = Object.freeze({
     performanceSprintV2HostTimingOptIn: true,
     performanceSprintV2OverlapMeasured: false,
     performanceSprintV2Bf16TieObserved: true,
-    performanceSprintV2Fp32ModelQualified: false,
+    performanceSprintV2Fp32FixedWorkloadPassed: true,
+    performanceSprintV2Fp32BroadNumericalQualification: false,
+    performanceSprintV2Fp32ModelObservations: 3,
+    performanceSprintV2Fp32ModelRepetitions: 1,
+    performanceSprintV2Fp32ModelReportSha256: "38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a",
     performanceSprintV2RoundVsSerialGainObserved: true,
     performanceSprintV2PeerBeatsHost: false,
     performanceSprintV2MatrixRepetitions: 1,
@@ -674,7 +678,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Checked concurrent-rank runtime and transport pass native and exact-reference TP2/TP8 model gates. Rounds improve over serial peer execution, but host-staged execution remains faster; the six-row instrumented matrix has n=1 per mode. Actual-model captures establish a BF16 logit-tie mechanism for the rejected TP1 MFMA result; an FP32-head candidate is not yet model-qualified. Earlier measurements retain frozen provenance. Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards; this is not an isolated cache-speedup claim. All 33 M1 gates remain open; no serving or vLLM/SGLang baseline exists.",
+      "Checked concurrent-rank runtime and transport pass native and exact-reference TP2/TP8 model gates. Rounds improve over serial peer execution, but host-staged execution remains faster; the six-row instrumented matrix has n=1 per mode. Actual-model captures establish a BF16 logit-tie mechanism for the rejected TP1 MFMA result; a separate opt-in FP32-head TP1 profile now passes the fixed eight-output reference with baseline and MFMA projections. MFMA under the FP32 head reaches 2.541x workload rate but has worse setup and whole-process time, n=1 each. This is not broad numerical qualification. Earlier measurements retain frozen provenance. Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards; this is not an isolated cache-speedup claim. All 33 M1 gates remain open; no serving or vLLM/SGLang baseline exists.",
   },
   readiness: [
     {
@@ -687,7 +691,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "Host timing and numerical diagnosis",
       state: "observed",
       detail:
-        "Opt-in Ferric host timing records setup, model phases, collective calls and IPC as host intervals, not GPU timestamps. Actual TP1 captures have bit-identical selected Q inputs and weights, but 4 of 24,576 Q outputs differ. On MFMA's actual final-head input, sampled serial FP32 logits favor token 17689, while both watched BF16 logits narrow to 24.375. The unchanged lowest-ID argmax correctly chooses 9856: the immediate BF16 tie mechanism is established, not an argmax or layout defect. The separate FP32-head candidate passes nine native scalar/MFMA-head and argmax fixtures at rows 1/3/16 with exact outputs and custody checks. Full-model FP32 validation is still pending; rejected model runs remain excluded from performance comparisons.",
+        "Opt-in Ferric host timing records setup, model phases, collective calls and IPC as host intervals, not GPU timestamps. Actual TP1 captures have bit-identical selected Q inputs and weights, but 4 of 24,576 Q outputs differ. On MFMA's actual final-head input, sampled serial FP32 logits favor token 17689, while both watched BF16 logits narrow to 24.375. The unchanged lowest-ID argmax correctly chooses 9856: the immediate BF16 tie mechanism is established, not an argmax or layout defect. The separate FP32-head candidate passes nine native scalar/MFMA-head and argmax fixtures at rows 1/3/16 with exact outputs and custody checks. Three separately pinned TP1 head-precision cases now pass the unchanged eight-output reference. MFMA under FP32 raises workload rate 154.05% but worsens setup and whole-process time; precision alone lowers rate 2.70%, n=1 each. Historical BF16 rejected runs remain excluded, and no broad numerical or serving qualification is claimed.",
     },
     {
       label: "Repeated TP8 performance checks",
@@ -1106,7 +1110,7 @@ window.FERRIC_PROJECT = Object.freeze({
       completed:
         "7521cdc implements a uniform serial RMSNorm fold and passes focused RMSNorm validation 21/21. Historical exact v77 emits all 12 Ferric-owned kernels through fe2o3 with 26 GuardedStore operations and exact replay.",
       current:
-        "Sprint V2 retains 15 synthetic scalar/MFMA cases with 30 passing dispatches, then adds actual-model captures establishing the immediate BF16 logit tie behind the rejected TP1 token. This is not a layout/argmax defect or a full MFMA fix. The separately admitted three-root FP32-head image and TP1 host route pass scoped host checks, emission/replay and nine independently reviewed native fixtures at rows 1/3/16. Full-model FP32 qualification is still pending. Frozen images and the exact token reference remain unchanged. " +
+        "Sprint V2 retains 15 synthetic scalar/MFMA cases with 30 passing dispatches, then adds actual-model captures establishing the immediate BF16 logit tie behind the rejected TP1 token. This is not a layout/argmax defect or a full MFMA fix. The separately admitted three-root FP32-head image and TP1 host route pass scoped host checks, emission/replay and nine independently reviewed native fixtures at rows 1/3/16. The separate TP1 fixed-workload result now passes all eight outputs with baseline and MFMA projections under FP32, without relaxing the reference. Three n=1 cases and only two approved pairs are reported separately; historical BF16 rejection remains unchanged. Frozen images and the exact token reference remain unchanged. " +
         "Separate nine-root batch images emit for gfx942 and gfx950 from private source 2048c10 through unchanged fe2o3 3546d54. Eleven synthetic GPU cases pass across seven roots, including multirow projections, distinct-position RoPE, guarded paged append, nonzero-Q/K causal attention, and argmax; full Qwen exercises all nine roots. Frozen TP source 8cdde149 emits the earlier thirteen-root gfx950 image and passes six synthetic GPU probes, including FP32 partial precision and stale-prefix exclusion. All 31 host/source tests pass per target; earlier kernel/probe build stages are cleaned after evidence capture. " +
         "The prior d9f target-only run generated 8/8 coherent tokens with hardware completion; HSACO SHA-256 is 068e15991b97a829af6e77f2d105262e3ffc5fc69f1fa41a5ed5efdcae0da5e3. K3 source is integrated, and public fe2o3 0ea54ed emitted aggregate d33933a with exact replay. The target-only Ferric run completed 32/32 tokens on MI300X GPU 3 with status 0 and hardware completion true; all 32 token IDs exactly match both frozen Hugging Face reference passes for this one prompt. No K3 speedup has been measured.",
       blockedBy:
@@ -1291,6 +1295,12 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      sourceStatus: "0495498",
+      title: "Opt-in FP32 head: fixed TP1 reference passes, with a startup tradeoff",
+      state: "observed",
+      detail: "Three separately pinned n=1 cases pass the unchanged four-request/eight-output reference and timing/custody checks on TP1 with 16-row capacity. The precision-only pair lowers output rate 2.70%. Under an FP32 head, MFMA projections raise workload rate 0.810583 to 2.059318 tok/s (2.541x); reuse TTFT falls 2.119207 to 0.626952 s and TPOT 1.375666 to 0.487188 s. Setup worsens 103.747 to 122.058 s and whole-process time 115.498 to 128.707 s, so the fresh full process is slower. The MFMA seed is [17689, 374] without reference relaxation. Weights/hidden states remain BF16; only final logits and argmax use FP32. Source 00fa58d, current-511 worker aaa0216a, frozen base image 8c81d3fe and new-511 image d6086650 are separately bound. Summary SHA-256 is 38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a. Independent raw review passes. This is one fixed workload, not broad numerical qualification, a general BF16 MFMA repair, TP8/wide32 validation or serving. Historical BF16 and transport results remain unchanged.",
+    },
+    {
       sourceStatus: "abecc46",
       title: "Concurrent rounds improve serial-peer execution, not the host baseline",
       state: "observed",
@@ -1298,9 +1308,9 @@ window.FERRIC_PROJECT = Object.freeze({
     },
     {
       sourceStatus: "b935b2e",
-      title: "Actual-model capture identifies the BF16 tie; FP32 head remains a candidate",
+      title: "Earlier native checkpoint: BF16 tie identified, FP32 model then pending",
       state: "observed",
-      detail: "Model-pair report e26a5dece9ecf1a42efa8b1e9d3f51164df7b0e4e18c43ea3be84e23fd22fe52 binds selected TP1 operands and full outputs. Four of 24,576 Q outputs differ despite identical inputs/weights. On MFMA's actual final-head input, sampled serial FP32 scores are 24.426361083984375 for token 17689 and 24.36589813232422 for token 9856, but both BF16 logits are 24.375. Lowest-ID argmax correctly selects 9856; the immediate tie mechanism is established without changing the reference. This does not prove those four Q differences caused every downstream difference or qualify a full FP32 model. The current-511 three-root image passes nine native fixtures with exact full outputs, guards, read-only custody, 24 freed buffers, close/status0 and all-eight-card idle checks. Native report SHA-256 is fb2c23697b2fe144534df214225f44d14359f3f4fe6810ae766f11b07721b69b. Full-model FP32 correctness and performance remain pending.",
+      detail: "Model-pair report e26a5dece9ecf1a42efa8b1e9d3f51164df7b0e4e18c43ea3be84e23fd22fe52 binds selected TP1 operands and full outputs. Four of 24,576 Q outputs differ despite identical inputs/weights. On MFMA's actual final-head input, sampled serial FP32 scores are 24.426361083984375 for token 17689 and 24.36589813232422 for token 9856, but both BF16 logits are 24.375. Lowest-ID argmax correctly selects 9856; the immediate tie mechanism is established without changing the reference. This does not prove those four Q differences caused every downstream difference or qualify a full FP32 model. The current-511 three-root image passes nine native fixtures with exact full outputs, guards, read-only custody, 24 freed buffers, close/status0 and all-eight-card idle checks. Native report SHA-256 is fb2c23697b2fe144534df214225f44d14359f3f4fe6810ae766f11b07721b69b. At this earlier native checkpoint, full-model FP32 correctness and performance were still pending; the separate three-case result above records the later fixed-workload outcome.",
     },
     {
       commit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",

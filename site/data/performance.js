@@ -1,5 +1,161 @@
 window.FERRIC_PERFORMANCE = {
   updated: "2026-09-11",
+  fp32HeadV7: {
+    "scope": "Three opt-in TP1 Qwen3-8B observations, n=1 per profile, on one fixed four-request workload with eight outputs including the cancelled request's output. All three pass the unchanged reference token IDs and decoded bytes, exact dispatch schedule, original host-timing sidecar, cleanup and all-eight-card idle checks. Prefix cache is on; row/chunk capacity is 16; each case executes 34 physical rows in five batches.",
+    "interpretation": "The precision-only pair shows no throughput gain: baseline projection with an FP32 head is 2.70% below its explicit BF16-head control. Under the same FP32 head, MFMA projection reaches 2.541x baseline projection's workload rate (+154.05%) and lowers reuse-prefix TTFT/TPOT. However, setup rises from 103.747 to 122.058 seconds and whole-process time from 115.498 to 128.707 seconds: a slower fresh full process. These are single observations, not a statistically established effect.",
+    "precisionScope": "Only final-head logits and argmax use FP32; weights and hidden tensors remain BF16, not an all-FP32 model. All three controls admit the same additional v7 image. The explicit BF16-head control allocates zero additional head workspace; FP32 adds 9,723,904 bytes. MFMA selects projections throughout the model under the FP32 head, not just a different final-head kernel. This profile is opt-in TP1 with capacity 16, not TP8 or wide32.",
+    "sourceScope": "This source-matched controller 3d039c49 and worker aaa0216a use public fe2o3 5110577a; controller source is 00fa58d. The base image retains frozen 8c81d3fe provenance, while the separate three-root v7 image d6086650 is emitted against 511. These reports and approved pairings are separate from the frozen BF16 and transport ledgers. Earlier rejected BF16 MFMA runs remain rejected; no reference or tie-break rule was relaxed.",
+    "limits": "One fixed eight-output workload is not broad numerical qualification, steady-state serving, an SLO, a stable tail, protected M1 qualification or a vLLM/SGLang comparison. All runs use the same host instrumentation and fresh workers without warmup. Times are host wall, not GPU duration; workload rate excludes setup/teardown. TTFT/TPOT remain per request. No precision-specific per-kernel cost or general MFMA repair is claimed.",
+    "pins": {
+      "controllerSourceRevision": "00fa58d6a1a9394433083b0f37b4f6365d5edb63",
+      "fe2o3Revision": "5110577a6d8c45390dfb353386cde748efd5d76c",
+      "controllerSha256": "3d039c49bf4a4610f3b704d52c17cc46398f0c0f010c060af66c369b8ea48192",
+      "workerSha256": "aaa0216a77de0d5f12c2d668b31ca8c340d8975407c2b446bb5e20b5d820bd6e",
+      "hsacoSha256": "8c81d3fe869d3346d95486354f366988ce99210111cd0fc712dfb2194450b125",
+      "manifestSha256": "76e582363a35d48e993fbd68f15438e853a2270b4bce27ad989d96d3370f1ce8",
+      "handoffSha256": "6aaa62549ee5ca71e8e1da2aed0eba6d86fed0bc0b08edcdfdbca68a1cc48bd1",
+      "fp32HsacoSha256": "d6086650521f72a27559cc049e51d167ea27d1990f0bbbb342b32e925057ff12",
+      "fp32ManifestSha256": "c3c7de779d8b26e60befb6a19224aaa0d43a08c724417e73718eaed34d341fc2",
+      "fp32HandoffSha256": "2d8c381c952e3ee30e94ba7f6350284101890f5217158284a9a6186b9edef818",
+      "workloadSha256": "23882e195cf578b987c72fc5703fffb51541708e5431d4166e55e0fe7e2f137f",
+      "referenceSha256": "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+      "approvedPrelaunchSha256": "4cfe035142fdd4751106cef6781d2238a1316c25f9e22625bd3975eb1daeb199",
+      "summaryFileSha256": "38ba909a53c3b6d4ae491b22ffbe56927ff50b484dd445fc048eb8184f55b97a",
+      "summaryManifestSha256": "e90129dd9792a28af4353072b322458f8aea386ae6d2f3ffaabf42e5db532aa4",
+      "precisionPairFileSha256": "4ab3737b072c6aa52a84c313614ab22d38cc4fc62c5a4cff4ddcb9f2033581a6",
+      "precisionPairManifestSha256": "8cc0960ff6f64fccc47c83bfd85f19786d52b7cfb958903f3359e2bb69e30820",
+      "mfmaPairFileSha256": "6622bd900a2ab97fbdb6314b3840498bb1c7064ddef85cd02a65e7302f62d4f7",
+      "mfmaPairManifestSha256": "4c14a8d35875230c9a490482cf40938eb07399caa0c455969d56df86b7218dd8",
+      "generatorSourceSha256": "1d0cecc87021798aa7aba7dca2fa4085a8c92fed66da5bb230f06e6e017ae6d0",
+      "comparatorSourceSha256": "3c69090b82fe578a25f4ef7f870b9cc2a634e41f9934f9714cc5fa6f9e07fdbc",
+      "legacyComparatorSourceSha256": "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a",
+      "legacyTimingSourceSha256": "057f4a6dfb929db44714f8192bb1e373184f4170ce3946dcc31be811637b2402",
+      "legacyLedgerSourceSha256": "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e"
+    },
+    "profiles": [
+      {
+        "name": "bf16-control",
+        "label": "BF16 head control",
+        "headPrecision": "bf16-v7-control",
+        "projection": "baseline",
+        "repetitions": 1,
+        "workspaceBytes": 0,
+        "outputTokensPerSecond": 0.8331176898447586,
+        "workloadSeconds": 9.602484856,
+        "setupSeconds": 101.510400895,
+        "wholeSeconds": 112.979125569,
+        "requestLatencies": [
+          [
+            4.506574549,
+            2.020205511
+          ],
+          [
+            2.005117709,
+            1.952405768
+          ],
+          [
+            2.020172762,
+            null
+          ],
+          [
+            1.884559526,
+            1.191098771
+          ]
+        ],
+        "expectationFileSha256": "b766de7d702593e64c6927ae960599060072ec53148df6661e0f0d5883266d92",
+        "comparisonFileSha256": "72c1d63c34a7cdb51d068ec7bdb27b20e41da80f53104bfe5f2d66e8b51e2b9d",
+        "rawTimingSha256": "d045d9e6ca6d87958e0b9ca99ed659672169d54275035b1ed0fc5889c3e1f23c"
+      },
+      {
+        "name": "fp32-baseline",
+        "label": "FP32 head / baseline projection",
+        "headPrecision": "fp32-v7",
+        "projection": "baseline",
+        "repetitions": 1,
+        "workspaceBytes": 9723904,
+        "outputTokensPerSecond": 0.8105825248112756,
+        "workloadSeconds": 9.869445436,
+        "setupSeconds": 103.747054203,
+        "wholeSeconds": 115.498045665,
+        "requestLatencies": [
+          [
+            4.240252671,
+            2.134192436
+          ],
+          [
+            1.954996783,
+            2.1267631905
+          ],
+          [
+            2.134126527,
+            null
+          ],
+          [
+            2.119207087,
+            1.375666384
+          ]
+        ],
+        "expectationFileSha256": "c8a97bb42ea6121c58762fc6b15239fdd87d48bca25ca32ee5e4a7d901184031",
+        "comparisonFileSha256": "2a04b38b7baf4c5ccc3944843d90dfa28cd55977c9c508723a73b0841cf01977",
+        "rawTimingSha256": "404df02f858a270600af07de3e1007610fd903a250fc9f0f47acf47e528cdbae"
+      },
+      {
+        "name": "fp32-mfma",
+        "label": "FP32 head / MFMA projection",
+        "headPrecision": "fp32-v7",
+        "projection": "mfma",
+        "repetitions": 1,
+        "workspaceBytes": 9723904,
+        "outputTokensPerSecond": 2.059318470858506,
+        "workloadSeconds": 3.884780384,
+        "setupSeconds": 122.058353603,
+        "wholeSeconds": 128.706665249,
+        "requestLatencies": [
+          [
+            2.008152688,
+            0.762439935
+          ],
+          [
+            0.713079996,
+            0.6947198425
+          ],
+          [
+            0.762399246,
+            null
+          ],
+          [
+            0.626951731,
+            0.487188011
+          ]
+        ],
+        "expectationFileSha256": "1c17f80c17d11c0bd73311ad2c22d0b271940568d2cf4face578998695e48cc1",
+        "comparisonFileSha256": "8a77d9b482a8c7a5c9d3f3149f3e42cca9dd6b082c55939352cbfaefc08776d0",
+        "rawTimingSha256": "fdee18193f336f19c96a3b23d9eeb85169f2f07ad284993f59404ad5274b7790"
+      }
+    ],
+    "pairs": [
+      {
+        "baseline": "bf16-control",
+        "candidate": "fp32-baseline",
+        "label": "Head precision only",
+        "rateRatio": 0.9729508023798148,
+        "setupRatio": 1.02203373534416,
+        "wholeRatio": 1.0222954469094525,
+        "reuseTtftRatio": 1.1245105595035472,
+        "reuseTpotRatio": 1.1549557580728962
+      },
+      {
+        "baseline": "fp32-baseline",
+        "candidate": "fp32-mfma",
+        "label": "MFMA projection under FP32 head",
+        "rateRatio": 2.5405414104356225,
+        "setupRatio": 1.176499463437011,
+        "wholeRatio": 1.1143622778026163,
+        "reuseTtftRatio": 0.29584259832177506,
+        "reuseTpotRatio": 0.35414691866163966
+      }
+    ]
+  },
   concurrentRounds: {
     "scope": "One instrumented Qwen3-8B observation per TP world and transport mode (n=1 per mode): four requests and eight outputs, including one from the cancelled request. All six runs pass the frozen token/byte reference, exact dispatch schedule, cleanup and physical-idle checks. Prefix cache is on; row/chunk budgets are 16; each run executes 34 physical rows in five batches.",
     "interpretation": "Concurrent rounds reach 1.870x the serial-peer workload output rate at TP2 and 6.797x at TP8. Host-staged execution is still faster: rounds reach only 0.308x and 0.202x its rate, respectively. The serial-to-round pair isolates the round mode within the same peer worker. The host-to-peer comparison also changes worker architecture and collective placement. These are separate baselines, not an overall peer speedup.",

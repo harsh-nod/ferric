@@ -119,6 +119,30 @@
         values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
       ])));
   }
+  const fp32 = performance.fp32HeadV7;
+  measured.append(element("h3", "", "FP32 head on TP1: faster requests, slower startup"),
+    element("p", "", fp32.scope), element("p", "", fp32.interpretation));
+  performanceTable("FP32 head: three separate process-window observations",
+    ["TP1 Profile / Reps", "Output tok/s", "Workload (s)", "Setup (s)", "Whole (s)", "Reuse TTFT / TPOT (s)"],
+    fp32.profiles.map((profile) => [`${profile.label} / n=1`, profile.outputTokensPerSecond.toFixed(6),
+      profile.workloadSeconds.toFixed(3), profile.setupSeconds.toFixed(3), profile.wholeSeconds.toFixed(3),
+      `${profile.requestLatencies[3][0].toFixed(3)} / ${profile.requestLatencies[3][1].toFixed(3)}`]));
+  performanceTable("FP32 head: only the two approved candidate-to-baseline pairs",
+    ["Candidate / Baseline", "Output Rate Ratio", "Setup Ratio", "Whole Ratio", "Reuse TTFT Ratio", "Reuse TPOT Ratio"],
+    fp32.pairs.map((pair) => [`${pair.label}: ${pair.candidate} / ${pair.baseline}`,
+      ...[pair.rateRatio, pair.setupRatio, pair.wholeRatio, pair.reuseTtftRatio, pair.reuseTpotRatio]
+        .map((value) => `${value.toFixed(3)}x`)]));
+  measured.append(element("p", "", "Ratios use candidate divided by baseline. Higher output rate is better; higher setup, whole-process or latency ratios are worse. Pair summaries reuse the same three observations, not extra repetitions."));
+  const headLatencies = element("details", "performance-identities");
+  headLatencies.append(element("summary", "", "All FP32-head request latencies"));
+  performanceTable("FP32 head: all 12 named request latencies",
+    ["Profile / Request / Decode Gaps", "TTFT (s)", "TPOT (s)"],
+    fp32.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+      `${profile.name} / ${performance.requests[index].name} / ${performance.requests[index].gapsPerRepetition}`,
+      values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+    ])), headLatencies);
+  measured.append(headLatencies, element("p", "", fp32.precisionScope), element("p", "", fp32.sourceScope),
+    element("p", "", fp32.limits));
   const rounds = performance.concurrentRounds;
   if (rounds) {
     measured.append(element("h3", "", "Concurrent peer rounds: matched TP2 and TP8"),
@@ -325,6 +349,22 @@
   provenance.append(element("summary", "", "Exact identities and archived evidence"));
   provenance.append(element("p", "", performance.provenance));
   const pins = element("dl", "observation-facts");
+  const headPinLabels = {
+    generatorSourceSha256: "summary generator source SHA-256",
+    comparatorSourceSha256: "comparator source SHA-256",
+    summaryFileSha256: "generated three-case summary SHA-256",
+    summaryManifestSha256: "three-case input manifest SHA-256",
+    precisionPairFileSha256: "generated precision-pair summary SHA-256",
+    mfmaPairFileSha256: "generated MFMA-pair summary SHA-256",
+  };
+  for (const [key, value] of Object.entries(fp32.pins)) {
+    pins.append(element("dt", "", `FP32 head ${headPinLabels[key] || key}`), element("dd", "", value));
+  }
+  for (const profile of fp32.profiles) {
+    for (const key of ["expectationFileSha256", "comparisonFileSha256", "rawTimingSha256"]) {
+      pins.append(element("dt", "", `FP32 head ${profile.name} ${key}`), element("dd", "", profile[key]));
+    }
+  }
   Object.entries(performance.identities).forEach(([label, digest]) => {
     pins.append(element("dt", "", label), element("dd", "", digest));
   });
