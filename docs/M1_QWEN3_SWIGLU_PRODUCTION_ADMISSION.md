@@ -38,7 +38,7 @@ checked-in V1 candidate is rejected explicitly by
 
 The standalone
 `adapters/qwen3-swiglu-worker-v3-envelope-v2` package now pins fe2o3
-`79706b43a177a2fd3fa43ec328221fa3e5041af5`. This active dependency update does
+`5110577a6d8c45390dfb353386cde748efd5d76c`. This active dependency update does
 not change the historical candidate or protected-build record above. Its raw entry point strictly
 decodes V2 into an inert request. Its recovered entry point consumes and
 retains one move-only `RecoveredWorkerV3LoadEnvelopeV2`, derives every

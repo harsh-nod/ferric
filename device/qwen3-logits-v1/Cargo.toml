@@ -10,10 +10,10 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "79706b43a177a2fd3fa43ec328221fa3e5041af5", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5110577a6d8c45390dfb353386cde748efd5d76c", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "79706b43a177a2fd3fa43ec328221fa3e5041af5", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5110577a6d8c45390dfb353386cde748efd5d76c", version = "=0.1.0" }
 
 [dev-dependencies]
 quote = "1"
