@@ -36,8 +36,12 @@ queue delay in TTFT and records overload and failures. The series analyzer
 checks source/workload/identity receipts and computes paired hierarchical
 bootstrap intervals. Client budget/environment faults invalidate comparisons.
 These remain finite arrival cohorts including drain, not steady-state load;
-chunk timestamps are not ITL and HTTP deadlines are not hard bounds. Full
-open-loop SLO qualification remains incomplete.
+chunk timestamps are not ITL. The current client bounds every HTTP I/O wait by
+one absolute monotonic deadline and joins cancelled workers after closing their
+owned sockets. Its 74 client/transport/adapter/series tests pass, including
+dripped headers, bodies and chunk framing. This is not a real-time OS or remote
+server cleanup guarantee; older soft-deadline receipts keep their original
+meaning. Full open-loop SLO qualification remains incomplete.
 
 Every run is explicitly non-qualifying. Passing a short canary or collecting
 30 windows alone does not satisfy `PERFORMANCE.md`: equal baseline tuning,
