@@ -85,7 +85,7 @@ def fixture(root, starts=3, windows=10, warmups=10):
                       'ttft_semantics': 'intended-arrival-to-first-nonempty-text-chunk',
                       'tpot_semantics': 'first-to-last-text-chunk-divided-by-usage-tokens-minus-one',
                       'e2e_semantics': 'intended-arrival-to-DONE', 'token_itl_available': False,
-                      'deadline_semantics': 'soft-absolute-checks-with-per-read-socket-timeout',
+                      'deadline_semantics': client.DEADLINE_SEMANTICS,
                       'response_budget_exhausted': False,
                       'window_semantics': 'finite-arrival-cohort-including-drain-not-steady-state',
                       'arrival_offsets_ns': [0], 'started_unix_ns': wall,
@@ -159,6 +159,28 @@ class SeriesTests(unittest.TestCase):
         result = self.analyze()
         self.assertFalse(result['comparison_valid'])
         self.assertIsNone(result['paired'])
+
+    def test_client_cancellation_is_not_ranked_as_an_engine_failure(self):
+        def cancel(run):
+            window = run['samples'][0]
+            item = run['workload']['requests'][0]
+            record = client.arrival_failure(item, window['started_ns'], window['started_ns'] + 1,
+                                            'client_cancelled')
+            window['requests'] = [record]
+            window['metrics'] = client.aggregate([record], window['started_ns'], window['completed_ns'], 100, 100)
+            window['metrics']['failure_counts'] = {kind: int(kind == 'client_cancelled')
+                                                 for kind in client.FAILURE_KINDS}
+        self.mutate_run(cancel)
+        result = self.analyze()
+        self.assertFalse(result['comparison_valid'])
+        self.assertIsNone(result['paired'])
+        self.assertTrue(any('client cancellation' in reason for reason in result['comparison_invalid_reasons']))
+
+    def test_soft_deadline_report_cannot_be_relabelled_as_current_client(self):
+        self.mutate_run(lambda run: run.update(
+            deadline_semantics='soft-absolute-checks-with-per-read-socket-timeout'))
+        with self.assertRaisesRegex(ValueError, 'timing semantics'):
+            self.analyze()
 
     def test_external_fault_or_drift_invalidates_comparison(self):
         entry = self.manifest['runs'][0]

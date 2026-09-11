@@ -4,23 +4,29 @@
 import argparse
 from collections import deque
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from contextlib import contextmanager
+import errno
 import hashlib
-from http.client import HTTPException
+from http.client import HTTPConnection, HTTPException
 import json
 import math
 from pathlib import Path
 import random
+import selectors
+import socket
 import statistics
 import threading
 import time
 from urllib.parse import urlsplit
-from urllib.request import ProxyHandler, Request, build_opener
 
 SCHEMA = "FerricCompetitiveWorkloadV1"
 LINE_LIMIT = 1024 * 1024
 RESPONSE_LIMIT = 16 * 1024 * 1024
 RUN_RESPONSE_LIMIT = 64 * 1024 * 1024
-FAILURE_KINDS = ("client_overload", "queue_timeout", "deadline", "request_error", "client_budget")
+FAILURE_KINDS = ("client_overload", "queue_timeout", "deadline", "request_error", "client_budget",
+                 "client_cancelled")
+DEADLINE_SEMANTICS = "absolute-monotonic-io-deadline-with-owned-cancellation"
+CANCEL_POLL_SECONDS = 0.05
 
 
 def require(condition, message):
@@ -85,6 +91,138 @@ def endpoint(value):
             "benchmark endpoint must be a loopback HTTP /v1/completions URL")
     require(parsed.port is not None and 1 <= parsed.port <= 65535, "explicit port required")
     return value
+
+
+class RequestCancelled(OSError):
+    pass
+
+
+class DeadlineSocket(socket.socket):
+    """Keep stdlib HTTP/socket-file parsing; bound every underlying I/O wait."""
+
+    def __init__(self, family, deadline_ns, cancel=None):
+        super().__init__(family, socket.SOCK_STREAM)
+        self.deadline_ns = deadline_ns
+        self.cancel = cancel
+        self.reader = None
+        self.selector = None
+        try:
+            self.setblocking(False)
+            self.selector = selectors.DefaultSelector()
+            self.selector.register(self, selectors.EVENT_WRITE)
+            self.events = selectors.EVENT_WRITE
+        except BaseException:
+            self.dispose()
+            raise
+
+    def check(self):
+        if self.cancel is not None and self.cancel.is_set():
+            raise RequestCancelled("client request cancelled")
+        remaining = (self.deadline_ns - time.monotonic_ns()) / 1e9
+        if remaining <= 0:
+            raise TimeoutError("absolute request deadline exceeded")
+        return remaining
+
+    def wait_ready(self, events):
+        if self.events != events:
+            self.selector.modify(self, events)
+            self.events = events
+        while True:
+            remaining = self.check()
+            ready = self.selector.select(min(remaining, CANCEL_POLL_SECONDS))
+            self.check()
+            if ready:
+                return
+
+    def connect_loopback(self, address):
+        self.check()
+        code = super().connect_ex(address)
+        if code not in (0, errno.EISCONN):
+            if code not in (errno.EINPROGRESS, errno.EWOULDBLOCK, errno.EALREADY, errno.EINTR):
+                raise OSError(code, "loopback connection failed")
+            self.wait_ready(selectors.EVENT_WRITE)
+            code = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            if code:
+                raise OSError(code, "loopback connection failed")
+        self.check()
+
+    def sendall(self, data, flags=0):
+        pending = memoryview(data).cast("B")
+        while pending:
+            self.wait_ready(selectors.EVENT_WRITE)
+            try:
+                count = super().send(pending, flags)
+            except (BlockingIOError, InterruptedError):
+                continue
+            if count == 0:
+                raise ConnectionError("socket closed during request write")
+            pending = pending[count:]
+        self.check()
+
+    def recv_into(self, buffer, nbytes=0, flags=0):
+        while True:
+            self.wait_ready(selectors.EVENT_READ)
+            try:
+                count = super().recv_into(buffer, nbytes, flags)
+            except (BlockingIOError, InterruptedError):
+                continue
+            self.check()
+            return count
+
+    def makefile(self, mode="r", buffering=None, *, encoding=None, errors=None, newline=None):
+        require(mode == "rb" and self.reader is None, "expected one HTTP response reader")
+        # SocketIO delegates to recv_into and retains the socket until file close,
+        # including HTTPConnection's early close for Connection: close responses.
+        self.reader = super().makefile(mode, buffering, encoding=encoding, errors=errors, newline=newline)
+        return self.reader
+
+    def dispose(self):
+        try:
+            if self.reader is not None:
+                self.reader.close()
+        finally:
+            try:
+                if self.selector is not None:
+                    self.selector.close()
+            finally:
+                super().close()
+
+
+class DeadlineHTTPConnection(HTTPConnection):
+    def __init__(self, host, port, deadline_ns, cancel=None):
+        super().__init__(host, port)
+        self.deadline_ns = deadline_ns
+        self.cancel = cancel
+        self.transport = None
+
+    def connect(self):
+        # No name resolution, proxies, TLS, redirects, retry or address fallback.
+        host = "127.0.0.1" if self.host == "localhost" else self.host
+        require(host in ("127.0.0.1", "::1"), "non-loopback connection rejected")
+        require(self.transport is None, "request connection retry rejected")
+        self.transport = DeadlineSocket(socket.AF_INET6 if host == "::1" else socket.AF_INET,
+                                        self.deadline_ns, self.cancel)
+        self.sock = self.transport
+        self.transport.connect_loopback((host, self.port))
+        self.transport.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    def dispose(self):
+        try:
+            self.close()
+        finally:
+            if self.transport is not None:
+                self.transport.dispose()
+
+
+@contextmanager
+def request_workers(concurrency):
+    cancel = threading.Event()
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        try:
+            yield executor, cancel
+        finally:
+            # Signal before executor shutdown joins its bounded set of workers.
+            cancel.set()
 
 
 class ResponseBudget:
@@ -184,30 +322,42 @@ def summarize_stream(events, started_ns, max_tokens, chunks=None):
     }
 
 
-def request_one(url, model, item, timeout, deadline_ns=None, budget=None):
+def request_one(url, model, item, timeout, deadline_ns=None, budget=None, cancel=None):
     body = {"model": model, "prompt": item["prompt"], "max_tokens": item["max_tokens"],
             "temperature": 0, "seed": 0, "ignore_eos": True, "stream": True,
             "stream_options": {"include_usage": True}, "n": 1}
-    request = Request(url, data=json.dumps(body).encode(),
-                      headers={"Content-Type": "application/json", "Accept": "text/event-stream"})
     started = time.monotonic_ns()
     chunks = []
+    connection = None
+    response_status = None
     try:
         deadline_ns = started + int(timeout * 1e9) if deadline_ns is None else deadline_ns
         remaining = (deadline_ns - started) / 1e9
         require(remaining > 0, "request deadline exceeded before send")
-        # This timeout is per socket read, not a watchdog for an in-progress
-        # readline. V2 reports explicitly retain soft-deadline semantics.
-        with build_opener(ProxyHandler({})).open(request, timeout=min(timeout, remaining)) as response:
+        parsed = urlsplit(endpoint(url))
+        connection = DeadlineHTTPConnection(parsed.hostname, parsed.port, deadline_ns, cancel)
+        connection.request("POST", parsed.path, body=json.dumps(body).encode(),
+                           headers={"Content-Type": "application/json", "Accept": "text/event-stream"})
+        with connection.getresponse() as response:
+            response_status = response.status
             require(response.status == 200, "non-success HTTP response")
             require(response.headers.get_content_type() == "text/event-stream",
                     "endpoint did not return an SSE stream")
             events = sse_events(response, deadline_ns=deadline_ns, budget=budget)
             record = summarize_stream(events, started, item["max_tokens"], chunks)
+            connection.transport.check()
         return {"id": item["id"], "success": True, **record}
     except (OSError, ValueError, TypeError, KeyError, HTTPException) as error:
-        return {"id": item["id"], "success": False, "started_ns": started,
-                "completed_ns": time.monotonic_ns(), "error": str(error), "chunks": chunks}
+        failure = {"id": item["id"], "success": False, "started_ns": started,
+                   "completed_ns": time.monotonic_ns(), "error": str(error), "chunks": chunks}
+        if response_status is not None:
+            failure["http_status"] = response_status
+        if isinstance(error, RequestCancelled):
+            failure["failure_kind"] = "client_cancelled"
+        return failure
+    finally:
+        if connection is not None:
+            connection.dispose()
 
 
 def percentile(values, fraction):
@@ -245,7 +395,7 @@ def aggregate(records, started_ns, completed_ns, ttft_slo_ms, tpot_slo_ms):
 def run_window(url, value, concurrency, timeout):
     # Executor queuing is included in window throughput, not per-request TTFT.
     # This is a bounded closed-loop window, not an open-loop arrival/SLO test.
-    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+    with request_workers(concurrency) as (executor, cancel):
         started = time.monotonic_ns()
         pending = iter(enumerate(value["requests"]))
         active, records = {}, [None] * len(value["requests"])
@@ -255,7 +405,8 @@ def run_window(url, value, concurrency, timeout):
                 if entry is None:
                     break
                 index, item = entry
-                active[executor.submit(request_one, url, value["model"], item, timeout)] = index
+                active[executor.submit(request_one, url, value["model"], item, timeout,
+                                       cancel=cancel)] = index
             if not active:
                 break
             done, _ = wait(active, return_when=FIRST_COMPLETED)
@@ -288,14 +439,16 @@ def arrival_failure(item, intended, observed, reason):
             "failure_kind": reason, "error": reason, "chunks": []}
 
 
-def arrival_request(url, model, item, timeout, intended, budget=None):
+def arrival_request(url, model, item, timeout, intended, budget=None, cancel=None):
     deadline = intended + int(timeout * 1e9)
     now = time.monotonic_ns()
+    if cancel is not None and cancel.is_set():
+        return arrival_failure(item, intended, now, "client_cancelled")
     if budget is not None and budget.exhausted:
         return arrival_failure(item, intended, now, "client_budget")
     if now >= deadline:
         return arrival_failure(item, intended, now, "queue_timeout")
-    record = request_one(url, model, item, timeout, deadline_ns=deadline, budget=budget)
+    record = request_one(url, model, item, timeout, deadline_ns=deadline, budget=budget, cancel=cancel)
     record.update(intended_arrival_ns=intended, send_started_ns=record["started_ns"],
                   send_delay_ns=record["started_ns"] - intended)
     if record["success"]:
@@ -303,8 +456,9 @@ def arrival_request(url, model, item, timeout, intended, budget=None):
                       ttft_ns=record["first_text_ns"] - intended,
                       e2e_ns=record["completed_ns"] - intended)
     else:
-        record["failure_kind"] = ("client_budget" if record.get("error") == "run response-byte budget exhausted"
-                                  else "deadline" if record["completed_ns"] >= deadline else "request_error")
+        record["failure_kind"] = record.get("failure_kind", (
+            "client_budget" if record.get("error") == "run response-byte budget exhausted"
+            else "deadline" if record["completed_ns"] >= deadline else "request_error"))
     return record
 
 
@@ -319,7 +473,7 @@ def run_open_loop(url, value, concurrency, pending_capacity, timeout, offsets, b
     pending, active = deque(), {}
     next_arrival = 0
     started = time.monotonic_ns()
-    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+    with request_workers(concurrency) as (executor, cancel):
         while next_arrival < len(offsets) or pending or active:
             now = time.monotonic_ns()
             for future in [future for future in active if future.done()]:
@@ -333,7 +487,7 @@ def run_open_loop(url, value, concurrency, pending_capacity, timeout, offsets, b
             def dispatch(index):
                 active[executor.submit(arrival_request, url, value["model"],
                                        value["requests"][index], timeout,
-                                       started + offsets[index], budget)] = index
+                                       started + offsets[index], budget, cancel)] = index
 
             while pending and len(active) < concurrency:
                 dispatch(pending.popleft())
@@ -437,7 +591,7 @@ def main():
                       timeout_seconds=args.timeout, completed=False,
                       ttft_semantics="intended-arrival-to-first-nonempty-text-chunk",
                       e2e_semantics="intended-arrival-to-DONE",
-                      deadline_semantics="soft-absolute-checks-with-per-read-socket-timeout",
+                      deadline_semantics=DEADLINE_SEMANTICS,
                       window_semantics="finite-arrival-cohort-including-drain-not-steady-state",
                       failure_policy="retain-all-planned-windows-including-overload",
                       start_evidence=None, start_evidence_sha256=None,

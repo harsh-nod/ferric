@@ -46,7 +46,9 @@ pending-queue delay. `wire_ttft_ns` and `wire_e2e_ns` retain the send-attempt-ba
 durations. Request deadline accounting also begins at intended arrival. An unsent request
 has null send timestamps and explicit `client_overload`, `queue_timeout`, or
 `client_budget` failure; sent failures are `deadline`, `request_error`, or
-`client_budget`. No overload is silently retried or dropped from the records.
+`client_budget`. Client-side cancellation is explicitly `client_cancelled`, sent
+or unsent, and invalidates comparison rather than ranking an engine. No overload
+is silently retried or dropped from the records.
 
 The shared open-loop raw SSE byte budget is 64 MiB per whole invocation, including
 warmups. Individual responses remain limited to 16 MiB, lines to 1 MiB and parsed
@@ -72,15 +74,33 @@ not a distribution of token ITLs. Usage must honor the fixed requested output
 length and the stream must finish with `length` and `[DONE]`. Raw SSE events and
 receive timestamps remain available. No token ITL is invented from chunk timing.
 
-V2 explicitly records
-`deadline_semantics: soft-absolute-checks-with-per-read-socket-timeout`. Absolute
-clock checks reject late reads when they return, but urllib's socket timeout is
-per blocking read; it does not interrupt an in-progress line that stalls or
-slowly drips bytes across the absolute deadline. Queue expiry is checked before
-send. HTTP timeout accounting is not a hard wall-clock termination guarantee,
-and these reports cannot establish hard-timeout qualification. Operators must
-retain their separately owned process-level cancellation/supervision policy for
-a server or client that does not return; this tool starts no supervisor.
+V2 now records
+`deadline_semantics: absolute-monotonic-io-deadline-with-owned-cancellation`.
+The same absolute deadline covers connect, request writes, status/headers,
+chunked-transfer framing and SSE body reads. A nonblocking owned socket checks
+remaining monotonic time at each readiness wait/read/write; byte drips cannot
+reset it. Python's standard HTTP and socket-file parsers remain responsible for
+HTTP framing. Complete parsed SSE events before a timeout remain in raw failure
+evidence; incomplete frames do not become invented token events.
+
+There is no DNS, TLS, proxy, redirect, retry or address fallback. `localhost`
+explicitly means IPv4 `127.0.0.1`; use `[::1]` for an IPv6 listener. Non-200
+statuses, including redirects and overload responses, remain request failures.
+Failure records retain the parsed numeric `http_status` when available.
+On a dispatcher exception, a per-window cancellation event is set before joining
+the bounded executor. Socket waits check cancellation at most every 50 ms, and
+each worker closes its own response reader, selector and socket before exit.
+No request watchdog thread is abandoned. Ordinary completion keeps the same
+V1 closed-loop schema and metrics, with the stricter underlying I/O lifetime.
+
+This prevents blocking I/O from extending the request budget, not operating
+system scheduling delays or arbitrary process suspension. Deadline tests allow
+an explicit shared-host scheduling margin; this is not a real-time OS claim or
+a guarantee about when a remote model server releases its resources. Queue
+expiry is still checked before send. Separately owned server cancellation and
+process supervision remain operator responsibilities; this tool launches none.
+Earlier reports with the soft-deadline literal retain their original meaning
+and cannot be replayed as current-client evidence under the new frozen hash.
 
 ## Frozen Paired Series
 
@@ -177,7 +197,7 @@ Before replay, the analyzer hashes the actual imported
 hash. It also records its own `aggregator_sha256`, so future implementations
 cannot silently reinterpret older runs under an unchanged claimed client hash.
 
-Any `client_budget` record, `response_budget_exhausted: true`, or externally
+Any `client_budget` or `client_cancelled` record, `response_budget_exhausted: true`, or externally
 recorded fault, environment/clock/thermal drift or failed admission gate makes
 `comparison_valid: false` and `paired: null`. Raw per-window metrics remain for
 diagnosis, but no ratio, difference or confidence interval is emitted from such
@@ -201,6 +221,6 @@ still needs human review.
 
 `qualification` and `framework_win_claim` are always false. Full
 `qualification_preconditions_satisfied` is also false for these cohort reports:
-the steady-state, token-ITL and hard-timeout requirements remain unmet. `--require-preconditions`
+the steady-state and token-ITL requirements remain unmet. `--require-preconditions`
 therefore writes the diagnostic report and exits unsuccessfully. It must not be
 used to relabel a 3-by-10 cohort series as qualified serving evidence.

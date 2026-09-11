@@ -128,7 +128,8 @@ def verify_record(record, item, origin, offset, end, timeout):
     if sent is None:
         require(not record['success'] and record.get('started_ns') is None
                 and record.get('send_delay_ns') is None and record.get('chunks') == []
-                and record.get('failure_kind') in ('client_overload', 'queue_timeout', 'client_budget'),
+                and record.get('failure_kind') in ('client_overload', 'queue_timeout', 'client_budget',
+                                                   'client_cancelled'),
                 'invalid unsent failure record')
         if record['failure_kind'] == 'queue_timeout':
             require(completed >= intended + int(timeout * 1e9), 'premature queue timeout')
@@ -137,7 +138,8 @@ def verify_record(record, item, origin, offset, end, timeout):
     require(record.get('started_ns') == sent and record.get('send_delay_ns') == sent - intended,
             'send-delay clock drifted')
     if not record['success']:
-        require(record.get('failure_kind') in ('deadline', 'request_error', 'client_budget'), 'invalid request failure')
+        require(record.get('failure_kind') in ('deadline', 'request_error', 'client_budget',
+                                               'client_cancelled'), 'invalid request failure')
         require(type(record.get('chunks')) is list, 'missing partial SSE evidence')
         return
     require(completed <= intended + int(timeout * 1e9), 'late successful request')
@@ -275,11 +277,12 @@ def analyze(frozen, manifest, root, plan_sha):
                                    2**64 - 1, 'run wall completion')
         require(run.get('ttft_semantics') == 'intended-arrival-to-first-nonempty-text-chunk'
                 and run.get('e2e_semantics') == 'intended-arrival-to-DONE'
-                and run.get('deadline_semantics') == 'soft-absolute-checks-with-per-read-socket-timeout'
+                and run.get('deadline_semantics') == client.DEADLINE_SEMANTICS
                 and run.get('tpot_semantics') == 'first-to-last-text-chunk-divided-by-usage-tokens-minus-one'
                 and run.get('token_itl_available') is False, 'timing semantics drifted')
         require(type(run.get('response_budget_exhausted')) is bool, 'missing response-budget status')
         client_budget_fault = run['response_budget_exhausted']
+        client_cancelled = False
         require(run.get('window_semantics') == 'finite-arrival-cohort-including-drain-not-steady-state',
                 'window semantics drifted')
         values = client.workload(data['workload'])
@@ -296,6 +299,7 @@ def analyze(frozen, manifest, root, plan_sha):
                 goodput, ok = window(record, index, values, settings, offsets)
                 for request in record['requests']:
                     client_budget_fault = client_budget_fault or request.get('failure_kind') == 'client_budget'
+                    client_cancelled = client_cancelled or request.get('failure_kind') == 'client_cancelled'
                     if request['success']:
                         count = request['usage']['prompt_tokens']
                         expected = observed_prompt_counts.setdefault(request['id'], count)
@@ -308,6 +312,10 @@ def analyze(frozen, manifest, root, plan_sha):
             reasons.append(f'{engine}/{start_index}: request failures retained at zero window goodput')
         if client_budget_fault:
             reason = f'{engine}/{start_index}: client response-evidence budget exhausted; not engine performance'
+            reasons.append(reason)
+            invalid_comparison.append(reason)
+        if client_cancelled:
+            reason = f'{engine}/{start_index}: client cancellation; not engine performance'
             reasons.append(reason)
             invalid_comparison.append(reason)
         mean = statistics.mean(goodputs)
@@ -323,8 +331,7 @@ def analyze(frozen, manifest, root, plan_sha):
     if len({tuple(order) for order in frozen['engine_order']}) < 2:
         reasons.append('engine order did not rotate')
     # Cohort windows and text-chunk TPOT cannot establish the release steady-state/ITL gates.
-    method_failures = ['finite arrival cohorts do not establish steady-state windows or token-level ITL SLOs',
-                       'soft HTTP read deadlines do not establish hard timeout qualification']
+    method_failures = ['finite arrival cohorts do not establish steady-state windows or token-level ITL SLOs']
     return {'schema': 'FerricCompetitivePairedSeriesReportV1', 'authority': 'none',
             'qualification': False, 'framework_win_claim': False, 'cell': frozen['cell'],
             'baseline': frozen['baseline'], 'plan_sha256': plan_sha,

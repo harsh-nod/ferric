@@ -197,7 +197,7 @@ class ArrivalTests(unittest.TestCase):
         release = threading.Event()
         submissions = []
 
-        def request(_url, _model, item, _timeout, intended, _budget):
+        def request(_url, _model, item, _timeout, intended, _budget, _cancel):
             submissions.append(item['id'])
             entered.set()
             self.assertTrue(release.wait(3))
@@ -255,7 +255,7 @@ class ArrivalTests(unittest.TestCase):
             self.assertFalse(result['qualification'])
             self.assertEqual(len(result['samples']), 2)
             self.assertEqual(result['samples'][0]['metrics']['failure_counts']['client_overload'], 1)
-            self.assertEqual(result['deadline_semantics'], 'soft-absolute-checks-with-per-read-socket-timeout')
+            self.assertEqual(result['deadline_semantics'], bench.DEADLINE_SEMANTICS)
 
     def test_closed_loop_cli_preserves_v1_default_and_send_semantics(self):
         with tempfile.TemporaryDirectory() as directory:
