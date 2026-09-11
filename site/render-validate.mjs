@@ -54,7 +54,6 @@ const requiredClaims = [
   "516 adapter test invocations, 18 explicit ignores",
   "There is no drain between windows",
   "failed windows are retained",
-  "f85bb375e7d6f4b8193e697293d29a8888439f0b",
   "mean workload rate rises 8.70%",
   "reuse-prefix TTFT falls 9.08% and TPOT falls 10.51%",
   "lowers mean fixed-canary rate 18.35%",

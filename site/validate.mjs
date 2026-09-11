@@ -1579,7 +1579,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "635a005edfdc564b784e724c3191ffa2e225b788",
+  "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
   "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
   "no isolated cache-speedup claim follows",
   "The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover",
