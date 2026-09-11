@@ -243,7 +243,7 @@ def validate_raw(value, producer_sha):
     exact(value["device"], ("index", "name", "gcn_arch", "torch_hip"), "device")
     integer(value["device"]["index"], 0, 0, "device index")
     for key in ("name", "gcn_arch", "torch_hip"):
-        require(type(value["device"][key]) is str and 0 < len(value["device"][key]) <= 256, "device metadata")
+        require(type(value["device"][key]) is str and 0 < len(value["device"][key]) <= 256, f"device metadata {key}")
     require(value["device"]["gcn_arch"].split(":")[0] == "gfx950", "reference target")
     require(value["loading_info"] == {name: [] for name in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")}, "checkpoint loading gaps")
     require(value["tied_weights"] is True and value["repeated_exact"] is True, "tie/repeated result")
@@ -280,6 +280,16 @@ def publish(path, value):
         raise
 
 
+def device_metadata(properties, hip_version):
+    values = {"name": properties.name, "gcn_arch": properties.gcnArchName, "torch_hip": hip_version}
+    for name, value in values.items():
+        require(isinstance(value, str) and 0 < len(value) <= 256,
+                f"runtime device metadata {name}: {type(value).__name__} {str(value)[:256]!r}")
+    require(values["gcn_arch"].split(":")[0] == "gfx950", "only root-selected gfx950 supported")
+    # PyTorch version metadata can be a str subclass; JSON receipts use plain strings.
+    return {"index": 0, **{name: str(value) for name, value in values.items()}}
+
+
 def produce(options, producer_sha):
     require(options.image == IMAGE and options.image_id == IMAGE_ID, "external image pin")
     ensure_fresh_output(options.output)
@@ -295,8 +305,7 @@ def produce(options, producer_sha):
     require(torch.__version__ == VERSIONS["torch"], "imported torch version")
     require(torch.cuda.is_available() and torch.cuda.device_count() == 1, "exactly one visible GPU required")
     properties = torch.cuda.get_device_properties(0)
-    architecture = properties.gcnArchName
-    require(architecture.split(":")[0] == "gfx950", "only root-selected gfx950 supported")
+    device = device_metadata(properties, torch.version.hip)
     torch.set_num_threads(2)
     torch.backends.cuda.matmul.allow_tf32 = False
     tokenizer = Tokenizer.from_file(str(source / "tokenizer.json"))
@@ -334,7 +343,7 @@ def produce(options, producer_sha):
             passes.append({"steps": steps, "generated_tokens": generated, "generated_utf8_bytes": decode_generated(tokenizer, generated)})
         torch.cuda.synchronize()
     require(checkpoint(source) == (files, payload_sha), "checkpoint changed during model execution")
-    raw = {"schema": RAW_SCHEMA, "authority": "independent-draft-reference-only", "performance_qualified": False, "model": MODEL, "model_revision": REVISION, "source": str(source), "checkpoint": files, "draft_payload_sha256": payload_sha, "producer_sha256": producer_sha, "externally_pinned_image": IMAGE, "externally_pinned_image_id": IMAGE_ID, "versions": versions, "implementation_sources": sources, "policy": POLICY, "prompt": PROMPT, "prompt_tokens": prompt, "device": {"index": 0, "name": properties.name, "gcn_arch": architecture, "torch_hip": torch.version.hip}, "loading_info": loading, "tied_weights": True, "passes": passes, "repeated_exact": passes[0] == passes[1]}
+    raw = {"schema": RAW_SCHEMA, "authority": "independent-draft-reference-only", "performance_qualified": False, "model": MODEL, "model_revision": REVISION, "source": str(source), "checkpoint": files, "draft_payload_sha256": payload_sha, "producer_sha256": producer_sha, "externally_pinned_image": IMAGE, "externally_pinned_image_id": IMAGE_ID, "versions": versions, "implementation_sources": sources, "policy": POLICY, "prompt": PROMPT, "prompt_tokens": prompt, "device": device, "loading_info": loading, "tied_weights": True, "passes": passes, "repeated_exact": passes[0] == passes[1]}
     validate_raw(raw, producer_sha)
     publish(options.output, raw)
 

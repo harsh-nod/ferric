@@ -7,6 +7,7 @@ from pathlib import Path
 import struct
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -46,6 +47,20 @@ def identity(raw):
 
 
 class DraftReferenceTests(unittest.TestCase):
+    def test_runtime_device_string_subclasses_normalize_before_json_validation(self):
+        class Version(str):
+            pass
+        properties = SimpleNamespace(name="fixture", gcnArchName="gfx950:sramecc+:xnack-")
+        device = reference.device_metadata(properties, Version("7.2.fixture"))
+        self.assertIs(type(device["torch_hip"]), str)
+        self.assertEqual(device["torch_hip"], "7.2.fixture")
+        for invalid in (None, False, 7.2, "", "x" * 257):
+            with self.assertRaises(ValueError):
+                reference.device_metadata(properties, invalid)
+        properties.gcnArchName = "gfx942"
+        with self.assertRaises(ValueError):
+            reference.device_metadata(properties, "fixture")
+
     def test_cpu_import_does_not_load_model_or_torch(self):
         self.assertNotIn("torch", sys.modules)
         self.assertNotIn("transformers", sys.modules)
