@@ -868,7 +868,7 @@ window.FERRIC_PROJECT = Object.freeze({
       label: "32-row FP32 head: bounded model passes",
       state: "observed",
       detail:
-        "All 15 native fixtures pass at rows 1/16/17/31/32 with exact outputs, active/tail bounds, unchanged guards and clean teardown. Separate TP1 MFMA+FP32-v8 model canaries pass the complete four-request/eight-output reference at row/chunk budgets 16 and 32, n=1 each: actual maximum rows are 16 and 17, not 32. Both complete 34 physical rows; rates 2.678148 and 2.665643 output tokens/s are effectively flat, with no speedup claim. Current-3e3 controller cd90bba6 and worker 933d73d2 use frozen v5 base image 98b5fdb1 plus fresh v8 image 5f19b3ba; old emission provenance is unchanged. All eight GPUs are idle after both. The capacity32 route adds 19,447,808 FP32 workspace bytes; BF16 control adds none. These tiny canaries do not establish sustained serving or broad numerical qualification; historical v7 results remain separate.",
+        "All 15 native fixtures pass at rows 1/16/17/31/32 with exact outputs, active/tail bounds, unchanged guards and clean teardown. Separate TP1 MFMA+FP32-v8 model canaries pass the complete four-request/eight-output reference at row/chunk budgets 16 and 32, n=1 each: actual maximum rows are 16 and 17, not 32. Both complete 34 physical rows; rates 2.678148 and 2.665643 output tokens/s are effectively flat, with no speedup claim. Frozen-3e3 controller cd90bba6 and worker 933d73d2 use frozen v5 base image 98b5fdb1 plus fresh v8 image 5f19b3ba; old emission provenance is unchanged. All eight GPUs are idle after both. The capacity32 route adds 19,447,808 FP32 workspace bytes; BF16 control adds none. These tiny canaries do not establish sustained serving or broad numerical qualification; historical v7 results remain separate.",
     },
     {
       label: "Shared peer currentness: native only",
@@ -889,7 +889,7 @@ window.FERRIC_PROJECT = Object.freeze({
         "The explicit TP1 large-kv-v9 profile implements up to 16,384 physical pages and 38,654,705,664 bytes (36 GiB) of KV payload; weights and workspaces are additional. Logical context remains 8,192 tokens and row capacity remains 32. Nine native fixtures pass exact outputs, immutable inputs and guards, including physical page 16,383 and logical position 8,191. Separately, both the legacy control and actual full-size v9 model allocation pass the fixed eight-output reference, n=1 each: five batches, 34 physical rows, 3,077 dispatches and at most 16 observed rows, with clean close and all eight GPUs idle. Controller 489e1751 and worker 933d73d2 remain frozen on 3e3, not current f85. The host gate passes 315 ordinary tests plus four image-bound tests. Long-context and 32-request concurrency remain unqualified. The primary 32-request workload needs 8,704 pages. Legacy behavior remains available; wave attention is excluded from v9. No speedup or new Verus proof is claimed.",
     },
     {
-      label: "Current source and dependency checks",
+      label: "Pinned source and dependency checks",
       state: "integration",
       detail:
         "Source 121609f passes 38 source-gate tests, 31 verifier-policy tests, 28 metadata configurations across 24 manifests, five byte-identical regenerated inventories, negative policies and protected release policy on public 3e3. Compiler-rooted coverage remains 173 modules and 8,235 executable bodies. This is a source/dependency policy gate, not a new Verus proof, GPU qualification or M1 receipt. Historical 6f6 host and 511 model receipts remain separately bound.",
