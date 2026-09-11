@@ -34,8 +34,11 @@ const requiredClaims = [
   "Checked concurrent-rank rounds",
   "Host timing and numerical diagnosis",
   "79706b43a177a2fd3fa43ec328221fa3e5041af5",
-  "Physical GPU overlap and Qwen performance improvement are not measured by these probes",
-  "the model token mismatch's cause is not proven",
+  "Physical GPU overlap is not measured",
+  "the immediate BF16 tie mechanism is established",
+  "Concurrent peer rounds: matched TP2 and TP8",
+  "Host-staged execution is still faster",
+  "n=1 per mode",
   "host intervals, not GPU timestamps",
   "0.471982 to 0.504046",
   "Not steady-state serving throughput",
@@ -683,6 +686,16 @@ try {
     assert(await generatorLabel.evaluate((node) => node.nextElementSibling.textContent)
       === "8719cb980590c41c7c8751b95117a858b04c42912964c811bebf7e2c4d69bbea",
     `${name}: generator digest changed`);
+    const roundGenerator = page.getByText("Concurrent matrix performance-ledger generator source SHA-256", { exact: true });
+    assert(await roundGenerator.isVisible(), `${name}: missing concurrent generator-source label`);
+    assert(await roundGenerator.evaluate((node) => node.nextElementSibling.textContent)
+      === "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
+    `${name}: concurrent generator digest changed`);
+    const roundReport = page.getByText("Concurrent matrix TP8 generated three-mode report SHA-256", { exact: true });
+    assert(await roundReport.isVisible(), `${name}: missing concurrent report label`);
+    assert(await roundReport.evaluate((node) => node.nextElementSibling.textContent)
+      === "d2e86b755c7b76915888f26ec4a7049e71981cb11b7e0ef43352130539575b64",
+    `${name}: concurrent report digest changed`);
     assert(await page.getByText("1xTP8 canonical expectation SHA-256", { exact: true }).isVisible(),
       `${name}: canonical replica-expectation label changed`);
     await provenanceDisclosure.click();
@@ -694,6 +707,11 @@ try {
     await replicaDisclosure.click();
     const currentDisclosure = page.getByText("All accepted current-controller request latencies", { exact: true });
     await currentDisclosure.click();
+    const roundDisclosure = page.getByText("All concurrent-matrix request latencies", { exact: true });
+    await roundDisclosure.click();
+    assert(await page.getByRole("region", { name: "Concurrent peer matrix: all 24 named request latencies", exact: true })
+      .locator("tbody tr").count() === 24, `${name}: missing concurrent matrix request identities`);
+    await roundDisclosure.click();
     assert(await page.getByRole("region", { name: "Current-controller compatibility: accepted named request latencies", exact: true })
       .locator("tbody tr").count() === 12, `${name}: missing accepted current-controller request identities`);
     await currentDisclosure.click();
@@ -723,6 +741,8 @@ try {
     await replicaDisclosure.click();
 
     for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
+      ["Concurrent peer matrix: six process-window observations", 6],
+      ["Concurrent peer matrix: separate workload-rate baselines", 2],
       ["Repeated MFMA pair: mean and observed range", 2],
       ["Repeated TP1 residual pair: mean and observed range", 2],
       ["Current-controller compatibility: rejected profiles", 2],
@@ -746,6 +766,7 @@ try {
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
+          ["Concurrent peer rounds: matched TP2 and TP8", "concurrent-matrix"],
           ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
           ["True 32-row execution: a latency tradeoff", "wide"],
           ["Current-controller combinations: mixed correctness", "current"],

@@ -1,7 +1,238 @@
 window.FERRIC_PERFORMANCE = {
-  updated: "2026-09-10",
-  scope: "Two separate Qwen3-8B workloads are reported on MI350X. Allocation and wide-policy cohorts use eight requests and 64 outputs with cache off. The other tables use a fixed four-request logical-tick BF16 workload with prefix cache enabled: eight output tokens including one from the cancelled request. Historical repeated TP8 profiles, MFMA and TP1 residual comparisons have n=2 per profile; other model pairs, cumulative and peer observations have n=1. Original R1 checkpoints remain separate, without double-counting their observations. Not steady-state serving throughput, a serving SLO, protected M1 qualification, or a vLLM/SGLang comparison.",
-  interpretation: "Operational-only runtime validation is consistently faster in its two repetitions. Pruning varies substantially. The new combined runtime sample is faster than its same-controller control, but slower than the earlier operational-only samples; no extra gain from caching or sequences is established. Standalone admission caching, sequences, and host workspace reuse do not establish reliable isolated gains. Both wave-projection-only and wave-attention-only model runs fail the frozen token reference and are excluded from performance results.",
+  updated: "2026-09-11",
+  concurrentRounds: {
+    "scope": "One instrumented Qwen3-8B observation per TP world and transport mode (n=1 per mode): four requests and eight outputs, including one from the cancelled request. All six runs pass the frozen token/byte reference, exact dispatch schedule, cleanup and physical-idle checks. Prefix cache is on; row/chunk budgets are 16; each run executes 34 physical rows in five batches.",
+    "interpretation": "Concurrent rounds reach 1.870x the serial-peer workload output rate at TP2 and 6.797x at TP8. Host-staged execution is still faster: rounds reach only 0.308x and 0.202x its rate, respectively. The serial-to-round pair isolates the round mode within the same peer worker. The host-to-peer comparison also changes worker architecture and collective placement. These are separate baselines, not an overall peer speedup.",
+    "sourceScope": "Frozen instrumented controller d9d378e0 was built from Ferric abecc466 with fe2o3 dependency cutoff 4fbc0a34. Both separately identified workers use public core 79706b43; the base image is 8c81d3fe and the peer image is 9d4f1b92. Later active-source repins do not relabel these runs or replace the earlier uninstrumented observations.",
+    "measurementScope": "Every run enables the same new host-timing sidecar; the independent worker runtime_profiling flag remains false. These are host wall intervals, not GPU timestamps. Workload rate excludes setup and teardown. TTFT starts at each request's actual admission; TPOT is its mean adjacent output gap. Setup and whole-process time remain separate, and no setup or close-cost improvement is attributed to rounds.",
+    "limits": "Fresh workers, no warmup; n=1 per mode is not steady-state serving, a stable tail, or statistical significance. There is no physical overlap measurement, protected authority, M1 closure, or vLLM/SGLang comparison. Request latencies are never pooled across identities.",
+    "pins": {
+      "controllerSha256": "d9d378e0378758f41b22b3112ccf113cc0d86f266f992a5626b062ad2399d800",
+      "controllerSourceRevision": "abecc46662ed884162407a4825899b212fb63db0",
+      "controllerFe2o3Revision": "4fbc0a34c7938474406d37a45e7972ea8b1ec277",
+      "workerFe2o3Revision": "79706b43a177a2fd3fa43ec328221fa3e5041af5",
+      "hostWorkerSha256": "aaa0216a77de0d5f12c2d668b31ca8c340d8975407c2b446bb5e20b5d820bd6e",
+      "peerWorkerSha256": "2032e31b6d7fbc22aae6e5b7092f9a4e37047360ca5025fb10b2e0119999ea2e",
+      "hsacoSha256": "8c81d3fe869d3346d95486354f366988ce99210111cd0fc712dfb2194450b125",
+      "manifestSha256": "76e582363a35d48e993fbd68f15438e853a2270b4bce27ad989d96d3370f1ce8",
+      "handoffSha256": "6aaa62549ee5ca71e8e1da2aed0eba6d86fed0bc0b08edcdfdbca68a1cc48bd1",
+      "peerHsacoSha256": "9d4f1b922967521b05199ce7d1e0269eaae3afa4fe558eafc4ba0bda3c4a4b65",
+      "peerManifestSha256": "e0242eefcffc7b278047467b118087b5336127e45dc5ee96f7991ea138e1ef2e",
+      "peerHandoffSha256": "ba2a796c529e2cac510cafff3ae9da72b7d3523de1774a9f9e88ce71a4ed16cc",
+      "workloadSha256": "23882e195cf578b987c72fc5703fffb51541708e5431d4166e55e0fe7e2f137f",
+      "referenceSha256": "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+      "prelaunchSha256": "3675ad678cfb1427d0ec84b79d7ab3141992aebdc3d1c8cd8ab399a894128115",
+      "comparatorSourceSha256": "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a",
+      "ledgerGeneratorSourceSha256": "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
+      "hostTimingGeneratorSourceSha256": "057f4a6dfb929db44714f8192bb1e373184f4170ce3946dcc31be811637b2402"
+    },
+    "worlds": [
+      {
+        "world": 2,
+        "ledgerFileSha256": "085a233fdc654e6cf75beee9c3bc1dc8dd42c6a2d9b7ac2216c2a1692702c420",
+        "serialLedgerFileSha256": "2297d9c4b8067b59c3c809efc38ba424a48ce12def680fb136bf224e9106c1d0",
+        "roundOverSerial": 1.869632033434311,
+        "roundOverHost": 0.3076843625405642
+      },
+      {
+        "world": 8,
+        "ledgerFileSha256": "d2e86b755c7b76915888f26ec4a7049e71981cb11b7e0ef43352130539575b64",
+        "serialLedgerFileSha256": "d4a52661591b145eb24dc4573c90b368eb813c147612a0981cf95b20252294cf",
+        "roundOverSerial": 6.796859078764497,
+        "roundOverHost": 0.2015156584758047
+      }
+    ],
+    "profiles": [
+      {
+        "id": "tp2-host-profile-r1",
+        "name": "Host-staged",
+        "world": 2,
+        "mode": "host",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.8715466342343043,
+        "workloadSeconds": 9.179084269,
+        "setupSeconds": 106.238880038,
+        "wholeSeconds": 119.078554602,
+        "requestLatencies": [
+          [
+            4.499774554,
+            1.937136546
+          ],
+          [
+            1.887106741,
+            1.8173636145
+          ],
+          [
+            1.937080417,
+            null
+          ],
+          [
+            1.697529045,
+            1.044582486
+          ]
+        ],
+        "caseFileSha256": "1686fb25cc3b2295c7fa52a9b2cc4883c4c332ce55f2782d857102b90036d9fb",
+        "comparisonFileSha256": "7a30e5242967feb74342fa7ef8e8846c080a7494c21d1f5e3075825a9bcdda80"
+      },
+      {
+        "id": "tp2-serial-profile-r1",
+        "name": "Serial peer",
+        "world": 2,
+        "mode": "serial",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.14342997219948841,
+        "workloadSeconds": 55.7763477,
+        "setupSeconds": 221.343087054,
+        "wholeSeconds": 287.399988888,
+        "requestLatencies": [
+          [
+            22.73383172,
+            11.340460339
+          ],
+          [
+            11.287127212,
+            11.3216869045
+          ],
+          [
+            11.340415269,
+            null
+          ],
+          [
+            11.302857202,
+            10.399142171
+          ]
+        ],
+        "caseFileSha256": "bc5545574e4f0871db06c2f20653a2eb1085332f86650ed1d560312d4875954e",
+        "comparisonFileSha256": "967a5eb1a909d394935d4e56e8e91bf507bbe7b174c52cc43fbf5bbea23b31e1"
+      },
+      {
+        "id": "tp2-round-profile-r1",
+        "name": "Concurrent peer round",
+        "world": 2,
+        "mode": "round",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.2681612705787562,
+        "workloadSeconds": 29.832794209,
+        "setupSeconds": 221.191863439,
+        "wholeSeconds": 261.256555958,
+        "requestLatencies": [
+          [
+            12.156615679,
+            6.063304663
+          ],
+          [
+            6.042474817,
+            6.046504237
+          ],
+          [
+            6.063263384,
+            null
+          ],
+          [
+            6.029657882,
+            5.583170056
+          ]
+        ],
+        "caseFileSha256": "832a298bd24deaa0efaae79f0e33ad5418b2f24dd3bc4397536b69cf641e9077",
+        "comparisonFileSha256": "bfaaf550b88e5acf4863c4278451c5c88d399dceea7215f7ce9cfeb9570fcf02"
+      },
+      {
+        "id": "tp8-host-profile-r1",
+        "name": "Host-staged",
+        "world": 8,
+        "mode": "host",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.3806743805792887,
+        "workloadSeconds": 21.015335962,
+        "setupSeconds": 135.388216231,
+        "wholeSeconds": 171.034464625,
+        "requestLatencies": [
+          [
+            11.134335381,
+            4.347102062
+          ],
+          [
+            4.046521012,
+            3.9408970745
+          ],
+          [
+            4.346994744,
+            null
+          ],
+          [
+            3.53455321,
+            1.999206432
+          ]
+        ],
+        "caseFileSha256": "12737ebfb85590411856e9f0e789b86d06db94eff15c3c06eb8a24fc05fecf9d",
+        "comparisonFileSha256": "ebc6ef9b186db9f03b6521ec8f8ace491e45a3abfcbbc2cfa1b11f9cb22a2fa9"
+      },
+      {
+        "id": "tp8-serial-profile-r1",
+        "name": "Serial peer",
+        "world": 8,
+        "mode": "serial",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.011286367361503218,
+        "workloadSeconds": 708.819741885,
+        "setupSeconds": 736.568781886,
+        "wholeSeconds": 1565.344074538,
+        "requestLatencies": [
+          [
+            284.792019959,
+            142.393238828
+          ],
+          [
+            142.219230283,
+            142.310494096
+          ],
+          [
+            142.393170079,
+            null
+          ],
+          [
+            142.227666546,
+            139.406733734
+          ]
+        ],
+        "caseFileSha256": "3f92c4856f8504c8cdf3dc0664fc6410fee4c284c9ee6c12900bb90faaf11655",
+        "comparisonFileSha256": "e343738ca5abbfb6e70e663c9df2fce012f02bbd7e04fd572ba09c957811bce3"
+      },
+      {
+        "id": "tp8-round-profile-r1",
+        "name": "Concurrent peer round",
+        "world": 8,
+        "mode": "round",
+        "repetitions": 1,
+        "outputTokensPerSecond": 0.07671184846730444,
+        "workloadSeconds": 104.286367228,
+        "setupSeconds": 737.535894015,
+        "wholeSeconds": 961.521453111,
+        "requestLatencies": [
+          [
+            41.841570966,
+            20.917410031
+          ],
+          [
+            20.898608219,
+            20.913519579
+          ],
+          [
+            20.917357012,
+            null
+          ],
+          [
+            20.909555688,
+            20.617757104
+          ]
+        ],
+        "caseFileSha256": "a0d1dc5aee4bec1826c3d9b754d69ee93325d5d09b5802132cde993c0e33ba27",
+        "comparisonFileSha256": "541eaf20f25a96f83521e5bd1be13bd636c9a4aafb0af3546b3ae98876f03abb"
+      }
+    ]
+  },
+  scope: "The latest six-case instrumented TP2/TP8 transport matrix has n=1 per mode and does not replace historical observations. Two separate Qwen3-8B workloads are reported on MI350X. Allocation and wide-policy cohorts use eight requests and 64 outputs with cache off. The other tables use a fixed four-request logical-tick BF16 workload with prefix cache enabled: eight output tokens including one from the cancelled request. Historical repeated TP8 profiles, MFMA and TP1 residual comparisons have n=2 per profile; other model pairs, cumulative and peer observations have n=1. Original R1 checkpoints remain separate, without double-counting their observations. Not steady-state serving throughput, a serving SLO, protected M1 qualification, or a vLLM/SGLang comparison.",
+  interpretation: "Concurrent rounds improve over serial peer execution but remain slower than host-staged execution at both TP2 and TP8. Setup and teardown remain costly. Earlier separately pinned results follow: Operational-only runtime validation is consistently faster in its two repetitions. Pruning varies substantially. The new combined runtime sample is faster than its same-controller control, but slower than the earlier operational-only samples; no extra gain from caching or sequences is established. Standalone admission caching, sequences, and host workspace reuse do not establish reliable isolated gains. Both wave-projection-only and wave-attention-only model runs fail the frozen token reference and are excluded from performance results.",
   correctness: "Every included four-request run exits with status 0, matches all eight reference-subsequence token IDs and decoded bytes, completes the exact rank dispatch schedule, closes and reaps workers, and binds before/after physical-idle checks for all eight GPUs. The separate replica cohorts check 64 outputs under their own common-clock protocol. The checker binds externally pinned controller, live worker, artifact, workload, and reference identities. Numerical kernels and transport remain Contracted; authority is none.",
   statistics: "Ranges show both observations (n=2). Nearest-rank p50 is the smaller observation and p95 the larger, calculated independently for each metric, not one median run. Small-sample p95 is not a stable tail. Request identities are never pooled.",
   definitions: [

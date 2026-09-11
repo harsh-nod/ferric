@@ -119,6 +119,29 @@
         values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
       ])));
   }
+  const rounds = performance.concurrentRounds;
+  if (rounds) {
+    measured.append(element("h3", "", "Concurrent peer rounds: matched TP2 and TP8"),
+      element("p", "", rounds.scope), element("p", "", rounds.interpretation));
+    performanceTable("Concurrent peer matrix: six process-window observations",
+      ["TP / Mode / Reps", "Output tok/s", "Workload (s)", "Setup (s)", "Whole (s)", "Reuse TTFT / TPOT (s)"],
+      rounds.profiles.map((profile) => [`TP${profile.world} / ${profile.name} / n=1`,
+        profile.outputTokensPerSecond.toFixed(6), profile.workloadSeconds.toFixed(3), profile.setupSeconds.toFixed(3),
+        profile.wholeSeconds.toFixed(3), `${profile.requestLatencies[3][0].toFixed(3)} / ${profile.requestLatencies[3][1].toFixed(3)}`]));
+    performanceTable("Concurrent peer matrix: separate workload-rate baselines",
+      ["TP / Reps per Mode", "Round / Serial", "Round / Host Staged"],
+      rounds.worlds.map((world) => [`TP${world.world} / n=1`, `${world.roundOverSerial.toFixed(3)}x`, `${world.roundOverHost.toFixed(3)}x`]));
+    const roundLatencies = element("details", "performance-identities");
+    roundLatencies.append(element("summary", "", "All concurrent-matrix request latencies"));
+    performanceTable("Concurrent peer matrix: all 24 named request latencies",
+      ["TP / Mode / Request / Gaps", "TTFT (s)", "TPOT (s)"],
+      rounds.profiles.flatMap((profile) => profile.requestLatencies.map((values, index) => [
+        `TP${profile.world} / ${profile.name} / ${performance.requests[index].name} / ${performance.requests[index].gapsPerRepetition}`,
+        values[0].toFixed(3), values[1] === null ? "n/a" : values[1].toFixed(3),
+      ])), roundLatencies);
+    measured.append(roundLatencies, element("p", "", rounds.measurementScope), element("p", "", rounds.sourceScope),
+      element("p", "", rounds.limits));
+  }
   const current = performance.currentCompatibility;
   measured.append(element("h3", "", "Current-controller combinations: mixed correctness"),
     element("p", "", current.scope), element("p", "", current.interpretation));
@@ -305,6 +328,24 @@
   Object.entries(performance.identities).forEach(([label, digest]) => {
     pins.append(element("dt", "", label), element("dd", "", digest));
   });
+  if (rounds) {
+    for (const [key, value] of Object.entries(rounds.pins)) {
+      const label = key === "ledgerGeneratorSourceSha256" ? "performance-ledger generator source SHA-256"
+        : key === "hostTimingGeneratorSourceSha256" ? "host-timing generator source SHA-256"
+          : key === "comparatorSourceSha256" ? "comparator source SHA-256" : key;
+      pins.append(element("dt", "", `Concurrent matrix ${label}`), element("dd", "", value));
+    }
+    for (const world of rounds.worlds) {
+      pins.append(element("dt", "", `Concurrent matrix TP${world.world} generated three-mode report SHA-256`),
+        element("dd", "", world.ledgerFileSha256),
+        element("dt", "", `Concurrent matrix TP${world.world} generated serial-baseline report SHA-256`),
+        element("dd", "", world.serialLedgerFileSha256));
+    }
+    for (const profile of rounds.profiles) {
+      pins.append(element("dt", "", `${profile.id} case report SHA-256`), element("dd", "", profile.caseFileSha256),
+        element("dt", "", `${profile.id} comparison report SHA-256`), element("dd", "", profile.comparisonFileSha256));
+    }
+  }
   performance.variants.forEach((variant) => {
     pins.append(element("dt", "", `${variant.name} controller`), element("dd", "", variant.controllerSha256),
       element("dt", "", `${variant.name} worker`), element("dd", "", variant.workerSha256));

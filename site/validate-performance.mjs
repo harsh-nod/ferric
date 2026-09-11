@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { validateRoundPerformance, testRoundPerformanceRejections } from "./validate-round-performance.mjs";
 
 function keys(value, expected) {
   assert(value && typeof value === "object" && !Array.isArray(value));
@@ -20,7 +21,8 @@ export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
     "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "peerSourceControls",
-    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated", "currentCompatibility"]);
+    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated", "currentCompatibility", "concurrentRounds"]);
+  validateRoundPerformance(data.concurrentRounds);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
   assert(data.scope.includes("Not steady-state serving throughput"));
   assert(data.scope.includes("eight output tokens including one from the cancelled request"));
@@ -402,6 +404,7 @@ export function validatePerformance(data) {
 }
 
 export function testPerformanceRejections(data) {
+  testRoundPerformanceRejections(data.concurrentRounds);
   const mutations = [
     (copy) => { copy.currentCompatibility.accepted[2].collective = null; },
     (copy) => { copy.currentCompatibility.accepted[2].projection = "mfma"; },
