@@ -3,7 +3,15 @@
 use super::*;
 
 fn configured(pool: &EngineeringTpPagedPoolV1) -> EngineeringTpBatchExecutionV2<Recording> {
+    configured_attention(pool, false)
+}
+
+fn configured_attention(
+    pool: &EngineeringTpPagedPoolV1,
+    wave: bool,
+) -> EngineeringTpBatchExecutionV2<Recording> {
     let mut driver = fixture(1, pool);
+    driver.configure_wave_attention(wave).unwrap();
     driver.configure_output_head_pruning(true).unwrap();
     driver
         .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
@@ -21,12 +29,21 @@ fn configured(pool: &EngineeringTpPagedPoolV1) -> EngineeringTpBatchExecutionV2<
 
 #[test]
 fn ordered_groups_preserve_every_bound_command_and_host_io() {
+    assert_ordered_groups_preserve_attention(false);
+}
+
+#[test]
+fn wave_ordered_groups_preserve_every_bound_command_and_host_io() {
+    assert_ordered_groups_preserve_attention(true);
+}
+
+fn assert_ordered_groups_preserve_attention(wave: bool) {
     for rows in [1, 16, 17, 32] {
         for selected in [Vec::new(), vec![rows - 1], (0..rows).collect()] {
             let mut recordings = Vec::new();
             for enabled in [false, true] {
                 let mut pool = wide_pool();
-                let mut driver = configured(&pool);
+                let mut driver = configured_attention(&pool, wave);
                 driver.configure_ordered_batches(enabled).unwrap();
                 let batch = prepare(&mut pool, rows);
                 pool.begin_submission(&batch).unwrap();
@@ -37,6 +54,15 @@ fn ordered_groups_preserve_every_bound_command_and_host_io() {
                     vec![if selected.is_empty() { 613 } else { 616 }]
                 );
                 let transport = &driver.inner.transports[0];
+                let attention = if wave {
+                    "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+                } else {
+                    "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+                };
+                assert_eq!(
+                    transport.commands.iter().filter(|command| command.kernel == attention).count(),
+                    36
+                );
                 let groups = transport
                     .events
                     .borrow()
@@ -79,9 +105,18 @@ fn ordered_groups_preserve_every_bound_command_and_host_io() {
 
 #[test]
 fn ordered_failures_cannot_complete_or_resume_the_batch() {
+    assert_ordered_failures(false);
+}
+
+#[test]
+fn wave_ordered_failures_cannot_complete_or_resume_the_batch() {
+    assert_ordered_failures(true);
+}
+
+fn assert_ordered_failures(wave: bool) {
     for failure in [Failure::OrderedSubmit, Failure::OrderedWait] {
         let mut pool = wide_pool();
-        let mut driver = configured(&pool);
+        let mut driver = configured_attention(&pool, wave);
         driver.configure_ordered_batches(true).unwrap();
         driver.inner.transports[0].failure = Some(failure);
         let batch = prepare(&mut pool, 17);
@@ -111,6 +146,10 @@ fn ordered_configuration_is_explicit_and_freezes_incompatible_changes() {
     wave.configure_wave_attention(true).unwrap();
     wave.configure_head_precision_v8(true).unwrap();
     assert!(wave.configure_ordered_batches(true).is_err());
+    let mut wave = configured_attention(&pool, true);
+    wave.configure_ordered_batches(true).unwrap();
+    assert!(wave.configure_wave_attention(false).is_err());
+    assert!(wave.configure_wave_attention(true).is_err());
     for legacy_sequence in [false, true] {
         let mut driver = configured(&pool);
         if legacy_sequence {

@@ -427,7 +427,6 @@ impl Options {
                 || kernel_profile != KernelProfile::WideMfma
                 || !head_precision.is_some_and(HeadPrecision::wide32)
                 || projection != ProjectionMode::Mfma
-                || wave_attention
                 || collective != EngineeringTpReductionModeV3::DeviceTp1V3
                 || !prune_output_head
                 || runtime.sequences
@@ -436,7 +435,7 @@ impl Options {
                 || numerical.is_some()
                 || benchmark_control.is_some())
         {
-            return Err("--runtime-ordered-batches requires TP1/v5-mfma32 with v8 head, MFMA projection, baseline attention, device-tp1-v3 and pruning; legacy sequences, large KV, peers, numerical capture and replicas are unsupported".into());
+            return Err("--runtime-ordered-batches requires TP1/v5-mfma32 with v8 head, MFMA projection, baseline or wave attention, device-tp1-v3 and pruning; legacy sequences, large KV, peers, numerical capture and replicas are unsupported".into());
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -1280,9 +1279,12 @@ mod tests {
         let mut rollover = enabled.clone();
         rollover.push("--queue-rollover");
         assert!(args(&rollover).unwrap().runtime.rollover);
+        let mut wave = rollover.clone();
+        wave.extend(["--attention", "wave"]);
+        let parsed = args(&wave).unwrap();
+        assert!(parsed.wave_attention && parsed.runtime.ordered_batches && parsed.runtime.rollover);
         for extra in [
             vec!["--dispatch-sequences"],
-            vec!["--attention", "wave"],
             vec!["--benchmark-control", "/replica"],
             vec![
                 "--kv-pool-profile",

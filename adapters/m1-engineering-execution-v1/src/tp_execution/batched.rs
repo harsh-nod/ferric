@@ -599,6 +599,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
 
     /// Enables dependent packet batches at the existing attention/FFN barriers.
     /// Configure this last; singleton embedding, residual and head calls stay synchronous.
+    /// Baseline and preconfigured wave attention retain the same packet dependencies.
     /// # Errors
     /// Rejects incompatible profiles, unsupported transports or any late policy change.
     pub fn configure_ordered_batches(&mut self, enabled: bool) -> TpResult<()> {
@@ -618,13 +619,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 || self.inner.sequences.is_some()
                 || self.inner.large_kv
                 || self.numerical.is_some()
-                || self.wave_attention
                 || !self.head_profile_configured
                 || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
                 || !self.prune_output_head
                 || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
             {
-                return Err("ordered batches require TP1/capacity32, v8 head, MFMA, baseline attention, device TP1, pruning, legacy pool and no sequences/capture/peers".into());
+                return Err("ordered batches require TP1/capacity32, v8 head, MFMA, baseline or wave attention, device TP1, pruning, legacy pool and no sequences/capture/peers".into());
             }
             self.inner.ordered_batches = Some(Vec::with_capacity(16));
         }
