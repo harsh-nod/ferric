@@ -184,11 +184,23 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
     pub fn configure_head_precision_v7(&mut self, fp32: bool) -> TpResult<()> {
+        self.configure_head_precision(fp32, 16)
+    }
+
+    /// Selects the separate TP1 v8 head on genuine 32-row allocations, or its BF16 control.
+    /// The existing v7 profile remains restricted to sixteen-row allocations.
+    /// # Errors
+    /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
+    pub fn configure_head_precision_v8(&mut self, fp32: bool) -> TpResult<()> {
+        self.configure_head_precision(fp32, 32)
+    }
+
+    fn configure_head_precision(&mut self, fp32: bool, capacity: usize) -> TpResult<()> {
         if self.head_profile_configured
             || self.last_batch != 0
             || self.poisoned
             || self.inner.closed
-            || self.row_capacity != 16
+            || self.row_capacity != capacity
             || self.inner.ranks.len() != 1
             || self.wave_attention
             || self.inner.sequences.is_some()
@@ -199,10 +211,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     | super::EngineeringTpProjectionModeV3::Mfma
             )
         {
-            return Err("v7 head requires fresh TP1/16 rows, baseline or MFMA, no wave attention, sequences or numerical capture".into());
+            return Err(format!(
+                "FP32 head profile requires fresh TP1/{capacity} rows, baseline or MFMA, no wave attention, sequences or numerical capture"
+            ));
         }
         if fp32 {
-            match allocate_tensor(&mut self.inner.transports[0], 16 * 151_936, 4) {
+            match allocate_tensor(&mut self.inner.transports[0], capacity * 151_936, 4) {
                 Ok(tensor) => self.fp32_logits = Some(tensor),
                 Err(error) => {
                     self.poisoned = true;
@@ -221,7 +235,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     #[must_use]
     pub const fn fp32_head_workspace_bytes(&self) -> u64 {
         if self.fp32_logits.is_some() {
-            16 * 151_936 * 4
+            if self.row_capacity == 32 {
+                32 * 151_936 * 4
+            } else {
+                16 * 151_936 * 4
+            }
         } else {
             0
         }

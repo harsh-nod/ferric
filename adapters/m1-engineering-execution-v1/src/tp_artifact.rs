@@ -85,6 +85,13 @@ pub const ENGINEERING_TP_FP32_HEAD_EXPORTS_V7: [&str; 3] = [
     "ferric_qwen3_tp_argmax_f32_v7",
 ];
 
+/// Closed additional TP1 FP32 head image for genuine 32-row execution.
+pub const ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8: [&str; 3] = [
+    "ferric_qwen3_tp_batch32_head_bf16_f32_v8",
+    "ferric_qwen3_tp_batch32_mfma_head_f32_v8",
+    "ferric_qwen3_tp_batch32_argmax_f32_v8",
+];
+
 /// Closed full v5 image; the wave-only form omits exactly the two MFMA roots.
 pub const ENGINEERING_TP_BATCH32_EXPORTS_V5: [&str; 15] = [
     "qwen3_rmsnorm_v1",
@@ -241,6 +248,22 @@ impl EngineeringTpArtifactV1 {
             expected,
             "ferric_qwen3_tp_fp32_head_kernels_device_v7",
             &ENGINEERING_TP_FP32_HEAD_EXPORTS_V7,
+        )
+    }
+
+    /// Opens only the separate v8 head32 image; neither v7 nor the base image is reinterpreted.
+    /// # Errors
+    /// Rejects target, exact roster, descriptor, source, file, or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_fp32_head32(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_fp32_head32_kernels_device_v8",
+            &ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8,
         )
     }
 
@@ -440,6 +463,29 @@ mod tests {
         #[cfg(feature = "tp-batch-engineering")]
         assert!(exact_roster(
             ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7()
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            &HEAD,
+        ));
+    }
+
+    #[test]
+    fn fp32_head32_roster_is_closed_and_cannot_substitute_for_v7() {
+        use super::{ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8 as HEAD, exact_roster};
+        assert!(exact_roster(HEAD.into_iter().rev(), &HEAD));
+        assert!(!exact_roster(HEAD.into_iter().take(2), &HEAD));
+        assert!(!exact_roster([HEAD[0]; 3].into_iter(), &HEAD));
+        for base in super::ENGINEERING_TP_BATCH_EXPORTS_V2
+            .into_iter()
+            .chain(super::ENGINEERING_TP_PERFORMANCE_EXPORTS_V3)
+            .chain(super::ENGINEERING_TP_BATCH32_EXPORTS_V5)
+            .chain(super::ENGINEERING_TP_FP32_HEAD_EXPORTS_V7)
+        {
+            assert!(!HEAD.contains(&base));
+        }
+        #[cfg(feature = "tp-batch-engineering")]
+        assert!(exact_roster(
+            ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8()
                 .iter()
                 .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
             &HEAD,

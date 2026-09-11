@@ -50,6 +50,9 @@ pub(super) fn bind(
         "ferric_qwen3_tp_mfma_gemm_partial_f32_v3" => {
             ("ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5", true)
         }
+        "ferric_qwen3_tp_head_bf16_f32_v7" => ("ferric_qwen3_tp_batch32_head_bf16_f32_v8", true),
+        "ferric_qwen3_tp_mfma_head_f32_v7" => ("ferric_qwen3_tp_batch32_mfma_head_f32_v8", true),
+        "ferric_qwen3_tp_argmax_f32_v7" => ("ferric_qwen3_tp_batch32_argmax_f32_v8", false),
         _ => return Err("kernel is not in the separately admitted 32-row profile".into()),
     };
     command.kernel = kernel;
@@ -100,5 +103,46 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn fp32_head32_uses_two_tiles_only_above_sixteen_rows() {
+        for (old, wide) in [
+            (
+                "ferric_qwen3_tp_head_bf16_f32_v7",
+                "ferric_qwen3_tp_batch32_head_bf16_f32_v8",
+            ),
+            (
+                "ferric_qwen3_tp_mfma_head_f32_v7",
+                "ferric_qwen3_tp_batch32_mfma_head_f32_v8",
+            ),
+        ] {
+            for rows in [0, 1, 16, 17, 31, 32, 33] {
+                let command = super::super::dispatch(
+                    old,
+                    9496,
+                    vec![
+                        EngineeringTpArgumentV1::U32(0),
+                        EngineeringTpArgumentV1::U32(0),
+                        EngineeringTpArgumentV1::U32(0),
+                        EngineeringTpArgumentV1::U32(rows),
+                    ],
+                );
+                assert_eq!(bind(16, command.clone()).unwrap(), command);
+                let result = bind(32, command);
+                if (1..=32).contains(&rows) {
+                    let result = result.unwrap();
+                    assert_eq!(result.kernel, wide);
+                    assert_eq!(result.grid_workgroups, rows.div_ceil(16) * 9496);
+                } else {
+                    assert!(result.is_err());
+                }
+            }
+        }
+        let command = super::super::dispatch("ferric_qwen3_tp_argmax_f32_v7", 32, vec![]);
+        assert_eq!(bind(16, command.clone()).unwrap(), command);
+        let wide = bind(32, command).unwrap();
+        assert_eq!(wide.kernel, "ferric_qwen3_tp_batch32_argmax_f32_v8");
+        assert_eq!(wide.grid_workgroups, 32);
     }
 }

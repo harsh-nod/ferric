@@ -214,6 +214,9 @@ impl EngineeringTpRankTransportV1 for Recording {
             "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
             | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5" => ATTENTION,
             "ferric_qwen3_tp_batch32_argmax_bf16_v5" => ARGMAX,
+            "ferric_qwen3_tp_batch32_head_bf16_f32_v8" => FP32_HEAD,
+            "ferric_qwen3_tp_batch32_mfma_head_f32_v8" => FP32_MFMA_HEAD,
+            "ferric_qwen3_tp_batch32_argmax_f32_v8" => FP32_ARGMAX,
             "ferric_qwen3_tp_batch32_residual_bf16_v5" => "ferric_qwen3_tp_batch_residual_bf16_v3",
             name => name,
         };
@@ -816,6 +819,192 @@ fn fp32_candidate_preserves_every_non_head_dispatch_and_prefill_only_skip() {
             .iter()
             .all(|&byte| byte == 0xa5)
     );
+}
+
+fn wide_pool() -> EngineeringTpPagedPoolV1 {
+    EngineeringTpPagedPoolV1::new_wide32(
+        pool().scope(),
+        EngineeringTpPagedLimitsV1::new(64, 32, 4, 100).unwrap(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn v8_head_routes_real_row_tiles_and_preserves_non_head_dispatches() {
+    for rows in [1, 16, 17, 31, 32] {
+        for mfma in [false, true] {
+            let mut recorded = Vec::new();
+            for fp32 in [false, true] {
+                let mut pool = wide_pool();
+                let mut driver = fixture(1, &pool);
+                if mfma {
+                    let original = driver.inner.ranks[0].global(Qwen3TensorKind::LanguageModelHead);
+                    let transposed =
+                        allocate_tensor(&mut driver.inner.transports[0], 1, 2).unwrap();
+                    driver.projection =
+                        super::super::projection::ProjectionPolicy::synthetic_mfma_for_recording(
+                            original.id,
+                            transposed,
+                        );
+                }
+                let original_logits = driver.inner.ranks[0].logits;
+                let before = driver.inner.transports[0].buffers.len();
+                driver.configure_head_precision_v8(fp32).unwrap();
+                assert_eq!(
+                    driver.fp32_head_workspace_bytes(),
+                    if fp32 { 19_447_808 } else { 0 }
+                );
+                assert_eq!(driver.inner.ranks[0].logits.id, original_logits.id);
+                assert_eq!(
+                    driver.inner.transports[0].buffers.len(),
+                    before + usize::from(fp32)
+                );
+                let batch = prepare(&mut pool, rows);
+                pool.begin_submission(&batch).unwrap();
+                let result = driver.execute(&batch).unwrap();
+                assert_eq!(result.choices.len(), rows as usize);
+                let commands = &driver.inner.transports[0].commands;
+                assert_eq!(commands.len(), 544);
+                let head = &commands[542];
+                let argmax = &commands[543];
+                assert_eq!(
+                    head.kernel,
+                    match (fp32, mfma) {
+                        (true, false) => "ferric_qwen3_tp_batch32_head_bf16_f32_v8",
+                        (true, true) => "ferric_qwen3_tp_batch32_mfma_head_f32_v8",
+                        (false, false) => "ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5",
+                        (false, true) => "ferric_qwen3_tp_batch32_mfma_gemm_bf16_v5",
+                    }
+                );
+                assert_eq!(
+                    argmax.kernel,
+                    if fp32 {
+                        "ferric_qwen3_tp_batch32_argmax_f32_v8"
+                    } else {
+                        "ferric_qwen3_tp_batch32_argmax_bf16_v5"
+                    }
+                );
+                assert_eq!(head.grid_workgroups, rows.div_ceil(16) * 9496);
+                assert_eq!(argmax.grid_workgroups, rows);
+                assert_eq!(scalar(head, 3), rows);
+                assert_eq!(buffer(head, 2), buffer(argmax, 0));
+                assert_eq!(buffer(head, 2).2, 32 * 151_936);
+                assert_eq!(buffer(head, 2).3, if fp32 { 4 } else { 2 });
+                if fp32 {
+                    let logits = driver.fp32_logits.unwrap();
+                    assert_eq!(
+                        driver.inner.transports[0].buffers[&logits.id].len(),
+                        19_447_808
+                    );
+                    assert!(
+                        driver.inner.transports[0].buffers[&logits.id]
+                            [rows as usize * 151_936 * 4..]
+                            .iter()
+                            .all(|&byte| byte == 0xa5)
+                    );
+                }
+                recorded.push(commands.clone());
+                pool.commit_batch(&batch, result.completion).unwrap();
+                driver.close().unwrap();
+            }
+            assert_eq!(&recorded[0][..542], &recorded[1][..542]);
+        }
+    }
+}
+
+#[test]
+fn v8_head_pruning_uses_selected_rows_and_prefill_only_skips_the_head() {
+    for selected in [vec![], vec![16, 30]] {
+        let mut pool = wide_pool();
+        let mut driver = fixture(1, &pool);
+        driver.configure_output_head_pruning(true).unwrap();
+        driver.configure_head_precision_v8(true).unwrap();
+        let batch = prepare(&mut pool, 32);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver.execute_selected(&batch, &selected).unwrap();
+        assert_eq!(
+            result.choices,
+            if selected.is_empty() {
+                vec![]
+            } else {
+                vec![42, 43]
+            }
+        );
+        let commands = &driver.inner.transports[0].commands;
+        assert_eq!(commands.len(), if selected.is_empty() { 541 } else { 544 });
+        if selected.is_empty() {
+            assert!(
+                !commands
+                    .iter()
+                    .any(|command| command.kernel.ends_with("_v8"))
+            );
+        } else {
+            let head = &commands[542];
+            assert_eq!(head.kernel, "ferric_qwen3_tp_batch32_head_bf16_f32_v8");
+            assert_eq!(head.grid_workgroups, 9496);
+            assert_eq!(scalar(head, 3), 2);
+            assert_eq!(
+                driver.inner.transports[0].u32_values(driver.inner.ranks[0].token.id, 2),
+                [16, 30]
+            );
+        }
+        let logits = driver.fp32_logits.unwrap();
+        assert!(
+            driver.inner.transports[0].buffers[&logits.id][selected.len() * 151_936 * 4..]
+                .iter()
+                .all(|&byte| byte == 0xa5)
+        );
+    }
+}
+
+#[test]
+fn v8_head_scope_and_configuration_freeze_do_not_broaden_v7() {
+    assert!(
+        fixture(1, &pool())
+            .configure_head_precision_v8(true)
+            .is_err()
+    );
+    assert!(
+        fixture(1, &wide_pool())
+            .configure_head_precision_v7(true)
+            .is_err()
+    );
+    for world in [2, 8] {
+        assert!(
+            fixture(world, &wide_pool())
+                .configure_head_precision_v8(true)
+                .is_err()
+        );
+    }
+    for mode in [
+        super::super::EngineeringTpProjectionModeV3::Wave,
+        super::super::EngineeringTpProjectionModeV3::Auto,
+    ] {
+        let mut driver = fixture(1, &wide_pool());
+        driver.projection.mode = mode;
+        assert!(driver.configure_head_precision_v8(true).is_err());
+    }
+    let mut driver = fixture(1, &wide_pool());
+    driver.wave_attention = true;
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    driver.wave_attention = false;
+    driver.inner.sequences = Some(vec![vec![]]);
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    driver.inner.sequences = None;
+    driver.last_batch = 1;
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    driver.last_batch = 0;
+    driver.poisoned = true;
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    driver.poisoned = false;
+    driver.inner.closed = true;
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    driver.inner.closed = false;
+    driver.configure_head_precision_v8(true).unwrap();
+    assert!(driver.configure_head_precision_v8(true).is_err());
+    assert!(driver.configure_head_precision_v7(true).is_err());
+    assert!(driver.configure_wave_attention(true).is_err());
+    assert!(driver.configure_dispatch_sequences(true).is_err());
 }
 
 fn prepare(pool: &mut EngineeringTpPagedPoolV1, rows: u32) -> EngineeringTpPreparedBatchV1 {
