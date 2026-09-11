@@ -10,10 +10,10 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
 | Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Bounded open-loop client and paired-series tooling integrated; 105 combined measurement tests pass; baseline launch approval still pending |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Continuous-window V3 collector and independent paired replay integrated; 109 combined measurement tests pass; matched baseline launch approval still pending |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
-| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Authenticated optional draft retention integrated at `8d6418f`; speculative execution and transactional KV settlement are not complete |
-| Dispatch batching | Distinct bounded ordered submission in core runtime | Published `f85bb375e`; Ferric opt-in integrated at `2ce566d`, full host gate and four model/reference gates pass, but initial mean output rate regresses 35.40%; not a performance default |
+| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft CLI and independent-reference producer integrated; paired KV host settlement and opaque target completion integrated at `228df11`; paged draft kernels/driver and end-to-end execution remain incomplete |
+| Dispatch batching | Distinct bounded ordered submission in core runtime | Currentness fix published at `216822284`; native counters/lifecycle and four model/reference gates pass, recovering the old ordered regression; fresh serial comparison pending, not a performance default |
 
 ## Frozen Comparison Contract
 
@@ -359,12 +359,47 @@ round-trip time despite lower send time. Source inspection identifies 720 full
 topology scans at ordered boundaries across this workload as a plausible cause,
 not an exclusive syscall or GPU-time attribution.
 
-An unpublished core candidate at `c110ac55c` makes ordered dispatch boundaries
+The core change built at `c110ac55c` makes ordered dispatch boundaries
 honor the already opt-in operational-currentness policy. Default-mode dispatch,
 first-use allocation, rollover and teardown retain full checks. Its exact-source
-host tests and strict Clippy pass; native counter/lifecycle and model A/B checks
-remain required before publication or adoption. The older receipts retain their
-original source and policy identities.
+gate passes 483 engineering library tests, 20 integration tests, 420 default
+library tests, 31 doctests, strict Clippy, formatting and worker release build
+(one preexisting library ignore per configuration). Native counter probes at
+chain lengths 1/1/16 observe operational full-check deltas 4/2/2 for the control
+and 2/0/0 for the candidate. Both retain the identical full-mode 13/11/26
+deltas. Each candidate lifecycle mode also passes 184 packets, 26 chains,
+storage reuse, actual rollover, full output/input/guard checks, clean teardown
+and all-eight-GPU idle checks.
+
+The exact candidate worker `b91ddef7` and old worker `761027c5` then passed a
+control/candidate/candidate/control Qwen canary, keeping the controller, images
+and ordered profile fixed:
+
+| Worker | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Old ordered | 1 | 3.011428 | 503.553 | 468.889 |
+| Currentness fix | 1 | 5.500006 | 261.776 | 228.193 |
+| Currentness fix | 2 | 5.495006 | 263.160 | 228.401 |
+| Old ordered | 2 | 2.912701 | 510.112 | 473.657 |
+
+Mean rate improves 85.60%, reuse TTFT falls 48.21%, and TPOT falls 51.56%
+against the old, regressed ordered path only. This is not an 85.60% gain over
+Ferric serial, steady-state throughput, or a framework comparison. Every run
+passes all eight reference outputs, five batches, 34 rows, 3,077 packets,
+unforced cleanup and idle checks. A fresh serial/ordered comparison with the
+same new worker remains required before considering default adoption.
+
+After these gates, a fresh fetch/rebase and non-forced push published
+`21682228486f7186cc3c37ddf165fffc438d8b6a` to fe2o3 main. Its only delta from
+the exact tested `c110ac55c` source is native-result documentation. Active
+Ferric dependencies are repinned at `3c554d9`, with only two separately audited
+verifier Cargo raw hashes refreshed. The combined latest-pin gate is pending;
+older receipts retain their original source and policy identities.
+
+Separate fresh serial and ordered HTTP smoke runs also pass all nine reference
+outputs, client text/usage, process cleanup and idle checks. Their corrected
+receipt parser requires the actual stopped/drained terminal record. The first
+parser attempt remains a failed receipt; it was not overwritten or relabelled.
 
 ## Draft Intake
 
@@ -374,8 +409,43 @@ view without cloning weights. Default `open` still authenticates draft input
 into a sink and allocates no draft payload. The scoped intake gate passes 305
 ordinary tests plus strict Clippy and formatting; full-model intake and
 speculative numerical execution are not established by the bounded fixtures.
-Resident draft execution, K+1 target verification, selective accepted-prefix
-KV commit/rollback, correction/bonus handling and load tests remain required.
+The standalone fixed-envelope draft CLI is integrated at `24dddba` and its
+host gate passes 291 tests plus retained-image admission, Clippy and release
+build. It consumes five prompt inputs and produces two outputs through six
+baseline forwards; it has not yet passed a native independent-reference gate.
+The separate offline PyTorch reference producer passes 15 CPU tests. Neither
+host fixture values nor target-model outputs are treated as draft references.
+
+Paired accepted-prefix KV support is integrated at `228df11`: it requires an
+opaque target-driver result, derives acceptance from every K+1 target choice,
+preflights both prefix states before applying either, and requires one draft
+catch-up input after full acceptance. Its host gate passes 376 ordinary tests,
+two compile-fail boundary doctests, strict Clippy and formatting. Draft success
+can currently be minted only inside test fixtures; production cannot complete
+a paired round until the real paged Draft06B driver is implemented. This is
+engineering support, not a new Verus proof or protected token publication.
+
+The isolated 32-row draft kernel family is in progress. Resident paged draft
+generation, its completion-bound driver join, multi-round numerical validation,
+serving integration and speculative load measurements remain required.
+
+## Continuous Measurement
+
+The V3 collector keeps one constant or seeded-Poisson arrival schedule across
+warmup, adjacent fixed measurement windows and a loaded guard interval, followed
+by bounded drain. It does not drain between windows. Completion-window usage
+and arrival-cohort failures are recorded separately; failures are never dropped
+to improve reported rate. The integrated collector gate passes 90 tests.
+
+The separate paired V3 analyzer replays raw observations against pinned plans
+and source identities, checks actual wall-clock containment, retains failed
+windows, and invalidates comparisons on client/resource/cleanup faults. Its
+combined 109-test gate includes 19 new paired-series methods. Descriptive
+whole-start bootstrap intervals require at least three fresh pairs and preserve
+adjacent-window correlation. Structural gate checks are not performance
+qualification: token ITL, stationarity, equal baseline tuning and held-out
+primary-suite comparisons are still outstanding. No matched vLLM/SGLang run
+has occurred.
 
 ## Published Checkpoint
 
