@@ -7,6 +7,7 @@
 //! `EngineeringHsacoObservationV1` JSON schema. Any schema or canonical field
 //! order change fails closed until Ferric audits and updates this decoder.
 
+pub mod host_timing;
 pub mod r33_lifecycle;
 pub mod r33_production_backend;
 #[allow(dead_code)] // Reviewed custody shell awaits its concrete daemon join.

@@ -60,6 +60,29 @@ def peer_fixture(world=8, cache=True, pruning=False, wide=None, budget=16, chunk
 
 
 class PeerProfileTests(unittest.TestCase):
+    def test_concurrent_round_has_explicit_label_pins_roster_and_no_legacy_sequences(self):
+        for world in (2, 8):
+            rows = peer_fixture(world)
+            rows[0]["collective"] = CHECK.CONCURRENT_COLLECTIVE
+            report = CHECK.validate_records(rows, GPU_IDS, world, PINS, True, False,
+                CHECK.CONCURRENT_COLLECTIVE, PROFILE, PEER_PINS)
+            self.assertTrue(report["passed"])
+            self.assertEqual(report["rank_dispatch_counts"], rows[-1]["rank_dispatch_counts"])
+            for field, value in (("collective", CHECK.PEER_COLLECTIVE),
+                                 ("worker_pids", list(range(1000, 1000 + world)))):
+                changed = copy.deepcopy(rows)
+                changed[0][field] = value
+                with self.assertRaises(ValueError):
+                    CHECK.validate_records(changed, GPU_IDS, world, PINS, True, False,
+                        CHECK.CONCURRENT_COLLECTIVE, PROFILE, PEER_PINS)
+            for profile in (None, {**PROFILE, "dispatch_sequences": True}):
+                changed = copy.deepcopy(rows)
+                if profile is not None:
+                    changed[0]["performance_profile"] = profile
+                with self.assertRaises(ValueError):
+                    CHECK.validate_records(changed, GPU_IDS, world, PINS, True, False,
+                        CHECK.CONCURRENT_COLLECTIVE, profile, PEER_PINS)
+
     def validate(self, rows, world=8, pruning=False, peer_pins=PEER_PINS):
         return CHECK.validate_records(rows, GPU_IDS, world, PINS, None, pruning,
                                       "device-peer-serial-v4", PROFILE, peer_pins)

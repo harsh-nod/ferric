@@ -44,7 +44,9 @@ ROW_FIELDS = set("slot generation token position kind".split())
 OUTPUT_FIELDS = set("slot generation token index completed_ns finished".split())
 LEGACY_COLLECTIVE = "host_staged_fp32_rank_order_reduce_bf16_residual"
 PEER_COLLECTIVE = "device-peer-serial-v4"
-COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3", PEER_COLLECTIVE)
+CONCURRENT_COLLECTIVE = "device-peer-concurrent-round-v1"
+PEER_COLLECTIVES = (PEER_COLLECTIVE, CONCURRENT_COLLECTIVE)
+COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3", *PEER_COLLECTIVES)
 PEER_ARTIFACT_FIELDS = {"artifact_hsaco_id", "artifact_manifest_id", "artifact_handoff_id"}
 WIDE_KERNEL_PROFILES = ("v5-wave32", "v5-mfma32")
 PROFILE_BOOLS = {"runtime_cache_admission", "runtime_operational", "dispatch_sequences",
@@ -289,13 +291,16 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
             "unknown expected collective")
     require(expected_collective != "device-tp1-v3" or world == 1,
             "device-tp1-v3 requires exactly one rank")
-    peer = expected_collective == PEER_COLLECTIVE
+    peer = expected_collective in PEER_COLLECTIVES
     if peer:
-        require(world in (2, 8), "device-peer-serial-v4 requires two or eight ranks")
+        require(world in (2, 8), "peer collective requires two or eight ranks")
         peer_artifact(expected_peer_artifact)
         extra.add("peer_artifact")
     else:
-        require(expected_peer_artifact is None, "peer artifact pins require device-peer-serial-v4")
+        require(expected_peer_artifact is None, "peer artifact pins require an explicit peer collective")
+    if expected_collective == CONCURRENT_COLLECTIVE:
+        require(expected_profile is not None and expected_profile["dispatch_sequences"] is False,
+                "concurrent round requires an explicit profile and rejects legacy sequences")
     record(setup, "Setup", SETUP_FIELDS | extra)
     if expected_wide_kernel_profile is not None:
         require(setup["kernel_profile"] == expected_wide_kernel_profile,
@@ -442,7 +447,7 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             if expected_collective == "device-tp1-v3":
                 rank_zero += 72
             dispatch = [rank_zero] + [540] * (world - 1)
-            if expected_collective == PEER_COLLECTIVE:
+            if expected_collective in PEER_COLLECTIVES:
                 dispatch = [rank_zero + 72] + [613] * (world - 1)
             require(integer_list(value["rank_dispatch_counts"], 1) == dispatch,
                     "rank dispatch schedule drifted")
@@ -528,7 +533,7 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
         report["expected_execution_profile"] = {"output_head_pruning": expected_pruning,
                                                 "collective": expected_collective,
                                                 "performance_profile": expected_profile}
-    if expected_collective == PEER_COLLECTIVE:
+    if expected_collective in PEER_COLLECTIVES:
         report["identities"]["peer_artifact"] = dict(expected_peer_artifact)
         report["externally_pinned_peer_artifact_identities"] = sorted(PEER_ARTIFACT_FIELDS)
         report["expected_execution_profile"]["peer_artifact"] = dict(expected_peer_artifact)

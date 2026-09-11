@@ -222,6 +222,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         hidden: vec![0; 4096 * row_capacity as usize],
         reduction: ReductionWorkspace::Baseline,
         sequences: None,
+        timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }
 }

@@ -10,6 +10,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         if pending.iter().all(Vec::is_empty) {
             return Ok(());
         }
+        let _timing = self.timing.span("flush_sequences", None);
         let count = pending[0].len();
         if !(1..=16).contains(&count)
             || pending.len() != self.ranks.len()

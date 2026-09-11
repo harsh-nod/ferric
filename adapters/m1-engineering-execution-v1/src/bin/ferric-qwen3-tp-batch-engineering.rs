@@ -1,6 +1,7 @@
 //! Bounded, explicitly non-authoritative continuous Qwen workload runner.
 
 mod tp_benchmark_control;
+mod tp_host_timing;
 mod tp_peer_worker;
 mod tp_rank_worker;
 mod tp_worker;
@@ -40,7 +41,7 @@ const USAGE: &str = concat!(
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
-    "[--benchmark-control FILE]"
+    "[--benchmark-control FILE] [--host-timing FILE]"
 );
 
 struct Options {
@@ -50,6 +51,7 @@ struct Options {
     worker: PathBuf,
     requests: PathBuf,
     benchmark_control: Option<PathBuf>,
+    host_timing: Option<PathBuf>,
     devices: Vec<u64>,
     rows: usize,
     chunk: usize,
@@ -102,6 +104,7 @@ impl Options {
         let mut wave_attention = false;
         let mut peer_artifact = None;
         let mut benchmark_control = None;
+        let mut host_timing = None;
         while let Some(flag) = args.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -148,6 +151,7 @@ impl Options {
                 "--worker" => worker = Some(PathBuf::from(value)),
                 "--requests" => requests = Some(PathBuf::from(value)),
                 "--benchmark-control" => benchmark_control = Some(PathBuf::from(value)),
+                "--host-timing" => host_timing = Some(PathBuf::from(value)),
                 "--devices" => {
                     devices = Some(
                         value
@@ -169,7 +173,9 @@ impl Options {
                         "host-staged-reuse-v3" => EngineeringTpReductionModeV3::HostStagedReuseV3,
                         "device-tp1-v3" => EngineeringTpReductionModeV3::DeviceTp1V3,
                         "device-peer-serial-v4" => EngineeringTpReductionModeV3::DevicePeerV4,
-                        "device-peer-concurrent-round-v1" => EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
+                        "device-peer-concurrent-round-v1" => {
+                            EngineeringTpReductionModeV3::DevicePeerConcurrentV1
+                        }
                         _ => return Err("unsupported collective".into()),
                     }
                 }
@@ -228,7 +234,8 @@ impl Options {
         if peer != peer_artifact.is_some()
             || (peer && !matches!(devices.len(), 2 | 8))
             || (peer && runtime.rollover)
-            || (collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1 && runtime.sequences)
+            || (collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1
+                && runtime.sequences)
         {
             return Err("peer transport requires TP2/8 and --peer-artifact; rollover and concurrent same-rank sequences are unsupported".into());
         }
@@ -258,6 +265,7 @@ impl Options {
             worker: worker.ok_or("--worker is required")?,
             requests: requests.ok_or("--requests is required")?,
             benchmark_control,
+            host_timing,
             devices,
             rows,
             chunk,
@@ -438,6 +446,7 @@ fn run_workload(
     prompts: &[Vec<u32>],
     options: &Options,
     benchmark_clock: Option<&BenchmarkClock>,
+    timing: &ferric_m1_engineering_execution_v1::host_timing::HostTiming,
 ) -> Result<(), String> {
     let clock = Instant::now();
     let now = || benchmark_clock.map_or_else(|| elapsed_ns(clock), BenchmarkClock::elapsed_ns);
@@ -496,10 +505,12 @@ fn run_workload(
         if batches >= options.max_batches {
             return Err("workload exhausted its conservative batch/packet budget".into());
         }
+        let batch_timing = timing.scope("controller_batch");
         let report = timed_step(now, |started, completed| {
             runtime.step(tick, started, completed)
         })?
         .ok_or("active requests produced no batch")?;
+        drop(batch_timing);
         let rows = report.rows.iter().map(|row| serde_json::json!({
             "slot":row.request.slot, "generation":row.request.generation, "token":row.token_id,
             "position":row.absolute_position, "kind":format!("{:?}", row.kind)
@@ -548,8 +559,29 @@ fn retire_finished(
 }
 
 fn run(options: &Options) -> Result<(), String> {
+    let mut diagnostics = tp_host_timing::TimingFile::create(options.host_timing.as_deref())?;
+    let result = run_with_timing(options, &mut diagnostics);
+    let output = diagnostics.finish(&result);
+    match (result, output) {
+        (Ok(()), output) => output,
+        (Err(error), Ok(())) => Err(error),
+        (Err(error), Err(output)) => Err(format!("{error}; {output}")),
+    }
+}
+
+fn run_with_timing(
+    options: &Options,
+    diagnostics: &mut tp_host_timing::TimingFile,
+) -> Result<(), String> {
+    let timing = diagnostics.timing.clone();
+    let _controller_timing = timing.scope("controller");
+    let setup_timing = timing.scope("setup");
     let whole = Instant::now();
+    let admission_timing = timing.scope("setup_admission");
     let (workload, loaded_requests_sha256) = Workload::open(&options.requests)?;
+    if timing.is_enabled() {
+        diagnostics.workload_sha256 = Some(loaded_requests_sha256.clone());
+    }
     let control = options
         .benchmark_control
         .as_ref()
@@ -601,6 +633,8 @@ fn run(options: &Options) -> Result<(), String> {
             .map_err(|error| error.to_string())
         })
         .transpose()?;
+    drop(admission_timing);
+    let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let prompts = workload
         .requests
@@ -615,6 +649,8 @@ fn run(options: &Options) -> Result<(), String> {
             Ok(tokens)
         })
         .collect::<Result<Vec<_>, String>>()?;
+    drop(model_timing);
+    let scheduler_timing = timing.scope("setup_scheduler");
     let mut session = [0; 32];
     std::fs::File::open("/dev/urandom")
         .and_then(|mut file| file.read_exact(&mut session))
@@ -645,6 +681,8 @@ fn run(options: &Options) -> Result<(), String> {
         options.chunk,
     )
     .map_err(|e| format!("scheduler: {e:?}"))?;
+    drop(scheduler_timing);
+    let workers_timing = timing.scope("setup_workers");
     let workers = if let Some(peer) = &peer_artifact {
         PeerWorker::spawn_with_timing(
             &options.worker,
@@ -652,7 +690,7 @@ fn run(options: &Options) -> Result<(), String> {
             &[&artifact, peer],
             options.runtime,
             options.collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
-            Default::default(),
+            timing.clone(),
         )?
         .into_iter()
         .map(RankWorker::Peer)
@@ -661,9 +699,17 @@ fn run(options: &Options) -> Result<(), String> {
         options
             .devices
             .iter()
-            .map(|&id| {
-                Worker::spawn_with_options(&options.worker, id, &artifact, options.runtime)
-                    .map(RankWorker::Independent)
+            .enumerate()
+            .map(|(rank, &id)| {
+                Worker::spawn_with_timing(
+                    &options.worker,
+                    id,
+                    &artifact,
+                    options.runtime,
+                    timing.clone(),
+                    u32::try_from(rank).map_err(|_| "timing rank overflow")?,
+                )
+                .map(RankWorker::Independent)
             })
             .collect::<Result<Vec<_>, _>>()?
     };
@@ -675,6 +721,8 @@ fn run(options: &Options) -> Result<(), String> {
     if running_hashes.iter().any(|hash| hash != &worker_hash) {
         return Err("running worker file identity drifted".into());
     }
+    drop(workers_timing);
+    let resident_timing = timing.scope("setup_resident_weights");
     let driver_constructor = if options.kernel_profile.wide32() {
         EngineeringTpBatchExecutionV2::new_wide32
     } else {
@@ -687,11 +735,18 @@ fn run(options: &Options) -> Result<(), String> {
         model.layout(),
         &pool,
     )?;
+    drop(resident_timing);
+    gpu.configure_host_timing(timing.clone())?;
+    let policies_timing = timing.scope("setup_execution_policies");
     gpu.configure_output_head_pruning(options.prune_output_head)?;
     gpu.configure_reduction(options.collective)?;
     gpu.configure_dispatch_sequences(options.runtime.sequences)?;
-    gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
+    {
+        let _projection_timing = timing.scope("setup_projection");
+        gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
+    }
     gpu.configure_wave_attention(options.wave_attention)?;
+    drop(policies_timing);
     eprintln!(
         "additional resident transposed weight bytes: {}",
         gpu.transposed_weight_bytes()
@@ -712,9 +767,11 @@ fn run(options: &Options) -> Result<(), String> {
     };
     let mut runtime = runtime_constructor(gpu, pool, scheduler, options.rows, options.cache)?;
     let mut benchmark_clock = None;
+    drop(setup_timing);
     let result = (|| {
         let setup_seconds = whole.elapsed().as_secs_f64();
         if let Some(config) = control {
+            let _barrier_timing = timing.scope("ready_barrier");
             benchmark_clock = Some(config.ready_and_wait()?);
         }
         let mut setup = serde_json::json!({"schema":"FerricQwen3TpBatchSetupV2", "authority":"none",
@@ -762,7 +819,11 @@ fn run(options: &Options) -> Result<(), String> {
                 "artifact_handoff_id":hex(peer.handoff_id().as_bytes())
             });
         }
+        if timing.is_enabled() {
+            diagnostics.setup = Some(setup.clone());
+        }
         emit(&setup)?;
+        let _workload_timing = timing.scope("workload");
         run_workload(
             &mut runtime,
             &model,
@@ -770,9 +831,13 @@ fn run(options: &Options) -> Result<(), String> {
             &prompts,
             options,
             benchmark_clock.as_ref(),
+            &timing,
         )
     })();
-    let close = runtime.close();
+    let close = {
+        let _close_timing = timing.scope("close");
+        runtime.close()
+    };
     match (result, close) {
         (Ok(()), Ok(())) => {
             let replica_closed = benchmark_clock.map(BenchmarkClock::finish).transpose()?;
@@ -782,6 +847,9 @@ fn run(options: &Options) -> Result<(), String> {
             if let Some(receipt) = replica_closed {
                 closed["replica_benchmark"] =
                     serde_json::to_value(receipt).map_err(|e| e.to_string())?;
+            }
+            if timing.is_enabled() {
+                diagnostics.closed = Some(closed.clone());
             }
             emit(&closed)
         }
@@ -818,6 +886,44 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn host_timing_is_explicit_single_valued_and_does_not_change_policy() {
+        let ordinary = args(&["--devices", "1"]).unwrap();
+        assert!(ordinary.host_timing.is_none());
+        let profiled = args(&["--devices", "1", "--host-timing", "/private/timing.json"]).unwrap();
+        assert_eq!(
+            profiled.host_timing,
+            Some(PathBuf::from("/private/timing.json"))
+        );
+        assert_eq!(
+            (
+                profiled.runtime.cache_admission,
+                profiled.runtime.operational,
+                profiled.runtime.sequences,
+                profiled.runtime.rollover
+            ),
+            (
+                ordinary.runtime.cache_admission,
+                ordinary.runtime.operational,
+                ordinary.runtime.sequences,
+                ordinary.runtime.rollover
+            )
+        );
+        assert_eq!(profiled.collective, ordinary.collective);
+        assert!(args(&["--devices", "1", "--host-timing"]).is_err());
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--host-timing",
+                "/a",
+                "--host-timing",
+                "/b"
+            ])
+            .is_err()
+        );
     }
     #[test]
     fn options_enforce_physical_roster_rows_and_ring_bound() {
@@ -989,9 +1095,19 @@ mod tests {
 
     #[test]
     fn concurrent_peer_profile_is_explicit_and_rejects_same_rank_sequences() {
-        let base = ["--devices", "1,2", "--collective", "device-peer-concurrent-round-v1", "--peer-artifact", "/peer"];
+        let base = [
+            "--devices",
+            "1,2",
+            "--collective",
+            "device-peer-concurrent-round-v1",
+            "--peer-artifact",
+            "/peer",
+        ];
         let options = args(&base).unwrap();
-        assert_eq!(options.collective.label(), "device-peer-concurrent-round-v1");
+        assert_eq!(
+            options.collective.label(),
+            "device-peer-concurrent-round-v1"
+        );
         assert_eq!(options.max_batches, 212);
         for flag in ["--dispatch-sequences", "--queue-rollover"] {
             let mut invalid = base.to_vec();

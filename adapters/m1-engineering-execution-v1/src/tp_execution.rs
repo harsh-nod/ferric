@@ -264,6 +264,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
+    timing: crate::host_timing::HostTiming,
     closed: bool,
 }
 
@@ -402,6 +403,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
             sequences: None,
+            timing: crate::host_timing::HostTiming::default(),
             closed: false,
         })
     }
@@ -768,6 +770,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        let _timing = self.timing.span("dispatch_zero", None);
         let bound = if self.row_capacity == 32 {
             Some(row_profile::bind(32, command.clone())?)
         } else {
@@ -788,6 +791,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         &mut self,
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
+        let _timing = self.timing.span("dispatch_each", None);
         if let Some(pending) = &mut self.sequences {
             if pending.len() != self.ranks.len() || pending.iter().any(|rank| rank.len() >= 16) {
                 return Err("pending rank sequence bound drifted".into());
@@ -843,6 +847,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn reduce(&mut self, layer: u32, operation: Qwen3TensorParallelCollectiveV1) -> TpResult<()> {
+        let _timing = self.timing.scope(match operation {
+            Qwen3TensorParallelCollectiveV1::AttentionOutputSum => "collective_attention",
+            Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => "collective_feed_forward",
+        });
         self.flush_sequences()?;
         match self.reduction.mode() {
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
@@ -851,7 +859,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             EngineeringTpReductionModeV3::DeviceTp1V3 => {
                 return self.reduce_device_tp1(layer, operation);
             }
-            EngineeringTpReductionModeV3::DevicePeerV4 | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
+            EngineeringTpReductionModeV3::DevicePeerV4
+            | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
                 return self.reduce_device_peer(layer, operation);
             }
             EngineeringTpReductionModeV3::HostStagedV1 => {}
@@ -895,6 +904,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn broadcast_hidden(&mut self, bytes: &[u8]) -> TpResult<()> {
+        let _timing = self.timing.span("broadcast_hidden", None);
         if bytes.len() != self.hidden.len() * 2 {
             return Err("hidden broadcast length drifted".into());
         }

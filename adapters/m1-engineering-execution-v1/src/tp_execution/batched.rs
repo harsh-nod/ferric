@@ -167,6 +167,20 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.row_capacity
     }
 
+    /// Attaches opt-in host diagnostics before execution, without altering GPU policy.
+    /// # Errors
+    /// Rejects a started, closed or failed stream.
+    pub fn configure_host_timing(
+        &mut self,
+        timing: crate::host_timing::HostTiming,
+    ) -> TpResult<()> {
+        if self.last_batch != 0 || self.poisoned || self.inner.closed {
+            return Err("host timing requires a fresh batch stream".into());
+        }
+        self.inner.timing = timing;
+        Ok(())
+    }
+
     /// Selects an explicit reduction ablation before the first batch.
     /// `DeviceTp1V3` requires a transport admitting the separate v3 image.
     ///
@@ -350,6 +364,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         batch: &EngineeringTpPreparedBatchV1,
         output_rows: &[usize],
     ) -> TpResult<EngineeringTpBatchOutputV2> {
+        let _timing = self.inner.timing.batch(batch.id());
         self.validate(batch)?;
         if output_rows.iter().any(|&row| row >= batch.rows().len())
             || output_rows.windows(2).any(|pair| pair[0] >= pair[1])
@@ -478,6 +493,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         output_rows: &[usize],
     ) -> TpResult<Vec<u32>> {
         use EngineeringTpArgumentV1::U32;
+        let metadata_timing = self.inner.timing.scope("metadata");
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
         let projection = &self.projection;
@@ -540,6 +556,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         }
         let zero = &self.inner.ranks[0];
         self.inner.transports[0].write(zero.token.id, 0, &tokens)?;
+        drop(metadata_timing);
+        let embedding_timing = self.inner.timing.scope("embedding");
         self.inner.dispatch_zero(&dispatch(
             EMBEDDING,
             rows * model.hidden_size / 64,
@@ -551,8 +569,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             ],
         ))?;
         self.inner.initialize_hidden_from_embedding()?;
+        drop(embedding_timing);
 
         for layer in 0..model.layers {
+            let attention_timing = self.inner.timing.scope("attention");
             let li = layer as usize;
             self.inner.dispatch_each(|r| {
                 norm(
@@ -681,8 +701,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(attention_timing);
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
+            let feed_forward_timing = self.inner.timing.scope("feed_forward");
             self.inner.dispatch_each(|r| {
                 norm(
                     r,
@@ -743,6 +765,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(feed_forward_timing);
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::FeedForwardDownSum)?;
         }
@@ -756,6 +779,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if head_rows == 0 {
             return Ok(Vec::new());
         }
+        let head_timing = self.inner.timing.scope("output_head");
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&norm(
             r,
@@ -786,6 +810,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             head_rows,
             vec![r.logits.read(), r.choice.write(), U32(head_rows)],
         ))?;
+        drop(head_timing);
+        let _readback_timing = self.inner.timing.scope("output_readback");
         let mut bytes = vec![0; head_rows as usize * 4];
         self.inner.transports[0].read(self.inner.ranks[0].choice.id, 0, &mut bytes)?;
         let choices = bytes

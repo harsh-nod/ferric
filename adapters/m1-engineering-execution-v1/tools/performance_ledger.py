@@ -50,7 +50,7 @@ def validate_manifest(value):
         CHECK.require(variant["kind"] in ("baseline", "standalone", "cumulative"), "variant kind")
         CHECK.require((variant["kind"] == "baseline") == (identifier == baseline), "baseline kind mismatch")
         expected = variant["expect"]
-        peer = type(expected) is dict and expected.get("collective") == CHECK.PEER_COLLECTIVE
+        peer = type(expected) is dict and expected.get("collective") in CHECK.PEER_COLLECTIVES
         wide = type(expected) is dict and "wide_kernel_profile" in expected
         extra = ({"peer_artifact"} if peer else set()) | ({"wide_kernel_profile"} if wide else set())
         CHECK.fields(expected, EXPECT_FIELDS | extra, "variant expectation")
@@ -65,6 +65,10 @@ def validate_manifest(value):
             CHECK.peer_artifact(expected["peer_artifact"])
         if expected["performance_profile"] is not None:
             CHECK.performance_profile(expected["performance_profile"])
+        if expected["collective"] == CHECK.CONCURRENT_COLLECTIVE:
+            CHECK.require(expected["performance_profile"] is not None
+                          and expected["performance_profile"]["dispatch_sequences"] is False,
+                          "concurrent rounds require explicit profile without legacy sequences")
         if wide:
             CHECK.wide_kernel_profile(expected["wide_kernel_profile"], expected["performance_profile"])
         for field in CHECK.IDENTITY_FIELDS | {"workload_sha256", "reference_sha256"}:

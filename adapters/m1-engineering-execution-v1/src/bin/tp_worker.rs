@@ -15,6 +15,7 @@ use fe2o3_kfd::engineering_wire::{
     self as wire, BufferAccessV1, CommandV1, KernelMetadataV1, PointerFixupV1, ResponseV1,
     SequenceDispatchV1,
 };
+use ferric_m1_engineering_execution_v1::host_timing::{HostTiming, IpcTiming};
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpArgumentV1, EngineeringTpBufferAccessV1, EngineeringTpDispatchV1,
@@ -57,6 +58,12 @@ enum PendingRequest {
     Sequence(usize),
 }
 
+struct WorkerTiming {
+    timing: HostTiming,
+    rank: u32,
+    pending: Option<IpcTiming>,
+}
+
 pub struct Worker {
     child: Child,
     writer: Option<SyncSender<Outgoing>>,
@@ -72,6 +79,7 @@ pub struct Worker {
     options: RuntimeOptions,
     queue_epoch: u64,
     queue_packets: u64,
+    timing: Option<Box<WorkerTiming>>,
 }
 
 impl Worker {
@@ -91,6 +99,24 @@ impl Worker {
         artifact: &EngineeringTpArtifactV1,
         options: RuntimeOptions,
     ) -> TpResult<Self> {
+        Self::spawn_with_timing(
+            executable,
+            unique_id,
+            artifact,
+            options,
+            HostTiming::default(),
+            0,
+        )
+    }
+
+    pub fn spawn_with_timing(
+        executable: &Path,
+        unique_id: u64,
+        artifact: &EngineeringTpArtifactV1,
+        options: RuntimeOptions,
+        timing: HostTiming,
+        rank: u32,
+    ) -> TpResult<Self> {
         let child = Command::new(executable)
             .arg("--device-unique-id")
             .arg(unique_id.to_string())
@@ -100,7 +126,7 @@ impl Worker {
             .stderr(Stdio::inherit())
             .spawn()
             .map_err(|error| format!("spawn GPU worker: {error}"))?;
-        let mut worker = Self::connect(child, unique_id, OP_TIMEOUT)?;
+        let mut worker = Self::connect_with_timing(child, unique_id, OP_TIMEOUT, timing, rank)?;
         worker.options = options;
         if options.cache_admission || options.operational {
             worker.send(
@@ -119,7 +145,18 @@ impl Worker {
         Ok(worker)
     }
 
-    fn connect(mut child: Child, unique_id: u64, timeout: Duration) -> TpResult<Self> {
+    #[cfg(test)]
+    fn connect(child: Child, unique_id: u64, timeout: Duration) -> TpResult<Self> {
+        Self::connect_with_timing(child, unique_id, timeout, HostTiming::default(), 0)
+    }
+
+    fn connect_with_timing(
+        mut child: Child,
+        unique_id: u64,
+        timeout: Duration,
+        timing: HostTiming,
+        timing_rank: u32,
+    ) -> TpResult<Self> {
         let Some(mut input) = child.stdin.take() else {
             let _ = child.kill();
             let _ = child.wait();
@@ -173,6 +210,13 @@ impl Worker {
             options: RuntimeOptions::default(),
             queue_epoch: 0,
             queue_packets: 0,
+            timing: timing.is_enabled().then(|| {
+                Box::new(WorkerTiming {
+                    timing,
+                    rank: timing_rank,
+                    pending: None,
+                })
+            }),
         };
         let ready = worker.receive()?;
         if !matches!(ready.header, ResponseV1::Ready { protocol, target, device_unique_id, authority }
@@ -228,6 +272,9 @@ impl Worker {
 
     fn reject<T>(&mut self, message: impl Into<String>) -> TpResult<T> {
         self.failed = true;
+        if let Some(timing) = &mut self.timing {
+            timing.pending.take();
+        }
         let message = message.into();
         let cleanup = self.terminate();
         Err(match cleanup {
@@ -243,6 +290,28 @@ impl Worker {
         if header.payload_bytes().map_err(|error| error.to_string())? != payload.len() {
             return self.reject("outgoing payload length mismatch");
         }
+        let (command, dispatches) = match &header {
+            CommandV1::Dispatch { .. } => ("dispatch", 1),
+            CommandV1::DispatchSequence { dispatches } => {
+                ("dispatch_sequence", dispatches.len() as u64)
+            }
+            CommandV1::Allocate { .. } => ("allocate", 0),
+            CommandV1::Write { .. } => ("write", 0),
+            CommandV1::Read { .. } => ("read", 0),
+            CommandV1::LoadKernel { .. } => ("load_kernel", 0),
+            CommandV1::ConfigurePerformance { .. } => ("configure_performance", 0),
+            CommandV1::RolloverQueue { .. } => ("rollover_queue", 0),
+            CommandV1::Close => ("close", 0),
+            _ => ("other", 0),
+        };
+        if let Some(timing) = &mut self.timing {
+            timing.pending = Some(timing.timing.request(
+                Some(timing.rank),
+                command,
+                payload.len(),
+                dispatches,
+            ));
+        }
         self.pending = Some(match &header {
             CommandV1::Dispatch { .. } => PendingRequest::Dispatch,
             CommandV1::DispatchSequence { dispatches } => {
@@ -256,7 +325,15 @@ impl Worker {
         if writer.try_send(Outgoing { header, payload }).is_err() {
             return self.reject("worker writer unavailable");
         }
-        match self.written.recv_timeout(self.timeout) {
+        let written = self.written.recv_timeout(self.timeout);
+        if let Some(ticket) = self
+            .timing
+            .as_mut()
+            .and_then(|timing| timing.pending.as_mut())
+        {
+            ticket.sent(matches!(&written, Ok(Ok(()))));
+        }
+        match written {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => self.reject(error),
             Err(error) => self.reject(format!("worker write deadline/disconnect: {error}")),
@@ -264,6 +341,10 @@ impl Worker {
     }
 
     fn receive(&mut self) -> TpResult<Incoming> {
+        let _timing = self
+            .timing
+            .as_ref()
+            .map(|timing| timing.timing.span("ipc_response_wait", Some(timing.rank)));
         if self.pending.is_none() || self.failed || self.exited {
             return self.reject("worker has no admissible pending response");
         }
@@ -274,6 +355,13 @@ impl Worker {
             })) => self.reject(format!("GPU worker failed (fatal={fatal}): {message}")),
             Ok(Ok(response)) => {
                 self.pending = None;
+                if let Some(ticket) = self
+                    .timing
+                    .as_mut()
+                    .and_then(|timing| timing.pending.take())
+                {
+                    ticket.finish(response.payload.len(), true);
+                }
                 Ok(response)
             }
             Ok(Err(error)) => self.reject(error),
@@ -873,6 +961,66 @@ while True:
         assert!(worker.writer.is_none());
         assert!(worker.io_threads.is_empty());
         assert!(worker.child.try_wait().unwrap().unwrap().success());
+    }
+
+    #[test]
+    fn host_tickets_preserve_roundtrip_payloads_and_explicit_failure() {
+        let timing = HostTiming::enabled();
+        let mut worker = Worker::connect_with_timing(
+            fake("normal"),
+            1,
+            Duration::from_secs(5),
+            timing.clone(),
+            1,
+        )
+        .unwrap();
+        let buffer = worker.allocate(4).unwrap();
+        worker.write(buffer, 0, &[1, 2, 3, 4]).unwrap();
+        let mut bytes = [0; 4];
+        worker.read(buffer, 0, &mut bytes).unwrap();
+        assert_eq!(bytes, [1, 2, 3, 4]);
+        worker.close().unwrap();
+        let snapshot = timing.snapshot();
+        assert_eq!(snapshot["incomplete"], false);
+        let rows = snapshot["records"].as_array().unwrap();
+        let requests = rows
+            .iter()
+            .filter(|row| row["category"] == "ipc_roundtrip")
+            .collect::<Vec<_>>();
+        assert_eq!(requests.len(), 4);
+        assert!(
+            requests
+                .iter()
+                .all(|row| row["rank"] == 1 && row["count"] == 1 && row["failed"] == 0)
+        );
+        assert_eq!(
+            requests.iter().find(|row| row["label"] == "write").unwrap()["request_payload_bytes"],
+            4
+        );
+        assert_eq!(
+            requests.iter().find(|row| row["label"] == "read").unwrap()["response_payload_bytes"],
+            4
+        );
+
+        let timing = HostTiming::enabled();
+        let mut worker = Worker::connect_with_timing(
+            fake("stall"),
+            1,
+            Duration::from_millis(100),
+            timing.clone(),
+            0,
+        )
+        .unwrap();
+        assert!(worker.allocate(4).is_err());
+        assert!(worker.exited);
+        let snapshot = timing.snapshot();
+        assert!(
+            snapshot["records"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|row| row["label"] == "allocate" && row["failed"] == 1)
+        );
     }
 
     #[test]

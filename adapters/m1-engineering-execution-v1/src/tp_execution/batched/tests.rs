@@ -467,6 +467,7 @@ fn fixture(
         hidden: vec![0; 4096 * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
+        timing: crate::host_timing::HostTiming::default(),
         closed: false,
     };
     EngineeringTpBatchExecutionV2 {
@@ -1212,6 +1213,55 @@ fn real_multirow_schedule_submits_all_ranks_before_waiting_and_preserves_tails()
         }
         assert_eq!(stages, 72);
     }
+}
+
+#[test]
+fn host_timing_preserves_driver_choices_counts_and_transport_order() {
+    let mut observations = Vec::new();
+    for enabled in [false, true] {
+        let mut pool = pool();
+        let mut driver = fixture(2, &pool);
+        let timing = if enabled {
+            crate::host_timing::HostTiming::enabled()
+        } else {
+            crate::host_timing::HostTiming::default()
+        };
+        driver.configure_host_timing(timing.clone()).unwrap();
+        let batch = prepare(&mut pool, 3);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver.execute(&batch).unwrap();
+        assert_eq!(result.choices, [42, 43, 44]);
+        pool.commit_batch(&batch, result.completion).unwrap();
+        assert!(driver.configure_host_timing(timing.clone()).is_err());
+        driver.close().unwrap();
+        observations.push((
+            driver.dispatch_counts(),
+            driver.inner.transports[0].events.borrow().clone(),
+        ));
+        if enabled {
+            let snapshot = timing.snapshot();
+            assert_eq!(snapshot["incomplete"], false);
+            let records = snapshot["records"].as_array().unwrap();
+            for (label, count) in [
+                ("batch", 1),
+                ("attention", 36),
+                ("feed_forward", 36),
+                ("collective_attention", 36),
+                ("collective_feed_forward", 36),
+                ("output_readback", 1),
+            ] {
+                let record = records
+                    .iter()
+                    .find(|record| record["label"] == label)
+                    .unwrap();
+                assert_eq!(record["batch"], batch.id());
+                assert_eq!(record["count"], count);
+            }
+        } else {
+            assert!(timing.snapshot().is_null());
+        }
+    }
+    assert_eq!(observations[0], observations[1]);
 }
 
 #[test]

@@ -7,8 +7,8 @@ mod peer_wire;
 
 use super::tp_worker::{LoadedKernel, RuntimeOptions, metadata_matches, pack_dispatch};
 use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1, SequenceDispatchV1};
-use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::host_timing::{HostTiming, IpcTiming};
+use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpArgumentV1, EngineeringTpBufferAccessV1, EngineeringTpDispatchV1,
     EngineeringTpRankTransportV1, TpResult,
@@ -51,7 +51,13 @@ struct Connection {
 }
 
 impl Connection {
-    fn connect_profile(mut child: Child, ids: &[u64], timeout: Duration, concurrent_rounds: bool, timing: HostTiming) -> TpResult<Self> {
+    fn connect_profile(
+        mut child: Child,
+        ids: &[u64],
+        timeout: Duration,
+        concurrent_rounds: bool,
+        timing: HostTiming,
+    ) -> TpResult<Self> {
         let Some(mut input) = child.stdin.take() else {
             let _ = child.kill();
             let _ = child.wait();
@@ -148,7 +154,9 @@ impl Connection {
         };
         let (kind, count) = match &command {
             CommandV1::Dispatch { .. } => ("dispatch", 1),
-            CommandV1::DispatchSequence { dispatches } => ("dispatch_sequence", dispatches.len() as u64),
+            CommandV1::DispatchSequence { dispatches } => {
+                ("dispatch_sequence", dispatches.len() as u64)
+            }
             CommandV1::Write { .. } => ("write", 0),
             CommandV1::Read { .. } => ("read", 0),
             CommandV1::Allocate { .. } => ("allocate", 0),
@@ -157,8 +165,15 @@ impl Connection {
             CommandV1::Close => ("close", 0),
             _ => ("other", 0),
         };
-        let ticket = self.timing.request(Some(rank as u32), kind, payload.len(), count);
-        self.tickets.insert(request, ticket);
+        if self.timing.is_enabled() {
+            let ticket = self.timing.request(
+                Some(u32::try_from(rank).map_err(|_| "timing rank overflow")?),
+                kind,
+                payload.len(),
+                count,
+            );
+            self.tickets.insert(request, ticket);
+        }
         let header = peer_wire::Request {
             id: request,
             rank: u32::try_from(rank).map_err(|_| "rank overflow")?,
@@ -184,9 +199,11 @@ impl Connection {
         }
         match self.written.recv_timeout(self.timeout) {
             Ok(Ok(())) => {
-                if let Some(ticket) = self.tickets.get_mut(&request) { ticket.sent(true); }
+                if let Some(ticket) = self.tickets.get_mut(&request) {
+                    ticket.sent(true);
+                }
                 Ok(())
-            },
+            }
             Ok(Err(error)) => self.reject(error),
             Err(error) => self.reject(format!("peer write deadline/disconnect: {error}")),
         }
@@ -200,7 +217,10 @@ impl Connection {
             self.flush_round()?;
         }
         while self.completed[rank].is_none() {
-            let _waiting = self.timing.span("ipc_response_wait", Some(rank as u32));
+            let _waiting = self.timing.span(
+                "ipc_response_wait",
+                Some(u32::try_from(rank).map_err(|_| "timing rank overflow")?),
+            );
             let incoming = match self.reader.recv_timeout(self.timeout) {
                 Ok(Ok(value)) => value,
                 Ok(Err(error)) => return self.reject(error),
@@ -229,7 +249,9 @@ impl Connection {
             if let ResponseV1::Error { message, fatal } = response {
                 return self.reject(format!("peer group failed (fatal={fatal}): {message}"));
             }
-            if let Some(ticket) = self.tickets.remove(&request) { ticket.finish(payload.len(), true); }
+            if let Some(ticket) = self.tickets.remove(&request) {
+                ticket.finish(payload.len(), true);
+            }
             self.completed[actual_rank] = Some((response, payload));
         }
         self.pending[rank] = None;
@@ -239,10 +261,16 @@ impl Connection {
     }
 
     fn queue_round(&mut self, rank: usize, command: CommandV1, payload: Vec<u8>) -> TpResult<()> {
-        if !self.concurrent_rounds || self.failed || self.exited
-            || rank >= self.pending.len() || self.closed[rank] || self.pending[rank].is_some()
-            || self.completed.iter().any(Option::is_some) || !self.order.is_empty()
-            || self.pending.iter().filter(|entry| entry.is_some()).count() != self.queued_round.len()
+        if !self.concurrent_rounds
+            || self.failed
+            || self.exited
+            || rank >= self.pending.len()
+            || self.closed[rank]
+            || self.pending[rank].is_some()
+            || self.completed.iter().any(Option::is_some)
+            || !self.order.is_empty()
+            || self.pending.iter().filter(|entry| entry.is_some()).count()
+                != self.queued_round.len()
         {
             return self.reject("peer round rank or barrier state mismatch");
         }
@@ -253,14 +281,32 @@ impl Connection {
         if bytes != payload.len() {
             return self.reject("peer round payload mismatch");
         }
-        let CommandV1::Dispatch { kernel, payload_bytes, workgroup, grid, pointers, timeout_ms } = command else {
+        let CommandV1::Dispatch {
+            kernel,
+            payload_bytes,
+            workgroup,
+            grid,
+            pointers,
+            timeout_ms,
+        } = command
+        else {
             return self.reject("peer round accepts only individual dispatches");
         };
-        let timeout_ms = timeout_ms.min(600_000 / self.pending.len() as u32);
+        let timeout_ms = timeout_ms
+            .min(600_000 / u32::try_from(self.pending.len()).map_err(|_| "peer world overflow")?);
         self.pending[rank] = Some(self.next_request);
-        self.queued_round.push((rank, SequenceDispatchV1 {
-            kernel, payload_bytes, workgroup, grid, pointers, timeout_ms,
-        }, payload));
+        self.queued_round.push((
+            rank,
+            SequenceDispatchV1 {
+                kernel,
+                payload_bytes,
+                workgroup,
+                grid,
+                pointers,
+                timeout_ms,
+            },
+            payload,
+        ));
         Ok(())
     }
 
@@ -270,16 +316,30 @@ impl Connection {
             return self.reject("peer round request identity exhausted");
         };
         let entries = std::mem::take(&mut self.queued_round);
-        let mut ticket = self.timing.request(None, "dispatch_round", entries.iter().map(|(_, _, bytes)| bytes.len()).sum(), entries.len() as u64);
-        let ranks = entries.iter().map(|(rank, _, _)| *rank as u32).collect::<Vec<_>>();
+        let mut ticket = self.timing.request(
+            None,
+            "dispatch_round",
+            entries.iter().map(|(_, _, bytes)| bytes.len()).sum(),
+            entries.len() as u64,
+        );
+        let ranks = entries
+            .iter()
+            .map(|(rank, _, _)| u32::try_from(*rank).map_err(|_| "peer rank overflow"))
+            .collect::<Result<Vec<_>, _>>()?;
         let mut payload = Vec::new();
-        let dispatches = entries.into_iter().map(|(_, dispatch, bytes)| {
-            payload.extend_from_slice(&bytes);
-            dispatch
-        }).collect();
+        let dispatches = entries
+            .into_iter()
+            .map(|(_, dispatch, bytes)| {
+                payload.extend_from_slice(&bytes);
+                dispatch
+            })
+            .collect();
         let header = peer_wire::Request {
-            id: request, rank: ranks[0], peer_readable: false,
-            command: CommandV1::DispatchSequence { dispatches }, round_ranks: ranks.clone(),
+            id: request,
+            rank: ranks[0],
+            peer_readable: false,
+            command: CommandV1::DispatchSequence { dispatches },
+            round_ranks: ranks.clone(),
         };
         let bytes = match header.payload_bytes() {
             Ok(bytes) => bytes,
@@ -289,27 +349,47 @@ impl Connection {
             return self.reject("peer round frame bound mismatch");
         }
         self.next_request = next;
-        let Some(writer) = &self.writer else { return self.reject("peer writer closed"); };
+        let Some(writer) = &self.writer else {
+            return self.reject("peer writer closed");
+        };
         if writer.try_send((header, payload)).is_err() {
             return self.reject("peer round writer unavailable");
         }
         match self.written.recv_timeout(self.timeout) {
-            Ok(Ok(())) => { ticket.sent(true); },
+            Ok(Ok(())) => {
+                ticket.sent(true);
+            }
             Ok(Err(error)) => return self.reject(error),
-            Err(error) => return self.reject(format!("peer round write deadline/disconnect: {error}")),
+            Err(error) => {
+                return self.reject(format!("peer round write deadline/disconnect: {error}"));
+            }
         }
         let _waiting = self.timing.span("ipc_response_wait", None);
         let incoming = match self.reader.recv_timeout(self.timeout) {
             Ok(Ok(value)) => value,
             Ok(Err(error)) => return self.reject(error),
-            Err(error) => return self.reject(format!("peer round response deadline/disconnect: {error}")),
+            Err(error) => {
+                return self.reject(format!("peer round response deadline/disconnect: {error}"));
+            }
         };
-        let (peer_wire::Response::RoundDone { request: actual_request, ranks: actual_ranks, response }, payload) = incoming else {
+        let (
+            peer_wire::Response::RoundDone {
+                request: actual_request,
+                ranks: actual_ranks,
+                response,
+            },
+            payload,
+        ) = incoming
+        else {
             return self.reject("peer round expected all-rank completion");
         };
-        if actual_request != request || actual_ranks != ranks || !payload.is_empty()
-            || ranks.iter().any(|&rank| self.pending[rank as usize] != Some(request)
-                || self.completed[rank as usize].is_some())
+        if actual_request != request
+            || actual_ranks != ranks
+            || !payload.is_empty()
+            || ranks.iter().any(|&rank| {
+                self.pending[rank as usize] != Some(request)
+                    || self.completed[rank as usize].is_some()
+            })
         {
             return self.reject("peer round completion identity or roster mismatch");
         }
@@ -470,7 +550,8 @@ impl PeerWorker {
             return Err("peer spawn requires exact TP2/8 roster and two admitted artifacts".into());
         }
         let mut command = Command::new(executable);
-        command.arg("--allow-unauthenticated-machine-code")
+        command
+            .arg("--allow-unauthenticated-machine-code")
             .arg("--device-unique-ids")
             .arg(
                 unique_ids
@@ -479,14 +560,21 @@ impl PeerWorker {
                     .collect::<Vec<_>>()
                     .join(","),
             );
-        if concurrent_rounds { command.arg("--concurrent-rounds"); }
-        let child = command.stdin(Stdio::piped())
+        if concurrent_rounds {
+            command.arg("--concurrent-rounds");
+        }
+        let child = command
+            .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
             .map_err(|e| format!("spawn peer child: {e}"))?;
         let connection = Rc::new(RefCell::new(Connection::connect_profile(
-            child, unique_ids, TIMEOUT, concurrent_rounds, timing,
+            child,
+            unique_ids,
+            TIMEOUT,
+            concurrent_rounds,
+            timing,
         )?));
         connection
             .borrow_mut()
@@ -864,7 +952,14 @@ while True:
             .spawn()
             .unwrap();
         let connection = Rc::new(RefCell::new(
-            Connection::connect_profile(child, &[1, 2], Duration::from_millis(250), mode.starts_with("round"), HostTiming::default()).unwrap(),
+            Connection::connect_profile(
+                child,
+                &[1, 2],
+                Duration::from_millis(250),
+                mode.starts_with("round"),
+                HostTiming::default(),
+            )
+            .unwrap(),
         ));
         (0..2)
             .map(|rank| PeerWorker {
@@ -890,7 +985,11 @@ while True:
 
     fn queue_fake_round(workers: &mut [PeerWorker], ranks: &[usize]) {
         for &rank in ranks {
-            workers[rank].connection.borrow_mut().queue_round(rank, empty_dispatch(), vec![]).unwrap();
+            workers[rank]
+                .connection
+                .borrow_mut()
+                .queue_round(rank, empty_dispatch(), vec![])
+                .unwrap();
             workers[rank].pending = Some(PendingDispatch::Single);
         }
     }
@@ -898,7 +997,11 @@ while True:
     #[test]
     fn concurrent_round_has_one_identity_and_releases_only_complete_receipts() {
         let mut workers = fixture("round_normal");
-        assert!(workers.iter().all(EngineeringTpRankTransportV1::supports_concurrent_rounds));
+        assert!(
+            workers
+                .iter()
+                .all(EngineeringTpRankTransportV1::supports_concurrent_rounds)
+        );
         queue_fake_round(&mut workers, &[0, 1]);
         {
             let connection = workers[0].connection.borrow();
@@ -917,8 +1020,84 @@ while True:
     }
 
     #[test]
+    fn timing_tickets_cover_serial_and_round_receipts_without_disabled_map_entries() {
+        let mut workers = fixture("normal");
+        workers[0]
+            .connection
+            .borrow_mut()
+            .send(0, empty_dispatch(), false, vec![])
+            .unwrap();
+        assert!(workers[0].connection.borrow().tickets.is_empty());
+        workers[0].connection.borrow_mut().receive(0).unwrap();
+        for worker in &mut workers {
+            worker.close().unwrap();
+        }
+
+        for mode in ["normal", "round_normal", "round_short"] {
+            let mut workers = fixture(mode);
+            let timing = HostTiming::enabled();
+            workers[0].connection.borrow_mut().timing = timing.clone();
+            if mode == "normal" {
+                for (rank, worker) in workers.iter().enumerate() {
+                    worker
+                        .connection
+                        .borrow_mut()
+                        .send(rank, empty_dispatch(), false, vec![])
+                        .unwrap();
+                }
+                workers[0].connection.borrow_mut().receive(0).unwrap();
+                workers[1].connection.borrow_mut().receive(1).unwrap();
+            } else {
+                queue_fake_round(&mut workers, &[0, 1]);
+                assert_eq!(workers[0].wait().is_ok(), mode == "round_normal");
+                assert_eq!(workers[1].wait().is_ok(), mode == "round_normal");
+            }
+            if mode != "round_short" {
+                for worker in &mut workers {
+                    worker.close().unwrap();
+                }
+            }
+            let snapshot = timing.snapshot();
+            assert_eq!(snapshot["incomplete"], false);
+            let rows = snapshot["records"].as_array().unwrap();
+            let requests = rows
+                .iter()
+                .filter(|row| {
+                    row["category"] == "ipc_roundtrip" && row["dispatches"].as_u64().unwrap() != 0
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                requests
+                    .iter()
+                    .map(|row| row["dispatches"].as_u64().unwrap())
+                    .sum::<u64>(),
+                2
+            );
+            if mode == "normal" {
+                assert_eq!(requests.len(), 2);
+                assert!(
+                    requests
+                        .iter()
+                        .all(|row| row["rank"].is_u64() && row["failed"] == 0)
+                );
+            } else {
+                assert_eq!(requests.len(), 1);
+                assert_eq!(requests[0]["label"], "dispatch_round");
+                assert!(requests[0]["rank"].is_null());
+                assert_eq!(requests[0]["failed"], u64::from(mode == "round_short"));
+            }
+        }
+    }
+
+    #[test]
     fn invalid_round_receipt_never_publishes_partial_success() {
-        for mode in ["round_short", "round_fatal", "round_wrong_order", "round_wrong_request", "round_serial_done"] {
+        for mode in [
+            "round_short",
+            "round_fatal",
+            "round_wrong_order",
+            "round_wrong_request",
+            "round_serial_done",
+        ] {
             let mut workers = fixture(mode);
             queue_fake_round(&mut workers, &[0, 1]);
             assert!(workers[0].wait().is_err(), "{mode}");
@@ -933,14 +1112,26 @@ while True:
     fn pending_round_rejects_duplicate_ranks_and_host_interleaving() {
         let mut workers = fixture("round_normal");
         queue_fake_round(&mut workers, &[0]);
-        assert!(workers[0].connection.borrow_mut().queue_round(0, empty_dispatch(), vec![]).is_err());
+        assert!(
+            workers[0]
+                .connection
+                .borrow_mut()
+                .queue_round(0, empty_dispatch(), vec![])
+                .is_err()
+        );
         let mut workers = fixture("round_normal");
         queue_fake_round(&mut workers, &[1]);
         assert!(workers[0].allocate(32).is_err());
         let mut workers = fixture("round_normal");
         queue_fake_round(&mut workers, &[0, 1]);
         workers[0].wait().unwrap();
-        assert!(workers[0].connection.borrow_mut().queue_round(0, empty_dispatch(), vec![]).is_err());
+        assert!(
+            workers[0]
+                .connection
+                .borrow_mut()
+                .queue_round(0, empty_dispatch(), vec![])
+                .is_err()
+        );
     }
 
     #[test]
