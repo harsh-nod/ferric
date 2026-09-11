@@ -7,10 +7,10 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 
 | Track | Deliverable | State |
 | --- | --- | --- |
-| Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Reviewed and published3e3a77284;475 library tests+31 doctests and scoped Clippy pass; native gate pending |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact3e3 emission,9 kernel tests,191 adapter tests+2ignored,22 policy tests and scoped Clippy pass;15 native fixtures running |
-| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Foundation integrated7a84682; preliminary host tests pass including65 admissions and prefix reuse; loopback HTTP adapter in progress |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates |20 client tests pass;6 candidate-checker tests pass, pin-drift followup in test; baseline launch approval requested |
+| Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
+| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission and 15 native fixtures pass; full model canary in progress |
+| Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | JSONL and loopback HTTP integrated; combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real HTTP smoke pending |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | 20 client tests and 7 candidate-checker tests pass, including checksum drift rejection; baseline launch approval requested |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
 
 ## Frozen Comparison Contract
@@ -28,8 +28,8 @@ server token usage and raw SSE arrival times. TTFT is client send to the first
 nonempty text chunk; TPOT uses first/last text arrival and the server token
 count. Chunk intervals are NOT per-token ITL, particularly under speculation.
 An HTTP baseline and an in-process Ferric timer are different measurement
-boundaries and cannot silently share a ranking. Open-loop queue-inclusive SLO
-qualification and a shared Ferric HTTP adapter remain separate work.
+boundaries and cannot silently share a ranking. The shared Ferric HTTP adapter
+is implemented; open-loop queue-inclusive SLO qualification remains separate work.
 
 Every run is explicitly non-qualifying. Passing a short canary or collecting
 30 windows alone does not satisfy `PERFORMANCE.md`: equal baseline tuning,
@@ -51,10 +51,43 @@ At intake, both hosts had approximately 85GiB free. Cached baseline images:
 - SGLang 0.5.15.post1.dev20260715+g495ae9aaa6: `sha256:cb8089ca16bd9182698b1bb5a915e6982bf9eeff63d2f6d027a9c31d8d6279d3`.
 
 Fresh fe2o3 origin/main at intake was `310ce7b8c`; its delta from the previous
-Ferric pin `6f6a67bb2` was test-only cleanup. Root repinned to310 at7c6edeb,
-then to the reviewed published runtime3e3a77284 at1ba3e01. Combined validation
-and structural dependency-inventory regeneration are pending. Preliminary
-host gates and frozen511 GPU ablations retain their actual provenance.
+Ferric pin `6f6a67bb2` was test-only cleanup. Root repinned to `310` at `7c6edeb`,
+then to the reviewed published runtime `3e3a77284` at `1ba3e01`. The final combined
+controller passes 206 library, 55 batch CLI, 6 replica-control and 22 source-policy
+tests, with three preexisting ignores, plus strict Clippy and release build.
+The separate source/dependency gate at `121609f` passes 38 source-gate tests,
+31 verifier policies, 28 metadata configurations, five unchanged generated
+inventories and negative/release policies. Two stale verifier raw-file checksums
+were independently audited and refreshed at `4182cad`; acceptance logic did not
+change. Coverage remains 173 modules and 8,235 executable bodies. This is not a
+new Verus proof or model qualification. Preliminary host gates and frozen `511`
+GPU ablations retain their actual provenance.
+
+## Native And Serving Gates
+
+The additive v8 image passes scalar head, MFMA head and FP32 argmax fixtures at
+1, 16, 17, 31 and 32 rows. Full-vocabulary outputs, immutable inputs, inactive
+tails and surrounding guards are checked. Image `5f19b3ba` and worker `933d73d2`
+retain exact `3e3` provenance. The root-reviewed result hash is
+`5e27c9f5175321c570954b601d7d1cd0d5d14fd330ab347a4f9376ec1cf0a85a`.
+
+Shared-currentness producer tests pass on TP2 and TP8, separately off and on,
+using the same frozen base/peer images. These direct-core fixtures establish
+GPU producer/peer-consumer ordering and checked teardown, not worker-wire,
+concurrent-round, model or speed qualification. All native runs finish with
+identity-bound idle checks across all eight GPUs.
+
+The new HTTP path is loopback-only raw-prompt greedy streaming, with bounded
+admission, cancellation, backpressure, deadlines and owned worker cleanup.
+The common client passes fake-child ordinary and split-UTF8 streams. The real
+smoke uses three complete reference cases and repeats the first, nine outputs
+total, sequentially with prefix caching off. It is not the static cancellation
+workload, a concurrent load test or a physical queue-rollover qualification.
+
+The physical KV pool remains capped at 512 pages. Conservative reservations
+allow at most 32, 6 and 1 active requests at ISL/OSL 128/128, 1024/256 and
+4096/256 respectively. The [large-pool plan](M1_LARGE_KV_POOL_PLAN_V1.md) describes
+the required coordinated host/kernel expansion; it is not implemented.
 
 ## First Target-Path Ablation
 
@@ -73,11 +106,11 @@ worker exit and identity-bound all-eight-GPU idle checks.
 | Cache |2|2.635293|3.035715|462.558|303.700|128.176270|
 | Control |2|2.001220|3.997561|643.552|492.986|128.812970|
 
-Across the two observations per mode, mean output rate improves27.72%, reuse
-TTFT falls26.09% and reuse TPOT falls37.16%. Mean whole-process time is1.14%
+Across the two observations per mode, mean output rate improves 27.72%, reuse
+TTFT falls 26.09% and reuse TPOT falls 37.16%. Mean whole-process time is 1.14%
 slower because setup varies. These are short engineering observations, not
 steady-state serving, confidence intervals, a new default or a vLLM/SGLang win.
-The frozen controller is3d039c49 (Ferric00fa58d/public511), worker aaa0216a,
-base image8c81d3fe and separate head image d6086650. They are not relabeled as
-the active3e3 source. Raw receipts are retained in the root-owned
+The frozen controller is `3d039c49` (Ferric `00fa58d` / public `511`), worker
+`aaa0216a`, base image `8c81d3fe` and separate head image `d6086650`. They are not
+relabeled as the active `3e3` source. Raw receipts are retained in the root-owned
 `ferric-compete-evidence-v1/tp1-mfma-{control,cache}-r{1,2}` evidence directories.
