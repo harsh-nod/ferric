@@ -90,6 +90,10 @@ pub struct EngineeringTpDispatchV1 {
 /// exact artifact, scalar ABI, allocation extents and pointer-fixup ownership.
 /// These are external Contracted prerequisites, not proved by this driver.
 pub trait EngineeringTpRankTransportV1 {
+    /// Explicit checked mixed-rank publication support; never inferred from PID.
+    fn supports_concurrent_rounds(&self) -> bool {
+        false
+    }
     /// Explicit shared-process peer identity: child PID, logical rank and world.
     /// Independent rank workers return `None`; no capability is inferred.
     fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
@@ -847,7 +851,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             EngineeringTpReductionModeV3::DeviceTp1V3 => {
                 return self.reduce_device_tp1(layer, operation);
             }
-            EngineeringTpReductionModeV3::DevicePeerV4 => {
+            EngineeringTpReductionModeV3::DevicePeerV4 | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
                 return self.reduce_device_peer(layer, operation);
             }
             EngineeringTpReductionModeV3::HostStagedV1 => {}

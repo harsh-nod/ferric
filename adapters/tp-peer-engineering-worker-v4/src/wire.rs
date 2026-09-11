@@ -6,6 +6,7 @@ use std::io::{self, Read, Write};
 
 pub const PROTOCOL: u32 = 4;
 pub const MODE: &str = "device-peer-serial-v4";
+pub const ROUND_MODE: &str = "device-peer-concurrent-round-v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -15,6 +16,10 @@ pub struct Request {
     pub rank: u32,
     pub peer_readable: bool,
     pub command: CommandV1,
+    /// Empty preserves the serial protocol. Otherwise entries name distinct ranks
+    /// for a single, all-or-terminal mixed-rank dispatch round.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub round_ranks: Vec<u32>,
 }
 
 impl Request {
@@ -24,6 +29,21 @@ impl Request {
             || self.peer_readable && !matches!(self.command, CommandV1::Allocate { .. })
         {
             return Err(io::Error::other("peer request scope"));
+        }
+        if !self.round_ranks.is_empty() {
+            let CommandV1::DispatchSequence { dispatches } = &self.command else {
+                return Err(io::Error::other("peer round requires dispatch entries"));
+            };
+            if self.peer_readable
+                || self.round_ranks.len() > 8
+                || self.round_ranks.len() != dispatches.len()
+                || self.round_ranks.first() != Some(&self.rank)
+                || self.round_ranks.iter().any(|&rank| rank >= 8)
+                || self.round_ranks.iter().collect::<std::collections::BTreeSet<_>>().len()
+                    != self.round_ranks.len()
+            {
+                return Err(io::Error::other("peer round rank roster"));
+            }
         }
         self.command.payload_bytes()
     }
@@ -45,11 +65,28 @@ pub enum Response {
         rank: u32,
         response: ResponseV1,
     },
+    RoundDone {
+        request: u64,
+        ranks: Vec<u32>,
+        response: ResponseV1,
+    },
 }
 
 impl Response {
     pub fn payload_bytes(&self) -> io::Result<usize> {
         match self {
+            Self::RoundDone { request, ranks, response } => {
+                if *request == 0 || ranks.is_empty() || ranks.len() > 8
+                    || ranks.iter().any(|&rank| rank >= 8)
+                    || ranks.iter().collect::<std::collections::BTreeSet<_>>().len() != ranks.len()
+                    || !matches!(response,
+                        ResponseV1::DispatchSequenceCompleted { elapsed_ns } if elapsed_ns.len() == ranks.len())
+                        && !matches!(response, ResponseV1::Error { fatal: true, .. })
+                {
+                    return Err(io::Error::other("peer round completion scope"));
+                }
+                Ok(0)
+            }
             Self::Done {
                 response: ResponseV1::Read { payload_bytes },
                 ..
@@ -107,6 +144,43 @@ mod tests {
     use super::*;
 
     #[test]
+    fn concurrent_round_checks_roster_shape_before_payload() {
+        let dispatch = base::SequenceDispatchV1 {
+            kernel: 1, payload_bytes: 4, workgroup: [64, 1, 1], grid: [64, 1, 1],
+            pointers: vec![], timeout_ms: 1000,
+        };
+        let mut request = Request {
+            id: 1, rank: 1, peer_readable: false, round_ranks: vec![1, 0],
+            command: CommandV1::DispatchSequence { dispatches: vec![dispatch; 2] },
+        };
+        assert_eq!(request.payload_bytes().unwrap(), 8);
+        for ranks in [vec![1, 1], vec![1], vec![0, 1], vec![1, 8], vec![1; 9]] {
+            request.round_ranks = ranks;
+            assert!(request.payload_bytes().is_err());
+        }
+        request.round_ranks = vec![1, 0];
+        request.command = CommandV1::Close;
+        assert!(request.payload_bytes().is_err());
+    }
+
+    #[test]
+    fn concurrent_round_completion_is_all_or_terminal() {
+        let response = |ranks, elapsed_ns| Response::RoundDone {
+            request: 1, ranks,
+            response: ResponseV1::DispatchSequenceCompleted { elapsed_ns },
+        };
+        assert_eq!(response(vec![1, 0], vec![5, 6]).payload_bytes().unwrap(), 0);
+        for invalid in [response(vec![1, 0], vec![5]), response(vec![1, 1], vec![5, 6]),
+            response(vec![], vec![]), response(vec![8], vec![5])] {
+            assert!(invalid.payload_bytes().is_err());
+        }
+        let failed = Response::RoundDone {
+            request: 1, ranks: vec![0, 1], response: ResponseV1::Error { message: "uncertain".into(), fatal: true },
+        };
+        assert_eq!(failed.payload_bytes().unwrap(), 0);
+    }
+
+    #[test]
     fn sequences_reuse_count_payload_and_aggregate_timeout_bounds() {
         let entry = base::SequenceDispatchV1 {
             kernel: 1,
@@ -120,6 +194,7 @@ mod tests {
             id: 1,
             rank: 1,
             peer_readable: false,
+            round_ranks: vec![],
             command: CommandV1::DispatchSequence {
                 dispatches: entries,
             },
@@ -136,6 +211,7 @@ mod tests {
             id: 1,
             rank: 0,
             peer_readable: false,
+            round_ranks: vec![],
             command: CommandV1::Read {
                 buffer: 1,
                 offset: 0,
@@ -159,6 +235,7 @@ mod tests {
             id: 1,
             rank: 0,
             peer_readable: false,
+            round_ranks: vec![],
             command: CommandV1::Write {
                 buffer: 1,
                 offset: 0,

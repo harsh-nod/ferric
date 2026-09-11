@@ -1,5 +1,5 @@
 //! Safe rank proxies for one explicitly opted-in disposable peer-memory child.
-//! The child executes ranks serially; submitting all ranks does not claim overlap.
+//! Serial and concurrent-round profiles have distinct, checked handshakes.
 
 #[path = "../../../tp-peer-engineering-worker-v4/src/wire.rs"]
 #[allow(dead_code)]
@@ -8,6 +8,7 @@ mod peer_wire;
 use super::tp_worker::{LoadedKernel, RuntimeOptions, metadata_matches, pack_dispatch};
 use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1, SequenceDispatchV1};
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
+use ferric_m1_engineering_execution_v1::host_timing::{HostTiming, IpcTiming};
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpArgumentV1, EngineeringTpBufferAccessV1, EngineeringTpDispatchV1,
     EngineeringTpRankTransportV1, TpResult,
@@ -43,10 +44,14 @@ struct Connection {
     failed: bool,
     exited: bool,
     timeout: Duration,
+    concurrent_rounds: bool,
+    queued_round: Vec<(usize, SequenceDispatchV1, Vec<u8>)>,
+    timing: HostTiming,
+    tickets: BTreeMap<u64, IpcTiming>,
 }
 
 impl Connection {
-    fn connect(mut child: Child, ids: &[u64], timeout: Duration) -> TpResult<Self> {
+    fn connect_profile(mut child: Child, ids: &[u64], timeout: Duration, concurrent_rounds: bool, timing: HostTiming) -> TpResult<Self> {
         let Some(mut input) = child.stdin.take() else {
             let _ = child.kill();
             let _ = child.wait();
@@ -95,11 +100,16 @@ impl Connection {
             failed: false,
             exited: false,
             timeout,
+            concurrent_rounds,
+            queued_round: Vec::new(),
+            timing,
+            tickets: BTreeMap::new(),
         };
         let ready = connection.reader.recv_timeout(timeout);
         if !matches!(ready, Ok(Ok((peer_wire::Response::Ready { protocol, mode, target,
             unique_ids, process_id, authority }, payload))) if protocol == peer_wire::PROTOCOL
-                && mode == peer_wire::MODE && target == "gfx950:xnack-" && unique_ids == ids
+                && mode == if concurrent_rounds { peer_wire::ROUND_MODE } else { peer_wire::MODE }
+                && target == "gfx950:xnack-" && unique_ids == ids
                 && process_id == connection.child.id() && authority == "none" && payload.is_empty())
         {
             return connection.reject("peer ready identity, roster, mode, or deadline mismatch");
@@ -109,6 +119,7 @@ impl Connection {
 
     fn reject<T>(&mut self, message: impl Into<String>) -> TpResult<T> {
         self.failed = true;
+        self.tickets.clear();
         let message = message.into();
         Err(match self.terminate() {
             Ok(()) => message,
@@ -135,11 +146,25 @@ impl Connection {
         let Some(next) = request.checked_add(1) else {
             return self.reject("peer request identity exhausted");
         };
+        let (kind, count) = match &command {
+            CommandV1::Dispatch { .. } => ("dispatch", 1),
+            CommandV1::DispatchSequence { dispatches } => ("dispatch_sequence", dispatches.len() as u64),
+            CommandV1::Write { .. } => ("write", 0),
+            CommandV1::Read { .. } => ("read", 0),
+            CommandV1::Allocate { .. } => ("allocate", 0),
+            CommandV1::LoadKernel { .. } => ("load_kernel", 0),
+            CommandV1::ConfigurePerformance { .. } => ("configure_performance", 0),
+            CommandV1::Close => ("close", 0),
+            _ => ("other", 0),
+        };
+        let ticket = self.timing.request(Some(rank as u32), kind, payload.len(), count);
+        self.tickets.insert(request, ticket);
         let header = peer_wire::Request {
             id: request,
             rank: u32::try_from(rank).map_err(|_| "rank overflow")?,
             command,
             peer_readable,
+            round_ranks: vec![],
         };
         let length = match header.payload_bytes() {
             Ok(length) => length,
@@ -158,7 +183,10 @@ impl Connection {
             return self.reject("peer writer unavailable");
         }
         match self.written.recv_timeout(self.timeout) {
-            Ok(Ok(())) => Ok(()),
+            Ok(Ok(())) => {
+                if let Some(ticket) = self.tickets.get_mut(&request) { ticket.sent(true); }
+                Ok(())
+            },
             Ok(Err(error)) => self.reject(error),
             Err(error) => self.reject(format!("peer write deadline/disconnect: {error}")),
         }
@@ -168,7 +196,11 @@ impl Connection {
         if self.failed || self.exited || self.pending.get(rank).is_none_or(Option::is_none) {
             return self.reject("peer rank has no pending completion");
         }
+        if !self.queued_round.is_empty() {
+            self.flush_round()?;
+        }
         while self.completed[rank].is_none() {
+            let _waiting = self.timing.span("ipc_response_wait", Some(rank as u32));
             let incoming = match self.reader.recv_timeout(self.timeout) {
                 Ok(Ok(value)) => value,
                 Ok(Err(error)) => return self.reject(error),
@@ -197,12 +229,102 @@ impl Connection {
             if let ResponseV1::Error { message, fatal } = response {
                 return self.reject(format!("peer group failed (fatal={fatal}): {message}"));
             }
+            if let Some(ticket) = self.tickets.remove(&request) { ticket.finish(payload.len(), true); }
             self.completed[actual_rank] = Some((response, payload));
         }
         self.pending[rank] = None;
         self.completed[rank]
             .take()
             .ok_or_else(|| "peer completion disappeared".into())
+    }
+
+    fn queue_round(&mut self, rank: usize, command: CommandV1, payload: Vec<u8>) -> TpResult<()> {
+        if !self.concurrent_rounds || self.failed || self.exited
+            || rank >= self.pending.len() || self.closed[rank] || self.pending[rank].is_some()
+            || self.completed.iter().any(Option::is_some) || !self.order.is_empty()
+            || self.pending.iter().filter(|entry| entry.is_some()).count() != self.queued_round.len()
+        {
+            return self.reject("peer round rank or barrier state mismatch");
+        }
+        let bytes = match command.payload_bytes() {
+            Ok(bytes) => bytes,
+            Err(error) => return self.reject(error.to_string()),
+        };
+        if bytes != payload.len() {
+            return self.reject("peer round payload mismatch");
+        }
+        let CommandV1::Dispatch { kernel, payload_bytes, workgroup, grid, pointers, timeout_ms } = command else {
+            return self.reject("peer round accepts only individual dispatches");
+        };
+        let timeout_ms = timeout_ms.min(600_000 / self.pending.len() as u32);
+        self.pending[rank] = Some(self.next_request);
+        self.queued_round.push((rank, SequenceDispatchV1 {
+            kernel, payload_bytes, workgroup, grid, pointers, timeout_ms,
+        }, payload));
+        Ok(())
+    }
+
+    fn flush_round(&mut self) -> TpResult<()> {
+        let request = self.next_request;
+        let Some(next) = request.checked_add(1) else {
+            return self.reject("peer round request identity exhausted");
+        };
+        let entries = std::mem::take(&mut self.queued_round);
+        let mut ticket = self.timing.request(None, "dispatch_round", entries.iter().map(|(_, _, bytes)| bytes.len()).sum(), entries.len() as u64);
+        let ranks = entries.iter().map(|(rank, _, _)| *rank as u32).collect::<Vec<_>>();
+        let mut payload = Vec::new();
+        let dispatches = entries.into_iter().map(|(_, dispatch, bytes)| {
+            payload.extend_from_slice(&bytes);
+            dispatch
+        }).collect();
+        let header = peer_wire::Request {
+            id: request, rank: ranks[0], peer_readable: false,
+            command: CommandV1::DispatchSequence { dispatches }, round_ranks: ranks.clone(),
+        };
+        let bytes = match header.payload_bytes() {
+            Ok(bytes) => bytes,
+            Err(error) => return self.reject(error.to_string()),
+        };
+        if bytes != payload.len() {
+            return self.reject("peer round frame bound mismatch");
+        }
+        self.next_request = next;
+        let Some(writer) = &self.writer else { return self.reject("peer writer closed"); };
+        if writer.try_send((header, payload)).is_err() {
+            return self.reject("peer round writer unavailable");
+        }
+        match self.written.recv_timeout(self.timeout) {
+            Ok(Ok(())) => { ticket.sent(true); },
+            Ok(Err(error)) => return self.reject(error),
+            Err(error) => return self.reject(format!("peer round write deadline/disconnect: {error}")),
+        }
+        let _waiting = self.timing.span("ipc_response_wait", None);
+        let incoming = match self.reader.recv_timeout(self.timeout) {
+            Ok(Ok(value)) => value,
+            Ok(Err(error)) => return self.reject(error),
+            Err(error) => return self.reject(format!("peer round response deadline/disconnect: {error}")),
+        };
+        let (peer_wire::Response::RoundDone { request: actual_request, ranks: actual_ranks, response }, payload) = incoming else {
+            return self.reject("peer round expected all-rank completion");
+        };
+        if actual_request != request || actual_ranks != ranks || !payload.is_empty()
+            || ranks.iter().any(|&rank| self.pending[rank as usize] != Some(request)
+                || self.completed[rank as usize].is_some())
+        {
+            return self.reject("peer round completion identity or roster mismatch");
+        }
+        let ResponseV1::DispatchSequenceCompleted { elapsed_ns } = response else {
+            return self.reject(format!("peer round failed: {response:?}"));
+        };
+        if elapsed_ns.len() != ranks.len() {
+            return self.reject("peer round completion count mismatch");
+        }
+        // Validate the entire receipt before making any rank completion available.
+        for (rank, elapsed_ns) in ranks.into_iter().zip(elapsed_ns) {
+            self.completed[rank as usize] = Some((ResponseV1::Dispatched { elapsed_ns }, vec![]));
+        }
+        ticket.finish(0, true);
+        Ok(())
     }
 
     fn sync(
@@ -329,14 +451,16 @@ pub struct PeerWorker {
 }
 
 impl PeerWorker {
-    pub fn spawn_with_options(
+    pub fn spawn_with_timing(
         executable: &Path,
         unique_ids: &[u64],
         artifacts: &[&EngineeringTpArtifactV1],
         options: RuntimeOptions,
+        concurrent_rounds: bool,
+        timing: HostTiming,
     ) -> TpResult<Vec<Self>> {
-        if options.rollover {
-            return Err("serial peer queue rollover is unsupported".into());
+        if options.rollover || concurrent_rounds && options.sequences {
+            return Err("peer rollover and concurrent same-rank sequences are unsupported".into());
         }
         if !matches!(unique_ids.len(), 2 | 8)
             || unique_ids.contains(&0)
@@ -345,8 +469,8 @@ impl PeerWorker {
         {
             return Err("peer spawn requires exact TP2/8 roster and two admitted artifacts".into());
         }
-        let child = Command::new(executable)
-            .arg("--allow-unauthenticated-machine-code")
+        let mut command = Command::new(executable);
+        command.arg("--allow-unauthenticated-machine-code")
             .arg("--device-unique-ids")
             .arg(
                 unique_ids
@@ -354,14 +478,15 @@ impl PeerWorker {
                     .map(u64::to_string)
                     .collect::<Vec<_>>()
                     .join(","),
-            )
-            .stdin(Stdio::piped())
+            );
+        if concurrent_rounds { command.arg("--concurrent-rounds"); }
+        let child = command.stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
             .map_err(|e| format!("spawn peer child: {e}"))?;
-        let connection = Rc::new(RefCell::new(Connection::connect(
-            child, unique_ids, TIMEOUT,
+        let connection = Rc::new(RefCell::new(Connection::connect_profile(
+            child, unique_ids, TIMEOUT, concurrent_rounds, timing,
         )?));
         connection
             .borrow_mut()
@@ -482,6 +607,9 @@ impl PeerWorker {
 }
 
 impl EngineeringTpRankTransportV1 for PeerWorker {
+    fn supports_concurrent_rounds(&self) -> bool {
+        self.connection.borrow().concurrent_rounds
+    }
     fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
         let connection = self.connection.borrow();
         Some((
@@ -551,7 +679,11 @@ impl EngineeringTpRankTransportV1 for PeerWorker {
             Ok(value) => value,
             Err(error) => return connection.reject(error),
         };
-        connection.send(self.rank, command, false, payload)?;
+        if connection.concurrent_rounds {
+            connection.queue_round(self.rank, command, payload)?;
+        } else {
+            connection.send(self.rank, command, false, payload)?;
+        }
         self.pending = Some(PendingDispatch::Single);
         Ok(())
     }
@@ -675,7 +807,7 @@ def send(response, payload=b''):
     header = json.dumps(response).encode()
     sys.stdout.buffer.write(struct.pack('<I', len(header)) + header + payload)
     sys.stdout.buffer.flush()
-send({'peer_op':'ready','protocol':4,'mode':'device-peer-serial-v4',
+send({'peer_op':'ready','protocol':4,'mode':'device-peer-concurrent-round-v1' if mode.startswith('round') else 'device-peer-serial-v4',
       'target':'gfx950:xnack-','unique_ids':[1,2], 'process_id':os.getpid(), 'authority':'none'})
 buffers = {}
 while True:
@@ -707,6 +839,17 @@ while True:
         response = {'op':'written' if mode == 'bad_config' else 'performance_configured'}
     elif op == 'close': response = {'op':'closed'}
     else: response = {'op':'error','message':'unsupported fake command','fatal':True}
+    if header.get('round_ranks'):
+        ranks = header['round_ranks']
+        assert mode.startswith('round')
+        assert len(ranks) == len(set(ranks)) == len(command['dispatches'])
+        if mode == 'round_short': response['elapsed_ns'].pop()
+        if mode == 'round_fatal': response = {'op':'error','message':'late group failure','fatal':True}
+        if mode == 'round_wrong_order': ranks = list(reversed(ranks))
+        request = header['request'] + (1 if mode == 'round_wrong_request' else 0)
+        if mode != 'round_serial_done':
+            send({'peer_op':'round_done','request':request,'ranks':ranks,'response':response})
+            continue
     rank = 1-header['rank'] if mode == 'wrong' else header['rank']
     send({'peer_op':'done','request':header['request'],'rank':rank,'response':response},out)
     if op == 'close': break
@@ -721,7 +864,7 @@ while True:
             .spawn()
             .unwrap();
         let connection = Rc::new(RefCell::new(
-            Connection::connect(child, &[1, 2], Duration::from_millis(250)).unwrap(),
+            Connection::connect_profile(child, &[1, 2], Duration::from_millis(250), mode.starts_with("round"), HostTiming::default()).unwrap(),
         ));
         (0..2)
             .map(|rank| PeerWorker {
@@ -743,6 +886,61 @@ while True:
             pointers: vec![],
             timeout_ms: 1000,
         }
+    }
+
+    fn queue_fake_round(workers: &mut [PeerWorker], ranks: &[usize]) {
+        for &rank in ranks {
+            workers[rank].connection.borrow_mut().queue_round(rank, empty_dispatch(), vec![]).unwrap();
+            workers[rank].pending = Some(PendingDispatch::Single);
+        }
+    }
+
+    #[test]
+    fn concurrent_round_has_one_identity_and_releases_only_complete_receipts() {
+        let mut workers = fixture("round_normal");
+        assert!(workers.iter().all(EngineeringTpRankTransportV1::supports_concurrent_rounds));
+        queue_fake_round(&mut workers, &[0, 1]);
+        {
+            let connection = workers[0].connection.borrow();
+            assert_eq!(connection.pending, vec![Some(1), Some(1)]);
+            assert_eq!(connection.queued_round.len(), 2);
+            assert!(connection.completed.iter().all(Option::is_none));
+        }
+        workers[1].wait().unwrap();
+        assert!(workers[0].connection.borrow().completed[0].is_some());
+        workers[0].wait().unwrap();
+        queue_fake_round(&mut workers, &[1]);
+        workers[1].wait().unwrap();
+        assert_eq!(workers[0].connection.borrow().next_request, 3);
+        workers[0].close().unwrap();
+        workers[1].close().unwrap();
+    }
+
+    #[test]
+    fn invalid_round_receipt_never_publishes_partial_success() {
+        for mode in ["round_short", "round_fatal", "round_wrong_order", "round_wrong_request", "round_serial_done"] {
+            let mut workers = fixture(mode);
+            queue_fake_round(&mut workers, &[0, 1]);
+            assert!(workers[0].wait().is_err(), "{mode}");
+            assert!(workers[1].wait().is_err(), "{mode}");
+            let connection = workers[0].connection.borrow();
+            assert!(connection.failed && connection.exited, "{mode}");
+            assert!(connection.completed.iter().all(Option::is_none), "{mode}");
+        }
+    }
+
+    #[test]
+    fn pending_round_rejects_duplicate_ranks_and_host_interleaving() {
+        let mut workers = fixture("round_normal");
+        queue_fake_round(&mut workers, &[0]);
+        assert!(workers[0].connection.borrow_mut().queue_round(0, empty_dispatch(), vec![]).is_err());
+        let mut workers = fixture("round_normal");
+        queue_fake_round(&mut workers, &[1]);
+        assert!(workers[0].allocate(32).is_err());
+        let mut workers = fixture("round_normal");
+        queue_fake_round(&mut workers, &[0, 1]);
+        workers[0].wait().unwrap();
+        assert!(workers[0].connection.borrow_mut().queue_round(0, empty_dispatch(), vec![]).is_err());
     }
 
     #[test]
@@ -855,7 +1053,7 @@ while True:
                 assert!(workers[1].connection.borrow().exited);
             }
         }
-        let result = PeerWorker::spawn_with_options(
+        let result = PeerWorker::spawn_with_timing(
             Path::new("/nonexistent-peer-worker"),
             &[1, 2],
             &[],
@@ -863,9 +1061,11 @@ while True:
                 rollover: true,
                 ..RuntimeOptions::default()
             },
+            false,
+            HostTiming::default(),
         );
         assert!(
-            matches!(result, Err(error) if error == "serial peer queue rollover is unsupported")
+            matches!(result, Err(error) if error == "peer rollover and concurrent same-rank sequences are unsupported")
         );
     }
 

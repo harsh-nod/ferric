@@ -20,6 +20,8 @@ pub enum EngineeringTpReductionModeV3 {
     DeviceTp1V3,
     /// TP2/8: ordered device reduction in one serial shared-process peer owner.
     DevicePeerV4,
+    /// TP2/8: all-rank publication before waiting, within one retained peer owner.
+    DevicePeerConcurrentV1,
 }
 
 impl EngineeringTpReductionModeV3 {
@@ -31,6 +33,7 @@ impl EngineeringTpReductionModeV3 {
             Self::HostStagedReuseV3 => "host-staged-reuse-v3",
             Self::DeviceTp1V3 => "device-tp1-v3",
             Self::DevicePeerV4 => "device-peer-serial-v4",
+            Self::DevicePeerConcurrentV1 => "device-peer-concurrent-round-v1",
         }
     }
 
@@ -38,7 +41,7 @@ impl EngineeringTpReductionModeV3 {
     #[must_use]
     pub const fn extra_dispatches_per_layer(self) -> u64 {
         match self {
-            Self::DeviceTp1V3 | Self::DevicePeerV4 => 2,
+            Self::DeviceTp1V3 | Self::DevicePeerV4 | Self::DevicePeerConcurrentV1 => 2,
             Self::HostStagedV1 | Self::HostStagedReuseV3 => 0,
         }
     }
@@ -46,11 +49,17 @@ impl EngineeringTpReductionModeV3 {
     /// Explicit embedding broadcast copy on every nonzero peer rank.
     #[must_use]
     pub const fn extra_dispatches_per_forward(self, rank: u32) -> u64 {
-        if matches!(self, Self::DevicePeerV4) && rank != 0 {
+        if matches!(self, Self::DevicePeerV4 | Self::DevicePeerConcurrentV1) && rank != 0 {
             1
         } else {
             0
         }
+    }
+
+    /// Both peer profiles share arithmetic but have different execution contracts.
+    #[must_use]
+    pub const fn is_peer(self) -> bool {
+        matches!(self, Self::DevicePeerV4 | Self::DevicePeerConcurrentV1)
     }
 }
 
@@ -60,7 +69,7 @@ pub(super) enum ReductionWorkspace {
     Baseline,
     Host(HostWorkspace),
     DeviceTp1(Tensor),
-    DevicePeer(Vec<Tensor>),
+    DevicePeer(Vec<Tensor>, EngineeringTpReductionModeV3),
 }
 
 impl ReductionWorkspace {
@@ -69,7 +78,7 @@ impl ReductionWorkspace {
             Self::Baseline => EngineeringTpReductionModeV3::HostStagedV1,
             Self::Host(_) => EngineeringTpReductionModeV3::HostStagedReuseV3,
             Self::DeviceTp1(_) => EngineeringTpReductionModeV3::DeviceTp1V3,
-            Self::DevicePeer(_) => EngineeringTpReductionModeV3::DevicePeerV4,
+            Self::DevicePeer(_, mode) => *mode,
         }
     }
 }
@@ -112,8 +121,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             return Err("reduction mode is already configured".into());
         }
         match mode {
-            EngineeringTpReductionModeV3::DevicePeerV4 => {
-                self.configure_device_peer()?;
+            EngineeringTpReductionModeV3::DevicePeerV4 | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
+                let concurrent = mode == EngineeringTpReductionModeV3::DevicePeerConcurrentV1;
+                if self.transports.iter().any(|transport| transport.supports_concurrent_rounds() != concurrent) {
+                    return Err("peer execution profile does not match transport capability".into());
+                }
+                self.configure_device_peer(mode)?;
             }
             EngineeringTpReductionModeV3::HostStagedV1 => {}
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
@@ -147,7 +160,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     pub(super) fn initialize_hidden_from_embedding(&mut self) -> TpResult<()> {
-        if matches!(self.reduction, ReductionWorkspace::DevicePeer(_)) {
+        if matches!(self.reduction, ReductionWorkspace::DevicePeer(..)) {
             return self.initialize_peer_hidden();
         }
         if matches!(self.reduction, ReductionWorkspace::DeviceTp1(_)) {

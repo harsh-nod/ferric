@@ -1,4 +1,4 @@
-//! One transport type for the independent and explicitly serial peer profiles.
+//! One transport type for independent and explicitly named peer profiles.
 
 use super::{tp_peer_worker::PeerWorker, tp_worker::Worker};
 use ferric_m1_engineering_execution_v1::tp_execution::{
@@ -32,6 +32,9 @@ impl RankWorker {
 }
 
 impl EngineeringTpRankTransportV1 for RankWorker {
+    fn supports_concurrent_rounds(&self) -> bool {
+        self.transport().supports_concurrent_rounds()
+    }
     fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
         self.transport().peer_group_rank()
     }

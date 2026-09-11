@@ -37,7 +37,7 @@ const USAGE: &str = concat!(
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
-    "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4] ",
+    "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--benchmark-control FILE]"
@@ -169,6 +169,7 @@ impl Options {
                         "host-staged-reuse-v3" => EngineeringTpReductionModeV3::HostStagedReuseV3,
                         "device-tp1-v3" => EngineeringTpReductionModeV3::DeviceTp1V3,
                         "device-peer-serial-v4" => EngineeringTpReductionModeV3::DevicePeerV4,
+                        "device-peer-concurrent-round-v1" => EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
                         _ => return Err("unsupported collective".into()),
                     }
                 }
@@ -223,12 +224,13 @@ impl Options {
                     .into(),
             );
         }
-        let peer = collective == EngineeringTpReductionModeV3::DevicePeerV4;
+        let peer = collective.is_peer();
         if peer != peer_artifact.is_some()
             || (peer && !matches!(devices.len(), 2 | 8))
             || (peer && runtime.rollover)
+            || (collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1 && runtime.sequences)
         {
-            return Err("serial peer transport requires TP2/8 and --peer-artifact; peer queue rollover is not supported".into());
+            return Err("peer transport requires TP2/8 and --peer-artifact; rollover and concurrent same-rank sequences are unsupported".into());
         }
         let packets_per_batch = 36 * (15 + collective.extra_dispatches_per_layer()) + 4;
         if !seen.contains("--max-batches") && !runtime.rollover {
@@ -644,11 +646,13 @@ fn run(options: &Options) -> Result<(), String> {
     )
     .map_err(|e| format!("scheduler: {e:?}"))?;
     let workers = if let Some(peer) = &peer_artifact {
-        PeerWorker::spawn_with_options(
+        PeerWorker::spawn_with_timing(
             &options.worker,
             &options.devices,
             &[&artifact, peer],
             options.runtime,
+            options.collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
+            Default::default(),
         )?
         .into_iter()
         .map(RankWorker::Peer)
@@ -981,6 +985,23 @@ mod tests {
         ] {
             assert!(args(&supplied).is_err());
         }
+    }
+
+    #[test]
+    fn concurrent_peer_profile_is_explicit_and_rejects_same_rank_sequences() {
+        let base = ["--devices", "1,2", "--collective", "device-peer-concurrent-round-v1", "--peer-artifact", "/peer"];
+        let options = args(&base).unwrap();
+        assert_eq!(options.collective.label(), "device-peer-concurrent-round-v1");
+        assert_eq!(options.max_batches, 212);
+        for flag in ["--dispatch-sequences", "--queue-rollover"] {
+            let mut invalid = base.to_vec();
+            invalid.push(flag);
+            assert!(args(&invalid).is_err());
+        }
+        let mut invalid = base;
+        invalid[1] = "1";
+        assert!(args(&invalid).is_err());
+        assert!(args(&base[..4]).is_err());
     }
 
     #[test]

@@ -44,6 +44,7 @@ struct Worker {
     next_kernel: u64,
     next_request: u64,
     world: usize,
+    concurrent_rounds: bool,
 }
 
 impl Worker {
@@ -62,6 +63,15 @@ impl Worker {
     ) -> Result<(ResponseV1, Vec<u8>)> {
         if request.id != self.next_request || request.rank as usize >= self.world {
             return Err("peer request identity or rank drift".into());
+        }
+        request.payload_bytes().map_err(|error| error.to_string())?;
+        let round = !request.round_ranks.is_empty();
+        if round && (!self.concurrent_rounds
+            || request.round_ranks.iter().any(|&rank| rank as usize >= self.world))
+            || self.concurrent_rounds && !round
+                && matches!(request.command, CommandV1::Dispatch { .. } | CommandV1::DispatchSequence { .. })
+        {
+            return Err("dispatch does not match the explicit peer execution profile".into());
         }
         self.next_request = self
             .next_request
@@ -156,7 +166,9 @@ impl Worker {
                 let mut offset = 0_usize;
                 let commands = dispatches
                     .into_iter()
-                    .map(|dispatch| {
+                    .enumerate()
+                    .map(|(index, dispatch)| {
+                        let rank = if round { request.round_ranks[index] as usize } else { rank };
                         let kernel = self
                             .kernels
                             .get(&dispatch.kernel)
@@ -186,7 +198,13 @@ impl Worker {
                 // SAFETY: the mandatory process opt-in covers each retained kernel;
                 // the group prevalidates the whole bounded sequence before publishing
                 // and observes every completion with all participant owners retained.
-                let elapsed_ns = unsafe { self.group.dispatch_sequence_unchecked(commands) }?;
+                let elapsed_ns = unsafe {
+                    if round {
+                        self.group.dispatch_round_unchecked(commands)
+                    } else {
+                        self.group.dispatch_sequence_unchecked(commands)
+                    }
+                }?;
                 ResponseV1::DispatchSequenceCompleted { elapsed_ns }
             }
             CommandV1::Close if rank == 0 => {
@@ -223,7 +241,12 @@ fn parse_args(args: &[String]) -> Result<Vec<u64>> {
 }
 
 fn run() -> Result<()> {
-    let ids = parse_args(&std::env::args().skip(1).collect::<Vec<_>>())?;
+    let mut args = std::env::args().skip(1).collect::<Vec<_>>();
+    let concurrent_rounds = args.last().is_some_and(|arg| arg == "--concurrent-rounds");
+    if concurrent_rounds {
+        args.pop();
+    }
+    let ids = parse_args(&args)?;
     // SAFETY: this dedicated entry has no threads or independent GPU clients.
     // Its mandatory opt-in is checked before opening KFD. Any error exits main.
     let group = unsafe { Group::open_unchecked(&ids) }?;
@@ -235,6 +258,7 @@ fn run() -> Result<()> {
         next_kernel: 1,
         next_request: 1,
         world: ids.len(),
+        concurrent_rounds,
     };
     let mut input = std::io::stdin().lock();
     let mut output = std::io::stdout().lock();
@@ -242,7 +266,7 @@ fn run() -> Result<()> {
         &mut output,
         &wire::Response::Ready {
             protocol: wire::PROTOCOL,
-            mode: wire::MODE.into(),
+            mode: if concurrent_rounds { wire::ROUND_MODE } else { wire::MODE }.into(),
             target: "gfx950:xnack-".into(),
             unique_ids: ids,
             process_id: std::process::id(),
@@ -257,19 +281,15 @@ fn run() -> Result<()> {
             .ok_or("peer controller closed without group teardown")?;
         let id = request.id;
         let rank = request.rank;
+        let round_ranks = request.round_ranks.clone();
         let (response, payload) = match worker.execute(request, payload) {
             Ok(response) => response,
             Err(message) => {
                 let _ = wire::write_response(
                     &mut output,
-                    &wire::Response::Done {
-                        request: id,
-                        rank,
-                        response: ResponseV1::Error {
-                            message: message.clone(),
-                            fatal: true,
-                        },
-                    },
+                    &completion(id, rank, round_ranks, ResponseV1::Error {
+                        message: message.clone(), fatal: true,
+                    }),
                     &[],
                 );
                 return Err(message);
@@ -278,17 +298,21 @@ fn run() -> Result<()> {
         let closed = matches!(response, ResponseV1::Closed);
         wire::write_response(
             &mut output,
-            &wire::Response::Done {
-                request: id,
-                rank,
-                response,
-            },
+            &completion(id, rank, round_ranks, response),
             &payload,
         )
         .map_err(|e| e.to_string())?;
         if closed {
             return Ok(());
         }
+    }
+}
+
+fn completion(request: u64, rank: u32, ranks: Vec<u32>, response: ResponseV1) -> wire::Response {
+    if ranks.is_empty() {
+        wire::Response::Done { request, rank, response }
+    } else {
+        wire::Response::RoundDone { request, ranks, response }
     }
 }
 

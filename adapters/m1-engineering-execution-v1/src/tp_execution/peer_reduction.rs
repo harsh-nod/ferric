@@ -31,7 +31,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         Ok(())
     }
 
-    pub(super) fn configure_device_peer(&mut self) -> TpResult<()> {
+    pub(super) fn configure_device_peer(&mut self, mode: super::EngineeringTpReductionModeV3) -> TpResult<()> {
         self.check_peer_group()?;
         let result = (|| {
             let mut scratch = Vec::with_capacity(self.ranks.len());
@@ -51,7 +51,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             if ids.len() != self.ranks.len() * 3 {
                 return Err("peer workspace identities alias".into());
             }
-            self.reduction = ReductionWorkspace::DevicePeer(scratch);
+            self.reduction = ReductionWorkspace::DevicePeer(scratch, mode);
             Ok(())
         })();
         if let Err(error) = result {
@@ -123,7 +123,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         if key.layer != layer || key.operation != operation {
             return Err("peer collective reordered".into());
         }
-        let ReductionWorkspace::DevicePeer(scratch) = &self.reduction else {
+        let ReductionWorkspace::DevicePeer(scratch, _) = &self.reduction else {
             return Err("peer workspace unavailable".into());
         };
         if scratch.len() != self.ranks.len() {
@@ -192,7 +192,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         self.collective
             .advance()
             .map_err(|e| format!("peer collective advance: {e:?}"))?;
-        let ReductionWorkspace::DevicePeer(scratch) = &mut self.reduction else {
+        let ReductionWorkspace::DevicePeer(scratch, _) = &mut self.reduction else {
             return Err("peer workspace disappeared".into());
         };
         // No rank publishes the new hidden state until every destination completed.
