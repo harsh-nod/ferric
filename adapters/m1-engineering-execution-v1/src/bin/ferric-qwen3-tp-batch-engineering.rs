@@ -42,10 +42,11 @@ const USAGE: &str = concat!(
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
+    "[--runtime-profile] [--peer-shared-full-currentness] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
-    "[--head-precision bf16-v7-control|fp32-v7 --fp32-head-artifact DIR] ",
+    "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
 );
@@ -88,6 +89,8 @@ struct NumericalOptions {
 enum HeadPrecision {
     Bf16Control,
     Fp32,
+    Bf16ControlV8,
+    Fp32V8,
 }
 
 impl HeadPrecision {
@@ -95,7 +98,17 @@ impl HeadPrecision {
         match self {
             Self::Bf16Control => "bf16-v7-control",
             Self::Fp32 => "fp32-v7",
+            Self::Bf16ControlV8 => "bf16-v8-control",
+            Self::Fp32V8 => "fp32-v8",
         }
+    }
+
+    const fn wide32(self) -> bool {
+        matches!(self, Self::Bf16ControlV8 | Self::Fp32V8)
+    }
+
+    const fn fp32(self) -> bool {
+        matches!(self, Self::Fp32 | Self::Fp32V8)
     }
 }
 
@@ -182,6 +195,14 @@ impl Options {
                     runtime.rollover = true;
                     continue;
                 }
+                "--runtime-profile" => {
+                    runtime.profile = true;
+                    continue;
+                }
+                "--peer-shared-full-currentness" => {
+                    runtime.shared_full_currentness = true;
+                    continue;
+                }
                 "--help" => return Err(USAGE.into()),
                 _ => {}
             }
@@ -197,6 +218,8 @@ impl Options {
                     head_precision = Some(match value.as_str() {
                         "bf16-v7-control" => HeadPrecision::Bf16Control,
                         "fp32-v7" => HeadPrecision::Fp32,
+                        "bf16-v8-control" => HeadPrecision::Bf16ControlV8,
+                        "fp32-v8" => HeadPrecision::Fp32V8,
                         _ => return Err("unknown explicit head precision profile".into()),
                     });
                 }
@@ -291,6 +314,11 @@ impl Options {
             );
         }
         let peer = collective.is_peer();
+        if runtime.shared_full_currentness && !peer {
+            return Err(
+                "--peer-shared-full-currentness requires an explicit peer transport".into(),
+            );
+        }
         if peer != peer_artifact.is_some()
             || (peer && !matches!(devices.len(), 2 | 8))
             || (peer && runtime.rollover)
@@ -318,6 +346,9 @@ impl Options {
         }
         EngineeringTpPagedLimitsV1::new(context, 32, pages, ttl)
             .map_err(|e| format!("page limits: {e:?}"))?;
+        if runtime.profile && (benchmark_control.is_some() || numerical_directory.is_some()) {
+            return Err("--runtime-profile is diagnostic only and excludes replica benchmarks and numerical capture".into());
+        }
         if live_stdin == requests.is_some()
             || (live_stdin
                 && (!runtime.rollover
@@ -337,16 +368,17 @@ impl Options {
             _ => return Err("numerical capture requires all four selection options, TP1/16 rows, baseline or MFMA, no wave attention, sequencing, timing or replica benchmark".into()),
         };
         if head_precision.is_some() != fp32_head_artifact.is_some()
-            || (head_precision.is_some()
-                && (devices.len() != 1
-                    || kernel_profile.wide32()
+            || head_precision.is_some_and(|precision| {
+                devices.len() != 1
+                    || kernel_profile.wide32() != precision.wide32()
                     || runtime.sequences
                     || wave_attention
                     || numerical.is_some()
                     || benchmark_control.is_some()
-                    || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)))
+                    || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)
+            })
         {
-            return Err("v7 head requires both explicit options, TP1/16 rows, baseline or MFMA, no wave attention, sequences, numerical capture or replicas".into());
+            return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA, no wave attention, sequences, numerical capture or replicas".into());
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -662,6 +694,19 @@ fn run(options: &Options) -> Result<(), String> {
     }
 }
 
+fn emit_runtime_diagnostic(
+    runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<RankWorker>>,
+    phase: &str,
+) -> Result<(), String> {
+    let snapshots = runtime.runtime_diagnostic_snapshot()?;
+    eprintln!("{}", serde_json::to_string(&serde_json::json!({
+        "schema":"FerricQwen3TpRuntimeDiagnosticV1","authority":"none",
+        "phase":phase,"measurement":"cumulative overlapping host-wall counters; not GPU timestamps",
+        "performance_qualified":false,"ranks":snapshots,
+    })).map_err(|e| e.to_string())?);
+    Ok(())
+}
+
 fn run_with_timing(
     options: &Options,
     diagnostics: &mut tp_host_timing::TimingFile,
@@ -680,7 +725,9 @@ fn run_with_timing(
         (Some(workload), Some(hash))
     });
     if timing.is_enabled() {
-        diagnostics.workload_sha256.clone_from(&loaded_requests_sha256);
+        diagnostics
+            .workload_sha256
+            .clone_from(&loaded_requests_sha256);
     }
     let control = options
         .benchmark_control
@@ -748,10 +795,18 @@ fn run_with_timing(
         .fp32_head_artifact
         .as_ref()
         .map(|path| {
-            EngineeringTpArtifactV1::open_fp32_head(
-                path,
-                &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
-            )
+            if options.head_precision.is_some_and(HeadPrecision::wide32) {
+                EngineeringTpArtifactV1::open_fp32_head32(
+                    path,
+                    &ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8(
+                    ),
+                )
+            } else {
+                EngineeringTpArtifactV1::open_fp32_head(
+                    path,
+                    &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
+                )
+            }
             .map_err(|error| error.to_string())
         })
         .transpose()?;
@@ -873,7 +928,11 @@ fn run_with_timing(
     }
     gpu.configure_wave_attention(options.wave_attention)?;
     if let Some(precision) = options.head_precision {
-        gpu.configure_head_precision_v7(precision == HeadPrecision::Fp32)?;
+        if precision.wide32() {
+            gpu.configure_head_precision_v8(precision.fp32())?;
+        } else {
+            gpu.configure_head_precision_v7(precision.fp32())?;
+        }
     }
     let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
@@ -942,7 +1001,7 @@ fn run_with_timing(
                 "runtime_operational":options.runtime.operational,
                 "dispatch_sequences":options.runtime.sequences,
                 "queue_rollover":options.runtime.rollover,
-                "projection":options.projection.label(), "attention":if options.wave_attention { "wave" } else { "baseline" }, "runtime_profiling":false
+                "projection":options.projection.label(), "attention":if options.wave_attention { "wave" } else { "baseline" }, "runtime_profiling":options.runtime.profile
             },
             "collective":if options.collective == EngineeringTpReductionModeV3::HostStagedV1 {
                 "host_staged_fp32_rank_order_reduce_bf16_residual"
@@ -961,6 +1020,17 @@ fn run_with_timing(
                 serde_json::json!("live monotonic ingress timestamps; includes pending wait");
             setup["live_protocol"] =
                 serde_json::json!("FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1");
+        }
+        if options.runtime.shared_full_currentness {
+            setup["peer_shared_full_currentness"] = serde_json::json!(true);
+        }
+        if options.runtime.profile {
+            setup["runtime_diagnostic_status"] = serde_json::json!(
+                "unqualified cumulative overlapping host-wall snapshots; deltas include the earlier snapshot command"
+            );
+            setup["numerical_status"] = serde_json::json!(
+                "Diagnostic runtime host-wall counters enabled; timings are not performance qualified"
+            );
         }
         if let Some(selection) = &options.numerical {
             setup["numerical_capture"] = serde_json::json!({"schema":"FerricTpNumericalSelectionV1",
@@ -1003,28 +1073,37 @@ fn run_with_timing(
             diagnostics.setup = Some(setup.clone());
         }
         emit(&setup)?;
-        let _workload_timing = timing.scope("workload");
-        if options.live_stdin() {
-            tp_live_ingress::run(
-                &mut runtime,
-                &model,
-                options.context,
-                options.pages,
-                options.max_batches,
-                &timing,
-                emit,
-            )
-        } else {
-            run_workload(
-                &mut runtime,
-                &model,
-                workload.as_ref().ok_or("static workload missing")?,
-                &prompts,
-                options,
-                benchmark_clock.as_ref(),
-                &timing,
-            )
+        if options.runtime.profile {
+            emit_runtime_diagnostic(&mut runtime, "before_workload")?;
         }
+        let result = {
+            let _workload_timing = timing.scope("workload");
+            if options.live_stdin() {
+                tp_live_ingress::run(
+                    &mut runtime,
+                    &model,
+                    options.context,
+                    options.pages,
+                    options.max_batches,
+                    &timing,
+                    emit,
+                )
+            } else {
+                run_workload(
+                    &mut runtime,
+                    &model,
+                    workload.as_ref().ok_or("static workload missing")?,
+                    &prompts,
+                    options,
+                    benchmark_clock.as_ref(),
+                    &timing,
+                )
+            }
+        };
+        if options.runtime.profile && result.is_ok() {
+            emit_runtime_diagnostic(&mut runtime, "after_workload")?;
+        }
+        result
     })();
     let close = {
         let _close_timing = timing.scope("close");
@@ -1144,6 +1223,146 @@ mod tests {
         let ordinary = args(&["--devices", "1"]).unwrap();
         assert!(!ordinary.live_stdin());
         assert_eq!(ordinary.requests.as_deref(), Some(Path::new("/requests")));
+    }
+
+    #[test]
+    fn runtime_diagnostics_and_shared_peer_currentness_are_explicit() {
+        let ordinary = args(&["--devices", "1"]).unwrap();
+        assert!(!ordinary.runtime.profile);
+        assert!(!ordinary.runtime.shared_full_currentness);
+        assert!(
+            args(&["--devices", "1", "--runtime-profile"])
+                .unwrap()
+                .runtime
+                .profile
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--runtime-profile",
+                "--benchmark-control",
+                "/replica"
+            ])
+            .is_err()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--runtime-profile",
+                "--numerical-capture",
+                "/capture"
+            ])
+            .is_err()
+        );
+        assert!(args(&["--devices", "1", "--peer-shared-full-currentness"]).is_err());
+        assert!(args(&["--devices", "1,2", "--peer-shared-full-currentness"]).is_err());
+        for collective in ["device-peer-serial-v4", "device-peer-concurrent-round-v1"] {
+            let options = args(&[
+                "--devices",
+                "1,2",
+                "--collective",
+                collective,
+                "--peer-artifact",
+                "/peer",
+                "--peer-shared-full-currentness",
+                "--runtime-profile",
+            ])
+            .unwrap();
+            assert!(options.runtime.shared_full_currentness);
+            assert!(options.runtime.profile);
+        }
+    }
+
+    #[test]
+    fn v8_head_is_only_available_with_explicit_tp1_wide_profiles() {
+        for mode in ["bf16-v8-control", "fp32-v8"] {
+            for profile in ["v5-wave32", "v5-mfma32"] {
+                let base = [
+                    "--devices",
+                    "1",
+                    "--kernel-profile",
+                    profile,
+                    "--head-precision",
+                    mode,
+                    "--fp32-head-artifact",
+                    "/v8",
+                ];
+                let options = args(&base).unwrap();
+                let head = options.head_precision.unwrap();
+                assert_eq!(head.label(), mode);
+                assert!(head.wide32());
+                assert_eq!(head.fp32(), mode == "fp32-v8");
+                for extra in [
+                    vec!["--dispatch-sequences"],
+                    vec!["--attention", "wave"],
+                    vec!["--projection", "wave"],
+                    vec!["--projection", "auto"],
+                    vec!["--benchmark-control", "/control"],
+                ] {
+                    let mut flags = base.to_vec();
+                    flags.extend(extra);
+                    assert!(args(&flags).is_err());
+                }
+            }
+            assert!(
+                args(&[
+                    "--devices",
+                    "1",
+                    "--kernel-profile",
+                    "v5-mfma32",
+                    "--projection",
+                    "mfma",
+                    "--head-precision",
+                    mode,
+                    "--fp32-head-artifact",
+                    "/v8"
+                ])
+                .is_ok()
+            );
+            for devices in ["1,2", "1,2,3,4,5,6,7,8"] {
+                assert!(
+                    args(&[
+                        "--devices",
+                        devices,
+                        "--kernel-profile",
+                        "v5-mfma32",
+                        "--head-precision",
+                        mode,
+                        "--fp32-head-artifact",
+                        "/v8"
+                    ])
+                    .is_err()
+                );
+            }
+            for profile in ["v2", "v3-wave", "v3-mfma"] {
+                assert!(
+                    args(&[
+                        "--devices",
+                        "1",
+                        "--kernel-profile",
+                        profile,
+                        "--head-precision",
+                        mode,
+                        "--fp32-head-artifact",
+                        "/v8"
+                    ])
+                    .is_err()
+                );
+            }
+            assert!(
+                args(&[
+                    "--devices",
+                    "1",
+                    "--kernel-profile",
+                    "v5-mfma32",
+                    "--head-precision",
+                    mode
+                ])
+                .is_err()
+            );
+        }
     }
 
     #[test]
