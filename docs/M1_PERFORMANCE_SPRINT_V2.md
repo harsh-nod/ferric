@@ -121,4 +121,18 @@ The new TP8 host control also passes: 0.380674 output tokens/s, 21.015336 second
 workload, 135.388216 seconds setup, reuse TTFT/TPOT 3.534553/1.999206 seconds.
 Its two non-overlapping collective spans total 12.169842 seconds, about 57.9% of
 the workload window. These are host-observed phase durations, not GPU timings.
-TP8 peer comparisons remain pending; do not extrapolate the TP2 gain.
+The TP8 concurrent-round case also passes all fixed-reference and teardown
+checks: 0.076712 output tokens/s, 104.286367 seconds workload, 737.535894 seconds
+setup, reuse TTFT/TPOT 20.909556/20.617757 seconds. Its comparison report is
+`541eaf20f25a96f83521e5bd1be13bd636c9a4aafb0af3546b3ae98876f03abb`.
+The two collective spans fall to 10.217258 seconds, but attention and FFN
+non-collective spans grow to 58.796540 and 29.843190 seconds. Resident setup
+grows from 47.309137 to 644.009930 seconds. These host-observed spans do not
+isolate GPU execution or individual system-call overhead. The TP8 serial
+control remains pending; do not extrapolate the TP2 gain.
+
+Independent repin review found one stale compiler tree in the promotion
+behavioral harness. Its commit/tree pair now matches public `79706b43` and
+tree `45f230ccc6fe2eb7400c68f20d68abafdc2f1b82`; the remote repin gate checks
+both together. This narrow identity correction does not claim a full rerun
+of that behavioral harness.

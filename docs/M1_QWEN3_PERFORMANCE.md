@@ -6,6 +6,26 @@ serving benchmark. Frozen baseline: Ferric `713e22c`, public fe2o3
 Builds, tests, and formatting run only on mi300x. Root coordinates hardware
 runs so independent teams cannot contaminate one another's measurements.
 
+## September 11 Follow-On
+
+The [current sprint](M1_PERFORMANCE_SPRINT_V2.md) adds a checked concurrent-rank
+runtime on public fe2o3 `79706b43`, Ferric transport support, full-path host
+timing and bounded actual-model numerical capture. Prior measurements below
+remain frozen; they do not silently become measurements of the new binaries.
+
+New TP2 single-run host/serial/round output rates are respectively
+0.871547/0.143430/0.268161 tokens/s. Concurrent rounds improve 86.96% over serial
+peers while remaining slower than host-staged execution. TP8 host and round
+pass the same fixed reference at 0.380674/0.076712 tokens/s; the serial control
+is pending. No stable-tail, serving-throughput or framework-comparison claim
+follows from these short observations.
+
+Actual TP1 captures show the immediate rejected MFMA seed choice comes from
+BF16 final logits tying at 24.375. Scalar FP32 sums on the actual MFMA input
+still favor the expected token. A separate opt-in FP32-head/argmax candidate
+is being implemented and tested. The BF16 rejection remains in force; captures
+are never accepted as performance evidence, and the fixed reference is unchanged.
+
 ## Progress
 
 | Change | Owner | Implementation | GPU Measurement |

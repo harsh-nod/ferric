@@ -1,9 +1,30 @@
 # M1 Team Progress
 
-Updated: 2026-09-10. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-11. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
-## Performance Swarm
+## Current Performance Swarm
+
+Active integration uses public fe2o3 `79706b43a177a2fd3fa43ec328221fa3e5041af5`,
+including the newly published concurrent-rank runtime. Frozen benchmark binaries
+retain their actual build identities. Ferric implementation remains local.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Core runtime | Concurrent mixed-rank dispatch is published after independent review, remote tests and genuine TP2/TP8 producer-reader probes. Completed owned core worktree/build stage removed after archival. | Further overhead work must preserve lifecycle/currentness and failure-quarantine checks. |
+| Measurement | Opt-in full-path host timing and strict matched-profile validation are integrated. TP2 host/serial/round and TP8 host/round pass the fixed reference. TP2 rounds improve output rate 86.96% over serial peers, but remain slower than host. | Final TP8 serial control and completed matrix publication; all current observations are n=1. |
+| Kernel numerics | Actual TP1 captures identify the immediate MFMA token flip as a BF16 final-logit tie. Capture custody and observed execution pass; the unchanged fixed reference still rejects MFMA BF16. A separate three-root FP32 head/argmax candidate and explicit comparison checker are in progress. | Fresh emission, native FP32/guard checks and matched full-reference model runs; no candidate fix or gain claimed yet. |
+| Integration and Pages | Public797 combined host integration passes 266 Rust tests (two existing ignores), strict Clippy/release, 26 metadata configurations, source gates and 31 verifier policies. Independent review caught and fixed the promotion harness's stale tree identity. Pages matrix update is being prepared separately. | Final formatted-source/checker gate, candidate integration, reviewed Pages publication and owned-stage cleanup. |
+
+The [sprint record](M1_PERFORMANCE_SPRINT_V2.md) contains exact evidence hashes,
+scope and numerical findings. TP8 rounds currently observe 0.076712 output
+tokens/s versus host-staged 0.380674. Collective spans improve modestly, but
+other host-observed dispatch and resident-setup spans dominate. These spans
+are not GPU timestamps and do not isolate individual system-call costs.
+The previous checkpoint below remains historical, including its cleanup and
+publication claims; new sprint stages are currently active.
+
+## September 10 Performance Checkpoint
 
 The integrated source tracks the observed public fe2o3 `7528e734` cutoff; frozen benchmark
 inputs retain their original source and binary identities. Compiler/KFD
