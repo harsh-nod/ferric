@@ -819,7 +819,7 @@ window.FERRIC_PROJECT = Object.freeze({
       nativeReviewSha256: "d69a9d9ab627661ee7dfddd662783b5911bb0eeff4dd05aff88f762f9a7428f2",
       modelCanary: {
         core: "3e3a77284a61654134211f8145dd0ddeebb2ff91",
-        repetitionsPerMode: 1, physicalPages: [512, 16384],
+        repetitionsPerMode: 1, physicalPages: [8, 16384],
         outputTokensPerRun: 8, physicalRowsPerRun: 34, batchesPerRun: 5,
         maximumRowsObserved: 16, dispatchesPerRun: 3077,
         exactReferencePassed: true, fullMaximumKvAllocationObserved: true,
