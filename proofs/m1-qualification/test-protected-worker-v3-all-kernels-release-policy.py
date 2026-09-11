@@ -17,7 +17,7 @@ from types import ModuleType, SimpleNamespace
 from typing import NoReturn
 
 
-REVISION = "3e3a77284a61654134211f8145dd0ddeebb2ff91"
+REVISION = "c94e2101a19c54e3291d2bc092238f4f7e233ca0"
 WORKER_BYTES = b"synthetic Worker V3 linker\n"
 WORKER_ID = "fe2o3-worker-v1-sha256-" + hashlib.sha256(b"worker build").hexdigest()
 
@@ -120,10 +120,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e3a77284a61654134211f8145dd0ddeebb2ff91", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "c94e2101a19c54e3291d2bc092238f4f7e233ca0", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "3e3a77284a61654134211f8145dd0ddeebb2ff91", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "c94e2101a19c54e3291d2bc092238f4f7e233ca0", version = "=0.1.0" }
 """,
         encoding="ascii",
     )
@@ -171,7 +171,7 @@ def main() -> None:
         repository / "proofs/m1-qualification/README.md"
     ).read_text(encoding="ascii")
     for required in [
-        'FE2O3_REVISION = "3e3a77284a61654134211f8145dd0ddeebb2ff91"',
+        'FE2O3_REVISION = "c94e2101a19c54e3291d2bc092238f4f7e233ca0"',
         '"FE2O3_PRODUCTION_BUILD_CONFIG_V2": str(arguments.config)',
         '"FE2O3_TARGET": "gfx942"',
         '"authority",\n        "release",\n        "build",\n        "--locked"',
