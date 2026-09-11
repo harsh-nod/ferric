@@ -8,11 +8,12 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; additive large-pool roots now in implementation |
+| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Shared client/candidate gates pass; open-loop and paired-series tooling in implementation; baseline launch approval still pending |
-| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | Coordinated host/kernel implementation in progress; not emitted or model-qualified |
-| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Bounded open-loop client and paired-series tooling integrated; 105 combined measurement tests pass; baseline launch approval still pending |
+| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 kernels emitted on exact `3e3`; host integrated at `f0cd55f`, 315 ordinary tests plus four emitted-image checks pass; native/model qualification in progress |
+| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Authenticated optional draft retention integrated at `8d6418f`; speculative execution and transactional KV settlement are not complete |
+| Dispatch batching | Distinct bounded ordered submission in core runtime | Implemented in an unpublished fe2o3 branch; host tests pass, root review/native qualification pending |
 
 ## Frozen Comparison Contract
 
@@ -30,7 +31,13 @@ nonempty text chunk; TPOT uses first/last text arrival and the server token
 count. Chunk intervals are NOT per-token ITL, particularly under speculation.
 An HTTP baseline and an in-process Ferric timer are different measurement
 boundaries and cannot silently share a ranking. The shared Ferric HTTP adapter
-is implemented; open-loop queue-inclusive SLO qualification remains separate work.
+is implemented. The bounded constant/Poisson open-loop client includes client
+queue delay in TTFT and records overload and failures. The series analyzer
+checks source/workload/identity receipts and computes paired hierarchical
+bootstrap intervals. Client budget/environment faults invalidate comparisons.
+These remain finite arrival cohorts including drain, not steady-state load;
+chunk timestamps are not ITL and HTTP deadlines are not hard bounds. Full
+open-loop SLO qualification remains incomplete.
 
 Every run is explicitly non-qualifying. Passing a short canary or collecting
 30 windows alone does not satisfy `PERFORMANCE.md`: equal baseline tuning,
@@ -92,10 +99,15 @@ requests. These ranges are not distributions or sustained-load estimates.
 No persistent server is left running. This is not the static cancellation
 workload, a concurrent load test or a physical queue-rollover qualification.
 
-The physical KV pool remains capped at 512 pages. Conservative reservations
+The default physical KV pool remains capped at 512 pages. Conservative reservations
 allow at most 32, 6 and 1 active requests at ISL/OSL 128/128, 1024/256 and
 4096/256 respectively. The [large-pool plan](M1_LARGE_KV_POOL_PLAN_V1.md) describes
-the required coordinated host/kernel expansion; it is not implemented.
+the coordinated host/kernel expansion. Its explicit TP1 `large-kv-v9` profile
+is now implemented with up to 16,384 physical pages and unchanged 8,192-token
+per-request context. Maximum target K/V payload is 36 GiB, excluding weights
+and workspace. It requires a separately admitted v9 image before allocation;
+the legacy profile still rejects more than 512 pages. CPU capacity tests are
+not a long-context model or 32-concurrent-request performance qualification.
 
 ## Current Wide-Head Canary
 
@@ -122,7 +134,7 @@ checks. Its two snapshots are validated by `runtime_diagnostic_report.py`;
 49 combined diagnostic/candidate/semantic tests pass. Raw records remain
 unchanged, and diagnostic runs never enter the ordinary performance ledger.
 
-The workload deltas include 2,720 dispatches and 3,481 commands. Host reads
+The host-staged workload deltas include 2,720 dispatches and 3,481 commands. Host reads
 transfer 40,386,696 bytes in 370 calls and record 1.482 seconds; dispatch waits
 record 1.469 seconds. Full-currentness and immutable admission deltas are zero,
 while operational checks record 0.112 seconds. Counter durations overlap,
@@ -130,6 +142,13 @@ include instrumentation overhead, and are not GPU timestamps or an exclusive
 time breakdown. The earlier snapshot command is included in command deltas.
 These observations motivate testing device-side TP1 reductions to eliminate
 hidden/partial host copies before pursuing further runtime changes.
+
+A separate device-TP1-plus-pruning diagnostic passes the same reference and
+cleanup gate: 3,077 dispatches, 3,107 commands, four reads totaling 32 bytes and
+25 writes totaling 18,224 bytes. Read time falls to 81,576 ns; dispatch waits
+still record 1.456 seconds. Operational currentness records 0.111 seconds.
+These overlapping host-wall counters motivate bounded ordered submission;
+they do not identify exclusive GPU kernel time.
 
 ## First Target-Path Ablation
 
@@ -190,8 +209,60 @@ work, and pruning removes three unnecessary head dispatches on this workload.
 An additive wave-attention/v8 candidate checker preserves the old comparator
 bytes and validates the actual wave policy through the frozen full-reference
 checker. Its five test methods plus the candidate/semantic suite pass all 46
-remote tests. The host opt-in and GPU experiment remain in progress; no wave
-speedup or numerical claim is made by the checker tests.
+remote tests. Host opt-in is integrated at `529a35c`; model measurements below
+are separate from those checker tests.
+
+## Wave Attention Ablation
+
+Four canaries use controller `a0dbe7d9` (wave host `3a89091` / exact `3e3`),
+worker `933d73d2`, unchanged v5/v8 images, budget/chunk16, device-TP1 reduction,
+head pruning and admission caching. Only attention changes. Run order is
+control1, wave1, wave2, control2. Every token, byte, schedule, worker-close and
+all-eight-GPU idle check passes; no forced process cleanup was needed.
+
+| Attention | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Baseline | 1 | 5.026699 | 291.670 | 258.695 |
+| Wave | 1 | 5.498143 | 263.157 | 230.293 |
+| Wave | 2 | 5.400687 | 268.684 | 234.377 |
+| Baseline | 2 | 5.000058 | 293.259 | 260.520 |
+
+Two-observation mean output rate improves 8.70%; reuse TTFT falls 9.08% and
+TPOT falls 10.51%. This is the fixed four-request/eight-output engineering
+canary, not a steady-state HTTP test, confidence interval, new default or
+framework win. The wave/v8 combination currently excludes the v9 large pool.
+
+## Rejected Polling Experiment
+
+An unpublished core experiment replaced the serial worker's fixed 50-us sleep
+with the existing adaptive wait, whose backoff can reach 1 ms. All four model
+runs pass correctness and teardown, but the candidate regresses.
+
+| Worker wait | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Fixed control | 1 | 4.928390 | 297.049 | 266.605 |
+| Adaptive 1-ms cap | 1 | 3.885786 | 405.628 | 347.523 |
+| Adaptive 1-ms cap | 2 | 4.176812 | 358.044 | 294.504 |
+| Fixed control | 2 | 4.945817 | 296.332 | 264.923 |
+
+Mean output rate falls 18.35%, reuse TTFT rises 28.70%, and TPOT rises 20.79%.
+Candidate worker `5372f002` is built from unpublished core `0052fe181`; it is
+not published or adopted. A separate follow-up capped at 50 us passes 477
+library tests, 31 doctests, strict engineering/default Clippy and a release
+build at `4491b6b70`; its GPU measurement is still pending. Raw failed-format
+and successful test receipts are retained. Neither experiment changes the
+public `3e3` pin or the general-purpose wait defaults.
+
+## Draft Intake
+
+`EngineeringQwenModelV1::open_with_draft` retains the exact authenticated
+1,503,264,768-byte draft payload and exposes a borrowed draft/config/layout
+view without cloning weights. Default `open` still authenticates draft input
+into a sink and allocates no draft payload. The scoped intake gate passes 305
+ordinary tests plus strict Clippy and formatting; full-model intake and
+speculative numerical execution are not established by the bounded fixtures.
+Resident draft execution, K+1 target verification, selective accepted-prefix
+KV commit/rollback, correction/bonus handling and load tests remain required.
 
 ## Published Checkpoint
 
