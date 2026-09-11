@@ -10,8 +10,8 @@ protected M1 qualification receipt. Prior measurements remain frozen in
 | --- | --- | --- | --- |
 | Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Published on main at `79706b43a177a2fd3fa43ec328221fa3e5041af5` after a fresh no-op rebase. 469 KFD tests, 31 doctests, strict scoped Clippy and independent review pass. Genuine TP2/TP8 producer/reader gates pass. | Model performance comparison; engineering execution is not protected qualification |
 | Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | Synthetic and actual-model captures pass integrity checks. The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. Baseline still passes the fixed reference; MFMA BF16 still fails. A separate opt-in FP32-head candidate is underway. | Fresh three-root emission, native FP32 checks and full fixed-reference model validation; no reference relaxation |
-| Measurement | Opt-in full-path host timing and strict profile summaries | Integrated. 256 Rust passes (two existing ignores), strict Clippy/release and 75 Python tests run (one skip). TP2 host control passes exact-reference and native sidecar checks. | Matched variant runs; failures excluded from performance comparisons |
-| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Public `79706b43` combined capture gate passes 266 Rust tests (two existing ignores), strict Clippy/release, standalone peer tests, 26 metadata configurations, source/negative gates and 31 verifier policies. Two new upstream compiler test targets are regenerated into the dependency inventories. | Remaining matched TP8 variants, FP32 candidate gates, archival and cleanup |
+| Measurement | Opt-in full-path host timing and strict profile summaries | Integrated. All six TP2/TP8 host, serial and round profiles pass fixed-reference, sidecar, identity and teardown checks. Separate explicit v7 comparison/timing tools pass 66 combined host tests. | FP32 candidate runs; failures excluded from performance comparisons |
+| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins now follow public `5110577a`, with 27 locked metadata configurations and the new shuffle-uniformity test inventoried. The separately rebuilt KFD worker is byte-identical to public797. The earlier public797 combined gate passes 266 Rust tests, strict Clippy/release, source/negative gates and 31 verifier policies. | Latest combined FP32 gate, native/model checks, archival and cleanup |
 
 ## Constraints
 
@@ -117,22 +117,49 @@ overhead. Full TP2 performance ledger SHA-256:
 Serial-baseline isolated pair:
 `2297d9c4b8067b59c3c809efc38ba424a48ce12def680fb136bf224e9106c1d0`.
 
-The new TP8 host control also passes: 0.380674 output tokens/s, 21.015336 seconds
-workload, 135.388216 seconds setup, reuse TTFT/TPOT 3.534553/1.999206 seconds.
-Its two non-overlapping collective spans total 12.169842 seconds, about 57.9% of
-the workload window. These are host-observed phase durations, not GPU timings.
-The TP8 concurrent-round case also passes all fixed-reference and teardown
-checks: 0.076712 output tokens/s, 104.286367 seconds workload, 737.535894 seconds
-setup, reuse TTFT/TPOT 20.909556/20.617757 seconds. Its comparison report is
-`541eaf20f25a96f83521e5bd1be13bd636c9a4aafb0af3546b3ae98876f03abb`.
-The two collective spans fall to 10.217258 seconds, but attention and FFN
-non-collective spans grow to 58.796540 and 29.843190 seconds. Resident setup
-grows from 47.309137 to 644.009930 seconds. These host-observed spans do not
-isolate GPU execution or individual system-call overhead. The TP8 serial
-control remains pending; do not extrapolate the TP2 gain.
+## Completed TP8 Matrix
+
+The same acceptance requirements and one-observation limits apply. All eight
+output tokens match; five batches process 34 physical rows. The serial/round
+comparison keeps the exact peer binary and images unchanged.
+
+| Mode | Output Tokens/s | Workload Seconds | Setup Seconds | Whole Seconds | Reuse TTFT Seconds | Reuse TPOT Seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Host staged | 0.380674 | 21.015336 | 135.388216 | 171.034465 | 3.534553 | 1.999206 |
+| Peer serial | 0.011286 | 708.819742 | 736.568782 | 1565.344075 | 142.227667 | 139.406734 |
+| Peer concurrent round | 0.076712 | 104.286367 | 737.535894 | 961.521453 | 20.909556 | 20.617757 |
+
+Concurrent rounds improve output rate 579.69% (6.797x) over serial peers and
+reduce request TTFT/TPOT about 85.3%, but remain 79.85% below host-staged output
+rate. This is not an overall peer win or a stable serving result.
+
+Selected non-overlapping host spans, host/serial/round respectively: attention
+5.440/413.946/58.797 seconds; FFN 3.178/210.609/29.843; both collectives
+12.170/78.029/10.217; metadata 0.0158/4.436/4.438. Resident setup is
+47.309/643.611/644.010 and close is 14.631/119.955/119.699 seconds. Rounds reduce
+serial dispatch spans but do not improve metadata, resident setup or close.
+These observations do not isolate GPU durations or individual system calls.
+
+Full TP8 performance ledger:
+`d2e86b755c7b76915888f26ec4a7049e71981cb11b7e0ef43352130539575b64`.
+Full timing summary:
+`76ac7c137b67e05aeb07118947ee42fe2611b5a92b46d03ddc761529d6a38366`.
+Isolated serial-to-round performance ledger:
+`d4a52661591b145eb24dc4573c90b368eb813c147612a0981cf95b20252294cf`.
+
+## Latest Source
+
+Public fe2o3 advanced to `5110577a6d8c45390dfb353386cde748efd5d76c` during
+the matrix. Its only delta is shuffle-uniformity analysis and one new regression
+target; runtime, device SDK and lockfile sources are unchanged. Active Ferric
+pins and the compiler commit/tree pair follow this revision; frozen matrix
+artifacts retain their actual identities. A separately rebuilt latest KFD worker
+is byte-identical to `aaa0216a`. The v7 head image was separately re-emitted
+with the latest compiler and exact replay, HSACO `d6086650`; its earlier public797
+emission is retained as history. Native and model qualification are still pending.
 
 Independent repin review found one stale compiler tree in the promotion
-behavioral harness. Its commit/tree pair now matches public `79706b43` and
-tree `45f230ccc6fe2eb7400c68f20d68abafdc2f1b82`; the remote repin gate checks
+behavioral harness. Its commit/tree pair was corrected at public797 and now
+matches public511 tree `7f1329b68e00f3325d3ed2b977a4b6ba7cc20542`; the remote repin gate checks
 both together. This narrow identity correction does not claim a full rerun
 of that behavioral harness.

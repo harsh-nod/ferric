@@ -5,16 +5,16 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Performance Swarm
 
-Active integration uses public fe2o3 `79706b43a177a2fd3fa43ec328221fa3e5041af5`,
-including the newly published concurrent-rank runtime. Frozen benchmark binaries
+Active integration uses public fe2o3 `5110577a6d8c45390dfb353386cde748efd5d76c`,
+including the concurrent-rank runtime published at public797. Frozen benchmark binaries
 retain their actual build identities. Ferric implementation remains local.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Core runtime | Concurrent mixed-rank dispatch is published after independent review, remote tests and genuine TP2/TP8 producer-reader probes. Completed owned core worktree/build stage removed after archival. | Further overhead work must preserve lifecycle/currentness and failure-quarantine checks. |
-| Measurement | Opt-in full-path host timing and strict matched-profile validation are integrated. TP2 host/serial/round and TP8 host/round pass the fixed reference. TP2 rounds improve output rate 86.96% over serial peers, but remain slower than host. | Final TP8 serial control and completed matrix publication; all current observations are n=1. |
-| Kernel numerics | Actual TP1 captures identify the immediate MFMA token flip as a BF16 final-logit tie. Capture custody and observed execution pass; the unchanged fixed reference still rejects MFMA BF16. A separate three-root FP32 head/argmax candidate and explicit comparison checker are in progress. | Fresh emission, native FP32/guard checks and matched full-reference model runs; no candidate fix or gain claimed yet. |
-| Integration and Pages | Public797 combined host integration passes 266 Rust tests (two existing ignores), strict Clippy/release, 26 metadata configurations, source gates and 31 verifier policies. Independent review caught and fixed the promotion harness's stale tree identity. Pages matrix update is being prepared separately. | Final formatted-source/checker gate, candidate integration, reviewed Pages publication and owned-stage cleanup. |
+| Measurement | All six TP2/TP8 host/serial/round profiles pass the fixed reference and full sidecar/identity/close checks. Rounds improve output rate 86.96% at TP2 and 579.69% at TP8 versus serial peers, but remain slower than host. | Completed matrix publication; all current observations are n=1. |
+| Kernel numerics | Actual TP1 captures identify the immediate MFMA token flip as a BF16 final-logit tie. The unchanged reference still rejects MFMA BF16. Separate FP32 head/argmax kernels and driver are integrated locally; latest511 emission/replay and host tests pass. | Native FP32/guard checks and matched full-reference model runs; no candidate fix or gain claimed yet. |
+| Integration and Pages | Public797 combined host integration passes 266 Rust tests, strict Clippy/release, source gates and 31 verifier policies. Active511 resolves 27 locked configurations; regenerated inventories and compiler commit/tree pair are independently reviewed. Latest KFD worker tests/build pass and its bytes equal public797. | Latest combined FP32 gate, reviewed Pages publication and owned-stage cleanup. |
 
 The [sprint record](M1_PERFORMANCE_SPRINT_V2.md) contains exact evidence hashes,
 scope and numerical findings. TP8 rounds currently observe 0.076712 output
