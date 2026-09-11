@@ -8,9 +8,10 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass |
+| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; additive large-pool roots now in implementation |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | 20 client tests and 7 candidate-checker tests pass, including checksum drift rejection; baseline launch approval requested |
+| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Shared client/candidate gates pass; open-loop and paired-series tooling in implementation; baseline launch approval still pending |
+| Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | Coordinated host/kernel implementation in progress; not emitted or model-qualified |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Queued after target-path integration; not a completed performance feature |
 
 ## Frozen Comparison Contract
@@ -155,3 +156,50 @@ The frozen controller is `3d039c49` (Ferric `00fa58d` / public `511`), worker
 `aaa0216a`, base image `8c81d3fe` and separate head image `d6086650`. They are not
 relabeled as the active `3e3` source. Raw receipts are retained in the root-owned
 `ferric-compete-evidence-v1/tp1-mfma-{control,cache}-r{1,2}` evidence directories.
+
+## Device Reduction And Head Pruning
+
+The existing device-side TP1 reduction and output-head pruning options now pass
+in the current v8/MFMA/admission-cache combination. These are explicit profile
+ablations, not newly implemented kernels or promoted defaults. All six cases
+use controller `cd90bba6`, worker `933d73d2`, v5 image `98b5fdb1`, v8 image
+`5f19b3ba`, budget/chunk16, and the same four-request/eight-output reference.
+Only the collective and pruning settings differ. Run order is host1, device1,
+device+prune1, device+prune2, device2, host2. All full token/byte, worker-close
+and all-eight-GPU idle checks pass.
+
+| Profile | Run | Output tokens/s | Workload s | Reuse TTFT ms | Reuse TPOT ms | Whole process s |
+| --- | --- | --- | --- | --- | --- | --- |
+| Host staged | 1 | 2.678148 | 2.987139 | 446.273 | 295.175 | 124.625608 |
+| Host staged | 2 | 2.515140 | 3.180737 | 463.546 | 303.082 | 134.223709 |
+| Device TP1 | 1 | 4.933816 | 1.621463 | 293.151 | 260.300 | 124.437870 |
+| Device TP1 | 2 | 4.070982 | 1.965128 | 372.862 | 336.891 | 133.330778 |
+| Device TP1 + pruning | 1 | 5.027332 | 1.591301 | 292.167 | 258.793 | 123.658619 |
+| Device TP1 + pruning | 2 | 4.179222 | 1.914232 | 366.985 | 333.343 | 132.901353 |
+
+Mean rates are 2.596644, 4.502399 and 4.603277 tokens/s respectively. Device
+reduction improves mean rate 73.39%; pruning adds 2.24%, for 77.28% combined.
+Combined mean reuse TTFT falls 27.55%, while mean reuse TPOT falls only 1.02%.
+The second device observations are substantially slower than the first ones;
+these two-observation means do not establish stable variance, confidence
+intervals, serving latency, or a framework comparison. The retained idle
+snapshots do not establish thermal/clock/CPU-load equivalence. Dispatch counts
+are 2,720, 3,080 and 3,077 respectively: eliminating host copies adds device
+work, and pruning removes three unnecessary head dispatches on this workload.
+
+An additive wave-attention/v8 candidate checker preserves the old comparator
+bytes and validates the actual wave policy through the frozen full-reference
+checker. Its five test methods plus the candidate/semantic suite pass all 46
+remote tests. The host opt-in and GPU experiment remain in progress; no wave
+speedup or numerical claim is made by the checker tests.
+
+## Published Checkpoint
+
+The separate Pages-only branch was freshly rebased and published at
+`0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76`. Workflow `34644821323` succeeded.
+All seven live static assets match the validated files byte for byte. The site
+records the v8 model and HTTP smoke checkpoint without altering historical
+performance results or claiming a baseline win. Its private build stage and
+completed worktree were removed after the evidence archive was verified.
+Ferric implementation commits remain local; fe2o3 main was independently
+rechecked and remains `3e3a77284a61654134211f8145dd0ddeebb2ff91`.
