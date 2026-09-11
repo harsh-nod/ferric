@@ -50,6 +50,18 @@ class DraftReferenceTests(unittest.TestCase):
         self.assertNotIn("torch", sys.modules)
         self.assertNotIn("transformers", sys.modules)
 
+    def test_decode_skips_special_text_but_preserves_all_generated_ids(self):
+        calls = []
+        class Tokenizer:
+            def decode(self, tokens, skip_special_tokens):
+                calls.append((list(tokens), skip_special_tokens))
+                return "fixture"
+        tokens = [6, 7]
+        self.assertEqual(reference.decode_generated(Tokenizer(), tokens), list(b"fixture"))
+        self.assertEqual(tokens, [6, 7])
+        self.assertEqual(calls, [([6, 7], True)])
+        self.assertIs(reference.POLICY["decode_skip_special_tokens"], True)
+
     def test_closed_raw_and_separate_adapter(self):
         raw = fixture()
         reference.validate_raw(raw, PRODUCER)

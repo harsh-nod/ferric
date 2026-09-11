@@ -42,7 +42,7 @@ POLICY = {
     "prompt_tokens": 5, "output_tokens": 2, "repetitions": 2,
     "greedy": "lowest-id-exact-maximum", "eos_stopping": False,
     "logits_processors": False, "chat_template": False, "add_special_tokens": False,
-    "decode_skip_special_tokens": False, "local_files_only": True, "trust_remote_code": False,
+    "decode_skip_special_tokens": True, "local_files_only": True, "trust_remote_code": False,
     "loading_info_input_format": "transformers5-empty-sets-and-error-list",
 }
 RAW_SCHEMA = "FerricIndependentDraftTorchObservationV1"
@@ -175,6 +175,12 @@ def byte_list(values):
     require(type(values) is list and len(values) <= 16_384, "decoded byte bound")
     for value in values:
         integer(value, 0, 255, "decoded byte")
+
+
+def decode_generated(tokenizer, tokens):
+    token_list(tokens, 2)
+    # Match EngineeringQwenModelV1::decode; generated IDs are never filtered.
+    return list(tokenizer.decode(tokens, skip_special_tokens=True).encode("utf-8"))
 
 
 def top_two(values):
@@ -325,7 +331,7 @@ def produce(options, producer_sha):
                 choices.append(choice)
                 steps.append({"position": position, "input_token": token, "choice": choice, "cache_tokens": cache.get_seq_length(), "logits_dtype": str(result.logits.dtype), "finite_count": len(values), "top2": top})
             generated = choices[4:6]
-            passes.append({"steps": steps, "generated_tokens": generated, "generated_utf8_bytes": list(tokenizer.decode(generated, skip_special_tokens=False).encode("utf-8"))})
+            passes.append({"steps": steps, "generated_tokens": generated, "generated_utf8_bytes": decode_generated(tokenizer, generated)})
         torch.cuda.synchronize()
     require(checkpoint(source) == (files, payload_sha), "checkpoint changed during model execution")
     raw = {"schema": RAW_SCHEMA, "authority": "independent-draft-reference-only", "performance_qualified": False, "model": MODEL, "model_revision": REVISION, "source": str(source), "checkpoint": files, "draft_payload_sha256": payload_sha, "producer_sha256": producer_sha, "externally_pinned_image": IMAGE, "externally_pinned_image_id": IMAGE_ID, "versions": versions, "implementation_sources": sources, "policy": POLICY, "prompt": PROMPT, "prompt_tokens": prompt, "device": {"index": 0, "name": properties.name, "gcn_arch": architecture, "torch_hip": torch.version.hip}, "loading_info": loading, "tied_weights": True, "passes": passes, "repeated_exact": passes[0] == passes[1]}

@@ -57,6 +57,9 @@ then the first selected token. Cache lengths and explicit position IDs are
 checked. No EOS stopping, penalties, suppression or generation processor is
 used. Both completed repetitions must agree in every retained step, including
 all six argmax choices, top-two values/gaps, and both decoded output tokens.
+Decoded text uses `skip_special_tokens=True`, matching Ferric's
+`SpecialTokenDecodePolicy::Skip`; every generated token ID is still retained
+and compared, including special IDs. This is not EOS stopping or ID filtering.
 
 The cached Transformers5 loader returns three empty sets plus an empty error
 list; the tool checks those exact types before converting them to empty JSON
