@@ -153,6 +153,27 @@ class HeadPrecisionTests(unittest.TestCase):
                     V7.main()
                 self.assertEqual(original, output.read_bytes())
 
+    def test_cli_rejects_frozen_semantic_source_drift_before_publishing_a_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rows, expected = fixture(root)
+            write_trace(root, rows)
+            (root / "expect.json").write_bytes(F.encoded(expected))
+            output = root / "must-not-exist.json"
+            argv = ["compare_tp_head_precision_v7.py", "--run-dir", str(root),
+                    "--workload", str(root / "workload.json"), "--reference", str(root / "reference.json"),
+                    "--expect", str(root / "expect.json"), "--output", str(output)]
+            original_read = V7.CHECK.read_bounded
+
+            def changed_source(path, maximum):
+                raw = original_read(path, maximum)
+                return raw + b"\n" if Path(path).name == "compare_tp_batch.py" else raw
+
+            with mock.patch("sys.argv", argv), mock.patch.object(V7.CHECK, "read_bounded", changed_source):
+                with self.assertRaisesRegex(ValueError, "frozen semantic checker source"):
+                    V7.main()
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
