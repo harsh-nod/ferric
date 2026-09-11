@@ -52,3 +52,24 @@ product-sum references. These are numerical diagnostics, not an MFMA instruction
 order model, exhaustive projection correctness, fixed-token parity or performance
 acceptance. It retains final-logit summaries without inventing decoded labels.
 Budget at least 1 GiB host RAM for analysis, excluding the resident model process.
+
+For a source-matched baseline/MFMA capture pair:
+
+```bash
+python3 tools/compare_tp_numerical_captures.py \
+  --baseline /absolute/baseline/capture --baseline-manifest-sha256 BASELINE_SHA256 \
+  --mfma /absolute/mfma/capture --mfma-manifest-sha256 MFMA_SHA256 \
+  --output /absolute/new-pair-analysis.json
+```
+
+This pins the original replay helper and requires matching executable/image,
+model/workload, physical device, scheduler rows and nonprojection policies, with
+distinct sessions. It counts all active projection/head input and output bit
+differences, checks original weights and shared selected LM weight rows, and
+recomputes top16/watch/argmax summaries from every raw head logit. Per-row top
+and watched columns are replayed against actual normalized head inputs using
+serial FP32 and FP64 product sums. The watch margin is token9856 minus token17689;
+neither token receives an inferred decoded label. A serial-reference mismatch
+under MFMA is a diagnostic observation, not token parity acceptance or evidence
+of a specific instruction-order defect. Full-run exact tokens and custody remain
+separate prerequisites; neither analysis tool admits performance measurements.
