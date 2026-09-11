@@ -13,7 +13,7 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | Bounded open-loop client and paired-series tooling integrated; 105 combined measurement tests pass; baseline launch approval still pending |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
 | Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Authenticated optional draft retention integrated at `8d6418f`; speculative execution and transactional KV settlement are not complete |
-| Dispatch batching | Distinct bounded ordered submission in core runtime | Published `f85bb375e` after full/operational native dependency-chain and rollover gates; Ferric opt-in integration in progress |
+| Dispatch batching | Distinct bounded ordered submission in core runtime | Published `f85bb375e`; Ferric opt-in integrated at `2ce566d`, full host gate and four model/reference gates pass, but initial mean output rate regresses 35.40%; not a performance default |
 
 ## Frozen Comparison Contract
 
@@ -84,8 +84,11 @@ tests, strict Clippy, 38 source-gate tests, 31 protected-verifier policies,
 unchanged generated inventories and negative/release policy checks. The newer
 generic ordered-batch runtime is now published at `f85bb375e`; active dependencies
 are repinned at `d8c8990` with two separately audited Cargo hashes at `663f780`.
-The final combined f85 gate awaits ordered-adapter integration. No completed
-`3e3` measurement is relabelled as a newer source revision.
+The exact combined `2ce566d` f85 gate passes all 22 steps: 333 ordinary adapter
+tests, strict Clippy/formatting, 38 source-gate tests, 31 protected policies,
+unchanged generated inventories and negative/release policy checks. No further
+hash, AST or inventory refresh was needed. This is not a new Verus proof.
+No completed `3e3` measurement is relabelled as a newer source revision.
 
 ## Native And Serving Gates
 
@@ -326,8 +329,42 @@ published commit adds only native-result documentation to those code bytes.
 Root review SHA-256:
 `5754053d21a8de9e5f79c1ce2cfbdd70859c1c0db9179bff0232587046c2cd42`.
 This is runtime dependency/lifecycle evidence, not model speed qualification.
-Ferric's separate opt-in adapter is in progress, using the existing 36 pairs
-of 10-kernel attention and 5-kernel FFN groups, with explicit host-I/O barriers.
+In this published implementation, the ordered entry/exit boundaries still
+perform full currentness checks even when operational mode is selected.
+Ferric's separate opt-in adapter is integrated at `2ce566d`, using the existing
+36 pairs of 10-kernel attention and 5-kernel FFN groups, with explicit host-I/O
+barriers. The legacy seven-field performance profile is unchanged; the new
+option has a separate Setup field and is not enabled by default.
+
+The initial serial/ordered/ordered/serial model comparison uses the identical
+controller `108feeb8` (source `826f62a`, byte-identical compiled closure to root
+`2ce566d`), worker `761027c5`, frozen v5/v8 images, device TP1 reduction, output
+head pruning and operational mode. All four pass eight reference outputs and
+bytes, cancellation, prefix reuse, five batches, 34 physical rows and 3,077
+dispatches, with unforced close and all-eight-GPU idle checks.
+
+| Submission | Run | Output tokens/s | Reuse TTFT ms | Reuse TPOT ms |
+| --- | --- | --- | --- | --- |
+| Serial | 1 | 4.962428 | 295.123 | 264.895 |
+| Ordered | 1 | 3.017013 | 500.564 | 468.802 |
+| Ordered | 2 | 3.002672 | 506.883 | 473.272 |
+| Serial | 2 | 4.356362 | 366.004 | 329.259 |
+
+Mean output rate regresses 35.40%, reuse TTFT increases 52.38% and TPOT
+increases 58.56%. Serial controls also vary; these are two short observations
+per mode, not steady-state serving or confidence intervals. Ordered submission
+is therefore not adopted as a performance default. The first-pair host phase
+audit observes approximately 1.027 seconds of additional attention/FFN IPC
+round-trip time despite lower send time. Source inspection identifies 720 full
+topology scans at ordered boundaries across this workload as a plausible cause,
+not an exclusive syscall or GPU-time attribution.
+
+An unpublished core candidate at `c110ac55c` makes ordered dispatch boundaries
+honor the already opt-in operational-currentness policy. Default-mode dispatch,
+first-use allocation, rollover and teardown retain full checks. Its exact-source
+host tests and strict Clippy pass; native counter/lifecycle and model A/B checks
+remain required before publication or adoption. The older receipts retain their
+original source and policy identities.
 
 ## Draft Intake
 
@@ -343,10 +380,11 @@ KV commit/rollback, correction/bonus handling and load tests remain required.
 ## Published Checkpoint
 
 The separate Pages-only branch was freshly rebased and published at
-`0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76`. Workflow `34644821323` succeeded.
-All seven live static assets match the validated files byte for byte. The site
-records the v8 model and HTTP smoke checkpoint without altering historical
-performance results or claiming a baseline win. Its private build stage and
-completed worktree were removed after the evidence archive was verified.
-Ferric implementation commits remain local; fe2o3 main was independently
-rechecked and remains `3e3a77284a61654134211f8145dd0ddeebb2ff91`.
+`4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d`. Workflow `34651357690` succeeded.
+All seven live static assets match the validated files byte for byte. This
+checkpoint adds wave-attention, wait-policy, full-allocation KV and native
+ordered-submission observations without changing frozen historical performance
+data or claiming a baseline win. It predates the model ordered-submission
+regression above. Its private build stage and completed worktree were removed
+after archive verification. Ferric implementation commits remain local;
+fe2o3 main was independently rechecked at `f85bb375e`.
