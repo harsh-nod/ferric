@@ -583,6 +583,28 @@ class ComparatorTests(unittest.TestCase):
         for index in range(len(fixture())):
             self.reject(lambda rows, index=index: rows[index].__setitem__("extra", True))
 
+    def test_diagnostic_capture_metadata_and_status_cannot_qualify_performance(self):
+        diagnostic_status = (
+            "Diagnostic readback run; all timings unqualified; "
+            "fixed-reference token checks remain unchanged"
+        )
+        mutations = (
+            lambda rows: rows[0].update(numerical_capture={"manifest_sha256": "a" * 64}),
+            lambda rows: rows[-1].update(numerical_capture={"manifest_sha256": "a" * 64}),
+            lambda rows: rows[0].update(numerical_status=diagnostic_status),
+            lambda rows: rows[-1].update(numerical_status=diagnostic_status),
+        )
+        for index, mutate in enumerate(mutations):
+            rows = fixture()
+            mutate(rows)
+            with self.subTest(mutation=index), self.assertRaises(ValueError):
+                self.check(rows)
+        rows = fixture()
+        for mutate in mutations:
+            mutate(rows)
+        with self.assertRaises(ValueError):
+            self.check(rows)
+
     def test_causal_rows_input_position_intermediate_kind_and_generation_reject(self):
         for key, bad in (("token", 1), ("position", 1), ("kind", "Decode"),
                          ("generation", 2), ("token", float(CHECK.PROMPT_IDS[0])), ("position", False)):

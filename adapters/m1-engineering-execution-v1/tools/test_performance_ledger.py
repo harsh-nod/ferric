@@ -252,6 +252,45 @@ class LedgerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             LEDGER.validate_manifest(value)
 
+    def test_diagnostic_raw_records_cannot_reuse_a_passing_performance_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            reference = FIXTURE.encoded(FIXTURE.synthetic_reference())
+            workload = FIXTURE.encoded(CHECK.expected_workload())
+            rows = FIXTURE.fixture()
+            files = {"status": b"0\n", "gpu-before.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "gpu-after.json": FIXTURE.encoded(FIXTURE.snapshots()),
+                     "results.jsonl": b"".join(FIXTURE.encoded(row) for row in rows),
+                     "workload.json": workload, "reference.json": reference}
+            for filename, data in files.items():
+                (root / filename).write_bytes(data)
+            expectation = expected(CHECK.sha256(reference), CHECK.sha256(workload))
+            item = {"id": "diagnostic-r1", "run_dir": str(root),
+                    "workload": str(root / "workload.json"), "reference": str(root / "reference.json"),
+                    "comparison": str(root / "comparison.json"), "comparison_sha256": "8" * 64}
+            diagnostic_status = (
+                "Diagnostic readback run; all timings unqualified; "
+                "fixed-reference token checks remain unchanged"
+            )
+            with mock.patch.object(CHECK, "REFERENCE_SHA256", CHECK.sha256(reference)):
+                report = CHECK.compare(root, root / "workload.json", root / "reference.json", 8, PINS, True,
+                                       expected_workload_hash=CHECK.sha256(workload),
+                                       expected_reference_hash=CHECK.sha256(reference))
+                comparison = FIXTURE.encoded(report)
+                (root / "comparison.json").write_bytes(comparison)
+                item["comparison_sha256"] = CHECK.sha256(comparison)
+                self.assertEqual(LEDGER.load_run(item, expectation)[0]["output_tokens"], 8)
+                for index, field, value in (
+                        (0, "numerical_capture", {"manifest_sha256": "a" * 64}),
+                        (-1, "numerical_capture", {"manifest_sha256": "a" * 64}),
+                        (0, "numerical_status", diagnostic_status),
+                        (-1, "numerical_status", diagnostic_status)):
+                    changed = copy.deepcopy(rows)
+                    changed[index][field] = value
+                    (root / "results.jsonl").write_bytes(b"".join(FIXTURE.encoded(row) for row in changed))
+                    with self.subTest(record=index, field=field), self.assertRaises(ValueError):
+                        LEDGER.load_run(item, expectation)
+
     def test_peer_manifest_requires_exact_additional_identity_object_only_in_peer_mode(self):
         value = manifest()
         expected_value = value["variants"][1]["expect"]
