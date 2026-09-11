@@ -11,7 +11,7 @@ protected M1 qualification receipt. Prior measurements remain frozen in
 | Core runtime | Additive checked concurrent mixed-rank dispatch round in fe2o3 | Published on main at `79706b43a177a2fd3fa43ec328221fa3e5041af5` after a fresh no-op rebase. 469 KFD tests, 31 doctests, strict scoped Clippy and independent review pass. Native TP2/TP8 and all six matched model profiles pass. | This sprint's comparison is complete; peer setup/teardown remain follow-ups, and engineering execution is not protected qualification |
 | Kernel numerics | Scalar/MFMA differential fixtures and diagnosis of the rejected TP1 path | Synthetic and actual-model captures pass integrity checks. The immediate token flip is a BF16 final-logit tie, not an argmax/layout defect. Baseline still passes the fixed reference; MFMA BF16 still fails. The opt-in FP32-head candidate has fresh latest-compiler emission and nine passing native fixtures. | Full fixed-reference model validation; no reference relaxation |
 | Measurement | Opt-in full-path host timing and strict profile summaries | Integrated. All six TP2/TP8 host, serial and round profiles pass fixed-reference, sidecar, identity and teardown checks. Separate explicit v7 comparison/timing tools pass 66 combined host tests. | FP32 candidate runs; failures excluded from performance comparisons |
-| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins now follow public `5110577a`, with 27 locked metadata configurations and the new shuffle-uniformity test inventoried. The separately rebuilt KFD worker is byte-identical to public797. The earlier public797 combined gate passes 266 Rust tests, strict Clippy/release, source/negative gates and 31 verifier policies. | Latest combined FP32 gate, native/model checks, archival and cleanup |
+| Integration | Fresh dependencies, concurrent-round worker/transport, serialized GPU experiments | Active pins follow public `5110577a`. The latest combined gate passes 273 adapter Rust tests, nine kernel tests, strict Clippy/release, 27 metadata configurations, exact inventories/source/negative gates and 31 verifier policies. Both image-bound loader tests explicitly pass. The separately rebuilt KFD worker is byte-identical to public797. | Matched FP32 model checks, final archival and cleanup |
 
 ## Constraints
 
@@ -186,8 +186,26 @@ The first latest511 combined adapter gate stopped on two exact source-policy
 inventories missing the newly declared optional v7 dependency. `00fa58d` adds
 only that name to both lists; exact equality and production/default isolation
 remain intact. All 273 adapter Rust tests, strict Clippy and release now pass;
-the full repin and explicit image-bound loader gates remain pending at this
-checkpoint. The original failed receipt is retained.
+the full repin, nine kernel tests, six peer tests plus its doctest, and 80 Python
+comparison tests (one explicit skip) also pass. Additional suites pass eleven
+launcher, four capture-replay and four capture-pair tests. The repin verifies
+27 locked metadata configurations, exact dependency/module inventories,
+38 source-gate tests, source/negative gates, 31 verifier policies and the
+protected release policy. These are host/source checks, not a new Verus or M1
+qualification. The original failed receipt is retained.
+
+The image-bound gate first rejected a staging-only layout mistake: the copied
+content directory lacked the required immediate `fe2o3-engineering-v1` parent.
+Correcting the filesystem layout without changing source or image bytes makes
+both CLI image-bound tests pass, including duplicate roots, invalid second-load
+metadata and partial-load poison/child reap. Four native-harness host tests and
+its CPU-only self-test also pass. The failed receipt is retained separately.
+
+The three matched model cases will use release controller
+`3d039c49bf4a4610f3b704d52c17cc46398f0c0f010c060af66c369b8ea48192`,
+built from `00fa58d` on latest511, the same latest worker and separately admitted
+v7 image. BF16 control, FP32 baseline and FP32 MFMA remain unqualified until
+their full fixed-reference runs and timing/custody checks pass.
 
 Completed core, numerical and v7 kernel worktrees/build stages have been removed
 after checksum-verified archival. Root integration, measurement and Pages stages
