@@ -208,9 +208,15 @@ built from `00fa58d` on latest511, the same latest worker and separately admitte
 v7 image. BF16 control, FP32 baseline and FP32 MFMA all pass their full
 fixed-reference runs and original timing/custody checks for this workload.
 
-Completed core, numerical and v7 kernel worktrees/build stages have been removed
-after checksum-verified archival. Root integration, measurement and Pages stages
-remain active; shared models, caches and user worktrees are untouched.
+Completed core, numerical, v7 kernel and measurement worktrees/build stages have
+been removed after checksum-verified archival. The root CPU integration stage,
+including its 6 GB target, is also removed; its archive is SHA-256
+`434492c9cf1df9dd8fa7dbd30d5fed4261337d3b3bb5e27f65c4f3234270b0cd`.
+Nine performance-case directories and both actual-model captures were verified
+against local hashes before remote deletion. A 46.3 MB GPU rerun/native-receipt
+bundle and the active Ferric integration checkout remain intentionally retained.
+Pages has its own scoped publication/cleanup receipts. Shared models, caches and
+user worktrees are untouched; no inference worker is left running.
 
 ## Matched FP32 Head Results
 
