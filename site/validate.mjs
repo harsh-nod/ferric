@@ -86,7 +86,7 @@ assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 
 
 const expectedCurrent = {
   siteRefreshBase: "3589d9e112afe3217500b50bc84a7be1af394c49",
-  performanceSprintV2Source: "025e6206072a0d5f87b5894a6b8fc0a77158b8ab",
+  performanceSprintV2Source: "80ca447a25484a8c9240538fcaaba630e897b1fd",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
   performanceSprintV2CoreDoctests: 31,
@@ -102,6 +102,12 @@ const expectedCurrent = {
   performanceSprintV2RoundVsSerialGainObserved: true,
   performanceSprintV2PeerBeatsHost: false,
   performanceSprintV2MatrixRepetitions: 1,
+  performanceSprintV2IntegrationSource: "00fa58d6a1a9394433083b0f37b4f6365d5edb63",
+  performanceSprintV2AdapterRustTests: 273,
+  performanceSprintV2MetadataGraphs: 27,
+  performanceSprintV2ImageBoundTests: 2,
+  performanceSprintV2Fp32NativeCases: 9,
+  performanceSprintV2Fp32NativeReportSha256: "fb2c23697b2fe144534df214225f44d14359f3f4fe6810ae766f11b07721b69b",
   tensorParallelBatchImplementationPrivate: true,
   tensorParallelBatchRows: 16,
   tensorParallelBatchMaxSequences: 32,
@@ -753,6 +759,7 @@ for (const [key, value] of Object.entries(expectedCurrent)) {
 }
 for (const key of [
   "performanceSprintV2Source",
+  "performanceSprintV2IntegrationSource",
   "performanceSprintV2CoreCommit",
   "siteRefreshBase",
   "integrationCommit",
@@ -1173,6 +1180,7 @@ assert(project.current.fe2o3CurrentRepinElfRebuiltAndBound === true, "source-pin
 assert(project.current.fe2o3CurrentRepinFinalHandoffPending === false, "integrated repin final handoff must not remain pending");
 assert(project.current.fe2o3PreexistingDcoAncestryConcern === true, "pre-existing fe2o3 DCO ancestry concern must remain explicit");
 assert(project.current.fe2o3LatestQualificationClaimed === false, "latest-fe2 qualification must remain unclaimed");
+assertSha256(project.current.performanceSprintV2Fp32NativeReportSha256, "current.performanceSprintV2Fp32NativeReportSha256");
 assert(project.current.currentAggregateGuardedStores === 26, "current aggregate GuardedStore count drifted");
 assert(project.current.currentAggregateAuthority === "none", "current aggregate must remain authority-free");
 assert(project.current.currentAggregateHardwareRunPending === false, "completed aggregate hardware run must not remain pending");
@@ -1319,6 +1327,9 @@ project.readiness.forEach((item, index) => {
 });
 
 assert(Array.isArray(project.envelope) && project.envelope.length >= 8, "M1 envelope is incomplete");
+const publicHeadRow = project.envelope.find(([label]) => label === "fe2o3 current public main");
+assert(publicHeadRow && publicHeadRow[1].startsWith(`Checked September 11: ${project.current.fe2o3LatestMain}; tree ${project.current.fe2o3LatestTree}.`),
+  "public-main evidence row must agree with the exact current commit/tree fields");
 const envelopeNames = new Set();
 project.envelope.forEach((entry, index) => {
   assert(Array.isArray(entry) && entry.length === 2, `envelope[${index}] must be a pair`);
