@@ -1,0 +1,25 @@
+[package]
+name = "ferric-qwen3-tp-fp32-head-kernels-device-v7"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "79706b43a177a2fd3fa43ec328221fa3e5041af5", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "79706b43a177a2fd3fa43ec328221fa3e5041af5", version = "=0.1.0" }
+
+[dev-dependencies]
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_tp_fp32_head_kernels_device_v7"
+path = "src/lib.rs"
