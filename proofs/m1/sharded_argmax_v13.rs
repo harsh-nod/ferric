@@ -125,7 +125,7 @@ pub open spec fn v13_long_shards_in_prefix(shards: int) -> int
     decreases shards,
 {
     if shards <= 0 { 0 } else {
-        v13_long_shards_in_prefix(shards - 1) + if shards <= 6 { 1 } else { 0 }
+        v13_long_shards_in_prefix(shards - 1) + if shards <= 6 { 1int } else { 0int }
     }
 }
 
