@@ -465,6 +465,90 @@ fn wave_argmax_live_is_separate_and_preserves_preallocation_and_terminal_selecti
 }
 
 #[test]
+fn layer_c1_wave_live_is_additive_ordered_and_preserves_pre_effect_admission() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-layer-c1-wave-live"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    let source = include_str!("../src/bin/ferric-qwen3-layer-c1-wave-live.rs");
+    let production = &source[..source.find("#[cfg(test)]").unwrap()];
+    let execute = &production[production.find("fn run(options:").unwrap()..];
+    assert!(execute.find("options.validate()").unwrap() < execute.find("TimingFile::create(").unwrap());
+    let setup = &production[production.find("fn run_with_timing(").unwrap()..];
+    let ordered = [
+        "options.validate()",
+        "EngineeringTpArtifactV1::open_batch32",
+        "EngineeringTpArtifactV1::open_fp32_head32",
+        "EngineeringTpArtifactV1::open_fp32_argmax32_v11",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(&head_artifact)",
+        "worker.load_additional_artifact(&argmax_artifact)",
+        "EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11",
+        "driver.configure_output_head_pruning(true)",
+        "driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)",
+        "driver.configure_projection(",
+        "EngineeringTpProjectionModeV3::Mfma",
+        "driver.configure_wave_attention(true)",
+        "driver.configure_head_precision_v8(true)",
+        "match options.layer_projection",
+        "profile_metadata(options, driver.layer_projection_mode())",
+        "let layer_projection = driver.layer_projection_mode();",
+        "EngineeringTpBatchRuntimeV2::new_wide32(",
+        "tp_live_ingress::run(",
+    ].map(|marker| setup.find(marker).unwrap());
+    assert!(ordered.windows(2).all(|positions| positions[0] < positions[1]));
+    let selection = &setup[setup.find("match options.layer_projection").unwrap()
+        ..setup.find("driver.configure_host_timing(").unwrap()];
+    let branches = [
+        "LayerProjection::Mfma",
+        "driver.configure_ordered_wave_attention_fp32_argmax_v11",
+        "LayerProjection::C1Wave",
+        "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
+    ].map(|marker| selection.find(marker).unwrap());
+    assert!(branches.windows(2).all(|positions| positions[0] < positions[1]));
+    assert_eq!(selection.matches("driver.configure_").count(), 2);
+    for forbidden in ["configure_ordered_batches(", "configure_dispatch_sequences(",
+        "configure_wave_attention_fp32_argmax_v11(", "new_large_kv32", "EngineeringTpProjectionModeV3::Auto"] {
+        assert!(!production.contains(forbidden), "{forbidden}");
+    }
+    assert!(production.contains("actual_layer != options.layer_projection.label()"));
+    assert!(production.contains("\"projection\":\"mfma\""));
+    assert!(production.contains("const LIVE_PROFILE: &str = \"layer-c1-wave-live-v1\";"));
+    assert_eq!(production.matches("\"live_profile\":LIVE_PROFILE").count(), 3);
+    assert_eq!(production.matches("\"layer_projection\":layer_projection").count(), 2);
+    assert!(production.contains("\"layer_projection\":actual_layer"));
+    assert!(production.contains("let result = body(runtime);\n    let close = runtime.close();"));
+    assert!(production.contains("check_retired(runtime, live.pages)"));
+    assert!(production.contains("FerricQwen3TpBatchSetupV2"));
+    assert!(production.contains("FerricQwen3TpBatchClosedV2"));
+    assert!(production.contains("FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1"));
+    let contract = include_str!("../src/bin/layer_c1_wave_live_contract.rs");
+    let contract = &contract[..contract.find("#[cfg(test)]").unwrap()];
+    assert!(contract.contains("wave_argmax_live_contract::Options::parse(forwarded.into_iter())?"));
+    assert!(contract.contains("self.live.validate()?;"));
+    assert!(contract.contains("self.live.submission != Submission::Ordered"));
+    assert!(contract.contains("!self.live.runtime.ordered_batches"));
+    for frozen in [
+        include_str!("../src/bin/ferric-qwen3-wave-argmax-live.rs"),
+        include_str!("../src/bin/wave_argmax_live_contract.rs"),
+        include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),
+    ] {
+        assert!(!frozen.contains("--layer-projection"));
+        assert!(!frozen.contains("layer_c1_wave_live_contract"));
+        assert!(!frozen.contains("configure_ordered_c1_wave_layers"));
+    }
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-layer-c1-wave-live"));
+}
+
+#[test]
 fn adapter_and_observation_schema_pin_current_fe2o3() {
     assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 6);
     assert!(SOURCE.contains(FE2O3_REVISION));
