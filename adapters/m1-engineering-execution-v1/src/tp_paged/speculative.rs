@@ -129,6 +129,13 @@ impl EngineeringTpSpeculativeTargetWorkV1<'_> {
 ///     result.choices = vec![42];
 /// }
 /// ```
+///
+/// ```compile_fail
+/// use ferric_m1_engineering_execution_v1::tp_paged::speculative::EngineeringTpSpeculativeTargetResultV1;
+/// fn replace(result: &mut EngineeringTpSpeculativeTargetResultV1) {
+///     result.choices()[0] = 42;
+/// }
+/// ```
 #[derive(Debug)]
 pub struct EngineeringTpSpeculativeTargetResultV1 {
     identity: WorkIdentity,
@@ -136,6 +143,44 @@ pub struct EngineeringTpSpeculativeTargetResultV1 {
     output_rows: Vec<usize>,
     choices: Vec<u32>,
     completion: EngineeringTpBatchCompletionV1,
+}
+
+impl EngineeringTpSpeculativeTargetResultV1 {
+    /// Read-only diagnostics do not expose a completion constructor or mutable choices.
+    #[must_use]
+    pub const fn request(&self) -> RequestId {
+        self.identity.request
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.identity.epoch
+    }
+
+    #[must_use]
+    pub const fn pool_identity(&self) -> u64 {
+        self.identity.pool
+    }
+
+    #[must_use]
+    pub const fn batch_id(&self) -> u64 {
+        self.identity.batch
+    }
+
+    #[must_use]
+    pub fn inputs(&self) -> &[EngineeringTpPageRowV1] {
+        &self.rows
+    }
+
+    #[must_use]
+    pub fn output_rows(&self) -> &[usize] {
+        &self.output_rows
+    }
+
+    #[must_use]
+    pub fn choices(&self) -> &[u32] {
+        &self.choices
+    }
 }
 
 /// Exact draft input work, consumed only by the role-checked paged draft driver.
@@ -210,6 +255,34 @@ pub struct EngineeringTpSpeculativeDraftResultV1 {
     identity: WorkIdentity,
     rows: Vec<EngineeringTpPageRowV1>,
     completion: EngineeringTpBatchCompletionV1,
+}
+
+impl EngineeringTpSpeculativeDraftResultV1 {
+    /// Exact completed-input diagnostics; the underlying completion stays private.
+    #[must_use]
+    pub const fn batch_id(&self) -> u64 {
+        self.identity.batch
+    }
+
+    #[must_use]
+    pub const fn pool_identity(&self) -> u64 {
+        self.identity.pool
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> CompletionEpoch {
+        self.identity.epoch
+    }
+
+    #[must_use]
+    pub const fn is_catch_up(&self) -> bool {
+        self.identity.catch_up
+    }
+
+    #[must_use]
+    pub fn inputs(&self) -> &[EngineeringTpPageRowV1] {
+        &self.rows
+    }
 }
 
 #[derive(Debug)]

@@ -90,6 +90,46 @@ pub struct EngineeringTpDraftProposalResultV1 {
     completion: EngineeringTpBatchCompletionV1,
 }
 
+impl EngineeringTpDraftProposalResultV1 {
+    /// Read-only diagnostic identity; no completion or publication authority escapes.
+    #[must_use]
+    pub const fn request(&self) -> ferric_spec::RequestId {
+        self.identity.round.request
+    }
+
+    #[must_use]
+    pub const fn completion_epoch(&self) -> ferric_spec::completion::CompletionEpoch {
+        self.identity.round.epoch
+    }
+
+    #[must_use]
+    pub const fn pool_identity(&self) -> u64 {
+        self.identity.round.pool
+    }
+
+    #[must_use]
+    pub const fn batch_id(&self) -> u64 {
+        self.identity.batch
+    }
+
+    #[must_use]
+    pub const fn ordinal(&self) -> u8 {
+        self.identity.ordinal
+    }
+
+    /// Input actually consumed by this completed one-row forward.
+    #[must_use]
+    pub const fn input(&self) -> EngineeringTpPageRowV1 {
+        self.input
+    }
+
+    /// Observed choice only; callers cannot replace the retained sealed value.
+    #[must_use]
+    pub const fn choice(&self) -> u32 {
+        self.choice
+    }
+}
+
 #[derive(Debug)]
 pub(super) struct ProposalRound {
     pub(super) target: EngineeringTpPreparedBatchV1,
