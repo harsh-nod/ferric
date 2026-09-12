@@ -59,6 +59,44 @@ fn parallel(values: &[f32], base: usize) -> Result<u32, ()> {
     finalize(&produce(values, base))
 }
 
+fn produce_into(values: &[f32], rows: usize, maxima: &mut [f32], keys: &mut [f32]) {
+    assert!((1..=32).contains(&rows));
+    assert!((rows * N..=32 * N).contains(&values.len()));
+    assert_eq!(maxima.len(), 32 * SHARDS);
+    assert_eq!(keys.len(), 32 * SHARDS);
+    for row in 0..rows {
+        for (shard, (maximum, key)) in produce(values, row * N).into_iter().enumerate() {
+            maxima[row * SHARDS + shard] = maximum;
+            keys[row * SHARDS + shard] = key;
+        }
+    }
+}
+
+fn finalize_into(
+    maxima: &[f32],
+    keys: &[f32],
+    rows: usize,
+    choices: &mut [u32],
+) -> Result<(), ()> {
+    assert!((1..=32).contains(&rows));
+    assert_eq!(maxima.len(), 32 * SHARDS);
+    assert_eq!(keys.len(), 32 * SHARDS);
+    assert!((rows..=32).contains(&choices.len()));
+    let maxima = StridedReadView2D::from_shared_slice(maxima, 0, rows, SHARDS, SHARDS).unwrap();
+    let keys = StridedReadView2D::from_shared_slice(keys, 0, rows, SHARDS, SHARDS).unwrap();
+    for (row, choice) in choices.iter_mut().take(rows).enumerate() {
+        let shards = core::array::from_fn(|shard| {
+            (maxima.load_or(row, shard, 0.0), keys.load_or(row, shard, 0.0))
+        });
+        *choice = finalize(&shards)?;
+    }
+    Ok(())
+}
+
+fn bits(values: &[f32]) -> std::vec::Vec<u32> {
+    values.iter().map(|value| value.to_bits()).collect()
+}
+
 #[test]
 fn exhaustive_token_ownership_has_exact_six_long_shards_and_no_tail_reads() {
     let mut owners = vec![0_u8; N];
@@ -342,5 +380,110 @@ fn active_rows_preserve_scratch_choice_guards_and_nonfinite_capacity_tails() {
                 .zip(&before)
                 .all(|(value, &bits)| value.to_bits() == bits)
         );
+    }
+}
+
+#[test]
+fn reused_scratch_tracks_32_then_1_then_17_rows_and_changed_winners() {
+    let guard = 0x7fc0_1234;
+    let mut maxima = [f32::from_bits(guard); 32 * SHARDS + 2];
+    let mut keys = maxima;
+    let mut choices = [0xa5a5_a5a5_u32; 34];
+    for (generation, rows) in [32, 1, 17].into_iter().enumerate() {
+        let mut values = vec![f32::from_bits(guard); rows * N + 2];
+        values[1..1 + rows * N].fill(-1.0);
+        let winners: std::vec::Vec<_> = (0..rows)
+            .map(|row| (generation * 7919 + row * 997 + 7) % N)
+            .collect();
+        for (row, &winner) in winners.iter().enumerate() {
+            values[1 + row * N + winner] = 2.0;
+        }
+        let input_before = bits(&values);
+        let maxima_before = bits(&maxima);
+        let keys_before = bits(&keys);
+        let choices_before = choices;
+        produce_into(
+            &values[1..1 + rows * N],
+            rows,
+            &mut maxima[1..1 + 32 * SHARDS],
+            &mut keys[1..1 + 32 * SHARDS],
+        );
+        assert_eq!(bits(&values), input_before);
+        assert_eq!(maxima[0].to_bits(), guard);
+        assert_eq!(keys[0].to_bits(), guard);
+        assert_eq!(bits(&maxima[1 + rows * SHARDS..]), maxima_before[1 + rows * SHARDS..]);
+        assert_eq!(bits(&keys[1 + rows * SHARDS..]), keys_before[1 + rows * SHARDS..]);
+        let produced_maxima = bits(&maxima);
+        let produced_keys = bits(&keys);
+        assert_eq!(
+            finalize_into(
+                &maxima[1..1 + 32 * SHARDS],
+                &keys[1..1 + 32 * SHARDS],
+                rows,
+                &mut choices[1..33],
+            ),
+            Ok(())
+        );
+        assert_eq!(bits(&maxima), produced_maxima);
+        assert_eq!(bits(&keys), produced_keys);
+        assert_eq!(bits(&values), input_before);
+        for (row, &winner) in winners.iter().enumerate() {
+            assert_eq!(choices[1 + row], winner as u32);
+            assert_eq!(scalar(&values[1 + row * N..1 + (row + 1) * N]), Ok(winner as u32));
+        }
+        assert_eq!(choices[0], choices_before[0]);
+        assert_eq!(choices[1 + rows..], choices_before[1 + rows..]);
+    }
+}
+
+#[test]
+fn minimum_carriers_reuse_valid_invalid_valid_without_stale_output_or_sentinel() {
+    let guard = 0x7fc0_1234;
+    let mut values = vec![f32::from_bits(guard); N + 2];
+    let mut maxima = [f32::from_bits(guard); 32 * SHARDS + 2];
+    let mut keys = maxima;
+    let mut choices = [0xa5a5_a5a5_u32; 3];
+    for (generation, winner) in [N - 1, 8192, 65].into_iter().enumerate() {
+        values[1..1 + N].fill(-1.0);
+        values[1 + winner] = 2.0;
+        if generation == 1 {
+            values[1 + 63] = f32::from_bits(0xff80_0001);
+        }
+        let input_before = bits(&values);
+        let choices_before = choices;
+        produce_into(
+            &values[1..1 + N],
+            1,
+            &mut maxima[1..1 + 32 * SHARDS],
+            &mut keys[1..1 + 32 * SHARDS],
+        );
+        let produced_maxima = bits(&maxima);
+        let produced_keys = bits(&keys);
+        let result = finalize_into(
+            &maxima[1..1 + 32 * SHARDS],
+            &keys[1..1 + 32 * SHARDS],
+            1,
+            &mut choices[1..2],
+        );
+        if generation == 1 {
+            assert_eq!(result, Err(()));
+            assert_eq!(keys[1].to_bits(), 0);
+            assert_eq!(choices, choices_before);
+            assert_eq!(scalar(&values[1..1 + N]), Err(()));
+        } else {
+            assert_eq!(result, Ok(()));
+            assert_ne!(keys[1].to_bits(), 0);
+            assert_eq!(choices[1], winner as u32);
+            assert_eq!(scalar(&values[1..1 + N]), Ok(winner as u32));
+        }
+        assert_eq!(bits(&values), input_before);
+        assert_eq!(bits(&maxima), produced_maxima);
+        assert_eq!(bits(&keys), produced_keys);
+        for scratch in [&maxima, &keys] {
+            assert_eq!(scratch[0].to_bits(), guard);
+            assert!(scratch[1 + SHARDS..].iter().all(|value| value.to_bits() == guard));
+        }
+        assert_eq!(choices[0], 0xa5a5_a5a5);
+        assert_eq!(choices[2], 0xa5a5_a5a5);
     }
 }

@@ -74,12 +74,16 @@ cargo check --locked --offline --no-default-features
 ```
 
 The last command is an expected feature-rejection negative, not a passing build.
-There are 13 numerical fixture methods and 6 source/contract methods. Ownership
+There are 15 numerical fixture methods and 8 source/contract methods. Ownership
 and key encodings are exhaustive; numerical fixtures cover all shard/lane scan
 boundaries, cross-shard ties, signed zero, finite extremes/subnormals, FP32 values
 that collapse in BF16, deterministic finite bit patterns, every lane's persistent
 nonfinite flag, every shard's sentinel/malformed scratch, and active-capacity
-tails with input/guard bit preservation. They are not general numerical proofs.
+tails with input/guard bit preservation. Reuse fixtures cover 32/1/17 active rows
+with changed winners and minimum-carrier valid/invalid/valid input transitions.
+Parsed-root checks bind the sentinel and complete write operands/witnesses;
+synthetic source mutations demonstrate rejection of changed keys or stores.
+These remain unexecuted host/source fixtures, not general numerical proofs.
 
 Only after the host gate is admitted should a separately reviewed exact-compiler
 emission bind the two-root ABI, descriptor/resource/progress results, and source
