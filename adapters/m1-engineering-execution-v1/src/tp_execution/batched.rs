@@ -788,7 +788,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     }
 
     /// Enables dependent packet batches at the existing attention/FFN barriers.
-    /// Configure this last; singleton embedding, residual and head calls stay synchronous.
+    /// Configure this last; residuals finish each group before state advances.
+    /// Singleton embedding and head calls stay synchronous.
     /// Baseline and preconfigured wave attention retain the same packet dependencies.
     /// # Errors
     /// Rejects incompatible profiles, unsupported transports or any late policy change.

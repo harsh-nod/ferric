@@ -191,12 +191,18 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         };
         let ordered_tail = self.ordered_batches.is_some() && !self.draft_v10;
         if ordered_tail {
-            let pending = self.ordered_batches.as_ref().expect("ordered residual group");
+            let pending = self
+                .ordered_batches
+                .as_ref()
+                .expect("ordered residual group");
             let expected = match operation {
                 Qwen3TensorParallelCollectiveV1::AttentionOutputSum => 10,
                 Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => 5,
             };
-            let count = pending.len().checked_add(1).ok_or("residual batch overflow")?;
+            let count = pending
+                .len()
+                .checked_add(1)
+                .ok_or("residual batch overflow")?;
             if pending.len() != expected
                 || !(1..=16).contains(&count)
                 || self.ranks.len() != 1

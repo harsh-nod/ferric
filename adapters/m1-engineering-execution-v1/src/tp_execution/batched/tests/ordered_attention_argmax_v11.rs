@@ -491,7 +491,10 @@ fn ordered_residual_tail_rejects_invalid_geometry_before_publication() {
             let handles = residual_handles(&driver);
             let pending = driver.inner.ordered_batches.clone();
             let layer = u32::from(mutation == 11);
-            assert!(driver.inner.reduce(layer, operation).is_err(), "mutation {mutation}");
+            assert!(
+                driver.inner.reduce(layer, operation).is_err(),
+                "mutation {mutation}"
+            );
             assert_eq!(driver.inner.collective.expected(), key);
             assert_eq!(residual_handles(&driver), handles);
             assert_eq!(driver.inner.ordered_batches, pending);
@@ -575,7 +578,11 @@ fn synchronous_device_residual_keeps_singleton_ack_and_failure_frontier() {
         Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
         Qwen3TensorParallelCollectiveV1::FeedForwardDownSum,
     ] {
-        for failure in [None, Some(Failure::ResidualSubmit), Some(Failure::ResidualWait)] {
+        for failure in [
+            None,
+            Some(Failure::ResidualSubmit),
+            Some(Failure::ResidualWait),
+        ] {
             let mut driver = phase_driver(operation, false);
             for bytes in driver.inner.transports[0].buffers.values_mut() {
                 bytes.fill(0);
@@ -664,9 +671,13 @@ fn ordered_wave_v11_host_spans_preserve_commands_and_name_the_flush_boundary() {
                 let row = flushes.iter().find(|row| row["phase"] == phase).unwrap();
                 assert_eq!(row["category"], "span");
                 assert_eq!(row["count"], count);
-                assert!(!snapshot["records"].as_array().unwrap().iter().any(|row| {
-                    row["phase"] == phase && row["label"] == "dispatch_zero"
-                }));
+                assert!(
+                    !snapshot["records"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|row| { row["phase"] == phase && row["label"] == "dispatch_zero" })
+                );
             }
         }
         driver.close().unwrap();
