@@ -500,11 +500,15 @@
   measured.append(provenance);
 
   const readiness = document.querySelector("[data-readiness]");
-  [...project.latestReadiness, ...project.readiness].forEach((item, index) => {
-    if (index === project.latestReadiness.length) {
+  const currentCount = project.routeReadiness.length + project.latestReadiness.length;
+  [...project.routeReadiness, ...project.latestReadiness, ...project.readiness].forEach((item, index) => {
+    if (index === project.routeReadiness.length) {
+      readiness.append(element("h3", "", "Earlier native checkpoints"));
+    }
+    if (index === currentCount) {
       readiness.append(element("h3", "", "Earlier sprint checkpoints"));
     }
-    if (index === project.latestReadiness.length + project.competitivenessRecovery.currentReadinessCount) {
+    if (index === currentCount + project.competitivenessRecovery.currentReadinessCount) {
       readiness.append(element("h3", "", "Earlier validated checkpoints"));
     }
     const row = element("div", "readiness-row");

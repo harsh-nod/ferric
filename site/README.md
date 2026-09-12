@@ -226,3 +226,26 @@ plus pruning/residual passes, with n=1 metrics from its pinned ledger; two
 flags change, so no isolated gain follows. Preserve the completed per-case
 receipts and the separate outer SSH255 anomaly. The failure is observed
 without pruning or device residual, but its numerical cause is not proven.
+## Argmax Route Checkpoint
+
+The additive `routeCheckpoint` and `routeReadiness` fields record the private
+`d9a2705` correction's exact host gate, the permanently rejected `f662d54`
+native attempt, and frozen `f65` overlapping host-counter diagnostics.
+The additive `argmaxNative` record binds the corrected six-run native diagnostic
+to the unchanged summary, manifest, reducer, checker and controller identities.
+Full128 has one run per mode; short8 ABBA has two. Displayed gains use ratios of
+arithmetic means, with individual short-pair variability retained. These are
+instrumented native controller-wall measurements, not HTTP or GPU durations,
+confidence-qualified estimates, a competitive ranking or a new default.
+Existing `nativeFollowup`, `matched128`, and historical `performance.js`
+records retain their original source and measurement scope.
+
+`node validate-argmax-checkpoint.mjs EVIDENCE_DIR` additionally checks the
+five pinned raw receipts/traces. Evidence is retained outside the published
+site. Its mutation checks also run in the normal static validator.
+
+`node validate-argmax-native.mjs EVIDENCE_DIR` checks the pinned summary,
+manifest, plan and reducer plus all 60 raw files in the six manifest-named
+directories. It independently recomputes displayed means and paired reductions,
+checks successful reference/cleanup receipts and preserves overlapping host
+scope exclusions. The earlier `f662d54` rejection contributes no result or timing.

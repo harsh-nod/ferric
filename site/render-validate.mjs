@@ -6,6 +6,7 @@ import { chromium } from "playwright";
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const pageUrl = pathToFileURL(join(siteRoot, "index.html")).href;
 const screenshotRoot = process.env.FERRIC_SCREENSHOT_DIR;
+const compactScreenshots = process.env.FERRIC_COMPACT_SCREENSHOTS === "1";
 const viewports = [
   ["desktop", 1440, 1100],
   ["validation-edge-1027", 1027, 900],
@@ -43,6 +44,16 @@ const requiredClaims = [
   "Paged draft: all eight native cases pass",
   "Paired K4: two fresh native passes",
   "Parallel FP32 argmax: 14 native fixtures",
+  "Opt-in argmax route: host gate passed",
+  "Retirement harness: rejected attempt preserved",
+  "Ordered runtime: diagnostic counters only",
+  "Earlier native checkpoints",
+  "Native argmax: full 128-output pair",
+  "Native argmax: short ABBA diagnostics",
+  "553.419547 / 528.962031 ms",
+  "16.79% to 7.72%",
+  "not isolated GPU-kernel durations",
+  "not isolated GPU execution",
   "Wave plus ordered: short-canary ABBA",
   "SGLang r7: numerical rejection retained",
   "two genuine last-proposal catch-ups",
@@ -875,36 +886,45 @@ try {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
-        for (const label of ["Paired K4: two fresh native passes", "Wave plus ordered: short-canary ABBA"]) {
+        for (const [label, suffix] of [
+          ["Paired K4: two fresh native passes", "paired-native"],
+          ["Wave plus ordered: short-canary ABBA", "wave-ordered"],
+          ["Opt-in argmax route: host gate passed", "argmax-route"],
+          ["Native argmax: full 128-output pair", "argmax-full128"],
+          ["Native argmax: short ABBA diagnostics", "argmax-short8"],
+          ["Retirement harness: rejected attempt preserved", "argmax-rejected"],
+          ["Ordered runtime: diagnostic counters only", "runtime-counters"],
+        ]) {
           await page.getByText(label, { exact: true }).evaluate((node) => {
             const headerHeight = document.querySelector("header").getBoundingClientRect().height;
             window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
           });
-          const suffix = label.startsWith("Paired") ? "paired-native" : "wave-ordered";
           await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
         }
-        for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
-          ["FP32 head on TP1: faster requests, slower startup", "fp32-head"],
-          ["Concurrent peer rounds: matched TP2 and TP8", "concurrent-matrix"],
-          ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
-          ["True 32-row execution: a latency tradeoff", "wide"],
-          ["Current-controller combinations: mixed correctness", "current"],
-          ["MFMA repeated: request gains, startup cost", "mfma-repeated"],
-          ["Source-matched peer controls: a regression", "peer-controls"],
-          ["Setup transpose: full-model observation", "transpose-model"],
-          ["Original peer checkpoint: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
-          await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
-            const headerHeight = document.querySelector("header").getBoundingClientRect().height;
-            window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
-          });
-          await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
+        if (!compactScreenshots) {
+          for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
+            ["FP32 head on TP1: faster requests, slower startup", "fp32-head"],
+            ["Concurrent peer rounds: matched TP2 and TP8", "concurrent-matrix"],
+            ["Eight-GPU allocation cohorts: 64 outputs", "replicas"],
+            ["True 32-row execution: a latency tradeoff", "wide"],
+            ["Current-controller combinations: mixed correctness", "current"],
+            ["MFMA repeated: request gains, startup cost", "mfma-repeated"],
+            ["Source-matched peer controls: a regression", "peer-controls"],
+            ["Setup transpose: full-model observation", "transpose-model"],
+            ["Original peer checkpoint: correctness, not a speedup", "peer"], ["CPU transpose helper only", "transpose"]]) {
+            await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
+              const headerHeight = document.querySelector("header").getBoundingClientRect().height;
+              window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
+            });
+            await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
+          }
+          await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();
+          await page.screenshot({ path: join(screenshotRoot, `${name}-ablations.png`) });
         }
-        await page.getByRole("heading", { name: "Single-repetition ablations", exact: true }).scrollIntoViewIfNeeded();
-        await page.screenshot({ path: join(screenshotRoot, `${name}-ablations.png`) });
         await page.evaluate(() => window.scrollTo(0, 0));
         await page.screenshot({ path: join(screenshotRoot, `${name}-overview.png`) });
       }
-      await page.screenshot({ path: join(screenshotRoot, `${name}.png`), fullPage: true });
+      if (!compactScreenshots) await page.screenshot({ path: join(screenshotRoot, `${name}.png`), fullPage: true });
     }
     await page.close();
   }

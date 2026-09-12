@@ -9,6 +9,8 @@ import { validateFollowup, testFollowupRejections } from "./validate-competitive
 import { validateRecovery, testRecoveryRejections } from "./validate-competitiveness-recovery.mjs";
 import { validateMatched128, testMatched128Rejections } from "./validate-matched128.mjs";
 import { validateNativeFollowup, testNativeFollowupRejections } from "./validate-native-followup.mjs";
+import { validateArgmaxCheckpoint, testArgmaxCheckpointRejections } from "./validate-argmax-checkpoint.mjs";
+import { validateArgmaxNative, testArgmaxNativeRejections } from "./validate-argmax-native.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -25,6 +27,10 @@ validateMatched128(project.matched128, project.pagedDraftReference);
 testMatched128Rejections(project.matched128, project.pagedDraftReference);
 validateNativeFollowup(project.nativeFollowup, project.latestReadiness);
 testNativeFollowupRejections(project.nativeFollowup, project.latestReadiness);
+validateArgmaxCheckpoint(project.routeCheckpoint, project.routeReadiness);
+testArgmaxCheckpointRejections(project.routeCheckpoint, project.routeReadiness);
+validateArgmaxNative(project.argmaxNative);
+testArgmaxNativeRejections(project.argmaxNative);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -85,6 +91,9 @@ assertExactKeys(
     "competitivenessRecovery",
     "matched128",
     "nativeFollowup",
+    "routeCheckpoint",
+    "routeReadiness",
+    "argmaxNative",
     "pagedDraftReference",
     "latestReadiness",
     "milestone",
