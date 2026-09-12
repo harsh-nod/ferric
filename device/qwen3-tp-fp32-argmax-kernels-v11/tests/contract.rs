@@ -71,7 +71,7 @@ fn all_lanes_participate_in_three_ordered_reductions_before_the_only_store() {
 }
 
 #[test]
-fn bounded_shape_and_frozen_v8_source_are_not_broadened() {
+fn shape_contract_and_distinct_root_remain_bounded() {
     for guard in [
         "rows == 0 || rows > 32",
         "logits.len() < rows * 151936",
@@ -83,6 +83,8 @@ fn bounded_shape_and_frozen_v8_source_are_not_broadened() {
         "max_grid = [32, 1, 1]",
         "control_flow(loop_bounds(2374))",
         "checked_row_striped_2d::<64, 1>()",
+        "winning_key < 151937",
+        "winning_key == 0",
     ] {
         assert!(LOGITS.contains(guard), "missing {guard}");
     }
@@ -108,7 +110,7 @@ fn active_output_has_one_writer_and_capacity_tail_has_none() {
 
 #[test]
 fn host_numeric_macros_match_inline_emitted_bodies() {
-    for name in ["lane_argmax", "stable_key"] {
+    for name in ["lane_argmax", "stable_key", "decode_key"] {
         let macro_body = LOGITS
             .split(&format!("macro_rules! {name}"))
             .nth(1)

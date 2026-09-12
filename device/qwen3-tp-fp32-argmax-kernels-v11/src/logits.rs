@@ -37,6 +37,21 @@ macro_rules! stable_key {
     }};
 }
 
+#[cfg(test)]
+macro_rules! decode_key {
+    ($winning_key:expr) => {{
+        let winning_key = $winning_key as u32;
+        if winning_key < 151937 {
+        } else {
+            fe2o3_device::trap();
+        }
+        if winning_key == 0 {
+            fe2o3_device::trap();
+        }
+        151936_u32 - winning_key
+    }};
+}
+
 /// One Wave64 per row, with exact lowest-token ties and all-value finite rejection.
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [32, 1, 1]), control_flow(loop_bounds(2374)))]
 pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
@@ -111,7 +126,19 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
         let Some(stripe) = invocation.checked_row_striped_2d::<64, 1>() else {
             fe2o3_device::trap();
         };
-        let winner = 151936_u32 - winning_key as u32;
+        let winner = {
+            // BEGIN decode_key
+            let winning_key = winning_key as u32;
+            if winning_key < 151937 {
+            } else {
+                fe2o3_device::trap();
+            }
+            if winning_key == 0 {
+                fe2o3_device::trap();
+            }
+            151936_u32 - winning_key
+            // END decode_key
+        };
         if !choices.write_row_striped_2d(&stripe, 0, rows, 1, 1, winner) {
             fe2o3_device::trap();
         }

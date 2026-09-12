@@ -32,7 +32,7 @@ fn parallel(values: &[f32], base: usize) -> Result<u32, ()> {
         .iter()
         .map(|&(value, winner, _)| stable_key!(value, maximum, winner))
         .fold(0.0_f32, f32::max);
-    Ok(N as u32 - key as u32)
+    Ok(decode_key!(key))
 }
 
 #[test]
@@ -54,9 +54,17 @@ fn every_token_key_is_exact_nonzero_and_strictly_ordered() {
         assert_eq!(key as u32, N as u32 - token);
         assert!(key > 0.0 && key < previous);
         assert_eq!(N as u32 - key as u32, token);
+        assert_eq!(decode_key!(key), token);
         previous = key;
     }
     assert_eq!(stable_key!(-1.0, 1.0, 0), 0.0);
+}
+
+#[test]
+fn decoding_rejects_zero_and_out_of_range_integer_keys() {
+    for key in [0.0, -0.0, -1.0, 151937.0, f32::NAN, f32::INFINITY] {
+        assert!(std::panic::catch_unwind(|| decode_key!(key)).is_err());
+    }
 }
 
 #[test]
