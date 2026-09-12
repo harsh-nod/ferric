@@ -72,6 +72,18 @@ accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
 (912,288 KiB), as is the redundant integrated source worktree (42,520 KiB).
 All required source, raw test output and executable artifacts remain retained.
 These updates supersede the pending-build/replay notes in the history below.
+The eight completed mi350 C1 case directories and six authenticated archive/ledger
+files are also removed after local custody and a fresh normal-close/process check
+(10,788 KiB); shared models and installed images/controllers remain untouched.
+
+Static inspection of the actual resident v5 image `98b5fdb1` confirms two query
+loads/waits inside the attention token loop. The attention descriptor reports
+97 SGPR / 36 VGPR and zero spills; these are not occupancy or elapsed-time data.
+Complete four-command CPU archive `224b645f` is accepted and its small stage is
+removed (780 KiB). A separate source-only query-hoist prototype is being prepared;
+the existing token loop, arithmetic and reduction order must remain unchanged.
+Partial GEMV also retains a masked fixed-K tail, but that is a separate future
+candidate. No GPU performance attribution or gain follows from disassembly.
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
