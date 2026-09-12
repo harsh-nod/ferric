@@ -41,7 +41,7 @@ const requiredClaims = [
   "Ordered submission: full128 ABBA diagnostic",
   "15.45% lower TPOT and 17.56% higher mean per-run output rate",
   "Paired rate gains are 21.03% and 14.03%",
-  "Synchronous/ordered/ordered/synchronous; n=2 per mode",
+  "Synchronous / ordered / ordered / synchronous; n=2 per mode",
   "Operation-group timings are not comparable across submission modes",
   "Attention attribution and validation",
   "Seven attention operation groups",

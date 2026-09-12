@@ -155,7 +155,7 @@
       [mode, String(outputs), packets.toLocaleString("en-US"), String(batches), String(cursor)]), submissionProgress);
   submissionProgress.append(element("p", "", "All four runs retire their pools, close workers normally and leave all eight GPUs idle. These are correctness cases, not comparison samples; their timings are excluded."),
     element("h3", "", "Ordered submission: full128 ABBA diagnostic"),
-    element("p", "performance-scope", "Instrumented native TP1, context 256, 128 input / 128 output tokens, fixed wave attention and wave-v11 argmax. Synchronous/ordered/ordered/synchronous; n=2 per mode. These controller-wall diagnostics are not HTTP serving or GPU durations."));
+    element("p", "performance-scope", "Instrumented native TP1, context 256, 128 input / 128 output tokens, fixed wave attention and wave-v11 argmax. Synchronous / ordered / ordered / synchronous; n=2 per mode. These controller-wall diagnostics are not HTTP serving or GPU durations."));
   performanceTable("Submission full128 ABBA: native host means and run ranges",
     ["Submission", "Mean TTFT (s)", "Mean TPOT (ms)", "Mean per-run output (tok/s)", "TPOT min / max (ms)", "Output min / max (tok/s)"],
     ["synchronous", "ordered"].map((mode) => {
