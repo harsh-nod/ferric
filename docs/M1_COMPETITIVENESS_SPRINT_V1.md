@@ -1563,3 +1563,71 @@ image's allocated `.relro_padding` section. Source/tool checks stayed exact.
 The narrow observed-padding correction is independently reviewed and retains
 rejection of other nonzero allocated BSS; the failed attempt is not relabeled
 as a pass. No kernel image or new kernel performance is admitted yet.
+
+## Cooperative Append Resource Rejection
+
+The corrected paired-emission R2 helper passes all eleven tests. Fresh offline
+vendoring, the exact SDK overlay, and both engineering emissions then exit0
+with unchanged source/tool checks. Both emissions use fe2o3 `8efd4fd`, with
+the explicitly retained LLVM worker from `2168222`; this is not a claim that
+the LLVM worker was rebuilt at the latest commit. A fresh root fetch at
+18:04 UTC confirms that public fe2o3 main remains `8efd4fd`.
+
+The comparison correctly exits1 on the candidate append root's 278 SGPR spills,
+before reaching the fourteen-root comparison. The baseline uses78 SGPRs and8
+VGPRs with no spills; the candidate uses106 SGPRs and47 VGPRs. Its body grows
+from3312 to14696 bytes. Both report zero private and shared bytes. Read-only
+disassembly confirms32 short-store sites with offsets corresponding to16
+unrolled blocks, and278 register-lane writes versus none in the baseline.
+These are register-lane transfers, not evidence of scratch-memory traffic.
+
+Failed R2 archive
+`f55e3ae0ad157d58e98821fed0f1eabd0b979ff92c3b8031672cbf682e0a584d`
+and append-only ISA archive
+`a7a7edb494d969b708d2957b54e54abeb3e0e348e21876089ea957096f076854`
+match independent transfers. Candidate `2716371` remains rejected for native
+use. A separate source revision will use the validated uniform active-block
+count `columns / 64`, retaining the component guard and maximum16 annotation;
+whether it prevents unrolling or spilling must be established by a new emission.
+No failed gate is relaxed, no historical result is replaced, and no performance
+gain is claimed for this kernel.
+
+## Matched Synchronous HTTP Remeasurement
+
+The live synchronous cohort completed with actual exit0 on mi350 at18:07 UTC.
+All42 requests passed: two diagnostics, ten warmups and thirty measured
+requests. Independent replay checked all20 raw files before/after, the exact
+source/setup and same-mode qualification, all40 timed HTTP identities and
+full final token sequences, both diagnostics and normal lifecycle closure.
+There were5670 batches and3491838 packets, no cleanup signals, controller
+exit0 and all eight GPUs idle afterward. No token/batch journal ran in the
+timed path; its131 events contain only admission, completion and lifecycle data.
+
+The unchanged client aggregates only the30 measured request records from the
+first sample-window start through the final sample-window end, including
+inter-window gaps and final drain. The interval is1157.044669186 seconds and
+contains3840 output tokens. Mean TTFT is3482.379512666667 ms, mean TPOT is
+276.2553326648294 ms, mean E2E is38567.20054086667 ms, and output throughput is
+3.3188001312875013 tokens/s. P50/P99 TPOT is287.417662/292.676743 ms.
+
+This is76.55% higher observed throughput and45.51% lower mean TPOT than the
+earlier matched Ferric cohort, not an isolated per-kernel or stable-speedup
+claim. The retained vLLM reference remains220.558111 tokens/s, so Ferric is
+still substantially slower. Settings remain TP1, C1, BF16 decoder, explicit
+FP32 head, context8192, 128/128 tokens, greedy fixed-length output, with prefix
+caching and speculation disabled. SGLang metrics remain excluded for output
+mismatches. The separate matched ordered cohort is running; it is not pooled
+with these samples or the earlier context256 native cohorts.
+
+- Acquisition receipt: `55eae5a1ca6730ab142c13bfd946314f91371979d975cb5605b15339e7aa6c61`.
+- Complete archive: `35143839a6567b3afb7fac988b875275e760e6280dff737b6e2f5c08fcb0a251`, matching two remote streams and the root copy.
+- Independent aggregate: `c930106517682ee5425199169f3c3a85632bd226e075e2ae820c5b78e0223969`, using the unchanged client and validators; actual replay exit0.
+- Full replay stdout: `168691e4adf03768bb6eb0054a83c0de9c553452fbfd80f8d8a8adb9d2fa148e`.
+
+The visible-attention candidate now includes the exact remotely formatted
+test bytes at `4e287b1`; its algorithm file remains unchanged from `b75e81c`.
+Format-only archive `e6341e6c3941b599525416669a8d0a45be0274f96e944f28c84b743f6a1d457d`
+matches twice. Actual formatter statuses were1/0/0, and prior source/tool/target
+bytes stayed unchanged. Host tests remain pending. Append active-block revision
+`d1ed99d` is separately source-only. Its superseded clean `2716371` worktree is
+removed, reclaiming42,284 KiB while retaining all commits and evidence.

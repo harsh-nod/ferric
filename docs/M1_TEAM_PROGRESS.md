@@ -50,13 +50,15 @@ requests in each submission mode at context8192. Both modes reproduce exact
 reference token IDs and UTF8, reuse slot0 with generations1/2 and no cached
 prefix, and close normally with all eight GPUs idle afterward. Independent raw
 review agrees. These four correctness requests provide no timing samples.
-The separate matched synchronous cohort is running; no new HTTP metrics are
-admitted yet.
+The separate matched synchronous cohort now passes all 42 requests and its
+independent raw replay. Thirty measured requests observe mean TTFT3482.380 ms,
+TPOT276.255 ms and output throughput3.318800 tokens/s. Ten warmups and two
+diagnostics are excluded. The matched ordered cohort is running.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition observes 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append `2716371` passes both 18-test host profiles; its exact pre-existing RMSNorm Clippy diagnostic remains actual exit101, not a strict pass. The new nine-case append probe passes ten CPU tests and its self-check. V12 remains host/emission-only. | Same-8efd control/candidate emission and unchanged fourteen-root comparison. First comparison-helper attempt stopped before emission on a known-good ELF padding section; the narrow correction is reviewed. Attention-loop `b75e81c` remains source-only. Neither new kernel has native or performance qualification. |
+| Measurement | Latest synchronous HTTP Qwen3-8B 128/128 cohort passes independent replay: TTFT3482.380 ms, TPOT276.255 ms, throughput3.318800 tokens/s across30 measured requests. Earlier Ferric cohort:3705.967/506.969 ms and1.879805 tokens/s; retained vLLM reference:19.243/4.414 ms and220.558111 tokens/s. SGLang r7 finishes but fails exact output in10 of30 measured responses. | Complete the matched ordered cohort. Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
+| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition observes 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append `2716371` passes both18-test host profiles; its exact pre-existing RMSNorm Clippy diagnostic remains actual exit101, not a strict pass. Both same-8efd images emit successfully, but the candidate fails the zero-SGPR-spill gate with278 spills. The new nine-case append probe passes ten CPU tests and its self-check. V12 remains host/emission-only. | Dynamic-bound revision `d1ed99d` is source-only, pending remote formatting and host/emission gates. The fourteen-root comparison was not reached. Attention-loop `4e287b1` includes reviewed remote formatting and is pending host tests. Neither new kernel has native or performance qualification. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Integration and Pages | Live entrypoint `7f58928` from tested `433e213` passes all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regressions. The separate HTTP wrapper passes 25 CPU tests and both context8192 two-request native checks. Pages-only `599943b` is deployed after eleven checks; all seven public assets match tested bytes. | Complete matched synchronous and ordered remeasurement, then publish admitted results. No new Verus proof. |
 
@@ -105,6 +107,8 @@ its raw inputs, admitted summary and cleanup receipt retained. The published
 submission Pages stage (338,332 KiB) and worktree (2,788 KiB) are removed too.
 Active kernel stages and source candidates remain tracked; unrelated worktrees,
 shared models, images and caches are untouched.
+The superseded clean append worktree `2716371` is also removed (42,284 KiB);
+its commit, branch, source archives and rejected-emission evidence are retained.
 
 ## September 11 Performance Swarm
 
