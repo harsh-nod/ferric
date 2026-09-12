@@ -20,6 +20,7 @@ const viewports = [
 const dynamicRoots = [
   "[data-readiness]",
   "[data-performance]",
+  "[data-attention-progress]",
   "[data-envelope]",
   "[data-capabilities]",
   "[data-validation]",
@@ -32,6 +33,18 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Attention attribution and validation",
+  "Seven attention operation groups",
+  "41.068",
+  "72.59",
+  "40 unchanged inputs and 96 guard sides",
+  "not GPU durations",
+  "parent and IPC spans overlap",
+  "Combined attention / argmax: host gate passed",
+  "42 required commands across 43 actual attempts",
+  "685 passed test invocations, 34 ignored",
+  "failed nested-TMP invocation and earlier Clippy failure",
+  "No combined-route metrics, default promotion or change to the matched HTTP results is admitted",
   "First matched Ferric / vLLM cell",
   "Ferric is substantially slower than vLLM on this cell",
   "3705.967",
@@ -861,7 +874,8 @@ try {
       .locator("tbody tr").count() === 8 * cohortCount, `${name}: missing replica request identities`);
     await replicaDisclosure.click();
 
-    for (const [caption, rows] of [["Matched MFMA pair: process windows", 2],
+    for (const [caption, rows] of [["Single-run attention operation groups: host intervals, not GPU durations", 7],
+      ["Matched MFMA pair: process windows", 2],
       ["Concurrent peer matrix: six process-window observations", 6],
       ["Concurrent peer matrix: separate workload-rate baselines", 2],
       ["Repeated MFMA pair: mean and observed range", 2],
@@ -884,9 +898,16 @@ try {
     if (screenshotRoot) {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
+        await page.getByRole("heading", { name: "Attention attribution and validation", exact: true }).evaluate((node) => {
+          const headerHeight = document.querySelector("header").getBoundingClientRect().height;
+          window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
+        });
+        await page.screenshot({ path: join(screenshotRoot, `${name}-attention-attribution.png`) });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [label, suffix] of [
+          ["Combined attention / argmax: host gate passed", "attention-composition-host"],
+          ["TP1 attention: eight exact native fixtures", "attention-fixtures"],
           ["Paired K4: two fresh native passes", "paired-native"],
           ["Wave plus ordered: short-canary ABBA", "wave-ordered"],
           ["Opt-in argmax route: host gate passed", "argmax-route"],

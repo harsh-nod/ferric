@@ -99,6 +99,32 @@
     wrap.append(table);
     parent.append(wrap);
   }
+  const attentionProgress = document.querySelector("[data-attention-progress]");
+  const attention = project.attentionCheckpoint;
+  attentionProgress.append(element("h3", "", "Seven attention operation groups"),
+    element("p", "performance-scope", "One TP1 run: 128 input tokens, 128 outputs, baseline attention, wave-v11 argmax, no ordered batches or prefix caching. Exact reference and clean teardown passed."),
+    element("p", "", "The attention parent spans 56.580 host seconds. Each group has 4,860 observations across 135 batches and 36 layers. These host intervals include dispatch and waiting; they are not isolated GPU-kernel durations."));
+  performanceTable("Single-run attention operation groups: host intervals, not GPU durations",
+    ["Operation group", "Host span (s)", "Share of parent (%)"],
+    attention.attribution.groups.map(([, label, nanoseconds]) => [label,
+      (nanoseconds / 1e9).toFixed(3), (100 * nanoseconds / attention.attribution.parentNs).toFixed(2)]), attentionProgress);
+  attentionProgress.append(element("p", "", "Sibling groups are disjoint; parent and IPC spans overlap and must not be added together. The GQA group identifies the largest recorded host interval in this profile, not a measured optimization gain or a cross-run comparison."),
+    element("h3", "", "Eight finite TP1 attention fixtures"),
+    element("p", "", project.attentionReadiness[1].detail),
+    element("p", "", project.attentionReadiness[2].detail));
+  const attentionDetails = element("details", "performance-identities");
+  attentionDetails.append(element("summary", "", "Attention evidence identities"));
+  const attentionPins = element("dl", "observation-facts");
+  for (const [label, value] of [["Instrumented source", attention.attribution.source],
+    ["Host-group diagnostic SHA-256", attention.attribution.reportSha256],
+    ["Fixture source", attention.fixtures.source], ["Frozen v5 image SHA-256", attention.fixtures.imageSha256],
+    ["Native fixture report SHA-256", attention.fixtures.reportSha256],
+    ["Independent fixture replay SHA-256", attention.fixtures.replaySha256]]) {
+    attentionPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  attentionDetails.append(attentionPins);
+  attentionProgress.append(attentionDetails);
+
   const matched = project.matched128;
   measured.append(element("h3", "", "First matched Ferric / vLLM cell"),
     element("p", "performance-scope", matched.scope), element("p", "", matched.interpretation));
@@ -500,9 +526,13 @@
   measured.append(provenance);
 
   const readiness = document.querySelector("[data-readiness]");
-  const currentCount = project.routeReadiness.length + project.latestReadiness.length;
-  [...project.routeReadiness, ...project.latestReadiness, ...project.readiness].forEach((item, index) => {
-    if (index === project.routeReadiness.length) {
+  const routeCount = project.attentionReadiness.length + project.routeReadiness.length;
+  const currentCount = routeCount + project.latestReadiness.length;
+  [...project.attentionReadiness, ...project.routeReadiness, ...project.latestReadiness, ...project.readiness].forEach((item, index) => {
+    if (index === project.attentionReadiness.length) {
+      readiness.append(element("h3", "", "Earlier argmax checkpoints"));
+    }
+    if (index === routeCount) {
       readiness.append(element("h3", "", "Earlier native checkpoints"));
     }
     if (index === currentCount) {

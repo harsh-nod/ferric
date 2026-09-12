@@ -249,3 +249,31 @@ manifest, plan and reducer plus all 60 raw files in the six manifest-named
 directories. It independently recomputes displayed means and paired reductions,
 checks successful reference/cleanup receipts and preserves overlapping host
 scope exclusions. The earlier `f662d54` rejection contributes no result or timing.
+
+## Attention Checkpoint
+
+The additive `attentionCheckpoint` and `attentionReadiness` records bind one
+`809af24` native host-attribution diagnostic and the separate eight-case
+`c26c1f4` finite TP1 fixture pass. The seven sibling groups are disjoint, but
+the parent and IPC spans overlap. None is an isolated GPU duration or a
+measured optimization gain. The fixtures compare exact complete BF16 bytes,
+immutable inputs, masks and tails against controlled finite expectations;
+they do not qualify arbitrary softmax inputs, model performance or new Verus
+proofs. Their old v5 image retains its original fe2o3 `3e74` provenance.
+
+Run `node validate-attention-checkpoint.mjs EVIDENCE_DIR` on the approved remote
+CPU stage to authenticate the reporter, raw timing/trace/receipt and native
+fixture probe/report/replay/receipt/prelaunch files. The validator recomputes
+each displayed host-span total from the pinned raw timing records and checks
+all eight complete native buffer/guard rosters. Evidence stays outside the
+site artifact. Mutation checks are part of the normal static validator.
+
+The new combined attention/argmax route's exact ed112 host gate passes 42
+required commands across 43 actual attempts, with 685 passed test invocations
+and 34 ignored. The nested-TMP failed attempt and earlier Clippy failure remain
+separately retained; the unchanged-source gate used a warm Cargo target.
+The validator authenticates `composition-HOST-GATE.md` and its archived failure
+identities. Native model/comparison evidence remains explicitly pending.
+Do not populate comparison metrics from partial runs. Existing
+`matched128`, `routeCheckpoint`, `routeReadiness`, `argmaxNative` and
+`performance.js` data are immutable historical observations in this update.
