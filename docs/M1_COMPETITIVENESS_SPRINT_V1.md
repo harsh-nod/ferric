@@ -1873,3 +1873,67 @@ images and the LLVM worker retain their actual older build provenance. The
 latest admitted HTTP figures remain 4.694997 tokens/s, 192.127 ms TPOT and
 2862.079 ms TTFT for ordered submission. No new performance gain follows from
 these implementation or CPU checkpoints; all 33 M1 gates remain open.
+
+## Residual Native Comparison
+
+The final source-bound wrapper/checker passes all 28 CPU methods. Complete
+archive `5b707ff7e3bbf12362836fc3109478085e5958d196a92127df17f977a4e7d33d`
+retains its actual controller pin and unchanged oracle. Four native correctness
+cases then pass: synchronous and ordered at 8 and 128 outputs, TP1/context256.
+Token IDs and UTF8, 9,219/83,139 packets, 15/135 batches, 135/255 committed
+inputs, retirement and normal close all match. All eight physical GPUs were idle
+before and after each case. Qualification archive
+`b53c4d08c3044aed9d72ed0340941b21d2b64dcc30bcb303e42929b77c707756`
+contains all 52 raw files; root matches all 48 nonempty file hashes and sizes to
+mi350. These correctness timings do not enter performance analysis.
+
+The separate predeclared old `7cb6522` / new `2396a82` / new / old full128 cohort
+also passes every raw check. Both use the same frozen images, worker, model and
+reference, with Wave attention, v11 argmax and ordered submission fixed.
+
+| Instrumented controller-wall mean, n=2 | Old | New | New relative to old |
+| --- | ---: | ---: | ---: |
+| TTFT, ms | 2859.059196 | 2748.736277 | 3.86% lower |
+| TPOT, ms | 194.521155 | 218.332664 | 12.24% higher |
+| Workload, seconds | 27.563246 | 30.476985 | 10.57% higher |
+| Mean per-run output tokens/s | 4.648212 | 4.200225 | 9.64% lower |
+
+Acquisition-order TPOT is 188.201, 220.489, 216.176 and 200.841 ms. Both new
+samples are slower than both old samples. This is a negative diagnostic result;
+reduced host request/response counts are not promoted as a performance gain.
+The comparison is exact-binary, not a bit-identical-build attestation. It is not
+HTTP, a GPU timestamp, a stable regression estimate or a competitive ranking.
+Changed old/new flush boundaries are not ratioed; common parent host scopes
+include overlapping IPC and waits. No earlier cohort or qualification is pooled.
+
+Root-authenticated native archive
+`b9c658552b29bfe11910449f61f22f1a886cc50ce072fb23df2129d208c34f01`
+is 458,922 bytes. Manifest
+`efeb4b3c6bcbcecef23f2a26ee7e9c35740ec2ab1fa177984707f9cd11ec883b`
+pins exactly 40 core files / 6,698,665 bytes. The independently tested reducer
+passes all 18 methods after a separately preserved missing-fixture-layout
+failure. Actual replay exits zero, its wrong-pin negative exits one, and the
+before/after source, prior CPU evidence, data and tool receipts are identical.
+Summary `cb0a76b9b50dae39d28e6f03c0f2d758692c6bdd0123d9fde749b4003978496d`
+and complete replay archive
+`3d3d123fcd3d0f99c8df82bdd2b74813f586faa13b3e631c3d15f667356b4e26`
+are retained. All native and replay owned groups completed without forced cleanup.
+
+The next source candidate is the additive layer-only C1 Wave selector and canary,
+raw `cbe224b649b49397c7b807de659e2f9598639bb1`. Only single-row layer projections
+select existing v5 Wave GEMV roots and original weights; rows 2..32 and the
+FP32-v8 MFMA head remain unchanged. Both canary arms use residual-tail ordered
+submission, so the comparison does not mix those policies. Source review is
+complete, remote formatting is underway, and the combined fresh-target host
+gate remains pending. Expected 845 passes / 45 ignores / 20 targets are not
+test results. Existing images need no new emission, but changed accumulation
+order requires fresh exact-reference native checks before any timing comparison.
+
+Pages-only `e638e80` is published after seven remote R2 checks and successful
+workflow `34717786557`. All seven HTTPS artifact bytes match the tested manifest;
+historical metrics remain unchanged. It publishes native correctness and stopped
+kernel dispositions, not this later ABBA result. The completed stage and clean
+worktree are removed (312,136 / 2,832 KiB). Guarded append's redundant worktree
+is also removed (42,292 KiB), preserving failed emission and source evidence.
+The admitted ordered HTTP result remains 4.694997 tokens/s / 192.127 ms TPOT /
+2862.079 ms TTFT. No new Verus proof, serving default or M1 gate closure follows.
