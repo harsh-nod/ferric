@@ -419,7 +419,7 @@ export async function validateSubmissionEvidence(root, value) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const context = { window: {} };
   vm.runInNewContext(await readFile(join(dirname(fileURLToPath(import.meta.url)), "data/project.js"), "utf8"), context);
-  const value = context.window.FERRIC_PROJECT.submissionCheckpoint;
+  const value = JSON.parse(JSON.stringify(context.window.FERRIC_PROJECT.submissionCheckpoint));
   validateSubmissionCheckpoint(value);
   testSubmissionCheckpointRejections(value);
   if (process.argv[2]) await validateSubmissionEvidence(process.argv[2], value);
