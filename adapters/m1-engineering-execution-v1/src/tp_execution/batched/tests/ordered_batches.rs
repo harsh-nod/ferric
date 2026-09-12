@@ -60,7 +60,11 @@ fn assert_ordered_groups_preserve_attention(wave: bool) {
                     "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
                 };
                 assert_eq!(
-                    transport.commands.iter().filter(|command| command.kernel == attention).count(),
+                    transport
+                        .commands
+                        .iter()
+                        .filter(|command| command.kernel == attention)
+                        .count(),
                     36
                 );
                 let groups = transport
