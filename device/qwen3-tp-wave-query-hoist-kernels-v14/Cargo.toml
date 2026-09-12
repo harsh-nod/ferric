@@ -1,0 +1,26 @@
+[package]
+name = "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "8efd4fd416d1ffae7a718144e4d299fe3c8f7590", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "8efd4fd416d1ffae7a718144e4d299fe3c8f7590", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_tp_wave_query_hoist_kernels_device_v14"
+path = "src/lib.rs"
