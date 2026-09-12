@@ -248,7 +248,7 @@ fn layer_c1_wave_rejection_is_atomic_for_every_existing_profile_boundary() {
             10 => driver.prune_output_head = false,
             11 => {
                 driver.projection.mode =
-                    super::super::super::EngineeringTpProjectionModeV3::Baseline
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline;
             }
             12 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave,
             13 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Auto,
@@ -261,7 +261,7 @@ fn layer_c1_wave_rejection_is_atomic_for_every_existing_profile_boundary() {
             20 => driver.inner.ranks.clear(),
             21 => {
                 driver.inner.reduction =
-                    super::super::super::reduction::ReductionWorkspace::Baseline
+                    super::super::super::reduction::ReductionWorkspace::Baseline;
             }
             22 => driver.inner.transports[0].ordered_supported = false,
             23 => driver
