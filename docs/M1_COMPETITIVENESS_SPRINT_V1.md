@@ -9,11 +9,11 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | Additive 32-row FP32 LM head/argmax and fast-path integration | Integrated; exact `3e3` emission, 15 native fixtures and both 16/32-budget model canaries pass; wave attention also passes four matched model canaries |
+| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes exact-216 emission/replay and 14 finite-active native fixtures. Adapter integration and matched timing remain open. |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
-| Integration/measurement | Shared streaming benchmark client, baseline identities, GPU scheduling, review and numerical gates | V3 measurement gates pass; independent target 128/128 reference passes twice; sequential baselines approved, first vLLM attempt stopped before model start on a Docker log-setting error and was cleaned up |
+| Integration/measurement | Shared streaming client, baseline identities, GPU scheduling and numerical gates | Matched Ferric/vLLM 128/128 cohorts pass; Ferric remains substantially slower. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses and its final diagnostic. No admitted SGLang metrics. |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
-| Speculation | Draft execution plus target verification and accepted-prefix KV integration into the fast path | Standalone draft and 36 native v10 fixtures pass; paged consumed-input driver integrated at `fa93f8f`, source `58ed5c5` passes 526 host test invocations and six doctests; paged model canary, autoregressive proposals and end-to-end speculation remain open |
+| Speculation | Private autoregressive proposals and paired target verification | All eight repeated paged-draft canaries pass. Two-round K4 source `ae355e5` passes 594 host test invocations/eight doctests and two fresh native runs with `[4,4]` acceptance, both catch-ups and exact output. Speculative serving remains separate. |
 | Dispatch batching | Distinct bounded ordered submission in core runtime | Currentness fix published at `216822284`; native counters/lifecycle and model/reference gates pass; fresh same-worker ABBA shows 22.19% mean rate gain over serial in this short canary, not a performance default |
 
 ## Frozen Comparison Contract
@@ -669,3 +669,84 @@ The final browser gate passes eight named viewports, every width from 320 to
 After archiving, the owned Pages worktree and remote stage (1,390,612 KiB) were
 removed. No implementation files were pushed. Public fe2o3 main was freshly
 rechecked at `216822284` during this update.
+
+The next Pages-only checkpoint is live at
+`8561285d68c066cfae53e5105b981644bdaba6d0`; workflow `34687558585`
+succeeded. All seven assets (401,240 bytes) match the validated files. It adds
+the matched Ferric/vLLM cell, exact head-operand policy disclosure, independent
+draft reference and first native draft case, plus private-proposal host status.
+It predates the completed eight-case matrix, wave ABBA and SGLang r7 below.
+Live receipt: `e5d84d7a3bcf8447668a93deaf43b1c8341a20872a55af978178f2876a4f08b5`.
+The completed Pages worktree and 1,245,156 KiB remote stage were removed after
+archival. No Ferric implementation was pushed.
+
+## September 12 Follow-On
+
+All eight paged-draft native cases pass: baseline and MFMA projection, full and
+tokenwise prefill, two repetitions each. Every case emits the fixed two-token
+` Paris.` continuation with exact IDs and bytes, expected dispatch counts,
+cursor retirement, normal worker close and all-eight-device idle checks.
+Tokenwise prefill diagnostics are not generated output. Controller `ac2682a`,
+image v10 and worker `c110ac55c` retain their frozen identities; these are not
+speculative serving or timing measurements. Eight-case archive SHA-256:
+`7ce5999a57f97285a6519a4376453992271567518ddafeac7fd648229ded6c3b`.
+
+The additive v11 argmax preserves finite FP32 maxima and lowest-ID ties without
+changing any head arithmetic or default route. Source `67b7290` passes eleven
+numeric/property and five ABI/source tests; exact-216 emission/replay and an
+independent ELF review pass. The new image is
+`122ee2a146b1f0735a315764c5eb1e2ff9aa83c26f5800b42ce6d69b0602236b`.
+All fourteen native fixtures pass, covering full-vocabulary finite inputs,
+every lane at three scan boundaries, 1/2/16/17/31/32 rows, signed zeros,
+subnormals, random finite bit patterns, inactive tails and all guards. No
+deliberately trapping GPU fixture was launched. Wrapper receipt:
+`4c4fda5650912f8b26198ee91f1d27c27ca50e18898ee8cc9a295d2d45c7e3ac`.
+Native archive: `9ee2d38456137241e2693e6fd9e991f4cf2bc34a6fca8a06f75617ca2fb9abd6`.
+This is not a model speedup; the adapter still uses the frozen v8 argmax.
+
+The separately gated paired K4 canary is frozen at
+`ae355e52e7674f027ca63f561dc6ec2b31ce5b3c`. Its exact-216 gate passes
+594 all-target test invocations, eight doctests, strict Clippy, formatting and
+locked metadata. The 25 existing image-gated skips include three repeated
+worker-module tests in the new binary. All 1,053 committed files match the
+before/after source manifests. Aggregate:
+`f67227b267089f52ec7618dc14bc2bcc2b0051f6f21645c13acbca2ac8a827e1`.
+The new closed CLI performs two genuine K4 rounds over independent target and
+draft workers/pools; it does not accept caller-supplied draft choices or
+acceptance counts. A separately decoded ten-prefix adapter retains the complete
+unchanged 128-token target oracle. Its external checker passes all 25 synthetic
+acceptance pairs and negative trace tests. Two fresh native runs now pass:
+each independently observes `[4,4]` acceptance, both genuine catch-up steps,
+the exact ten-token target prefix, 6,136 target and 8,610 draft packets, normal
+worker closes and all-eight-device idle checks. Catch-up was not forced by
+replacing choices. Native rejection/rollback branches still need additional
+workloads; these two runs are not speculative serving or speed qualification.
+First native wrapper: `70d6ff75e7f8e69d4dfe7b026ed6d854d02e0813744e114c22aaa83f06d17865`.
+
+SGLang r7 fixes the startup-only private AITER module lookup while preserving
+original packaged-module precedence, model arithmetic and serving flags. It
+starts and finishes the ten warmups and thirty measured requests. It remains
+rejected: every response has 128/128/256 usage, but an additive
+`reasoning_tokens: 0` field fails the frozen whole-object usage check; separately,
+ten measured texts and four warmup texts differ from the exact reference.
+The native before diagnostic matches, but the identical after request diverges
+at output index four. Fixing usage parsing cannot admit this numerical failure.
+Normal exit, container/cache removal and all-eight-device idle checks pass.
+Receipt: `69bba54516149f01ca0bf52e415f7577b5b9d5e8addcd7ea8afe510196118a6a`.
+CPU-only numerical audit, without latency calculations:
+`e228350363d13b0e3639c3c21f5fa93c1da1fc060d1ec426c0c3f8ae924df412`.
+No SGLang timing enters the comparison, and earlier failed revisions remain
+preserved. In particular r6 required forced teardown and is not a clean sample.
+
+Upstream fe2o3 advanced to `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`,
+tree `93a51b4af0287ccb51dec07fe431dae71fc55d0f`. The 29-file delta is
+compiler, macro, analysis and associated test/policy work; KFD runtime, device
+SDK and Cargo lockfiles are unchanged. Active repin `ddd3aaf` passes locked
+metadata, explicit source scope, three identity-only dependency inventories and
+the audited manifest/lock review-hash refresh. Its audit is
+`0b1e21160bef449b45c3cc79bc61a1764f3558bb9167db3d1ddcadb560313c97`.
+Combined source `9c2e98e` adds the paired canary; the latest full host gate and
+kernel emission are in progress. Frozen 216 and older artifacts are not relabeled
+as latest builds. Six completed source directories and four completed evidence
+directories were archived, hash-checked and removed from the owned mi300x stage,
+reclaiming 246,892 and 341,524 KiB respectively without deleting its active cache.

@@ -9,9 +9,11 @@ remain host contract tests unless separately authorized in an isolated setting.
 
 ## Emission Gate
 
-1. Record Ferric source identity and require fe2o3 revision
-   `21682228486f7186cc3c37ddf165fffc438d8b6a` in the compiler, Cargo metadata, and
-   generated artifact receipts. Use the existing managed gfx950/Wave64 build
+1. Record Ferric source identity and bind the compiler, Cargo metadata, and
+   generated artifact receipts to the exact selected dependency revision.
+   The first frozen emission used `21682228486f7186cc3c37ddf165fffc438d8b6a`;
+   it is not relabeled by the active `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`
+   update. Use the existing managed gfx950/Wave64 build
    and measured crate binding, not the host-test binding from `build.rs`.
 2. Emit only this crate's closed one-root roster. Admission must independently
    match `compiler_expectation_roster_v11()` and the emitted typed ABI/effects.

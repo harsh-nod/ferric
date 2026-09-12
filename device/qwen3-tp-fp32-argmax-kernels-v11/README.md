@@ -31,9 +31,10 @@ nonfinites in every lane, and immutable input/output-tail fixtures. Structural
 tests check the closed ABI, convergent source ordering, and output ownership.
 These are not native execution, device guard validation, or performance proof.
 
-The dependency is pinned to fe2o3
-`21682228486f7186cc3c37ddf165fffc438d8b6a`. Device emission and native qualification
-remain separate gates, described in [the probe recipe](tools/README.md).
+The active dependency is pinned to fe2o3
+`8efd4fd416d1ffae7a718144e4d299fe3c8f7590`. The first frozen emission and
+fourteen-case native pass retain their actual `216822284` compiler identity;
+the latest-source gate is separate, as described in [the probe recipe](tools/README.md).
 The additive `tools/probe.py` specifies 14 full-vocabulary, finite-active native
 cases and a CPU-only self-test. It reuses a hash-pinned fixture helper and
 requires explicit worker/image pins and an approved GPU run. No trapping device

@@ -5,17 +5,19 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Performance Swarm
 
-Active integration is `82703c6`, using public fe2o3
-`21682228486f7186cc3c37ddf165fffc438d8b6a`, freshly rechecked September 12.
+Combined integration `9c2e98e` includes the paired K4 canary and standalone
+parallel argmax, with active dependencies pinned to public fe2o3
+`8efd4fd416d1ffae7a718144e4d299fe3c8f7590`. Locked metadata and identity-only
+dependency inventories pass; the latest full host gate is in progress.
 Frozen GPU binaries retain their actual source identities. Ferric implementation
 remains local; separately reviewed Pages content is published independently.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Measurement | First matched Qwen3-8B 128/128 cell passes exact diagnostics and 30 measured requests per engine. Ferric TTFT/TPOT are 3705.967/506.969 ms, versus vLLM 19.243/4.414 ms. | SGLang startup retry, repeated primary workloads and direct bottleneck diagnosis. No competitive win. |
-| Kernels | Same-source wave-plus-ordered ABBA passes all four exact-reference canaries. Mean short-workload rate rises from 5.501543 to 6.176470 tokens/s (+12.27%). | Additive parallel FP32 argmax, preserving finite rejection and lowest-ID ties; native correctness before timing. |
-| Speculation | Private K4/K8/K16 autoregressive proposal transactions are integrated. Independent full/tokenwise paged-draft FP32 references pass twice each; first native baseline/full case passes. | Remaining seven native draft cases, native multi-round paired draft/target execution and serving integration. |
-| Integration and Pages | Exact `82703c6` passes 568 adapter test invocations, 22 existing image skips, seven doctests, 31 Python tests, formatting, strict Clippy and release on mi300x. All 1,040 source files remain unchanged. Completed draft worktree removed after archival. | Reviewed Pages publication, evidence archival and owned-stage cleanup. No new Verus proof. |
+| Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
+| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes exact-216 emission/replay and all 14 finite-active native fixtures with full byte/guard checks. | Latest compiler emission, opt-in adapter route and matched model timing; existing v8 remains the default. |
+| Speculation | All eight repeated paged-draft cases pass. Paired K4 source `ae355e5` passes two fresh native runs: each has real acceptance `[4,4]`, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
+| Integration and Pages | Paired source passes 594 host test invocations, 25 existing image skips, eight doctests, strict Clippy/fmt/release; all 1,053 files unchanged. Pages `8561285` is live and byte-verified. Completed source/evidence stages reclaimed after archival. | Integrate paired source with latest dependency pin, combined gate and updated publication. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
