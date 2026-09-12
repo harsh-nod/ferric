@@ -62,7 +62,9 @@ const requiredClaims = [
   "Ordered residual tail",
   "780 adapter test invocations, 41 ignored across 19 result rows",
   "74 HTTP fixtures, 38 source-gate and 31 protected-policy tests",
-  "The complete archive is accepted; private integration 212ec85 preserves the tested code",
+  "Private integration 212ec85 preserves the tested code",
+  "Four native TP1/context256 cases now pass: synchronous and ordered modes with 8 or 128 outputs",
+  "These are fixed-reference correctness checks, not HTTP or performance qualification; their timings are excluded",
   "Earlier team records",
   "Ordered submission: host and correctness gates passed",
   "51 host commands without retry",
@@ -946,7 +948,7 @@ try {
       .locator("tbody tr").count() === 20, `${name}: missing single-run per-request latencies`);
     assert(await page.locator("[data-live-http-teams] .team-item").count() === 4,
       `${name}: missing current live HTTP/kernel team checkpoints`);
-    for (const label of ["Stopped", "Compiler rejected", "CPU gate accepted"]) {
+    for (const label of ["Stopped", "Compiler rejected", "Native correctness accepted"]) {
       assert(await page.locator("[data-live-http-teams] .state-tag").filter({ hasText: new RegExp(`^${label}$`) }).count() === 1,
         `${name}: missing exact current checkpoint label: ${label}`);
     }

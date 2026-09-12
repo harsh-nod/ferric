@@ -78,9 +78,26 @@ export async function validateKernelCheckpointEvidence(root, project) {
     "All 89 own-source Cargo artifact records were `fresh=false`."])
     assert(note.includes(claim), `residual CPU evidence: ${claim}`);
   assert.equal(residual.archiveAdmitted, true);
-  assert.equal(residual.nativeAdmitted, false);
+  const native = (await pinned("residual-native-qualification.md", residual.nativeNoteSha256))
+    .toString("utf8").replace(/\s+/g, " ");
+  for (const claim of [residual.nativeArchiveSha256, "Exact source2396a82 and controller40fcfff3",
+    "All four predeclared cases completed with exit0 in order: synchronous8, ordered8, synchronous128, ordered128.",
+    "No case was retried.", "unchanged token-ID/UTF8 oracle, autoregressive inputs, packet/batch/cursor counts, retirement and normal worker close.",
+    "Eight-output cases completed9,219 packets,15 batches and135 committed inputs",
+    "128-output cases completed83,139 packets,135 batches and255 committed inputs",
+    "Every wrapper reports no errors, all-eight idle before and after, and unforced owned-group cleanup.",
+    `The${residual.nativeArchiveBytes.toLocaleString("en-US")}-byte archive`,
+    "Root directly authenticated all48 nonempty raw SHA/size entries against mi350.",
+    `TP1/context${residual.nativeContext}`, "not serving, default, Verus, M1 or performance qualification.",
+    "All four timings are excluded", "The latest context8192 HTTP measurements remain unchanged."])
+    assert(native.includes(claim), `residual native correctness evidence: ${claim}`);
+  assert.equal(residual.nativeAdmitted, true);
+  assert.equal(residual.nativeCasesPassed, 4);
+  assert.deepEqual(residual.nativeOutputLengths, [8, 128]);
+  assert.deepEqual(residual.nativeModes, ["synchronous", "ordered"]);
+  assert.equal(residual.nativeTimingsExcluded, true);
   assert.equal(residual.performanceGainClaimed, false);
-  console.log("PASS: current kernel/runtime checkpoints match pinned CPU/audit evidence; every measurement and historical object remains unchanged; no new native or performance admission.");
+  console.log("PASS: current kernel/runtime checkpoints match pinned CPU/audit and accepted native-correctness evidence; every measurement and historical object remains unchanged; no performance admission.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
