@@ -140,15 +140,16 @@ fn actual_full_acceptance_catchup_and_partial_next_round_use_fresh_ids_and_corre
     assert_eq!(draft.completed_batches(), 10);
     assert_eq!(draft.dispatch_counts(), [2 * 477 + 8 * 480]);
     owner.reserve_proposals().unwrap();
-    let work = owner.proposal_work().unwrap();
-    assert_eq!(
-        (
-            work.batch().rows()[0].position(),
-            work.batch().rows()[0].token()
-        ),
-        (23, 888)
-    );
-    drop(work);
+    {
+        let work = owner.proposal_work().unwrap();
+        assert_eq!(
+            (
+                work.batch().rows()[0].position(),
+                work.batch().rows()[0].token()
+            ),
+            (23, 888)
+        );
+    }
     owner.fail_submitted().unwrap();
     target.close().unwrap();
     draft.close().unwrap();

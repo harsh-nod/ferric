@@ -146,9 +146,10 @@ fn reservations_abort_before_submission_and_never_reuse_ids() {
     assert_eq!(owner.next_epoch().value, 1);
     owner.reserve_proposals().unwrap();
     assert!(owner.target.pending.as_ref().unwrap().id > target_id);
-    let work = owner.proposal_work().unwrap();
-    assert!(work.batch().id() > last_reserved);
-    drop(work);
+    {
+        let work = owner.proposal_work().unwrap();
+        assert!(work.batch().id() > last_reserved);
+    }
     assert!(owner.abort_unsubmitted().is_err());
     assert!(owner.proposal_work().is_err());
     owner.fail_submitted().unwrap();
@@ -225,7 +226,9 @@ fn duplicate_and_foreign_results_do_not_advance_the_next_private_row() {
     first.reserve_proposals().unwrap();
     second.reserve_proposals().unwrap();
     let foreign = step(&mut first, 100);
-    drop(second.proposal_work().unwrap());
+    {
+        let _work = second.proposal_work().unwrap();
+    }
     assert!(second.record_proposal(foreign).is_err());
     assert_eq!(second.phase(), EngineeringTpSpeculativePhaseV1::Terminal);
     first.fail_submitted().unwrap();
