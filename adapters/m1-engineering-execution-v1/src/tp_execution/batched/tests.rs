@@ -43,6 +43,7 @@ enum Failure {
     RuntimeCounter,
     OrderedSubmit,
     OrderedWait,
+    PreparePackets,
 }
 
 struct Recording {
@@ -59,6 +60,11 @@ struct Recording {
     reads: Vec<(u64, usize)>,
     writes: Vec<(u64, usize)>,
     failure: Option<Failure>,
+    choice_override: Option<Vec<u32>>,
+    rollover_supported: bool,
+    queue_packets: u64,
+    queue_epochs: u64,
+    packet_preparations: Vec<u64>,
 }
 
 fn scalar(command: &EngineeringTpDispatchV1, index: usize) -> u32 {
@@ -126,6 +132,24 @@ impl Recording {
 }
 
 impl EngineeringTpRankTransportV1 for Recording {
+    fn supports_queue_rollover(&self) -> bool {
+        self.rollover_supported
+    }
+
+    fn prepare_packets(&mut self, count: u64) -> TpResult<()> {
+        self.packet_preparations.push(count);
+        if self.failure == Some(Failure::PreparePackets) {
+            return Err("injected queue preparation failure".into());
+        }
+        let limit = fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1;
+        if self.rollover_supported && self.queue_packets + count > limit {
+            assert!(self.pending.is_none());
+            self.queue_epochs += 1;
+            self.queue_packets = 0;
+        }
+        Ok(())
+    }
+
     fn runtime_diagnostic_snapshot(&mut self) -> TpResult<serde_json::Value> {
         if self.failure == Some(Failure::RuntimeSnapshot) {
             return Err("injected runtime snapshot failure".into());
@@ -252,7 +276,14 @@ impl EngineeringTpRankTransportV1 for Recording {
                 assert!(elements * *element_bytes as usize <= self.buffers[id].len() - offset);
             }
         }
-        if self.failure == Some(Failure::Submit) && command.kernel == PARTIAL {
+        if self.failure == Some(Failure::Submit)
+            && matches!(
+                command.kernel,
+                PARTIAL
+                    | "ferric_qwen3_draft_batch32_gemm_partial_bf16_f32_v10"
+                    | "ferric_qwen3_draft_batch32_mfma_gemm_partial_f32_v10"
+            )
+        {
             return Err("injected partial submit failure".into());
         }
         self.events
@@ -448,14 +479,22 @@ impl EngineeringTpRankTransportV1 for Recording {
             }
             ARGMAX | FP32_ARGMAX => {
                 let bad = self.failure == Some(Failure::BadChoice);
+                let choices = self.choice_override.clone();
                 self.output(&command, 1, scalar(&command, 2), 1, |row| {
-                    (if bad { 151_936 } else { 42 + row })
-                        .to_le_bytes()
-                        .to_vec()
+                    (if bad {
+                        151_936
+                    } else {
+                        choices
+                            .as_ref()
+                            .map_or(42 + row, |values| values[row as usize])
+                    })
+                    .to_le_bytes()
+                    .to_vec()
                 });
             }
             other => panic!("unexpected batch kernel {other}"),
         }
+        self.queue_packets += 1;
         Ok(())
     }
 
@@ -528,6 +567,11 @@ fn fixture_for_model(
             reads: Vec::new(),
             writes: Vec::new(),
             failure: None,
+            choice_override: None,
+            rollover_supported: false,
+            queue_packets: 0,
+            queue_epochs: 0,
+            packet_preparations: Vec::new(),
         })
         .collect::<Vec<_>>();
     let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();

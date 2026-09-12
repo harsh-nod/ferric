@@ -1,5 +1,7 @@
 //! Actual forward/settlement orchestration with synthetic byte outputs, not GPU math.
 
+mod proposals;
+
 use super::*;
 use crate::tp_artifact::{DraftBindingV10, ENGINEERING_DRAFT_BATCH32_EXPORTS_V10};
 use crate::tp_paged::speculative::tests::index;

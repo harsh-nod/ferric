@@ -76,7 +76,7 @@ fn append(pool: &mut EngineeringTpPagedPoolV1, seq: EngineeringTpSequenceIdV1, t
     }
 }
 
-fn role_pool(
+pub(super) fn role_pool(
     model: u8,
     cursor: u32,
     pages: u32,
@@ -95,7 +95,7 @@ fn role_pool(
     (pool, seq)
 }
 
-fn owner(cursor: u32, k: u8) -> EngineeringTpSpeculativeKvV1 {
+pub(super) fn owner(cursor: u32, k: u8) -> EngineeringTpSpeculativeKvV1 {
     let (target, target_seq) = role_pool(1, cursor, 16);
     let (draft, draft_seq) = role_pool(2, cursor, 16);
     EngineeringTpSpeculativeKvV1::new(
@@ -117,7 +117,7 @@ fn choices(index: &SpeculativeKvRoundIndex, a: u8) -> Vec<u32> {
     result
 }
 
-fn target_result(
+pub(super) fn target_result(
     owner: &mut EngineeringTpSpeculativeKvV1,
     values: Vec<u32>,
 ) -> EngineeringTpSpeculativeTargetResultV1 {

@@ -16,6 +16,9 @@ use ferric_spec::{
     SpeculativeKvInputSource, SpeculativeKvRoundIndex, verify_greedy_round,
 };
 
+mod proposals;
+pub use proposals::{EngineeringTpDraftProposalResultV1, EngineeringTpDraftProposalWorkV1};
+
 /// Fail-closed engineering settlement rejection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum EngineeringTpSpeculativeErrorV1 {
@@ -50,6 +53,7 @@ impl From<EngineeringTpPagedErrorV1> for Error {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum EngineeringTpSpeculativePhaseV1 {
     Ready,
+    DraftProposing,
     Reserved,
     DraftCatchUpRequired,
     DraftCatchUpReserved,
@@ -215,11 +219,13 @@ struct Round {
     draft: EngineeringTpPreparedBatchV1,
     target_result: Option<EngineeringTpSpeculativeTargetResultV1>,
     draft_result: Option<EngineeringTpSpeculativeDraftResultV1>,
+    proposal_results: Option<proposals::CompletedDraftProposals>,
 }
 
 #[derive(Debug)]
 enum Phase {
     Ready,
+    Proposing(Box<proposals::ProposalRound>),
     Round(Box<Round>),
     CatchUpRequired {
         token: u32,
@@ -346,6 +352,7 @@ impl EngineeringTpSpeculativeKvV1 {
     pub const fn phase(&self) -> EngineeringTpSpeculativePhaseV1 {
         match self.phase {
             Phase::Ready => EngineeringTpSpeculativePhaseV1::Ready,
+            Phase::Proposing(_) => EngineeringTpSpeculativePhaseV1::DraftProposing,
             Phase::Round(_) => EngineeringTpSpeculativePhaseV1::Reserved,
             Phase::CatchUpRequired { .. } => EngineeringTpSpeculativePhaseV1::DraftCatchUpRequired,
             Phase::CatchUp { .. } => EngineeringTpSpeculativePhaseV1::DraftCatchUpReserved,
@@ -403,6 +410,7 @@ impl EngineeringTpSpeculativeKvV1 {
             draft,
             target_result: None,
             draft_result: None,
+            proposal_results: None,
         }));
         Ok(())
     }
@@ -422,12 +430,12 @@ impl EngineeringTpSpeculativeKvV1 {
         })
     }
 
-    /// Marks draft submission. Production completion requires a future draft driver.
+    /// Marks consumed-input submission for the role-checked draft driver.
     /// # Errors
     /// Rejects missing, repeated or terminal work.
     pub fn draft_work(&mut self) -> Result<EngineeringTpSpeculativeDraftWorkV1<'_>> {
         let (batch, catch_up) = match &self.phase {
-            Phase::Round(round) => (&round.draft, false),
+            Phase::Round(round) if round.proposal_results.is_none() => (&round.draft, false),
             Phase::CatchUp { batch, .. } => (batch, true),
             _ => return Err(Error::Phase),
         };
@@ -483,7 +491,11 @@ impl EngineeringTpSpeculativeKvV1 {
     pub fn record_draft(&mut self, result: EngineeringTpSpeculativeDraftResultV1) -> Result<()> {
         let checked = (|| {
             let (batch, catch_up) = match &self.phase {
-                Phase::Round(round) if round.draft_result.is_none() => (&round.draft, false),
+                Phase::Round(round)
+                    if round.draft_result.is_none() && round.proposal_results.is_none() =>
+                {
+                    (&round.draft, false)
+                }
                 Phase::CatchUp { batch, .. } => (batch, true),
                 _ => return Err(Error::Phase),
             };
@@ -536,10 +548,16 @@ impl EngineeringTpSpeculativeKvV1 {
         let Phase::Round(round) = &self.phase else {
             return Err(Error::Phase);
         };
-        let (Some(target_result), Some(_)) = (&round.target_result, &round.draft_result) else {
+        let Some(target_result) = &round.target_result else {
             return Err(Error::Phase);
         };
+        if round.draft_result.is_none() && round.proposal_results.is_none() {
+            return Err(Error::Phase);
+        }
         let checked = (|| {
+            if let Some(proposals) = &round.proposal_results {
+                proposals.validate(self, round)?;
+            }
             let k = usize::from(round.index.draft_token_count);
             let commit =
                 verify_greedy_round(&round.index.draft_tokens[..k], &target_result.choices)
@@ -631,6 +649,13 @@ impl EngineeringTpSpeculativeKvV1 {
             return Err(Error::Phase);
         }
         match &self.phase {
+            Phase::Proposing(round) => {
+                self.target.require_batch(&round.target)?;
+                self.draft.require_batch(&round.draft)?;
+                self.target.pending = None;
+                self.draft.pending = None;
+                self.phase = Phase::Ready;
+            }
             Phase::Round(round) => {
                 self.target.require_batch(&round.target)?;
                 self.draft.require_batch(&round.draft)?;

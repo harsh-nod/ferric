@@ -4,6 +4,8 @@ This is bounded engineering host support, not a speculative serving engine,
 protected publication, verified physical refinement, GPU qualification, or a
 performance result. The additive paged Draft06B driver join is described in
 `DRAFT_PAGED_DRIVER_V10.md`; native paired-round qualification remains separate.
+The additive private autoregressive proposal transaction is described in
+`DRAFT_PRIVATE_PROPOSALS_V1.md` and leaves supplied-candidate rounds unchanged.
 
 ## Boundary
 
@@ -111,7 +113,7 @@ transport tests exercise both real role-driver mints and completion-bound
 catch-up without GPU arithmetic.
 
 Remaining obligations include: composing authenticated target/draft lifetimes
-with the full serving loop and draft-proposal generation; refining engineering
+with the full serving loop and native draft-proposal generation; refining engineering
 page/refcount transitions to the protected isolated KV model; proving that
 completed GPU writes match exact row/address bounds; composing the settlement
 with `StepPublication` without independently mutable token publication; and

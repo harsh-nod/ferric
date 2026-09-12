@@ -172,6 +172,29 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpDraftBatchExecutionV10<R> {
         })
     }
 
+    /// Runs one private autoregressive row and seals its sole FP32-head choice.
+    /// No mutable ordinary output or caller-provided token becomes proposal evidence.
+    /// # Errors
+    /// Rejects stale/foreign work, malformed selection and incomplete device work.
+    /// The paired owner must call `fail_submitted` and close both drivers on error.
+    pub fn execute_speculative_proposal(
+        &mut self,
+        work: crate::tp_paged::speculative::EngineeringTpDraftProposalWorkV1<'_>,
+    ) -> TpResult<crate::tp_paged::speculative::EngineeringTpDraftProposalResultV1> {
+        if !work.validate()
+            || !self.inner.inner.draft_v10
+            || self.inner.inner.plan.model().role != Qwen3ModelRole::Draft06B
+        {
+            return Err("speculative proposal requires an exact private draft row".into());
+        }
+        let output = self.inner.execute_selected(work.batch(), &[0])?;
+        work.seal(output.completion, output.choices, &[0])
+            .map_err(|error| {
+                self.inner.poisoned = true;
+                format!("speculative draft choice binding: {error:?}")
+            })
+    }
+
     /// Exact admitted image identity retained for this driver's whole lifetime.
     #[must_use]
     pub const fn image_id(&self) -> [u8; 32] {

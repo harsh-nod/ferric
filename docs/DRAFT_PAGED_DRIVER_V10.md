@@ -41,6 +41,10 @@ not accept a vector of tokens or a caller-provided completion. Consumed-input
 work selects no head output, so no draft argmax provenance is asserted. Proposal
 IDs remain untrusted until target greedy verification accepts them.
 
+The additive private K-row proposal path is described in
+`DRAFT_PRIVATE_PROPOSALS_V1.md`. It uses a separate one-row ticket and result,
+not a conversion from this consumed-input result or ordinary mutable choices.
+
 After full acceptance, the distinct one-row catch-up ticket contains the last
 accepted proposal at the missing draft cursor, never the target bonus. The next
 round stays blocked until that GPU work completes and its opaque result is
