@@ -632,29 +632,57 @@ mod profile_tests {
     fn submission_profiles_have_closed_schemas_and_truthful_ordered_modes() {
         for (record, expected) in [
             (RecordKind::Setup, "FerricWaveArgmaxSubmissionCanarySetupV1"),
-            (RecordKind::Prefill, "FerricWaveArgmaxSubmissionCanaryPrefillV1"),
-            (RecordKind::Observation, "FerricWaveArgmaxSubmissionCanaryObservationV1"),
-            (RecordKind::Closed, "FerricWaveArgmaxSubmissionCanaryClosedV1"),
+            (
+                RecordKind::Prefill,
+                "FerricWaveArgmaxSubmissionCanaryPrefillV1",
+            ),
+            (
+                RecordKind::Observation,
+                "FerricWaveArgmaxSubmissionCanaryObservationV1",
+            ),
+            (
+                RecordKind::Closed,
+                "FerricWaveArgmaxSubmissionCanaryClosedV1",
+            ),
         ] {
-            for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+            for profile in [
+                CanaryProfile::SubmissionSynchronous,
+                CanaryProfile::SubmissionOrdered,
+            ] {
                 assert_eq!(profile.schema(record), expected);
                 assert_eq!(profile.attention(), "wave");
                 assert!(profile.wave_attention());
-                assert_eq!(profile.ordered_batches(), profile == CanaryProfile::SubmissionOrdered);
-                assert_eq!(profile.error_prefix(), "Wave argmax submission canary rejected");
+                assert_eq!(
+                    profile.ordered_batches(),
+                    profile == CanaryProfile::SubmissionOrdered
+                );
+                assert_eq!(
+                    profile.error_prefix(),
+                    "Wave argmax submission canary rejected"
+                );
             }
             assert_ne!(CanaryProfile::LegacyArgmax.schema(record), expected);
             assert_ne!(CanaryProfile::AttentionWave.schema(record), expected);
         }
-        for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline, CanaryProfile::AttentionWave] {
+        for profile in [
+            CanaryProfile::LegacyArgmax,
+            CanaryProfile::AttentionBaseline,
+            CanaryProfile::AttentionWave,
+        ] {
             assert!(!profile.ordered_batches());
-            assert_eq!(profile.wave_attention(), profile == CanaryProfile::AttentionWave);
+            assert_eq!(
+                profile.wave_attention(),
+                profile == CanaryProfile::AttentionWave
+            );
         }
     }
 
     #[test]
     fn submission_profiles_reject_mismatched_runtime_without_normalizing_options() {
-        for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+        for profile in [
+            CanaryProfile::SubmissionSynchronous,
+            CanaryProfile::SubmissionOrdered,
+        ] {
             for outputs in [8, 128] {
                 let mut options = submission_options(profile);
                 options.outputs = outputs;
@@ -665,16 +693,23 @@ mod profile_tests {
                 mismatch(&mut options, mutation);
                 let before = (runtime_bits(&options), options.mode, options.outputs);
                 assert!(profile.validate_options(&options).is_err());
-                assert_eq!((runtime_bits(&options), options.mode, options.outputs), before);
+                assert_eq!(
+                    (runtime_bits(&options), options.mode, options.outputs),
+                    before
+                );
             }
         }
     }
 
     #[test]
     fn submission_profile_mismatches_create_no_sidecar_before_execution() {
-        let root = std::env::temp_dir().join(format!("ferric-submission-profile-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("ferric-submission-profile-{}", std::process::id()));
         std::fs::create_dir(&root).unwrap();
-        for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+        for profile in [
+            CanaryProfile::SubmissionSynchronous,
+            CanaryProfile::SubmissionOrdered,
+        ] {
             for mutation in 0..10 {
                 let mut options = submission_options(profile);
                 options.reference = root.join("missing-reference");
@@ -682,7 +717,10 @@ mod profile_tests {
                 let sidecar = root.join(format!("{}-{mutation}.json", profile.ordered_batches()));
                 options.host_timing_output = sidecar.clone();
                 mismatch(&mut options, mutation);
-                assert_eq!(execute(Ok(options), profile), std::process::ExitCode::FAILURE);
+                assert_eq!(
+                    execute(Ok(options), profile),
+                    std::process::ExitCode::FAILURE
+                );
                 assert!(!sidecar.exists());
             }
         }

@@ -310,8 +310,12 @@ fn wave_argmax_submission_canary_is_separate_and_validates_before_effects() {
     assert!(contract.contains("attention != CanaryProfile::AttentionWave"));
     let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
     let execution = &shared[shared.find("pub fn execute(").unwrap()..];
-    assert!(execution.find("profile.validate_options(&options)").unwrap()
-        < execution.find("TimingFile::create(").unwrap());
+    assert!(
+        execution
+            .find("profile.validate_options(&options)")
+            .unwrap()
+            < execution.find("TimingFile::create(").unwrap()
+    );
     assert!(shared.contains("configure_ordered_wave_attention_fp32_argmax_v11"));
     for frozen in [
         include_str!("../src/bin/argmax_canary_contract.rs"),
