@@ -21,6 +21,7 @@ const dynamicRoots = [
   "[data-readiness]",
   "[data-performance]",
   "[data-attention-progress]",
+  "[data-submission-progress]",
   "[data-envelope]",
   "[data-capabilities]",
   "[data-validation]",
@@ -33,6 +34,15 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Ordered submission: host and correctness gates passed",
+  "51 host commands without retry",
+  "745 passed adapter test invocations, 38 ignored",
+  "26 and 18 synthetic CPU methods",
+  "Ordered submission: full128 ABBA diagnostic",
+  "15.45% lower TPOT and 17.56% higher mean per-run output rate",
+  "Paired rate gains are 21.03% and 14.03%",
+  "Synchronous/ordered/ordered/synchronous; n=2 per mode",
+  "Operation-group timings are not comparable across submission modes",
   "Attention attribution and validation",
   "Seven attention operation groups",
   "41.068",
@@ -882,6 +892,8 @@ try {
     await replicaDisclosure.click();
 
     for (const [caption, rows] of [["Single-run attention operation groups: host intervals, not GPU durations", 7],
+      ["Ordered-submission correctness: fixed native packet and ownership bounds", 4],
+      ["Submission full128 ABBA: native host means and run ranges", 2],
       ["Combined attention full128 ABBA: native host means and run ranges", 2],
       ["Matched MFMA pair: process windows", 2],
       ["Concurrent peer matrix: six process-window observations", 6],
@@ -907,6 +919,8 @@ try {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
+          ["Ordered submission: host and correctness gates passed", "submission-correctness"],
+          ["Ordered submission: full128 ABBA diagnostic", "submission-abba"],
           ["Combined attention / argmax: full128 ABBA", "attention-abba-table"]]) {
           await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
             const headerHeight = document.querySelector("header").getBoundingClientRect().height;

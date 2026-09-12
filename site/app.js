@@ -144,6 +144,46 @@
   attentionDetails.append(attentionPins);
   attentionProgress.append(attentionDetails);
 
+  const submission = project.submissionCheckpoint;
+  const submissionProgress = document.querySelector("[data-submission-progress]");
+  submissionProgress.append(element("h3", "", "Ordered submission: host and correctness gates passed"),
+    element("p", "", "The integrated opt-in submission path passes 51 host commands without retry, with 745 passed adapter test invocations, 38 ignored and eight doctests. Strict Clippy, 27 adapter policies, 38 source-gate tests, 31 protected policies and five unchanged inventories pass. All 104 custody ledgers match; the build reused a warm target. Separate checker/wrapper and reducer gates pass 26 and 18 synthetic CPU methods."),
+    element("p", "performance-scope", "Both synchronous and ordered submission pass exact IDs and UTF-8 at 8 and 128 outputs. Fixed native TP1: 128 input tokens, context 256, wave attention and wave-v11 argmax, with prefix caching and speculation off."));
+  performanceTable("Ordered-submission correctness: fixed native packet and ownership bounds",
+    ["Submission", "Outputs", "Packets", "Batches", "Committed inputs"],
+    submission.qualification.cases.map(([, mode, outputs, packets, batches, cursor]) =>
+      [mode, String(outputs), packets.toLocaleString("en-US"), String(batches), String(cursor)]), submissionProgress);
+  submissionProgress.append(element("p", "", "All four runs retire their pools, close workers normally and leave all eight GPUs idle. These are correctness cases, not comparison samples; their timings are excluded."),
+    element("h3", "", "Ordered submission: full128 ABBA diagnostic"),
+    element("p", "performance-scope", "Instrumented native TP1, context 256, 128 input / 128 output tokens, fixed wave attention and wave-v11 argmax. Synchronous/ordered/ordered/synchronous; n=2 per mode. These controller-wall diagnostics are not HTTP serving or GPU durations."));
+  performanceTable("Submission full128 ABBA: native host means and run ranges",
+    ["Submission", "Mean TTFT (s)", "Mean TPOT (ms)", "Mean per-run output (tok/s)", "TPOT min / max (ms)", "Output min / max (tok/s)"],
+    ["synchronous", "ordered"].map((mode) => {
+      const row = submission.abba[mode];
+      return [mode, row.ttftSeconds.toFixed(6), (row.tpotSeconds * 1000).toFixed(3),
+        row.outputTokensPerSecond.toFixed(6), row.tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" / "),
+        row.outputRateRange.map((x) => x.toFixed(6)).join(" / ")];
+    }), submissionProgress);
+  submissionProgress.append(element("p", "", "All four separate ABBA runs pass the exact 128-output reference and normal teardown. Ratios of arithmetic means describe 8.91% lower TTFT, 15.45% lower TPOT and 17.56% higher mean per-run output rate. Ordered TPOT ranges from 187.289 to 202.566 ms and output rate from 4.472915 to 4.813659 tokens/s. Paired rate gains are 21.03% and 14.03%; paired TPOT reductions are 18.20% and 12.75%. These small-sample observations are not stable estimates or confidence intervals."),
+    element("p", "", "Output rate is the arithmetic mean of per-run rates, not 128 divided by mean duration. Ratios of arithmetic means and mean paired ratios are distinct. The four correctness timings and all older cohorts are excluded; no gains are added together. Setup, final detokenization, retirement and worker close are outside the timing boundary."),
+    element("p", "", "Operation-group timings are not comparable across submission modes: synchronous spans include submission and waiting, while ordered spans measure command preparation only. Parent and IPC spans overlap. No GPU-duration, HTTP-serving, stable-gain, competitive, default, new Verus or M1 claim follows; all historical measurements remain separate."));
+  const submissionDetails = element("details", "performance-identities");
+  submissionDetails.append(element("summary", "", "Submission checkpoint identities"));
+  const submissionPins = element("dl", "observation-facts");
+  for (const [label, value] of [["Exact source", submission.source],
+    ["Controller SHA-256", submission.controllerSha256], ["Experiment plan SHA-256", submission.planSha256],
+    ["Host gate receipt SHA-256", submission.host.noteSha256],
+    ["Correctness note SHA-256", submission.qualification.noteSha256],
+    ["Forty-file correctness roster SHA-256", submission.qualification.rosterSha256],
+    ["Forty-file correctness sizes SHA-256", submission.qualification.sizesSha256],
+    ["Separate ABBA summary SHA-256", submission.abba.summarySha256],
+    ["Separate ABBA manifest SHA-256", submission.abba.manifestSha256],
+    ["Independent replay receipt SHA-256", submission.abba.replaySha256]]) {
+    submissionPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  submissionDetails.append(submissionPins);
+  submissionProgress.append(submissionDetails);
+
   const matched = project.matched128;
   measured.append(element("h3", "", "First matched Ferric / vLLM cell"),
     element("p", "performance-scope", matched.scope), element("p", "", matched.interpretation));
