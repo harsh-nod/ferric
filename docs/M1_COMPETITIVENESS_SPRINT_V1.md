@@ -722,6 +722,10 @@ worker closes and all-eight-device idle checks. Catch-up was not forced by
 replacing choices. Native rejection/rollback branches still need additional
 workloads; these two runs are not speculative serving or speed qualification.
 First native wrapper: `70d6ff75e7f8e69d4dfe7b026ed6d854d02e0813744e114c22aaa83f06d17865`.
+Second native wrapper: `bb662c2dfe6be7a0661e66bf9d2f65f201136165362d001105f7d83ed0373926`.
+Both-run archive, including the frozen binary, wrapper/checker, prefix producer
+and sixteen passing CPU Python tests:
+`8d9997bb81a9827fbe408b256125d9f1fd72c6c676e68f865a59f9976102c927`.
 
 SGLang r7 fixes the startup-only private AITER module lookup while preserving
 original packaged-module precedence, model arithmetic and serving flags. It
