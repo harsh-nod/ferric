@@ -1053,6 +1053,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         for layer in 0..model.layers {
             let attention_timing = self.inner.timing.scope("attention");
             let li = layer as usize;
+            let input_norm_timing = self.inner.timing.span("attention_input_norm", None);
             self.inner.dispatch_each(|r| {
                 norm(
                     r,
@@ -1063,6 +1064,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     model.hidden_size,
                 )
             })?;
+            drop(input_norm_timing);
+            let qkv_timing = self.inner.timing.span("attention_qkv_projection", None);
             for (kind, tag) in [
                 (Qwen3TensorKind::QueryProjection, 1),
                 (Qwen3TensorKind::KeyProjection, 2),
@@ -1101,6 +1104,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     rows,
                 )?;
             }
+            drop(qkv_timing);
+            let qk_norm_timing = self.inner.timing.span("attention_qk_norm", None);
             self.inner.dispatch_each(|r| {
                 norm(
                     r,
@@ -1121,10 +1126,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     128,
                 )
             })?;
+            drop(qk_norm_timing);
             let positions = &self.positions;
             let tables = &self.page_tables;
             let stride = self.table_stride;
             let pages = self.physical_pages;
+            let rope_timing = self.inner.timing.span("attention_rope", None);
             self.inner.dispatch_each(|r| {
                 dispatch(
                     ROPE,
@@ -1142,6 +1149,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(rope_timing);
+            let append_timing = self.inner.timing.span("attention_kv_append", None);
             self.inner.dispatch_each(|r| {
                 dispatch(
                     APPEND,
@@ -1160,6 +1169,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(append_timing);
+            let gqa_timing = self.inner.timing.span("attention_gqa_math", None);
             self.inner.dispatch_each(|r| {
                 dispatch(
                     attention,
@@ -1179,6 +1190,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(gqa_timing);
+            let output_timing = self.inner.timing.span("attention_output_projection", None);
             self.inner.dispatch_each(|r| {
                 projection.command(
                     r.geometry.rank as usize,
@@ -1195,6 +1208,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
+            drop(output_timing);
             drop(attention_timing);
             capture_projection(
                 &mut self.numerical,

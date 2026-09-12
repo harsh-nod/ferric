@@ -261,6 +261,8 @@ fn v11_nested_host_scopes_preserve_commands_and_skip_pruned_prefill() {
             if enabled {
                 let snapshot = timing.snapshot();
                 assert_eq!(snapshot["incomplete"], false);
+                assert_eq!(snapshot["active_records"], 0);
+                assert_attention_operation_spans(&snapshot, batch.id(), 36);
                 for label in [
                     "output_head",
                     "output_head_normalization",

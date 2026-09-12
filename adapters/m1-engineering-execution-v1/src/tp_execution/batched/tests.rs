@@ -1984,6 +1984,8 @@ fn host_timing_preserves_driver_choices_counts_and_transport_order() {
         if enabled {
             let snapshot = timing.snapshot();
             assert_eq!(snapshot["incomplete"], false);
+            assert_eq!(snapshot["active_records"], 0);
+            assert_attention_operation_spans(&snapshot, batch.id(), 36);
             let records = snapshot["records"].as_array().unwrap();
             for (label, count) in [
                 ("batch", 1),
@@ -1999,12 +2001,72 @@ fn host_timing_preserves_driver_choices_counts_and_transport_order() {
                     .unwrap();
                 assert_eq!(record["batch"], batch.id());
                 assert_eq!(record["count"], count);
+                assert_eq!(record["phase"], label);
             }
         } else {
             assert!(timing.snapshot().is_null());
         }
     }
     assert_eq!(observations[0], observations[1]);
+}
+
+fn assert_attention_operation_spans(snapshot: &serde_json::Value, batch: u64, count: u64) {
+    let records = snapshot["records"].as_array().unwrap();
+    for label in [
+        "attention_input_norm",
+        "attention_qkv_projection",
+        "attention_qk_norm",
+        "attention_rope",
+        "attention_kv_append",
+        "attention_gqa_math",
+        "attention_output_projection",
+    ] {
+        let matching = records
+            .iter()
+            .filter(|record| record["label"] == label)
+            .collect::<Vec<_>>();
+        assert_eq!(matching.len(), 1, "{label}");
+        let record = matching[0];
+        assert_eq!(record["batch"], batch);
+        assert_eq!(record["phase"], "attention");
+        assert_eq!(record["category"], "span");
+        assert!(record["rank"].is_null());
+        assert_eq!(record["count"], count);
+    }
+    let dispatch = records
+        .iter()
+        .find(|record| record["phase"] == "attention" && record["label"] == "dispatch_each")
+        .unwrap();
+    assert_eq!(dispatch["count"], count * 10);
+}
+
+#[test]
+fn attention_operation_spans_restore_phase_after_submit_and_wait_failures() {
+    for failure in [Failure::Submit, Failure::Wait] {
+        let mut pool = pool();
+        let mut driver = fixture(1, &pool);
+        let timing = crate::host_timing::HostTiming::enabled();
+        driver.configure_host_timing(timing.clone()).unwrap();
+        driver.inner.transports[0].failure = Some(failure);
+        let batch = prepare(&mut pool, 1);
+        pool.begin_submission(&batch).unwrap();
+        assert!(driver.execute(&batch).is_err());
+        pool.quarantine_batch(&batch).unwrap();
+        driver.close().unwrap();
+        drop(timing.span("after_failed_attention_batch", None));
+        let snapshot = timing.snapshot();
+        assert_eq!(snapshot["incomplete"], false);
+        assert_eq!(snapshot["active_records"], 0);
+        assert_attention_operation_spans(&snapshot, batch.id(), 1);
+        let restored = snapshot["records"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|record| record["label"] == "after_failed_attention_batch")
+            .unwrap();
+        assert_eq!(restored["phase"], "controller");
+        assert!(restored["batch"].is_null());
+    }
 }
 
 #[test]
