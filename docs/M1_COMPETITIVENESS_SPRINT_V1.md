@@ -749,8 +749,9 @@ SDK and Cargo lockfiles are unchanged. Active repin `ddd3aaf` passes locked
 metadata, explicit source scope, three identity-only dependency inventories and
 the audited manifest/lock review-hash refresh. Its audit is
 `0b1e21160bef449b45c3cc79bc61a1764f3558bb9167db3d1ddcadb560313c97`.
-Combined source `9c2e98e` adds the paired canary; the latest full adapter host gate
-is in progress. Its separate v11 kernel gate passes eleven numeric/property and
+Combined source `9c2e98e` adds the paired canary; its latest full adapter test and
+release gate passes, as do the source/verifier, inventory, negative and release
+policy checks. Its separate v11 kernel gate passes eleven numeric/property and
 five contract tests, strict Clippy, formatting, locked metadata, nine Python tests
 and the fourteen-case scalar self-test. All 1,055 source files remain unchanged.
 The exact latest-8efd one-root emission/replay and independent ELF review pass:
@@ -772,3 +773,53 @@ artifacts retain their own identities.
 Six completed source directories and four completed evidence
 directories were archived, hash-checked and removed from the owned mi300x stage,
 reclaiming 246,892 and 341,524 KiB respectively without deleting its active cache.
+
+The latest `9c2e98e` paired controller is separately frozen as
+`d0bef75dec8e9287aaa21acba14e526f6770634e8d2e0e3ff244df58798759e6`.
+Two additional fresh native runs both pass with actual `[4,4]` acceptance, two
+catch-ups, exact ten-token IDs/UTF8, 6,136 target and 8,610 draft packets, normal
+worker closes and all-eight-device idle checks. Frozen images and the c110
+worker retain their actual identities. Latest-run wrappers are
+`a8a379b2ae25a4efe4d10fbaf7f14286113042dd2e6b1a884b6b8303aaf96ea8`
+and `28c731e8ab742b577680ace747d5a0374c2c1f2d512fb6e9813ae2d94832144a`.
+Both-run archive, including the exact binary, checker, wrapper and references:
+`e924a2c7aee87e063acd601d3a0cd40c068d82369a7ab7e053f4a13eada01f4a`.
+These are separate latest-build observations, not relabeled 216 runs, broader
+native rejection coverage, speculative HTTP serving or timing qualification.
+
+The latest policy build first stopped at its reserved pre-cap threshold while
+compiling verifier tests; no result is claimed for that attempt. After archiving
+the exact source, logs and three release binaries, package-only cleanup removed
+2,650,132 KiB of completed adapter outputs without deleting dependencies or
+source/verifier state. The retry passes within the unchanged 9 GiB stage cap.
+The unchanged negative-policy script used separately bounded temporary scratch.
+
+Pages-only commit `75d8c0351d0223e60fc02360d9a1ddc56bd1db70` was reviewed,
+rebased onto freshly fetched public main and published without implementation
+files. Deployment `34691255551` succeeds; all seven live files match the
+410,270-byte reviewed artifact. The frozen performance ledger is unchanged.
+Its new native checkpoint preserves actual 216 provenance and distinguishes
+active development at 8efd. Both evidence replays, 142 new mutation cases, all
+existing site checks, eight named viewports and widths 320 through 1440 pass.
+Live receipt: `bfe0b9ded38ac399b22fc7d185428256359c932e688ae6fad878f5ae619ca221`.
+The completed Pages stage and clean worktree were removed after archival,
+reclaiming 1,288,084,362 remote bytes.
+
+## Bounded Decoder Attribution
+
+The four frozen f65 host-timing files show that the wave candidate's disjoint
+decoder-plus-local-reduction scopes account for 92.44-92.46% of batch wall time;
+the entire output head accounts for 7.32-7.36%. Removing that entire head at zero
+cost, with all other latencies unchanged, would allow at most about 1.079x on
+this five-batch workload. This is an arithmetic bound, not an argmax prediction.
+The final single-row decode's whole-head share is 12.11-12.32%, also not all argmax.
+
+Ordered decoder groups drain inside the scopes named `collective_attention`
+and `collective_feed_forward`; these are not network-communication costs.
+Nested IPC/flush/response-wait spans overlap and must not be added to outer
+stage totals. Setup is excluded. The pinned jq replay and note identify the
+four input hashes; note SHA-256:
+`a842f4bed38a476af6bb9b4a5e411c08747c24fc55b4064e8d5896d694c2fe5b`.
+This tiny instrumented workload is not matched HTTP TTFT/TPOT or a GPU profile.
+The opt-in argmax path needs model measurements, while larger improvements
+need finer attribution of decoder projections and dispatch overhead.
