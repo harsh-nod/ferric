@@ -51,11 +51,18 @@ const requiredClaims = [
   "The v5 and FP32-v8 images remain frozen artifacts with their original provenance",
   "Current parallel checkpoint",
   "Visible-token attention",
-  "Source-fresh host validation is pending after shared-target reuse",
-  "six new attention tests compiled and passed",
+  "Stopped for the current C1 workload",
+  "single-row decode has zero masked tail iterations",
+  "Emission then failed the unique-header-exit check",
   "Clippy commands exited 101 and matched known debt, not a strict Clippy pass",
   "278 SGPR spills versus zero",
   "18 tests where 19 were expected after stale binary reuse",
+  "Guarded source 8b57646 failed FE2O3-PROGRESS-002",
+  "Failure custody is accepted, not compiler or image admission",
+  "Ordered residual tail",
+  "780 adapter test invocations, 41 ignored across 19 result rows",
+  "74 HTTP fixtures, 38 source-gate and 31 protected-policy tests",
+  "The complete archive is accepted; private integration 212ec85 preserves the tested code",
   "Earlier team records",
   "Ordered submission: host and correctness gates passed",
   "51 host commands without retry",
@@ -937,8 +944,12 @@ try {
     }
     assert(await page.getByRole("region", { name: "Single-run ablation latencies by request identity", exact: true })
       .locator("tbody tr").count() === 20, `${name}: missing single-run per-request latencies`);
-    assert(await page.locator("[data-live-http-teams] .team-item").count() === 3,
+    assert(await page.locator("[data-live-http-teams] .team-item").count() === 4,
       `${name}: missing current live HTTP/kernel team checkpoints`);
+    for (const label of ["Stopped", "Compiler rejected", "CPU gate accepted"]) {
+      assert(await page.locator("[data-live-http-teams] .state-tag").filter({ hasText: new RegExp(`^${label}$`) }).count() === 1,
+        `${name}: missing exact current checkpoint label: ${label}`);
+    }
     const liveHttpDisclosure = page.getByText("Live HTTP percentiles and evidence", { exact: true });
     await liveHttpDisclosure.click();
     assert(await page.getByRole("region", { name: "Live wave/v11 HTTP: descriptive single-cohort percentiles", exact: true })
@@ -954,6 +965,9 @@ try {
         for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
           ["Wave attention / v11: context8192 HTTP", "live-http"],
           ["Current parallel checkpoint", "live-teams"],
+          ["Visible-token attention", "checkpoint-visible"],
+          ["Cooperative KV append", "checkpoint-append"],
+          ["Ordered residual tail", "checkpoint-residual"],
           ["Ordered submission: host and correctness gates passed", "submission-correctness"],
           ["Ordered submission: full128 ABBA diagnostic", "submission-abba"],
           ["Combined attention / argmax: full128 ABBA", "attention-abba-table"]]) {

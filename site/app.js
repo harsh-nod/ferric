@@ -223,7 +223,8 @@
     const heading = element("div", "team-heading");
     const identity = element("div", "team-identity");
     identity.append(element("div", "team-scope-label", "Private source checkpoint"), element("h3", "", team.name));
-    heading.append(identity, stateTag(team.name === "Live HTTP" ? "observed" : "implemented"));
+    heading.append(identity, team.name === "Live HTTP" ? stateTag("observed")
+      : element("span", "state-tag state-open", team.label));
     const facts = element("dl", "team-facts");
     for (const [label, value] of [["Source", team.source], ["Validation", team.detail]]) {
       facts.append(element("dt", "", label), element("dd", "", value));
