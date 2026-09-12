@@ -14,7 +14,9 @@ fn normalize(value: &str) -> String {
 fn same_expression(actual: &syn::Expr, expected: &syn::Expr) -> bool {
     match (actual, expected) {
         (syn::Expr::Path(a), syn::Expr::Path(b)) => {
-            a.qself.is_none() && b.qself.is_none() && a.path.get_ident() == b.path.get_ident()
+            a.qself.is_none()
+                && b.qself.is_none()
+                && a.path.get_ident() == b.path.get_ident()
                 && a.path.get_ident().is_some()
         }
         (syn::Expr::Lit(a), syn::Expr::Lit(b)) => match (&a.lit, &b.lit) {
@@ -27,8 +29,7 @@ fn same_expression(actual: &syn::Expr, expected: &syn::Expr) -> bool {
             _ => false,
         },
         (syn::Expr::Reference(a), syn::Expr::Reference(b)) => {
-            a.mutability.is_none() && b.mutability.is_none()
-                && same_expression(&a.expr, &b.expr)
+            a.mutability.is_none() && b.mutability.is_none() && same_expression(&a.expr, &b.expr)
         }
         (syn::Expr::Binary(a), syn::Expr::Binary(b)) => {
             core::mem::discriminant(&a.op) == core::mem::discriminant(&b.op)
@@ -62,14 +63,18 @@ fn expression_is(actual: &syn::Expr, expected: &str) -> bool {
 }
 
 fn lane_zero_block(function: &syn::ItemFn) -> Result<&syn::Block, &'static str> {
-    let mut matches = function.block.stmts.iter().filter_map(|statement| match statement {
-        syn::Stmt::Expr(syn::Expr::If(branch), _)
-            if expression_is(&branch.cond, "lane == 0") && branch.else_branch.is_none() =>
-        {
-            Some(&branch.then_branch)
-        }
-        _ => None,
-    });
+    let mut matches = function
+        .block
+        .stmts
+        .iter()
+        .filter_map(|statement| match statement {
+            syn::Stmt::Expr(syn::Expr::If(branch), _)
+                if expression_is(&branch.cond, "lane == 0") && branch.else_branch.is_none() =>
+            {
+                Some(&branch.then_branch)
+            }
+            _ => None,
+        });
     let block = matches.next().ok_or("missing lane-zero block")?;
     if matches.next().is_some() {
         return Err("duplicate lane-zero block");
@@ -90,15 +95,22 @@ fn validate_write_bindings(source: &str) -> Result<(), &'static str> {
         }
         if index == 0 {
             let mut bindings = function.block.stmts.iter().filter_map(|statement| {
-                let syn::Stmt::Local(local) = statement else { return None; };
-                let syn::Pat::Ident(pattern) = &local.pat else { return None; };
+                let syn::Stmt::Local(local) = statement else {
+                    return None;
+                };
+                let syn::Pat::Ident(pattern) = &local.pat else {
+                    return None;
+                };
                 (pattern.ident == "shard_key").then_some(local)
             });
             let binding = bindings.next().ok_or("missing sentinel binding")?;
             let value = binding.init.as_ref().ok_or("missing sentinel value")?;
-            if bindings.next().is_some() || value.diverge.is_some()
-                || !expression_is(&value.expr,
-                    "if any_invalid == 0.0 { winning_key } else { 0.0 }")
+            if bindings.next().is_some()
+                || value.diverge.is_some()
+                || !expression_is(
+                    &value.expr,
+                    "if any_invalid == 0.0 { winning_key } else { 0.0 }",
+                )
             {
                 return Err("wrong producer sentinel expression");
             }
@@ -110,7 +122,8 @@ fn validate_write_bindings(source: &str) -> Result<(), &'static str> {
         let syn::Pat::TupleStruct(pattern) = &witness.pat else {
             return Err("wrong writer witness pattern");
         };
-        if !pattern.path.is_ident("Some") || pattern.elems.len() != 1
+        if !pattern.path.is_ident("Some")
+            || pattern.elems.len() != 1
             || !matches!(&pattern.elems[0], syn::Pat::Ident(p) if p.ident == "stripe"
                 && p.by_ref.is_none() && p.mutability.is_none() && p.subpat.is_none())
         {
@@ -120,28 +133,47 @@ fn validate_write_bindings(source: &str) -> Result<(), &'static str> {
         let syn::Expr::MethodCall(call) = initializer.expr.as_ref() else {
             return Err("wrong witness initializer");
         };
-        let arguments = &call.turbofish.as_ref().ok_or("missing witness geometry")?.args;
+        let arguments = &call
+            .turbofish
+            .as_ref()
+            .ok_or("missing witness geometry")?
+            .args;
         if !expression_is(&call.receiver, "invocation")
-            || call.method != "checked_row_striped_2d" || !call.args.is_empty()
-            || initializer.diverge.is_none() || arguments.len() != 2
+            || call.method != "checked_row_striped_2d"
+            || !call.args.is_empty()
+            || initializer.diverge.is_none()
+            || arguments.len() != 2
         {
             return Err("wrong writer witness");
         }
         for (argument, expected) in arguments.iter().zip(["64", "1"]) {
-            if !matches!(argument, GenericArgument::Const(value) if expression_is(value, expected)) {
+            if !matches!(argument, GenericArgument::Const(value) if expression_is(value, expected))
+            {
                 return Err("wrong witness geometry");
             }
         }
-        let writes: Vec<_> = block.stmts.iter().filter_map(|statement| {
-            let syn::Stmt::Expr(syn::Expr::If(branch), _) = statement else { return None; };
-            let syn::Expr::Unary(negative) = branch.cond.as_ref() else { return None; };
-            let syn::Expr::MethodCall(call) = negative.expr.as_ref() else { return None; };
-            (matches!(negative.op, syn::UnOp::Not(_))
-                && call.method == "write_row_striped_2d").then_some(call)
-        }).collect();
+        let writes: Vec<_> = block
+            .stmts
+            .iter()
+            .filter_map(|statement| {
+                let syn::Stmt::Expr(syn::Expr::If(branch), _) = statement else {
+                    return None;
+                };
+                let syn::Expr::Unary(negative) = branch.cond.as_ref() else {
+                    return None;
+                };
+                let syn::Expr::MethodCall(call) = negative.expr.as_ref() else {
+                    return None;
+                };
+                (matches!(negative.op, syn::UnOp::Not(_)) && call.method == "write_row_striped_2d")
+                    .then_some(call)
+            })
+            .collect();
         let expected = if index == 0 {
-            vec![("maxima", ["&stripe", "0", "rows * 64", "1", "1", "maximum"]),
-                ("keys", ["&stripe", "0", "rows * 64", "1", "1", "shard_key"])]
+            vec![
+                ("maxima", ["&stripe", "0", "rows * 64", "1", "1", "maximum"]),
+                ("keys", ["&stripe", "0", "rows * 64", "1", "1", "shard_key"]),
+            ]
         } else {
             vec![("choices", ["&stripe", "0", "rows", "1", "1", "winner"])]
         };
@@ -149,9 +181,14 @@ fn validate_write_bindings(source: &str) -> Result<(), &'static str> {
             return Err("wrong write count");
         }
         for (write, (receiver, arguments)) in writes.into_iter().zip(expected) {
-            if !expression_is(&write.receiver, receiver) || write.turbofish.is_some()
+            if !expression_is(&write.receiver, receiver)
+                || write.turbofish.is_some()
                 || write.args.len() != arguments.len()
-                || !write.args.iter().zip(arguments).all(|(value, expected)| expression_is(value, expected))
+                || !write
+                    .args
+                    .iter()
+                    .zip(arguments)
+                    .all(|(value, expected)| expression_is(value, expected))
             {
                 return Err("wrong write receiver or operand");
             }
@@ -391,7 +428,10 @@ fn parsed_binding_policy_rejects_semantic_source_mutations() {
         assert_eq!(LOGITS.matches(before).count(), 1);
         let changed = LOGITS.replacen(before, after, 1);
         assert!(syn::parse_file(&changed).is_ok());
-        assert!(validate_write_bindings(&changed).is_err(), "accepted {after}");
+        assert!(
+            validate_write_bindings(&changed).is_err(),
+            "accepted {after}"
+        );
     };
     let sentinel = "let shard_key = if any_invalid == 0.0 { winning_key } else { 0.0 };";
     for changed in [
@@ -408,19 +448,36 @@ fn parsed_binding_policy_rejects_semantic_source_mutations() {
     ] {
         let arguments = ["&stripe", "0", rows, "1", "1", value];
         let original = format!("{receiver}.write_row_striped_2d({})", arguments.join(", "));
-        mutate(&original, &format!("wrong_receiver.write_row_striped_2d({})", arguments.join(", ")));
-        let wrong_value = if receiver == "choices" { "winner + 1" } else { "winning_key" };
-        for (index, wrong) in ["&wrong_stripe", "1", "rows + 1", "2", "2", wrong_value].into_iter().enumerate() {
+        mutate(
+            &original,
+            &format!(
+                "wrong_receiver.write_row_striped_2d({})",
+                arguments.join(", ")
+            ),
+        );
+        let wrong_value = if receiver == "choices" {
+            "winner + 1"
+        } else {
+            "winning_key"
+        };
+        for (index, wrong) in ["&wrong_stripe", "1", "rows + 1", "2", "2", wrong_value]
+            .into_iter()
+            .enumerate()
+        {
             let mut changed = arguments;
             changed[index] = wrong;
-            mutate(&original, &format!("{receiver}.write_row_striped_2d({})", changed.join(", ")));
+            mutate(
+                &original,
+                &format!("{receiver}.write_row_striped_2d({})", changed.join(", ")),
+            );
         }
     }
     let witness = "invocation.checked_row_striped_2d::<64, 1>()";
     assert_eq!(LOGITS.matches(witness).count(), 2);
-    for wrong in ["other_invocation.checked_row_striped_2d::<64, 1>()",
-        "invocation.checked_row_striped_2d::<32, 1>()"]
-    {
+    for wrong in [
+        "other_invocation.checked_row_striped_2d::<64, 1>()",
+        "invocation.checked_row_striped_2d::<32, 1>()",
+    ] {
         let first = LOGITS.replacen(witness, wrong, 1);
         assert!(syn::parse_file(&first).is_ok());
         assert!(validate_write_bindings(&first).is_err());

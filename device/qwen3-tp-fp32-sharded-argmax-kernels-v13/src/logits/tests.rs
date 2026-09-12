@@ -72,12 +72,7 @@ fn produce_into(values: &[f32], rows: usize, maxima: &mut [f32], keys: &mut [f32
     }
 }
 
-fn finalize_into(
-    maxima: &[f32],
-    keys: &[f32],
-    rows: usize,
-    choices: &mut [u32],
-) -> Result<(), ()> {
+fn finalize_into(maxima: &[f32], keys: &[f32], rows: usize, choices: &mut [u32]) -> Result<(), ()> {
     assert!((1..=32).contains(&rows));
     assert_eq!(maxima.len(), 32 * SHARDS);
     assert_eq!(keys.len(), 32 * SHARDS);
@@ -86,7 +81,10 @@ fn finalize_into(
     let keys = StridedReadView2D::from_shared_slice(keys, 0, rows, SHARDS, SHARDS).unwrap();
     for (row, choice) in choices.iter_mut().take(rows).enumerate() {
         let shards = core::array::from_fn(|shard| {
-            (maxima.load_or(row, shard, 0.0), keys.load_or(row, shard, 0.0))
+            (
+                maxima.load_or(row, shard, 0.0),
+                keys.load_or(row, shard, 0.0),
+            )
         });
         *choice = finalize(&shards)?;
     }
@@ -411,8 +409,14 @@ fn reused_scratch_tracks_32_then_1_then_17_rows_and_changed_winners() {
         assert_eq!(bits(&values), input_before);
         assert_eq!(maxima[0].to_bits(), guard);
         assert_eq!(keys[0].to_bits(), guard);
-        assert_eq!(bits(&maxima[1 + rows * SHARDS..]), maxima_before[1 + rows * SHARDS..]);
-        assert_eq!(bits(&keys[1 + rows * SHARDS..]), keys_before[1 + rows * SHARDS..]);
+        assert_eq!(
+            bits(&maxima[1 + rows * SHARDS..]),
+            maxima_before[1 + rows * SHARDS..]
+        );
+        assert_eq!(
+            bits(&keys[1 + rows * SHARDS..]),
+            keys_before[1 + rows * SHARDS..]
+        );
         let produced_maxima = bits(&maxima);
         let produced_keys = bits(&keys);
         assert_eq!(
@@ -429,7 +433,10 @@ fn reused_scratch_tracks_32_then_1_then_17_rows_and_changed_winners() {
         assert_eq!(bits(&values), input_before);
         for (row, &winner) in winners.iter().enumerate() {
             assert_eq!(choices[1 + row], winner as u32);
-            assert_eq!(scalar(&values[1 + row * N..1 + (row + 1) * N]), Ok(winner as u32));
+            assert_eq!(
+                scalar(&values[1 + row * N..1 + (row + 1) * N]),
+                Ok(winner as u32)
+            );
         }
         assert_eq!(choices[0], choices_before[0]);
         assert_eq!(choices[1 + rows..], choices_before[1 + rows..]);
@@ -481,7 +488,11 @@ fn minimum_carriers_reuse_valid_invalid_valid_without_stale_output_or_sentinel()
         assert_eq!(bits(&keys), produced_keys);
         for scratch in [&maxima, &keys] {
             assert_eq!(scratch[0].to_bits(), guard);
-            assert!(scratch[1 + SHARDS..].iter().all(|value| value.to_bits() == guard));
+            assert!(
+                scratch[1 + SHARDS..]
+                    .iter()
+                    .all(|value| value.to_bits() == guard)
+            );
         }
         assert_eq!(choices[0], 0xa5a5_a5a5);
         assert_eq!(choices[2], 0xa5a5_a5a5);
