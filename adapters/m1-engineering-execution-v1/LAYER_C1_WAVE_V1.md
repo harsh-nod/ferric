@@ -60,22 +60,26 @@ Required future gates: remote-only format review, strict Clippy, these focused
 tests, all adapter tests/old profile regressions, source policies and existing
 artifact admission. No execution is authorized by this document.
 
-## Separate Canary Composition Plan
+## Separate Canary Composition
 
-This revision intentionally adds no CLI or record-schema change. A separately
-reviewed additive `ferric-qwen3-layer-c1-wave-canary` should reuse the existing
-argmax canary runtime/reference/lifecycle with two closed profiles selected by
-`--layer-projection mfma|c1-wave`. Both require the same existing wave attention,
-MFMA setup, v8/v11 images and ordered runtime flags before any effect. One selects
-the existing terminal API; the other selects the new API. All legacy entrypoints,
-parsers, four-record schemas and frozen Python checkers remain unchanged.
+The additive `ferric-qwen3-layer-c1-wave-canary` reuses the existing argmax canary
+runtime/reference/lifecycle with two closed profiles selected by
+`--layer-projection mfma|c1-wave`. Its parser delegates to the unchanged submission
+parser and additionally requires explicit `--submission ordered`; synchronous
+submission is rejected. Both require the same existing wave attention, MFMA
+setup, v8/v11 images and runtime flags before any effect. The baseline selects
+the existing terminal API; only the candidate selects the new API. All legacy
+entrypoints, parsers, four-record schemas and frozen Python checkers remain
+unchanged. This is source implementation only, not an executed qualification.
 
-Use new `FerricLayerC1WaveCanary{Setup,Prefill,Observation,Closed}V1` names and an
-explicit `layer_projection` setup field. Keep `projection: mfma` truthful for the
-resident/head policy, `head_precision: fp32-v8`, and unchanged full target/prefix
-reference validation. Validate profile/runtime disagreement before timing files,
-model intake, worker creation or allocation. Workload identity remains independent
-of the compared policy; independently assert the exact fixed prompt/length pins.
+New `FerricLayerC1WaveCanary{Setup,Prefill,Observation,Closed}V1` names and an
+explicit `layer_projection` setup field distinguish these runs. `projection:
+mfma` describes the resident/head policy; `head_precision: fp32-v8` and full
+target/prefix reference validation stay unchanged. Profile/runtime disagreement
+is rejected before timing files, model intake, worker creation or allocation.
+Workload identity remains independent of the compared policy and uses the same
+exact fixed prompt/length pins. The setup annotation adds no key or byte change
+for any legacy profile. Old record emission code is otherwise retained.
 
 Qualify both new-binary profiles at 8 then 128 outputs against the unchanged fixed
 token IDs and independently decoded UTF8, with exact dispatch/cursor/lifecycle and
@@ -85,3 +89,28 @@ the inherited 11/6 residual-tail composition in both arms. No TP8, HTTP, serving
 speculation or numerical-acceptance broadening is implied. Only after both modes
 pass may a newly frozen matched ABBA measure host-wall TTFT/TPOT/throughput; old
 cohorts are immutable and no gain is promised.
+
+## Combined Gate Expectations
+
+Against the exact4014178 baseline's780 passes/41 ignores/19 all-target result
+rows, the combined source expects845 passes/45 ignores/20 result rows. This is
+a pre-execution expectation, not a result:
+
+- Seven new library tests from the driver/helper revision.
+- Four new shared runtime profile tests in each of the three existing canary
+  binaries:12 additional invocations, no new ignores there.
+- The new binary:45 passes/4 ignores. Breakdown:3 contract passes/1 frozen-golden
+  ignore,11 shared runtime passes,5 attention-parser passes,5 submission-parser
+  passes,5 new layer-parser passes,2 host-timing passes,14 worker passes/3 worker
+  fixture ignores. No ignored fixture is claimed executed by ordinary all-targets.
+- One new source-policy test, bringing that integration target to29 methods.
+- Eight doctests remain unchanged. Compiler/source protected policies and five
+  inventories are unchanged; no kernel/SDK/compiler/runtime/lockfile edits.
+
+Focused filters are `layer_c1_wave_` on the library (7),
+`layer_c1_wave_canary_contract::tests` on the new binary (5), and
+`argmax_canary_runtime::profile_tests::layer_` on each of four canary binaries (4
+each). Old parser/profile/ordered-failure tests remain in ordinary coverage.
+Explicit existing v11 artifact and two frozen serde workload goldens retain
+their separate fixture prerequisites. Remote formatting and the complete combined
+host gate still require root source/control review before execution.
