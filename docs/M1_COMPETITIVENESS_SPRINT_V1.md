@@ -1681,3 +1681,47 @@ Its host and typed-emission gates remain pending. Visible-attention
 pending. Its two strict Clippy invocations retain the exact known RMSNorm
 exit-101 diagnostic, not a strict pass. Neither candidate has new native or
 performance evidence.
+
+## Kernel Host Freshness Correction
+
+The append active-block host gate stopped at its candidate full-test count:
+actual Cargo exit 0 and 18 passing tests, versus the required 19. All three
+candidate test binaries were byte-identical to their baseline counterparts and
+reported `fresh: true`, including the old five-test append executable. The new
+source has six append tests. The count was not lowered and the failed attempt
+was not rerun. Nine executable instances were retained from the three completed
+test invocations; candidate wave tests and later steps did not run.
+
+Read-only fingerprint inspection explains the mismatch. The candidate source
+timestamps are 18:18:50 UTC, earlier than the baseline artifact/fingerprint built
+at 18:41:29-30 UTC. Cargo's retained dep-info uses relative source paths with
+checksum checking disabled. Candidate source hashes differ, but the shared
+target accepted the older artifact as current. A reported candidate manifest
+path alone therefore did not establish a fresh source build.
+
+Failed append archive
+`3594b074fcdf54996e7cf049a530a3728c34c3f5e29e773a0078721ee16af1c1`
+is 110,932,634 bytes and matches the actual retained remote file, independent
+second stream and root copy. Source/prior checks remained equal and owned groups
+were absent at closure. No emission or GPU run followed this failure.
+
+The same review found `fresh: true` and baseline-identical library/contract
+artifacts in visible-attention host archive
+`da4a6ab49554bbda27fd3a333aa39b44d3a09640a489a3f18a0edd1bcf227cbc`.
+Its six new attention tests did compile and pass in both profiles, but the
+earlier full source-bound host admission is withdrawn pending corrected
+validation. The actual counts, ten retained executable instances and raw
+Clippy 101/101 diagnostics remain historical observations, not a fresh build.
+
+The corrective host controls will clean only the selected kernel package before
+each source's first Cargo invocation and require `fresh` to be exactly `false`
+for every own-package compiler artifact, including libraries and build scripts.
+Dependencies remain cached; no source timestamp touching, count relaxation or
+whole-target deletion is proposed. Cargo supports package-scoped cleaning.
+[Cargo clean reference](https://doc.rust-lang.org/cargo/commands/cargo-clean.html)
+The correction is still preparation-only at this checkpoint.
+
+The Pages candidate passed its twelve checks but was withheld from publication
+when this issue surfaced. A separate wording correction keeps kernel validation
+pending. Both independently replayed HTTP cohorts and their measured values
+remain unchanged; neither used these new kernel candidates.
