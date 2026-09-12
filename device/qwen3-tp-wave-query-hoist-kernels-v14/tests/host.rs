@@ -51,7 +51,11 @@ fn fixture(world: usize, rows: usize, context: usize, position: usize) -> Fixtur
     let heads = 32 / world;
     let columns = 8 / world * 128;
     let mut result = Fixture {
-        rows, world, pages, physical, context,
+        rows,
+        world,
+        pages,
+        physical,
+        context,
         query: vec![0; rows * heads * 128],
         key: vec![bits(-2.0); physical * 16 * columns],
         value: vec![bits(-64.0); physical * 16 * columns],
@@ -60,7 +64,8 @@ fn fixture(world: usize, rows: usize, context: usize, position: usize) -> Fixtur
     };
     for head_row in 0..rows * heads {
         for dimension in 0..128 {
-            result.query[head_row * 128 + dimension] = bits(if dimension < 64 { 0.25 } else { 0.5 });
+            result.query[head_row * 128 + dimension] =
+                bits(if dimension < 64 { 0.25 } else { 0.5 });
         }
     }
     for row in 0..rows {
@@ -82,8 +87,12 @@ fn fixture(world: usize, rows: usize, context: usize, position: usize) -> Fixtur
 fn query_pair(input: &Fixture, head_row: usize, trace: &mut Trace) -> [[f32; 2]; 64] {
     trace.reads.push(Read::QueryPair);
     trace.query_elements += 128;
-    core::array::from_fn(|lane| [value(input.query[head_row * 128 + lane]),
-                               value(input.query[head_row * 128 + lane + 64])])
+    core::array::from_fn(|lane| {
+        [
+            value(input.query[head_row * 128 + lane]),
+            value(input.query[head_row * 128 + lane + 64]),
+        ]
+    })
 }
 
 fn wave_sum(mut values: [f32; 64]) -> [f32; 64] {
@@ -96,23 +105,40 @@ fn wave_sum(mut values: [f32; 64]) -> [f32; 64] {
     values
 }
 
-fn run(input: &Fixture, head_row: usize, hoist: bool, output: &mut [u16], trace: &mut Trace) -> Result<(), Reject> {
-    if input.rows == 0 || input.rows > 32 || ![1, 2, 8].contains(&input.world)
-        || input.pages == 0 || input.pages > 512 || input.physical == 0 || input.physical > 512
-        || input.context == 0 || input.context > 8192
+fn run(
+    input: &Fixture,
+    head_row: usize,
+    hoist: bool,
+    output: &mut [u16],
+    trace: &mut Trace,
+) -> Result<(), Reject> {
+    if input.rows == 0
+        || input.rows > 32
+        || ![1, 2, 8].contains(&input.world)
+        || input.pages == 0
+        || input.pages > 512
+        || input.physical == 0
+        || input.physical > 512
+        || input.context == 0
+        || input.context > 8192
     {
         return Err(Reject::Shape);
     }
     let heads = 32 / input.world;
     let columns = 8 / input.world * 128;
     let head_rows = input.rows * heads;
-    if input.query.len() < head_rows * 128 || input.query.len() > 32 * heads * 128
-        || output.len() < head_rows * 128 || output.len() > 32 * heads * 128
+    if input.query.len() < head_rows * 128
+        || input.query.len() > 32 * heads * 128
+        || output.len() < head_rows * 128
+        || output.len() > 32 * heads * 128
         || input.key.len() != input.physical * 16 * columns
         || input.value.len() != input.physical * 16 * columns
-        || input.positions.len() < input.rows || input.positions.len() > 32
-        || input.table.len() < input.rows * input.pages || input.table.len() > 32 * input.pages
-        || input.context > input.pages * 16 || head_row >= head_rows
+        || input.positions.len() < input.rows
+        || input.positions.len() > 32
+        || input.table.len() < input.rows * input.pages
+        || input.table.len() > 32 * input.pages
+        || input.context > input.pages * 16
+        || head_row >= head_rows
     {
         return Err(Reject::Shape);
     }
@@ -122,7 +148,11 @@ fn run(input: &Fixture, head_row: usize, hoist: bool, output: &mut [u16], trace:
         return Err(Reject::Position);
     }
     let kv_head = (head_row % heads) / 4;
-    let mut query = if hoist { query_pair(input, head_row, trace) } else { [[0.0; 2]; 64] };
+    let mut query = if hoist {
+        query_pair(input, head_row, trace)
+    } else {
+        [[0.0; 2]; 64]
+    };
     let mut maximum = [0.0_f32; 64];
     let mut denominator = [0.0_f32; 64];
     let mut numerator = [[0.0_f32; 2]; 64];
@@ -154,32 +184,49 @@ fn run(input: &Fixture, head_row: usize, hoist: bool, output: &mut [u16], trace:
         }
         for lane in 0..64 {
             let score = dots[lane] * f32::from_bits(0x3db5_04f3);
-            let values = [value(input.value[base + lane]), value(input.value[base + lane + 64])];
+            let values = [
+                value(input.value[base + lane]),
+                value(input.value[base + lane + 64]),
+            ];
             finite[lane] &= score.is_finite() & values[0].is_finite() & values[1].is_finite();
             if token == 0 {
                 maximum[lane] = score;
                 denominator[lane] = 1.0;
                 numerator[lane] = values;
             } else {
-                let next = if score > maximum[lane] { score } else { maximum[lane] };
+                let next = if score > maximum[lane] {
+                    score
+                } else {
+                    maximum[lane]
+                };
                 let previous_weight = (maximum[lane] - next).exp();
                 let current_weight = (score - next).exp();
                 denominator[lane] = denominator[lane] * previous_weight + current_weight;
-                numerator[lane][0] = numerator[lane][0] * previous_weight + values[0] * current_weight;
-                numerator[lane][1] = numerator[lane][1] * previous_weight + values[1] * current_weight;
-                finite[lane] &= previous_weight.is_finite() & (previous_weight >= 0.0)
-                    & current_weight.is_finite() & (current_weight >= 0.0)
-                    & denominator[lane].is_finite() & (denominator[lane] > 0.0)
-                    & numerator[lane][0].is_finite() & numerator[lane][1].is_finite();
+                numerator[lane][0] =
+                    numerator[lane][0] * previous_weight + values[0] * current_weight;
+                numerator[lane][1] =
+                    numerator[lane][1] * previous_weight + values[1] * current_weight;
+                finite[lane] &= previous_weight.is_finite()
+                    & (previous_weight >= 0.0)
+                    & current_weight.is_finite()
+                    & (current_weight >= 0.0)
+                    & denominator[lane].is_finite()
+                    & (denominator[lane] > 0.0)
+                    & numerator[lane][0].is_finite()
+                    & numerator[lane][1].is_finite();
                 maximum[lane] = next;
             }
         }
     }
     let mut result = [0_u16; 128];
     for lane in 0..64 {
-        let values = [numerator[lane][0] / denominator[lane], numerator[lane][1] / denominator[lane]];
+        let values = [
+            numerator[lane][0] / denominator[lane],
+            numerator[lane][1] / denominator[lane],
+        ];
         let narrowed = [bits(values[0]), bits(values[1])];
-        if !finite[lane] || values.iter().any(|x| !x.is_finite())
+        if !finite[lane]
+            || values.iter().any(|x| !x.is_finite())
             || narrowed.iter().any(|&x| !value(x).is_finite())
         {
             return Err(Reject::Numerical);
@@ -202,8 +249,15 @@ fn compare(input: &Fixture, head_row: usize) -> (Vec<u16>, Trace, Trace) {
     assert_eq!(baseline, candidate);
     assert_eq!(*input, before);
     assert!(candidate[..head_row * 128].iter().all(|&x| x == 0x55aa));
-    assert!(candidate[(head_row + 1) * 128..].iter().all(|&x| x == 0x55aa));
-    assert_eq!(a.query_elements, 128 * (input.positions[head_row / (32 / input.world)] as usize + 1));
+    assert!(
+        candidate[(head_row + 1) * 128..]
+            .iter()
+            .all(|&x| x == 0x55aa)
+    );
+    assert_eq!(
+        a.query_elements,
+        128 * (input.positions[head_row / (32 / input.world)] as usize + 1)
+    );
     assert_eq!(b.query_elements, 128);
     (candidate, a, b)
 }
@@ -269,11 +323,19 @@ fn invalid_shape_or_position_rejects_before_any_query_read() {
             6 => input.physical = 513,
             7 => input.context = 0,
             8 => input.context = 8193,
-            9 => { input.query.pop(); }
-            10 => { input.key.pop(); }
-            11 => { input.value.pop(); }
+            9 => {
+                input.query.pop();
+            }
+            10 => {
+                input.key.pop();
+            }
+            11 => {
+                input.value.pop();
+            }
             12 => input.positions.clear(),
-            13 => { input.table.pop(); }
+            13 => {
+                input.table.pop();
+            }
             14 => input.positions[0] = u32::MAX,
             _ => unreachable!(),
         }
@@ -281,7 +343,10 @@ fn invalid_shape_or_position_rejects_before_any_query_read() {
             let mut output = vec![0x55aa; 32 * 16 * 128];
             let before = output.clone();
             let mut trace = Trace::default();
-            assert!(matches!(run(&input, 0, hoist, &mut output, &mut trace), Err(Reject::Shape | Reject::Position)));
+            assert!(matches!(
+                run(&input, 0, hoist, &mut output, &mut trace),
+                Err(Reject::Shape | Reject::Position)
+            ));
             assert_eq!(trace.query_elements, 0);
             assert_eq!(output, before);
         }
@@ -298,7 +363,10 @@ fn invalid_first_and_later_pages_preserve_rejection_but_change_read_order() {
             let mut output = vec![0x55aa; 32 * 32 * 128];
             let before = output.clone();
             let mut trace = Trace::default();
-            assert_eq!(run(&input, 0, hoist, &mut output, &mut trace), Err(Reject::Page));
+            assert_eq!(
+                run(&input, 0, hoist, &mut output, &mut trace),
+                Err(Reject::Page)
+            );
             assert_eq!(output, before);
             traces.push(trace);
         }
@@ -325,7 +393,10 @@ fn nonfinite_query_key_value_and_overflow_keep_host_rejection() {
                 for hoist in [false, true] {
                     let mut output = vec![0x55aa; 32 * 4 * 128];
                     let before = output.clone();
-                    assert_eq!(run(&input, 0, hoist, &mut output, &mut Trace::default()), Err(Reject::Numerical));
+                    assert_eq!(
+                        run(&input, 0, hoist, &mut output, &mut Trace::default()),
+                        Err(Reject::Numerical)
+                    );
                     assert_eq!(output, before);
                 }
             }
@@ -336,7 +407,10 @@ fn nonfinite_query_key_value_and_overflow_keep_host_rejection() {
     input.key.fill(0x7f7f);
     for hoist in [false, true] {
         let mut output = vec![0x55aa; 4 * 128];
-        assert_eq!(run(&input, 0, hoist, &mut output, &mut Trace::default()), Err(Reject::Numerical));
+        assert_eq!(
+            run(&input, 0, hoist, &mut output, &mut Trace::default()),
+            Err(Reject::Numerical)
+        );
         assert!(output.iter().all(|&x| x == 0x55aa));
     }
 }
@@ -353,11 +427,17 @@ fn minimum_and_full_carriers_preserve_inputs_and_inactive_output() {
     assert_eq!(compare(&full, head_row).0, expected);
     for hoist in [false, true] {
         let mut minimum = vec![0x55aa; 17 * 16 * 128];
-        assert_eq!(run(&input, head_row, hoist, &mut minimum, &mut Trace::default()), Ok(()));
+        assert_eq!(
+            run(&input, head_row, hoist, &mut minimum, &mut Trace::default()),
+            Ok(())
+        );
         assert_eq!(minimum, expected[..minimum.len()]);
         minimum.pop();
         let before = minimum.clone();
-        assert_eq!(run(&input, head_row, hoist, &mut minimum, &mut Trace::default()), Err(Reject::Shape));
+        assert_eq!(
+            run(&input, head_row, hoist, &mut minimum, &mut Trace::default()),
+            Err(Reject::Shape)
+        );
         assert_eq!(minimum, before);
     }
 }
@@ -384,11 +464,20 @@ fn repeated_calls_do_not_reuse_stale_query_values_after_rejection() {
             input.query.fill(bits(query_scale));
             let head_row = rows * 4 - 1;
             let expected = compare(&input, head_row).0;
-            assert_eq!(run(&input, head_row, hoist, &mut output, &mut Trace::default()), Ok(()));
-            assert_eq!(&output[head_row * 128..(head_row + 1) * 128], &expected[head_row * 128..(head_row + 1) * 128]);
+            assert_eq!(
+                run(&input, head_row, hoist, &mut output, &mut Trace::default()),
+                Ok(())
+            );
+            assert_eq!(
+                &output[head_row * 128..(head_row + 1) * 128],
+                &expected[head_row * 128..(head_row + 1) * 128]
+            );
             let before = output.clone();
             input.table[0] = u32::MAX;
-            assert_eq!(run(&input, 0, hoist, &mut output, &mut Trace::default()), Err(Reject::Page));
+            assert_eq!(
+                run(&input, 0, hoist, &mut output, &mut Trace::default()),
+                Err(Reject::Page)
+            );
             assert_eq!(output, before);
         }
     }

@@ -12,9 +12,7 @@ extern crate alloc;
 
 pub mod attention;
 
-pub const ROOTS_V14: [&str; 1] = [
-    "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14",
-];
+pub const ROOTS_V14: [&str; 1] = ["ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"];
 
 #[cfg(all(not(target_arch = "amdgpu"), not(test)))]
 pub fn compiler_expectation_roster_v14()
