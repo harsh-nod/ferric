@@ -15,6 +15,19 @@ This is variable controller host-wall evidence, not a stable gain, HTTP result,
 GPU duration or competitive claim. See the
 [comparison record](../../docs/M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-native-comparison).
 
+The separate `ferric-qwen3-layer-c1-wave-live` entrypoint at tested source
+`87f38de` also passes all 40 host steps: 892 passed, 48 ignored, 21 targets,
+strict Clippy, eight doctests, 74 CPU HTTP tests and unchanged protected checks.
+It requires ordered submission and explicit `--layer-projection mfma|c1-wave`,
+and emits the distinct `layer-c1-wave-live-v1` profile with actual layer metadata.
+Both arms retain the same context8192/pages512 runtime envelope and FP32 head.
+Final executable SHA:
+`8ae69215cf93524ae3438f84bad6d4ce146a92d6636d41a8fc854b897233d450`.
+Complete host archive:
+`7aec042f6d41450644d6ecbd2eed94e5ccc7b9115236e96eb00fe9ce990a0fa5`.
+Own-source artifacts were rebuilt; only authenticated external dependencies
+were warm. This does not yet admit context8192 native output or HTTP timing.
+
 The original source proposal below is retained as history. Its 845-test forecast
 was wrong: it omitted eight paired-contract and three worker-diagnostic tests.
 The corrected 856/45/20 expectation was frozen before the successful c2 gate.

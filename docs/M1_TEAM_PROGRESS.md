@@ -64,7 +64,7 @@ stable-gain or isolated per-kernel claim.
 | Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 `c2a235e`, integrated through `b7b1eda`, passes all 40 host steps, both 8/128-token qualifications and all four separate ABBA runs. Authenticated replay passes: n=2 mean TPOT 180.651 to 162.999 ms, rate 4.976281 to 5.523671 tokens/s. | Material variation: first TPOT pair is nearly tied, second improves 19.852%. No stable/HTTP/GPU/competitive claim. Qualify the new explicit live profile separately. Head, multirow MFMA and defaults remain fixed. No fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `45b608e` preserves historical serving metrics. New explicit C1 live entrypoint `87f38de` has accepted remote formatting; its host gate is running with freshly rebuilt own packages and authenticated warm external dependencies. | Finish all 40 live host steps, then separate native/HTTP qualification. Parallel Pages update will add accepted C1 diagnostics and the standalone integer proof without changing serving metrics or claiming stability. |
+| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `45b608e` preserves historical serving metrics. C1 live source `87f38de`, integrated through `15b5c4b`, passes all 40 host steps: 892/48/21, strict Clippy, eight doctests and 74 CPU HTTP tests. Final binary `8ae69215` matches early/release/closure copies. | Separate context8192 native/HTTP qualification uses same-binary MFMA/C1 arms; historical source433 has different residual grouping. Parallel Pages update adds accepted C1 diagnostics and the standalone integer proof without changing serving metrics or claiming stability. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
@@ -72,6 +72,10 @@ accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
 (912,288 KiB), as is the redundant integrated source worktree (42,520 KiB).
 All required source, raw test output and executable artifacts remain retained.
 These updates supersede the pending-build/replay notes in the history below.
+The C1 live complete host archive `7aec042f` and all 2,354 files are also accepted.
+All 93 own-source artifacts were fresh after a closed 22-package clean; external
+dependencies were explicitly warm. The redundant integrated live worktree is
+removed (42,480 KiB). Its compiled target is being released after final custody.
 The eight completed mi350 C1 case directories and six authenticated archive/ledger
 files are also removed after local custody and a fresh normal-close/process check
 (10,788 KiB); shared models and installed images/controllers remain untouched.
