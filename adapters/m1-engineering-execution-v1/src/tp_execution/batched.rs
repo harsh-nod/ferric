@@ -377,6 +377,39 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
+    /// Selects the separate ordered wave-attention/v11 profile in one terminal step.
+    /// Configure wave attention, MFMA, pruning, device TP1 and the v8 head first.
+    /// Layer groups use existing ordered barriers; the v8/v11 head stays synchronous.
+    /// # Errors
+    /// Rejects wrong bindings, unsupported transports/profiles or repeated/late selection.
+    pub fn configure_ordered_wave_attention_fp32_argmax_v11(
+        &mut self,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<()> {
+        let binding = artifact
+            .fp32_argmax_binding_v11()
+            .ok_or("argmax v11 requires the exact separately admitted one-root image")?;
+        self.configure_ordered_wave_attention_fp32_argmax_binding_v11(binding)
+    }
+
+    fn configure_ordered_wave_attention_fp32_argmax_binding_v11(
+        &mut self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+    ) -> TpResult<()> {
+        if !self.fp32_argmax_binding_is_fresh_v11(binding)
+            || !self.wave_attention
+            || !self.prune_output_head
+            || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
+            || !self.inner.transports[0].supports_ordered_batches()
+        {
+            return Err("ordered wave attention argmax v11 requires fresh target TP1/capacity32, FP32-v8, device TP1, MFMA, pruning, preconfigured wave attention and an ordered-capable transport, without large KV, peers, sequences or capture".into());
+        }
+        let pending = Vec::with_capacity(16);
+        self.fp32_argmax_v11 = Some(binding);
+        self.inner.ordered_batches = Some(pending);
+        Ok(())
+    }
+
     fn fp32_argmax_binding_is_fresh_v11(
         &self,
         binding: crate::tp_artifact::Fp32ArgmaxBindingV11,

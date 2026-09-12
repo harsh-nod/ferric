@@ -7,6 +7,7 @@ mod argmax_v11;
 mod attention_argmax_v11;
 mod draft;
 mod large_kv;
+mod ordered_attention_argmax_v11;
 mod ordered_batches;
 mod speculative;
 
