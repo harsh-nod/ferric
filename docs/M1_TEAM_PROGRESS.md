@@ -156,20 +156,30 @@ live-entrypoint gate, with no reuse authorized yet. A fresh fe2o3 fetch still
 resolves to `8efd4fd`.
 
 Root installed only the new pinned controller/wrapper under the shared mi350
-lease. Both MFMA and C1-Wave 8-token cases pass exact IDs/UTF8, 9,219 packets,
-15 batches, cursor135, normal close and all-eight-idle pre/postflight. These
-correctness timings are excluded from the separate full128 ABBA cohort. The
-two 128-token qualification cases and performance comparison are still pending.
+lease. Both MFMA and C1-Wave pass the 8-token and 128-token cases with exact
+IDs/UTF8, normal close and all-eight-idle pre/postflight. The short cases have
+9,219 packets, 15 batches and cursor135; the full cases have 83,139 packets,
+135 batches and cursor255. Complete four-case archive `d58812cf` matches two
+remote streams and all 52 raw-file hashes and sizes. These correctness timings
+are excluded from the separately declared full128 ABBA cohort, now running.
+Root integrated the opt-in source through `b7b1eda`; all relevant code bytes
+match tested `c2a235e`. The redundant clean source worktree was removed,
+reclaiming 42,436 KiB. Defaults, head and multirow projection remain unchanged.
 
 Independent work produced two-stage sharded FP32 argmax source `5cd315f` and
 remote-format-only follow-up `1ca7223`. It does not change v11, the unrelated
 v12 down-projection candidate, artifact inventories or the C1 route. Source
-review found no algorithm defect, but identified missing store-operand binding
-and scratch-reuse test cases; those are being added before the first build.
-Separate integer ownership/bounds proof source and a conditional C1 live
-entrypoint are also in progress. Typed emission, native kernel correctness,
-Verus verification and performance remain unproven; the extra dispatch may
-offset potential parallelism. No new kernel or proof qualification is claimed.
+review found no algorithm defect. Added parsed store-operand binding mutations
+and scratch-reuse cases bring the forecast to 15 numerical plus 8 contract
+tests; `256a6e4` applies accepted remote-only formatting to those tests. The
+first host build is still pending. Separate integer proof `7faa90c` stopped
+before verification on E0283; raw JSON reports zero verified queries. Correction
+`ed2ceb5` only types two branch literals as `int`, with a separate rerun pending.
+Conditional live entrypoint `e1ac86f` adds explicit ordered-only layer selection
+without changing the old live/parser path; its host gate is also pending.
+Typed emission, native kernel correctness, Verus verification and performance
+remain unproven; the extra dispatch may offset potential parallelism. No new
+kernel or proof qualification is claimed.
 
 A read-only timing audit confirms that the current ordered KFD worker exposes
 host elapsed time, not per-dispatch GPU duration. Ferric currently discards the
