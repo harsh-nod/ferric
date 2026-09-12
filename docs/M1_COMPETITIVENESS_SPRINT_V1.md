@@ -1631,3 +1631,53 @@ matches twice. Actual formatter statuses were1/0/0, and prior source/tool/target
 bytes stayed unchanged. Host tests remain pending. Append active-block revision
 `d1ed99d` is separately source-only. Its superseded clean `2716371` worktree is
 removed, reclaiming42,284 KiB while retaining all commits and evidence.
+
+## Matched Ordered HTTP Remeasurement
+
+The live ordered cohort completed with actual exit 0 on mi350 at 18:29 UTC.
+All 42 requests passed. Independent read-only replay checked all 20 raw files
+before and after, all 40 timed HTTP request identities and full token arrays,
+both diagnostics, the same-mode qualification and source/setup identities.
+Normal closure reports 5670 batches and 3491838 packets, no cleanup signals,
+joined threads, absent owned processes and all eight GPUs idle afterward.
+Both matched-run execution sessions are closed.
+
+The unchanged client aggregates only the 30 measured requests. Ten warmups
+and two diagnostics are excluded. The first sample-window start through final
+sample-window end spans 817.891828785 seconds, including inter-window gaps and
+final drain, with 3840 output tokens. Mean TTFT is 2862.0793933 ms, mean TPOT
+is 192.12655409396325 ms, mean E2E is 27262.319697 ms, and output throughput is
+4.694997388229715 tokens/s. P50/P99 TPOT is 189.085127/212.690701 ms.
+
+Compared with the separate new synchronous cohort, observed throughput is
+41.47% higher and mean TPOT is 30.45% lower. This is a descriptive comparison
+of sequential, single-start cohorts, not repeated ABBA or a stable causal gain.
+Settings remain TP1, C1, BF16 decoder, explicit FP32 output head, context 8192,
+128/128 tokens, greedy fixed-length output, with prefix caching and speculation
+disabled. No token/batch journal or profiling ran in the timed path.
+
+The ordered rate is about 2.50 times the earlier Ferric HTTP observation, but
+the retained vLLM reference is still about 47 times faster. SGLang metrics
+remain excluded for exact-output mismatches. These results do not qualify
+sustained serving, TP8 performance, speculative HTTP or a competitive win;
+older context-256 native gains are not pooled or multiplied into them.
+
+- Acquisition receipt: `f4f44c5a8070d7f7f54cfad25626f0e9b354b022723b74d790ee309f89d71dec`.
+- Complete archive: `46547a5c48d3783d2c061cbbed20b30127f64766d56ad2cc92afd11996adcbca`, matching two remote streams and the root copy.
+- Independent aggregate: `684727bd8a8f85bc819f5bdeabd4d2fa2d536f7fbe4525915155a8832f829995`; actual replay exit 0.
+- Full replay stdout: `7c5883199f07c79550d2252b6dc8c8c2758d90bc0f4eab4e03e8850a9698de18`.
+
+A fresh fetch at 18:29 UTC confirms public fe2o3 main remains `8efd4fd`.
+No compiler/runtime source was changed in this continuation. Frozen HTTP
+artifacts retain their actual historical build identities.
+
+The separate append active-block revision is now remotely formatted at
+`d03ccd5436fe99d9dc7f761964b0fd978db3cd0f`. Format-only archive
+`b6911fb03f69ef190e1a3e13dd2d1ebfa6fcec47385b5566920c6034049aca00`
+matches two transfers and the root copy; actual formatting statuses were
+1/0/0 and only the reviewed test-file whitespace patch was integrated.
+Its host and typed-emission gates remain pending. Visible-attention
+`4e287b1` has completed both 19-test host profiles; final custody review is
+pending. Its two strict Clippy invocations retain the exact known RMSNorm
+exit-101 diagnostic, not a strict pass. Neither candidate has new native or
+performance evidence.
