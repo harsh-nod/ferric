@@ -1757,3 +1757,73 @@ artifact/source evidence, not a clean or hermetic build attestation. Exact-`9fd`
 HTTP measurements remain unchanged.
 
 Audit note: `0a2738d0705ba19dfb1d0c0f94e38ea9c3d161af49016c5c48f58e090d23938a`.
+
+## Corrected Append Host And Emission
+
+Append host R2 now passes its 28 steps: 26 ordinary checks and two exact
+known Clippy-debt checks, retaining actual Cargo exits 101/101. Package-only
+cleaning precedes each source role. All own-package compiler artifacts report
+`fresh: false`, including build scripts and non-test libraries. Baseline `2716371`
+passes 18/18 tests; candidate `d03ccd5` passes 19/19, with no ignores. The four
+invocations retain twelve executable instances; root independently rehashed
+them and all four raw Cargo captures. Fourteen helper methods, five Python probe
+methods, 30/24 fixtures and both zero-doctest runs also pass.
+
+The complete archive `a8a1e2eed30d709aaae634aa0f8d8b03b4e129d4caea323183027401be935c35`
+is 39,779,545 bytes and matches the actual remote file, second stream and root
+copy. Source/prior ledger `67f7e8c8952ebaa97c5faca27dc6a6c4581471a26ab39262c2f05d84c5175bf4`
+is unchanged. Fifty-eight raw ledger paths share one immutable payload; all
+28 recorded owned groups were absent and short TMP was empty at closure.
+
+The subsequent emission attempt passes sixteen helper methods, read-only vendor
+validation and a fresh full baseline emission. Baseline image `b70db13b` matches
+the earlier bytes but was compiled anew. Candidate `d03ccd5` then fails the
+unchanged compiler verifier: the cache-component arithmetic at `rope_kv.rs:467`
+does not have the required dominating overflow proof. Candidate extraction
+returns 101; its enclosing command, wrapper and outer gate return 1. No candidate
+HSACO is captured; the paired comparison and final-source step never run. This
+is distinct from the earlier candidate's register-spill rejection.
+
+Failed archive `73b5094d3cf174ff9ca3aa92f614b7f66b5bf4f95005f57e4f989c99f34f10ea`
+is 31,264,492 bytes and matches two streams and root SHA. The last source/prior
+ledger remains equal to preflight (`a8301356ad7c817d606d6670f6f9215f6b7d9aca338e780f12cd4fe197a1b3cd`).
+All four recorded owned groups were absent and short TMP was empty. No source
+edit, inline retry, verifier relaxation or GPU action followed this attempt.
+
+## Visible Host Cleanup Correction
+
+Visible R2 passes fourteen helper methods, then stops before compilation because
+the explicit target-directory cleanup requires a cache marker absent from this
+owned target. Its command and outer status are 101. The actual Cargo commit
+checks that marker for explicit `--target-dir`; the successful append command
+uses the same recorded `CARGO_TARGET_DIR` without that redundant flag.
+[Cargo implementation at the installed commit](https://raw.githubusercontent.com/rust-lang/cargo/c980f4866141969fab6254a680546a277789d6f0/src/cargo/ops/cargo_clean.rs).
+
+Failed archive `83e9f9230babde3aa291b5ac9ddeca184934f6749a007a4e5033095f4f8e973a`
+is 15,678,310 bytes, matches two streams and root SHA, and retains all seventy
+file hashes. Source/prior inputs remain equal and both owned groups are absent.
+No marker was fabricated and no target was manually deleted. New R3 keeps the
+same source, scoped cleanup, exact environment target, ownership checks, counts
+and freshness policy; it removes only the redundant cleanup argument. Its
+fourteen helper methods, package-only base clean and formatting check now pass;
+the remaining host gate is still running. This is not completed host admission.
+
+## Ordered Residual Candidate
+
+Runtime candidate `2396a82ff42c94654261a2ee8313f881a77aee1d`, tree
+`b9c74a4fda441f0df381d7f1e04525ddcd7a5da4`, follows raw implementation `411836b`.
+It adds each unchanged TP1 residual to its preceding ordered group, then waits
+before collective advancement and hidden/scratch handle swaps. Groups become
+11/6, within the existing sixteen-packet bound. Flattened packet totals remain
+613/616 per forward. Synchronous, host/peer, draft, embedding and output-head
+paths are unchanged. No new kernel, CLI mode, default or fe2o3 change is included.
+
+Five new tests cover phase geometry, overflow boundaries, failed aggregate ACKs
+and synchronous residual behavior; existing equivalence and submitted-pool
+failure checks are strengthened. These tests are not yet executed. Remote
+formatting records 1/0/0 and changes only layout; the API comment is corrected
+separately. Complete format archive
+`8303968d4a8d1742de013f1c685561379bef4f85dc9d2cc5140618ea09a4e50d`
+matches two streams and root SHA. Source-fresh host validation and subsequent
+native/performance measurements remain pending. No speedup is inferred from
+fewer host request/response pairs.
