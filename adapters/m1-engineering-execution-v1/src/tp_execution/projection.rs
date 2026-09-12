@@ -526,7 +526,7 @@ mod tests {
                     let root = if partial {
                         super::super::batched::PARTIAL
                     } else {
-                        super::super::batched::GEMM
+                        "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2"
                     };
                     let output = Tensor {
                         element_bytes: if partial { 4 } else { 2 },
