@@ -1937,3 +1937,48 @@ worktree are removed (312,136 / 2,832 KiB). Guarded append's redundant worktree
 is also removed (42,292 KiB), preserving failed emission and source evidence.
 The admitted ordered HTTP result remains 4.694997 tokens/s / 192.127 ms TPOT /
 2862.079 ms TTFT. No new Verus proof, serving default or M1 gate closure follows.
+
+## Layer C1 Native Comparison
+
+The later source `c2a235e44008bd8e0ed9e3bf6e62000e4f18f51c` passes all 40 host
+steps with the corrected 856/45/20 test expectation. Both modes pass the four
+separate 8/128-output exact-reference qualification cases. Qualification archive
+`d58812cff158baf0a07e3faea1ae605f1472c177c86922960237ca2c89a88249`
+retains their raw output; those timings are excluded from this comparison.
+
+The predeclared MFMA/C1/C1/MFMA full128 cohort uses the same controller
+`ae5fad8d668c8c4336bf5a4e1cbb66116994bca826c7a58d6febe575e0eae97a`
+in both arms. TP1, context256, wave attention, FP32-v8 head, wave-v11 argmax,
+ordered residual tails, model and token/UTF8 oracle are fixed. Only single-row
+layer projections change; head and multirow projections remain MFMA. All four
+runs pass exact outputs, 83,139 packets, 135 batches, cursor255 and normal close,
+with all eight GPUs idle before and after each run.
+
+| Instrumented controller-wall mean, n=2 | MFMA | C1 Wave | Descriptive change |
+| --- | ---: | ---: | ---: |
+| TTFT, ms | 2787.320699 | 2772.372499 | 0.536% lower |
+| TPOT, ms | 180.651018 | 162.998615 | 9.772% lower |
+| Workload, seconds | 25.730000 | 23.473197 | 8.771% lower |
+| Mean per-run output tokens/s | 4.976281 | 5.523671 | 11.000% higher |
+
+Acquisition-order TPOT is 183.815, 183.746, 142.252 and 177.487 ms. The first
+pair is nearly tied (0.038% lower TPOT); the second is 19.852% lower. This small,
+variable cohort does not establish a stable improvement or confidence interval.
+Timing measures controller host wall, not HTTP or GPU duration. Nested ordered
+attention/feed-forward, preparation and wait spans must not be summed or treated
+as isolated GPU kernel times. Neither qualification nor old cohorts are pooled;
+rate is the arithmetic mean of per-run rates, not pooled tokens/duration.
+
+Complete native archive
+`fd35466851b5b0b065b3f36bd9b39b6019adb5ac545ef2d4219729702427e8d2`
+retains all 52 raw files. Manifest
+`4ffb2d5225cf94366a2ca9236c8cc7f7b7cc98000fa59a6ed7aed686cd6f6c7c`
+binds 40 core files / 6,442,016 bytes. Frozen reducer replay passes zero, its
+wrong-pin negative passes by exiting one, and before/after custody is identical.
+Accepted summary
+`2b94e482ce94db6ff6358eac9a5c381156fbab108714ed210f9acbd9be85bda8`
+and complete replay archive
+`e2f30d792e67d0b7c82499f913db41192acdf7cca58c910be8378f642fc10af9`
+retain all evidence. No new serving default, competitive win or M1 closure is
+claimed. The admitted ordered HTTP figures remain unchanged. New live source
+`87f38de` needs its own host and context8192 native/HTTP qualification.

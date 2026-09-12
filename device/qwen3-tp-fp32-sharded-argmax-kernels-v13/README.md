@@ -1,9 +1,15 @@
-# Sharded FP32 argmax v13: source-only prototype
+# Sharded FP32 argmax v13: host-tested prototype
 
 This standalone crate proposes a separate two-stage fixed-vocabulary argmax. It
 does not replace v11/v12, join a driver, change a selector/default, or establish
-native correctness or a performance gain. No build, formatting, host test, typed
-emission, or GPU result is claimed by this source checkpoint.
+native correctness or a performance gain. Source `256a6e4` passes remote-only
+formatting, 15 numerical tests, eight source/contract tests, strict Clippy and
+zero doctests on mi300x. All ten host-gate commands pass, with fresh own artifacts
+and unchanged source/dependency receipts. Complete archive:
+`88fb14461cd48795c4fab23f2db9ce9bfbc3862aaaf47350236212d7e2e18c09`.
+Typed emission, actual device ABI, native correctness and performance remain
+unqualified. The separate [integer model](../../proofs/m1/sharded_argmax_v13.md)
+is not a refinement proof of these kernel bodies.
 
 ## Closed source contract
 
@@ -83,7 +89,9 @@ tails with input/guard bit preservation. Reuse fixtures cover 32/1/17 active row
 with changed winners and minimum-carrier valid/invalid/valid input transitions.
 Parsed-root checks bind the sentinel and complete write operands/witnesses;
 synthetic source mutations demonstrate rejection of changed keys or stores.
-These remain unexecuted host/source fixtures, not general numerical proofs.
+These host/source fixtures pass at the checkpoint above; they are not general
+numerical proofs. The proposed feature-rejection negative above was not part of
+the accepted ten-step host gate and is not claimed executed.
 
 Only after the host gate is admitted should a separately reviewed exact-compiler
 emission bind the two-root ABI, descriptor/resource/progress results, and source

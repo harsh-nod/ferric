@@ -1,8 +1,24 @@
 # Layer-Only C1 Wave Projection Experiment
 
-Status: source candidate only. No formatter, host test, build, native model run,
-numerical qualification or performance claim has been executed for this revision.
-Base: `4014178032c6d56e21a088934d61b5983988ae34`.
+## Accepted September 12 Checkpoint
+
+Tested source `c2a235e` passes all 40 host steps: 856 tests, 45 ignored and
+20 result rows, strict Clippy, eight doctests and unchanged protected inventories.
+Both MFMA and C1-Wave pass separate exact-reference 8/128-output native checks.
+All four subsequent MFMA/C1/C1/MFMA full128 samples and independent replay pass.
+The same binary is used in both arms; head, multirow policy and defaults stay fixed.
+
+Descriptive n=2 means: TTFT 2787.321 -> 2772.372 ms, TPOT
+180.651 -> 162.999 ms, mean per-run output rate 4.976281 -> 5.523671 tokens/s.
+The first paired TPOT change is only 0.038% lower; the second is 19.852% lower.
+This is variable controller host-wall evidence, not a stable gain, HTTP result,
+GPU duration or competitive claim. See the
+[comparison record](../../docs/M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-native-comparison).
+
+The original source proposal below is retained as history. Its 845-test forecast
+was wrong: it omitted eight paired-contract and three worker-diagnostic tests.
+The corrected 856/45/20 expectation was frozen before the successful c2 gate.
+Proposal base: `4014178032c6d56e21a088934d61b5983988ae34`.
 
 ## Driver Boundary
 
