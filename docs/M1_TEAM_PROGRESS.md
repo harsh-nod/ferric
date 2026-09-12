@@ -62,7 +62,7 @@ stable-gain or isolated per-kernel claim.
 | Measurement | Both latest HTTP Qwen3-8B 128/128 cohorts pass independent replay. Ordered: TTFT 2862.079 ms, TPOT 192.127 ms, throughput 4.694997 tokens/s across 30 measured requests. Synchronous: 3482.380 / 276.255 ms and 3.318800 tokens/s. Earlier Ferric: 3705.967 / 506.969 ms and 1.879805 tokens/s; retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s. SGLang r7 finishes but fails exact output in 10 of 30 measured responses. | Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
 | Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. Cooperative KV-append `2716371` emits but fails the zero-SGPR-spill gate with 278 spills. The nine-case append probe passes ten CPU tests and its self-check. New `d03ccd5` host validation stopped at 18 tests instead of 19 because Cargo reused the baseline binary. Visible-attention `4e287b1` compiled its six new tests, but reused its library/contract artifacts; full source-bound host admission is reopened. Raw results and both actual Clippy exit-101 debt checks remain retained. | Rebuild each kernel package before testing each source, with explicit rejection of reused own-package artifacts. Preserve dependencies and exact expected test counts. Both new kernels still require fresh host, emission, native and performance validation. V12 remains host/emission-only. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Live entrypoint `7f58928` from tested `433e213` passes all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regressions. The separate HTTP wrapper passes 25 CPU tests, both context8192 two-request native checks and both matched cohorts. Pages-only `599943b` is deployed after eleven checks; all seven public assets match tested bytes. | Publish the separately validated Pages update with both new HTTP cohorts. No new Verus proof. |
+| Integration and Pages | Live entrypoint `7f58928` from tested `433e213` passes all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regressions. The separate HTTP wrapper passes 25 CPU tests, both context8192 two-request native checks and both matched cohorts. Pages-only `5bdab97` is deployed after twelve checks; all seven public assets match tested bytes. Both HTTP cohorts and the reopened kernel validation are published. | Keep the site aligned with completed kernel gates. The live-controller artifact audit found no analogous stale-candidate reuse; it is not a hermetic-build attestation. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -111,6 +111,9 @@ Active kernel stages and source candidates remain tracked; unrelated worktrees,
 shared models, images and caches are untouched.
 The superseded clean append worktree `2716371` is also removed (42,284 KiB);
 its commit, branch, source archives and rejected-emission evidence are retained.
+The latest HTTP Pages stage and clean worktree are also removed after verified
+publication and archival, reclaiming 351,616 KiB remotely and 2,816 KiB locally.
+Both validation attempts, final screenshots and exact public asset bytes remain.
 
 ## September 11 Performance Swarm
 

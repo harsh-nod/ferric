@@ -1725,3 +1725,35 @@ The Pages candidate passed its twelve checks but was withheld from publication
 when this issue surfaced. A separate wording correction keeps kernel validation
 pending. Both independently replayed HTTP cohorts and their measured values
 remain unchanged; neither used these new kernel candidates.
+
+## HTTP Pages Publication And Artifact Audit
+
+The corrected Pages-only revision `5bdab9719acdbc8145d8176195de61cc486984ad`
+is now published at https://harsh-nod.github.io/ferric/. Its twelve remote checks
+pass, including all widths from 320 through 1440 pixels and 36 screenshots.
+All seven deployed assets match the tested artifact. The earlier unpublished
+validation and final wording-corrected validation remain separately archived;
+neither kernel's withdrawn source-fresh host admission is presented as current.
+
+- Final gate archive: `ec72ad989ac810d2ce0e365228739d93830c590c35cdfdc7213745d0ff523d2e`, 136,493,146 bytes, authenticated by two transfers and root SHA.
+- Deployment: workflow `34712640941`, exact head `5bdab97`, completed successfully at 18:57:05 UTC on September 12.
+- Live asset/header ledger: `e64b562757cb8dd2c3be4898a874be5d4d8bf8207093a4913a1041ffe4f3ff2e`; all fourteen entries match.
+- Cleanup receipt: `ed30dc4952213b85e4e6f73b3a18c4d3a60363b668190dab4bac57b6d60837b3`.
+
+All 25 recorded owned process groups were absent before cleanup. The released
+mi300x stage and clean local Pages worktree were removed, reclaiming 351,616 KiB
+and 2,816 KiB respectively. Root independently confirmed both absences. Source
+commits, branches, archives, screenshots and publication evidence remain.
+
+A bounded read-only audit of the retained live-controller gate found no
+analogous stale-candidate reuse. Its source-policy step records compilation of
+22 Ferric packages from the correct source directory and a live-binary change
+from `b7ac0f7f` to the measured `9fd94a97`. Retained target metadata records new
+live executable, test and library units; the later 0.14-second release command
+reuses that already rebuilt same-gate executable. Shared library, kernel and
+lock sources did not change in this live-entrypoint delta. Per-unit verbose
+compiler traces and retained library bytes are unavailable, so this is bounded
+artifact/source evidence, not a clean or hermetic build attestation. Exact-`9fd`
+HTTP measurements remain unchanged.
+
+Audit note: `0a2738d0705ba19dfb1d0c0f94e38ea9c3d161af49016c5c48f58e090d23938a`.
