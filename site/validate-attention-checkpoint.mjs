@@ -57,7 +57,7 @@ const expected = {
     sourceUnchanged: true, warmTarget: true,
     nestedTmpFailureArchiveSha256: "589c753d66bd6783295620a6452236328c4301cd959dbf5be09e824756ebee20",
     earlierClippyFailureArchiveSha256: "68a8617b7f96c83478c68916cd37b16e3fdbd31bc8c4080e4af577cff9ca48de",
-    state: "host-and-native-passed-abba-pending", fullHostGatePassed: true, nativeModelGatePassed: true,
+    state: "host-native-and-descriptive-abba-passed", fullHostGatePassed: true, nativeModelGatePassed: true,
     qualification: {
       noteSha256: "764fdd72e56011bad94794adb1329c3dce775fee8e37f31133a055f4d876449a",
       archiveSha256: "d00d832c6a4e0e8732b7902c9e6470414324c615589ccf23ab9eb6ae2b4ba45f",
@@ -80,10 +80,38 @@ const expected = {
       exactIdsAndUtf8: true, retirementPassed: true, normalWorkerClose: true,
       allEightIdleBeforeAndAfter: true, comparisonSamples: false,
     },
-    full128AbbaAdmitted: false, metrics: null,
+    full128AbbaAdmitted: true,
+    metrics: {
+      summarySha256: "0435191640d3d8669910ce4c6de5906636ee525804c1440fe0ae45bc2fe957f3",
+      manifestSha256: "c088748c7d9b478e2650bddd3c1ee9abfabd77e772390bf16259825feb139e20",
+      sizesSha256: "4ca6c145e756f5e3e2bafa5e6f9b967c9c9ab21ce1b011a9d28215c6567b64ae",
+      reducerSha256: "ade46c5deb31c093579950550b265f9d35dd7c03d92a30e482d2a1b75e1d66a3",
+      planSha256: "7ae229bc61801541e7130d574abd67962026428b2ca31f02fcabe6ca6b447e5b",
+      replaySha256: "caa0c160ce94b6242a566326e11b30444fd332ff203d4aa525efd24a64efbfa9",
+      rawArchiveSha256: "173e6df4b6620f2d1cd3c2a5c806ca6a0d9a53a72b0c80c70f58d979367511d6",
+      runs: ["baseline-a1", "wave-b1", "wave-b2", "baseline-a2"],
+      repetitionsPerMode: 2, rawFiles: 40, outputs: 128, packets: 83139, batches: 135, cursor: 255,
+      baseline: { ttftSeconds: 3.973108651, tpotSeconds: 0.5214579239606298,
+        outputTokensPerSecond: 1.8234076826445493, workloadSeconds: 70.198265029,
+        tpotRangeSeconds: [0.5210801167007874, 0.5218357312204724],
+        outputRateRange: [1.8222041755954572, 1.8246111896936414] },
+      wave: { ttftSeconds: 3.3076722075, tpotSeconds: 0.258562046503937,
+        outputTokensPerSecond: 3.5981236273579746, workloadSeconds: 36.1450521885,
+        tpotRangeSeconds: [0.22446020741732284, 0.2926638855905512],
+        outputRateRange: [3.1459007252538935, 4.050346529462056] },
+      tpotReductionPercent: 50.41554943875808, meanOutputRateGainPercent: 97.32962966019181,
+      pairedTpotReductionPercent: [56.98642427333329, 43.83514622596826],
+      pairedTpotSpeedRatios: [2.3248474071409038, 1.7804728986267881],
+      pairedOutputRateGainsPercent: [122.27731577546676, 72.41485435492156],
+      clock: "controller-std-instant", outputRateAggregation: "arithmetic-mean-of-per-run-rates",
+      comparisonAggregation: "ratio-of-arithmetic-means", exactIdsAndUtf8: true,
+      normalWorkerCloses: true, allEightIdleBeforeAndAfter: true,
+      qualificationTimingsIncluded: false, oldCohortMixed: false, additiveGainClaim: false,
+    },
   },
-  authority: "none", performanceGainClaimed: false, httpMeasurement: false,
-  newVerusProof: false, defaultPromotion: false, m1Complete: false,
+  authority: "none", descriptiveComparisonAdmitted: true, stablePerformanceGainClaimed: false,
+  httpMeasurement: false, gpuClockMeasurement: false, confidenceQualified: false,
+  competitiveRanking: false, newVerusProof: false, defaultPromotion: false, m1Complete: false,
 };
 const readinessContract = [
   ["Attention attribution: one native diagnostic", "observed", "41.068 s", "72.59%",
@@ -95,10 +123,21 @@ const readinessContract = [
     "685 passed test invocations, 34 ignored", "failed nested-TMP invocation and earlier Clippy failure",
     "warm, not a clean rebuild", "All four baseline/wave attention model checks pass exact IDs and UTF-8",
     "9,219 packets, 15 batches and cursor 135", "83,139 packets, 135 batches and cursor 255",
-    "correctness diagnostics, not comparison samples", "full128 ABBA cohort remains pending at this checkpoint",
-    "No combined-route metrics, default promotion or change to the matched HTTP results is admitted"],
+    "correctness diagnostics, not comparison samples", "timings are excluded from the separate full128 ABBA cohort"],
+  ["Combined attention / argmax: full128 ABBA diagnostic", "observed", "baseline/wave/wave/baseline",
+    "Instrumented native TP1 uses context 256", "n=2 per mode", "3.973109 / 3.307672 s",
+    "521.458 / 258.562 ms", "arithmetic mean per-run output rate", "1.823408 / 3.598124",
+    "Ratios of arithmetic means", "50.42% lower TPOT", "97.33% higher mean rate",
+    "224.460-292.664 ms", "3.145901-4.050347", "56.99% and 43.84%", "Variability is substantial",
+    "not stable estimates, confidence intervals, HTTP serving or GPU durations",
+    "No older cohort is mixed in or added", "no default promotion, competitive ranking, M1 completion",
+    "change to the matched HTTP results is claimed"],
 ];
 const plain = (value) => JSON.parse(JSON.stringify(value));
+const close = (actual, wanted) => {
+  assert(Number.isFinite(actual) && Number.isFinite(wanted));
+  assert(Math.abs(actual - wanted) <= 1e-12 * Math.max(1, Math.abs(wanted)), `${actual} != ${wanted}`);
+};
 
 export function validateAttentionCheckpoint(value, readiness) {
   assert.deepEqual(plain(value), expected, "attention checkpoint source or scope drifted");
@@ -271,6 +310,171 @@ export async function validateAttentionCheckpointEvidence(root, value) {
       }
     }
   }
+  const m = c.metrics;
+  const summary = await pinned("abba/summary.json", m.summarySha256);
+  const manifest = await pinned("abba/manifest.json", m.manifestSha256);
+  const sizes = await pinned("abba/sizes.json", m.sizesSha256);
+  const replayReceipt = await pinned("abba/replay.json", m.replaySha256);
+  await pinned("abba/PLAN.md", m.planSha256, false);
+  await pinned("abba/summarize_attention_argmax.py", m.reducerSha256, false);
+  assert.equal(summary.schema, "FerricAttentionArgmaxAbbaSummaryV1");
+  assert.equal(manifest.schema, "FerricAttentionArgmaxAbbaEvidenceV1");
+  assert.equal(sizes.schema, "FerricAttentionArgmaxAbbaSizeLedgerV1");
+  assert.equal(sizes.manifest_sha256, m.manifestSha256);
+  assert.equal(summary.evidence_manifest_sha256, m.manifestSha256);
+  assert.equal(replayReceipt.schema, "FerricAttentionArgmaxReplayGateV1");
+  assert.equal(replayReceipt.passed, true);
+  assert.deepEqual(replayReceipt.errors, []);
+  assert.deepEqual(replayReceipt.commands.map((command) => command.exit_code), [0, 1]);
+  assert.equal(replayReceipt.commands[0].argv.at(-1), m.manifestSha256);
+  assert.equal(replayReceipt.commands[1].argv.at(-1), "0".repeat(64));
+  for (const item of [summary, manifest, sizes, replayReceipt]) {
+    assert.equal(item.authority, "none");
+    assert.equal(item.performance_qualified, false);
+  }
+  for (const item of [summary, manifest]) {
+    assert.equal(item.controller.source, c.source);
+    assert.equal(item.controller.tree, c.tree);
+    assert.equal(item.controller.sha256, q.controllerSha256);
+    assert.equal(item.controller.path, "/tmp/ferric-compete-gpu.VabkOGCx/attention-argmax-canary-ed112e0");
+    assert.equal(item.experiment_plan_sha256, m.planSha256);
+    assert.equal(item.reducer_sha256, m.reducerSha256);
+    assert.equal(item.checker_sha256, q.checkerSha256);
+    assert.equal(item.wrapper_sha256, q.wrapperSha256);
+    assert.equal(item.base_checker_sha256, "eb7a5f7d243675fac25c318d640e50c6a5aad1d39b7bc3eedefc5f5316964a76");
+    assert.deepEqual(item.runs.map((run) => run.id), m.runs);
+  }
+  for (const flag of ["http_measurement", "gpu_clock_measurement", "confidence_qualified", "competitive_ranking",
+    "default_promotion", "serving_qualified", "m1_completion", "old_cohort_mixed", "additive_gain_claim"])
+    assert.equal(summary[flag], false);
+  assert.equal(summary.scope, "full128 baseline/wave/wave/baseline only; initial8/128 correctness runs excluded");
+  assert.equal(summary.stage_accounting, "checked host attention siblings are disjoint; parent/IPC/head scopes overlap; not GPU durations");
+  const abbaCases = [["baseline", "a1", 1], ["wave", "b1", 1], ["wave", "b2", 2], ["baseline", "a2", 2]];
+  const wantedPaths = abbaCases.flatMap(([mode, tag]) => rawNames.map((name) => `attention-argmax-ed112e0-${mode}-128-${tag}/${name}`));
+  assert.deepEqual(Object.keys(sizes.files).sort(), [...wantedPaths].sort());
+  let authenticated = 0;
+  for (const [index, [mode, tag, repetition]] of abbaCases.entries()) {
+    const run = summary.runs[index];
+    const entry = manifest.runs[index];
+    assert.equal(entry.directory, `attention-argmax-ed112e0-${mode}-128-${tag}`);
+    assert.equal(run.attention, mode);
+    assert.equal(run.outputs, m.outputs);
+    assert.equal(run.repetition, repetition);
+    assert.deepEqual(Object.keys(entry.files).sort(), [...rawNames].sort());
+    assert.deepEqual(run.evidence_sha256, entry.files);
+    const raw = {};
+    for (const file of rawNames) {
+      const path = `${entry.directory}/${file}`;
+      const bytes = await pinned(`abba/${path}`, entry.files[file], false);
+      assert.equal(bytes.length, sizes.files[path]);
+      raw[file] = file.endsWith(".jsonl") ? bytes.toString("utf8").trim().split("\n").map((line) => JSON.parse(line)) : JSON.parse(bytes);
+      authenticated += 1;
+    }
+    const checked = run.checked_trace;
+    const receipt = raw["wrapper-result.json"];
+    const setup = raw["results.jsonl"][0];
+    const observation = raw["results.jsonl"].at(-2);
+    const closed = raw["results.jsonl"].at(-1);
+    assert.deepEqual(receipt.checked_trace, checked);
+    assert.equal(raw["prelaunch.json"].controller_source, c.source);
+    assert.equal(raw["prelaunch.json"].pins[summary.controller.path], q.controllerSha256);
+    assert.deepEqual(setup.prompt_token_ids, targetReference.prompt_token_ids);
+    for (const [field, value] of Object.entries({ context: q.context, pages: q.pages, row_capacity: q.capacity,
+      prefill_chunk: q.prefillChunk, argmax_mode: q.argmax, projection: q.projection, collective: q.collective,
+      attention: mode, max_new_tokens: m.outputs, expected_packets: m.packets, expected_batches: m.batches,
+      prefix_cache: q.prefixCaching, runtime_ordered_batches: q.ordered, controller_sha256: q.controllerSha256 }))
+      assert.equal(setup[field], value, `${run.id}: ${field}`);
+    assert.equal(setup.target_artifact.hsaco, f.imageSha256);
+    assert.equal(setup.target_head_artifact.hsaco, "5f19b3ba59035a5f0ebc90cdf3a40466f9910908a45e082d146cb674028da6cb");
+    assert.equal(setup.argmax_artifact.hsaco, "de9db78c0ef7ad5d84fc903d41ee9db59026113d79e23f12d3909761363b9390");
+    for (const item of [observation, checked]) {
+      assert.deepEqual(item.generated_token_ids, targetReference.generated_token_ids);
+      assert.equal(item.generated_utf8_hex, targetReference.generated_utf8_hex);
+      assert.equal(item.reference_passed, true);
+      assert.equal(item.completed_packets, m.packets);
+      assert.equal(item.completed_batches, m.batches);
+      assert.equal(item.committed_inputs_before_retirement, m.cursor);
+    }
+    assert.equal(checked.attention, mode);
+    assert.equal(checked.argmax_mode, q.argmax);
+    assert.equal(checked.controller_sha256, q.controllerSha256);
+    assert.equal(checked.host_timing.clock, m.clock);
+    assert.equal(checked.host_timing.aggregation, "overlapping-not-additive");
+    for (const flag of ["performance_qualified", "http_measurement", "gpu_clock_measurement", "speculative_serving"])
+      assert.equal(checked[flag], false);
+    for (const flag of ["passed", "all_eight_idle_before", "all_eight_idle_after"]) assert.equal(receipt[flag], true);
+    assert.equal(receipt.serving_qualified, false);
+    assert.equal(receipt.performance_qualified, false);
+    assert.deepEqual(receipt.errors, []);
+    assert.equal(observation.pool_retired, true);
+    for (const flag of ["execution_completed", "reference_passed", "worker_exited"]) assert.equal(closed[flag], true);
+    assert.equal(closed.completed_batches, m.batches);
+    assert.deepEqual(closed.completed_packets, [m.packets]);
+    assert(Number.isInteger(setup.worker_pid) && setup.worker_pid > 0);
+    assert.equal(closed.worker_pid, setup.worker_pid);
+    assert.equal(checked.worker_pid, setup.worker_pid);
+    assert.deepEqual(raw["group-cleanup.json"], { absent: true, cleanup_error: null,
+      controller_returncode: 0, forced: false, reason: null });
+    const offsets = observation.elapsed_seconds;
+    assert.equal(offsets.length, m.outputs);
+    assert(offsets.every((x, i) => Number.isFinite(x) && x > 0 && x < 900 && (i === 0 || x > offsets[i - 1])));
+    assert(observation.workload_seconds >= offsets.at(-1) && observation.workload_seconds < 900);
+    close(checked.diagnostic_ttft_seconds, offsets[0]);
+    close(checked.diagnostic_tpot_seconds, (offsets.at(-1) - offsets[0]) / (m.outputs - 1));
+    close(checked.diagnostic_workload_seconds, observation.workload_seconds);
+    close(checked.diagnostic_output_tokens_per_second, m.outputs / observation.workload_seconds);
+  }
+  assert.equal(authenticated, m.rawFiles);
+  const cohort = summary.cohort;
+  assert.equal(cohort.repetitions_per_attention, m.repetitionsPerMode);
+  assert.equal(cohort.output_rate_aggregation, "arithmetic mean of per-run 128/workload_seconds, not pooled duration");
+  assert.equal(cohort.inference, "descriptive n=2 only; no confidence interval or statistical qualification");
+  const metricFields = { ttftSeconds: "diagnostic_ttft_seconds", tpotSeconds: "diagnostic_tpot_seconds",
+    outputTokensPerSecond: "diagnostic_output_tokens_per_second", workloadSeconds: "diagnostic_workload_seconds" };
+  for (const mode of ["baseline", "wave"]) {
+    const runs = summary.runs.filter((run) => run.attention === mode);
+    assert.equal(runs.length, m.repetitionsPerMode);
+    for (const [field, metric] of Object.entries(metricFields)) {
+      const values = runs.map((run) => run.checked_trace[metric]);
+      const mean = values.reduce((sum, x) => sum + x, 0) / values.length;
+      const variability = cohort.within_attention_variability[mode][metric];
+      close(mean, m[mode][field]);
+      close(mean, cohort.arithmetic_metric_means[mode][metric]);
+      close(mean, variability.arithmetic_mean);
+      close(Math.min(...values), variability.minimum);
+      close(Math.max(...values), variability.maximum);
+      assert.equal(variability.n, m.repetitionsPerMode);
+      assert.deepEqual(variability.values, values);
+      const rangeField = { tpotSeconds: "tpotRangeSeconds", outputTokensPerSecond: "outputRateRange" }[field];
+      if (rangeField) m[mode][rangeField].forEach((value, index) => close(value, index ? Math.max(...values) : Math.min(...values)));
+    }
+  }
+  const compare = (baseline, wave, metric) => metric === "diagnostic_output_tokens_per_second"
+    ? { ratio: wave / baseline, percent: 100 * (wave / baseline - 1) }
+    : { ratio: baseline / wave, percent: 100 * (1 - wave / baseline) };
+  for (const [field, metric] of Object.entries(metricFields)) {
+    const means = compare(m.baseline[field], m.wave[field], metric);
+    close(means.ratio, cohort.ratio_of_arithmetic_means[metric].speed_ratio);
+    close(means.percent, cohort.ratio_of_arithmetic_means[metric].improvement_percent);
+  }
+  close(m.tpotReductionPercent, cohort.ratio_of_arithmetic_means.diagnostic_tpot_seconds.improvement_percent);
+  close(m.meanOutputRateGainPercent, cohort.ratio_of_arithmetic_means.diagnostic_output_tokens_per_second.improvement_percent);
+  assert.equal(cohort.repetition_pairs.length, 2);
+  for (const [index, pair] of cohort.repetition_pairs.entries()) {
+    assert.equal(pair.baseline_id, `baseline-a${index + 1}`);
+    assert.equal(pair.wave_id, `wave-b${index + 1}`);
+    assert.equal(pair.repetition, index + 1);
+    const baseline = summary.runs.find((run) => run.id === pair.baseline_id).checked_trace;
+    const wave = summary.runs.find((run) => run.id === pair.wave_id).checked_trace;
+    for (const metric of Object.values(metricFields)) {
+      const actual = compare(baseline[metric], wave[metric], metric);
+      close(actual.ratio, pair.relative_changes[metric].speed_ratio);
+      close(actual.percent, pair.relative_changes[metric].improvement_percent);
+    }
+    close(m.pairedTpotReductionPercent[index], pair.relative_changes.diagnostic_tpot_seconds.improvement_percent);
+    close(m.pairedTpotSpeedRatios[index], pair.relative_changes.diagnostic_tpot_seconds.speed_ratio);
+    close(m.pairedOutputRateGainsPercent[index], pair.relative_changes.diagnostic_output_tokens_per_second.improvement_percent);
+  }
   await pinned("attention-reporter.py", a.reporterSha256, false);
   const diagnostic = await pinned("attention-diagnostic.json", a.reportSha256);
   const timing = await pinned("attention-host-timing.json", a.timingSha256);
@@ -376,7 +580,7 @@ export async function validateAttentionCheckpointEvidence(root, value) {
     assert.deepEqual(replay.cases[index], { name: row.name, symbol: row.symbol, checks: row.checks });
     if (index % 2) assert.deepEqual(row.checks, fixture.results[index - 1].checks);
   });
-  console.log("PASS: source-bound attention attribution, eight native fixtures, composite host gate with retained failures and four exact model qualifications; no comparison claim.");
+  console.log("PASS: source-bound attention attribution, eight native fixtures, host failures preserved, four model qualifications and separate raw40 ABBA host means/ranges/pairs; no stable or competitive claim.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

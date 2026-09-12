@@ -44,7 +44,14 @@ const requiredClaims = [
   "42 required commands across 43 actual attempts",
   "685 passed test invocations, 34 ignored",
   "failed nested-TMP invocation and earlier Clippy failure",
-  "No combined-route metrics, default promotion or change to the matched HTTP results is admitted",
+  "Combined attention / argmax: full128 ABBA diagnostic",
+  "521.458 / 258.562 ms",
+  "50.42% lower TPOT",
+  "97.33% higher mean rate",
+  "224.460-292.664 ms",
+  "56.99% and 43.84%",
+  "not stable estimates, confidence intervals, HTTP serving or GPU durations",
+  "not 256 divided by pooled duration",
   "First matched Ferric / vLLM cell",
   "Ferric is substantially slower than vLLM on this cell",
   "3705.967",
@@ -875,6 +882,7 @@ try {
     await replicaDisclosure.click();
 
     for (const [caption, rows] of [["Single-run attention operation groups: host intervals, not GPU durations", 7],
+      ["Combined attention full128 ABBA: native host means and run ranges", 2],
       ["Matched MFMA pair: process windows", 2],
       ["Concurrent peer matrix: six process-window observations", 6],
       ["Concurrent peer matrix: separate workload-rate baselines", 2],
@@ -898,15 +906,19 @@ try {
     if (screenshotRoot) {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
-        await page.getByRole("heading", { name: "Attention attribution and validation", exact: true }).evaluate((node) => {
-          const headerHeight = document.querySelector("header").getBoundingClientRect().height;
-          window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
-        });
-        await page.screenshot({ path: join(screenshotRoot, `${name}-attention-attribution.png`) });
+        for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
+          ["Combined attention / argmax: full128 ABBA", "attention-abba-table"]]) {
+          await page.getByRole("heading", { name: heading, exact: true }).evaluate((node) => {
+            const headerHeight = document.querySelector("header").getBoundingClientRect().height;
+            window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
+          });
+          await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
+        }
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [label, suffix] of [
           ["Combined attention / argmax: host and native gates passed", "attention-composition-host"],
+          ["Combined attention / argmax: full128 ABBA diagnostic", "attention-composition-abba"],
           ["TP1 attention: eight exact native fixtures", "attention-fixtures"],
           ["Paired K4: two fresh native passes", "paired-native"],
           ["Wave plus ordered: short-canary ABBA", "wave-ordered"],

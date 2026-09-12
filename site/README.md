@@ -279,7 +279,14 @@ wave-v11 argmax. These are correctness diagnostics, not comparison samples.
 The validator authenticates the qualification note, both equivalent forty-file
 hash rosters, all raw files, original references, fixed profile and normal
 retirement/close/idle receipts. No qualification timing becomes a metric.
-The separate full128 ABBA comparison remains pending; do not populate its
-metrics from partial runs. Existing
+The separate full128 ABBA cohort is now admitted as descriptive native host
+diagnostics only, with two runs per attention mode. Its forty raw files are
+bound by the frozen manifest and size ledger, then connected to the unchanged
+reducer replay. The validator independently recomputes per-run timings from
+the original observation offsets, arithmetic means, min/max ranges and paired
+ratios. Output rate is the arithmetic mean of per-run rates, not a pooled rate.
+Wave's substantial observed variation prevents a stable-gain claim. No HTTP,
+GPU-duration, confidence, competitive, default-promotion or M1 claim follows;
+qualification timings and older cohorts are excluded. Existing
 `matched128`, `routeCheckpoint`, `routeReadiness`, `argmaxNative` and
 `performance.js` data are immutable historical observations in this update.

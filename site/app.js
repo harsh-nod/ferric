@@ -112,6 +112,19 @@
     element("h3", "", "Eight finite TP1 attention fixtures"),
     element("p", "", project.attentionReadiness[1].detail),
     element("p", "", project.attentionReadiness[2].detail));
+  const attentionMetrics = attention.composition.metrics;
+  attentionProgress.append(element("h3", "", "Combined attention / argmax: full128 ABBA"),
+    element("p", "performance-scope", "Instrumented native TP1, context 256, 128 input / 128 output tokens, fixed wave-v11 argmax. Baseline/wave/wave/baseline; n=2 per mode. These host diagnostics are not HTTP serving or GPU durations."));
+  performanceTable("Combined attention full128 ABBA: native host means and run ranges",
+    ["Attention", "Mean TTFT (s)", "Mean TPOT (ms)", "Mean per-run output (tok/s)", "TPOT min / max (ms)", "Output min / max (tok/s)"],
+    ["baseline", "wave"].map((mode) => {
+      const row = attentionMetrics[mode];
+      return [mode, row.ttftSeconds.toFixed(6), (row.tpotSeconds * 1000).toFixed(3),
+        row.outputTokensPerSecond.toFixed(6), row.tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" / "),
+        row.outputRateRange.map((x) => x.toFixed(6)).join(" / ")];
+    }), attentionProgress);
+  attentionProgress.append(element("p", "", project.attentionReadiness[3].detail),
+    element("p", "", "Output rate is the arithmetic mean of each run's 128 / workload seconds, not 256 divided by pooled duration. The mean-rate ratio is distinct from the average paired ratio. Qualification-run timings and the earlier six-run argmax cohort are excluded. Nested host intervals and IPC spans overlap; no isolated kernel speedup or additive gain follows."));
   const attentionDetails = element("details", "performance-identities");
   attentionDetails.append(element("summary", "", "Attention evidence identities"));
   const attentionPins = element("dl", "observation-facts");
@@ -122,7 +135,10 @@
     ["Independent fixture replay SHA-256", attention.fixtures.replaySha256],
     ["Combined model qualification source", attention.composition.source],
     ["Combined model qualification note SHA-256", attention.composition.qualification.noteSha256],
-    ["Four-case qualification roster SHA-256", attention.composition.qualification.localRosterSha256]]) {
+    ["Four-case qualification roster SHA-256", attention.composition.qualification.localRosterSha256],
+    ["Full128 ABBA summary SHA-256", attentionMetrics.summarySha256],
+    ["Full128 ABBA manifest SHA-256", attentionMetrics.manifestSha256],
+    ["Full128 ABBA raw archive SHA-256", attentionMetrics.rawArchiveSha256]]) {
     attentionPins.append(element("dt", "", label), element("dd", "", value));
   }
   attentionDetails.append(attentionPins);
