@@ -233,6 +233,34 @@
     liveHttpTeams.append(article);
   }
 
+  const residual = project.residualDiagnostic;
+  const residualProgress = document.querySelector("[data-residual-diagnostic]");
+  residualProgress.append(element("h3", "", "Residual-tail diagnostic: decode regression"),
+    element("p", "performance-scope", residual.scope));
+  performanceTable("Residual-tail native diagnostic: n=2 per exact binary",
+    ["Ordered residual policy", "Mean TTFT (ms)", "Mean TPOT (ms)", "Mean output tok/s"],
+    residual.rows.map((row) => [row.label, (row.ttftMeanSeconds * 1000).toFixed(3),
+      (row.tpotMeanSeconds * 1000).toFixed(3), row.meanPerRunOutputTokensPerSecond.toFixed(6)]),
+    residualProgress);
+  residualProgress.append(element("p", "", residual.interpretation),
+    element("p", "", `TPOT ranges: old ${residual.rows[0].tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" to ")} ms; new ${residual.rows[1].tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" to ")} ms.`),
+    element("p", "", residual.limitations), element("p", "", residual.correctness));
+  const residualDetails = element("details", "performance-identities");
+  residualDetails.append(element("summary", "", "Residual diagnostic evidence"));
+  const residualPins = element("dl", "observation-facts");
+  for (const [label, value] of [
+    ...residual.rows.flatMap((row) => [[`${row.profile} source`, row.source],
+      [`${row.profile} controller SHA-256`, row.controllerSha256]]),
+    ["Independent summary SHA-256", residual.summarySha256],
+    ["Forty-file manifest SHA-256", residual.manifestSha256],
+    ["Independent replay receipt SHA-256", residual.replaySha256],
+    ["Complete native archive SHA-256", residual.nativeArchiveSha256],
+    ["Complete replay archive SHA-256", residual.replayArchiveSha256]]) {
+    residualPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  residualDetails.append(residualPins);
+  residualProgress.append(residualDetails);
+
   const matched = project.matched128;
   measured.append(element("h3", "", "First matched Ferric / vLLM cell"),
     element("p", "performance-scope", matched.scope), element("p", "", matched.interpretation));

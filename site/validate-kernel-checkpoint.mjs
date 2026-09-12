@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { validateLiveHttpCheckpoint } from "./validate-submission-checkpoint.mjs";
+import { validateResidualDiagnostic } from "./validate-residual-diagnostic.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const baselineProjectSha256 = "8402465db7d75b5f4897774054ec2aef2f1c8e2d40077b2dc4a6ac510f34781a";
@@ -18,6 +19,7 @@ function projectFrom(bytes) {
 
 export async function validateKernelCheckpointEvidence(root, project) {
   validateLiveHttpCheckpoint(project.liveHttpCheckpoint);
+  validateResidualDiagnostic(project.residualDiagnostic);
   async function pinned(name, digest) {
     const bytes = await readFile(join(root, name));
     assert(bytes.length > 0 && bytes.length <= 2 * 1024 * 1024, `${name}: bounded checkpoint input`);
@@ -26,6 +28,7 @@ export async function validateKernelCheckpointEvidence(root, project) {
   }
   const baseline = projectFrom(await pinned("baseline-project.js", baselineProjectSha256));
   const unchanged = JSON.parse(JSON.stringify(project));
+  delete unchanged.residualDiagnostic;
   assert.deepEqual(unchanged.liveHttpCheckpoint.teams[0], baseline.liveHttpCheckpoint.teams[0]);
   delete unchanged.liveHttpCheckpoint.teams;
   delete baseline.liveHttpCheckpoint.teams;
