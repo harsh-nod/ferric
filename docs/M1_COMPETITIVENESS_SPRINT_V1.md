@@ -1449,3 +1449,66 @@ or changing unrelated kernel code. There is no append speedup claim.
 The completed submission replay stage is removed after verified archival,
 reclaiming 7,296 KiB. Active kernel/Pages stages and the final live build stage
 remain owned and tracked pending their respective releases.
+
+### Host Coverage, Publication And Cleanup
+
+Cooperative KV-append `2716371` completes the replacement 26-step host gate:
+24 ordinary passes and two exact baseline-Clippy-debt checks. Control full and
+gfx950-only profiles each pass 13 tests; candidate profiles each pass 18,
+including five append methods. Nine gate-helper methods, five existing Python
+probe methods and 30/24 full/wave host fixtures pass. Doctests explicitly run
+zero tests. Both strict Clippy commands retain actual exit101 under `-D warnings`,
+with the complete unchanged shared RMSNorm diagnostic matched. There is no
+strict-Clippy-pass claim and no warning suppression or unrelated source edit.
+
+All source/control/prior-evidence checks pass. The full host archive
+`391b752b2949d14d63e83f25a9d73880186097fe74be515bdb1e765e85a1c69a`
+matches two remote streams and the local transfer. Actual candidate6 test
+executables and original R1base4 are retained with their real provenance.
+Cargo overwrote the original R2 base executable slots; those bytes are not
+retained and no recovery replay was run. This is source-bound host evidence,
+not artifact-identical replay. Typed emission and native qualification remain
+separate gates, and the candidate is not integrated or promoted.
+
+The exact archived compiler tools and nine reviewed bitcodes are restored for
+the forthcoming same-compiler pair. Receipt
+`424d8e2399c58e22e7f771886e0018d2a289051123b2afa489819e5304aae9d4`
+binds five tools, two build IDs and nine bitcodes. This is a new, narrowly owned
+compatibility restoration of the worker's embedded library path, not reuse of
+a supposedly undeleted old build stage. The old source/cache/target remain
+absent. The worker remains explicitly reused from `216`, with latest `8efd`
+backend/CLI and prospectively pinned current clang/lld. Both owned prefixes
+remain tracked for eventual cleanup. No image was emitted in this restoration.
+
+Pages-only `599943bfffb75a079c7ecc9fcff7c917d8b02e5e` publishes the admitted
+ordered-submission cohort after all eleven remote checks. It preserves every
+historical object and matched HTTP measurement. The new validator checks raw
+host/correctness/ABBA evidence and rejects 133 scalar mutations plus roster
+changes. Browser checks pass eight named viewports and every width 320-1440.
+Three failed attempts are retained: wrapped-prose matching, a cross-VM array
+comparison and one narrow-screen text overflow. Their fixes do not alter raw
+measurements or relax numerical checks.
+
+Workflow `34706818277` succeeds for the exact Pages head. All seven live assets
+match the tested 444,558-byte artifact, ledger
+`4f235284f29a76dcc8ea8cafcc2a6a5d9607156cb21eb88e071713ae46ece86d`.
+The final Pages closure archive is
+`d1207fad19c23fb4880710b4c3c5c792dba426266da717df99a911721ac81e45`.
+Only the six reviewed site paths were pushed; no implementation or fe2o3 change
+was included.
+
+The complete live build stage is removed after archive review and a locked,
+unchanged 26,947-entry metadata check. All 146 recorded process groups were
+absent; accessible same-UID references were clear. Cleanup receipt
+`57e95ac52d8fc517d7d7226f5eadf87416ffb959329033ca88d1f4190e1e3702`
+records 5,120,303,104 allocated bytes reclaimed, with independent SSH absence
+confirmed. Its clean source worktree is removed too (42,308 KiB). The published
+Pages stage and clean worktree are removed, reclaiming 338,332 and 2,788 KiB.
+Their cleanup receipt is
+`cf50737e9a5bd9db5a9b05398a5c73bc14e71d68037ba5287f16332d0dbd044e`.
+Foreign-UID processes were skipped and nondumpable SSH/PAM visibility limits
+remain explicit; these are not global process-absence claims.
+
+The new context8192 HTTP wrapper is source-only and under independent review.
+No new HTTP timing, native kernel gain, speculative serving, default promotion,
+Verus proof, M1 closure or competitive win is claimed.
