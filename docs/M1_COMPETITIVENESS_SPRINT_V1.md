@@ -1343,3 +1343,64 @@ and preserves the original CLI/defaults. Logical context remains <=8192 and
 the aggregate physical pool <=512 pages. Context256 canary timing cannot
 stand in for context8192 HTTP timing; fresh correctness and matched HTTP
 remeasurement remain required.
+
+### Ordered Submission Native Comparison
+
+The exact `7cb6522` controller above passes synchronous8, ordered8,
+synchronous128 and ordered128 correctness checks, followed by the predeclared
+synchronous-a1 / ordered-b1 / ordered-b2 / synchronous-a2 full128 ABBA cohort.
+All eight runs match exact token IDs and UTF-8, autoregressive committed inputs,
+selected-row accounting, packet/batch counts and retirement. All workers close
+normally; owned process groups are absent without forced cleanup and all eight
+physical GPUs are idle before and after every run. No launch remains active.
+
+The comparison fixes TP1 physical GPU0, 128 input and 128 output tokens,
+context256, pages16, cap32/chunk16, v5 MFMA, wave attention, FP32-v8 head and
+wave-v11 argmax. Prefix caching and speculation are off. Only submission mode
+changes. The four earlier correctness cases are not comparison samples.
+
+| Whole-workload host metric | Synchronous mean | Ordered mean | Descriptive change |
+| --- | ---: | ---: | ---: |
+| TTFT | 3126.512 ms | 2848.070 ms | 8.91% lower |
+| TPOT | 230.559 ms | 194.927 ms | 15.45% lower |
+| Mean per-run output rate | 3.949884 tokens/s | 4.643287 tokens/s | 17.56% higher |
+| Prefill-start through final token commit | 32.407551 s | 27.603841 s | 14.82% lower |
+
+There are two runs per mode, not a confidence interval. Ordered TPOT ranges
+187.288912-202.565752 ms (7.84% of its mean), and rate ranges
+4.472915378-4.813658827 tokens/s (7.34%). The two repetition-pair rate changes
+are +21.03% and +14.03%; the table uses ratios of arithmetic means, not the
+average paired ratio. Mean output rate averages each run's 128/duration.
+Setup, detokenization, retirement and close are excluded from the clock.
+These are instrumented controller host durations, not HTTP or GPU timestamps.
+
+Root authenticated all forty original mi350 comparison hashes and sizes
+against the extracted local files, totaling 6,919,376 bytes. The archive
+matches a second independent remote stream. The frozen reducer independently
+replays all four raw traces on mi300x; its positive execution exits0 and a
+wrong external manifest hash exits1 with empty stdout and the expected byte-pin
+error. Both process groups close unforced. All prior30 stage files, source11,
+raw40, manifest, runner, plan and Python retain equal before/after custody.
+
+- Raw archive: `af4751cbc88b626b7a8a9c200ae055069ea45117d2276d198bf54df4b5fca716`.
+- Manifest: `be4495ac63eaa8b05e2321a39232f3dcd49b12966c7ba9dce01064bd6b86c505`.
+- Raw hash ledger: `a847b1889f324487c550fa8485f9904515883b0fdb65c903c66971910248f2d8`.
+- Raw size ledger: `df7cfbf3a9c4cd585c0cf867ab8defa346988f45b4f7e89066bc61d7e573561b`.
+- Frozen reducer: `f0f08a9f621620fe5006c7b941fbe35641f1d1c99a7dd372544b952ccca9533f`.
+- Descriptive summary: `2de0c6a0fd2520f77f53c570959f653b55caa71e8a87ab94d937f565febe2ace`.
+- Replay receipt: `2dd3d91a35632adddbc50dbe21196a6c6b59f86d3d507914df1d82fbf30bc29e`.
+- Equal custody ledgers: `3c7d4feeb742a73505668c319c2489b47b203b61b90f3367d180d29a91021a03`.
+- Complete replay archive: `b2197021e895393c8e6b5b9abe847d29cd640ad420378d70fc7ee5cd5bc8b43d`, matching a second remote stream.
+
+Synchronous operation-group spans include submission and waiting; ordered
+group spans measure only command preparation, with waits in collective flush
+spans. No cross-mode operation-group speed ratio is valid, and overlapping
+parent/IPC spans are not additive. No stable, competitive, HTTP, default, TP8,
+M1 or new Verus claim is made. The earlier attention, argmax and matched HTTP
+cohorts remain unchanged; their gains are not multiplied into this result.
+
+Fresh fe2o3 main at 16:24 UTC remains `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`.
+The separate live entrypoint is formatted source `489a5a1`, with source review
+complete and its remote host gate running. Cooperative KV-append candidate
+`1d3f358` is source-reviewed only; same-compiler control/candidate emission,
+native raw-bit/guard tests and complete model qualification remain required.
