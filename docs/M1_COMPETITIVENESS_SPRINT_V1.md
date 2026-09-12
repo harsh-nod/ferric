@@ -1226,3 +1226,71 @@ test, formatter or new Verus proof ran.
 - Descriptive summary: `0435191640d3d8669910ce4c6de5906636ee525804c1440fe0ae45bc2fe957f3`.
 - Strict replay receipt: `caa0c160ce94b6242a566326e11b30444fd332ff203d4aa525efd24a64efbfa9`.
 - Complete replay archive: `b0599fc0743a48df2481213f9b6c14667a759fb28f458468e895ae3d8506baf2`, also matching a second remote stream.
+
+The completed isolated CPU replay stage is removed after verified custody,
+reclaiming 7,516,160 allocated bytes. Cleanup receipt is
+`931b0e67e662d7c8d032f86697d54342a2d05f6dd260dc3e1bbcded3a8d4fbce`;
+restricted process visibility is recorded without a global absence claim.
+
+### Ordered Wave/V11 Driver
+
+Source `ad0663303a642a5d5c5b7e300b4a6f3fab5bced3`, tree
+`7f8cc3ce530e5f163aa2f929e12e796676521ddc`, is integrated as `a68f04c`
+after all 44 remote host-gate commands pass. The new explicit terminal selector
+validates the fresh TP1/cap32, MFMA, pruning, device-residual, wave-attention,
+FP32-v8 and admitted-v11 profile plus ordered transport capability before
+publishing either selector field. It reuses the existing ten-command attention
+and five-command FFN groups at each layer's barriers. Embedding, residuals and
+all selected output-head operations remain synchronous. No kernel arithmetic,
+worker protocol, reference, default, prior selector or CLI changes occur in
+this driver-only revision.
+
+Six focused recording tests cover active-row/output selections, flattened
+commands and byte arguments, packet reservations, atomic admission rejection,
+legacy exclusion, failure poisoning/quarantine and host timing. The full gate
+passes 691 adapter test invocations with 34 ignored, eight doctests, strict
+Clippy, 26 adapter source-policy tests, both existing release binaries, explicit image
+and workload goldens, 38 source-gate tests and 31 protected verifier policies.
+All five inventories match byte-for-byte. The adapter source-policy count for
+this driver revision is 26; the later canary adds one more test.
+
+All 1,070 source files retain before/after custody across the 44 commands. The
+target was fresh at entry while offline toolchain/dependency caches were reused;
+peak post-command stage size is 2,704,984 KiB under the 6 GiB cap. The initial
+raw-source formatting check's exit1 remains separate from the passing gate.
+Host note: `af96e909805386b722cb0e7422c68a3e917709b9c7a4734db243065287334d72`.
+Complete archive: `e638f869557d2508c190dcb3f5d328971ed217249d225562115edfcbe22d6f44`,
+matching an independent second remote stream. Integrated implementation bytes
+match tested ad066 across adapters, device, crates, proofs and Cargo.lock.
+The redundant clean driver worktree is removed, reclaiming 43,245,568 allocated
+bytes. Its private target remains explicitly leased for the next warm gate.
+
+The separate canary candidate is raw `144a885`, formatted `7cb6522`, with new
+closed schemas and `--submission synchronous|ordered`. It fixes wave attention,
+v11 argmax and the unchanged 8/128-token workload, and rejects profile/runtime
+mismatches before sidecar creation or model/worker effects. Both source reviews
+pass; remote formatting changes only two new test sections. Its full host and
+native gates remain separate and pending. Ordered attention/FFN spans describe
+command preparation; waits move to the collective flush spans. A new checker
+must validate that exact roster without rewriting older raw evidence.
+
+### Published Attention Checkpoint
+
+Pages-only `0fa8c199e9a65d44ce8cd0a35e7e19a0e7b92373` is published after
+fresh fetch/rebase and a seven-site-file path audit. All ten remote checks pass,
+including 260 negative checkpoint mutations, authenticated raw-file arithmetic,
+desktop/mobile screenshots and every width 320-1440. Workflow `34701617457`
+deploys that exact source; all seven live assets match the tested 434,648-byte
+artifact. Live verification receipt:
+`7057da81f741af264f44d59c95a63f16bbd48bafc21bafdfb511df091f7ae3e4`.
+
+The page publishes the seven-group diagnostic, finite fixtures, four model
+checks and separate full128 ABBA means/ranges, preserving all prior HTTP and
+argmax observations. It makes no stable, competitive, serving or M1 claim.
+The failed r4 validator binding collision and six-identifier correction remain
+archived; no raw result or metric changed. Final gate archive:
+`23e53ff3c6f5ecef828c4ae0cebb896e9c56d7e3f2c6d80b7b04f23c1529eedb`.
+The completed owned stage and worktree are removed after full closure custody,
+reclaiming 325,460 KiB remotely and 2,748 KiB locally. Cleanup receipt:
+`333d1ad953fd30a562fdea08abc480ddf086251a318898d2e6aada94276f5c19`.
+Only Pages commits are pushed; Ferric implementation remains local.
