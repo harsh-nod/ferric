@@ -144,7 +144,7 @@ fn attention_v11_rejects_wrong_bindings_and_unsupported_profiles_without_io() {
             10 => driver.prune_output_head = false,
             11 => {
                 driver.projection.mode =
-                    super::super::super::EngineeringTpProjectionModeV3::Baseline
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline;
             }
             12 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave,
             13 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Auto,
@@ -157,7 +157,7 @@ fn attention_v11_rejects_wrong_bindings_and_unsupported_profiles_without_io() {
             20 => driver.inner.ranks.clear(),
             21 => {
                 driver.inner.reduction =
-                    super::super::super::reduction::ReductionWorkspace::Baseline
+                    super::super::super::reduction::ReductionWorkspace::Baseline;
             }
             _ => unreachable!(),
         }
