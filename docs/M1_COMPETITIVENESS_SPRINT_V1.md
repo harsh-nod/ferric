@@ -1404,3 +1404,48 @@ The separate live entrypoint is formatted source `489a5a1`, with source review
 complete and its remote host gate running. Cooperative KV-append candidate
 `1d3f358` is source-reviewed only; same-compiler control/candidate emission,
 native raw-bit/guard tests and complete model qualification remain required.
+
+### Live Entrypoint Host Integration
+
+The separate opt-in live entrypoint is integrated locally as `7f58928` from
+tested source `433e21354ca7e9b2f97b3e96caf39070d79c711a`, tree
+`0a0717414eb5fa143081132f816c18dc8058f0c6`. Implementation bytes match the
+tested source. Existing entrypoints and defaults are unchanged. The new profile
+fixes TP1, MFMA, wave attention, FP32-v8 head, wave-v11 argmax, cap32/chunk16,
+device-TP1 residuals and prefix caching off; submission is explicitly either
+synchronous or ordered. It reuses the existing live ingress and runtime.
+
+The first host attempt on `489a5a1` stopped at strict Clippy for two missing
+statement semicolons. Its failure and incidentally compiled, unqualified
+binaries are archived separately; none was launched. The two-semicolon fix
+is the only change in `433e213`. The new r2 gate on mi300x passes all 32 actual
+commands and all wrappers: 775 adapter test invocations with 41 explicit
+ignores across 19 result rows, eight doctests, strict all-target Clippy, 74
+CPU HTTP regressions, source-gate38, protected-policy31 and all five generated
+inventory comparisons. All ten source copies and prior evidence retain equal
+before/after custody. All owned command groups are absent without forced
+cleanup. The release build used the explicitly warm, source-bound target.
+
+- Failed r1 archive: `81175770da253873ed8255ef49a7d0e3f24db0db154668c9ea64c9b628ce5b18`.
+- Passed r2 archive: `fd08f565829069adf1bfa53b4729d8ebba18a4ab6262cfbcd206de5b23c98fc8`, matching a second independent remote stream.
+- Final remote receipt: `9fc31d0d209a8d7abbf88e9ba9ef991efc33f4328b0ad4370234c6c1a44f549d`.
+- Live controller: `9fd94a978358f0533c096ec9b5dd51d46833b4ca5426b1eaabb0337b4409c656`.
+
+Fresh fe2o3 main at 16:47 UTC remains exact `8efd4fd`; no compiler or KFD
+changes were needed. Frozen emitted images and the worker retain their actual
+earlier source identities. No live GPU or new HTTP result is admitted yet.
+The next qualification uses the original matched128 prompt/reference and
+context8192, including a second request on the same controller after retirement.
+Only after correctness passes may a separate C1, ten-warmup/thirty-measured
+HTTP cell run with the unchanged shared client and serving transport.
+
+Cooperative KV-append `2716371` remains a separate candidate. Its first paired
+host gate stops at a pre-existing `clippy::let_and_return` diagnostic in the
+unchanged shared RMSNorm root after control full/wave tests pass. Candidate
+tests and emission have not run. The follow-up will explicitly bind this
+baseline warning and reject any new diagnostic, without suppressing warnings
+or changing unrelated kernel code. There is no append speedup claim.
+
+The completed submission replay stage is removed after verified archival,
+reclaiming 7,296 KiB. Active kernel/Pages stages and the final live build stage
+remain owned and tracked pending their respective releases.

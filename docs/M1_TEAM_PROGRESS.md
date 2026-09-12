@@ -48,9 +48,9 @@ All four correctness timings and prior cohorts remain excluded.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition passes all eight new model runs, observing 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append source `1d3f358` distributes raw BF16 copies across 64 lanes; source review passes, but formatting, host tests, typed emission and native validation have not run. V12 remains host/emission-only. | Validate cooperative append with same-8efd control/candidate emission and unchanged remaining roots. No kernel performance claim or default promotion. |
+| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition passes all eight new model runs, observing 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append candidate `2716371` is source-reviewed and remotely formatted. The paired host gate stopped on a pre-existing shared RMSNorm Clippy warning after both control feature configurations passed; candidate tests have not run. V12 remains host/emission-only. | Resume with an exact baseline-warning check, then same-8efd control/candidate emission and unchanged remaining roots. No kernel performance claim or default promotion. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Ordered driver `ad06633` and submission canary `7cb6522` are integrated locally. All 51 canary host steps, 745 adapter invocations, eight doctests and 26/18 checker/reducer CPU methods pass. Four correctness cases and four ABBA samples pass independent replay, with all forty comparison files authenticated. Pages-only `0fa8c19` remains live; the ordered-result update is in preparation. | Separate live entrypoint `489a5a1` has passed source review and remote formatting; its 32-command host gate is running. Context8192 native correctness and matched HTTP remeasurement remain required. No new Verus proof. |
+| Integration and Pages | Ordered driver `ad06633` and submission canary `7cb6522` are integrated locally. All eight native submission runs pass independent replay. The separate live entrypoint is now integrated as `7f58928` from tested `433e213`: all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regression tests pass. Pages-only `0fa8c19` remains live; the ordered-result update is being validated. | Implement and CPU-test the context8192 correctness wrapper, then fresh GPU qualification and matched HTTP remeasurement. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -90,8 +90,9 @@ All required source, failures, receipts and deployment evidence remain archived.
 The submission canary is integrated as `0a9d5df`, with implementation bytes
 matching tested `7cb6522`. Its completed candidate worktree is removed
 (42,260 KiB), and the checker CPU stage is removed (208 KiB). The remote
-target remains explicitly warm and leased for the live-entrypoint follow-up;
-the small reducer stage is retained for the upcoming authenticated replay.
+target was explicitly warm for the completed live-entrypoint gate and awaits
+archive-reviewed cleanup. The completed submission replay stage is removed
+(7,296 KiB), with its raw inputs, admitted summary and cleanup receipt retained.
 
 ## September 11 Performance Swarm
 
