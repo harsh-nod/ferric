@@ -130,7 +130,7 @@ export async function validateSubmissionEvidence(root, value) {
   const q = value.qualification;
   await pinned("check_wave_argmax_submission.py", q.checkerSha256, false);
   await pinned("run_wave_argmax_submission.py", q.wrapperSha256, false);
-  const note = (await pinned("qualification/QUALIFICATION.md", q.noteSha256, false)).toString("utf8");
+  const note = (await pinned("qualification/QUALIFICATION.md", q.noteSha256, false)).toString("utf8").replace(/\s+/g, " ");
   for (const fact of [value.source, value.tree, value.controllerSha256, value.planSha256,
     q.archiveSha256, q.rosterSha256, q.sizesSha256, "All four predeclared correctness cases passed",
     "normal unforced", "timings are excluded", "No comparison", "all40 raw files"])
