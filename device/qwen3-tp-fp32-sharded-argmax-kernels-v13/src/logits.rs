@@ -64,9 +64,7 @@ macro_rules! final_lane_input {
 
 #[cfg(test)]
 macro_rules! winning_shard_key {
-    ($value:expr, $maximum:expr, $key:expr) => {{
-        if $value == $maximum { $key } else { 0.0_f32 }
-    }};
+    ($value:expr, $maximum:expr, $key:expr) => {{ if $value == $maximum { $key } else { 0.0_f32 } }};
 }
 
 #[cfg(test)]
@@ -199,8 +197,7 @@ pub fn ferric_qwen3_tp_batch32_sharded_argmax_finalize_f32_v13(
     {
         fe2o3_device::trap();
     }
-    let Ok(maxima_view) = StridedReadView2D::from_shared_slice(maxima, 0, rows, 64, 64)
-    else {
+    let Ok(maxima_view) = StridedReadView2D::from_shared_slice(maxima, 0, rows, 64, 64) else {
         fe2o3_device::trap();
     };
     let Ok(keys_view) = StridedReadView2D::from_shared_slice(keys, 0, rows, 64, 64) else {

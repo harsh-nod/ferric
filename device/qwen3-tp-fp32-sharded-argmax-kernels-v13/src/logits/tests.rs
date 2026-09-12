@@ -213,8 +213,7 @@ fn each_lane_keeps_nonfinite_flag_after_later_finite_candidates() {
                 let saved = values[token];
                 for invalid in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
                     values[token] = invalid;
-                    let view =
-                        StridedReadView2D::from_shared_slice(&values, 0, 1, N, N).unwrap();
+                    let view = StridedReadView2D::from_shared_slice(&values, 0, 1, N, N).unwrap();
                     let (_, _, flag) = shard_lane_argmax!(view, 0, shard, lane);
                     assert_eq!(flag, 1.0);
                 }
@@ -332,7 +331,11 @@ fn active_rows_preserve_scratch_choice_guards_and_nonfinite_capacity_tails() {
             );
         }
         assert_eq!(choices[0], 0xa5a5_a5a5);
-        assert!(choices[1 + rows..].iter().all(|&value| value == 0xa5a5_a5a5));
+        assert!(
+            choices[1 + rows..]
+                .iter()
+                .all(|&value| value == 0xa5a5_a5a5)
+        );
         assert!(
             values
                 .iter()

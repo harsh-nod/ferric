@@ -68,7 +68,9 @@ fn closed_two_root_roster_has_exact_explicit_argument_types() {
                         panic!("missing owner arguments")
                     };
                     assert_eq!(owner_args.args.len(), 3);
-                    assert!(matches!(&owner_args.args[0], GenericArgument::Type(Type::Path(p)) if p.path.is_ident("Index1D")));
+                    assert!(
+                        matches!(&owner_args.args[0], GenericArgument::Type(Type::Path(p)) if p.path.is_ident("Index1D"))
+                    );
                     for (argument, expected) in owner_args.args.iter().skip(1).zip([64, 1]) {
                         let GenericArgument::Const(syn::Expr::Lit(literal)) = argument else {
                             panic!("nonliteral ownership width")
@@ -164,10 +166,14 @@ fn producer_has_literal_canonical_loop_and_guarded_last_stripe() {
             let syn::Expr::Block(block) = local.init.as_ref()?.expr.as_ref() else {
                 return None;
             };
-            block.block.stmts.iter().find_map(|statement| match statement {
-                syn::Stmt::Expr(syn::Expr::While(scan), _) => Some(scan),
-                _ => None,
-            })
+            block
+                .block
+                .stmts
+                .iter()
+                .find_map(|statement| match statement {
+                    syn::Stmt::Expr(syn::Expr::While(scan), _) => Some(scan),
+                    _ => None,
+                })
         })
         .unwrap();
     let syn::Expr::Binary(condition) = scan.cond.as_ref() else {
@@ -178,7 +184,9 @@ fn producer_has_literal_canonical_loop_and_guarded_last_stripe() {
     let syn::Expr::Lit(right) = condition.right.as_ref() else {
         panic!("nonliteral loop bound")
     };
-    assert!(matches!(&right.lit, syn::Lit::Int(value) if value.base10_parse::<usize>().unwrap() == 38));
+    assert!(
+        matches!(&right.lit, syn::Lit::Int(value) if value.base10_parse::<usize>().unwrap() == 38)
+    );
     let source = normalize(LOGITS);
     for text in [
         "let mut step = 1_usize",
@@ -198,7 +206,9 @@ fn producer_reductions_precede_both_stores_and_final_rejection_precedes_selectio
     let invalid = producer.find("reduce_max_f32::<64>(invalid)").unwrap();
     let maximum = producer.find("reduce_max_f32::<64>(value)").unwrap();
     let key = producer.find("reduce_max_f32::<64>(key)").unwrap();
-    let sentinel = producer.find("let shard_key = if any_invalid == 0.0").unwrap();
+    let sentinel = producer
+        .find("let shard_key = if any_invalid == 0.0")
+        .unwrap();
     let lane_zero = producer.find("if lane == 0").unwrap();
     let first_store = producer.find("maxima.write_row_striped_2d").unwrap();
     let second_store = producer.find("keys.write_row_striped_2d").unwrap();
