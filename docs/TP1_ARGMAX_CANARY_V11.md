@@ -43,6 +43,10 @@ Expected totals are 9,219 packets and 15 batches for eight outputs, or
 83,139 packets and 135 batches for 128 outputs. Resident input counts before
 retirement are 135 and 255; the last generated token is not consumed.
 The completed sequence retires without publishing a cached prefix.
+Retirement requires zero live sequences, retained/cached/quarantined pages,
+all 16 pages free, a stale sequence handle, and valid pool invariants. It
+does not reset monotone sequence or batch identities: `is_empty()` remains
+a never-used admission guard, not a post-retirement ownership predicate.
 
 ## Evidence Boundaries
 
@@ -64,3 +68,12 @@ unchanged command traces, failure poisoning, and timing scope behavior.
 Recording transports are not kernel emulators. Native kernel fixtures,
 full-model parity, and matched timing trials require separate source- and
 image-pinned receipts; this document makes no native success or speedup claim.
+
+The first native 128-output serial attempt at source `f662d54` completed
+83,139 packets and 135 batches but failed a controller assertion that
+mistakenly reused the fresh-pool guard after retirement. The worker closed
+normally and all eight GPUs were idle afterward. That attempt is retained
+as rejected, with no published observation or admitted parity result. The
+correction changes only the post-retirement check; metadata regressions
+exercise actual reserve/begin/commit flows for 135 and 255 resident inputs,
+and the canary's retirement helper rejects pending or quarantined work.

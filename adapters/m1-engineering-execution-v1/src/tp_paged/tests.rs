@@ -280,6 +280,66 @@ fn append(
         pool.check_invariants().unwrap();
     }
 }
+
+fn no_cache_argmax_retirement(outputs: u32) {
+    let limits = EngineeringTpPagedLimitsV1::new(256, 1, 16, 100).unwrap();
+    let mut pool = EngineeringTpPagedPoolV1::new_wide32(scope(), limits).unwrap();
+    assert!(pool.is_empty());
+    let hit = pool.open_sequence(scope(), &[7; 128], 0).unwrap();
+    let sequence = hit.sequence();
+    assert_eq!((hit.hit_tokens(), hit.hit_pages()), (0, 0));
+    append(&mut pool, sequence, &[7; 128]);
+    for _ in 1..outputs {
+        append(&mut pool, sequence, &[9]);
+    }
+    assert_eq!(pool.committed_position(sequence), Ok(127 + outputs));
+    assert_eq!(pool.next_batch, u64::from(8 + outputs));
+    assert_eq!(pool.stats().retained_pages, (127 + outputs).div_ceil(16));
+    pool.retire_sequence(sequence, false, 1).unwrap();
+    pool.check_invariants().unwrap();
+    assert_eq!(
+        pool.committed_position(sequence),
+        Err(Error::UnknownSequence)
+    );
+    assert_eq!(
+        pool.stats(),
+        EngineeringTpPagedStatsV1 {
+            sequences: 0,
+            free_pages: 16,
+            retained_pages: 0,
+            cached_pages: 0,
+            quarantined_pages: 0,
+            prefix_hits: 0,
+            hit_tokens: 0,
+            hit_pages: 0,
+            evicted_pages: 0,
+        }
+    );
+    assert!(!pool.is_empty());
+    assert_eq!(pool.next_batch, u64::from(8 + outputs));
+    let reopened = pool.open_sequence(scope(), &[7; 128], 1).unwrap();
+    assert_ne!(reopened.sequence(), sequence);
+    assert_eq!((reopened.hit_tokens(), reopened.hit_pages()), (0, 0));
+    let next = pool
+        .reserve_batch(&[row(reopened.sequence(), 0, 7)])
+        .unwrap();
+    assert_eq!(next.id(), u64::from(8 + outputs));
+    pool.abort_batch(&next).unwrap();
+    pool.retire_sequence(reopened.sequence(), false, 1).unwrap();
+    pool.check_invariants().unwrap();
+    assert_eq!(pool.stats().free_pages, 16);
+}
+
+#[test]
+fn no_cache_argmax_retirement_after_135_committed_inputs() {
+    no_cache_argmax_retirement(8);
+}
+
+#[test]
+fn no_cache_argmax_retirement_after_255_committed_inputs() {
+    no_cache_argmax_retirement(128);
+}
+
 fn publish(pool: &mut EngineeringTpPagedPoolV1, tokens: &[u32], now: u64) {
     let hit = pool.open_sequence(scope(), tokens, now).unwrap();
     append(pool, hit.sequence(), &tokens[hit.hit_tokens() as usize..]);

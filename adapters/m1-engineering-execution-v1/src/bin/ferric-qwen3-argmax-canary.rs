@@ -20,8 +20,8 @@ use ferric_m1_engineering_execution_v1::tp_execution::{
 };
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use ferric_m1_engineering_execution_v1::tp_paged::{
-    EngineeringTpPageRowV1, EngineeringTpPagedLimitsV1, EngineeringTpPagedPoolV1,
-    EngineeringTpPoolScopeV1, EngineeringTpSequenceIdV1,
+    EngineeringTpPageRowV1, EngineeringTpPagedErrorV1, EngineeringTpPagedLimitsV1,
+    EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1, EngineeringTpSequenceIdV1,
 };
 use paired_paged_canary_contract::{SOURCE_REFERENCE_SHA256, hash_file, hex};
 use serde_json::{Value, json};
@@ -50,6 +50,28 @@ fn count(values: &[u64]) -> Result<u64, String> {
 fn identity(artifact: &EngineeringTpArtifactV1) -> Value {
     json!({"hsaco":hex(artifact.hsaco_id().as_bytes()), "manifest":hex(artifact.manifest_id().as_bytes()),
         "handoff":hex(artifact.handoff_id().as_bytes())})
+}
+
+fn retire_no_cache(
+    pool: &mut EngineeringTpPagedPoolV1,
+    sequence: EngineeringTpSequenceIdV1,
+) -> Result<(), String> {
+    pool.retire_sequence(sequence, false, 1)
+        .map_err(|e| format!("retire: {e:?}"))?;
+    pool.check_invariants()
+        .map_err(|e| format!("retired pool: {e:?}"))?;
+    // is_empty is the virgin-driver admission guard; retirement never rewinds IDs.
+    let stats = pool.stats();
+    if stats.sequences != 0
+        || stats.free_pages != PAGES
+        || stats.retained_pages != 0
+        || stats.cached_pages != 0
+        || stats.quarantined_pages != 0
+        || pool.committed_position(sequence) != Err(EngineeringTpPagedErrorV1::UnknownSequence)
+    {
+        return Err("retired no-cache pool must release every page and sequence".into());
+    }
+    Ok(())
 }
 
 fn execute_step<R: EngineeringTpRankTransportV1>(
@@ -180,13 +202,7 @@ fn observe<R: EngineeringTpRankTransportV1>(
     {
         return Err("final packet/batch/resident-input contract drift".into());
     }
-    pool.retire_sequence(sequence, false, 1)
-        .map_err(|e| format!("retire: {e:?}"))?;
-    pool.check_invariants()
-        .map_err(|e| format!("retired pool: {e:?}"))?;
-    if !pool.is_empty() {
-        return Err("retired no-cache pool must be empty".into());
-    }
+    retire_no_cache(pool, sequence)?;
     emit(
         &json!({"schema":"FerricArgmaxCanaryObservationV1","authority":"none","performance_qualified":false,
         "generated_token_ids":generated,"generated_utf8_hex":utf8,"reference_passed":parity,
@@ -334,5 +350,63 @@ fn main() -> std::process::ExitCode {
             eprintln!("Argmax canary rejected: {error}");
             std::process::ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod retirement_tests {
+    use super::*;
+
+    fn reserved() -> (
+        EngineeringTpPagedPoolV1,
+        EngineeringTpSequenceIdV1,
+        ferric_m1_engineering_execution_v1::tp_paged::EngineeringTpPreparedBatchV1,
+    ) {
+        let scope = EngineeringTpPoolScopeV1 {
+            model: [1; 32],
+            session: [2; 32],
+        };
+        let limits = EngineeringTpPagedLimitsV1::new(CONTEXT, 1, PAGES, 100).unwrap();
+        let mut pool = EngineeringTpPagedPoolV1::new_wide32(scope, limits).unwrap();
+        assert!(pool.is_empty());
+        let sequence = pool
+            .open_sequence(scope, &[7; PROMPT], 0)
+            .unwrap()
+            .sequence();
+        let batch = pool
+            .reserve_batch(&[EngineeringTpPageRowV1 {
+                sequence,
+                token: 7,
+                position: 0,
+            }])
+            .unwrap();
+        (pool, sequence, batch)
+    }
+
+    #[test]
+    fn no_cache_retirement_checks_ownership_without_resetting_freshness() {
+        let (mut pool, sequence, batch) = reserved();
+        pool.abort_batch(&batch).unwrap();
+        retire_no_cache(&mut pool, sequence).unwrap();
+        assert!(!pool.is_empty());
+        assert_eq!(pool.stats().free_pages, PAGES);
+        assert!(retire_no_cache(&mut pool, sequence).is_err());
+        let next = pool.open_sequence(pool.scope(), &[7; PROMPT], 1).unwrap();
+        assert_ne!(next.sequence(), sequence);
+        assert_eq!((next.hit_tokens(), next.hit_pages()), (0, 0));
+        retire_no_cache(&mut pool, next.sequence()).unwrap();
+    }
+
+    #[test]
+    fn no_cache_retirement_rejects_pending_and_quarantined_work() {
+        let (mut pool, sequence, batch) = reserved();
+        assert!(retire_no_cache(&mut pool, sequence).is_err());
+        assert_eq!(pool.stats().sequences, 1);
+        pool.begin_submission(&batch).unwrap();
+        assert!(retire_no_cache(&mut pool, sequence).is_err());
+        pool.quarantine_batch(&batch).unwrap();
+        assert!(retire_no_cache(&mut pool, sequence).is_err());
+        assert_eq!(pool.stats().quarantined_pages, PAGES);
+        assert_eq!(pool.stats().free_pages, 0);
     }
 }
