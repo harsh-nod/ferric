@@ -12,7 +12,8 @@ import { validateNativeFollowup, testNativeFollowupRejections } from "./validate
 import { validateArgmaxCheckpoint, testArgmaxCheckpointRejections } from "./validate-argmax-checkpoint.mjs";
 import { validateArgmaxNative, testArgmaxNativeRejections } from "./validate-argmax-native.mjs";
 import { validateAttentionCheckpoint, testAttentionCheckpointRejections } from "./validate-attention-checkpoint.mjs";
-import { validateSubmissionCheckpoint, testSubmissionCheckpointRejections } from "./validate-submission-checkpoint.mjs";
+import { validateSubmissionCheckpoint, testSubmissionCheckpointRejections,
+  validateLiveHttpCheckpoint, testLiveHttpCheckpointRejections } from "./validate-submission-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -37,6 +38,8 @@ validateAttentionCheckpoint(project.attentionCheckpoint, project.attentionReadin
 testAttentionCheckpointRejections(project.attentionCheckpoint, project.attentionReadiness);
 validateSubmissionCheckpoint(project.submissionCheckpoint);
 testSubmissionCheckpointRejections(project.submissionCheckpoint);
+validateLiveHttpCheckpoint(project.liveHttpCheckpoint);
+testLiveHttpCheckpointRejections(project.liveHttpCheckpoint);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);

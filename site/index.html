@@ -48,8 +48,8 @@
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
               Bounded resident JSONL and loopback HTTP are implemented in private source;
-              the first matched 128-token Ferric/vLLM cell passes exact output checks on one GPU.
-              Ferric is substantially slower on that cell. Standalone draft execution and an
+              a separate wave-attention / v11 profile now has admitted context8192 HTTP measurements.
+              The retained vLLM reference is substantially faster. Standalone draft execution and an
               independent paged-draft FP32 reference pass; end-to-end speculative serving,
               SGLang measurements, sustained-load and protected qualification remain open.
             </p>
@@ -99,8 +99,9 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>One matched 128/128 cell, followed by earlier fixed-workload observations. Not production-serving qualification.</p>
+            <p>New context8192 live HTTP cohorts, the retained first matched cell, then earlier fixed-workload observations. Not production-serving qualification.</p>
           </div>
+          <div data-live-http-progress></div>
           <div data-performance></div>
         </div>
       </section>
@@ -202,6 +203,9 @@
               deliverable, and the latest validation boundary.
             </p>
           </div>
+          <h3>Current parallel checkpoint</h3>
+          <div class="team-grid" data-live-http-teams></div>
+          <h3>Earlier team records</h3>
           <div class="team-grid" data-teams></div>
         </div>
       </section>

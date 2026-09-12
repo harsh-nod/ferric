@@ -60,7 +60,7 @@
 
   document.querySelector("[data-milestone-name]").textContent = project.milestone.name;
   document.querySelector("[data-milestone-label]").textContent = project.milestone.label;
-  document.querySelector("[data-milestone-summary]").textContent = project.milestone.summary;
+  document.querySelector("[data-milestone-summary]").textContent = project.liveHttpCheckpoint.overview;
   document.querySelector("[data-milestone-dot]").classList.add(
     `dot-${project.milestone.state}`,
   );
@@ -183,6 +183,54 @@
   }
   submissionDetails.append(submissionPins);
   submissionProgress.append(submissionDetails);
+
+  const liveHttp = project.liveHttpCheckpoint;
+  const liveHttpProgress = document.querySelector("[data-live-http-progress]");
+  liveHttpProgress.append(element("h3", "", "Wave attention / v11: context8192 HTTP"),
+    element("p", "performance-scope", liveHttp.scope));
+  performanceTable("Live wave/v11 HTTP: separate admitted context8192 cohorts",
+    ["Submission", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tok/s"],
+    liveHttp.cohorts.map((row) => [row.mode, row.ttftMeanMs.toFixed(3), row.tpotMeanMs.toFixed(3),
+      row.outputTokensPerSecond.toFixed(6)]), liveHttpProgress);
+  liveHttpProgress.append(element("p", "", liveHttp.measurement),
+    element("p", "", liveHttp.correctness), element("p", "", liveHttp.imageScope),
+    element("p", "", liveHttp.interpretation));
+  if (liveHttp.orderedMeasurementState !== "independent-replay-passed") {
+    liveHttpProgress.append(element("p", "", "Ordered HTTP measurement is awaiting completed independent replay; no ordered timing is published yet."));
+  }
+  const liveHttpDetails = element("details", "performance-identities");
+  liveHttpDetails.append(element("summary", "", "Live HTTP percentiles and evidence"));
+  performanceTable("Live wave/v11 HTTP: descriptive single-cohort percentiles",
+    ["Submission", "TTFT p50 / p99 (ms)", "TPOT p50 / p99 (ms)", "Cohort (s)"],
+    liveHttp.cohorts.map((row) => [row.mode, `${row.ttftP50Ms.toFixed(3)} / ${row.ttftP99Ms.toFixed(3)}`,
+      `${row.tpotP50Ms.toFixed(3)} / ${row.tpotP99Ms.toFixed(3)}`, row.windowSeconds.toFixed(6)]), liveHttpDetails);
+  const liveHttpPins = element("dl", "observation-facts");
+  for (const [label, value] of [["Live controller source", liveHttp.source],
+    ["Live controller SHA-256", liveHttp.controllerSha256], ["Controller dependency / v11 compiler source", liveHttp.compilerSource],
+    ["Actual runtime worker source", liveHttp.workerSource], ["Actual runtime worker SHA-256", liveHttp.workerSha256],
+    ["Unchanged HTTP client SHA-256", liveHttp.clientSha256], ["Independent reference SHA-256", liveHttp.referenceSha256],
+    ...liveHttp.qualification.map((row) => [`${row.mode} context8192 qualification receipt SHA-256`, row.receiptSha256]),
+    ...liveHttp.cohorts.flatMap((row) => [[`${row.mode} HTTP receipt SHA-256`, row.receiptSha256],
+      [`${row.mode} independent replay SHA-256`, row.replaySummarySha256],
+      [`${row.mode} twice-verified raw archive SHA-256`, row.archiveSha256]])]) {
+    liveHttpPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  liveHttpDetails.append(liveHttpPins);
+  liveHttpProgress.append(liveHttpDetails);
+  const liveHttpTeams = document.querySelector("[data-live-http-teams]");
+  for (const team of liveHttp.teams) {
+    const article = element("article", "team-item");
+    const heading = element("div", "team-heading");
+    const identity = element("div", "team-identity");
+    identity.append(element("div", "team-scope-label", "Private source checkpoint"), element("h3", "", team.name));
+    heading.append(identity, stateTag(team.name === "Live HTTP" ? "observed" : "implemented"));
+    const facts = element("dl", "team-facts");
+    for (const [label, value] of [["Source", team.source], ["Validation", team.detail]]) {
+      facts.append(element("dt", "", label), element("dd", "", value));
+    }
+    article.append(heading, facts);
+    liveHttpTeams.append(article);
+  }
 
   const matched = project.matched128;
   measured.append(element("h3", "", "First matched Ferric / vLLM cell"),

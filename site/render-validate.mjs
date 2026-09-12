@@ -22,6 +22,8 @@ const dynamicRoots = [
   "[data-performance]",
   "[data-attention-progress]",
   "[data-submission-progress]",
+  "[data-live-http-progress]",
+  "[data-live-http-teams]",
   "[data-envelope]",
   "[data-capabilities]",
   "[data-validation]",
@@ -34,6 +36,25 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Wave attention / v11: context8192 HTTP",
+  "3482.380",
+  "276.255",
+  "3.318800",
+  "2862.079",
+  "192.127",
+  "4.694997",
+  "not a context256 proxy",
+  "first sample-window start through the last sample-window end",
+  "all forty timed HTTP request IDs and final token arrays",
+  "not repeated independent starts, stable tails, confidence intervals or sustained-load qualification",
+  "vLLM was not rerun alongside this new profile",
+  "The v5 and FP32-v8 images remain frozen artifacts with their original provenance",
+  "Current parallel checkpoint",
+  "Visible-token attention",
+  "host step wrappers completed successfully; custody review is pending",
+  "Clippy commands exited 101 and matched known debt, not a strict Clippy pass",
+  "278 SGPR spills versus zero",
+  "Earlier team records",
   "Ordered submission: host and correctness gates passed",
   "51 host commands without retry",
   "745 passed adapter test invocations, 38 ignored",
@@ -892,6 +913,7 @@ try {
     await replicaDisclosure.click();
 
     for (const [caption, rows] of [["Single-run attention operation groups: host intervals, not GPU durations", 7],
+      ["Live wave/v11 HTTP: separate admitted context8192 cohorts", 2],
       ["Ordered-submission correctness: fixed native packet and ownership bounds", 4],
       ["Submission full128 ABBA: native host means and run ranges", 2],
       ["Combined attention full128 ABBA: native host means and run ranges", 2],
@@ -913,12 +935,23 @@ try {
     }
     assert(await page.getByRole("region", { name: "Single-run ablation latencies by request identity", exact: true })
       .locator("tbody tr").count() === 20, `${name}: missing single-run per-request latencies`);
+    assert(await page.locator("[data-live-http-teams] .team-item").count() === 3,
+      `${name}: missing current live HTTP/kernel team checkpoints`);
+    const liveHttpDisclosure = page.getByText("Live HTTP percentiles and evidence", { exact: true });
+    await liveHttpDisclosure.click();
+    assert(await page.getByRole("region", { name: "Live wave/v11 HTTP: descriptive single-cohort percentiles", exact: true })
+      .locator("tbody tr").count() === 2, `${name}: missing admitted live HTTP percentiles`);
+    assert(await page.getByText("Ordered HTTP measurement is awaiting completed independent replay; no ordered timing is published yet.",
+      { exact: true }).count() === 0, `${name}: obsolete pending ordered result`);
+    await liveHttpDisclosure.click();
     await latencyDisclosure.click();
 
     if (screenshotRoot) {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
+          ["Wave attention / v11: context8192 HTTP", "live-http"],
+          ["Current parallel checkpoint", "live-teams"],
           ["Ordered submission: host and correctness gates passed", "submission-correctness"],
           ["Ordered submission: full128 ABBA diagnostic", "submission-abba"],
           ["Combined attention / argmax: full128 ABBA", "attention-abba-table"]]) {

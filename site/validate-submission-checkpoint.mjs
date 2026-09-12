@@ -5,6 +5,86 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
+const liveHttpExpected = {
+    schema: "FerricPagesLiveHttpCheckpointV1", date: "2026-09-12",
+    source: "433e21354ca7e9b2f97b3e96caf39070d79c711a",
+    tree: "0a0717414eb5fa143081132f816c18dc8058f0c6",
+    controllerSha256: "9fd94a978358f0533c096ec9b5dd51d46833b4ca5426b1eaabb0337b4409c656",
+    compilerSource: "8efd4fd416d1ffae7a718144e4d299fe3c8f7590",
+    workerSource: "c110ac55c655579e0969b310402800b0c2666694",
+    workerSha256: "b91ddef78135829f607d1b83f5cf898d745b36013327f0d2d12771aba1b5150b",
+    contractSha256: "645e2bee141670be68c9a47c516099204502b2f3198e16f9de30e8394dbf2d31",
+    driverSha256: "726b39888d01e9a0fa2c79352b36b146ee44cc18f965bc8f84bfaf07c696d0ee",
+    clientSha256: "979136caea4f134f33f19c62b82a8ac9537205eaa11d11a43b7a3af466af0a2d",
+    referenceSha256: "cd7f512537e44d677244c606cba919e57747e8c26caf3c0df4a0aca7acc0eb8b",
+    model: "Qwen3-8B", hardware: "1 x MI350X, physical GPU 0",
+    tensorParallel: 1, contextTokens: 8192, physicalPages: 512, rowCapacity: 32, prefillChunk: 16,
+    promptTokens: 128, outputTokens: 128, concurrency: 1,
+    freshStartsPerMode: 1, warmups: 10, measuredRequests: 30, diagnostics: 2,
+    measuredOutputTokens: 3840, weightsAndDecoder: "BF16", head: "fp32-v8",
+    projection: "mfma", attention: "wave", argmax: "wave-v11",
+    speculation: false, prefixCache: false, hostTiming: false, runtimeProfiling: false,
+    qualification: [
+      { mode: "synchronous", requests: 2,
+        receiptSha256: "697dc47d0137de1a1e644f4f6474c7729ea7a034bdef59f6cfe32e251fe9a565",
+        archiveSha256: "0076b69c498a8df0378c753046a4cdb57beb3b65707a7eb1f139bb8ac94cf588" },
+      { mode: "ordered", requests: 2,
+        receiptSha256: "469ba83b882ddb4e81e3dbfa0fa215ae0bfb4a93770eaef419f6bc94c30cf4f2",
+        archiveSha256: "2d357980ea3b1952b9961fae7571bbd9db3d69cea2efc3d9f47e84cfd6c8aea3" },
+    ],
+    cohorts: [
+      { mode: "synchronous", ttftMeanMs: 3482.379512666667,
+        ttftP50Ms: 3589.147967, ttftP99Ms: 3670.73661252,
+        tpotMeanMs: 276.2553326648294, tpotP50Ms: 287.41766190944884,
+        tpotP99Ms: 292.6767426588976, e2eMeanMs: 38567.20054086667,
+        outputTokensPerSecond: 3.3188001312875013, windowSeconds: 1157.044669186,
+        rawFiles: 20, diagnosticRequestsChecked: 2, timedRequestIdentitiesChecked: 40,
+        timedFinalTokenIdsChecked: 40, exactOutput: true, normalUnforcedClose: true,
+        allEightIdleBeforeAndAfter: true,
+        planSha256: "43ac4e4d78e6f1ba06ca4086f639ff48272274d6566d6b38977d061d18fc60f1",
+        receiptSha256: "55eae5a1ca6730ab142c13bfd946314f91371979d975cb5605b15339e7aa6c61",
+        replaySummarySha256: "c930106517682ee5425199169f3c3a85632bd226e075e2ae820c5b78e0223969",
+        archiveSha256: "35143839a6567b3afb7fac988b875275e760e6280dff737b6e2f5c08fcb0a251" },
+      { mode: "ordered", ttftMeanMs: 2862.0793933,
+        ttftP50Ms: 2827.064237, ttftP99Ms: 3128.58817749,
+        tpotMeanMs: 192.12655409396325, tpotP50Ms: 189.08512703543306,
+        tpotP99Ms: 212.69070149283465, e2eMeanMs: 27262.319697,
+        outputTokensPerSecond: 4.694997388229715, windowSeconds: 817.891828785,
+        rawFiles: 20, diagnosticRequestsChecked: 2, timedRequestIdentitiesChecked: 40,
+        timedFinalTokenIdsChecked: 40, exactOutput: true, normalUnforcedClose: true,
+        allEightIdleBeforeAndAfter: true,
+        planSha256: "65d9bcc5dd3143960fce1262403f92bc8bb9680d7cfab9fdd736fbbb3bbf892b",
+        receiptSha256: "f4f44c5a8070d7f7f54cfad25626f0e9b354b022723b74d790ee309f89d71dec",
+        replaySummarySha256: "684727bd8a8f85bc819f5bdeabd4d2fa2d536f7fbe4525915155a8832f829995",
+        archiveSha256: "46547a5c48d3783d2c061cbbed20b30127f64766d56ad2cc92afd11996adcbca" },
+    ],
+    orderedMeasurementState: "independent-replay-passed",
+    teams: [
+      { name: "Live HTTP", source: "433e21354ca7e9b2f97b3e96caf39070d79c711a",
+        state: "both-cohorts-independently-replayed",
+        detail: "Both context8192 correctness qualifications and both 42-request HTTP runs pass independent replay. Each mode has thirty measured requests after ten warmups; this is finite C1 evidence, not sustained serving or a competitive win." },
+      { name: "Visible-token attention", source: "4e287b1ed0058cca95908b0a977748d9ef8b56ee",
+        tree: "c5c5a59c35a55b2a997937e73b8ce50ae05cd4f7", state: "host-checks-complete-custody-pending",
+        detail: "All 26 host step wrappers completed successfully; custody review is pending. The two actual strict Clippy commands exited 101 and matched known debt, not a strict Clippy pass. Emission and native correctness remain pending; no gain is claimed." },
+      { name: "Cooperative KV append", source: "d03ccd5436fe99d9dc7f761964b0fd978db3cd0f",
+        tree: "8543635ba23ac1f8ee7c8220d253af6cf50e405a", state: "formatted-host-and-emission-pending",
+        rejectedSource: "27163716949cd596523ef769d0b9673c2298f963",
+        rejectedArchiveSha256: "f55e3ae0ad157d58e98821fed0f1eabd0b979ff92c3b8031672cbf682e0a584d",
+        rejectedSgprSpills: 278, baselineSgprSpills: 0,
+        detail: "Candidate 2716371 is rejected by the emission resource gate: 278 SGPR spills versus zero in its baseline. The smaller active-block loop is reviewed and remotely formatted at d03ccd5; host validation, a new emission gate and native correctness remain pending. No candidate GPU launch or performance gain is admitted." },
+    ],
+    overview: "New opt-in wave-attention / wave-v11 HTTP measurements use the actual 8,192-token context. Synchronous / ordered mean TPOT is 276.255 / 192.127 ms, with output rates of 3.318800 / 4.694997 tokens/s. Each is one independently replayed finite concurrency-one cohort, not stable or production-serving performance. The earlier vLLM reference remains much faster; SGLang numerical failures stay excluded. Speculative HTTP serving, default promotion and M1 completion remain open.",
+    scope: "Separate live HTTP remeasurement: Qwen3-8B, one MI350X GPU, TP1, context 8192, 128 input / 128 output tokens, concurrency 1. Fixed wave attention, MFMA projection, FP32-v8 head and wave-v11 argmax; speculation and prefix caching off. Each admitted mode has one fresh start, ten excluded warmups, thirty measured requests and two excluded diagnostics.",
+    measurement: "The unchanged client measures send-to-first-text TTFT and first-to-last-text TPOT divided by 127. Output rate is 3,840 measured tokens divided by the first sample-window start through the last sample-window end, including gaps and drain. These are HTTP host clocks, not GPU duration; host and runtime profiling are off.",
+    correctness: "Both modes first pass two full128 correctness requests at context8192, not a context256 proxy. Every admitted measured cohort then matches both diagnostic token-ID/UTF-8 oracles, all forty timed HTTP request IDs and final token arrays, exact usage, normal draining/stopped/Closed, no cleanup signals, and all-eight-GPU idle checks. Qualification and warmup timings are excluded.",
+    imageScope: "The controller dependency and v11 argmax image use compiler source 8efd4fd. The v5 and FP32-v8 images remain frozen artifacts with their original provenance; they are not rebuilt or relabeled. The actual runtime worker remains c110ac55 / b91ddef7. No kernel or default changes are introduced by this HTTP profile.",
+    interpretation: "These are descriptive single-start finite C1 cohorts, not repeated independent starts, stable tails, confidence intervals or sustained-load qualification. The earlier Ferric/vLLM cohort below keeps its original source and numbers; vLLM was not rerun alongside this new profile. No SGLang timing is admitted. No historical/native gains are added or pooled, and no competitive win is claimed.",
+    oldCohortsPreserved: true, context256Proxy: false, warmupsPooled: false,
+    gpuDurationClaim: false, confidenceIntervalClaimed: false, stableGainClaimed: false,
+    servingQualified: false, frameworkWinClaimed: false, defaultPromotion: false,
+    newVerusProof: false, m1Complete: false, authority: "none",
+  };
+
 const expected = {
   schema: "FerricPagesSubmissionCheckpointV1",
   source: "7cb6522430b6990e1d3f12bc15958865358459f4",
@@ -416,11 +496,177 @@ export async function validateSubmissionEvidence(root, value) {
   console.log("PASS: exact submission host gate, four native correctness cases and separate forty-file full128 ABBA means/ranges/pairs; no cross-mode group comparison or stable/HTTP/GPU claim.");
 }
 
+export function validateLiveHttpCheckpoint(value) {
+  assert.deepEqual(JSON.parse(JSON.stringify(value)), liveHttpExpected);
+}
+
+export function testLiveHttpCheckpointRejections(value) {
+  let mutations = 0;
+  function visit(node, path = []) {
+    for (const [key, child] of Object.entries(node)) {
+      const next = [...path, key];
+      if (child !== null && typeof child === "object") visit(child, next);
+      else {
+        const changed = JSON.parse(JSON.stringify(value));
+        let parent = changed;
+        for (const part of next.slice(0, -1)) parent = parent[part];
+        parent[key] = typeof child === "boolean" ? !child : "mutated";
+        assert.throws(() => validateLiveHttpCheckpoint(changed));
+        mutations++;
+      }
+    }
+  }
+  visit(value);
+  for (const key of ["cohorts", "qualification", "teams"]) {
+    const changed = JSON.parse(JSON.stringify(value));
+    changed[key].push(changed[key][0]);
+    assert.throws(() => validateLiveHttpCheckpoint(changed));
+  }
+  const changed = JSON.parse(JSON.stringify(value));
+  changed.unreviewed = true;
+  assert.throws(() => validateLiveHttpCheckpoint(changed));
+  console.log(`PASS: live HTTP checkpoint rejects ${mutations} scalar mutations and added cohorts/claims.`);
+}
+
+export async function validateLiveHttpEvidence(root, value) {
+  validateLiveHttpCheckpoint(value);
+  async function pinned(file, digest, parse = true) {
+    const bytes = await readFile(join(root, file));
+    assert(bytes.length > 0 && bytes.length <= 16 * 1024 * 1024, "bounded live HTTP evidence");
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), digest, file);
+    return parse ? JSON.parse(bytes) : bytes;
+  }
+  await pinned("source/wave_live_http_contract.py", value.contractSha256, false);
+  await pinned("source/run_wave_live_http.py", value.driverSha256, false);
+  await pinned("source/competitive_benchmark.py", value.clientSha256, false);
+  const reference = await pinned("reference.json", value.referenceSha256);
+  async function run(directory, row, count, purpose) {
+    const receipt = await pinned(`${directory}/receipt.json`, row.receiptSha256);
+    assert.equal(receipt.schema, "FerricWaveArgmaxLiveHttpReceiptV1");
+    assert.equal(receipt.purpose, purpose);
+    assert.equal(receipt.submission, row.mode);
+    assert.equal(receipt.request_count, count);
+    for (const key of ["passed", "cleanup_completed", "all_eight_idle_before_after"])
+      assert.equal(receipt[key], true);
+    for (const key of ["serving_qualified", "framework_win_claim", "gpu_duration_claim"])
+      assert.equal(receipt[key], false);
+    assert.equal(receipt.qualification_admitted, purpose === "qualification");
+    assert.equal(receipt.timing_admitted, purpose === "matched");
+    assert.deepEqual(receipt.errors, []);
+    const raw = new Map();
+    for (const [name, digest] of Object.entries(receipt.raw_files)) {
+      assert(/^[a-z0-9][a-z0-9.-]+$/.test(name) && name !== "receipt.json", "direct raw file");
+      raw.set(name, await pinned(`${directory}/${name}`, digest, false));
+    }
+    const record = (name) => JSON.parse(raw.get(name));
+    const plan = record("frozen-plan.json");
+    assert.equal(receipt.plan_sha256, receipt.raw_files["frozen-plan.json"]);
+    assert.equal(plan.ferric.controller_source, value.source);
+    assert.equal(plan.ferric.controller_tree, value.tree);
+    assert.equal(plan.ferric.controller.sha256, value.controllerSha256);
+    assert.equal(plan.ferric.worker_source, value.workerSource);
+    assert.equal(plan.ferric.worker.sha256, value.workerSha256);
+    assert.equal(plan.client.sha256, value.clientSha256);
+    const setup = record("ferric-setup.json");
+    for (const [key, expectedValue] of Object.entries({ context_tokens: 8192, physical_pages: 512,
+      tensor_parallel: 1, kernel_row_capacity: 32, prefill_chunk: 16, prefix_cache: false,
+      head_precision: "fp32-v8", argmax_mode: "wave-v11", submission: row.mode,
+      runtime_ordered_batches: row.mode === "ordered", controller_sha256: value.controllerSha256 }))
+      assert.equal(setup[key], expectedValue, key);
+    assert.equal(setup.performance_profile.runtime_profiling, false);
+    assert.equal(setup.performance_profile.attention, "wave");
+    const events = record("ferric-final-events.json");
+    assert.deepEqual(events[0], setup);
+    assert(events.every((event) => event.authority === "none"));
+    const finals = events.filter((event) => event.event === "request");
+    assert.equal(finals.length, count);
+    finals.forEach((final, index) => {
+      assert.equal(final.request_id, index + 1);
+      assert.deepEqual(final.generated_tokens, reference.generated_token_ids);
+      assert.equal(Buffer.from(final.generated_utf8_bytes).toString("hex"), reference.generated_utf8_hex);
+      assert.equal(final.state, "Completed");
+    });
+    assert.deepEqual(events.slice(-3).map((event) => event.event ?? null), ["draining", "stopped", null]);
+    assert.equal(events.at(-3).reason, "shutdown");
+    assert.equal(events.at(-2).reason, "drained");
+    assert.equal(events.at(-2).batches, 135 * count);
+    assert.deepEqual(events.at(-1).rank_dispatch_counts, [83139 * count]);
+    const teardown = record("ferric-teardown.json");
+    assert.equal(teardown.controller_status, 0);
+    assert.equal(teardown.admissions, count);
+    assert.equal(teardown.forced_group_cleanup, false);
+    assert.deepEqual(teardown.backend_cleanup_signals, []);
+    for (const key of ["closed_receipt", "group_absent", "worker_pids_absent", "threads_joined"])
+      assert.equal(teardown[key], true);
+    const idle = (snapshot) => {
+      assert.deepEqual(Object.keys(snapshot).sort(), Array.from({ length: 8 }, (_, i) => `card${i}`));
+      for (const card of Object.values(snapshot)) {
+        for (const key of ["GPU use (%)", "GPU Memory Allocated (VRAM%)", "GPU Memory Read/Write Activity (%)"])
+          assert.equal(card[key], "0");
+      }
+    };
+    // Exact u64 GPU identities and clock replay are already bound by the pinned Python receipt.
+    idle(record("gpu-preflight.stdout"));
+    const settlement = record("gpu-postflight-settling.json");
+    assert.equal(settlement.settled, true);
+    assert(settlement.attempts.length >= 1 && settlement.attempts.length <= 31);
+    assert.equal(settlement.attempts.at(-1).status, "idle");
+    idle(record(`${settlement.attempts.at(-1).label}.stdout`));
+    return { receipt, record };
+  }
+  for (const row of value.qualification) await run(`qualification-${row.mode}`, row, 2, "qualification");
+  for (const row of value.cohorts) {
+    const { receipt, record } = await run(row.mode, row, 42, "matched");
+    assert.equal(Object.keys(receipt.raw_files).length, row.rawFiles);
+    assert.equal(receipt.plan_sha256, row.planSha256);
+    assert.equal(receipt.client_exit_status, 0);
+    const summary = await pinned(`${row.mode}/summary.json`, row.replaySummarySha256);
+    assert.equal(summary.receipt_sha256, row.receiptSha256);
+    assert.equal(summary.plan_sha256, row.planSha256);
+    assert.equal(summary.submission, row.mode);
+    assert.equal(summary.raw_files_checked, row.rawFiles);
+    assert.equal(summary.measured_requests, value.measuredRequests);
+    assert.equal(summary.measured_output_tokens, value.measuredOutputTokens);
+    assert.equal(summary.diagnostic_requests_checked, row.diagnosticRequestsChecked);
+    assert.equal(summary.timed_http_request_identities_checked, row.timedRequestIdentitiesChecked);
+    assert.equal(summary.timed_final_token_ids_checked, row.timedFinalTokenIdsChecked);
+    assert.equal(summary.gpu_duration_claim, false);
+    assert.equal(summary.framework_win_claim, false);
+    assert.equal(summary.serving_qualified, false);
+    const metrics = summary.metrics;
+    assert.equal(metrics.requests, 30);
+    assert.equal(metrics.successful_requests, 30);
+    assert.equal(metrics.failed_requests, 0);
+    assert.equal(metrics.all_requests_succeeded, true);
+    for (const [field, expectedValue] of Object.entries({ mean: row.ttftMeanMs, p50: row.ttftP50Ms, p99: row.ttftP99Ms }))
+      assert.equal(metrics.ttft_ms[field], expectedValue);
+    for (const [field, expectedValue] of Object.entries({ mean: row.tpotMeanMs, p50: row.tpotP50Ms, p99: row.tpotP99Ms }))
+      assert.equal(metrics.tpot_ms[field], expectedValue);
+    assert.equal(metrics.e2e_ms.mean, row.e2eMeanMs);
+    assert.equal(metrics.output_tokens_per_second, row.outputTokensPerSecond);
+    assert.equal(metrics.window_seconds, row.windowSeconds);
+    const timed = record("timed-raw.json");
+    assert.equal(timed.warmups.length, 10);
+    assert.equal(timed.samples.length, 30);
+    assert.equal(summary.cohort_start_ns, timed.samples[0].started_ns);
+    assert.equal(summary.cohort_end_ns, timed.samples.at(-1).completed_ns);
+    assert.equal(value.measuredOutputTokens / row.windowSeconds, row.outputTokensPerSecond);
+  }
+  console.log("PASS: separate context8192 HTTP cohorts, source-bound replay metrics, full raw hashes, exact final tokens and normal closure; historical measurements unchanged.");
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const context = { window: {} };
   vm.runInNewContext(await readFile(join(dirname(fileURLToPath(import.meta.url)), "data/project.js"), "utf8"), context);
-  const value = JSON.parse(JSON.stringify(context.window.FERRIC_PROJECT.submissionCheckpoint));
-  validateSubmissionCheckpoint(value);
-  testSubmissionCheckpointRejections(value);
-  if (process.argv[2]) await validateSubmissionEvidence(process.argv[2], value);
+  if (process.argv[2] === "--live-http") {
+    const value = JSON.parse(JSON.stringify(context.window.FERRIC_PROJECT.liveHttpCheckpoint));
+    validateLiveHttpCheckpoint(value);
+    testLiveHttpCheckpointRejections(value);
+    if (process.argv[3]) await validateLiveHttpEvidence(process.argv[3], value);
+  } else {
+    const value = JSON.parse(JSON.stringify(context.window.FERRIC_PROJECT.submissionCheckpoint));
+    validateSubmissionCheckpoint(value);
+    testSubmissionCheckpointRejections(value);
+    if (process.argv[2]) await validateSubmissionEvidence(process.argv[2], value);
+  }
 }
