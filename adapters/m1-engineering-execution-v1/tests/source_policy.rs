@@ -290,6 +290,43 @@ fn attention_argmax_canary_is_closed_and_reuses_preallocation_admission() {
 }
 
 #[test]
+fn wave_argmax_submission_canary_is_separate_and_validates_before_effects() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-wave-argmax-submission-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    let entry = include_str!("../src/bin/ferric-qwen3-wave-argmax-submission-canary.rs");
+    assert!(entry.contains("wave_argmax_submission_canary_contract::parse"));
+    assert!(entry.contains("argmax_canary_runtime::execute"));
+    let contract = include_str!("../src/bin/wave_argmax_submission_canary_contract.rs");
+    assert!(contract.contains("attention_argmax_canary_contract::parse(forwarded.into_iter())"));
+    assert!(contract.contains("attention != CanaryProfile::AttentionWave"));
+    let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
+    let execution = &shared[shared.find("pub fn execute(").unwrap()..];
+    assert!(execution.find("profile.validate_options(&options)").unwrap()
+        < execution.find("TimingFile::create(").unwrap());
+    assert!(shared.contains("configure_ordered_wave_attention_fp32_argmax_v11"));
+    for frozen in [
+        include_str!("../src/bin/argmax_canary_contract.rs"),
+        include_str!("../src/bin/attention_argmax_canary_contract.rs"),
+        include_str!("../src/bin/ferric-qwen3-argmax-canary.rs"),
+        include_str!("../src/bin/ferric-qwen3-attention-argmax-canary.rs"),
+        include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),
+        include_str!("../src/bin/ferric-qwen3-paired-paged-canary.rs"),
+    ] {
+        assert!(!frozen.contains("--submission"));
+        assert!(!frozen.contains("SubmissionOrdered"));
+    }
+}
+
+#[test]
 fn adapter_and_observation_schema_pin_current_fe2o3() {
     assert_eq!(MANIFEST.matches(FE2O3_REVISION).count(), 6);
     assert!(SOURCE.contains(FE2O3_REVISION));

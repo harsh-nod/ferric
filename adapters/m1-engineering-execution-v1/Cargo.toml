@@ -61,6 +61,11 @@ name = "ferric-qwen3-attention-argmax-canary"
 path = "src/bin/ferric-qwen3-attention-argmax-canary.rs"
 required-features = ["tp-batch-engineering"]
 
+[[bin]]
+name = "ferric-qwen3-wave-argmax-submission-canary"
+path = "src/bin/ferric-qwen3-wave-argmax-submission-canary.rs"
+required-features = ["tp-batch-engineering"]
+
 # This non-authoritative engineering tool is intentionally outside Ferric's
 # verified production workspace and runtime dependency closure.
 [workspace]

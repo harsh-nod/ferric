@@ -27,6 +27,8 @@ pub enum CanaryProfile {
     LegacyArgmax,
     AttentionBaseline,
     AttentionWave,
+    SubmissionSynchronous,
+    SubmissionOrdered,
 }
 
 #[derive(Clone, Copy)]
@@ -44,30 +46,81 @@ impl CanaryProfile {
             (Self::LegacyArgmax, RecordKind::Prefill) => "FerricArgmaxCanaryPrefillV1",
             (Self::LegacyArgmax, RecordKind::Observation) => "FerricArgmaxCanaryObservationV1",
             (Self::LegacyArgmax, RecordKind::Closed) => "FerricArgmaxCanaryClosedV1",
-            (_, RecordKind::Setup) => "FerricAttentionArgmaxCanarySetupV1",
-            (_, RecordKind::Prefill) => "FerricAttentionArgmaxCanaryPrefillV1",
-            (_, RecordKind::Observation) => "FerricAttentionArgmaxCanaryObservationV1",
-            (_, RecordKind::Closed) => "FerricAttentionArgmaxCanaryClosedV1",
+            (Self::AttentionBaseline | Self::AttentionWave, RecordKind::Setup) => {
+                "FerricAttentionArgmaxCanarySetupV1"
+            }
+            (Self::AttentionBaseline | Self::AttentionWave, RecordKind::Prefill) => {
+                "FerricAttentionArgmaxCanaryPrefillV1"
+            }
+            (Self::AttentionBaseline | Self::AttentionWave, RecordKind::Observation) => {
+                "FerricAttentionArgmaxCanaryObservationV1"
+            }
+            (Self::AttentionBaseline | Self::AttentionWave, RecordKind::Closed) => {
+                "FerricAttentionArgmaxCanaryClosedV1"
+            }
+            (Self::SubmissionSynchronous | Self::SubmissionOrdered, RecordKind::Setup) => {
+                "FerricWaveArgmaxSubmissionCanarySetupV1"
+            }
+            (Self::SubmissionSynchronous | Self::SubmissionOrdered, RecordKind::Prefill) => {
+                "FerricWaveArgmaxSubmissionCanaryPrefillV1"
+            }
+            (Self::SubmissionSynchronous | Self::SubmissionOrdered, RecordKind::Observation) => {
+                "FerricWaveArgmaxSubmissionCanaryObservationV1"
+            }
+            (Self::SubmissionSynchronous | Self::SubmissionOrdered, RecordKind::Closed) => {
+                "FerricWaveArgmaxSubmissionCanaryClosedV1"
+            }
         }
     }
 
     const fn attention(self) -> &'static str {
         match self {
-            Self::AttentionWave => "wave",
+            Self::AttentionWave | Self::SubmissionSynchronous | Self::SubmissionOrdered => "wave",
             Self::LegacyArgmax | Self::AttentionBaseline => "baseline",
         }
+    }
+
+    const fn wave_attention(self) -> bool {
+        matches!(
+            self,
+            Self::AttentionWave | Self::SubmissionSynchronous | Self::SubmissionOrdered
+        )
+    }
+
+    const fn ordered_batches(self) -> bool {
+        matches!(self, Self::SubmissionOrdered)
     }
 
     const fn error_prefix(self) -> &'static str {
         match self {
             Self::LegacyArgmax => "Argmax canary rejected",
             Self::AttentionBaseline | Self::AttentionWave => "Attention argmax canary rejected",
+            Self::SubmissionSynchronous | Self::SubmissionOrdered => {
+                "Wave argmax submission canary rejected"
+            }
         }
     }
 
     fn validate(self, mode: ArgmaxMode) -> Result<(), String> {
         if self != Self::LegacyArgmax && mode != ArgmaxMode::WaveV11 {
             return Err("attention comparison requires fixed argmax mode wave-v11".into());
+        }
+        Ok(())
+    }
+
+    fn validate_options(self, options: &Options) -> Result<(), String> {
+        self.validate(options.mode)?;
+        if matches!(self, Self::SubmissionSynchronous | Self::SubmissionOrdered)
+            && (!matches!(options.outputs, 8 | 128)
+                || !options.runtime.cache_admission
+                || !options.runtime.operational
+                || !options.runtime.rollover
+                || options.runtime.sequences
+                || options.runtime.profile
+                || options.runtime.shared_full_currentness
+                || options.runtime.ordered_batches != self.ordered_batches())
+        {
+            return Err("submission profile requires 8 or 128 outputs, matching ordered policy, cache admission, operational currentness and rollover, without sequences, runtime profiling or shared currentness".into());
         }
         Ok(())
     }
@@ -329,12 +382,14 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
             model.target_weights(),
             model.layout(),
         )?;
-        if profile == CanaryProfile::AttentionWave {
+        if profile.wave_attention() {
             driver.configure_wave_attention(true)?;
         }
         driver.configure_head_precision_v8(true)?;
         if options.mode == ArgmaxMode::WaveV11 {
-            if profile == CanaryProfile::AttentionWave {
+            if profile.ordered_batches() {
+                driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?;
+            } else if profile.wave_attention() {
                 driver.configure_wave_attention_fp32_argmax_v11(&argmax_artifact)?;
             } else {
                 driver.configure_fp32_argmax_v11(&argmax_artifact)?;
@@ -360,7 +415,7 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
             "max_new_tokens":options.outputs,"row_capacity":32,"prefill_chunk":CHUNK,"context":CONTEXT,"pages":PAGES,
             "projection":"mfma","attention":profile.attention(),"head_precision":"fp32-v8","collective":"device-tp1-v3",
             "prefix_cache":false,"runtime_cache_admission":true,"runtime_operational":true,"runtime_rollover":true,
-            "runtime_ordered_batches":false,"runtime_sequences":false,"target_payload_bytes":model.target_weights().len(),
+            "runtime_ordered_batches":profile.ordered_batches(),"runtime_sequences":false,"target_payload_bytes":model.target_weights().len(),
             "target_transposed_bytes":driver.transposed_weight_bytes(),"target_kv_payload_bytes":limits.target_kv_payload_bytes().map_err(|e| format!("KV: {e:?}"))?,
             "fp32_workspace_bytes":driver.fp32_head_workspace_bytes(),"expected_packets":options.expected_packets()?,
             "expected_batches":7+options.outputs,"timing_boundary":"host-prefill-start-through-generated-token-commit; excludes setup; not HTTP or GPU duration"});
@@ -386,7 +441,7 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
 
 pub fn execute(options: Result<Options, String>, profile: CanaryProfile) -> std::process::ExitCode {
     let result = options.and_then(|options| {
-        profile.validate(options.mode)?;
+        profile.validate_options(&options)?;
         let mut timing = TimingFile::create(Some(&options.host_timing_output))?;
         let result = run(&options, profile, &mut timing);
         let sidecar = timing.finish(&result);
@@ -519,5 +574,119 @@ mod profile_tests {
                 assert_eq!(profile.validate(mode).is_ok(), mode == ArgmaxMode::WaveV11);
             }
         }
+    }
+
+    fn submission_options(profile: CanaryProfile) -> Options {
+        Options {
+            source: "source".into(),
+            target_artifact: "target".into(),
+            target_head_artifact: "head".into(),
+            argmax_artifact: "argmax".into(),
+            worker: "worker".into(),
+            worker_sha256: "a".repeat(64),
+            device: 1,
+            reference: "reference".into(),
+            prefix_reference: "prefix".into(),
+            host_timing_output: "timing".into(),
+            mode: ArgmaxMode::WaveV11,
+            outputs: 8,
+            runtime: super::super::tp_worker::RuntimeOptions {
+                cache_admission: true,
+                operational: true,
+                rollover: true,
+                ordered_batches: profile.ordered_batches(),
+                ..super::super::tp_worker::RuntimeOptions::default()
+            },
+        }
+    }
+
+    fn runtime_bits(options: &Options) -> [bool; 7] {
+        [
+            options.runtime.cache_admission,
+            options.runtime.operational,
+            options.runtime.rollover,
+            options.runtime.sequences,
+            options.runtime.profile,
+            options.runtime.shared_full_currentness,
+            options.runtime.ordered_batches,
+        ]
+    }
+
+    fn mismatch(options: &mut Options, mutation: usize) {
+        match mutation {
+            0 => options.runtime.cache_admission = false,
+            1 => options.runtime.operational = false,
+            2 => options.runtime.rollover = false,
+            3 => options.runtime.sequences = true,
+            4 => options.runtime.profile = true,
+            5 => options.runtime.shared_full_currentness = true,
+            6 => options.runtime.ordered_batches = !options.runtime.ordered_batches,
+            7 => options.mode = ArgmaxMode::Serial,
+            8 => options.outputs = 0,
+            9 => options.outputs = 9,
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn submission_profiles_have_closed_schemas_and_truthful_ordered_modes() {
+        for (record, expected) in [
+            (RecordKind::Setup, "FerricWaveArgmaxSubmissionCanarySetupV1"),
+            (RecordKind::Prefill, "FerricWaveArgmaxSubmissionCanaryPrefillV1"),
+            (RecordKind::Observation, "FerricWaveArgmaxSubmissionCanaryObservationV1"),
+            (RecordKind::Closed, "FerricWaveArgmaxSubmissionCanaryClosedV1"),
+        ] {
+            for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+                assert_eq!(profile.schema(record), expected);
+                assert_eq!(profile.attention(), "wave");
+                assert!(profile.wave_attention());
+                assert_eq!(profile.ordered_batches(), profile == CanaryProfile::SubmissionOrdered);
+                assert_eq!(profile.error_prefix(), "Wave argmax submission canary rejected");
+            }
+            assert_ne!(CanaryProfile::LegacyArgmax.schema(record), expected);
+            assert_ne!(CanaryProfile::AttentionWave.schema(record), expected);
+        }
+        for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline, CanaryProfile::AttentionWave] {
+            assert!(!profile.ordered_batches());
+            assert_eq!(profile.wave_attention(), profile == CanaryProfile::AttentionWave);
+        }
+    }
+
+    #[test]
+    fn submission_profiles_reject_mismatched_runtime_without_normalizing_options() {
+        for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+            for outputs in [8, 128] {
+                let mut options = submission_options(profile);
+                options.outputs = outputs;
+                assert!(profile.validate_options(&options).is_ok());
+            }
+            for mutation in 0..10 {
+                let mut options = submission_options(profile);
+                mismatch(&mut options, mutation);
+                let before = (runtime_bits(&options), options.mode, options.outputs);
+                assert!(profile.validate_options(&options).is_err());
+                assert_eq!((runtime_bits(&options), options.mode, options.outputs), before);
+            }
+        }
+    }
+
+    #[test]
+    fn submission_profile_mismatches_create_no_sidecar_before_execution() {
+        let root = std::env::temp_dir().join(format!("ferric-submission-profile-{}", std::process::id()));
+        std::fs::create_dir(&root).unwrap();
+        for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+            for mutation in 0..10 {
+                let mut options = submission_options(profile);
+                options.reference = root.join("missing-reference");
+                options.worker = root.join("missing-worker");
+                let sidecar = root.join(format!("{}-{mutation}.json", profile.ordered_batches()));
+                options.host_timing_output = sidecar.clone();
+                mismatch(&mut options, mutation);
+                assert_eq!(execute(Ok(options), profile), std::process::ExitCode::FAILURE);
+                assert!(!sidecar.exists());
+            }
+        }
+        assert_eq!(std::fs::read_dir(&root).unwrap().count(), 0);
+        std::fs::remove_dir(root).unwrap();
     }
 }
