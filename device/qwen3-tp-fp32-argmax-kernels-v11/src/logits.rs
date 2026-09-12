@@ -30,7 +30,7 @@ macro_rules! lane_argmax {
 macro_rules! stable_key {
     ($value:expr, $maximum:expr, $winner:expr) => {{
         if $value == $maximum {
-            (151936_u32 - $winner) as f32
+            151936.0_f32 - $winner as f32
         } else {
             0.0_f32
         }
@@ -115,7 +115,7 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
     let key = {
         // BEGIN stable_key
         if value == maximum {
-            (151936_u32 - winner) as f32
+            151936.0_f32 - winner as f32
         } else {
             0.0_f32
         }
