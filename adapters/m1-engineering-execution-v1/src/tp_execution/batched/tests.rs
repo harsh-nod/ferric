@@ -40,6 +40,7 @@ enum Failure {
     Write,
     BadChoice,
     NonfinitePartial,
+    ResidualSubmit,
     ResidualWait,
     Close,
     RuntimeSnapshot,
@@ -284,6 +285,15 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.failure == Some(Failure::ResidualSubmit)
+            && matches!(
+                command.kernel,
+                "ferric_qwen3_tp_batch_residual_bf16_v3"
+                    | "ferric_qwen3_tp_batch32_residual_bf16_v5"
+            )
+        {
+            return Err("injected residual submit failure".into());
+        }
         if self.failure == Some(Failure::AttentionSubmit)
             && matches!(
                 command.kernel,

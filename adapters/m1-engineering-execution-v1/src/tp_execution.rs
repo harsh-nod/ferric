@@ -942,7 +942,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             Qwen3TensorParallelCollectiveV1::AttentionOutputSum => "collective_attention",
             Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => "collective_feed_forward",
         });
-        self.flush_dispatch_groups()?;
+        if self.ordered_batches.is_none()
+            || self.draft_v10
+            || self.reduction.mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+        {
+            self.flush_dispatch_groups()?;
+        }
         match self.reduction.mode() {
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
                 return self.reduce_host_reused(layer, operation);

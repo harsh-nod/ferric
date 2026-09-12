@@ -79,7 +79,7 @@ fn assert_ordered_groups_preserve_attention(wave: bool) {
                 assert_eq!(
                     groups,
                     if enabled {
-                        [10, 5].repeat(36)
+                        [11, 6].repeat(36)
                     } else {
                         Vec::new()
                     }

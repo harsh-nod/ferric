@@ -189,6 +189,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         let ReductionWorkspace::DeviceTp1(scratch) = self.reduction else {
             return Err("device residual workspace unavailable".into());
         };
+        let ordered_tail = self.ordered_batches.is_some() && !self.draft_v10;
+        if ordered_tail {
+            let pending = self.ordered_batches.as_ref().expect("ordered residual group");
+            let expected = match operation {
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum => 10,
+                Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => 5,
+            };
+            let count = pending.len().checked_add(1).ok_or("residual batch overflow")?;
+            if pending.len() != expected
+                || !(1..=16).contains(&count)
+                || self.ranks.len() != 1
+                || self.transports.len() != 1
+                || self.sequences.is_some()
+                || self.ranks[0].dispatches.checked_add(count as u64).is_none()
+            {
+                return Err("ordered residual batch geometry or counter drifted".into());
+            }
+        }
         let elements = self.hidden.len();
         let width = if self.draft_v10 {
             if self.plan.model().role != ferric_spec::Qwen3ModelRole::Draft06B
@@ -215,7 +233,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         {
             return Err("device residual extent or ownership drifted".into());
         }
-        self.dispatch_zero(&dispatch(
+        let command = dispatch(
             DEVICE_RESIDUAL,
             u32::try_from(elements / 64).map_err(|_| "residual grid overflow")?,
             vec![
@@ -238,7 +256,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                     u32::try_from(rows).map_err(|_| "residual rows overflow")?,
                 ),
             ],
-        ))?;
+        );
+        if ordered_tail {
+            // Keep the residual in the same completion frontier as its producer.
+            self.dispatch_each(|_| command.clone())?;
+            self.flush_dispatch_groups()?;
+        } else {
+            self.dispatch_zero(&command)?;
+        }
         self.collective
             .arrive(0, key)
             .map_err(|error| format!("device collective arrival: {error:?}"))?;

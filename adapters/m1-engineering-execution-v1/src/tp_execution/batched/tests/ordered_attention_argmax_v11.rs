@@ -41,6 +41,49 @@ fn allocations(driver: &EngineeringTpBatchExecutionV2<Recording>) -> Vec<(u64, u
         .collect()
 }
 
+fn residual_handles(driver: &EngineeringTpBatchExecutionV2<Recording>) -> (u64, u64) {
+    let super::super::super::reduction::ReductionWorkspace::DeviceTp1(scratch) =
+        driver.inner.reduction
+    else {
+        panic!("device residual workspace");
+    };
+    (driver.inner.ranks[0].hidden.id, scratch.id)
+}
+
+fn phase_driver(
+    operation: Qwen3TensorParallelCollectiveV1,
+    ordered: bool,
+) -> EngineeringTpBatchExecutionV2<Recording> {
+    let mut driver = configured(&wide_pool());
+    if ordered {
+        select(&mut driver).unwrap();
+    } else {
+        driver
+            .configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+            .unwrap();
+    }
+    driver.inner.hidden.resize(4096, 0);
+    if operation == Qwen3TensorParallelCollectiveV1::FeedForwardDownSum {
+        let key = driver.inner.collective.expected();
+        driver.inner.collective.arrive(0, key).unwrap();
+        driver.inner.collective.advance().unwrap();
+    }
+    driver
+}
+
+fn pending_phase(
+    operation: Qwen3TensorParallelCollectiveV1,
+    count: usize,
+) -> EngineeringTpBatchExecutionV2<Recording> {
+    let mut driver = phase_driver(operation, true);
+    // These placeholders are only used by tests that reject before execution.
+    driver.inner.ordered_batches = Some(vec![
+        super::super::super::dispatch(RMSNORM, 1, Vec::new());
+        count
+    ]);
+    driver
+}
+
 fn event_pair(events: &[Event], cursor: &mut usize, command: &EngineeringTpDispatchV1) {
     assert_eq!(events[*cursor], Event::Submit(0, command.kernel));
     assert_eq!(events[*cursor + 1], Event::Wait(0, command.kernel));
@@ -58,7 +101,7 @@ fn ordered_barriers(transport: &Recording, published: bool) {
     event_pair(&events, &mut cursor, &commands[0]);
     let mut index = 1;
     for _ in 0..36 {
-        for count in [10, 5] {
+        for count in [11, 6] {
             assert_eq!(events[cursor], Event::OrderedSubmit(0, count));
             assert_eq!(events[cursor + 1], Event::OrderedWait(0, count));
             cursor += 2;
@@ -68,20 +111,18 @@ fn ordered_barriers(transport: &Recording, published: bool) {
                     .iter()
                     .filter(|command| command.kernel == WAVE_GQA)
                     .count(),
-                usize::from(count == 10),
+                usize::from(count == 11),
             );
             assert!(
-                group
+                group[..count - 1]
                     .iter()
                     .all(|command| !matches!(command.kernel, RESIDUAL | HEAD | WAVE_ARGMAX))
             );
+            assert_eq!(group[count - 1].kernel, RESIDUAL);
             for command in group {
                 event_pair(&events, &mut cursor, command);
             }
             index += count;
-            assert_eq!(commands[index].kernel, RESIDUAL);
-            event_pair(&events, &mut cursor, &commands[index]);
-            index += 1;
         }
     }
     if published {
@@ -147,10 +188,12 @@ fn ordered_wave_v11_preserves_flattened_commands_io_and_head_barriers() {
                 if ordered {
                     ordered_barriers(transport, !selected.is_empty());
                 } else {
-                    assert!(!transport.events.borrow().iter().any(|event| matches!(
-                        event,
-                        Event::OrderedSubmit(..) | Event::OrderedWait(..)
-                    )));
+                    let events = transport.events.borrow();
+                    let mut cursor = 0;
+                    for command in &transport.commands {
+                        event_pair(&events, &mut cursor, command);
+                    }
+                    assert_eq!(cursor, events.len());
                 }
                 let expected_reads = if selected.is_empty() {
                     Vec::new()
@@ -337,6 +380,7 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
         Failure::OrderedWait,
         Failure::AttentionSubmit,
         Failure::AttentionWait,
+        Failure::ResidualSubmit,
         Failure::ResidualWait,
         Failure::ArgmaxSubmit,
         Failure::ArgmaxWait,
@@ -349,6 +393,8 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
         driver.inner.transports[0].failure = Some(failure);
         let batch = prepare(&mut pool, 17);
         pool.begin_submission(&batch).unwrap();
+        let collective = driver.inner.collective.expected();
+        let handles = residual_handles(&driver);
         assert!(driver.execute_selected(&batch, &[16]).is_err());
         assert_eq!(driver.completed_batches(), 0);
         assert!(driver.poisoned);
@@ -358,8 +404,12 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
                 | Failure::OrderedWait
                 | Failure::AttentionSubmit
                 | Failure::AttentionWait
+                | Failure::ResidualSubmit
+                | Failure::ResidualWait
         ) {
             assert_eq!(driver.dispatch_counts(), [1]);
+            assert_eq!(driver.inner.collective.expected(), collective);
+            assert_eq!(residual_handles(&driver), handles);
         }
         assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
         assert!(driver.inner.transports[0].pending_ordered.is_none());
@@ -380,6 +430,182 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
         );
         driver.close().unwrap();
         assert!(driver.inner.closed);
+    }
+}
+
+#[test]
+fn ordered_residual_tail_rejects_malformed_phase_groups_before_publication() {
+    for (operation, expected) in [
+        (Qwen3TensorParallelCollectiveV1::AttentionOutputSum, 10),
+        (Qwen3TensorParallelCollectiveV1::FeedForwardDownSum, 5),
+    ] {
+        for count in [0, 1, 4, 5, 6, 9, 10, 11, 15, 16, 17] {
+            if count == expected {
+                continue;
+            }
+            let mut driver = pending_phase(operation, count);
+            let key = driver.inner.collective.expected();
+            let handles = residual_handles(&driver);
+            let pending = driver.inner.ordered_batches.clone();
+            assert!(driver.inner.reduce(0, operation).is_err());
+            assert_eq!(driver.inner.collective.expected(), key);
+            assert_eq!(residual_handles(&driver), handles);
+            assert_eq!(driver.inner.ordered_batches, pending);
+            assert_eq!(driver.dispatch_counts(), [0]);
+            assert!(driver.inner.transports[0].events.borrow().is_empty());
+            assert!(driver.inner.transports[0].commands.is_empty());
+            driver.close().unwrap();
+        }
+    }
+}
+
+#[test]
+fn ordered_residual_tail_rejects_invalid_geometry_before_publication() {
+    use super::super::super::reduction::ReductionWorkspace;
+    for (operation, count) in [
+        (Qwen3TensorParallelCollectiveV1::AttentionOutputSum, 10),
+        (Qwen3TensorParallelCollectiveV1::FeedForwardDownSum, 5),
+    ] {
+        for mutation in 0..12 {
+            let mut driver = pending_phase(operation, count);
+            let ReductionWorkspace::DeviceTp1(mut scratch) = driver.inner.reduction else {
+                unreachable!();
+            };
+            match mutation {
+                0 => driver.inner.hidden.clear(),
+                1 => driver.inner.hidden.resize(4097, 0),
+                2 => driver.inner.hidden.resize(33 * 4096, 0),
+                3 => scratch.elements = 0,
+                4 => driver.inner.ranks[0].hidden.elements = 0,
+                5 => driver.inner.ranks[0].partial.elements = 0,
+                6 => scratch.id = driver.inner.ranks[0].hidden.id,
+                7 => scratch.id = driver.inner.ranks[0].partial.id,
+                8 => driver.inner.ranks[0].partial.id = driver.inner.ranks[0].hidden.id,
+                9 => driver.inner.sequences = Some(vec![Vec::new()]),
+                10 => driver.inner.row_capacity = 0,
+                11 => {}
+                _ => unreachable!(),
+            }
+            driver.inner.reduction = ReductionWorkspace::DeviceTp1(scratch);
+            let key = driver.inner.collective.expected();
+            let handles = residual_handles(&driver);
+            let pending = driver.inner.ordered_batches.clone();
+            let layer = u32::from(mutation == 11);
+            assert!(driver.inner.reduce(layer, operation).is_err(), "mutation {mutation}");
+            assert_eq!(driver.inner.collective.expected(), key);
+            assert_eq!(residual_handles(&driver), handles);
+            assert_eq!(driver.inner.ordered_batches, pending);
+            assert_eq!(driver.dispatch_counts(), [0]);
+            assert!(driver.inner.transports[0].events.borrow().is_empty());
+            assert!(driver.inner.transports[0].commands.is_empty());
+            driver.close().unwrap();
+        }
+    }
+}
+
+#[test]
+fn ordered_residual_tail_checks_the_combined_counter_before_publication() {
+    for (operation, count) in [
+        (Qwen3TensorParallelCollectiveV1::AttentionOutputSum, 10),
+        (Qwen3TensorParallelCollectiveV1::FeedForwardDownSum, 5),
+    ] {
+        for (counter, fits) in [
+            (u64::MAX, false),
+            (u64::MAX - count as u64, false),
+            (u64::MAX - count as u64 - 1, true),
+        ] {
+            let mut driver = pending_phase(operation, count);
+            driver.inner.ranks[0].dispatches = counter;
+            driver.inner.transports[0].failure = Some(Failure::OrderedSubmit);
+            let key = driver.inner.collective.expected();
+            let handles = residual_handles(&driver);
+            let pending = driver.inner.ordered_batches.clone();
+            assert!(driver.inner.reduce(0, operation).is_err());
+            assert_eq!(driver.inner.collective.expected(), key);
+            assert_eq!(residual_handles(&driver), handles);
+            assert_eq!(driver.dispatch_counts(), [counter]);
+            if fits {
+                assert_eq!(
+                    *driver.inner.transports[0].events.borrow(),
+                    [Event::OrderedSubmit(0, count + 1)]
+                );
+                assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
+            } else {
+                assert_eq!(driver.inner.ordered_batches, pending);
+                assert!(driver.inner.transports[0].events.borrow().is_empty());
+            }
+            assert!(driver.inner.transports[0].commands.is_empty());
+            assert!(driver.inner.transports[0].pending_ordered.is_none());
+            driver.close().unwrap();
+        }
+    }
+}
+
+#[test]
+fn ordered_residual_tail_failed_ack_never_advances_either_collective() {
+    for (operation, count) in [
+        (Qwen3TensorParallelCollectiveV1::AttentionOutputSum, 10),
+        (Qwen3TensorParallelCollectiveV1::FeedForwardDownSum, 5),
+    ] {
+        for failure in [Failure::OrderedSubmit, Failure::OrderedWait] {
+            let mut driver = pending_phase(operation, count);
+            driver.inner.transports[0].failure = Some(failure);
+            let key = driver.inner.collective.expected();
+            let handles = residual_handles(&driver);
+            assert!(driver.inner.reduce(0, operation).is_err());
+            assert_eq!(driver.inner.collective.expected(), key);
+            assert_eq!(residual_handles(&driver), handles);
+            assert_eq!(driver.dispatch_counts(), [0]);
+            let mut events = vec![Event::OrderedSubmit(0, count + 1)];
+            if failure == Failure::OrderedWait {
+                events.push(Event::OrderedWait(0, count + 1));
+            }
+            assert_eq!(*driver.inner.transports[0].events.borrow(), events);
+            assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
+            assert!(driver.inner.transports[0].pending_ordered.is_none());
+            assert!(driver.inner.transports[0].pending.is_none());
+            driver.close().unwrap();
+        }
+    }
+}
+
+#[test]
+fn synchronous_device_residual_keeps_singleton_ack_and_failure_frontier() {
+    for operation in [
+        Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+        Qwen3TensorParallelCollectiveV1::FeedForwardDownSum,
+    ] {
+        for failure in [None, Some(Failure::ResidualSubmit), Some(Failure::ResidualWait)] {
+            let mut driver = phase_driver(operation, false);
+            for bytes in driver.inner.transports[0].buffers.values_mut() {
+                bytes.fill(0);
+            }
+            driver.inner.transports[0].failure = failure;
+            let key = driver.inner.collective.expected();
+            let handles = residual_handles(&driver);
+            let result = driver.inner.reduce(0, operation);
+            if failure.is_none() {
+                result.unwrap();
+                assert_ne!(driver.inner.collective.expected(), key);
+                assert_eq!(residual_handles(&driver), (handles.1, handles.0));
+                assert_eq!(driver.dispatch_counts(), [1]);
+            } else {
+                assert!(result.is_err());
+                assert_eq!(driver.inner.collective.expected(), key);
+                assert_eq!(residual_handles(&driver), handles);
+                assert_eq!(driver.dispatch_counts(), [0]);
+            }
+            let expected = if failure == Some(Failure::ResidualSubmit) {
+                Vec::new()
+            } else {
+                vec![Event::Submit(0, RESIDUAL), Event::Wait(0, RESIDUAL)]
+            };
+            assert_eq!(*driver.inner.transports[0].events.borrow(), expected);
+            assert!(driver.inner.ordered_batches.is_none());
+            assert!(driver.inner.transports[0].pending_ordered.is_none());
+            assert!(driver.inner.transports[0].pending.is_none());
+            driver.close().unwrap();
+        }
     }
 }
 
@@ -438,6 +664,9 @@ fn ordered_wave_v11_host_spans_preserve_commands_and_name_the_flush_boundary() {
                 let row = flushes.iter().find(|row| row["phase"] == phase).unwrap();
                 assert_eq!(row["category"], "span");
                 assert_eq!(row["count"], count);
+                assert!(!snapshot["records"].as_array().unwrap().iter().any(|row| {
+                    row["phase"] == phase && row["label"] == "dispatch_zero"
+                }));
             }
         }
         driver.close().unwrap();
