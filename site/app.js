@@ -233,6 +233,44 @@
     liveHttpTeams.append(article);
   }
 
+  const c1 = project.c1Checkpoint;
+  const c1Progress = document.querySelector("[data-c1-checkpoint]");
+  c1Progress.append(element("h3", "", "C1 layer projection: variable native diagnostic"),
+    element("p", "performance-scope", c1.scope));
+  performanceTable("C1 layer projection: same-binary n=2 diagnostic",
+    ["Layer projection", "Mean TTFT (ms)", "Mean TPOT (ms)", "Mean output tok/s"],
+    c1.rows.map((row) => [row.label, (row.ttftMeanSeconds * 1000).toFixed(3),
+      (row.tpotMeanSeconds * 1000).toFixed(3), row.meanPerRunOutputTokensPerSecond.toFixed(6)]), c1Progress);
+  c1Progress.append(element("p", "", c1.interpretation),
+    element("p", "", `TPOT ranges: MFMA ${c1.rows[0].tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" to ")} ms; C1 ${c1.rows[1].tpotRangeSeconds.map((x) => (x * 1000).toFixed(3)).join(" to ")} ms.`),
+    element("p", "", c1.limitations), element("p", "", c1.correctness),
+    element("h3", "", "v13 ownership: standalone integer proof"),
+    element("p", "", c1.integerProof.scope));
+  const c1Teams = element("div", "team-grid");
+  for (const team of c1.teams) {
+    const article = element("article", "team-item");
+    const heading = element("div", "team-heading");
+    heading.append(element("h3", "", team.name), element("span", "state-tag state-open", team.label));
+    const facts = element("dl", "team-facts");
+    for (const [label, value] of [["Source", team.source], ["Validation", team.detail]])
+      facts.append(element("dt", "", label), element("dd", "", value));
+    article.append(heading, facts);
+    c1Teams.append(article);
+  }
+  c1Progress.append(c1Teams);
+  const c1Details = element("details", "performance-identities");
+  c1Details.append(element("summary", "", "C1 diagnostic and integer-proof evidence"));
+  const c1Pins = element("dl", "observation-facts");
+  for (const [label, value] of [["Same controller source", c1.source], ["Controller SHA-256", c1.controllerSha256],
+    ["Independent summary SHA-256", c1.summarySha256], ["Forty-file manifest SHA-256", c1.manifestSha256],
+    ["Replay receipt SHA-256", c1.replaySha256], ["Complete native archive SHA-256", c1.nativeArchiveSha256],
+    ["Complete replay archive SHA-256", c1.replayArchiveSha256], ["Integer proof source", c1.integerProof.source],
+    ["Integer proof source SHA-256", c1.integerProof.sourceSha256], ["Raw Verus JSON SHA-256", c1.integerProof.rawSha256],
+    ["Complete proof archive SHA-256", c1.integerProof.archiveSha256]])
+    c1Pins.append(element("dt", "", label), element("dd", "", value));
+  c1Details.append(c1Pins);
+  c1Progress.append(c1Details);
+
   const residual = project.residualDiagnostic;
   const residualProgress = document.querySelector("[data-residual-diagnostic]");
   residualProgress.append(element("h3", "", "Residual-tail diagnostic: decode regression"),

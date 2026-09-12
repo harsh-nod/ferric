@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { validateLiveHttpCheckpoint } from "./validate-submission-checkpoint.mjs";
 import { validateResidualDiagnostic } from "./validate-residual-diagnostic.mjs";
+import { validateC1Checkpoint } from "./validate-c1-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const baselineProjectSha256 = "8402465db7d75b5f4897774054ec2aef2f1c8e2d40077b2dc4a6ac510f34781a";
@@ -28,6 +29,8 @@ export async function validateKernelCheckpointEvidence(root, project) {
   }
   const baseline = projectFrom(await pinned("baseline-project.js", baselineProjectSha256));
   const unchanged = JSON.parse(JSON.stringify(project));
+  validateC1Checkpoint(unchanged.c1Checkpoint);
+  delete unchanged.c1Checkpoint;
   delete unchanged.residualDiagnostic;
   assert.deepEqual(unchanged.liveHttpCheckpoint.teams[0], baseline.liveHttpCheckpoint.teams[0]);
   delete unchanged.liveHttpCheckpoint.teams;
