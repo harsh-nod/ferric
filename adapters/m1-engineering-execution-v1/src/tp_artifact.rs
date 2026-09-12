@@ -92,6 +92,33 @@ pub const ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8: [&str; 3] = [
     "ferric_qwen3_tp_batch32_argmax_f32_v8",
 ];
 
+/// Independent Wave64 FP32 argmax image; the v8 projection remains required.
+#[cfg(feature = "tp-batch-engineering")]
+pub const ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11: [&str; 1] =
+    ["ferric_qwen3_tp_batch32_wave_argmax_f32_v11"];
+#[cfg(feature = "tp-batch-engineering")]
+const FP32_ARGMAX32_CRATE_V11: &str = "ferric_qwen3_tp_fp32_argmax_kernels_device_v11";
+
+/// Private image identity minted only by exact one-root v11 admission.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) struct Fp32ArgmaxBindingV11 {
+    pub(crate) hsaco: [u8; 32],
+    manifest: [u8; 32],
+    handoff: [u8; 32],
+}
+
+#[cfg(all(test, feature = "tp-batch-engineering"))]
+impl Fp32ArgmaxBindingV11 {
+    pub(crate) const fn recording() -> Self {
+        Self {
+            hsaco: [113; 32],
+            manifest: [114; 32],
+            handoff: [115; 32],
+        }
+    }
+}
+
 /// Closed TP1 image extending physical KV storage without extending logical context.
 pub const ENGINEERING_TP_LARGE_KV_EXPORTS_V9: [&str; 2] = [
     "ferric_qwen3_tp_batch32_large_kv_append_v9",
@@ -338,6 +365,31 @@ impl EngineeringTpArtifactV1 {
         )
     }
 
+    /// Opens only the separate v11 argmax image against its own compiled roster.
+    /// This grants no authentication authority and never replaces the v8 head image.
+    /// # Errors
+    /// Rejects target, exact roster, descriptor, source, file or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_fp32_argmax32_v11(
+        root: &Path,
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            &ferric_qwen3_tp_fp32_argmax_kernels_device_v11::compiler_expectation_roster_v11(),
+            FP32_ARGMAX32_CRATE_V11,
+            &ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11,
+        )
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    pub(crate) fn fp32_argmax_binding_v11(&self) -> Option<Fp32ArgmaxBindingV11> {
+        (self.source_crate == FP32_ARGMAX32_CRATE_V11).then(|| Fp32ArgmaxBindingV11 {
+            hsaco: *self.hsaco_id.as_bytes(),
+            manifest: *self.manifest_id.as_bytes(),
+            handoff: *self.handoff_id.as_bytes(),
+        })
+    }
+
     /// Opens the separately compiled two-root TP1 large-physical-KV image.
     /// # Errors
     /// Rejects any source, target, descriptor, roster, file or identity drift.
@@ -566,6 +618,55 @@ fn exact_roster<'a>(actual: impl Iterator<Item = &'a str>, expected: &[&str]) ->
 #[cfg(test)]
 mod tests {
     use super::{ENGINEERING_TP_EXPORTS_V1, exact_exports};
+
+    #[test]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn argmax_v11_roster_is_single_root_and_disjoint_from_unchanged_head() {
+        use super::{ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11 as ROOTS, exact_roster};
+        assert!(exact_roster(
+            ferric_qwen3_tp_fp32_argmax_kernels_device_v11::compiler_expectation_roster_v11()
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            &ROOTS
+        ));
+        assert!(!exact_roster([ROOTS[0], ROOTS[0]].into_iter(), &ROOTS));
+        for root in super::ENGINEERING_TP_BATCH32_EXPORTS_V5
+            .into_iter()
+            .chain(super::ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8)
+            .chain(super::ENGINEERING_DRAFT_BATCH32_EXPORTS_V10)
+        {
+            assert!(!ROOTS.contains(&root));
+        }
+    }
+
+    #[test]
+    #[ignore = "requires a separately emitted canonical v11 image; host admission only"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn argmax_v11_image_admission_binds_its_own_exact_roster() {
+        let root = std::path::PathBuf::from(
+            std::env::var_os("FERRIC_TEST_ARGMAX_V11_ARTIFACT").expect("explicit v11 image"),
+        );
+        let artifact = super::EngineeringTpArtifactV1::open_fp32_argmax32_v11(&root).unwrap();
+        let binding = artifact.fp32_argmax_binding_v11().unwrap();
+        assert_eq!(binding.hsaco, *artifact.hsaco_id().as_bytes());
+        assert!(artifact.draft_binding().is_none());
+        assert!(artifact.large_kv_binding().is_none());
+        assert!(
+            super::EngineeringTpArtifactV1::open_fp32_head32(
+                &root,
+                &ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8()
+            )
+            .is_err()
+        );
+        assert!(
+            super::EngineeringTpArtifactV1::open_batch32(
+                &root,
+                &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
+                true
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     #[cfg(feature = "tp-batch-engineering")]

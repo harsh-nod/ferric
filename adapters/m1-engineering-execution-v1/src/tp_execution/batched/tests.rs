@@ -3,6 +3,7 @@
 //! evidence. These tests exercise scheduling, active extents, ownership handoff,
 //! host reductions, and terminal failure behavior without a physical device.
 
+mod argmax_v11;
 mod draft;
 mod large_kv;
 mod ordered_batches;
@@ -44,6 +45,8 @@ enum Failure {
     OrderedSubmit,
     OrderedWait,
     PreparePackets,
+    ArgmaxSubmit,
+    ArgmaxWait,
 }
 
 struct Recording {
@@ -65,6 +68,8 @@ struct Recording {
     queue_packets: u64,
     queue_epochs: u64,
     packet_preparations: Vec<u64>,
+    argmax_v11_loaded: Option<[u8; 32]>,
+    argmax_peer: Option<(u32, u32, u32)>,
 }
 
 fn scalar(command: &EngineeringTpDispatchV1, index: usize) -> u32 {
@@ -132,6 +137,19 @@ impl Recording {
 }
 
 impl EngineeringTpRankTransportV1 for Recording {
+    fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
+        self.argmax_peer
+    }
+    fn require_loaded_image(&mut self, image: [u8; 32], kernels: &[&str]) -> TpResult<()> {
+        if self.buffers.is_empty()
+            && self.argmax_v11_loaded == Some(image)
+            && kernels == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11
+        {
+            Ok(())
+        } else {
+            Err("recording image was not loaded".into())
+        }
+    }
     fn supports_queue_rollover(&self) -> bool {
         self.rollover_supported
     }
@@ -260,6 +278,11 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.failure == Some(Failure::ArgmaxSubmit)
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
+        {
+            return Err("injected argmax submit failure".into());
+        }
         assert!(self.pending.is_none());
         assert_eq!(command.workgroup_size, 64);
         assert!(command.grid_workgroups > 0);
@@ -296,6 +319,11 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
+        if self.failure == Some(Failure::ArgmaxWait)
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
+        {
+            return Err("injected argmax completion failure".into());
+        }
         self.events
             .borrow_mut()
             .push(Event::Wait(self.rank, command.kernel));
@@ -334,6 +362,7 @@ impl EngineeringTpRankTransportV1 for Recording {
             "ferric_qwen3_draft_batch32_mfma_head_f32_v10"
             | "ferric_qwen3_tp_batch32_mfma_head_f32_v8" => FP32_MFMA_HEAD,
             "ferric_qwen3_draft_batch32_argmax_f32_v10"
+            | "ferric_qwen3_tp_batch32_wave_argmax_f32_v11"
             | "ferric_qwen3_tp_batch32_argmax_f32_v8" => FP32_ARGMAX,
             "ferric_qwen3_draft_batch32_residual_bf16_v10"
             | "ferric_qwen3_tp_batch32_residual_bf16_v5" => {
@@ -554,6 +583,8 @@ fn fixture_for_model(
     let events = Rc::new(RefCell::new(Vec::new()));
     let mut transports = (0..world)
         .map(|rank| Recording {
+            argmax_v11_loaded: None,
+            argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
             next: 1,
@@ -655,6 +686,8 @@ fn fixture_for_model(
         numerical: None,
         head_profile_configured: false,
         fp32_logits: None,
+        fp32_argmax_v11: None,
+        admitted_argmax_v11: None,
     }
 }
 

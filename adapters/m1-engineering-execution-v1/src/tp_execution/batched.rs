@@ -25,7 +25,11 @@ pub use draft::EngineeringTpDraftBatchExecutionV10;
 
 #[derive(Clone, Copy)]
 enum BatchedProfile {
-    Target { rows: usize, large_kv: bool },
+    Target {
+        rows: usize,
+        large_kv: bool,
+        argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
+    },
     Draft(crate::tp_artifact::DraftBindingV10),
 }
 
@@ -74,6 +78,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     numerical: Option<Box<EngineeringTpNumericalCaptureV1>>,
     head_profile_configured: bool,
     fp32_logits: Option<Tensor>,
+    fp32_argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
+    admitted_argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -105,6 +111,38 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
     ) -> TpResult<Self> {
         Self::new_bounded(transports, model, weights, layout, pool, 32, false)
+    }
+
+    /// Binds a separately loaded v11 image before allocating the unchanged v5/v8 buffers.
+    /// Both comparison modes use this constructor; selection remains serial by default.
+    /// # Errors
+    /// Rejects a wrong image, nonfresh worker, unsupported target geometry or allocation failure.
+    pub fn new_wide32_with_argmax_v11(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        let Some(binding) = artifact.fp32_argmax_binding_v11() else {
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err("argmax v11 constructor requires its exact admitted image".into());
+        };
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 32,
+                large_kv: false,
+                argmax_v11: Some(binding),
+            },
+        )
     }
 
     /// Allocates TP1 physical KV only after checking the pool's exact admitted v9 image.
@@ -140,6 +178,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             BatchedProfile::Target {
                 rows: row_capacity,
                 large_kv,
+                argmax_v11: None,
             },
         )
     }
@@ -152,13 +191,28 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
         profile: BatchedProfile,
     ) -> TpResult<Self> {
-        let (row_capacity, large_kv, draft_v10) = match profile {
-            BatchedProfile::Target { rows, large_kv } => (rows, large_kv, false),
-            BatchedProfile::Draft(_) => (32, false, true),
+        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11) = match profile {
+            BatchedProfile::Target {
+                rows,
+                large_kv,
+                argmax_v11,
+            } => (rows, large_kv, false, argmax_v11),
+            BatchedProfile::Draft(_) => (32, false, true, None),
         };
         let binding = match profile {
             BatchedProfile::Target { .. } => {
                 validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
+                    .and_then(|()| {
+                        if let Some(image) = admitted_argmax_v11 {
+                            validate_argmax_binding_v11(
+                                &mut transports,
+                                row_capacity,
+                                large_kv,
+                                image,
+                            )?;
+                        }
+                        Ok(())
+                    })
             }
             BatchedProfile::Draft(image) => {
                 draft::validate_binding(&mut transports, model, pool, image)
@@ -233,6 +287,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             numerical: None,
             head_profile_configured: false,
             fp32_logits: None,
+            fp32_argmax_v11: None,
+            admitted_argmax_v11,
         })
     }
 
@@ -257,6 +313,66 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
     pub fn configure_head_precision_v8(&mut self, fp32: bool) -> TpResult<()> {
         self.configure_head_precision(fp32, 32)
+    }
+
+    /// Selects the separately loaded v11 argmax while retaining the exact v8 head.
+    /// Configure projection, attention, reduction and pruning before this selector.
+    /// # Errors
+    /// Rejects wrong images, unsupported profiles and repeated or late configuration.
+    pub fn configure_fp32_argmax_v11(
+        &mut self,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<()> {
+        let binding = artifact
+            .fp32_argmax_binding_v11()
+            .ok_or("argmax v11 requires the exact separately admitted one-root image")?;
+        self.configure_fp32_argmax_binding_v11(binding)
+    }
+
+    fn configure_fp32_argmax_binding_v11(
+        &mut self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+    ) -> TpResult<()> {
+        if self.fp32_argmax_v11.is_some()
+            || self.admitted_argmax_v11 != Some(binding)
+            || self.last_batch != 0
+            || self.completed_batches != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.inner.draft_v10
+            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
+            || self.row_capacity != 32
+            || self.inner.ranks.len() != 1
+            || self.inner.transports.len() != 1
+            || self.inner.transports[0].peer_group_rank().is_some()
+            || !self.head_profile_configured
+            || self.fp32_logits.is_none()
+            || self.inner.large_kv
+            || self.inner.sequences.is_some()
+            || self.inner.ordered_batches.is_some()
+            || self.numerical.is_some()
+            || self.wave_attention
+            || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+            || !matches!(
+                self.projection.mode,
+                super::EngineeringTpProjectionModeV3::Baseline
+                    | super::EngineeringTpProjectionModeV3::Mfma
+            )
+        {
+            return Err("argmax v11 requires fresh target TP1/capacity32, FP32-v8, device TP1, baseline or MFMA projection and baseline attention, without large KV, peers, sequences, ordered batches or capture".into());
+        }
+        self.fp32_argmax_v11 = Some(binding);
+        Ok(())
+    }
+
+    /// Opt-in argmax selection only; the v8 projection and FP32 output are unchanged.
+    #[must_use]
+    pub const fn fp32_argmax_mode(&self) -> &'static str {
+        if self.fp32_argmax_v11.is_some() {
+            "wave-v11"
+        } else {
+            "serial"
+        }
     }
 
     fn configure_head_precision(&mut self, fp32: bool, capacity: usize) -> TpResult<()> {
@@ -399,6 +515,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
     pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
         if self.poisoned
+            || self.fp32_argmax_v11.is_some()
             || self.last_batch != 0
             || self.completed_batches != 0
             || self.numerical.is_some()
@@ -464,6 +581,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects changes after submission, failure, or closure.
     pub fn configure_output_head_pruning(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || self.fp32_argmax_v11.is_some()
             || self.poisoned
             || self.inner.closed
             || self.numerical.is_some()
@@ -559,6 +677,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects a started, poisoned, or closed execution.
     pub fn configure_wave_attention(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || self.fp32_argmax_v11.is_some()
             || self.poisoned
             || self.inner.closed
             || self.numerical.is_some()
@@ -577,6 +696,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects unsupported transports, execution already begun, or closed state.
     pub fn configure_dispatch_sequences(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || self.fp32_argmax_v11.is_some()
             || self.inner.ordered_batches.is_some()
             || (enabled
                 && (self.numerical.is_some()
@@ -604,6 +724,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects incompatible profiles, unsupported transports or any late policy change.
     pub fn configure_ordered_batches(&mut self, enabled: bool) -> TpResult<()> {
         if self.last_batch != 0
+            || self.fp32_argmax_v11.is_some()
             || self.poisoned
             || self.inner.closed
             || self.inner.ordered_batches.is_some()
@@ -1184,6 +1305,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Ok(Vec::new());
         }
         let head_timing = self.inner.timing.scope("output_head");
+        let normalization_timing = self.inner.timing.scope("output_head_normalization");
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&norm(
             r,
@@ -1193,6 +1315,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             head_rows,
             model.hidden_size,
         ))?;
+        drop(normalization_timing);
+        let projection_timing = self.inner.timing.scope("output_head_projection");
         let r = &self.inner.ranks[0];
         let logits = self.fp32_logits.unwrap_or(r.logits);
         let mut head = projection.command(
@@ -1217,9 +1341,13 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             };
         }
         self.inner.dispatch_zero(&head)?;
+        drop(projection_timing);
+        let argmax_timing = self.inner.timing.scope("output_head_argmax");
         let r = &self.inner.ranks[0];
         self.inner.dispatch_zero(&dispatch(
-            if self.fp32_logits.is_some() {
+            if self.fp32_argmax_v11.is_some() {
+                crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
+            } else if self.fp32_logits.is_some() {
                 FP32_ARGMAX
             } else {
                 ARGMAX
@@ -1227,6 +1355,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             head_rows,
             vec![logits.read(), r.choice.write(), U32(head_rows)],
         ))?;
+        drop(argmax_timing);
         drop(head_timing);
         let _readback_timing = self.inner.timing.scope("output_readback");
         let mut bytes = vec![0; head_rows as usize * 4];
@@ -1271,6 +1400,25 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             Ok(output_rows.iter().map(|&row| choices[row]).collect())
         }
     }
+}
+
+fn validate_argmax_binding_v11<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    row_capacity: usize,
+    large_kv: bool,
+    image: crate::tp_artifact::Fp32ArgmaxBindingV11,
+) -> TpResult<()> {
+    if row_capacity != 32
+        || large_kv
+        || transports.len() != 1
+        || transports[0].peer_group_rank().is_some()
+    {
+        return Err("argmax v11 requires a fresh nonpeer target TP1/32-row allocation".into());
+    }
+    transports[0].require_loaded_image(
+        image.hsaco,
+        &crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]

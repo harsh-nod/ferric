@@ -53,6 +53,20 @@ pub(super) fn bind(
     capacity: u32,
     mut command: EngineeringTpDispatchV1,
 ) -> TpResult<EngineeringTpDispatchV1> {
+    if command.kernel == "ferric_qwen3_tp_batch32_wave_argmax_f32_v11" {
+        let Some(EngineeringTpArgumentV1::U32(rows)) = command.arguments.get(2) else {
+            return Err("argmax v11 row argument is missing".into());
+        };
+        if capacity != 32
+            || command.workgroup_size != 64
+            || command.arguments.len() != 3
+            || !(1..=32).contains(rows)
+            || command.grid_workgroups != *rows
+        {
+            return Err("argmax v11 requires exactly one Wave64 group per active row".into());
+        }
+        return Ok(command);
+    }
     if capacity != 32 {
         return Ok(command);
     }
@@ -121,6 +135,40 @@ pub(super) fn bind(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn v11_route_requires_exact_wave64_rows_and_legacy_target_storage() {
+        const ROOT: &str = "ferric_qwen3_tp_batch32_wave_argmax_f32_v11";
+        for rows in [1, 16, 17, 32] {
+            let command = super::super::dispatch(
+                ROOT,
+                rows,
+                vec![
+                    EngineeringTpArgumentV1::U32(0),
+                    EngineeringTpArgumentV1::U32(0),
+                    EngineeringTpArgumentV1::U32(rows),
+                ],
+            );
+            assert_eq!(bind_storage(32, false, command.clone()).unwrap(), command);
+            assert!(bind_storage(16, false, command.clone()).is_err());
+            assert!(bind_storage(32, true, command.clone()).is_err());
+            #[cfg(feature = "tp-batch-engineering")]
+            assert!(bind_mode(true, 32, false, command.clone()).is_err());
+            for mutation in 0..4 {
+                let mut bad = command.clone();
+                match mutation {
+                    0 => bad.workgroup_size = 32,
+                    1 => bad.grid_workgroups += 1,
+                    2 => bad.arguments[2] = EngineeringTpArgumentV1::U32(0),
+                    3 => {
+                        bad.arguments.pop();
+                    }
+                    _ => unreachable!(),
+                }
+                assert!(bind_storage(32, false, bad).is_err());
+            }
+        }
+    }
 
     #[test]
     fn row_tiles_are_one_physical_grid_and_old_profiles_are_unchanged() {

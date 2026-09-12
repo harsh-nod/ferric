@@ -143,6 +143,7 @@ fn adapter_is_an_exact_standalone_workspace() {
             "ferric-qwen3-draft-batch32-kernels-device-v10",
             "ferric-qwen3-tp-batch-kernels-device-v2",
             "ferric-qwen3-tp-batch32-kernels-device-v5",
+            "ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
             "ferric-qwen3-tp-fp32-head-kernels-device-v7",
             "ferric-qwen3-tp-fp32-head32-kernels-device-v8",
             "ferric-qwen3-tp-kernels-device-v1",
@@ -190,7 +191,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("dep:ferric-qwen3-tp-fp32-head-kernels-device-v7"),
             Some("dep:ferric-qwen3-tp-fp32-head32-kernels-device-v8"),
             Some("dep:ferric-qwen3-tp-large-kv-kernels-device-v9"),
-            Some("dep:ferric-qwen3-draft-batch32-kernels-device-v10")
+            Some("dep:ferric-qwen3-draft-batch32-kernels-device-v10"),
+            Some("dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11")
         ]
     );
     let bin = manifest["bin"]
@@ -207,6 +209,33 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
         assert!(SOURCE.contains(&format!(
             "#[cfg(feature = \"tp-batch-engineering\")]\npub mod {module};"
         )));
+    }
+}
+
+#[test]
+fn argmax_canary_is_separately_opted_in_without_changing_frozen_clis() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-argmax-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    let dependency = &manifest["dependencies"]["ferric-qwen3-tp-fp32-argmax-kernels-device-v11"];
+    assert_eq!(dependency["optional"].as_bool(), Some(true));
+    assert_eq!(dependency["default-features"].as_bool(), Some(false));
+    let canary = include_str!("../src/bin/ferric-qwen3-argmax-canary.rs");
+    assert!(canary.contains("new_wide32_with_argmax_v11"));
+    assert!(canary.contains("configure_fp32_argmax_v11"));
+    for frozen in [
+        include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),
+        include_str!("../src/bin/ferric-qwen3-paired-paged-canary.rs"),
+    ] {
+        assert!(!frozen.contains("--argmax-mode"));
     }
 }
 
