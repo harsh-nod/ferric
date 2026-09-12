@@ -1,6 +1,7 @@
 # Competitiveness Sprint V1
 
-Status: in progress. No matched vLLM/SGLang result or competitive claim yet.
+Status: in progress. The first matched Ferric/vLLM cell passes, with Ferric
+substantially slower. SGLang measurement and competitive qualification remain open.
 The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 
 ## Active Teams
@@ -579,9 +580,70 @@ The first SGLang v3 attempt failed before model execution: AITER tried to copy
 unreadable image-bundled cache files into its owned user cache. Its exact owned
 container was removed and all GPUs returned idle. It produced no numerical or
 performance result. A separately versioned startup correction is under review;
-the failed receipt remains retained. The next Ferric work is measured diagnosis
-of ordered attention/FFN execution, the explicit wave-attention combination, and
-the private autoregressive draft transaction. Speculative serving remains open.
+the failed receipt remains retained. Revision v4 passed cache import but failed
+on the observer's Python-3.11-only hashing API. Revision v5 replaces only that
+hashing helper with bounded SHA-256 reads and passes 101 CPU tests. Its actual
+model load and observer completed, but graph capture failed opening a FlyDSL
+lock in the read-only image cache. Both owned containers were removed cleanly,
+with all eight GPUs idle afterward. Neither failure produced a numerical or
+timing result. The next correction must retain the selected backend/graphs and
+use an owned writable cache. Speculative serving remains open.
+
+## Wave Plus Ordered And Private Proposals
+
+Exact controller source `f65c4603f936b3cf5d009991bc19a9645ecdb604` adds the
+explicit wave-attention/ordered-batch combination without changing defaults.
+The same controller binary and frozen worker run a baseline/wave/wave/baseline
+sequence on the four-request/eight-output canary. All four runs match every
+reference token and decoded byte, cancellation and prefix reuse, 34 physical
+rows, five batches and 3,077 packets. Owned workers exit and all eight GPUs are
+idle before/after each run.
+
+| Attention With Ordered Batches | Run 1 Rate | Run 2 Rate | Mean Rate |
+| --- | ---: | ---: | ---: |
+| Baseline | 5.495401 | 5.507684 | 5.501543 |
+| Wave | 6.178240 | 6.174699 | 6.176470 |
+
+Rates are output tokens/s over the fixed workload window. The mean-rate
+increase is 12.27%. Mean arriving-short TTFT/TPOT change from
+284.777/280.808 ms to 253.348/247.320 ms; reuse-prefix changes from
+262.911/228.906 ms to 229.464/194.947 ms. These are two fresh runs per mode,
+not confidence intervals, serving results, per-kernel GPU timings or a new
+default. Both modes retain host-timing instrumentation, context 64, eight KV
+pages, 16-row chunks, prefix caching, and no queue rollover. Do not substitute
+these values into the separate unprofiled HTTP 128/128 comparison.
+
+Evidence is retained under `ferric-ordered-wave-evidence-v1`, with run tags
+`ordered-wave-f65-{control,candidate}-r{1,2}`. Controller SHA-256 is
+`d1c006b89f918541820a3335ba0f931a7394d1f7fa1a4eca2de5e4653e824237`.
+The exact wrapper is `7512e47a4d664ce401e644c935238eba9c4a21306d3c5322f9940dcfbbc131cc`;
+the independently checked composed comparator is
+`1caf29f9f957263ae563f9fd66207d9ba7a361650d67248fe75a6d332b68590a`.
+Batch-five head spans are roughly 23 ms; the aggregated host trace cannot
+attribute its longest dispatch to a particular kernel or isolate GPU duration.
+Source inspection identifies the lane-zero serial FP32 vocabulary argmax as
+an additive parallel-reduction candidate. No argmax speedup is measured yet.
+
+Private autoregressive proposals are integrated in `82703c6`: target K+1 is
+reserved before draft K, each next draft input comes from the previous sealed
+device choice, and individual completion evidence is retained through target
+verification and accepted-prefix settlement. Full acceptance still requires
+last-candidate catch-up. No user-supplied candidate vector or synthesized
+aggregate completion substitutes for actual draft execution. Host fixtures
+cover K4/K8/K16, rejected/replayed/foreign choices, exhaustion, failures and
+multi-round catch-up; native paired-model execution and speculative serving
+remain open.
+
+The exact integrated `82703c6a788e99e23ef8d4204ea5c976413ae6e1` gate passes
+568 adapter test invocations, 22 existing optional image skips, seven doctests,
+31 Python tests, formatting, strict all-target Clippy and release on mi300x.
+All 1,040 source files remain unchanged; all fe2o3 packages resolve to public
+`216822284`, freshly rechecked September 12. Aggregate SHA-256:
+`81a847daa89ab1b7829b3229a197e6ace567ea84585f54be2d9dc2248a9d0863`.
+Archive SHA-256:
+`61971250985491f8d902df090f949748e571f20ea313cd43dd76aa66fa9cf970`.
+The completed draft worktree was removed after archival; branch and evidence
+are retained. This is not a new Verus proof or native speculative result.
 
 ## Published Checkpoint
 

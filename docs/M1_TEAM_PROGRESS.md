@@ -1,9 +1,32 @@
 # M1 Team Progress
 
-Updated: 2026-09-11. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-12. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Performance Swarm
+
+Active integration is `82703c6`, using public fe2o3
+`21682228486f7186cc3c37ddf165fffc438d8b6a`, freshly rechecked September 12.
+Frozen GPU binaries retain their actual source identities. Ferric implementation
+remains local; separately reviewed Pages content is published independently.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Measurement | First matched Qwen3-8B 128/128 cell passes exact diagnostics and 30 measured requests per engine. Ferric TTFT/TPOT are 3705.967/506.969 ms, versus vLLM 19.243/4.414 ms. | SGLang startup retry, repeated primary workloads and direct bottleneck diagnosis. No competitive win. |
+| Kernels | Same-source wave-plus-ordered ABBA passes all four exact-reference canaries. Mean short-workload rate rises from 5.501543 to 6.176470 tokens/s (+12.27%). | Additive parallel FP32 argmax, preserving finite rejection and lowest-ID ties; native correctness before timing. |
+| Speculation | Private K4/K8/K16 autoregressive proposal transactions are integrated. Independent full/tokenwise paged-draft FP32 references pass twice each; first native baseline/full case passes. | Remaining seven native draft cases, native multi-round paired draft/target execution and serving integration. |
+| Integration and Pages | Exact `82703c6` passes 568 adapter test invocations, 22 existing image skips, seven doctests, 31 Python tests, formatting, strict Clippy and release on mi300x. All 1,040 source files remain unchanged. Completed draft worktree removed after archival. | Reviewed Pages publication, evidence archival and owned-stage cleanup. No new Verus proof. |
+
+The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
+selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
+greedy fixed-length output, and speculation/prefix caching off. It is a
+single-start finite cohort, not sustained-load or stock-default qualification.
+Ferric is substantially slower than vLLM. The wave canary is a separate
+host-timed four-request/eight-output workload, with two runs per mode; it cannot
+replace the matched HTTP numbers. See the
+[competitiveness sprint](M1_COMPETITIVENESS_SPRINT_V1.md) for exact evidence.
+
+## September 11 Performance Swarm
 
 Active integration uses public fe2o3 `5110577a6d8c45390dfb353386cde748efd5d76c`,
 including the concurrent-rank runtime published at public797. Frozen benchmark binaries
