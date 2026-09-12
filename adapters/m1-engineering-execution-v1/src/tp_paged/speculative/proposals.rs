@@ -63,10 +63,11 @@ impl EngineeringTpDraftProposalWorkV1<'_> {
         if output_rows != [0] || choices.len() != 1 || choices[0] >= QWEN3_VOCABULARY_SIZE {
             return Err(Error::Choices);
         }
+        let choice = choices.into_iter().next().ok_or(Error::Choices)?;
         Ok(EngineeringTpDraftProposalResultV1 {
             identity: self.identity,
             input: self.batch.rows[0].input,
-            choice: choices[0],
+            choice,
             completion,
         })
     }
@@ -233,7 +234,7 @@ impl EngineeringTpSpeculativeKvV1 {
             unreachable!("proposal phase was checked without a phase mutation");
         };
         let row = &round.draft.rows[usize::from(ordinal)];
-        round.active = Some(EngineeringTpPreparedBatchV1 {
+        let batch = EngineeringTpPreparedBatchV1 {
             pool: round.draft.pool,
             scope: round.draft.scope,
             id: identity.batch,
@@ -243,13 +244,10 @@ impl EngineeringTpSpeculativeKvV1 {
                 pages: row.pages.clone(),
                 write_page: row.write_page,
             }],
-        });
+        };
         Ok(EngineeringTpDraftProposalWorkV1 {
             identity,
-            batch: round
-                .active
-                .as_ref()
-                .expect("private row was just installed"),
+            batch: round.active.insert(batch),
         })
     }
 
@@ -266,6 +264,11 @@ impl EngineeringTpSpeculativeKvV1 {
                 return Err(error);
             }
         };
+        let (Some(target), Some(draft)) = (&mut self.target.pending, &mut self.draft.pending)
+        else {
+            self.terminalize_if_submitted();
+            return Err(Error::Completion);
+        };
         let Phase::Proposing(mut round) = std::mem::replace(&mut self.phase, Phase::Terminal)
         else {
             unreachable!("successful proposal preflight retains its phase");
@@ -275,16 +278,8 @@ impl EngineeringTpSpeculativeKvV1 {
         if ordinal + 1 < round.draft.rows.len() {
             round.draft.rows[ordinal + 1].input.token = result.choice;
         }
-        self.target
-            .pending
-            .as_mut()
-            .expect("preflight target reservation")
-            .proposed = target_state;
-        self.draft
-            .pending
-            .as_mut()
-            .expect("preflight draft reservation")
-            .proposed = draft_state;
+        target.proposed = target_state;
+        draft.proposed = draft_state;
         round.index = index;
         round.active = None;
         round.results.push(result);
