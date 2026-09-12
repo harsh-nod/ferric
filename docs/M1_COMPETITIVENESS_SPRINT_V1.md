@@ -1014,7 +1014,92 @@ specializes TP1 one-row down projection and groups pairs of K16 loads while
 preserving the existing single-accumulator order and weight layout. Nine
 focused host tests, format, Clippy and locked metadata pass on mi300x.
 Its host archive is `81a6ed8ea2d096bc4417676c95d5348851bdb2cedb962d6aad7d6411717ce11a`.
-It is not integrated into a route or default. Emission, ISA review and native
-bitwise comparison are separate gates; no v12 performance claim is made.
+It is not integrated into a route or default. The subsequent emission and ISA
+results are recorded below; native bitwise comparison remains open.
 Active core remains public `8efd4fd` / tree `93a51b4a`, freshly checked after
 the native runs. No core code was changed or pushed in this continuation.
+
+### V12 Emission And Cleanup
+
+The initial emission rejects the original v12 source with
+`FE2O3-TENSOR-LAYOUT-002`: dimension predicates precede MFMA in the compiler
+control-flow analysis. Source `73617b7cee6dd0fa65e40008f91b8fb7a51955f5`
+moves those predicates after accumulator extraction and before stores, matching
+the supported v5 ordering. No guard is removed; required launch admission and
+the earlier shape/slice bounds remain. Ten focused host tests and emission/
+exact replay pass with latest fe2o3 `8efd4fd`; the reused LLVM worker retains
+its actual `2168222` provenance. The rejected first attempt remains archived.
+
+HSACO `2748bc178ac01c32a9a95d929ed67ce5ba358e0525ca2d8490d07c112db20c85`
+has 32 VGPRs, 34 SGPRs and four AGPRs, with no scratch, LDS or spills. ISA
+retains paired K16 loads and the original single-accumulator MFMA order, but
+waits for all loads before the pair of MFMAs. It does not establish software-
+pipelined load/compute overlap, occupancy improvement or a performance gain.
+The full final archive is
+`73f454b6f7dd3437f157b6f86fe8bd42d5af61373fa30308d4ba94c45e50a2ca`;
+emission receipt is
+`e07f6f3bfc6b05606a20bdbcbd8865994b920b0a384b9809ca84eb57d171f8b9`.
+Both completed remote roots and the clean local worktree are removed after
+verified custody, reclaiming about 1.29 GiB remotely and 41.2 MiB locally.
+The branch and evidence remain; no native v12 parity or route integration is
+claimed.
+
+### Seven-Group Attention Diagnostic
+
+Source `809af24513f71cde7439bd8f7cfbff4c11351ade`, tree
+`29f9a335f2317b570c67f1f8958aebb339f00a3e`, adds seven nested host spans
+without changing kernels, commands, arithmetic or runtime flags. All 32 remote
+host-gate steps pass: 638 adapter test invocations, eight doctests, explicit
+image/reference fixtures, strict Clippy/release, 38 source-gate tests, 31
+protected verifier policies and five unchanged inventories. Thirty adapter
+invocations are ignored in the general suites, including the two separately
+executed fixtures. All 1,059 source files retain exact before/after custody.
+Aggregate receipt:
+`d371ec67b801b5be3a210ae8b84c88c279d5e705b75cfaa9d9e9fd36f25b1651`.
+
+One fresh full128 native run uses the same baseline-attention, MFMA, FP32-v8,
+wave-v11-argmax profile and unchanged oracle. All 128 IDs and decoded bytes
+match; 83,139 packets, 135 batches, retirement, normal worker close and exact
+all-eight idle checks pass. The independently reviewed reporter admits 945
+group records, with 4,860 observations per group:
+
+| Host Operation Group | Seconds | Percent Of Attention Parent |
+| --- | ---: | ---: |
+| GQA math | 41.068390375 | 72.5853% |
+| Input normalization | 4.165605679 | 7.3624% |
+| Q/K/V projections | 4.119716878 | 7.2813% |
+| KV append | 3.637546242 | 6.4291% |
+| Q/K normalization | 1.530490487 | 2.7050% |
+| Output projection | 1.275791124 | 2.2549% |
+| RoPE | 0.778113253 | 1.3753% |
+
+The parent attention span is 56.579512157 seconds. Sibling groups are disjoint,
+but their parent and IPC spans overlap. These are controller wall times that
+include dispatch and waits, not GPU durations or a cross-run speedup. The next
+candidate explicitly composes the existing wave GQA kernel with v11 argmax;
+its summation order differs, so correctness and matched performance remain
+separate gates. Old selectors, defaults and references remain unchanged.
+
+- Controller SHA-256: `950b42c13f5f2fa548cce4a0c0c029a6b2bb87a1addb9f8cc8119a3467517a82`.
+- Raw case archive: `aa951138f204ff7ccf04b5c1c1de35eac21376f6cfafebcb9314e6bd3bee70cc`, matching an independent second remote stream.
+- Wrapper receipt: `9b5c000eb0e2462fd40c25b2dd8f7d1d0fcca8d7726a70b391b055476ee3fa52`.
+- Reviewed reporter: `43282d1f74fea4730beb26912e4fa90b34b548bf205a0a74e10e15053c55d715`; 19 CPU tests pass.
+- Independent diagnostic: `0ebd4dd53827536f8dbca6f4ed3c5be964dfd6a5e1f36d29eb86bfe488f6b633`.
+
+The redundant instrumentation worktree is removed after archive/bundle checks.
+Its private mi300x stage is explicitly leased for the next source-bound gate;
+any reuse of its Cargo target will be recorded as a warm cache, not a clean
+rebuild. No compiler/runtime code change or new Verus proof is implied.
+
+### Published Native Checkpoint
+
+Pages-only `de9980fc299a738e8835d203e0cc8799d219ab31` is published after
+fresh fetch/rebase, independent data review, 225 negative schema cases and
+desktop/mobile validation. Deployment `34695107216` succeeds and all seven
+live assets match the tested artifact. The site records the six-run argmax
+results, rejected canary and runtime diagnostic without changing the frozen
+matched HTTP table. It does not yet publish the later seven-group diagnostic.
+Live-asset receipt:
+`998e5370245424bd6ed2d15f691b59392591303102e35a400088b5a5e8fb0527`.
+Completed Pages stage/worktree are removed after verified archival. Ferric
+implementation is not pushed; only the separately reviewed site is public.

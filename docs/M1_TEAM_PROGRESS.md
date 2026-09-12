@@ -20,13 +20,17 @@ observes +10.16% mean output rate, with two runs per mode. These are native
 host-wall descriptions, not HTTP performance or default-promotion evidence.
 Frozen GPU binaries retain their actual source identities. Ferric implementation
 remains local; separately reviewed Pages content is published independently.
+Instrumentation source `809af245` is integrated and passes all 32 host-gate
+steps. Its unchanged full128 model diagnostic passes: the GQA math group
+accounts for 72.59% of the attention parent host span. This is attribution,
+not a measured speedup from instrumentation.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay, fourteen finite-active native fixtures, and all six corrected model comparisons. The separate v12 one-row down-projection prototype passes nine focused host tests; emission remains a separate gate. | Attribute the broad decoder spans; qualify composition and serving separately. Serial v8 remains the default. |
+| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay, fourteen finite-active native fixtures, and all six corrected model comparisons. Separate v12 source `73617b7` passes ten focused host tests and latest-8efd emission/replay; ISA shows paired load batching, not load/compute overlap. | Test explicit wave-attention plus v11 composition against the unchanged oracle. V12 native parity remains open. Serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Corrected route source `d9a2705` passes 637 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. The six-run native manifest and summary pass independent replay; all workers close normally and all eight GPUs are idle afterward. Frozen f65 runtime-counter diagnostic passes. Pages `75d8c03` is live; the new checkpoint is in review. | Publish reviewed native checkpoint; finer wait/kernel attribution. No new Verus proof. |
+| Integration and Pages | Instrumented source `809af245` passes 638 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. Independent full128 replay validates all seven attention groups, exact tokens/text, normal worker close and all-eight idle checks. Pages-only `de9980f` is deployed and all seven live assets are byte-verified. | Review and host-test the separate wave-attention/v11 candidate; serialize native gates. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -45,6 +49,9 @@ with the earlier wave-plus-ordered gain or replace the matched serving table.
 Completed correction and prior route worktrees are removed. Hash-verified
 closure archives precede removal of 7,259,676 KiB of released mi300x stages;
 active team stages, current GPU artifacts, shared models and caches remain.
+The completed Pages stage, v12 stages and redundant instrumentation worktree
+are also removed after verified archival. One leased mi300x build cache remains
+for the next candidate; it is not evidence of a clean rebuild.
 
 ## September 11 Performance Swarm
 
