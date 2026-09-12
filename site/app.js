@@ -119,7 +119,10 @@
     ["Host-group diagnostic SHA-256", attention.attribution.reportSha256],
     ["Fixture source", attention.fixtures.source], ["Frozen v5 image SHA-256", attention.fixtures.imageSha256],
     ["Native fixture report SHA-256", attention.fixtures.reportSha256],
-    ["Independent fixture replay SHA-256", attention.fixtures.replaySha256]]) {
+    ["Independent fixture replay SHA-256", attention.fixtures.replaySha256],
+    ["Combined model qualification source", attention.composition.source],
+    ["Combined model qualification note SHA-256", attention.composition.qualification.noteSha256],
+    ["Four-case qualification roster SHA-256", attention.composition.qualification.localRosterSha256]]) {
     attentionPins.append(element("dt", "", label), element("dd", "", value));
   }
   attentionDetails.append(attentionPins);

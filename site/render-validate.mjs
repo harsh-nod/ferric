@@ -40,7 +40,7 @@ const requiredClaims = [
   "40 unchanged inputs and 96 guard sides",
   "not GPU durations",
   "parent and IPC spans overlap",
-  "Combined attention / argmax: host gate passed",
+  "Combined attention / argmax: host and native gates passed",
   "42 required commands across 43 actual attempts",
   "685 passed test invocations, 34 ignored",
   "failed nested-TMP invocation and earlier Clippy failure",
@@ -906,7 +906,7 @@ try {
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
         for (const [label, suffix] of [
-          ["Combined attention / argmax: host gate passed", "attention-composition-host"],
+          ["Combined attention / argmax: host and native gates passed", "attention-composition-host"],
           ["TP1 attention: eight exact native fixtures", "attention-fixtures"],
           ["Paired K4: two fresh native passes", "paired-native"],
           ["Wave plus ordered: short-canary ABBA", "wave-ordered"],

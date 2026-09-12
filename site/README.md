@@ -273,7 +273,13 @@ required commands across 43 actual attempts, with 685 passed test invocations
 and 34 ignored. The nested-TMP failed attempt and earlier Clippy failure remain
 separately retained; the unchanged-source gate used a warm Cargo target.
 The validator authenticates `composition-HOST-GATE.md` and its archived failure
-identities. Native model/comparison evidence remains explicitly pending.
-Do not populate comparison metrics from partial runs. Existing
+identities. The same source's four native model qualifications now pass exact
+IDs and UTF-8: baseline/wave attention, each at 8 and 128 outputs, with fixed
+wave-v11 argmax. These are correctness diagnostics, not comparison samples.
+The validator authenticates the qualification note, both equivalent forty-file
+hash rosters, all raw files, original references, fixed profile and normal
+retirement/close/idle receipts. No qualification timing becomes a metric.
+The separate full128 ABBA comparison remains pending; do not populate its
+metrics from partial runs. Existing
 `matched128`, `routeCheckpoint`, `routeReadiness`, `argmaxNative` and
 `performance.js` data are immutable historical observations in this update.
