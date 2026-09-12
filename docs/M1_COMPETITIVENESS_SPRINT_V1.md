@@ -1827,3 +1827,49 @@ separately. Complete format archive
 matches two streams and root SHA. Source-fresh host validation and subsequent
 native/performance measurements remain pending. No speedup is inferred from
 fewer host request/response pairs.
+
+## Residual Integration And Kernel Dispositions
+
+The residual gate now passes all 31 steps against source `2396a82`, including
+780 adapter passes / 41 ignores, eight doctests, strict Clippy, 74 HTTP tests,
+38 source-gate tests, 31 protected policies and unchanged inventories. The
+initial target was empty; all 89 own-package compiler artifacts report
+`fresh: false`, with retained executable and library bytes. Later commands
+reuse only this same-source build. Root accepted the 211,343,379-byte archive
+`1bb70bbd294d740237c22fc13d256bc239b2dca1898e01f957b966e07bc1c70f`
+and integrated the changes as `37a2e8e` plus `212ec85`. Tested code is identical.
+Actual canary SHA is
+`40fcfff3bb5ce567532b96c88ae11c11ca8d744a08489380b14984f36ba2430b`;
+live-controller SHA is
+`e10ec5bc9fdb91fe19c0c0a4e775a86e258f6ffb87ffc776fa4cf0b80be16012`.
+Neither binary inherits older native or HTTP qualification. The released host
+stage and redundant worktree are removed, reclaiming 3,296,632 / 42,364 KiB.
+
+Visible-attention source-fresh R3 passes baseline 13/13 and candidate 19/19
+profiles. Its complete archive is
+`036b0a70ab709bafae8c5ebdd50c3c7ee0db2967a00af540c0143b92eb135fce`.
+The exact existing Clippy debt remains actual 101, not strict Clippy success.
+Subsequent emission rejects the combined loop condition because it lacks one
+unique header exit; no candidate image exists. Failed archive:
+`7110f5f6335bf10a25fd64c44d6e2e0d5a7b4e4d979feb171927f08cacbcf286`.
+A producer audit then establishes that the host already supplies the maximum
+active position plus one, not configured context8192. C1 decode has no masked
+tail; contiguous16 prefill has only 0..15 per row. This optimization is stopped,
+not retried under a new loop form. The clean worktree is removed (42,344 KiB),
+with source, branch, audits and failed emission retained.
+
+Guarded append `8b57646` passes formatting and 19 diagnostic helper methods,
+but its compiler attempt fails `FE2O3-PROGRESS-002`: a control-flow cycle can
+bypass the induction update. It produces neither target IR nor HSACO; the final
+diagnostic report never runs. Exact source/control checks remain unchanged
+through each attempted step. Root accepted failure archive
+`d4303bf63950a265cbcabcfa190e9045b684508d8ef9d7d045b75481e2bcf9a4`
+(18,686,911 bytes), including all 1,177 verified raw files. This is not a
+completed termination proof, host gate, resource result or native admission.
+No further compiler retry is authorized by this record.
+
+Public fe2o3 was fetched again on September 12 and remains `8efd4fd`; frozen
+images and the LLVM worker retain their actual older build provenance. The
+latest admitted HTTP figures remain 4.694997 tokens/s, 192.127 ms TPOT and
+2862.079 ms TTFT for ordered submission. No new performance gain follows from
+these implementation or CPU checkpoints; all 33 M1 gates remain open.

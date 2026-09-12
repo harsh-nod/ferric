@@ -9,8 +9,10 @@ physical pool remains required. Defaults, kernel source and fe2o3 are unchanged.
 Configure attention before the FP32 head and configure ordered batches last.
 Afterward neither attention mode nor other frozen execution policies can change.
 Each group still uses its original packet dependencies, per-packet completion
-checks and bounded aggregate wait. Head, embedding and residual calls remain
-synchronous. Large KV, peers, legacy sequences, numerical capture and replica
+checks and bounded aggregate wait. The TP1 residual is now the final packet in
+each attention/FFN group (11/6 packets), with collective advancement and handle
+swaps only after completion. Head and embedding calls remain synchronous.
+Large KV, peers, legacy sequences, numerical capture and replica
 control remain excluded from this combination.
 
 Host recording tests compare every command, argument, write, read and synthetic

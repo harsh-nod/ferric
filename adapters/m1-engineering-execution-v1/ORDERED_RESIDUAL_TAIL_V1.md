@@ -1,8 +1,12 @@
 # Ordered TP1 Residual Tail
 
-Source-only experiment based on Ferric
-`0d1a90d9b0940552a6d87b699353f5be6b71bb80`. No host gate, native numerical
-qualification, or latency result is claimed for this change.
+Experiment based on Ferric `0d1a90d9b0940552a6d87b699353f5be6b71bb80`.
+Source `2396a82` passes the complete source-fresh 31-step CPU gate and is
+integrated as `212ec85` with identical tested code. The adapter suite records
+780 passed and 41 ignored across 19 targets; eight doctests, strict Clippy,
+74 HTTP regressions, policy checks and release builds also pass. Gate archive:
+`1bb70bbd294d740237c22fc13d256bc239b2dca1898e01f957b966e07bc1c70f`.
+Native numerical qualification and latency measurement remain separate gates.
 
 ## Boundary
 
