@@ -105,6 +105,7 @@ assertExactKeys(
     "argmaxNative",
     "attentionCheckpoint",
     "submissionCheckpoint",
+    "liveHttpCheckpoint",
     "attentionReadiness",
     "pagedDraftReference",
     "latestReadiness",
