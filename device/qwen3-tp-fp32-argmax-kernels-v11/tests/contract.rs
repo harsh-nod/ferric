@@ -85,6 +85,7 @@ fn shape_contract_and_distinct_root_remain_bounded() {
         "checked_row_striped_2d::<64, 1>()",
         "winning_key < 151937",
         "winning_key == 0",
+        "let row = thread::block_idx_x() as usize",
     ] {
         assert!(LOGITS.contains(guard), "missing {guard}");
     }

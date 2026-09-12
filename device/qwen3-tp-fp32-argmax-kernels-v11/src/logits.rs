@@ -77,7 +77,7 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
     }
     let invocation = thread::index_1d();
     let raw = invocation.get();
-    let row = raw / 64;
+    let row = thread::block_idx_x() as usize;
     let lane = raw % 64;
     if row < rows {
     } else {
