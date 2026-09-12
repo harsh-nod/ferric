@@ -61,7 +61,7 @@ stable-gain or isolated per-kernel claim.
 | --- | --- | --- |
 | Measurement | Both latest HTTP Qwen3-8B 128/128 cohorts pass independent replay. Ordered: TTFT 2862.079 ms, TPOT 192.127 ms, throughput 4.694997 tokens/s across 30 measured requests. Synchronous: 3482.380 / 276.255 ms and 3.318800 tokens/s. Earlier Ferric: 3705.967 / 506.969 ms and 1.879805 tokens/s; retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s. SGLang r7 finishes but fails exact output in 10 of 30 measured responses. | Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
 | Kernels | Visible-attention R3 passes fresh 13/13 baseline and 19/19 candidate tests, but emission fails the unique-header-exit check. The experiment is stopped: C1 decode already uses position+1, so it has no masked tail to remove. Append `2716371` has 278 SGPR spills; `d03ccd5` fails an overflow proof; guarded `8b57646` fails the termination proof before producing an image. All failures are retained. | No new kernel candidate is admitted. Reassess bottlenecks before another source trial; do not weaken compiler checks. Known kernel Clippy 101 debt remains explicit. V12 remains host/emission-only. |
-| Runtime Optimization | Tested source `2396a82`, integrated as `212ec85`, passes all 31 CPU steps and four native synchronous/ordered 8/128-output correctness cases. Separate old/new/new/old replay passes, but mean TPOT worsens from 194.521 to 218.333 ms and mean output rate falls from 4.648212 to 4.200225 tokens/s. These are instrumented TP1/context256 diagnostics, n=2 per binary, not HTTP results. | Do not promote residual grouping as a performance gain. Layer-only C1 Wave source `8b7cb03` passes its cold all-target command: 856 passed, 45 ignored, 20 targets. The gate stops on the stale 845 forecast; the extra 11 inherited tests are accounted for. Remaining host checks, final checker gate and native qualification are pending. Head and multirow MFMA remain fixed. No fe2o3 change. |
+| Runtime Optimization | Tested source `2396a82`, integrated as `212ec85`, passes all 31 CPU steps and four native synchronous/ordered 8/128-output correctness cases. Separate old/new/new/old replay passes, but mean TPOT worsens from 194.521 to 218.333 ms and mean output rate falls from 4.648212 to 4.200225 tokens/s. These are instrumented TP1/context256 diagnostics, n=2 per binary, not HTTP results. | Do not promote residual grouping as a performance gain. Corrected layer-only C1 Wave source `c2a235e` passes all 40 host steps, including 856 passing invocations, 45 ignored, 20 targets and strict Clippy. Release byte parity and separate 28-checker/18-reducer CPU gates pass. Both 8-token native modes pass; 128-token qualification and separate ABBA remain pending. Head and multirow MFMA remain fixed. No fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Integration and Pages | Live entrypoint `7f58928` from tested `433e213` retains its admitted HTTP evidence. Pages-only `45b608e` is deployed after nine checks; all seven public assets match tested bytes. The site adds the residual decode regression as a separate diagnostic, preserving all historical objects and serving metrics. Its completed stage and worktree are removed after archival. | Finish C1 qualification before adding any new performance or HTTP claim. A read-only audit is mapping the conditional live integration. The live-controller artifact audit found no analogous stale-candidate reuse; it is not a hermetic-build attestation. No new Verus proof. |
 
@@ -135,9 +135,41 @@ The full failure archive remains, and its owned stage was removed (1,959,704 KiB
 The next cold all-target command passes all 856 tests, but the enclosing gate
 stops on an incorrect 845 expectation. Eight unchanged paired-contract tests
 and three unchanged worker-diagnostic tests were omitted from the forecast.
-The stopped attempt, its successful raw test output and target are preserved;
-a separately reviewed continuation must authenticate those bytes before the
-remaining checks. Neither stop is represented as a complete host-gate pass.
+The separately reviewed count-only continuation authenticated the original
+source, artifacts and successful raw output, then passed 15 more declared
+steps before strict Clippy rejected two test-only missing semicolons. Source
+`c2a235e` adds only those semicolons. All failed attempts remain archived;
+the count-stop/continuation stage was removed after verified custody,
+reclaiming 2,894,220 KiB. No failed attempt is represented as a full gate pass.
+
+The new `c2a235e` stage used an empty target and the unchanged 40-step gate,
+with the audited 856/45/20 expectation. All 40 commands and the outer gate pass,
+including strict Clippy, eight doctests, 74 CPU HTTP fixtures, 38 source-gate
+tests, 31 protected source policies and five unchanged inventory comparisons.
+Actual non-test controller `ae5fad8d` (9,018,536 bytes) matches the explicit
+release artifact. Complete host archive `41335206` is independently verified.
+Separate checker and reducer gates pass 28 and 18 methods, respectively;
+archives `ffbd1a4a` and `2fc04d5f` retain their raw evidence. The completed
+checker stage is removed (220 KiB); the reducer stage (292 KiB) remains for
+later actual replay. The idle host stage is briefly retained for the conditional
+live-entrypoint gate, with no reuse authorized yet. A fresh fe2o3 fetch still
+resolves to `8efd4fd`.
+
+Root installed only the new pinned controller/wrapper under the shared mi350
+lease. Both MFMA and C1-Wave 8-token cases pass exact IDs/UTF8, 9,219 packets,
+15 batches, cursor135, normal close and all-eight-idle pre/postflight. These
+correctness timings are excluded from the separate full128 ABBA cohort. The
+two 128-token qualification cases and performance comparison are still pending.
+
+Independent work produced two-stage sharded FP32 argmax source `5cd315f` and
+remote-format-only follow-up `1ca7223`. It does not change v11, the unrelated
+v12 down-projection candidate, artifact inventories or the C1 route. Source
+review found no algorithm defect, but identified missing store-operand binding
+and scratch-reuse test cases; those are being added before the first build.
+Separate integer ownership/bounds proof source and a conditional C1 live
+entrypoint are also in progress. Typed emission, native kernel correctness,
+Verus verification and performance remain unproven; the extra dispatch may
+offset potential parallelism. No new kernel or proof qualification is claimed.
 
 A read-only timing audit confirms that the current ordered KFD worker exposes
 host elapsed time, not per-dispatch GPU duration. Ferric currently discards the
