@@ -151,11 +151,44 @@ impl ProjectionPolicy {
         output: Tensor,
         shape: [u32; 5],
     ) -> EngineeringTpDispatchV1 {
+        self.command_with_mode(self.mode, rank, baseline, input, weight, output, shape)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn layer_command(
+        &self,
+        c1_wave: bool,
+        rank: usize,
+        baseline: &'static str,
+        input: Tensor,
+        weight: Tensor,
+        output: Tensor,
+        shape: [u32; 5],
+    ) -> EngineeringTpDispatchV1 {
+        let mode = if c1_wave && shape[0] == 1 {
+            EngineeringTpProjectionModeV3::Wave
+        } else {
+            self.mode
+        };
+        self.command_with_mode(mode, rank, baseline, input, weight, output, shape)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn command_with_mode(
+        &self,
+        mode: EngineeringTpProjectionModeV3,
+        rank: usize,
+        baseline: &'static str,
+        input: Tensor,
+        weight: Tensor,
+        output: Tensor,
+        shape: [u32; 5],
+    ) -> EngineeringTpDispatchV1 {
         use EngineeringTpProjectionModeV3::{Auto, Baseline, Mfma, Wave};
         let [rows, n, ..] = shape;
         let partial = baseline == super::batched::PARTIAL;
-        let mfma = self.mode == Mfma || (self.mode == Auto && rows > 1);
-        let kernel = if self.mode == Baseline {
+        let mfma = mode == Mfma || (mode == Auto && rows > 1);
+        let kernel = if mode == Baseline {
             baseline
         } else if mfma && partial {
             "ferric_qwen3_tp_mfma_gemm_partial_f32_v3"
@@ -174,7 +207,7 @@ impl ProjectionPolicy {
             weight
         };
         let mut command = super::batched::matrix(kernel, input, weight, output, shape);
-        if self.mode == Wave || (self.mode == Auto && !mfma) {
+        if mode == Wave || (mode == Auto && !mfma) {
             command.grid_workgroups = rows
                 .checked_mul(n)
                 .expect("admitted bounded projection geometry");
@@ -454,6 +487,46 @@ mod tests {
         assert!(transpose_row(&[0; 9], 3, 1, &mut output).is_err());
         assert!(transpose_row(&[0; 8], 3, 1, &mut output).is_err());
         assert_eq!(output, unchanged);
+    }
+
+    #[test]
+    fn layer_c1_wave_reuses_existing_commands_for_all_rows_and_seven_layer_shapes() {
+        use EngineeringTpProjectionModeV3::{Auto, Baseline, Mfma, Wave};
+        let input = Tensor { id: 1, elements: 32 * 12_288, element_bytes: 2 };
+        let weight = Tensor { id: 2, elements: 4096 * 12_288, element_bytes: 2 };
+        let output = Tensor { id: 3, elements: 32 * 12_288, element_bytes: 2 };
+        for mode in [Baseline, Wave, Mfma, Auto] {
+            let policy = ProjectionPolicy {
+                mode,
+                transposed: vec![BTreeMap::from([(2, Tensor { id: 4, ..weight })])],
+                bytes: 7,
+            };
+            for rows in 1..=32 {
+                for (partial, n, k, tag) in [
+                    (false, 4096, 4096, 1),
+                    (false, 1024, 4096, 2),
+                    (false, 1024, 4096, 3),
+                    (true, 4096, 4096, 1),
+                    (false, 12_288, 4096, 4),
+                    (false, 12_288, 4096, 5),
+                    (true, 4096, 12_288, 2),
+                ] {
+                    let root = if partial { super::super::batched::PARTIAL } else { super::super::batched::GEMM };
+                    let output = Tensor { element_bytes: if partial { 4 } else { 2 }, ..output };
+                    let shape = [rows, n, k, 1, tag];
+                    let legacy = policy.command(0, root, input, weight, output, shape);
+                    assert_eq!(policy.layer_command(false, 0, root, input, weight, output, shape), legacy);
+                    if mode == Mfma {
+                        let expected = if rows == 1 {
+                            ProjectionPolicy { mode: Wave, ..ProjectionPolicy::default() }.command(0, root, input, weight, output, shape)
+                        } else { legacy };
+                        assert_eq!(policy.layer_command(true, 0, root, input, weight, output, shape), expected);
+                        assert_eq!(policy.mode, Mfma);
+                        assert_eq!(policy.bytes, 7);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

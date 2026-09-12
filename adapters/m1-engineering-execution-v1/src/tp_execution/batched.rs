@@ -74,6 +74,7 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     prune_output_head: bool,
     projection: super::projection::ProjectionPolicy,
     projection_configured: bool,
+    c1_wave_layers: bool,
     wave_attention: bool,
     numerical: Option<Box<EngineeringTpNumericalCaptureV1>>,
     head_profile_configured: bool,
@@ -283,6 +284,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             prune_output_head: false,
             projection: super::projection::ProjectionPolicy::default(),
             projection_configured: false,
+            c1_wave_layers: false,
             wave_attention: false,
             numerical: None,
             head_profile_configured: false,
@@ -408,6 +410,43 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.fp32_argmax_v11 = Some(binding);
         self.inner.ordered_batches = Some(pending);
         Ok(())
+    }
+
+    /// Selects C1 Wave layer projections with the unchanged ordered wave/v8/v11 profile.
+    /// Configure MFMA, pruning, device TP1, wave attention and the v8 head first.
+    /// Only one-row layer projections change; multirow projections and the head retain MFMA.
+    /// # Errors
+    /// Rejects wrong bindings, unsupported profiles/transports and repeated or late selection.
+    pub fn configure_ordered_c1_wave_layers_fp32_argmax_v11(
+        &mut self,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<()> {
+        let binding = artifact
+            .fp32_argmax_binding_v11()
+            .ok_or("C1 Wave layers require the exact separately admitted v11 image")?;
+        self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(binding)
+    }
+
+    fn configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(
+        &mut self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+    ) -> TpResult<()> {
+        if self.c1_wave_layers {
+            return Err("C1 Wave layer selection is already frozen".into());
+        }
+        self.configure_ordered_wave_attention_fp32_argmax_binding_v11(binding)?;
+        self.c1_wave_layers = true;
+        Ok(())
+    }
+
+    /// Layer projection policy only; this never describes or changes the output head.
+    #[must_use]
+    pub const fn layer_projection_mode(&self) -> &'static str {
+        if self.c1_wave_layers {
+            "c1-wave"
+        } else {
+            self.projection.mode.label()
+        }
     }
 
     fn fp32_argmax_binding_is_fresh_v11(
@@ -1043,6 +1082,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
         let projection = &self.projection;
+        let c1_wave_layers = self.c1_wave_layers;
         let attention = if self.wave_attention {
             "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
         } else {
@@ -1150,7 +1190,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     } else {
                         (r.v, r.geometry.kv_channels.count)
                     };
-                    projection.command(
+                    projection.layer_command(
+                        c1_wave_layers,
                         r.geometry.rank as usize,
                         GEMM,
                         r.normalized,
@@ -1264,7 +1305,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             drop(gqa_timing);
             let output_timing = self.inner.timing.span("attention_output_projection", None);
             self.inner.dispatch_each(|r| {
-                projection.command(
+                projection.layer_command(
+                    c1_wave_layers,
                     r.geometry.rank as usize,
                     PARTIAL,
                     r.attention,
@@ -1308,7 +1350,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 (Qwen3TensorKind::UpProjection, 5),
             ] {
                 self.inner.dispatch_each(|r| {
-                    projection.command(
+                    projection.layer_command(
+                        c1_wave_layers,
                         r.geometry.rank as usize,
                         GEMM,
                         r.normalized,
@@ -1351,7 +1394,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 )
             })?;
             self.inner.dispatch_each(|r| {
-                projection.command(
+                projection.layer_command(
+                    c1_wave_layers,
                     r.geometry.rank as usize,
                     PARTIAL,
                     r.activation,

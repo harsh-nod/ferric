@@ -7,6 +7,7 @@ mod argmax_v11;
 mod attention_argmax_v11;
 mod draft;
 mod large_kv;
+mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
 mod speculative;
@@ -52,6 +53,8 @@ enum Failure {
     ArgmaxWait,
     AttentionSubmit,
     AttentionWait,
+    WaveProjectionSubmit,
+    WaveProjectionWait,
 }
 
 struct Recording {
@@ -285,6 +288,13 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.failure == Some(Failure::WaveProjectionSubmit)
+            && matches!(command.kernel,
+                "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
+                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5")
+        {
+            return Err("injected Wave projection submit failure".into());
+        }
         if self.failure == Some(Failure::ResidualSubmit)
             && matches!(
                 command.kernel,
@@ -344,6 +354,13 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
+        if self.failure == Some(Failure::WaveProjectionWait)
+            && matches!(command.kernel,
+                "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
+                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5")
+        {
+            return Err("injected Wave projection completion failure".into());
+        }
         if self.failure == Some(Failure::AttentionWait)
             && matches!(
                 command.kernel,
@@ -717,6 +734,7 @@ fn fixture_for_model(
         prune_output_head: false,
         projection: super::super::projection::ProjectionPolicy::default(),
         projection_configured: false,
+        c1_wave_layers: false,
         wave_attention: false,
         numerical: None,
         head_profile_configured: false,
