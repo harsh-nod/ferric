@@ -1294,3 +1294,52 @@ The completed owned stage and worktree are removed after full closure custody,
 reclaiming 325,460 KiB remotely and 2,748 KiB locally. Cleanup receipt:
 `333d1ad953fd30a562fdea08abc480ddf086251a318898d2e6aada94276f5c19`.
 Only Pages commits are pushed; Ferric implementation remains local.
+
+### Submission Canary Host Gate
+
+Source `7cb6522430b6990e1d3f12bc15958865358459f4`, tree
+`2bfbe7b0ce3a6912e2909f31db11d873f422c14e`, is integrated as `0a9d5df`.
+All 51 remote commands and their wrappers pass without retry or inline edits.
+The all-target gate reports 745 passed invocations, 38 ignored and 18 result
+rows; eight doctests, strict Clippy, 27 adapter policies, 38 source-gate tests,
+31 protected policies, all five unchanged inventories, explicit image and
+workload goldens, three release binaries and 20 CLI rejection probes pass.
+This is host validation, not ordered native or serving qualification.
+
+The target is explicitly warm from the completed ad066 gate. All 104 source
+and prior-evidence ledgers match; command-time peak allocation is 3,533,676 KiB.
+Fresh fe2o3 main remains `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`.
+The frozen worker and images retain their earlier actual build provenance.
+
+- Host receipt: `66001b37ea6ce8fbf739625cd43744671ae888b85bc3f57fd81bbfca0e5e13d1`.
+- Complete gate archive: `6aadf1c013f96760d658d8130466f7694d2b918ba659e36ab35cbcf09166f92d`, matching a second remote stream.
+- New canary binary: `0da9c59a9172d809dd5109ec30681a847c5f83e7da2c396a943f51d99235c075`.
+- Exact experiment plan: `a13346d5587c5a6308c9790511d712a8d687fddbf03720cb5ea166be698a786b`.
+
+The new direct checker and launch wrapper pass 26 remote CPU methods. Their
+complete archive is `7acf112b8922a0199d37b08a73182eecc3d81421d30893700272884cee6cd5ca`.
+The prospective reducer passes 18 synthetic methods; its complete archive is
+`9dacc9c055dc767ef0f99897483fa2fd9a984fe5323296be1899918c4cf99970`.
+Both archives match independent second remote streams. The new protocol is
+checked directly, including zero-payload dispatch acknowledgments and the
+ordered collective-flush roster. Operation-group intervals change meaning
+under ordering and must not be compared as GPU speedups.
+
+Native acquisition first requires synchronous8, ordered8, synchronous128 and
+ordered128 correctness checks. Only then may a fresh full128 synchronous /
+ordered / ordered / synchronous cohort run. Correctness timings are excluded;
+the comparison requires all forty original raw-file hashes and sizes before
+reduction. No submission performance result is admitted at this checkpoint.
+
+The redundant clean candidate worktree is removed (42,260 KiB). The completed
+checker stage is removed (208 KiB); its initial allocation-assertion pause is
+retained separately from successful cleanup. The warm build target and small
+reducer stage remain leased for the next required work.
+
+Separate live-only entrypoint source `79404f3` is under review, not integrated
+or tested. It reuses the existing live ingress, scheduler, runtime and HTTP
+transport, fixes wave/v8/v11 with explicit synchronous or ordered submission,
+and preserves the original CLI/defaults. Logical context remains <=8192 and
+the aggregate physical pool <=512 pages. Context256 canary timing cannot
+stand in for context8192 HTTP timing; fresh correctness and matched HTTP
+remeasurement remain required.

@@ -41,7 +41,7 @@ descriptions with two runs per mode, not new HTTP results. Wave TPOT ranges
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
 | Kernels | Wave attention plus v11 argmax passes eight finite native fixtures, four fixed-reference model checks and a separate full128 ABBA cohort. Mean TPOT is 50.42% lower and mean per-run rate 97.33% higher than baseline attention in this n=2 native cohort. Earlier argmax/ordered cohorts remain separate. The atomic ordered-wave-v11 driver selector now passes all host gates. V12 source `73617b7` remains a host/emission-only prototype, not load/compute overlap. | Test the separate synchronous/ordered canary profile against the unchanged oracle. V12 native parity remains open. Serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Combined attention/v11 source `ed112e0` passes the host gate and all eight new model runs; independent ABBA replay authenticates all forty raw files. Ordered driver source `ad06633`, integrated as `a68f04c`, passes 44 host steps, 691 adapter invocations and eight doctests. Pages-only `0fa8c19` publishes the reviewed attention/results checkpoint with all seven live bytes verified. | Separate submission canary source `7cb6522` has passed source review and remote formatting; its host gate is next. Ordered native execution and matched HTTP remeasurement remain open. No new Verus proof. |
+| Integration and Pages | Combined attention/v11 source `ed112e0` passes the host gate and all eight new model runs; independent ABBA replay authenticates all forty raw files. Ordered driver `ad06633` and submission canary `7cb6522` are integrated locally. The canary passes all 51 host steps, 745 adapter invocations and eight doctests; its checker/wrapper and reducer pass 26 and 18 CPU methods. Pages-only `0fa8c19` publishes the reviewed attention/results checkpoint with all seven live bytes verified. | Native synchronous/ordered correctness acquisition is in progress; its comparison remains unmeasured. Separate live entrypoint `79404f3` is source-only, pending host/native validation before matched HTTP remeasurement. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -78,6 +78,11 @@ source-bound gate and will be reported as warm, not a fresh rebuild.
 The completed ABBA replay stage is removed (7,516,160 allocated bytes), as are
 the published attention Pages stage (325,460 KiB) and worktree (2,748 KiB).
 All required source, failures, receipts and deployment evidence remain archived.
+The submission canary is integrated as `0a9d5df`, with implementation bytes
+matching tested `7cb6522`. Its completed candidate worktree is removed
+(42,260 KiB), and the checker CPU stage is removed (208 KiB). The remote
+target remains explicitly warm and leased for the live-entrypoint follow-up;
+the small reducer stage is retained for the upcoming authenticated replay.
 
 ## September 11 Performance Swarm
 
