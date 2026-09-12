@@ -11,7 +11,9 @@ fn configured(
     wave: bool,
 ) -> EngineeringTpBatchExecutionV2<Recording> {
     let mut driver = fixture(1, pool);
-    driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3).unwrap();
+    driver
+        .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+        .unwrap();
     driver.configure_output_head_pruning(true).unwrap();
     let original = driver.inner.ranks[0].global(Qwen3TensorKind::LanguageModelHead);
     let transposed = allocate_tensor(&mut driver.inner.transports[0], 1, 2).unwrap();
@@ -49,7 +51,11 @@ fn attention_v11_changes_only_gqa_root_for_every_row_and_output_selection() {
         for selected in [
             Vec::new(),
             vec![rows as usize - 1],
-            if rows > 1 { vec![0, rows as usize - 1] } else { vec![0] },
+            if rows > 1 {
+                vec![0, rows as usize - 1]
+            } else {
+                vec![0]
+            },
             (0..rows as usize).collect(),
         ] {
             let mut recordings = Vec::new();
@@ -84,7 +90,10 @@ fn attention_v11_changes_only_gqa_root_for_every_row_and_output_selection() {
                 }
                 assert_eq!(count, 36);
                 if !selected.is_empty() {
-                    assert_eq!(commands.last().unwrap().kernel, ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]);
+                    assert_eq!(
+                        commands.last().unwrap().kernel,
+                        ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
+                    );
                 }
                 let mut events = transport.events.borrow().clone();
                 for event in &mut events {
@@ -133,7 +142,10 @@ fn attention_v11_rejects_wrong_bindings_and_unsupported_profiles_without_io() {
             8 => driver.inner.ordered_batches = Some(Vec::new()),
             9 => driver.wave_attention = false,
             10 => driver.prune_output_head = false,
-            11 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Baseline,
+            11 => {
+                driver.projection.mode =
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline
+            }
             12 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave,
             13 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Auto,
             14 => driver.last_batch = 1,
@@ -143,17 +155,40 @@ fn attention_v11_rejects_wrong_bindings_and_unsupported_profiles_without_io() {
             18 => driver.inner.transports[0].argmax_peer = Some((1, 0, 1)),
             19 => driver.inner.transports.clear(),
             20 => driver.inner.ranks.clear(),
-            21 => driver.inner.reduction = super::super::super::reduction::ReductionWorkspace::Baseline,
+            21 => {
+                driver.inner.reduction =
+                    super::super::super::reduction::ReductionWorkspace::Baseline
+            }
             _ => unreachable!(),
         }
-        let before = driver.inner.transports.iter().map(|rank| (
-            rank.buffers.len(), rank.reads.len(), rank.writes.len(), rank.commands.len(),
-        )).collect::<Vec<_>>();
+        let before = driver
+            .inner
+            .transports
+            .iter()
+            .map(|rank| {
+                (
+                    rank.buffers.len(),
+                    rank.reads.len(),
+                    rank.writes.len(),
+                    rank.commands.len(),
+                )
+            })
+            .collect::<Vec<_>>();
         assert!(select(&mut driver, true).is_err(), "mutation {mutation}");
         assert!(driver.fp32_argmax_v11.is_none());
-        let after = driver.inner.transports.iter().map(|rank| (
-            rank.buffers.len(), rank.reads.len(), rank.writes.len(), rank.commands.len(),
-        )).collect::<Vec<_>>();
+        let after = driver
+            .inner
+            .transports
+            .iter()
+            .map(|rank| {
+                (
+                    rank.buffers.len(),
+                    rank.reads.len(),
+                    rank.writes.len(),
+                    rank.commands.len(),
+                )
+            })
+            .collect::<Vec<_>>();
         assert_eq!(before, after);
     }
 }
@@ -169,7 +204,11 @@ fn attention_v11_keeps_legacy_rejection_and_freezes_every_policy() {
     assert!(driver.configure_wave_attention(true).is_err());
     assert!(driver.configure_wave_attention(false).is_err());
     assert!(driver.configure_output_head_pruning(false).is_err());
-    assert!(driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3).is_err());
+    assert!(
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+            .is_err()
+    );
     assert!(driver.configure_head_precision_v8(true).is_err());
     assert!(driver.configure_dispatch_sequences(true).is_err());
     assert!(driver.configure_ordered_batches(true).is_err());

@@ -266,12 +266,20 @@ fn attention_argmax_canary_is_closed_and_reuses_preallocation_admission() {
     let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
     assert!(shared.contains("configure_wave_attention_fp32_argmax_v11"));
     assert!(
-        shared.find("worker.load_additional_artifact(&argmax_artifact)").unwrap()
-            < shared.find("EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11").unwrap()
+        shared
+            .find("worker.load_additional_artifact(&argmax_artifact)")
+            .unwrap()
+            < shared
+                .find("EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11")
+                .unwrap()
     );
     assert!(
-        shared.find("driver.configure_wave_attention(true)").unwrap()
-            < shared.find("driver.configure_head_precision_v8(true)").unwrap()
+        shared
+            .find("driver.configure_wave_attention(true)")
+            .unwrap()
+            < shared
+                .find("driver.configure_head_precision_v8(true)")
+                .unwrap()
     );
     for frozen in [
         include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),

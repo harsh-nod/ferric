@@ -4,6 +4,9 @@ use super::argmax_canary_contract::{
     ArgmaxMode, CHUNK, CONTEXT, Options, PAGES, PREFIX_REFERENCE_SHA256, PROMPT, Reference,
     workload_sha256,
 };
+use super::paired_paged_canary_contract::{SOURCE_REFERENCE_SHA256, hash_file, hex};
+use super::tp_host_timing::TimingFile;
+use super::tp_worker::Worker;
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::batched::EngineeringTpBatchExecutionV2;
 use ferric_m1_engineering_execution_v1::tp_execution::{
@@ -14,13 +17,10 @@ use ferric_m1_engineering_execution_v1::tp_paged::{
     EngineeringTpPageRowV1, EngineeringTpPagedErrorV1, EngineeringTpPagedLimitsV1,
     EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1, EngineeringTpSequenceIdV1,
 };
-use super::paired_paged_canary_contract::{SOURCE_REFERENCE_SHA256, hash_file, hex};
 use serde_json::{Value, json};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use super::tp_host_timing::TimingFile;
-use super::tp_worker::Worker;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CanaryProfile {
@@ -469,10 +469,26 @@ mod profile_tests {
     #[test]
     fn closed_profiles_preserve_legacy_labels_and_distinguish_attention_records() {
         for (record, legacy, attention) in [
-            (RecordKind::Setup, "FerricArgmaxCanarySetupV1", "FerricAttentionArgmaxCanarySetupV1"),
-            (RecordKind::Prefill, "FerricArgmaxCanaryPrefillV1", "FerricAttentionArgmaxCanaryPrefillV1"),
-            (RecordKind::Observation, "FerricArgmaxCanaryObservationV1", "FerricAttentionArgmaxCanaryObservationV1"),
-            (RecordKind::Closed, "FerricArgmaxCanaryClosedV1", "FerricAttentionArgmaxCanaryClosedV1"),
+            (
+                RecordKind::Setup,
+                "FerricArgmaxCanarySetupV1",
+                "FerricAttentionArgmaxCanarySetupV1",
+            ),
+            (
+                RecordKind::Prefill,
+                "FerricArgmaxCanaryPrefillV1",
+                "FerricAttentionArgmaxCanaryPrefillV1",
+            ),
+            (
+                RecordKind::Observation,
+                "FerricArgmaxCanaryObservationV1",
+                "FerricAttentionArgmaxCanaryObservationV1",
+            ),
+            (
+                RecordKind::Closed,
+                "FerricArgmaxCanaryClosedV1",
+                "FerricAttentionArgmaxCanaryClosedV1",
+            ),
         ] {
             assert_eq!(CanaryProfile::LegacyArgmax.schema(record), legacy);
             assert_eq!(CanaryProfile::AttentionBaseline.schema(record), attention);
@@ -482,15 +498,24 @@ mod profile_tests {
         assert_eq!(CanaryProfile::LegacyArgmax.attention(), "baseline");
         assert_eq!(CanaryProfile::AttentionBaseline.attention(), "baseline");
         assert_eq!(CanaryProfile::AttentionWave.attention(), "wave");
-        assert_eq!(CanaryProfile::LegacyArgmax.error_prefix(), "Argmax canary rejected");
-        assert_eq!(CanaryProfile::AttentionWave.error_prefix(), "Attention argmax canary rejected");
+        assert_eq!(
+            CanaryProfile::LegacyArgmax.error_prefix(),
+            "Argmax canary rejected"
+        );
+        assert_eq!(
+            CanaryProfile::AttentionWave.error_prefix(),
+            "Attention argmax canary rejected"
+        );
     }
 
     #[test]
     fn attention_runtime_rejects_serial_even_without_the_cli_parser() {
         for mode in [ArgmaxMode::Serial, ArgmaxMode::WaveV11] {
             assert!(CanaryProfile::LegacyArgmax.validate(mode).is_ok());
-            for profile in [CanaryProfile::AttentionBaseline, CanaryProfile::AttentionWave] {
+            for profile in [
+                CanaryProfile::AttentionBaseline,
+                CanaryProfile::AttentionWave,
+            ] {
                 assert_eq!(profile.validate(mode).is_ok(), mode == ArgmaxMode::WaveV11);
             }
         }

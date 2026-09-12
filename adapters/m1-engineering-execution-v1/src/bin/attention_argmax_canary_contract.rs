@@ -3,9 +3,7 @@
 use super::argmax_canary_contract::{ArgmaxMode, Options};
 use super::argmax_canary_runtime::CanaryProfile;
 
-pub fn parse(
-    arguments: impl Iterator<Item = String>,
-) -> Result<(Options, CanaryProfile), String> {
+pub fn parse(arguments: impl Iterator<Item = String>) -> Result<(Options, CanaryProfile), String> {
     let mut arguments = arguments;
     let mut forwarded = Vec::new();
     let mut profile = None;
@@ -49,19 +47,32 @@ mod tests {
 
     fn arguments(attention: &str, mode: &str, outputs: &str) -> Vec<String> {
         [
-            "--source", "source",
-            "--target-artifact", "target",
-            "--target-head-artifact", "head",
-            "--argmax-artifact", "argmax",
-            "--worker", "worker",
-            "--worker-sha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--device-unique-id", "1",
-            "--reference", "reference",
-            "--prefix-reference", "prefix",
-            "--host-timing-output", "timing",
-            "--argmax-mode", mode,
-            "--max-new-tokens", outputs,
-            "--attention", attention,
+            "--source",
+            "source",
+            "--target-artifact",
+            "target",
+            "--target-head-artifact",
+            "head",
+            "--argmax-artifact",
+            "argmax",
+            "--worker",
+            "worker",
+            "--worker-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "--device-unique-id",
+            "1",
+            "--reference",
+            "reference",
+            "--prefix-reference",
+            "prefix",
+            "--host-timing-output",
+            "timing",
+            "--argmax-mode",
+            mode,
+            "--max-new-tokens",
+            outputs,
+            "--attention",
+            attention,
             "--allow-unauthenticated-machine-code",
             "--runtime-cache-admission",
             "--runtime-operational",
@@ -79,8 +90,8 @@ mod tests {
             ("wave", CanaryProfile::AttentionWave),
         ] {
             for (outputs, packets) in [("8", 9_219), ("128", 83_139)] {
-                let (options, actual) = parse(arguments(attention, "wave-v11", outputs).into_iter())
-                    .unwrap();
+                let (options, actual) =
+                    parse(arguments(attention, "wave-v11", outputs).into_iter()).unwrap();
                 assert_eq!(actual, profile);
                 assert_eq!(options.mode, ArgmaxMode::WaveV11);
                 assert_eq!(options.expected_packets().unwrap(), packets);
@@ -147,7 +158,10 @@ mod tests {
             let index = args.iter().position(|flag| flag == "--attention").unwrap();
             let mut legacy = args;
             legacy.drain(index..index + 2);
-            assert_eq!(Options::parse(legacy.into_iter()).unwrap().mode.label(), mode);
+            assert_eq!(
+                Options::parse(legacy.into_iter()).unwrap().mode.label(),
+                mode
+            );
         }
     }
 
