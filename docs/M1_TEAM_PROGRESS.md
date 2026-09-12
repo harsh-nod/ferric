@@ -27,15 +27,21 @@ not a measured speedup from instrumentation.
 The separate attention/v11 composition is integrated as `dcbbd5b` from tested
 source `ed112e0`; all 42 required host-gate steps pass across two reviewed
 harness revisions. Eight native finite attention fixtures also pass exact
-full-buffer and guard comparisons. Fixed-reference model qualification is
-running before the separate full128 ABBA comparison; no new gain is admitted.
+full-buffer and guard comparisons. All four fixed-reference baseline/wave
+8/128-output model checks pass, with clean teardown and all-eight idle checks.
+The separate full128 ABBA comparison and independent byte-authenticated replay
+pass. With wave-v11 argmax fixed, baseline-to-wave attention observes mean
+TTFT 3973.109 -> 3307.672 ms, TPOT 521.458 -> 258.562 ms and mean per-run
+output rate 1.823408 -> 3.598124 tokens/s. These are native host-clock
+descriptions with two runs per mode, not new HTTP results. Wave TPOT ranges
+224.460-292.664 ms; no stable or competitive gain is claimed.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay, fourteen finite-active native fixtures, and all six corrected model comparisons. Separate v12 source `73617b7` passes ten focused host tests and latest-8efd emission/replay; ISA shows paired load batching, not load/compute overlap. | Test explicit wave-attention plus v11 composition against the unchanged oracle. V12 native parity remains open. Serial v8 remains the default. |
+| Kernels | Wave attention plus v11 argmax passes eight finite native fixtures, four fixed-reference model checks and a separate full128 ABBA cohort. Mean TPOT is 50.42% lower and mean per-run rate 97.33% higher than baseline attention in this n=2 native cohort. Earlier argmax/ordered cohorts remain separate. V12 source `73617b7` passes ten focused host tests and latest-8efd emission/replay; ISA shows paired load batching, not load/compute overlap. | Ordered-wave-v11 driver composition host gate, then a separately reviewed native execution profile. V12 native parity remains open. Serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Combined attention/v11 source `ed112e0`, integrated as `dcbbd5b`, passes 685 adapter test invocations, eight doctests, strict Clippy, both release builds, explicit image/reference checks and source/verifier policies; five inventories are unchanged. The original nested-TMP socket-path failure is retained separately. Pages-only `de9980f` remains deployed; the additive attention checkpoint is under review. | Serialize fixed-reference baseline/wave model gates, then the predeclared full128 ABBA cohort. No new Verus proof. |
+| Integration and Pages | Combined attention/v11 source `ed112e0`, integrated as `dcbbd5b`, passes the complete host gate and all eight new model runs. Independent replay authenticates all forty ABBA raw files and passes a wrong-pin negative control. Ordered driver source `ad06633` is in a fresh remote host gate. Pages-only `de9980f` remains deployed; the additive attention/results checkpoint is under review. | Finish ordered driver integration and publish the reviewed native checkpoint. Ordered native execution and matched HTTP remeasurement remain open. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -46,17 +52,26 @@ host-timed four-request/eight-output workload, with two runs per mode; it cannot
 replace the matched HTTP numbers. See the
 [competitiveness sprint](M1_COMPETITIVENESS_SPRINT_V1.md) for exact evidence.
 
-The current native argmax comparison keeps TP1, the same v5 MFMA projections,
+The earlier native argmax comparison keeps TP1, the same v5 MFMA projections,
 baseline attention, FP32 v8 head, 128-token prompt, context256, prefix caching
 off and ordered submission off. Its full128 pair is n=1 per mode; short8 uses
 the predeclared serial/wave/wave/serial order, n=2 per mode. Do not combine it
 with the earlier wave-plus-ordered gain or replace the matched serving table.
+The new attention ABBA cohort also uses TP1/context256 and a 128-token prompt
+with 128 generated tokens, but fixes wave-v11 argmax and changes only attention.
+Prefix caching, speculation and ordered submission remain off. Timing starts
+before prefill and ends at final token commit, excluding setup, detokenization,
+retirement and close. Mean output rate averages each run's 128/duration value;
+it is not 128 divided by mean duration. The four prior correctness runs are
+excluded. No older gain is multiplied into this result.
 Completed correction and prior route worktrees are removed. Hash-verified
 closure archives precede removal of 7,259,676 KiB of released mi300x stages;
 active team stages, current GPU artifacts, shared models and caches remain.
 The completed Pages stage, v12 stages and redundant instrumentation worktree
-are also removed after verified archival. One leased mi300x build cache remains
-for the next candidate; it is not evidence of a clean rebuild.
+are also removed after verified archival. The completed combined-route stage
+is now removed too, reclaiming 3,620,618,240 allocated bytes remotely and
+43,171,840 bytes for its local worktree. A separate ordered-driver candidate
+has a new worktree; no deleted stage is silently reused.
 
 ## September 11 Performance Swarm
 

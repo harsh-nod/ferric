@@ -1146,5 +1146,83 @@ diagnostics, not comparison samples. Only after all pass may the frozen full128
 baseline/wave/wave/baseline cohort run with the same binary, images and runtime
 flags. The root launch wrapper and new raw-protocol checker passed 24 CPU test
 methods; the prospective reducer and all checker/wrapper tests passed 38.
-No model or comparison result is admitted at this checkpoint. Existing six-run
-argmax and matched HTTP observations remain immutable and separate.
+All four model correctness cases now pass, in the declared order. Each matches
+all generated IDs/UTF-8, packet/batch/cursor counts, retirement, normal worker
+closure and all-eight idle checks before and after. The two short runs have
+9,219 packets/15 batches/cursor135; the two full runs have 83,139 packets/135
+batches/cursor255. Root directly authenticated all forty raw-file hashes
+against original mi350 files. The four-case archive matches a second remote
+stream: `d00d832c6a4e0e8732b7902c9e6470414324c615589ccf23ab9eb6ae2b4ba45f`.
+These are correctness diagnostics, excluded from comparison metrics. The
+separate full128 ABBA cohort and independent replay now pass, as recorded below.
+Existing six-run argmax and matched HTTP observations remain unchanged.
+
+After verified archive/binary custody, the completed mi300x J8idsFOi stage and
+clean ed112 worktree are removed, retaining the source branch and local evidence.
+Measured pre-removal allocation was 3,620,618,240 bytes remotely and 43,171,840
+bytes locally. Cleanup receipt is
+`672799aad29d56aa21fd7a56e175af8fd928e69c04eb314d323225d0527355ad`.
+Private ownership and released leases were checked; process visibility excluded
+other UIDs and explicitly recorded the restricted sd-pam/cleanup SSH ancestry.
+No privileged global process-absence claim or shared-cache deletion is implied.
+
+### Full128 Attention ABBA
+
+The frozen baseline-a1, wave-b1, wave-b2, baseline-a2 acquisition order completes
+without reruns. Each case matches all 128 reference IDs and decoded UTF-8,
+83,139 packets, 135 batches and cursor255, followed by successful retirement,
+normal worker close and exact all-eight idle checks. Tested source remains
+`ed112e0b8298d1d2070b93dea638e7572ec65ba9` and executable remains
+`d0ec403ea4713f4d795ee55221da5282a5668b7ebff283ba56c531f236cc0468`.
+No integrated revision is substituted for that actual build identity.
+
+Only attention changes. Both modes use TP1 on physical GPU0, MFMA projections,
+FP32-v8 output head, wave-v11 argmax, device TP1 residuals, pruning, batch cap32,
+context256, pages16 and chunk16. Prompt/output lengths are 128/128 with actual
+autoregressive token feedback. Runtime caching, operational mode and rollover
+are on; prefix caching, speculation, ordered submission, sequences, peers,
+large-KV and capture are off. Instrumented controller wall time starts before
+prefill and ends at final token commit. It excludes model setup, detokenization,
+retirement and close; it is neither HTTP latency nor GPU duration.
+
+| Acquisition | TTFT ms | TPOT ms | Workload Seconds | Output Tokens/s |
+| --- | ---: | ---: | ---: | ---: |
+| Baseline a1 | 3971.460221 | 521.835731 | 70.244598116 | 1.822204176 |
+| Wave b1 | 3095.787923 | 224.460207 | 31.602234295 | 4.050346529 |
+| Wave b2 | 3519.556492 | 292.663886 | 40.687870082 | 3.145900725 |
+| Baseline a2 | 3974.757081 | 521.080117 | 70.151931942 | 1.824611190 |
+| Baseline arithmetic mean | 3973.108651 | 521.457924 | 70.198265029 | 1.823407683 |
+| Wave arithmetic mean | 3307.672208 | 258.562047 | 36.145052189 | 3.598123627 |
+
+Ratios of arithmetic means describe 16.7485% lower TTFT, 50.4155% lower TPOT,
+48.5100% lower workload duration and 97.3296% higher mean per-run output rate.
+Rate is the arithmetic mean of individual 128/duration values, not 128 divided
+by mean duration. There are two runs per mode: wave TPOT ranges
+224.460207-292.663886 ms (26.38% of its mean) and wave rate ranges
+3.145900725-4.050346529 tokens/s (25.14% of its mean). Paired TPOT reductions
+are 56.9864% and 43.8351%; the two latency ratios are 2.324847407 and
+1.780472899. Paired ratios are distinct from ratios of cohort means.
+
+This admits a descriptive native comparison, not a confidence interval,
+stable-gain estimate, default promotion, serving qualification, competitive
+win or M1 completion. The four prior correctness diagnostics and all older
+argmax/ordered/HTTP cohorts remain excluded. Gains are not additive. Nested
+attention and IPC spans overlap and are not GPU durations or an additive
+causal explanation of the workload difference.
+
+Root directly authenticated all forty raw-file hashes and sizes against the
+original mi350 files: 6,900,569 bytes total. The raw archive matches a second
+independent remote stream. The unchanged reducer passes independent mi300x
+replay, while a wrong external manifest hash exits1 with empty stdout and the
+exact byte-pin error. All twelve source/helper/reference files, forty raw files,
+manifest, size ledger, harness and Python binary retain before/after custody.
+The prior 38-method reducer/checker/wrapper gate also passes. No local build,
+test, formatter or new Verus proof ran.
+
+- Raw archive: `173e6df4b6620f2d1cd3c2a5c806ca6a0d9a53a72b0c80c70f58d979367511d6`.
+- Manifest: `c088748c7d9b478e2650bddd3c1ee9abfabd77e772390bf16259825feb139e20`.
+- Size ledger: `4ca6c145e756f5e3e2bafa5e6f9b967c9c9ab21ce1b011a9d28215c6567b64ae`.
+- Frozen reducer: `ade46c5deb31c093579950550b265f9d35dd7c03d92a30e482d2a1b75e1d66a3`.
+- Descriptive summary: `0435191640d3d8669910ce4c6de5906636ee525804c1440fe0ae45bc2fe957f3`.
+- Strict replay receipt: `caa0c160ce94b6242a566326e11b30444fd332ff203d4aa525efd24a64efbfa9`.
+- Complete replay archive: `b0599fc0743a48df2481213f9b6c14667a759fb28f458468e895ae3d8506baf2`, also matching a second remote stream.
