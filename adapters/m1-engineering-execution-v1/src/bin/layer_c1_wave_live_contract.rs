@@ -90,18 +90,30 @@ mod tests {
 
     fn arguments(layer: &str) -> Vec<String> {
         [
-            "--source", "source",
-            "--target-artifact", "target",
-            "--target-head-artifact", "head",
-            "--argmax-artifact", "argmax",
-            "--worker", "worker",
-            "--worker-sha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--device-unique-id", "1",
-            "--submission", "ordered",
-            "--context", "8192",
-            "--pages", "512",
-            "--max-batches", "1000000",
-            "--layer-projection", layer,
+            "--source",
+            "source",
+            "--target-artifact",
+            "target",
+            "--target-head-artifact",
+            "head",
+            "--argmax-artifact",
+            "argmax",
+            "--worker",
+            "worker",
+            "--worker-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "--device-unique-id",
+            "1",
+            "--submission",
+            "ordered",
+            "--context",
+            "8192",
+            "--pages",
+            "512",
+            "--max-batches",
+            "1000000",
+            "--layer-projection",
+            layer,
             "--live-stdin",
             "--allow-unauthenticated-machine-code",
             "--runtime-cache-admission",
@@ -124,14 +136,32 @@ mod tests {
             assert_eq!(live.submission, Submission::Ordered);
             assert_eq!((ROWS, CHUNK, live.context, live.pages), (32, 16, 8192, 512));
             assert_eq!(live.limits().unwrap().page_table_stride(), 512);
-            assert_eq!(live.limits().unwrap().physical_token_capacity().unwrap(), 8192);
-            assert!(live.runtime.cache_admission && live.runtime.operational
-                && live.runtime.rollover && live.runtime.ordered_batches);
-            assert!(!live.runtime.sequences && !live.runtime.profile
-                && !live.runtime.shared_full_currentness);
-            snapshots.push((live.source, live.target_artifact, live.target_head_artifact,
-                live.argmax_artifact, live.worker, live.worker_sha256, live.device,
-                live.max_batches, live.host_timing));
+            assert_eq!(
+                live.limits().unwrap().physical_token_capacity().unwrap(),
+                8192
+            );
+            assert!(
+                live.runtime.cache_admission
+                    && live.runtime.operational
+                    && live.runtime.rollover
+                    && live.runtime.ordered_batches
+            );
+            assert!(
+                !live.runtime.sequences
+                    && !live.runtime.profile
+                    && !live.runtime.shared_full_currentness
+            );
+            snapshots.push((
+                live.source,
+                live.target_artifact,
+                live.target_head_artifact,
+                live.argmax_artifact,
+                live.worker,
+                live.worker_sha256,
+                live.device,
+                live.max_batches,
+                live.host_timing,
+            ));
         }
         assert_eq!(snapshots[0], snapshots[1]);
     }
@@ -145,12 +175,23 @@ mod tests {
             }
             let mut missing = args.clone();
             missing.remove(index);
-            assert!(Options::parse(missing.into_iter()).is_err(), "{}", args[index]);
+            assert!(
+                Options::parse(missing.into_iter()).is_err(),
+                "{}",
+                args[index]
+            );
             let mut duplicate = args.clone();
             duplicate.push(args[index].clone());
-            assert!(Options::parse(duplicate.into_iter()).is_err(), "{}", args[index]);
+            assert!(
+                Options::parse(duplicate.into_iter()).is_err(),
+                "{}",
+                args[index]
+            );
         }
-        for (flag, value) in [("--layer-projection", "c1-wave"), ("--submission", "ordered")] {
+        for (flag, value) in [
+            ("--layer-projection", "c1-wave"),
+            ("--submission", "ordered"),
+        ] {
             let mut duplicate = args.clone();
             duplicate.extend([flag.into(), value.into()]);
             assert!(Options::parse(duplicate.into_iter()).is_err());
@@ -190,9 +231,20 @@ mod tests {
 
     #[test]
     fn layer_live_preserves_option_shaped_path_values() {
-        for flag in ["--source", "--target-artifact", "--target-head-artifact",
-            "--argmax-artifact", "--worker", "--host-timing"] {
-            for value in ["--layer-projection", "--submission", "--live-stdin", "--runtime-operational"] {
+        for flag in [
+            "--source",
+            "--target-artifact",
+            "--target-head-artifact",
+            "--argmax-artifact",
+            "--worker",
+            "--host-timing",
+        ] {
+            for value in [
+                "--layer-projection",
+                "--submission",
+                "--live-stdin",
+                "--runtime-operational",
+            ] {
                 let mut args = arguments("c1-wave");
                 if flag == "--host-timing" {
                     args.extend([flag.into(), value.into()]);
@@ -223,7 +275,10 @@ mod tests {
             assert!(wave_argmax_live_contract::Options::parse(args.clone().into_iter()).is_err());
             for submission in [Submission::Synchronous, Submission::Ordered] {
                 let mut args = args.clone();
-                let index = args.iter().position(|flag| flag == "--layer-projection").unwrap();
+                let index = args
+                    .iter()
+                    .position(|flag| flag == "--layer-projection")
+                    .unwrap();
                 args.drain(index..index + 2);
                 let index = args.iter().position(|flag| flag == "--submission").unwrap();
                 args[index + 1] = submission.label().into();

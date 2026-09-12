@@ -21,6 +21,7 @@ use ferric_m1_engineering_execution_v1::tp_paged::{
     EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
 };
 use ferric_m1_engineering_execution_v1::tp_scheduler::EngineeringTpSchedulerV1;
+use layer_c1_wave_live_contract::{LayerProjection, Options};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
@@ -28,7 +29,6 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 use tp_host_timing::TimingFile;
 use tp_worker::Worker;
-use layer_c1_wave_live_contract::{LayerProjection, Options};
 use wave_argmax_live_contract::{CACHE_TTL, CHUNK, ROWS};
 
 const LIVE_PROFILE: &str = "layer-c1-wave-live-v1";
@@ -414,7 +414,16 @@ mod live_tests {
                     "live_profile":LIVE_PROFILE, "layer_projection":layer.label(),
                 })
             );
-            for actual in ["auto", "wave", "", if layer == LayerProjection::Mfma { "c1-wave" } else { "mfma" }] {
+            for actual in [
+                "auto",
+                "wave",
+                "",
+                if layer == LayerProjection::Mfma {
+                    "c1-wave"
+                } else {
+                    "mfma"
+                },
+            ] {
                 assert!(profile_metadata(&options, actual).is_err());
             }
             let mut mismatched = options;

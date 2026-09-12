@@ -480,7 +480,9 @@ fn layer_c1_wave_live_is_additive_ordered_and_preserves_pre_effect_admission() {
     let source = include_str!("../src/bin/ferric-qwen3-layer-c1-wave-live.rs");
     let production = &source[..source.find("#[cfg(test)]").unwrap()];
     let execute = &production[production.find("fn run(options:").unwrap()..];
-    assert!(execute.find("options.validate()").unwrap() < execute.find("TimingFile::create(").unwrap());
+    assert!(
+        execute.find("options.validate()").unwrap() < execute.find("TimingFile::create(").unwrap()
+    );
     let setup = &production[production.find("fn run_with_timing(").unwrap()..];
     let ordered = [
         "options.validate()",
@@ -503,8 +505,13 @@ fn layer_c1_wave_live_is_additive_ordered_and_preserves_pre_effect_admission() {
         "let layer_projection = driver.layer_projection_mode();",
         "EngineeringTpBatchRuntimeV2::new_wide32(",
         "tp_live_ingress::run(",
-    ].map(|marker| setup.find(marker).unwrap());
-    assert!(ordered.windows(2).all(|positions| positions[0] < positions[1]));
+    ]
+    .map(|marker| setup.find(marker).unwrap());
+    assert!(
+        ordered
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     let selection = &setup[setup.find("match options.layer_projection").unwrap()
         ..setup.find("driver.configure_host_timing(").unwrap()];
     let branches = [
@@ -512,18 +519,36 @@ fn layer_c1_wave_live_is_additive_ordered_and_preserves_pre_effect_admission() {
         "driver.configure_ordered_wave_attention_fp32_argmax_v11",
         "LayerProjection::C1Wave",
         "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
-    ].map(|marker| selection.find(marker).unwrap());
-    assert!(branches.windows(2).all(|positions| positions[0] < positions[1]));
+    ]
+    .map(|marker| selection.find(marker).unwrap());
+    assert!(
+        branches
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     assert_eq!(selection.matches("driver.configure_").count(), 2);
-    for forbidden in ["configure_ordered_batches(", "configure_dispatch_sequences(",
-        "configure_wave_attention_fp32_argmax_v11(", "new_large_kv32", "EngineeringTpProjectionModeV3::Auto"] {
+    for forbidden in [
+        "configure_ordered_batches(",
+        "configure_dispatch_sequences(",
+        "configure_wave_attention_fp32_argmax_v11(",
+        "new_large_kv32",
+        "EngineeringTpProjectionModeV3::Auto",
+    ] {
         assert!(!production.contains(forbidden), "{forbidden}");
     }
     assert!(production.contains("actual_layer != options.layer_projection.label()"));
     assert!(production.contains("\"projection\":\"mfma\""));
     assert!(production.contains("const LIVE_PROFILE: &str = \"layer-c1-wave-live-v1\";"));
-    assert_eq!(production.matches("\"live_profile\":LIVE_PROFILE").count(), 3);
-    assert_eq!(production.matches("\"layer_projection\":layer_projection").count(), 2);
+    assert_eq!(
+        production.matches("\"live_profile\":LIVE_PROFILE").count(),
+        3
+    );
+    assert_eq!(
+        production
+            .matches("\"layer_projection\":layer_projection")
+            .count(),
+        2
+    );
     assert!(production.contains("\"layer_projection\":actual_layer"));
     assert!(production.contains("let result = body(runtime);\n    let close = runtime.close();"));
     assert!(production.contains("check_retired(runtime, live.pages)"));
