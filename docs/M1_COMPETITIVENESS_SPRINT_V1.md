@@ -9,7 +9,7 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. Opt-in adapter route and retirement correction are integrated and host-gated; native model comparison is pending. |
+| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. All six corrected opt-in model comparisons pass independent replay; full128 output rate +4.67% at n=1 per mode, short8 ABBA +10.16% at n=2. Native host-wall diagnostics only; default unchanged. |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming client, baseline identities, GPU scheduling and numerical gates | Matched Ferric/vLLM 128/128 cohorts pass; Ferric remains substantially slower. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses and its final diagnostic. No admitted SGLang metrics. |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
@@ -939,3 +939,82 @@ and cannot be subtracted to derive kernel duration. Finer wait observation and
 kernel analysis are the next diagnostic priorities; core checks are unchanged.
 The detailed source/counter note is
 `d6a787adf81101a35f6806c1a74041de65925dd637e7cf9350ba852be4de0984`.
+
+### Corrected Six-Run Result
+
+All six corrected d9a2705 runs pass. The full128 serial and wave-v11 runs
+each match all 128 generated IDs and UTF-8 bytes, 83,139 packets, 135 batches,
+cursor255, retirement and normal worker closure. The following short8
+serial/wave/wave/serial runs each match all eight generated IDs/bytes,
+9,219 packets, 15 batches and cursor135. Every run has fresh process/resource
+receipts, unchanged binary/input pins and identity-bound all-eight idle checks
+before and after. The rejected f662 attempt remains permanently excluded.
+
+The only experimental selector is target FP32 argmax. Both modes use the same
+v5 MFMA projections, baseline attention, v8 FP32 head, v11 admitted image,
+TP1 worker, 128-token prompt, context256, 16 physical pages, 32-row workspace
+and 16-row prefill chunks. Prefix caching, speculation and ordered submission
+are off. The host clock starts before prefill and ends at generated-token
+commit; setup, final detokenization, retirement and closure are excluded.
+
+| Diagnostic Cohort | Mode | TTFT (ms) | TPOT (ms) | Workload (s) | Output Tokens/s |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Full128, n=1 | Serial | 4182.023 | 553.420 | 74.466305 | 1.718898 |
+| Full128, n=1 | Wave v11 | 3966.503 | 528.962 | 71.144681 | 1.799151 |
+| Short8 ABBA, n=2 mean | Serial | 4337.997 | 489.293 | 7.763047 | 1.032721 |
+| Short8 ABBA, n=2 mean | Wave v11 | 4034.981 | 428.179 | 7.032234 | 1.137693 |
+
+Descriptively, the full128 pair reduces TTFT 5.15% and TPOT 4.42%, with output
+rate +4.67%. Short8 ratios of arithmetic means give TTFT -6.99%, TPOT -12.49%
+and mean output rate +10.16%. The two individual short TPOT reductions are
+16.79% and 7.72%; n=2 does not establish a stable improvement or confidence
+interval. Mean per-run output rate is not tokens divided by mean elapsed time,
+and ratio of means is not mean paired speed ratio.
+
+The full128 output-head host span is 3.004575642 -> 0.384304466 s; its nested
+argmax span is 2.763174148 -> 0.147159205 s. The latter's 18.78x ratio describes
+host scope, not an isolated GPU kernel speedup. Broad attention spans remain
+57.598240118/57.189654603 s. These spans and IPC timings overlap; do not add
+nested values or claim the total improvement is fully explained by argmax.
+The earlier +12.27% wave-plus-ordered result is a separate workload/profile,
+not a multiplier for these observations. Default and HTTP routes are unchanged.
+
+The frozen reducer passed 31 CPU tests with its manifest helper and checker.
+Root independently compared all 60 manifest file hashes to original mi350
+files before authorizing replay; the unchanged reducer then admitted all six.
+Root also independently checked per-run values and arithmetic means.
+
+- Authenticated manifest: `d7efd64eb1aad2f55e5639b97fdae52b9bd60e2a75c56d5c4a346c12fd3448f1`.
+- Summary: `064e1ced84a0ac4e275225bcc9243a161462c19f907f9ca2080048daafc7eaab`.
+- Reducer: `d112d5113657867417bc8358ddbbf19a2c1a918a658e146c0522b1860b7863d7`.
+- Raw six-run archive: `d203ad9443cfae86ea10672330c9aa09fa1ae8388915a1305bf86ae5f7e4e4be`, matching a second independent remote archive stream.
+
+These are instrumented native controller-wall results, not HTTP or GPU-clock
+measurements, competitive ranking, default promotion, new Verus proof or M1
+completion. The matched Ferric/vLLM cell and rejected SGLang result above are
+unchanged; Ferric remains substantially slower.
+
+### Released Stages And Next Kernel
+
+After verified source/log/executable custody, the completed correction
+worktree and mi300x stages `ferric-large-kv-host.SfMXxwBa` (7,237,660 KiB)
+and `ferric-paired-canary-cpu.oBWfSYP9` (22,016 KiB) are removed. The SfMX
+closure archive excludes redundant Cargo target bulk; its SHA-256 is
+`f6a31f6749b7504e890f08c41c72e76bac8dddd35cb8aeed02b3192d623b80ca`.
+The complete root Python-gate archive is
+`affff2bbd7a0cf1ed1eab5635a75a98d11df6406acccb7bbc37c9c8a7904b1e2`.
+Both match independently repeated remote archive streams. Audits found no
+process references or foreign-owned entries; nondumpable SSH/PAM services and
+foreign processes were not fully inspectable. Cleanup relies on the released
+private ownership/leases, not a claim of privileged process visibility.
+Shared models, caches and unrelated worktrees are untouched.
+
+A separate additive v12 prototype at `ef619051248f469a13f02f8054cbf50ef0e9f9e2`
+specializes TP1 one-row down projection and groups pairs of K16 loads while
+preserving the existing single-accumulator order and weight layout. Nine
+focused host tests, format, Clippy and locked metadata pass on mi300x.
+Its host archive is `81a6ed8ea2d096bc4417676c95d5348851bdb2cedb962d6aad7d6411717ce11a`.
+It is not integrated into a route or default. Emission, ISA review and native
+bitwise comparison are separate gates; no v12 performance claim is made.
+Active core remains public `8efd4fd` / tree `93a51b4a`, freshly checked after
+the native runs. No core code was changed or pushed in this continuation.

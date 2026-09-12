@@ -13,17 +13,20 @@ release policy gates pass, with the final aggregate archived. Opt-in target
 argmax route and retirement correction `17dcaa4` are integrated locally from
 tested source `d9a2705`; all host and source-policy gates pass. The first
 `f662d54` native control was rejected for a canary freshness-predicate error,
-with clean teardown and no admitted parity or timing. The corrected fixed-oracle
-comparison is in progress, with no routed gain claimed yet.
+with clean teardown and no admitted parity or timing. All six corrected
+fixed-oracle runs now pass independent replay. The full128 diagnostic pair
+observes TPOT 553.420 -> 528.962 ms and output rate +4.67%; the short8 ABBA
+observes +10.16% mean output rate, with two runs per mode. These are native
+host-wall descriptions, not HTTP performance or default-promotion evidence.
 Frozen GPU binaries retain their actual source identities. Ferric implementation
 remains local; separately reviewed Pages content is published independently.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. The opt-in target-only route and fixed-oracle comparison binary pass their host gates. | Full128 model parity, then short8 ABBA diagnostics; serial v8 remains the default. |
+| Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay, fourteen finite-active native fixtures, and all six corrected model comparisons. The separate v12 one-row down-projection prototype passes nine focused host tests; emission remains a separate gate. | Attribute the broad decoder spans; qualify composition and serving separately. Serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Corrected route source `d9a2705` passes 637 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. Frozen f65 runtime-counter diagnostic passes exact output and cleanup. Pages `75d8c03` is live; a separate checkpoint update is in review. | Corrected native model comparison; finer wait/kernel attribution. No new Verus proof. |
+| Integration and Pages | Corrected route source `d9a2705` passes 637 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. The six-run native manifest and summary pass independent replay; all workers close normally and all eight GPUs are idle afterward. Frozen f65 runtime-counter diagnostic passes. Pages `75d8c03` is live; the new checkpoint is in review. | Publish reviewed native checkpoint; finer wait/kernel attribution. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -33,6 +36,15 @@ Ferric is substantially slower than vLLM. The wave canary is a separate
 host-timed four-request/eight-output workload, with two runs per mode; it cannot
 replace the matched HTTP numbers. See the
 [competitiveness sprint](M1_COMPETITIVENESS_SPRINT_V1.md) for exact evidence.
+
+The current native argmax comparison keeps TP1, the same v5 MFMA projections,
+baseline attention, FP32 v8 head, 128-token prompt, context256, prefix caching
+off and ordered submission off. Its full128 pair is n=1 per mode; short8 uses
+the predeclared serial/wave/wave/serial order, n=2 per mode. Do not combine it
+with the earlier wave-plus-ordered gain or replace the matched serving table.
+Completed correction and prior route worktrees are removed. Hash-verified
+closure archives precede removal of 7,259,676 KiB of released mi300x stages;
+active team stages, current GPU artifacts, shared models and caches remain.
 
 ## September 11 Performance Swarm
 
