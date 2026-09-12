@@ -8,6 +8,7 @@ import { validateCompetitiveness, testCompetitivenessRejections } from "./valida
 import { validateFollowup, testFollowupRejections } from "./validate-competitiveness-followup.mjs";
 import { validateRecovery, testRecoveryRejections } from "./validate-competitiveness-recovery.mjs";
 import { validateMatched128, testMatched128Rejections } from "./validate-matched128.mjs";
+import { validateNativeFollowup, testNativeFollowupRejections } from "./validate-native-followup.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -22,6 +23,8 @@ validateRecovery(project.competitivenessRecovery);
 testRecoveryRejections(project.competitivenessRecovery);
 validateMatched128(project.matched128, project.pagedDraftReference);
 testMatched128Rejections(project.matched128, project.pagedDraftReference);
+validateNativeFollowup(project.nativeFollowup, project.latestReadiness);
+testNativeFollowupRejections(project.nativeFollowup, project.latestReadiness);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -81,6 +84,7 @@ assertExactKeys(
     "competitivenessFollowup",
     "competitivenessRecovery",
     "matched128",
+    "nativeFollowup",
     "pagedDraftReference",
     "latestReadiness",
     "milestone",
@@ -103,8 +107,8 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "4200318970ddd0edebf24761cccdb4bb18c22794",
-  previousSiteRefreshBase: "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
+  siteRefreshBase: "8561285d68c066cfae53e5105b981644bdaba6d0",
+  previousSiteRefreshBase: "4200318970ddd0edebf24761cccdb4bb18c22794",
   performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
@@ -527,6 +531,8 @@ const expectedCurrent = {
   fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
   fe2o3LatestMain: "21682228486f7186cc3c37ddf165fffc438d8b6a",
   fe2o3LatestTree: "e87e1433b7a519d3acd78859520549edd58bcfc0",
+  fe2o3ActiveDevelopmentMain: "8efd4fd416d1ffae7a718144e4d299fe3c8f7590",
+  fe2o3ActiveDevelopmentTree: "93a51b4af0287ccb51dec07fe431dae71fc55d0f",
   fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
   fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
   fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -871,6 +877,8 @@ for (const key of [
   "fe2o3FerricPinTree",
   "fe2o3LatestMain",
   "fe2o3LatestTree",
+  "fe2o3ActiveDevelopmentMain",
+  "fe2o3ActiveDevelopmentTree",
   "gemmLayoutFixCommit",
   "gemmLayoutFixTree",
   "productionOwnerSourceCommit",
@@ -1382,19 +1390,25 @@ project.readiness.forEach((item, index) => {
   assertExactKeys(item, ["label", "state", "detail"], `readiness[${index}]`);
   assertState(item.state, `readiness[${index}].state`);
 });
-assert(project.latestReadiness.length === 4, "latest scoped readiness roster");
+assert(project.latestReadiness.length === 9, "latest scoped readiness roster");
 project.latestReadiness.forEach((item, index) => {
   assertExactKeys(item, ["label", "state", "detail"], `latestReadiness[${index}]`);
   assertState(item.state, `latestReadiness[${index}].state`);
 });
 assert(project.latestReadiness[0].detail.includes("substantially slower"), "measured gap must remain explicit");
-assert(project.latestReadiness[2].detail.includes("566 all-target"), "private candidate host gate scope");
-assert(project.latestReadiness[3].detail.includes("568 all-target"), "combined integration host gate scope");
+assert(project.latestReadiness[7].detail.includes("566 all-target"), "private candidate host gate scope");
+assert(project.latestReadiness[8].detail.includes("568 all-target"), "combined integration host gate scope");
 
 assert(Array.isArray(project.envelope) && project.envelope.length >= 8, "M1 envelope is incomplete");
-const publicHeadRow = project.envelope.find(([label]) => label === "fe2o3 current public main");
+const publicHeadRow = project.envelope.find(([label]) => label === "fe2o3 frozen measurement cutoff");
 assert(publicHeadRow && publicHeadRow[1].startsWith(`Observed cutoff: ${project.current.fe2o3LatestMain}; tree ${project.current.fe2o3LatestTree}.`),
-  "public-main evidence row must agree with the exact current commit/tree fields");
+  "frozen measurement row must agree with the exact historical cutoff fields");
+assert(publicHeadRow[1].includes(`Active development tracks ${project.current.fe2o3ActiveDevelopmentMain}; tree ${project.current.fe2o3ActiveDevelopmentTree}, with separate latest-source gates.`),
+  "active development must be bound separately from historical receipts");
+assert(publicHeadRow[1].includes("These historical GPU receipts are not rebuilt or relabeled; no latest-source performance result is claimed here."),
+  "active development must not relabel frozen measurement evidence");
+assert(!project.envelope.some(([label]) => label === "fe2o3 current public main"),
+  "a frozen measurement cutoff must not be labeled current public main");
 const envelopeNames = new Set();
 project.envelope.forEach((entry, index) => {
   assert(Array.isArray(entry) && entry.length === 2, `envelope[${index}] must be a pair`);
@@ -1594,7 +1608,7 @@ project.evidence.legend.forEach((entry, index) => {
 
 const snapshot = JSON.stringify(project);
 const missingSnapshotClaims = [
-  "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
+  "8561285d68c066cfae53e5105b981644bdaba6d0",
   "Prefix reuse reduces work from 50 to 34 physical token rows and six to five batched forwards",
   "no isolated cache-speedup claim follows",
   "The CLI admits at most 32 requests, 1-256 requested output tokens each, and 240 batches without ring rollover",

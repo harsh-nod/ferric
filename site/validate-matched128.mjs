@@ -31,7 +31,7 @@ const expected = {
       outputTokensPerSecond: 220.55811110798334, windowSeconds: 17.410377613,
       receiptSha256: "f88d8a4d49aee99cbadf532fd0aa9c899a8beb227492e4043b52f53828f636b0" },
   ],
-  sglang: { state: "startup-failed", metrics: null, numericalResult: false },
+  sglang: { state: "numerical-rejected", metrics: null, numericalResult: false },
 };
 const draftExpected = {
   independentPassed: true, schedules: ["full", "tokenwise"], repetitionsPerSchedule: 2,
@@ -80,7 +80,9 @@ export function validateMatched128(value, draft) {
   assert(value.correctness.includes("Ferric's MFMA head and vLLM use BF16 operands with FP32 accumulation/output"));
   assert(value.correctness.includes("independent reference explicitly converts head operands to FP32"));
   assert(value.correctness.includes("frozen before engine outputs"));
-  assert(value.sglangNote.includes("no measured result"));
+  assert(value.sglangNote.includes("10 of 30 measured texts"));
+  assert(value.sglangNote.includes("after diagnostic diverges at output index four"));
+  assert(value.sglangNote.includes("No SGLang timing is admitted"));
   assert(value.sglangNote.includes("not assigned zero throughput"));
 }
 

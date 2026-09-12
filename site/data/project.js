@@ -3,8 +3,8 @@ window.FERRIC_PROJECT = Object.freeze({
   repository: "https://github.com/harsh-nod/ferric",
   fe2o3Repository: "https://github.com/harsh-nod/fe2o3",
   current: {
-    siteRefreshBase: "4200318970ddd0edebf24761cccdb4bb18c22794",
-    previousSiteRefreshBase: "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
+    siteRefreshBase: "8561285d68c066cfae53e5105b981644bdaba6d0",
+    previousSiteRefreshBase: "4200318970ddd0edebf24761cccdb4bb18c22794",
     performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
     performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
     performanceSprintV2CoreHostTests: 469,
@@ -426,8 +426,11 @@ window.FERRIC_PROJECT = Object.freeze({
     fe2o3V71Tree: "68573bf31789625ecc2489491711ad9153eb1cac",
     fe2o3FerricPin: "cf6faec0ee3c026d3a1fc5090ab606a3b425225c",
     fe2o3FerricPinTree: "6d115af5cd5285b84b7629834393d6eee6a37045",
+    // Legacy Latest fields record the frozen measurement cutoff, not active development.
     fe2o3LatestMain: "21682228486f7186cc3c37ddf165fffc438d8b6a",
     fe2o3LatestTree: "e87e1433b7a519d3acd78859520549edd58bcfc0",
+    fe2o3ActiveDevelopmentMain: "8efd4fd416d1ffae7a718144e4d299fe3c8f7590",
+    fe2o3ActiveDevelopmentTree: "93a51b4af0287ccb51dec07fe431dae71fc55d0f",
     fe2o3LatestHostGateCore: "6f6a67bb2f6de70a1c5533bbcde1b09449c37359",
     fe2o3PriorE535MigrationCommit: "aba3f86ef14136fa73a385834d4f33f7c9416a32",
     fe2o3PriorE535MigrationTree: "ea47a88d49ea67384299d1bc3054b09ba4567dd3",
@@ -935,20 +938,189 @@ window.FERRIC_PROJECT = Object.freeze({
         outputTokensPerSecond: 220.55811110798334, windowSeconds: 17.410377613,
         receiptSha256: "f88d8a4d49aee99cbadf532fd0aa9c899a8beb227492e4043b52f53828f636b0" },
     ],
-    sglang: { state: "startup-failed", metrics: null, numericalResult: false },
+    sglang: { state: "numerical-rejected", metrics: null, numericalResult: false },
     scope: "September 12: Qwen3-8B, one MI350X GPU, TP1, 8,192-token context, 128 input and 128 output tokens, concurrency 1. BF16 weights/decoder with an explicitly selected FP32 output head; greedy fixed-length completions, speculation and prefix caching off. One fresh start per engine, 10 warmups excluded and 30 measured requests.",
     interpretation: "Ferric is substantially slower than vLLM on this cell. These are descriptive single-start, closed-loop finite cohorts, not a confidence-qualified comparison, stock-default comparison or sustained-load result. Earlier short-canary improvements do not establish competitiveness.",
     measurement: "TTFT is client send to the first nonempty SSE text chunk. TPOT uses first-to-last text arrival divided by 127 post-first tokens. Output rate spans the first measured request start through the last completion, including inter-request gaps and final drain. Token-level inter-token latency is unavailable.",
     correctness: "Before/after diagnostics match all 128 independent token IDs and decoded UTF-8 bytes. Every timed request passes exact output-byte and token-usage replay. Ferric's MFMA head and vLLM use BF16 operands with FP32 accumulation/output; the independent reference explicitly converts head operands to FP32. Head implementations differ; these switches and the numerical contract were frozen before engine outputs. Both owned teardowns pass, with all eight GPUs idle afterward; no profiled run is substituted into this table.",
-    sglangNote: "SGLang: no measured result. Startup cache-permission and observer-compatibility failures are retained. The owned containers were removed and all GPUs returned idle. Corrections are being validated; failed launches are not assigned zero throughput.",
+    sglangNote: "SGLang r7 starts and completes all 10 warmups and 30 measured requests, but remains rejected: 10 of 30 measured texts and four warmup texts differ from the reference. The before diagnostic matches; the identical after diagnostic diverges at output index four. All responses have 128/128/256 token counts, but an extra reasoning_tokens: 0 field also fails the frozen usage-object check. Changing usage parsing cannot repair the numerical failure. Normal teardown, owned container/cache removal and all-eight-GPU idle checks pass. No SGLang timing is admitted; rejected runs are not assigned zero throughput. Earlier startup failures, including r6 forced teardown, remain preserved.",
+  },
+  nativeFollowup: {
+    schema: "FerricPagesNativeFollowupV1",
+    pairedHostCore: "21682228486f7186cc3c37ddf165fffc438d8b6a",
+    waveOrdered: {
+      source: "f65c4603f936b3cf5d009991bc19a9645ecdb604",
+      controllerSha256: "d1c006b89f918541820a3335ba0f931a7394d1f7fa1a4eca2de5e4653e824237",
+      order: [
+        "baseline",
+        "wave",
+        "wave",
+        "baseline"
+      ],
+      requestsPerRun: 4,
+      outputsPerRun: 8,
+      repetitionsPerMode: 2,
+      hostTimingEnabled: true,
+      contextTokens: 64,
+      physicalPages: 8,
+      prefillChunk: 16,
+      prefixCache: true,
+      queueRollover: false,
+      meanRateGainPercent: 12.27,
+      newDefault: false,
+      servingQualified: false,
+      runs: [
+        {
+          run: "control-r1",
+          outputTokensPerSecond: 5.495400995763088,
+          comparisonSha256: "f6a43299f8061e4e007ba7022a98dabf7647ab87860dc85bafbb100f4b791ea1"
+        },
+        {
+          run: "candidate-r1",
+          outputTokensPerSecond: 6.178239764442994,
+          comparisonSha256: "9da2ff2198b5b9f8937de4a3a1fee01514fadef5105e1ee55f400533575dd949"
+        },
+        {
+          run: "candidate-r2",
+          outputTokensPerSecond: 6.174699472398327,
+          comparisonSha256: "80a0d25350e87d55c2f8cde40671bf499d7ed0bef70a3d6837a1e9482a5f2b63"
+        },
+        {
+          run: "control-r2",
+          outputTokensPerSecond: 5.5076840812458965,
+          comparisonSha256: "a6a674e7a0075bb6cf20ab3a19590106a0307903d4f7ca70634236c6312e36be"
+        }
+      ]
+    },
+    draftMatrix: {
+      completedCases: 8,
+      plannedCases: 8,
+      projections: [
+        "baseline",
+        "mfma"
+      ],
+      prefill: [
+        "full",
+        "tokenwise"
+      ],
+      repetitionsPerProfile: 2,
+      generatedTokens: [
+        12095,
+        13
+      ],
+      generatedText: " Paris.",
+      archiveSha256: "7ce5999a57f97285a6519a4376453992271567518ddafeac7fd648229ded6c3b",
+      allReferenceOutputsExact: true,
+      unforcedCleanup: true,
+      allEightIdleAfter: true,
+      servingQualified: false
+    },
+    parallelArgmax: {
+      source: "67b729046d78b8f48205eeab2152fb90499b374f",
+      artifactSha256: "122ee2a146b1f0735a315764c5eb1e2ff9aa83c26f5800b42ce6d69b0602236b",
+      wrapperSha256: "4c4fda5650912f8b26198ee91f1d27c27ca50e18898ee8cc9a295d2d45c7e3ac",
+      reportSha256: "824c6404e07fdef5887ad87cd475f9cae65ed3797c690abd14ade118ff7ced7a",
+      nativeCases: 14,
+      activeInputsFinite: true,
+      fullByteAndGuardChecks: true,
+      adapterIntegrated: false,
+      modelSpeedupClaimed: false,
+      defaultRoute: "v8"
+    },
+    pairedK4: {
+      source: "ae355e52e7674f027ca63f561dc6ec2b31ce5b3c",
+      controllerSha256: "bd0cf2480d94c509f00323c39ed469a04d604ce3db21c801cab85e1876580766",
+      hostAggregateSha256: "f67227b267089f52ec7618dc14bc2bcc2b0051f6f21645c13acbca2ac8a827e1",
+      hostTests: 594,
+      imageSkips: 25,
+      doctests: 8,
+      sourceFiles: 1053,
+      referenceSha256: "e5588cefc924a8be5b77345876b6893d53436213de03108a7fc4702cc86356a0",
+      freshRuns: 2,
+      roundsPerRun: 2,
+      draftWidth: 4,
+      acceptedPerRun: [
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      catchUpsPerRun: [
+        2,
+        2
+      ],
+      generatedTokens: [
+        13934,
+        9489,
+        9079,
+        13,
+        5443,
+        30339,
+        4128,
+        323,
+        14175,
+        10295
+      ],
+      targetPacketsPerRun: 6136,
+      draftPacketsPerRun: 8610,
+      exactTargetPrefix: true,
+      unforcedCleanup: true,
+      allEightIdleAfter: true,
+      nativeRejectionBranchesCovered: false,
+      speculativeHttpServing: false,
+      performanceQualified: false,
+      wrapperSha256: [
+        "70d6ff75e7f8e69d4dfe7b026ed6d854d02e0813744e114c22aaa83f06d17865",
+        "bb662c2dfe6be7a0661e66bf9d2f65f201136165362d001105f7d83ed0373926"
+      ],
+      traceSha256: [
+        "1ef9662d533222252067a85c61e5c1960e7987cec9dbb1f0c7be4ac2e05f81a5",
+        "f682807721a55a5733bb528b419a5abe4eb5da058c33fa97f3674683473d75a9"
+      ]
+    },
+    sglangR7: {
+      state: "numerical-rejected",
+      receiptSha256: "69bba54516149f01ca0bf52e415f7577b5b9d5e8addcd7ea8afe510196118a6a",
+      auditSha256: "e228350363d13b0e3639c3c21f5fa93c1da1fc060d1ec426c0c3f8ae924df412",
+      warmups: 10,
+      measuredRequests: 30,
+      measuredTextMismatches: 10,
+      warmupTextMismatches: 4,
+      allLengths128: true,
+      extraReasoningTokensZero: true,
+      nativeBeforeExact: true,
+      nativeAfterExact: false,
+      afterFirstMismatchIndex: 4,
+      unforcedCleanup: true,
+      allEightIdleAfter: true,
+      metrics: null
+    },
+    authority: "none",
+    competitiveWinClaimed: false,
+    newVerusClaimed: false,
+    m1Complete: false
   },
   latestReadiness: [
     { label: "First matched Ferric / vLLM cell", state: "observed",
       detail: "Both engines pass the 128-input/128-output reference and 30 measured requests after ten warmups. Mean client TTFT / TPOT: Ferric 3,705.967 / 506.969 ms; vLLM 19.243 / 4.414 ms. Ferric remains substantially slower. This single-start concurrency-one cohort is not the repeated primary suite, sustained serving or a competitive win. SGLang has no admitted measurement yet." },
+    { label: "Paged draft: all eight native cases pass", state: "observed",
+      detail: "Baseline and MFMA projection each pass full and tokenwise prefill twice: eight of eight fixed Qwen3-0.6B native canaries. Every run returns IDs [12095, 13] and exact bytes for \" Paris.\", with the expected packets, cursor retirement, normal worker close and all eight GPUs idle. Controller ac2682a, the v10 image and worker c110ac55c retain their frozen identities. Tokenwise prefill diagnostics are not generated output. This completes the bounded matrix, not speculative serving or a timing comparison." },
+    { label: "Paired K4: two fresh native passes", state: "observed",
+      detail: "Frozen source ae355e5 runs two genuine K4 rounds on independent target/draft workers and pools. Both fresh runs observe [4,4] accepted drafts and two genuine last-proposal catch-ups, producing the same exact ten-token target prefix without supplied choices or forced acceptance. Each uses 6,136 target and 8,610 draft packets, normal closes and all-eight-GPU idle checks. Its exact-216 host gate passes 594 test invocations, 25 existing image skips and eight doctests with unchanged source. Native rejection/rollback branches still need other workloads. This is not HTTP speculative serving or a speed qualification." },
+    { label: "Parallel FP32 argmax: 14 native fixtures", state: "observed",
+      detail: "Additive v11 source 67b7290 passes exact-216 emission/replay and all 14 finite-active native fixtures. Full output bytes, inactive tails and guards are checked across 1/2/16/17/31/32 rows, all lanes at three scan boundaries, lowest-ID ties, signed zeros, subnormals and random finite bit patterns. No deliberately trapping GPU fixture is launched. The adapter still uses v8; this is kernel correctness evidence, not an integrated model speedup or new default." },
+    { label: "Wave plus ordered: short-canary ABBA", state: "observed",
+      detail: "Same-controller baseline/wave/wave/baseline runs pass all four requests and eight reference outputs, 34 physical rows, five batches, 3,077 packets and clean teardown. Mean fixed-workload rate rises from 5.501543 to 6.176470 output tokens/s: +12.27%, n=2 per mode. Both modes use host-timing instrumentation, 64-token context, eight KV pages, 16-row chunks, prefix caching and no queue rollover. These are not confidence intervals, per-kernel GPU timings, HTTP throughput or a new default. Do not substitute this short canary into the unprofiled matched 128/128 table." },
+    { label: "SGLang r7: numerical rejection retained", state: "open",
+      detail: "Startup now succeeds with the original selected backend and graphs. The run completes, but 10 of 30 measured texts fail exact output; the identical final native diagnostic also fails. Four of ten warmups differ. Correct token lengths do not rescue the numerical failure or the extra usage-field rejection. Cleanup is normal and complete. No SGLang timing, zero-throughput placeholder or competitive ranking is published; nondeterminism diagnosis remains open." },
     { label: "Independent paged-draft FP32 reference", state: "observed",
-      detail: "The separate Qwen3-0.6B BF16/SDPA-body, FP32-head oracle passes full-prompt and token-at-a-time schedules twice each. All 16 full-vocabulary FP32 vectors are finite and repeated exactly, with clean owned-container removal and all eight GPUs idle. One native baseline-projection/full-prefill case also passes 960 packets; seven planned matrix cases remain. The prior two LLVM temporary-file-limit failures are retained. This is not a complete native paged-model matrix or speculative serving." },
+      detail: "Earlier reference checkpoint: the Qwen3-0.6B BF16/SDPA-body, FP32-head oracle passes full-prompt and token-at-a-time schedules twice each. All 16 full-vocabulary FP32 vectors are finite and repeated exactly, with clean owned-container removal and all eight GPUs idle. The first baseline/full native case passes 960 packets; the later eight-case completion is recorded above. The prior two LLVM temporary-file-limit failures remain retained. This reference checkpoint alone is not speculative serving." },
     { label: "Private autoregressive draft transaction", state: "integration",
-      detail: "Private candidate 4cd0b7e adds the tentative draft-proposal transaction. Its revised exact-source CPU gate passes 14 focused tests, 566 all-target test invocations, 22 existing image ignores and seven doctests, plus strict Clippy, formatting and release. The earlier Clippy style failures are retained. Native multi-round proposals, target verification and end-to-end speculative serving remain unqualified." },
+      detail: "Earlier private candidate 4cd0b7e adds the tentative draft-proposal transaction. Its revised exact-source CPU gate passes 14 focused tests, 566 all-target test invocations, 22 existing image ignores and seven doctests, plus strict Clippy, formatting and release. The earlier Clippy style failures are retained. This host-only checkpoint did not qualify native proposals or target verification; later paired native passes are recorded above. End-to-end speculative serving remains open." },
     { label: "Exact 827 combined host gate", state: "integration",
       detail: "Private integrated source 82703c6 passes all eight recorded host-gate steps: 568 all-target test invocations, 22 existing image skips, seven doctests and 31 Python reference tests, plus strict Clippy, formatting and release. All 1,040 source files remain unchanged through the gate on pinned public core 216822284. This combines wave-plus-ordered host support, private draft proposals and paged-reference contracts; it adds no native paired-model result, speculative serving CLI, new Verus proof or performance qualification." },
   ],
@@ -981,7 +1153,7 @@ window.FERRIC_PROJECT = Object.freeze({
     label: "Qwen3 speculative inference on one gfx942",
     state: "integration",
     summary:
-      "Ferric runs Qwen through resident JSONL and loopback HTTP with FP32 heads, paged attention, chunked prefill and radix reuse. The first matched Qwen3-8B cell now passes exact output checks for Ferric and vLLM, but Ferric is substantially slower: mean client TPOT is 506.969 ms versus 4.414 ms on one MI350X. These are single-start, concurrency-one results with speculation and prefix caching off, not sustained-load qualification. SGLang has no admitted measurement yet. Standalone draft execution and 36 fast-kernel fixtures pass; the paged-draft FP32 reference and a private proposal transaction's host gate now pass. The complete native paged matrix and end-to-end speculation remain open. Historical observations retain their original scope. No competitive win, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
+      "Ferric runs Qwen through resident JSONL and loopback HTTP with FP32 heads, paged attention, chunked prefill and radix reuse. It remains substantially slower in the matched Qwen3-8B cell: mean client TPOT is 506.969 ms versus vLLM's 4.414 ms on one MI350X. This is a single-start, concurrency-one cell with speculation and prefix caching off. SGLang r7 starts but fails exact output, so no timing is admitted. All eight paged-draft canaries and 14 parallel-argmax native fixtures pass. Two fresh paired K4 runs each accept [4,4] drafts, exercise both catch-ups and return the exact ten-token target prefix. This is not HTTP speculative serving; the argmax adapter route and model speedup remain open. A separate instrumented wave-plus-ordered short canary improves mean rate 12.27%, not matched HTTP performance. Historical observations retain their scope. No competitive win, new Verus proof or M1 completion is claimed; all 33 M1 gates remain open.",
   },
   readiness: [
     {
@@ -1285,7 +1457,7 @@ window.FERRIC_PROJECT = Object.freeze({
     ["Exact four-token runtime", "254b89aa3a6e4e751c3ad81db84073a5fb26b52d; tree e31a988bb8b74557381a4a04f0cb765cafb7cf72; exact binary source for the authority-free target-only run"],
     ["Ferric intermediate integration", "23f326a3133ef4b5e0da19b9a170bf05f8cb7a6b; audited seven-file exact kernel/host ABI delta plus authenticated prefill, readback, and radix; not final or public product integration"],
     ["fe2o3 exact v77 pin", "public commit cf6faec0ee3c026d3a1fc5090ab606a3b425225c; tree 6d115af5cd5285b84b7629834393d6eee6a37045; pinned compiler/runtime input for the exact authority-free aggregate"],
-    ["fe2o3 current public main", "Observed cutoff: 21682228486f7186cc3c37ddf165fffc438d8b6a; tree e87e1433b7a519d3acd78859520549edd58bcfc0. The published operational ordered-currentness correction adds only native documentation after tested worker source c110ac55c. Exact Ferric source 656edb2 passes its separately pinned CPU aggregate; no new Verus or M1 qualification follows. Ordered models use controller 108feeb8 and worker b91ddef7 with frozen v5/v8 images. Standalone draft uses controller e84b104e at 346d588 and the original baseline image. New v10 emission uses compiler 216822284. Earlier 3e3 and 511 receipts keep their own identities; polling experiments remain unpublished."],
+    ["fe2o3 frozen measurement cutoff", "Observed cutoff: 21682228486f7186cc3c37ddf165fffc438d8b6a; tree e87e1433b7a519d3acd78859520549edd58bcfc0. Active development tracks 8efd4fd416d1ffae7a718144e4d299fe3c8f7590; tree 93a51b4af0287ccb51dec07fe431dae71fc55d0f, with separate latest-source gates. These historical GPU receipts are not rebuilt or relabeled; no latest-source performance result is claimed here. The published operational ordered-currentness correction adds only native documentation after tested worker source c110ac55c. Exact Ferric source 656edb2 passes its separately pinned CPU aggregate; no new Verus or M1 qualification follows. Ordered models use controller 108feeb8 and worker b91ddef7 with frozen v5/v8 images. Standalone draft uses controller e84b104e at 346d588 and the original baseline image. New v10 emission uses compiler 216822284. Earlier 3e3 and 511 receipts keep their own identities; polling experiments remain unpublished."],
     ["fe2o3 historical 6f6 host checkpoint", "Checked September 11: 6f6a67bb2f6de70a1c5533bbcde1b09449c37359; tree 5674a7078440e445010d3b5d58c8bc4a34b6fe94. Uniformity-report constructor refactoring and ownership-test cleanup do not change KFD/SDK/device/Cargo.lock. The separately bound 29d756a freshness host gate passes; controller 80fab5d4 has no model run. Receipt SHA-256 b2e5d5b107f3b1fc51bb9d472a0c98259f03fc904ffd315583d3b4db67c4a852. Frozen FP32 model/native runs retain actual public 511 and controller 3d039 identities. Historical source 5110577a6d8c45390dfb353386cde748efd5d76c, tree 7f1329b68e00f3325d3ed2b977a4b6ba7cc20542, supplies their v7 image; it is reused only in host fake-worker tests on 6f6. Historical runtime implementation: 79706b43a177a2fd3fa43ec328221fa3e5041af5, tree 45f230ccc6fe2eb7400c68f20d68abafdc2f1b82. Concurrent-rank native TP2/TP8 gates and the separately frozen six-case instrumented model matrix pass; no physical GPU overlap is measured and rounds remain slower than host staging. Earlier check, September 10: 7528e7345cef0158d7034cdbae23011e3c6fb5d2; tree 897f21b7affba51b29103de55adde90cfc10f0dc. Combined private source cb31075 passes 239 Rust tests, two explicit ignores, 70 Python tests, strict Clippy and release builds on this pin; narrow follow-up 54e79c3 separately passes 31 verifier-policy tests. The earlier combined checkpoint remains 1b262ac3dd23ee63067e40587d62a124f40b9fc9, tree 6d7cf46ae19fc922c4ca39a919294e68f8ee8df3. Runtime, peer ownership/cached sequences, and generic compiler fixes are public. The preceding public-head observation was 902fef6e1478b3ac677e5456b2a2d1f917456fba, tree f62bdf2e0203a9e090958e2324553cb440e8668e. Model results retain their exact older worker/artifact pins. Historical public 3546d54d2c4a913f5d079701aed557d0a378bba8 passed 433 runtime tests, a real single RMSNorm dispatch, and eight lifecycle checks. The preceding a8 checkpoint remains a8b016e14ca8c77c9e7abe4591086f7cab11ce61, tree 3b14f1e5e1ce800e07ec05638d85d61100c1b04e. Historical MI300X Qwen32 stays bound to 0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree 15f49dde796fe9cbf76274f7d36c7de4c25fef68"],
     ["Historical public-428 aggregate", "Historical authority-free aggregate 528: content ID 528fa128e398b9aac5f5fa672388b44ff7b7e67932332abbb61d7e9704715d7a; HSACO SHA-256 cf786f800b818a1771c32bd9aa3eb2fe8daf56c625177aa193d6406eab033804; handoff SHA-256 382afa968efda2b761919746e20a2e032b9bdef01ed57ce56dcc757af2ac69a5. This prior 428/528 artifact is not the current public-0ea artifact"],
     ["CPU pre-device observations", "428 host plus aggregate 528 completed its CPU pre-device probe in 98.23s after KFD admission and topology enumeration, excluding initialize_memory, HBM upload, and dispatch. An independent public-0ea KFD descriptor probe hashed 97.313 GiB in 58.133s, excluding GPU work. Neither is request latency"],

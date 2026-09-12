@@ -40,6 +40,22 @@ const requiredClaims = [
   "220.558111",
   "not assigned zero throughput",
   "Independent paged-draft FP32 reference",
+  "Paged draft: all eight native cases pass",
+  "Paired K4: two fresh native passes",
+  "Parallel FP32 argmax: 14 native fixtures",
+  "Wave plus ordered: short-canary ABBA",
+  "SGLang r7: numerical rejection retained",
+  "two genuine last-proposal catch-ups",
+  "Native rejection/rollback branches still need other workloads",
+  "The adapter still uses v8",
+  "+12.27%, n=2 per mode",
+  "Do not substitute this short canary into the unprofiled matched 128/128 table",
+  "10 of 30 measured texts",
+  "No SGLang timing is admitted",
+  "fe2o3 frozen measurement cutoff",
+  "Active development tracks 8efd4fd416d1ffae7a718144e4d299fe3c8f7590",
+  "tree 93a51b4af0287ccb51dec07fe431dae71fc55d0f, with separate latest-source gates",
+  "These historical GPU receipts are not rebuilt or relabeled; no latest-source performance result is claimed here.",
   "566 all-target test invocations",
   "568 all-target test invocations",
   "Ferric's MFMA head and vLLM use BF16 operands with FP32 accumulation/output",
@@ -859,6 +875,14 @@ try {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
         await page.locator('nav a[href="#performance"]').click();
         await page.screenshot({ path: join(screenshotRoot, `${name}-performance.png`) });
+        for (const label of ["Paired K4: two fresh native passes", "Wave plus ordered: short-canary ABBA"]) {
+          await page.getByText(label, { exact: true }).evaluate((node) => {
+            const headerHeight = document.querySelector("header").getBoundingClientRect().height;
+            window.scrollTo(0, window.scrollY + node.getBoundingClientRect().top - headerHeight - 20);
+          });
+          const suffix = label.startsWith("Paired") ? "paired-native" : "wave-ordered";
+          await page.screenshot({ path: join(screenshotRoot, `${name}-${suffix}.png`) });
+        }
         for (const [heading, suffix] of [["MFMA R1 checkpoint: faster requests, slower startup", "mfma"],
           ["FP32 head on TP1: faster requests, slower startup", "fp32-head"],
           ["Concurrent peer rounds: matched TP2 and TP8", "concurrent-matrix"],
