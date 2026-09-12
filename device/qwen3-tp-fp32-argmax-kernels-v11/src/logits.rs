@@ -1,19 +1,20 @@
 use fe2o3_device::{
-    Gfx950Subgroup, Index1D, RowStriped2D, WriteOnlyDisjointSlice, kernel, memory, thread,
+    Gfx950Subgroup, Index1D, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel,
+    thread,
 };
 
 // Source-equivalence tests bind these host fixtures to the expanded device body.
 #[cfg(test)]
 macro_rules! lane_argmax {
-    ($logits:expr, $base:expr, $lane:expr) => {{
-        let first = memory::volatile_load($logits, $base + $lane);
+    ($logits_view:expr, $row:expr, $lane:expr) => {{
+        let first = $logits_view.load_or($row, $lane, 0.0_f32);
         let mut invalid = if first.is_finite() { 0.0_f32 } else { 1.0 };
         let mut value = if first.is_finite() { first } else { 0.0 };
         let mut winner = $lane as u32;
         let mut step = 1_usize;
         while step < 2374 {
             let token = step * 64 + $lane;
-            let candidate = memory::volatile_load($logits, $base + token);
+            let candidate = $logits_view.load_or($row, token, 0.0_f32);
             if !candidate.is_finite() {
                 invalid = 1.0;
             } else if candidate > value {
@@ -75,6 +76,10 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
     {
         fe2o3_device::trap();
     }
+    let Ok(logits_view) = StridedReadView2D::from_shared_slice(logits, 0, rows, 151936, 151936)
+    else {
+        fe2o3_device::trap();
+    };
     let invocation = thread::index_1d();
     let raw = invocation.get();
     let row = thread::block_idx_x() as usize;
@@ -83,18 +88,17 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
     } else {
         fe2o3_device::trap();
     }
-    let base = row * 151936;
     let subgroup = Gfx950Subgroup::current();
     let (value, winner, invalid) = {
         // BEGIN lane_argmax
-        let first = memory::volatile_load(logits, base + lane);
+        let first = logits_view.load_or(row, lane, 0.0_f32);
         let mut invalid = if first.is_finite() { 0.0_f32 } else { 1.0 };
         let mut value = if first.is_finite() { first } else { 0.0 };
         let mut winner = lane as u32;
         let mut step = 1_usize;
         while step < 2374 {
             let token = step * 64 + lane;
-            let candidate = memory::volatile_load(logits, base + token);
+            let candidate = logits_view.load_or(row, token, 0.0_f32);
             if !candidate.is_finite() {
                 invalid = 1.0;
             } else if candidate > value {

@@ -21,8 +21,10 @@ fn scalar(values: &[f32]) -> Result<u32, ()> {
 
 // Numerical oracle only: this does not construct or emulate a device capability.
 fn parallel(values: &[f32], base: usize) -> Result<u32, ()> {
+    let logits_view = StridedReadView2D::from_shared_slice(values, base, 1, N, N).unwrap();
+    let row = 0;
     let lanes: [(f32, u32, f32); 64] =
-        core::array::from_fn(|lane| lane_argmax!(values, base, lane));
+        core::array::from_fn(|lane| lane_argmax!(logits_view, row, lane));
     let invalid = lanes.iter().map(|lane| lane.2).fold(0.0_f32, f32::max);
     if invalid != 0.0 {
         return Err(());

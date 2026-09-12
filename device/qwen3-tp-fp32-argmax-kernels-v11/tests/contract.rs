@@ -86,6 +86,7 @@ fn shape_contract_and_distinct_root_remain_bounded() {
         "winning_key < 151937",
         "winning_key == 0",
         "let row = thread::block_idx_x() as usize",
+        "StridedReadView2D::from_shared_slice(logits, 0, rows, 151936, 151936)",
     ] {
         assert!(LOGITS.contains(guard), "missing {guard}");
     }
