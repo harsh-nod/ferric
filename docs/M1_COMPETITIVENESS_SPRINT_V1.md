@@ -823,3 +823,59 @@ four input hashes; note SHA-256:
 This tiny instrumented workload is not matched HTTP TTFT/TPOT or a GPU profile.
 The opt-in argmax path needs model measurements, while larger improvements
 need finer attribution of decoder projections and dispatch overhead.
+
+## Opt-In Argmax Model Route
+
+Source `f662d541e1ab9a47ef8dada410fffd964851d297` is integrated locally at
+`a8c87bc3c67ee36f89f1004462f745a48f947aa8`. Only two progress documents differ
+between the tested source and that integration. The new target-only constructor
+admits the separate v11 image before allocating unchanged v5/v8 buffers. Both
+comparison modes load identical images, and only the explicit argmax selector
+changes. Serial v8 remains the default; the existing serving and paired CLIs
+are unchanged. See [the canary contract](TP1_ARGMAX_CANARY_V11.md).
+
+The final 29-step host gate passes 633 adapter test invocations, eight doctests,
+strict Clippy, formatting, release build, explicit latest-image admission and
+compiled workload goldens, 38 source-gate tests, 31 protected verifier policies,
+and five byte-identical inventories. Two new ignored fixtures were explicitly
+executed; 28 image-gated invocations remain skipped. All 1,059 source files and
+the binary remain unchanged over the final gate. Earlier attempts caught a
+test-only Clippy lint and two engineering dependency allowlists; their failed
+logs are retained. No protected identity was regenerated and no Verus proof
+was added. Final aggregate:
+`3cdbddb6742b75c3f3d0ff96376609c2d05bd7589ef1d574956f57cf5cddff57`.
+Source archive:
+`1eb904b3a3e1f2f57f3809c7136376d1e8b489aaf15061706bd0241190a7365f`.
+Controller binary:
+`053a342ae270e2fdb6f7e2572af865cfc90e3bc4a4c2875e6a659d782df8423a`.
+
+An independent fixed-reference checker and root lifecycle wrapper pass 36
+combined Python tests on mi300x, including 560 rejected scalar mutations.
+Both Rust and Python agree on the mode-independent 8/128 workload hashes.
+Checker and wrapper pins are respectively
+`eb7a5f7d243675fac25c318d640e50c6a5aad1d39b7bc3eedefc5f5316964a76`
+and `186e2de9c64a278d2e16458ca4e24b0f8eea2b0ed20fec73e460634df7ab2daf`.
+The predeclared native plan is one full128 serial/wave pair, followed only on
+success by an eight-output serial/wave/wave/serial sequence. All use the same
+binary, images, full128 prompt, context256/pages16/chunk16 and runtime policy.
+Every actual autoregressive token, decoded byte, packet counter, pool retirement
+and worker close must pass unchanged checks. Measurements exclude setup and
+are instrumented native host diagnostics, not HTTP or GPU durations. Native
+completion and performance results remain pending at this checkpoint.
+
+The previous latest `9c2e98e` combined gate is archived separately; its aggregate
+is `02e7cc66091de4ed891af66896a47db103a5f92bda2be96fba9a33a03172452b`
+and archive is `bb71cab213b1d90777173ba8867b1b5d656b5157195c743bfb65b4550255ff4c`.
+Completed kernel stages were fully archived with matching all-file/symlink
+ledgers and removed after the latest image was copied to the active host stage,
+reclaiming 1,310,208 KiB. Their final archive is
+`0a525b4281ffc3271be9ac816368a1711e5137c11948fc9d79aef426c97caa74`.
+
+Read-only inspection of the identical c110/8efd KFD source tree identifies
+N+9 operational currentness checks per steady-state ordered frame containing
+N dispatches. This is a source-derived repetition count, not measured cost.
+An existing `--runtime-profile` diagnostic can separate cumulative counter
+deltas without changing core code. Preparation, publication, wait and command
+timers overlap; wait includes host checks and sleep and is not GPU duration.
+The source-line audit is pinned as
+`a573988b7a4e2764706a182d60ea8ab9e77cddce25433247631959d5cbbecc77`.
