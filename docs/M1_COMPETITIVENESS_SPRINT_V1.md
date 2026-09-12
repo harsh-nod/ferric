@@ -1103,3 +1103,48 @@ Live-asset receipt:
 `998e5370245424bd6ed2d15f691b59392591303102e35a400088b5a5e8fb0527`.
 Completed Pages stage/worktree are removed after verified archival. Ferric
 implementation is not pushed; only the separately reviewed site is public.
+
+### Finite Native Attention And Combined Route
+
+Additive fixture source `c26c1f4dc267b53f840b2fb01cafd19234596ed2` is
+integrated as `8da127b`. All eight native baseline/wave cases pass at active
+rows 1/17/31/32: eight complete 262,144-byte output slices, 40 immutable input
+slices and 96 guard sides. Dense nonzero QK, token-varying V, permuted pages,
+causal masks and inactive tails are checked against controlled finite integer
+expectations. Baseline/wave bytes match exactly in each pair. This is bounded
+engineering evidence, not arbitrary-softmax qualification or a new Verus proof.
+The frozen v5 image retains its actual fe2o3 `3e74a93` provenance.
+
+Normal worker closure and all-eight idle checks pass. Independent CPU replay
+authenticates the native report and all 48 buffer records. Native archive
+`84022e9f347212bb371a619add6bd735eb35376d5f8327a2b1ecb0be54a9630a`
+matches a second remote stream; replay receipt is
+`ff826ed5b092c613cd9547a4709e2fcd9672205bb28c9fb7b82ec2d410c65ea8`.
+The released fixture worktree and CPU stage are removed after verified custody.
+
+The distinct attention/argmax canary is integrated as `dcbbd5b` from tested
+source `ed112e0b8298d1d2070b93dea638e7572ec65ba9`, tree
+`e3fd5c5757298312394522bbd80c89eb05e35f73`. All 42 required host commands
+pass: 19 under the original harness and 23 under the reviewed short-TMP
+continuation. There were 43 actual ed112 attempts, including the retained
+all-targets failure caused by Unix-socket paths exceeding the harness limit.
+No source changed between those attempts. The earlier strict-Clippy failure
+and its two test-only semicolon corrections remain separately recorded.
+
+The complete gate includes 685 passing adapter test invocations, 34 ignored,
+eight doctests, both old/new release builds, strict Clippy, explicit v11 image
+admission and both workload goldens, 38 source-gate and 31 protected verifier
+tests, and five byte-identical inventories. All builds/tests ran on mi300x
+using an explicitly warm Cargo cache. No local build or new core change ran.
+Gate note: `139e1696797b43049dfa42c8a140c56375714242f1aa62caaf2c5487f306ea9d`.
+Composite archive: `f3860c912f5c44b611a2209c14e7eb733c092c9ea7481ddad20237ae7d785dfd`.
+New executable: `d0ec403ea4713f4d795ee55221da5282a5668b7ebff283ba56c531f236cc0468`.
+
+Native model qualification is separate: baseline8, wave8, baseline128, wave128,
+stopping at any failure against the unchanged reference. These are correctness
+diagnostics, not comparison samples. Only after all pass may the frozen full128
+baseline/wave/wave/baseline cohort run with the same binary, images and runtime
+flags. The root launch wrapper and new raw-protocol checker passed 24 CPU test
+methods; the prospective reducer and all checker/wrapper tests passed 38.
+No model or comparison result is admitted at this checkpoint. Existing six-run
+argmax and matched HTTP observations remain immutable and separate.

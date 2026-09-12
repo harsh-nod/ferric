@@ -24,13 +24,18 @@ Instrumentation source `809af245` is integrated and passes all 32 host-gate
 steps. Its unchanged full128 model diagnostic passes: the GQA math group
 accounts for 72.59% of the attention parent host span. This is attribution,
 not a measured speedup from instrumentation.
+The separate attention/v11 composition is integrated as `dcbbd5b` from tested
+source `ed112e0`; all 42 required host-gate steps pass across two reviewed
+harness revisions. Eight native finite attention fixtures also pass exact
+full-buffer and guard comparisons. Fixed-reference model qualification is
+running before the separate full128 ABBA comparison; no new gain is admitted.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
 | Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay, fourteen finite-active native fixtures, and all six corrected model comparisons. Separate v12 source `73617b7` passes ten focused host tests and latest-8efd emission/replay; ISA shows paired load batching, not load/compute overlap. | Test explicit wave-attention plus v11 composition against the unchanged oracle. V12 native parity remains open. Serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Instrumented source `809af245` passes 638 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. Independent full128 replay validates all seven attention groups, exact tokens/text, normal worker close and all-eight idle checks. Pages-only `de9980f` is deployed and all seven live assets are byte-verified. | Review and host-test the separate wave-attention/v11 candidate; serialize native gates. No new Verus proof. |
+| Integration and Pages | Combined attention/v11 source `ed112e0`, integrated as `dcbbd5b`, passes 685 adapter test invocations, eight doctests, strict Clippy, both release builds, explicit image/reference checks and source/verifier policies; five inventories are unchanged. The original nested-TMP socket-path failure is retained separately. Pages-only `de9980f` remains deployed; the additive attention checkpoint is under review. | Serialize fixed-reference baseline/wave model gates, then the predeclared full128 ABBA cohort. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
