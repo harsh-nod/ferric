@@ -289,9 +289,11 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
         if self.failure == Some(Failure::WaveProjectionSubmit)
-            && matches!(command.kernel,
+            && matches!(
+                command.kernel,
                 "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
-                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5")
+                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5"
+            )
         {
             return Err("injected Wave projection submit failure".into());
         }
@@ -355,9 +357,11 @@ impl EngineeringTpRankTransportV1 for Recording {
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
         if self.failure == Some(Failure::WaveProjectionWait)
-            && matches!(command.kernel,
+            && matches!(
+                command.kernel,
                 "ferric_qwen3_tp_batch32_wave_gemv_bf16_v5"
-                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5")
+                    | "ferric_qwen3_tp_batch32_wave_gemv_partial_f32_v5"
+            )
         {
             return Err("injected Wave projection completion failure".into());
         }

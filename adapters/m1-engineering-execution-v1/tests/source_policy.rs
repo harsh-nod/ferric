@@ -292,19 +292,34 @@ fn attention_argmax_canary_is_closed_and_reuses_preallocation_admission() {
 #[test]
 fn layer_c1_wave_canary_is_additive_and_validates_before_effects() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
-    let binary = manifest["bin"].as_array().unwrap().iter()
-        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-layer-c1-wave-canary")).unwrap();
-    assert_eq!(binary["required-features"].as_array().unwrap(), &vec![toml::Value::String("tp-batch-engineering".into())]);
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-layer-c1-wave-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
     let entry = include_str!("../src/bin/ferric-qwen3-layer-c1-wave-canary.rs");
     assert!(entry.contains("layer_c1_wave_canary_contract::parse"));
     assert!(entry.contains("argmax_canary_runtime::execute"));
     let contract = include_str!("../src/bin/layer_c1_wave_canary_contract.rs");
-    assert!(contract.contains("wave_argmax_submission_canary_contract::parse(forwarded.into_iter())"));
+    assert!(
+        contract.contains("wave_argmax_submission_canary_contract::parse(forwarded.into_iter())")
+    );
     assert!(contract.contains("submission != CanaryProfile::SubmissionOrdered"));
     let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
     let execution = &shared[shared.find("pub fn execute(").unwrap()..];
-    assert!(execution.find("profile.validate_options(&options)").unwrap() < execution.find("TimingFile::create(").unwrap());
-    let run = &shared[shared.find("fn run(options:").unwrap()..shared.find("pub fn execute(").unwrap()];
+    assert!(
+        execution
+            .find("profile.validate_options(&options)")
+            .unwrap()
+            < execution.find("TimingFile::create(").unwrap()
+    );
+    let run =
+        &shared[shared.find("fn run(options:").unwrap()..shared.find("pub fn execute(").unwrap()];
     let ordered = [
         "EngineeringTpArtifactV1::open_batch32",
         "Worker::spawn_with_timing",
@@ -316,7 +331,8 @@ fn layer_c1_wave_canary_is_additive_and_validates_before_effects() {
         "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
         "driver.configure_ordered_wave_attention_fp32_argmax_v11",
         "profile.annotate_setup(&mut setup)",
-    ].map(|marker| run.find(marker).unwrap());
+    ]
+    .map(|marker| run.find(marker).unwrap());
     assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
     for frozen in [
         include_str!("../src/bin/argmax_canary_contract.rs"),

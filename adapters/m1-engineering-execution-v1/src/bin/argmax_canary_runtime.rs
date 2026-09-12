@@ -89,8 +89,11 @@ impl CanaryProfile {
 
     const fn attention(self) -> &'static str {
         match self {
-            Self::AttentionWave | Self::SubmissionSynchronous | Self::SubmissionOrdered
-                | Self::LayerMfma | Self::LayerC1Wave => "wave",
+            Self::AttentionWave
+            | Self::SubmissionSynchronous
+            | Self::SubmissionOrdered
+            | Self::LayerMfma
+            | Self::LayerC1Wave => "wave",
             Self::LegacyArgmax | Self::AttentionBaseline => "baseline",
         }
     }
@@ -98,21 +101,30 @@ impl CanaryProfile {
     const fn wave_attention(self) -> bool {
         matches!(
             self,
-            Self::AttentionWave | Self::SubmissionSynchronous | Self::SubmissionOrdered
-                | Self::LayerMfma | Self::LayerC1Wave
+            Self::AttentionWave
+                | Self::SubmissionSynchronous
+                | Self::SubmissionOrdered
+                | Self::LayerMfma
+                | Self::LayerC1Wave
         )
     }
 
     const fn ordered_batches(self) -> bool {
-        matches!(self, Self::SubmissionOrdered | Self::LayerMfma | Self::LayerC1Wave)
+        matches!(
+            self,
+            Self::SubmissionOrdered | Self::LayerMfma | Self::LayerC1Wave
+        )
     }
 
     const fn layer_projection(self) -> Option<&'static str> {
         match self {
             Self::LayerMfma => Some("mfma"),
             Self::LayerC1Wave => Some("c1-wave"),
-            Self::LegacyArgmax | Self::AttentionBaseline | Self::AttentionWave
-                | Self::SubmissionSynchronous | Self::SubmissionOrdered => None,
+            Self::LegacyArgmax
+            | Self::AttentionBaseline
+            | Self::AttentionWave
+            | Self::SubmissionSynchronous
+            | Self::SubmissionOrdered => None,
         }
     }
 
@@ -142,16 +154,20 @@ impl CanaryProfile {
 
     fn validate_options(self, options: &Options) -> Result<(), String> {
         self.validate(options.mode)?;
-        if matches!(self, Self::SubmissionSynchronous | Self::SubmissionOrdered
-            | Self::LayerMfma | Self::LayerC1Wave)
-            && (!matches!(options.outputs, 8 | 128)
-                || !options.runtime.cache_admission
-                || !options.runtime.operational
-                || !options.runtime.rollover
-                || options.runtime.sequences
-                || options.runtime.profile
-                || options.runtime.shared_full_currentness
-                || options.runtime.ordered_batches != self.ordered_batches())
+        if matches!(
+            self,
+            Self::SubmissionSynchronous
+                | Self::SubmissionOrdered
+                | Self::LayerMfma
+                | Self::LayerC1Wave
+        ) && (!matches!(options.outputs, 8 | 128)
+            || !options.runtime.cache_admission
+            || !options.runtime.operational
+            || !options.runtime.rollover
+            || options.runtime.sequences
+            || options.runtime.profile
+            || options.runtime.shared_full_currentness
+            || options.runtime.ordered_batches != self.ordered_batches())
         {
             return Err("submission profile requires 8 or 128 outputs, matching ordered policy, cache admission, operational currentness and rollover, without sequences, runtime profiling or shared currentness".into());
         }
@@ -434,7 +450,9 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
         if driver.expected_dispatch_counts(0) != [613]
             || driver.expected_dispatch_counts(1) != [616]
             || driver.fp32_argmax_mode() != options.mode.label()
-            || profile.layer_projection().is_some_and(|mode| driver.layer_projection_mode() != mode)
+            || profile
+                .layer_projection()
+                .is_some_and(|mode| driver.layer_projection_mode() != mode)
         {
             return Err("configured selector/packet contract differs".into());
         }
@@ -563,10 +581,16 @@ mod profile_tests {
         for (record, expected) in [
             (RecordKind::Setup, "FerricLayerC1WaveCanarySetupV1"),
             (RecordKind::Prefill, "FerricLayerC1WaveCanaryPrefillV1"),
-            (RecordKind::Observation, "FerricLayerC1WaveCanaryObservationV1"),
+            (
+                RecordKind::Observation,
+                "FerricLayerC1WaveCanaryObservationV1",
+            ),
             (RecordKind::Closed, "FerricLayerC1WaveCanaryClosedV1"),
         ] {
-            for (profile, mode) in [(CanaryProfile::LayerMfma, "mfma"), (CanaryProfile::LayerC1Wave, "c1-wave")] {
+            for (profile, mode) in [
+                (CanaryProfile::LayerMfma, "mfma"),
+                (CanaryProfile::LayerC1Wave, "c1-wave"),
+            ] {
                 assert_eq!(profile.schema(record), expected);
                 assert_eq!(profile.layer_projection(), Some(mode));
                 assert_eq!(profile.attention(), "wave");
@@ -574,9 +598,18 @@ mod profile_tests {
                 assert_eq!(profile.error_prefix(), "Layer C1 Wave canary rejected");
                 let mut setup = json!({"projection":"mfma","head_precision":"fp32-v8"});
                 profile.annotate_setup(&mut setup);
-                assert_eq!(setup, json!({"projection":"mfma","head_precision":"fp32-v8","layer_projection":mode}));
+                assert_eq!(
+                    setup,
+                    json!({"projection":"mfma","head_precision":"fp32-v8","layer_projection":mode})
+                );
             }
-            for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline, CanaryProfile::AttentionWave, CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+            for profile in [
+                CanaryProfile::LegacyArgmax,
+                CanaryProfile::AttentionBaseline,
+                CanaryProfile::AttentionWave,
+                CanaryProfile::SubmissionSynchronous,
+                CanaryProfile::SubmissionOrdered,
+            ] {
                 assert_ne!(profile.schema(record), expected);
                 assert_eq!(profile.layer_projection(), None);
                 let mut setup = json!({"schema":profile.schema(RecordKind::Setup),"projection":"mfma","head_precision":"fp32-v8","runtime_ordered_batches":profile.ordered_batches()});
@@ -600,14 +633,18 @@ mod profile_tests {
                 mismatch(&mut options, mutation);
                 let before = (runtime_bits(&options), options.mode, options.outputs);
                 assert!(profile.validate_options(&options).is_err());
-                assert_eq!((runtime_bits(&options), options.mode, options.outputs), before);
+                assert_eq!(
+                    (runtime_bits(&options), options.mode, options.outputs),
+                    before
+                );
             }
         }
     }
 
     #[test]
     fn layer_profile_mismatches_create_no_sidecar_or_model_effects() {
-        let root = std::env::temp_dir().join(format!("ferric-layer-profile-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("ferric-layer-profile-{}", std::process::id()));
         std::fs::create_dir(&root).unwrap();
         for profile in [CanaryProfile::LayerMfma, CanaryProfile::LayerC1Wave] {
             for mutation in 0..10 {
@@ -615,10 +652,16 @@ mod profile_tests {
                 options.reference = root.join("missing-reference");
                 options.source = root.join("missing-model");
                 options.worker = root.join("missing-worker");
-                let sidecar = root.join(format!("{}-{mutation}.json", profile.layer_projection().unwrap()));
+                let sidecar = root.join(format!(
+                    "{}-{mutation}.json",
+                    profile.layer_projection().unwrap()
+                ));
                 options.host_timing_output = sidecar.clone();
                 mismatch(&mut options, mutation);
-                assert_eq!(execute(Ok(options), profile), std::process::ExitCode::FAILURE);
+                assert_eq!(
+                    execute(Ok(options), profile),
+                    std::process::ExitCode::FAILURE
+                );
                 assert!(!sidecar.exists());
             }
         }
@@ -628,19 +671,30 @@ mod profile_tests {
 
     #[test]
     fn layer_profiles_leave_legacy_runtime_acceptance_unchanged() {
-        for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline, CanaryProfile::AttentionWave] {
+        for profile in [
+            CanaryProfile::LegacyArgmax,
+            CanaryProfile::AttentionBaseline,
+            CanaryProfile::AttentionWave,
+        ] {
             for mutation in 0..10 {
                 let mut options = submission_options(profile);
                 mismatch(&mut options, mutation);
-                let expected = profile == CanaryProfile::LegacyArgmax || options.mode == ArgmaxMode::WaveV11;
+                let expected =
+                    profile == CanaryProfile::LegacyArgmax || options.mode == ArgmaxMode::WaveV11;
                 assert_eq!(profile.validate_options(&options).is_ok(), expected);
                 assert!(!profile.ordered_batches());
             }
         }
-        for profile in [CanaryProfile::SubmissionSynchronous, CanaryProfile::SubmissionOrdered] {
+        for profile in [
+            CanaryProfile::SubmissionSynchronous,
+            CanaryProfile::SubmissionOrdered,
+        ] {
             let options = submission_options(profile);
             assert!(profile.validate_options(&options).is_ok());
-            assert_eq!(profile.ordered_batches(), profile == CanaryProfile::SubmissionOrdered);
+            assert_eq!(
+                profile.ordered_batches(),
+                profile == CanaryProfile::SubmissionOrdered
+            );
         }
     }
 

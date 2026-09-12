@@ -492,9 +492,21 @@ mod tests {
     #[test]
     fn layer_c1_wave_reuses_existing_commands_for_all_rows_and_seven_layer_shapes() {
         use EngineeringTpProjectionModeV3::{Auto, Baseline, Mfma, Wave};
-        let input = Tensor { id: 1, elements: 32 * 12_288, element_bytes: 2 };
-        let weight = Tensor { id: 2, elements: 4096 * 12_288, element_bytes: 2 };
-        let output = Tensor { id: 3, elements: 32 * 12_288, element_bytes: 2 };
+        let input = Tensor {
+            id: 1,
+            elements: 32 * 12_288,
+            element_bytes: 2,
+        };
+        let weight = Tensor {
+            id: 2,
+            elements: 4096 * 12_288,
+            element_bytes: 2,
+        };
+        let output = Tensor {
+            id: 3,
+            elements: 32 * 12_288,
+            element_bytes: 2,
+        };
         for mode in [Baseline, Wave, Mfma, Auto] {
             let policy = ProjectionPolicy {
                 mode,
@@ -511,16 +523,35 @@ mod tests {
                     (false, 12_288, 4096, 5),
                     (true, 4096, 12_288, 2),
                 ] {
-                    let root = if partial { super::super::batched::PARTIAL } else { super::super::batched::GEMM };
-                    let output = Tensor { element_bytes: if partial { 4 } else { 2 }, ..output };
+                    let root = if partial {
+                        super::super::batched::PARTIAL
+                    } else {
+                        super::super::batched::GEMM
+                    };
+                    let output = Tensor {
+                        element_bytes: if partial { 4 } else { 2 },
+                        ..output
+                    };
                     let shape = [rows, n, k, 1, tag];
                     let legacy = policy.command(0, root, input, weight, output, shape);
-                    assert_eq!(policy.layer_command(false, 0, root, input, weight, output, shape), legacy);
+                    assert_eq!(
+                        policy.layer_command(false, 0, root, input, weight, output, shape),
+                        legacy
+                    );
                     if mode == Mfma {
                         let expected = if rows == 1 {
-                            ProjectionPolicy { mode: Wave, ..ProjectionPolicy::default() }.command(0, root, input, weight, output, shape)
-                        } else { legacy };
-                        assert_eq!(policy.layer_command(true, 0, root, input, weight, output, shape), expected);
+                            ProjectionPolicy {
+                                mode: Wave,
+                                ..ProjectionPolicy::default()
+                            }
+                            .command(0, root, input, weight, output, shape)
+                        } else {
+                            legacy
+                        };
+                        assert_eq!(
+                            policy.layer_command(true, 0, root, input, weight, output, shape),
+                            expected
+                        );
                         assert_eq!(policy.mode, Mfma);
                         assert_eq!(policy.bytes, 7);
                     }
