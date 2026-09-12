@@ -10,8 +10,10 @@ parallel argmax, with active dependencies pinned to public fe2o3
 `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`. The latest adapter tests,
 release builds, source/verifier policies, inventory comparisons and negative/
 release policy gates pass, with the final aggregate archived. Opt-in target
-argmax route `a8c87bc` is integrated locally from tested source `f662d54`;
-its complete host and source-policy gates pass. Fixed-oracle native model
+argmax route and retirement correction `17dcaa4` are integrated locally from
+tested source `d9a2705`; all host and source-policy gates pass. The first
+`f662d54` native control was rejected for a canary freshness-predicate error,
+with clean teardown and no admitted parity or timing. The corrected fixed-oracle
 comparison is in progress, with no routed gain claimed yet.
 Frozen GPU binaries retain their actual source identities. Ferric implementation
 remains local; separately reviewed Pages content is published independently.
@@ -21,7 +23,7 @@ remains local; separately reviewed Pages content is published independently.
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
 | Kernels | Wave-plus-ordered ABBA passes, with +12.27% mean short-canary rate. Additive v11 parallel FP32 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. The opt-in target-only route and fixed-oracle comparison binary pass their host gates. | Full128 model parity, then short8 ABBA diagnostics; serial v8 remains the default. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Latest route source `f662d54` passes 633 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. Pages `75d8c03` is live with its actual frozen 216 native cutoff. Completed kernel and Pages stages/worktrees were archived and removed. | Serialized native model comparison and separately labelled runtime-counter diagnostic. No new Verus proof. |
+| Integration and Pages | Corrected route source `d9a2705` passes 637 adapter invocations, eight doctests, explicit image/reference fixtures and final source/verifier policies. Frozen f65 runtime-counter diagnostic passes exact output and cleanup. Pages `75d8c03` is live; a separate checkpoint update is in review. | Corrected native model comparison; finer wait/kernel attribution. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,

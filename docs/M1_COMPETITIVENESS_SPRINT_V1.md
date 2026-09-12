@@ -9,7 +9,7 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. Adapter integration and matched timing remain open. |
+| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. Opt-in adapter route and retirement correction are integrated and host-gated; native model comparison is pending. |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming client, baseline identities, GPU scheduling and numerical gates | Matched Ferric/vLLM 128/128 cohorts pass; Ferric remains substantially slower. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses and its final diagnostic. No admitted SGLang metrics. |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
@@ -879,3 +879,63 @@ deltas without changing core code. Preparation, publication, wait and command
 timers overlap; wait includes host checks and sleep and is not GPU duration.
 The source-line audit is pinned as
 `a573988b7a4e2764706a182d60ea8ab9e77cddce25433247631959d5cbbecc77`.
+
+### Retirement Correction
+
+The first `f662d54` serial128 run completed 83,139 packets and 135 batches but
+was rejected at the final `pool.is_empty()` assertion. That documented API
+means never admitted or reserved, not released ownership; retirement correctly
+does not rewind monotone IDs. The worker closed normally and all eight GPUs
+were idle, but no Observation record was emitted. There is no admitted full128
+parity or timing from this attempt. Rejected wrapper:
+`cf9543fec83c68a5d88cbd14b808896b87c5a8f47d31e55138e6e25b2cf488ee`.
+Rejected native archive:
+`b2dbbd7b5006b45d991130f7c1687657b84994716961c3c4bd4a2d58cca62005`.
+
+Correction source `d9a2705e6b2f3a8d8dd173b9700a63446b611016`, integrated
+locally at `17dcaa4`, preserves the initial freshness guard and pool API. Its
+production retirement helper requires successful retirement, invariants,
+16 free pages, zero sequences/retained/cached/quarantined pages, and exact
+stale-sequence rejection. Regressions cover actual 135/255-input metadata
+commit flows, nonfresh monotone IDs, zero prefix reuse, and pending/submitted/
+quarantined rejection. The reference, trace schema, kernels and clocks are
+unchanged. All 29 gate steps pass: 637 adapter invocations, eight doctests,
+explicit image/reference fixtures, strict Clippy/release and final 38/31 source
+policies with five unchanged inventories. Aggregate:
+`497de7d70a785c39d99f9b919e7906542896928e27559fad31bb0f9f7e7df861`.
+Controller: `d298c5ea6b0dfd64c66722b12ffba1f5e8498bf215b15b9ca6d0d88da56f890f`.
+Full gate archive:
+`2e61230d7c5bba7908ff9298da0dfbf2fbb3d0a409fe03016b3fde5d60971ee5`.
+
+A replacement six-run plan was frozen before corrected output at
+`5781935439ab23f4e234135ab14fa4ea425e71d210919980afe6de46a6f10c79`.
+It uses new d9a2705 tags/binary, the unchanged root wrapper/checker and exact
+same workloads and arithmetic. The original attempt stays excluded. Corrected
+native results are pending; a successful host gate is not model qualification.
+
+### Runtime Counter Observation
+
+A separate frozen f65/c110 ordered-wave run adds only the existing runtime
+profiling switch. It passes all fixed tokens/bytes, 3,077 packets, 34 physical
+rows, five batches, normal worker closure and all-eight idle checks. The
+independent replay matches its report, preserving actual profiling=true and
+never extracting ordinary performance metrics. Native diagnostic:
+`d4ebc18f20fb1697237503a7f94b38ccadac4853b127157bf5e106466cdb91c8`.
+Native archive: `dbf7b82756a1e572b13b6827cec764b0ab1ecec38ff0af2b060be014f0c86eb1`.
+Independent replay: `c90e86c9da0da08550fb8ef108685033986398e173b062ad0a09fd56c4b500bb`.
+
+Worker deltas are 1,358.312 ms command wall time, 139.592 ms operational
+currentness over 7,507 checks, 7.309 ms full currentness, 60.078 ms preparation,
+14.345 ms publication and 1,217.956 ms waiting. These overlap and are not an
+additive breakdown or GPU duration. Operational currentness is 10.277% of
+command span; all preparation is only 4.423%, so preparation-check coalescing
+is not the highest-impact demonstrated target. Cached kernel admission adds
+zero workload admissions/time.
+
+There are 737 completed wait loops and 12,624 polls: 11,887 unsuccessful polls
+request 594.350 ms of nominal sleep. Actual elapsed sleep is unmeasured, can
+be extended by scheduling, and overlaps GPU work. It is not established waste
+and cannot be subtracted to derive kernel duration. Finer wait observation and
+kernel analysis are the next diagnostic priorities; core checks are unchanged.
+The detailed source/counter note is
+`d6a787adf81101a35f6806c1a74041de65925dd637e7cf9350ba852be4de0984`.
