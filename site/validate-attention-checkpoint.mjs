@@ -122,9 +122,7 @@ export function testAttentionCheckpointRejections(value, readiness) {
 }
 
 export async function validateAttentionCheckpointEvidence(root, value) {
-  const a = value.attribution;
-  const f = value.fixtures;
-  const c = value.composition;
+  const { attribution: a, fixtures: f, composition: c } = plain(value);
   async function pinned(file, digest, parse = true) {
     const raw = await readFile(join(root, file));
     assert(raw.length > 0 && raw.length < 4 * 1024 * 1024, file);
