@@ -33,8 +33,12 @@ These are not native execution, device guard validation, or performance proof.
 
 The active dependency is pinned to fe2o3
 `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`. The first frozen emission and
-fourteen-case native pass retain their actual `216822284` compiler identity;
-the latest-source gate is separate, as described in [the probe recipe](tools/README.md).
+fourteen-case native pass retain their actual `216822284` compiler identity.
+The separate exact-`8efd4fd` emission/replay, host tests, independent ELF review
+and fourteen-case native gate also pass on source `9c2e98e`; the LLVM worker
+retains its actual reused-216 provenance. See the
+[sprint evidence](../../docs/M1_COMPETITIVENESS_SPRINT_V1.md) and
+[probe recipe](tools/README.md). Neither gate establishes routed model performance.
 The additive `tools/probe.py` specifies 14 full-vocabulary, finite-active native
 cases and a CPU-only self-test. It reuses a hash-pinned fixture helper and
 requires explicit worker/image pins and an approved GPU run. No trapping device

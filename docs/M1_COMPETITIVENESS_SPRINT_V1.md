@@ -9,7 +9,7 @@ The prior measurements remain frozen in `M1_PERFORMANCE_SPRINT_V2.md`.
 | Track | Deliverable | State |
 | --- | --- | --- |
 | Core runtime | Opt-in shared fresh full-topology observation per peer boundary, preserving all per-rank checks | Published `3e3a77284`; 475 library tests, 31 doctests and scoped Clippy pass; native TP2/TP8 producer fixtures pass with the option off and on |
-| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes exact-216 emission/replay and 14 finite-active native fixtures. Adapter integration and matched timing remain open. |
+| Kernels | FP32 heads and opt-in parallel selection | Existing v8 head route passes; new one-root Wave64 v11 argmax passes separate exact-216 and latest-8efd emission/replay and fourteen-case finite-active native gates. Adapter integration and matched timing remain open. |
 | Serving | Bounded sustained JSONL ingress, wall-clock arrival, token output, cancellation/backpressure | Combined gate passes 289 Rust tests, 16 HTTP tests and strict Clippy; real four-request/nine-token HTTP smoke passes |
 | Integration/measurement | Shared streaming client, baseline identities, GPU scheduling and numerical gates | Matched Ferric/vLLM 128/128 cohorts pass; Ferric remains substantially slower. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses and its final diagnostic. No admitted SGLang metrics. |
 | Capacity | Explicit larger physical KV pool without changing the logical context/proof boundary | v9 emitted on exact `3e3`; host at `f0cd55f`, 315 ordinary tests plus four emitted-image checks and all nine native fixtures pass; the fixed full-allocation model canary passes, long-context/concurrency qualification remains open |
@@ -749,8 +749,26 @@ SDK and Cargo lockfiles are unchanged. Active repin `ddd3aaf` passes locked
 metadata, explicit source scope, three identity-only dependency inventories and
 the audited manifest/lock review-hash refresh. Its audit is
 `0b1e21160bef449b45c3cc79bc61a1764f3558bb9167db3d1ddcadb560313c97`.
-Combined source `9c2e98e` adds the paired canary; the latest full host gate and
-kernel emission are in progress. Frozen 216 and older artifacts are not relabeled
-as latest builds. Six completed source directories and four completed evidence
+Combined source `9c2e98e` adds the paired canary; the latest full adapter host gate
+is in progress. Its separate v11 kernel gate passes eleven numeric/property and
+five contract tests, strict Clippy, formatting, locked metadata, nine Python tests
+and the fourteen-case scalar self-test. All 1,055 source files remain unchanged.
+The exact latest-8efd one-root emission/replay and independent ELF review pass:
+36 explicit/296 total argument bytes, Wave64, no scratch, LDS or spills.
+The LLVM worker is explicitly reused from 216; it is not relabeled as rebuilt.
+The new image is
+`de9db78c0ef7ad5d84fc903d41ee9db59026113d79e23f12d3909761363b9390`.
+All fourteen native cases also pass with this latest image, normal worker close
+and identity-bound all-eight-device idle checks. Raw native report:
+`ba0b459c265bf96c6d2dce6b3ecb20af89046a860347b5ceb268878f56accc5b`.
+The archived prelaunch manifest binds actual source/image/tool identities;
+the pass-only wrapper JSON is intentionally identical to the earlier pass.
+Latest native archive, including the additive wrapper and nineteen passing CPU
+wrapper/checker tests:
+`dccf98beae535e1e400b7ba6765a70cfa2e5fa7aa1b8bcb0b127a8f46a66fd4f`.
+There is still no routed model gain or default change. Frozen 216 and older
+artifacts retain their own identities.
+
+Six completed source directories and four completed evidence
 directories were archived, hash-checked and removed from the owned mi300x stage,
 reclaiming 246,892 and 341,524 KiB respectively without deleting its active cache.
