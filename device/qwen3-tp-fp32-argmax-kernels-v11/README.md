@@ -34,6 +34,11 @@ These are not native execution, device guard validation, or performance proof.
 The dependency is pinned to fe2o3
 `21682228486f7186cc3c37ddf165fffc438d8b6a`. Device emission and native qualification
 remain separate gates, described in [the probe recipe](tools/README.md).
+The additive `tools/probe.py` specifies 14 full-vocabulary, finite-active native
+cases and a CPU-only self-test. It reuses a hash-pinned fixture helper and
+requires explicit worker/image pins and an approved GPU run. No trapping device
+fixtures are scheduled. The runner is not an adapter route or model benchmark.
+
 One wave per row is intentionally bounded and may still limit occupancy at
 small row counts. No latency or throughput improvement is claimed before a
 matched, correct end-to-end measurement.

@@ -1,6 +1,7 @@
 # Native Probe Recipe
 
-This is a recipe, not an executable probe or an approval to launch GPU work.
+`probe.py` implements the bounded fixture runner; this recipe is not an approval
+to launch GPU work.
 Use an owned, bounded remote build stage on `mi300x`; use an explicitly approved,
 idle GPU only when the integration lead schedules native qualification. Never
 fault a shared GPU deliberately. Nonfinite and malformed-launch fault cases
@@ -23,12 +24,13 @@ remain host contract tests unless separately authorized in an isolated setting.
 
 ## Full-Vocabulary Fixtures
 
-Adapt the pinned native fixture helper and admission flow documented by
-`../../qwen3-tp-fp32-head32-kernels-v8/tools/probe.py`; do not pass a v8-only
-allowlist to this new root. The v11 fixture runner and adapter route are not
-implemented by this crate. It needs two buffers and scalar `[rows]`, with
-`rows` workgroups. Retain helper/worker/image identity checks, immutable-input
-comparison, and guard verification from the existing probe.
+The runner reuses the pinned native fixture helper and admission flow documented
+by `../../qwen3-tp-fp32-head32-kernels-v8/tools/probe.py`, with only the new v11
+root in its case roster. An adapter route is not implemented by this crate.
+Each case has two buffers and scalar `[rows]`, with `rows` workgroups. Helper,
+worker and image identity checks, immutable-input comparison and buffer guards
+remain mandatory. At least 1 GiB of host headroom is required; the largest
+fixture has 32 vocabulary rows, about 20 MiB of GPU buffer data.
 
 For active row counts 1, 2, 16, 17, 31 and 32, compare every output token ID with
 an independent ascending finite FP32 scan over all 151936 logits per row:
@@ -44,6 +46,32 @@ an independent ascending finite FP32 scan over all 151936 logits per row:
 - Minimum-sized and capacity-32 logits/choices. Fill inactive input rows with
   NaNs and inactive outputs with a bitwise sentinel. Prefix/suffix guards and
   all input bytes must remain unchanged; every active choice must be written.
+
+The 14 cases are six mixed-pattern row counts, six 32-row lane/scan-boundary
+cases covering all 64 lanes at three scan positions, and two deterministic
+finite-bit randomized cases with minimum-sized allocations. Every active input
+is checked finite by an independent complete scalar scan before any worker is
+started, and each lazily generated case is checked again before dispatch.
+Inactive NaN capacity tails are deliberately outside the active read view;
+there are no active NaN/Inf or malformed-launch GPU cases.
+
+From the repository root, the CPU-only commands are:
+
+```sh
+python3 -B -m unittest discover -s device/qwen3-tp-fp32-argmax-kernels-v11/tools -p 'test_*.py'
+python3 -B device/qwen3-tp-fp32-argmax-kernels-v11/tools/probe.py --self-test \
+  --helper proofs/tensor-parallel-kernels-v1/probe.py
+```
+
+After the integration lead separately approves an idle, identified GPU, the
+bounded wrapper can invoke:
+
+```sh
+python3 -B probe.py --run --operational --helper PINNED_HELPER \
+  --worker PINNED_WORKER --worker-sha256 WORKER_SHA256 \
+  --artifact observation.hsaco --artifact-sha256 ARTIFACT_SHA256 \
+  --device-unique-id PHYSICAL_ID --output FRESH_PRIVATE_OUTPUT
+```
 
 ## Integration And Timing Gate
 
