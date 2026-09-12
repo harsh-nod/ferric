@@ -1,11 +1,13 @@
 """CPU-only policy/custody tests; no PyTorch import or GPU execution."""
 
+import ast
 import copy
 import importlib.util
 import os
 from pathlib import Path
 import struct
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 
@@ -13,7 +15,8 @@ ROOT = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location("paged_reference", ROOT / "draft_paged_reference.py")
 tool = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tool)
-helper = tool.load_helper(ROOT / "draft_reference.py", tool.HELPER_SHA)
+HELPER_PATH = Path(os.environ.get("FERRIC_DRAFT_REFERENCE_HELPER", ROOT / "draft_reference.py"))
+helper = tool.load_helper(HELPER_PATH, tool.HELPER_SHA)
 PRODUCER = "a" * 64
 
 
@@ -68,18 +71,53 @@ class PagedReferenceTests(unittest.TestCase):
 
     def test_frozen_source_and_external_helper_pin_are_required(self):
         with self.assertRaises(ValueError):
-            tool.load_helper(ROOT / "draft_reference.py", "0" * 64)
+            tool.load_helper(HELPER_PATH, "0" * 64)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "helper.py"
-            path.write_bytes((ROOT / "draft_reference.py").read_bytes() + b"\n")
+            path.write_bytes(HELPER_PATH.read_bytes() + b"\n")
             with self.assertRaises(ValueError):
                 tool.load_helper(path, tool.HELPER_SHA)
 
     def test_cli_self_source_drift_rejects_before_raw_or_model_access(self):
         with self.assertRaisesRegex(ValueError, "producer source drift"):
-            tool.main(["--producer-sha256", "0" * 64, "--legacy-helper", str(ROOT / "draft_reference.py"),
+            tool.main(["--producer-sha256", "0" * 64, "--legacy-helper", str(HELPER_PATH),
                        "--legacy-helper-sha256", tool.HELPER_SHA, "produce", "--source", "/absent",
                        "--output", "/absent", "--image", helper.IMAGE, "--image-id", helper.IMAGE_ID])
+
+    def test_empty_display_name_and_string_subclasses_preserve_strict_architecture(self):
+        class RuntimeString(str):
+            pass
+
+        properties = SimpleNamespace(name=RuntimeString(""), gcnArchName=RuntimeString("gfx950:sramecc+:xnack-"))
+        device = helper.device_metadata(properties, RuntimeString("7.2.fixture"))
+        self.assertEqual(device["name"], "")
+        self.assertTrue(all(type(device[key]) is str for key in ("name", "gcn_arch", "torch_hip")))
+        raw, payloads = fixture()
+        raw["device"] = device
+        tool.validate_raw(helper, raw, PRODUCER, payloads.__getitem__)
+        for key, value in [("gcn_arch", ""), ("gcn_arch", "gfx942"), ("torch_hip", ""), ("name", None)]:
+            changed = copy.deepcopy(raw)
+            changed["device"][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                tool.validate_raw(helper, changed, PRODUCER, payloads.__getitem__)
+
+    def test_fp32_controls_are_explicit_and_bound_in_policy(self):
+        tree = ast.parse((ROOT / "draft_paged_reference.py").read_text())
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)]
+        precision = [node for node in calls if node.func.attr == "set_float32_matmul_precision"]
+        self.assertEqual(len(precision), 1)
+        self.assertEqual(ast.literal_eval(precision[0].args[0]), "highest")
+        autocast = [node for node in calls if node.func.attr == "autocast"]
+        self.assertEqual(len(autocast), 1)
+        self.assertEqual({item.arg: ast.literal_eval(item.value) for item in autocast[0].keywords}, {"device_type": "cuda", "enabled": False})
+        self.assertEqual(tool.POLICY["float32_matmul_precision"], "highest")
+        self.assertIs(tool.POLICY["autocast_enabled"], False)
+        raw, payloads = fixture()
+        for key, value in [("float32_matmul_precision", "high"), ("autocast_enabled", True), ("tf32", True)]:
+            changed = copy.deepcopy(raw)
+            changed["policy"][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                tool.validate_raw(helper, changed, PRODUCER, payloads.__getitem__)
 
     def test_raw_profile_identity_and_policy_mutations_reject(self):
         mutations = [

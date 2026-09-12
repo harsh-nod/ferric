@@ -51,14 +51,17 @@ loader still retains both target and draft host payloads.
 
 `tools/draft_paged_reference.py` is a new producer and custody checker. It imports
 only the exact frozen `tools/draft_reference.py` bytes with SHA-256
-`e491b4f243855dd57ce5b7cd6b2cd7b78811b5605622018827bb3932d41cb96e`.
+`1d429cc87a8bc46018da9f8d84a7a4328dad05c43de8867ed791226c913f2959`.
 It does not monkeypatch or use the old BF16 producer, policy, or adapter. The
 existing pinned image, package/source hashes, checkpoint hashes, tokenizer,
-offline settings and Draft06B geometry remain required.
+offline settings and Draft06B geometry remain required. This proven helper
+preserves a legitimate empty display name while requiring nonempty HIP metadata
+and exact gfx950 architecture. No physical GPU identity is inferred from its name.
 
 The new producer uses the BF16 Qwen3 model body with SDPA, then applies a separate
 FP32 linear head to the final BF16 hidden state converted to FP32 and the tied
-embedding/head weights converted to FP32. It freezes both schedules above before
+embedding/head weights converted to FP32, with float32 matmul precision `highest`, TF32 disabled and CUDA
+autocast explicitly disabled. It freezes both schedules above before
 execution and runs two repetitions of each, each with an empty initial cache.
 It checks full finite vocabulary logits and exact lowest-ID argmax at every
 forward. All 16 little-endian FP32 vectors are retained, 607,744 bytes each and

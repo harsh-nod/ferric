@@ -18,7 +18,7 @@ import struct
 import sys
 
 
-HELPER_SHA = "e491b4f243855dd57ce5b7cd6b2cd7b78811b5605622018827bb3932d41cb96e"
+HELPER_SHA = "1d429cc87a8bc46018da9f8d84a7a4328dad05c43de8867ed791226c913f2959"
 RAW_SCHEMA = "FerricIndependentDraftPagedFp32ObservationV10"
 REFERENCE_SCHEMA = "FerricDraftPagedCanaryReferenceV10"
 VOCABULARY = 151_936
@@ -33,6 +33,7 @@ POLICY = {
     "logits_processors": False, "chat_template": False, "add_special_tokens": False,
     "decode_skip_special_tokens": True, "local_files_only": True, "trust_remote_code": False,
     "fresh_cache_per_repetition": True, "tf32": False,
+    "float32_matmul_precision": "highest", "autocast_enabled": False,
     "loading_info_input_format": "transformers5-empty-sets-and-error-list",
 }
 
@@ -156,7 +157,8 @@ def validate_raw(helper, raw, producer_sha, read_payload):
     helper.exact(raw["device"], ("index", "name", "gcn_arch", "torch_hip"), "device")
     helper.integer(raw["device"]["index"], 0, 0, "device index")
     for name in ("name", "gcn_arch", "torch_hip"):
-        helper.require(type(raw["device"][name]) is str and 0 < len(raw["device"][name]) <= 256, "device metadata")
+        minimum = 0 if name == "name" else 1
+        helper.require(type(raw["device"][name]) is str and minimum <= len(raw["device"][name]) <= 256, "device metadata")
     helper.require(raw["device"]["gcn_arch"].split(":")[0] == "gfx950", "GPU architecture")
     helper.require(raw["loading_info"] == {name: [] for name in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")}, "model loading gaps")
     helper.require(raw["tied_weights"] is True and raw["repeated_exact"] is True, "tied/repeated result")
@@ -220,6 +222,7 @@ def produce(helper, options, producer_sha):
     helper.require(torch.cuda.is_available() and torch.cuda.device_count() == 1, "exactly one visible GPU")
     device = helper.device_metadata(torch.cuda.get_device_properties(0), torch.version.hip)
     torch.set_num_threads(2)
+    torch.set_float32_matmul_precision("highest")
     torch.backends.cuda.matmul.allow_tf32 = False
     tokenizer = Tokenizer.from_file(str(source / "tokenizer.json"))
     prompt = tokenizer.encode(helper.PROMPT, add_special_tokens=False).ids
@@ -236,7 +239,8 @@ def produce(helper, options, producer_sha):
     model.eval().to("cuda:0")
     options.output.mkdir(mode=0o700)
     schedules = {}
-    with torch.inference_mode():
+    with torch.inference_mode(), torch.autocast(device_type="cuda", enabled=False):
+        helper.require(torch.get_float32_matmul_precision() == "highest" and not torch.is_autocast_enabled("cuda"), "FP32 precision context")
         head32 = model.get_output_embeddings().weight.float()
         for mode, schedule in POLICY["schedules"].items():
             passes = []
