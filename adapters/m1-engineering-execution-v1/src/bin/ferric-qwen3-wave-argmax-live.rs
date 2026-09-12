@@ -16,7 +16,9 @@ use ferric_m1_engineering_execution_v1::tp_execution::{
 };
 use ferric_m1_engineering_execution_v1::tp_live_ingress;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
-use ferric_m1_engineering_execution_v1::tp_paged::{EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1};
+use ferric_m1_engineering_execution_v1::tp_paged::{
+    EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
+};
 use ferric_m1_engineering_execution_v1::tp_scheduler::EngineeringTpSchedulerV1;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -30,15 +32,23 @@ use wave_argmax_live_contract::{CACHE_TTL, CHUNK, Options, ROWS, Submission};
 fn emit(value: &Value) -> Result<(), String> {
     let mut output = std::io::stdout().lock();
     serde_json::to_writer(&mut output, value).map_err(|e| e.to_string())?;
-    output.write_all(b"\n").and_then(|()| output.flush()).map_err(|e| e.to_string())
+    output
+        .write_all(b"\n")
+        .and_then(|()| output.flush())
+        .map_err(|e| e.to_string())
 }
 
 fn hex(bytes: &[u8]) -> String {
     const DIGITS: &[u8; 16] = b"0123456789abcdef";
-    bytes.iter().flat_map(|byte| [
-        char::from(DIGITS[usize::from(byte >> 4)]),
-        char::from(DIGITS[usize::from(byte & 15)]),
-    ]).collect()
+    bytes
+        .iter()
+        .flat_map(|byte| {
+            [
+                char::from(DIGITS[usize::from(byte >> 4)]),
+                char::from(DIGITS[usize::from(byte & 15)]),
+            ]
+        })
+        .collect()
 }
 
 fn hash_file(path: &Path) -> Result<String, String> {
@@ -55,7 +65,8 @@ fn hash_file(path: &Path) -> Result<String, String> {
         if bytes == 0 {
             break;
         }
-        length = length.checked_add(u64::try_from(bytes).map_err(|_| "executable read length")?)
+        length = length
+            .checked_add(u64::try_from(bytes).map_err(|_| "executable read length")?)
             .ok_or("executable extent overflow")?;
         if length > before.len() {
             return Err("executable grew during hashing".into());
@@ -63,8 +74,10 @@ fn hash_file(path: &Path) -> Result<String, String> {
         hash.update(&buffer[..bytes]);
     }
     let after = file.metadata().map_err(|e| e.to_string())?;
-    if length != before.len() || after.len() != before.len()
-        || before.modified().map_err(|e| e.to_string())? != after.modified().map_err(|e| e.to_string())?
+    if length != before.len()
+        || after.len() != before.len()
+        || before.modified().map_err(|e| e.to_string())?
+            != after.modified().map_err(|e| e.to_string())?
     {
         return Err("executable changed during hashing".into());
     }
@@ -107,8 +120,12 @@ fn check_retired<G: EngineeringTpBatchRunnerV2>(
     pages: u32,
 ) -> Result<(), String> {
     let stats = runtime.page_stats();
-    if runtime.retained_requests() != 0 || stats.sequences != 0 || stats.free_pages != pages
-        || stats.retained_pages != 0 || stats.cached_pages != 0 || stats.quarantined_pages != 0
+    if runtime.retained_requests() != 0
+        || stats.sequences != 0
+        || stats.free_pages != pages
+        || stats.retained_pages != 0
+        || stats.cached_pages != 0
+        || stats.quarantined_pages != 0
     {
         return Err("drained no-cache live runtime must retire every request and page".into());
     }
@@ -125,28 +142,48 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
     }
     let target_artifact = EngineeringTpArtifactV1::open_batch32(
         &options.target_artifact,
-        &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(), true,
-    ).map_err(|e| e.to_string())?;
+        &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
+        true,
+    )
+    .map_err(|e| e.to_string())?;
     let head_artifact = EngineeringTpArtifactV1::open_fp32_head32(
         &options.target_head_artifact,
         &ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8(),
-    ).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
     let argmax_artifact = EngineeringTpArtifactV1::open_fp32_argmax32_v11(&options.argmax_artifact)
         .map_err(|e| e.to_string())?;
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let mut session = [0_u8; 32];
-    std::fs::File::open("/dev/urandom").and_then(|mut file| file.read_exact(&mut session))
+    std::fs::File::open("/dev/urandom")
+        .and_then(|mut file| file.read_exact(&mut session))
         .map_err(|e| e.to_string())?;
     let limits = options.limits()?;
-    let kv_pool_payload_bytes = limits.target_kv_payload_bytes().map_err(|e| format!("KV payload: {e:?}"))?;
-    let pool = EngineeringTpPagedPoolV1::new_wide32(EngineeringTpPoolScopeV1 {
-        model: *model.bundle_id().as_bytes(), session,
-    }, limits).map_err(|e| format!("pool: {e:?}"))?;
+    let kv_pool_payload_bytes = limits
+        .target_kv_payload_bytes()
+        .map_err(|e| format!("KV payload: {e:?}"))?;
+    let pool = EngineeringTpPagedPoolV1::new_wide32(
+        EngineeringTpPoolScopeV1 {
+            model: *model.bundle_id().as_bytes(),
+            session,
+        },
+        limits,
+    )
+    .map_err(|e| format!("pool: {e:?}"))?;
     let scheduler = EngineeringTpSchedulerV1::new_wide32(
-        model.config().vocabulary_size, options.context, ROWS, CHUNK,
-    ).map_err(|e| format!("scheduler: {e:?}"))?;
+        model.config().vocabulary_size,
+        options.context,
+        ROWS,
+        CHUNK,
+    )
+    .map_err(|e| format!("scheduler: {e:?}"))?;
     let mut worker = Worker::spawn_with_timing(
-        &options.worker, options.device, &target_artifact, options.runtime, timing.timing.clone(), 0,
+        &options.worker,
+        options.device,
+        &target_artifact,
+        options.runtime,
+        timing.timing.clone(),
+        0,
     )?;
     let worker_pid = worker.pid();
     let admitted = (|| {
@@ -161,20 +198,34 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
         return Err(format!("{error}; worker close: {close:?}"));
     }
     let mut driver = EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11(
-        vec![worker], model.config(), model.target_weights(), model.layout(), &pool, &argmax_artifact,
+        vec![worker],
+        model.config(),
+        model.target_weights(),
+        model.layout(),
+        &pool,
+        &argmax_artifact,
     )?;
     let configured = (|| {
         driver.configure_output_head_pruning(true)?;
         driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)?;
-        driver.configure_projection(EngineeringTpProjectionModeV3::Mfma, model.target_weights(), model.layout())?;
+        driver.configure_projection(
+            EngineeringTpProjectionModeV3::Mfma,
+            model.target_weights(),
+            model.layout(),
+        )?;
         driver.configure_wave_attention(true)?;
         driver.configure_head_precision_v8(true)?;
         match options.submission {
-            Submission::Synchronous => driver.configure_wave_attention_fp32_argmax_v11(&argmax_artifact)?,
-            Submission::Ordered => driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?,
+            Submission::Synchronous => {
+                driver.configure_wave_attention_fp32_argmax_v11(&argmax_artifact)?
+            }
+            Submission::Ordered => {
+                driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?
+            }
         }
         driver.configure_host_timing(timing.timing.clone())?;
-        if driver.expected_dispatch_counts(0) != [613] || driver.expected_dispatch_counts(1) != [616]
+        if driver.expected_dispatch_counts(0) != [613]
+            || driver.expected_dispatch_counts(1) != [616]
             || driver.fp32_argmax_mode() != "wave-v11"
         {
             return Err("live selector or packet contract differs".into());
@@ -188,7 +239,8 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
     let transposed_weight_bytes = driver.transposed_weight_bytes();
     let fp32_workspace_bytes = driver.fp32_head_workspace_bytes();
     let argmax_mode = driver.fp32_argmax_mode();
-    let mut runtime = EngineeringTpBatchRuntimeV2::new_wide32(driver, pool, scheduler, ROWS, false)?;
+    let mut runtime =
+        EngineeringTpBatchRuntimeV2::new_wide32(driver, pool, scheduler, ROWS, false)?;
     drop(setup_scope);
     let setup = json!({
         "schema":"FerricQwen3TpBatchSetupV2", "authority":"none", "performance_qualified":false,
@@ -221,8 +273,15 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
     let (result, close) = run_and_close(&mut runtime, |runtime| {
         emit(&setup)?;
         let _workload_scope = timing.timing.scope("workload");
-        tp_live_ingress::run(runtime, &model, options.context, options.pages, options.max_batches,
-            &timing.timing, emit)?;
+        tp_live_ingress::run(
+            runtime,
+            &model,
+            options.context,
+            options.pages,
+            options.max_batches,
+            &timing.timing,
+            emit,
+        )?;
         check_retired(runtime, options.pages)
     });
     let closed = json!({
@@ -235,7 +294,9 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
     let emitted = emit(&closed);
     match (result, close, emitted) {
         (Ok(()), Ok(()), Ok(())) => Ok(()),
-        (result, close, emitted) => Err(format!("live execution: {result:?}; close: {close:?}; closed record: {emitted:?}")),
+        (result, close, emitted) => Err(format!(
+            "live execution: {result:?}; close: {close:?}; closed record: {emitted:?}"
+        )),
     }
 }
 
@@ -274,27 +335,53 @@ mod live_tests {
     }
 
     impl EngineeringTpBatchRunnerV2 for CloseOnly {
-        fn row_capacity(&self) -> usize { ROWS }
-        fn execute_batch(&mut self, _: &EngineeringTpPreparedBatchV1, _: &[usize]) -> Result<EngineeringTpBatchOutputV2, String> {
+        fn row_capacity(&self) -> usize {
+            ROWS
+        }
+        fn execute_batch(
+            &mut self,
+            _: &EngineeringTpPreparedBatchV1,
+            _: &[usize],
+        ) -> Result<EngineeringTpBatchOutputV2, String> {
             Err("CPU lifecycle fixture must not execute GPU work".into())
         }
-        fn dispatch_counts(&self) -> Vec<u64> { vec![0] }
+        fn dispatch_counts(&self) -> Vec<u64> {
+            vec![0]
+        }
         fn close(&mut self) -> Result<(), String> {
             self.calls.set(self.calls.get() + 1);
-            if self.fail_close { Err("injected close failure".into()) } else { Ok(()) }
+            if self.fail_close {
+                Err("injected close failure".into())
+            } else {
+                Ok(())
+            }
         }
     }
 
     fn runtime(fail_close: bool) -> (EngineeringTpBatchRuntimeV2<CloseOnly>, Rc<Cell<usize>>) {
         let options = wave_argmax_live_contract::fixture(Submission::Synchronous);
         let pool = EngineeringTpPagedPoolV1::new_wide32(
-            EngineeringTpPoolScopeV1 { model: [1; 32], session: [2; 32] }, options.limits().unwrap(),
-        ).unwrap();
-        let scheduler = EngineeringTpSchedulerV1::new_wide32(100, options.context, ROWS, CHUNK).unwrap();
+            EngineeringTpPoolScopeV1 {
+                model: [1; 32],
+                session: [2; 32],
+            },
+            options.limits().unwrap(),
+        )
+        .unwrap();
+        let scheduler =
+            EngineeringTpSchedulerV1::new_wide32(100, options.context, ROWS, CHUNK).unwrap();
         let calls = Rc::new(Cell::new(0));
         let runtime = EngineeringTpBatchRuntimeV2::new_wide32(
-            CloseOnly { calls: calls.clone(), fail_close }, pool, scheduler, ROWS, false,
-        ).unwrap();
+            CloseOnly {
+                calls: calls.clone(),
+                fail_close,
+            },
+            pool,
+            scheduler,
+            ROWS,
+            false,
+        )
+        .unwrap();
         (runtime, calls)
     }
 
@@ -303,11 +390,14 @@ mod live_tests {
         for submission in [Submission::Synchronous, Submission::Ordered] {
             let options = wave_argmax_live_contract::fixture(submission);
             let profile = profile_metadata(&options).unwrap();
-            assert_eq!(profile, json!({
-                "runtime_cache_admission":true, "runtime_operational":true, "dispatch_sequences":false,
-                "queue_rollover":true, "runtime_profiling":false, "projection":"mfma", "attention":"wave",
-                "argmax_mode":"wave-v11", "submission":submission.label(), "runtime_ordered_batches":submission.ordered(),
-            }));
+            assert_eq!(
+                profile,
+                json!({
+                    "runtime_cache_admission":true, "runtime_operational":true, "dispatch_sequences":false,
+                    "queue_rollover":true, "runtime_profiling":false, "projection":"mfma", "attention":"wave",
+                    "argmax_mode":"wave-v11", "submission":submission.label(), "runtime_ordered_batches":submission.ordered(),
+                })
+            );
             let mut mismatched = options;
             mismatched.runtime.ordered_batches = !submission.ordered();
             assert!(profile_metadata(&mismatched).is_err());
@@ -316,7 +406,10 @@ mod live_tests {
 
     #[test]
     fn invalid_direct_live_options_create_no_timing_file_before_rejection() {
-        let path = std::env::temp_dir().join(format!("ferric-wave-live-reject-{}.json", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "ferric-wave-live-reject-{}.json",
+            std::process::id()
+        ));
         assert!(!path.exists());
         for submission in [Submission::Synchronous, Submission::Ordered] {
             for mutation in 0..7 {
@@ -344,7 +437,11 @@ mod live_tests {
             for fail_close in [false, true] {
                 let (mut runtime, calls) = runtime(fail_close);
                 let (result, close) = run_and_close(&mut runtime, |_| {
-                    if fail_body { Err("injected live or output failure".into()) } else { Ok(()) }
+                    if fail_body {
+                        Err("injected live or output failure".into())
+                    } else {
+                        Ok(())
+                    }
                 });
                 assert_eq!(result.is_err(), fail_body);
                 assert_eq!(close.is_err(), fail_close);
@@ -360,10 +457,20 @@ mod live_tests {
         let (mut runtime, _) = runtime(false);
         check_retired(&runtime, 512).unwrap();
         assert!(check_retired(&runtime, 16).is_err());
-        let request = runtime.admit(TpRequestAdmissionV1 {
-            prompt_tokens: vec![7; 128], max_new_tokens: 128, cached_prefix_tokens: 0,
-            arrival_tick: 0, arrival_ns: 0,
-        }, 0, 0).unwrap().request;
+        let request = runtime
+            .admit(
+                TpRequestAdmissionV1 {
+                    prompt_tokens: vec![7; 128],
+                    max_new_tokens: 128,
+                    cached_prefix_tokens: 0,
+                    arrival_tick: 0,
+                    arrival_ns: 0,
+                },
+                0,
+                0,
+            )
+            .unwrap()
+            .request;
         assert!(check_retired(&runtime, 512).is_err());
         runtime.cancel(request, 1).unwrap();
         assert!(check_retired(&runtime, 512).is_err());

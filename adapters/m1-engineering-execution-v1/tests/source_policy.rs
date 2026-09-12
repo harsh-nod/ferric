@@ -333,14 +333,22 @@ fn wave_argmax_submission_canary_is_separate_and_validates_before_effects() {
 #[test]
 fn wave_argmax_live_is_separate_and_preserves_preallocation_and_terminal_selection() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
-    let binary = manifest["bin"].as_array().unwrap().iter()
-        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-wave-argmax-live")).unwrap();
-    assert_eq!(binary["required-features"].as_array().unwrap(),
-        &vec![toml::Value::String("tp-batch-engineering".into())]);
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-wave-argmax-live"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
     let source = include_str!("../src/bin/ferric-qwen3-wave-argmax-live.rs");
     let production = &source[..source.find("#[cfg(test)]").unwrap()];
     let execute = &production[production.find("fn run(options:").unwrap()..];
-    assert!(execute.find("options.validate()").unwrap() < execute.find("TimingFile::create(").unwrap());
+    assert!(
+        execute.find("options.validate()").unwrap() < execute.find("TimingFile::create(").unwrap()
+    );
     let ordered = [
         "EngineeringTpArtifactV1::open_fp32_argmax32_v11",
         "Worker::spawn_with_timing",
@@ -355,14 +363,27 @@ fn wave_argmax_live_is_separate_and_preserves_preallocation_and_terminal_selecti
         "match options.submission",
         "EngineeringTpBatchRuntimeV2::new_wide32(",
         "tp_live_ingress::run(",
-    ].map(|marker| production.find(marker).unwrap());
-    assert!(ordered.windows(2).all(|positions| positions[0] < positions[1]));
+    ]
+    .map(|marker| production.find(marker).unwrap());
+    assert!(
+        ordered
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     let selection = &production[production.find("match options.submission").unwrap()
         ..production.find("driver.configure_host_timing(").unwrap()];
-    let branches = ["Submission::Synchronous", "driver.configure_wave_attention_fp32_argmax_v11",
-        "Submission::Ordered", "driver.configure_ordered_wave_attention_fp32_argmax_v11"]
-        .map(|marker| selection.find(marker).unwrap());
-    assert!(branches.windows(2).all(|positions| positions[0] < positions[1]));
+    let branches = [
+        "Submission::Synchronous",
+        "driver.configure_wave_attention_fp32_argmax_v11",
+        "Submission::Ordered",
+        "driver.configure_ordered_wave_attention_fp32_argmax_v11",
+    ]
+    .map(|marker| selection.find(marker).unwrap());
+    assert!(
+        branches
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     assert!(!production.contains("configure_ordered_batches("));
     assert!(!production.contains("configure_dispatch_sequences("));
     assert!(!production.contains("new_large_kv32"));
@@ -371,9 +392,15 @@ fn wave_argmax_live_is_separate_and_preserves_preallocation_and_terminal_selecti
     assert!(production.contains("FerricQwen3TpBatchSetupV2"));
     assert!(production.contains("FerricQwen3TpBatchClosedV2"));
     let contract = include_str!("../src/bin/wave_argmax_live_contract.rs");
-    assert!(contract.contains("EngineeringTpPagedLimitsV1::new(self.context, 32, self.pages, CACHE_TTL)"));
+    assert!(
+        contract
+            .contains("EngineeringTpPagedLimitsV1::new(self.context, 32, self.pages, CACHE_TTL)")
+    );
     assert!(contract.contains("self.runtime.ordered_batches != self.submission.ordered()"));
-    assert!(!include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs").contains("wave_argmax_live_contract"));
+    assert!(
+        !include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs")
+            .contains("wave_argmax_live_contract")
+    );
     assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-argmax-live"));
 }
 

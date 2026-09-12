@@ -72,16 +72,27 @@ impl Options {
                 | "--context"
                 | "--pages"
                 | "--max-batches"
-                | "--host-timing" => arguments.next().ok_or_else(|| format!("missing value for {flag}"))?,
+                | "--host-timing" => arguments
+                    .next()
+                    .ok_or_else(|| format!("missing value for {flag}"))?,
                 _ => return Err(format!("unsupported live profile option {flag}")),
             };
             values.insert(flag, value);
         }
         let host_timing = values.remove("--host-timing").map(PathBuf::from);
-        let mut take = |name: &str| values.remove(name).ok_or_else(|| format!("required option {name}"));
+        let mut take = |name: &str| {
+            values
+                .remove(name)
+                .ok_or_else(|| format!("required option {name}"))
+        };
         for flag in [
-            "--live-stdin", "--allow-unauthenticated-machine-code", "--runtime-cache-admission",
-            "--runtime-operational", "--queue-rollover", "--disable-prefix-cache", "--prune-output-head",
+            "--live-stdin",
+            "--allow-unauthenticated-machine-code",
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--queue-rollover",
+            "--disable-prefix-cache",
+            "--prune-output-head",
         ] {
             take(flag)?;
         }
@@ -97,11 +108,17 @@ impl Options {
             argmax_artifact: take("--argmax-artifact")?.into(),
             worker: take("--worker")?.into(),
             worker_sha256: take("--worker-sha256")?,
-            device: take("--device-unique-id")?.parse::<u64>().map_err(|e| e.to_string())?,
+            device: take("--device-unique-id")?
+                .parse::<u64>()
+                .map_err(|e| e.to_string())?,
             submission,
-            context: take("--context")?.parse::<u32>().map_err(|e| e.to_string())?,
+            context: take("--context")?
+                .parse::<u32>()
+                .map_err(|e| e.to_string())?,
             pages: take("--pages")?.parse::<u32>().map_err(|e| e.to_string())?,
-            max_batches: take("--max-batches")?.parse::<u64>().map_err(|e| e.to_string())?,
+            max_batches: take("--max-batches")?
+                .parse::<u64>()
+                .map_err(|e| e.to_string())?,
             host_timing,
             runtime: RuntimeOptions {
                 cache_admission: true,
@@ -125,7 +142,10 @@ impl Options {
         if self.device == 0
             || !(1..=1_000_000).contains(&self.max_batches)
             || self.worker_sha256.len() != 64
-            || !self.worker_sha256.bytes().all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            || !self
+                .worker_sha256
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
             || self.worker_sha256.bytes().all(|byte| byte == b'0')
             || !self.runtime.cache_admission
             || !self.runtime.operational
@@ -137,8 +157,15 @@ impl Options {
         {
             return Err("live wave/v8/v11 requires nonzero device and worker hash, bounded batches, matching submission, cache admission, operational currentness and rollover; sequences, profiling and shared currentness are excluded".into());
         }
-        for path in [&self.source, &self.target_artifact, &self.target_head_artifact, &self.argmax_artifact, &self.worker]
-            .into_iter().chain(self.host_timing.as_ref())
+        for path in [
+            &self.source,
+            &self.target_artifact,
+            &self.target_head_artifact,
+            &self.argmax_artifact,
+            &self.worker,
+        ]
+        .into_iter()
+        .chain(self.host_timing.as_ref())
         {
             if path.as_os_str().is_empty() {
                 return Err("live profile paths must be nonempty".into());
@@ -151,12 +178,24 @@ impl Options {
 #[cfg(test)]
 pub(super) fn fixture(submission: Submission) -> Options {
     Options {
-        source: "source".into(), target_artifact: "target".into(), target_head_artifact: "head".into(),
-        argmax_artifact: "argmax".into(), worker: "worker".into(), worker_sha256: "a".repeat(64),
-        device: 1, submission, context: 8192, pages: 512, max_batches: 1_000_000, host_timing: None,
+        source: "source".into(),
+        target_artifact: "target".into(),
+        target_head_artifact: "head".into(),
+        argmax_artifact: "argmax".into(),
+        worker: "worker".into(),
+        worker_sha256: "a".repeat(64),
+        device: 1,
+        submission,
+        context: 8192,
+        pages: 512,
+        max_batches: 1_000_000,
+        host_timing: None,
         runtime: RuntimeOptions {
-            cache_admission: true, operational: true, rollover: true,
-            ordered_batches: submission.ordered(), ..RuntimeOptions::default()
+            cache_admission: true,
+            operational: true,
+            rollover: true,
+            ordered_batches: submission.ordered(),
+            ..RuntimeOptions::default()
         },
     }
 }
@@ -168,18 +207,35 @@ mod tests {
     fn arguments(submission: &str) -> Vec<String> {
         let mut arguments = Vec::new();
         for (flag, value) in [
-            ("--source", "source"), ("--target-artifact", "target"), ("--target-head-artifact", "head"),
-            ("--argmax-artifact", "argmax"), ("--worker", "worker"),
-            ("--worker-sha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-            ("--device-unique-id", "1"), ("--submission", submission), ("--context", "8192"),
-            ("--pages", "512"), ("--max-batches", "1000000"),
+            ("--source", "source"),
+            ("--target-artifact", "target"),
+            ("--target-head-artifact", "head"),
+            ("--argmax-artifact", "argmax"),
+            ("--worker", "worker"),
+            (
+                "--worker-sha256",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            ),
+            ("--device-unique-id", "1"),
+            ("--submission", submission),
+            ("--context", "8192"),
+            ("--pages", "512"),
+            ("--max-batches", "1000000"),
         ] {
             arguments.extend([flag.to_owned(), value.to_owned()]);
         }
-        arguments.extend([
-            "--live-stdin", "--allow-unauthenticated-machine-code", "--runtime-cache-admission",
-            "--runtime-operational", "--queue-rollover", "--disable-prefix-cache", "--prune-output-head",
-        ].map(str::to_owned));
+        arguments.extend(
+            [
+                "--live-stdin",
+                "--allow-unauthenticated-machine-code",
+                "--runtime-cache-admission",
+                "--runtime-operational",
+                "--queue-rollover",
+                "--disable-prefix-cache",
+                "--prune-output-head",
+            ]
+            .map(str::to_owned),
+        );
         arguments
     }
 
@@ -189,9 +245,15 @@ mod tests {
             let options = Options::parse(arguments(submission).into_iter()).unwrap();
             assert_eq!(options.submission.label(), submission);
             assert_eq!(options.runtime.ordered_batches, submission == "ordered");
-            assert_eq!((ROWS, CHUNK, options.context, options.pages), (32, 16, 8192, 512));
+            assert_eq!(
+                (ROWS, CHUNK, options.context, options.pages),
+                (32, 16, 8192, 512)
+            );
             assert_eq!(options.limits().unwrap().page_table_stride(), 512);
-            assert_eq!(options.limits().unwrap().physical_token_capacity().unwrap(), 8192);
+            assert_eq!(
+                options.limits().unwrap().physical_token_capacity().unwrap(),
+                8192
+            );
             assert_eq!((128_u32 + 128 - 1).div_ceil(16), 16);
             assert!(options.host_timing.is_none());
         }
@@ -200,7 +262,11 @@ mod tests {
     #[test]
     fn live_parser_requires_every_profile_flag_and_rejects_duplicates() {
         let original = arguments("ordered");
-        for (index, flag) in original.iter().enumerate().filter(|(_, value)| value.starts_with("--")) {
+        for (index, flag) in original
+            .iter()
+            .enumerate()
+            .filter(|(_, value)| value.starts_with("--"))
+        {
             let mut missing = original.clone();
             missing.remove(index);
             assert!(Options::parse(missing.into_iter()).is_err(), "{flag}");
@@ -213,11 +279,26 @@ mod tests {
     #[test]
     fn live_parser_rejects_other_execution_and_storage_profiles() {
         for flag in [
-            "--requests", "--benchmark-control", "--numerical-capture", "--runtime-profile",
-            "--runtime-ordered-batches", "--dispatch-sequences", "--runtime-sequences",
-            "--peer-artifact", "--peer-shared-full-currentness", "--devices", "--speculative-k",
-            "--draft-artifact", "--kv-pool-profile", "--large-kv-artifact", "--attention",
-            "--projection", "--head-precision", "--argmax-mode", "--batch-tokens", "--prefill-chunk",
+            "--requests",
+            "--benchmark-control",
+            "--numerical-capture",
+            "--runtime-profile",
+            "--runtime-ordered-batches",
+            "--dispatch-sequences",
+            "--runtime-sequences",
+            "--peer-artifact",
+            "--peer-shared-full-currentness",
+            "--devices",
+            "--speculative-k",
+            "--draft-artifact",
+            "--kv-pool-profile",
+            "--large-kv-artifact",
+            "--attention",
+            "--projection",
+            "--head-precision",
+            "--argmax-mode",
+            "--batch-tokens",
+            "--prefill-chunk",
         ] {
             let mut changed = arguments("ordered");
             changed.extend([flag.to_owned(), "unreviewed".to_owned()]);
@@ -235,7 +316,10 @@ mod tests {
             options.context = context;
             options.pages = pages;
             options.validate().unwrap();
-            assert_eq!(options.limits().unwrap().physical_token_capacity().unwrap(), pages * 16);
+            assert_eq!(
+                options.limits().unwrap().physical_token_capacity().unwrap(),
+                pages * 16
+            );
         }
         for (context, pages) in [(0, 16), (8193, 512), (256, 0), (8192, 513), (8192, 16384)] {
             let mut options = fixture(Submission::Ordered);
