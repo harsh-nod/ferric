@@ -60,11 +60,11 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Both latest HTTP Qwen3-8B 128/128 cohorts pass independent replay. Ordered: TTFT 2862.079 ms, TPOT 192.127 ms, throughput 4.694997 tokens/s across 30 measured requests. Synchronous: 3482.380 / 276.255 ms and 3.318800 tokens/s. Earlier Ferric: 3705.967 / 506.969 ms and 1.879805 tokens/s; retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s. SGLang r7 finishes but fails exact output in 10 of 30 measured responses. | Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
-| Kernels | Sharded FP32 argmax v13 `256a6e4`, integrated through `1458e0c`, passes all ten host steps, 15 numerical tests, eight contract tests and strict Clippy. Own artifacts are fresh and the complete archive is accepted. Prior visible-attention and append emission failures remain retained and stopped. | V13 needs typed emission, actual ABI/resource checks and native parity before routing or timing. Inspect the actual resident v5 attention/GEMV ISA to prioritize a larger bottleneck. No new GPU kernel candidate is admitted; v12 remains host/emission-only. |
+| Kernels | Sharded FP32 argmax v13 `256a6e4`, integrated through `1458e0c`, passes all ten host steps, 15 numerical tests, eight contract tests and strict Clippy. Resident v5 ISA confirms repeated query loads inside the attention token loop. Separate v14 query-hoist source `1843d8f` has passed remote formatting only; focused host tests are next. Prior visible-attention and append emission failures remain retained and stopped. | V13 and v14 need typed emission, actual ABI/resource checks and native parity before routing or timing. No new GPU kernel candidate is admitted; v12 remains host/emission-only. |
 | Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 `c2a235e`, integrated through `b7b1eda`, passes all 40 host steps, both 8/128-token qualifications and all four separate ABBA runs. Authenticated replay passes: n=2 mean TPOT 180.651 to 162.999 ms, rate 4.976281 to 5.523671 tokens/s. | Material variation: first TPOT pair is nearly tied, second improves 19.852%. No stable/HTTP/GPU/competitive claim. Qualify the new explicit live profile separately. Head, multirow MFMA and defaults remain fixed. No fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `45b608e` preserves historical serving metrics. C1 live source `87f38de`, integrated through `15b5c4b`, passes all 40 host steps: 892/48/21, strict Clippy, eight doctests and 74 CPU HTTP tests. Final binary `8ae69215` matches early/release/closure copies. | Separate context8192 native/HTTP qualification uses same-binary MFMA/C1 arms; historical source433 has different residual grouping. Parallel Pages update adds accepted C1 diagnostics and the standalone integer proof without changing serving metrics or claiming stability. |
+| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `8e6643f` is deployed after eleven remote QA checks and seven exact public asset comparisons. C1 live source `87f38de`, integrated through `15b5c4b`, passes all 40 host steps: 892/48/21, strict Clippy, eight doctests and 74 CPU HTTP tests. Final binary `8ae69215` matches early/release/closure copies; its separate HTTP harness passes all 29 synthetic tests. | Separate context8192 native/HTTP qualification uses same-binary MFMA/C1 arms; historical source433 has different residual grouping. Public C1 diagnostics and the standalone integer proof do not replace serving metrics or claim stability. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
@@ -75,7 +75,9 @@ These updates supersede the pending-build/replay notes in the history below.
 The C1 live complete host archive `7aec042f` and all 2,354 files are also accepted.
 All 93 own-source artifacts were fresh after a closed 22-package clean; external
 dependencies were explicitly warm. The redundant integrated live worktree is
-removed (42,480 KiB). Its compiled target is being released after final custody.
+removed (42,480 KiB). The complete owned build parent is also removed after
+10,838 content checks, exact metadata and all 80 original/new groups were
+confirmed absent, reclaiming 4,199,364 KiB; independent SSH absence passed.
 The eight completed mi350 C1 case directories and six authenticated archive/ledger
 files are also removed after local custody and a fresh normal-close/process check
 (10,788 KiB); shared models and installed images/controllers remain untouched.
@@ -84,10 +86,22 @@ Static inspection of the actual resident v5 image `98b5fdb1` confirms two query
 loads/waits inside the attention token loop. The attention descriptor reports
 97 SGPR / 36 VGPR and zero spills; these are not occupancy or elapsed-time data.
 Complete four-command CPU archive `224b645f` is accepted and its small stage is
-removed (780 KiB). A separate source-only query-hoist prototype is being prepared;
-the existing token loop, arithmetic and reduction order must remain unchanged.
+removed (780 KiB). Separate query-hoist source `1843d8f` preserves the existing
+token loop, arithmetic and reduction order; only two invariant query reads move.
+Remote formatting archive `39ac6317` and all 92 files are accepted, including
+the original exclusive-transfer flag failure and its one-token correction.
+Only remote formatter output was applied locally; the completed stage is removed
+(832 KiB). Its thirteen host-model/contract tests have not yet executed.
 Partial GEMV also retains a masked fixed-K tail, but that is a separate future
 candidate. No GPU performance attribution or gain follows from disassembly.
+
+The C1 HTTP synthetic gate archive `51240a2f` and all 29 files are accepted;
+all 29 test methods pass with no retry. Its completed CPU stage is removed
+(376 KiB). The new `8ae69215` controller and reviewed HTTP harness are installed
+in separate owned mi350 paths; no correctness or timing request has run yet.
+Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
+seven deployed assets match the accepted artifact, with historical serving
+metrics unchanged. No Ferric implementation or fe2o3 changes were pushed.
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
