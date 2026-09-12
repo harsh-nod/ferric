@@ -38,6 +38,47 @@ const CAPABILITY_SOURCE: &str =
 const FE2O3_REVISION: &str = "21682228486f7186cc3c37ddf165fffc438d8b6a";
 
 #[test]
+fn paged_draft_canary_is_separate_and_non_authoritative() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|binary| binary["name"].as_str() == Some("ferric-qwen3-draft-paged-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["path"].as_str(),
+        Some("src/bin/ferric-qwen3-draft-paged-canary.rs")
+    );
+    assert_eq!(
+        binary["required-features"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(toml::Value::as_str)
+            .collect::<Vec<_>>(),
+        vec![Some("tp-batch-engineering")]
+    );
+    let source = include_str!("../src/bin/ferric-qwen3-draft-paged-canary.rs");
+    assert!(source.contains("EngineeringTpArtifactV1::open_draft32"));
+    assert!(source.contains("EngineeringTpDraftBatchExecutionV10::new"));
+    assert!(source.contains("reference.bind(&identity, &prompt)"));
+    assert!(source.contains("engine.execute_selected"));
+    assert!(source.contains("pool.commit_batch(&batch, observed.completion)"));
+    assert!(source.contains("FerricDraftPagedCanaryClosedV10"));
+    for forbidden in [
+        "execute_speculative_draft",
+        "unsafe",
+        "StepPublication",
+        "verify_greedy_round",
+    ] {
+        assert!(!source.contains(forbidden));
+    }
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-draft-paged-canary"));
+    assert!(!ROOT_MANIFEST.contains("ferric-qwen3-draft-paged-canary"));
+}
+
+#[test]
 fn adapter_is_an_exact_standalone_workspace() {
     assert_eq!(MANIFEST.matches("[workspace]").count(), 1);
     assert!(MANIFEST.contains("edition = \"2024\""));
