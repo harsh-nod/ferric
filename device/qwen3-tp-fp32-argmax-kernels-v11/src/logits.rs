@@ -48,7 +48,7 @@ macro_rules! decode_key {
         if winning_key == 0 {
             fe2o3_device::trap();
         }
-        151936_u32 - winning_key
+        (151936.0_f32 - winning_key as f32) as u32
     }};
 }
 
@@ -136,7 +136,7 @@ pub fn ferric_qwen3_tp_batch32_wave_argmax_f32_v11(
             if winning_key == 0 {
                 fe2o3_device::trap();
             }
-            151936_u32 - winning_key
+            (151936.0_f32 - winning_key as f32) as u32
             // END decode_key
         };
         if !choices.write_row_striped_2d(&stripe, 0, rows, 1, 1, winner) {
