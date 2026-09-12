@@ -313,14 +313,14 @@ export async function validateAttentionCheckpointEvidence(root, value) {
   const m = c.metrics;
   const summary = await pinned("abba/summary.json", m.summarySha256);
   const manifest = await pinned("abba/manifest.json", m.manifestSha256);
-  const sizes = await pinned("abba/sizes.json", m.sizesSha256);
+  const sizeLedger = await pinned("abba/sizes.json", m.sizesSha256);
   const replayReceipt = await pinned("abba/replay.json", m.replaySha256);
   await pinned("abba/PLAN.md", m.planSha256, false);
   await pinned("abba/summarize_attention_argmax.py", m.reducerSha256, false);
   assert.equal(summary.schema, "FerricAttentionArgmaxAbbaSummaryV1");
   assert.equal(manifest.schema, "FerricAttentionArgmaxAbbaEvidenceV1");
-  assert.equal(sizes.schema, "FerricAttentionArgmaxAbbaSizeLedgerV1");
-  assert.equal(sizes.manifest_sha256, m.manifestSha256);
+  assert.equal(sizeLedger.schema, "FerricAttentionArgmaxAbbaSizeLedgerV1");
+  assert.equal(sizeLedger.manifest_sha256, m.manifestSha256);
   assert.equal(summary.evidence_manifest_sha256, m.manifestSha256);
   assert.equal(replayReceipt.schema, "FerricAttentionArgmaxReplayGateV1");
   assert.equal(replayReceipt.passed, true);
@@ -328,7 +328,7 @@ export async function validateAttentionCheckpointEvidence(root, value) {
   assert.deepEqual(replayReceipt.commands.map((command) => command.exit_code), [0, 1]);
   assert.equal(replayReceipt.commands[0].argv.at(-1), m.manifestSha256);
   assert.equal(replayReceipt.commands[1].argv.at(-1), "0".repeat(64));
-  for (const item of [summary, manifest, sizes, replayReceipt]) {
+  for (const item of [summary, manifest, sizeLedger, replayReceipt]) {
     assert.equal(item.authority, "none");
     assert.equal(item.performance_qualified, false);
   }
@@ -351,7 +351,7 @@ export async function validateAttentionCheckpointEvidence(root, value) {
   assert.equal(summary.stage_accounting, "checked host attention siblings are disjoint; parent/IPC/head scopes overlap; not GPU durations");
   const abbaCases = [["baseline", "a1", 1], ["wave", "b1", 1], ["wave", "b2", 2], ["baseline", "a2", 2]];
   const wantedPaths = abbaCases.flatMap(([mode, tag]) => rawNames.map((name) => `attention-argmax-ed112e0-${mode}-128-${tag}/${name}`));
-  assert.deepEqual(Object.keys(sizes.files).sort(), [...wantedPaths].sort());
+  assert.deepEqual(Object.keys(sizeLedger.files).sort(), [...wantedPaths].sort());
   let authenticated = 0;
   for (const [index, [mode, tag, repetition]] of abbaCases.entries()) {
     const run = summary.runs[index];
@@ -366,7 +366,7 @@ export async function validateAttentionCheckpointEvidence(root, value) {
     for (const file of rawNames) {
       const path = `${entry.directory}/${file}`;
       const bytes = await pinned(`abba/${path}`, entry.files[file], false);
-      assert.equal(bytes.length, sizes.files[path]);
+      assert.equal(bytes.length, sizeLedger.files[path]);
       raw[file] = file.endsWith(".jsonl") ? bytes.toString("utf8").trim().split("\n").map((line) => JSON.parse(line)) : JSON.parse(bytes);
       authenticated += 1;
     }
