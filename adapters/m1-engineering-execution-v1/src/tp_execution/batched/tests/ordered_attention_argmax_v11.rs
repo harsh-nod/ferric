@@ -29,7 +29,8 @@ fn configured(pool: &EngineeringTpPagedPoolV1) -> EngineeringTpBatchExecutionV2<
 }
 
 fn select(driver: &mut EngineeringTpBatchExecutionV2<Recording>) -> TpResult<()> {
-    driver.configure_ordered_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+    driver
+        .configure_ordered_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
 }
 
 fn allocations(driver: &EngineeringTpBatchExecutionV2<Recording>) -> Vec<(u64, usize)> {
@@ -50,7 +51,10 @@ fn ordered_barriers(transport: &Recording, published: bool) {
     let events = transport.events.borrow();
     let commands = &transport.commands;
     let mut cursor = 0;
-    assert_eq!(commands[0].kernel, "ferric_qwen3_tp_batch32_embedding_bf16_v5");
+    assert_eq!(
+        commands[0].kernel,
+        "ferric_qwen3_tp_batch32_embedding_bf16_v5"
+    );
     event_pair(&events, &mut cursor, &commands[0]);
     let mut index = 1;
     for _ in 0..36 {
@@ -60,10 +64,17 @@ fn ordered_barriers(transport: &Recording, published: bool) {
             cursor += 2;
             let group = &commands[index..index + count];
             assert_eq!(
-                group.iter().filter(|command| command.kernel == WAVE_GQA).count(),
+                group
+                    .iter()
+                    .filter(|command| command.kernel == WAVE_GQA)
+                    .count(),
                 usize::from(count == 10),
             );
-            assert!(group.iter().all(|command| !matches!(command.kernel, RESIDUAL | HEAD | WAVE_ARGMAX)));
+            assert!(
+                group
+                    .iter()
+                    .all(|command| !matches!(command.kernel, RESIDUAL | HEAD | WAVE_ARGMAX))
+            );
             for command in group {
                 event_pair(&events, &mut cursor, command);
             }
@@ -90,7 +101,11 @@ fn ordered_wave_v11_preserves_flattened_commands_io_and_head_barriers() {
         for selected in [
             Vec::new(),
             vec![rows as usize - 1],
-            if rows > 1 { vec![0, rows as usize - 1] } else { vec![0] },
+            if rows > 1 {
+                vec![0, rows as usize - 1]
+            } else {
+                vec![0]
+            },
             (0..rows as usize).collect(),
         ] {
             let mut recordings = Vec::new();
@@ -102,7 +117,9 @@ fn ordered_wave_v11_preserves_flattened_commands_io_and_head_barriers() {
                     select(&mut driver).unwrap();
                 } else {
                     driver
-                        .configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+                        .configure_wave_attention_fp32_argmax_binding_v11(
+                            Fp32ArgmaxBindingV11::recording(),
+                        )
                         .unwrap();
                 }
                 assert_eq!(allocations(&driver), initial_allocations);
@@ -111,18 +128,28 @@ fn ordered_wave_v11_preserves_flattened_commands_io_and_head_barriers() {
                 let output = driver.execute_selected(&batch, &selected).unwrap();
                 assert_eq!(output.choices.len(), selected.len());
                 assert_eq!(driver.completed_batches(), 1);
-                assert_eq!(driver.dispatch_counts(), [if selected.is_empty() { 613 } else { 616 }]);
+                assert_eq!(
+                    driver.dispatch_counts(),
+                    [if selected.is_empty() { 613 } else { 616 }]
+                );
                 assert_eq!(allocations(&driver), initial_allocations);
                 let transport = &driver.inner.transports[0];
                 assert!(transport.pending.is_none());
                 assert!(transport.pending_ordered.is_none());
                 assert!(transport.pending_sequence.is_none());
-                assert!(driver.inner.ordered_batches.as_ref().is_none_or(Vec::is_empty));
+                assert!(
+                    driver
+                        .inner
+                        .ordered_batches
+                        .as_ref()
+                        .is_none_or(Vec::is_empty)
+                );
                 if ordered {
                     ordered_barriers(transport, !selected.is_empty());
                 } else {
                     assert!(!transport.events.borrow().iter().any(|event| matches!(
-                        event, Event::OrderedSubmit(..) | Event::OrderedWait(..)
+                        event,
+                        Event::OrderedSubmit(..) | Event::OrderedWait(..)
                     )));
                 }
                 let expected_reads = if selected.is_empty() {
@@ -176,7 +203,8 @@ fn ordered_wave_v11_rejection_is_atomic_for_binding_capability_and_profile() {
             9 => driver.wave_attention = false,
             10 => driver.prune_output_head = false,
             11 => {
-                driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Baseline;
+                driver.projection.mode =
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline;
             }
             12 => {
                 driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave;
@@ -192,28 +220,58 @@ fn ordered_wave_v11_rejection_is_atomic_for_binding_capability_and_profile() {
             19 => driver.inner.transports.clear(),
             20 => driver.inner.ranks.clear(),
             21 => {
-                driver.inner.reduction = super::super::super::reduction::ReductionWorkspace::Baseline;
+                driver.inner.reduction =
+                    super::super::super::reduction::ReductionWorkspace::Baseline;
             }
             22 => driver.inner.transports[0].ordered_supported = false,
             23 => {
-                driver.inner.ranks.push(fixture(1, &wide_pool()).inner.ranks.pop().unwrap());
+                driver
+                    .inner
+                    .ranks
+                    .push(fixture(1, &wide_pool()).inner.ranks.pop().unwrap());
             }
             24 => {
-                driver.inner.transports.push(fixture(1, &wide_pool()).inner.transports.pop().unwrap());
+                driver
+                    .inner
+                    .transports
+                    .push(fixture(1, &wide_pool()).inner.transports.pop().unwrap());
             }
             _ => unreachable!(),
         }
         let before = (driver.fp32_argmax_v11, driver.inner.ordered_batches.clone());
-        let io_before = driver.inner.transports.iter().map(|transport| (
-            transport.buffers.len(), transport.commands.clone(), transport.reads.clone(),
-            transport.writes.clone(), transport.events.borrow().clone(),
-        )).collect::<Vec<_>>();
+        let io_before = driver
+            .inner
+            .transports
+            .iter()
+            .map(|transport| {
+                (
+                    transport.buffers.len(),
+                    transport.commands.clone(),
+                    transport.reads.clone(),
+                    transport.writes.clone(),
+                    transport.events.borrow().clone(),
+                )
+            })
+            .collect::<Vec<_>>();
         assert!(select(&mut driver).is_err(), "mutation {mutation}");
-        assert_eq!((driver.fp32_argmax_v11, driver.inner.ordered_batches.clone()), before);
-        let io_after = driver.inner.transports.iter().map(|transport| (
-            transport.buffers.len(), transport.commands.clone(), transport.reads.clone(),
-            transport.writes.clone(), transport.events.borrow().clone(),
-        )).collect::<Vec<_>>();
+        assert_eq!(
+            (driver.fp32_argmax_v11, driver.inner.ordered_batches.clone()),
+            before
+        );
+        let io_after = driver
+            .inner
+            .transports
+            .iter()
+            .map(|transport| {
+                (
+                    transport.buffers.len(),
+                    transport.commands.clone(),
+                    transport.reads.clone(),
+                    transport.writes.clone(),
+                    transport.events.borrow().clone(),
+                )
+            })
+            .collect::<Vec<_>>();
         assert_eq!(io_before, io_after);
     }
 }
@@ -221,13 +279,19 @@ fn ordered_wave_v11_rejection_is_atomic_for_binding_capability_and_profile() {
 #[test]
 fn ordered_wave_v11_keeps_existing_selectors_closed_and_freezes_policies() {
     let mut synchronous = configured(&wide_pool());
-    synchronous.configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording()).unwrap();
+    synchronous
+        .configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+        .unwrap();
     assert!(synchronous.configure_ordered_batches(true).is_err());
     assert!(select(&mut synchronous).is_err());
     assert!(synchronous.inner.ordered_batches.is_none());
     let mut legacy_ordered = configured(&wide_pool());
     legacy_ordered.configure_ordered_batches(true).unwrap();
-    assert!(legacy_ordered.configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording()).is_err());
+    assert!(
+        legacy_ordered
+            .configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+            .is_err()
+    );
     assert!(select(&mut legacy_ordered).is_err());
     assert!(legacy_ordered.fp32_argmax_v11.is_none());
 
@@ -237,8 +301,16 @@ fn ordered_wave_v11_keeps_existing_selectors_closed_and_freezes_policies() {
     assert_eq!(driver.inner.ordered_batches.as_ref().unwrap().len(), 0);
     assert_eq!(driver.dispatch_counts(), [0]);
     assert!(select(&mut driver).is_err());
-    assert!(driver.configure_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording()).is_err());
-    assert!(driver.configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording()).is_err());
+    assert!(
+        driver
+            .configure_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+            .is_err()
+    );
+    assert!(
+        driver
+            .configure_wave_attention_fp32_argmax_binding_v11(Fp32ArgmaxBindingV11::recording())
+            .is_err()
+    );
     for enabled in [false, true] {
         assert!(driver.configure_wave_attention(enabled).is_err());
         assert!(driver.configure_output_head_pruning(enabled).is_err());
@@ -246,17 +318,30 @@ fn ordered_wave_v11_keeps_existing_selectors_closed_and_freezes_policies() {
         assert!(driver.configure_dispatch_sequences(enabled).is_err());
         assert!(driver.configure_ordered_batches(enabled).is_err());
     }
-    assert!(driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3).is_err());
-    assert_eq!(driver.fp32_argmax_v11, Some(Fp32ArgmaxBindingV11::recording()));
+    assert!(
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+            .is_err()
+    );
+    assert_eq!(
+        driver.fp32_argmax_v11,
+        Some(Fp32ArgmaxBindingV11::recording())
+    );
     assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
 }
 
 #[test]
 fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() {
     for failure in [
-        Failure::OrderedSubmit, Failure::OrderedWait, Failure::AttentionSubmit,
-        Failure::AttentionWait, Failure::ResidualWait, Failure::ArgmaxSubmit,
-        Failure::ArgmaxWait, Failure::BadChoice, Failure::PreparePackets,
+        Failure::OrderedSubmit,
+        Failure::OrderedWait,
+        Failure::AttentionSubmit,
+        Failure::AttentionWait,
+        Failure::ResidualWait,
+        Failure::ArgmaxSubmit,
+        Failure::ArgmaxWait,
+        Failure::BadChoice,
+        Failure::PreparePackets,
     ] {
         let mut pool = wide_pool();
         let mut driver = configured(&pool);
@@ -267,7 +352,13 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
         assert!(driver.execute_selected(&batch, &[16]).is_err());
         assert_eq!(driver.completed_batches(), 0);
         assert!(driver.poisoned);
-        if matches!(failure, Failure::OrderedSubmit | Failure::OrderedWait | Failure::AttentionSubmit | Failure::AttentionWait) {
+        if matches!(
+            failure,
+            Failure::OrderedSubmit
+                | Failure::OrderedWait
+                | Failure::AttentionSubmit
+                | Failure::AttentionWait
+        ) {
             assert_eq!(driver.dispatch_counts(), [1]);
         }
         assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
@@ -279,8 +370,14 @@ fn ordered_wave_v11_failures_never_complete_and_quarantine_the_submitted_pool() 
         assert_eq!(pool.stats().free_pages, 0);
         assert_eq!(pool.stats().quarantined_pages, 4);
         assert_eq!(pool.stats().cached_pages, 0);
-        assert_eq!(pool.check_invariants(), Err(crate::tp_paged::EngineeringTpPagedErrorV1::Poisoned));
-        assert!(pool.retire_sequence(batch.rows()[0].sequence(), false, 1).is_err());
+        assert_eq!(
+            pool.check_invariants(),
+            Err(crate::tp_paged::EngineeringTpPagedErrorV1::Poisoned)
+        );
+        assert!(
+            pool.retire_sequence(batch.rows()[0].sequence(), false, 1)
+                .is_err()
+        );
         driver.close().unwrap();
         assert!(driver.inner.closed);
     }
@@ -311,7 +408,11 @@ fn ordered_wave_v11_host_spans_preserve_commands_and_name_the_flush_boundary() {
         let mut pool = wide_pool();
         let mut driver = configured(&pool);
         select(&mut driver).unwrap();
-        let timing = if enabled { crate::host_timing::HostTiming::enabled() } else { crate::host_timing::HostTiming::default() };
+        let timing = if enabled {
+            crate::host_timing::HostTiming::enabled()
+        } else {
+            crate::host_timing::HostTiming::default()
+        };
         driver.configure_host_timing(timing.clone()).unwrap();
         let batch = prepare(&mut pool, 1);
         pool.begin_submission(&batch).unwrap();
@@ -323,10 +424,17 @@ fn ordered_wave_v11_host_spans_preserve_commands_and_name_the_flush_boundary() {
             assert_eq!(snapshot["incomplete"], false);
             assert_eq!(snapshot["active_records"], 0);
             assert_attention_operation_spans(&snapshot, batch.id(), 36);
-            let flushes = snapshot["records"].as_array().unwrap().iter()
-                .filter(|row| row["label"] == "flush_ordered_batches").collect::<Vec<_>>();
+            let flushes = snapshot["records"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|row| row["label"] == "flush_ordered_batches")
+                .collect::<Vec<_>>();
             assert_eq!(flushes.len(), 2);
-            for (phase, count) in [("collective_attention", 36), ("collective_feed_forward", 36)] {
+            for (phase, count) in [
+                ("collective_attention", 36),
+                ("collective_feed_forward", 36),
+            ] {
                 let row = flushes.iter().find(|row| row["phase"] == phase).unwrap();
                 assert_eq!(row["category"], "span");
                 assert_eq!(row["count"], count);
