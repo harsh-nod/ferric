@@ -333,26 +333,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         &mut self,
         binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
     ) -> TpResult<()> {
-        if self.fp32_argmax_v11.is_some()
-            || self.admitted_argmax_v11 != Some(binding)
-            || self.last_batch != 0
-            || self.completed_batches != 0
-            || self.poisoned
-            || self.inner.closed
-            || self.inner.draft_v10
-            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
-            || self.row_capacity != 32
-            || self.inner.ranks.len() != 1
-            || self.inner.transports.len() != 1
-            || self.inner.transports[0].peer_group_rank().is_some()
-            || !self.head_profile_configured
-            || self.fp32_logits.is_none()
-            || self.inner.large_kv
-            || self.inner.sequences.is_some()
-            || self.inner.ordered_batches.is_some()
-            || self.numerical.is_some()
+        if !self.fp32_argmax_binding_is_fresh_v11(binding)
             || self.wave_attention
-            || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
             || !matches!(
                 self.projection.mode,
                 super::EngineeringTpProjectionModeV3::Baseline
@@ -363,6 +345,61 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         }
         self.fp32_argmax_v11 = Some(binding);
         Ok(())
+    }
+
+    /// Selects v11 only for the separate preconfigured wave-attention experiment.
+    /// The legacy selector remains baseline-attention-only. Configure wave attention
+    /// before the v8 head; this selector freezes the resulting MFMA/pruned profile.
+    /// # Errors
+    /// Rejects wrong images, unsupported profiles and repeated or late configuration.
+    pub fn configure_wave_attention_fp32_argmax_v11(
+        &mut self,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<()> {
+        let binding = artifact
+            .fp32_argmax_binding_v11()
+            .ok_or("argmax v11 requires the exact separately admitted one-root image")?;
+        self.configure_wave_attention_fp32_argmax_binding_v11(binding)
+    }
+
+    fn configure_wave_attention_fp32_argmax_binding_v11(
+        &mut self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+    ) -> TpResult<()> {
+        if !self.fp32_argmax_binding_is_fresh_v11(binding)
+            || !self.wave_attention
+            || !self.prune_output_head
+            || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
+        {
+            return Err("wave attention argmax v11 requires fresh target TP1/capacity32, FP32-v8, device TP1, MFMA projection, pruning and preconfigured wave attention, without large KV, peers, sequences, ordered batches or capture".into());
+        }
+        self.fp32_argmax_v11 = Some(binding);
+        Ok(())
+    }
+
+    fn fp32_argmax_binding_is_fresh_v11(
+        &self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+    ) -> bool {
+        self.fp32_argmax_v11.is_none()
+            && self.admitted_argmax_v11 == Some(binding)
+            && self.last_batch == 0
+            && self.completed_batches == 0
+            && !self.poisoned
+            && !self.inner.closed
+            && !self.inner.draft_v10
+            && self.inner.plan.model().role == Qwen3ModelRole::Target8B
+            && self.row_capacity == 32
+            && self.inner.ranks.len() == 1
+            && self.inner.transports.len() == 1
+            && self.inner.transports[0].peer_group_rank().is_none()
+            && self.head_profile_configured
+            && self.fp32_logits.is_some()
+            && !self.inner.large_kv
+            && self.inner.sequences.is_none()
+            && self.inner.ordered_batches.is_none()
+            && self.numerical.is_none()
+            && self.reduction_mode() == EngineeringTpReductionModeV3::DeviceTp1V3
     }
 
     /// Opt-in argmax selection only; the v8 projection and FP32 output are unchanged.

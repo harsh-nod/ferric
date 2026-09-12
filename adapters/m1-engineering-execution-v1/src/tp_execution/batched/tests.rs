@@ -4,6 +4,7 @@
 //! host reductions, and terminal failure behavior without a physical device.
 
 mod argmax_v11;
+mod attention_argmax_v11;
 mod draft;
 mod large_kv;
 mod ordered_batches;
@@ -47,6 +48,8 @@ enum Failure {
     PreparePackets,
     ArgmaxSubmit,
     ArgmaxWait,
+    AttentionSubmit,
+    AttentionWait,
 }
 
 struct Recording {
@@ -62,6 +65,7 @@ struct Recording {
     commands: Vec<EngineeringTpDispatchV1>,
     reads: Vec<(u64, usize)>,
     writes: Vec<(u64, usize)>,
+    write_payloads: Vec<(u64, usize, Vec<u8>)>,
     failure: Option<Failure>,
     choice_override: Option<Vec<u32>>,
     rollover_supported: bool,
@@ -266,6 +270,7 @@ impl EngineeringTpRankTransportV1 for Recording {
         }
         self.buffers.get_mut(&id).unwrap()[offset..offset + bytes.len()].copy_from_slice(bytes);
         self.writes.push((id, bytes.len()));
+        self.write_payloads.push((id, offset, bytes.to_vec()));
         Ok(())
     }
 
@@ -278,6 +283,15 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.failure == Some(Failure::AttentionSubmit)
+            && matches!(
+                command.kernel,
+                "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+                    | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+            )
+        {
+            return Err("injected attention submit failure".into());
+        }
         if self.failure == Some(Failure::ArgmaxSubmit)
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
         {
@@ -319,6 +333,15 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
+        if self.failure == Some(Failure::AttentionWait)
+            && matches!(
+                command.kernel,
+                "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+                    | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+            )
+        {
+            return Err("injected attention completion failure".into());
+        }
         if self.failure == Some(Failure::ArgmaxWait)
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
         {
@@ -597,6 +620,7 @@ fn fixture_for_model(
             commands: Vec::new(),
             reads: Vec::new(),
             writes: Vec::new(),
+            write_payloads: Vec::new(),
             failure: None,
             choice_override: None,
             rollover_supported: false,

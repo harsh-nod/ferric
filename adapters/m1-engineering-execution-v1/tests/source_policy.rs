@@ -229,13 +229,55 @@ fn argmax_canary_is_separately_opted_in_without_changing_frozen_clis() {
     assert_eq!(dependency["optional"].as_bool(), Some(true));
     assert_eq!(dependency["default-features"].as_bool(), Some(false));
     let canary = include_str!("../src/bin/ferric-qwen3-argmax-canary.rs");
-    assert!(canary.contains("new_wide32_with_argmax_v11"));
-    assert!(canary.contains("configure_fp32_argmax_v11"));
+    assert!(canary.contains("argmax_canary_contract::Options::parse"));
+    assert!(canary.contains("CanaryProfile::LegacyArgmax"));
+    assert!(!canary.contains("attention_argmax_canary_contract"));
+    let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
+    assert!(shared.contains("new_wide32_with_argmax_v11"));
+    assert!(shared.contains("configure_fp32_argmax_v11"));
     for frozen in [
         include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),
         include_str!("../src/bin/ferric-qwen3-paired-paged-canary.rs"),
     ] {
         assert!(!frozen.contains("--argmax-mode"));
+    }
+}
+
+#[test]
+fn attention_argmax_canary_is_closed_and_reuses_preallocation_admission() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-attention-argmax-canary"))
+        .unwrap();
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
+    let entry = include_str!("../src/bin/ferric-qwen3-attention-argmax-canary.rs");
+    assert!(entry.contains("attention_argmax_canary_contract::parse"));
+    assert!(entry.contains("argmax_canary_runtime::execute"));
+    let contract = include_str!("../src/bin/attention_argmax_canary_contract.rs");
+    assert!(contract.contains("Options::parse(forwarded.into_iter())"));
+    assert!(contract.contains("options.mode != ArgmaxMode::WaveV11"));
+    assert!(!include_str!("../src/bin/argmax_canary_contract.rs").contains("--attention"));
+    let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
+    assert!(shared.contains("configure_wave_attention_fp32_argmax_v11"));
+    assert!(
+        shared.find("worker.load_additional_artifact(&argmax_artifact)").unwrap()
+            < shared.find("EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11").unwrap()
+    );
+    assert!(
+        shared.find("driver.configure_wave_attention(true)").unwrap()
+            < shared.find("driver.configure_head_precision_v8(true)").unwrap()
+    );
+    for frozen in [
+        include_str!("../src/bin/ferric-qwen3-tp-batch-engineering.rs"),
+        include_str!("../src/bin/ferric-qwen3-paired-paged-canary.rs"),
+    ] {
+        assert!(!frozen.contains("configure_wave_attention_fp32_argmax_v11"));
     }
 }
 
