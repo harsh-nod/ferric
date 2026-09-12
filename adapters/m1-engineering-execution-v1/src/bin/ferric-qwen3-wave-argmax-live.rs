@@ -217,10 +217,10 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
         driver.configure_head_precision_v8(true)?;
         match options.submission {
             Submission::Synchronous => {
-                driver.configure_wave_attention_fp32_argmax_v11(&argmax_artifact)?
+                driver.configure_wave_attention_fp32_argmax_v11(&argmax_artifact)?;
             }
             Submission::Ordered => {
-                driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?
+                driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?;
             }
         }
         driver.configure_host_timing(timing.timing.clone())?;
