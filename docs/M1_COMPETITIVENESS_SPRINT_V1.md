@@ -1509,6 +1509,57 @@ Their cleanup receipt is
 Foreign-UID processes were skipped and nondumpable SSH/PAM visibility limits
 remain explicit; these are not global process-absence claims.
 
-The new context8192 HTTP wrapper is source-only and under independent review.
+At that checkpoint the context8192 HTTP wrapper was source-only and under review.
 No new HTTP timing, native kernel gain, speculative serving, default promotion,
 Verus proof, M1 closure or competitive win is claimed.
+
+## Live HTTP Correctness And Matched Admission
+
+The separate HTTP wrapper now passes 25 CPU tests on mi300x, with unchanged
+frozen client and serving sources. It binds every timed stream to the actual
+controller/request final, validates the source-shaped live journal and exact
+setup, and rejects forced cleanup even when the process subsequently exits0.
+CPU archive `2e6787ead422afd1613fe753a23e29ea2470544a74b7c35cdfc2a9f3e66434ac`
+matches two remote streams and the local copy. The private 360 KiB stage is
+removed after source checks and known-process absence.
+
+Root stages the exact tested live executable `9fd94a978358f0533c096ec9b5dd51d46833b4ca5426b1eaabb0337b4409c656`
+on mi350 and runs the two qualification modes sequentially under the shared
+GPU lease. Each uses two full128 prompt/output requests at context8192,
+pages512, cap32/chunk16, TP1 physical GPU0, wave attention, FP32 v8 head and
+v11 argmax. Prefix caching, speculation and profiling remain disabled.
+
+Both actual launch statuses are0. Each 267-record journal binds the saved
+setup, two fresh request IDs, slot0 generations1/2, all256 output token events,
+zero cache reuse and the exact reference token IDs/UTF8. Each close reports
+270 batches and166278 packets, with no cleanup signals or outer forcing,
+controller exit0, joined threads and absent controller group/worker. All eight
+GPU identities and zero-utilization snapshots agree before/after. Independent
+raw review and all18 raw-file hashes pass for each mode.
+
+| Mode | Receipt SHA256 | Complete Archive SHA256 |
+| --- | --- | --- |
+| Synchronous | `697dc47d0137de1a1e644f4f6474c7729ea7a034bdef59f6cfe32e251fe9a565` | `0076b69c498a8df0378c753046a4cdb57beb3b65707a7eb1f139bb8ac94cf588` |
+| Ordered | `469ba83b882ddb4e81e3dbfa0fa215ae0bfb4a93770eaef419f6bc94c30cf4f2` | `2d357980ea3b1952b9961fae7571bbd9db3d69cea2efc3d9f47e84cfd6c8aea3` |
+
+Both archives match independent second remote streams. Qualification timings
+are not summarized or admitted. Same-mode raw replay now permits preparing
+the unchanged C1/10warmup/30sample matched workload, with pre/post diagnostic
+requests and no token/batch journaling in the timed path. Synchronous matched
+execution is in progress; no new HTTP performance or serving qualification
+is claimed at this checkpoint.
+
+The append-only finite probe separately passes ten CPU test methods and its
+nine-case self-check. It uses TP widths1/2/8 and rows1/17/32, including logical
+and physical boundary8191, remapped pages, finite raw BF16 words and complete
+cache/input/guard checks. Its112-byte explicit/368-byte total ABI is not the
+attention ABI. These are single-worker width fixtures, not multi-GPU evidence.
+Archive `df31e2ba06bbdda6b9934b549138d45c2582469bdf7e20edd0a091c7d0bae265`
+matches twice; the164 KiB CPU stage is removed. Native execution remains pending.
+
+The first paired-emission helper attempt stopped at step1 before vendoring or
+emission: six of ten methods passed and four rejected the archived good v11
+image's allocated `.relro_padding` section. Source/tool checks stayed exact.
+The narrow observed-padding correction is independently reviewed and retains
+rejection of other nonzero allocated BSS; the failed attempt is not relabeled
+as a pass. No kernel image or new kernel performance is admitted yet.

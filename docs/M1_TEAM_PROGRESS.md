@@ -45,12 +45,20 @@ output rate 3.949884 -> 4.643287 tokens/s (+17.56%). Ordered TPOT ranges
 argmax fixed; context256 host timing does not replace context8192 HTTP timing.
 All four correctness timings and prior cohorts remain excluded.
 
+The new live entrypoint now also passes two fresh sequential full128 HTTP
+requests in each submission mode at context8192. Both modes reproduce exact
+reference token IDs and UTF8, reuse slot0 with generations1/2 and no cached
+prefix, and close normally with all eight GPUs idle afterward. Independent raw
+review agrees. These four correctness requests provide no timing samples.
+The separate matched synchronous cohort is running; no new HTTP metrics are
+admitted yet.
+
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | Matched Qwen3-8B 128/128 cell passes for Ferric and vLLM. TTFT/TPOT: Ferric 3705.967/506.969 ms; vLLM 19.243/4.414 ms. SGLang r7 starts and finishes but fails exact output in 10 of 30 measured responses. | Diagnose SGLang nondeterminism; repeated primary workloads and bottleneck attribution. No admitted SGLang metrics or competitive win. |
-| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition observes 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append `2716371` passes both 18-test host profiles; its exact pre-existing RMSNorm Clippy diagnostic remains actual exit101, not a strict pass. Nine helper methods and existing 30/24 probe fixtures pass. V12 remains host/emission-only. | Same-8efd control/candidate emission and unchanged fourteen-root comparison. A separate source-only attention-loop candidate is in progress. Neither new kernel has native or performance qualification. |
+| Kernels | Wave attention plus v11 argmax passes finite fixtures and the earlier full128 ABBA cohort. The separate ordered composition observes 15.45% lower mean TPOT and 17.56% higher mean output rate in its own n=2 cohort. Cooperative KV-append `2716371` passes both 18-test host profiles; its exact pre-existing RMSNorm Clippy diagnostic remains actual exit101, not a strict pass. The new nine-case append probe passes ten CPU tests and its self-check. V12 remains host/emission-only. | Same-8efd control/candidate emission and unchanged fourteen-root comparison. First comparison-helper attempt stopped before emission on a known-good ELF padding section; the narrow correction is reviewed. Attention-loop `b75e81c` remains source-only. Neither new kernel has native or performance qualification. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Ordered driver `ad06633` and submission canary `7cb6522` are integrated locally. All eight native submission runs pass independent replay. The live entrypoint is integrated as `7f58928` from tested `433e213`: all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regression tests pass. Pages-only `599943b` is deployed after eleven checks; all seven public assets match tested bytes. | Complete review and CPU tests of the separate context8192 HTTP wrapper, then fresh GPU qualification and matched remeasurement. No new Verus proof. |
+| Integration and Pages | Live entrypoint `7f58928` from tested `433e213` passes all 32 host steps, 775 adapter invocations, eight doctests, strict Clippy and 74 HTTP regressions. The separate HTTP wrapper passes 25 CPU tests and both context8192 two-request native checks. Pages-only `599943b` is deployed after eleven checks; all seven public assets match tested bytes. | Complete matched synchronous and ordered remeasurement, then publish admitted results. No new Verus proof. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
