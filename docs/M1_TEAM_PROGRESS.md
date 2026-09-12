@@ -61,9 +61,10 @@ stable-gain or isolated per-kernel claim.
 | --- | --- | --- |
 | Measurement | Both latest HTTP Qwen3-8B 128/128 cohorts pass independent replay. Ordered: TTFT 2862.079 ms, TPOT 192.127 ms, throughput 4.694997 tokens/s across 30 measured requests. Synchronous: 3482.380 / 276.255 ms and 3.318800 tokens/s. Earlier Ferric: 3705.967 / 506.969 ms and 1.879805 tokens/s; retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s. SGLang r7 finishes but fails exact output in 10 of 30 measured responses. | Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
 | Kernels | Visible-attention R3 passes fresh 13/13 baseline and 19/19 candidate tests, but emission fails the unique-header-exit check. The experiment is stopped: C1 decode already uses position+1, so it has no masked tail to remove. Append `2716371` has 278 SGPR spills; `d03ccd5` fails an overflow proof; guarded `8b57646` fails the termination proof before producing an image. All failures are retained. | No new kernel candidate is admitted. Reassess bottlenecks before another source trial; do not weaken compiler checks. Known kernel Clippy 101 debt remains explicit. V12 remains host/emission-only. |
-| Runtime Optimization | Tested source `2396a82`, integrated as `212ec85`, passes all 31 CPU steps and four native synchronous/ordered 8/128-output correctness cases. Separate old/new/new/old replay passes, but mean TPOT worsens from 194.521 to 218.333 ms and mean output rate falls from 4.648212 to 4.200225 tokens/s. These are instrumented TP1/context256 diagnostics, n=2 per binary, not HTTP results. | Do not promote residual grouping as a performance gain. Corrected layer-only C1 Wave source `c2a235e` passes all 40 host steps, including 856 passing invocations, 45 ignored, 20 targets and strict Clippy. Release byte parity and separate 28-checker/18-reducer CPU gates pass. Both 8-token native modes pass; 128-token qualification and separate ABBA remain pending. Head and multirow MFMA remain fixed. No fe2o3 change. |
+| Runtime Optimization | Residual grouping remains a negative result: mean TPOT 194.521 to 218.333 ms and rate 4.648212 to 4.200225 tokens/s in the separate n=2 controller diagnostic. Layer-only C1 source `c2a235e`, integrated through `b7b1eda`, passes all 40 host steps, strict Clippy, release parity and the 28-checker/18-reducer CPU gates. Both modes pass 8/128-token qualification and all four separate ABBA runs; complete raw archive is retained. | Replay the authenticated full ABBA cohort before publishing metrics. Head, multirow MFMA and defaults remain fixed. No fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
-| Integration and Pages | Live entrypoint `7f58928` from tested `433e213` retains its admitted HTTP evidence. Pages-only `45b608e` is deployed after nine checks; all seven public assets match tested bytes. The site adds the residual decode regression as a separate diagnostic, preserving all historical objects and serving metrics. Its completed stage and worktree are removed after archival. | Finish C1 qualification before adding any new performance or HTTP claim. A read-only audit is mapping the conditional live integration. The live-controller artifact audit found no analogous stale-candidate reuse; it is not a hermetic-build attestation. No new Verus proof. |
+| Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
+| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `45b608e` publishes the residual decode regression separately and preserves historical serving metrics. The completed Pages stage/worktree are removed. New explicit C1 live entrypoint `87f38de` has accepted remote formatting and leaves the old parser/entrypoint unchanged. | Run the new live host gate, then separate native/HTTP qualification. Publish accepted C1 diagnostics without changing serving metrics or claiming stability. |
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
@@ -174,12 +175,15 @@ and scratch-reuse cases bring the forecast to 15 numerical plus 8 contract
 tests; `256a6e4` applies accepted remote-only formatting to those tests. The
 first host build is still pending. Separate integer proof `7faa90c` stopped
 before verification on E0283; raw JSON reports zero verified queries. Correction
-`ed2ceb5` only types two branch literals as `int`, with a separate rerun pending.
-Conditional live entrypoint `e1ac86f` adds explicit ordered-only layer selection
-without changing the old live/parser path; its host gate is also pending.
-Typed emission, native kernel correctness, Verus verification and performance
-remain unproven; the extra dispatch may offset potential parallelism. No new
-kernel or proof qualification is claimed.
+`ed2ceb5` only types two branch literals as `int`; its separate Verus rerun passes
+18 queries, zero errors and all 16 required functions. Raw JSON `f1ec34e3` and
+complete archive `ce0feb56` retain the standalone integer-model result, not actual
+kernel refinement or FP32/runtime admission. The redundant proof worktree is
+removed after integration (42,404 KiB). Conditional live entrypoint `e1ac86f`,
+formatted as `87f38de`, adds explicit ordered-only layer selection without changing
+the old live/parser path; its host gate is still pending. Typed emission, native
+kernel correctness and performance remain unproven; the extra dispatch may
+offset potential parallelism. No new kernel or M1 qualification is claimed.
 
 A read-only timing audit confirms that the current ordered KFD worker exposes
 host elapsed time, not per-dispatch GPU duration. Ferric currently discards the
