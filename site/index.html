@@ -48,12 +48,10 @@
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
               Bounded resident JSONL and loopback HTTP are implemented in private source;
-              a four-request GPU smoke passes with clean teardown.
-              Corrected ordered submission improves a separate short canary against fresh serial
-              controls; standalone draft outputs match an independent reference.
-              Native fast-draft kernels do not yet establish speculative serving.
-              Repeated short-workload measurements exist; sustained GPU serving qualification,
-              matched vLLM/SGLang comparisons, and protected qualification remain open.
+              the first matched 128-token Ferric/vLLM cell passes exact output checks on one GPU.
+              Ferric is substantially slower on that cell. Standalone draft execution and an
+              independent paged-draft FP32 reference pass; end-to-end speculative serving,
+              SGLang measurements, sustained-load and protected qualification remain open.
             </p>
             <div class="milestone-line">
               <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
@@ -68,7 +66,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-11">Updated 2026-09-11</time>
+              <time data-updated datetime="2026-09-12">Updated 2026-09-12</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -87,7 +85,7 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>Fixed short workload. Repeated profiles and single-run ablations, not production serving.</p>
+            <p>One matched 128/128 cell, followed by earlier fixed-workload observations. Not production-serving qualification.</p>
           </div>
           <div data-performance></div>
         </div>

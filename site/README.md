@@ -7,7 +7,41 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-The new recovery checkpoint is unpublished until separately approved. The prior
+## September 12 Matched Cell
+
+The new `matched128` section is pending root review and Pages-only publication.
+It records the first admitted Ferric and vLLM Qwen3-8B cell: one MI350X GPU, TP1,
+BF16 weights/decoder with an explicitly selected FP32 output head, context 8192,
+128 input/output tokens, concurrency one, ten warmups and thirty measured
+requests per engine. Speculation and prefix caching are off. Ferric is
+substantially slower. The table is descriptive, single-start and closed-loop;
+it does not qualify sustained serving, stock defaults, a repeated primary suite,
+confidence intervals, token ITL or a competitive win. SGLang startup failures
+remain without a metric, never zero throughput. The output-head operand policy
+is explicit: Ferric's MFMA head and vLLM use BF16 operands with FP32
+accumulation/output, while the independent reference converts head operands to
+FP32. These implementation differences were declared before engine outputs.
+
+`latestReadiness` and `pagedDraftReference` separately record the independent
+BF16/SDPA-body FP32-head draft reference, one of eight planned native paged
+canary cases, the private proposal candidate's passing host gate, and the exact
+82703c6 combined host gate (568 invocations, 22 image skips, seven doctests and
+31 Python tests). They do not claim a complete native matrix, new Verus proof
+or speculative serving. All prior scoped objects and `performance.js` remain
+unchanged; their no-baseline/no-paged-model flags describe their earlier cutoff.
+
+`validate-matched128.mjs` rejects metric, precision, identity and qualification
+mutations. Its optional evidence route binds every displayed metric to the
+root-reviewed pair replay and the independent draft captions to raw, adapted and
+clean-lifecycle receipts. It is not a replacement model or performance qualifier.
+
+```sh
+node validate-matched128.mjs /private/matched-evidence
+```
+
+## Earlier Checkpoints
+
+The recovery checkpoint was published at Pages-only commit `4200318`. The prior
 `competitivenessSprint` snapshot in `data/project.js` is preserved verbatim and records private integrated JSONL
 and loopback HTTP source, scoped host/protocol tests, v8 native fixtures and
 separate exact-reference model canaries at budgets 16/32 (actual maxima 16/17,
@@ -19,7 +53,7 @@ HTTP performance claim. Shared peer-currentness results remain native-only;
 the frozen-511 two-per-mode admission-cache canary remains separate. Native
 fixtures alone are not model evidence. Its then-unimplemented larger-KV flag
 is historical, not the current implementation status. Sequential baseline launches
-are now explicitly approved; no matched result is available at this cutoff.
+were approved; no matched result was available at that earlier cutoff.
 No serving-comparison or competitive-win claim follows from the canary.
 
 The preserved historical `competitivenessFollowup` records the exact-reference wave/v8
@@ -96,10 +130,11 @@ and separates completion-window usage from arrival cohorts. The 90-test
 collector and 109-test paired-series gates are CPU-only. Descriptive bootstrap
 intervals require at least three fresh start pairs; this is not evidence of
 stationarity, stable tails or equal framework tuning. The approved sequential
-baseline launches remain without a matched performance result at this cutoff.
-The independent target reference now passes two repeated 128-input/128-output
+baseline launches had no matched performance result at that earlier cutoff.
+The independent target reference passed two repeated 128-input/128-output
 runs with a BF16 eager decoder and explicit FP32-head operands/output. It is
-not the stock-BF16-head cell, a Ferric matching result or a baseline serving run.
+not the stock-BF16-head cell, and that reference-only checkpoint was not itself
+a Ferric matching result or a baseline serving run.
 Its raw, adapted reference and clean-container/idle wrapper receipts are separately pinned.
 
 `validate-competitiveness-recovery.mjs` checks the closed new snapshot, negative

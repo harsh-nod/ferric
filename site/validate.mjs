@@ -7,6 +7,7 @@ import { validatePerformance, testPerformanceRejections } from "./validate-perfo
 import { validateCompetitiveness, testCompetitivenessRejections } from "./validate-competitiveness.mjs";
 import { validateFollowup, testFollowupRejections } from "./validate-competitiveness-followup.mjs";
 import { validateRecovery, testRecoveryRejections } from "./validate-competitiveness-recovery.mjs";
+import { validateMatched128, testMatched128Rejections } from "./validate-matched128.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -19,6 +20,8 @@ validateFollowup(project.competitivenessFollowup);
 testFollowupRejections(project.competitivenessFollowup);
 validateRecovery(project.competitivenessRecovery);
 testRecoveryRejections(project.competitivenessRecovery);
+validateMatched128(project.matched128, project.pagedDraftReference);
+testMatched128Rejections(project.matched128, project.pagedDraftReference);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -77,6 +80,9 @@ assertExactKeys(
     "competitivenessSprint",
     "competitivenessFollowup",
     "competitivenessRecovery",
+    "matched128",
+    "pagedDraftReference",
+    "latestReadiness",
     "milestone",
     "readiness",
     "envelope",
@@ -97,8 +103,8 @@ assert(project.repository === "https://github.com/harsh-nod/ferric", "Ferric rep
 assert(project.fe2o3Repository === "https://github.com/harsh-nod/fe2o3", "fe2o3 repository drifted");
 
 const expectedCurrent = {
-  siteRefreshBase: "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
-  previousSiteRefreshBase: "0a8df6e3595c1ed3ae7fa15dd0edcd9e00986e76",
+  siteRefreshBase: "4200318970ddd0edebf24761cccdb4bb18c22794",
+  previousSiteRefreshBase: "4a3cbd4efe1df08ccdf7e3e59e19036f9f14469d",
   performanceSprintV2Source: "0780becbe5ee3e4e92f53d42311866e79d3f03af",
   performanceSprintV2CoreCommit: "79706b43a177a2fd3fa43ec328221fa3e5041af5",
   performanceSprintV2CoreHostTests: 469,
@@ -908,7 +914,8 @@ assert(project.current.radixPrefixIntegrated === true, "integrated radix status 
 assert(project.current.currentAggregateHsaco === true, "current authority-free aggregate HSACO observation must remain explicit");
 assert(project.current.qwenTokenObserved === true, "site must retain the diagnostic Qwen token observation");
 assert(project.current.servingEndpointAvailable === false, "site must not claim serving");
-assert(project.current.baselineRunsAvailable === false, "site must not claim baseline runs");
+assert(project.current.baselineRunsAvailable === false && project.matched128.frameworkWinClaimed === false,
+  "preserve the historical no-baseline flag; new matched128 data must not imply qualification");
 assert(project.current.dockerAccessible === false, "Docker must remain inaccessible for this checkpoint");
 assert(project.current.nativeBaselineInstallsAvailable === false, "native baseline installs must remain absent");
 assert(project.current.protectedInfrastructureDeployed === false, "protected infrastructure must remain absent");
@@ -1375,6 +1382,14 @@ project.readiness.forEach((item, index) => {
   assertExactKeys(item, ["label", "state", "detail"], `readiness[${index}]`);
   assertState(item.state, `readiness[${index}].state`);
 });
+assert(project.latestReadiness.length === 4, "latest scoped readiness roster");
+project.latestReadiness.forEach((item, index) => {
+  assertExactKeys(item, ["label", "state", "detail"], `latestReadiness[${index}]`);
+  assertState(item.state, `latestReadiness[${index}].state`);
+});
+assert(project.latestReadiness[0].detail.includes("substantially slower"), "measured gap must remain explicit");
+assert(project.latestReadiness[2].detail.includes("566 all-target"), "private candidate host gate scope");
+assert(project.latestReadiness[3].detail.includes("568 all-target"), "combined integration host gate scope");
 
 assert(Array.isArray(project.envelope) && project.envelope.length >= 8, "M1 envelope is incomplete");
 const publicHeadRow = project.envelope.find(([label]) => label === "fe2o3 current public main");

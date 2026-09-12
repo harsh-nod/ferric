@@ -31,6 +31,18 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "First matched Ferric / vLLM cell",
+  "Ferric is substantially slower than vLLM on this cell",
+  "3705.967",
+  "506.969",
+  "19.243",
+  "4.414",
+  "220.558111",
+  "not assigned zero throughput",
+  "Independent paged-draft FP32 reference",
+  "566 all-target test invocations",
+  "568 all-target test invocations",
+  "Ferric's MFMA head and vLLM use BF16 operands with FP32 accumulation/output",
   "Sustained ingress and loopback HTTP",
   "32-row FP32 head: bounded model passes",
   "Shared peer currentness: native only",
@@ -733,6 +745,13 @@ try {
     assert(!/\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i.test(result.currentText), `${name}: rendered a current-dependency claim`);
     assert(browserErrors.length === 0, `${name}: ${browserErrors.join("; ")}`);
 
+    const matchedTable = page.getByRole("region", { name: "Matched 128/128: client latency and output rate", exact: true });
+    assert(await matchedTable.locator("tbody tr").count() === 2, `${name}: exactly two admitted matched engines`);
+    assert((await matchedTable.textContent()).includes("1.879805"), `${name}: Ferric measured rate`);
+    assert(!(await matchedTable.textContent()).includes("SGLang"), `${name}: failed SGLang must not enter numeric table`);
+    await page.getByText("Matched-cell percentiles and evidence", { exact: true }).click();
+    assert(await page.getByRole("region", { name: "Matched 128/128: descriptive single-cohort percentiles", exact: true })
+      .locator("tbody tr").count() === 2, `${name}: both matched percentile rows`);
     const provenanceDisclosure = page.getByText("Exact identities and archived evidence", { exact: true });
     await provenanceDisclosure.click();
     const generatorLabel = page.getByText("Matched MFMA ledger generator source SHA-256", { exact: true });

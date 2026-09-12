@@ -99,6 +99,29 @@
     wrap.append(table);
     parent.append(wrap);
   }
+  const matched = project.matched128;
+  measured.append(element("h3", "", "First matched Ferric / vLLM cell"),
+    element("p", "performance-scope", matched.scope), element("p", "", matched.interpretation));
+  performanceTable("Matched 128/128: client latency and output rate",
+    ["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tok/s"],
+    matched.metrics.map((row) => [row.engine, row.ttftMeanMs.toFixed(3), row.tpotMeanMs.toFixed(3),
+      row.outputTokensPerSecond.toFixed(6)]));
+  measured.append(element("p", "", matched.measurement), element("p", "", matched.correctness),
+    element("p", "", matched.sglangNote));
+  const matchedDetails = element("details", "performance-identities");
+  matchedDetails.append(element("summary", "", "Matched-cell percentiles and evidence"));
+  performanceTable("Matched 128/128: descriptive single-cohort percentiles",
+    ["Engine", "TTFT p50 / p99 (ms)", "TPOT p50 / p99 (ms)", "Cohort (s)"],
+    matched.metrics.map((row) => [row.engine, `${row.ttftP50Ms.toFixed(3)} / ${row.ttftP99Ms.toFixed(3)}`,
+      `${row.tpotP50Ms.toFixed(3)} / ${row.tpotP99Ms.toFixed(3)}`, row.windowSeconds.toFixed(6)]), matchedDetails);
+  const matchedPins = element("dl", "observation-facts");
+  for (const [label, value] of [["Read-only pair replay SHA-256", matched.sourceSummarySha256],
+    ["Timed client SHA-256", matched.clientSha256], ["Independent reference SHA-256", matched.referenceSha256],
+    ...matched.metrics.map((row) => [`${row.engine} receipt SHA-256`, row.receiptSha256])]) {
+    matchedPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  matchedDetails.append(matchedPins);
+  measured.append(matchedDetails, element("h3", "", "Earlier engineering measurements"));
   measured.append(
     element("p", "performance-scope", performance.scope),
     element("p", "", performance.interpretation),
@@ -477,8 +500,11 @@
   measured.append(provenance);
 
   const readiness = document.querySelector("[data-readiness]");
-  project.readiness.forEach((item, index) => {
-    if (index === project.competitivenessRecovery.currentReadinessCount) {
+  [...project.latestReadiness, ...project.readiness].forEach((item, index) => {
+    if (index === project.latestReadiness.length) {
+      readiness.append(element("h3", "", "Earlier sprint checkpoints"));
+    }
+    if (index === project.latestReadiness.length + project.competitivenessRecovery.currentReadinessCount) {
       readiness.append(element("h3", "", "Earlier validated checkpoints"));
     }
     const row = element("div", "readiness-row");
