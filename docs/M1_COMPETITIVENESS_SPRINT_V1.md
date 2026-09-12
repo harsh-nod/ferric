@@ -542,6 +542,47 @@ Ferric's unchanged 128/128 cell is running separately while that baseline-only
 correction is prepared. Native framework API/observer validation and measured
 comparisons remain outstanding.
 
+## First Matched 128/128 Results
+
+On September 12, the unchanged Ferric v2 cell and corrected vLLM v3 cell both
+completed ten warmups and thirty measured requests. Both before/after diagnostics
+match all 128 independent output IDs and decoded UTF-8 bytes exactly. The timed
+client replay matches output bytes and token usage for every request. Both owned
+process/container teardowns pass, followed by all-eight-GPU idle checks.
+
+| Engine | Mean TTFT | Mean TPOT | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric, controller `656edb2` | 3705.967 ms | 506.969 ms | 1.879805 |
+| vLLM 0.28.0 | 19.243 ms | 4.414 ms | 220.558111 |
+
+These are descriptive single-start, concurrency-one, closed-loop finite cohorts,
+not the repeated primary suite or a confidence-qualified framework comparison.
+The interval includes inter-window gaps and final drain, excludes ten warmups,
+and uses the unchanged client aggregator. The shared checkpoint is Qwen3-8B
+BF16 with an explicitly selected FP32 output head, TP1 on physical MI350X GPU0,
+8192-token context, 128 input/output tokens, greedy fixed-length output, and
+speculation/prefix caching disabled. This is not a comparison of stock BF16-head
+defaults. Ferric is substantially slower on this cell; no competitiveness or win
+claim follows from the earlier short-canary improvements.
+
+Ferric p50/p99 TTFT are 3684.923/3963.110 ms and TPOT are 505.073/516.929 ms.
+vLLM p50/p99 TTFT are 19.486/20.167 ms and TPOT are 4.414/4.420 ms. The cohort
+durations are 2042.764846 and 17.410378 seconds respectively. Pair replay SHA-256:
+`f6fb4811915afce5d004320f3d6f1d455b7a3a9093b22858ac9c7fba925a254f`.
+Ferric receipt SHA-256:
+`6192619afddae282d66813c9c9f50aee98c0cac3bde14f0507c8e59759781a2e`.
+Source, raw requests, diagnostics and lifecycle evidence remain retained under
+the local `ferric-matched-result-summary-v1` and `ferric-matched-final-plan-v2/v3`
+evidence directories. No profiled run is substituted into these numbers.
+
+The first SGLang v3 attempt failed before model execution: AITER tried to copy
+unreadable image-bundled cache files into its owned user cache. Its exact owned
+container was removed and all GPUs returned idle. It produced no numerical or
+performance result. A separately versioned startup correction is under review;
+the failed receipt remains retained. The next Ferric work is measured diagnosis
+of ordered attention/FFN execution, the explicit wave-attention combination, and
+the private autoregressive draft transaction. Speculative serving remains open.
+
 ## Published Checkpoint
 
 The separate Pages-only branch was freshly rebased and published at
