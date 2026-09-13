@@ -1,0 +1,26 @@
+[package]
+name = "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "32e43025b09f05656171cd12e839289d2ce706e4", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "32e43025b09f05656171cd12e839289d2ce706e4", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_tp_wave_rmsnorm_kernels_device_v15"
+path = "src/lib.rs"

@@ -1,0 +1,86 @@
+# Wave RMSNorm V15 Source Candidate
+
+Separate source-only hypothesis. No host tests, formatting, emission, native
+qualification or performance measurement has run for this candidate. No adapter,
+controller, existing kernel, default, inventory or external manifest is changed.
+
+## Closed Scope
+
+One root: `ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15`.
+Only pure behavior 0, width 4096 and rows 1..32 are admitted. Both auxiliary slices
+must be empty. Input/output lengths are exactly rows*4096, weight length is
+exactly 4096, grid is exactly [rows,1,1], and epsilon is exactly `1e-6_f32`.
+The Wave64 workgroup is [64,1,1]. Width 128 Q/K normalization, draft 1024 and
+residual-fused normalization are not part of this candidate.
+
+The signature retains the original five slice descriptors and four scalar
+arguments: 96 explicit bytes, with pointer alignment 2 and scalar alignment 4.
+Hidden offset 96, total 352 and kernarg alignment 8 are predeclared expectations
+to be measured, not an emitted ABI result. Empty auxiliary slices still need
+the caller's valid zero-length slice/sentinel contract. This source does not
+authenticate raw pointers or aliasing at a device launch boundary.
+
+Lane L accumulates columns L+64*k for k=0..63. All physical lanes then perform
+sum64 and invalid-max64 collectives before any numeric rejection. The retained
+second pass rereads each owned input and its weight and uses the old pure
+output path: FP32 division, epsilon addition, sqrt, reciprocal, two separate
+multiplications and BF16 round-to-nearest-even. RowStriped2D<Index1D,64,64>
+retains one writer per active element and no writer outside the supplied slice.
+No LDS, global scratch, register-array cache, FMA or approximate rsqrt is added.
+
+## Arithmetic Boundary
+
+This is not the old scalar left fold. A host case with a leading 256 and 4095
+copies of 0.03125 explicitly demonstrates different sum bits. BF16 output bits
+and downstream model tokens may change at rounding boundaries. Universal
+bitwise equivalence is not claimed and no frozen oracle is changed.
+
+Nonfinite inputs, products and partial sums are recorded without an early
+lane exit. Both collectives execute before the uniform result/invalid check.
+The second pass retains input/weight/intermediate/narrowed-output checks and
+has no later collective. Failed numerical execution may have partial stores;
+there is no transactional output promise. A future runtime must retain its
+existing failed-dispatch poison/quarantine behavior.
+
+The baseline has a width-4096 source-level serial chain in every lane; the
+candidate has 64 local additions plus a six-level sum and invalid reduction.
+Compiler scalarization, caches and memory broadcast mean this is not evidence
+of 64x physical traffic or speedup. Retained host spans include IPC/submission/
+wait; they are not per-kernel GPU durations. No GPU, HTTP, stability, default,
+competitive or M1 claim follows from this source.
+
+## Focused Tests and Future Gate
+
+Forecast, not executed: six contract methods and fourteen host-model methods,
+20 total; zero unit tests and zero doctests expected. Contract tests bind the
+one-root generated roster, five-slice/four-scalar ABI, exact entry/collective
+AST, seventeen source mutations and all 32 row ownership maps. The post-sum
+arithmetic and complete second pass are compared against the existing RMSNorm
+AST with only its unreachable fused branch replaced by the pure expression.
+
+The CPU model simulates the six XOR levels [1,2,4,8,16,32], records both
+collectives before invalid rejection and checks both input passes. It uses CPU
+sqrt, not device-capability emulation or a GPU mathematical oracle. Nonuniform,
+signed, exponent-mixed and association-boundary inputs are checked against a
+sampled f64 reference with a fixture-only BF16 rounding sanity bound, not a
+native acceptance tolerance. Separate tests cover even/odd signed midpoint
+rounding, narrowing overflow, tiny inputs/zero signs, invalid shapes/lengths,
+exact epsilon/grid, auxiliary modes, nonfinite inputs in every lane, square/
+sum/output overflow, guarded inactive capacity and changed inputs after error.
+
+Source base: Ferric `0588f997`. Both fe2o3 dependencies are pinned to
+`32e43025b09f05656171cd12e839289d2ce706e4`. Cargo.lock is deliberately absent:
+root requires a separately reviewed remote metadata phase to generate and
+admit that exact dependency closure before any host tests. No local Cargo
+resolution or hand-derived lock graph was used. Build.rs reuses the unchanged
+aggregate target helpers; its fixed binding is a host fixture only.
+
+After source review, the remote-only gate must retain the exact new crate,
+baseline `../qwen3-all-kernels-v1/src/rmsnorm.rs`, shared target.rs and
+build/target_contract.rs, final lock and compiler/tool closure. Run formatting,
+source-fresh host tests and strict Clippy before a separate typed-emission gate.
+Emission must retain detailed typed/effect/progress payload, verify all bounds
+and full-wave convergence, inspect both load passes/shuffle association/stores,
+and check actual ABI/resources without suppressing compiler checks. Any later
+finite native profile, whole-buffer guards, model oracle or opt-in adapter route
+requires separate review; none is implemented here.
