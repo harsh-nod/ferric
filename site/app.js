@@ -263,13 +263,13 @@
   const liveC1Teams = element("div", "team-grid");
   for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
     ["Query-hoist v14: finite native parity", "8 cases + CPU replay passed", liveC1.v14],
-    ["Wave RMSNorm v15: static image checks", "23 tests + image emitted", liveC1.v15],
+    ["Wave RMSNorm v15: finite native checks", "8 cases + CPU replay passed", liveC1.v15],
     ["V14 canary and current runtime", "4 full-Qwen cases passed", liveC1.development]]) {
     const article = element("article", "team-item");
     const heading = element("div", "team-heading");
     heading.append(element("h3", "", name), element("span", "state-tag state-open", label));
     const facts = element("dl", "team-facts");
-    for (const [key, value] of [["Source", team === liveC1.v15 ? team.emission.source : team.source], ["Validation", team.detail]])
+    for (const [key, value] of [["Source", team === liveC1.v15 ? team.current.source : team.source], ["Validation", team.detail]])
       facts.append(element("dt", "", key), element("dd", "", value));
     if (team.native) {
       for (const [key, value] of [["Native report SHA-256", team.native.reportSha256],
@@ -277,11 +277,14 @@
         facts.append(element("dt", "", key), element("dd", "", value));
     }
     if (team === liveC1.v15)
-      facts.append(element("dt", "", "Emission SHA-256"), element("dd", "", team.emission.archiveSha256),
-        element("dt", "", "Image SHA-256"), element("dd", "", team.emission.imageSha256));
+      facts.append(element("dt", "", "Emission SHA-256"), element("dd", "", team.current.emissionArchiveSha256),
+        element("dt", "", "Image SHA-256"), element("dd", "", team.current.imageSha256),
+        element("dt", "", "Native SHA-256"), element("dd", "", team.current.nativeArchiveSha256),
+        element("dt", "", "Replay SHA-256"), element("dd", "", team.current.replayArchiveSha256));
     if (team === liveC1.development) {
       facts.append(element("dt", "", "Tested pin"), element("dd", "", team.fe2o3Source),
-        element("dt", "", "Active pin"), element("dd", "", `${team.activeDependencySource}; validation pending`));
+        element("dt", "", "Active pin"), element("dd", "", `${team.activeDependencySource}; V15 validated; adapter/model pending`),
+        element("dt", "", "V15 canary"), element("dd", "", `${team.v15CanarySource}; source only; adapter gate, model parity and performance pending`));
       facts.append(element("dt", "", "Native SHA-256"), element("dd", "", team.model.archiveSha256),
         element("dt", "", "Replay SHA-256"), element("dd", "", team.model.replayArchiveSha256));
     }

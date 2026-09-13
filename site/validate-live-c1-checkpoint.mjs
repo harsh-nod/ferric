@@ -148,11 +148,48 @@ const v15Emission = {
   dynamicStack: false, abiResourcesPassed: true, staticReviewBlocker: false, detailedTypedReviewAdmitted: false,
   nativeAdmitted: false, modelParityQualified: false, performanceGainClaimed: false,
 };
+const v15Current = {
+  source: "f393390350b15a0a050b1025eda6476d738ac98a", tree: "9a22571657d6479d0d6a9898655e4561ab5fc4b4",
+  compilerSource: "c9c7036cf98034b638886f54a745701e70ac3571", compilerTree: "27142fd1003494aac211bc8250584228ff09525c",
+  llvmWorkerActualBuild: "21682228486f7186cc3c37ddf165fffc438d8b6a",
+  emissionNoteSha256: "075f008e9128872bc2cbe9c0514c65dc0ab9c7b4ce562675fc4fe5358beccaaf",
+  emissionArchiveSha256: "1e21a6ff97f2af54efbdf138abefe08cc12e4a610281b6aea37ffd7785119ec6",
+  testsLogSha256: "546b917e8ebf8746fd9c650225fb80db044403eda9998803ba726a5d30cb04d5",
+  verifierLogSha256: "4c2e69d79bf9790a8e18efa6cd79d732d0a6cb208d014b85b87a29f8b06224a5",
+  clippyLogSha256: "d7aca83d92bc3d50cbe9e975f2b701795e069c61432cf3cf0c0e0d7730cc113a",
+  artifactReceiptSha256: "39885d09d2d8a5e6af286b1aee3aafc35fd7da3ba0c3907ee2379f423366948c",
+  verifierArtifactSha256: "a8ec6756b1947c7c3a249605c95000d6825e173f6bc96b3ce019f4bcb16c8e03",
+  inspectionSha256: "46dc816dc09a1e90deaa839bf6cc2b1835edc5cb28617377a481140961276f66",
+  imageSha256: "68607fc1d12eb6151dd55e7b53dcb88b00d484cfa0c087c002666b224093b45c", imageBytes: 11240,
+  hostTestsPassed: 23, verifierTestsPassed: 31, strictClippyExit: 0, emissionPhasesPassed: 15,
+  nativeSource: "d293b7c2f03f911c5b140d91ff746a1d4b3ab6f3", nativeTree: "72b94d328052cbbe49d56408f16f87cbfd328974",
+  cpuTestsPassed: 30, cpuNoteSha256: "20f7321a21e9e8694ab94d280099bc2d59482682300b4c4c595cc4ea9030f9fe",
+  cpuTestsLogSha256: "9c5ab0642e19067b99b1f21aba28501e2ca7d1f9b689a58da24248e7fe541ba5",
+  cpuArchiveSha256: "ba94c2aa668c06bd12c7199427351742b798c7a23e5231b04a8d665e5c44d60a",
+  nativeNoteSha256: "e6b2919cb238279c372264a110ecc0bcc0a1553c3343227faafdde1ddac1bf9c",
+  nativeArchiveSha256: "c96ea879cadd7bcbc8acedcf7730bffcea2df6737b9b5a517361bc11022f5e51",
+  nativeReportSha256: "2c9073ff344eb1783e2abd14d8c02af598b60a5e1760fe8587f2c8cc0c497cca",
+  nativeWrapperSha256: "e0d61ae442b864dfe2d42cfdd7f30a23478c5cfcc094776e51e697cd2cc12ab1",
+  protocolSha256: "46654a637a64bc497772ffdd682a1b80003ebe13af94ebb99b7109e72c60f095",
+  replayNoteSha256: "816d5c29fb04adeaa7c65a4469ebb7af7b7993360331b5f99b0efdabc31a4941",
+  replayReportSha256: "23fd2937e96b7873d83aac8469e6eafdfa7925276095a9af6825091e6a45f4b8",
+  replayArchiveSha256: "eddabe7e909324fb2f1b216aa26cdef5295437e6e7a2c331ad93d616a9a6b206",
+  workerSource: "ae26717922b1fb7ad62fdd5ad70814d83eb01177",
+  workerSha256: "526cc6bf8902128767a5318c90d1c0206a9e435957612c398eeb28ff2ae71032",
+  scope: "eight-analytical-finite-kernel-cases", cases: 8, rows: [1, 16, 17, 32], width: 4096,
+  bufferRecords: 40, guards: 80, protocolRows: 357, finiteNativeChecksPassed: true,
+  normalUnforcedClose: true, allEightIdleBeforeAfter: true, cpuReplayPassed: true,
+  invalidCasesQualified: false, generalFp32Proof: false, modelParityQualified: false,
+  performanceGainClaimed: false, defaultPromotion: false, sameCompilerAblation: false,
+};
 const development = {
   source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
   fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
   activeDependencySource: "c9c7036cf98034b638886f54a745701e70ac3571",
-  activeDependencyTree: "27142fd1003494aac211bc8250584228ff09525c", activeDependencyValidationPending: true,
+  activeDependencyTree: "27142fd1003494aac211bc8250584228ff09525c", activeDependencyValidationPending: false,
+  activeDependencyValidationScope: "V15 kernel/verifier/emission and finite native fixtures",
+  v15CanarySource: "9dfedb5d1f9b80bc3f80a859e8740a69b9e5d793",
+  v15AdapterGatePending: true, v15ModelParityPending: true, v15PerformancePending: true,
   canaryIntegrated: true, hostState: "composite-passed", hostAdmitted: true, workerHostAdmitted: true,
   hostNoteSha256: "05bc395159aaa06d8f5b2f3908a160a35718247f78a931cb71ce5ec4345ea422",
   hostFinalArchiveSha256: "e0a7ed83af27957a33544dd7acb37dd12e774b9d4f162b6ee92b1317ba1c67b6",
@@ -235,8 +272,9 @@ export function validateLiveC1Checkpoint(input) {
   exact(value.v14, v14, ["detail", "emission", "native"]);
   exact(value.v14.emission, v14Emission);
   exact(value.v14.native, v14Native);
-  exact(value.v15, v15, ["detail", "emission"]);
+  exact(value.v15, v15, ["detail", "emission", "current"]);
   exact(value.v15.emission, v15Emission);
+  exact(value.v15.current, v15Current);
   exact(value.development, development, ["detail"]);
   phrases(value.overview, ["independent replay at context8192", "199.719 to 154.310 ms", "4.532745 to 5.707624",
     "not a stable or competitive result", "all 33 M1 gates remain open"]);
@@ -263,14 +301,16 @@ export function validateLiveC1Checkpoint(input) {
     "independent CPU replay passed the unchanged validator and all 421 raw protocol rows",
     "not a same-compiler ablation or full-model/context8192 parity", "detailed typed review is still unadmitted",
     "No performance gain is claimed", "neither v14 nor v13 changes the measured C1 live route"]);
-  phrases(value.v15.detail, ["23 source-fresh CPU tests", "seven contract and sixteen host-model tests",
-    "strict Clippy exit zero", "all twelve host/emission phases", "Source 39be94d uses actual ae267 compiler tools",
-    "LLVM worker remains an actual 216822 build", "14 explicit arguments", "96 explicit bytes",
+  phrases(value.v15.detail, ["eight finite GPU cases", "rows 1/16/17/32, width4096",
+    "40 complete buffer records and 80 guards", "normal unforced close", "all eight GPUs idle before and after",
+    "30 CPU methods", "all 357 protocol rows", "guarded write/read payload hashes", "complete ABI",
+    "source f393390 uses actual c9c7036 compiler tools", "23 kernel tests, 31 verifier tests",
+    "strict Clippy exit zero", "all fifteen emission phases", "14 explicit arguments", "96 explicit bytes",
     "hidden start 96 and 352 total kernarg bytes", "Wave64, 70 SGPR / 22 VGPR and zero spills/private/LDS/AGPR",
-    "Independent static review found no concrete blocker", "detailed typed review remains unadmitted",
-    "20 source-fresh CPU tests at c534e35 using fe2o3 61e014a", "offline-dependency and typed-convergence failures before R3",
-    "FP32 association differs from the old serial fold", "No native/model parity or performance gain is admitted",
-    "not a proof of GPU arithmetic"]);
+    "Historical 39be/ae267 R3 emission", "earlier c534/61e CPU checkpoint", "prior failures",
+    "LLVM worker remains an actual 216822 build", "production runtime worker remains ae267",
+    "FP32 association differs from the old serial fold", "not general FP32 proof, invalid-case qualification or Qwen model parity",
+    "No performance gain or default promotion is claimed", "historical C1 measurements are unchanged"]);
   phrases(value.development.detail, ["opt-in V14 full-Qwen canary is integrated in private source",
     "Scoped current controller host checks pass", "11 focused tests with one ignore",
     "all 31 verifier-policy tests", "failures remain retained, not relabeled",
@@ -628,6 +668,79 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   const rmsStatic = (await pinned("v15-r3-static-review.md", v15Emission.staticReviewSha256)).toString("utf8").replace(/\s+/g, " ");
   phrases(rmsStatic, ["No concrete static blocker found", "not a proof of all FP32 behavior or a native result",
     "no detailed typed-node/LLVM payload was retained"]);
+  const currentEmissionNote = (await pinned("v15-r4-note.md", v15Current.emissionNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(currentEmissionNote, [v15Current.source, v15Current.compilerSource, v15Current.emissionArchiveSha256,
+    "All15 frozen phases", "LLVM worker remains actual216822", "Historical failures and source39be/ae R3 remain intact"]);
+  for (const [name, logSha, receiptSha, counts, records, files] of [
+    ["host", v15Current.testsLogSha256, v15Current.artifactReceiptSha256, [0, 7, 16], 5, 6],
+    ["verifier", v15Current.verifierLogSha256, v15Current.verifierArtifactSha256, [31], 2, 3],
+  ]) {
+    const log = (await pinned(`v15-r4-${name}-tests.log`, logSha)).toString("utf8");
+    assert.deepEqual([...log.matchAll(/^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;/gm)]
+      .map((row) => Number(row[1])), counts);
+    const receipt = JSON.parse(await pinned(`v15-r4-${name}-artifacts.json`, receiptSha));
+    for (const [key, expected] of Object.entries({ source: v15Current.source, tree: v15Current.tree,
+      passed: counts.reduce((sum, count) => sum + count, 0), ignored: 0, rows: counts.length }))
+      assert.deepEqual(receipt[key], expected);
+    assert.equal(receipt.records.length, records);
+    assert.equal(Object.keys(receipt.files).length, files);
+    assert(receipt.records.every((row) => row.fresh === false));
+  }
+  await pinned("v15-r4-clippy.log", v15Current.clippyLogSha256);
+  const currentImage = JSON.parse(await pinned("v15-r4-inspection.json", v15Current.inspectionSha256));
+  assert.equal(currentImage.schema, rmsImage.schema);
+  assert.equal(currentImage.abi_resources_passed, true);
+  assert.deepEqual(currentImage.image, rmsImage.image);
+  for (const key of ["gpu_used", "numerical_parity", "performance_claim", "same_compiler_ablation"])
+    assert.equal(currentImage[key], false);
+  for (const [key, expected] of Object.entries({ source: v15Current.source, source_tree: v15Current.tree,
+    compiler: v15Current.compilerSource, compiler_tree: v15Current.compilerTree,
+    worker_actual_build: v15Current.llvmWorkerActualBuild, image_sha256: v15Current.imageSha256, image_bytes: v15Current.imageBytes }))
+    assert.deepEqual(currentImage.identities[key], expected);
+  const nativeCpuNote = (await pinned("v15-native-cpu-note.md", v15Current.cpuNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(nativeCpuNote, [v15Current.nativeSource, v15Current.nativeTree, v15Current.cpuArchiveSha256,
+    "30 tests passed", "10 fixture, 10 native-probe, 10 wrapper methods", "synthetic CPU validation"]);
+  const nativeCpuLog = (await pinned("v15-native-cpu-tests.log", v15Current.cpuTestsLogSha256)).toString("utf8");
+  assert.match(nativeCpuLog, /\nRan 30 tests in [\d.]+s\n\nOK\n$/);
+  const nativeNote = (await pinned("v15-native-note.md", v15Current.nativeNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(nativeNote, [v15Current.source, v15Current.compilerSource, v15Current.workerSource, v15Current.nativeArchiveSha256,
+    "40 buffer records and80 guards", "All eight GPUs were idle before and after", "group cleanup was unforced and complete",
+    "This admits these eight finite cases only", development.v15CanarySource]);
+  const nativeReport = JSON.parse(await pinned("v15-native-report.json", v15Current.nativeReportSha256));
+  assert.equal(nativeReport.schema, "FerricTp1WaveRmsnormProbeV15");
+  assert.equal(nativeReport.artifact_sha256, v15Current.imageSha256);
+  assert.equal(nativeReport.worker_sha256, v15Current.workerSha256);
+  for (const key of ["checks_pass", "clean_teardown", "runtime_operational", "active_inputs_finite"])
+    assert.equal(nativeReport[key], true);
+  const expectedNames = ["uniform", "signed"].flatMap((mode) => v15Current.rows.map((rows) => `wave_rmsnorm_v15_${mode}_rows${rows}`));
+  assert.deepEqual(nativeReport.results.map((row) => row.name), expectedNames);
+  const nativeBuffers = nativeReport.results.flatMap((row) => row.checks);
+  assert.equal(nativeBuffers.length, v15Current.bufferRecords);
+  assert.equal(nativeBuffers.filter((row) => row.bytes === 0).length, 16);
+  assert(nativeBuffers.every((row) => row.guard_bytes_each_side === 64 && row.guards_unchanged === true));
+  const nativeWrapper = JSON.parse(await pinned("v15-native-wrapper.json", v15Current.nativeWrapperSha256));
+  assert.equal(nativeWrapper.schema, "FerricTp1WaveRmsnormV15WrapperV1");
+  for (const key of ["passed", "all_eight_idle_before", "all_eight_idle_after"])
+    assert.equal(nativeWrapper[key], true);
+  assert.deepEqual(nativeWrapper.errors, []);
+  const protocol = await pinned("v15-native-protocol.jsonl", v15Current.protocolSha256);
+  assert.equal(protocol.toString("utf8").trim().split("\n").length, v15Current.protocolRows);
+  const nativeReplayNote = (await pinned("v15-native-replay-note.md", v15Current.replayNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(nativeReplayNote, [v15Current.nativeArchiveSha256, v15Current.replayArchiveSha256,
+    "357 protocol rows", "no metrics were calculated", "does not recover raw device payloads from hashes"]);
+  const nativeReplay = JSON.parse(await pinned("v15-native-replay.json", v15Current.replayReportSha256));
+  for (const [key, expected] of Object.entries({ schema: "FerricTp1WaveRmsnormV15NativeCpuReplayV1", passed: true,
+    cpu_replay: true, gpu_used: false, cases: 8, complete_buffer_records: 40, guards: 80, protocol_rows: 357,
+    read_write_payload_hashes_reconstructed: true, exact_abi_validated: true,
+    native_archive_sha256: v15Current.nativeArchiveSha256, report_sha256: v15Current.nativeReportSha256,
+    protocol_sha256: v15Current.protocolSha256, artifact_sha256: v15Current.imageSha256, worker_sha256: v15Current.workerSha256,
+    elapsed_fields: "associated only; no metric reduction" }))
+    assert.deepEqual(nativeReplay[key], expected);
+  for (const record of [nativeReport, nativeWrapper, nativeReplay]) {
+    for (const key of ["benchmark", "model_inference", "model_parity_qualified", "performance_qualified"])
+      assert.equal(record[key], false);
+    assert.equal(record.authority, "none");
+  }
   const checkerNote = (await pinned("v14-canary-cpu32.md", "f0392b3daca5a4157c264319ddad8d8789e905fb980ccbb2d198167d10c7ac29"))
     .toString("utf8").replace(/\s+/g, " ");
   phrases(checkerNote, [development.checkerArchiveSha256, "All 32 methods reported", "No retries",
@@ -796,7 +909,7 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
     "nightly Cargo metadata returned 101", "smallvec v1.16.0", "No repair or retry was performed"]);
   const emissionDiagnostic = (await pinned("v15-emission-failed.stderr", v15.emissionAttempt.diagnosticSha256)).toString("utf8");
   phrases(emissionDiagnostic, ["failed to download `smallvec v1.16.0`", "--offline was specified"]);
-  console.log("PASS: historical HTTP/native results unchanged; V15 R3 CPU/static emission is separate from pending c9c7036 validation, native parity and performance.");
+  console.log("PASS: historical results unchanged; current V15 c9 emission, eight finite native cases and independent replay are separately bound; adapter/model/performance remain pending.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
