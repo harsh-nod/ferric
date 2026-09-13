@@ -576,63 +576,128 @@ fn layer_c1_wave_live_is_additive_ordered_and_preserves_pre_effect_admission() {
 #[test]
 fn layer_c1_runtime_diagnostic_is_separate_profiled_and_closes_after_snapshots() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
-    let binary = manifest["bin"].as_array().unwrap().iter()
-        .find(|entry| entry["name"].as_str() == Some("ferric-qwen3-layer-c1-wave-runtime-diagnostic"))
+    let binary = manifest["bin"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|entry| {
+            entry["name"].as_str() == Some("ferric-qwen3-layer-c1-wave-runtime-diagnostic")
+        })
         .unwrap();
-    assert_eq!(binary["path"].as_str(), Some("src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs"));
-    assert_eq!(binary["required-features"].as_array().unwrap(),
-        &vec![toml::Value::String("tp-batch-engineering".into())]);
+    assert_eq!(
+        binary["path"].as_str(),
+        Some("src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs")
+    );
+    assert_eq!(
+        binary["required-features"].as_array().unwrap(),
+        &vec![toml::Value::String("tp-batch-engineering".into())]
+    );
     let source = include_str!("../src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs");
     let production = &source[..source.find("#[cfg(test)]").unwrap()];
     let run = &production[production.find("fn run(options:").unwrap()..];
     assert!(run.find("options.validate()").unwrap() < run.find("TimingFile::create(").unwrap());
     let setup = &production[production.find("fn run_with_timing(").unwrap()..];
     let ordered = [
-        "options.validate()", "let runtime_options = options.worker_runtime()?;",
-        "EngineeringTpArtifactV1::open_batch32", "EngineeringTpArtifactV1::open_fp32_head32",
-        "EngineeringTpArtifactV1::open_fp32_argmax32_v11", "EngineeringQwenModelV1::open",
-        "Worker::spawn_with_timing", "worker.load_additional_artifact(&head_artifact)",
+        "options.validate()",
+        "let runtime_options = options.worker_runtime()?;",
+        "EngineeringTpArtifactV1::open_batch32",
+        "EngineeringTpArtifactV1::open_fp32_head32",
+        "EngineeringTpArtifactV1::open_fp32_argmax32_v11",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(&head_artifact)",
         "worker.load_additional_artifact(&argmax_artifact)",
         "EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11",
         "driver.configure_output_head_pruning(true)",
         "driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)",
-        "driver.configure_projection(", "EngineeringTpProjectionModeV3::Mfma",
-        "driver.configure_wave_attention(true)", "driver.configure_head_precision_v8(true)",
-        "match options.base.layer_projection", "profile_metadata(options, driver.layer_projection_mode())",
-        "EngineeringTpBatchRuntimeV2::new_wide32(", "run_diagnostic_and_close(", "emit(&setup)",
-        "tp_live_ingress::run(", "check_retired(runtime, live.pages)",
-    ].map(|marker| setup.find(marker).unwrap());
-    assert!(ordered.windows(2).all(|positions| positions[0] < positions[1]));
+        "driver.configure_projection(",
+        "EngineeringTpProjectionModeV3::Mfma",
+        "driver.configure_wave_attention(true)",
+        "driver.configure_head_precision_v8(true)",
+        "match options.base.layer_projection",
+        "profile_metadata(options, driver.layer_projection_mode())",
+        "EngineeringTpBatchRuntimeV2::new_wide32(",
+        "run_diagnostic_and_close(",
+        "emit(&setup)",
+        "tp_live_ingress::run(",
+        "check_retired(runtime, live.pages)",
+    ]
+    .map(|marker| setup.find(marker).unwrap());
+    assert!(
+        ordered
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     let selection = &setup[setup.find("match options.base.layer_projection").unwrap()
         ..setup.find("driver.configure_host_timing(").unwrap()];
-    let selectors = ["LayerProjection::Mfma", "driver.configure_ordered_wave_attention_fp32_argmax_v11",
-        "LayerProjection::C1Wave", "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11"]
-        .map(|marker| selection.find(marker).unwrap());
-    assert!(selectors.windows(2).all(|positions| positions[0] < positions[1]));
+    let selectors = [
+        "LayerProjection::Mfma",
+        "driver.configure_ordered_wave_attention_fp32_argmax_v11",
+        "LayerProjection::C1Wave",
+        "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
+    ]
+    .map(|marker| selection.find(marker).unwrap());
+    assert!(
+        selectors
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
     assert_eq!(selection.matches("driver.configure_").count(), 2);
     let lifecycle = &production[production.find("fn run_diagnostic_and_close<").unwrap()
         ..production.find("fn check_retired<").unwrap()];
-    let phases = ["runtime_snapshot_before", "body(runtime)?", "runtime_snapshot_after", "runtime.close()"]
-        .map(|marker| lifecycle.find(marker).unwrap());
-    assert!(phases.windows(2).all(|positions| positions[0] < positions[1]));
-    assert_eq!(lifecycle.matches("runtime.runtime_diagnostic_snapshot()?").count(), 2);
+    let phases = [
+        "runtime_snapshot_before",
+        "body(runtime)?",
+        "runtime_snapshot_after",
+        "runtime.close()",
+    ]
+    .map(|marker| lifecycle.find(marker).unwrap());
+    assert!(
+        phases
+            .windows(2)
+            .all(|positions| positions[0] < positions[1])
+    );
+    assert_eq!(
+        lifecycle
+            .matches("runtime.runtime_diagnostic_snapshot()?")
+            .count(),
+        2
+    );
     assert!(lifecycle.contains("let result = (||"));
     assert!(lifecycle.contains("})();"));
-    for marker in ["FerricQwen3TpBatchSetupV2", "FerricQwen3TpBatchClosedV2",
-        "FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1", "FerricLayerC1WaveRuntimeDiagnosticV1",
-        "layer-c1-wave-runtime-diagnostic-v1", "one earlier snapshot command", "1..16 dispatches",
-        "overlapping worker host-wall counters", "not GPU timestamps", "\"benchmark_qualified\":false",
-        "\"serving_qualified\":false", "\"projection\":\"mfma\"", "std::io::stderr().lock()"] {
+    for marker in [
+        "FerricQwen3TpBatchSetupV2",
+        "FerricQwen3TpBatchClosedV2",
+        "FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1",
+        "FerricLayerC1WaveRuntimeDiagnosticV1",
+        "layer-c1-wave-runtime-diagnostic-v1",
+        "one earlier snapshot command",
+        "1..16 dispatches",
+        "overlapping worker host-wall counters",
+        "not GPU timestamps",
+        "\"benchmark_qualified\":false",
+        "\"serving_qualified\":false",
+        "\"projection\":\"mfma\"",
+        "std::io::stderr().lock()",
+    ] {
         assert!(production.contains(marker), "{marker}");
     }
-    for forbidden in ["configure_ordered_batches(", "configure_dispatch_sequences(", "new_large_kv32",
-        "EngineeringTpProjectionModeV3::Auto", "\"performance_qualified\":true", "\"benchmark_qualified\":true",
-        "\"serving_qualified\":true"] {
+    for forbidden in [
+        "configure_ordered_batches(",
+        "configure_dispatch_sequences(",
+        "new_large_kv32",
+        "EngineeringTpProjectionModeV3::Auto",
+        "\"performance_qualified\":true",
+        "\"benchmark_qualified\":true",
+        "\"serving_qualified\":true",
+    ] {
         assert!(!production.contains(forbidden), "{forbidden}");
     }
     let contract = include_str!("../src/bin/layer_c1_wave_runtime_diagnostic_contract.rs");
     let contract = &contract[..contract.find("#[cfg(test)]").unwrap()];
-    assert!(contract.contains("layer_c1_wave_live_contract::Options::parse(forwarded.into_iter())?"));
+    assert!(
+        contract.contains("layer_c1_wave_live_contract::Options::parse(forwarded.into_iter())?")
+    );
     assert!(contract.contains("self.base.validate()?;"));
     assert!(contract.contains("!self.profiling_requested"));
     assert!(contract.contains("self.base.live.host_timing.is_none()"));
@@ -641,11 +706,13 @@ fn layer_c1_runtime_diagnostic_is_separate_profiled_and_closes_after_snapshots()
     let derive = &contract[contract.find("pub fn worker_runtime(").unwrap()..];
     assert_eq!(derive.matches("runtime.profile = true;").count(), 1);
     assert!(derive.contains("let mut runtime = self.base.live.runtime;"));
-    for frozen in [include_str!("../src/bin/ferric-qwen3-layer-c1-wave-live.rs"),
+    for frozen in [
+        include_str!("../src/bin/ferric-qwen3-layer-c1-wave-live.rs"),
         include_str!("../src/bin/layer_c1_wave_live_contract.rs"),
         include_str!("../src/bin/wave_argmax_live_contract.rs"),
         include_str!("../src/bin/argmax_canary_runtime.rs"),
-        include_str!("../src/bin/tp_worker.rs")] {
+        include_str!("../src/bin/tp_worker.rs"),
+    ] {
         assert!(!frozen.contains("layer_c1_wave_runtime_diagnostic_contract"));
         assert!(!frozen.contains("layer-c1-wave-runtime-diagnostic-v1"));
     }

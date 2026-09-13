@@ -84,21 +84,50 @@ mod tests {
 
     fn arguments(layer: &str) -> Vec<String> {
         [
-            "--source", "source", "--target-artifact", "target", "--target-head-artifact", "head",
-            "--argmax-artifact", "argmax", "--worker", "worker", "--worker-sha256",
+            "--source",
+            "source",
+            "--target-artifact",
+            "target",
+            "--target-head-artifact",
+            "head",
+            "--argmax-artifact",
+            "argmax",
+            "--worker",
+            "worker",
+            "--worker-sha256",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--device-unique-id", "1", "--submission", "ordered", "--context", "8192",
-            "--pages", "512", "--max-batches", "1000000", "--layer-projection", layer,
-            "--host-timing", "host-timing.json", "--runtime-profile", "--live-stdin",
-            "--allow-unauthenticated-machine-code", "--runtime-cache-admission", "--runtime-operational",
-            "--queue-rollover", "--disable-prefix-cache", "--prune-output-head",
+            "--device-unique-id",
+            "1",
+            "--submission",
+            "ordered",
+            "--context",
+            "8192",
+            "--pages",
+            "512",
+            "--max-batches",
+            "1000000",
+            "--layer-projection",
+            layer,
+            "--host-timing",
+            "host-timing.json",
+            "--runtime-profile",
+            "--live-stdin",
+            "--allow-unauthenticated-machine-code",
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--queue-rollover",
+            "--disable-prefix-cache",
+            "--prune-output-head",
         ]
         .map(str::to_owned)
         .to_vec()
     }
 
     fn replace(arguments: &mut [String], flag: &str, value: &str) {
-        let index = arguments.iter().position(|argument| argument == flag).unwrap();
+        let index = arguments
+            .iter()
+            .position(|argument| argument == flag)
+            .unwrap();
         arguments[index + 1] = value.into();
     }
 
@@ -118,7 +147,10 @@ mod tests {
             assert_eq!(derived.sequences, base.sequences);
             assert_eq!(derived.ordered_batches, base.ordered_batches);
             assert_eq!(derived.rollover, base.rollover);
-            assert_eq!(derived.shared_full_currentness, base.shared_full_currentness);
+            assert_eq!(
+                derived.shared_full_currentness,
+                base.shared_full_currentness
+            );
         }
     }
 
@@ -127,7 +159,10 @@ mod tests {
         for layer in ["mfma", "c1-wave"] {
             for (flag, has_value) in [("--runtime-profile", false), ("--host-timing", true)] {
                 let mut missing = arguments(layer);
-                let index = missing.iter().position(|argument| argument == flag).unwrap();
+                let index = missing
+                    .iter()
+                    .position(|argument| argument == flag)
+                    .unwrap();
                 missing.remove(index);
                 if has_value {
                     missing.remove(index);
@@ -140,7 +175,11 @@ mod tests {
                 }
                 assert!(Options::parse(duplicate.into_iter()).is_err());
             }
-            for extra in [vec!["--runtime-profile", "true"], vec!["--benchmark-control"], vec!["--unknown", "x"]] {
+            for extra in [
+                vec!["--runtime-profile", "true"],
+                vec!["--benchmark-control"],
+                vec!["--unknown", "x"],
+            ] {
                 let mut invalid = arguments(layer);
                 invalid.extend(extra.into_iter().map(str::to_owned));
                 assert!(Options::parse(invalid.into_iter()).is_err());
@@ -151,13 +190,21 @@ mod tests {
     #[test]
     fn diagnostic_preserves_ordered_only_layer_and_fixed_live_geometry() {
         for (flag, value) in [
-            ("--submission", "synchronous"), ("--layer-projection", "auto"),
-            ("--context", "256"), ("--context", "8193"), ("--pages", "16"),
-            ("--pages", "513"), ("--host-timing", ""), ("--max-batches", "0"),
+            ("--submission", "synchronous"),
+            ("--layer-projection", "auto"),
+            ("--context", "256"),
+            ("--context", "8193"),
+            ("--pages", "16"),
+            ("--pages", "513"),
+            ("--host-timing", ""),
+            ("--max-batches", "0"),
         ] {
             let mut invalid = arguments("c1-wave");
             replace(&mut invalid, flag, value);
-            assert!(Options::parse(invalid.into_iter()).is_err(), "{flag} {value}");
+            assert!(
+                Options::parse(invalid.into_iter()).is_err(),
+                "{flag} {value}"
+            );
         }
     }
 
@@ -177,7 +224,9 @@ mod tests {
         for layer in ["mfma", "c1-wave"] {
             let args = arguments(layer);
             assert!(layer_c1_wave_live_contract::Options::parse(args.clone().into_iter()).is_err());
-            let ordinary = args.into_iter().filter(|value| value != "--runtime-profile");
+            let ordinary = args
+                .into_iter()
+                .filter(|value| value != "--runtime-profile");
             let old = layer_c1_wave_live_contract::Options::parse(ordinary).unwrap();
             assert!(!old.live.runtime.profile);
             assert_eq!(old.live.submission, Submission::Ordered);

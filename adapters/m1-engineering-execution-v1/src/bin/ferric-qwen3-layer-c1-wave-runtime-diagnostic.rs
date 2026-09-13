@@ -141,7 +141,10 @@ fn emit_diagnostic(options: &Options, phase: &str, snapshots: &[Value]) -> Resul
     let value = diagnostic_record(options, phase, snapshots)?;
     let mut output = std::io::stderr().lock();
     serde_json::to_writer(&mut output, &value).map_err(|e| e.to_string())?;
-    output.write_all(b"\n").and_then(|()| output.flush()).map_err(|e| e.to_string())
+    output
+        .write_all(b"\n")
+        .and_then(|()| output.flush())
+        .map_err(|e| e.to_string())
 }
 
 fn run_diagnostic_and_close<G: EngineeringTpBatchRunnerV2>(
@@ -445,22 +448,37 @@ mod diagnostic_tests {
     fn runtime(
         fail_snapshot: Option<usize>,
         fail_close: bool,
-    ) -> (EngineeringTpBatchRuntimeV2<DiagnosticRunner>, Events, HostTiming) {
+    ) -> (
+        EngineeringTpBatchRuntimeV2<DiagnosticRunner>,
+        Events,
+        HostTiming,
+    ) {
         let options = layer_c1_wave_runtime_diagnostic_contract::fixture(LayerProjection::C1Wave);
         let pool = EngineeringTpPagedPoolV1::new_wide32(
-            EngineeringTpPoolScopeV1 { model: [1; 32], session: [2; 32] },
+            EngineeringTpPoolScopeV1 {
+                model: [1; 32],
+                session: [2; 32],
+            },
             options.base.live.limits().unwrap(),
-        ).unwrap();
+        )
+        .unwrap();
         let scheduler = EngineeringTpSchedulerV1::new_wide32(100, 8192, ROWS, CHUNK).unwrap();
         let events = Rc::new(RefCell::new(Vec::new()));
         let timing = HostTiming::enabled();
         let runtime = EngineeringTpBatchRuntimeV2::new_wide32(
             DiagnosticRunner {
-                events: events.clone(), timing: timing.clone(), snapshots: 0,
-                fail_snapshot, fail_close,
+                events: events.clone(),
+                timing: timing.clone(),
+                snapshots: 0,
+                fail_snapshot,
+                fail_close,
             },
-            pool, scheduler, ROWS, false,
-        ).unwrap();
+            pool,
+            scheduler,
+            ROWS,
+            false,
+        )
+        .unwrap();
         (runtime, events, timing)
     }
 
@@ -469,15 +487,27 @@ mod diagnostic_tests {
         for layer in [LayerProjection::Mfma, LayerProjection::C1Wave] {
             let options = layer_c1_wave_runtime_diagnostic_contract::fixture(layer);
             let profile = profile_metadata(&options, layer.label()).unwrap();
-            assert_eq!(profile, json!({
-                "runtime_cache_admission":true, "runtime_operational":true,
-                "dispatch_sequences":false, "queue_rollover":true, "runtime_profiling":true,
-                "projection":"mfma", "attention":"wave", "argmax_mode":"wave-v11",
-                "submission":"ordered", "runtime_ordered_batches":true,
-                "live_profile":LIVE_PROFILE, "layer_projection":layer.label(),
-                "benchmark_qualified":false, "serving_qualified":false, "performance_qualified":false,
-            }));
-            for actual in ["auto", "wave", "", if layer == LayerProjection::Mfma { "c1-wave" } else { "mfma" }] {
+            assert_eq!(
+                profile,
+                json!({
+                    "runtime_cache_admission":true, "runtime_operational":true,
+                    "dispatch_sequences":false, "queue_rollover":true, "runtime_profiling":true,
+                    "projection":"mfma", "attention":"wave", "argmax_mode":"wave-v11",
+                    "submission":"ordered", "runtime_ordered_batches":true,
+                    "live_profile":LIVE_PROFILE, "layer_projection":layer.label(),
+                    "benchmark_qualified":false, "serving_qualified":false, "performance_qualified":false,
+                })
+            );
+            for actual in [
+                "auto",
+                "wave",
+                "",
+                if layer == LayerProjection::Mfma {
+                    "c1-wave"
+                } else {
+                    "mfma"
+                },
+            ] {
                 assert!(profile_metadata(&options, actual).is_err());
             }
         }
@@ -485,18 +515,23 @@ mod diagnostic_tests {
 
     #[test]
     fn diagnostic_envelope_preserves_raw_snapshots_and_nonexclusive_scope() {
-        let snapshots = vec![json!({"schema":"FerricRuntimeDiagnosticSnapshotV1", "ordinal":0,
-            "process_id":123, "device_unique_id":456, "rank":0, "counters":{"commands":11}})];
+        let snapshots = vec![
+            json!({"schema":"FerricRuntimeDiagnosticSnapshotV1", "ordinal":0,
+            "process_id":123, "device_unique_id":456, "rank":0, "counters":{"commands":11}}),
+        ];
         for layer in [LayerProjection::Mfma, LayerProjection::C1Wave] {
             let options = layer_c1_wave_runtime_diagnostic_contract::fixture(layer);
             let record = diagnostic_record(&options, "before_workload", &snapshots).unwrap();
-            assert_eq!(record, json!({
-                "schema":"FerricLayerC1WaveRuntimeDiagnosticV1", "authority":"none",
-                "performance_qualified":false, "benchmark_qualified":false, "serving_qualified":false,
-                "live_profile":LIVE_PROFILE, "layer_projection":layer.label(), "runtime_profiling":true,
-                "phase":"before_workload", "measurement":COUNTER_SCOPE,
-                "command_accounting":COMMAND_ACCOUNTING, "snapshots":snapshots,
-            }));
+            assert_eq!(
+                record,
+                json!({
+                    "schema":"FerricLayerC1WaveRuntimeDiagnosticV1", "authority":"none",
+                    "performance_qualified":false, "benchmark_qualified":false, "serving_qualified":false,
+                    "live_profile":LIVE_PROFILE, "layer_projection":layer.label(), "runtime_profiling":true,
+                    "phase":"before_workload", "measurement":COUNTER_SCOPE,
+                    "command_accounting":COMMAND_ACCOUNTING, "snapshots":snapshots,
+                })
+            );
             assert!(COUNTER_SCOPE.contains("overlapping"));
             assert!(COMMAND_ACCOUNTING.contains("one earlier snapshot command"));
             assert!(COMMAND_ACCOUNTING.contains("1..16 dispatches"));
@@ -506,7 +541,10 @@ mod diagnostic_tests {
 
     #[test]
     fn invalid_direct_diagnostic_options_create_no_timing_file() {
-        let path = std::env::temp_dir().join(format!("ferric-layer-diagnostic-reject-{}.json", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "ferric-layer-diagnostic-reject-{}.json",
+            std::process::id()
+        ));
         assert!(!path.exists());
         for layer in [LayerProjection::Mfma, LayerProjection::C1Wave] {
             for mutation in 0..12 {
@@ -536,8 +574,13 @@ mod diagnostic_tests {
     #[test]
     fn snapshot_order_brackets_ready_body_retirement_and_restores_host_phase() {
         let (mut runtime, events, timing) = runtime(None, false);
-        let (result, close) = run_diagnostic_and_close(&mut runtime, &timing,
-            |phase, _| { events.borrow_mut().push(phase.into()); Ok(()) },
+        let (result, close) = run_diagnostic_and_close(
+            &mut runtime,
+            &timing,
+            |phase, _| {
+                events.borrow_mut().push(phase.into());
+                Ok(())
+            },
             |runtime| {
                 events.borrow_mut().push("setup_ready".into());
                 let _scope = timing.scope("workload");
@@ -546,10 +589,22 @@ mod diagnostic_tests {
                 check_retired(runtime, 512)?;
                 events.borrow_mut().push("retired".into());
                 Ok(())
-            });
+            },
+        );
         assert!(result.is_ok() && close.is_ok());
-        assert_eq!(*events.borrow(), ["snapshot0", "before_workload", "setup_ready", "body", "retired",
-            "snapshot1", "after_workload", "close"]);
+        assert_eq!(
+            *events.borrow(),
+            [
+                "snapshot0",
+                "before_workload",
+                "setup_ready",
+                "body",
+                "retired",
+                "snapshot1",
+                "after_workload",
+                "close"
+            ]
+        );
         {
             let _span = timing.span("restored_fixture", None);
         }
@@ -557,11 +612,21 @@ mod diagnostic_tests {
         assert_eq!(recorded["incomplete"], false);
         assert_eq!(recorded["active_records"], 0);
         let records = recorded["records"].as_array().unwrap();
-        for (label, phase) in [("snapshot_fixture", "runtime_snapshot_before"),
-            ("snapshot_fixture", "runtime_snapshot_after"), ("body_fixture", "workload"),
-            ("close_fixture", "runtime_diagnostic_close"), ("restored_fixture", "controller")] {
-            assert_eq!(records.iter().filter(|record| record["label"] == label && record["phase"] == phase)
-                .map(|record| record["count"].as_u64().unwrap()).sum::<u64>(), 1);
+        for (label, phase) in [
+            ("snapshot_fixture", "runtime_snapshot_before"),
+            ("snapshot_fixture", "runtime_snapshot_after"),
+            ("body_fixture", "workload"),
+            ("close_fixture", "runtime_diagnostic_close"),
+            ("restored_fixture", "controller"),
+        ] {
+            assert_eq!(
+                records
+                    .iter()
+                    .filter(|record| record["label"] == label && record["phase"] == phase)
+                    .map(|record| record["count"].as_u64().unwrap())
+                    .sum::<u64>(),
+                1
+            );
         }
         assert!(runtime.runtime_diagnostic_snapshot().is_err());
     }
@@ -569,20 +634,34 @@ mod diagnostic_tests {
     #[test]
     fn all_snapshot_output_body_and_close_failures_attempt_close_once() {
         for failure in 0..7 {
-            let snapshot_failure = match failure { 1 => Some(0), 4 => Some(1), _ => None };
+            let snapshot_failure = match failure {
+                1 => Some(0),
+                4 => Some(1),
+                _ => None,
+            };
             let (mut runtime, events, timing) = runtime(snapshot_failure, failure == 6);
-            let (result, close) = run_diagnostic_and_close(&mut runtime, &timing,
+            let (result, close) = run_diagnostic_and_close(
+                &mut runtime,
+                &timing,
                 |phase, _| {
                     events.borrow_mut().push(phase.into());
-                    if (failure == 2 && phase == "before_workload") || (failure == 5 && phase == "after_workload") {
+                    if (failure == 2 && phase == "before_workload")
+                        || (failure == 5 && phase == "after_workload")
+                    {
                         Err("injected snapshot output failure".into())
-                    } else { Ok(()) }
+                    } else {
+                        Ok(())
+                    }
                 },
                 |_| {
                     events.borrow_mut().push("body".into());
-                    if failure == 3 { Err("injected ingress, output or retirement failure".into()) }
-                    else { Ok(()) }
-                });
+                    if failure == 3 {
+                        Err("injected ingress, output or retirement failure".into())
+                    } else {
+                        Ok(())
+                    }
+                },
+            );
             assert_eq!(result.is_err(), (1..=5).contains(&failure));
             assert_eq!(close.is_err(), failure == 6);
             let recorded = events.borrow();
@@ -603,13 +682,27 @@ mod diagnostic_tests {
     fn diagnostic_after_snapshot_requires_complete_no_cache_retirement() {
         use ferric_m1_engineering_execution_v1::tp_scheduler::TpRequestAdmissionV1;
         let (mut runtime, events, timing) = runtime(None, false);
-        let request = runtime.admit(TpRequestAdmissionV1 {
-            prompt_tokens: vec![7; 128], max_new_tokens: 128, cached_prefix_tokens: 0,
-            arrival_tick: 0, arrival_ns: 0,
-        }, 0, 0).unwrap().request;
+        let request = runtime
+            .admit(
+                TpRequestAdmissionV1 {
+                    prompt_tokens: vec![7; 128],
+                    max_new_tokens: 128,
+                    cached_prefix_tokens: 0,
+                    arrival_tick: 0,
+                    arrival_ns: 0,
+                },
+                0,
+                0,
+            )
+            .unwrap()
+            .request;
         runtime.cancel(request, 1).unwrap();
-        let (result, close) = run_diagnostic_and_close(&mut runtime, &timing, |_, _| Ok(()),
-            |runtime| check_retired(runtime, 512));
+        let (result, close) = run_diagnostic_and_close(
+            &mut runtime,
+            &timing,
+            |_, _| Ok(()),
+            |runtime| check_retired(runtime, 512),
+        );
         assert!(result.is_err() && close.is_ok());
         assert_eq!(*events.borrow(), ["snapshot0", "close"]);
     }
