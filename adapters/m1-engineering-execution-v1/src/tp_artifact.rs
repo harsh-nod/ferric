@@ -691,13 +691,17 @@ fn query_hoist_metadata_matches_v14(kernel: &fe2o3_hsaco::InspectedKernel) -> bo
         && kernel.vgpr_spill_count() == Some(0)
         && !kernel.uses_dynamic_stack()
         && kernel.explicit_arguments().len() == 17
-        && kernel.explicit_arguments().iter().enumerate().all(|(index, arg)| {
-            QueryHoistArgumentV14::from(arg).matches(index)
-        })
+        && kernel
+            .explicit_arguments()
+            .iter()
+            .enumerate()
+            .all(|(index, arg)| QueryHoistArgumentV14::from(arg).matches(index))
         && kernel.hidden_arguments().len() == hidden.len()
-        && kernel.hidden_arguments().iter().zip(hidden).all(|(arg, expected)| {
-            (arg.offset(), arg.size(), arg.value_kind()) == expected
-        })
+        && kernel
+            .hidden_arguments()
+            .iter()
+            .zip(hidden)
+            .all(|(arg, expected)| (arg.offset(), arg.size(), arg.value_kind()) == expected)
 }
 
 /// Parsed fields used by this new exact ABI profile and its synthetic negative tests.
@@ -719,10 +723,15 @@ struct QueryHoistArgumentV14 {
 impl From<&fe2o3_hsaco::ExplicitArgument> for QueryHoistArgumentV14 {
     fn from(arg: &fe2o3_hsaco::ExplicitArgument) -> Self {
         Self {
-            offset: arg.offset(), size: arg.size(), kind: arg.value_kind(),
-            address_space: arg.address_space(), alignment: arg.alignment(),
-            pointee_alignment: arg.pointee_alignment(), access: arg.access(),
-            actual_access: arg.actual_access(), value_type: arg.value_type(),
+            offset: arg.offset(),
+            size: arg.size(),
+            kind: arg.value_kind(),
+            address_space: arg.address_space(),
+            alignment: arg.alignment(),
+            pointee_alignment: arg.pointee_alignment(),
+            access: arg.access(),
+            actual_access: arg.actual_access(),
+            value_type: arg.value_type(),
         }
     }
 }
@@ -730,15 +739,28 @@ impl From<&fe2o3_hsaco::ExplicitArgument> for QueryHoistArgumentV14 {
 #[cfg(feature = "tp-batch-engineering")]
 impl QueryHoistArgumentV14 {
     fn matches(self, index: usize) -> bool {
-        use fe2o3_hsaco::{ArgumentAddressSpace::Global, ExplicitValueKind::{ByValue, GlobalBuffer}};
-        if index >= 17 { return false; }
+        use fe2o3_hsaco::{
+            ArgumentAddressSpace::Global,
+            ExplicitValueKind::{ByValue, GlobalBuffer},
+        };
+        if index >= 17 {
+            return false;
+        }
         let pointer = index < 12 && index.is_multiple_of(2);
-        let (offset, size) = if index < 12 { (index * 8, 8) } else { (96 + (index - 12) * 4, 4) };
-        self.offset == offset as u64 && self.size == size
+        let (offset, size) = if index < 12 {
+            (index * 8, 8)
+        } else {
+            (96 + (index - 12) * 4, 4)
+        };
+        self.offset == offset as u64
+            && self.size == size
             && self.kind == (if pointer { GlobalBuffer } else { ByValue })
             && self.address_space == (if pointer { Some(Global) } else { None })
-            && self.alignment.is_none() && self.pointee_alignment.is_none()
-            && self.access.is_none() && self.actual_access.is_none() && self.value_type.is_none()
+            && self.alignment.is_none()
+            && self.pointee_alignment.is_none()
+            && self.access.is_none()
+            && self.actual_access.is_none()
+            && self.value_type.is_none()
     }
 }
 
@@ -769,10 +791,14 @@ mod tests {
                 .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
             &ROOTS,
         ));
-        assert_eq!(ROOTS, ferric_qwen3_tp_wave_query_hoist_kernels_device_v14::ROOTS_V14);
+        assert_eq!(
+            ROOTS,
+            ferric_qwen3_tp_wave_query_hoist_kernels_device_v14::ROOTS_V14
+        );
         assert!(!exact_roster(std::iter::empty(), &ROOTS));
         assert!(!exact_roster([ROOTS[0], ROOTS[0]].into_iter(), &ROOTS));
-        for root in super::ENGINEERING_TP_BATCH32_EXPORTS_V5.into_iter()
+        for root in super::ENGINEERING_TP_BATCH32_EXPORTS_V5
+            .into_iter()
             .chain(super::ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8)
             .chain(super::ENGINEERING_TP_LARGE_KV_EXPORTS_V9)
             .chain(super::ENGINEERING_DRAFT_BATCH32_EXPORTS_V10)
@@ -786,15 +812,33 @@ mod tests {
     #[test]
     #[cfg(feature = "tp-batch-engineering")]
     fn query_hoist_v14_argument_profile_rejects_geometry_and_qualifier_drift() {
-        use fe2o3_hsaco::{ArgumentAccess, ArgumentAddressSpace, ExplicitValueKind, ExplicitValueType};
+        use fe2o3_hsaco::{
+            ArgumentAccess, ArgumentAddressSpace, ExplicitValueKind, ExplicitValueType,
+        };
         for index in 0_usize..17 {
             let pointer = index < 12 && index.is_multiple_of(2);
             let valid = super::QueryHoistArgumentV14 {
-                offset: if index < 12 { index * 8 } else { 96 + (index - 12) * 4 } as u64,
+                offset: if index < 12 {
+                    index * 8
+                } else {
+                    96 + (index - 12) * 4
+                } as u64,
                 size: if index < 12 { 8 } else { 4 },
-                kind: if pointer { ExplicitValueKind::GlobalBuffer } else { ExplicitValueKind::ByValue },
-                address_space: if pointer { Some(ArgumentAddressSpace::Global) } else { None },
-                alignment: None, pointee_alignment: None, access: None, actual_access: None, value_type: None,
+                kind: if pointer {
+                    ExplicitValueKind::GlobalBuffer
+                } else {
+                    ExplicitValueKind::ByValue
+                },
+                address_space: if pointer {
+                    Some(ArgumentAddressSpace::Global)
+                } else {
+                    None
+                },
+                alignment: None,
+                pointee_alignment: None,
+                access: None,
+                actual_access: None,
+                value_type: None,
             };
             assert!(valid.matches(index));
             assert!(!valid.matches(17));
@@ -805,7 +849,13 @@ mod tests {
                     1 => changed.size += 1,
                     2 => changed.kind = ExplicitValueKind::DynamicSharedPointer,
                     3 => changed.address_space = Some(ArgumentAddressSpace::Local),
-                    4 => changed.address_space = if pointer { None } else { Some(ArgumentAddressSpace::Global) },
+                    4 => {
+                        changed.address_space = if pointer {
+                            None
+                        } else {
+                            Some(ArgumentAddressSpace::Global)
+                        }
+                    }
                     5 => changed.alignment = Some(8),
                     6 => changed.pointee_alignment = Some(2),
                     7 => changed.access = Some(ArgumentAccess::ReadOnly),
@@ -813,7 +863,10 @@ mod tests {
                     9 => changed.value_type = Some(ExplicitValueType::F32),
                     _ => unreachable!(),
                 }
-                assert!(!changed.matches(index), "argument {index}, mutation {mutation}");
+                assert!(
+                    !changed.matches(index),
+                    "argument {index}, mutation {mutation}"
+                );
             }
         }
     }
@@ -830,16 +883,21 @@ mod tests {
         assert_eq!(binding.hsaco, *artifact.hsaco_id().as_bytes());
         assert_eq!(binding.manifest, *artifact.manifest_id().as_bytes());
         assert_eq!(binding.handoff, *artifact.handoff_id().as_bytes());
-        assert!(super::query_hoist_metadata_matches_v14(&artifact.inspection().hsaco().kernels()[0]));
+        assert!(super::query_hoist_metadata_matches_v14(
+            &artifact.inspection().hsaco().kernels()[0]
+        ));
         assert!(artifact.fp32_argmax_binding_v11().is_none());
         assert!(artifact.draft_binding().is_none());
         assert!(artifact.large_kv_binding().is_none());
         assert!(super::EngineeringTpArtifactV1::open_fp32_argmax32_v11(&root).is_err());
-        assert!(super::EngineeringTpArtifactV1::open_batch32(
-            &root,
-            &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
-            true,
-        ).is_err());
+        assert!(
+            super::EngineeringTpArtifactV1::open_batch32(
+                &root,
+                &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
+                true,
+            )
+            .is_err()
+        );
     }
 
     #[test]

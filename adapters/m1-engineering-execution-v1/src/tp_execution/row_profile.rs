@@ -56,26 +56,39 @@ pub(super) fn bind(
     #[cfg(feature = "tp-batch-engineering")]
     if command.kernel == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14[0] {
         use super::EngineeringTpBufferAccessV1::{Read, Write};
-        let Some([
-            EngineeringTpArgumentV1::U32(rows),
-            EngineeringTpArgumentV1::U32(world),
-            EngineeringTpArgumentV1::U32(stride),
-            EngineeringTpArgumentV1::U32(pages),
-            EngineeringTpArgumentV1::U32(context),
-        ]) = command.arguments.get(6..) else {
+        let Some(
+            [
+                EngineeringTpArgumentV1::U32(rows),
+                EngineeringTpArgumentV1::U32(world),
+                EngineeringTpArgumentV1::U32(stride),
+                EngineeringTpArgumentV1::U32(pages),
+                EngineeringTpArgumentV1::U32(context),
+            ],
+        ) = command.arguments.get(6..)
+        else {
             return Err("query hoist v14 requires six slices and five u32 scalars".into());
         };
-        if capacity != 32 || *world != 1 || !(1..=32).contains(rows)
-            || !(1..=512).contains(stride) || !(1..=512).contains(pages)
-            || !(1..=8192).contains(context) || *context > *stride * 16
-            || command.workgroup_size != 64 || command.grid_workgroups != *rows * 32
-            || command.arguments[..6].iter().enumerate().any(|(index, arg)| {
-                !matches!(arg, EngineeringTpArgumentV1::Buffer { element_bytes, access, .. }
+        if capacity != 32
+            || *world != 1
+            || !(1..=32).contains(rows)
+            || !(1..=512).contains(stride)
+            || !(1..=512).contains(pages)
+            || !(1..=8192).contains(context)
+            || *context > *stride * 16
+            || command.workgroup_size != 64
+            || command.grid_workgroups != *rows * 32
+            || command.arguments[..6]
+                .iter()
+                .enumerate()
+                .any(|(index, arg)| {
+                    !matches!(arg, EngineeringTpArgumentV1::Buffer { element_bytes, access, .. }
                     if *element_bytes == (if matches!(index, 3 | 4) { 4 } else { 2 })
                     && *access == (if index == 5 { Write } else { Read }))
-            })
+                })
         {
-            return Err("query hoist v14 requires the exact TP1/capacity32 Wave64 GQA geometry".into());
+            return Err(
+                "query hoist v14 requires the exact TP1/capacity32 Wave64 GQA geometry".into(),
+            );
         }
         return Ok(command);
     }

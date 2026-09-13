@@ -248,11 +248,20 @@ fn argmax_canary_is_separately_opted_in_without_changing_frozen_clis() {
 #[test]
 fn query_hoist_v14_route_adds_no_controller_or_default_selection() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
-    let dependency = &manifest["dependencies"]["ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"];
+    let dependency =
+        &manifest["dependencies"]["ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"];
     assert_eq!(dependency["optional"].as_bool(), Some(true));
     assert_eq!(dependency["default-features"].as_bool(), Some(false));
-    assert_eq!(dependency["features"].as_array().unwrap(), &[toml::Value::String("gfx950".into())]);
-    assert!(!manifest["features"].as_table().unwrap().contains_key("default"));
+    assert_eq!(
+        dependency["features"].as_array().unwrap(),
+        &[toml::Value::String("gfx950".into())]
+    );
+    assert!(
+        !manifest["features"]
+            .as_table()
+            .unwrap()
+            .contains_key("default")
+    );
     let artifact = include_str!("../src/tp_artifact.rs");
     assert!(artifact.contains("compiler_expectation_roster_v14()"));
     assert!(artifact.contains("query_hoist_metadata_matches_v14"));
@@ -260,8 +269,8 @@ fn query_hoist_v14_route_adds_no_controller_or_default_selection() {
     assert!(batched.contains("new_wide32_with_argmax_v11_and_query_hoist_v14"));
     assert!(batched.contains("configure_ordered_c1_wave_query_hoist_v14"));
     for binary in manifest["bin"].as_array().unwrap() {
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join(binary["path"].as_str().unwrap());
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap());
         let source = std::fs::read_to_string(path).unwrap();
         assert!(!source.contains("open_query_hoist_v14"));
         assert!(!source.contains("configure_ordered_c1_wave_query_hoist_v14"));

@@ -163,15 +163,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
         attention: &crate::tp_artifact::EngineeringTpArtifactV1,
     ) -> TpResult<Self> {
-        let bindings = argmax.fp32_argmax_binding_v11().zip(attention.query_hoist_binding_v14());
+        let bindings = argmax
+            .fp32_argmax_binding_v11()
+            .zip(attention.query_hoist_binding_v14());
         let Some((argmax_v11, query_hoist_v14)) = bindings else {
             for transport in &mut transports {
                 let _ = transport.close();
             }
-            return Err("query hoist constructor requires exact separately admitted v11 and v14 images".into());
+            return Err(
+                "query hoist constructor requires exact separately admitted v11 and v14 images"
+                    .into(),
+            );
         };
         Self::new_profile(
-            transports, model, weights, layout, pool,
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
             BatchedProfile::Target {
                 rows: 32,
                 large_kv: false,
@@ -228,15 +237,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
         profile: BatchedProfile,
     ) -> TpResult<Self> {
-        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11, admitted_query_hoist_v14) = match profile {
-            BatchedProfile::Target {
-                rows,
-                large_kv,
-                argmax_v11,
-                query_hoist_v14,
-            } => (rows, large_kv, false, argmax_v11, query_hoist_v14),
-            BatchedProfile::Draft(_) => (32, false, true, None, None),
-        };
+        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11, admitted_query_hoist_v14) =
+            match profile {
+                BatchedProfile::Target {
+                    rows,
+                    large_kv,
+                    argmax_v11,
+                    query_hoist_v14,
+                } => (rows, large_kv, false, argmax_v11, query_hoist_v14),
+                BatchedProfile::Draft(_) => (32, false, true, None, None),
+            };
         let binding = match profile {
             BatchedProfile::Target { .. } => {
                 validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
@@ -251,7 +261,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                         }
                         if let Some(image) = admitted_query_hoist_v14 {
                             validate_query_hoist_binding_v14(
-                                &mut transports, row_capacity, large_kv, image,
+                                &mut transports,
+                                row_capacity,
+                                large_kv,
+                                image,
                             )?;
                         }
                         Ok(())
@@ -492,7 +505,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
         attention: &crate::tp_artifact::EngineeringTpArtifactV1,
     ) -> TpResult<()> {
-        let (argmax, attention) = argmax.fp32_argmax_binding_v11()
+        let (argmax, attention) = argmax
+            .fp32_argmax_binding_v11()
             .zip(attention.query_hoist_binding_v14())
             .ok_or("query hoist requires exact separately admitted v11 and v14 images")?;
         self.configure_ordered_c1_wave_query_hoist_binding_v14(argmax, attention)
@@ -504,7 +518,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         attention: crate::tp_artifact::QueryHoistBindingV14,
     ) -> TpResult<()> {
         if self.query_hoist_v14.is_some() || self.admitted_query_hoist_v14 != Some(attention) {
-            return Err("query hoist requires its preallocated image binding and fresh selection".into());
+            return Err(
+                "query hoist requires its preallocated image binding and fresh selection".into(),
+            );
         }
         self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(argmax)?;
         self.query_hoist_v14 = Some(attention);
@@ -1647,7 +1663,9 @@ fn validate_query_hoist_binding_v14<R: EngineeringTpRankTransportV1>(
         || transports.len() != 1
         || transports[0].peer_group_rank().is_some()
     {
-        return Err("query hoist v14 requires fresh target TP1/capacity32 without large KV or peers".into());
+        return Err(
+            "query hoist v14 requires fresh target TP1/capacity32 without large KV or peers".into(),
+        );
     }
     transports[0].require_loaded_image(
         image.hsaco,
