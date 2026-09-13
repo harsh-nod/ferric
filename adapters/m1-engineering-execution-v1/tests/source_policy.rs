@@ -338,7 +338,7 @@ fn wave_rmsnorm_v15_live_preserves_ingress_and_preloads_both_explicit_modes() {
         "driver.configure_head_precision_v8(true)",
         "match options.rmsnorm_mode",
         "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
-        "driver.configure_ordered_c1_wave_rmsnorm_v15",
+        "configure_ordered_c1_wave_rmsnorm_v15",
         "EngineeringTpBatchRuntimeV2::new_wide32",
     ]
     .map(|marker| production.find(marker).unwrap());
