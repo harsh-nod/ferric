@@ -162,7 +162,8 @@ fn run(input: &Fixture, output: &mut [u16], trace: &mut Trace) -> Result<(), Rej
                 let column = lane + component * 64;
                 let index = row * WIDTH + column;
                 trace.second_reads += 1;
-                output[index] = finish_value(input.input[index], input.weight[column], inverse_rms)?;
+                output[index] =
+                    finish_value(input.input[index], input.weight[column], inverse_rms)?;
                 trace.writes += 1;
             }
         }
@@ -250,11 +251,21 @@ fn striped_association_is_not_the_old_left_fold() {
 
 #[test]
 fn output_rounding_keeps_even_ties_and_rejects_narrowing_overflow() {
-    for (midpoint, expected) in [(0x3f80_8000, 0x3f80), (0x3f81_8000, 0x3f82),
-        (0xbf80_8000, 0xbf80), (0xbf81_8000, 0xbf82)] {
-        assert_eq!(finish_value(bits(1.0), bits(1.0), f32::from_bits(midpoint)), Ok(expected));
+    for (midpoint, expected) in [
+        (0x3f80_8000, 0x3f80),
+        (0x3f81_8000, 0x3f82),
+        (0xbf80_8000, 0xbf80),
+        (0xbf81_8000, 0xbf82),
+    ] {
+        assert_eq!(
+            finish_value(bits(1.0), bits(1.0), f32::from_bits(midpoint)),
+            Ok(expected)
+        );
     }
-    assert_eq!(finish_value(bits(1.0), bits(1.0), f32::MAX), Err(Reject::Numerical));
+    assert_eq!(
+        finish_value(bits(1.0), bits(1.0), f32::MAX),
+        Err(Reject::Numerical)
+    );
 }
 
 #[test]
@@ -282,11 +293,17 @@ fn invalid_shape_and_lengths_reject_before_reads_or_writes() {
             3 => input.width = 128,
             4 => input.width = 1024,
             5 => input.width = u32::MAX,
-            6 => { input.input.pop(); }
+            6 => {
+                input.input.pop();
+            }
             7 => input.input.push(bits(1.0)),
-            8 => { input.weight.pop(); }
+            8 => {
+                input.weight.pop();
+            }
             9 => input.weight.push(bits(1.0)),
-            10 => { output.pop(); }
+            10 => {
+                output.pop();
+            }
             11 => output.push(SENTINEL),
             _ => unreachable!(),
         }
@@ -301,15 +318,27 @@ fn invalid_shape_and_lengths_reject_before_reads_or_writes() {
 
 #[test]
 fn exact_epsilon_and_grid_are_required() {
-    for epsilon in [0.0, -EPSILON, f32::NAN, f32::INFINITY, f32::from_bits(EPSILON.to_bits() + 1)] {
+    for epsilon in [
+        0.0,
+        -EPSILON,
+        f32::NAN,
+        f32::INFINITY,
+        f32::from_bits(EPSILON.to_bits() + 1),
+    ] {
         let mut input = fixture(1);
         input.epsilon = epsilon;
-        assert_eq!(run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()), Err(Reject::Shape));
+        assert_eq!(
+            run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()),
+            Err(Reject::Shape)
+        );
     }
     for grid in [[0, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]] {
         let mut input = fixture(1);
         input.grid = grid;
-        assert_eq!(run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()), Err(Reject::Shape));
+        assert_eq!(
+            run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()),
+            Err(Reject::Shape)
+        );
     }
 }
 
@@ -327,7 +356,10 @@ fn auxiliary_buffers_and_behavior_cannot_enable_fusion() {
         let residual = input.residual.clone();
         let fused = input.fused.clone();
         let mut output = vec![SENTINEL; WIDTH];
-        assert_eq!(run(&input, &mut output, &mut Trace::default()), Err(Reject::Shape));
+        assert_eq!(
+            run(&input, &mut output, &mut Trace::default()),
+            Err(Reject::Shape)
+        );
         assert_eq!(output, vec![SENTINEL; WIDTH]);
         assert_eq!(input.residual, residual);
         assert_eq!(input.fused, fused);
@@ -357,7 +389,10 @@ fn finite_square_and_sum_overflow_reject_without_early_lane_exit() {
         let mut input = fixture(1);
         input.input.fill(word);
         let mut trace = Trace::default();
-        assert_eq!(run(&input, &mut vec![SENTINEL; WIDTH], &mut trace), Err(Reject::Numerical));
+        assert_eq!(
+            run(&input, &mut vec![SENTINEL; WIDTH], &mut trace),
+            Err(Reject::Numerical)
+        );
         assert_eq!(trace.collectives.len(), 2);
         assert_eq!(trace.first_reads, WIDTH);
         assert_eq!(trace.second_reads, 0);
@@ -370,14 +405,20 @@ fn invalid_weights_and_weighted_overflow_are_not_successful_outputs() {
         let mut input = fixture(1);
         input.weight[4095] = weight;
         let mut trace = Trace::default();
-        assert_eq!(run(&input, &mut vec![SENTINEL; WIDTH], &mut trace), Err(Reject::Numerical));
+        assert_eq!(
+            run(&input, &mut vec![SENTINEL; WIDTH], &mut trace),
+            Err(Reject::Numerical)
+        );
         assert_eq!(trace.collectives.len(), 2);
     }
     let mut input = fixture(1);
     input.input.fill(0);
     input.input[0] = bits(1.0);
     input.weight[0] = Bf16::MAX.to_bits();
-    assert_eq!(run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()), Err(Reject::Numerical));
+    assert_eq!(
+        run(&input, &mut vec![SENTINEL; WIDTH], &mut Trace::default()),
+        Err(Reject::Numerical)
+    );
 }
 
 #[test]
@@ -403,7 +444,10 @@ fn changed_inputs_after_rejection_have_no_retained_model_state() {
     let mut output = vec![SENTINEL; WIDTH];
     run(&input, &mut output, &mut Trace::default()).unwrap();
     input.input[63] = Bf16::NAN.to_bits();
-    assert_eq!(run(&input, &mut output, &mut Trace::default()), Err(Reject::Numerical));
+    assert_eq!(
+        run(&input, &mut output, &mut Trace::default()),
+        Err(Reject::Numerical)
+    );
     input.input.fill(bits(-2.0));
     run(&input, &mut output, &mut Trace::default()).unwrap();
     assert_eq!(output, vec![bits(-1.0); WIDTH]);

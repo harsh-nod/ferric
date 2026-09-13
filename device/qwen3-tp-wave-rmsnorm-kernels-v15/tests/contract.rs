@@ -1,6 +1,4 @@
-use ferric_qwen3_tp_wave_rmsnorm_kernels_device_v15::{
-    ROOTS_V15, compiler_expectation_roster_v15,
-};
+use ferric_qwen3_tp_wave_rmsnorm_kernels_device_v15::{ROOTS_V15, compiler_expectation_roster_v15};
 use quote::{ToTokens, quote};
 use syn::{Block, Expr, FnArg, Item, ItemFn, Pat, Stmt};
 
@@ -75,13 +73,23 @@ fn verify(candidate: &str) -> Result<(), &'static str> {
     let new = function(candidate, ROOTS_V15[0])?;
     let old = function(BASELINE, "qwen3_rmsnorm_v1")?;
     let parsed = syn::parse_file(candidate).map_err(|_| "parse")?;
-    if parsed.items.iter().filter(|item| matches!(item, Item::Fn(_))).count() != 1 {
+    if parsed
+        .items
+        .iter()
+        .filter(|item| matches!(item, Item::Fn(_)))
+        .count()
+        != 1
+    {
         return Err("root count");
     }
-    let constants: Vec<_> = parsed.items.iter().filter_map(|item| match item {
-        Item::Const(value) => Some(value),
-        _ => None,
-    }).collect();
+    let constants: Vec<_> = parsed
+        .items
+        .iter()
+        .filter_map(|item| match item {
+            Item::Const(value) => Some(value),
+            _ => None,
+        })
+        .collect();
     if constants.len() != 1
         || constants[0].ident != "QWEN3_RMSNORM_EPSILON_V1"
         || tokens(&constants[0].expr) != "1e-6_f32"
@@ -107,28 +115,46 @@ fn verify(candidate: &str) -> Result<(), &'static str> {
         launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [32, 1, 1]),
         control_flow(loop_bounds(64, 64))
     )]);
-    let actual = new.attrs.iter().find(|attr| attr.path().is_ident("kernel"))
+    let actual = new
+        .attrs
+        .iter()
+        .find(|attr| attr.path().is_ident("kernel"))
         .ok_or("kernel attribute")?;
     if tokens(actual) != tokens(&expected) {
         return Err("launch or loop bound");
     }
-    let begin = new.block.stmts.iter().position(|s| binding(s, "mean_square"))
+    let begin = new
+        .block
+        .stmts
+        .iter()
+        .position(|s| binding(s, "mean_square"))
         .ok_or("normalization boundary")?;
     let prefix: Block = syn::parse_str(PREFIX).map_err(|_| "expected prefix")?;
     if statements(&new.block.stmts[..begin]) != statements(&prefix.stmts) {
         return Err("entry or convergent reduction");
     }
-    let old_begin = old.block.stmts.iter().position(|s| binding(s, "mean_square"))
+    let old_begin = old
+        .block
+        .stmts
+        .iter()
+        .position(|s| binding(s, "mean_square"))
         .ok_or("old normalization boundary")?;
     let mut tail = old.block.stmts[old_begin..].to_vec();
-    let output_loop = tail.iter_mut().find_map(|s| match s {
-        Stmt::Expr(Expr::While(value), _) => Some(value),
-        _ => None,
-    }).ok_or("old output loop")?;
+    let output_loop = tail
+        .iter_mut()
+        .find_map(|s| match s {
+            Stmt::Expr(Expr::While(value), _) => Some(value),
+            _ => None,
+        })
+        .ok_or("old output loop")?;
     let Some(Stmt::Expr(Expr::If(active), _)) = output_loop.body.stmts.get_mut(1) else {
         return Err("old active output");
     };
-    let fused = active.then_branch.stmts.iter_mut().find(|s| binding(s, "normalized_input"))
+    let fused = active
+        .then_branch
+        .stmts
+        .iter_mut()
+        .find(|s| binding(s, "normalized_input"))
         .ok_or("old fused branch")?;
     *fused = syn::parse_quote!(let normalized_input = input_value;);
     if statements(&new.block.stmts[begin..]) != statements(&tail) {
@@ -147,11 +173,18 @@ fn one_distinct_root_retains_five_slices_four_scalars_and_96_explicit_bytes() {
     assert_ne!(roster[0].generated_host_contract_identity(), [0; 32]);
     let root = function(SOURCE, ROOTS_V15[0]).unwrap();
     assert!(root.sig.unsafety.is_none());
-    let sizes: Vec<_> = root.sig.inputs.iter().map(|input| {
-        let FnArg::Typed(input) = input else { panic!("receiver") };
-        let ty = tokens(&input.ty);
-        if ty == "u32" || ty == "f32" { 4 } else { 16 }
-    }).collect();
+    let sizes: Vec<_> = root
+        .sig
+        .inputs
+        .iter()
+        .map(|input| {
+            let FnArg::Typed(input) = input else {
+                panic!("receiver")
+            };
+            let ty = tokens(&input.ty);
+            if ty == "u32" || ty == "f32" { 4 } else { 16 }
+        })
+        .collect();
     assert_eq!(sizes, [16, 16, 16, 16, 16, 4, 4, 4, 4]);
     assert_eq!(sizes.iter().sum::<usize>(), 96);
 }
@@ -161,7 +194,12 @@ fn entry_and_both_convergent_collectives_are_closed() {
     verify(SOURCE).unwrap();
     assert_eq!(SOURCE.matches("subgroup.reduce_sum_f32::<64>").count(), 1);
     assert_eq!(SOURCE.matches("subgroup.reduce_max_f32::<64>").count(), 1);
-    assert_eq!(SOURCE.matches("memory::volatile_load(input_bf16, index)").count(), 2);
+    assert_eq!(
+        SOURCE
+            .matches("memory::volatile_load(input_bf16, index)")
+            .count(),
+        2
+    );
     assert!(!SOURCE.contains("fused_residual_bf16.write"));
 }
 
@@ -179,19 +217,34 @@ fn malformed_source_cannot_relax_guards_association_or_output() {
         ("rows <= 32", "rows <= 33"),
         ("width == 4_096", "width == 1_024"),
         ("behavior == 0", "behavior <= 1"),
-        ("input_bf16.len() == elements", "input_bf16.len() >= elements"),
-        ("residual_bf16.len() == 0", "residual_bf16.len() <= elements"),
+        (
+            "input_bf16.len() == elements",
+            "input_bf16.len() >= elements",
+        ),
+        (
+            "residual_bf16.len() == 0",
+            "residual_bf16.len() <= elements",
+        ),
         ("thread::grid_dim_y() == 1", "thread::grid_dim_y() >= 1"),
         ("1e-6_f32", "1e-5_f32"),
         ("loop_bounds(64, 64)", "loop_bounds(63, 64)"),
         ("lane_index + component * 64", "lane_index + component * 63"),
         ("finite &=", "finite |= "),
-        ("partial = next_sum;", "partial = next_sum; if !finite { fe2o3_device::trap(); }"),
+        (
+            "partial = next_sum;",
+            "partial = next_sum; if !finite { fe2o3_device::trap(); }",
+        ),
         ("reduce_sum_f32::<64>", "reduce_sum_f32::<32>"),
         ("reduce_max_f32::<64>(invalid)", "reduce_max_f32::<64>(0.0)"),
         ("sum / width as f32", "sum / 4_095.0_f32"),
-        ("normalized_input * inverse_rms", "normalized_input / inverse_rms"),
-        ("normalized * weight.to_f32()", "weight.to_f32() * normalized"),
+        (
+            "normalized_input * inverse_rms",
+            "normalized_input / inverse_rms",
+        ),
+        (
+            "normalized * weight.to_f32()",
+            "weight.to_f32() * normalized",
+        ),
         ("Bf16::from_f32(weighted)", "Bf16::from_f32(normalized)"),
     ] {
         let mutated = SOURCE.replace(from, to);
@@ -223,7 +276,12 @@ fn stripes_cover_each_active_element_once_and_no_capacity_tail() {
 #[test]
 fn standalone_manifest_pins_latest_compiler_without_old_route_changes() {
     let manifest = include_str!("../Cargo.toml");
-    assert_eq!(manifest.matches("61e014ac28690cd993761590fd2f7d75d419d340").count(), 2);
+    assert_eq!(
+        manifest
+            .matches("61e014ac28690cd993761590fd2f7d75d419d340")
+            .count(),
+        2
+    );
     assert!(manifest.contains("[workspace]"));
     assert!(manifest.contains("default = [\"gfx950\"]"));
     assert!(!manifest.contains("8efd4fd"));
