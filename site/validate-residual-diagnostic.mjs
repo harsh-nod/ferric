@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { validateC1Checkpoint } from "./validate-c1-checkpoint.mjs";
+import { validateLiveC1Checkpoint } from "./validate-live-c1-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const pins = {
@@ -117,6 +118,8 @@ export async function validateResidualDiagnosticEvidence(root, project) {
   const baseline = projectFrom(await pinned("residual-baseline-project.js",
     "dc728b4b7199e33fce99a03e141559ad1140123918404d5b9d97136d08035e34"));
   const historical = clone(project);
+  validateLiveC1Checkpoint(historical.liveC1Checkpoint);
+  delete historical.liveC1Checkpoint;
   validateC1Checkpoint(historical.c1Checkpoint);
   delete historical.c1Checkpoint;
   delete historical.residualDiagnostic;

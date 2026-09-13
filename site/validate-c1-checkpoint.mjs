@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { validateLiveC1Checkpoint } from "./validate-live-c1-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -156,6 +157,8 @@ export async function validateC1CheckpointEvidence(root, project) {
   const baseline = projectFrom(await pinned("c1-baseline-project.js",
     "b8757d8e3072f7dd78ba0744dc892d59d50ef7fb7861782808b6bbe366741987"));
   const historical = clone(project);
+  validateLiveC1Checkpoint(historical.liveC1Checkpoint);
+  delete historical.liveC1Checkpoint;
   delete historical.c1Checkpoint;
   assert.deepEqual(historical, baseline, "every preexisting public object, including HTTP and residual regression, is unchanged");
   assert.equal(digest(await readFile(join(siteRoot, "data/performance.js"))),

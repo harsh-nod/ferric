@@ -48,7 +48,8 @@
               inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
               on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
               Bounded resident JSONL and loopback HTTP are implemented in private source;
-              a separate wave-attention / v11 profile now has admitted context8192 HTTP measurements.
+              separate wave-attention / v11 and same-binary C1-layer profiles have admitted
+              finite context8192 HTTP measurements.
               The retained vLLM reference is substantially faster. Standalone draft execution and an
               independent paged-draft FP32 reference pass; end-to-end speculative serving,
               SGLang measurements, sustained-load and protected qualification remain open.
@@ -204,6 +205,8 @@
             </p>
           </div>
           <h3>Current parallel checkpoint</h3>
+          <div data-live-c1-checkpoint></div>
+          <h3>Retained C1 native diagnostic and integer proof</h3>
           <div data-c1-checkpoint></div>
           <h3>Retained HTTP and kernel checkpoints</h3>
           <div class="team-grid" data-live-http-teams></div>

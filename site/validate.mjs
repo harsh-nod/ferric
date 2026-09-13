@@ -16,6 +16,7 @@ import { validateSubmissionCheckpoint, testSubmissionCheckpointRejections,
   validateLiveHttpCheckpoint, testLiveHttpCheckpointRejections } from "./validate-submission-checkpoint.mjs";
 import { validateResidualDiagnostic, testResidualDiagnosticRejections } from "./validate-residual-diagnostic.mjs";
 import { validateC1Checkpoint, testC1CheckpointRejections } from "./validate-c1-checkpoint.mjs";
+import { validateLiveC1Checkpoint, testLiveC1CheckpointRejections } from "./validate-live-c1-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
@@ -46,6 +47,8 @@ validateResidualDiagnostic(project.residualDiagnostic);
 testResidualDiagnosticRejections(project.residualDiagnostic);
 validateC1Checkpoint(project.c1Checkpoint);
 testC1CheckpointRejections(project.c1Checkpoint);
+validateLiveC1Checkpoint(project.liveC1Checkpoint);
+testLiveC1CheckpointRejections(project.liveC1Checkpoint);
 const performanceSource = await readFile(join(siteRoot, "data/performance.js"), "utf8");
 vm.runInNewContext(performanceSource, context, { filename: "site/data/performance.js" });
 validatePerformance(context.window.FERRIC_PERFORMANCE);
@@ -114,6 +117,7 @@ assertExactKeys(
     "liveHttpCheckpoint",
     "residualDiagnostic",
     "c1Checkpoint",
+    "liveC1Checkpoint",
     "attentionReadiness",
     "pagedDraftReference",
     "latestReadiness",

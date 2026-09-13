@@ -26,6 +26,7 @@ const dynamicRoots = [
   "[data-live-http-teams]",
   "[data-residual-diagnostic]",
   "[data-c1-checkpoint]",
+  "[data-live-c1-checkpoint]",
   "[data-envelope]",
   "[data-capabilities]",
   "[data-validation]",
@@ -38,6 +39,26 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "C1 live route: context8192 HTTP",
+  "199.719",
+  "154.310",
+  "4.532745",
+  "5.707624",
+  "22.737% lower",
+  "25.920% higher",
+  "2873.632 to 2827.804 ms",
+  "One fresh start per arm",
+  "all forty timed SSE/request IDs",
+  "38.643 times this C1 output rate",
+  "pre-worker socket-bind failure with zero requests",
+  "Retained C1 native diagnostic and integer proof",
+  "Sharded argmax v13: static image checks",
+  "52 explicit bytes, hidden start 56 and 312 total kernarg bytes",
+  "only the typed handoff digest was retained",
+  "detailed typed-node review and native parity remain unadmitted",
+  "actually built at 216822",
+  "Query-hoist v14: host checkpoint",
+  "Ten synthetic control tests pass separately using fabricated metadata",
   "Wave attention / v11: context8192 HTTP",
   "3482.380",
   "276.255",
@@ -990,6 +1011,15 @@ try {
       `${name}: missing current live HTTP/kernel team checkpoints`);
     assert(await page.locator("[data-c1-checkpoint] .team-item").count() === 2,
       `${name}: missing separate C1/v13 checkpoints`);
+    assert(await page.locator("[data-live-c1-checkpoint] .team-item").count() === 2,
+      `${name}: missing current V13/V14 checkpoints`);
+    assert(await page.getByRole("region", { name: "C1 live route: same-binary finite HTTP cohorts", exact: true })
+      .locator("tbody tr").count() === 2, `${name}: missing admitted C1 live HTTP pair`);
+    const liveC1Disclosure = page.getByText("C1 live HTTP percentiles and evidence", { exact: true });
+    await liveC1Disclosure.click();
+    assert(await page.getByRole("region", { name: "C1 live route: retained HTTP percentiles", exact: true })
+      .locator("tbody tr").count() === 2, `${name}: missing C1 live HTTP percentiles`);
+    await liveC1Disclosure.click();
     assert(await page.getByRole("region", { name: "C1 layer projection: same-binary n=2 diagnostic", exact: true })
       .locator("tbody tr").count() === 2, `${name}: missing same-binary C1 diagnostic rows`);
     for (const label of ["Stopped", "Compiler rejected", "Native correctness accepted"]) {
@@ -1011,6 +1041,9 @@ try {
         for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
           ["Wave attention / v11: context8192 HTTP", "live-http"],
           ["Current parallel checkpoint", "live-teams"],
+          ["C1 live route: context8192 HTTP", "live-c1-http"],
+          ["Sharded argmax v13: static image checks", "v13-emission"],
+          ["Query-hoist v14: host checkpoint", "v14-host"],
           ["C1 layer projection: variable native diagnostic", "c1-diagnostic"],
           ["v13 ownership: standalone integer proof", "v13-proof"],
           ["Sharded argmax v13", "v13-host"],

@@ -60,7 +60,7 @@
 
   document.querySelector("[data-milestone-name]").textContent = project.milestone.name;
   document.querySelector("[data-milestone-label]").textContent = project.milestone.label;
-  document.querySelector("[data-milestone-summary]").textContent = project.liveHttpCheckpoint.overview;
+  document.querySelector("[data-milestone-summary]").textContent = project.liveC1Checkpoint.overview;
   document.querySelector("[data-milestone-dot]").classList.add(
     `dot-${project.milestone.state}`,
   );
@@ -232,6 +232,47 @@
     article.append(heading, facts);
     liveHttpTeams.append(article);
   }
+
+  const liveC1 = project.liveC1Checkpoint;
+  const liveC1Progress = document.querySelector("[data-live-c1-checkpoint]");
+  liveC1Progress.append(element("h3", "", "C1 live route: context8192 HTTP"),
+    element("p", "performance-scope", liveC1.qualificationScope));
+  performanceTable("C1 live route: same-binary finite HTTP cohorts",
+    ["Layer projection", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tok/s"],
+    liveC1.matchedCohorts.map((row) => [row.layerProjection, row.ttftMeanMs.toFixed(3),
+      row.tpotMeanMs.toFixed(3), row.outputTokensPerSecond.toFixed(6)]), liveC1Progress);
+  for (const text of [liveC1.measurement, liveC1.interpretation, liveC1.correctness, liveC1.exclusions])
+    liveC1Progress.append(element("p", "", text));
+  const liveC1Details = element("details", "performance-identities");
+  liveC1Details.append(element("summary", "", "C1 live HTTP percentiles and evidence"));
+  performanceTable("C1 live route: retained HTTP percentiles",
+    ["Layer projection", "TTFT p50 / p99 (ms)", "TPOT p50 / p99 (ms)", "Window (s)"],
+    liveC1.matchedCohorts.map((row) => [row.layerProjection,
+      `${row.ttftP50Ms.toFixed(3)} / ${row.ttftP99Ms.toFixed(3)}`,
+      `${row.tpotP50Ms.toFixed(3)} / ${row.tpotP99Ms.toFixed(3)}`, row.windowSeconds.toFixed(6)]), liveC1Details);
+  const liveC1Pins = element("dl", "observation-facts");
+  for (const [label, value] of [["Same live source", liveC1.source], ["Same controller SHA-256", liveC1.controllerSha256],
+    ["Unchanged HTTP client SHA-256", liveC1.clientSha256], ["Actual worker SHA-256", liveC1.workerSha256],
+    ...liveC1.qualification.map((row) => [`${row.layerProjection} qualification receipt SHA-256`, row.receiptSha256]),
+    ...liveC1.matchedCohorts.flatMap((row) => [[`${row.layerProjection} matched receipt SHA-256`, row.receiptSha256],
+      [`${row.layerProjection} replay SHA-256`, row.replaySha256], [`${row.layerProjection} archive SHA-256`, row.archiveSha256]]),
+    ["Excluded zero-request attempt archive SHA-256", liveC1.excludedAttempt.archiveSha256]])
+    liveC1Pins.append(element("dt", "", label), element("dd", "", value));
+  liveC1Details.append(liveC1Pins);
+  liveC1Progress.append(liveC1Details);
+  const liveC1Teams = element("div", "team-grid");
+  for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
+    ["Query-hoist v14: host checkpoint", "Host/control tests passed", liveC1.v14]]) {
+    const article = element("article", "team-item");
+    const heading = element("div", "team-heading");
+    heading.append(element("h3", "", name), element("span", "state-tag state-open", label));
+    const facts = element("dl", "team-facts");
+    for (const [key, value] of [["Source", team.source], ["Validation", team.detail]])
+      facts.append(element("dt", "", key), element("dd", "", value));
+    article.append(heading, facts);
+    liveC1Teams.append(article);
+  }
+  liveC1Progress.append(liveC1Teams);
 
   const c1 = project.c1Checkpoint;
   const c1Progress = document.querySelector("[data-c1-checkpoint]");
