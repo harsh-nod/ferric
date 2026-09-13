@@ -322,7 +322,7 @@ fn standalone_manifest_pins_latest_compiler_without_old_route_changes() {
     let manifest = include_str!("../Cargo.toml");
     assert_eq!(
         manifest
-            .matches("18946f627ac183958535ca858207fa856bd49aa5")
+            .matches("c9c7036cf98034b638886f54a745701e70ac3571")
             .count(),
         2
     );
