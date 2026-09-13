@@ -108,7 +108,9 @@ fn striped_sum_view(
 #[test]
 fn read_view_preserves_every_valid_coordinate_and_rejects_outside_coordinates() {
     for rows in 1..=CAPACITY {
-        let input: Vec<u16> = (0..rows * WIDTH).map(|index| (index as u16).wrapping_mul(257)).collect();
+        let input: Vec<u16> = (0..rows * WIDTH)
+            .map(|index| (index as u16).wrapping_mul(257))
+            .collect();
         let view = StridedReadView2D::from_shared_slice(&input, 0, rows, WIDTH, WIDTH).unwrap();
         for row in 0..rows {
             for lane in 0..64 {
@@ -116,7 +118,10 @@ fn read_view_preserves_every_valid_coordinate_and_rejects_outside_coordinates() 
                     let column = lane + component * 64;
                     assert!(column < WIDTH);
                     assert!(row * WIDTH + column < input.len());
-                    assert_eq!(view.load_or(row, column, 0x7fc0), input[row * WIDTH + column]);
+                    assert_eq!(
+                        view.load_or(row, column, 0x7fc0),
+                        input[row * WIDTH + column]
+                    );
                 }
             }
         }
@@ -132,9 +137,13 @@ fn read_view_preserves_every_valid_coordinate_and_rejects_outside_coordinates() 
 fn out_of_view_nan_fallback_reaches_both_collectives_before_rejection() {
     let input = fixture(1);
     for (columns, row, fallbacks) in [(WIDTH - 1, 0, 1), (WIDTH, 1, WIDTH)] {
-        let view = StridedReadView2D::from_shared_slice(&input.input, 0, 1, columns, WIDTH).unwrap();
+        let view =
+            StridedReadView2D::from_shared_slice(&input.input, 0, 1, columns, WIDTH).unwrap();
         let mut trace = Trace::default();
-        assert_eq!(striped_sum_view(&view, row, &mut trace), Err(Reject::Numerical));
+        assert_eq!(
+            striped_sum_view(&view, row, &mut trace),
+            Err(Reject::Numerical)
+        );
         assert_eq!(trace.first_reads, WIDTH);
         assert_eq!(trace.first_fallbacks, fallbacks);
         assert_eq!(trace.collectives, [(row, "sum64"), (row, "invalid_max64")]);

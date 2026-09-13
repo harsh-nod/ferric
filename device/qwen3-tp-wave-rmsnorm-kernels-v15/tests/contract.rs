@@ -211,15 +211,28 @@ fn entry_and_both_convergent_collectives_are_closed() {
 fn first_pass_has_guarded_nan_fallback_and_no_lane_local_exit() {
     verify(SOURCE).unwrap();
     let root = function(SOURCE, ROOTS_V15[0]).unwrap();
-    let first_loop = root.block.stmts.iter().find_map(|statement| match statement {
-        Stmt::Expr(Expr::While(value), _) => Some(value),
-        _ => None,
-    }).unwrap();
+    let first_loop = root
+        .block
+        .stmts
+        .iter()
+        .find_map(|statement| match statement {
+            Stmt::Expr(Expr::While(value), _) => Some(value),
+            _ => None,
+        })
+        .unwrap();
     let body = tokens(&first_loop.body);
     for forbidden in ["volatile_load", "trap", "return", "break"] {
-        assert!(!body.contains(forbidden), "first-pass lane exit: {forbidden}");
+        assert!(
+            !body.contains(forbidden),
+            "first-pass lane exit: {forbidden}"
+        );
     }
-    assert_eq!(SOURCE.matches("input_view.load_or(row, column, 0x7fc0)").count(), 1);
+    assert_eq!(
+        SOURCE
+            .matches("input_view.load_or(row, column, 0x7fc0)")
+            .count(),
+        1
+    );
 }
 
 #[test]
