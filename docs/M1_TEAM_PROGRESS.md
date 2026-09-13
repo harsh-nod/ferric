@@ -60,11 +60,11 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
-| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 query-hoist source `1843d8f` passes its host gate and all nine emission phases; static ISA review confirms hoisting survives. The separate eight-case two-image fixture `fec0311`, integrated as `4dcc92a`, passes 15 new and ten unchanged CPU tests plus its self-test. | V13 still needs native parity and runtime ordering checks. V14 needs native parity and a same-compiler control before performance attribution. Its native bindings remain unset. Detailed typed payloads are not retained by the standard emission path. No new GPU kernel candidate is admitted. |
+| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 `1843d8f` passes host/emission/static-ISA checks, 25 fixture CPU tests, eight native two-image parity cases and an independent 421-row raw-protocol replay. All 48 complete buffers and 96 guards agree. | V13 still needs native parity and runtime ordering checks. V14 still needs exact Qwen model qualification and a same-compiler control before performance attribution. Repository launch bindings remain unset; only the separately bound finite run is admitted. Detailed typed payloads are not retained by the standard emission path. No model/default route or speedup is admitted. |
 | Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. The source87 same-binary C1 HTTP pair passes with the measurements above. Corrected diagnostic source `c4fb35d` passes both scoped cleans and all 40 host checks: 936 tests, strict Clippy, eight doctests, 74 HTTP regressions, inventories and protected policies. It is integrated locally through `0e879d6`; binary SHA `27c0404e`. The original proof-placement failure remains archived separately. | Capture actual counters with the isolated diagnostic profile; repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. The 19 runtime counters overlap and measure worker host time, not GPU duration. No stable-gain or competitive claim; no fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `351cb254` is deployed and all seven public assets match the remotely tested artifact. It adds the C1 HTTP pair and V13/V14 emission checkpoint without changing historical data. Diagnostic and finite-parity sources are integrated locally; no implementation push. The completed Pages stage and worktree are removed, reclaiming 309,912 KiB. | Run the next separately reviewed diagnostic and finite-parity GPU checks. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
+| Integration and Pages | Pages-only `351cb254` is deployed and all seven public assets match the remotely tested artifact. It adds the C1 HTTP pair and V13/V14 emission checkpoint without changing historical data. Diagnostic and finite-parity sources are integrated locally; no implementation push. Completed Pages, diagnostic and parity worktrees are removed; source bundles and raw evidence remain. Latest fe2o3 fetch still resolves to `8efd4fd`. | Complete the isolated runtime-counter capture and publish a separately reviewed finite-parity status update. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
@@ -187,6 +187,23 @@ removed after fresh exact checks (24,404 KiB); the restored toolchain stays.
 The completed parity CPU stage and clean integrated source worktree are also
 removed after fresh source/archive/group checks (300 and 42,836 KiB), with
 independent absence checks. The native launch copy is retained separately.
+
+The separately bound V14 native run now passes all eight TP1/context32 cases,
+with exact integer BF16 output, complete input/inactive-tail equality, 48 buffer
+hashes and 96 guards. Resident and candidate loaded ABIs agree at 17 arguments,
+116 explicit and 376 total kernarg bytes. The worker/probe group close normally;
+all eight GPUs are idle before and after. Archive `bfb4ea39` and all22 files
+pass independent root custody. A separate mi300x replay calls the unchanged
+validator and reconstructs all421 protocol rows and guarded payload hashes;
+archive `7403deac` and all35 files pass root custody, with unchanged41 metadata
+entries. This is finite parity, not Qwen parity, TP2/8, context8192, a general
+numerical proof, same-compiler ablation or performance/default admission.
+The completed replay stage is removed (388 KiB). Native runout/upload cleanup
+first stops before deletion at an apparent-size predicate that included directory
+st_sizes; separately reviewed R2 corrects only that expected byte count and
+passes. Only the runout and upload are removed (252 KiB); the installed candidate
+and all shared inputs/models remain unchanged. Independent SSH absence passes,
+and both original failed cleanup and all successful evidence stay local.
 
 Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
 seven deployed assets match the accepted artifact, with historical serving

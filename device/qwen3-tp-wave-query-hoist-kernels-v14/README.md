@@ -6,8 +6,10 @@ passes all ten remote host steps: five contract and eight host-model tests,
 strict Clippy, formatting and zero doctests. Complete archive
 `9d025c4646b4751681230fb46036f738a6f38ebe5edd9bc4362a1e2f7dc7f579`
 retains all 276 evidence files and fresh own artifacts. The separate nine-phase
-emission gate also passes, including eleven synthetic control tests. Native
-numerical qualification and performance comparison remain pending.
+emission gate also passes, including eleven synthetic control tests. Eight
+finite TP1/context32 native cases and their independent raw-protocol replay
+also pass. Exact Qwen model qualification and performance comparison remain
+pending.
 
 ## Scope
 
@@ -98,7 +100,18 @@ handoff's digest, not its payload; independent typed/progress replay remains
 unavailable. Frozen automatic pending flags are not rewritten by the later
 manual ISA review.
 
-No compiler/proof relaxation is permitted. A same-compiler control, native
-finite attention fixtures and exact model qualification remain required before
-performance attribution or routing changes.
+The separate `fec0311` finite profile passes resident-v5 and V14 cases for
+uniform rows1/17/31 and selector rows32: 48 complete buffers, 96 guards, exact
+integer BF16 expectations and unchanged inactive tails. Both native images
+report the required 17 arguments and 376-byte kernarg segment. The worker
+closes normally and all eight GPUs are idle before and after. Complete native
+archive `bfb4ea39` retains all 22 files. Independent mi300x replay archive
+`7403deac` retains all 35 files and confirms the unchanged native validator
+and all 421 raw protocol rows, including regenerated guarded payload digests.
+See the [finite profile](../../proofs/tp1-attention-query-hoist-v1/PLAN.md).
+
+No compiler/proof relaxation is permitted. A same-compiler control and exact
+model qualification remain required before performance attribution. The finite
+case result does not admit TP2/8, context8192, general numerical accuracy or a
+new model route.
 Any comparison remains opt-in and conditional; no default or serving claim follows.

@@ -1,9 +1,10 @@
 # Finite TP1 Query-Hoist Parity Profile
 
-CPU-checked candidate; no GPU run is claimed. The native wrapper
-fails before loading host support while STAGE, WORKER, IMAGE_DIRECTORIES and
-PROBE_SOURCE remain unbound. Root must review and freeze that small binding
-with actual worker/device/path identities before a separately authorized launch.
+Eight finite native cases and an independent CPU replay now pass. The repository
+wrapper still fails before loading host support while STAGE, WORKER,
+IMAGE_DIRECTORIES and PROBE_SOURCE remain unbound. The executed copy had a
+separately reviewed, frozen binding to actual worker/device/path identities;
+no launch paths are enabled by this repository source.
 The pinned legacy lifecycle/checker must remain compatible with the chosen
 stage and worker; emission-worker source216 is not a native-worker assumption.
 
@@ -87,7 +88,31 @@ copies; the checker must be SHA256
 No local test/build/formatter, dependency installation, native execution or
 control binding is part of this source change.
 
-Even a future PASS admits only these finite TP1/context32 cases. It does not
+## Native And Independent Replay
+
+The root-bound copy at SHA
+`c7eed52c47f64e143c1927fcbde7766e61485337fcf1cd0db194739d24612dea`
+executes once on mi350 physical GPU0 with worker `b91ddef7`, source `c110ac55`.
+All eight cases pass: 48 complete buffer hashes and 96 guards, exact integer
+BF16 output, every input byte and inactive output tail, with pairwise equality
+between resident and candidate. Both loaded ABIs have 17 arguments, 116 explicit
+bytes, hidden start120+256 and total376, Wave64 and zero private/LDS.
+All eight devices are idle before and after; worker and probe group close
+normally without forced cleanup. Complete native archive
+`bfb4ea3909a4a9673cbbc38c0727c0fdf1eff529ad9f7375eda909b41026ca9f`
+has matching independent streams and all22 files pass root checks.
+
+One independent CPU-only mi300x replay calls the unchanged native validator and
+walks all421 raw protocol records. It regenerates all48 expected buffers and
+96 guards, checks guarded write/read digests and exact dispatch payload bytes,
+and binds normal close without loading a worker or image. Complete archive
+`7403deacb6a422fe305c5836632a8e74a71f36d68824a38c2ba9a2887736c702`
+has matching streams and all35 file hashes pass root checks; all41 metadata
+entries are unchanged. The raw transcript retains payload hashes, not original
+payload bytes; the original native acquisition performed full byte comparisons.
+Both original native and independent replay evidence remain retained locally.
+
+This PASS admits only these finite TP1/context32 cases. It does not
 admit TP2/8, context8192, model inference/parity, serving, general numerical
 accuracy, Verus proof, transactional behavior on invalid pages, default
 promotion or a performance gain. Worker dispatch timings are retained only
