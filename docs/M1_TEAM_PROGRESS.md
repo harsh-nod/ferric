@@ -61,7 +61,7 @@ stable-gain or isolated per-kernel claim.
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
 | Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 query-hoist source `1843d8f`, integrated through `f9894e6`, passes its host gate and all nine emission phases, including eleven synthetic control tests. Its ABI/resources pass and static ISA def/use confirms hoisting survives. Prior failures remain retained. | V13 still needs native parity and runtime ordering checks. V14 needs native parity and a same-compiler control before performance attribution. Detailed typed payloads are not retained by the standard emission path. No new GPU kernel candidate is admitted. |
-| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 retains its n=2 native comparison, with material variation. The separate source87 live-profile same-binary HTTP pair now passes with the measurements above. Additive runtime diagnostic source `6116495` is formatted and its full remote host gate is running. | Actual runtime counter capture and repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. No isolated GPU-duration, stable-gain or competitive claim; no fe2o3 change. |
+| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 retains its n=2 native comparison, with material variation. The separate source87 live-profile same-binary HTTP pair now passes with the measurements above. Diagnostic source `6116495` passes its first 27 host steps, including 936 tests, strict Clippy and 74 HTTP regressions, but the source inventory rejects the standalone proof's Cargo-package placement. A byte-preserving relocation is prepared at `c4fb35d`. | Complete the corrected source-bound host gate before integrating or launching the diagnostic. Actual runtime counter capture and repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. No isolated GPU-duration, stable-gain or competitive claim; no fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
 | Integration and Pages | Pages-only `8e6643f` remains deployed; an additive new checkpoint is being prepared separately. C1 live source `87f38de`, integrated through `15b5c4b`, passes its 40-step host gate and both context8192 HTTP qualifications. Both matched cohorts now close normally and pass independent replay. Original source433 HTTP history remains unchanged. | Publish only reviewed site content after remote QA. Integrate the diagnostic only after its host gate closes. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
@@ -138,15 +138,23 @@ Image `8f21681f` has 116 explicit, hidden start 120 and 376 total kernarg bytes,
 static def/use review confirms query loads and conversions stay outside the
 recurring token loop. This is not a same-compiler comparison with resident v5,
 native numerical parity or a measured gain. The typed handoff is digest-only;
-full typed/progress replay remains unavailable. The closed stage remains held
-pending exact cleanup, and the restored compiler is retained for a control.
+full typed/progress replay remains unavailable. The completed stage is removed
+after fresh exact custody and nine-group absence checks (24,552 KiB), with
+independent SSH absence. The restored compiler is retained for a control.
 
 The additive C1 runtime diagnostic is formatted at source `6116495`, with
 profiling isolated from the timed entrypoint. All 2,268 format archive files
 and 1,103 formatted source hashes pass; archive `c85fc647` is accepted. Its
 completed remote format stage is removed (134,000 KiB). The source-fresh full
-host gate is running on mi300x; actual counter capture is pending and no diagnostic
-performance result is claimed.
+host gate stops at step 28: the source inventory correctly rejects the standalone
+`sharded_argmax_v13.rs` as unreachable inside the Cargo proof package. The first
+27 steps pass (936 tests / 51 ignored / 22 rows, strict Clippy, eight doctests,
+release parity, 74 HTTP regressions and 38 source-gate tests). The last twelve
+steps do not run, so there is no full host admission. Correction `c4fb35d` moves
+only the Rust proof to `proofs/standalone`, preserving SHA `1111950b`, and explains
+the placement in its existing note. No source-gate exception or proof authority
+is added. A separately recorded corrected gate is pending; actual counter
+capture is pending and no diagnostic performance result is claimed.
 Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
 seven deployed assets match the accepted artifact, with historical serving
 metrics unchanged. No Ferric implementation or fe2o3 changes were pushed.
