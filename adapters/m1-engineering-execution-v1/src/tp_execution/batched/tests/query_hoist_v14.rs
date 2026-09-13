@@ -174,10 +174,10 @@ fn v14_changes_only_attention_root_for_all_active_rows_and_head_selections() {
                 assert_eq!(changed, 36);
                 let mut events = transport.events.borrow().clone();
                 for event in &mut events {
-                    if let Event::Submit(_, kernel) | Event::Wait(_, kernel) = event {
-                        if *kernel == V14 {
-                            *kernel = V5;
-                        }
+                    if let Event::Submit(_, kernel) | Event::Wait(_, kernel) = event
+                        && *kernel == V14
+                    {
+                        *kernel = V5;
                     }
                 }
                 recordings.push((
@@ -294,7 +294,7 @@ fn v14_terminal_rejection_keeps_all_route_and_io_state_unchanged() {
             13 => driver.prune_output_head = false,
             14 => {
                 driver.projection.mode =
-                    super::super::super::EngineeringTpProjectionModeV3::Baseline
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline;
             }
             15 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave,
             16 => driver.last_batch = 1,
@@ -306,7 +306,7 @@ fn v14_terminal_rejection_keeps_all_route_and_io_state_unchanged() {
             22 => driver.inner.ranks.clear(),
             23 => {
                 driver.inner.reduction =
-                    super::super::super::reduction::ReductionWorkspace::Baseline
+                    super::super::super::reduction::ReductionWorkspace::Baseline;
             }
             24 => driver.inner.transports[0].ordered_supported = false,
             25 => driver
