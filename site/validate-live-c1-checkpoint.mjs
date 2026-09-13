@@ -470,6 +470,9 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
     "f7b007301cb69f43c719e3bb5388eead8d198cbbce27747f30b87d63e13cfb57"));
   const historical = clone(project);
   delete historical.liveC1Checkpoint;
+  assert.equal(historical.updated, "2026-09-13", "current refresh date");
+  assert.equal(baseline.updated, "2026-09-12", "historical snapshot date");
+  historical.updated = baseline.updated;
   assert.deepEqual(historical, baseline, "all historical public objects remain unchanged");
   assert.equal(sha(await readFile(join(siteRoot, "data/performance.js"))),
     "05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f");
