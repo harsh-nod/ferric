@@ -24,13 +24,13 @@ mod draft;
 pub use draft::EngineeringTpDraftBatchExecutionV10;
 
 #[derive(Clone, Copy)]
-enum BatchedProfile {
+enum BatchedProfile<'a> {
     Target {
         rows: usize,
         large_kv: bool,
         argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
         query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
-        wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
+        wave_rmsnorm_v15: Option<&'a crate::tp_artifact::WaveRmsNormBindingV15>,
     },
     Draft(crate::tp_artifact::DraftBindingV10),
 }
@@ -231,7 +231,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv: false,
                 argmax_v11: Some(argmax_v11),
                 query_hoist_v14: None,
-                wave_rmsnorm_v15: Some(wave_rmsnorm_v15),
+                wave_rmsnorm_v15: Some(&wave_rmsnorm_v15),
             },
         )
     }
@@ -282,7 +282,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         weights: &[u8],
         layout: &AuthenticatedModelWeightLayout,
         pool: &EngineeringTpPagedPoolV1,
-        profile: BatchedProfile,
+        profile: BatchedProfile<'_>,
     ) -> TpResult<Self> {
         let (
             row_capacity,
@@ -304,7 +304,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 false,
                 argmax_v11,
                 query_hoist_v14,
-                wave_rmsnorm_v15,
+                wave_rmsnorm_v15.copied(),
             ),
             BatchedProfile::Draft(_) => (32, false, true, None, None, None),
         };
@@ -598,7 +598,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
-    /// Freezes pure width4096 Wave RMSNorm with C1 layers, resident v5 attention and v8/v11 head.
+    /// Freezes pure width4096 Wave `RMSNorm` with C1 layers, resident v5 attention and v8/v11 head.
     /// Both images must have been admitted by the dedicated constructor before allocations.
     /// # Errors
     /// Rejects wrong bindings or unsupported, repeated or late terminal configuration.
@@ -631,7 +631,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
-    /// Actual pure target-width RMSNorm policy; Q/K and all other norm profiles are unchanged.
+    /// Actual pure target-width `RMSNorm` policy; Q/K and all other norm profiles are unchanged.
     #[must_use]
     pub const fn rmsnorm_mode(&self) -> &'static str {
         if self.wave_rmsnorm_v15.is_some() {

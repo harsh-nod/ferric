@@ -1,9 +1,9 @@
-//! Separate pure width4096 RMSNorm admission, without changing resident root inventories.
+//! Separate pure width4096 `RMSNorm` admission, without changing resident root inventories.
 
 use super::{EngineeringTpArtifactV1, M1EngineeringAggregateArtifactOpenErrorV1};
 use std::path::Path;
 
-/// One separately loaded Wave64 RMSNorm root; never a resident image substitute.
+/// One separately loaded Wave64 `RMSNorm` root; never a resident image substitute.
 pub const ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15: [&str; 1] =
     ["ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15"];
 const CRATE: &str = "ferric_qwen3_tp_wave_rmsnorm_kernels_device_v15";

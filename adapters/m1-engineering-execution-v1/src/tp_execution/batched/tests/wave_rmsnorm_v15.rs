@@ -1,4 +1,4 @@
-//! Actual routing with synthetic byte writers, not RMSNorm emulation or Qwen parity.
+//! Actual routing with synthetic byte writers, not `RMSNorm` emulation or Qwen parity.
 
 use super::*;
 use crate::tp_artifact::{Fp32ArgmaxBindingV11, QueryHoistBindingV14, WaveRmsNormBindingV15};
