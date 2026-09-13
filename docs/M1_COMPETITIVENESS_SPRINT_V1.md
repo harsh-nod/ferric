@@ -1982,3 +1982,64 @@ and complete replay archive
 retain all evidence. No new serving default, competitive win or M1 closure is
 claimed. The admitted ordered HTTP figures remain unchanged. New live source
 `87f38de` needs its own host and context8192 native/HTTP qualification.
+
+## Layer C1 Matched HTTP Comparison
+
+The later source `87f38de` host gate and both context8192 HTTP qualifications
+pass. The subsequent same-binary MFMA/C1-wave matched pair also passes independent
+raw replay, superseding only the pending status above, not its native results.
+
+Both arms use controller
+`8ae69215cf93524ae3438f84bad6d4ce146a92d6636d41a8fc854b897233d450`,
+worker `b91ddef7`, the same v5/v8/v11 images and frozen client `979136ca`.
+The workload is TP1 on physical MI350X GPU0, Qwen3-8B BF16 decoder, explicit
+FP32 output head, 128-token prompt and 128-token greedy completion, context8192,
+pages512, rows32, chunk16, concurrency one, ordered submission, prefix caching
+and speculation off. Only the single-row layer projection selector changes;
+head, multirow projection and serving defaults remain fixed.
+
+| Thirty-request measured cohort | MFMA Layers | C1-Wave Layers | Change |
+| --- | ---: | ---: | ---: |
+| Mean TTFT, ms | 2873.632427 | 2827.804126 | 1.595% lower |
+| Mean TPOT, ms | 199.718905 | 154.309643 | 22.737% lower |
+| Output tokens/s | 4.532745 | 5.707624 | 25.920% higher |
+| TPOT p50, ms | 199.196042 | 150.064447 | |
+| TPOT p90, ms | 218.974605 | 180.393478 | |
+| TPOT p99, ms | 221.808409 | 184.064414 | |
+| Full measured window, s | 847.168769 | 672.784298 | |
+
+Each arm completes 42 exact-output requests: ten excluded warmups, thirty
+measured requests and two excluded diagnostics. All forty timed HTTP/final
+token associations pass. The throughput denominator covers the full measured
+window, including intervening gaps/drain; the numerator is 3840 tokens per arm.
+Both normal closes use no cleanup signal or forced termination, with worker/
+group absence, joined threads and all eight GPUs idle before and after.
+
+These are sequential single-start finite cohorts, not confidence intervals,
+stable tails, isolated GPU timings or sustained-load qualification. Historical
+source433 ordered timing has different residual grouping and is not this
+same-binary control. Do not multiply this gain by earlier native gains.
+
+The first C1 attempt fails at the pre-worker loopback socket probe with zero
+requests. Its receipt `d989d4e9` and complete archive `8b61ba88` remain separately
+retained. C1 R2 uses the exact same frozen plan/code in a new directory after the
+port clears. Both replays bind and exclude the failed attempt; no measured
+request was discarded from it.
+
+MFMA receipt/archive:
+`9a5e0b80ec86e719861663148699bbdfeddf68b96e3112c4fe07f919cf4140dc` /
+`8e1a8fd6659564c5b2731ff71be60e45ee6c4ea367c4895ae6ff6f67703319fd`.
+C1 R2 receipt/archive:
+`3c2e4731a75127ff012d35a64aad5c4ee89824656daaf82a222c2a7d225a2c5c` /
+`260d126f37b964e8733a56c61305b6f50147288b0712ca8eeba3172145d5f5ea`.
+Both archives match independent streams and every file hash. Unchanged replay
+body `9c5982ab` validates twenty receipt-bound raw files per arm, both own
+qualification bundles, source/artifact identity and both completed receipts.
+Actual statuses are zero; full replay stdout hashes:
+`783f0dcc71b5335667d093b0fe0249558363b4755ad8e37ea1c895b0e067af09` /
+`0814bd8f79ad98003d54cfbcf1ca48e9dff9880653328dc445927e2f88959576`.
+
+The retained vLLM baseline remains 220.558111 output tokens/s, about 38.64x the
+new C1-wave rate. No new baseline was launched. SGLang's exact-output failure
+still has no admitted performance result. No competitive win, speculative
+serving result, default promotion or M1 closure follows; all 33 gates remain open.

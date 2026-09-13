@@ -26,7 +26,18 @@ Final executable SHA:
 Complete host archive:
 `7aec042f6d41450644d6ecbd2eed94e5ccc7b9115236e96eb00fe9ce990a0fa5`.
 Own-source artifacts were rebuilt; only authenticated external dependencies
-were warm. This does not yet admit context8192 native output or HTTP timing.
+were warm. Both subsequent context8192 HTTP qualification arms pass two exact
+128-token responses, normal teardown and all-eight idle checks.
+
+The separate same-binary HTTP comparison also passes independent replay: thirty
+measured requests per arm, ten warmups and two diagnostics excluded. MFMA/C1-wave
+means are TTFT 2873.632 / 2827.804 ms, TPOT 199.719 / 154.310 ms and output rate
+4.532745 / 5.707624 tokens/s. This observes 22.74% lower TPOT and 25.92% higher
+rate in single-start finite cohorts, not a stable gain or competitive win.
+The first C1 attempt failed before worker launch with zero requests; its evidence
+is retained separately. The unchanged replacement cohort has no discarded
+measured sample. See the
+[complete comparison](../../docs/M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-matched-http-comparison).
 
 The original source proposal below is retained as history. Its 845-test forecast
 was wrong: it omitted eight paired-contract and three worker-diagnostic tests.

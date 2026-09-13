@@ -59,12 +59,12 @@ stable-gain or isolated per-kernel claim.
 
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
-| Measurement | Both latest HTTP Qwen3-8B 128/128 cohorts pass independent replay. Ordered: TTFT 2862.079 ms, TPOT 192.127 ms, throughput 4.694997 tokens/s across 30 measured requests. Synchronous: 3482.380 / 276.255 ms and 3.318800 tokens/s. Earlier Ferric: 3705.967 / 506.969 ms and 1.879805 tokens/s; retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s. SGLang r7 finishes but fails exact output in 10 of 30 measured responses. | Repeated primary workloads and bottleneck attribution remain pending. No admitted SGLang metrics, sustained-load qualification or competitive win. |
+| Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
 | Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. Resident v5 ISA confirms repeated query loads inside the attention token loop. V14 query-hoist source `1843d8f`, integrated through `f9894e6`, passes its host gate; ten separate synthetic emission-control tests also pass. Prior failures remain retained. | V13 still needs native parity and runtime ordering checks; detailed typed payload is not retained by the standard emission path. V14 needs actual emission/ABI/ISA checks and native parity before routing or timing. No new GPU kernel candidate is admitted. |
-| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 `c2a235e`, integrated through `b7b1eda`, passes all 40 host steps, both 8/128-token qualifications and all four separate ABBA runs. Authenticated replay passes: n=2 mean TPOT 180.651 to 162.999 ms, rate 4.976281 to 5.523671 tokens/s. | Material variation: first TPOT pair is nearly tied, second improves 19.852%. No stable/HTTP/GPU/competitive gain claim. Both new live-profile HTTP correctness arms pass; separate same-binary timing is running. Head, multirow MFMA and defaults remain fixed. No fe2o3 change. |
+| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 retains its n=2 native comparison, with material variation. The separate source87 live-profile same-binary HTTP pair now passes with the measurements above. Additive runtime diagnostic source `6116495` is formatted and its full remote host gate is running. | Actual runtime counter capture and repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. No isolated GPU-duration, stable-gain or competitive claim; no fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Existing live entrypoint `7f58928` retains its admitted HTTP evidence. Pages-only `8e6643f` is deployed after eleven remote QA checks and seven exact public asset comparisons. C1 live source `87f38de`, integrated through `15b5c4b`, passes all 40 host steps: 892/48/21, strict Clippy, eight doctests and 74 CPU HTTP tests. Final binary `8ae69215` matches early/release/closure copies; its separate HTTP harness passes all 29 synthetic tests. Both context8192 HTTP correctness arms pass exact output and normal teardown. | Sequential same-binary MFMA/C1 timing uses ten warmups and thirty measured requests per arm; historical source433 has different residual grouping. Public C1 diagnostics and the standalone integer proof do not replace serving metrics or claim stability. |
+| Integration and Pages | Pages-only `8e6643f` remains deployed; an additive new checkpoint is being prepared separately. C1 live source `87f38de`, integrated through `15b5c4b`, passes its 40-step host gate and both context8192 HTTP qualifications. Both matched cohorts now close normally and pass independent replay. Original source433 HTTP history remains unchanged. | Publish only reviewed site content after remote QA. Integrate the diagnostic only after its host gate closes. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
@@ -110,11 +110,13 @@ archive `1af0b1ee` match their independent streams and complete file ledgers.
 Both exact matched plans pass independent review and replay their own qualification
 receipts. The MFMA arm completes all 42 requests and closes normally; archive
 `8e1a8fd6` is accepted. C1 R1 fails at the pre-worker socket probe with zero
-requests, preserved in archive `8b61ba88`. The unchanged C1 workload is running
-in a separate R2 directory after the port cleared. Each completed arm requires
-ten warmups, thirty measured requests and two excluded diagnostics. Correctness
-clocks and the zero-request failure are excluded; no new timed result is admitted
-until both complete receipts and independent raw replay pass.
+requests, preserved in archive `8b61ba88`. The unchanged C1 workload then passes
+in a separate R2 directory, archive `260d126f`. Both independent raw replays pass,
+stdout hashes `783f0dcc` / `0814bd8f`, with forty HTTP/final associations and
+twenty raw files checked per arm. Each arm excludes ten warmups and two diagnostics
+from its thirty measured requests. The zero-request failure remains explicitly
+bound and excluded, with no dropped timing sample. See the
+[same-binary HTTP result](M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-matched-http-comparison).
 
 V13 emission R2 archive `0601efc2` and all 107 files are accepted. Image
 `72104603` has producer/finalizer SGPR counts 35/30 and VGPR counts 18/13;
@@ -127,8 +129,9 @@ is accepted and its completed CPU stage is removed (3,596 KiB).
 The additive C1 runtime diagnostic is formatted at source `6116495`, with
 profiling isolated from the timed entrypoint. All 2,268 format archive files
 and 1,103 formatted source hashes pass; archive `c85fc647` is accepted. Its
-completed remote format stage is removed (134,000 KiB). Host build/tests and
-actual counter capture are pending; no diagnostic performance result is claimed.
+completed remote format stage is removed (134,000 KiB). The source-fresh full
+host gate is running on mi300x; actual counter capture is pending and no diagnostic
+performance result is claimed.
 Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
 seven deployed assets match the accepted artifact, with historical serving
 metrics unchanged. No Ferric implementation or fe2o3 changes were pushed.

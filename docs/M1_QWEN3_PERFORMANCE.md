@@ -6,6 +6,16 @@ serving benchmark. Frozen baseline: Ferric `713e22c`, public fe2o3
 Builds, tests, and formatting run only on mi300x. Root coordinates hardware
 runs so independent teams cannot contaminate one another's measurements.
 
+Latest finite HTTP checkpoint: the same-binary MFMA/C1-wave comparison passes
+thirty measured requests per arm. C1-wave observes mean TTFT 2827.804 ms,
+TPOT 154.310 ms and 5.707624 output tokens/s, versus 2873.632 ms, 199.719 ms
+and 4.532745 tokens/s with MFMA layers. This is a single-start cohort comparison,
+not M1 serving qualification or a stable/competitive gain. The retained vLLM
+baseline remains about 38.64x faster in output rate. See the
+[current HTTP comparison](M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-matched-http-comparison)
+for complete settings, exclusions and evidence. The historical campaign below
+remains unchanged.
+
 ## September 11 Follow-On
 
 The [current sprint](M1_PERFORMANCE_SPRINT_V2.md) adds a checked concurrent-rank
