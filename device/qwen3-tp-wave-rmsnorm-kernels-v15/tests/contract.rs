@@ -17,6 +17,11 @@ const PREFIX: &str = r"{
         || epsilon != QWEN3_RMSNORM_EPSILON_V1 || !exact_grid {
         fe2o3_device::trap();
     }
+    let Ok(input_view) =
+        StridedReadView2D::from_shared_slice(input_bf16, 0, rows as usize, 4_096, 4_096)
+    else {
+        fe2o3_device::trap();
+    };
     let row = thread::block_idx_x() as usize;
     let lane = WaveLane::<Wave64>::current();
     let lane_index = lane.into_lane_id() as usize;
@@ -27,8 +32,7 @@ const PREFIX: &str = r"{
     let mut component = 0_usize;
     while component < 64 {
         let column = lane_index + component * 64;
-        let index = row_base + column;
-        let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
+        let input = Bf16::from_bits(input_view.load_or(row, column, 0x7fc0));
         let input_value = input.to_f32();
         let square = input_value * input_value;
         let next_sum = partial + square;
@@ -198,9 +202,24 @@ fn entry_and_both_convergent_collectives_are_closed() {
         SOURCE
             .matches("memory::volatile_load(input_bf16, index)")
             .count(),
-        2
+        1
     );
     assert!(!SOURCE.contains("fused_residual_bf16.write"));
+}
+
+#[test]
+fn first_pass_has_guarded_nan_fallback_and_no_lane_local_exit() {
+    verify(SOURCE).unwrap();
+    let root = function(SOURCE, ROOTS_V15[0]).unwrap();
+    let first_loop = root.block.stmts.iter().find_map(|statement| match statement {
+        Stmt::Expr(Expr::While(value), _) => Some(value),
+        _ => None,
+    }).unwrap();
+    let body = tokens(&first_loop.body);
+    for forbidden in ["volatile_load", "trap", "return", "break"] {
+        assert!(!body.contains(forbidden), "first-pass lane exit: {forbidden}");
+    }
+    assert_eq!(SOURCE.matches("input_view.load_or(row, column, 0x7fc0)").count(), 1);
 }
 
 #[test]
@@ -229,6 +248,18 @@ fn malformed_source_cannot_relax_guards_association_or_output() {
         ("1e-6_f32", "1e-5_f32"),
         ("loop_bounds(64, 64)", "loop_bounds(63, 64)"),
         ("lane_index + component * 64", "lane_index + component * 63"),
+        (
+            "from_shared_slice(input_bf16, 0, rows as usize, 4_096, 4_096)",
+            "from_shared_slice(input_bf16, 0, rows as usize, 4_095, 4_096)",
+        ),
+        (
+            "input_view.load_or(row, column, 0x7fc0)",
+            "input_view.load_or(row, column, 0)",
+        ),
+        (
+            "input_view.load_or(row, column, 0x7fc0)",
+            "memory::volatile_load(input_bf16, row_base + column)",
+        ),
         ("finite &=", "finite |= "),
         (
             "partial = next_sum;",

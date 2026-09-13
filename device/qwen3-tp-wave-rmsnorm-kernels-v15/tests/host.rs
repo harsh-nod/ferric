@@ -1,6 +1,6 @@
 //! Bounded CPU arithmetic models, not execution of device capabilities or GPU math.
 
-use fe2o3_device::Bf16;
+use fe2o3_device::{Bf16, StridedReadView2D};
 
 const WIDTH: usize = 4096;
 const CAPACITY: usize = 32;
@@ -28,7 +28,9 @@ enum Reject {
 
 #[derive(Default, Debug)]
 struct Trace {
+    // Load attempts include fallbacks, which do not read the backing slice.
     first_reads: usize,
+    first_fallbacks: usize,
     second_reads: usize,
     collectives: Vec<(usize, &'static str)>,
     writes: usize,
@@ -68,12 +70,24 @@ fn wave_sum(mut lanes: [f32; 64]) -> [f32; 64] {
 }
 
 fn striped_sum(input: &[u16], row: usize, trace: &mut Trace) -> Result<f32, Reject> {
+    let view = StridedReadView2D::from_shared_slice(input, 0, input.len() / WIDTH, WIDTH, WIDTH)
+        .map_err(|_| Reject::Shape)?;
+    striped_sum_view(&view, row, trace)
+}
+
+fn striped_sum_view(
+    view: &StridedReadView2D<'_, u16>,
+    row: usize,
+    trace: &mut Trace,
+) -> Result<f32, Reject> {
     let mut partial = [0.0_f32; 64];
     let mut finite = [true; 64];
     for lane in 0..64 {
         for component in 0..64 {
-            let x = Bf16::from_bits(input[row * WIDTH + lane + component * 64]);
+            let column = lane + component * 64;
+            let x = Bf16::from_bits(view.load_or(row, column, 0x7fc0));
             trace.first_reads += 1;
+            trace.first_fallbacks += usize::from(row >= view.rows() || column >= view.columns());
             let square = x.to_f32() * x.to_f32();
             let next = partial[lane] + square;
             finite[lane] &= x.is_finite() & square.is_finite() & next.is_finite();
@@ -89,6 +103,44 @@ fn striped_sum(input: &[u16], row: usize, trace: &mut Trace) -> Result<f32, Reje
     }
     assert!(sums.iter().all(|sum| sum.to_bits() == sums[0].to_bits()));
     Ok(sums[0])
+}
+
+#[test]
+fn read_view_preserves_every_valid_coordinate_and_rejects_outside_coordinates() {
+    for rows in 1..=CAPACITY {
+        let input: Vec<u16> = (0..rows * WIDTH).map(|index| (index as u16).wrapping_mul(257)).collect();
+        let view = StridedReadView2D::from_shared_slice(&input, 0, rows, WIDTH, WIDTH).unwrap();
+        for row in 0..rows {
+            for lane in 0..64 {
+                for component in 0..64 {
+                    let column = lane + component * 64;
+                    assert!(column < WIDTH);
+                    assert!(row * WIDTH + column < input.len());
+                    assert_eq!(view.load_or(row, column, 0x7fc0), input[row * WIDTH + column]);
+                }
+            }
+        }
+        for (row, column) in [(rows, 0), (0, WIDTH), (usize::MAX, 0), (0, usize::MAX)] {
+            let word = view.load_or(row, column, 0x7fc0);
+            assert_eq!(word, 0x7fc0);
+            assert!(!Bf16::from_bits(word).is_finite());
+        }
+    }
+}
+
+#[test]
+fn out_of_view_nan_fallback_reaches_both_collectives_before_rejection() {
+    let input = fixture(1);
+    for (columns, row, fallbacks) in [(WIDTH - 1, 0, 1), (WIDTH, 1, WIDTH)] {
+        let view = StridedReadView2D::from_shared_slice(&input.input, 0, 1, columns, WIDTH).unwrap();
+        let mut trace = Trace::default();
+        assert_eq!(striped_sum_view(&view, row, &mut trace), Err(Reject::Numerical));
+        assert_eq!(trace.first_reads, WIDTH);
+        assert_eq!(trace.first_fallbacks, fallbacks);
+        assert_eq!(trace.collectives, [(row, "sum64"), (row, "invalid_max64")]);
+        assert_eq!(trace.second_reads, 0);
+        assert_eq!(trace.writes, 0);
+    }
 }
 
 fn sequential_sum(input: &[u16]) -> Result<f32, Reject> {
@@ -430,6 +482,7 @@ fn second_pass_and_guarded_inactive_capacity_are_preserved() {
         let mut trace = Trace::default();
         run(&input, &mut storage[8..8 + active], &mut trace).unwrap();
         assert_eq!(trace.first_reads, active);
+        assert_eq!(trace.first_fallbacks, 0);
         assert_eq!(trace.second_reads, active);
         assert_eq!(trace.writes, active);
         assert_eq!(trace.collectives.len(), rows as usize * 2);

@@ -1,7 +1,8 @@
 # Wave RMSNorm V15 Source Candidate
 
 Separate kernel candidate. Formatting, 20 focused host tests and strict Clippy
-pass at the frozen CPU checkpoint described below. No emitted image, native
+pass at the historical CPU checkpoint described below. The current guarded-read
+source correction is untested. No emitted image, native
 qualification or performance result is admitted. No adapter, controller,
 existing kernel, default, inventory or external manifest is changed.
 
@@ -22,7 +23,13 @@ the caller's valid zero-length slice/sentinel contract. This source does not
 authenticate raw pointers or aliasing at a device launch boundary.
 
 Lane L accumulates columns L+64*k for k=0..63. All physical lanes then perform
-sum64 and invalid-max64 collectives before any numeric rejection. The retained
+sum64 and invalid-max64 collectives before any numeric rejection. After uniform
+shape/length/grid admission, a shared read view uses rows by4096 with stride4096.
+The first pass uses `load_or(row,column,0x7fc0)`: valid coordinates preserve the
+input bits; an out-of-view coordinate supplies quiet NaN without a bounds trap,
+sets the sticky invalid flag and reaches both reductions before rejection.
+These are nonvolatile first-pass reads, not a volatile-equivalence claim.
+Input storage must remain immutable through execution. The retained
 second pass rereads each owned input and its weight and uses the old pure
 output path: FP32 division, epsilon addition, sqrt, reciprocal, two separate
 multiplications and BF16 round-to-nearest-even. RowStriped2D<Index1D,64,64>
@@ -76,14 +83,28 @@ Source base: Ferric `0588f997`, with the original candidate retained at
 `9921546`. Both current fe2o3 dependencies and the remotely generated
 Cargo.lock are pinned to `ae26717922b1fb7ad62fdd5ad70814d83eb01177` after
 revision-only migration `94eb4e1`. Kernel and host arithmetic are unchanged.
+The subsequent source correction changes only the first-pass read API and its
+uniform constructor; post-sum arithmetic, ABI and second-pass volatile reads
+remain unchanged. The current proposed roster is seven contract and sixteen
+host methods, 23 total, not a completed result. Added checks bind the read-view
+constructor/NaN fallback, reject a restored volatile/trapping first pass, cover
+every valid coordinate for rows1..32 and model one-lane/all-lane out-of-view
+fallbacks reaching both collectives before rejection.
 No local Cargo resolution or hand-derived lock graph was used. Build.rs
 reuses the unchanged aggregate target helpers; its binding is a host fixture.
 
 The first ae267 emission attempt stopped before compilation: its private
 offline cache lacked `smallvec 1.16.0`. Result `910a724a` and archive `b52ecb05`
-retain that failure. The next attempt must include the exact standalone lock
-and pinned nightly build-std registry dependencies through normal Cargo
-vendoring with `--sync`; compiler and kernel source remain unchanged.
+retain that failure. The separately corrected R2 dependency preparation passed
+exact standalone163 and vendor198 package checks, including all40 pinned
+build-std registry packages. Its unchanged94eb kernel was then rejected by
+ae267 typed lowering: `UnprovenBarrierConvergence`, bb33 op0. No image was emitted;
+archive64c99339 retains the failed attempt. The safe volatile-read intrinsic
+introduces a lane-dependent bounds branch/trap before the reductions, unlike
+the guarded view used by admitted wave kernels. This is the evidence-backed
+convergence hypothesis; no retained MIR proves an exact guard-to-bb33 mapping.
+The current correction must pass the unchanged compiler checks in a separately
+reviewed emission. No convergence or numerical acceptance is claimed yet.
 
 The remote-only device gate must retain the exact crate,
 baseline `../qwen3-all-kernels-v1/src/rmsnorm.rs`, shared target.rs and

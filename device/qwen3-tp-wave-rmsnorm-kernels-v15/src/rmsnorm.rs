@@ -5,7 +5,7 @@
 //! Source only: no numerical equivalence, artifact or launch authority.
 
 use fe2o3_device::{
-    Bf16, Index1D, Math, RowStriped2D, Wave64, WaveLane, WriteOnlyDisjointSlice,
+    Bf16, Index1D, Math, RowStriped2D, StridedReadView2D, Wave64, WaveLane, WriteOnlyDisjointSlice,
     gfx950::Gfx950Subgroup, kernel, memory, thread,
 };
 
@@ -45,6 +45,11 @@ pub fn ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15(
         fe2o3_device::trap();
     }
 
+    let Ok(input_view) =
+        StridedReadView2D::from_shared_slice(input_bf16, 0, rows as usize, 4_096, 4_096)
+    else {
+        fe2o3_device::trap();
+    };
     let row = thread::block_idx_x() as usize;
     let lane = WaveLane::<Wave64>::current();
     let lane_index = lane.into_lane_id() as usize;
@@ -55,8 +60,7 @@ pub fn ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15(
     let mut component = 0_usize;
     while component < 64 {
         let column = lane_index + component * 64;
-        let index = row_base + column;
-        let input = Bf16::from_bits(memory::volatile_load(input_bf16, index));
+        let input = Bf16::from_bits(input_view.load_or(row, column, 0x7fc0));
         let input_value = input.to_f32();
         let square = input_value * input_value;
         let next_sum = partial + square;
