@@ -1027,6 +1027,7 @@ dependencies = [
  "ferric-qwen3-tp-peer32-kernels-device-v6",
  "ferric-qwen3-tp-perf-kernels-device-v3",
  "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
+ "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
  "ferric-spec",
  "rustix",
  "serde",
@@ -1184,6 +1185,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",

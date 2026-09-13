@@ -151,7 +151,8 @@ fn adapter_is_an_exact_standalone_workspace() {
             "ferric-qwen3-tp-peer-kernels-device-v4",
             "ferric-qwen3-tp-peer32-kernels-device-v6",
             "ferric-qwen3-tp-perf-kernels-device-v3",
-            "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"
+            "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
+            "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"
         ]
     );
     let features = manifest
@@ -194,7 +195,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("dep:ferric-qwen3-tp-large-kv-kernels-device-v9"),
             Some("dep:ferric-qwen3-draft-batch32-kernels-device-v10"),
             Some("dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11"),
-            Some("dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14")
+            Some("dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"),
+            Some("dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15")
         ]
     );
     let bin = manifest["bin"]
@@ -242,6 +244,32 @@ fn argmax_canary_is_separately_opted_in_without_changing_frozen_clis() {
         include_str!("../src/bin/ferric-qwen3-paired-paged-canary.rs"),
     ] {
         assert!(!frozen.contains("--argmax-mode"));
+    }
+}
+
+#[test]
+fn wave_rmsnorm_v15_route_keeps_defaults_and_existing_controllers_unchanged() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let dependency = &manifest["dependencies"]["ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"];
+    assert_eq!(dependency["optional"].as_bool(), Some(true));
+    assert_eq!(dependency["default-features"].as_bool(), Some(false));
+    assert_eq!(dependency["features"].as_array().unwrap(), &[toml::Value::String("gfx950".into())]);
+    assert!(!manifest["features"].as_table().unwrap().contains_key("default"));
+    let artifact = include_str!("../src/tp_artifact/wave_rmsnorm_v15.rs");
+    assert!(artifact.contains("compiler_expectation_roster_v15()"));
+    assert!(artifact.contains("if !metadata_matches("));
+    let batched = include_str!("../src/tp_execution/batched.rs");
+    assert!(batched.contains("new_wide32_with_argmax_v11_and_wave_rmsnorm_v15"));
+    assert!(batched.contains("configure_ordered_c1_wave_rmsnorm_v15"));
+    assert!(batched.contains("pub const fn rmsnorm_mode"));
+    assert_eq!(batched.matches("target_norm(").count(), 4);
+    assert!(!include_str!("../src/tp_execution.rs").contains("wave_rmsnorm_v15"));
+    for binary in manifest["bin"].as_array().unwrap() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap());
+        let source = std::fs::read_to_string(path).unwrap();
+        for selector in ["--rmsnorm-mode", "--rmsnorm-artifact", "configure_ordered_c1_wave_rmsnorm_v15", "open_wave_rmsnorm_v15"] {
+            assert!(!source.contains(selector));
+        }
     }
 }
 

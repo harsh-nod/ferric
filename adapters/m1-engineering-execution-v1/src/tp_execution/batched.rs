@@ -30,6 +30,7 @@ enum BatchedProfile {
         large_kv: bool,
         argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
         query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
+        wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
     },
     Draft(crate::tp_artifact::DraftBindingV10),
 }
@@ -84,6 +85,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     admitted_argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
     query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
     admitted_query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
+    wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
+    admitted_wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -146,6 +149,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv: false,
                 argmax_v11: Some(binding),
                 query_hoist_v14: None,
+                wave_rmsnorm_v15: None,
             },
         )
     }
@@ -186,8 +190,36 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv: false,
                 argmax_v11: Some(argmax_v11),
                 query_hoist_v14: Some(query_hoist_v14),
+                wave_rmsnorm_v15: None,
             },
         )
+    }
+
+    /// Admits separate v11 and v15 images before allocating unchanged resident v5/v8 storage.
+    /// Both comparison routes use this constructor; V15 remains unselected by default.
+    /// # Errors
+    /// Rejects wrong/unloaded images, stale transports, unsupported geometry or allocation failure.
+    pub fn new_wide32_with_argmax_v11_and_wave_rmsnorm_v15(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        let bindings = argmax.fp32_argmax_binding_v11().zip(rmsnorm.wave_rmsnorm_binding_v15());
+        let Some((argmax_v11, wave_rmsnorm_v15)) = bindings else {
+            for transport in &mut transports { let _ = transport.close(); }
+            return Err("wave RMSNorm constructor requires exact separately admitted v11 and v15 images".into());
+        };
+        Self::new_profile(transports, model, weights, layout, pool, BatchedProfile::Target {
+            rows: 32,
+            large_kv: false,
+            argmax_v11: Some(argmax_v11),
+            query_hoist_v14: None,
+            wave_rmsnorm_v15: Some(wave_rmsnorm_v15),
+        })
     }
 
     /// Allocates TP1 physical KV only after checking the pool's exact admitted v9 image.
@@ -225,6 +257,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv,
                 argmax_v11: None,
                 query_hoist_v14: None,
+                wave_rmsnorm_v15: None,
             },
         )
     }
@@ -237,15 +270,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
         profile: BatchedProfile,
     ) -> TpResult<Self> {
-        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11, admitted_query_hoist_v14) =
+        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11, admitted_query_hoist_v14, admitted_wave_rmsnorm_v15) =
             match profile {
                 BatchedProfile::Target {
                     rows,
                     large_kv,
                     argmax_v11,
                     query_hoist_v14,
-                } => (rows, large_kv, false, argmax_v11, query_hoist_v14),
-                BatchedProfile::Draft(_) => (32, false, true, None, None),
+                    wave_rmsnorm_v15,
+                } => (rows, large_kv, false, argmax_v11, query_hoist_v14, wave_rmsnorm_v15),
+                BatchedProfile::Draft(_) => (32, false, true, None, None, None),
             };
         let binding = match profile {
             BatchedProfile::Target { .. } => {
@@ -265,6 +299,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                                 row_capacity,
                                 large_kv,
                                 image,
+                            )?;
+                        }
+                        if let Some(image) = admitted_wave_rmsnorm_v15 {
+                            validate_wave_rmsnorm_binding_v15(
+                                &mut transports, row_capacity, large_kv, image,
                             )?;
                         }
                         Ok(())
@@ -348,6 +387,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_argmax_v11,
             query_hoist_v14: None,
             admitted_query_hoist_v14,
+            wave_rmsnorm_v15: None,
+            admitted_wave_rmsnorm_v15,
         })
     }
 
@@ -525,6 +566,44 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(argmax)?;
         self.query_hoist_v14 = Some(attention);
         Ok(())
+    }
+
+    /// Freezes pure width4096 Wave RMSNorm with C1 layers, resident v5 attention and v8/v11 head.
+    /// Both images must have been admitted by the dedicated constructor before allocations.
+    /// # Errors
+    /// Rejects wrong bindings or unsupported, repeated or late terminal configuration.
+    pub fn configure_ordered_c1_wave_rmsnorm_v15(
+        &mut self,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<()> {
+        let (argmax, rmsnorm) = argmax.fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15())
+            .ok_or("wave RMSNorm requires exact separately admitted v11 and v15 images")?;
+        self.configure_ordered_c1_wave_rmsnorm_binding_v15(argmax, rmsnorm)
+    }
+
+    fn configure_ordered_c1_wave_rmsnorm_binding_v15(
+        &mut self,
+        argmax: crate::tp_artifact::Fp32ArgmaxBindingV11,
+        rmsnorm: crate::tp_artifact::WaveRmsNormBindingV15,
+    ) -> TpResult<()> {
+        if self.wave_rmsnorm_v15.is_some()
+            || self.admitted_wave_rmsnorm_v15 != Some(rmsnorm)
+            || self.query_hoist_v14.is_some()
+            || self.admitted_query_hoist_v14.is_some()
+        {
+            return Err("wave RMSNorm requires its preallocated image, resident v5 attention and fresh selection".into());
+        }
+        self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(argmax)?;
+        self.wave_rmsnorm_v15 = Some(rmsnorm);
+        Ok(())
+    }
+
+    /// Actual pure target-width RMSNorm policy; Q/K and all other norm profiles are unchanged.
+    #[must_use]
+    pub const fn rmsnorm_mode(&self) -> &'static str {
+        if self.wave_rmsnorm_v15.is_some() { "wave-v15" } else { "baseline" }
     }
 
     /// Actual attention policy; legacy wave/baseline image versions follow the row profile.
@@ -1183,6 +1262,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let world = self.inner.plan.world_size();
         let projection = &self.projection;
         let c1_wave_layers = self.c1_wave_layers;
+        let wave_rmsnorm_v15 = self.wave_rmsnorm_v15.is_some();
         let attention = if self.query_hoist_v14.is_some() {
             crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14[0]
         } else if self.wave_attention {
@@ -1268,13 +1348,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             let li = layer as usize;
             let input_norm_timing = self.inner.timing.span("attention_input_norm", None);
             self.inner.dispatch_each(|r| {
-                norm(
+                target_norm(
                     r,
                     r.hidden,
                     r.layers[li].weight(Qwen3TensorKind::InputLayerNorm),
                     r.normalized,
                     rows,
                     model.hidden_size,
+                    wave_rmsnorm_v15,
                 )
             })?;
             drop(input_norm_timing);
@@ -1438,13 +1519,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
             let feed_forward_timing = self.inner.timing.scope("feed_forward");
             self.inner.dispatch_each(|r| {
-                norm(
+                target_norm(
                     r,
                     r.hidden,
                     r.layers[li].weight(Qwen3TensorKind::PostAttentionLayerNorm),
                     r.normalized,
                     rows,
                     model.hidden_size,
+                    wave_rmsnorm_v15,
                 )
             })?;
             for (kind, tag) in [
@@ -1538,13 +1620,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let head_timing = self.inner.timing.scope("output_head");
         let normalization_timing = self.inner.timing.scope("output_head_normalization");
         let r = &self.inner.ranks[0];
-        self.inner.dispatch_zero(&norm(
+        self.inner.dispatch_zero(&target_norm(
             r,
             r.hidden,
             r.global(Qwen3TensorKind::FinalNorm),
             r.normalized,
             head_rows,
             model.hidden_size,
+            wave_rmsnorm_v15,
         ))?;
         drop(normalization_timing);
         let projection_timing = self.inner.timing.scope("output_head_projection");
@@ -1650,6 +1733,20 @@ fn validate_argmax_binding_v11<R: EngineeringTpRankTransportV1>(
         image.hsaco,
         &crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11,
     )
+}
+
+fn validate_wave_rmsnorm_binding_v15<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    row_capacity: usize,
+    large_kv: bool,
+    image: crate::tp_artifact::WaveRmsNormBindingV15,
+) -> TpResult<()> {
+    if row_capacity != 32 || large_kv || transports.len() != 1
+        || transports[0].peer_group_rank().is_some()
+    {
+        return Err("wave RMSNorm v15 requires fresh target TP1/capacity32 without large KV or peers".into());
+    }
+    transports[0].require_loaded_image(image.hsaco, &crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15)
 }
 
 fn validate_query_hoist_binding_v14<R: EngineeringTpRankTransportV1>(
@@ -1776,6 +1873,23 @@ fn numerical_projection_command(
     let original = rank.layers[layer as usize].weight(kind);
     let command = policy.command(0, kernel, input, original, output, [rows, n, k, 1, tag]);
     (command, original.read())
+}
+
+// Only the three target-width sites call this helper; row binding checks the exact V15 ABI.
+fn target_norm(
+    rank: &Rank,
+    input: Tensor,
+    weight: Tensor,
+    output: Tensor,
+    rows: u32,
+    width: u32,
+    wave_v15: bool,
+) -> EngineeringTpDispatchV1 {
+    let mut command = norm(rank, input, weight, output, rows, width);
+    if wave_v15 {
+        command.kernel = crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0];
+    }
+    command
 }
 
 fn norm(

@@ -126,6 +126,13 @@ pub const ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14: [&str; 1] =
 #[cfg(feature = "tp-batch-engineering")]
 const QUERY_HOIST_CRATE_V14: &str = "ferric_qwen3_tp_wave_query_hoist_kernels_device_v14";
 
+#[cfg(feature = "tp-batch-engineering")]
+mod wave_rmsnorm_v15;
+#[cfg(feature = "tp-batch-engineering")]
+pub use wave_rmsnorm_v15::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15;
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) use wave_rmsnorm_v15::WaveRmsNormBindingV15;
+
 /// Private identity minted only by the separate one-root v14 profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(feature = "tp-batch-engineering")]

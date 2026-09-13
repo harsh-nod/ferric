@@ -54,6 +54,31 @@ pub(super) fn bind(
     mut command: EngineeringTpDispatchV1,
 ) -> TpResult<EngineeringTpDispatchV1> {
     #[cfg(feature = "tp-batch-engineering")]
+    if command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0] {
+        use super::EngineeringTpBufferAccessV1::{Read, Write};
+        let Some([
+            EngineeringTpArgumentV1::U32(rows),
+            EngineeringTpArgumentV1::U32(width),
+            EngineeringTpArgumentV1::F32(epsilon),
+            EngineeringTpArgumentV1::U32(behavior),
+        ]) = command.arguments.get(5..) else {
+            return Err("wave RMSNorm v15 requires five slices and four exact scalars".into());
+        };
+        if capacity != 32 || !(1..=32).contains(rows) || *width != 4096
+            || epsilon.to_bits() != 1.0e-6_f32.to_bits() || *behavior != 0
+            || command.workgroup_size != 64 || command.grid_workgroups != *rows
+            || command.arguments[..5].iter().enumerate().any(|(index, arg)| {
+                let extent = match index { 0 | 4 => *rows as usize * 4096, 2 => 4096, _ => 0 };
+                !matches!(arg, EngineeringTpArgumentV1::Buffer { offset, elements, element_bytes, access, .. }
+                    if *offset == 0 && *elements == extent && *element_bytes == 2
+                    && *access == (if index >= 3 { Write } else { Read }))
+            })
+        {
+            return Err("wave RMSNorm v15 requires pure width4096/rows1..32, empty auxiliaries and exact Wave64 geometry".into());
+        }
+        return Ok(command);
+    }
+    #[cfg(feature = "tp-batch-engineering")]
     if command.kernel == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14[0] {
         use super::EngineeringTpBufferAccessV1::{Read, Write};
         let Some(

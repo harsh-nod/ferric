@@ -11,6 +11,7 @@ mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
 mod query_hoist_v14;
+mod wave_rmsnorm_v15;
 mod speculative;
 
 use super::super::{
@@ -56,6 +57,8 @@ enum Failure {
     AttentionWait,
     WaveProjectionSubmit,
     WaveProjectionWait,
+    RmsNormSubmit(usize),
+    RmsNormWait(usize),
 }
 
 struct Recording {
@@ -80,6 +83,7 @@ struct Recording {
     packet_preparations: Vec<u64>,
     argmax_v11_loaded: Option<[u8; 32]>,
     query_hoist_v14_loaded: Option<[u8; 32]>,
+    wave_rmsnorm_v15_loaded: Option<[u8; 32]>,
     argmax_peer: Option<(u32, u32, u32)>,
 }
 
@@ -156,7 +160,9 @@ impl EngineeringTpRankTransportV1 for Recording {
             && ((self.argmax_v11_loaded == Some(image)
                 && kernels == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11)
                 || (self.query_hoist_v14_loaded == Some(image)
-                    && kernels == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14))
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14)
+                || (self.wave_rmsnorm_v15_loaded == Some(image)
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15))
         {
             Ok(())
         } else {
@@ -292,6 +298,12 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if let Some(Failure::RmsNormSubmit(ordinal)) = self.failure
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
+            && self.commands.iter().filter(|c| c.kernel == command.kernel).count() == ordinal
+        {
+            return Err("injected Wave RMSNorm submit failure".into());
+        }
         if self.failure == Some(Failure::WaveProjectionSubmit)
             && matches!(
                 command.kernel,
@@ -361,6 +373,12 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
+        if let Some(Failure::RmsNormWait(ordinal)) = self.failure
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
+            && self.commands.iter().filter(|c| c.kernel == command.kernel).count() == ordinal + 1
+        {
+            return Err("injected Wave RMSNorm completion failure".into());
+        }
         if self.failure == Some(Failure::WaveProjectionWait)
             && matches!(
                 command.kernel,
@@ -394,7 +412,8 @@ impl EngineeringTpRankTransportV1 for Recording {
         let query = if is_draft { 2048 } else { 4096 };
         let intermediate = if is_draft { 3072 } else { 12_288 };
         let kernel = match command.kernel {
-            "ferric_qwen3_draft_batch32_rmsnorm_v10" => RMSNORM,
+            "ferric_qwen3_draft_batch32_rmsnorm_v10"
+            | "ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15" => RMSNORM,
             "ferric_qwen3_draft_batch32_embedding_bf16_v10"
             | "ferric_qwen3_tp_batch32_embedding_bf16_v5" => EMBEDDING,
             "ferric_qwen3_tp_batch32_gemm_bf16_f32_bf16_v5"
@@ -647,6 +666,7 @@ fn fixture_for_model(
         .map(|rank| Recording {
             argmax_v11_loaded: None,
             query_hoist_v14_loaded: None,
+            wave_rmsnorm_v15_loaded: None,
             argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
@@ -755,6 +775,8 @@ fn fixture_for_model(
         admitted_argmax_v11: None,
         query_hoist_v14: None,
         admitted_query_hoist_v14: None,
+        wave_rmsnorm_v15: None,
+        admitted_wave_rmsnorm_v15: None,
     }
 }
 
