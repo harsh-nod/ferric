@@ -280,8 +280,8 @@
       facts.append(element("dt", "", "CPU archive SHA-256"), element("dd", "", team.hostArchiveSha256));
     if (team === liveC1.development) {
       facts.append(element("dt", "", "Current fe2o3 source"), element("dd", "", team.fe2o3Source));
-      facts.append(element("dt", "", "Four-case native archive SHA-256"), element("dd", "", team.model.archiveSha256),
-        element("dt", "", "Independent CPU replay archive SHA-256"), element("dd", "", team.model.replayArchiveSha256));
+      facts.append(element("dt", "", "Native SHA-256"), element("dd", "", team.model.archiveSha256),
+        element("dt", "", "Replay SHA-256"), element("dd", "", team.model.replayArchiveSha256));
     }
     article.append(heading, facts);
     liveC1Teams.append(article);
