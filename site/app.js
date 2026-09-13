@@ -264,7 +264,7 @@
   for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
     ["Query-hoist v14: finite native parity", "8 cases + CPU replay passed", liveC1.v14],
     ["Wave RMSNorm v15: CPU validation", "20 CPU tests passed", liveC1.v15],
-    ["V14 canary and current runtime", "Host validation in progress", liveC1.development]]) {
+    ["V14 canary and current runtime", "Worker host passed", liveC1.development]]) {
     const article = element("article", "team-item");
     const heading = element("div", "team-heading");
     heading.append(element("h3", "", name), element("span", "state-tag state-open", label));

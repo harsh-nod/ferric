@@ -113,7 +113,7 @@ const v14Native = {
 };
 const v15 = {
   source: "c534e35258f6379b481380f0088e777356547efb", tree: "01dec2245a5d80f5d4de262f7fdb14883525dc97",
-  compilerSource: "61e014ac28690cd993761590fd2f7d75d419d340",
+  dependencySource: "61e014ac28690cd993761590fd2f7d75d419d340",
   hostNoteSha256: "f230c4eb94c0b07fd5f18154550743713b99267b46fd94e8efa6456ef820a656",
   hostArchiveSha256: "3c63d3e74f680f85f213a4ee2fce0a68eee576b902b9a545dd5f088afb6fe594",
   testsLogSha256: "6e3598fb47c81ca24e12cb493f8923f918841661a81c46d15b9eb719d8ff9a57",
@@ -127,7 +127,17 @@ const v15 = {
 const development = {
   source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
   fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
-  canaryIntegrated: true, hostState: "validation-running", hostAdmitted: false, workerHostAdmitted: false,
+  canaryIntegrated: true, hostState: "validation-pending", hostAdmitted: false, workerHostAdmitted: true,
+  workerTestsPassed: 484, workerTestsIgnored: 1, workerDoctestsPassed: 31, workerStrictClippyExit: 0,
+  workerSha256: "526cc6bf8902128767a5318c90d1c0206a9e435957612c398eeb28ff2ae71032", workerBytes: 1591144,
+  workerNoteSha256: "aaed3d109764d09f2701983e5cba85089358e51fb64aae26c3b7e4335305a238",
+  workerArchiveSha256: "006295ae51234b789c8e054328a6ce22b84485cabdbe186f7e28d45a26dbd87d",
+  workerReceiptSha256: "2a82fdfdf148ab68f60981550c6ae5fc8aea38251edd99760171543abebf2b32",
+  workerTestsLogSha256: "cdc5935cebacddb1ff21f9060ab155d0e49a6fbf9aad40ead930d08880fb0f9c",
+  workerDocsLogSha256: "e6e9e9e5a16c0c2a68bcf696aa0df3aba50573c45475fbf40df45a10ec79d4c9",
+  workerClippyLogSha256: "7d3f20709fe76ad4c2c435857d91a9fc0f4e389fbc022d34508c1e183594ad36",
+  workerBuildLogSha256: "58fcf627fda086459d9f56f836818fb84ed66a91c1e347e871fae90ce330d8e0",
+  workerNativeAdmitted: false,
   checkerMethodsPassed: 32, currentWorkerWrapperMethodsPassed: 8,
   checkerArchiveSha256: "60a0753844cf780704fe8d4078a21e48a8c29c85a6a615b2486078d50c6a15b1",
   wrapperArchiveSha256: "89f771db8322b60aa9d852e292e0843e2bc3ba3d523eac07226db35e7e9d4bc1",
@@ -193,9 +203,11 @@ export function validateLiveC1Checkpoint(input) {
     "FP32 association differs from the old serial fold", "No image emission, device ABI/resource validation",
     "native/model parity or performance gain is admitted", "not a proof of GPU arithmetic"]);
   phrases(value.development.detail, ["opt-in V14 full-Qwen canary is integrated in private source",
-    "host validation and the fresh runtime-worker build are in progress on fe2o3 ae267179",
+    "combined controller host validation is pending", "484 library tests with one unchanged ignore, 31 doctests",
+    "strict release Clippy exit zero", "All twelve host phases pass", "current worker record is fresh:false",
+    "Worker native qualification remains pending",
     "32 synthetic methods", "eight focused wrapper methods", "rejection of superseded 61e provenance",
-    "These are not model runs", "Actual controller/worker artifacts and full-Qwen parity remain pending",
+    "These are not model runs", "The controller artifact and full-Qwen parity remain pending",
     "compiler 8efd provenance, not ae267", "No default, HTTP measurement, competitive or M1 claim changes",
     "all historical cohorts remain unchanged"]);
 }
@@ -225,12 +237,14 @@ export function testLiveC1CheckpointRejections(input) {
     (x) => { x.v14.native.archiveSha256 = "0".repeat(64); },
     (x) => { x.interpretation = "Stable and competitive gain"; }, (x) => { x.extra = true; },
     (x) => { x.v15.hostTestsPassed = 21; }, (x) => { x.v15.strictClippyExit = 101; },
-    (x) => { x.v15.compilerSource = x.development.fe2o3Source; }, (x) => { x.v15.ownArtifactsFresh = false; },
+    (x) => { x.v15.dependencySource = x.development.fe2o3Source; }, (x) => { x.v15.ownArtifactsFresh = false; },
     (x) => { x.v15.emissionAdmitted = true; }, (x) => { x.v15.nativeAdmitted = true; },
     (x) => { x.v15.modelParityQualified = true; }, (x) => { x.v15.performanceGainClaimed = true; },
-    (x) => { x.development.hostAdmitted = true; }, (x) => { x.development.workerHostAdmitted = true; },
-    (x) => { x.development.fe2o3Source = x.v15.compilerSource; },
+    (x) => { x.development.hostAdmitted = true; }, (x) => { x.development.workerHostAdmitted = false; },
+    (x) => { x.development.fe2o3Source = x.v15.dependencySource; },
     (x) => { x.development.modelParityQualified = true; },
+    (x) => { x.development.workerTestsPassed = 485; }, (x) => { x.development.workerTestsIgnored = 0; },
+    (x) => { x.development.workerNativeAdmitted = true; }, (x) => { x.development.workerSha256 = "0".repeat(64); },
   ];
   for (const mutate of mutations) {
     const changed = clone(input);
@@ -500,7 +514,29 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
     .toString("utf8").replace(/\s+/g, " ");
   phrases(wrapperNote, [development.wrapperArchiveSha256, development.fe2o3Source, development.fe2o3Tree,
     "passed eight wrapper methods", "No actual bindings, model/GPU reads or controller/worker execution occurred"]);
-  console.log("PASS: admitted HTTP pair and historical objects unchanged; V13/V14 finite scopes, V15 CPU-only evidence and pending current-runtime boundary preserved.");
+  const workerNote = (await pinned("current-worker-note.md", development.workerNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(workerNote, [development.fe2o3Source, development.fe2o3Tree, development.workerSha256,
+    development.workerArchiveSha256, "all twelve actual commands", "Library tests: 484 passed, one unchanged ignored",
+    "All 31 doctests passed", "Strict release Clippy and explicit worker build returned 0",
+    "No live-validation, ignored test, worker or GPU execution occurred", "not native parity or a performance result"]);
+  const workerTests = (await pinned("current-worker-tests.log", development.workerTestsLogSha256)).toString("utf8");
+  assert.equal([...workerTests.matchAll(/^test result: ok\. 484 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out;/gm)].length, 1);
+  phrases(workerTests, ["test queue::live::tests::auxiliary_destroy_requires_retired_dispatch_ledger_before_taking_custody ... ok"]);
+  const workerDocs = (await pinned("current-worker-docs.log", development.workerDocsLogSha256)).toString("utf8");
+  assert.equal([...workerDocs.matchAll(/^test result: ok\. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;/gm)].length, 1);
+  await pinned("current-worker-clippy.log", development.workerClippyLogSha256);
+  await pinned("current-worker-build.log", development.workerBuildLogSha256);
+  const workerReceipt = JSON.parse(await pinned("current-worker-artifacts.json", development.workerReceiptSha256));
+  assert.equal(workerReceipt.source, development.fe2o3Source);
+  assert.equal(workerReceipt.tree, development.fe2o3Tree);
+  const workerRecords = workerReceipt.records.filter((row) => row.target.name === "fe2o3-gfx950-engineering-worker");
+  assert.equal(workerRecords.length, 1);
+  assert.equal(workerRecords[0].fresh, false);
+  assert.equal(workerRecords[0].profile.test, false);
+  assert.deepEqual(workerRecords[0].features, ["default", "engineering-gfx950"]);
+  assert.deepEqual(workerReceipt.files["release/fe2o3-gfx950-engineering-worker"],
+    { bytes: development.workerBytes, sha256: development.workerSha256 });
+  console.log("PASS: admitted HTTP pair and historical objects unchanged; V13/V14 finite scopes, V15 CPU evidence and current-worker host-only boundary preserved.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
