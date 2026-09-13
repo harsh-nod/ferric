@@ -262,13 +262,18 @@
   liveC1Progress.append(liveC1Details);
   const liveC1Teams = element("div", "team-grid");
   for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
-    ["Query-hoist v14: static image checks", "ABI/resources passed", liveC1.v14]]) {
+    ["Query-hoist v14: finite native parity", "8 cases + CPU replay passed", liveC1.v14]]) {
     const article = element("article", "team-item");
     const heading = element("div", "team-heading");
     heading.append(element("h3", "", name), element("span", "state-tag state-open", label));
     const facts = element("dl", "team-facts");
     for (const [key, value] of [["Source", team.source], ["Validation", team.detail]])
       facts.append(element("dt", "", key), element("dd", "", value));
+    if (team.native) {
+      for (const [key, value] of [["Native report SHA-256", team.native.reportSha256],
+        ["CPU replay archive SHA-256", team.native.cpuReplayArchiveSha256]])
+        facts.append(element("dt", "", key), element("dd", "", value));
+    }
     article.append(heading, facts);
     liveC1Teams.append(article);
   }

@@ -82,7 +82,7 @@ const v14 = {
   controlNoteSha256: "cd77dc0bc4776c71892417e69797b1a0f6cc743d9c3b0250a3f3f8b46ccfa9a5",
   controlArchiveSha256: "f18848ad0870c83e92c62014616a3f4624824608f554d5a612ac432c2a4afd1e",
   hostTestsPassed: 13, strictClippyExit: 0, syntheticControlTestsPassed: 10,
-  detailedTypedReviewAdmitted: false, nativeAdmitted: false, performanceGainClaimed: false,
+  detailedTypedReviewAdmitted: false, nativeAdmitted: true, performanceGainClaimed: false,
 };
 const v14Emission = {
   imageSha256: "8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8",
@@ -96,6 +96,20 @@ const v14Emission = {
   sgprs: 95, vgprs: 37, sgprSpills: 0, vgprSpills: 0, privateBytes: 0, ldsBytes: 0, agprs: 0,
   dynamicStack: false, abiResourcesPassed: true, staticHoistObserved: true,
   rawHoistFlag: "pending", sameCompilerAblation: false,
+};
+const v14Native = {
+  scope: "finite-eight-case-parity", cases: 8, checkedBuffers: 48, guardRegions: 96, protocolRows: 421,
+  fixtureSource: "fec0311b3ec84de12ac16271eccf7515ed61e758",
+  reportSha256: "f5a20e0300f3c11c660f9058a41b600471f8041d20faf1c826a2513b4a51a4c3",
+  protocolSha256: "1bde1eb87d097317eb6a4b5f2ab27b0d364c34433358c26dc822870554c2cb53",
+  wrapperSha256: "bbd943b97fad5140bd37a6ee3e1e2f4afc7116772977d7fd40d9a007ef4d20d0",
+  cleanupSha256: "adb2976ce274a8f114429d295b7d633629ab1696c84dc650b88dc44219c662c0",
+  archiveSha256: "bfb4ea3909a4a9673cbbc38c0727c0fdf1eff529ad9f7375eda909b41026ca9f",
+  cpuReplayLogSha256: "28477b80434165df7472ceda4166581c6d3a28b61b8d2a6d363c2b21cc2f5759",
+  cpuReplayClosureSha256: "35753ed8a7f1101a633c0bf237ee8bff68c1e4bfa9235eb279e0e8b8fed82410",
+  cpuReplayArchiveSha256: "7403deacb6a422fe305c5836632a8e74a71f36d68824a38c2ba9a2887736c702",
+  normalUnforcedClose: true, allEightIdleBeforeAfter: true, cpuReplayPassed: true,
+  sameCompilerAblation: false, modelParityQualified: false, performanceQualified: false,
 };
 function exact(value, expected, extra = []) {
   assert.deepEqual(Object.keys(value).sort(), [...Object.keys(expected), ...extra].sort());
@@ -122,8 +136,9 @@ export function validateLiveC1Checkpoint(input) {
   assert.deepEqual(value.matchedCohorts, cohorts);
   assert.deepEqual(value.excludedAttempt, excluded);
   exact(value.v13, v13, ["detail"]);
-  exact(value.v14, v14, ["detail", "emission"]);
+  exact(value.v14, v14, ["detail", "emission", "native"]);
   exact(value.v14.emission, v14Emission);
+  exact(value.v14.native, v14Native);
   phrases(value.overview, ["independent replay at context8192", "199.719 to 154.310 ms", "4.532745 to 5.707624",
     "not a stable or competitive result", "all 33 M1 gates remain open"]);
   phrases(value.qualificationScope, ["Two sequential 128-input / 128-output", "same source 87f38de / controller 8ae69215",
@@ -144,7 +159,11 @@ export function validateLiveC1Checkpoint(input) {
   phrases(value.v14.detail, ["13 source-fresh host methods", "strict Clippy with actual exit zero", "original ten synthetic control tests",
     "all nine phases, including 11 synthetic methods", "116 explicit bytes", "hidden start 120", "376 total kernarg",
     "outside recurring token backedges", "raw hoist flag remains pending", "typed handoff is digest-only",
-    "not detailed typed review, native parity or a same-compiler ablation", "No performance gain is claimed"]);
+    "eight finite native cases at TP1/context32", "uniform rows 1/17/31 and selector rows 32", "48 complete input/output buffers",
+    "inactive tails and 96 guards", "normal unforced close", "all eight GPUs idle before and after",
+    "independent CPU replay passed the unchanged validator and all 421 raw protocol rows",
+    "not a same-compiler ablation or full-model/context8192 parity", "detailed typed review is still unadmitted",
+    "No performance gain is claimed", "neither v14 nor v13 changes the measured C1 live route"]);
 }
 export function testLiveC1CheckpointRejections(input) {
   const mutations = [
@@ -165,6 +184,11 @@ export function testLiveC1CheckpointRejections(input) {
     (x) => { x.v14.detailedTypedReviewAdmitted = true; }, (x) => { x.v14.syntheticControlTestsPassed = 13; },
     (x) => { x.v14.emission.syntheticTestsPassed = 10; }, (x) => { x.v14.emission.rawHoistFlag = "passed"; },
     (x) => { x.v14.emission.sameCompilerAblation = true; },
+    (x) => { x.v14.nativeAdmitted = false; }, (x) => { x.v14.native.cases = 7; },
+    (x) => { x.v14.native.guardRegions = 48; }, (x) => { x.v14.native.protocolRows = 420; },
+    (x) => { x.v14.native.cpuReplayPassed = false; }, (x) => { x.v14.native.sameCompilerAblation = true; },
+    (x) => { x.v14.native.modelParityQualified = true; }, (x) => { x.v14.native.performanceQualified = true; },
+    (x) => { x.v14.native.archiveSha256 = "0".repeat(64); },
     (x) => { x.interpretation = "Stable and competitive gain"; }, (x) => { x.extra = true; },
   ];
   for (const mutate of mutations) {
@@ -363,6 +387,54 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   const hoistReview = (await pinned("v14-static-review.md", v14Emission.staticReviewSha256)).toString("utf8").replace(/\s+/g, " ");
   phrases(hoistReview, ["Static query-load hoisting survives", v14Emission.imageSha256,
     "no actual handoff", "Raw `result.json` is not rewritten", "Native finite attention fixtures and numerical parity remain pending"]);
+  const native = JSON.parse(await pinned("v14-native-report.json", v14Native.reportSha256));
+  assert.equal(native.schema, "FerricTp1AttentionQueryHoistProbeV1");
+  assert.equal(native.authority, "none");
+  for (const key of ["checks_pass", "clean_teardown", "active_inputs_finite", "runtime_operational"])
+    assert.equal(native[key], true);
+  for (const key of ["benchmark", "performance_qualified", "model_inference", "model_parity_qualified", "same_compiler_ablation"])
+    assert.equal(native[key], false);
+  assert.equal(native.images[0].compiler, "3e74a9324a5acd7107e96a4a9b5319d3dd5ecde8");
+  assert.equal(native.images[1].compiler, v13.compilerSource);
+  assert.equal(native.images[1].sha256, v14Emission.imageSha256);
+  assert.equal(native.results.length, 8);
+  const specs = [["uniform", 1], ["uniform", 17], ["uniform", 31], ["selector", 32]];
+  const bufferNames = ["query", "keys", "values", "positions", "table", "output"];
+  for (const [index, result] of native.results.entries()) {
+    const [family, rows] = specs[Math.floor(index / 2)];
+    const role = index % 2 ? "candidate" : "resident";
+    assert.equal(result.name, `${role}_${family}_rows${rows}_tp1_causal_pages`);
+    assert.equal(result.role, role);
+    assert.equal(result.symbol, native.images[index % 2].root);
+    assert.deepEqual(result.checks.map((check) => check.name), bufferNames);
+    for (const check of result.checks) {
+      assert.match(check.sha256, /^[0-9a-f]{64}$/);
+      assert.equal(check.guard_bytes_each_side, 64);
+      assert.equal(check.guards_unchanged, true);
+    }
+    if (index % 2) assert.deepEqual(result.checks, native.results[index - 1].checks);
+  }
+  const protocolBytes = await pinned("v14-native-protocol.jsonl", v14Native.protocolSha256);
+  assert.equal(protocolBytes.at(-1), 10);
+  const protocol = protocolBytes.toString("utf8").trimEnd().split("\n").map((line) => JSON.parse(line));
+  assert.equal(protocol.length, 421);
+  assert.equal(protocol[0].response.op, "ready");
+  for (const [op, count] of [["load_kernel", 8], ["dispatch", 8], ["allocate", 48], ["write", 48], ["read", 48], ["free", 48]])
+    assert.equal(protocol.filter((row) => row.command?.op === op).length, count);
+  assert.equal(protocol.at(-2).command.op, "close");
+  assert.equal(protocol.at(-1).response.op, "closed");
+  // Large device IDs stay bound by raw-byte pins and the accepted integer-safe CPU replay.
+  exact(JSON.parse(await pinned("v14-native-wrapper.json", v14Native.wrapperSha256)), {
+    schema: "FerricTp1AttentionQueryHoistWrapperV1", authority: "none", passed: true, errors: [],
+    all_eight_idle_before: true, all_eight_idle_after: true, performance_qualified: false, same_compiler_ablation: false,
+  });
+  exact(JSON.parse(await pinned("v14-native-cleanup.json", v14Native.cleanupSha256)), {
+    absent: true, cleanup_error: null, controller_returncode: 0, forced: false, reason: null,
+  });
+  assert.equal((await pinned("v14-cpu-replay.log", v14Native.cpuReplayLogSha256)).toString("utf8"),
+    "PASS: frozen native validator and 421 protocol rows; 48 buffers/96 guards; CPU only\n");
+  const cpuClosure = (await pinned("v14-cpu-closure.tsv", v14Native.cpuReplayClosureSha256)).toString("utf8");
+  phrases(cpuClosure, ["owned_groups_absent\ttrue", "forced_cleanup\t0", "TMP_empty\ttrue", "raw-replay\t0", "exit_code\t0"]);
   console.log("PASS: new same-binary HTTP pair matches admitted replay bytes and scalar arithmetic; qualification, V13/V14 boundaries and all historical objects preserved.");
 }
 
