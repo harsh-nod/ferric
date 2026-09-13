@@ -4,9 +4,12 @@ Updated: 2026-09-12. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 Current continuation: public fe2o3 main now resolves to
-`32e43025b09f05656171cd12e839289d2ce706e4`, with Pliron
-`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. Migration of current manifests,
-locks and policy inventories is in progress before the next host build.
+`61e014ac28690cd993761590fd2f7d75d419d340`, with Pliron
+`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. Current manifests, locks and
+policy inventories are migrated in private integration `997438f`. All 71
+offline metadata/renderer steps pass: 29 locks preserve registry package
+versions/checksums, and the regenerated inventories match the upstream
+dependency refactor. This is not a full host-build or native qualification.
 Existing binaries and emitted images retain their actual older producer
 revisions; unchanged KFD source does not make them fresh compiler builds.
 The historical checkpoints below remain descriptions of their own revisions.
@@ -72,7 +75,7 @@ stable-gain or isolated per-kernel claim.
 | Runtime Optimization | Diagnostic binary `27c0404e` completed two exact 128-output requests and normal drain. Its original report validator failed on a synchronous-command allowlist omission. A separate corrected CPU replay passes all 17 tests and validates the full raw capture: 166,278 dispatches, 347,568 operational currentness checks and 395,246 completion polls. The original native receipt remains failed; no missing postflight is manufactured. | Currentness consumed 8.772 s of overlapping host time; ordered preparation accounts for 165,240 repeated checks. A bounded preparation optimization needs fault-injection tests and matched measurement. No GPU-duration or speedup inference, no fe2o3 change, and no new performance cohort. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `555d2077` is deployed, with all seven public assets matching the remotely tested artifact. It adds the finite V14 parity/replay checkpoint; 13 QA checks and two dependency phases pass. Completed Pages stages and the clean published worktree are removed. V14 route source is formatted at `0588f997`; its host gate awaits actual 32e/9de lock and inventory regeneration. A separate width4096 Wave64 RMSNorm V15 source candidate is being implemented and independently reviewed. No implementation push. | Finish the current-dependency migration, run the V14 route host gate on mi300x, and qualify the RMSNorm candidate before any model or performance claim. Historical images remain pinned to their real producer revisions. |
+| Integration and Pages | Pages-only `555d2077` is deployed, with all seven public assets matching the remotely tested artifact. It adds the finite V14 parity/replay checkpoint; 13 QA checks and two dependency phases pass. Completed Pages stages and the clean published worktree are removed. The formatted V14 route and 61e/9de dependency migration are integrated at `997438f`; all 71 metadata/renderer steps pass. The explicit two-arm V14 canary is source-reviewed and undergoing remote formatting. Width4096 Wave64 RMSNorm V15 `d119e38` has passed remote formatting and lockfile checks; its focused CPU build is running. No implementation push. | Run one combined V14 route/canary host gate on mi300x, and finish the RMSNorm CPU gate before emission or model qualification. Historical images remain pinned to their real producer revisions. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
