@@ -111,6 +111,28 @@ const v14Native = {
   normalUnforcedClose: true, allEightIdleBeforeAfter: true, cpuReplayPassed: true,
   sameCompilerAblation: false, modelParityQualified: false, performanceQualified: false,
 };
+const v15 = {
+  source: "c534e35258f6379b481380f0088e777356547efb", tree: "01dec2245a5d80f5d4de262f7fdb14883525dc97",
+  compilerSource: "61e014ac28690cd993761590fd2f7d75d419d340",
+  hostNoteSha256: "f230c4eb94c0b07fd5f18154550743713b99267b46fd94e8efa6456ef820a656",
+  hostArchiveSha256: "3c63d3e74f680f85f213a4ee2fce0a68eee576b902b9a545dd5f088afb6fe594",
+  testsLogSha256: "6e3598fb47c81ca24e12cb493f8923f918841661a81c46d15b9eb719d8ff9a57",
+  clippyLogSha256: "1ceb245292588f66cd2a4a98b76c3b8d057b5170b7a6bb6d787d52ab77b42184",
+  artifactReceiptSha256: "20b23aa878df1043e5fd8f7da2b4493ef6b76996eb434ab55642c64005533d72",
+  lockSha256: "78154f4e92d8badc4839f6ef37c889fa105e7945bdb03f85aa3e1a9cdb9cfb52",
+  hostTestsPassed: 20, contractTestsPassed: 6, hostModelTestsPassed: 14, strictClippyExit: 0,
+  ownArtifactsFresh: true, emissionAdmitted: false, nativeAdmitted: false,
+  modelParityQualified: false, performanceGainClaimed: false,
+};
+const development = {
+  source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
+  fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
+  canaryIntegrated: true, hostState: "validation-running", hostAdmitted: false, workerHostAdmitted: false,
+  checkerMethodsPassed: 32, currentWorkerWrapperMethodsPassed: 8,
+  checkerArchiveSha256: "60a0753844cf780704fe8d4078a21e48a8c29c85a6a615b2486078d50c6a15b1",
+  wrapperArchiveSha256: "89f771db8322b60aa9d852e292e0843e2bc3ba3d523eac07226db35e7e9d4bc1",
+  modelParityQualified: false, performanceGainClaimed: false, defaultPromotion: false, historicalCohortsMixed: false,
+};
 function exact(value, expected, extra = []) {
   assert.deepEqual(Object.keys(value).sort(), [...Object.keys(expected), ...extra].sort());
   for (const [key, item] of Object.entries(expected)) assert.deepEqual(value[key], item, key);
@@ -131,7 +153,7 @@ function projectFrom(bytes) {
 export function validateLiveC1Checkpoint(input) {
   const value = clone(input);
   exact(value, fixed, ["qualification", "matchedCohorts", "excludedAttempt", "overview", "qualificationScope",
-    "correctness", "measurement", "interpretation", "exclusions", "v13", "v14"]);
+    "correctness", "measurement", "interpretation", "exclusions", "v13", "v14", "v15", "development"]);
   assert.deepEqual(value.qualification, qualifications);
   assert.deepEqual(value.matchedCohorts, cohorts);
   assert.deepEqual(value.excludedAttempt, excluded);
@@ -139,6 +161,8 @@ export function validateLiveC1Checkpoint(input) {
   exact(value.v14, v14, ["detail", "emission", "native"]);
   exact(value.v14.emission, v14Emission);
   exact(value.v14.native, v14Native);
+  exact(value.v15, v15, ["detail"]);
+  exact(value.development, development, ["detail"]);
   phrases(value.overview, ["independent replay at context8192", "199.719 to 154.310 ms", "4.532745 to 5.707624",
     "not a stable or competitive result", "all 33 M1 gates remain open"]);
   phrases(value.qualificationScope, ["Two sequential 128-input / 128-output", "same source 87f38de / controller 8ae69215",
@@ -164,6 +188,16 @@ export function validateLiveC1Checkpoint(input) {
     "independent CPU replay passed the unchanged validator and all 421 raw protocol rows",
     "not a same-compiler ablation or full-model/context8192 parity", "detailed typed review is still unadmitted",
     "No performance gain is claimed", "neither v14 nor v13 changes the measured C1 live route"]);
+  phrases(value.v15.detail, ["20 source-fresh CPU tests", "six contract and fourteen host-model tests",
+    "strict Clippy exit zero", "c534e35 using fe2o3 61e014a", "five own Cargo records are fresh:false",
+    "FP32 association differs from the old serial fold", "No image emission, device ABI/resource validation",
+    "native/model parity or performance gain is admitted", "not a proof of GPU arithmetic"]);
+  phrases(value.development.detail, ["opt-in V14 full-Qwen canary is integrated in private source",
+    "host validation and the fresh runtime-worker build are in progress on fe2o3 ae267179",
+    "32 synthetic methods", "eight focused wrapper methods", "rejection of superseded 61e provenance",
+    "These are not model runs", "Actual controller/worker artifacts and full-Qwen parity remain pending",
+    "compiler 8efd provenance, not ae267", "No default, HTTP measurement, competitive or M1 claim changes",
+    "all historical cohorts remain unchanged"]);
 }
 export function testLiveC1CheckpointRejections(input) {
   const mutations = [
@@ -190,6 +224,13 @@ export function testLiveC1CheckpointRejections(input) {
     (x) => { x.v14.native.modelParityQualified = true; }, (x) => { x.v14.native.performanceQualified = true; },
     (x) => { x.v14.native.archiveSha256 = "0".repeat(64); },
     (x) => { x.interpretation = "Stable and competitive gain"; }, (x) => { x.extra = true; },
+    (x) => { x.v15.hostTestsPassed = 21; }, (x) => { x.v15.strictClippyExit = 101; },
+    (x) => { x.v15.compilerSource = x.development.fe2o3Source; }, (x) => { x.v15.ownArtifactsFresh = false; },
+    (x) => { x.v15.emissionAdmitted = true; }, (x) => { x.v15.nativeAdmitted = true; },
+    (x) => { x.v15.modelParityQualified = true; }, (x) => { x.v15.performanceGainClaimed = true; },
+    (x) => { x.development.hostAdmitted = true; }, (x) => { x.development.workerHostAdmitted = true; },
+    (x) => { x.development.fe2o3Source = x.v15.compilerSource; },
+    (x) => { x.development.modelParityQualified = true; },
   ];
   for (const mutate of mutations) {
     const changed = clone(input);
@@ -435,7 +476,31 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
     "PASS: frozen native validator and 421 protocol rows; 48 buffers/96 guards; CPU only\n");
   const cpuClosure = (await pinned("v14-cpu-closure.tsv", v14Native.cpuReplayClosureSha256)).toString("utf8");
   phrases(cpuClosure, ["owned_groups_absent\ttrue", "forced_cleanup\t0", "TMP_empty\ttrue", "raw-replay\t0", "exit_code\t0"]);
-  console.log("PASS: new same-binary HTTP pair matches admitted replay bytes and scalar arithmetic; qualification, V13/V14 boundaries and all historical objects preserved.");
+  const rmsNote = (await pinned("v15-host-note.md", v15.hostNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(rmsNote, [v15.source, v15.tree, v15.hostArchiveSha256, "Twenty host tests passed",
+    "Strict all-target release Clippy returned 0", "Five actual own Cargo", "all fresh:false",
+    "No local Cargo/Python, emitted image, GPU dispatch or performance run occurred"]);
+  const rmsTests = (await pinned("v15-tests.log", v15.testsLogSha256)).toString("utf8");
+  const rmsRows = [...rmsTests.matchAll(/^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;/gm)];
+  assert.deepEqual(rmsRows.map((row) => Number(row[1])), [0, 6, 14]);
+  await pinned("v15-clippy.log", v15.clippyLogSha256);
+  const rmsArtifacts = JSON.parse(await pinned("v15-artifacts.json", v15.artifactReceiptSha256));
+  assert.equal(rmsArtifacts.passed, 20);
+  assert.equal(rmsArtifacts.ignored, 0);
+  assert.equal(rmsArtifacts.rows, 3);
+  assert.equal(rmsArtifacts.records.length, 5);
+  assert.equal(Object.keys(rmsArtifacts.files).length, 6);
+  assert(rmsArtifacts.records.every((row) => row.fresh === false));
+  await pinned("v15-Cargo.lock", v15.lockSha256);
+  const checkerNote = (await pinned("v14-canary-cpu32.md", "f0392b3daca5a4157c264319ddad8d8789e905fb980ccbb2d198167d10c7ac29"))
+    .toString("utf8").replace(/\s+/g, " ");
+  phrases(checkerNote, [development.checkerArchiveSha256, "All 32 methods reported", "No retries",
+    "does not authenticate any real host receipt or admit native execution"]);
+  const wrapperNote = (await pinned("v14-current-wrapper-cpu8.md", "6fee47c94fed367085611d31a311ed91abedff7aaf5b09676628c354ffbb2ba7"))
+    .toString("utf8").replace(/\s+/g, " ");
+  phrases(wrapperNote, [development.wrapperArchiveSha256, development.fe2o3Source, development.fe2o3Tree,
+    "passed eight wrapper methods", "No actual bindings, model/GPU reads or controller/worker execution occurred"]);
+  console.log("PASS: admitted HTTP pair and historical objects unchanged; V13/V14 finite scopes, V15 CPU-only evidence and pending current-runtime boundary preserved.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

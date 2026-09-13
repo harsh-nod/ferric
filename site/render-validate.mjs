@@ -65,6 +65,16 @@ const requiredClaims = [
   "116 explicit bytes, hidden start 120 and 376 total kernarg bytes",
   "the typed handoff is digest-only; detailed typed review is still unadmitted",
   "eight finite native cases at TP1/context32",
+  "Wave RMSNorm v15: CPU validation",
+  "20 CPU tests passed",
+  "six contract and fourteen host-model tests",
+  "FP32 association differs from the old serial fold",
+  "No image emission, device ABI/resource validation, native/model parity or performance gain is admitted",
+  "V14 canary and current runtime",
+  "Host validation in progress",
+  "fresh runtime-worker build are in progress on fe2o3 ae267179",
+  "These are not model runs",
+  "Actual controller/worker artifacts and full-Qwen parity remain pending",
   "Qualification requests in both arms",
   "These counts do not describe the separate 42-request matched cohorts",
   "Wave attention / v11: context8192 HTTP",
@@ -1019,8 +1029,8 @@ try {
       `${name}: missing current live HTTP/kernel team checkpoints`);
     assert(await page.locator("[data-c1-checkpoint] .team-item").count() === 2,
       `${name}: missing separate C1/v13 checkpoints`);
-    assert(await page.locator("[data-live-c1-checkpoint] .team-item").count() === 2,
-      `${name}: missing current V13/V14 checkpoints`);
+    assert(await page.locator("[data-live-c1-checkpoint] .team-item").count() === 4,
+      `${name}: missing separate V13/V14/V15 and runtime checkpoints`);
     assert(await page.getByRole("region", { name: "C1 live route: same-binary finite HTTP cohorts", exact: true })
       .locator("tbody tr").count() === 2, `${name}: missing admitted C1 live HTTP pair`);
     const liveC1Disclosure = page.getByText("C1 live HTTP percentiles and evidence", { exact: true });
@@ -1052,6 +1062,8 @@ try {
           ["C1 live route: context8192 HTTP", "live-c1-http"],
           ["Sharded argmax v13: static image checks", "v13-emission"],
           ["Query-hoist v14: finite native parity", "v14-native"],
+          ["Wave RMSNorm v15: CPU validation", "v15-cpu"],
+          ["V14 canary and current runtime", "v14-runtime"],
           ["C1 layer projection: variable native diagnostic", "c1-diagnostic"],
           ["v13 ownership: standalone integer proof", "v13-proof"],
           ["Sharded argmax v13", "v13-host"],
