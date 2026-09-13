@@ -123,11 +123,28 @@ const v15 = {
   hostTestsPassed: 20, contractTestsPassed: 6, hostModelTestsPassed: 14, strictClippyExit: 0,
   ownArtifactsFresh: true, emissionAdmitted: false, nativeAdmitted: false,
   modelParityQualified: false, performanceGainClaimed: false,
+  emissionAttempt: {
+    state: "offline-dependency-stop-before-compilation", metadataExit: 101, gateExit: 1, emissionInvoked: false,
+    noteSha256: "910a724ac83975a8acb9ff36a4aaa7168d369fa09743e1bd9d4871dba059b8be",
+    diagnosticSha256: "6600808929240a65a9778baeb8d98a4abb45715654d83ad9e00f7edfa2d3794b",
+    archiveSha256: "b52ecb0567d3395502372450cdf3fa394e0caf54a4ad71a4ef6fe95f3888c47a",
+  },
 };
 const development = {
   source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
   fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
-  canaryIntegrated: true, hostState: "validation-pending", hostAdmitted: false, workerHostAdmitted: true,
+  canaryIntegrated: true, hostState: "composite-passed", hostAdmitted: true, workerHostAdmitted: true,
+  hostNoteSha256: "05bc395159aaa06d8f5b2f3908a160a35718247f78a931cb71ce5ec4345ea422",
+  hostFinalArchiveSha256: "e0a7ed83af27957a33544dd7acb37dd12e774b9d4f162b6ee92b1317ba1c67b6",
+  controllerSha256: "5b7fd71c289ac7efa95b8f0d2ea1ac9a5decdeef545bb5bef6066690934df9c5", controllerBytes: 9429152,
+  controllerReceiptSha256: "35bba7be5b3327a6dc239511e5dabcb8bb24bd4baca23a6e837f6e1932230019",
+  controllerBuildLogSha256: "83e7dfd68a96dc7f5bc948a7efe03ca693acbd7187161526ae865ee37c1026de",
+  hostPolicyLogSha256: "3b8d91150a7c8f86364f9690ee67554a09d5b8a0f834191d1ceba0dc1cc3ef58",
+  hostBinaryMapSha256: "cf528074a0033e2ed23d664c0364b813c9e561d83370cc2e6a16eab15135dbae",
+  hostVerifierSource: "4f215146ba1033b721148372138133611ee23a8b", hostPolicyTestsPassed: 31,
+  hostFormatSource: "0793070acbe27a3d516c6172196119786b69a677", hostFormatExit: 0,
+  hostFormatNoteSha256: "103c7c6988fcb7fad2434587131785a79160b7cf38f81cdad504b62eec0ee8cb",
+  fullCurrentAllTargetRerun: false, priorHostFailuresPreserved: true,
   workerTestsPassed: 484, workerTestsIgnored: 1, workerDoctestsPassed: 31, workerStrictClippyExit: 0,
   workerSha256: "526cc6bf8902128767a5318c90d1c0206a9e435957612c398eeb28ff2ae71032", workerBytes: 1591144,
   workerNoteSha256: "aaed3d109764d09f2701983e5cba85089358e51fb64aae26c3b7e4335305a238",
@@ -137,10 +154,37 @@ const development = {
   workerDocsLogSha256: "e6e9e9e5a16c0c2a68bcf696aa0df3aba50573c45475fbf40df45a10ec79d4c9",
   workerClippyLogSha256: "7d3f20709fe76ad4c2c435857d91a9fc0f4e389fbc022d34508c1e183594ad36",
   workerBuildLogSha256: "58fcf627fda086459d9f56f836818fb84ed66a91c1e347e871fae90ce330d8e0",
-  workerNativeAdmitted: false,
+  finiteNativeChecksPassed: true,
   checkerMethodsPassed: 32, currentWorkerWrapperMethodsPassed: 8,
   checkerArchiveSha256: "60a0753844cf780704fe8d4078a21e48a8c29c85a6a615b2486078d50c6a15b1",
   wrapperArchiveSha256: "89f771db8322b60aa9d852e292e0843e2bc3ba3d523eac07226db35e7e9d4bc1",
+  model: {
+    scope: "four-fixed-prompt-correctness-cases", correctnessPassed: true, cases: 4, contextTokens: 256, prefillChunkTokens: 16,
+    promptTokens: 128, tensorParallel: 1, layerProjection: "c1-wave", submission: "ordered", argmaxMode: "wave-v11",
+    bindingsSha256: "a55c27aece7070935e970b03bebe1c232837562598b8b332f53874badb5a4c0b",
+    archiveSha256: "8d4fe9046241c80c7692980d6cbbfaeacb9d10032c5cdd50f3bad9b2893ef3a4",
+    noteSha256: "14a0b50e2923b72778e08d2d6fca06a0415ddaa0fc99ddba5c7c68ba410de488",
+    replayNoteSha256: "a38f1d6cac44fc9117c6f97c958a2d12d6d8d5c73f18e677bfb4f30e11284e87",
+    replayReportSha256: "8e920204fcd7f2db285b1b19e5bf9c7251fbf7d327e6f9a9c21e2c8591502308",
+    replayArchiveSha256: "26727569f6f9a537eeefbc66481a9df3bbc59e52ffed6f2375e0f3a6760fd911",
+    cleanupSha256: "adb2976ce274a8f114429d295b7d633629ab1696c84dc650b88dc44219c662c0",
+    failedArchiveSha256: "41cf92f0ea2ca9463809cd0673fc78c488b067b420faed52cd9f5af2c2bb28e9",
+    failedWrapperSha256: "fae6d748b56b166937efede6940fd56419f5e26d21137cb9cf4f9ba051d3564c",
+    failedTimingSha256: "840a52118144145a1b5a3cbdaf269b5dc8c0430284e687cd5ebadf17dc251943",
+    rows: [
+      { name: "resident8", attentionMode: "resident-wave", outputs: 8, packets: 9219, batches: 15, committedInputs: 135,
+        wrapperSha256: "ff6ebb9c8e85239db36bfddaa8b3d6f65fdf98a26d554286fef3535cc9538df2" },
+      { name: "candidate8", attentionMode: "query-hoist-v14", outputs: 8, packets: 9219, batches: 15, committedInputs: 135,
+        wrapperSha256: "6743a99ac1bd6b3cc1335b090d3ff9b06d7037a741b77c003c8f4f041dc3a870" },
+      { name: "resident128", attentionMode: "resident-wave", outputs: 128, packets: 83139, batches: 135, committedInputs: 255,
+        wrapperSha256: "6da7b69d28464720c21d09de3e80851497f3318e681194ce16312b53a0df595e" },
+      { name: "candidate128", attentionMode: "query-hoist-v14", outputs: 128, packets: 83139, batches: 135, committedInputs: 255,
+        wrapperSha256: "b2c489548d97cadbead1d0528c4b1bca8b790b2e26a6fbf5df27a08628cab325" },
+    ],
+    normalUnforcedClose: true, allEightIdleBeforeAfter: true, cpuReplayPassed: true,
+    layoutOnlyCorrection: true, originalFailurePreserved: true, sameCompilerAblation: false,
+    httpMeasurement: false, performanceQualified: false, defaultPromotion: false,
+  },
   modelParityQualified: false, performanceGainClaimed: false, defaultPromotion: false, historicalCohortsMixed: false,
 };
 function exact(value, expected, extra = []) {
@@ -201,13 +245,21 @@ export function validateLiveC1Checkpoint(input) {
   phrases(value.v15.detail, ["20 source-fresh CPU tests", "six contract and fourteen host-model tests",
     "strict Clippy exit zero", "c534e35 using fe2o3 61e014a", "five own Cargo records are fresh:false",
     "FP32 association differs from the old serial fold", "No image emission, device ABI/resource validation",
-    "native/model parity or performance gain is admitted", "not a proof of GPU arithmetic"]);
+    "native/model parity or performance gain is admitted", "not a proof of GPU arithmetic",
+    "separate emission attempt stopped before compilation", "offline metadata could not find smallvec 1.16.0"]);
   phrases(value.development.detail, ["opt-in V14 full-Qwen canary is integrated in private source",
-    "combined controller host validation is pending", "484 library tests with one unchanged ignore, 31 doctests",
-    "strict release Clippy exit zero", "All twelve host phases pass", "current worker record is fresh:false",
-    "Worker native qualification remains pending",
+    "Scoped current controller host checks pass", "11 focused tests with one ignore",
+    "all 31 verifier-policy tests", "failures remain retained, not relabeled",
+    "full 1,025-test suite belongs to the earlier 61e source and was not rerun at ae267",
+    "484 library tests with one unchanged ignore, 31 doctests",
+    "strict release Clippy exit zero", "All twelve worker host phases pass", "current worker record is fresh:false",
     "32 synthetic methods", "eight focused wrapper methods", "rejection of superseded 61e provenance",
-    "These are not model runs", "The controller artifact and full-Qwen parity remain pending",
+    "These are not model runs", "four real Qwen3-8B correctness cases pass",
+    "same 128-token prompt", "same controller, current worker and V14 preload",
+    "independent CPU replay exactly reproduces all four wrapper objects",
+    "ContentDirectoryIdentity failure occurred before setup and remains archived",
+    "R2 changed only image path/layout and wrapper/case tags",
+    "do not establish generalized or context8192 parity", "Raw host timings are retained without reduction",
     "compiler 8efd provenance, not ae267", "No default, HTTP measurement, competitive or M1 claim changes",
     "all historical cohorts remain unchanged"]);
 }
@@ -240,11 +292,20 @@ export function testLiveC1CheckpointRejections(input) {
     (x) => { x.v15.dependencySource = x.development.fe2o3Source; }, (x) => { x.v15.ownArtifactsFresh = false; },
     (x) => { x.v15.emissionAdmitted = true; }, (x) => { x.v15.nativeAdmitted = true; },
     (x) => { x.v15.modelParityQualified = true; }, (x) => { x.v15.performanceGainClaimed = true; },
-    (x) => { x.development.hostAdmitted = true; }, (x) => { x.development.workerHostAdmitted = false; },
+    (x) => { x.development.hostAdmitted = false; }, (x) => { x.development.workerHostAdmitted = false; },
     (x) => { x.development.fe2o3Source = x.v15.dependencySource; },
     (x) => { x.development.modelParityQualified = true; },
     (x) => { x.development.workerTestsPassed = 485; }, (x) => { x.development.workerTestsIgnored = 0; },
-    (x) => { x.development.workerNativeAdmitted = true; }, (x) => { x.development.workerSha256 = "0".repeat(64); },
+    (x) => { x.development.finiteNativeChecksPassed = false; }, (x) => { x.development.workerSha256 = "0".repeat(64); },
+    (x) => { x.development.fullCurrentAllTargetRerun = true; }, (x) => { x.development.priorHostFailuresPreserved = false; },
+    (x) => { x.development.hostPolicyTestsPassed = 30; }, (x) => { x.development.controllerSha256 = "0".repeat(64); },
+    (x) => { x.development.hostFormatExit = 1; }, (x) => { x.development.model.cases = 3; },
+    (x) => { x.development.model.contextTokens = 8192; }, (x) => { x.development.model.cpuReplayPassed = false; },
+    (x) => { x.development.model.rows[1].attentionMode = "resident-wave"; },
+    (x) => { x.development.model.rows[3].packets = 83138; },
+    (x) => { x.development.model.sameCompilerAblation = true; }, (x) => { x.development.model.httpMeasurement = true; },
+    (x) => { x.development.model.originalFailurePreserved = false; }, (x) => { x.development.model.normalUnforcedClose = false; },
+    (x) => { x.v15.emissionAttempt.emissionInvoked = true; }, (x) => { x.v15.emissionAttempt.metadataExit = 0; },
   ];
   for (const mutate of mutations) {
     const changed = clone(input);
@@ -536,7 +597,145 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   assert.deepEqual(workerRecords[0].features, ["default", "engineering-gfx950"]);
   assert.deepEqual(workerReceipt.files["release/fe2o3-gfx950-engineering-worker"],
     { bytes: development.workerBytes, sha256: development.workerSha256 });
-  console.log("PASS: admitted HTTP pair and historical objects unchanged; V13/V14 finite scopes, V15 CPU evidence and current-worker host-only boundary preserved.");
+  const hostNote = (await pinned("current-controller-note.md", development.hostNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(hostNote, [development.source, development.tree, development.hostVerifierSource,
+    development.controllerSha256, development.hostFinalArchiveSha256, "Verifier source-policy31 passed/0 ignored",
+    "The full1025-test suite was not rerun at ae267", "R3 formatting is not relabeled as passing",
+    "No production rebuild", "Native numerical qualification remains a separate root-owned gate"]);
+  await pinned("current-controller-build.log", development.controllerBuildLogSha256);
+  const policyLog = (await pinned("current-controller-policy.log", development.hostPolicyLogSha256)).toString("utf8");
+  assert.equal([...policyLog.matchAll(/^test result: ok\. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;/gm)].length, 1);
+  const binaryMap = (await pinned("current-controller-binaries.sha256", development.hostBinaryMapSha256)).toString("utf8");
+  assert.equal(binaryMap.trim().split("\n").length, 7);
+  phrases(binaryMap, [development.controllerSha256]);
+  const controllerReceipt = JSON.parse(await pinned("current-controller-artifacts.json", development.controllerReceiptSha256));
+  assert.equal(controllerReceipt.commit, development.source);
+  assert.equal(controllerReceipt.tree, development.tree);
+  assert.equal(controllerReceipt.passed, true);
+  assert.equal(controllerReceipt.warm_target, true);
+  assert.equal(controllerReceipt.full_r1_suite_repeated, false);
+  const controllerRecords = controllerReceipt.own_compiler_artifacts.filter((row) => row.target.name === "ferric-qwen3-query-hoist-v14-canary");
+  assert.equal(controllerRecords.length, 1);
+  assert.equal(controllerRecords[0].fresh, false);
+  assert.equal(controllerRecords[0].profile.test, false);
+  const retainedController = controllerReceipt.retained.filter((row) => row.path === controllerRecords[0].executable);
+  assert.equal(retainedController.length, 1);
+  assert.equal(retainedController[0].sha256, development.controllerSha256);
+  assert.equal(retainedController[0].bytes, development.controllerBytes);
+  const formatNote = (await pinned("current-controller-format.md", development.hostFormatNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(formatNote, [development.hostFormatSource, "Actual command/outer status0", "Input and tool hashes were unchanged afterward",
+    "No formatter application, full source snapshot, build, test or GPU work occurred",
+    "separate from preserved R3 formatting1", "production binaries remain exact source7c"]);
+  const model = development.model;
+  const modelNote = (await pinned("v14-model-native-note.md", model.noteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(modelNote, [development.source, development.workerSha256, model.archiveSha256, model.failedArchiveSha256,
+    model.replayArchiveSha256, "four sequential real Qwen3-8B BF16 correctness cases",
+    "All eight GPUs were idle before and after each case", "No controller, worker, kernel, checker, workload or reference bytes changed",
+    "not generalized numerical parity", "no new TTFT/TPOT/throughput result"]);
+  const bindings = JSON.parse(await pinned("v14-model-bindings.json", model.bindingsSha256));
+  assert.equal(bindings.schema, "FerricQueryHoistV14CanaryBindingsV1");
+  for (const [key, source, tree, sha, bytes, receipt] of [
+    ["controller", development.source, development.tree, development.controllerSha256, development.controllerBytes, development.hostNoteSha256],
+    ["worker", development.fe2o3Source, development.fe2o3Tree, development.workerSha256, development.workerBytes, development.workerNoteSha256],
+  ]) {
+    assert.equal(bindings[key].source, source);
+    assert.equal(bindings[key].tree, tree);
+    assert.equal(bindings[key].sha256, sha);
+    assert.equal(bindings[key].byte_len, bytes);
+    assert.equal(bindings[key].host_receipt_sha256, receipt);
+  }
+  const query = bindings.query_hoist_artifact;
+  assert.equal(query.hsaco, v14Emission.imageSha256);
+  assert.equal(query.manifest, v14Emission.observationSha256);
+  assert.equal(query.handoff, "dacfab37c50f78828c329322d34f14dea67a383baf8402b3f7d1bbb843947798");
+  assert.equal(query.path, "/tmp/ferric-compete-gpu.VabkOGCx/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a");
+  const modelTraces = [];
+  for (const row of model.rows) {
+    const report = JSON.parse(await pinned(`v14-model-${row.name}.json`, row.wrapperSha256));
+    assert.equal(report.schema, "FerricQueryHoistV14ModelWrapperV1");
+    assert.equal(report.passed, true);
+    assert.deepEqual(report.errors, []);
+    assert.equal(report.bindings_sha256, model.bindingsSha256);
+    assert.equal(report.max_new_tokens, row.outputs);
+    assert.equal(report.all_eight_idle_before, true);
+    assert.equal(report.all_eight_idle_after, true);
+    assert.equal(report.measurement, "correctness-only-raw-host-timing-not-reduced");
+    const trace = report.checked_trace;
+    assert.equal(trace.schema, "FerricQueryHoistV14CanaryCheckedV1");
+    for (const record of [report, trace]) {
+      assert.equal(record.attention_mode, row.attentionMode);
+      assert.equal(record.layer_projection, model.layerProjection);
+      assert.equal(record.submission, model.submission);
+      assert.equal(record.correctness_only, true);
+      assert.equal(record.performance_qualified, false);
+      assert.equal(record.benchmark_admitted, false);
+      assert.equal(record.serving_admitted, false);
+      assert.equal(record.authority, "none");
+    }
+    assert.equal(trace.argmax_mode, model.argmaxMode);
+    assert.equal(trace.controller_sha256, development.controllerSha256);
+    assert.equal(trace.worker_sha256, development.workerSha256);
+    assert.equal(trace.reference_passed, true);
+    assert.equal(trace.http_measurement, false);
+    assert.equal(trace.gpu_clock_measurement, false);
+    assert.equal(trace.completed_packets, row.packets);
+    assert.equal(trace.completed_batches, row.batches);
+    assert.equal(trace.committed_inputs_before_retirement, row.committedInputs);
+    assert.equal(trace.generated_token_ids.length, row.outputs);
+    assert.equal(trace.query_hoist_artifact_path, query.path);
+    assert.deepEqual(trace.query_hoist_artifact, { hsaco: query.hsaco, manifest: query.manifest, handoff: query.handoff });
+    const cleanup = JSON.parse(await pinned(`v14-model-${row.name}-cleanup.json`, model.cleanupSha256));
+    assert.deepEqual(cleanup, { absent: true, cleanup_error: null, controller_returncode: 0, forced: false, reason: null });
+    modelTraces.push(trace);
+  }
+  for (const [left, right] of [[0, 1], [2, 3]]) {
+    assert.deepEqual(modelTraces[left].generated_token_ids, modelTraces[right].generated_token_ids);
+    assert.equal(modelTraces[left].generated_utf8_hex, modelTraces[right].generated_utf8_hex);
+  }
+  const failedModel = JSON.parse(await pinned("v14-model-failed-r1.json", model.failedWrapperSha256));
+  assert.equal(failedModel.passed, false);
+  assert.equal(failedModel.checked_trace, null);
+  assert.deepEqual(failedModel.errors, ["ValueError: execution or owned cleanup failed"]);
+  assert.equal(failedModel.all_eight_idle_before, true);
+  assert.equal(failedModel.all_eight_idle_after, true);
+  const failedTiming = JSON.parse(await pinned("v14-model-failed-r1-timing.json", model.failedTimingSha256));
+  assert.equal(failedTiming.schema, "FerricHostTimingV1");
+  assert.equal(failedTiming.failure, "non-authoritative M1 engineering aggregate rejected: ContentDirectoryIdentity");
+  assert.equal(failedTiming.setup, null);
+  assert.equal(failedTiming.closed, null);
+  assert.equal(failedTiming.active_records, 0);
+  assert.deepEqual(failedTiming.records, []);
+  assert.equal(failedTiming.run_status, "failed");
+  const modelReplayNote = (await pinned("v14-model-replay-note.md", model.replayNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(modelReplayNote, [model.archiveSha256, model.replayArchiveSha256, model.replayReportSha256,
+    "matched each complete recorded wrapper object exactly", "all twelve actual native files",
+    "not a timing reduction or performance admission", "All 52 extracted regular-file hashes verified"]);
+  const modelReplay = JSON.parse(await pinned("v14-model-replay.json", model.replayReportSha256));
+  assert.equal(modelReplay.schema, "FerricQueryHoistV14NativeReplayV1");
+  assert.equal(modelReplay.passed, true);
+  assert.equal(modelReplay.bindings_sha256, model.bindingsSha256);
+  assert.equal(modelReplay.externally_authenticated_native_archive_sha256, model.archiveSha256);
+  assert.equal(modelReplay.raw_files_checked, 12);
+  assert.equal(modelReplay.gpu_execution, false);
+  assert.equal(modelReplay.timing_reduced, false);
+  assert.equal(modelReplay.performance_qualified, false);
+  assert.equal(modelReplay.authority, "none");
+  assert.equal(modelReplay.cases.length, model.cases);
+  for (const [index, row] of model.rows.entries()) {
+    const replayed = modelReplay.cases[index];
+    assert.equal(replayed.exact_wrapper_match, true);
+    assert.equal(replayed.case, `v14-model-7c92836-${row.name}-r2`);
+    assert.equal(replayed.attention_mode, row.attentionMode);
+    assert.equal(replayed.max_new_tokens, row.outputs);
+    assert.deepEqual(replayed.checked_trace.generated_token_ids, modelTraces[index].generated_token_ids);
+    assert.equal(replayed.checked_trace.generated_utf8_hex, modelTraces[index].generated_utf8_hex);
+  }
+  const emissionNote = (await pinned("v15-emission-failed-note.md", v15.emissionAttempt.noteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(emissionNote, [v15.emissionAttempt.archiveSha256, "emission command was never invoked",
+    "nightly Cargo metadata returned 101", "smallvec v1.16.0", "No repair or retry was performed"]);
+  const emissionDiagnostic = (await pinned("v15-emission-failed.stderr", v15.emissionAttempt.diagnosticSha256)).toString("utf8");
+  phrases(emissionDiagnostic, ["failed to download `smallvec v1.16.0`", "--offline was specified"]);
+  console.log("PASS: admitted HTTP pair and historical objects unchanged; V15 CPU/pre-emission failure and four finite V14 model cases preserve all performance/nonclaim boundaries.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

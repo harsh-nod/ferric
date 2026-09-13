@@ -264,7 +264,7 @@
   for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
     ["Query-hoist v14: finite native parity", "8 cases + CPU replay passed", liveC1.v14],
     ["Wave RMSNorm v15: CPU validation", "20 CPU tests passed", liveC1.v15],
-    ["V14 canary and current runtime", "Worker host passed", liveC1.development]]) {
+    ["V14 canary and current runtime", "4 full-Qwen cases passed", liveC1.development]]) {
     const article = element("article", "team-item");
     const heading = element("div", "team-heading");
     heading.append(element("h3", "", name), element("span", "state-tag state-open", label));
@@ -278,8 +278,11 @@
     }
     if (team.hostArchiveSha256 && team === liveC1.v15)
       facts.append(element("dt", "", "CPU archive SHA-256"), element("dd", "", team.hostArchiveSha256));
-    if (team === liveC1.development)
+    if (team === liveC1.development) {
       facts.append(element("dt", "", "Current fe2o3 source"), element("dd", "", team.fe2o3Source));
+      facts.append(element("dt", "", "Four-case native archive SHA-256"), element("dd", "", team.model.archiveSha256),
+        element("dt", "", "Independent CPU replay archive SHA-256"), element("dd", "", team.model.replayArchiveSha256));
+    }
     article.append(heading, facts);
     liveC1Teams.append(article);
   }
