@@ -4,6 +4,18 @@ Updated: 2026-09-13 UTC. This is an implementation checkpoint, not a qualificati
 receipt. The 33 M1 roadmap gates remain open.
 
 Current continuation: public fe2o3 main resolves to
+`18946f627ac183958535ca858207fa856bd49aa5`, with Pliron
+`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. Its single commit since ae267
+changes private SSA operation-order verification and resource accounting in
+fe2o3-pliron. Runtime/KFD, device SDK, LLVM worker, all dependency manifests
+and the upstream lock are unchanged. Controllers still transitively depend on
+the changed compiler crate. Private `3ababa7` updates the same 79 active files
+by exact revision substitution; reversing it reproduces all prior bytes.
+`446de57` separately refreshes the two verifier test manifest/lock hashes.
+Latest-source host validation and compiler emission remain pending; existing
+binaries and images retain their actual producer revisions.
+
+The preceding ae267 checkpoint used
 `ae26717922b1fb7ad62fdd5ad70814d83eb01177`, with Pliron
 `9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two upstream commits since
 61e change auxiliary-queue teardown and a runtime benchmark's error reporting,
@@ -48,13 +60,22 @@ remain intact. V15's first emission attempt stopped on a missing offline
 dependency. The corrected standalone/build-std cache passes exact 163/198
 package checks, but ae267 rejects the unchanged kernel with
 `UnprovenBarrierConvergence` at bb33/op0. Archive `64c99339` retains that
-failure. A first-pass guarded-read correction is committed at `c119660`;
-remote formatting, focused host checks and new emission remain pending.
-It changes no compiler, lock, arithmetic, ABI or second-pass volatile read.
+failure. The first-pass guarded-read correction at `c119660`, remotely formatted
+at `39be94d`, now passes all twelve R3 phases: 23 focused host tests, strict
+Clippy, unchanged-ae267 emission, capture and independent ABI/resource checks.
+Archive `c4f3be27` retains all 33,585 files and matching 40,774 metadata entries.
+Image `a9da1d79` measures 96 explicit / 96 hidden offset / 352 total bytes,
+Wave64, 70 SGPR / 22 VGPR, with zero spills/private/LDS/AGPR/dynamic stack.
+Independent static review finds no blocker: RNE/preserved-denormal/IEEE mode,
+convergent reductions and refined sqrt/division match the intended policy.
+This is not a complete numerical proof or native result. The correction
+changes no compiler, lock, arithmetic, ABI or second-pass volatile read.
 Separately, exact analytical BF16 fixtures are integrated at `fcbba18`:
 ten CPU tests and an eight-case self-test pass, archive `7b71c9c9`. These
 fixtures do not bind an image or launch a GPU. Their completed 204 KiB stage
-is removed. No V15 device image or native result is admitted yet.
+is removed. The completed format-only and failed R2 emission stages are also
+removed (804 and 989,132 KiB). Latest18946 emission, V15 native fixtures and
+model parity remain pending; no V15 launch or performance result is admitted.
 
 Pages-only `0bcdd226` is now deployed. Its 15-phase remote QA and separate
 two-label browser/width/artifact follow-up pass; GitHub workflow `34741759370`
@@ -119,11 +140,11 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
-| Kernels | V13 `256a6e4` passes host/emission checks at then-current `8efd4fd`, with expected ABI and zero spills/private/LDS/AGPR. V14 passes its eight native finite parity cases (48 complete buffers, 96 guards) and independent protocol replay. Four real Qwen 8/128-output resident/V14 checks now also pass, with exact independent CPU replay. Width4096 Wave64 RMSNorm V15 is integrated at `9c8c1aa`; 20 focused CPU tests, strict Clippy and offline lock checks pass with 61e/9de. Its ae267 emission attempt stopped before compilation on a missing offline dependency. | V13 needs native parity/runtime ordering. V14 needs a same-compiler control before isolated performance attribution. V15 needs exact standalone plus build-std cache closure, emission, finite native comparisons and model qualification; changed FP32 reduction association is explicit. Detailed typed payloads are not retained by standard emission. No default promotion or new speedup is admitted. |
+| Kernels | V13 `256a6e4` passes host/emission checks at then-current `8efd4fd`. V14 passes eight native finite cases and four real Qwen 8/128-output resident/V14 checks, with independent replay. Guarded width4096 Wave64 RMSNorm V15 at `39be94d` now passes 23 host tests, strict Clippy and all twelve ae267 emission phases. Image `a9da1d79` matches ABI/resource expectations and passes independent static review; original dependency/convergence failures remain archived. | V13 needs native parity/runtime ordering. V14 needs a same-compiler control before isolated performance attribution. V15 needs latest18946 emission, eight finite native comparisons and model qualification; changed FP32 reduction association is explicit. Detailed typed payloads are not retained by standard emission. No default promotion or new speedup is admitted. |
 | Runtime Optimization | Diagnostic binary `27c0404e` completed two exact 128-output requests and normal drain. Its original report validator failed on a synchronous-command allowlist omission. A separate corrected CPU replay passes all 17 tests and validates the full raw capture: 166,278 dispatches, 347,568 operational currentness checks and 395,246 completion polls. The original native receipt remains failed; no missing postflight is manufactured. | Currentness consumed 8.772 s of overlapping host time; ordered preparation accounts for 165,240 repeated checks. A bounded preparation optimization needs fault-injection tests and matched measurement. No GPU-duration or speedup inference, no fe2o3 change, and no new performance cohort. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `0bcdd226` is deployed and all seven live assets match remote QA. It covers V15 CPU progress, current KFD/controller, and four real Qwen V14 correctness cases; historical performance is unchanged. Actual production controller `5b7fd71c` and ae267 worker `526cc6bf` pass all four native cases. Completed host targets, run directories, replay/Pages stages and the published sparse worktree are removed after evidence retention. No implementation push. | Validate the V15 guarded-read correction and emit with the unchanged current compiler. Historical images and installed binaries keep their actual producer revisions; no new performance result follows from correctness checks. |
+| Integration and Pages | Pages-only `0bcdd226` is deployed and all seven live assets match remote QA. It covers the earlier V15 CPU checkpoint, ae267 KFD/controller, and four real Qwen V14 correctness cases; historical performance is unchanged. Actual controller `5b7fd71c` and ae267 worker `526cc6bf` pass all four native cases. The private V15 emission and active18946 pin update are newer than that published checkpoint. Completed scratch stages and the published sparse worktree are removed after evidence retention. No implementation push. | Validate the latest18946 dependency/compiler update, then V15 native numerics. Historical images and installed binaries keep their actual producer revisions; no new performance result follows from correctness checks. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive

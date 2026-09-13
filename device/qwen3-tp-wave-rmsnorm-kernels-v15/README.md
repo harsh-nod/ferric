@@ -1,10 +1,11 @@
-# Wave RMSNorm V15 Source Candidate
+# Wave RMSNorm V15 Candidate
 
-Separate kernel candidate. Formatting, 20 focused host tests and strict Clippy
-pass at the historical CPU checkpoint described below. The current guarded-read
-source correction is untested. No emitted image, native
-qualification or performance result is admitted. No adapter, controller,
-existing kernel, default, inventory or external manifest is changed.
+Separate kernel candidate. The guarded-read source at `39be94d` passes remote
+formatting, 23 focused host tests, strict Clippy and emission with compiler
+`ae267179`. The emitted image passes ABI/resource inspection and independent
+static review. Native qualification and performance remain pending. The later
+revision-only update to `18946f6` needs its own validation. No adapter,
+controller, existing kernel, default, inventory or external manifest is changed.
 
 ## Closed Scope
 
@@ -17,8 +18,8 @@ residual-fused normalization are not part of this candidate.
 
 The signature retains the original five slice descriptors and four scalar
 arguments: 96 explicit bytes, with pointer alignment 2 and scalar alignment 4.
-Hidden offset 96, total 352 and kernarg alignment 8 are predeclared expectations
-to be measured, not an emitted ABI result. Empty auxiliary slices still need
+The ae267 image measures hidden offset 96, total 352 and kernarg alignment 8,
+matching the predeclared ABI. Empty auxiliary slices still need
 the caller's valid zero-length slice/sentinel contract. This source does not
 authenticate raw pointers or aliasing at a device launch boundary.
 
@@ -80,13 +81,15 @@ exact epsilon/grid, auxiliary modes, nonfinite inputs in every lane, square/
 sum/output overflow, guarded inactive capacity and changed inputs after error.
 
 Source base: Ferric `0588f997`, with the original candidate retained at
-`9921546`. Both current fe2o3 dependencies and the remotely generated
-Cargo.lock are pinned to `ae26717922b1fb7ad62fdd5ad70814d83eb01177` after
-revision-only migration `94eb4e1`. Kernel and host arithmetic are unchanged.
+`9921546`. Revision-only migration `94eb4e1` pinned the successful emission's
+dependencies to `ae26717922b1fb7ad62fdd5ad70814d83eb01177`. Active dependencies
+now use `18946f627ac183958535ca858207fa856bd49aa5` after the separate exact
+revision substitution at `3ababa7`; its validation remains pending.
+Kernel and host arithmetic are unchanged by either dependency migration.
 The subsequent source correction changes only the first-pass read API and its
 uniform constructor; post-sum arithmetic, ABI and second-pass volatile reads
-remain unchanged. The current proposed roster is seven contract and sixteen
-host methods, 23 total, not a completed result. Added checks bind the read-view
+remain unchanged. Seven contract and sixteen host methods, 23 total, pass
+at `39be94d` with ae267. Added checks bind the read-view
 constructor/NaN fallback, reject a restored volatile/trapping first pass, cover
 every valid coordinate for rows1..32 and model one-lane/all-lane out-of-view
 fallbacks reaching both collectives before rejection.
@@ -103,8 +106,20 @@ archive64c99339 retains the failed attempt. The safe volatile-read intrinsic
 introduces a lane-dependent bounds branch/trap before the reductions, unlike
 the guarded view used by admitted wave kernels. This is the evidence-backed
 convergence hypothesis; no retained MIR proves an exact guard-to-bb33 mapping.
-The current correction must pass the unchanged compiler checks in a separately
-reviewed emission. No convergence or numerical acceptance is claimed yet.
+The guarded-read correction passes the unchanged ae267 compiler in separate
+R3. All twelve phases pass, including the 23 tests, strict Clippy, capture and
+independent ELF inspection. Complete archive `c4f3be27` retains all 33,585 files;
+independent streams, file hashes and 40,774 metadata entries agree. This resolves
+the concrete compilation rejection without weakening compiler checks.
+
+Image `a9da1d79` is 11,240 bytes, with a 2,940-byte kernel body, 70 SGPRs and
+22 VGPRs. It has zero register spills, private memory, LDS and AGPRs, with no
+dynamic stack. Static review observes RNE rounding, preserved denormals and
+IEEE mode; restored EXEC before both six-stage collectives; square-root and
+division refinement; separate output multiplications; and integer BF16 RNE.
+This supports the intended arithmetic policy, not a complete ISA numerical
+proof, native parity, occupancy measurement or speedup. The producer remains
+ae267 even though active source dependencies have advanced.
 
 The remote-only device gate must retain the exact crate,
 baseline `../qwen3-all-kernels-v1/src/rmsnorm.rs`, shared target.rs and
@@ -112,6 +127,8 @@ build/target_contract.rs, final lock and compiler/tool closure. Detailed
 typed/effect/progress payload remains an open obligation: the standard emission
 path retains only its digest, not an admitted detailed payload. Verify all bounds
 and full-wave convergence, inspect both load passes/shuffle association/stores,
-and check actual ABI/resources without suppressing compiler checks. Any later
+and check actual ABI/resources without suppressing compiler checks. A new
+18946 compiler build/emission and the eight-case analytical native fixtures
+remain next steps. Any later
 finite native profile, whole-buffer guards, model oracle or opt-in adapter route
 requires separate review; none is implemented here.
