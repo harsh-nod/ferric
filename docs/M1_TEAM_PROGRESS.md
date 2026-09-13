@@ -3,7 +3,17 @@
 Updated: 2026-09-13 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
-Current continuation: public fe2o3 main resolves to
+Current upstream fe2o3 main resolves to
+`b9ab3553d1e7f87751a24892ba66a591408ee31f`, fetched without changing the
+existing dirty fe2o3 worktree. This adds shared bounded semantic verification
+and canonical V12 admission; it is a substantive compiler change, not a
+revision-only validation. The worker's declared local dependency closure is
+byte-identical from ae267 through b9, including KFD and manifests. That does
+not relabel its actual producer. A separate compiler migration still needs a
+fresh build, verifier/consumer regressions and V15 emission/ABI checks. No
+fe2o3 source edits or push were required for the completed comparison.
+
+The frozen comparison and active integration remain pinned to
 `c9c7036cf98034b638886f54a745701e70ac3571`, with Pliron
 `9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two commits since ae267
 change private SSA operation-order verification/resource accounting, then add
@@ -15,8 +25,13 @@ Private `3ababa7` updates the same 79 active files to `18946f6`
 by exact revision substitution; reversing it reproduces all prior bytes.
 The separate `319315e` substitution advances those files to `c9c7036` before any
 18946 build began. Verifier test manifest/lock hashes are refreshed separately.
-Latest-source host validation and compiler emission remain pending; existing
-binaries and images retain their actual producer revisions.
+The c9 compiler CLI/backend build and 57 identity tests now pass. A collector
+expectation for Pliron's empty default feature was corrected separately without
+rerunning those tests; both focused V12 tests then pass. The original collector
+failure remains retained. V15 emission at Ferric `f393390` passes all 15 phases,
+including 23 kernel tests, strict Clippy and 31 verifier source-policy tests.
+Archive `1e21a6ff` retains the complete emission. Existing binaries and images
+retain their actual producer revisions; this does not relabel the ae267 worker.
 
 The preceding ae267 checkpoint used
 `ae26717922b1fb7ad62fdd5ad70814d83eb01177`, with Pliron
@@ -78,14 +93,87 @@ ten CPU tests and an eight-case self-test pass, archive `7b71c9c9`. These
 fixtures do not bind an image or launch a GPU. Their completed 204 KiB stage
 is removed. The completed format-only and failed R2 emission stages are also
 removed (804 and 989,132 KiB), followed by the accepted R3 stage
-(1,905,580 KiB). Emission with `c9c7036`, V15 native fixtures and
-model parity remain pending; no V15 launch or performance result is admitted.
+(1,905,580 KiB).
 
-Pages-only `0bcdd226` is now deployed. Its 15-phase remote QA and separate
-two-label browser/width/artifact follow-up pass; GitHub workflow `34741759370`
-succeeds. All seven live assets match the tested artifact at 06:04:45 UTC.
-The completed Pages stage (319,400 KiB) and clean sparse worktree (1,188 KiB)
-are removed. Historical performance data is unchanged.
+The separate c9 emission produces image `68607fc1`, observation `66980589`
+and handoff `0d9ee564`. Its 2,940-byte kernel body and hardware descriptor are
+byte-identical to the ae267 image; differences are confined to nonallocated
+compiler metadata. ABI and resource counts remain unchanged. Thirty CPU methods
+for the unchanged fixtures and new native probe/wrapper pass on mi300x.
+All eight real mi350 GPU0 cases then pass: uniform/signed inputs at rows
+1/16/17/32, with 40 exact complete-buffer comparisons and 80 guards. The first
+install-only tar-option failure is retained; the corrected install changes no
+probe or image bytes. Native result `e6b2919c` and archive `c96ea879` retain the
+run. Independent CPU replay `816d5c29` reconstructs all 357 protocol records and
+expected payload hashes. These finite normal cases do not cover general FP32
+equivalence, invalid/trap behavior, rounding boundaries or model parity.
+
+Private source `9dfedb5` adds a separately admitted opt-in V15 adapter and a thin
+same-image baseline/wave-v15 Qwen canary. Only the three pure width4096 target
+normalization sites change; Q/K, draft, fused and default routes are unchanged.
+Its nine focused tests, 35 source policies, 101 batching regressions, new and
+legacy canary tests (67 each), and actual V15 image admission pass. A scratch
+budget stop and subsequent strict Clippy failures remain retained. The completed
+compiler parent is archived and removed, reclaiming 1,882,992 KiB. Correction
+`ff313b4` borrows the V15 constructor argument then copies the same owned binding,
+avoiding an oversized temporary profile without heap allocation; rustdoc and
+test-only statement corrections end at `87fdcea`. That exact source passes all
+20 host-gate phases: formatting, strict all-target Clippy, nine focused tests,
+35 source policies, 101 batching regressions, new and legacy canary tests
+(67 each), actual V15 image admission and release. Archive `ca6dd019` retains
+the run; controller `21168d30` is bound to that source. Independent code review
+finds no concrete blocker. The final bound model wrapper passes 23 CPU methods;
+the separate prospective ABBA reducer passes 19. All four baseline/V15 Qwen
+cases at eight and 128 outputs now pass exact token IDs/UTF8, retirement and
+normal unforced close. All eight GPUs are idle before and after each case.
+Archive `1e2ff5f1` retains the native run; independent CPU replay `dd2f37f1`
+reproduces all four complete checked traces and wrappers. The first launcher's
+SSH-stdin mistake is preserved: it launched only the first case; a fixed-array
+continuation launched each remaining case once. No numerical retry occurred.
+
+A separate fresh full128 ABBA cohort also passes independent replay `5ee062de`.
+At n=2 per mode, baseline/V15 mean TTFT is 2.829254/2.475442 seconds, TPOT
+166.854/113.231 ms and mean per-run output rate 5.415718/7.854668 tokens/s.
+These descriptive changes are 12.51% lower TTFT, 32.14% lower TPOT and 45.03%
+higher rate. Within-mode TPOT range/mean is 27.96%/40.92%, so stability is not
+established. The boundary is controller host-prefill-start through final token
+commit, excluding setup; it is not HTTP or GPU duration. Correctness timings
+and all historical cohorts are excluded. Native archive `4af4c059` and replay
+archive `1615f275` retain the comparison. No default or competitive win follows.
+
+The separate V15 live entrypoint is integrated at its tested source `5b3e332`.
+All 16 host phases pass: formatting, strict all-target Clippy, 40 live tests,
+36 source policies, 35 legacy C1 tests, 29 old wave-live tests and release.
+Nine unchanged tests are ignored across those live targets. Archive `2f0be996`
+retains the gate; live controller `757d0579` remains a distinct producer from
+the canary. The bound HTTP harness passes all 33 CPU tests; its first stale
+test-fixture failure is preserved. Both context8192 HTTP correctness runs now
+pass: two full128 requests per mode, exact token IDs/UTF8, slot0 generations1/2,
+zero cached prefix, normal drain/close and all-eight-idle checks. Native archives
+`118335a6`/`2300e7c6` retain the baseline/V15 runs, with 25 files and 27 metadata
+entries each. Independent CPU replay `c8fde727` rechecks all four streams,
+512 generated IDs, original numerical diagnostics and lifecycle/resource
+records; archive `02588b51` retains all 97 replay files. No timing is reduced
+from these qualification requests. Matched HTTP measurement remains next.
+
+Completed V15 host scratch is removed after full retention, reclaiming
+5,515,132 KiB including formatter stages. The four model run directories and
+upload (12,964 KiB), four ABBA directories (6,484 KiB), model/ABBA replay
+stages (3,948/7,820 KiB), both HTTP CPU stages (792 KiB) and the HTTP replay
+stage (1,344 KiB) are removed. Both completed HTTP run/plan/authorization sets
+(816 KiB) and their upload (2,648 KiB unshared allocation) are also removed.
+The installed live binary retains its own hardlink and is not counted as freed.
+The redundant live worktree is also removed. Models, required installed
+controllers, workers and images remain intact.
+
+Pages-only `030b9e1` is deployed; workflow `34749428862` succeeds and all seven
+live assets match the tested artifact at 09:26:33 UTC. It adds the model and
+descriptive ABBA results while retaining historical checkpoints and unchanged
+HTTP timing data. Evidence, browser and every integer width from 320 to 1440 pass.
+The first date-validator failure is preserved; the correction explicitly checks
+both old/new dates before comparing all other historical fields unchanged.
+Both archived result sets remain local. The completed remote parent
+(309,656 KiB) and published sparse worktree (1,252 KiB) are removed.
 
 ## Current Performance Swarm
 
@@ -144,11 +232,11 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
-| Kernels | V13 `256a6e4` passes host/emission checks at then-current `8efd4fd`. V14 passes eight native finite cases and four real Qwen 8/128-output resident/V14 checks, with independent replay. Guarded width4096 Wave64 RMSNorm V15 at `39be94d` now passes 23 host tests, strict Clippy and all twelve ae267 emission phases. Image `a9da1d79` matches ABI/resource expectations and passes independent static review; original dependency/convergence failures remain archived. | V13 needs native parity/runtime ordering. V14 needs a same-compiler control before isolated performance attribution. V15 needs latestc9c7036 emission, eight finite native comparisons and model qualification; changed FP32 reduction association is explicit. Detailed typed payloads are not retained by standard emission. No default promotion or new speedup is admitted. |
+| Kernels | V13 `256a6e4` passes host/emission checks at then-current `8efd4fd`. V14 passes eight native finite cases and four Qwen 8/128-output checks. V15 at `f393390` passes c9 emission, 23 kernel tests, strict Clippy, 31 verifier tests and static review. Image `68607fc1` passes eight native cases with 40 complete buffers and 80 guards; independent replay matches all 357 protocol records. Its opt-in adapter/canary `87fdcea` passes all 20 host phases and four exact Qwen 8/128-output cases. Separate n=2 ABBA replay observes 32.14% lower mean TPOT and 45.03% higher mean per-run rate, with substantial variability. Its live route now passes both context8192 HTTP correctness modes and independent replay. | A separate matched HTTP cohort; no stable gain, default promotion or competitive win. V13 native parity/runtime ordering, V14 same-compiler isolation, general FP32 refinement and detailed typed payloads remain open. |
 | Runtime Optimization | Diagnostic binary `27c0404e` completed two exact 128-output requests and normal drain. Its original report validator failed on a synchronous-command allowlist omission. A separate corrected CPU replay passes all 17 tests and validates the full raw capture: 166,278 dispatches, 347,568 operational currentness checks and 395,246 completion polls. The original native receipt remains failed; no missing postflight is manufactured. | Currentness consumed 8.772 s of overlapping host time; ordered preparation accounts for 165,240 repeated checks. A bounded preparation optimization needs fault-injection tests and matched measurement. No GPU-duration or speedup inference, no fe2o3 change, and no new performance cohort. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `0bcdd226` is deployed and all seven live assets match remote QA. It covers the earlier V15 CPU checkpoint, ae267 KFD/controller, and four real Qwen V14 correctness cases; historical performance is unchanged. Actual controller `5b7fd71c` and ae267 worker `526cc6bf` pass all four native cases. The private V15 emission and activec9c7036 pin update are newer than that published checkpoint; a small Pages update is being checked separately. Completed scratch stages and the published sparse worktree are removed after evidence retention. No implementation push. | Validate the latestc9c7036 dependency/compiler update, then V15 native numerics. Historical images and installed binaries keep their actual producer revisions; no new performance result follows from correctness checks. |
+| Integration and Pages | Pages-only `030b9e1` is deployed with seven matching live assets and the model/ABBA checkpoint. Actual V14 controller `5b7fd71c` and ae267 worker `526cc6bf` retain their producer identities. V15 canary `21168d30` passes its host/model gates at `87fdcea`; separate live source `5b3e332` is integrated after all 16 host phases pass, with binary `757d0579`. Its HTTP harness passes 33 CPU tests, both two-request native qualifications and independent four-request replay. Completed scratch stages and redundant worktrees are removed after retention. No implementation push. | Separate matched HTTP measurement. Upstream b9 compiler migration needs its own validation; c9 comparison artifacts are not relabeled. All 33 M1 gates remain open. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive

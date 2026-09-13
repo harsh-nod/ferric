@@ -1,8 +1,9 @@
 # Analytical V15 Fixtures
 
-New fixture-only profile. No image pins, native wrapper, launch entrypoint,
-driver route, or changes to the unchanged a9e702e7 core helper. The exact root
-name and ABI tuple are source expectations, not observed image/ISA admission.
+The original fixture-only profile and a9e702e7 core helper remain unchanged.
+Separate `native_probe.py` and `run_native.py` now bind the accepted c9 V15
+image and a root-controlled native launch. The fixture-only API itself cannot
+launch a worker. See the distinct accepted checkpoints below.
 
 Exactly eight cases: uniform and signed families at rows 1, 16, 17 and 32.
 All use width 4096, epsilon bits 0x358637bd (1e-6_f32), behavior 0, WG64 and
@@ -56,3 +57,23 @@ This is only a fixture/conditional arithmetic CPU checkpoint. No V15 image,
 native wrapper, device sqrt/divide behavior, actual guards, model parity or
 performance has been admitted by this gate. The generator and tests are unchanged;
 this result section is a documentation-only addition after the accepted run.
+
+## Accepted Native Checkpoint
+
+Source `d293b7c` adds the native probe/wrapper and their tests without changing
+the generator or core helper. All 30 CPU methods pass on mi300x, plus the
+separate eight-case self-test; archive `ba94c2aa` retains the run.
+
+The actual c9-emitted image `68607fc1` from source `f393390` passes all eight
+cases on mi350 GPU0. All 40 complete-buffer comparisons and 80 guards pass,
+including the empty auxiliary buffers. Normal close and all-eight-idle checks
+pass before and after. Result `e6b2919c` and archive `c96ea879` retain the native
+run, separately from the initial install-only tar-option failure. Independent
+CPU replay `816d5c29`, archive `eddabe7e`, matches all 357 protocol records and
+reconstructs the expected payload hashes from the unchanged fixtures.
+
+This qualifies only these finite normal fixture cases. It does not establish
+general FP32 equivalence, invalid/trap behavior, underflow, rounding-boundary
+behavior, model parity or performance. Raw host elapsed fields are retained but
+not reduced into a performance result. The completed CPU, native wrapper/run
+and replay stages are removed; the image and worker remain for model checks.

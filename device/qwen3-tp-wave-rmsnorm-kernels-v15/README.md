@@ -3,9 +3,13 @@
 Separate kernel candidate. The guarded-read source at `39be94d` passes remote
 formatting, 23 focused host tests, strict Clippy and emission with compiler
 `ae267179`. The emitted image passes ABI/resource inspection and independent
-static review. Native qualification and performance remain pending. The later
-revision-only update to `c9c7036` needs its own validation. No adapter,
-controller, existing kernel, default, inventory or external manifest is changed.
+static review. The separate `f393390` checkpoint passes emission with compiler
+`c9c7036`, 23 kernel tests, strict Clippy and 31 verifier source-policy tests.
+Its image passes eight finite native cases and independent CPU replay. The
+opt-in adapter and Qwen canary at `87fdcea` pass host validation and four fixed
+baseline/V15 Qwen 8/128-output parity cases, with independent raw replay.
+A separate n=2-per-mode native ABBA diagnostic is retained below; stable and
+HTTP performance remain pending. Existing kernels and defaults are unchanged.
 
 ## Closed Scope
 
@@ -84,7 +88,8 @@ Source base: Ferric `0588f997`, with the original candidate retained at
 `9921546`. Revision-only migration `94eb4e1` pinned the successful emission's
 dependencies to `ae26717922b1fb7ad62fdd5ad70814d83eb01177`. Active dependencies
 now use `c9c7036cf98034b638886f54a745701e70ac3571` after the separate exact
-revision substitutions at `3ababa7` and `319315e`; validation remains pending.
+revision substitutions at `3ababa7` and `319315e`; the separate c9 compiler and
+V15 emission checks now pass.
 Kernel and host arithmetic are unchanged by these dependency migrations.
 The subsequent source correction changes only the first-pass read API and its
 uniform constructor; post-sum arithmetic, ABI and second-pass volatile reads
@@ -128,7 +133,38 @@ typed/effect/progress payload remains an open obligation: the standard emission
 path retains only its digest, not an admitted detailed payload. Verify all bounds
 and full-wave convergence, inspect both load passes/shuffle association/stores,
 and check actual ABI/resources without suppressing compiler checks. A new
-c9c7036 compiler build/emission and the eight-case analytical native fixtures
-remain next steps. Any later
-finite native profile, whole-buffer guards, model oracle or opt-in adapter route
-requires separate review; none is implemented here.
+c9c7036 checkpoint is retained separately in archive `1e21a6ff`: image
+`68607fc1`, observation `66980589`, handoff `0d9ee564`. Its kernel body and
+hardware descriptor are byte-identical to R3; only nonallocated compiler
+metadata differs. This preserves the limited static arithmetic argument, not a
+general numerical proof.
+
+The native probe and wrapper in `proofs/tp1-wave-rmsnorm-v15` pass 30 CPU tests.
+On mi350 GPU0, all eight uniform/signed cases at rows1/16/17/32 pass exact
+comparisons of 40 complete buffers and 80 guards, with normal worker close.
+Native result `e6b2919c` and archive `c96ea879` retain actual bytes and outputs;
+independent replay result `816d5c29` matches all 357 protocol records. Invalid,
+trap, underflow and rounding-boundary native cases remain excluded. The new
+adapter selects only the three pure width4096 target sites, and its canary
+preloads the same images for baseline and wave-v15 modes. All 20 host-gate
+phases pass. Four Qwen baseline/V15 cases at 8/128 outputs then pass exact token
+IDs and UTF8, retirement and normal close; archive `1e2ff5f1` retains the run.
+Independent replay `dd2f37f1` reproduces all four checked traces and wrappers.
+These fixed model checks are separate from the finite analytical kernel cases
+and do not prove general FP32 equivalence.
+
+The separate predeclared full128 ABBA cohort passes independent replay
+`5ee062de`, with native archive `4af4c059` and replay archive `1615f275`.
+Baseline/V15 mean TTFT is 2.829254/2.475442 seconds, TPOT 166.854/113.231 ms
+and mean per-run output rate 5.415718/7.854668 tokens/s. At two runs per mode,
+this is a descriptive 32.14% lower TPOT and 45.03% higher rate. TPOT range/mean
+is 27.96%/40.92%, so no stable gain follows. These are context256 controller
+host-wall intervals excluding setup, not HTTP or GPU duration. No historical
+cohort or correctness timing is mixed in, and defaults remain unchanged.
+
+Separate live source `5b3e332`, binary `757d0579`, passes all 16 host phases
+and the 33-test HTTP harness. Baseline and V15 each pass two exact full128
+HTTP requests at context8192, including slot reuse, disabled prefix caching
+and normal drain/close. Independent replay `c8fde727` checks all four requests
+and lifecycle records. This admits only those correctness cases, not matched
+HTTP timings, general serving readiness or default promotion.
