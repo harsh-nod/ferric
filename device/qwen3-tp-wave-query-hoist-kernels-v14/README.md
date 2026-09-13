@@ -1,8 +1,12 @@
 # Query-Hoist Wave Attention V14
 
-Source-only hypothesis, separate from every existing v5 root, crate, adapter route,
-inventory and default. No format, build, test, typed emission, native numerical
-qualification or performance comparison has run for this source.
+Host-tested hypothesis, separate from every existing v5 root, crate, adapter route,
+inventory and default. Source `1843d8f174b20ebd6dbc0e72d6fe9044e8d1f244`
+passes all ten remote host steps: five contract and eight host-model tests,
+strict Clippy, formatting and zero doctests. Complete archive
+`9d025c4646b4751681230fb46036f738a6f38ebe5edd9bc4362a1e2f7dc7f579`
+retains all 276 evidence files and fresh own artifacts. No typed emission,
+native numerical qualification or performance comparison has run.
 
 ## Scope
 
@@ -41,8 +45,8 @@ Nonfinite products, values, reductions and final output retain their old checks.
 
 ## Focused Coverage
 
-Forecast: five structural/contract test methods and eight host-model methods,
-13 total, plus zero unit tests and zero doctests. Not yet executed.
+Verified host coverage: five structural/contract test methods and eight
+host-model methods, 13 total, plus zero unit tests and zero doctests.
 
 The structural comparator parses both complete source files, checks the exact
 post-admission placement and load expressions, relocates only those two AST
@@ -73,11 +77,10 @@ remain pinned to `8efd4fd416d1ffae7a718144e4d299fe3c8f7590`.
 The build script reuses the existing target helpers unchanged. Its fixed crate
 binding is a host fixture, not a measured device artifact identity.
 
-After source review, prepare a small separately approved remote format-only gate,
-then an offline source-fresh focused host gate with the shared target helpers and
-frozen v5 comparison source included in custody. Record actual counts and strict
-Clippy separately. No compiler/proof relaxation is permitted. Only after these
-gates should a separately authorized same-compiler control/candidate emission
+Remote formatting and the offline source-fresh host gate are complete, including
+the shared target helpers and frozen v5 comparison source in custody. No
+compiler/proof relaxation is permitted. A separately authorized same-compiler
+control/candidate emission must now
 check actual descriptors, resources, query-load placement and zero spills,
 followed by existing finite attention fixtures and exact model qualification.
 Any comparison remains opt-in and conditional; no default or serving claim follows.
