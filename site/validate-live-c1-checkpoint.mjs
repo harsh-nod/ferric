@@ -182,6 +182,70 @@ const v15Current = {
   invalidCasesQualified: false, generalFp32Proof: false, modelParityQualified: false,
   performanceGainClaimed: false, defaultPromotion: false, sameCompilerAblation: false,
 };
+const v15Model = {
+  source: "87fdcead7418e8f64db29fdb2703f5a4c8c9b742", tree: "561c2a1da66691d6da9c9a213ecfcd19621dbc3a",
+  controllerSha256: "21168d30802925ad8aad61ba9f87a5d2f406d2413e512234b9db3690e8fc18f2", controllerBytes: 9445768,
+  hostNoteSha256: "2170b8e09e15c9652aea817d63e03839cac676b452db4e620fde7a3483baedc2",
+  hostReceiptSha256: "5f32bf1b0863fedf4f751f6b97d76523e26330e0e71158662fa3f6373986394b",
+  hostArchiveSha256: "ca6dd01968a29ffc33cecece890ab3169267b23404eafb4e4d8840db6bfb4533",
+  hostPhasesPassed: 20, strictClippyExit: 0, hostFormatExit: 0,
+  hostTests: {
+    focused_library: { passed: 9, ignored: 1 }, source_policy: { passed: 35, ignored: 0 },
+    batched_regressions: { passed: 101, ignored: 0 }, v15_canary: { passed: 67, ignored: 4 },
+    legacy_v14_canary: { passed: 67, ignored: 4 }, actual_v15_image_admission: { passed: 1, ignored: 0 },
+  },
+  scope: "four-fixed-prompt-correctness-cases", correctnessPassed: true, cases: 4,
+  promptTokens: 128, contextTokens: 256, pages: 16, rows: 32, prefillChunkTokens: 16, tensorParallel: 1,
+  layerProjection: "c1-wave", attention: "wave", submission: "ordered", argmaxMode: "wave-v11",
+  bindingsSha256: "48944261c326523886d33119178fd48c4511513c35127b0704f7023d19a50959",
+  noteSha256: "011e3bbd17b3ee711f4ad62507086d7f4ed7c3fa40dc04c1547b1500c49f59de",
+  archiveSha256: "1e2ff5f1ced1ea4b7104ff79d1df7a45706219109ed28817ff9a366c6ccf0662",
+  cleanupSha256: "adb2976ce274a8f114429d295b7d633629ab1696c84dc650b88dc44219c662c0",
+  launcherCorrectionSha256: "610c727f827d9683d384c9f79382a3a1d1d0bf121f66a466acd87aa6c87dc65d",
+  replayNoteSha256: "9c5323082a5bdd5f88609d3c9595c9445f248eed33c0075cdaffb494c2663006",
+  replayReportSha256: "dd2f37f1289e3748bfec7151786cc3b4d11ba3ef9f86475440f00e557378d3d2",
+  replayArchiveSha256: "5ad101563ddea47bf9f9e98296c064943a0e17487148a8df35649b16195f6df9",
+  rowsChecked: [
+    { name: "baseline8", rmsnormMode: "baseline", outputs: 8, packets: 9219, batches: 15, committedInputs: 135,
+      wrapperSha256: "a41f7d79651b4db3c8ea4deed0c14027b859a58d4e1d6880ba565dfe2d0c6098" },
+    { name: "candidate8", rmsnormMode: "wave-v15", outputs: 8, packets: 9219, batches: 15, committedInputs: 135,
+      wrapperSha256: "9afb674c6733db8a26a0170ef64962476bd9e3a5ebf5c7a7220ce13a8cd4af0e" },
+    { name: "baseline128", rmsnormMode: "baseline", outputs: 128, packets: 83139, batches: 135, committedInputs: 255,
+      wrapperSha256: "3de932b405b53db61e54eb83c968839a8432f5d046951cc870404aadbb91d1c4" },
+    { name: "candidate128", rmsnormMode: "wave-v15", outputs: 128, packets: 83139, batches: 135, committedInputs: 255,
+      wrapperSha256: "7df69ac5e16f07c7bbca5e39120a368601dfa4779c8742ddb292e3648a49e29d" },
+  ],
+  normalUnforcedClose: true, allEightIdleBeforeAfter: true, cpuReplayPassed: true,
+  sameControllerAndPreloads: true, correctnessTimingsExcluded: true, numericalRetry: false,
+  generalizedParityQualified: false, context8192Qualified: false, httpMeasurement: false,
+  performanceQualified: false, defaultPromotion: false, historicalCohortsMixed: false,
+};
+const v15Abba = {
+  state: "complete-independent-replay", contextTokens: 256, promptTokens: 128, outputTokens: 128,
+  repetitionsPerMode: 2, acquisitionOrder: ["baseline-a1", "wave-v15-b1", "wave-v15-b2", "baseline-a2"],
+  experimentPlanSha256: "d4cd6df496057bf920f0451e1ad4b04f3595ca7dcf8e4dfda9f4033c207673f9",
+  reducerSha256: "88858aa8d43b7c9393dfd43e739ba70a53fb6f197a48a2927efbc9d35673c21d",
+  summarySha256: "5ee062de5682d8b1474e9dc9ed0362f6dd5cb0ed9de5419f4007ac24dc17807a",
+  manifestSha256: "337398866cf355516c4d82c4cc1ede63d04a4db2615a6c17ff1e1cd039b6462d",
+  nativeArchiveSha256: "4af4c05996f882bc5d176cac4969bf8635d1efb33df2a9202b71ee7841c31596",
+  replayArchiveSha256: "1615f275f8c33c3ec075dff59b23dc0ce584f62efd1d9b2a8165f15170fea0ab",
+  replayNoteSha256: "832caed175b12b7136b8caf862359f99b783bba25f5e78ab41406d0452e2a0ff",
+  coreFiles: 40, fullRawFiles: 52, correctnessTimingsExcluded: true, historicalCohortsMixed: false,
+  rows: [
+    { profile: "baseline", ttftMeanSeconds: 2.8292537170000003, tpotMeanSeconds: 0.1668542422007874,
+      workloadMeanSeconds: 24.0197425565, meanPerRunOutputTokensPerSecond: 5.415717612777184,
+      tpotRangeSeconds: [0.14353043494488188, 0.19017804945669292], tpotRangePercentOfMean: 27.95710429446361 },
+    { profile: "wave-v15", ttftMeanSeconds: 2.4754419739999998, tpotMeanSeconds: 0.11323067961023622,
+      workloadMeanSeconds: 16.855738369500003, meanPerRunOutputTokensPerSecond: 7.8546680779958375,
+      tpotRangeSeconds: [0.09006585533070867, 0.13639550388976376], tpotRangePercentOfMean: 40.916162226113514 },
+  ],
+  ttftReductionPercent: 12.505479479414273, tpotReductionPercent: 32.137967775504436,
+  rateIncreasePercent: 45.034668341356834,
+  pairedTpotReductionPercent: [28.280101578797844, 37.24964648417913],
+  pairedRateIncreasePercent: [35.79438148277132, 52.1985768531815],
+  descriptiveComparisonAdmitted: true, performanceQualified: false, stableGainClaimed: false,
+  httpMeasurement: false, gpuDurationMeasurement: false, defaultPromotion: false, m1Completion: false,
+};
 const development = {
   source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
   fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
@@ -189,7 +253,8 @@ const development = {
   activeDependencyTree: "27142fd1003494aac211bc8250584228ff09525c", activeDependencyValidationPending: false,
   activeDependencyValidationScope: "V15 kernel/verifier/emission and finite native fixtures",
   v15CanarySource: "9dfedb5d1f9b80bc3f80a859e8740a69b9e5d793",
-  v15AdapterGatePending: true, v15ModelParityPending: true, v15PerformancePending: true,
+  v15ModelSource: "87fdcead7418e8f64db29fdb2703f5a4c8c9b742",
+  v15AdapterGatePending: false, v15ModelParityPending: false, v15PerformancePending: false,
   canaryIntegrated: true, hostState: "composite-passed", hostAdmitted: true, workerHostAdmitted: true,
   hostNoteSha256: "05bc395159aaa06d8f5b2f3908a160a35718247f78a931cb71ce5ec4345ea422",
   hostFinalArchiveSha256: "e0a7ed83af27957a33544dd7acb37dd12e774b9d4f162b6ee92b1317ba1c67b6",
@@ -272,9 +337,12 @@ export function validateLiveC1Checkpoint(input) {
   exact(value.v14, v14, ["detail", "emission", "native"]);
   exact(value.v14.emission, v14Emission);
   exact(value.v14.native, v14Native);
-  exact(value.v15, v15, ["detail", "emission", "current"]);
+  exact(value.v15, v15, ["detail", "emission", "current", "model", "abba"]);
   exact(value.v15.emission, v15Emission);
   exact(value.v15.current, v15Current);
+  exact(value.v15.model, v15Model, ["detail"]);
+  exact(value.v15.abba, v15Abba, ["detail"]);
+  assert.equal(value.development.v15ModelSource, value.v15.model.source);
   exact(value.development, development, ["detail"]);
   phrases(value.overview, ["independent replay at context8192", "199.719 to 154.310 ms", "4.532745 to 5.707624",
     "not a stable or competitive result", "all 33 M1 gates remain open"]);
@@ -311,6 +379,18 @@ export function validateLiveC1Checkpoint(input) {
     "LLVM worker remains an actual 216822 build", "production runtime worker remains ae267",
     "FP32 association differs from the old serial fold", "not general FP32 proof, invalid-case qualification or Qwen model parity",
     "No performance gain or default promotion is claimed", "historical C1 measurements are unchanged"]);
+  phrases(value.v15.model.detail, ["four full-Qwen correctness cases pass", "exact token IDs and UTF8 for 8 and 128 outputs",
+    "same 128-token prompt", "all twenty host phases", "test invocations overlap", "same V5/V8/V11/V15 images",
+    "actual ae267 worker", "Only three pure target-width4096 norm sites change", "normal unforced close",
+    "Independent CPU replay reproduces all four complete checked traces and wrappers", "no numerical retry occurred",
+    "not generalized or context8192 parity", "Correctness timings are excluded from the separate ABBA cohort"]);
+  phrases(value.v15.abba.detail, ["predeclared baseline / V15 / V15 / baseline", "independent replay of all forty core files",
+    "n=2 per mode", "2.829254 to 2.475442 seconds", "166.854 to 113.231 ms", "5.415718 to 7.854668 tokens/s",
+    "TPOT is 32.138% lower and rate 45.035% higher", "27.96% for baseline and 40.92% for V15",
+    "paired TPOT reductions are 28.280% and 37.250%", "arithmetic mean of per-run 128/workload seconds, not pooled duration",
+    "overlapping parent/IPC/wait scopes", "not HTTP latency, GPU duration, a stable gain or competitive result",
+    "frozen c9 V15 image and actual ae267 worker", "all historical HTTP measurements and all 33 M1 gates remain unchanged",
+    "No default promotion or HTTP qualification follows"]);
   phrases(value.development.detail, ["opt-in V14 full-Qwen canary is integrated in private source",
     "Scoped current controller host checks pass", "11 focused tests with one ignore",
     "all 31 verifier-policy tests", "failures remain retained, not relabeled",
@@ -904,12 +984,132 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
     assert.deepEqual(replayed.checked_trace.generated_token_ids, modelTraces[index].generated_token_ids);
     assert.equal(replayed.checked_trace.generated_utf8_hex, modelTraces[index].generated_utf8_hex);
   }
+  const v15ModelHostNote = (await pinned("v15-model-host-note.md", v15Model.hostNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(v15ModelHostNote, [v15Model.source, v15Model.tree, v15Model.controllerSha256, v15Model.hostArchiveSha256,
+    "all 20 commands, wrappers and outer status 0", "overlapping invocations are not pooled as unique coverage",
+    "non-test policy artifact fresh=false", "fresh=true with identical retained bytes", "All earlier failures remain retained"]);
+  const v15ModelHost = JSON.parse(await pinned("v15-model-host-receipt.json", v15Model.hostReceiptSha256));
+  for (const [key, expected] of Object.entries({ schema: "FerricWaveRmsNormV15ControllerHostReceiptV1", authority: "none",
+    source: v15Model.source, tree: v15Model.tree, fe2o3_source: v15Current.compilerSource,
+    executable_sha256: v15Model.controllerSha256, executable_bytes: v15Model.controllerBytes,
+    complete_archive_sha256: v15Model.hostArchiveSha256, test_results: v15Model.hostTests,
+    phases_passed: v15Model.hostPhasesPassed, strict_clippy_exit: 0, format_exit: 0, release_exit: 0, outer_exit: 0,
+    normal_closed_groups: 20, forced_cleanup: false, gpu_used: false, model_parity_admitted: false, performance_admitted: false }))
+    assert.deepEqual(v15ModelHost[key], expected);
+  const v15ModelNote = (await pinned("v15-model-note.md", v15Model.noteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(v15ModelNote, [v15Model.source, v15Model.tree, v15Model.controllerSha256, v15Model.archiveSha256,
+    "same executable and V5/V8/V11/V15 preloads", "normal unforced close", "135/255 committed-input accounting passed",
+    "No numerical retry, oracle change, or discarded model failure occurred", "No timing from these correctness cases is reduced"]);
+  await pinned("v15-model-launcher-correction.md", v15Model.launcherCorrectionSha256);
+  const v15ModelBindings = JSON.parse(await pinned("v15-model-bindings.json", v15Model.bindingsSha256));
+  assert.equal(v15ModelBindings.schema, "FerricWaveRmsNormV15CanaryBindingsV1");
+  for (const [key, source, tree, sha, bytes, receipt] of [
+    ["controller", v15Model.source, v15Model.tree, v15Model.controllerSha256, v15Model.controllerBytes, v15Model.hostReceiptSha256],
+    ["worker", development.fe2o3Source, development.fe2o3Tree, development.workerSha256, development.workerBytes, development.workerNoteSha256],
+  ]) {
+    assert.deepEqual({ source: v15ModelBindings[key].source, tree: v15ModelBindings[key].tree,
+      sha256: v15ModelBindings[key].sha256, byte_len: v15ModelBindings[key].byte_len,
+      host_receipt_sha256: v15ModelBindings[key].host_receipt_sha256 },
+    { source, tree, sha256: sha, byte_len: bytes, host_receipt_sha256: receipt });
+  }
+  const v15ModelArtifact = v15ModelBindings.rmsnorm_artifact;
+  assert.equal(v15ModelArtifact.hsaco, v15Current.imageSha256);
+  const v15ModelTraces = [];
+  for (const row of v15Model.rowsChecked) {
+    const report = JSON.parse(await pinned(`v15-model-${row.name}.json`, row.wrapperSha256));
+    assert.equal(report.schema, "FerricWaveRmsNormV15ModelWrapperV1");
+    for (const key of ["passed", "all_eight_idle_before", "all_eight_idle_after"])
+      assert.equal(report[key], true);
+    assert.deepEqual(report.errors, []);
+    assert.equal(report.bindings_sha256, v15Model.bindingsSha256);
+    assert.equal(report.max_new_tokens, row.outputs);
+    assert.equal(report.measurement, "correctness-only-raw-host-timing-not-reduced");
+    const trace = report.checked_trace;
+    assert.equal(trace.schema, "FerricWaveRmsNormV15CanaryCheckedV1");
+    for (const record of [report, trace]) {
+      for (const [key, expected] of Object.entries({ rmsnorm_mode: row.rmsnormMode, attention: v15Model.attention,
+        layer_projection: v15Model.layerProjection, submission: v15Model.submission, correctness_only: true,
+        performance_qualified: false, benchmark_admitted: false, serving_admitted: false, authority: "none" }))
+        assert.deepEqual(record[key], expected);
+    }
+    for (const [key, expected] of Object.entries({ argmax_mode: v15Model.argmaxMode,
+      controller_sha256: v15Model.controllerSha256, worker_sha256: v15Current.workerSha256,
+      reference_passed: true, http_measurement: false, gpu_clock_measurement: false,
+      completed_packets: row.packets, completed_batches: row.batches, committed_inputs_before_retirement: row.committedInputs }))
+      assert.deepEqual(trace[key], expected);
+    assert.equal(trace.generated_token_ids.length, row.outputs);
+    assert.equal(trace.rmsnorm_artifact_path, v15ModelArtifact.path);
+    assert.deepEqual(trace.rmsnorm_artifact, { hsaco: v15ModelArtifact.hsaco, manifest: v15ModelArtifact.manifest, handoff: v15ModelArtifact.handoff });
+    const cleanup = JSON.parse(await pinned(`v15-model-${row.name}-cleanup.json`, v15Model.cleanupSha256));
+    assert.deepEqual(cleanup, { absent: true, cleanup_error: null, controller_returncode: 0, forced: false, reason: null });
+    v15ModelTraces.push(trace);
+  }
+  for (const [left, right] of [[0, 1], [2, 3]]) {
+    assert.deepEqual(v15ModelTraces[left].generated_token_ids, v15ModelTraces[right].generated_token_ids);
+    assert.equal(v15ModelTraces[left].generated_utf8_hex, v15ModelTraces[right].generated_utf8_hex);
+  }
+  const v15ModelReplayNote = (await pinned("v15-model-replay-note.md", v15Model.replayNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(v15ModelReplayNote, [v15Model.archiveSha256, v15Model.replayArchiveSha256, v15Model.replayReportSha256,
+    "reproduced every complete checked_trace and wrapper exactly", "No synthetic suite, model/GPU launch, timing reduction or performance claim"]);
+  const v15ModelReplay = JSON.parse(await pinned("v15-model-replay.json", v15Model.replayReportSha256));
+  for (const [key, expected] of Object.entries({ schema: "FerricWaveRmsNormV15NativeReplayV1", authority: "none", passed: true,
+    bindings_sha256: v15Model.bindingsSha256, externally_authenticated_native_archive_sha256: v15Model.archiveSha256,
+    raw_files_checked: 12, gpu_execution: false, timing_reduced: false, performance_qualified: false }))
+    assert.deepEqual(v15ModelReplay[key], expected);
+  assert.equal(v15ModelReplay.cases.length, v15Model.cases);
+  for (const [index, row] of v15Model.rowsChecked.entries()) {
+    assert.deepEqual(v15ModelReplay.cases[index], { case: `rmsnorm-v15-87fdcea-${row.name}-r1`,
+      rmsnorm_mode: row.rmsnormMode, max_new_tokens: row.outputs, exact_wrapper_match: true, checked_trace: v15ModelTraces[index] });
+  }
+  const v15AbbaNote = (await pinned("v15-abba-note.md", v15Abba.replayNoteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(v15AbbaNote, [v15Abba.summarySha256, v15Abba.manifestSha256, v15Abba.nativeArchiveSha256,
+    v15Abba.replayArchiveSha256, "unchanged reducer 0", "wrong external manifest pin rejection 1 with empty stdout",
+    "descriptive n=2, not a confidence interval or stability claim", "Parent/IPC/wait intervals overlap"]);
+  const v15AbbaManifest = JSON.parse(await pinned("v15-abba-manifest.json", v15Abba.manifestSha256));
+  const v15AbbaSummary = JSON.parse(await pinned("v15-abba-summary.json", v15Abba.summarySha256));
+  assert.equal(v15AbbaManifest.schema, "FerricWaveRmsNormV15AbbaEvidenceV1");
+  assert.equal(v15AbbaSummary.schema, "FerricWaveRmsNormV15AbbaSummaryV1");
+  for (const record of [v15AbbaManifest, v15AbbaSummary]) {
+    assert.equal(record.authority, "none");
+    assert.equal(record.performance_qualified, false);
+    assert.equal(record.experiment_plan_sha256, v15Abba.experimentPlanSha256);
+    assert.equal(record.reducer_sha256, v15Abba.reducerSha256);
+    assert.deepEqual(record.runs.map((row) => row.id), v15Abba.acquisitionOrder);
+    for (const mode of ["baseline", "wave-v15"]) {
+      assert.equal(record.profiles[mode].rmsnorm_mode, mode);
+      assert.equal(record.profiles[mode].source, v15Model.source);
+      assert.equal(record.profiles[mode].tree, v15Model.tree);
+      assert.equal(record.profiles[mode].sha256, v15Model.controllerSha256);
+      assert.equal(record.profiles[mode].bindings_sha256, v15Model.bindingsSha256);
+      assert.deepEqual(record.profiles[mode].identity_set, v15ModelBindings);
+    }
+  }
+  assert.equal(v15AbbaSummary.evidence_manifest_sha256, v15Abba.manifestSha256);
+  assert.equal(v15AbbaManifest.runs.flatMap((row) => Object.keys(row.files)).length, v15Abba.coreFiles);
+  assert.equal(v15AbbaSummary.cohort.repetitions_per_mode, v15Abba.repetitionsPerMode);
+  for (const key of ["stable_performance_gain_claimed", "confidence_qualified", "http_measurement", "gpu_clock_measurement",
+    "default_promotion", "serving_qualified", "competitive_ranking", "m1_completion", "old_cohort_mixed", "additive_gain_claim"])
+    assert.equal(v15AbbaSummary[key], false);
+  for (const row of v15Abba.rows) {
+    assert.deepEqual(v15AbbaSummary.cohort.arithmetic_metric_means[row.profile], {
+      diagnostic_ttft_seconds: row.ttftMeanSeconds, diagnostic_tpot_seconds: row.tpotMeanSeconds,
+      diagnostic_workload_seconds: row.workloadMeanSeconds, diagnostic_output_tokens_per_second: row.meanPerRunOutputTokensPerSecond,
+    });
+    const variability = v15AbbaSummary.cohort.within_mode_variability[row.profile].diagnostic_tpot_seconds;
+    assert.deepEqual([variability.minimum, variability.maximum], row.tpotRangeSeconds);
+    assert.equal(variability.range_percent_of_mean, row.tpotRangePercentOfMean);
+  }
+  for (const [key, expected] of [["diagnostic_ttft_seconds", v15Abba.ttftReductionPercent],
+    ["diagnostic_tpot_seconds", v15Abba.tpotReductionPercent], ["diagnostic_output_tokens_per_second", v15Abba.rateIncreasePercent]])
+    assert.equal(v15AbbaSummary.cohort.ratio_of_arithmetic_means[key].improvement_percent, expected);
+  assert.deepEqual(v15AbbaSummary.cohort.repetition_pairs.map((row) => row.relative_changes.diagnostic_tpot_seconds.improvement_percent), v15Abba.pairedTpotReductionPercent);
+  assert.deepEqual(v15AbbaSummary.cohort.repetition_pairs.map((row) => row.relative_changes.diagnostic_output_tokens_per_second.improvement_percent), v15Abba.pairedRateIncreasePercent);
   const emissionNote = (await pinned("v15-emission-failed-note.md", v15.emissionAttempt.noteSha256)).toString("utf8").replace(/\s+/g, " ");
   phrases(emissionNote, [v15.emissionAttempt.archiveSha256, "emission command was never invoked",
     "nightly Cargo metadata returned 101", "smallvec v1.16.0", "No repair or retry was performed"]);
   const emissionDiagnostic = (await pinned("v15-emission-failed.stderr", v15.emissionAttempt.diagnosticSha256)).toString("utf8");
   phrases(emissionDiagnostic, ["failed to download `smallvec v1.16.0`", "--offline was specified"]);
-  console.log("PASS: historical results unchanged; current V15 c9 emission, eight finite native cases and independent replay are separately bound; adapter/model/performance remain pending.");
+  console.log("PASS: historical results unchanged; V15 c9 emission, eight finite native cases, twenty host phases, four fixed-prompt model cases and descriptive n=2 ABBA with independent replay are separately bound; no HTTP or stable-gain qualification.");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
