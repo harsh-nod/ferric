@@ -248,7 +248,7 @@ fn argmax_canary_is_separately_opted_in_without_changing_frozen_clis() {
 }
 
 #[test]
-fn wave_rmsnorm_v15_route_keeps_defaults_and_existing_controllers_unchanged() {
+fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
     let dependency = &manifest["dependencies"]["ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"];
     assert_eq!(dependency["optional"].as_bool(), Some(true));
@@ -267,10 +267,53 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_existing_controllers_unchanged() {
     for binary in manifest["bin"].as_array().unwrap() {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap());
         let source = std::fs::read_to_string(path).unwrap();
+        if binary["name"].as_str() == Some("ferric-qwen3-wave-rmsnorm-v15-canary") {
+            assert!(source.contains("wave_rmsnorm_v15_canary_contract::parse"));
+            assert!(source.contains("argmax_canary_runtime::execute_wave_rmsnorm_v15"));
+            assert_eq!(binary["required-features"].as_array().unwrap(), &[toml::Value::String("tp-batch-engineering".into())]);
+        } else {
+            assert!(!source.contains("wave_rmsnorm_v15_canary_contract"));
+            assert!(!source.contains("execute_wave_rmsnorm_v15"));
+        }
         for selector in ["--rmsnorm-mode", "--rmsnorm-artifact", "configure_ordered_c1_wave_rmsnorm_v15", "open_wave_rmsnorm_v15"] {
             assert!(!source.contains(selector));
         }
     }
+}
+
+#[test]
+fn wave_rmsnorm_v15_canary_preloads_both_arms_and_records_actual_mode() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let binaries = manifest["bin"].as_array().unwrap();
+    let matches = binaries.iter().filter(|binary| binary["name"].as_str() == Some("ferric-qwen3-wave-rmsnorm-v15-canary")).collect::<Vec<_>>();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0]["path"].as_str(), Some("src/bin/ferric-qwen3-wave-rmsnorm-v15-canary.rs"));
+    let contract = include_str!("../src/bin/wave_rmsnorm_v15_canary_contract.rs");
+    assert!(contract.contains("layer_c1_wave_canary_contract::parse(forwarded.into_iter())"));
+    assert!(contract.contains("layer != CanaryProfile::LayerC1Wave"));
+    assert!(contract.contains("required option --rmsnorm-mode"));
+    assert!(contract.contains("required option --rmsnorm-artifact"));
+    let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
+    let run = &shared[shared.find("fn run(").unwrap()..shared.find("pub fn execute(").unwrap()];
+    let ordered = [
+        "EngineeringTpArtifactV1::open_wave_rmsnorm_v15", "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing", "worker.load_additional_artifact(&argmax_artifact)",
+        "if let Some(artifact) = &wave_rmsnorm_artifact", "new_wide32_with_argmax_v11_and_wave_rmsnorm_v15",
+        "driver.configure_projection(", "driver.configure_head_precision_v8(true)",
+        "profile == CanaryProfile::WaveRmsNormV15", "driver.configure_ordered_c1_wave_rmsnorm_v15",
+        "profile == CanaryProfile::WaveRmsNormBaseline", "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
+    ].map(|marker| run.find(marker).unwrap());
+    assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
+    assert!(run.contains("driver.rmsnorm_mode() != mode"));
+    assert!(run.contains("setup[\"rmsnorm_artifact\"] = identity(artifact)"));
+    assert!(run.contains("annotate_wave_rmsnorm_record(&mut setup, driver.rmsnorm_mode())"));
+    assert!(run.contains("annotate_wave_rmsnorm_record(&mut closed, driver.rmsnorm_mode())"));
+    let observe = &shared[shared.find("fn observe<").unwrap()..shared.find("fn run(").unwrap()];
+    assert_eq!(observe.matches("driver.rmsnorm_mode()").count(), 2);
+    assert!(observe.contains("generated == reference.source.generated_token_ids[..options.outputs]"));
+    assert!(observe.contains("utf8 == reference.expected_utf8(options.outputs)?"));
+    let execution = &shared[shared.find("fn execute_with_query_hoist_path(").unwrap()..shared.find("#[cfg(test)]").unwrap()];
+    assert!(execution.find("profile.validate_wave_rmsnorm_path(").unwrap() < execution.find("TimingFile::create(").unwrap());
 }
 
 #[test]
