@@ -10,6 +10,7 @@ mod large_kv;
 mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
+mod query_hoist_v14;
 mod speculative;
 
 use super::super::{
@@ -78,6 +79,7 @@ struct Recording {
     queue_epochs: u64,
     packet_preparations: Vec<u64>,
     argmax_v11_loaded: Option<[u8; 32]>,
+    query_hoist_v14_loaded: Option<[u8; 32]>,
     argmax_peer: Option<(u32, u32, u32)>,
 }
 
@@ -151,8 +153,10 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
     fn require_loaded_image(&mut self, image: [u8; 32], kernels: &[&str]) -> TpResult<()> {
         if self.buffers.is_empty()
-            && self.argmax_v11_loaded == Some(image)
-            && kernels == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11
+            && ((self.argmax_v11_loaded == Some(image)
+                && kernels == crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11)
+                || (self.query_hoist_v14_loaded == Some(image)
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14))
         {
             Ok(())
         } else {
@@ -311,6 +315,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                 command.kernel,
                 "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+                    | "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"
             )
         {
             return Err("injected attention submit failure".into());
@@ -370,6 +375,7 @@ impl EngineeringTpRankTransportV1 for Recording {
                 command.kernel,
                 "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+                    | "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"
             )
         {
             return Err("injected attention completion failure".into());
@@ -410,7 +416,8 @@ impl EngineeringTpRankTransportV1 for Recording {
             "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
             | "ferric_qwen3_draft_batch32_paged_gqa_bf16_f32_v10"
             | "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9"
-            | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5" => ATTENTION,
+            | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
+            | "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14" => ATTENTION,
             "ferric_qwen3_tp_batch32_argmax_bf16_v5" => ARGMAX,
             "ferric_qwen3_draft_batch32_head_bf16_f32_v10"
             | "ferric_qwen3_tp_batch32_head_bf16_f32_v8" => FP32_HEAD,
@@ -639,6 +646,7 @@ fn fixture_for_model(
     let mut transports = (0..world)
         .map(|rank| Recording {
             argmax_v11_loaded: None,
+            query_hoist_v14_loaded: None,
             argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
@@ -745,6 +753,8 @@ fn fixture_for_model(
         fp32_logits: None,
         fp32_argmax_v11: None,
         admitted_argmax_v11: None,
+        query_hoist_v14: None,
+        admitted_query_hoist_v14: None,
     }
 }
 

@@ -119,6 +119,33 @@ impl Fp32ArgmaxBindingV11 {
     }
 }
 
+/// Separate query-hoisted GQA image; no existing v5 export is replaced at admission.
+#[cfg(feature = "tp-batch-engineering")]
+pub const ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14: [&str; 1] =
+    ["ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"];
+#[cfg(feature = "tp-batch-engineering")]
+const QUERY_HOIST_CRATE_V14: &str = "ferric_qwen3_tp_wave_query_hoist_kernels_device_v14";
+
+/// Private identity minted only by the separate one-root v14 profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) struct QueryHoistBindingV14 {
+    pub(crate) hsaco: [u8; 32],
+    manifest: [u8; 32],
+    handoff: [u8; 32],
+}
+
+#[cfg(all(test, feature = "tp-batch-engineering"))]
+impl QueryHoistBindingV14 {
+    pub(crate) const fn recording() -> Self {
+        Self {
+            hsaco: [141; 32],
+            manifest: [142; 32],
+            handoff: [143; 32],
+        }
+    }
+}
+
 /// Closed TP1 image extending physical KV storage without extending logical context.
 pub const ENGINEERING_TP_LARGE_KV_EXPORTS_V9: [&str; 2] = [
     "ferric_qwen3_tp_batch32_large_kv_append_v9",
@@ -390,6 +417,35 @@ impl EngineeringTpArtifactV1 {
         })
     }
 
+    /// Admits only the separate query-hoisted Wave64 attention image and its exact ABI.
+    /// This retains observation-only handoff provenance, not numerical or model proof.
+    /// # Errors
+    /// Rejects noncanonical identity, wrong roots, changed argument geometry or resource use.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_query_hoist_v14(
+        root: &Path,
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        let artifact = Self::open_profile(
+            root,
+            &ferric_qwen3_tp_wave_query_hoist_kernels_device_v14::compiler_expectation_roster_v14(),
+            QUERY_HOIST_CRATE_V14,
+            &ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14,
+        )?;
+        if !query_hoist_metadata_matches_v14(&artifact.inspection.hsaco().kernels()[0]) {
+            return Err(M1EngineeringAggregateArtifactOpenErrorV1::HsacoProfile);
+        }
+        Ok(artifact)
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    pub(crate) fn query_hoist_binding_v14(&self) -> Option<QueryHoistBindingV14> {
+        (self.source_crate == QUERY_HOIST_CRATE_V14).then(|| QueryHoistBindingV14 {
+            hsaco: *self.hsaco_id.as_bytes(),
+            manifest: *self.manifest_id.as_bytes(),
+            handoff: *self.handoff_id.as_bytes(),
+        })
+    }
+
     /// Opens the separately compiled two-root TP1 large-physical-KV image.
     /// # Errors
     /// Rejects any source, target, descriptor, roster, file or identity drift.
@@ -602,6 +658,90 @@ impl EngineeringTpArtifactV1 {
     }
 }
 
+#[cfg(feature = "tp-batch-engineering")]
+fn query_hoist_metadata_matches_v14(kernel: &fe2o3_hsaco::InspectedKernel) -> bool {
+    use fe2o3_hsaco::HiddenValueKind;
+    let hidden = [
+        (120, 4, HiddenValueKind::BlockCountX),
+        (124, 4, HiddenValueKind::BlockCountY),
+        (128, 4, HiddenValueKind::BlockCountZ),
+        (132, 2, HiddenValueKind::GroupSizeX),
+        (134, 2, HiddenValueKind::GroupSizeY),
+        (136, 2, HiddenValueKind::GroupSizeZ),
+        (138, 2, HiddenValueKind::RemainderX),
+        (140, 2, HiddenValueKind::RemainderY),
+        (142, 2, HiddenValueKind::RemainderZ),
+        (160, 8, HiddenValueKind::GlobalOffsetX),
+        (168, 8, HiddenValueKind::GlobalOffsetY),
+        (176, 8, HiddenValueKind::GlobalOffsetZ),
+        (184, 2, HiddenValueKind::GridDimensions),
+    ];
+    kernel.name() == ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14[0]
+        && kernel.kernarg_segment_size() == 376
+        && kernel.kernarg_segment_alignment() == 8
+        && kernel.implicit_argument_offset() == Some(120)
+        && kernel.implicit_argument_size() == 256
+        && kernel.wavefront_size() == 64
+        && kernel.max_flat_workgroup_size() == 64
+        && kernel.required_workgroup_size() == Some([64, 1, 1])
+        && kernel.group_segment_fixed_size() == 0
+        && kernel.private_segment_fixed_size() == 0
+        && kernel.agpr_count() == Some(0)
+        && kernel.sgpr_spill_count() == Some(0)
+        && kernel.vgpr_spill_count() == Some(0)
+        && !kernel.uses_dynamic_stack()
+        && kernel.explicit_arguments().len() == 17
+        && kernel.explicit_arguments().iter().enumerate().all(|(index, arg)| {
+            QueryHoistArgumentV14::from(arg).matches(index)
+        })
+        && kernel.hidden_arguments().len() == hidden.len()
+        && kernel.hidden_arguments().iter().zip(hidden).all(|(arg, expected)| {
+            (arg.offset(), arg.size(), arg.value_kind()) == expected
+        })
+}
+
+/// Parsed fields used by this new exact ABI profile and its synthetic negative tests.
+#[derive(Clone, Copy)]
+#[cfg(feature = "tp-batch-engineering")]
+struct QueryHoistArgumentV14 {
+    offset: u64,
+    size: u64,
+    kind: fe2o3_hsaco::ExplicitValueKind,
+    address_space: Option<fe2o3_hsaco::ArgumentAddressSpace>,
+    alignment: Option<u64>,
+    pointee_alignment: Option<u64>,
+    access: Option<fe2o3_hsaco::ArgumentAccess>,
+    actual_access: Option<fe2o3_hsaco::ArgumentAccess>,
+    value_type: Option<fe2o3_hsaco::ExplicitValueType>,
+}
+
+#[cfg(feature = "tp-batch-engineering")]
+impl From<&fe2o3_hsaco::ExplicitArgument> for QueryHoistArgumentV14 {
+    fn from(arg: &fe2o3_hsaco::ExplicitArgument) -> Self {
+        Self {
+            offset: arg.offset(), size: arg.size(), kind: arg.value_kind(),
+            address_space: arg.address_space(), alignment: arg.alignment(),
+            pointee_alignment: arg.pointee_alignment(), access: arg.access(),
+            actual_access: arg.actual_access(), value_type: arg.value_type(),
+        }
+    }
+}
+
+#[cfg(feature = "tp-batch-engineering")]
+impl QueryHoistArgumentV14 {
+    fn matches(self, index: usize) -> bool {
+        use fe2o3_hsaco::{ArgumentAddressSpace::Global, ExplicitValueKind::{ByValue, GlobalBuffer}};
+        if index >= 17 { return false; }
+        let pointer = index < 12 && index.is_multiple_of(2);
+        let (offset, size) = if index < 12 { (index * 8, 8) } else { (96 + (index - 12) * 4, 4) };
+        self.offset == offset as u64 && self.size == size
+            && self.kind == (if pointer { GlobalBuffer } else { ByValue })
+            && self.address_space == (if pointer { Some(Global) } else { None })
+            && self.alignment.is_none() && self.pointee_alignment.is_none()
+            && self.access.is_none() && self.actual_access.is_none() && self.value_type.is_none()
+    }
+}
+
 #[cfg(test)]
 fn exact_exports<'a>(actual: impl Iterator<Item = &'a str>) -> bool {
     exact_roster(actual, &ENGINEERING_TP_EXPORTS_V1)
@@ -618,6 +758,89 @@ fn exact_roster<'a>(actual: impl Iterator<Item = &'a str>, expected: &[&str]) ->
 #[cfg(test)]
 mod tests {
     use super::{ENGINEERING_TP_EXPORTS_V1, exact_exports};
+
+    #[test]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn query_hoist_v14_roster_is_exact_and_disjoint_from_all_resident_images() {
+        use super::{ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14 as ROOTS, exact_roster};
+        assert!(exact_roster(
+            ferric_qwen3_tp_wave_query_hoist_kernels_device_v14::compiler_expectation_roster_v14()
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            &ROOTS,
+        ));
+        assert_eq!(ROOTS, ferric_qwen3_tp_wave_query_hoist_kernels_device_v14::ROOTS_V14);
+        assert!(!exact_roster(std::iter::empty(), &ROOTS));
+        assert!(!exact_roster([ROOTS[0], ROOTS[0]].into_iter(), &ROOTS));
+        for root in super::ENGINEERING_TP_BATCH32_EXPORTS_V5.into_iter()
+            .chain(super::ENGINEERING_TP_FP32_HEAD32_EXPORTS_V8)
+            .chain(super::ENGINEERING_TP_LARGE_KV_EXPORTS_V9)
+            .chain(super::ENGINEERING_DRAFT_BATCH32_EXPORTS_V10)
+            .chain(super::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11)
+        {
+            assert!(!ROOTS.contains(&root));
+            assert!(!exact_roster([root].into_iter(), &ROOTS));
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn query_hoist_v14_argument_profile_rejects_geometry_and_qualifier_drift() {
+        use fe2o3_hsaco::{ArgumentAccess, ArgumentAddressSpace, ExplicitValueKind, ExplicitValueType};
+        for index in 0_usize..17 {
+            let pointer = index < 12 && index.is_multiple_of(2);
+            let valid = super::QueryHoistArgumentV14 {
+                offset: if index < 12 { index * 8 } else { 96 + (index - 12) * 4 } as u64,
+                size: if index < 12 { 8 } else { 4 },
+                kind: if pointer { ExplicitValueKind::GlobalBuffer } else { ExplicitValueKind::ByValue },
+                address_space: if pointer { Some(ArgumentAddressSpace::Global) } else { None },
+                alignment: None, pointee_alignment: None, access: None, actual_access: None, value_type: None,
+            };
+            assert!(valid.matches(index));
+            assert!(!valid.matches(17));
+            for mutation in 0..10 {
+                let mut changed = valid;
+                match mutation {
+                    0 => changed.offset += 1,
+                    1 => changed.size += 1,
+                    2 => changed.kind = ExplicitValueKind::DynamicSharedPointer,
+                    3 => changed.address_space = Some(ArgumentAddressSpace::Local),
+                    4 => changed.address_space = if pointer { None } else { Some(ArgumentAddressSpace::Global) },
+                    5 => changed.alignment = Some(8),
+                    6 => changed.pointee_alignment = Some(2),
+                    7 => changed.access = Some(ArgumentAccess::ReadOnly),
+                    8 => changed.actual_access = Some(ArgumentAccess::WriteOnly),
+                    9 => changed.value_type = Some(ExplicitValueType::F32),
+                    _ => unreachable!(),
+                }
+                assert!(!changed.matches(index), "argument {index}, mutation {mutation}");
+            }
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the separately emitted canonical v14 image; host admission only"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn query_hoist_v14_image_admission_binds_exact_abi_and_its_own_identity() {
+        let root = std::path::PathBuf::from(
+            std::env::var_os("FERRIC_TEST_QUERY_HOIST_V14_ARTIFACT").expect("explicit v14 image"),
+        );
+        let artifact = super::EngineeringTpArtifactV1::open_query_hoist_v14(&root).unwrap();
+        let binding = artifact.query_hoist_binding_v14().unwrap();
+        assert_eq!(binding.hsaco, *artifact.hsaco_id().as_bytes());
+        assert_eq!(binding.manifest, *artifact.manifest_id().as_bytes());
+        assert_eq!(binding.handoff, *artifact.handoff_id().as_bytes());
+        assert!(super::query_hoist_metadata_matches_v14(&artifact.inspection().hsaco().kernels()[0]));
+        assert!(artifact.fp32_argmax_binding_v11().is_none());
+        assert!(artifact.draft_binding().is_none());
+        assert!(artifact.large_kv_binding().is_none());
+        assert!(super::EngineeringTpArtifactV1::open_fp32_argmax32_v11(&root).is_err());
+        assert!(super::EngineeringTpArtifactV1::open_batch32(
+            &root,
+            &ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5(),
+            true,
+        ).is_err());
+    }
 
     #[test]
     #[cfg(feature = "tp-batch-engineering")]
