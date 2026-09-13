@@ -280,7 +280,7 @@
       facts.append(element("dt", "", "Emission SHA-256"), element("dd", "", team.emission.archiveSha256),
         element("dt", "", "Image SHA-256"), element("dd", "", team.emission.imageSha256));
     if (team === liveC1.development) {
-      facts.append(element("dt", "", "Tested fe2o3"), element("dd", "", team.fe2o3Source),
+      facts.append(element("dt", "", "Tested pin"), element("dd", "", team.fe2o3Source),
         element("dt", "", "Active pin"), element("dd", "", `${team.activeDependencySource}; validation pending`));
       facts.append(element("dt", "", "Native SHA-256"), element("dd", "", team.model.archiveSha256),
         element("dt", "", "Replay SHA-256"), element("dd", "", team.model.replayArchiveSha256));
