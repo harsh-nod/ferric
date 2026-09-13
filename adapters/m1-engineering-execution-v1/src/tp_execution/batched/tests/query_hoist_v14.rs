@@ -56,21 +56,32 @@ fn v14_canary_chunk_and_decode_recordings_keep_same_images_allocations_and_head(
         if enabled {
             select(&mut driver).unwrap();
         } else {
-            driver.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(
-                Fp32ArgmaxBindingV11::recording(),
-            ).unwrap();
+            driver
+                .configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(
+                    Fp32ArgmaxBindingV11::recording(),
+                )
+                .unwrap();
         }
-        let sequence = pool.open_sequence(pool.scope(), &[7; 32], 0).unwrap().sequence();
+        let sequence = pool
+            .open_sequence(pool.scope(), &[7; 32], 0)
+            .unwrap()
+            .sequence();
         let mut position = 0;
         for (rows, publish) in [(16, false), (16, true), (1, true)] {
-            let input = (0..rows).map(|offset| EngineeringTpPageRowV1 {
-                sequence,
-                token: 7,
-                position: position + offset,
-            }).collect::<Vec<_>>();
+            let input = (0..rows)
+                .map(|offset| EngineeringTpPageRowV1 {
+                    sequence,
+                    token: 7,
+                    position: position + offset,
+                })
+                .collect::<Vec<_>>();
             let batch = pool.reserve_batch(&input).unwrap();
             pool.begin_submission(&batch).unwrap();
-            let selected = if publish { vec![rows as usize - 1] } else { Vec::new() };
+            let selected = if publish {
+                vec![rows as usize - 1]
+            } else {
+                Vec::new()
+            };
             let output = driver.execute_selected(&batch, &selected).unwrap();
             assert_eq!(output.choices.len(), usize::from(publish));
             pool.commit_batch(&batch, output.completion).unwrap();
@@ -92,8 +103,14 @@ fn v14_canary_chunk_and_decode_recordings_keep_same_images_allocations_and_head(
             }
         }
         assert_eq!(changed, 3 * 36);
-        recordings.push((commands, transport.write_payloads.clone(), transport.reads.clone(),
-            transport.packet_preparations.clone(), transport.argmax_v11_loaded, transport.query_hoist_v14_loaded));
+        recordings.push((
+            commands,
+            transport.write_payloads.clone(),
+            transport.reads.clone(),
+            transport.packet_preparations.clone(),
+            transport.argmax_v11_loaded,
+            transport.query_hoist_v14_loaded,
+        ));
         pool.retire_sequence(sequence, false, 1).unwrap();
         pool.check_invariants().unwrap();
         assert_eq!(pool.stats().free_pages, 4);

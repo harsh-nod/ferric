@@ -275,8 +275,10 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
         if binary["name"].as_str() == Some("ferric-qwen3-query-hoist-v14-canary") {
             assert!(source.contains("query_hoist_v14_canary_contract::parse"));
             assert!(source.contains("argmax_canary_runtime::execute_query_hoist_v14"));
-            assert_eq!(binary["required-features"].as_array().unwrap(),
-                &[toml::Value::String("tp-batch-engineering".into())]);
+            assert_eq!(
+                binary["required-features"].as_array().unwrap(),
+                &[toml::Value::String("tp-batch-engineering".into())]
+            );
         } else {
             assert!(!source.contains("query_hoist_v14_canary_contract"));
             assert!(!source.contains("execute_query_hoist_v14"));
@@ -293,11 +295,15 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
 fn query_hoist_v14_canary_preloads_both_arms_before_allocations_and_keeps_exact_reference() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
     let binaries = manifest["bin"].as_array().unwrap();
-    let matches = binaries.iter().filter(|binary|
-        binary["name"].as_str() == Some("ferric-qwen3-query-hoist-v14-canary")
-    ).collect::<Vec<_>>();
+    let matches = binaries
+        .iter()
+        .filter(|binary| binary["name"].as_str() == Some("ferric-qwen3-query-hoist-v14-canary"))
+        .collect::<Vec<_>>();
     assert_eq!(matches.len(), 1);
-    assert_eq!(matches[0]["path"].as_str(), Some("src/bin/ferric-qwen3-query-hoist-v14-canary.rs"));
+    assert_eq!(
+        matches[0]["path"].as_str(),
+        Some("src/bin/ferric-qwen3-query-hoist-v14-canary.rs")
+    );
     let contract = include_str!("../src/bin/query_hoist_v14_canary_contract.rs");
     assert!(contract.contains("layer_c1_wave_canary_contract::parse(forwarded.into_iter())"));
     assert!(contract.contains("layer != CanaryProfile::LayerC1Wave"));
@@ -305,29 +311,49 @@ fn query_hoist_v14_canary_preloads_both_arms_before_allocations_and_keeps_exact_
     assert!(contract.contains("required option --query-hoist-artifact"));
     let shared = include_str!("../src/bin/argmax_canary_runtime.rs");
     let run = &shared[shared.find("fn run(").unwrap()..shared.find("pub fn execute(").unwrap()];
-    let ordered = ["EngineeringTpArtifactV1::open_query_hoist_v14", "EngineeringQwenModelV1::open",
-        "Worker::spawn_with_timing", "worker.load_additional_artifact(&argmax_artifact)",
-        "worker.load_additional_artifact(artifact)", "new_wide32_with_argmax_v11_and_query_hoist_v14",
-        "driver.configure_projection(", "driver.configure_head_precision_v8(true)",
-        "profile == CanaryProfile::QueryHoistV14", "driver.configure_ordered_c1_wave_query_hoist_v14",
-        "profile == CanaryProfile::QueryHoistResidentWave", "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11"]
-        .map(|marker| run.find(marker).unwrap());
+    let ordered = [
+        "EngineeringTpArtifactV1::open_query_hoist_v14",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(&argmax_artifact)",
+        "worker.load_additional_artifact(artifact)",
+        "new_wide32_with_argmax_v11_and_query_hoist_v14",
+        "driver.configure_projection(",
+        "driver.configure_head_precision_v8(true)",
+        "profile == CanaryProfile::QueryHoistV14",
+        "driver.configure_ordered_c1_wave_query_hoist_v14",
+        "profile == CanaryProfile::QueryHoistResidentWave",
+        "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
+    ]
+    .map(|marker| run.find(marker).unwrap());
     assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
     assert!(run.contains("driver.attention_mode() != profile.attention()"));
     assert!(run.contains("setup[\"query_hoist_artifact\"] = identity(artifact)"));
     let execution = &shared[shared.find("fn execute_with_query_hoist_path(").unwrap()..];
-    assert!(execution.find("profile.validate_options(&options)").unwrap()
-        < execution.find("TimingFile::create(").unwrap());
-    assert!(execution.find("profile.validate_query_hoist_path(artifact)").unwrap()
-        < execution.find("TimingFile::create(").unwrap());
-    assert!(shared.contains("generated == reference.source.generated_token_ids[..options.outputs]"));
+    assert!(
+        execution
+            .find("profile.validate_options(&options)")
+            .unwrap()
+            < execution.find("TimingFile::create(").unwrap()
+    );
+    assert!(
+        execution
+            .find("profile.validate_query_hoist_path(artifact)")
+            .unwrap()
+            < execution.find("TimingFile::create(").unwrap()
+    );
+    assert!(
+        shared.contains("generated == reference.source.generated_token_ids[..options.outputs]")
+    );
     assert!(shared.contains("utf8 == reference.expected_utf8(options.outputs)?"));
     assert!(shared.contains("let close = driver.close()"));
     assert!(shared.contains("pool.quarantine_batch(&batch)"));
-    for legacy in [include_str!("../src/bin/argmax_canary_contract.rs"),
+    for legacy in [
+        include_str!("../src/bin/argmax_canary_contract.rs"),
         include_str!("../src/bin/attention_argmax_canary_contract.rs"),
         include_str!("../src/bin/wave_argmax_submission_canary_contract.rs"),
-        include_str!("../src/bin/layer_c1_wave_canary_contract.rs")] {
+        include_str!("../src/bin/layer_c1_wave_canary_contract.rs"),
+    ] {
         assert!(!legacy.contains("--attention-mode"));
         assert!(!legacy.contains("--query-hoist-artifact"));
     }
@@ -408,8 +434,7 @@ fn layer_c1_wave_canary_is_additive_and_validates_before_effects() {
             .unwrap()
             < execution.find("TimingFile::create(").unwrap()
     );
-    let run =
-        &shared[shared.find("fn run(").unwrap()..shared.find("pub fn execute(").unwrap()];
+    let run = &shared[shared.find("fn run(").unwrap()..shared.find("pub fn execute(").unwrap()];
     let ordered = [
         "EngineeringTpArtifactV1::open_batch32",
         "Worker::spawn_with_timing",
