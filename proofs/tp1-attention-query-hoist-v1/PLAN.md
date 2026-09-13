@@ -1,6 +1,6 @@
 # Finite TP1 Query-Hoist Parity Profile
 
-Source-only candidate. No CPU test or GPU run is claimed. The native wrapper
+CPU-checked candidate; no GPU run is claimed. The native wrapper
 fails before loading host support while STAGE, WORKER, IMAGE_DIRECTORIES and
 PROBE_SOURCE remain unbound. Root must review and freeze that small binding
 with actual worker/device/path identities before a separately authorized launch.
@@ -63,20 +63,24 @@ image/worker pins and separate raw receipts. No launch is authorized by an
 engineering observation's `exact_output_replay`, which is compiler byte replay.
 Its publication/load/launch grants remain false.
 
-## Focused Gate Forecast
+## Focused CPU Gate
 
-New source contains **8 profile +7 wrapper =15 synthetic test methods**;
-none has run. They use real frozen-generator bytes and realistic complete
+Source `fec0311` passes **8 profile +7 wrapper =15 synthetic test methods**
+on mi300x in 52.574 seconds. They use real frozen-generator bytes and realistic complete
 metadata, not miniature placeholder buffers. Cached generated cases reduce
 test construction cost while retaining the real case validator. Tests cover
 paired bytes/order, closed roots/geometry/tails, source-loader mutations,
 normal/configuration/dispatch/close paths, all48 expected buffer checks,
 complete argument/resource metadata, observation pins/grants and unbound launch.
 
-Re-run the unchanged old10 fixture methods separately, without mixing its
-`probe` module with the new one: total25 methods if both suites are authorized,
-plus the new explicit eight-case CPU self-test. Use only a separately reviewed
-bounded remote CPU gate. Set `FERRIC_ATTENTION_FIXTURES`,
+The unchanged old10 fixture methods pass separately in 15.601 seconds, without
+mixing their `probe` module with the new one: total25 methods passed, plus the
+exact eight-case CPU self-test. All three groups close without forced cleanup;
+the complete archive `12d834216e717dc2df1642494233b664225e3fab6b2194a1c1dd8b051b6c9fa5`
+has matching independent streams and all39 file hashes/sizes pass root checks.
+The source/control bytes remain unchanged. These are fixture checks, not GPU
+results. Any repeat needs a separately reviewed bounded remote CPU gate.
+Set `FERRIC_ATTENTION_FIXTURES`,
 `FERRIC_ATTENTION_HELPER` and `FERRIC_PAIRED_CHECKER` to authenticated staged
 copies; the checker must be SHA256
 `2568a3dce9e6031012f548608deb6ce5c1de8914d53612ac38539ab576af5cf9`.

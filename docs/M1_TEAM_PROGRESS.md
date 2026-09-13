@@ -60,11 +60,11 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
-| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 query-hoist source `1843d8f`, integrated through `f9894e6`, passes its host gate and all nine emission phases, including eleven synthetic control tests. Its ABI/resources pass and static ISA def/use confirms hoisting survives. Prior failures remain retained. | V13 still needs native parity and runtime ordering checks. V14 needs native parity and a same-compiler control before performance attribution. Detailed typed payloads are not retained by the standard emission path. No new GPU kernel candidate is admitted. |
-| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 retains its n=2 native comparison, with material variation. The separate source87 live-profile same-binary HTTP pair now passes with the measurements above. Diagnostic source `6116495` passes its first 27 host steps, including 936 tests, strict Clippy and 74 HTTP regressions, but the source inventory rejects the standalone proof's Cargo-package placement. A byte-preserving relocation is prepared at `c4fb35d`. | Complete the corrected source-bound host gate before integrating or launching the diagnostic. Actual runtime counter capture and repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. No isolated GPU-duration, stable-gain or competitive claim; no fe2o3 change. |
+| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 query-hoist source `1843d8f` passes its host gate and all nine emission phases; static ISA review confirms hoisting survives. The separate eight-case two-image fixture `fec0311`, integrated as `4dcc92a`, passes 15 new and ten unchanged CPU tests plus its self-test. | V13 still needs native parity and runtime ordering checks. V14 needs native parity and a same-compiler control before performance attribution. Its native bindings remain unset. Detailed typed payloads are not retained by the standard emission path. No new GPU kernel candidate is admitted. |
+| Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. The source87 same-binary C1 HTTP pair passes with the measurements above. Corrected diagnostic source `c4fb35d` passes both scoped cleans and all 40 host checks: 936 tests, strict Clippy, eight doctests, 74 HTTP regressions, inventories and protected policies. It is integrated locally through `0e879d6`; binary SHA `27c0404e`. The original proof-placement failure remains archived separately. | Capture actual counters with the isolated diagnostic profile; repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. The 19 runtime counters overlap and measure worker host time, not GPU duration. No stable-gain or competitive claim; no fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `8e6643f` remains deployed; an additive new checkpoint is being prepared separately. C1 live source `87f38de`, integrated through `15b5c4b`, passes its 40-step host gate and both context8192 HTTP qualifications. Both matched cohorts now close normally and pass independent replay. Original source433 HTTP history remains unchanged. | Publish only reviewed site content after remote QA. Integrate the diagnostic only after its host gate closes. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
+| Integration and Pages | Pages-only `351cb254` is deployed and all seven public assets match the remotely tested artifact. It adds the C1 HTTP pair and V13/V14 emission checkpoint without changing historical data. Diagnostic and finite-parity sources are integrated locally; no implementation push. The completed Pages stage and worktree are removed, reclaiming 309,912 KiB. | Run the next separately reviewed diagnostic and finite-parity GPU checks. Historical native data and the standalone integer proof do not replace serving metrics or claim stability. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
@@ -153,8 +153,33 @@ release parity, 74 HTTP regressions and 38 source-gate tests). The last twelve
 steps do not run, so there is no full host admission. Correction `c4fb35d` moves
 only the Rust proof to `proofs/standalone`, preserving SHA `1111950b`, and explains
 the placement in its existing note. No source-gate exception or proof authority
-is added. A separately recorded corrected gate is pending; actual counter
-capture is pending and no diagnostic performance result is claimed.
+is added. This original failure remains in full archive `43305fcb`; it is not
+relabeled as a pass.
+
+Corrected source `c4fb35d` passes the separately recorded R2: two scoped clean
+commands and all 40 unchanged checks. The 936/51/22 all-target results, strict
+Clippy, eight doctests, 74 HTTP regressions, 38 source-gate tests, all five
+inventory comparisons and 31 protected policies pass. External compiled
+dependencies are explicitly warm; all 95 first-run own artifact records are
+freshly built. Binary `27c0404e` matches its early, release and final copies.
+Success archive `b8621f4d` has matching independent streams and all 1,244 files
+pass root hash verification. All 42 new and 28 old owned groups close normally.
+Integration through `0e879d6` preserves tested Rust and dependency bytes;
+only existing documentation and the separate Python fixture differ from the
+tested source. Actual runtime counter capture remains pending. A duplicate
+local failed-build target is removed after full failure-archive custody,
+reclaiming 2,300,296 KiB; its original bytes remain in that archive.
+
+The V14 finite two-image fixture `fec0311` is integrated as `4dcc92a`. The
+mi300x CPU gate passes 15 new methods, ten unchanged fixture methods and the
+exact eight-case self-test. Complete archive `12d83421` has two matching
+streams; all 39 files pass independent root checks. All three groups close
+without signals. This validates the fixture and report checks, not native
+parity: its worker/stage/image bindings remain unset. The resident-v5 and V14
+images use different compilers, so even a future numerical pass would not be
+a same-compiler performance ablation. V13's completed emission R2 stage is
+removed after fresh exact checks (24,404 KiB); the restored toolchain stays.
+
 Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
 seven deployed assets match the accepted artifact, with historical serving
 metrics unchanged. No Ferric implementation or fe2o3 changes were pushed.
@@ -162,6 +187,15 @@ The completed Pages stage and clean worktree are removed after publication and
 fresh custody checks, reclaiming 316,387,328 bytes in total. The retained LLVM
 worker's actual build remains `216822`; its complete worker source subtree
 `613ef51b10cdb00c192b8c6292c06f051f519a6a` is identical at latest fe2o3 `8efd4fd`.
+The later Pages-only checkpoint `351cb254` passes remote QA: all 13 checks,
+eight named viewports, integer widths 320 through 1440, and 58 screenshots.
+Its original dependency-admission failure remains in archive `00844f87`;
+corrected QA archive `dbf44311` and all 881 files pass root custody checks.
+Workflow `34731342554` succeeds for the exact source; all seven canonical
+HTTPS assets match at 2026-09-13T01:54:13Z. Historical `performance.js` remains
+`05ad1f50`. Fresh custody/process checks and independent absence precede release
+of the new Pages stage (308,792 KiB) and clean worktree (1,120 KiB).
+Root fetched fe2o3 again after this gate; public main remains `8efd4fd`.
 
 The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
 selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
