@@ -723,8 +723,8 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   for (const key of ["passed", "all_eight_idle_before", "all_eight_idle_after"])
     assert.equal(nativeWrapper[key], true);
   assert.deepEqual(nativeWrapper.errors, []);
-  const protocol = await pinned("v15-native-protocol.jsonl", v15Current.protocolSha256);
-  assert.equal(protocol.toString("utf8").trim().split("\n").length, v15Current.protocolRows);
+  const nativeProtocol = await pinned("v15-native-protocol.jsonl", v15Current.protocolSha256);
+  assert.equal(nativeProtocol.toString("utf8").trim().split("\n").length, v15Current.protocolRows);
   const nativeReplayNote = (await pinned("v15-native-replay-note.md", v15Current.replayNoteSha256)).toString("utf8").replace(/\s+/g, " ");
   phrases(nativeReplayNote, [v15Current.nativeArchiveSha256, v15Current.replayArchiveSha256,
     "357 protocol rows", "no metrics were calculated", "does not recover raw device payloads from hashes"]);
