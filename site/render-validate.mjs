@@ -71,7 +71,7 @@ const requiredClaims = [
   "FP32 association differs from the old serial fold",
   "No native/model parity or performance gain is admitted",
   "Wave64, 70 SGPR / 22 VGPR and zero spills/private/LDS/AGPR",
-  "18946f627ac183958535ca858207fa856bd49aa5; validation pending",
+  "c9c7036cf98034b638886f54a745701e70ac3571; validation pending",
   "V14 canary and current runtime",
   "4 full-Qwen cases passed",
   "Scoped current controller host checks pass",

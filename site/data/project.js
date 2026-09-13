@@ -1067,8 +1067,8 @@ window.FERRIC_PROJECT = Object.freeze({
     development: {
       source: "7c9283675f1f7f40e781f2d774d4c0fcd9e31d69", tree: "73518159bdb1f3b9c688509eaf25e4b10ace7d80",
       fe2o3Source: "ae26717922b1fb7ad62fdd5ad70814d83eb01177", fe2o3Tree: "2ef28f830df9832d53a62525e20aa33815c164fa",
-      activeDependencySource: "18946f627ac183958535ca858207fa856bd49aa5",
-      activeDependencyTree: "4acf6252811b95f4d21eaa44c83ca173ed8e65c8", activeDependencyValidationPending: true,
+      activeDependencySource: "c9c7036cf98034b638886f54a745701e70ac3571",
+      activeDependencyTree: "27142fd1003494aac211bc8250584228ff09525c", activeDependencyValidationPending: true,
       canaryIntegrated: true, hostState: "composite-passed", hostAdmitted: true, workerHostAdmitted: true,
       hostNoteSha256: "05bc395159aaa06d8f5b2f3908a160a35718247f78a931cb71ce5ec4345ea422",
       hostFinalArchiveSha256: "e0a7ed83af27957a33544dd7acb37dd12e774b9d4f162b6ee92b1317ba1c67b6",
