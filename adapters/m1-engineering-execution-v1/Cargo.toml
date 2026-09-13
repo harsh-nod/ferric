@@ -92,6 +92,11 @@ path = "src/bin/ferric-qwen3-layer-c1-wave-live.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-wave-rmsnorm-v15-live"
+path = "src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-layer-c1-wave-runtime-diagnostic"
 path = "src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs"
 required-features = ["tp-batch-engineering"]

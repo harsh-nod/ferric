@@ -287,15 +287,89 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
             assert!(!source.contains("wave_rmsnorm_v15_canary_contract"));
             assert!(!source.contains("execute_wave_rmsnorm_v15"));
         }
-        for selector in [
-            "--rmsnorm-mode",
-            "--rmsnorm-artifact",
-            "configure_ordered_c1_wave_rmsnorm_v15",
-            "open_wave_rmsnorm_v15",
-        ] {
+        for selector in ["--rmsnorm-mode", "--rmsnorm-artifact"] {
             assert!(!source.contains(selector));
         }
+        if binary["name"].as_str() == Some("ferric-qwen3-wave-rmsnorm-v15-live") {
+            assert!(source.contains("mod wave_rmsnorm_v15_live_contract;"));
+            assert!(source.contains("configure_ordered_c1_wave_rmsnorm_v15"));
+            assert!(source.contains("open_wave_rmsnorm_v15"));
+        } else {
+            for selector in ["wave_rmsnorm_v15_live_contract",
+                "configure_ordered_c1_wave_rmsnorm_v15", "open_wave_rmsnorm_v15"] {
+                assert!(!source.contains(selector));
+            }
+        }
     }
+}
+
+#[test]
+fn wave_rmsnorm_v15_live_preserves_ingress_and_preloads_both_explicit_modes() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let matches = manifest["bin"].as_array().unwrap().iter()
+        .filter(|binary| binary["name"].as_str() == Some("ferric-qwen3-wave-rmsnorm-v15-live"))
+        .collect::<Vec<_>>();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0]["path"].as_str(), Some("src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs"));
+    assert_eq!(matches[0]["required-features"].as_array().unwrap(),
+        &[toml::Value::String("tp-batch-engineering".into())]);
+    let source = include_str!("../src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs");
+    let production = &source[..source.find("#[cfg(test)]").unwrap()];
+    let ordered = [
+        "EngineeringTpArtifactV1::open_wave_rmsnorm_v15",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(&head_artifact)",
+        "worker.load_additional_artifact(&argmax_artifact)",
+        "worker.load_additional_artifact(&rmsnorm_artifact)",
+        "new_wide32_with_argmax_v11_and_wave_rmsnorm_v15",
+        "driver.configure_projection(",
+        "driver.configure_head_precision_v8(true)",
+        "match options.rmsnorm_mode",
+        "driver.configure_ordered_c1_wave_layers_fp32_argmax_v11",
+        "driver.configure_ordered_c1_wave_rmsnorm_v15",
+        "EngineeringTpBatchRuntimeV2::new_wide32",
+    ].map(|marker| production.find(marker).unwrap());
+    assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
+    assert!(production.contains("const LIVE_PROFILE: &str = \"wave-rmsnorm-v15-live-v1\";"));
+    assert_eq!(production.matches("\"live_profile\":LIVE_PROFILE").count(), 3);
+    for marker in [
+        "actual_layer != \"c1-wave\"", "actual_attention != \"wave\"",
+        "actual_rmsnorm != options.rmsnorm_mode.label()",
+        "driver.layer_projection_mode()", "driver.attention_mode()", "driver.rmsnorm_mode()",
+        "\"schema\":\"FerricQwen3TpBatchSetupV2\"",
+        "\"schema\":\"FerricQwen3TpBatchClosedV2\"",
+        "\"live_protocol\":\"FerricQwen3TpLiveCommandV1/FerricQwen3TpLiveEventV1\"",
+        "\"rmsnorm_artifact\":artifact_identity(&rmsnorm_artifact)",
+        "\"rmsnorm_artifact_path\":options.rmsnorm_artifact",
+        "\"benchmark_admitted\":false", "\"serving_admitted\":false",
+        "\"prefix_cache\":false", "\"projection\":\"mfma\"",
+        "let close = worker.close();", "let close = driver.close();",
+        "let close = runtime.close();", "run_and_close(&mut runtime",
+        "tp_live_ingress::run(", "check_retired(runtime, live.pages)",
+    ] {
+        assert!(production.contains(marker), "{marker}");
+    }
+    let run = &production[production.find("fn run(options:").unwrap()..];
+    assert!(run.find("options.validate()?").unwrap() < run.find("TimingFile::create(").unwrap());
+    let contract = include_str!("../src/bin/wave_rmsnorm_v15_live_contract.rs");
+    for marker in [
+        "layer_c1_wave_live_contract::Options::parse(forwarded.into_iter())?",
+        "layer.layer_projection != LayerProjection::C1Wave",
+        "required option --rmsnorm-mode", "required option --rmsnorm-artifact",
+        "self.live.context != 8192", "self.live.pages != 512",
+        "self.live.submission != Submission::Ordered",
+    ] {
+        assert!(contract.contains(marker), "{marker}");
+    }
+    for old in [include_str!("../src/bin/ferric-qwen3-wave-argmax-live.rs"),
+        include_str!("../src/bin/wave_argmax_live_contract.rs"),
+        include_str!("../src/bin/ferric-qwen3-layer-c1-wave-live.rs"),
+        include_str!("../src/bin/layer_c1_wave_live_contract.rs")] {
+        assert!(!old.contains("wave_rmsnorm_v15"));
+        assert!(!old.contains("--rmsnorm-mode"));
+    }
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-rmsnorm-v15-live"));
 }
 
 #[test]
