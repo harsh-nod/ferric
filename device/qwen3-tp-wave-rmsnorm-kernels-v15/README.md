@@ -1,8 +1,9 @@
 # Wave RMSNorm V15 Source Candidate
 
-Separate source-only hypothesis. No host tests, formatting, emission, native
-qualification or performance measurement has run for this candidate. No adapter,
-controller, existing kernel, default, inventory or external manifest is changed.
+Separate kernel candidate. Formatting, 20 focused host tests and strict Clippy
+pass at the frozen CPU checkpoint described below. No emitted image, native
+qualification or performance result is admitted. No adapter, controller,
+existing kernel, default, inventory or external manifest is changed.
 
 ## Closed Scope
 
@@ -49,10 +50,13 @@ of 64x physical traffic or speedup. Retained host spans include IPC/submission/
 wait; they are not per-kernel GPU durations. No GPU, HTTP, stability, default,
 competitive or M1 claim follows from this source.
 
-## Focused Tests and Future Gate
+## Focused Tests and Device Gate
 
-Forecast, not executed: six contract methods and fourteen host-model methods,
-20 total; zero unit tests and zero doctests expected. Contract tests bind the
+Six contract methods and fourteen host-model methods pass on mi300x, 20 total,
+at source `c534e35258f6379b481380f0088e777356547efb`, with fe2o3 `61e014a`
+and Pliron `9de42fc`. Strict Clippy also passes. Immutable host result
+`f230c4eb` and complete archive `3c63d3e7` retain this checkpoint; later
+dependency migration does not relabel its producer. Contract tests bind the
 one-root generated roster, five-slice/four-scalar ABI, exact entry/collective
 AST, seventeen source mutations and all 32 row ownership maps. The post-sum
 arithmetic and complete second pass are compared against the existing RMSNorm
@@ -68,21 +72,24 @@ rounding, narrowing overflow, tiny inputs/zero signs, invalid shapes/lengths,
 exact epsilon/grid, auxiliary modes, nonfinite inputs in every lane, square/
 sum/output overflow, guarded inactive capacity and changed inputs after error.
 
-Source base: Ferric `0588f997`. Both fe2o3 dependencies are pinned to
-`61e014ac28690cd993761590fd2f7d75d419d340`. This separate pin update retains
-the original 32e source candidate `9921546`; the kernel and host arithmetic
-are unchanged. No 32e binary exists for this candidate or is relabeled.
-Cargo.lock is deliberately absent:
-root requires a separately reviewed remote metadata phase to generate and
-admit that exact dependency closure before any host tests. No local Cargo
-resolution or hand-derived lock graph was used. Build.rs reuses the unchanged
-aggregate target helpers; its fixed binding is a host fixture only.
+Source base: Ferric `0588f997`, with the original candidate retained at
+`9921546`. Both current fe2o3 dependencies and the remotely generated
+Cargo.lock are pinned to `ae26717922b1fb7ad62fdd5ad70814d83eb01177` after
+revision-only migration `94eb4e1`. Kernel and host arithmetic are unchanged.
+No local Cargo resolution or hand-derived lock graph was used. Build.rs
+reuses the unchanged aggregate target helpers; its binding is a host fixture.
 
-After source review, the remote-only gate must retain the exact new crate,
+The first ae267 emission attempt stopped before compilation: its private
+offline cache lacked `smallvec 1.16.0`. Result `910a724a` and archive `b52ecb05`
+retain that failure. The next attempt must include the exact standalone lock
+and pinned nightly build-std registry dependencies through normal Cargo
+vendoring with `--sync`; compiler and kernel source remain unchanged.
+
+The remote-only device gate must retain the exact crate,
 baseline `../qwen3-all-kernels-v1/src/rmsnorm.rs`, shared target.rs and
-build/target_contract.rs, final lock and compiler/tool closure. Run formatting,
-source-fresh host tests and strict Clippy before a separate typed-emission gate.
-Emission must retain detailed typed/effect/progress payload, verify all bounds
+build/target_contract.rs, final lock and compiler/tool closure. Detailed
+typed/effect/progress payload remains an open obligation: the standard emission
+path retains only its digest, not an admitted detailed payload. Verify all bounds
 and full-wave convergence, inspect both load passes/shuffle association/stores,
 and check actual ABI/resources without suppressing compiler checks. Any later
 finite native profile, whole-buffer guards, model oracle or opt-in adapter route
