@@ -1,4 +1,4 @@
-# Sharded FP32 argmax v13: host-tested prototype
+# Sharded FP32 argmax v13: emission-checked prototype
 
 This standalone crate proposes a separate two-stage fixed-vocabulary argmax. It
 does not replace v11/v12, join a driver, change a selector/default, or establish
@@ -7,9 +7,31 @@ formatting, 15 numerical tests, eight source/contract tests, strict Clippy and
 zero doctests on mi300x. All ten host-gate commands pass, with fresh own artifacts
 and unchanged source/dependency receipts. Complete archive:
 `88fb14461cd48795c4fab23f2db9ce9bfbc3862aaaf47350236212d7e2e18c09`.
-Typed emission, actual device ABI, native correctness and performance remain
-unqualified. The separate [integer model](../../proofs/m1/sharded_argmax_v13.md)
-is not a refinement proof of these kernel bodies.
+The separate eight-phase emission gate now passes using compiler `8efd4fd` and
+the retained LLVM worker built at `216822`, whose worker subtree is unchanged
+at that compiler revision. Actual ABI/resource inspection passes for both roots.
+Native correctness and performance remain unqualified. The separate
+[integer model](../../proofs/m1/sharded_argmax_v13.md) is not a refinement proof
+of these kernel bodies.
+
+Complete emission archive:
+`0601efc2d683bf6b02100f3d36d887ba5bbce4cbc22d92753d9135fc6d4ab9b6`.
+Image SHA256:
+`72104603f91ac5037a7b106307fc7023e20860f905e912d43700a119381665db`.
+The first attempt failed during source extraction before invoking the compiler;
+its original evidence is retained separately. The corrected attempt changed
+only the extraction/review harness, not kernel or compiler source.
+
+| Root | SGPR | VGPR | Code Bytes |
+| --- | ---: | ---: | ---: |
+| Producer | 35 | 18 | 2252 |
+| Finalizer | 30 | 13 | 2112 |
+
+Both descriptors report zero register spills, private segment, LDS and AGPR,
+with no dynamic stack. These are static values, not occupancy or timing results.
+The compiler reports successful typed extraction and retains the handoff digest,
+but this emission path does not persist the separate typed handoff payload.
+Detailed typed-node review and native numerical/ordering checks remain separate.
 
 ## Closed source contract
 
@@ -24,8 +46,8 @@ is not a refinement proof of these kernel bodies.
   shape in `crates/fe2o3-kernel-analysis/src/pliron_progress.rs`, function
   `canonical_positive_induction_loop`: the header compares its induction value
   directly against a cycle-external bound. Whether the complete new
-  ownership/bounds/uniformity proof is accepted still requires typed emission;
-  the source shape is not a proof result.
+  ownership/bounds/uniformity checks now pass compiler emission. This does not
+  make the separate integer model a refinement proof of the emitted image.
 - Two separate FP32 scratch arrays each have exactly 2048 elements, representing
   `[32, 64]`. The declared workspace is 16384 bytes total, excluding logits and
   choices. This is request-private global memory, not claimed LDS/private-segment
@@ -40,8 +62,9 @@ Both roots have three slice carriers and a `u32 rows` argument: a calculated
 52 explicit argument bytes on the existing 64-bit slice ABI. Producer arguments
 are read-only FP32 logits, disjoint FP32 maxima, disjoint FP32 keys, and rows;
 finalizer arguments are read-only FP32 maxima/keys, disjoint `u32` choices, and
-rows. Hidden arguments, alignment, total kernarg size, descriptors, spill counts,
-and emitted ABI admission remain unmeasured and unqualified.
+rows. Actual inspection measures 52 explicit bytes, hidden arguments beginning
+at byte 56, 312 total kernarg bytes and alignment 8 in both roots. Both require
+Wave64 and a 64-by-1-by-1 workgroup. Native launch admission remains separate.
 
 ## Numerical and lifecycle policy
 
