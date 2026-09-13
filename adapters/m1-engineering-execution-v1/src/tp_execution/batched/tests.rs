@@ -11,8 +11,8 @@ mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
 mod query_hoist_v14;
-mod wave_rmsnorm_v15;
 mod speculative;
+mod wave_rmsnorm_v15;
 
 use super::super::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,
@@ -300,7 +300,12 @@ impl EngineeringTpRankTransportV1 for Recording {
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
         if let Some(Failure::RmsNormSubmit(ordinal)) = self.failure
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
-            && self.commands.iter().filter(|c| c.kernel == command.kernel).count() == ordinal
+            && self
+                .commands
+                .iter()
+                .filter(|c| c.kernel == command.kernel)
+                .count()
+                == ordinal
         {
             return Err("injected Wave RMSNorm submit failure".into());
         }
@@ -375,7 +380,12 @@ impl EngineeringTpRankTransportV1 for Recording {
         let command = self.pending.take().expect("one submitted request");
         if let Some(Failure::RmsNormWait(ordinal)) = self.failure
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
-            && self.commands.iter().filter(|c| c.kernel == command.kernel).count() == ordinal + 1
+            && self
+                .commands
+                .iter()
+                .filter(|c| c.kernel == command.kernel)
+                .count()
+                == ordinal + 1
         {
             return Err("injected Wave RMSNorm completion failure".into());
         }

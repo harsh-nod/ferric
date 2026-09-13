@@ -56,12 +56,15 @@ pub(super) fn bind(
     #[cfg(feature = "tp-batch-engineering")]
     if command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0] {
         use super::EngineeringTpBufferAccessV1::{Read, Write};
-        let Some([
-            EngineeringTpArgumentV1::U32(rows),
-            EngineeringTpArgumentV1::U32(width),
-            EngineeringTpArgumentV1::F32(epsilon),
-            EngineeringTpArgumentV1::U32(behavior),
-        ]) = command.arguments.get(5..) else {
+        let Some(
+            [
+                EngineeringTpArgumentV1::U32(rows),
+                EngineeringTpArgumentV1::U32(width),
+                EngineeringTpArgumentV1::F32(epsilon),
+                EngineeringTpArgumentV1::U32(behavior),
+            ],
+        ) = command.arguments.get(5..)
+        else {
             return Err("wave RMSNorm v15 requires five slices and four exact scalars".into());
         };
         if capacity != 32 || !(1..=32).contains(rows) || *width != 4096

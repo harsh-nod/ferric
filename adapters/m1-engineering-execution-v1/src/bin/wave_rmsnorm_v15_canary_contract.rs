@@ -39,7 +39,9 @@ pub fn parse(
             | "--runtime-operational"
             | "--runtime-rollover" => forwarded.push(flag),
             _ => {
-                let value = arguments.next().ok_or_else(|| format!("missing value for {flag}"))?;
+                let value = arguments
+                    .next()
+                    .ok_or_else(|| format!("missing value for {flag}"))?;
                 forwarded.extend([flag, value]);
             }
         }
@@ -60,17 +62,47 @@ mod tests {
 
     fn arguments(mode: &str, outputs: &str) -> Vec<String> {
         [
-            "--source", "source", "--target-artifact", "target",
-            "--target-head-artifact", "head", "--argmax-artifact", "argmax",
-            "--rmsnorm-artifact", "v15", "--worker", "worker", "--worker-sha256",
+            "--source",
+            "source",
+            "--target-artifact",
+            "target",
+            "--target-head-artifact",
+            "head",
+            "--argmax-artifact",
+            "argmax",
+            "--rmsnorm-artifact",
+            "v15",
+            "--worker",
+            "worker",
+            "--worker-sha256",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--device-unique-id", "1", "--reference", "reference", "--prefix-reference", "prefix",
-            "--host-timing-output", "timing", "--argmax-mode", "wave-v11",
-            "--max-new-tokens", outputs, "--attention", "wave", "--submission", "ordered",
-            "--layer-projection", "c1-wave", "--rmsnorm-mode", mode,
-            "--allow-unauthenticated-machine-code", "--runtime-cache-admission",
-            "--runtime-operational", "--runtime-rollover",
-        ].map(str::to_owned).to_vec()
+            "--device-unique-id",
+            "1",
+            "--reference",
+            "reference",
+            "--prefix-reference",
+            "prefix",
+            "--host-timing-output",
+            "timing",
+            "--argmax-mode",
+            "wave-v11",
+            "--max-new-tokens",
+            outputs,
+            "--attention",
+            "wave",
+            "--submission",
+            "ordered",
+            "--layer-projection",
+            "c1-wave",
+            "--rmsnorm-mode",
+            mode,
+            "--allow-unauthenticated-machine-code",
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--runtime-rollover",
+        ]
+        .map(str::to_owned)
+        .to_vec()
     }
 
     #[test]
@@ -82,18 +114,37 @@ mod tests {
                 ("baseline", CanaryProfile::WaveRmsNormBaseline),
                 ("wave-v15", CanaryProfile::WaveRmsNormV15),
             ] {
-                let (options, artifact, profile) = parse(arguments(mode, outputs).into_iter()).unwrap();
+                let (options, artifact, profile) =
+                    parse(arguments(mode, outputs).into_iter()).unwrap();
                 assert_eq!(profile, expected);
                 assert_eq!(artifact, PathBuf::from("v15"));
                 assert_eq!(options.mode, ArgmaxMode::WaveV11);
                 assert_eq!(options.expected_packets().unwrap(), packets);
-                assert!(options.runtime.cache_admission && options.runtime.operational
-                    && options.runtime.rollover && options.runtime.ordered_batches);
-                assert!(!options.runtime.sequences && !options.runtime.profile && !options.runtime.shared_full_currentness);
-                inputs.push((options.source, options.target_artifact, options.target_head_artifact,
-                    options.argmax_artifact, artifact, options.worker, options.worker_sha256,
-                    options.device, options.reference, options.prefix_reference,
-                    options.host_timing_output, options.outputs));
+                assert!(
+                    options.runtime.cache_admission
+                        && options.runtime.operational
+                        && options.runtime.rollover
+                        && options.runtime.ordered_batches
+                );
+                assert!(
+                    !options.runtime.sequences
+                        && !options.runtime.profile
+                        && !options.runtime.shared_full_currentness
+                );
+                inputs.push((
+                    options.source,
+                    options.target_artifact,
+                    options.target_head_artifact,
+                    options.argmax_artifact,
+                    artifact,
+                    options.worker,
+                    options.worker_sha256,
+                    options.device,
+                    options.reference,
+                    options.prefix_reference,
+                    options.host_timing_output,
+                    options.outputs,
+                ));
             }
             assert_eq!(inputs[0], inputs[1]);
         }
@@ -118,7 +169,14 @@ mod tests {
             no_value.push(flag.into());
             assert!(parse(no_value.into_iter()).is_err());
         }
-        for mode in ["wave", "resident-wave", "v15", "auto", "WAVE-V15", "query-hoist-v14"] {
+        for mode in [
+            "wave",
+            "resident-wave",
+            "v15",
+            "auto",
+            "WAVE-V15",
+            "query-hoist-v14",
+        ] {
             assert!(parse(arguments(mode, "8").into_iter()).is_err());
         }
     }
@@ -126,8 +184,11 @@ mod tests {
     #[test]
     fn v15_canary_rejects_attention_head_layer_submission_and_runtime_broadening() {
         for (flag, value) in [
-            ("--layer-projection", "mfma"), ("--submission", "synchronous"),
-            ("--attention", "baseline"), ("--argmax-mode", "serial"), ("--max-new-tokens", "9"),
+            ("--layer-projection", "mfma"),
+            ("--submission", "synchronous"),
+            ("--attention", "baseline"),
+            ("--argmax-mode", "serial"),
+            ("--max-new-tokens", "9"),
         ] {
             let mut args = arguments("wave-v15", "8");
             let index = args.iter().position(|arg| arg == flag).unwrap();
@@ -135,10 +196,15 @@ mod tests {
             assert!(parse(args.into_iter()).is_err());
         }
         for extra in [
-            vec!["--runtime-sequences"], vec!["--runtime-profile"],
-            vec!["--runtime-shared-full-currentness"], vec!["--runtime-ordered-batches"],
-            vec!["--context", "8192"], vec!["--pages", "512"], vec!["--projection", "auto"],
-            vec!["--attention-mode", "query-hoist-v14"], vec!["--query-hoist-artifact", "v14"],
+            vec!["--runtime-sequences"],
+            vec!["--runtime-profile"],
+            vec!["--runtime-shared-full-currentness"],
+            vec!["--runtime-ordered-batches"],
+            vec!["--context", "8192"],
+            vec!["--pages", "512"],
+            vec!["--projection", "auto"],
+            vec!["--attention-mode", "query-hoist-v14"],
+            vec!["--query-hoist-artifact", "v14"],
             vec!["--unknown", "value"],
         ] {
             let mut args = arguments("baseline", "128");
@@ -149,9 +215,23 @@ mod tests {
 
     #[test]
     fn v15_canary_preserves_option_shaped_path_values() {
-        for flag in ["--source", "--target-artifact", "--target-head-artifact", "--argmax-artifact",
-            "--rmsnorm-artifact", "--worker", "--reference", "--prefix-reference", "--host-timing-output"] {
-            for value in ["--rmsnorm-mode", "--rmsnorm-artifact", "--layer-projection", "--runtime-operational"] {
+        for flag in [
+            "--source",
+            "--target-artifact",
+            "--target-head-artifact",
+            "--argmax-artifact",
+            "--rmsnorm-artifact",
+            "--worker",
+            "--reference",
+            "--prefix-reference",
+            "--host-timing-output",
+        ] {
+            for value in [
+                "--rmsnorm-mode",
+                "--rmsnorm-artifact",
+                "--layer-projection",
+                "--runtime-operational",
+            ] {
                 let mut args = arguments("wave-v15", "8");
                 let index = args.iter().position(|arg| arg == flag).unwrap();
                 args[index + 1] = value.into();
@@ -178,18 +258,31 @@ mod tests {
     fn v15_canary_leaves_all_prior_parsers_and_layer_modes_closed() {
         let args = arguments("wave-v15", "8");
         assert!(layer_c1_wave_canary_contract::parse(args.clone().into_iter()).is_err());
-        assert!(crate::wave_argmax_submission_canary_contract::parse(args.clone().into_iter()).is_err());
+        assert!(
+            crate::wave_argmax_submission_canary_contract::parse(args.clone().into_iter()).is_err()
+        );
         assert!(crate::attention_argmax_canary_contract::parse(args.clone().into_iter()).is_err());
         assert!(Options::parse(args.clone().into_iter()).is_err());
-        for (mode, profile) in [("mfma", CanaryProfile::LayerMfma), ("c1-wave", CanaryProfile::LayerC1Wave)] {
+        for (mode, profile) in [
+            ("mfma", CanaryProfile::LayerMfma),
+            ("c1-wave", CanaryProfile::LayerC1Wave),
+        ] {
             let mut old = args.clone();
             for flag in ["--rmsnorm-mode", "--rmsnorm-artifact"] {
                 let index = old.iter().position(|arg| arg == flag).unwrap();
                 old.drain(index..index + 2);
             }
-            let index = old.iter().position(|arg| arg == "--layer-projection").unwrap();
+            let index = old
+                .iter()
+                .position(|arg| arg == "--layer-projection")
+                .unwrap();
             old[index + 1] = mode.into();
-            assert_eq!(layer_c1_wave_canary_contract::parse(old.into_iter()).unwrap().1, profile);
+            assert_eq!(
+                layer_c1_wave_canary_contract::parse(old.into_iter())
+                    .unwrap()
+                    .1,
+                profile
+            );
         }
     }
 }

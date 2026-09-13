@@ -208,18 +208,32 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
         rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
     ) -> TpResult<Self> {
-        let bindings = argmax.fp32_argmax_binding_v11().zip(rmsnorm.wave_rmsnorm_binding_v15());
+        let bindings = argmax
+            .fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15());
         let Some((argmax_v11, wave_rmsnorm_v15)) = bindings else {
-            for transport in &mut transports { let _ = transport.close(); }
-            return Err("wave RMSNorm constructor requires exact separately admitted v11 and v15 images".into());
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err(
+                "wave RMSNorm constructor requires exact separately admitted v11 and v15 images"
+                    .into(),
+            );
         };
-        Self::new_profile(transports, model, weights, layout, pool, BatchedProfile::Target {
-            rows: 32,
-            large_kv: false,
-            argmax_v11: Some(argmax_v11),
-            query_hoist_v14: None,
-            wave_rmsnorm_v15: Some(wave_rmsnorm_v15),
-        })
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 32,
+                large_kv: false,
+                argmax_v11: Some(argmax_v11),
+                query_hoist_v14: None,
+                wave_rmsnorm_v15: Some(wave_rmsnorm_v15),
+            },
+        )
     }
 
     /// Allocates TP1 physical KV only after checking the pool's exact admitted v9 image.
@@ -270,17 +284,30 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
         profile: BatchedProfile,
     ) -> TpResult<Self> {
-        let (row_capacity, large_kv, draft_v10, admitted_argmax_v11, admitted_query_hoist_v14, admitted_wave_rmsnorm_v15) =
-            match profile {
-                BatchedProfile::Target {
-                    rows,
-                    large_kv,
-                    argmax_v11,
-                    query_hoist_v14,
-                    wave_rmsnorm_v15,
-                } => (rows, large_kv, false, argmax_v11, query_hoist_v14, wave_rmsnorm_v15),
-                BatchedProfile::Draft(_) => (32, false, true, None, None, None),
-            };
+        let (
+            row_capacity,
+            large_kv,
+            draft_v10,
+            admitted_argmax_v11,
+            admitted_query_hoist_v14,
+            admitted_wave_rmsnorm_v15,
+        ) = match profile {
+            BatchedProfile::Target {
+                rows,
+                large_kv,
+                argmax_v11,
+                query_hoist_v14,
+                wave_rmsnorm_v15,
+            } => (
+                rows,
+                large_kv,
+                false,
+                argmax_v11,
+                query_hoist_v14,
+                wave_rmsnorm_v15,
+            ),
+            BatchedProfile::Draft(_) => (32, false, true, None, None, None),
+        };
         let binding = match profile {
             BatchedProfile::Target { .. } => {
                 validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
@@ -303,7 +330,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                         }
                         if let Some(image) = admitted_wave_rmsnorm_v15 {
                             validate_wave_rmsnorm_binding_v15(
-                                &mut transports, row_capacity, large_kv, image,
+                                &mut transports,
+                                row_capacity,
+                                large_kv,
+                                image,
                             )?;
                         }
                         Ok(())
@@ -577,7 +607,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
         rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
     ) -> TpResult<()> {
-        let (argmax, rmsnorm) = argmax.fp32_argmax_binding_v11()
+        let (argmax, rmsnorm) = argmax
+            .fp32_argmax_binding_v11()
             .zip(rmsnorm.wave_rmsnorm_binding_v15())
             .ok_or("wave RMSNorm requires exact separately admitted v11 and v15 images")?;
         self.configure_ordered_c1_wave_rmsnorm_binding_v15(argmax, rmsnorm)
@@ -603,7 +634,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Actual pure target-width RMSNorm policy; Q/K and all other norm profiles are unchanged.
     #[must_use]
     pub const fn rmsnorm_mode(&self) -> &'static str {
-        if self.wave_rmsnorm_v15.is_some() { "wave-v15" } else { "baseline" }
+        if self.wave_rmsnorm_v15.is_some() {
+            "wave-v15"
+        } else {
+            "baseline"
+        }
     }
 
     /// Actual attention policy; legacy wave/baseline image versions follow the row profile.
@@ -1741,12 +1776,20 @@ fn validate_wave_rmsnorm_binding_v15<R: EngineeringTpRankTransportV1>(
     large_kv: bool,
     image: crate::tp_artifact::WaveRmsNormBindingV15,
 ) -> TpResult<()> {
-    if row_capacity != 32 || large_kv || transports.len() != 1
+    if row_capacity != 32
+        || large_kv
+        || transports.len() != 1
         || transports[0].peer_group_rank().is_some()
     {
-        return Err("wave RMSNorm v15 requires fresh target TP1/capacity32 without large KV or peers".into());
+        return Err(
+            "wave RMSNorm v15 requires fresh target TP1/capacity32 without large KV or peers"
+                .into(),
+        );
     }
-    transports[0].require_loaded_image(image.hsaco, &crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15)
+    transports[0].require_loaded_image(
+        image.hsaco,
+        &crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15,
+    )
 }
 
 fn validate_query_hoist_binding_v14<R: EngineeringTpRankTransportV1>(

@@ -161,10 +161,11 @@ impl CanaryProfile {
     const fn layer_projection(self) -> Option<&'static str> {
         match self {
             Self::LayerMfma => Some("mfma"),
-            Self::LayerC1Wave | Self::QueryHoistResidentWave | Self::QueryHoistV14
-            | Self::WaveRmsNormBaseline | Self::WaveRmsNormV15 => {
-                Some("c1-wave")
-            }
+            Self::LayerC1Wave
+            | Self::QueryHoistResidentWave
+            | Self::QueryHoistV14
+            | Self::WaveRmsNormBaseline
+            | Self::WaveRmsNormV15 => Some("c1-wave"),
             Self::LegacyArgmax
             | Self::AttentionBaseline
             | Self::AttentionWave
@@ -290,7 +291,11 @@ fn emit(value: &Value) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-fn emit_profile(profile: CanaryProfile, mut value: Value, rmsnorm_mode: &str) -> Result<(), String> {
+fn emit_profile(
+    profile: CanaryProfile,
+    mut value: Value,
+    rmsnorm_mode: &str,
+) -> Result<(), String> {
     profile.annotate_query_hoist_record(&mut value);
     profile.annotate_wave_rmsnorm_record(&mut value, rmsnorm_mode);
     emit(&value)
@@ -605,7 +610,9 @@ fn run(
             } else if profile == CanaryProfile::WaveRmsNormV15 {
                 driver.configure_ordered_c1_wave_rmsnorm_v15(
                     &argmax_artifact,
-                    wave_rmsnorm_artifact.as_ref().ok_or("missing preloaded V15 image")?,
+                    wave_rmsnorm_artifact
+                        .as_ref()
+                        .ok_or("missing preloaded V15 image")?,
                 )?;
             } else if profile == CanaryProfile::LayerC1Wave
                 || profile == CanaryProfile::QueryHoistResidentWave
@@ -626,7 +633,9 @@ fn run(
             || driver.fp32_argmax_mode() != options.mode.label()
             || ((profile.query_hoist_mode().is_some() || profile.wave_rmsnorm_mode().is_some())
                 && driver.attention_mode() != profile.attention())
-            || profile.wave_rmsnorm_mode().is_some_and(|mode| driver.rmsnorm_mode() != mode)
+            || profile
+                .wave_rmsnorm_mode()
+                .is_some_and(|mode| driver.rmsnorm_mode() != mode)
             || profile
                 .layer_projection()
                 .is_some_and(|mode| driver.layer_projection_mode() != mode)
@@ -713,7 +722,13 @@ fn execute_with_query_hoist_path(
         profile.validate_query_hoist_path(artifact)?;
         profile.validate_wave_rmsnorm_path(wave_rmsnorm_artifact)?;
         let mut timing = TimingFile::create(Some(&options.host_timing_output))?;
-        let result = run(&options, profile, &mut timing, artifact, wave_rmsnorm_artifact);
+        let result = run(
+            &options,
+            profile,
+            &mut timing,
+            artifact,
+            wave_rmsnorm_artifact,
+        );
         let sidecar = timing.finish(&result);
         match (result, sidecar) {
             (Ok(()), Ok(())) => Ok(()),
@@ -796,7 +811,10 @@ mod profile_tests {
         for (record, schema) in [
             (RecordKind::Setup, "FerricWaveRmsNormV15CanarySetupV1"),
             (RecordKind::Prefill, "FerricWaveRmsNormV15CanaryPrefillV1"),
-            (RecordKind::Observation, "FerricWaveRmsNormV15CanaryObservationV1"),
+            (
+                RecordKind::Observation,
+                "FerricWaveRmsNormV15CanaryObservationV1",
+            ),
             (RecordKind::Closed, "FerricWaveRmsNormV15CanaryClosedV1"),
         ] {
             for (profile, expected_mode) in [
@@ -811,15 +829,25 @@ mod profile_tests {
                 for actual_mode in ["baseline", "wave-v15"] {
                     let mut value = json!({"schema":schema,"projection":"mfma","head_precision":"fp32-v8","argmax_mode":"wave-v11"});
                     profile.annotate_wave_rmsnorm_record(&mut value, actual_mode);
-                    assert_eq!(value, json!({"schema":schema,"projection":"mfma","head_precision":"fp32-v8","argmax_mode":"wave-v11",
+                    assert_eq!(
+                        value,
+                        json!({"schema":schema,"projection":"mfma","head_precision":"fp32-v8","argmax_mode":"wave-v11",
                         "rmsnorm_mode":actual_mode,"attention":"wave","layer_projection":"c1-wave","runtime_ordered_batches":true,
-                        "benchmark_admitted":false,"serving_admitted":false}));
+                        "benchmark_admitted":false,"serving_admitted":false})
+                    );
                 }
             }
-            for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline,
-                CanaryProfile::AttentionWave, CanaryProfile::SubmissionSynchronous,
-                CanaryProfile::SubmissionOrdered, CanaryProfile::LayerMfma, CanaryProfile::LayerC1Wave,
-                CanaryProfile::QueryHoistResidentWave, CanaryProfile::QueryHoistV14] {
+            for profile in [
+                CanaryProfile::LegacyArgmax,
+                CanaryProfile::AttentionBaseline,
+                CanaryProfile::AttentionWave,
+                CanaryProfile::SubmissionSynchronous,
+                CanaryProfile::SubmissionOrdered,
+                CanaryProfile::LayerMfma,
+                CanaryProfile::LayerC1Wave,
+                CanaryProfile::QueryHoistResidentWave,
+                CanaryProfile::QueryHoistV14,
+            ] {
                 assert_ne!(profile.schema(record), schema);
                 let mut value = json!({"schema":profile.schema(record),"sentinel":[1,2,3]});
                 let before = serde_json::to_vec(&value).unwrap();
@@ -831,31 +859,60 @@ mod profile_tests {
 
     #[test]
     fn v15_profiles_require_matching_runtime_and_exclusive_image_without_normalization() {
-        for profile in [CanaryProfile::WaveRmsNormBaseline, CanaryProfile::WaveRmsNormV15] {
+        for profile in [
+            CanaryProfile::WaveRmsNormBaseline,
+            CanaryProfile::WaveRmsNormV15,
+        ] {
             for outputs in [8, 128] {
                 let mut options = submission_options(profile);
                 options.outputs = outputs;
                 assert!(profile.validate_options(&options).is_ok());
-                assert!(profile.validate_wave_rmsnorm_path(Some(Path::new("exact-v15"))).is_ok());
+                assert!(
+                    profile
+                        .validate_wave_rmsnorm_path(Some(Path::new("exact-v15")))
+                        .is_ok()
+                );
                 assert!(profile.validate_query_hoist_path(None).is_ok());
-                assert!(profile.validate_query_hoist_path(Some(Path::new("exact-v14"))).is_err());
+                assert!(
+                    profile
+                        .validate_query_hoist_path(Some(Path::new("exact-v14")))
+                        .is_err()
+                );
             }
             assert!(profile.validate_wave_rmsnorm_path(None).is_err());
-            assert!(profile.validate_wave_rmsnorm_path(Some(Path::new(""))).is_err());
+            assert!(
+                profile
+                    .validate_wave_rmsnorm_path(Some(Path::new("")))
+                    .is_err()
+            );
             for mutation in 0..10 {
                 let mut options = submission_options(profile);
                 mismatch(&mut options, mutation);
                 let before = (runtime_bits(&options), options.outputs, options.mode);
                 assert!(profile.validate_options(&options).is_err());
-                assert_eq!((runtime_bits(&options), options.outputs, options.mode), before);
+                assert_eq!(
+                    (runtime_bits(&options), options.outputs, options.mode),
+                    before
+                );
             }
         }
-        for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline,
-            CanaryProfile::AttentionWave, CanaryProfile::SubmissionSynchronous,
-            CanaryProfile::SubmissionOrdered, CanaryProfile::LayerMfma, CanaryProfile::LayerC1Wave,
-            CanaryProfile::QueryHoistResidentWave, CanaryProfile::QueryHoistV14] {
+        for profile in [
+            CanaryProfile::LegacyArgmax,
+            CanaryProfile::AttentionBaseline,
+            CanaryProfile::AttentionWave,
+            CanaryProfile::SubmissionSynchronous,
+            CanaryProfile::SubmissionOrdered,
+            CanaryProfile::LayerMfma,
+            CanaryProfile::LayerC1Wave,
+            CanaryProfile::QueryHoistResidentWave,
+            CanaryProfile::QueryHoistV14,
+        ] {
             assert!(profile.validate_wave_rmsnorm_path(None).is_ok());
-            assert!(profile.validate_wave_rmsnorm_path(Some(Path::new("exact-v15"))).is_err());
+            assert!(
+                profile
+                    .validate_wave_rmsnorm_path(Some(Path::new("exact-v15")))
+                    .is_err()
+            );
         }
     }
 
@@ -863,18 +920,30 @@ mod profile_tests {
     fn v15_profile_or_image_mismatch_creates_no_sidecar_before_execution() {
         let root = std::env::temp_dir().join(format!("ferric-v15-profile-{}", std::process::id()));
         std::fs::create_dir(&root).unwrap();
-        for profile in [CanaryProfile::WaveRmsNormBaseline, CanaryProfile::WaveRmsNormV15] {
+        for profile in [
+            CanaryProfile::WaveRmsNormBaseline,
+            CanaryProfile::WaveRmsNormV15,
+        ] {
             for mutation in 0..13 {
                 let mut options = submission_options(profile);
-                options.host_timing_output = root.join(format!("{}-{mutation}.json", profile.wave_rmsnorm_mode().unwrap()));
+                options.host_timing_output = root.join(format!(
+                    "{}-{mutation}.json",
+                    profile.wave_rmsnorm_mode().unwrap()
+                ));
                 let sidecar = options.host_timing_output.clone();
-                let artifact = if mutation == 11 { PathBuf::new() } else { root.join("missing-v15") };
+                let artifact = if mutation == 11 {
+                    PathBuf::new()
+                } else {
+                    root.join("missing-v15")
+                };
                 let status = if mutation == 10 {
                     execute(Ok(options), profile)
                 } else if mutation == 12 {
                     execute_query_hoist_v14(options, &artifact, profile)
                 } else {
-                    if mutation < 10 { mismatch(&mut options, mutation); }
+                    if mutation < 10 {
+                        mismatch(&mut options, mutation);
+                    }
                     execute_wave_rmsnorm_v15(options, &artifact, profile)
                 };
                 assert_eq!(status, std::process::ExitCode::FAILURE);
@@ -884,7 +953,10 @@ mod profile_tests {
         for profile in [CanaryProfile::LayerC1Wave, CanaryProfile::QueryHoistV14] {
             let mut options = submission_options(profile);
             options.host_timing_output = root.join("legacy.json");
-            assert_eq!(execute_wave_rmsnorm_v15(options, &root.join("missing-v15"), profile), std::process::ExitCode::FAILURE);
+            assert_eq!(
+                execute_wave_rmsnorm_v15(options, &root.join("missing-v15"), profile),
+                std::process::ExitCode::FAILURE
+            );
         }
         assert_eq!(std::fs::read_dir(&root).unwrap().count(), 0);
         std::fs::remove_dir(root).unwrap();
