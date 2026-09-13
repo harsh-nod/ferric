@@ -82,7 +82,20 @@ const v14 = {
   controlNoteSha256: "cd77dc0bc4776c71892417e69797b1a0f6cc743d9c3b0250a3f3f8b46ccfa9a5",
   controlArchiveSha256: "f18848ad0870c83e92c62014616a3f4624824608f554d5a612ac432c2a4afd1e",
   hostTestsPassed: 13, strictClippyExit: 0, syntheticControlTestsPassed: 10,
-  emissionAdmitted: false, nativeAdmitted: false, performanceGainClaimed: false,
+  detailedTypedReviewAdmitted: false, nativeAdmitted: false, performanceGainClaimed: false,
+};
+const v14Emission = {
+  imageSha256: "8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8",
+  observationSha256: "eb058fceb9519c4e9f9fb9d347263dcb80e957c1accd87122c4e139a9e571752",
+  resultSha256: "7de9014563122dcc7126a974aabefe2a8ea99d5eed3c80f44f7de84bd1a4342f",
+  noteSha256: "5a9ffe76844fa78c9449088cd9242abd6bdc61a10f2577888f09799d08d77eda",
+  staticReviewSha256: "c4ed8cff08dd0378311be425a2de699b88e543ef2539931c09e83d683c58d4c4",
+  archiveSha256: "cb58d401389f3b85f06c81b126b59e2b12e8cad8da8d2b1425b77989fdacc7a0",
+  phasesPassed: 9, syntheticTestsPassed: 11, roots: 1,
+  explicitBytes: 116, hiddenStart: 120, kernargBytes: 376, kernargAlign: 8,
+  sgprs: 95, vgprs: 37, sgprSpills: 0, vgprSpills: 0, privateBytes: 0, ldsBytes: 0, agprs: 0,
+  dynamicStack: false, abiResourcesPassed: true, staticHoistObserved: true,
+  rawHoistFlag: "pending", sameCompilerAblation: false,
 };
 function exact(value, expected, extra = []) {
   assert.deepEqual(Object.keys(value).sort(), [...Object.keys(expected), ...extra].sort());
@@ -109,13 +122,15 @@ export function validateLiveC1Checkpoint(input) {
   assert.deepEqual(value.matchedCohorts, cohorts);
   assert.deepEqual(value.excludedAttempt, excluded);
   exact(value.v13, v13, ["detail"]);
-  exact(value.v14, v14, ["detail"]);
+  exact(value.v14, v14, ["detail", "emission"]);
+  exact(value.v14.emission, v14Emission);
   phrases(value.overview, ["independent replay at context8192", "199.719 to 154.310 ms", "4.532745 to 5.707624",
     "not a stable or competitive result", "all 33 M1 gates remain open"]);
   phrases(value.qualificationScope, ["Two sequential 128-input / 128-output", "same source 87f38de / controller 8ae69215",
     "context8192 / 512 pages", "ordered residual tails", "not a context256 proxy", "timing instrumentation are disabled"]);
-  phrases(value.correctness, ["793 decoded UTF8 bytes", "exact SSE controller/request associations", "generations 1 then 2",
-    "without cleanup signals", "270 batches and 166,278 dispatches", "All eight GPUs", "no broader concurrency"]);
+  phrases(value.correctness, ["Qualification requests in both arms", "793 decoded UTF8 bytes", "exact SSE controller/request associations",
+    "generations 1 then 2", "without cleanup signals", "270 batches and 166,278 dispatches",
+    "These counts do not describe the separate 42-request matched cohorts", "All eight GPUs", "no broader concurrency"]);
   phrases(value.measurement, ["One fresh start per arm", "two exact-output diagnostics", "ten excluded warmups",
     "thirty measured requests", "All 42 requests", "all forty timed SSE/request IDs", "3,840 measured output tokens",
     "first sample-window start through the last sample-window end", "not GPU durations", "profiling stays disabled"]);
@@ -126,8 +141,10 @@ export function validateLiveC1Checkpoint(input) {
   phrases(value.v13.detail, ["All eight CPU emission phases", "52 explicit bytes", "hidden start 56", "312 total kernarg",
     "only the typed handoff digest was retained", "detailed typed-node review and native parity remain unadmitted",
     "actually built at 216822", "not rebuilt there", "not used by the HTTP cohorts", "no gain or kernel-refinement proof"]);
-  phrases(value.v14.detail, ["13 source-fresh host methods", "strict Clippy with actual exit zero", "Ten synthetic control tests",
-    "fabricated metadata", "not an emitted V14 image", "performance remain pending"]);
+  phrases(value.v14.detail, ["13 source-fresh host methods", "strict Clippy with actual exit zero", "original ten synthetic control tests",
+    "all nine phases, including 11 synthetic methods", "116 explicit bytes", "hidden start 120", "376 total kernarg",
+    "outside recurring token backedges", "raw hoist flag remains pending", "typed handoff is digest-only",
+    "not detailed typed review, native parity or a same-compiler ablation", "No performance gain is claimed"]);
 }
 export function testLiveC1CheckpointRejections(input) {
   const mutations = [
@@ -145,7 +162,9 @@ export function testLiveC1CheckpointRejections(input) {
     (x) => { x.m1OpenGates = 32; }, (x) => { x.v13.detailedTypedReviewAdmitted = true; },
     (x) => { x.v13.actualWorkerBuild = x.v13.compilerSource; },
     (x) => { x.v13.kernargBytes = 308; }, (x) => { x.v13.nativeAdmitted = true; },
-    (x) => { x.v14.emissionAdmitted = true; }, (x) => { x.v14.syntheticControlTestsPassed = 13; },
+    (x) => { x.v14.detailedTypedReviewAdmitted = true; }, (x) => { x.v14.syntheticControlTestsPassed = 13; },
+    (x) => { x.v14.emission.syntheticTestsPassed = 10; }, (x) => { x.v14.emission.rawHoistFlag = "passed"; },
+    (x) => { x.v14.emission.sameCompilerAblation = true; },
     (x) => { x.interpretation = "Stable and competitive gain"; }, (x) => { x.extra = true; },
   ];
   for (const mutate of mutations) {
@@ -311,6 +330,39 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   phrases(host, [v14.source, v14.tree, "Exact 13 method names passed", "actual 0 with `-D warnings`", v14.hostArchiveSha256]);
   const control = (await pinned("v14-control-note.md", v14.controlNoteSha256)).toString("utf8").replace(/\s+/g, " ");
   phrases(control, ["exactly ten synthetic checker methods", "not a compiler emission", v14.controlArchiveSha256]);
+  const hoist = JSON.parse(await pinned("v14-emission-result.json", v14Emission.resultSha256));
+  assert.equal(hoist.schema, "FerricQueryHoistV14EmissionAbiResourceReviewV1");
+  assert.equal(hoist.abi_resources_passed, true);
+  assert.equal(hoist.hoist_survival, "pending");
+  assert.equal(hoist.manual_typed_progress_effect_and_isa_review_pending, true);
+  for (const key of ["gpu_used", "numerical_parity", "performance_claim"]) assert.equal(hoist[key], false);
+  assert.equal(hoist.identities.image_sha256, v14Emission.imageSha256);
+  assert.equal(hoist.identities.source, v14.source);
+  assert.equal(hoist.identities.source_tree, v14.tree);
+  assert.equal(hoist.identities.compiler, v13.compilerSource);
+  assert.equal(hoist.identities.worker_actual_build, v13.actualWorkerBuild);
+  assert.deepEqual(Object.keys(hoist.image.roots), ["ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"]);
+  const hoistRoot = Object.values(hoist.image.roots)[0];
+  assert.equal(hoistRoot.explicit_bytes, 116);
+  const hoistMeta = hoistRoot.metadata;
+  assert.equal(hoistMeta[".kernarg_segment_size"], 376);
+  assert.equal(hoistMeta[".kernarg_segment_align"], 8);
+  assert.equal(hoistMeta[".args"].find((arg) => arg[".value_kind"].startsWith("hidden_"))[".offset"], 120);
+  assert.deepEqual(hoistMeta[".reqd_workgroup_size"], [64, 1, 1]);
+  assert.equal(hoistMeta[".sgpr_count"], 95);
+  assert.equal(hoistMeta[".vgpr_count"], 37);
+  for (const field of [".sgpr_spill_count", ".vgpr_spill_count", ".private_segment_fixed_size", ".group_segment_fixed_size", ".agpr_count"])
+    assert.equal(hoistMeta[field], 0);
+  assert.equal(hoistMeta[".uses_dynamic_stack"], false);
+  const hoistObservation = JSON.parse(await pinned("v14-observation.json", v14Emission.observationSha256));
+  exact(hoistObservation.grants, { publication: false, load: false, launch: false });
+  assert.deepEqual(hoistObservation.compiler_handoff, hoist.identities.compiler_handoff);
+  const hoistNote = (await pinned("v14-emission-note.md", v14Emission.noteSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(hoistNote, ["all nine frozen phases", "11 synthetic methods", v14Emission.archiveSha256,
+    "not native parity or a same-compiler performance ablation", "typed handoff is digest-only"]);
+  const hoistReview = (await pinned("v14-static-review.md", v14Emission.staticReviewSha256)).toString("utf8").replace(/\s+/g, " ");
+  phrases(hoistReview, ["Static query-load hoisting survives", v14Emission.imageSha256,
+    "no actual handoff", "Raw `result.json` is not rewritten", "Native finite attention fixtures and numerical parity remain pending"]);
   console.log("PASS: new same-binary HTTP pair matches admitted replay bytes and scalar arithmetic; qualification, V13/V14 boundaries and all historical objects preserved.");
 }
 

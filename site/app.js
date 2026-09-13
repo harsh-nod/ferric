@@ -262,7 +262,7 @@
   liveC1Progress.append(liveC1Details);
   const liveC1Teams = element("div", "team-grid");
   for (const [name, label, team] of [["Sharded argmax v13: static image checks", "ABI/resources passed", liveC1.v13],
-    ["Query-hoist v14: host checkpoint", "Host/control tests passed", liveC1.v14]]) {
+    ["Query-hoist v14: static image checks", "ABI/resources passed", liveC1.v14]]) {
     const article = element("article", "team-item");
     const heading = element("div", "team-heading");
     heading.append(element("h3", "", name), element("span", "state-tag state-open", label));
