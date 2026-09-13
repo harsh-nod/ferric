@@ -121,12 +121,12 @@ qualification-fault-injection = [
 ]
 
 [dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0" }
-fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0", optional = true }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0" }
-fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "ae26717922b1fb7ad62fdd5ad70814d83eb01177", version = "=0.1.0", optional = true }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0" }
+fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0", optional = true }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "18946f627ac183958535ca858207fa856bd49aa5", version = "=0.1.0", optional = true }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
