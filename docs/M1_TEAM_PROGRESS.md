@@ -169,6 +169,11 @@ only existing documentation and the separate Python fixture differ from the
 tested source. Actual runtime counter capture remains pending. A duplicate
 local failed-build target is removed after full failure-archive custody,
 reclaiming 2,300,296 KiB; its original bytes remain in that archive.
+The completed remote diagnostic parent is then removed after fresh exact
+10,587-file and 12,216-entry metadata checks, all 70 owned-group absences and
+binary/tool parity (4,305,344 KiB). Independent SSH absence passes. The clean
+integrated diagnostic worktree is removed nonforced (42,824 KiB); both source
+bundles, branch and all executable/failure evidence remain retained.
 
 The V14 finite two-image fixture `fec0311` is integrated as `4dcc92a`. The
 mi300x CPU gate passes 15 new methods, ten unchanged fixture methods and the
@@ -179,6 +184,9 @@ parity: its worker/stage/image bindings remain unset. The resident-v5 and V14
 images use different compilers, so even a future numerical pass would not be
 a same-compiler performance ablation. V13's completed emission R2 stage is
 removed after fresh exact checks (24,404 KiB); the restored toolchain stays.
+The completed parity CPU stage and clean integrated source worktree are also
+removed after fresh source/archive/group checks (300 and 42,836 KiB), with
+independent absence checks. The native launch copy is retained separately.
 
 Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
 seven deployed assets match the accepted artifact, with historical serving
