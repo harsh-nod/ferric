@@ -6,6 +6,12 @@ errors, whole-crate success and all 16 required proof-function records. It is
 not wired into Cargo, runtime certificates, proof inventories, source gates or
 existing M1 theorem admission. This is not verification of the actual GPU kernel.
 
+The Rust source now lives in `proofs/standalone`, outside the `ferric-m1-proof`
+Cargo package. Its original placement under `proofs/m1` was rejected by the
+package source-inventory gate as unreachable Rust source. This relocation
+preserves the verified source bytes; it does not add a source-gate exception,
+Cargo module, proof-inventory entry or theorem admission.
+
 The first attempt stopped before verification on an ambiguous integer literal.
 The accepted correction only adds `int` suffixes to two literals; the original
 failure is retained separately. The exact proof source SHA256 is
@@ -55,6 +61,10 @@ VERUS_Z3_PATH="$VERUS_ROOT/z3" timeout --signal=TERM --kill-after=5s 300s \
   --num-threads 1 --rlimit 30 \
   proofs/m1/sharded_argmax_v13.rs
 ```
+
+That command is the historical invocation. A new verification at the current
+location must use `proofs/standalone/sharded_argmax_v13.rs` with the same pinned
+tool closure and newly recorded command provenance; no rerun is implied here.
 
 Retain exact source/tool-closure hashes, raw status and JSON for all 16 proof
 functions (15 public obligations and one private fixed-division helper).
