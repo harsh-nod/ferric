@@ -3,16 +3,29 @@
 Updated: 2026-09-12. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
-Current continuation: public fe2o3 main now resolves to
-`61e014ac28690cd993761590fd2f7d75d419d340`, with Pliron
-`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. Current manifests, locks and
-policy inventories are migrated in private integration `997438f`. All 71
-offline metadata/renderer steps pass: 29 locks preserve registry package
-versions/checksums, and the regenerated inventories match the upstream
-dependency refactor. This is not a full host-build or native qualification.
-Existing binaries and emitted images retain their actual older producer
-revisions; unchanged KFD source does not make them fresh compiler builds.
+Current continuation: public fe2o3 main resolves to
+`ae26717922b1fb7ad62fdd5ad70814d83eb01177`, with Pliron
+`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two upstream commits since
+61e change auxiliary-queue teardown and a runtime benchmark's error reporting,
+not manifests, the upstream lock, compiler code or the worker protocol.
+Private integration `94eb4e1` updates 79 files by exact revision substitution
+only; reversing that substitution reproduces every prior file byte-for-byte.
+Its remote metadata and host checks remain pending. The prior 61e migration
+in `997438f` passed all 71 offline metadata/renderer steps with unchanged
+registry versions/checksums. A frozen 61e worker build has now passed 483
+library tests, 31 doctests and strict Clippy, with one hardware-fixture test
+ignored; its artifact custody is being collected before the warm ae267 build.
+Existing binaries and emitted images retain their actual producer revisions.
 The historical checkpoints below remain descriptions of their own revisions.
+
+The combined V14 host snapshot `f3b596f` passed 1,025 tests across 23 targets
+(56 ignored), the focused V14 checks, image admission and source policies,
+then failed strict Clippy on three test-only warnings. Commit `af1b384` fixes
+those warnings without production changes. Its separately attributed warm
+continuation will run focused tests, formatting, Clippy and the unreached
+checks; the initial failure is retained. The independent V14 Qwen correctness
+runner passed all 32 synthetic CPU tests, with all 30 retained files checked
+independently. No full-model V14 run or new performance result is admitted.
 
 ## Current Performance Swarm
 
