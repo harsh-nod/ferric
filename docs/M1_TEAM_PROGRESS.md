@@ -44,9 +44,23 @@ replay result `a38f1d6c` and archive `26727569` retain the recomputation. The
 completed host stage and three compiler targets were removed (7,377,032 KiB),
 as were eight mi350 run/wrapper/upload directories (14,680 KiB) and the CPU
 replay stage (3,964 KiB). Models, active compiler inputs and installed binaries
-remain intact. V15 emission stopped before compilation because its private
-offline cache lacks `smallvec 1.16.0`; exact dependency and build-std cache
-preparation is the next step, with no kernel/compiler/lock changes.
+remain intact. V15's first emission attempt stopped on a missing offline
+dependency. The corrected standalone/build-std cache passes exact 163/198
+package checks, but ae267 rejects the unchanged kernel with
+`UnprovenBarrierConvergence` at bb33/op0. Archive `64c99339` retains that
+failure. A first-pass guarded-read correction is committed at `c119660`;
+remote formatting, focused host checks and new emission remain pending.
+It changes no compiler, lock, arithmetic, ABI or second-pass volatile read.
+Separately, exact analytical BF16 fixtures are integrated at `fcbba18`:
+ten CPU tests and an eight-case self-test pass, archive `7b71c9c9`. These
+fixtures do not bind an image or launch a GPU. Their completed 204 KiB stage
+is removed. No V15 device image or native result is admitted yet.
+
+Pages-only `0bcdd226` is now deployed. Its 15-phase remote QA and separate
+two-label browser/width/artifact follow-up pass; GitHub workflow `34741759370`
+succeeds. All seven live assets match the tested artifact at 06:04:45 UTC.
+The completed Pages stage (319,400 KiB) and clean sparse worktree (1,188 KiB)
+are removed. Historical performance data is unchanged.
 
 ## Current Performance Swarm
 
@@ -109,7 +123,7 @@ stable-gain or isolated per-kernel claim.
 | Runtime Optimization | Diagnostic binary `27c0404e` completed two exact 128-output requests and normal drain. Its original report validator failed on a synchronous-command allowlist omission. A separate corrected CPU replay passes all 17 tests and validates the full raw capture: 166,278 dispatches, 347,568 operational currentness checks and 395,246 completion polls. The original native receipt remains failed; no missing postflight is manufactured. | Currentness consumed 8.772 s of overlapping host time; ordered preparation accounts for 165,240 repeated checks. A bounded preparation optimization needs fault-injection tests and matched measurement. No GPU-duration or speedup inference, no fe2o3 change, and no new performance cohort. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
-| Integration and Pages | Pages-only `555d2077` is deployed; the next update covers V15 CPU progress, current compiler/KFD, and four real Qwen V14 correctness cases. Current integration through `0793070` has closed its separately scoped host, verifier and formatting follow-ups. Actual production controller `5b7fd71c` and ae267 worker `526cc6bf` pass all four native cases. Completed host targets, run directories and replay stages are removed after evidence retention. No implementation push. | Remotely validate and publish the next Pages update. Continue V15 emission and fixtures independently. Historical images and installed binaries keep their actual producer revisions; no new performance result follows from correctness checks. |
+| Integration and Pages | Pages-only `0bcdd226` is deployed and all seven live assets match remote QA. It covers V15 CPU progress, current KFD/controller, and four real Qwen V14 correctness cases; historical performance is unchanged. Actual production controller `5b7fd71c` and ae267 worker `526cc6bf` pass all four native cases. Completed host targets, run directories, replay/Pages stages and the published sparse worktree are removed after evidence retention. No implementation push. | Validate the V15 guarded-read correction and emit with the unchanged current compiler. Historical images and installed binaries keep their actual producer revisions; no new performance result follows from correctness checks. |
 
 Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
 accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
