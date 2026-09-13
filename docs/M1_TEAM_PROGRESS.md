@@ -60,7 +60,7 @@ stable-gain or isolated per-kernel claim.
 | Team | Current Progress | Next Gate |
 | --- | --- | --- |
 | Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
-| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. Resident v5 ISA confirms repeated query loads inside the attention token loop. V14 query-hoist source `1843d8f`, integrated through `f9894e6`, passes its host gate; ten separate synthetic emission-control tests also pass. Prior failures remain retained. | V13 still needs native parity and runtime ordering checks; detailed typed payload is not retained by the standard emission path. V14 needs actual emission/ABI/ISA checks and native parity before routing or timing. No new GPU kernel candidate is admitted. |
+| Kernels | Sharded FP32 argmax v13 `256a6e4` passes its host gate and all eight emission phases at latest `8efd4fd`. Both roots have the expected ABI and zero spills/private/LDS/AGPR. V14 query-hoist source `1843d8f`, integrated through `f9894e6`, passes its host gate and all nine emission phases, including eleven synthetic control tests. Its ABI/resources pass and static ISA def/use confirms hoisting survives. Prior failures remain retained. | V13 still needs native parity and runtime ordering checks. V14 needs native parity and a same-compiler control before performance attribution. Detailed typed payloads are not retained by the standard emission path. No new GPU kernel candidate is admitted. |
 | Runtime Optimization | Residual grouping remains a negative result: TPOT 194.521 to 218.333 ms. Layer-only C1 retains its n=2 native comparison, with material variation. The separate source87 live-profile same-binary HTTP pair now passes with the measurements above. Additive runtime diagnostic source `6116495` is formatted and its full remote host gate is running. | Actual runtime counter capture and repeated HTTP cohorts remain pending. Head, multirow MFMA and defaults remain fixed. No isolated GPU-duration, stable-gain or competitive claim; no fe2o3 change. |
 | Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
 | Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
@@ -117,6 +117,11 @@ twenty raw files checked per arm. Each arm excludes ten warmups and two diagnost
 from its thirty measured requests. The zero-request failure remains explicitly
 bound and excluded, with no dropped timing sample. See the
 [same-binary HTTP result](M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-matched-http-comparison).
+The three completed matched case directories, two matched plan directories and
+three run-specific authorization files are removed after fresh local/remote
+custody and process-absence checks (8,320 KiB); independent absence passes.
+All local archives, failures and replays remain retained. Shared models,
+installed controllers/images and the two qualification cases are untouched.
 
 V13 emission R2 archive `0601efc2` and all 107 files are accepted. Image
 `72104603` has producer/finalizer SGPR counts 35/30 and VGPR counts 18/13;
@@ -125,6 +130,16 @@ original source-mode extraction failure remains archived, with no compiler
 invocation in that attempt. The immutable restored toolchain is retained for
 V14 reuse. V14's separate ten synthetic control tests pass; archive `f18848ad`
 is accepted and its completed CPU stage is removed (3,596 KiB).
+
+V14 emission R2 archive `cb58d401` and all 126 files are accepted. All nine
+phases pass, including eleven revised synthetic control tests in the same stage.
+Image `8f21681f` has 116 explicit, hidden start 120 and 376 total kernarg bytes,
+95 SGPR / 37 VGPR and zero spills/private/LDS/AGPR/dynamic stack. Separate
+static def/use review confirms query loads and conversions stay outside the
+recurring token loop. This is not a same-compiler comparison with resident v5,
+native numerical parity or a measured gain. The typed handoff is digest-only;
+full typed/progress replay remains unavailable. The closed stage remains held
+pending exact cleanup, and the restored compiler is retained for a control.
 
 The additive C1 runtime diagnostic is formatted at source `6116495`, with
 profiling isolated from the timed entrypoint. All 2,268 format archive files

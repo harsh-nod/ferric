@@ -1,12 +1,13 @@
 # Query-Hoist Wave Attention V14
 
-Host-tested hypothesis, separate from every existing v5 root, crate, adapter route,
+Host-tested and emission-checked candidate, separate from every existing v5 root, crate, adapter route,
 inventory and default. Source `1843d8f174b20ebd6dbc0e72d6fe9044e8d1f244`
 passes all ten remote host steps: five contract and eight host-model tests,
 strict Clippy, formatting and zero doctests. Complete archive
 `9d025c4646b4751681230fb46036f738a6f38ebe5edd9bc4362a1e2f7dc7f579`
-retains all 276 evidence files and fresh own artifacts. No typed emission,
-native numerical qualification or performance comparison has run.
+retains all 276 evidence files and fresh own artifacts. The separate nine-phase
+emission gate also passes, including eleven synthetic control tests. Native
+numerical qualification and performance comparison remain pending.
 
 ## Scope
 
@@ -21,9 +22,11 @@ Token induction/bounds, visible-token condition, page validation, QK products,
 shuffle reduction order, deferred finite checks, online softmax, narrowing and
 two-component output ownership remain unchanged. No GEMV optimization is included.
 The source signature retains six slice descriptors plus five u32 arguments
-(116 explicit ABI bytes), Wave64 and maximum grid 1024. The old image has a
-376-byte kernarg segment; this new root's emitted descriptor/hidden ABI has not
-been observed and must be validated rather than inferred from host tests.
+(116 explicit ABI bytes), Wave64 and maximum grid 1024. Actual V14 emission
+confirms hidden arguments start at 120 bytes, a 376-byte total kernarg segment
+and eight-byte alignment. The descriptor reports 95 SGPR / 37 VGPR and zero
+spills, fixed private/LDS, AGPR and dynamic stack. These are static resource
+observations, not achieved occupancy or elapsed GPU time.
 
 The hypothesis comes from a CPU-only inspection of actual resident v5 HSACO
 `98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502`:
@@ -78,9 +81,24 @@ The build script reuses the existing target helpers unchanged. Its fixed crate
 binding is a host fixture, not a measured device artifact identity.
 
 Remote formatting and the offline source-fresh host gate are complete, including
-the shared target helpers and frozen v5 comparison source in custody. No
-compiler/proof relaxation is permitted. A separately authorized same-compiler
-control/candidate emission must now
-check actual descriptors, resources, query-load placement and zero spills,
-followed by existing finite attention fixtures and exact model qualification.
+the shared target helpers and frozen v5 comparison source in custody. Emission
+at compiler `8efd4fd` produces image
+`8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8`.
+Complete archive
+`cb58d401389f3b85f06c81b126b59e2b12e8cad8da8d2b1425b77989fdacc7a0`
+retains all 126 files. The actual LLVM worker remains build `216822` with a
+source subtree identical to the pinned compiler; it is not relabeled as rebuilt.
+
+Static ISA def/use review confirms query loads at `0x2360` / `0x239c` and their
+conversions precede the recurring token backedges to `0x26a4`. Registers `v19`
+and `v18` are reused without loop redefinition. The observed resident v5 uses
+a different compiler, so this is not a same-compiler ablation or a numerical
+proof. The retained observation authenticates only the 71,865-byte typed
+handoff's digest, not its payload; independent typed/progress replay remains
+unavailable. Frozen automatic pending flags are not rewritten by the later
+manual ISA review.
+
+No compiler/proof relaxation is permitted. A same-compiler control, native
+finite attention fixtures and exact model qualification remain required before
+performance attribution or routing changes.
 Any comparison remains opt-in and conditional; no default or serving claim follows.
