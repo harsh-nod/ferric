@@ -31,6 +31,8 @@ pub enum CanaryProfile {
     SubmissionOrdered,
     LayerMfma,
     LayerC1Wave,
+    QueryHoistResidentWave,
+    QueryHoistV14,
 }
 
 #[derive(Clone, Copy)]
@@ -84,6 +86,18 @@ impl CanaryProfile {
             (Self::LayerMfma | Self::LayerC1Wave, RecordKind::Closed) => {
                 "FerricLayerC1WaveCanaryClosedV1"
             }
+            (Self::QueryHoistResidentWave | Self::QueryHoistV14, RecordKind::Setup) => {
+                "FerricQueryHoistV14CanarySetupV1"
+            }
+            (Self::QueryHoistResidentWave | Self::QueryHoistV14, RecordKind::Prefill) => {
+                "FerricQueryHoistV14CanaryPrefillV1"
+            }
+            (Self::QueryHoistResidentWave | Self::QueryHoistV14, RecordKind::Observation) => {
+                "FerricQueryHoistV14CanaryObservationV1"
+            }
+            (Self::QueryHoistResidentWave | Self::QueryHoistV14, RecordKind::Closed) => {
+                "FerricQueryHoistV14CanaryClosedV1"
+            }
         }
     }
 
@@ -93,7 +107,9 @@ impl CanaryProfile {
             | Self::SubmissionSynchronous
             | Self::SubmissionOrdered
             | Self::LayerMfma
-            | Self::LayerC1Wave => "wave",
+            | Self::LayerC1Wave
+            | Self::QueryHoistResidentWave => "wave",
+            Self::QueryHoistV14 => "query-hoist-v14",
             Self::LegacyArgmax | Self::AttentionBaseline => "baseline",
         }
     }
@@ -106,6 +122,8 @@ impl CanaryProfile {
                 | Self::SubmissionOrdered
                 | Self::LayerMfma
                 | Self::LayerC1Wave
+                | Self::QueryHoistResidentWave
+                | Self::QueryHoistV14
         )
     }
 
@@ -113,13 +131,14 @@ impl CanaryProfile {
         matches!(
             self,
             Self::SubmissionOrdered | Self::LayerMfma | Self::LayerC1Wave
+                | Self::QueryHoistResidentWave | Self::QueryHoistV14
         )
     }
 
     const fn layer_projection(self) -> Option<&'static str> {
         match self {
             Self::LayerMfma => Some("mfma"),
-            Self::LayerC1Wave => Some("c1-wave"),
+            Self::LayerC1Wave | Self::QueryHoistResidentWave | Self::QueryHoistV14 => Some("c1-wave"),
             Self::LegacyArgmax
             | Self::AttentionBaseline
             | Self::AttentionWave
@@ -132,6 +151,34 @@ impl CanaryProfile {
         if let Some(mode) = self.layer_projection() {
             setup["layer_projection"] = json!(mode);
         }
+        self.annotate_query_hoist_record(setup);
+    }
+
+    const fn query_hoist_mode(self) -> Option<&'static str> {
+        match self {
+            Self::QueryHoistResidentWave => Some("resident-wave"),
+            Self::QueryHoistV14 => Some("query-hoist-v14"),
+            _ => None,
+        }
+    }
+
+    fn validate_query_hoist_path(self, artifact: Option<&Path>) -> Result<(), String> {
+        match (self.query_hoist_mode(), artifact) {
+            (Some(_), Some(path)) if !path.as_os_str().is_empty() => Ok(()),
+            (None, None) => Ok(()),
+            _ => Err("V14 comparison requires its explicit image path and closed profile".into()),
+        }
+    }
+
+    fn annotate_query_hoist_record(self, record: &mut Value) {
+        if let Some(mode) = self.query_hoist_mode() {
+            record["attention_mode"] = json!(mode);
+            record["attention"] = json!(self.attention());
+            record["layer_projection"] = json!("c1-wave");
+            record["runtime_ordered_batches"] = json!(true);
+            record["benchmark_admitted"] = json!(false);
+            record["serving_admitted"] = json!(false);
+        }
     }
 
     const fn error_prefix(self) -> &'static str {
@@ -142,6 +189,7 @@ impl CanaryProfile {
                 "Wave argmax submission canary rejected"
             }
             Self::LayerMfma | Self::LayerC1Wave => "Layer C1 Wave canary rejected",
+            Self::QueryHoistResidentWave | Self::QueryHoistV14 => "Query hoist V14 canary rejected",
         }
     }
 
@@ -160,6 +208,8 @@ impl CanaryProfile {
                 | Self::SubmissionOrdered
                 | Self::LayerMfma
                 | Self::LayerC1Wave
+                | Self::QueryHoistResidentWave
+                | Self::QueryHoistV14
         ) && (!matches!(options.outputs, 8 | 128)
             || !options.runtime.cache_admission
             || !options.runtime.operational
@@ -182,6 +232,11 @@ fn emit(value: &Value) -> Result<(), String> {
         .write_all(b"\n")
         .and_then(|()| output.flush())
         .map_err(|e| e.to_string())
+}
+
+fn emit_profile(profile: CanaryProfile, mut value: Value) -> Result<(), String> {
+    profile.annotate_query_hoist_record(&mut value);
+    emit(&value)
 }
 
 fn count(values: &[u64]) -> Result<u64, String> {
@@ -321,8 +376,9 @@ fn observe<R: EngineeringTpRankTransportV1>(
     if generated.len() != 1 {
         return Err("prefill must produce exactly one choice".into());
     }
-    emit(
-        &json!({"schema":profile.schema(RecordKind::Prefill),"authority":"none","performance_qualified":false,
+    emit_profile(
+        profile,
+        json!({"schema":profile.schema(RecordKind::Prefill),"authority":"none","performance_qualified":false,
         "steps":prefill,"generated_token":generated[0],"elapsed_seconds":elapsed_seconds[0]}),
     )?;
     let mut decode = Vec::with_capacity(options.outputs - 1);
@@ -348,8 +404,9 @@ fn observe<R: EngineeringTpRankTransportV1>(
         return Err("final packet/batch/resident-input contract drift".into());
     }
     retire_no_cache(pool, sequence)?;
-    emit(
-        &json!({"schema":profile.schema(RecordKind::Observation),"authority":"none","performance_qualified":false,
+    emit_profile(
+        profile,
+        json!({"schema":profile.schema(RecordKind::Observation),"authority":"none","performance_qualified":false,
         "generated_token_ids":generated,"generated_utf8_hex":utf8,"reference_passed":parity,
         "elapsed_seconds":elapsed_seconds,"workload_seconds":workload_seconds,"decode_steps":decode,
         "completed_packets":count(&driver.dispatch_counts())?,"completed_batches":driver.completed_batches(),
@@ -361,7 +418,7 @@ fn observe<R: EngineeringTpRankTransportV1>(
     Ok(true)
 }
 
-fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Result<(), String> {
+fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile, query_hoist_path: Option<&Path>) -> Result<(), String> {
     let reference = Reference::open(options)?;
     let controller_sha256 = hash_file(Path::new("/proc/self/exe"))?;
     if hash_file(&options.worker)? != options.worker_sha256 {
@@ -379,6 +436,10 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
     )
     .map_err(|e| e.to_string())?;
     let argmax_artifact = EngineeringTpArtifactV1::open_fp32_argmax32_v11(&options.argmax_artifact)
+        .map_err(|e| e.to_string())?;
+    let query_hoist_artifact = query_hoist_path
+        .map(EngineeringTpArtifactV1::open_query_hoist_v14)
+        .transpose()
         .map_err(|e| e.to_string())?;
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let mut session = [0_u8; 32];
@@ -409,20 +470,36 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
             return Err("running worker hash differs".into());
         }
         worker.load_additional_artifact(&head_artifact)?;
-        worker.load_additional_artifact(&argmax_artifact)
+        worker.load_additional_artifact(&argmax_artifact)?;
+        if let Some(artifact) = &query_hoist_artifact {
+            worker.load_additional_artifact(artifact)?;
+        }
+        Ok::<(), String>(())
     })();
     if let Err(error) = admitted {
         let close = worker.close();
         return Err(format!("{error}; worker close: {close:?}"));
     }
-    let mut driver = EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11(
+    let mut driver = if let Some(artifact) = &query_hoist_artifact {
+        EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11_and_query_hoist_v14(
+            vec![worker],
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+            &argmax_artifact,
+            artifact,
+        )?
+    } else {
+        EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11(
         vec![worker],
         model.config(),
         model.target_weights(),
         model.layout(),
         &pool,
         &argmax_artifact,
-    )?;
+        )?
+    };
     let observed = (|| {
         driver.configure_output_head_pruning(true)?;
         driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)?;
@@ -436,7 +513,13 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
         }
         driver.configure_head_precision_v8(true)?;
         if options.mode == ArgmaxMode::WaveV11 {
-            if profile == CanaryProfile::LayerC1Wave {
+            if profile == CanaryProfile::QueryHoistV14 {
+                driver.configure_ordered_c1_wave_query_hoist_v14(
+                    &argmax_artifact,
+                    query_hoist_artifact.as_ref().ok_or("missing preloaded V14 image")?,
+                )?;
+            } else if profile == CanaryProfile::LayerC1Wave
+                || profile == CanaryProfile::QueryHoistResidentWave {
                 driver.configure_ordered_c1_wave_layers_fp32_argmax_v11(&argmax_artifact)?;
             } else if profile.ordered_batches() {
                 driver.configure_ordered_wave_attention_fp32_argmax_v11(&argmax_artifact)?;
@@ -450,6 +533,8 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
         if driver.expected_dispatch_counts(0) != [613]
             || driver.expected_dispatch_counts(1) != [616]
             || driver.fp32_argmax_mode() != options.mode.label()
+            || (profile.query_hoist_mode().is_some()
+                && driver.attention_mode() != profile.attention())
             || profile
                 .layer_projection()
                 .is_some_and(|mode| driver.layer_projection_mode() != mode)
@@ -474,16 +559,21 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
             "fp32_workspace_bytes":driver.fp32_head_workspace_bytes(),"expected_packets":options.expected_packets()?,
             "expected_batches":7+options.outputs,"timing_boundary":"host-prefill-start-through-generated-token-commit; excludes setup; not HTTP or GPU duration"});
         profile.annotate_setup(&mut setup);
+        if let Some(artifact) = &query_hoist_artifact {
+            setup["query_hoist_artifact"] = identity(artifact);
+            setup["query_hoist_artifact_path"] = json!(query_hoist_path);
+        }
         timing.setup = Some(setup.clone());
         emit(&setup)?;
         observe(&mut driver, &mut pool, &model, &reference, options, profile)
     })();
     // Closure is attempted on every configuration, execution, reference or output failure.
     let close = driver.close();
-    let closed = json!({"schema":profile.schema(RecordKind::Closed),"authority":"none","performance_qualified":false,
+    let mut closed = json!({"schema":profile.schema(RecordKind::Closed),"authority":"none","performance_qualified":false,
         "execution_completed":observed.is_ok(),"reference_passed":observed.as_ref().ok(),
         "worker_exited":close.is_ok(),"worker_pid":worker_pid,
         "completed_packets":driver.dispatch_counts(),"completed_batches":driver.completed_batches()});
+    profile.annotate_query_hoist_record(&mut closed);
     timing.closed = Some(closed.clone());
     let emitted = emit(&closed);
     match (observed, close, emitted) {
@@ -495,10 +585,19 @@ fn run(options: &Options, profile: CanaryProfile, timing: &mut TimingFile) -> Re
 }
 
 pub fn execute(options: Result<Options, String>, profile: CanaryProfile) -> std::process::ExitCode {
+    execute_with_query_hoist_path(options, profile, None)
+}
+
+pub fn execute_query_hoist_v14(options: Options, artifact: &Path, profile: CanaryProfile) -> std::process::ExitCode {
+    execute_with_query_hoist_path(Ok(options), profile, Some(artifact))
+}
+
+fn execute_with_query_hoist_path(options: Result<Options, String>, profile: CanaryProfile, artifact: Option<&Path>) -> std::process::ExitCode {
     let result = options.and_then(|options| {
         profile.validate_options(&options)?;
+        profile.validate_query_hoist_path(artifact)?;
         let mut timing = TimingFile::create(Some(&options.host_timing_output))?;
-        let result = run(&options, profile, &mut timing);
+        let result = run(&options, profile, &mut timing, artifact);
         let sidecar = timing.finish(&result);
         match (result, sidecar) {
             (Ok(()), Ok(())) => Ok(()),
@@ -575,6 +674,94 @@ mod retirement_tests {
 #[cfg(test)]
 mod profile_tests {
     use super::*;
+
+    #[test]
+    fn v14_profiles_record_exact_mode_without_changing_any_legacy_record() {
+        for (record, schema) in [
+            (RecordKind::Setup, "FerricQueryHoistV14CanarySetupV1"),
+            (RecordKind::Prefill, "FerricQueryHoistV14CanaryPrefillV1"),
+            (RecordKind::Observation, "FerricQueryHoistV14CanaryObservationV1"),
+            (RecordKind::Closed, "FerricQueryHoistV14CanaryClosedV1"),
+        ] {
+            for (profile, mode, attention) in [
+                (CanaryProfile::QueryHoistResidentWave, "resident-wave", "wave"),
+                (CanaryProfile::QueryHoistV14, "query-hoist-v14", "query-hoist-v14"),
+            ] {
+                assert_eq!(profile.schema(record), schema);
+                assert_eq!(profile.query_hoist_mode(), Some(mode));
+                assert_eq!(profile.layer_projection(), Some("c1-wave"));
+                assert!(profile.wave_attention() && profile.ordered_batches());
+                let mut value = json!({"schema":schema,"projection":"mfma","head_precision":"fp32-v8","argmax_mode":"wave-v11"});
+                profile.annotate_query_hoist_record(&mut value);
+                assert_eq!(value, json!({"schema":schema,"projection":"mfma","head_precision":"fp32-v8","argmax_mode":"wave-v11",
+                    "attention_mode":mode,"attention":attention,"layer_projection":"c1-wave","runtime_ordered_batches":true,
+                    "benchmark_admitted":false,"serving_admitted":false}));
+            }
+            for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline,
+                CanaryProfile::AttentionWave, CanaryProfile::SubmissionSynchronous,
+                CanaryProfile::SubmissionOrdered, CanaryProfile::LayerMfma, CanaryProfile::LayerC1Wave] {
+                assert_ne!(profile.schema(record), schema);
+                let mut value = json!({"schema":profile.schema(record),"sentinel":[1,2,3]});
+                let before = serde_json::to_vec(&value).unwrap();
+                profile.annotate_query_hoist_record(&mut value);
+                assert_eq!(serde_json::to_vec(&value).unwrap(), before);
+            }
+        }
+    }
+
+    #[test]
+    fn v14_profiles_require_matching_runtime_and_explicit_image_without_normalization() {
+        for profile in [CanaryProfile::QueryHoistResidentWave, CanaryProfile::QueryHoistV14] {
+            for outputs in [8, 128] {
+                let mut options = submission_options(profile);
+                options.outputs = outputs;
+                assert!(profile.validate_options(&options).is_ok());
+                assert!(profile.validate_query_hoist_path(Some(Path::new("exact-v14"))).is_ok());
+            }
+            assert!(profile.validate_query_hoist_path(None).is_err());
+            assert!(profile.validate_query_hoist_path(Some(Path::new(""))).is_err());
+            for mutation in 0..10 {
+                let mut options = submission_options(profile);
+                mismatch(&mut options, mutation);
+                let before = (runtime_bits(&options), options.outputs, options.mode);
+                assert!(profile.validate_options(&options).is_err());
+                assert_eq!((runtime_bits(&options), options.outputs, options.mode), before);
+            }
+        }
+        for profile in [CanaryProfile::LegacyArgmax, CanaryProfile::AttentionBaseline,
+            CanaryProfile::AttentionWave, CanaryProfile::SubmissionSynchronous,
+            CanaryProfile::SubmissionOrdered, CanaryProfile::LayerMfma, CanaryProfile::LayerC1Wave] {
+            assert!(profile.validate_query_hoist_path(None).is_ok());
+            assert!(profile.validate_query_hoist_path(Some(Path::new("exact-v14"))).is_err());
+        }
+    }
+
+    #[test]
+    fn v14_profile_or_image_mismatch_creates_no_sidecar_before_execution() {
+        let root = std::env::temp_dir().join(format!("ferric-v14-profile-{}", std::process::id()));
+        std::fs::create_dir(&root).unwrap();
+        for profile in [CanaryProfile::QueryHoistResidentWave, CanaryProfile::QueryHoistV14] {
+            for mutation in 0..12 {
+                let mut options = submission_options(profile);
+                options.host_timing_output = root.join(format!("{}-{mutation}.json", profile.query_hoist_mode().unwrap()));
+                let sidecar = options.host_timing_output.clone();
+                let artifact = if mutation == 11 { PathBuf::new() } else { root.join("missing-v14") };
+                let status = if mutation == 10 {
+                    execute(Ok(options), profile)
+                } else {
+                    if mutation < 10 { mismatch(&mut options, mutation); }
+                    execute_query_hoist_v14(options, &artifact, profile)
+                };
+                assert_eq!(status, std::process::ExitCode::FAILURE);
+                assert!(!sidecar.exists());
+            }
+        }
+        let mut options = submission_options(CanaryProfile::LayerC1Wave);
+        options.host_timing_output = root.join("legacy.json");
+        assert_eq!(execute_query_hoist_v14(options, &root.join("missing-v14"), CanaryProfile::LayerC1Wave), std::process::ExitCode::FAILURE);
+        assert_eq!(std::fs::read_dir(&root).unwrap().count(), 0);
+        std::fs::remove_dir(root).unwrap();
+    }
 
     #[test]
     fn layer_profiles_have_closed_schemas_and_do_not_change_legacy_setup_bytes() {

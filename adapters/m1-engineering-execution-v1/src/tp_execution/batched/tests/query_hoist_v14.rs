@@ -43,6 +43,67 @@ fn allocations(driver: &EngineeringTpBatchExecutionV2<Recording>) -> Vec<(u64, u
 }
 
 #[test]
+fn v14_canary_chunk_and_decode_recordings_keep_same_images_allocations_and_head() {
+    // Small synthetic context exercises the canary's three packet shapes, not Qwen arithmetic.
+    let mut recordings = Vec::new();
+    for enabled in [false, true] {
+        let mut pool = wide_pool();
+        let mut driver = configured(&pool);
+        let transport = &mut driver.inner.transports[0];
+        transport.query_hoist_v14_loaded = Some(QueryHoistBindingV14::recording().hsaco);
+        transport.argmax_v11_loaded = Some(Fp32ArgmaxBindingV11::recording().hsaco);
+        let before = allocations(&driver);
+        if enabled {
+            select(&mut driver).unwrap();
+        } else {
+            driver.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(
+                Fp32ArgmaxBindingV11::recording(),
+            ).unwrap();
+        }
+        let sequence = pool.open_sequence(pool.scope(), &[7; 32], 0).unwrap().sequence();
+        let mut position = 0;
+        for (rows, publish) in [(16, false), (16, true), (1, true)] {
+            let input = (0..rows).map(|offset| EngineeringTpPageRowV1 {
+                sequence,
+                token: 7,
+                position: position + offset,
+            }).collect::<Vec<_>>();
+            let batch = pool.reserve_batch(&input).unwrap();
+            pool.begin_submission(&batch).unwrap();
+            let selected = if publish { vec![rows as usize - 1] } else { Vec::new() };
+            let output = driver.execute_selected(&batch, &selected).unwrap();
+            assert_eq!(output.choices.len(), usize::from(publish));
+            pool.commit_batch(&batch, output.completion).unwrap();
+            position += rows;
+            assert_eq!(allocations(&driver), before);
+        }
+        assert_eq!(driver.completed_batches(), 3);
+        assert_eq!(driver.dispatch_counts(), [613 + 616 + 616]);
+        assert_eq!(pool.committed_position(sequence).unwrap(), 33);
+        assert_eq!(driver.layer_projection_mode(), "c1-wave");
+        assert_eq!(driver.fp32_argmax_mode(), "wave-v11");
+        let transport = &driver.inner.transports[0];
+        let mut commands = transport.commands.clone();
+        let mut changed = 0;
+        for command in &mut commands {
+            if command.kernel == if enabled { V14 } else { V5 } {
+                changed += 1;
+                command.kernel = V5;
+            }
+        }
+        assert_eq!(changed, 3 * 36);
+        recordings.push((commands, transport.write_payloads.clone(), transport.reads.clone(),
+            transport.packet_preparations.clone(), transport.argmax_v11_loaded, transport.query_hoist_v14_loaded));
+        pool.retire_sequence(sequence, false, 1).unwrap();
+        pool.check_invariants().unwrap();
+        assert_eq!(pool.stats().free_pages, 4);
+        assert_eq!(pool.stats().quarantined_pages, 0);
+        driver.close().unwrap();
+    }
+    assert_eq!(recordings[0], recordings[1]);
+}
+
+#[test]
 fn v14_changes_only_attention_root_for_all_active_rows_and_head_selections() {
     for rows in [1, 16, 17, 32] {
         for selected in [

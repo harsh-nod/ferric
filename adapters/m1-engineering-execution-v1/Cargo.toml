@@ -72,6 +72,11 @@ path = "src/bin/ferric-qwen3-layer-c1-wave-canary.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-query-hoist-v14-canary"
+path = "src/bin/ferric-qwen3-query-hoist-v14-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-wave-argmax-live"
 path = "src/bin/ferric-qwen3-wave-argmax-live.rs"
 required-features = ["tp-batch-engineering"]
