@@ -188,7 +188,7 @@ fn wave_rmsnorm_v15_terminal_rejection_is_atomic() {
             13 => driver.prune_output_head = false,
             14 => {
                 driver.projection.mode =
-                    super::super::super::EngineeringTpProjectionModeV3::Baseline
+                    super::super::super::EngineeringTpProjectionModeV3::Baseline;
             }
             15 => driver.projection.mode = super::super::super::EngineeringTpProjectionModeV3::Wave,
             16 => driver.last_batch = 1,
@@ -200,7 +200,7 @@ fn wave_rmsnorm_v15_terminal_rejection_is_atomic() {
             22 => driver.inner.ranks.clear(),
             23 => {
                 driver.inner.reduction =
-                    super::super::super::reduction::ReductionWorkspace::Baseline
+                    super::super::super::reduction::ReductionWorkspace::Baseline;
             }
             24 => driver.inner.transports[0].ordered_supported = false,
             25 => driver
@@ -484,7 +484,7 @@ fn wave_rmsnorm_v15_row_binding_is_exact_and_preserves_legacy_norms() {
                 7 => bad.arguments[7] = EngineeringTpArgumentV1::F32(f32::NAN),
                 8 => {
                     bad.arguments[7] =
-                        EngineeringTpArgumentV1::F32(f32::from_bits(1.0e-6_f32.to_bits() + 1))
+                        EngineeringTpArgumentV1::F32(f32::from_bits(1.0e-6_f32.to_bits() + 1));
                 }
                 9 => bad.arguments[8] = EngineeringTpArgumentV1::U32(1),
                 10 => {
