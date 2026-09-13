@@ -223,7 +223,7 @@ fn stripes_cover_each_active_element_once_and_no_capacity_tail() {
 #[test]
 fn standalone_manifest_pins_latest_compiler_without_old_route_changes() {
     let manifest = include_str!("../Cargo.toml");
-    assert_eq!(manifest.matches("32e43025b09f05656171cd12e839289d2ce706e4").count(), 2);
+    assert_eq!(manifest.matches("61e014ac28690cd993761590fd2f7d75d419d340").count(), 2);
     assert!(manifest.contains("[workspace]"));
     assert!(manifest.contains("default = [\"gfx950\"]"));
     assert!(!manifest.contains("8efd4fd"));

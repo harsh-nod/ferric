@@ -69,7 +69,10 @@ exact epsilon/grid, auxiliary modes, nonfinite inputs in every lane, square/
 sum/output overflow, guarded inactive capacity and changed inputs after error.
 
 Source base: Ferric `0588f997`. Both fe2o3 dependencies are pinned to
-`32e43025b09f05656171cd12e839289d2ce706e4`. Cargo.lock is deliberately absent:
+`61e014ac28690cd993761590fd2f7d75d419d340`. This separate pin update retains
+the original 32e source candidate `9921546`; the kernel and host arithmetic
+are unchanged. No 32e binary exists for this candidate or is relabeled.
+Cargo.lock is deliberately absent:
 root requires a separately reviewed remote metadata phase to generate and
 admit that exact dependency closure before any host tests. No local Cargo
 resolution or hand-derived lock graph was used. Build.rs reuses the unchanged
