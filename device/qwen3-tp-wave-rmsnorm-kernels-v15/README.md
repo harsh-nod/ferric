@@ -4,7 +4,7 @@ Separate kernel candidate. The guarded-read source at `39be94d` passes remote
 formatting, 23 focused host tests, strict Clippy and emission with compiler
 `ae267179`. The emitted image passes ABI/resource inspection and independent
 static review. Native qualification and performance remain pending. The later
-revision-only update to `18946f6` needs its own validation. No adapter,
+revision-only update to `c9c7036` needs its own validation. No adapter,
 controller, existing kernel, default, inventory or external manifest is changed.
 
 ## Closed Scope
@@ -83,9 +83,9 @@ sum/output overflow, guarded inactive capacity and changed inputs after error.
 Source base: Ferric `0588f997`, with the original candidate retained at
 `9921546`. Revision-only migration `94eb4e1` pinned the successful emission's
 dependencies to `ae26717922b1fb7ad62fdd5ad70814d83eb01177`. Active dependencies
-now use `18946f627ac183958535ca858207fa856bd49aa5` after the separate exact
-revision substitution at `3ababa7`; its validation remains pending.
-Kernel and host arithmetic are unchanged by either dependency migration.
+now use `c9c7036cf98034b638886f54a745701e70ac3571` after the separate exact
+revision substitutions at `3ababa7` and `319315e`; validation remains pending.
+Kernel and host arithmetic are unchanged by these dependency migrations.
 The subsequent source correction changes only the first-pass read API and its
 uniform constructor; post-sum arithmetic, ABI and second-pass volatile reads
 remain unchanged. Seven contract and sixteen host methods, 23 total, pass
@@ -128,7 +128,7 @@ typed/effect/progress payload remains an open obligation: the standard emission
 path retains only its digest, not an admitted detailed payload. Verify all bounds
 and full-wave convergence, inspect both load passes/shuffle association/stores,
 and check actual ABI/resources without suppressing compiler checks. A new
-18946 compiler build/emission and the eight-case analytical native fixtures
+c9c7036 compiler build/emission and the eight-case analytical native fixtures
 remain next steps. Any later
 finite native profile, whole-buffer guards, model oracle or opt-in adapter route
 requires separate review; none is implemented here.
