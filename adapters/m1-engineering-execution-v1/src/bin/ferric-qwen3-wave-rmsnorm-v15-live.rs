@@ -105,10 +105,13 @@ fn profile_metadata(
     actual_rmsnorm: &str,
 ) -> Result<Value, String> {
     options.validate()?;
-    if actual_layer != "c1-wave" || actual_attention != "wave"
+    if actual_layer != "c1-wave"
+        || actual_attention != "wave"
         || actual_rmsnorm != options.rmsnorm_mode.label()
     {
-        return Err("actual layer, attention or RMSNorm policy differs from requested live profile".into());
+        return Err(
+            "actual layer, attention or RMSNorm policy differs from requested live profile".into(),
+        );
     }
     let live = &options.live;
     Ok(json!({
@@ -174,8 +177,9 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
     .map_err(|e| e.to_string())?;
     let argmax_artifact = EngineeringTpArtifactV1::open_fp32_argmax32_v11(&live.argmax_artifact)
         .map_err(|e| e.to_string())?;
-    let rmsnorm_artifact = EngineeringTpArtifactV1::open_wave_rmsnorm_v15(&options.rmsnorm_artifact)
-        .map_err(|e| e.to_string())?;
+    let rmsnorm_artifact =
+        EngineeringTpArtifactV1::open_wave_rmsnorm_v15(&options.rmsnorm_artifact)
+            .map_err(|e| e.to_string())?;
     let model = EngineeringQwenModelV1::open(&live.source)?;
     let mut session = [0_u8; 32];
     std::fs::File::open("/dev/urandom")
@@ -221,15 +225,16 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
         let close = worker.close();
         return Err(format!("{error}; worker close: {close:?}"));
     }
-    let mut driver = EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11_and_wave_rmsnorm_v15(
-        vec![worker],
-        model.config(),
-        model.target_weights(),
-        model.layout(),
-        &pool,
-        &argmax_artifact,
-        &rmsnorm_artifact,
-    )?;
+    let mut driver =
+        EngineeringTpBatchExecutionV2::new_wide32_with_argmax_v11_and_wave_rmsnorm_v15(
+            vec![worker],
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+            &argmax_artifact,
+            &rmsnorm_artifact,
+        )?;
     let configured = (|| {
         driver.configure_output_head_pruning(true)?;
         driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)?;
@@ -245,7 +250,8 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
                 driver.configure_ordered_c1_wave_layers_fp32_argmax_v11(&argmax_artifact)?;
             }
             RmsNormMode::WaveV15 => {
-                driver.configure_ordered_c1_wave_rmsnorm_v15(&argmax_artifact, &rmsnorm_artifact)?;
+                driver
+                    .configure_ordered_c1_wave_rmsnorm_v15(&argmax_artifact, &rmsnorm_artifact)?;
             }
         }
         driver.configure_host_timing(timing.timing.clone())?;
@@ -255,8 +261,12 @@ fn run_with_timing(options: &Options, timing: &mut TimingFile) -> Result<(), Str
         {
             return Err("live selector or packet contract differs".into());
         }
-        profile_metadata(options, driver.layer_projection_mode(),
-            driver.attention_mode(), driver.rmsnorm_mode())
+        profile_metadata(
+            options,
+            driver.layer_projection_mode(),
+            driver.attention_mode(),
+            driver.rmsnorm_mode(),
+        )
     })();
     let performance_profile = match configured {
         Ok(profile) => profile,
@@ -445,9 +455,15 @@ mod live_tests {
                 ("c1-wave", "query-hoist-v14", mode.label()),
                 ("c1-wave", "wave", "auto"),
                 ("c1-wave", "wave", ""),
-                ("c1-wave", "wave", if mode == RmsNormMode::Baseline {
-                    "wave-v15"
-                } else { "baseline" }),
+                (
+                    "c1-wave",
+                    "wave",
+                    if mode == RmsNormMode::Baseline {
+                        "wave-v15"
+                    } else {
+                        "baseline"
+                    },
+                ),
             ] {
                 assert!(profile_metadata(&options, layer, attention, rmsnorm).is_err());
             }

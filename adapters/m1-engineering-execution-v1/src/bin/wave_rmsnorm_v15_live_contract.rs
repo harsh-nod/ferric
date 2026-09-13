@@ -49,7 +49,9 @@ impl Options {
                         return Err("duplicate option --rmsnorm-artifact".into());
                     }
                     rmsnorm_artifact = Some(PathBuf::from(
-                        arguments.next().ok_or("missing value for --rmsnorm-artifact")?,
+                        arguments
+                            .next()
+                            .ok_or("missing value for --rmsnorm-artifact")?,
                     ));
                 }
                 "--live-stdin"
@@ -91,7 +93,10 @@ impl Options {
             || self.live.pages != 512
             || self.rmsnorm_artifact.as_os_str().is_empty()
         {
-            return Err("V15 live requires ordered C1, context8192/pages512 and an explicit RMSNorm image".into());
+            return Err(
+                "V15 live requires ordered C1, context8192/pages512 and an explicit RMSNorm image"
+                    .into(),
+            );
         }
         Ok(())
     }
@@ -113,20 +118,34 @@ mod tests {
 
     fn arguments(mode: &str) -> Vec<String> {
         [
-            "--source", "source",
-            "--target-artifact", "target",
-            "--target-head-artifact", "head",
-            "--argmax-artifact", "argmax",
-            "--worker", "worker",
-            "--worker-sha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--device-unique-id", "1",
-            "--submission", "ordered",
-            "--context", "8192",
-            "--pages", "512",
-            "--max-batches", "1000000",
-            "--layer-projection", "c1-wave",
-            "--rmsnorm-mode", mode,
-            "--rmsnorm-artifact", "rmsnorm",
+            "--source",
+            "source",
+            "--target-artifact",
+            "target",
+            "--target-head-artifact",
+            "head",
+            "--argmax-artifact",
+            "argmax",
+            "--worker",
+            "worker",
+            "--worker-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "--device-unique-id",
+            "1",
+            "--submission",
+            "ordered",
+            "--context",
+            "8192",
+            "--pages",
+            "512",
+            "--max-batches",
+            "1000000",
+            "--layer-projection",
+            "c1-wave",
+            "--rmsnorm-mode",
+            mode,
+            "--rmsnorm-artifact",
+            "rmsnorm",
             "--live-stdin",
             "--allow-unauthenticated-machine-code",
             "--runtime-cache-admission",
@@ -134,7 +153,9 @@ mod tests {
             "--queue-rollover",
             "--disable-prefix-cache",
             "--prune-output-head",
-        ].map(str::to_owned).to_vec()
+        ]
+        .map(str::to_owned)
+        .to_vec()
     }
 
     #[test]
@@ -146,14 +167,33 @@ mod tests {
             let live = options.live;
             assert_eq!((ROWS, CHUNK, live.context, live.pages), (32, 16, 8192, 512));
             assert_eq!(live.submission, Submission::Ordered);
-            assert!(live.runtime.cache_admission && live.runtime.operational
-                && live.runtime.rollover && live.runtime.ordered_batches);
-            assert!(!live.runtime.sequences && !live.runtime.profile
-                && !live.runtime.shared_full_currentness);
-            assert_eq!(live.limits().unwrap().physical_token_capacity().unwrap(), 8192);
-            snapshots.push((live.source, live.target_artifact, live.target_head_artifact,
-                live.argmax_artifact, options.rmsnorm_artifact, live.worker,
-                live.worker_sha256, live.device, live.max_batches, live.host_timing));
+            assert!(
+                live.runtime.cache_admission
+                    && live.runtime.operational
+                    && live.runtime.rollover
+                    && live.runtime.ordered_batches
+            );
+            assert!(
+                !live.runtime.sequences
+                    && !live.runtime.profile
+                    && !live.runtime.shared_full_currentness
+            );
+            assert_eq!(
+                live.limits().unwrap().physical_token_capacity().unwrap(),
+                8192
+            );
+            snapshots.push((
+                live.source,
+                live.target_artifact,
+                live.target_head_artifact,
+                live.argmax_artifact,
+                options.rmsnorm_artifact,
+                live.worker,
+                live.worker_sha256,
+                live.device,
+                live.max_batches,
+                live.host_timing,
+            ));
         }
         assert_eq!(snapshots[0], snapshots[1]);
     }
@@ -162,16 +202,29 @@ mod tests {
     fn v15_live_requires_explicit_modes_images_and_every_common_flag() {
         let args = arguments("baseline");
         for index in 0..args.len() {
-            if !args[index].starts_with("--") { continue; }
+            if !args[index].starts_with("--") {
+                continue;
+            }
             let mut missing = args.clone();
             missing.remove(index);
-            assert!(Options::parse(missing.into_iter()).is_err(), "{}", args[index]);
+            assert!(
+                Options::parse(missing.into_iter()).is_err(),
+                "{}",
+                args[index]
+            );
             let mut duplicate = args.clone();
             duplicate.push(args[index].clone());
-            assert!(Options::parse(duplicate.into_iter()).is_err(), "{}", args[index]);
+            assert!(
+                Options::parse(duplicate.into_iter()).is_err(),
+                "{}",
+                args[index]
+            );
         }
-        for (flag, value) in [("--rmsnorm-mode", "wave-v15"),
-            ("--rmsnorm-artifact", "another"), ("--layer-projection", "c1-wave")] {
+        for (flag, value) in [
+            ("--rmsnorm-mode", "wave-v15"),
+            ("--rmsnorm-artifact", "another"),
+            ("--layer-projection", "c1-wave"),
+        ] {
             let mut duplicate = args.clone();
             duplicate.extend([flag.into(), value.into()]);
             assert!(Options::parse(duplicate.into_iter()).is_err());
@@ -181,21 +234,33 @@ mod tests {
     #[test]
     fn v15_live_rejects_other_arithmetic_geometry_and_runtime_profiles() {
         for (flag, value) in [
-            ("--rmsnorm-mode", ""), ("--rmsnorm-mode", "wave"),
-            ("--rmsnorm-mode", "Wave-v15"), ("--rmsnorm-mode", "auto"),
-            ("--rmsnorm-artifact", ""), ("--layer-projection", "mfma"),
-            ("--submission", "synchronous"), ("--context", "256"),
-            ("--context", "8193"), ("--pages", "16"), ("--pages", "513"),
+            ("--rmsnorm-mode", ""),
+            ("--rmsnorm-mode", "wave"),
+            ("--rmsnorm-mode", "Wave-v15"),
+            ("--rmsnorm-mode", "auto"),
+            ("--rmsnorm-artifact", ""),
+            ("--layer-projection", "mfma"),
+            ("--submission", "synchronous"),
+            ("--context", "256"),
+            ("--context", "8193"),
+            ("--pages", "16"),
+            ("--pages", "513"),
         ] {
             let mut args = arguments("wave-v15");
             let index = args.iter().position(|argument| argument == flag).unwrap();
             args[index + 1] = value.into();
             assert!(Options::parse(args.into_iter()).is_err(), "{flag} {value}");
         }
-        for extra in [vec!["--runtime-ordered-batches"], vec!["--runtime-sequences"],
-            vec!["--runtime-profile"], vec!["--peer-shared-full-currentness"],
-            vec!["--attention", "query-hoist-v14"], vec!["--argmax-mode", "wave-v11"],
-            vec!["--query-hoist-artifact", "v14"], vec!["--prefix-cache"]] {
+        for extra in [
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-sequences"],
+            vec!["--runtime-profile"],
+            vec!["--peer-shared-full-currentness"],
+            vec!["--attention", "query-hoist-v14"],
+            vec!["--argmax-mode", "wave-v11"],
+            vec!["--query-hoist-artifact", "v14"],
+            vec!["--prefix-cache"],
+        ] {
             let mut args = arguments("wave-v15");
             args.extend(extra.into_iter().map(str::to_owned));
             assert!(Options::parse(args.into_iter()).is_err());
@@ -204,9 +269,21 @@ mod tests {
 
     #[test]
     fn v15_live_preserves_option_shaped_path_values() {
-        for flag in ["--source", "--target-artifact", "--target-head-artifact",
-            "--argmax-artifact", "--rmsnorm-artifact", "--worker", "--host-timing"] {
-            for value in ["--rmsnorm-mode", "--rmsnorm-artifact", "--layer-projection", "--live-stdin"] {
+        for flag in [
+            "--source",
+            "--target-artifact",
+            "--target-head-artifact",
+            "--argmax-artifact",
+            "--rmsnorm-artifact",
+            "--worker",
+            "--host-timing",
+        ] {
+            for value in [
+                "--rmsnorm-mode",
+                "--rmsnorm-artifact",
+                "--layer-projection",
+                "--live-stdin",
+            ] {
                 let mut args = arguments("wave-v15");
                 if flag == "--host-timing" {
                     args.extend([flag.into(), value.into()]);
@@ -244,7 +321,10 @@ mod tests {
             }
             for layer in ["mfma", "c1-wave"] {
                 let mut old = old.clone();
-                let index = old.iter().position(|argument| argument == "--layer-projection").unwrap();
+                let index = old
+                    .iter()
+                    .position(|argument| argument == "--layer-projection")
+                    .unwrap();
                 old[index + 1] = layer.into();
                 let parsed = layer_c1_wave_live_contract::Options::parse(old.into_iter()).unwrap();
                 assert_eq!(parsed.layer_projection.label(), layer);
