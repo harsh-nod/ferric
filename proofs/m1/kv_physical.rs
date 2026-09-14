@@ -30,6 +30,11 @@ use vstd::prelude::*;
 verus! {
 
 /// Strongest current verified initialized speculative-KV success boundary.
+///
+/// Equal role cursors before the round are equal afterward exactly for partial
+/// acceptance. Full acceptance leaves draft one token behind target, with no
+/// rejected suffix in either role. This relation does not observe serving
+/// policy or establish that the missing draft token has been executed.
 pub open spec fn m1_initialized_speculative_kv_success(
     before: &IsolatedRequestKv,
     after: &IsolatedRequestKv,
@@ -85,6 +90,22 @@ pub open spec fn m1_initialized_speculative_kv_success(
         } else {
             0
         }
+    &&& index.target_pre_committed == index.draft_pre_committed ==> {
+        &&& (after.projection_spec().target.committed_tokens
+                == after.projection_spec().draft.committed_tokens)
+            == (outcome.accepted_draft_tokens < index.draft_token_count)
+        &&& if outcome.accepted_draft_tokens < index.draft_token_count {
+            after.projection_spec().target.resident_tokens
+                == after.projection_spec().draft.resident_tokens
+        } else {
+            &&& after.projection_spec().target.committed_tokens as int
+                == after.projection_spec().draft.committed_tokens as int + 1
+            &&& after.projection_spec().target.resident_tokens as int
+                == after.projection_spec().draft.resident_tokens as int + 1
+            &&& index.target_tentative.end == outcome.target_commit_end
+            &&& index.draft_tentative.end == outcome.draft_commit_end
+        }
+    }
 }
 
 /// Exact failure frame for speculative KV settlement.
