@@ -1300,6 +1300,90 @@ pub closed spec fn initialized_draft_catchup_cursor_pair(
     &&& target.committed_tokens == draft.resident_tokens
 }
 
+pub closed spec fn draft_catchup_initialization_enabled(
+    target: &PhysicalKvState,
+    draft: &PhysicalKvState,
+    request: RequestId,
+    parent: Qwen3PlanSelection,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> bool {
+    &&& lifecycle_matches(target.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(target.request, request)
+    &&& target.selection == parent
+    &&& parent.role == Qwen3ModelRole::Target8B
+    &&& selection.role == Qwen3ModelRole::Draft06B
+    &&& target.resident_tokens == target.committed_tokens
+    &&& target.committed_tokens as int == logical_position as int + 1
+    &&& draft.committed_tokens == logical_position
+    &&& write_token_enabled(draft, request, selection, logical_position)
+}
+
+/// Initializes the one draft token at the actual maintenance write point.
+///
+/// The target is the immutable physical owner, not a copied projection. These
+/// checks establish the cursor pair without assuming the engine wrapper's
+/// request or cursor correspondence. They do not authenticate the parent
+/// profile, page lease, queue completion, or device write.
+///
+/// # Errors
+///
+/// Rejects mismatched authority, roles, cursors, or physical write eligibility
+/// without changing the selected state at helper entry. A preceding caller
+/// page append is outside this frame and remains owned by that caller.
+pub fn initialize_draft_catchup_kv(
+    target: &PhysicalKvState,
+    selected: &mut PhysicalKvState,
+    request: RequestId,
+    parent: Qwen3PlanSelection,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == draft_catchup_initialization_enabled(
+            target, old(selected), request, parent, selection, logical_position,
+        ),
+        result.is_ok() ==> initialized_draft_catchup_cursor_pair(
+            target, final(selected), request, selection,
+        ),
+        result.is_ok() ==> write_at_transition(
+            old(selected), final(selected), logical_position,
+        ),
+        result.is_ok() ==> {
+            &&& old(selected).abstraction_spec().committed_tokens == logical_position
+            &&& final(selected).abstraction_spec().committed_tokens == logical_position
+            &&& final(selected).abstraction_spec().resident_tokens as int
+                == logical_position as int + 1
+        },
+        result.is_err() ==> *final(selected) == *old(selected),
+{
+    proof {
+        reveal(draft_catchup_initialization_enabled);
+        reveal(initialized_draft_catchup_cursor_pair);
+        reveal(write_token_enabled);
+        reveal(write_at_transition);
+        reveal(write_token_transition);
+        reveal(PhysicalKvState::immutable_frame);
+        reveal(PhysicalKvState::abstraction_spec);
+    }
+    validate_active_authority(target, request, parent)?;
+    if !same_role(parent.role, Qwen3ModelRole::Target8B)
+        || !same_role(selection.role, Qwen3ModelRole::Draft06B)
+    {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if logical_position >= M1_MAX_CONTEXT_TOKENS {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    if target.resident_tokens != target.committed_tokens
+        || target.committed_tokens != logical_position + 1
+        || selected.committed_tokens != logical_position
+    {
+        return Err(PhysicalKvError::LogicalPositionMismatch);
+    }
+    write_physical_token(selected, request, selection, logical_position)
+}
+
 /// Commits the one initialized token used by the engine's draft catch-up path.
 ///
 /// Epoch and accepted-count checks execute here even when the caller has
@@ -2685,6 +2769,152 @@ mod tests {
         commit_physical_kv(&mut target, request(), target_selection, committed + 1).unwrap();
         commit_physical_kv(&mut draft, request(), draft_selection, committed).unwrap();
         (target, draft, draft_selection)
+    }
+
+    fn prepared_catchup_pair(
+        bucket: Qwen3PlanBucket,
+        committed: u32,
+    ) -> (PhysicalKvState, PhysicalKvState, Qwen3PlanSelection) {
+        let parent = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        };
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..parent
+        };
+        let mut target = PhysicalKvState::new(request(), parent).unwrap();
+        let mut draft = PhysicalKvState::new(request(), selection).unwrap();
+        for (state, role_selection, resident) in [
+            (&mut target, parent, committed + 1),
+            (&mut draft, selection, committed),
+        ] {
+            for page in 0..(committed + 1).div_ceil(M1_KV_PAGE_TOKENS) {
+                let count = (resident - page * M1_KV_PAGE_TOKENS).min(M1_KV_PAGE_TOKENS);
+                append_and_write(state, role_selection, page, count);
+            }
+            commit_physical_kv(state, request(), role_selection, resident).unwrap();
+        }
+        (target, draft, selection)
+    }
+
+    #[test]
+    fn catchup_initialization_establishes_cursor_pair_before_one_token_commit() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for committed in [0, 15, 16, 127, 128, 143, 144, 8191] {
+                let (target, mut draft, selection) = prepared_catchup_pair(bucket, committed);
+                let parent = target.selection;
+                let target_logical = target.logical_state();
+                let target_table = target.page_table;
+                let target_slots = target.page_slots;
+                let draft_table = draft.page_table;
+                let draft_pages = draft.page_count;
+                initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    parent,
+                    selection,
+                    committed,
+                )
+                .unwrap();
+                assert_eq!(draft.request, request());
+                assert_eq!(draft.selection, selection);
+                assert_eq!(draft.resident_tokens, committed + 1);
+                assert_eq!(draft.committed_tokens, committed);
+                assert_eq!(draft.page_table, draft_table);
+                assert_eq!(draft.page_count, draft_pages);
+                assert_eq!(target.logical_state(), target_logical);
+                assert_eq!(target.page_table, target_table);
+                assert_eq!(target.page_slots, target_slots);
+
+                let initialized_logical = draft.logical_state();
+                let initialized_slots = draft.page_slots;
+                assert!(initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    parent,
+                    selection,
+                    committed,
+                )
+                .is_err());
+                assert_eq!(draft.logical_state(), initialized_logical);
+                assert_eq!(draft.page_table, draft_table);
+                assert_eq!(draft.page_slots, initialized_slots);
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                )
+                .unwrap();
+                assert_eq!(draft.committed_tokens, target.committed_tokens);
+                assert_eq!(draft.resident_tokens, target.resident_tokens);
+            }
+        }
+    }
+
+    #[test]
+    fn catchup_initialization_rejects_authority_cursor_and_page_drift_without_mutation() {
+        for case in 0..13 {
+            let (mut target, mut draft, mut selection) =
+                prepared_catchup_pair(Qwen3PlanBucket::SpeculativeS1K16C8192, 15);
+            let mut parent = target.selection;
+            let mut supplied_request = request();
+            let mut position = 15;
+            let other_request = RequestId::new(request().slot(), request().generation() + 1);
+            match case {
+                0 => target.request = other_request,
+                1 => draft.request = other_request,
+                2 => supplied_request = other_request,
+                3 => parent = selection,
+                4 => selection = parent,
+                5 => target.resident_tokens -= 1,
+                6 => target.committed_tokens -= 1,
+                7 => draft.committed_tokens -= 1,
+                8 => draft.resident_tokens -= 1,
+                9 => position += 1,
+                10 => draft.page_slots[0].generation += 1,
+                11 => draft.page_slots[0].initialized_prefix = 0,
+                12 => position = M1_MAX_CONTEXT_TOKENS,
+                _ => unreachable!(),
+            }
+            let before_logical = draft.logical_state();
+            let before_request = draft.request;
+            let before_selection = draft.selection;
+            let before_capacity = draft.max_context_tokens;
+            let before_page_count = draft.page_count;
+            let before_table = draft.page_table;
+            let before_slots = draft.page_slots;
+            assert!(
+                initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    supplied_request,
+                    parent,
+                    selection,
+                    position,
+                )
+                .is_err(),
+                "hostile case {case}"
+            );
+            assert_eq!(draft.logical_state(), before_logical);
+            assert_eq!(draft.request, before_request);
+            assert_eq!(draft.selection, before_selection);
+            assert_eq!(draft.max_context_tokens, before_capacity);
+            assert_eq!(draft.page_count, before_page_count);
+            assert_eq!(draft.page_table, before_table);
+            assert_eq!(draft.page_slots, before_slots);
+        }
     }
 
     #[test]

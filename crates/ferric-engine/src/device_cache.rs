@@ -51,7 +51,7 @@ use ferric_build::{
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::paged_kv_refinement::{
-    commit_initialized_draft_catchup_kv, PhysicalKvCatchupCommitError,
+    commit_initialized_draft_catchup_kv, initialize_draft_catchup_kv, PhysicalKvCatchupCommitError,
 };
 use ferric_spec::{
     append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
@@ -6810,12 +6810,24 @@ impl ActiveDeviceKvCache {
                 cache.active_pages.push(lease);
             }
 
-            let write_result = write_physical_token(
-                &mut common.role_mut(role).physical,
-                binding.request,
-                binding.selection,
-                logical_position,
-            );
+            let write_result = match binding.purpose {
+                PendingStepWritePurpose::DraftCatchup { parent, .. } => {
+                    initialize_draft_catchup_kv(
+                        &common.target.physical,
+                        &mut common.draft.physical,
+                        binding.request,
+                        parent,
+                        binding.selection,
+                        logical_position,
+                    )
+                }
+                PendingStepWritePurpose::Ordinary => write_physical_token(
+                    &mut common.role_mut(role).physical,
+                    binding.request,
+                    binding.selection,
+                    logical_position,
+                ),
+            };
             if let Err(error) = write_result {
                 let unappended_page_leases = new_page_leases.collect();
                 return DeviceKvStepCompletionOutcome::Poisoned(PoisonedDeviceKvStepCompletion {
@@ -9546,6 +9558,72 @@ mod tests {
                 assert_eq!(cache.projection().target.committed_tokens, expected);
             }
         }
+    }
+
+    #[test]
+    fn draft_catchup_initialization_poison_retains_appended_page_and_completion() {
+        let committed = 16_u32;
+        let mut cache = catchup_cache(Qwen3PlanBucket::SpeculativeS1K4C8192, committed);
+        let parent = cache.common.target.selection();
+        let mut storage = M1DraftCatchupKvWriteHostStorageV1::try_new().unwrap();
+        let pending = cache
+            .reserve_step_write_for_purpose(
+                request(),
+                Qwen3ModelRole::Draft06B,
+                committed,
+                1,
+                CompletionEpoch::new(32),
+                leases(Qwen3ModelRole::Draft06B, 1, 1, 72),
+                PendingStepWritePurpose::DraftCatchup {
+                    parent,
+                    prior_epoch: CompletionEpoch::new(31),
+                },
+                Some(&mut storage),
+            )
+            .unwrap();
+
+        let other_request = RequestId::new(request().slot(), request().generation() + 1);
+        let mut drifted_target = PhysicalKvState::new(other_request, parent).unwrap();
+        for position in 0..committed + 1 {
+            if position % M1_KV_PAGE_TOKENS == 0 {
+                let page =
+                    cache.common.target.active_pages[(position / M1_KV_PAGE_TOKENS) as usize].page;
+                append_physical_page(&mut drifted_target, other_request, parent, page).unwrap();
+            }
+            write_physical_token(&mut drifted_target, other_request, parent, position).unwrap();
+        }
+        commit_physical_kv(&mut drifted_target, other_request, parent, committed + 1).unwrap();
+        cache.common.target.physical = drifted_target;
+        let target_before = cache.projection().target;
+        let draft_pages_before = cache.common.draft.active_pages.len();
+
+        let DeviceKvStepCompletionOutcome::Poisoned(poisoned) = complete_step(cache, pending, 32)
+        else {
+            panic!("physical target request drift must retain poisoned custody");
+        };
+        assert_eq!(
+            poisoned.error,
+            DeviceKvCacheError::Physical(PhysicalKvError::RequestMismatch)
+        );
+        assert_eq!(poisoned.completion.epoch(), CompletionEpoch::new(32));
+        assert_eq!(poisoned.common.target.logical(), target_before);
+        assert_eq!(poisoned.common.draft.logical().committed_tokens, committed);
+        assert_eq!(poisoned.common.draft.logical().resident_tokens, committed);
+        assert_eq!(
+            poisoned.common.draft.active_pages.len(),
+            draft_pages_before + 1
+        );
+        assert_eq!(
+            poisoned.common.draft.physical.page_count() as usize,
+            draft_pages_before + 1
+        );
+        assert_eq!(
+            poisoned.common.draft.pending,
+            Some(PendingWriteState::Step(poisoned.binding))
+        );
+        assert_eq!(poisoned.page_table.len(), 2);
+        assert_eq!(poisoned.write_pages.len(), 1);
+        assert!(poisoned.unappended_page_leases.is_empty());
     }
 
     #[test]
