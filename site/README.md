@@ -9,6 +9,44 @@ locally, and remove the private stage after archiving evidence.
 
 ## September 14 Resident Checkpoint
 
+The current checkpoint records published fe2o3 `85255498a`, 539 backend tests,
+and 37 Ferric kernel host tests. The actual `d55/852` aggregate retry stayed
+within storage controls, but rejected an arithmetic-overflow proof obligation
+at semantic `bb97`, source fingerprint `01a6c27889e4`, line 373, attributed to
+paged `committed_tokens + query_token`. A same-source, same-native-MIR comparison
+stops at a prefill assertion with `829` and this paged assertion with `852`.
+Progression or regression remains unresolved pending isolated assertion checks;
+different first errors alone establish neither.
+The earlier 12 GiB resource stop remains separate. No image was produced.
+
+Authenticated resident K4/K8/K16 catch-up is integrated. It consumes the missing
+last accepted draft candidate, advances draft KV by one, emits zero served
+tokens, and restores the original speculative queue shape. Twenty focused
+host tests passed on the earlier `829` cohort. The exact `d55/852` engine gate
+passes 697 library tests (nine ignored), binary suites of 11, 2, 75 and 2 tests
+(two ignored in the 75-test suite), 171 doctests, and strict engine Clippy.
+The current adapter passes 109 tests (one ignored) and 37 policies; the owner
+passes 16 tests and three policies. Strict adapter and owner Clippy also passes.
+The exact `d55/852` release generator also passes `--check`: generated runner
+source matches the current renderer, not a produced native runner or image.
+No warmed allocation-free catch-up or native serving qualification is claimed.
+
+Full canonical target and draft prepack and reopen verification both pass on
+the exact `bed11/829` CLI. These producer results are not relabeled as `852`;
+they are model-data checks, not kernel execution, model parity or latency data.
+Actual source coverage matches 173 modules and 8,433 executable identities:
+181 new pending-Verus identities, 7,711 unverified identities in total, and
+722 unchanged existing verified labels. This does not establish new physical
+proofs. The separate `852` gate passes 32 locked graphs, 38 source-gate tests,
+31 verifier policies, six source-pin policies and three exact dependency
+inventory comparisons. All 33 M1 gates remain open; performance data is
+unchanged.
+
+### Earlier Diagnostic And Getter Checkpoints
+
+The following cohorts retain their original source identities and historical
+pending states. They are not relabeled by the current checkpoint above.
+
 The follow-up records published fe2o3 diagnostic `ae441`, rebased onto `836afb284`,
 and its separate backend/lineage/analysis/IR host suites. Actual aggregate
 extraction attributed the earlier divisor failure to paged GQA coordinates.

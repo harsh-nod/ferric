@@ -72,7 +72,17 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Latest compiler and catch-up integration"),
+    element("h3", "", "Current compiler and catch-up checkpoint"),
+    element("p", "", resident.integration.compiler.detail),
+    element("p", "", resident.integration.resident.detail),
+    element("p", "", resident.integration.host.detail),
+    element("h3", "", "Canonical target and draft preparation"),
+    element("p", "", resident.integration.prepack.detail),
+    element("h3", "", "Source coverage and dependency checks"),
+    element("p", "", resident.integration.coverage.detail),
+    element("p", "", resident.integration.sourcePolicy.detail),
+    element("h3", "", "Earlier diagnostic and getter checkpoints"),
+    element("p", "performance-scope", "The following cohorts retain their original compiler and Ferric identities; their pending states describe those earlier checkpoints."),
     element("p", "", resident.followup.compilerDiagnostic.detail),
     element("p", "", resident.followup.coordinateRepair.detail),
     element("p", "", resident.followup.runtimeGetter.detail),
@@ -92,11 +102,17 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
+    ["Tested published compiler pin", resident.integration.compiler.source],
+    ["Current private engine host snapshot", resident.integration.host.source],
+    ["Current source-policy evidence SHA-256", resident.integration.sourcePolicy.evidenceSha256],
+    ["Catch-up inventory evidence SHA-256", resident.integration.coverage.evidenceSha256],
+    ["Frozen canonical model producer", resident.integration.prepack.producerSource],
+    ["Canonical producer compiler pin", resident.integration.prepack.compilerSource],
     ["Published typed compiler diagnostic", resident.followup.compilerDiagnostic.source],
     ["Private literal-coordinate repair", resident.followup.coordinateRepair.source],
     ["Coordinate and getter evidence SHA-256", resident.followup.coordinateRepair.evidenceSha256],
     ["Published completed-read generation getter", resident.followup.runtimeGetter.source],
-    ["Private Ferric repin; combined validation pending", resident.followup.runtimeGetter.ferricPinSource],
+    ["Earlier private repin; then-pending combined validation", resident.followup.runtimeGetter.ferricPinSource],
     ["Private selected cursor-proof source", resident.followup.cursorProof.source],
     ["Cursor-proof compiler pin", resident.followup.cursorProof.compilerSource],
     ["Selected Verus evidence SHA-256", resident.followup.cursorProof.evidenceSha256],

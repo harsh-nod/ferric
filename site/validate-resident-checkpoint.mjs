@@ -9,18 +9,97 @@ export function validateResidentCheckpoint(value, updated) {
   const checkpoint = JSON.parse(JSON.stringify(value));
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
     "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuMeasurement",
-    "newPerformanceMeasurement", "overview", "followup", "selection", "host", "compiler", "remaining"]);
+    "newPerformanceMeasurement", "overview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
   assert.equal(updated, "2026-09-14");
   assert.equal(checkpoint.date, updated);
   assert.equal(checkpoint.implementationPrivate, true);
   assert.equal(checkpoint.m1OpenGates, 33);
-  for (const key of ["nativeServingQualified", "fullAcceptanceCatchupImplemented",
+  assert.equal(checkpoint.fullAcceptanceCatchupImplemented, true);
+  for (const key of ["nativeServingQualified",
     "newGpuMeasurement", "newPerformanceMeasurement"]) {
     assert.equal(checkpoint[key], false, key);
   }
   assert.equal(checkpoint.scope, "Private authenticated resident serving; host and compiler progress only");
-  assert(checkpoint.overview.includes("resident dispatch is still under integration and continuing full acceptance remains fail-closed"));
+  assert(checkpoint.overview.includes("draft KV catch-up is integrated and host-tested"));
   assert(checkpoint.overview.includes("All 33 M1 gates remain open; this checkpoint adds no GPU or performance result"));
+
+  const integration = checkpoint.integration;
+  exactKeys(integration, ["compiler", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  const currentCompiler = integration.compiler;
+  exactKeys(currentCompiler, ["source", "backendPassed", "kernelHostPassed", "emissionState",
+    "emissionBlock", "emissionSourceFingerprint", "emissionLine", "attributedExpression",
+    "compilerProgressionOrRegression", "imageProduced", "detail"]);
+  assert.equal(currentCompiler.source, "85255498a021ed2b7a1a511f99f577ee4b11d175");
+  assert.deepEqual([currentCompiler.backendPassed, currentCompiler.kernelHostPassed], [539, 37]);
+  assert.equal(currentCompiler.emissionState, "overflow-proof-rejected");
+  assert.deepEqual([currentCompiler.emissionBlock, currentCompiler.emissionSourceFingerprint,
+    currentCompiler.emissionLine], ["bb97", "01a6c27889e4", 373]);
+  assert.equal(currentCompiler.attributedExpression, "committed_tokens + query_token");
+  assert.equal(currentCompiler.compilerProgressionOrRegression, "unresolved");
+  assert.equal(currentCompiler.imageProduced, false);
+  assert(currentCompiler.detail.includes("actual d55/852 aggregate retry stays within its storage limits"));
+  assert(currentCompiler.detail.includes("rejects the paged committed_tokens + query_token arithmetic-overflow proof obligation"));
+  assert(currentCompiler.detail.includes("same-source, same-native-MIR comparison stops at a prefill assertion with 829 and this paged assertion with 852"));
+  assert(currentCompiler.detail.includes("Progression or regression remains unresolved pending isolated assertion checks"));
+  assert(currentCompiler.detail.includes("earlier 12 GiB resource stop remains retained separately"));
+  const currentResident = integration.resident;
+  exactKeys(currentResident, ["windows", "dispatchIntegrated", "focusedPassed", "focusedCompilerSource",
+    "maintenanceServedTokens", "warmedAllocationValidated", "detail"]);
+  assert.deepEqual(currentResident.windows, [4, 8, 16]);
+  assert.equal(currentResident.dispatchIntegrated, true);
+  assert.equal(currentResident.focusedPassed, 20);
+  assert.equal(currentResident.focusedCompilerSource, "82950a3cfc7b0192159fb7afcd1b89fb48d56053");
+  assert.equal(currentResident.maintenanceServedTokens, 0);
+  assert.equal(currentResident.warmedAllocationValidated, false);
+  assert(currentResident.detail.includes("missing last draft candidate before the next speculative round"));
+  assert(currentResident.detail.includes("not a native model-serving or warmed allocation-free qualification"));
+  const currentHost = integration.host;
+  exactKeys(currentHost, ["source", "compilerSource", "enginePassed", "engineIgnored", "binaryPassed",
+    "binaryIgnored", "doctestsPassed", "strictEngineClippyPassed", "strictAdapterClippyPassed", "strictOwnerClippyPassed",
+    "generatedRunnerSourceEqualityPassed",
+    "adapterPassed", "adapterIgnored", "adapterPoliciesPassed", "ownerPassed", "ownerPoliciesPassed", "detail"]);
+  assert.equal(currentHost.source, "d55fd00a44a01dce3f4c8c790b4736e2440a69fa");
+  assert.equal(currentHost.compilerSource, currentCompiler.source);
+  assert.deepEqual([currentHost.enginePassed, currentHost.engineIgnored, currentHost.doctestsPassed], [697, 9, 171]);
+  assert.deepEqual(currentHost.binaryPassed, [11, 2, 75, 2]);
+  assert.deepEqual(currentHost.binaryIgnored, [0, 0, 2, 0]);
+  assert.equal(currentHost.strictEngineClippyPassed, true);
+  assert.equal(currentHost.strictAdapterClippyPassed, true);
+  assert.equal(currentHost.strictOwnerClippyPassed, true);
+  assert.equal(currentHost.generatedRunnerSourceEqualityPassed, true);
+  assert.deepEqual([currentHost.adapterPassed, currentHost.adapterIgnored, currentHost.adapterPoliciesPassed,
+    currentHost.ownerPassed, currentHost.ownerPoliciesPassed], [109, 1, 37, 16, 3]);
+  assert(currentHost.detail.includes("generated runner source equality; this is not a native runner or image"));
+  assert(currentHost.detail.includes("do not include the earlier producer's prepack work or constitute hardware qualification"));
+  const coverage = integration.coverage;
+  exactKeys(coverage, ["modules", "identities", "existingVerified", "unverified", "addedPending",
+    "removed", "changedStatus", "newProofQualification", "evidenceSha256", "detail"]);
+  assert.deepEqual([coverage.modules, coverage.identities, coverage.existingVerified, coverage.unverified,
+    coverage.addedPending, coverage.removed, coverage.changedStatus], [173, 8433, 722, 7711, 181, 0, 0]);
+  assert.equal(coverage.identities, coverage.existingVerified + coverage.unverified);
+  assert.equal(coverage.newProofQualification, false);
+  assert.equal(coverage.evidenceSha256, "5001522110d67c40ac177aae320da36f842092e148dce0f752818eac87190ad7");
+  assert(coverage.detail.includes("722 existing verified labels remain unchanged"));
+  assert(coverage.detail.includes("not fresh whole-crate verification or a proof of physical catch-up"));
+  const sourcePolicy = integration.sourcePolicy;
+  exactKeys(sourcePolicy, ["compilerSource", "lockedGraphs", "sourceGatePassed", "verifierPassed",
+    "sourcePinPassed", "dependencyInventoriesEqual", "evidenceSha256", "detail"]);
+  assert.equal(sourcePolicy.compilerSource, currentCompiler.source);
+  assert.deepEqual([sourcePolicy.lockedGraphs, sourcePolicy.sourceGatePassed, sourcePolicy.verifierPassed,
+    sourcePolicy.sourcePinPassed, sourcePolicy.dependencyInventoriesEqual], [32, 38, 31, 6, 3]);
+  assert.equal(sourcePolicy.evidenceSha256, "1074fbf60b9643f13044c13ae2cd12a00502644371ab69a98efec38fce327f63");
+  assert(sourcePolicy.detail.includes("No dependency admission or proof-status upgrade was needed"));
+  const prepack = integration.prepack;
+  exactKeys(prepack, ["producerSource", "compilerSource", "roles", "fullCanonicalPrepackPassed",
+    "reopenVerificationPassed", "hardwareExecution", "detail"]);
+  assert.equal(prepack.producerSource, "bed11d00e49baae326a71cf3a7df36bf22336548");
+  assert.equal(prepack.compilerSource, "82950a3cfc7b0192159fb7afcd1b89fb48d56053");
+  assert.deepEqual(prepack.roles, ["Target8B", "Draft06B"]);
+  assert.equal(prepack.fullCanonicalPrepackPassed, true);
+  assert.equal(prepack.reopenVerificationPassed, true);
+  assert.equal(prepack.hardwareExecution, false);
+  assert(prepack.detail.includes("exact frozen bed11/829 CLI, not a relabeled 852 binary"));
+  assert(prepack.detail.includes("do not execute GPU kernels, establish model output parity or provide latency measurements"));
 
   const followup = checkpoint.followup;
   exactKeys(followup, ["compilerDiagnostic", "coordinateRepair", "runtimeGetter", "cursorProof", "catchup"]);
@@ -147,9 +226,61 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.implementationPrivate = false; },
     (x) => { x.m1OpenGates = 32; },
     (x) => { x.nativeServingQualified = true; },
-    (x) => { x.fullAcceptanceCatchupImplemented = true; },
+    (x) => { x.fullAcceptanceCatchupImplemented = false; },
     (x) => { x.newGpuMeasurement = true; },
     (x) => { x.newPerformanceMeasurement = true; },
+    (x) => { x.integration.compiler.source = x.followup.runtimeGetter.source; },
+    (x) => { x.integration.compiler.backendPassed += 1; },
+    (x) => { x.integration.compiler.kernelHostPassed += 1; },
+    (x) => { x.integration.compiler.emissionState = "produced"; },
+    (x) => { x.integration.compiler.emissionBlock = "bb81"; },
+    (x) => { x.integration.compiler.emissionSourceFingerprint = "09ab2715abb3"; },
+    (x) => { x.integration.compiler.emissionLine = 378; },
+    (x) => { x.integration.compiler.attributedExpression = "query_position + 1"; },
+    (x) => { x.integration.compiler.compilerProgressionOrRegression = "regression"; },
+    (x) => { x.integration.compiler.compilerProgressionOrRegression = "progression"; },
+    (x) => { x.integration.compiler.imageProduced = true; },
+    (x) => { x.integration.resident.windows.push(32); },
+    (x) => { x.integration.resident.dispatchIntegrated = false; },
+    (x) => { x.integration.resident.focusedPassed += 1; },
+    (x) => { x.integration.resident.focusedCompilerSource = x.integration.compiler.source; },
+    (x) => { x.integration.resident.maintenanceServedTokens = 1; },
+    (x) => { x.integration.resident.warmedAllocationValidated = true; },
+    (x) => { x.integration.host.source = x.integration.prepack.producerSource; },
+    (x) => { x.integration.host.compilerSource = x.integration.prepack.compilerSource; },
+    (x) => { x.integration.host.enginePassed += 1; },
+    (x) => { x.integration.host.engineIgnored = 0; },
+    (x) => { x.integration.host.binaryPassed[2] += 2; },
+    (x) => { x.integration.host.binaryIgnored[2] = 0; },
+    (x) => { x.integration.host.doctestsPassed += 1; },
+    (x) => { x.integration.host.strictEngineClippyPassed = false; },
+    (x) => { x.integration.host.strictAdapterClippyPassed = false; },
+    (x) => { x.integration.host.strictOwnerClippyPassed = false; },
+    (x) => { x.integration.host.generatedRunnerSourceEqualityPassed = false; },
+    (x) => { x.integration.host.adapterPassed += 1; },
+    (x) => { x.integration.host.adapterIgnored = 0; },
+    (x) => { x.integration.host.adapterPoliciesPassed += 1; },
+    (x) => { x.integration.host.ownerPassed += 1; },
+    (x) => { x.integration.host.ownerPoliciesPassed += 1; },
+    (x) => { x.integration.coverage.existingVerified += 181; },
+    (x) => { x.integration.coverage.unverified -= 181; },
+    (x) => { x.integration.coverage.addedPending = 0; },
+    (x) => { x.integration.coverage.removed = 1; },
+    (x) => { x.integration.coverage.changedStatus = 181; },
+    (x) => { x.integration.coverage.newProofQualification = true; },
+    (x) => { x.integration.coverage.evidenceSha256 = x.integration.sourcePolicy.evidenceSha256; },
+    (x) => { x.integration.sourcePolicy.compilerSource = x.integration.prepack.compilerSource; },
+    (x) => { x.integration.sourcePolicy.lockedGraphs += 1; },
+    (x) => { x.integration.sourcePolicy.sourceGatePassed += 1; },
+    (x) => { x.integration.sourcePolicy.verifierPassed += 1; },
+    (x) => { x.integration.sourcePolicy.sourcePinPassed += 1; },
+    (x) => { x.integration.sourcePolicy.dependencyInventoriesEqual = 2; },
+    (x) => { x.integration.prepack.producerSource = x.integration.host.source; },
+    (x) => { x.integration.prepack.compilerSource = x.integration.compiler.source; },
+    (x) => { x.integration.prepack.roles.pop(); },
+    (x) => { x.integration.prepack.fullCanonicalPrepackPassed = false; },
+    (x) => { x.integration.prepack.reopenVerificationPassed = false; },
+    (x) => { x.integration.prepack.hardwareExecution = true; },
     (x) => { x.selection.windows.push(32); },
     (x) => { x.selection.prefill = "S8/T128"; },
     (x) => { x.selection.legacyCanonicalBytesPreserved = false; },
