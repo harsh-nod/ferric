@@ -683,14 +683,26 @@ fn aggregate_paged_decode_authenticates_every_coordinate_divisor() {
 }
 
 fn paged_decode_coordinate_expressions() -> Vec<(String, syn::Expr)> {
-    let parsed = syn::parse_file(include_str!("../src/paged_decode.rs")).unwrap();
+    coordinate_expressions(
+        include_str!("../src/paged_decode.rs"),
+        "qwen3_paged_gqa_decode_bf16_f32_v1",
+    )
+}
+
+fn prefill_coordinate_expressions() -> Vec<(String, syn::Expr)> {
+    coordinate_expressions(
+        include_str!("../src/prefill.rs"),
+        "qwen3_gqa_prefill_causal_bf16_f32_v1",
+    )
+}
+
+fn coordinate_expressions(source: &str, symbol: &str) -> Vec<(String, syn::Expr)> {
+    let parsed = syn::parse_file(source).unwrap();
     let function = parsed
         .items
         .iter()
         .find_map(|item| match item {
-            Item::Fn(function) if function.sig.ident == "qwen3_paged_gqa_decode_bf16_f32_v1" => {
-                Some(function)
-            }
+            Item::Fn(function) if function.sig.ident == symbol => Some(function),
             _ => None,
         })
         .unwrap();
@@ -728,8 +740,10 @@ fn paged_decode_coordinate_expressions() -> Vec<(String, syn::Expr)> {
     expressions
 }
 
-#[test]
-fn aggregate_paged_decode_coordinate_operators_have_literal_nonzero_rhs() {
+fn assert_literal_nonzero_coordinate_divisors(
+    expressions: Vec<(String, syn::Expr)>,
+    expected_count: usize,
+) {
     use syn::visit::Visit;
     struct CoordinateDivisors(usize);
     impl<'ast> Visit<'ast> for CoordinateDivisors {
@@ -748,10 +762,31 @@ fn aggregate_paged_decode_coordinate_operators_have_literal_nonzero_rhs() {
         }
     }
     let mut divisors = CoordinateDivisors(0);
-    for (_, expression) in paged_decode_coordinate_expressions() {
+    for (_, expression) in expressions {
         divisors.visit_expr(&expression);
     }
-    assert_eq!(divisors.0, 18);
+    assert_eq!(divisors.0, expected_count);
+}
+
+#[test]
+fn aggregate_paged_decode_coordinate_operators_have_literal_nonzero_rhs() {
+    assert_literal_nonzero_coordinate_divisors(paged_decode_coordinate_expressions(), 18);
+}
+
+#[test]
+fn aggregate_prefill_coordinate_operators_have_literal_nonzero_rhs() {
+    assert_literal_nonzero_coordinate_divisors(prefill_coordinate_expressions(), 12);
+    let compact = include_str!("../src/prefill.rs")
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    for guard in [
+        "ifquery_heads==0{fe2o3_device::trap();}",
+        "iftokens==0{fe2o3_device::trap();}",
+        "ifgqa_group_size==0{fe2o3_device::trap();}",
+    ] {
+        assert_eq!(compact.matches(guard).count(), 1, "guard count for {guard}");
+    }
 }
 
 fn evaluate_coordinate(expression: &syn::Expr, values: &[(&str, usize)]) -> usize {
@@ -820,6 +855,47 @@ fn aggregate_paged_decode_literal_coordinates_match_all_profile_lanes() {
                 expected_position,
                 expected_position % profile.active_tokens,
                 expected_position / profile.active_tokens,
+                expected_head / profile.gqa_group_size,
+            ];
+            assert_eq!(
+                values[3..]
+                    .iter()
+                    .map(|(_, value)| *value)
+                    .collect::<Vec<_>>(),
+                expected,
+                "profile {profile:?}, vector {vector}, lane {}",
+                global % 64
+            );
+            assert!(expected[3] < profile.sequences);
+            assert!(expected[4] < 8);
+        }
+    }
+}
+
+#[test]
+fn aggregate_prefill_literal_coordinates_match_all_profile_lanes() {
+    use ferric_qwen3_all_kernels_device_v1::prefill::QWEN3_PREFILL_PROFILES_V1;
+    let expressions = prefill_coordinate_expressions();
+    assert_eq!(QWEN3_PREFILL_PROFILES_V1.len(), 8);
+    for profile in QWEN3_PREFILL_PROFILES_V1 {
+        for global in 0..profile.query_elements / 2 {
+            let vector = global / 64;
+            let mut values = vec![
+                ("target", usize::from(profile.query_heads == 32)),
+                ("vector", vector),
+                ("tokens", profile.tokens),
+            ];
+            for (name, expression) in &expressions {
+                let value = evaluate_coordinate(expression, &values);
+                values.push((name.as_str(), value));
+            }
+            let expected_head = vector % profile.query_heads;
+            let expected_position = vector / profile.query_heads;
+            let expected = [
+                expected_head,
+                expected_position,
+                expected_position % profile.tokens,
+                expected_position / profile.tokens,
                 expected_head / profile.gqa_group_size,
             ];
             assert_eq!(

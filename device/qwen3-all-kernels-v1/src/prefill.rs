@@ -211,16 +211,32 @@ pub fn qwen3_gqa_prefill_causal_bf16_f32_v1(
 
     let vector = global / 64;
     let local = global % 64;
-    let query_head = vector % query_heads;
-    let position = vector / query_heads;
-    let query_token = position % tokens;
+    let query_head = if target { vector % 32 } else { vector % 16 };
+    let position = if target { vector / 32 } else { vector / 16 };
+    let query_token = if tokens == 128 {
+        position % 128
+    } else if tokens == 512 {
+        position % 512
+    } else {
+        position % 2_048
+    };
     if query_token < 2_048 {
     } else {
         fe2o3_device::trap();
     }
     let key_limit = query_token + 1;
-    let sequence = position / tokens;
-    let kv_head = query_head / gqa_group_size;
+    let sequence = if tokens == 128 {
+        position / 128
+    } else if tokens == 512 {
+        position / 512
+    } else {
+        position / 2_048
+    };
+    let kv_head = if target {
+        query_head / 4
+    } else {
+        query_head / 2
+    };
     if sequence >= sequences || kv_head >= QWEN3_PREFILL_KV_HEADS_V1 {
         fe2o3_device::trap();
     }
