@@ -13,7 +13,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use arrayvec::ArrayVec;
 use ferric_spec::{
     completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
+    Qwen3PlanSelection, RequestId, TokenId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::{
@@ -85,6 +85,7 @@ pub(crate) struct M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
     generated: Box<[(RequestId, u32)]>,
     completed_rounds: u64,
     last_epoch: CompletionEpoch,
+    draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     physical_history: Option<crate::m1_queue_rearm::M1RearmRoundHistoryV1>,
 }
@@ -103,6 +104,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             generated,
             completed_rounds,
             last_epoch,
+            draft_catchup,
             prior_windows,
         } = lineage;
         let archived = Self {
@@ -114,6 +116,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             generated,
             completed_rounds,
             last_epoch,
+            draft_catchup,
             queue_wait_timeout,
             physical_history: None,
         };
@@ -131,6 +134,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             &self.generated,
             self.completed_rounds,
             self.last_epoch,
+            &self.draft_catchup,
             self.queue_wait_timeout,
             &self.physical_history,
         );
@@ -158,7 +162,139 @@ pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
     generated: Box<[(RequestId, u32)]>,
     completed_rounds: u64,
     last_epoch: CompletionEpoch,
+    draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
     pub(crate) prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+}
+
+/// Linear maintenance intent minted only after the speculative physical and
+/// logical completion owners have been joined. The copied token is not itself
+/// completion authority; the retained lineage and released queue remain required.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupPendingV1 {
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    completed_round: u64,
+    prior_epoch: CompletionEpoch,
+    epoch: CompletionEpoch,
+    draft_committed: u32,
+    target_committed: u32,
+    token: TokenId,
+    prior_dispatch_generation: u64,
+}
+
+impl M1AuthenticatedDraftCatchupPendingV1 {
+    pub(crate) const fn coordinator_identity(
+        &self,
+    ) -> crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1 {
+        self.coordinator_identity
+    }
+    pub(crate) const fn completed_round(&self) -> u64 {
+        self.completed_round
+    }
+    pub(crate) const fn parent(&self) -> Qwen3PlanSelection {
+        self.parent
+    }
+    pub(crate) const fn request(&self) -> RequestId {
+        self.request
+    }
+    pub(crate) const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+    pub(crate) const fn prior_epoch(&self) -> CompletionEpoch {
+        self.prior_epoch
+    }
+    pub(crate) const fn draft_committed(&self) -> u32 {
+        self.draft_committed
+    }
+    pub(crate) const fn target_committed(&self) -> u32 {
+        self.target_committed
+    }
+    pub(crate) const fn token(&self) -> TokenId {
+        self.token
+    }
+    pub(crate) const fn prior_dispatch_generation(&self) -> u64 {
+        self.prior_dispatch_generation
+    }
+}
+
+/// Created only by the authenticated maintenance completion join after physical
+/// draft settlement. Logical advancement borrows this same move-only witness.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupCompletedV1 {
+    pending: M1AuthenticatedDraftCatchupPendingV1,
+    dispatch_generation: u64,
+}
+
+impl M1AuthenticatedDraftCatchupCompletedV1 {
+    pub(crate) const fn pending(&self) -> &M1AuthenticatedDraftCatchupPendingV1 {
+        &self.pending
+    }
+    pub(crate) const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+}
+
+fn joined_draft_catchup_pending(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    outcome: &M1SpeculativeRoundOutcomeV1,
+    choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
+) -> Result<Option<M1AuthenticatedDraftCatchupPendingV1>, ()> {
+    let parent = outcome.selection();
+    if !matches!(
+        parent.bucket,
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+            | Qwen3PlanBucket::SpeculativeS1K8C8192
+            | Qwen3PlanBucket::SpeculativeS1K16C8192
+    ) {
+        return Ok(None);
+    }
+    let [member] = outcome.members() else {
+        return Err(());
+    };
+    if member.status() != M1SpeculativeMemberStatusV1::Active {
+        return Ok(None);
+    }
+    let snapshot = coordinator.member(member.request()).ok_or(())?;
+    let target_committed = member.target_settlement().commit_end();
+    let draft_committed = member.draft_settlement().commit_end();
+    if target_committed == draft_committed {
+        return Ok(None);
+    }
+    let k = choices.shape().draft_tokens();
+    let candidates = choices.draft_choices_for_lane(0).ok_or(())?;
+    let token = *candidates.last().ok_or(())?;
+    if parent.role != Qwen3ModelRole::Target8B
+        || parent.mode != Qwen3ExecutionMode::Speculative
+        || choices.shape().selection() != parent
+        || choices.live_sequences() != 1
+        || candidates.len() != usize::from(k)
+        || member.accepted_draft_tokens() != k
+        || member.accepted_prefix_tokens().last() != Some(&token)
+        || snapshot.status() != M1SpeculativeMemberStatusV1::Active
+        || snapshot.target_committed_tokens() != target_committed
+        || snapshot.draft_committed_tokens() != draft_committed
+        || draft_committed.checked_add(1) != Some(target_committed)
+        || outcome.coordinator_identity() != coordinator.identity()
+        || outcome.completed_round().checked_add(1) != Some(coordinator.next_round())
+        || coordinator.last_epoch() != Some(outcome.completed_epoch())
+        || choices.dispatch_generation() == 0
+    {
+        return Err(());
+    }
+    let epoch = outcome.completed_epoch().value().checked_add(1).ok_or(())?;
+    Ok(Some(M1AuthenticatedDraftCatchupPendingV1 {
+        coordinator_identity: coordinator.identity(),
+        parent,
+        request: member.request(),
+        completed_round: outcome.completed_round(),
+        prior_epoch: outcome.completed_epoch(),
+        epoch: CompletionEpoch::new(epoch),
+        draft_committed,
+        target_committed,
+        token,
+        prior_dispatch_generation: choices.dispatch_generation(),
+    }))
 }
 
 /// Stable association rejection before any executor exists.
@@ -4106,6 +4242,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: epoch,
+            draft_catchup: None,
             prior_windows: Vec::new(),
         };
         let prepared = match prepare_coordinator_round_core(
@@ -4265,7 +4402,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             coordinator,
             outcome,
             physical: (choices, physical),
-            lineage,
+            mut lineage,
         } = committed;
         let released = match release_m1_authenticated_completed_step_kv_pages_v1(physical) {
             Ok(released) => M1AuthenticatedLongLivedQueueReleasedRoundV1::initial(released),
@@ -4279,8 +4416,10 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 }));
             }
         };
+        let catchup = joined_draft_catchup_pending(&coordinator, &outcome, &choices);
         if validate_prior_association(&coordinator, &outcome, &released).is_err()
             || !validate_causal_lineage(&coordinator, &released, &lineage)
+            || catchup.is_err()
         {
             engine.quarantine_m1_queue_rearm_failure();
             return Err(Box::new(
@@ -4293,6 +4432,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
                 },
             ));
         }
+        lineage.draft_catchup = catchup.expect("joined catch-up preflight succeeded");
         Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
             executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 coordinator,
@@ -4539,7 +4679,7 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
         coordinator,
         outcome,
         physical: (choices, physical),
-        lineage,
+        mut lineage,
     } = committed;
     if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
         engine.quarantine_m1_queue_rearm_failure();
@@ -4601,8 +4741,10 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
     }
     match released {
         M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+            let catchup = joined_draft_catchup_pending(&coordinator, &outcome, &choices);
             if validate_prior_association(&coordinator, &outcome, &released).is_err()
                 || !validate_causal_lineage(&coordinator, &released, &lineage)
+                || catchup.is_err()
             {
                 engine.quarantine_m1_queue_rearm_failure();
                 return Err(Box::new(
@@ -4616,6 +4758,7 @@ fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const
                     },
                 ));
             }
+            lineage.draft_catchup = catchup.expect("joined catch-up preflight succeeded");
             Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
                 executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     coordinator,
@@ -4831,6 +4974,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: self.epoch,
+            draft_catchup: None,
             prior_windows: self.prior_windows,
         };
         prepare_coordinator_round_core(
@@ -5359,8 +5503,9 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 self.released.current_released().queue().shape(),
             ),
             active_count: self.active_count(),
-            inputs_match: inputs.recipe_workspace_plans.workspace_plans()
-                == Some(&inputs.preparation_workspace_plans)
+            inputs_match: self.lineage.draft_catchup.is_none()
+                && inputs.recipe_workspace_plans.workspace_plans()
+                    == Some(&inputs.preparation_workspace_plans)
                 && inputs
                     .recipe_workspace_plans
                     .workspace_plans()
@@ -6720,6 +6865,7 @@ mod tests {
             generated,
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(39),
+            draft_catchup: None,
             prior_windows: Vec::new(),
         }
     }
@@ -7584,6 +7730,7 @@ mod tests {
             generated: generated.into_boxed_slice(),
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(7),
+            draft_catchup: None,
             prior_windows: Vec::new(),
         };
         let _ = coordinator

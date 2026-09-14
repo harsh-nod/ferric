@@ -1067,6 +1067,9 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
     ) -> M1PhysicalRunnerRecipeOutcomeV1 {
         let selection = self.queue.custody().selection();
         let intent = match self.queue.shape() {
+            M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+                M1StepDispatchIntent::DraftCatchup(selection)
+            }
             M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(selection),
             M1PhysicalFixedBatchShapeV1::PairedPrefill => {
                 M1StepDispatchIntent::PairedPrefill(selection)
@@ -1086,6 +1089,9 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
     ) -> M1PhysicalRunnerRecipeOutcomeV1 {
         let selection = self.queue.custody().selection();
         let intent = match self.queue.shape() {
+            M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+                M1StepDispatchIntent::DraftCatchup(selection)
+            }
             M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(selection),
             M1PhysicalFixedBatchShapeV1::PairedPrefill => {
                 M1StepDispatchIntent::PairedPrefill(selection)
@@ -1261,7 +1267,9 @@ fn validate_authenticated_rearm_eligibility(
         | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
             selection.mode == Qwen3ExecutionMode::Speculative
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => false,
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            false
+        }
     };
     let qualification_supported = !qualification_logits_enabled
         || (shape == M1PhysicalFixedBatchShapeV1::TargetOnly
@@ -5659,7 +5667,8 @@ fn validate_kv_arena_ids(
     let expected_draft = match kind {
         M1FullStepWorkspaceInputKind::TargetOnly => None,
         M1FullStepWorkspaceInputKind::PairedPrefill
-        | M1FullStepWorkspaceInputKind::SpeculativeRound => Some(retained_draft),
+        | M1FullStepWorkspaceInputKind::SpeculativeRound
+        | M1FullStepWorkspaceInputKind::DraftCatchup => Some(retained_draft),
     };
     if fresh_draft != expected_draft {
         return Err(M1AuthenticatedQueueRearmPreflightErrorV1::DraftKvArena);

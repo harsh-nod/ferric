@@ -1665,6 +1665,9 @@ fn preflight_all<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
         });
     }
     let reservation_count = match reservations {
+        M1FullStepKvReservationCustodyV1::DraftCatchup { .. } => {
+            return Err(M1CompletedStepErrorV1::Shape);
+        }
         M1FullStepKvReservationCustodyV1::TargetOnly { target } => target.reservations().len(),
         M1FullStepKvReservationCustodyV1::PairedPrefill { draft, target } => {
             if draft.reservations().len() != target.reservations().len() {
@@ -1719,6 +1722,9 @@ fn preflight_all<const C: usize, R: M1CompletedStepReadbackCarrierV1>(
             return Err(M1CompletedStepErrorV1::Selection { lane });
         }
         let (rows, member_arithmetic) = match reservations {
+            M1FullStepKvReservationCustodyV1::DraftCatchup { .. } => {
+                return Err(M1CompletedStepErrorV1::Shape);
+            }
             M1FullStepKvReservationCustodyV1::TargetOnly { target } => {
                 let target = &target.reservations()[lane];
                 let semantics = record.semantics();
@@ -1852,6 +1858,9 @@ fn bind_work(
     mut bound: Vec<Option<BoundMemberWorkV1>>,
 ) -> Vec<Option<BoundMemberWorkV1>> {
     match reservations {
+        M1FullStepKvReservationCustodyV1::DraftCatchup { .. } => {
+            unreachable!("ordinary completion rejects maintenance before binding")
+        }
         M1FullStepKvReservationCustodyV1::TargetOnly { target } => {
             for ((member, arithmetic), target) in roster
                 .members

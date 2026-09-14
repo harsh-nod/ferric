@@ -32,9 +32,10 @@ use crate::{
     M1CompletionProgressWaitDiagnosticV1, M1PhysicalFixedBatchCustodyV1,
     M1PhysicalFixedBatchShapeV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationStepCustodyV1,
     M1ScheduledDispatchV1, M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
-    M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1, M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Nonzero wall-clock budget for one production authenticated queue wait.
@@ -466,6 +467,10 @@ impl<const N: usize> core::fmt::Debug for M1AuthenticatedPhysicalQueuePhaseSlotV
 #[must_use = "prepared authenticated queue custody must be submitted or retained"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalQueueSessionV1 {
+    /// One authenticated draft maintenance queue generation.
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     /// One complete target-only queue generation.
     TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
@@ -496,6 +501,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
             Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
         }
     }
 
@@ -514,6 +520,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
             Self::SpeculativeK8(case) => case.scheduled_dispatch(),
             Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+            Self::DraftCatchup(case) => case.scheduled_dispatch(),
         }
     }
 
@@ -526,6 +533,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             Self::SpeculativeK4(case) => case.device(),
             Self::SpeculativeK8(case) => case.device(),
             Self::SpeculativeK16(case) => case.device(),
+            Self::DraftCatchup(case) => case.device(),
         }
     }
 
@@ -538,6 +546,7 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             Self::SpeculativeK4(case) => close_unpublished_case(case),
             Self::SpeculativeK8(case) => close_unpublished_case(case),
             Self::SpeculativeK16(case) => close_unpublished_case(case),
+            Self::DraftCatchup(case) => close_unpublished_case(case),
         }
     }
 }
@@ -621,6 +630,10 @@ fn close_unpublished_case<const N: usize>(
 #[must_use = "published authenticated queue custody must be completed"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalPublishedQueueSessionV1 {
+    /// One authenticated draft maintenance queue generation.
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     /// One complete target-only queue generation.
     TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
@@ -659,6 +672,7 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
             Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
         }
     }
 
@@ -677,6 +691,7 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
             Self::SpeculativeK8(case) => case.scheduled_dispatch(),
             Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+            Self::DraftCatchup(case) => case.scheduled_dispatch(),
         }
     }
 
@@ -689,6 +704,7 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
             Self::SpeculativeK4(case) => case.device(),
             Self::SpeculativeK8(case) => case.device(),
             Self::SpeculativeK16(case) => case.device(),
+            Self::DraftCatchup(case) => case.device(),
         }
     }
 }
@@ -696,6 +712,10 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
 #[must_use = "completed authenticated queue custody must be recycled"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalCompletedQueueSessionV1 {
+    /// One authenticated draft maintenance queue generation.
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     /// One complete target-only queue generation.
     TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
@@ -734,6 +754,7 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
             Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
         }
     }
 
@@ -752,6 +773,7 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
             Self::SpeculativeK8(case) => case.scheduled_dispatch(),
             Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+            Self::DraftCatchup(case) => case.scheduled_dispatch(),
         }
     }
 
@@ -764,6 +786,7 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
             Self::SpeculativeK4(case) => case.device(),
             Self::SpeculativeK8(case) => case.device(),
             Self::SpeculativeK16(case) => case.device(),
+            Self::DraftCatchup(case) => case.device(),
         }
     }
 }
@@ -771,6 +794,10 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
 #[must_use = "recycled authenticated queue custody must be reused, detached, or released"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    /// One authenticated draft maintenance queue generation.
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     /// One complete target-only queue generation.
     TargetOnly(Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
     /// One complete paired-prefill queue generation.
@@ -800,6 +827,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK4(case) => close_recycled_case(case),
             Self::SpeculativeK8(case) => close_recycled_case(case),
             Self::SpeculativeK16(case) => close_recycled_case(case),
+            Self::DraftCatchup(case) => close_recycled_case(case),
         }
     }
 
@@ -812,6 +840,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
             Self::SpeculativeK16(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
         }
     }
 
@@ -830,6 +859,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK4(case) => case.scheduled_dispatch(),
             Self::SpeculativeK8(case) => case.scheduled_dispatch(),
             Self::SpeculativeK16(case) => case.scheduled_dispatch(),
+            Self::DraftCatchup(case) => case.scheduled_dispatch(),
         }
     }
 
@@ -842,6 +872,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             Self::SpeculativeK4(case) => case.device(),
             Self::SpeculativeK8(case) => case.device(),
             Self::SpeculativeK16(case) => case.device(),
+            Self::DraftCatchup(case) => case.device(),
         }
     }
 }
@@ -1299,6 +1330,17 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
             step,
         } = prepublication;
         match batch {
+            M1AuthenticatedPhysicalPacketBatchV1::DraftCatchup(batch) => finish_create(
+                create_case(
+                    ring_bytes,
+                    runner,
+                    CreateCaseInputV1(batch),
+                    step,
+                    M1PhysicalFixedBatchShapeV1::DraftCatchup,
+                ),
+                M1AuthenticatedPhysicalQueueSessionV1::DraftCatchup,
+                M1AuthenticatedPhysicalPacketBatchV1::DraftCatchup,
+            ),
             M1AuthenticatedPhysicalPacketBatchV1::TargetOnly(batch) => finish_create(
                 create_case(
                     ring_bytes,
@@ -1633,6 +1675,12 @@ impl M1AuthenticatedPhysicalQueueSessionV1 {
                 M1AuthenticatedPhysicalPublishedQueueSessionV1::SpeculativeK16,
                 Self::SpeculativeK16,
             ),
+            Self::DraftCatchup(case) => submit_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::DraftCatchup,
+                M1AuthenticatedPhysicalPublishedQueueSessionV1::DraftCatchup,
+                Self::DraftCatchup,
+            ),
         }
     }
 }
@@ -1828,6 +1876,11 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
                 M1PhysicalFixedBatchShapeV1::SpeculativeK16,
                 M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK16,
             ),
+            Self::DraftCatchup(case) => wait_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::DraftCatchup,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::DraftCatchup,
+            ),
         }
     }
 
@@ -1881,6 +1934,12 @@ impl M1AuthenticatedPhysicalPublishedQueueSessionV1 {
                 M1PhysicalFixedBatchShapeV1::SpeculativeK16,
                 timeout_ms,
                 M1AuthenticatedPhysicalCompletedQueueSessionV1::SpeculativeK16,
+            ),
+            Self::DraftCatchup(case) => wait_for_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::DraftCatchup,
+                timeout_ms,
+                M1AuthenticatedPhysicalCompletedQueueSessionV1::DraftCatchup,
             ),
         }
     }
@@ -1958,6 +2017,11 @@ impl M1AuthenticatedPhysicalCompletedQueueSessionV1 {
                 case,
                 M1PhysicalFixedBatchShapeV1::SpeculativeK16,
                 M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK16,
+            ),
+            Self::DraftCatchup(case) => recycle_variant(
+                case,
+                M1PhysicalFixedBatchShapeV1::DraftCatchup,
+                M1AuthenticatedPhysicalRecycledQueueSessionV1::DraftCatchup,
             ),
         }
     }
@@ -2072,6 +2136,11 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                 M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
                 Self::SpeculativeK16,
             ),
+            Self::DraftCatchup(case) => reuse_variant(
+                case,
+                M1AuthenticatedPhysicalQueueSessionV1::DraftCatchup,
+                Self::DraftCatchup,
+            ),
         }
     }
 }
@@ -2131,6 +2200,9 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             }
             Self::SpeculativeK16(case) => {
                 detach_case(case, M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+            }
+            Self::DraftCatchup(case) => {
+                detach_case(case, M1PhysicalFixedBatchShapeV1::DraftCatchup)
             }
         }
     }

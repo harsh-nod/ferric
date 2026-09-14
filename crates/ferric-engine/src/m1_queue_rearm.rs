@@ -2896,6 +2896,19 @@ fn requested_workspace_range(
         M1PhysicalBufferSourceV1::SpeculativeDraftChoices(row) => Ok(
             RearmRangeRequestV1::FreshWorkspace(M1FullStepWorkspaceRole::Target, row.range()),
         ),
+        M1PhysicalBufferSourceV1::DraftCatchupChoices(row) => {
+            if composition
+                .segment_binding(row.producer_segment())
+                .and_then(|binding| binding.catchup_choice_subrange())
+                != Some(row)
+            {
+                return Err(());
+            }
+            Ok(RearmRangeRequestV1::FreshWorkspace(
+                M1FullStepWorkspaceRole::Target,
+                row.range(),
+            ))
+        }
         M1PhysicalBufferSourceV1::SpeculativeDraftIterationMetadata {
             workspace,
             range,

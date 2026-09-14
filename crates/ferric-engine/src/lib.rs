@@ -403,10 +403,11 @@ pub use initialized_step_workspaces::{
 };
 pub use kv_workspace_authority::{
     bind_m1_kv_workspace_table_v1, bind_m1_speculative_draft_kv_round_workspace_table_v1,
-    BoundM1KvWorkspaceTableV1, BoundM1SpeculativeDraftKvRoundWorkspaceTableV1,
-    M1KvWorkspaceReservationCustodyV1, M1KvWorkspaceTableBindingErrorV1,
-    M1KvWorkspaceTableBindingFailureV1, M1SpeculativeDraftKvRoundBindingErrorV1,
-    M1SpeculativeDraftKvRoundBindingFailureV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
+    BoundM1DraftCatchupKvWorkspaceTableV1, BoundM1KvWorkspaceTableV1,
+    BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, M1KvWorkspaceReservationCustodyV1,
+    M1KvWorkspaceTableBindingErrorV1, M1KvWorkspaceTableBindingFailureV1,
+    M1SpeculativeDraftKvRoundBindingErrorV1, M1SpeculativeDraftKvRoundBindingFailureV1,
+    M1SpeculativeDraftKvRoundReservationCustodyV1,
 };
 pub use m1_completed_step::{
     complete_m1_authenticated_physical_step_v1, complete_m1_physical_step_v1,
@@ -676,9 +677,10 @@ pub use physical_fixed_batch::{
     build_m1_physical_fixed_batch_v1, M1PhysicalFixedBatchBuildErrorV1,
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
     M1PhysicalFixedBatchRowSetV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
-    M1PhysicalQueueBatchCustodyV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1PhysicalQueueBatchCustodyV1, M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 pub use physical_kernarg_recipe::{
     derive_m1_physical_kernarg_recipe_v1, AddresslessM1PhysicalKernargRecipeV1,
@@ -810,9 +812,10 @@ pub use step_dispatch_composition::{
 };
 pub use step_workspace_composition::{
     compose_addressless_m1_full_step_workspaces, AddresslessM1FullStepWorkspaceComposition,
-    M1FullStepWorkspaceCompositionError, M1FullStepWorkspaceCompositionFailure,
-    M1FullStepWorkspaceCompositionOutcome, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
-    M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding, M1SpeculativeDraftChoiceSubrange,
+    M1DraftCatchupChoiceSubrange, M1FullStepWorkspaceCompositionError,
+    M1FullStepWorkspaceCompositionFailure, M1FullStepWorkspaceCompositionOutcome,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
+    M1FullStepWorkspaceSegmentBinding, M1SpeculativeDraftChoiceSubrange,
     M1SpeculativeDraftMetadataSubrange,
 };
 pub use step_workspace_images::{

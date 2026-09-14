@@ -94,6 +94,12 @@ impl ComposedM1StepWorkspaceImageV1 {
 #[must_use = "all composed plan-and-image owners remain retained"]
 #[derive(Debug, Eq, PartialEq)]
 pub enum ComposedM1FullStepWorkspaceSetV1 {
+    /// Composed draft maintenance decode and completion-only workspaces.
+    DraftCatchup {
+        parent: Qwen3PlanSelection,
+        draft_decode: ComposedM1StepWorkspaceImageV1,
+        completion: ComposedM1StepWorkspaceImageV1,
+    },
     /// One composed target-only workspace.
     TargetOnly {
         /// Exact retained target plan and initialized image.
@@ -116,6 +122,17 @@ pub enum ComposedM1FullStepWorkspaceSetV1 {
 }
 
 impl ComposedM1FullStepWorkspaceSetV1 {
+    pub(crate) const fn draft_catchup(
+        parent: Qwen3PlanSelection,
+        draft_decode: ComposedM1StepWorkspaceImageV1,
+        completion: ComposedM1StepWorkspaceImageV1,
+    ) -> Self {
+        Self::DraftCatchup {
+            parent,
+            draft_decode,
+            completion,
+        }
+    }
     /// Wraps one composed target-only workspace owner.
     #[must_use = "the composed target workspace remains retained"]
     pub const fn target_only(target: ComposedM1StepWorkspaceImageV1) -> Self {
@@ -147,6 +164,7 @@ impl ComposedM1FullStepWorkspaceSetV1 {
     #[must_use]
     pub const fn kind(&self) -> M1FullStepWorkspaceInputKind {
         match self {
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
@@ -161,6 +179,18 @@ impl ComposedM1FullStepWorkspaceSetV1 {
     #[must_use = "the exact plans and complete images remain retained"]
     pub fn into_allocation_inputs(self) -> (M1FullStepWorkspacePlans, M1FullStepWorkspaceImagesV1) {
         match self {
+            Self::DraftCatchup {
+                parent,
+                draft_decode,
+                completion,
+            } => {
+                let (draft_plan, draft_image) = draft_decode.into_parts();
+                let (completion_plan, completion_image) = completion.into_parts();
+                (
+                    M1FullStepWorkspacePlans::draft_catchup(parent, draft_plan, completion_plan),
+                    M1FullStepWorkspaceImagesV1::draft_catchup(draft_image, completion_image),
+                )
+            }
             Self::TargetOnly { target } => {
                 let (target_plan, target_image) = target.into_parts();
                 (

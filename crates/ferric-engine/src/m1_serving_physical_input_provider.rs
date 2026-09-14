@@ -1008,6 +1008,7 @@ fn workspace_kind(plan: M1ServingPlanV1) -> M1FullStepWorkspaceInputKind {
     match plan.shape() {
         M1PhysicalFixedBatchShapeV1::PairedPrefill => M1FullStepWorkspaceInputKind::PairedPrefill,
         M1PhysicalFixedBatchShapeV1::TargetOnly => M1FullStepWorkspaceInputKind::TargetOnly,
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => M1FullStepWorkspaceInputKind::DraftCatchup,
         M1PhysicalFixedBatchShapeV1::SpeculativeK4
         | M1PhysicalFixedBatchShapeV1::SpeculativeK8
         | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
@@ -1022,6 +1023,9 @@ fn dispatch_intent(plan: M1ServingPlanV1) -> M1StepDispatchIntent {
             M1StepDispatchIntent::PairedPrefill(plan.target())
         }
         M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(plan.target()),
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            M1StepDispatchIntent::DraftCatchup(plan.target())
+        }
         M1PhysicalFixedBatchShapeV1::SpeculativeK4
         | M1PhysicalFixedBatchShapeV1::SpeculativeK8
         | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {

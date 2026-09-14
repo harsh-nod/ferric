@@ -226,6 +226,8 @@ pub(crate) mod test_support {
 /// Fail-closed device-cache rejection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DeviceKvCacheError {
+    /// Required preallocated maintenance reservation storage is absent or too small.
+    StepHostStorageCapacity,
     MissingDeviceIdentity,
     MissingAllocationIdentity,
     ProcessorMismatch,
@@ -2674,6 +2676,14 @@ impl M1PartitionedModelMemoryKvPoolV1 {
         workspaces.speculative_draft_choice_dispatch_range(&self.allocations, producer_segment)
     }
 
+    pub(crate) fn catchup_choice_dispatch_range(
+        &self,
+        workspaces: &BoundM1FullStepWorkspaceSubleases,
+        producer_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        workspaces.catchup_choice_dispatch_range(&self.allocations, producer_segment)
+    }
+
     pub(crate) fn speculative_draft_position_dispatch_range(
         &self,
         workspaces: &BoundM1FullStepWorkspaceSubleases,
@@ -4127,6 +4137,54 @@ struct PendingStepWriteBinding {
     end_tokens: u32,
     epoch: CompletionEpoch,
     write_generation: u64,
+    purpose: PendingStepWritePurpose,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PendingStepWritePurpose {
+    Ordinary,
+    DraftCatchup {
+        parent: Qwen3PlanSelection,
+        prior_epoch: CompletionEpoch,
+    },
+}
+
+fn step_write_active_matches(
+    selection: Qwen3PlanSelection,
+    active_tokens: u32,
+    epoch: CompletionEpoch,
+    ordinary_active_tokens: u32,
+    purpose: PendingStepWritePurpose,
+) -> bool {
+    match purpose {
+        PendingStepWritePurpose::Ordinary => match selection.mode {
+            Qwen3ExecutionMode::Prefill => active_tokens <= ordinary_active_tokens,
+            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
+                active_tokens == ordinary_active_tokens
+            }
+        },
+        PendingStepWritePurpose::DraftCatchup {
+            parent,
+            prior_epoch,
+        } => {
+            parent.role == Qwen3ModelRole::Target8B
+                && parent.mode == Qwen3ExecutionMode::Speculative
+                && matches!(
+                    parent.bucket,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192
+                        | Qwen3PlanBucket::SpeculativeS1K8C8192
+                        | Qwen3PlanBucket::SpeculativeS1K16C8192
+                )
+                && selection
+                    == (Qwen3PlanSelection {
+                        role: Qwen3ModelRole::Draft06B,
+                        ..parent
+                    })
+                && active_tokens == 1
+                && prior_epoch.value() != 0
+                && prior_epoch.value().checked_add(1) == Some(epoch.value())
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -4233,10 +4291,31 @@ impl DeviceKvStepPageBinding {
 #[derive(Debug, PartialEq, Eq)]
 pub struct PendingDeviceKvStepWrite {
     binding: PendingStepWriteBinding,
-    page_table: Box<[DeviceKvStepPageIdentity]>,
-    write_pages: Box<[DeviceKvStepPageBinding]>,
+    page_table: Vec<DeviceKvStepPageIdentity>,
+    write_pages: Vec<DeviceKvStepPageBinding>,
     new_page_leases: Vec<DeviceKvPageLease>,
     qualification_context: Option<crate::M1ValidatedQualificationContextStepV1>,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1DraftCatchupKvWriteHostStorageV1 {
+    page_table: Vec<DeviceKvStepPageIdentity>,
+    write_pages: Vec<DeviceKvStepPageBinding>,
+}
+
+impl M1DraftCatchupKvWriteHostStorageV1 {
+    pub(crate) fn try_new() -> Option<Self> {
+        let mut page_table = Vec::new();
+        let mut write_pages = Vec::new();
+        page_table
+            .try_reserve_exact(M1_KV_PAGE_TABLE_ENTRIES)
+            .ok()?;
+        write_pages.try_reserve_exact(1).ok()?;
+        Some(Self {
+            page_table,
+            write_pages,
+        })
+    }
 }
 
 /// Typed one-token target-KV reservation for an authenticated C8192 context step.
@@ -4458,6 +4537,29 @@ pub(crate) fn m1_speculative_draft_round_shape_v1(
 }
 
 impl PendingDeviceKvStepWrite {
+    pub(crate) const fn is_authenticated_draft_catchup(&self) -> bool {
+        matches!(
+            self.binding.purpose,
+            PendingStepWritePurpose::DraftCatchup { .. }
+        )
+    }
+
+    pub(crate) fn matches_authenticated_draft_catchup(
+        &self,
+        authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    ) -> bool {
+        self.binding.purpose
+            == PendingStepWritePurpose::DraftCatchup {
+                parent: authorized.parent(),
+                prior_epoch: authorized.prior_epoch(),
+            }
+            && self.request() == authorized.request()
+            && self.epoch() == authorized.epoch()
+            && self.committed_tokens() == authorized.draft_committed()
+            && self.end_tokens() == authorized.target_committed()
+            && self.active_tokens() == 1
+    }
+
     pub(crate) const fn device(&self) -> Gfx942DeviceBinding {
         self.binding.device
     }
@@ -4585,8 +4687,8 @@ impl PendingSpeculativeDraftKvRoundWrite {
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct InertInitializedDeviceKvStepWrite {
     binding: PendingStepWriteBinding,
-    page_table: Box<[DeviceKvStepPageIdentity]>,
-    write_pages: Box<[DeviceKvStepPageBinding]>,
+    page_table: Vec<DeviceKvStepPageIdentity>,
+    write_pages: Vec<DeviceKvStepPageBinding>,
 }
 
 #[allow(dead_code)]
@@ -4688,8 +4790,8 @@ pub(crate) struct PoisonedDeviceKvStepCompletion {
     error: DeviceKvCacheError,
     common: DeviceKvCacheCommon,
     binding: PendingStepWriteBinding,
-    page_table: Box<[DeviceKvStepPageIdentity]>,
-    write_pages: Box<[DeviceKvStepPageBinding]>,
+    page_table: Vec<DeviceKvStepPageIdentity>,
+    write_pages: Vec<DeviceKvStepPageBinding>,
     unappended_page_leases: Vec<DeviceKvPageLease>,
     completion: ExactCompletion,
 }
@@ -5597,6 +5699,63 @@ impl ActiveDeviceKvCache {
         epoch: CompletionEpoch,
         new_page_leases: Vec<DeviceKvPageLease>,
     ) -> Result<PendingDeviceKvStepWrite, Box<DeviceKvStepReservationFailure>> {
+        self.reserve_step_write_for_purpose(
+            request,
+            role,
+            committed_tokens,
+            active_tokens,
+            epoch,
+            new_page_leases,
+            PendingStepWritePurpose::Ordinary,
+            None,
+        )
+    }
+
+    pub(crate) fn reserve_authenticated_draft_catchup_write(
+        &mut self,
+        authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+        new_page_leases: Vec<DeviceKvPageLease>,
+        storage: &mut M1DraftCatchupKvWriteHostStorageV1,
+    ) -> Result<PendingDeviceKvStepWrite, Box<DeviceKvStepReservationFailure>> {
+        if self.common.target.selection() != authorized.parent()
+            || self.common.target.pending.is_some()
+            || self.common.target.logical().lifecycle != PhysicalKvLifecycle::Active
+            || self.common.target.logical().committed_tokens != authorized.target_committed()
+            || self.common.target.logical().resident_tokens != authorized.target_committed()
+            || authorized.draft_committed().checked_add(1) != Some(authorized.target_committed())
+        {
+            return Err(Box::new(DeviceKvStepReservationFailure {
+                error: DeviceKvCacheError::StepCommittedPositionMismatch,
+                page_leases: new_page_leases,
+            }));
+        }
+        self.reserve_step_write_for_purpose(
+            authorized.request(),
+            Qwen3ModelRole::Draft06B,
+            authorized.draft_committed(),
+            1,
+            authorized.epoch(),
+            new_page_leases,
+            PendingStepWritePurpose::DraftCatchup {
+                parent: authorized.parent(),
+                prior_epoch: authorized.prior_epoch(),
+            },
+            Some(storage),
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn reserve_step_write_for_purpose(
+        &mut self,
+        request: RequestId,
+        role: Qwen3ModelRole,
+        committed_tokens: u32,
+        active_tokens: u32,
+        epoch: CompletionEpoch,
+        new_page_leases: Vec<DeviceKvPageLease>,
+        purpose: PendingStepWritePurpose,
+        storage: Option<&mut M1DraftCatchupKvWriteHostStorageV1>,
+    ) -> Result<PendingDeviceKvStepWrite, Box<DeviceKvStepReservationFailure>> {
         let reject = |error, page_leases| {
             Err(Box::new(DeviceKvStepReservationFailure {
                 error,
@@ -5631,12 +5790,13 @@ impl ActiveDeviceKvCache {
         if active_tokens == 0 {
             return reject(DeviceKvCacheError::ZeroStepActiveTokens, new_page_leases);
         }
-        let active_matches = match selection.mode {
-            Qwen3ExecutionMode::Prefill => active_tokens <= dimensions.active_tokens,
-            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
-                active_tokens == dimensions.active_tokens
-            }
-        };
+        let active_matches = step_write_active_matches(
+            selection,
+            active_tokens,
+            epoch,
+            dimensions.active_tokens,
+            purpose,
+        );
         if !active_matches {
             return reject(
                 DeviceKvCacheError::StepActiveLengthMismatch,
@@ -5738,7 +5898,23 @@ impl ActiveDeviceKvCache {
                 new_page_leases,
             );
         };
-        let mut page_table = Vec::with_capacity(required_page_count);
+        if matches!(purpose, PendingStepWritePurpose::DraftCatchup { .. })
+            && storage.as_ref().is_none_or(|storage| {
+                storage.page_table.capacity() < required_page_count
+                    || storage.write_pages.capacity() < 1
+            })
+        {
+            return reject(DeviceKvCacheError::StepHostStorageCapacity, new_page_leases);
+        }
+        let (mut page_table, mut write_pages) = match storage {
+            Some(storage) => (
+                core::mem::take(&mut storage.page_table),
+                core::mem::take(&mut storage.write_pages),
+            ),
+            None => (Vec::with_capacity(required_page_count), Vec::new()),
+        };
+        page_table.clear();
+        write_pages.clear();
         for logical_page in 0..required_page_count {
             let Ok(logical_page_u32) = u32::try_from(logical_page) else {
                 return reject(DeviceKvCacheError::StepRangeOverflow, new_page_leases);
@@ -5757,7 +5933,6 @@ impl ActiveDeviceKvCache {
 
         let first_logical_page = committed_tokens / M1_KV_PAGE_TOKENS;
         let last_logical_page = (end_tokens - 1) / M1_KV_PAGE_TOKENS;
-        let mut write_pages = Vec::new();
         for logical_page in first_logical_page..=last_logical_page {
             let logical_page_start = logical_page * M1_KV_PAGE_TOKENS;
             let span_start = committed_tokens.max(logical_page_start);
@@ -5786,14 +5961,15 @@ impl ActiveDeviceKvCache {
             end_tokens,
             epoch,
             write_generation,
+            purpose,
         };
         let cache = self.common.role_mut(role);
         cache.next_write_generation = next_write_generation;
         cache.pending = Some(PendingWriteState::Step(binding));
         Ok(PendingDeviceKvStepWrite {
             binding,
-            page_table: page_table.into_boxed_slice(),
-            write_pages: write_pages.into_boxed_slice(),
+            page_table,
+            write_pages,
             new_page_leases,
             qualification_context: None,
         })
@@ -6114,14 +6290,25 @@ impl ActiveDeviceKvCache {
         if binding.active_tokens == 0 {
             return Err(DeviceKvCacheError::ZeroStepActiveTokens);
         }
-        let active_matches = match binding.selection.mode {
-            Qwen3ExecutionMode::Prefill => binding.active_tokens <= dimensions.active_tokens,
-            Qwen3ExecutionMode::Decode | Qwen3ExecutionMode::Speculative => {
-                binding.active_tokens == dimensions.active_tokens
-            }
-        };
+        let active_matches = step_write_active_matches(
+            binding.selection,
+            binding.active_tokens,
+            binding.epoch,
+            dimensions.active_tokens,
+            binding.purpose,
+        );
         if !active_matches {
             return Err(DeviceKvCacheError::StepActiveLengthMismatch);
+        }
+        if let PendingStepWritePurpose::DraftCatchup { parent, .. } = binding.purpose {
+            let target = &self.common.target;
+            if target.selection() != parent
+                || target.logical().committed_tokens != binding.end_tokens
+                || target.logical().resident_tokens != binding.end_tokens
+                || target.pending.is_some()
+            {
+                return Err(DeviceKvCacheError::StepCommittedPositionMismatch);
+            }
         }
         if binding.selection.mode == Qwen3ExecutionMode::Prefill && binding.committed_tokens != 0 {
             return Err(DeviceKvCacheError::StepCommittedPositionMismatch);
@@ -6268,6 +6455,13 @@ impl ActiveDeviceKvCache {
         if after_epoch.value() == 0 || pending.epoch() != after_epoch {
             return Err(DeviceKvCacheError::CompletionEpochMismatch);
         }
+        if matches!(
+            pending.binding.purpose,
+            PendingStepWritePurpose::DraftCatchup { .. }
+        ) && accepted_tokens != 1
+        {
+            return Err(DeviceKvCacheError::StepActiveLengthMismatch);
+        }
         if accepted_tokens > pending.active_tokens() {
             return Err(DeviceKvCacheError::Physical(
                 PhysicalKvError::CommitExceedsResident,
@@ -6290,6 +6484,13 @@ impl ActiveDeviceKvCache {
     ) -> Result<u32, DeviceKvCacheError> {
         if initialized.epoch() != after_epoch {
             return Err(DeviceKvCacheError::CompletionEpochMismatch);
+        }
+        if matches!(
+            initialized.binding.purpose,
+            PendingStepWritePurpose::DraftCatchup { .. }
+        ) && accepted_tokens != 1
+        {
+            return Err(DeviceKvCacheError::StepActiveLengthMismatch);
         }
         let request = initialized.request();
         let role = initialized.selection().role;
@@ -8902,6 +9103,169 @@ mod tests {
                 assert_eq!(cache.abort_step_write(pending).unwrap().page_count(), 1);
             }
         }
+    }
+
+    fn catchup_cache(bucket: Qwen3PlanBucket, draft_committed: u32) -> ActiveDeviceKvCache {
+        let mut cache = cache_for(request(), Qwen3ExecutionMode::Speculative, bucket);
+        for (role, count, allocation) in [
+            (Qwen3ModelRole::Target8B, draft_committed + 1, 71),
+            (Qwen3ModelRole::Draft06B, draft_committed, 72),
+        ] {
+            for page in 0..count.div_ceil(M1_KV_PAGE_TOKENS) {
+                let active = (count - page * M1_KV_PAGE_TOKENS).min(M1_KV_PAGE_TOKENS);
+                append_and_initialize(&mut cache, role, page, allocation, active, 30);
+            }
+            cache.accept_initialized(request(), role, count).unwrap();
+        }
+        cache
+    }
+
+    #[test]
+    fn draft_catchup_initializes_and_commits_only_one_token_with_preallocated_spans() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for committed in [15_u32, 16, 127, 128, 143, 144, 8191] {
+                let mut cache = catchup_cache(bucket, committed);
+                let before_target = cache.projection().target;
+                let parent = cache.common.target.selection();
+                let mut storage = M1DraftCatchupKvWriteHostStorageV1::try_new().unwrap();
+                let table_address = storage.page_table.as_ptr();
+                let spans_address = storage.write_pages.as_ptr();
+                let missing = usize::from(committed % M1_KV_PAGE_TOKENS == 0);
+                let pending = cache
+                    .reserve_step_write_for_purpose(
+                        request(),
+                        Qwen3ModelRole::Draft06B,
+                        committed,
+                        1,
+                        CompletionEpoch::new(32),
+                        leases(
+                            Qwen3ModelRole::Draft06B,
+                            committed.div_ceil(M1_KV_PAGE_TOKENS),
+                            missing,
+                            72,
+                        ),
+                        PendingStepWritePurpose::DraftCatchup {
+                            parent,
+                            prior_epoch: CompletionEpoch::new(31),
+                        },
+                        Some(&mut storage),
+                    )
+                    .unwrap();
+                assert_eq!(pending.page_table.as_ptr(), table_address);
+                assert_eq!(pending.write_pages.as_ptr(), spans_address);
+                assert_eq!(pending.new_page_count(), missing);
+                assert_eq!(pending.write_pages().len(), 1);
+                assert_eq!(
+                    pending.write_pages()[0].first_offset(),
+                    committed % M1_KV_PAGE_TOKENS
+                );
+                assert_eq!(pending.write_pages()[0].token_count(), 1);
+                assert_eq!(cache.projection().draft.committed_tokens, committed);
+                assert_eq!(
+                    cache.preflight_step_settlement(&pending, 0, CompletionEpoch::new(32)),
+                    Err(DeviceKvCacheError::StepActiveLengthMismatch)
+                );
+                let DeviceKvStepCompletionOutcome::Completed(completed) =
+                    complete_step(cache, pending, 32)
+                else {
+                    panic!("exact maintenance completion rejected");
+                };
+                let (mut cache, initialized, _completion) = completed.into_parts();
+                assert_eq!(initialized.page_table.as_ptr(), table_address);
+                assert_eq!(initialized.write_pages.as_ptr(), spans_address);
+                assert_eq!(cache.projection().draft.committed_tokens, committed);
+                assert_eq!(cache.projection().draft.resident_tokens, committed + 1);
+                assert_eq!(
+                    cache.settle_completed_step(&initialized, 0, CompletionEpoch::new(32)),
+                    Err(DeviceKvCacheError::StepActiveLengthMismatch)
+                );
+                assert_eq!(
+                    cache.settle_completed_step(&initialized, 1, CompletionEpoch::new(32)),
+                    Ok(0)
+                );
+                assert_eq!(cache.projection().draft.committed_tokens, committed + 1);
+                assert_eq!(cache.projection().target, before_target);
+            }
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reservation_does_not_relax_ordinary_width_or_allocate_missing_scratch() {
+        let mut cache = catchup_cache(Qwen3PlanBucket::SpeculativeS1K16C8192, 16);
+        let before = cache.projection();
+        let returned = cache
+            .reserve_step_write(
+                request(),
+                Qwen3ModelRole::Draft06B,
+                16,
+                1,
+                CompletionEpoch::new(32),
+                leases(Qwen3ModelRole::Draft06B, 1, 1, 72),
+            )
+            .unwrap_err();
+        assert_eq!(
+            returned.error(),
+            DeviceKvCacheError::StepActiveLengthMismatch
+        );
+        let parent = cache.common.target.selection();
+        let returned = cache
+            .reserve_step_write_for_purpose(
+                request(),
+                Qwen3ModelRole::Draft06B,
+                16,
+                1,
+                CompletionEpoch::new(32),
+                leases(Qwen3ModelRole::Draft06B, 1, 1, 72),
+                PendingStepWritePurpose::DraftCatchup {
+                    parent,
+                    prior_epoch: CompletionEpoch::new(31),
+                },
+                None,
+            )
+            .unwrap_err();
+        assert_eq!(
+            returned.error(),
+            DeviceKvCacheError::StepHostStorageCapacity
+        );
+        assert_eq!(returned.into_parts().1.len(), 1);
+        assert_eq!(cache.projection(), before);
+    }
+
+    #[test]
+    fn draft_catchup_wrong_epoch_returns_exact_pending_owner_without_advancing_cursors() {
+        let mut cache = catchup_cache(Qwen3PlanBucket::SpeculativeS1K8C8192, 15);
+        let parent = cache.common.target.selection();
+        let mut storage = M1DraftCatchupKvWriteHostStorageV1::try_new().unwrap();
+        let pending = cache
+            .reserve_step_write_for_purpose(
+                request(),
+                Qwen3ModelRole::Draft06B,
+                15,
+                1,
+                CompletionEpoch::new(32),
+                Vec::new(),
+                PendingStepWritePurpose::DraftCatchup {
+                    parent,
+                    prior_epoch: CompletionEpoch::new(31),
+                },
+                Some(&mut storage),
+            )
+            .unwrap();
+        let table_address = pending.page_table.as_ptr();
+        let before = cache.projection();
+        let DeviceKvStepCompletionOutcome::Rejected(failure) = complete_step(cache, pending, 31)
+        else {
+            panic!("stale maintenance completion was accepted");
+        };
+        let (error, cache, pending, completion) = failure.into_parts();
+        assert_eq!(error, DeviceKvCacheError::CompletionEpochMismatch);
+        assert_eq!(cache.projection(), before);
+        assert_eq!(pending.page_table.as_ptr(), table_address);
+        assert_eq!(completion.epoch(), CompletionEpoch::new(31));
     }
 
     #[test]

@@ -9,7 +9,9 @@
 use core::fmt;
 
 use fe2o3_service_host::{ServiceFixedBatchV1, ServiceFixedDispatchPacketV1};
-use ferric_spec::{Identity, Qwen3PlanBucket, Qwen3PlanSelection};
+use ferric_spec::{
+    Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+};
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
@@ -28,6 +30,8 @@ use crate::{
 
 /// Exact packet count of every target-only M1 step.
 pub const M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1: usize = 545;
+/// One draft decode graph followed by its distinct maintenance receipt.
+pub const M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1: usize = 425;
 /// Exact packet count of every paired draft/target prefill M1 step.
 pub const M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1: usize = 969;
 /// Exact packet count of both four-token speculative M1 shapes.
@@ -42,6 +46,8 @@ pub const M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1: usize = 7_330;
 pub enum M1PhysicalFixedBatchShapeV1 {
     /// One complete target graph.
     TargetOnly,
+    /// One missing draft token's decode followed by an S1/K0 compact receipt.
+    DraftCatchup,
     /// Draft prefill followed by target prefill.
     PairedPrefill,
     /// Four draft decode graphs and one target verification graph.
@@ -58,6 +64,7 @@ impl M1PhysicalFixedBatchShapeV1 {
     pub const fn packet_count(self) -> usize {
         match self {
             Self::TargetOnly => M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+            Self::DraftCatchup => M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1,
             Self::PairedPrefill => M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
             Self::SpeculativeK4 => M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
             Self::SpeculativeK8 => M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
@@ -480,6 +487,9 @@ pub(crate) enum M1AuthenticatedPhysicalPacketBatchV1 {
     TargetOnly(
         Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>,
     ),
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     PairedPrefill(
         Box<M1AuthenticatedPhysicalPacketBatchCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
@@ -498,6 +508,7 @@ impl M1AuthenticatedPhysicalPacketBatchV1 {
     pub(crate) const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
@@ -508,6 +519,7 @@ impl M1AuthenticatedPhysicalPacketBatchV1 {
     pub(crate) const fn custody(&self) -> &M1PhysicalFixedBatchCustodyV1 {
         match self {
             Self::TargetOnly(case) => case.custody(),
+            Self::DraftCatchup(case) => case.custody(),
             Self::PairedPrefill(case) => case.custody(),
             Self::SpeculativeK4(case) => case.custody(),
             Self::SpeculativeK8(case) => case.custody(),
@@ -544,6 +556,9 @@ impl<const N: usize> M1AuthenticatedQueuePacketBatchCaseV1<N> {
 #[derive(Debug)]
 pub(crate) enum M1AuthenticatedQueuePacketBatchV1 {
     TargetOnly(Box<M1AuthenticatedQueuePacketBatchCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>),
+    DraftCatchup(
+        Box<M1AuthenticatedQueuePacketBatchCaseV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     PairedPrefill(
         Box<M1AuthenticatedQueuePacketBatchCaseV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     ),
@@ -562,6 +577,7 @@ impl M1AuthenticatedQueuePacketBatchV1 {
     pub(crate) const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
@@ -917,6 +933,12 @@ pub fn build_m1_physical_fixed_batch_v1(
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
             lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::TargetOnly)
         }
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            let error = M1PhysicalFixedBatchBuildErrorV1::UnsupportedIntent(
+                parts.workspace_composition.dispatch_plan().intent(),
+            );
+            Err(Box::new(LoweringFailureV1 { error, parts }))
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => {
             lower_boxed_fixed_batch(parts).map(M1PhysicalFixedBatchV1::PairedPrefill)
         }
@@ -1004,6 +1026,10 @@ pub(crate) fn build_m1_authenticated_physical_packet_batch_v1(
             lower_authenticated_boxed_packet_batch(parts, programs)
                 .map(M1AuthenticatedPhysicalPacketBatchV1::TargetOnly)
         }
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            lower_authenticated_boxed_packet_batch(parts, programs)
+                .map(M1AuthenticatedPhysicalPacketBatchV1::DraftCatchup)
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => {
             lower_authenticated_boxed_packet_batch(parts, programs)
                 .map(M1AuthenticatedPhysicalPacketBatchV1::PairedPrefill)
@@ -1076,6 +1102,10 @@ pub(crate) fn build_m1_authenticated_queue_packet_batch_v1(
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
                 .map(M1AuthenticatedQueuePacketBatchV1::TargetOnly)
         }
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
+                .map(M1AuthenticatedQueuePacketBatchV1::DraftCatchup)
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => {
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
                 .map(M1AuthenticatedQueuePacketBatchV1::PairedPrefill)
@@ -1113,6 +1143,13 @@ pub(crate) fn build_m1_authenticated_rollover_packet_batch_v1(
 
 pub(crate) struct M1AuthenticatedRolloverPacketBatchHostStorageV1 {
     speculative_shape: M1PhysicalFixedBatchShapeV1,
+    draft_catchup: Option<
+        Box<
+            core::mem::MaybeUninit<
+                M1AuthenticatedQueuePacketBatchCaseV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    >,
     paired_prefill: Option<
         Box<
             core::mem::MaybeUninit<
@@ -1142,6 +1179,7 @@ pub(crate) struct M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         >,
     >,
     paired_prefill_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
+    draft_catchup_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
     speculative_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
 }
 
@@ -1180,6 +1218,7 @@ impl core::fmt::Debug for M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         formatter
             .debug_struct("M1AuthenticatedRolloverPacketBatchHostStorageV1")
             .field("speculative_shape", &self.speculative_shape)
+            .field("draft_catchup", &self.draft_catchup.is_some())
             .field("paired_prefill", &self.paired_prefill.is_some())
             .field("speculative_k4", &self.speculative_k4.is_some())
             .field("speculative_k8", &self.speculative_k8.is_some())
@@ -1210,6 +1249,7 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         }
         Some(Self {
             speculative_shape: shape,
+            draft_catchup: Some(Box::new_uninit()),
             paired_prefill: Some(Box::new_uninit()),
             speculative_k4: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4)
                 .then(Box::new_uninit),
@@ -1218,12 +1258,14 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
             speculative_k16: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK16)
                 .then(Box::new_uninit),
             paired_prefill_lowering: None,
+            draft_catchup_lowering: None,
             speculative_lowering: None,
         })
     }
 
     fn has_case(&self, shape: M1PhysicalFixedBatchShapeV1) -> bool {
         match shape {
+            M1PhysicalFixedBatchShapeV1::DraftCatchup => self.draft_catchup.is_some(),
             M1PhysicalFixedBatchShapeV1::PairedPrefill => self.paired_prefill.is_some(),
             M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
                 shape == self.speculative_shape && self.speculative_k4.is_some()
@@ -1238,6 +1280,19 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         }
     }
 
+    fn accepts_intent(&self, intent: M1StepDispatchIntent) -> bool {
+        match intent {
+            M1StepDispatchIntent::DraftCatchup(parent) => {
+                m1_physical_fixed_batch_shape_for_intent_v1(intent)
+                    == Some(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+                    && m1_physical_fixed_batch_shape_for_intent_v1(
+                        M1StepDispatchIntent::SpeculativeRound(parent),
+                    ) == Some(self.speculative_shape)
+            }
+            _ => true,
+        }
+    }
+
     fn ready_for_recipe(
         &self,
         shape: M1PhysicalFixedBatchShapeV1,
@@ -1246,15 +1301,18 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         if !self.has_case(shape) || rows.len() != shape.packet_count() {
             return false;
         }
-        let lowering = if shape == M1PhysicalFixedBatchShapeV1::PairedPrefill {
-            &self.paired_prefill_lowering
-        } else {
-            &self.speculative_lowering
+        let lowering = match shape {
+            M1PhysicalFixedBatchShapeV1::PairedPrefill => &self.paired_prefill_lowering,
+            M1PhysicalFixedBatchShapeV1::DraftCatchup => &self.draft_catchup_lowering,
+            _ => &self.speculative_lowering,
         };
         lowering.as_ref().is_some_and(|storage| storage.fits(rows))
     }
 
     pub(crate) fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
+        if !self.accepts_intent(recipe.workspace_composition().dispatch_plan().intent()) {
+            return false;
+        }
         let Some(shape) = m1_physical_fixed_batch_shape_for_intent_v1(
             recipe.workspace_composition().dispatch_plan().intent(),
         ) else {
@@ -1267,6 +1325,10 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
             return false;
         };
         match shape {
+            M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+                self.draft_catchup_lowering = Some(lowering);
+                true
+            }
             M1PhysicalFixedBatchShapeV1::PairedPrefill => {
                 self.paired_prefill_lowering = Some(lowering);
                 true
@@ -1345,6 +1407,7 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
         source_rows: recipe.rows(),
         bound_rows: &bound_rows,
         completion_output_shape: custody.completion_output().shape(),
+        draft_catchup_parent: custody.completion_output().draft_catchup_parent_selection(),
     }) {
         Ok(shape) => shape,
         Err(error) => return Err(reject(error, recipe, bound_rows, custody)),
@@ -1362,10 +1425,10 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
             custody,
         ));
     }
-    if storage
-        .as_ref()
-        .is_some_and(|storage| !storage.ready_for_recipe(shape, recipe.rows()))
-    {
+    if storage.as_ref().is_some_and(|storage| {
+        !storage.ready_for_recipe(shape, recipe.rows())
+            || !storage.accepts_intent(recipe.workspace_composition().dispatch_plan().intent())
+    }) {
         return Err(reject(
             M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
             recipe,
@@ -1378,6 +1441,19 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
                 .map(M1AuthenticatedQueuePacketBatchV1::TargetOnly)
         }
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => lower_authenticated_queue_packet_case_core(
+            witness,
+            recipe,
+            bound_rows,
+            custody,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.draft_catchup.take()),
+            storage
+                .as_mut()
+                .and_then(|storage| storage.draft_catchup_lowering.take()),
+        )
+        .map(M1AuthenticatedQueuePacketBatchV1::DraftCatchup),
         M1PhysicalFixedBatchShapeV1::PairedPrefill => lower_authenticated_queue_packet_case_core(
             witness,
             recipe,
@@ -1457,6 +1533,7 @@ fn validate_authenticated_queue_packet_inputs(
         source_rows: recipe.rows(),
         bound_rows,
         completion_output_shape: custody.completion_output().shape(),
+        draft_catchup_parent: custody.completion_output().draft_catchup_parent_selection(),
     })?;
     validate_authenticated_operation_plan_v1(operations, workspace_composition.dispatch_plan())?;
 
@@ -1516,6 +1593,9 @@ fn validate_bound_inputs(
         source_rows: bindings.source_rows(),
         bound_rows: bindings.rows(),
         completion_output_shape: bindings.completion_output().shape(),
+        draft_catchup_parent: bindings
+            .completion_output()
+            .draft_catchup_parent_selection(),
     })
 }
 
@@ -1527,6 +1607,7 @@ struct PacketValidationInputsV1<'a> {
     source_rows: &'a [M1PhysicalBufferRecipeRowV1],
     bound_rows: &'a [M1BoundPhysicalBufferRowV1],
     completion_output_shape: M1CompletionOutputShapeV1,
+    draft_catchup_parent: Option<Qwen3PlanSelection>,
 }
 
 fn validate_packet_inputs(
@@ -1540,6 +1621,7 @@ fn validate_packet_inputs(
         source_rows,
         bound_rows,
         completion_output_shape,
+        draft_catchup_parent,
     } = inputs;
     if program_count != M1_PHYSICAL_PROGRAM_COUNT_V1 {
         return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCount {
@@ -1554,10 +1636,17 @@ fn validate_packet_inputs(
     let count = usize::try_from(physical_recipe.dispatch_count())
         .map_err(|_| M1PhysicalFixedBatchBuildErrorV1::ArithmeticOverflow)?;
     let shape = classify_shape(workspace_composition.dispatch_plan().intent(), count)?;
+    let expected_catchup_parent = match workspace_composition.dispatch_plan().intent() {
+        M1StepDispatchIntent::DraftCatchup(parent) => Some(parent),
+        _ => None,
+    };
+    if draft_catchup_parent != expected_catchup_parent {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::RetainedWorkspaceComposition);
+    }
     let selection = workspace_composition
         .dispatch_plan()
         .intent()
-        .target_selection();
+        .completion_selection();
     validate_completion_output_shape(selection, completion_output_shape)?;
 
     validate_row_count(
@@ -1682,6 +1771,20 @@ pub(crate) fn m1_physical_fixed_batch_shape_for_intent_v1(
 ) -> Option<M1PhysicalFixedBatchShapeV1> {
     let shape = match intent {
         M1StepDispatchIntent::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+        M1StepDispatchIntent::DraftCatchup(parent) => {
+            if parent.role != Qwen3ModelRole::Target8B
+                || parent.mode != Qwen3ExecutionMode::Speculative
+                || !matches!(
+                    parent.bucket,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192
+                        | Qwen3PlanBucket::SpeculativeS1K8C8192
+                        | Qwen3PlanBucket::SpeculativeS1K16C8192
+                )
+            {
+                return None;
+            }
+            M1PhysicalFixedBatchShapeV1::DraftCatchup
+        }
         M1StepDispatchIntent::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
         M1StepDispatchIntent::SpeculativeRound(selection) => match selection.bucket {
             Qwen3PlanBucket::SpeculativeS1K4C8192 | Qwen3PlanBucket::SpeculativeS8K4C8192 => {
@@ -2352,6 +2455,67 @@ mod tests {
         assert!(legacy.speculative_k4.is_some());
         assert!(legacy.speculative_k8.is_none());
         assert!(legacy.speculative_k16.is_none());
+    }
+
+    #[test]
+    fn draft_catchup_is_exactly_425_packets_and_reuses_only_its_parent_slot() {
+        for (bucket, selected) in [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let intent = M1StepDispatchIntent::DraftCatchup(parent);
+            assert_eq!(
+                classify_shape(intent, 425),
+                Ok(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+            );
+            for count in [0, 424, 426, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1] {
+                assert!(classify_shape(intent, count).is_err());
+            }
+            let (kernargs, workspaces) =
+                crate::physical_buffer_recipe::tests::exact_inputs(intent, 10);
+            let recipe = crate::derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+            let mut storage =
+                M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(
+                    selected,
+                )
+                .unwrap();
+            assert!(storage.prepare_recipe(&recipe));
+            assert!(
+                storage.ready_for_recipe(M1PhysicalFixedBatchShapeV1::DraftCatchup, recipe.rows())
+            );
+            let other = if bucket == Qwen3PlanBucket::SpeculativeS1K4C8192 {
+                Qwen3PlanBucket::SpeculativeS1K8C8192
+            } else {
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+            };
+            assert!(
+                !storage.accepts_intent(M1StepDispatchIntent::DraftCatchup(target(
+                    Qwen3ExecutionMode::Speculative,
+                    other
+                )))
+            );
+            drop(storage.draft_catchup.take());
+            assert!(!storage.prepare_recipe(&recipe));
+        }
+        let unsupported = M1StepDispatchIntent::DraftCatchup(target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+        ));
+        assert_eq!(
+            m1_physical_fixed_batch_shape_for_intent_v1(unsupported),
+            None
+        );
     }
 
     #[test]

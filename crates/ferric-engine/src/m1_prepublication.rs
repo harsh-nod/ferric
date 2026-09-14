@@ -46,6 +46,13 @@ const MAX_LANES: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
 #[must_use = "validated workspace tables and pending reservations remain linear"]
 #[derive(Debug, Eq, PartialEq)]
 pub enum M1FullStepKvWorkspaceTablesV1 {
+    /// One authenticated draft-only maintenance write and its receipt inputs.
+    DraftCatchup {
+        draft: crate::kv_workspace_authority::BoundM1DraftCatchupKvWorkspaceTableV1,
+        completion: ferric_spec::ValidatedM1StepInputs,
+        completion_page_indices: Box<[u32]>,
+        target_allocation_id: Identity,
+    },
     /// One target-only workspace table.
     TargetOnly { target: BoundM1KvWorkspaceTableV1 },
     /// Draft and target prefill workspace tables.
@@ -65,6 +72,7 @@ impl M1FullStepKvWorkspaceTablesV1 {
     #[must_use]
     pub const fn kind(&self) -> M1FullStepWorkspaceInputKind {
         match self {
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
@@ -82,6 +90,12 @@ impl M1FullStepKvWorkspaceTablesV1 {
 #[must_use = "pending KV reservations must remain retained until explicitly settled"]
 #[derive(Debug, Eq, PartialEq)]
 pub enum M1FullStepKvReservationCustodyV1 {
+    /// One sealed draft maintenance reservation; no target KV write is present.
+    DraftCatchup {
+        parent: Qwen3PlanSelection,
+        target_allocation_id: Identity,
+        draft: M1KvWorkspaceReservationCustodyV1,
+    },
     /// Target-only pending reservations.
     TargetOnly {
         target: M1KvWorkspaceReservationCustodyV1,
@@ -108,6 +122,7 @@ impl M1FullStepKvReservationCustodyV1 {
                     .all(|pending| pending.device() == expected)
         };
         match self {
+            Self::DraftCatchup { draft, .. } => target_matches(draft),
             Self::TargetOnly { target } => target_matches(target),
             Self::PairedPrefill { draft, target } => {
                 target_matches(draft) && target_matches(target)
@@ -130,6 +145,7 @@ impl M1FullStepKvReservationCustodyV1 {
     #[must_use]
     pub const fn target_selection(&self) -> Qwen3PlanSelection {
         match self {
+            Self::DraftCatchup { parent, .. } => *parent,
             Self::TargetOnly { target } | Self::PairedPrefill { target, .. } => target.selection(),
             Self::SpeculativeRound {
                 target_speculative, ..
@@ -141,6 +157,10 @@ impl M1FullStepKvReservationCustodyV1 {
     #[must_use]
     pub const fn target_allocation_id(&self) -> Identity {
         match self {
+            Self::DraftCatchup {
+                target_allocation_id,
+                ..
+            } => *target_allocation_id,
             Self::TargetOnly { target } | Self::PairedPrefill { target, .. } => {
                 target.allocation_id()
             }
@@ -154,6 +174,7 @@ impl M1FullStepKvReservationCustodyV1 {
     #[must_use]
     pub const fn draft_allocation_id(&self) -> Option<Identity> {
         match self {
+            Self::DraftCatchup { draft, .. } => Some(draft.allocation_id()),
             Self::TargetOnly { .. } => None,
             Self::PairedPrefill { draft, .. } => Some(draft.allocation_id()),
             Self::SpeculativeRound { draft_decode, .. } => Some(draft_decode.allocation_id()),
@@ -331,6 +352,7 @@ impl M1PrepublicationStepCustodyV1 {
 
     pub(crate) fn target_active_lengths(&self) -> impl ExactSizeIterator<Item = u32> + '_ {
         let target = match &self.kv {
+            M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } => draft,
             M1FullStepKvReservationCustodyV1::TargetOnly { target }
             | M1FullStepKvReservationCustodyV1::PairedPrefill { target, .. } => target,
             M1FullStepKvReservationCustodyV1::SpeculativeRound {
@@ -1328,6 +1350,9 @@ fn validate_partitioned_page_custody(
     custody: &M1FullStepKvReservationCustodyV1,
 ) -> Result<(), M1PrepublicationBatchBuildErrorKindV1> {
     match custody {
+        M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } => {
+            validate_regular_reservations(partitioned_memory, draft, false)
+        }
         M1FullStepKvReservationCustodyV1::TargetOnly { target } => {
             validate_regular_reservations(partitioned_memory, target, true)
         }
@@ -1403,6 +1428,7 @@ fn validate_pending_pages(
 type ComposeOutcome = M1StepWorkspaceImageCompositionOutcomeV1;
 
 enum FullComposeOutcomes {
+    DraftCatchup(Qwen3PlanSelection, ComposeOutcome, ComposeOutcome),
     TargetOnly(ComposeOutcome),
     PairedPrefill(ComposeOutcome, ComposeOutcome),
     SpeculativeRound(ComposeOutcome, ComposeOutcome),
@@ -1432,6 +1458,39 @@ fn compose_all(
         None => compose_m1_step_workspace_image_v1(plan, inputs, pages),
     };
     match (plans, tables) {
+        (
+            M1FullStepWorkspacePlans::DraftCatchup {
+                parent,
+                draft_decode,
+                completion,
+            },
+            M1FullStepKvWorkspaceTablesV1::DraftCatchup {
+                draft,
+                completion: completion_inputs,
+                completion_page_indices,
+                target_allocation_id,
+            },
+        ) => {
+            let (draft_inputs, draft_pages, draft_reservations) =
+                draft.into_workspace_image_parts();
+            (
+                FullComposeOutcomes::DraftCatchup(
+                    parent,
+                    compose(*draft_decode, draft_inputs, draft_pages, true),
+                    compose(
+                        *completion,
+                        completion_inputs,
+                        completion_page_indices,
+                        false,
+                    ),
+                ),
+                M1FullStepKvReservationCustodyV1::DraftCatchup {
+                    parent,
+                    target_allocation_id,
+                    draft: draft_reservations,
+                },
+            )
+        }
         (
             M1FullStepWorkspacePlans::TargetOnly { target: plan },
             M1FullStepKvWorkspaceTablesV1::TargetOnly { target },
@@ -1499,6 +1558,14 @@ fn collect_composed(
     outcomes: FullComposeOutcomes,
 ) -> Result<ComposedM1FullStepWorkspaceSetV1, Box<[M1WorkspaceImageResidueV1]>> {
     match outcomes {
+        FullComposeOutcomes::DraftCatchup(parent, draft, completion) => match (draft, completion) {
+            (ComposeOutcome::Composed(draft), ComposeOutcome::Composed(completion)) => Ok(
+                ComposedM1FullStepWorkspaceSetV1::draft_catchup(parent, draft, completion),
+            ),
+            (draft, completion) => {
+                Err(vec![into_residue(draft), into_residue(completion)].into_boxed_slice())
+            }
+        },
         FullComposeOutcomes::TargetOnly(target) => match target {
             ComposeOutcome::Composed(target) => {
                 Ok(ComposedM1FullStepWorkspaceSetV1::target_only(target))
@@ -1546,6 +1613,57 @@ fn validate_join(
         });
     }
     match (plans, tables) {
+        (
+            M1FullStepWorkspacePlans::DraftCatchup {
+                parent,
+                draft_decode,
+                completion: plan,
+            },
+            M1FullStepKvWorkspaceTablesV1::DraftCatchup {
+                draft,
+                completion,
+                completion_page_indices,
+                target_allocation_id,
+            },
+        ) => {
+            let expected_draft = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+            };
+            let expected_completion = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                ..expected_draft
+            };
+            if draft.parent() != *parent
+                || scheduled.member_count() != 1
+                || draft_decode.selection() != expected_draft
+                || plan.selection() != expected_completion
+                || draft.inputs().selection() != expected_draft
+                || completion.selection() != expected_completion
+                || completion_page_indices.len()
+                    != crate::M1_KV_PAGE_TABLE_ENTRIES_PER_SEQUENCE_V1 as usize
+                || completion_page_indices.iter().any(|entry| *entry != 0)
+                || !target_allocation_id.is_present()
+                || draft.reservations().allocation_id() == *target_allocation_id
+            {
+                return Err(M1PrepublicationJoinErrorV1::SpeculativeWidth);
+            }
+            validate_inputs(
+                scheduled,
+                runner,
+                Qwen3ModelRole::Draft06B,
+                draft.inputs(),
+                expected_draft,
+            )?;
+            validate_inputs(
+                scheduled,
+                runner,
+                Qwen3ModelRole::Target8B,
+                completion,
+                expected_completion,
+            )
+        }
         (
             M1FullStepWorkspacePlans::TargetOnly { target: plan },
             M1FullStepKvWorkspaceTablesV1::TargetOnly { target },

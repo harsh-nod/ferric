@@ -74,6 +74,11 @@ pub enum M1InitializedWorkspaceSlotV1 {
 #[must_use = "complete workspace images must be allocated or explicitly retained"]
 #[derive(Debug, Eq, PartialEq)]
 pub enum M1FullStepWorkspaceImagesV1 {
+    /// Complete draft maintenance and compact-receipt workspace images.
+    DraftCatchup {
+        draft_decode: Box<[u8]>,
+        completion: Box<[u8]>,
+    },
     /// One target-only image.
     TargetOnly {
         /// Complete target workspace bytes.
@@ -96,6 +101,12 @@ pub enum M1FullStepWorkspaceImagesV1 {
 }
 
 impl M1FullStepWorkspaceImagesV1 {
+    pub(crate) fn draft_catchup(draft_decode: Box<[u8]>, completion: Box<[u8]>) -> Self {
+        Self::DraftCatchup {
+            draft_decode,
+            completion,
+        }
+    }
     /// Wraps one complete target-only image.
     #[must_use = "the complete target workspace image remains retained"]
     pub fn target_only(target: Box<[u8]>) -> Self {
@@ -121,6 +132,7 @@ impl M1FullStepWorkspaceImagesV1 {
     #[must_use]
     pub const fn kind(&self) -> M1FullStepWorkspaceInputKind {
         match self {
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
@@ -386,6 +398,39 @@ pub(crate) fn allocate_initialized_m1_full_step_workspaces_v1(
 
     match (plans, images, descriptors) {
         (
+            M1FullStepWorkspacePlans::DraftCatchup {
+                draft_decode,
+                completion,
+                ..
+            },
+            M1FullStepWorkspaceImagesV1::DraftCatchup {
+                draft_decode: draft_image,
+                completion: completion_image,
+            },
+            WorkspaceDescriptors::DraftCatchup {
+                draft_decode: draft_descriptor,
+                completion: completion_descriptor,
+            },
+        ) => {
+            let draft = allocate_and_bind::<M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1>(
+                allocations,
+                M1InitializedWorkspaceSlotV1::SpeculativeDraftDecode,
+                *draft_decode,
+                draft_image,
+                draft_descriptor,
+            )?;
+            let completion = allocate_and_bind::<M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1>(
+                allocations,
+                M1InitializedWorkspaceSlotV1::TargetOnlyTarget,
+                *completion,
+                completion_image,
+                completion_descriptor,
+            )?;
+            Ok(M1FullStepWorkspaceSubleaseOwners::draft_catchup(
+                draft, completion,
+            ))
+        }
+        (
             M1FullStepWorkspacePlans::TargetOnly { target },
             M1FullStepWorkspaceImagesV1::TargetOnly { target: image },
             WorkspaceDescriptors::TargetOnly { target: descriptor },
@@ -466,6 +511,10 @@ pub(crate) fn allocate_initialized_m1_full_step_workspaces_v1(
 
 #[derive(Clone, Copy, Debug)]
 enum WorkspaceDescriptors {
+    DraftCatchup {
+        draft_decode: Gfx942DeviceContentDescriptorV1,
+        completion: Gfx942DeviceContentDescriptorV1,
+    },
     TargetOnly {
         target: Gfx942DeviceContentDescriptorV1,
     },
@@ -493,6 +542,28 @@ fn preflight_full_step_workspaces(
     validate_distinct_allocations(plans)?;
 
     match (plans, images) {
+        (
+            M1FullStepWorkspacePlans::DraftCatchup {
+                draft_decode,
+                completion,
+                ..
+            },
+            M1FullStepWorkspaceImagesV1::DraftCatchup {
+                draft_decode: draft_image,
+                completion: completion_image,
+            },
+        ) => Ok(WorkspaceDescriptors::DraftCatchup {
+            draft_decode: preflight_workspace::<M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1>(
+                M1InitializedWorkspaceSlotV1::SpeculativeDraftDecode,
+                draft_decode,
+                draft_image,
+            )?,
+            completion: preflight_workspace::<M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1>(
+                M1InitializedWorkspaceSlotV1::TargetOnlyTarget,
+                completion,
+                completion_image,
+            )?,
+        }),
         (
             M1FullStepWorkspacePlans::TargetOnly { target },
             M1FullStepWorkspaceImagesV1::TargetOnly { target: image },
@@ -552,6 +623,38 @@ fn validate_selection_shape(
     plans: &M1FullStepWorkspacePlans,
 ) -> Result<(), InitializedM1FullStepWorkspacePreflightErrorV1> {
     match plans {
+        M1FullStepWorkspacePlans::DraftCatchup {
+            parent,
+            draft_decode,
+            completion,
+        } => {
+            let expected_completion = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+            };
+            let expected_draft = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..expected_completion
+            };
+            if crate::physical_fixed_batch::m1_physical_fixed_batch_shape_for_intent_v1(
+                crate::M1StepDispatchIntent::DraftCatchup(*parent),
+            )
+            .is_none()
+                || completion.selection() != expected_completion
+            {
+                return Err(selection_error(
+                    M1InitializedWorkspaceSlotV1::TargetOnlyTarget,
+                    completion.selection(),
+                ));
+            }
+            if draft_decode.selection() != expected_draft {
+                return Err(selection_error(
+                    M1InitializedWorkspaceSlotV1::SpeculativeDraftDecode,
+                    draft_decode.selection(),
+                ));
+            }
+        }
         M1FullStepWorkspacePlans::TargetOnly { target } => {
             let selection = target.selection();
             if selection.role != Qwen3ModelRole::Target8B

@@ -117,6 +117,36 @@ pub struct BoundM1KvWorkspaceTableV1 {
     reservations: M1KvWorkspaceReservationCustodyV1,
 }
 
+/// One authenticated maintenance write projected into the draft decode table.
+/// This is not an ordinary decode reservation and cannot be unwrapped as one.
+#[must_use = "the catch-up table retains the pending draft write"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct BoundM1DraftCatchupKvWorkspaceTableV1 {
+    parent: Qwen3PlanSelection,
+    table: BoundM1KvWorkspaceTableV1,
+}
+
+impl BoundM1DraftCatchupKvWorkspaceTableV1 {
+    pub(crate) const fn parent(&self) -> Qwen3PlanSelection {
+        self.parent
+    }
+    pub(crate) const fn inputs(&self) -> &ValidatedM1StepInputs {
+        self.table.inputs()
+    }
+    pub(crate) const fn reservations(&self) -> &M1KvWorkspaceReservationCustodyV1 {
+        self.table.reservations()
+    }
+    pub(crate) fn into_workspace_image_parts(
+        self,
+    ) -> (
+        ValidatedM1StepInputs,
+        Box<[u32]>,
+        M1KvWorkspaceReservationCustodyV1,
+    ) {
+        self.table.into_workspace_image_parts()
+    }
+}
+
 impl BoundM1KvWorkspaceTableV1 {
     /// Returns the exact finite selection shared by every retained input.
     #[must_use]
@@ -700,7 +730,7 @@ pub fn bind_m1_kv_workspace_table_v1(
     inputs: ValidatedM1StepInputs,
     reservations: Vec<PendingDeviceKvStepWrite>,
 ) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
-    bind_m1_kv_workspace_table_core_v1(inputs, reservations, None)
+    bind_m1_kv_workspace_table_core_v1(inputs, reservations, None, None)
 }
 
 #[derive(Debug)]
@@ -733,13 +763,30 @@ pub(crate) fn bind_m1_kv_workspace_table_with_storage_v1(
     reservations: Vec<PendingDeviceKvStepWrite>,
     storage: M1KvWorkspaceTableHostStorageV1,
 ) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
-    bind_m1_kv_workspace_table_core_v1(inputs, reservations, Some(storage))
+    bind_m1_kv_workspace_table_core_v1(inputs, reservations, Some(storage), None)
+}
+
+pub(crate) fn bind_m1_draft_catchup_kv_workspace_table_with_storage_v1(
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingDeviceKvStepWrite>,
+    storage: M1KvWorkspaceTableHostStorageV1,
+    authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+) -> Result<BoundM1DraftCatchupKvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
+    bind_m1_kv_workspace_table_core_v1(inputs, reservations, Some(storage), Some(authorized)).map(
+        |table| BoundM1DraftCatchupKvWorkspaceTableV1 {
+            parent: authorized.parent(),
+            table,
+        },
+    )
 }
 
 fn bind_m1_kv_workspace_table_core_v1(
     inputs: ValidatedM1StepInputs,
     reservations: Vec<PendingDeviceKvStepWrite>,
     storage: Option<M1KvWorkspaceTableHostStorageV1>,
+    catchup: Option<
+        &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    >,
 ) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
     let live_lanes = usize::try_from(inputs.live_lane_count()).unwrap_or(usize::MAX);
     if reservations.len() != live_lanes {
@@ -754,6 +801,32 @@ fn bind_m1_kv_workspace_table_core_v1(
     }
 
     let selection = inputs.selection();
+    if let Some(authorized) = catchup {
+        let expected = Qwen3PlanSelection {
+            role: ferric_spec::Qwen3ModelRole::Draft06B,
+            mode: ferric_spec::Qwen3ExecutionMode::Decode,
+            bucket: ferric_spec::Qwen3PlanBucket::DecodeS1C8192,
+        };
+        if selection != expected
+            || live_lanes != 1
+            || inputs.token_ids().first() != Some(&authorized.token())
+            || reservations
+                .first()
+                .is_none_or(|pending| !pending.matches_authenticated_draft_catchup(authorized))
+        {
+            return reject(
+                M1KvWorkspaceTableBindingErrorV1::ReservationSelection {
+                    lane: 0,
+                    inputs: expected,
+                    reservation: reservations
+                        .first()
+                        .map_or(selection, PendingDeviceKvStepWrite::selection),
+                },
+                inputs,
+                reservations,
+            );
+        }
+    }
     let sequence_count = match usize::try_from(inputs.dimensions().sequences) {
         Ok(count) => count,
         Err(_) => {
@@ -775,6 +848,20 @@ fn bind_m1_kv_workspace_table_core_v1(
     };
 
     let physical_page_slots = usize::try_from(M1_KV_PHYSICAL_PAGE_SLOTS_V1).unwrap_or(usize::MAX);
+    if catchup.is_some()
+        && storage.as_ref().is_none_or(|storage| {
+            storage.seen_pages.capacity() < physical_page_slots
+                || storage.page_table.capacity() < table_entries
+        })
+    {
+        return reject(
+            M1KvWorkspaceTableBindingErrorV1::HostTableReservation {
+                entries: table_entries,
+            },
+            inputs,
+            reservations,
+        );
+    }
     let (mut seen_pages, mut page_table) = storage
         .map(|storage| (storage.seen_pages, storage.page_table))
         .unwrap_or_default();
@@ -803,7 +890,14 @@ fn bind_m1_kv_workspace_table_core_v1(
     seen_pages.resize(physical_page_slots, UNSEEN_PHYSICAL_PAGE);
     let mut allocation_id = None;
     for (lane, reservation) in reservations.iter().enumerate() {
-        if reservation.selection() != selection {
+        let selection_matches = match catchup {
+            Some(authorized) => reservation.matches_authenticated_draft_catchup(authorized),
+            None => {
+                reservation.selection() == selection
+                    && !reservation.is_authenticated_draft_catchup()
+            }
+        };
+        if !selection_matches {
             return reject(
                 M1KvWorkspaceTableBindingErrorV1::ReservationSelection {
                     lane,
@@ -1062,7 +1156,10 @@ fn bind_m1_kv_workspace_table_core_v1(
         inputs,
         kv_page_indices: page_table.into_boxed_slice(),
         reservations: M1KvWorkspaceReservationCustodyV1 {
-            selection,
+            selection: catchup.map_or(selection, |authorized| Qwen3PlanSelection {
+                role: ferric_spec::Qwen3ModelRole::Draft06B,
+                ..authorized.parent()
+            }),
             allocation_id,
             reservations,
         },
