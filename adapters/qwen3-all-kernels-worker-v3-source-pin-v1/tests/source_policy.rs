@@ -8,7 +8,7 @@ const README: &str = include_str!("../README.md");
 const DEVICE_MARKER_ORDER: &str =
     include_str!("../../../device/qwen3-all-kernels-v1/tests/marker_order.rs");
 
-const FE2O3_REVISION: &str = "e6cfa668f21e5b80d2e70730ed61602c1aaf5804";
+const FE2O3_REVISION: &str = "ae441734f27ef35c26baf7b3a6281852cd544de9";
 
 #[test]
 fn standalone_manifest_and_lock_pin_the_exact_fe2o3_revision() {
