@@ -1490,6 +1490,33 @@ mod tests {
     }
 
     #[test]
+    fn catchup_receipt_retains_exact_s1_k0_abi_for_each_parent_window() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let physical = physical_recipe(M1StepDispatchIntent::DraftCatchup(parent));
+            let recipe = derive_m1_physical_kernarg_recipe_v1(physical).unwrap();
+            assert_eq!(recipe.images().len(), 425);
+            let receipt = &recipe.images()[424];
+            assert_eq!(
+                receipt.selection(),
+                M1StepDispatchIntent::DraftCatchup(parent).completion_selection()
+            );
+            assert_eq!(receipt.program(), M1PhysicalProgramV1::LogitsCompact);
+            assert_eq!(read_u64(receipt.bytes(), 8), 1);
+            assert_eq!(read_u64(receipt.bytes(), 24), 0);
+            assert_eq!(read_u32(receipt.bytes(), 128), 1);
+            assert_eq!(read_u32(receipt.bytes(), 132), 1);
+            assert_eq!(read_u32(receipt.bytes(), 136), 0);
+            assert!(!recipe.binds_device_buffers());
+            assert!(!recipe.grants_packet_or_queue_authority());
+        }
+    }
+
+    #[test]
     fn every_complete_intent_derives_exact_zero_pointer_images_for_all_programs() {
         let mut programs = HashSet::new();
         let mut selections = Vec::new();

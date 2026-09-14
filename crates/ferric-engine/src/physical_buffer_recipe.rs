@@ -17,10 +17,10 @@ use ferric_spec::{
 
 use crate::{
     AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalKernargRecipeV1,
-    M1FullStepWorkspaceRole, M1OperationDispatchKind, M1PhysicalDispatchKindV1,
-    M1PhysicalDispatchProfileV1, M1PhysicalProgramV1, M1SpeculativeDraftChoiceSubrange,
-    M1StepDispatchStage, M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
-    M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1,
+    M1DraftCatchupChoiceSubrange, M1FullStepWorkspaceRole, M1FullStepWorkspaceSegmentBinding,
+    M1OperationDispatchKind, M1PhysicalDispatchKindV1, M1PhysicalDispatchProfileV1,
+    M1PhysicalProgramV1, M1SpeculativeDraftChoiceSubrange, M1StepDispatchStage,
+    M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1, M1_PHYSICAL_KERNARG_RECIPE_VERSION_V1,
 };
 
 /// Addressless explicit-buffer recipe format.
@@ -69,6 +69,8 @@ pub enum M1PhysicalBufferSourceV1 {
     },
     /// One exact target `DraftChoices [K,S]` iteration row.
     SpeculativeDraftChoices(M1SpeculativeDraftChoiceSubrange),
+    /// Draft maintenance argmax output in the receipt workspace's `Choices`.
+    DraftCatchupChoices(M1DraftCatchupChoiceSubrange),
     /// Initial draft `TokenIds [S]` consumed by target-token assembly.
     SpeculativeDraftAnchorTokenIds {
         /// Exact draft workspace containing the anchor tokens.
@@ -605,7 +607,12 @@ fn derive_rows(
             validate_physical_entry(physical_row, image, segment, dispatch_index)?;
             let expected_logical_dispatch_index = segment
                 .dispatch_start()
-                .checked_add(logical.dispatch_index())
+                .checked_add(
+                    logical
+                        .dispatch_index()
+                        .checked_sub(segment.source_dispatch_start())
+                        .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index })?,
+                )
                 .ok_or(M1PhysicalBufferRecipeErrorV1::PhysicalRow { dispatch_index })?;
             let (logical_ordinal, descriptor, kind, profile_id) = match physical_row.profile() {
                 M1PhysicalDispatchProfileV1::Model {
@@ -849,7 +856,9 @@ fn validate_mapping_input(input: MappingInput) -> Result<(), M1PhysicalBufferRec
             | M1StepDispatchStage::TargetOnly
             | M1StepDispatchStage::DraftPrefill
             | M1StepDispatchStage::TargetPrefill
-            | M1StepDispatchStage::TargetVerification { .. },
+            | M1StepDispatchStage::TargetVerification { .. }
+            | M1StepDispatchStage::DraftCatchup
+            | M1StepDispatchStage::DraftCatchupCompletion,
             None,
         ) => {}
         _ => {
@@ -1272,6 +1281,16 @@ fn expected_buffers(
                         }
                         M1PhysicalBufferSourceV1::SpeculativeDraftChoices(subrange)
                     }
+                    M1StepDispatchStage::DraftCatchup => {
+                        let subrange = workspaces
+                            .segment_binding(input.segment_index)
+                            .and_then(M1FullStepWorkspaceSegmentBinding::catchup_choice_subrange)
+                            .filter(|range| range.producer_segment() == input.segment_index)
+                            .ok_or(M1PhysicalBufferRecipeErrorV1::WorkspaceBinding {
+                                segment_index: input.segment_index,
+                            })?;
+                        M1PhysicalBufferSourceV1::DraftCatchupChoices(subrange)
+                    }
                     _ => workspace(input, W::Choices, workspaces),
                 };
                 vec![
@@ -1522,6 +1541,34 @@ fn validate_source(
                     dispatch_index,
                     workspace: target,
                     role: M1StepWorkspaceRangeRole::DraftChoices,
+                });
+            }
+        }
+        M1PhysicalBufferSourceV1::DraftCatchupChoices(subrange) => {
+            let completion = workspaces.workspace_plans().target();
+            let valid = matches!(
+                workspaces.dispatch_plan().intent(),
+                crate::M1StepDispatchIntent::DraftCatchup(_)
+            ) && subrange.producer_segment() == 0
+                && subrange.completion_segment() == 1
+                && subrange.completion_workspace_id() == completion.workspace_id()
+                && subrange.completion_allocation_id() == completion.allocation().allocation_id()
+                && completion.range(M1StepWorkspaceRangeRole::Choices) == Some(subrange.range())
+                && subrange.range().byte_len() == 4
+                && workspaces
+                    .segment_binding(0)
+                    .and_then(M1FullStepWorkspaceSegmentBinding::catchup_choice_subrange)
+                    == Some(subrange)
+                && workspaces.segment_binding(1).is_some_and(|binding| {
+                    binding.workspace_role() == M1FullStepWorkspaceRole::Target
+                        && binding.workspace_id() == completion.workspace_id()
+                        && binding.workspace_selection() == completion.selection()
+                });
+            if !valid {
+                return Err(M1PhysicalBufferRecipeErrorV1::WorkspaceRange {
+                    dispatch_index,
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    role: M1StepWorkspaceRangeRole::Choices,
                 });
             }
         }
@@ -1831,7 +1878,7 @@ pub(crate) mod tests {
 
         let workspace_step = derive_m1_step_dispatch_plan(&operation_plan, intent).unwrap();
         let target_selection = intent.target_selection();
-        let target_plan = exact_workspace_plan(target_selection, identity_byte);
+        let target_plan = exact_workspace_plan(intent.completion_selection(), identity_byte);
         let plans = match intent {
             M1StepDispatchIntent::TargetOnly(_) => {
                 M1FullStepWorkspacePlans::target_only(target_plan)
@@ -1845,6 +1892,10 @@ pub(crate) mod tests {
                 let draft =
                     exact_workspace_plan(draft_selection(target_selection), identity_byte + 1);
                 M1FullStepWorkspacePlans::speculative_round(draft, target_plan)
+            }
+            M1StepDispatchIntent::DraftCatchup(parent) => {
+                let draft = exact_workspace_plan(draft_selection(parent), identity_byte + 1);
+                M1FullStepWorkspacePlans::draft_catchup(parent, draft, target_plan)
             }
         };
         let workspaces = match compose_addressless_m1_full_step_workspaces(workspace_step, plans) {
@@ -1872,6 +1923,102 @@ pub(crate) mod tests {
             M1PhysicalProgramV1::LogitsArgmax => 2,
             M1PhysicalProgramV1::LogitsCompact => 8,
         }
+    }
+
+    #[test]
+    fn catchup_receipt_consumes_exact_draft_argmax_destination_without_target_kv() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let intent = M1StepDispatchIntent::DraftCatchup(parent);
+            let (kernargs, workspaces) = exact_inputs(intent, 180);
+            let destination = workspaces
+                .segment_binding(0)
+                .unwrap()
+                .catchup_choice_subrange()
+                .unwrap();
+            assert_eq!(
+                workspaces.dispatch_plan().intent().target_selection(),
+                parent
+            );
+            assert_eq!(
+                workspaces.workspace_plans().target().selection(),
+                intent.completion_selection()
+            );
+            assert_eq!(destination.range().byte_len(), 4);
+            assert_eq!(
+                workspaces
+                    .workspace_plans()
+                    .target()
+                    .range(M1StepWorkspaceRangeRole::Choices),
+                Some(destination.range())
+            );
+            let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+            assert_eq!(recipe.rows().len(), 425);
+            let argmax = &recipe.rows()[423];
+            assert_eq!(argmax.program(), M1PhysicalProgramV1::LogitsArgmax);
+            assert_eq!(argmax.stage(), M1StepDispatchStage::DraftCatchup);
+            assert_eq!(
+                argmax.buffers()[1].source(),
+                M1PhysicalBufferSourceV1::DraftCatchupChoices(destination)
+            );
+            assert_eq!(
+                argmax.buffers()[1].access(),
+                M1PhysicalBufferAccessV1::WriteOnly
+            );
+            let receipt = &recipe.rows()[424];
+            assert_eq!(receipt.program(), M1PhysicalProgramV1::LogitsCompact);
+            assert_eq!(receipt.stage(), M1StepDispatchStage::DraftCatchupCompletion);
+            assert_eq!(
+                receipt.buffers()[0].source(),
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: M1StepWorkspaceRangeRole::Choices,
+                }
+            );
+            assert_eq!(
+                receipt.buffers()[0].access(),
+                M1PhysicalBufferAccessV1::ReadOnly
+            );
+            for row in &recipe.rows()[..424] {
+                assert_eq!(row.selection().role, Qwen3ModelRole::Draft06B);
+            }
+            for row in recipe.rows() {
+                for source in row.buffers().iter().map(|buffer| buffer.source()) {
+                    if let M1PhysicalBufferSourceV1::KvCachePlane { role, .. } = source {
+                        assert_eq!(role, Qwen3ModelRole::Draft06B);
+                    }
+                }
+            }
+            recipe.revalidate().unwrap();
+            assert!(!recipe.grants_packet_or_queue_authority());
+            assert!(!recipe.binds_device_memory());
+        }
+    }
+
+    #[test]
+    fn catchup_choice_destination_from_another_workspace_is_rejected() {
+        let parent = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let intent = M1StepDispatchIntent::DraftCatchup(parent);
+        let (_, first) = exact_inputs(intent, 200);
+        let (_, second) = exact_inputs(intent, 202);
+        let wrong = first
+            .segment_binding(0)
+            .unwrap()
+            .catchup_choice_subrange()
+            .unwrap();
+        assert!(validate_source(
+            423,
+            M1PhysicalBufferSourceV1::DraftCatchupChoices(wrong),
+            &second
+        )
+        .is_err());
     }
 
     #[test]

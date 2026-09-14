@@ -34,6 +34,8 @@ pub enum M1FullStepWorkspaceInputKind {
     PairedPrefill,
     /// One reusable draft decode workspace and one target speculative workspace.
     SpeculativeRound,
+    /// One draft decode workspace and one receipt-only completion workspace.
+    DraftCatchup,
 }
 
 /// Model workspace selected for one full-step dispatch segment.
@@ -71,9 +73,32 @@ pub enum M1FullStepWorkspacePlans {
         /// Exact target speculative workspace containing `DraftChoices [K,S]`.
         target_speculative: Box<AddresslessM1StepWorkspacePlan>,
     },
+    /// Draft maintenance under an exact original speculative parent.
+    DraftCatchup {
+        /// Original singleton speculative target selector, not a decode selector.
+        parent: Qwen3PlanSelection,
+        /// Exact singleton draft decode workspace.
+        draft_decode: Box<AddresslessM1StepWorkspacePlan>,
+        /// Canonical target decode workspace used only for its compact receipt.
+        completion: Box<AddresslessM1StepWorkspacePlan>,
+    },
 }
 
 impl M1FullStepWorkspacePlans {
+    /// Retains the parent, draft decode and receipt workspace without authority.
+    #[must_use = "the exact parent and both workspace plans remain retained"]
+    pub fn draft_catchup(
+        parent: Qwen3PlanSelection,
+        draft_decode: AddresslessM1StepWorkspacePlan,
+        completion: AddresslessM1StepWorkspacePlan,
+    ) -> Self {
+        Self::DraftCatchup {
+            parent,
+            draft_decode: Box::new(draft_decode),
+            completion: Box::new(completion),
+        }
+    }
+
     /// Wraps the one exact target-only plan.
     #[must_use = "the target workspace plan remains retained"]
     pub fn target_only(target: AddresslessM1StepWorkspacePlan) -> Self {
@@ -113,6 +138,7 @@ impl M1FullStepWorkspacePlans {
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
         }
     }
 
@@ -124,6 +150,7 @@ impl M1FullStepWorkspacePlans {
             Self::SpeculativeRound {
                 target_speculative, ..
             } => target_speculative,
+            Self::DraftCatchup { completion, .. } => completion,
         }
     }
 
@@ -134,6 +161,7 @@ impl M1FullStepWorkspacePlans {
             Self::TargetOnly { .. } => None,
             Self::PairedPrefill { draft, .. } => Some(draft),
             Self::SpeculativeRound { draft_decode, .. } => Some(draft_decode),
+            Self::DraftCatchup { draft_decode, .. } => Some(draft_decode),
         }
     }
 
@@ -147,6 +175,49 @@ impl M1FullStepWorkspacePlans {
             M1FullStepWorkspaceRole::Target => Some(self.target()),
             M1FullStepWorkspaceRole::Draft => self.draft(),
         }
+    }
+}
+
+/// Checked cross-workspace destination for one maintenance argmax choice.
+/// This contains no initialized value, native address or execution authority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1DraftCatchupChoiceSubrange {
+    producer_segment: u8,
+    completion_segment: u8,
+    completion_workspace_id: Identity,
+    completion_allocation_id: Identity,
+    range: M1StepWorkspaceRange,
+}
+
+impl M1DraftCatchupChoiceSubrange {
+    /// Draft segment producing the receipt choice.
+    #[must_use]
+    pub const fn producer_segment(self) -> u8 {
+        self.producer_segment
+    }
+
+    /// Receipt-only segment consuming the choice.
+    #[must_use]
+    pub const fn completion_segment(self) -> u8 {
+        self.completion_segment
+    }
+
+    /// Exact destination workspace identity.
+    #[must_use]
+    pub const fn completion_workspace_id(self) -> Identity {
+        self.completion_workspace_id
+    }
+
+    /// Exact destination future-allocation identity.
+    #[must_use]
+    pub const fn completion_allocation_id(self) -> Identity {
+        self.completion_allocation_id
+    }
+
+    /// Exact singleton `Choices` range, shared by argmax output and compact input.
+    #[must_use]
+    pub const fn range(self) -> M1StepWorkspaceRange {
+        self.range
     }
 }
 
@@ -313,9 +384,16 @@ pub struct M1FullStepWorkspaceSegmentBinding {
     draft_choice_subrange: Option<M1SpeculativeDraftChoiceSubrange>,
     draft_position_ids_subrange: Option<M1SpeculativeDraftMetadataSubrange>,
     draft_context_lengths_subrange: Option<M1SpeculativeDraftMetadataSubrange>,
+    catchup_choice_subrange: Option<M1DraftCatchupChoiceSubrange>,
 }
 
 impl M1FullStepWorkspaceSegmentBinding {
+    /// Cross-workspace argmax destination, only for the draft catch-up segment.
+    #[must_use]
+    pub const fn catchup_choice_subrange(self) -> Option<M1DraftCatchupChoiceSubrange> {
+        self.catchup_choice_subrange
+    }
+
     /// Zero-based dispatch-composition segment index.
     #[must_use]
     pub const fn segment_index(self) -> u8 {
@@ -458,6 +536,10 @@ impl AddresslessM1FullStepWorkspaceComposition {
 /// Fail-closed full-step workspace-composition error.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1FullStepWorkspaceCompositionError {
+    /// Catch-up workspace parent is not the exact dispatch parent.
+    DraftCatchupParent,
+    /// Catch-up must contain the exact draft decode and sole compact tail.
+    DraftCatchupShape,
     /// The intent must name the target model role.
     IntentRole {
         /// Required target role.
@@ -715,6 +797,11 @@ fn validate_composition(
 ) -> Result<Box<[M1FullStepWorkspaceSegmentBinding]>, M1FullStepWorkspaceCompositionError> {
     let contract = intent_contract(dispatch_plan.intent())?;
     validate_input_kind(contract.kind, workspace_plans.kind())?;
+    if let M1FullStepWorkspacePlans::DraftCatchup { parent, .. } = workspace_plans {
+        if *parent != dispatch_plan.intent().target_selection() {
+            return Err(M1FullStepWorkspaceCompositionError::DraftCatchupParent);
+        }
+    }
     validate_workspace_selection(
         M1FullStepWorkspaceRole::Target,
         contract.target_selection,
@@ -746,6 +833,7 @@ fn validate_composition(
     let expected_segment_count = match contract.kind {
         M1FullStepWorkspaceInputKind::TargetOnly => 1,
         M1FullStepWorkspaceInputKind::PairedPrefill => 2,
+        M1FullStepWorkspaceInputKind::DraftCatchup => 2,
         M1FullStepWorkspaceInputKind::SpeculativeRound => {
             let (_, iterations) = contract
                 .speculative_shape
@@ -832,7 +920,92 @@ fn validate_composition(
         M1FullStepWorkspaceInputKind::SpeculativeRound => {
             validate_speculative_segments(dispatch_plan, workspace_plans, contract)
         }
+        M1FullStepWorkspaceInputKind::DraftCatchup => {
+            validate_catchup_segments(dispatch_plan, workspace_plans, contract)
+        }
     }
+}
+
+fn validate_catchup_segments(
+    dispatch_plan: &AddresslessM1StepDispatchPlan,
+    workspace_plans: &M1FullStepWorkspacePlans,
+    contract: M1FullStepWorkspaceContract,
+) -> Result<Box<[M1FullStepWorkspaceSegmentBinding]>, M1FullStepWorkspaceCompositionError> {
+    let draft = workspace_plans
+        .draft()
+        .ok_or(M1FullStepWorkspaceCompositionError::DraftCatchupShape)?;
+    let completion = workspace_plans.target();
+    let draft_selection = contract
+        .draft_selection
+        .ok_or(M1FullStepWorkspaceCompositionError::DraftCatchupShape)?;
+    let draft_segment = &dispatch_plan.segments()[0];
+    let completion_segment = &dispatch_plan.segments()[1];
+    validate_segment_fields(
+        0,
+        draft_segment.segment_index(),
+        draft_segment.stage(),
+        draft_segment.dependency(),
+        draft_segment.selection(),
+        0,
+        M1StepDispatchStage::DraftCatchup,
+        M1StepDispatchDependency::ExternalInputs,
+        draft_selection,
+    )?;
+    validate_segment_fields(
+        1,
+        completion_segment.segment_index(),
+        completion_segment.stage(),
+        completion_segment.dependency(),
+        completion_segment.selection(),
+        1,
+        M1StepDispatchStage::DraftCatchupCompletion,
+        M1StepDispatchDependency::PriorDraftArgmax {
+            producer_segment: 0,
+        },
+        contract.target_selection,
+    )?;
+    if dispatch_plan.dispatch_count() != 425
+        || draft_segment.dispatch_start() != 0
+        || draft_segment.source_dispatch_start() != 0
+        || draft_segment.dispatch_count() != 424
+        || completion_segment.dispatch_start() != 424
+        || completion_segment.source_dispatch_start() != 544
+        || completion_segment.dispatch_count() != 1
+        || completion_segment.rows()[0].kind() != crate::M1OperationDispatchKind::K7Compact
+    {
+        return Err(M1FullStepWorkspaceCompositionError::DraftCatchupShape);
+    }
+    for (role, plan) in [
+        (M1FullStepWorkspaceRole::Draft, draft),
+        (M1FullStepWorkspaceRole::Target, completion),
+    ] {
+        let range = plan.range(M1StepWorkspaceRangeRole::Choices).ok_or(
+            M1FullStepWorkspaceCompositionError::MissingWorkspaceRange {
+                workspace: role,
+                role: M1StepWorkspaceRangeRole::Choices,
+            },
+        )?;
+        validate_range_role(role, M1StepWorkspaceRangeRole::Choices, range)?;
+        validate_range_alignment(role, range)?;
+        validate_range_length(role, U32_BYTES, range)?;
+        validate_range_bounds(role, plan.allocation().byte_len(), range)?;
+    }
+    let range = completion
+        .range(M1StepWorkspaceRangeRole::Choices)
+        .ok_or(M1FullStepWorkspaceCompositionError::DraftCatchupShape)?;
+    let mut draft_binding = segment_binding(0, M1FullStepWorkspaceRole::Draft, draft, None);
+    draft_binding.catchup_choice_subrange = Some(M1DraftCatchupChoiceSubrange {
+        producer_segment: 0,
+        completion_segment: 1,
+        completion_workspace_id: completion.workspace_id(),
+        completion_allocation_id: completion.allocation().allocation_id(),
+        range,
+    });
+    Ok(vec![
+        draft_binding,
+        segment_binding(1, M1FullStepWorkspaceRole::Target, completion, None),
+    ]
+    .into_boxed_slice())
 }
 
 fn validate_speculative_segments(
@@ -930,6 +1103,7 @@ fn segment_binding(
         draft_position_ids_subrange: speculative_subranges.map(|subranges| subranges.position_ids),
         draft_context_lengths_subrange: speculative_subranges
             .map(|subranges| subranges.context_lengths),
+        catchup_choice_subrange: None,
     }
 }
 
@@ -1019,6 +1193,35 @@ fn intent_contract(
                     bucket: draft_bucket,
                 }),
                 speculative_shape: Some((sequences, iterations)),
+            })
+        }
+        M1StepDispatchIntent::DraftCatchup(selection) => {
+            if selection.mode != Qwen3ExecutionMode::Speculative {
+                return Err(M1FullStepWorkspaceCompositionError::IntentMode {
+                    intent: M1FullStepWorkspaceInputKind::DraftCatchup,
+                    actual: selection.mode,
+                });
+            }
+            if !matches!(
+                selection.bucket,
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+                    | Qwen3PlanBucket::SpeculativeS1K8C8192
+                    | Qwen3PlanBucket::SpeculativeS1K16C8192
+            ) {
+                return Err(M1FullStepWorkspaceCompositionError::IntentBucket {
+                    intent: M1FullStepWorkspaceInputKind::DraftCatchup,
+                    actual: selection.bucket,
+                });
+            }
+            Ok(M1FullStepWorkspaceContract {
+                kind: M1FullStepWorkspaceInputKind::DraftCatchup,
+                target_selection: intent.completion_selection(),
+                draft_selection: Some(Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    mode: Qwen3ExecutionMode::Decode,
+                    bucket: Qwen3PlanBucket::DecodeS1C8192,
+                }),
+                speculative_shape: None,
             })
         }
     }
@@ -1522,6 +1725,65 @@ mod tests {
 
     const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         selection(Qwen3ModelRole::Target8B, mode, bucket)
+    }
+
+    #[test]
+    fn catchup_rejects_parent_completion_shape_and_allocation_substitution() {
+        let parent = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let intent = M1StepDispatchIntent::DraftCatchup(parent);
+        for fault in 0..3 {
+            let operation_plan = public_operation_kernel_plan_fixture();
+            let dispatch = derive_m1_step_dispatch_plan(&operation_plan, intent).unwrap();
+            let draft = exact_workspace_plan(
+                selection(
+                    Qwen3ModelRole::Draft06B,
+                    Qwen3ExecutionMode::Decode,
+                    Qwen3PlanBucket::DecodeS1C8192,
+                ),
+                210,
+            );
+            let completion = exact_workspace_plan(
+                if fault == 1 {
+                    parent
+                } else {
+                    intent.completion_selection()
+                },
+                if fault == 2 { 210 } else { 211 },
+            );
+            let supplied_parent = if fault == 0 {
+                target(
+                    Qwen3ExecutionMode::Speculative,
+                    Qwen3PlanBucket::SpeculativeS1K8C8192,
+                )
+            } else {
+                parent
+            };
+            let outcome = compose_addressless_m1_full_step_workspaces(
+                dispatch,
+                M1FullStepWorkspacePlans::draft_catchup(supplied_parent, draft, completion),
+            );
+            let M1FullStepWorkspaceCompositionOutcome::Rejected(failure) = outcome else {
+                panic!("substituted catch-up workspace admitted");
+            };
+            match fault {
+                0 => assert_eq!(
+                    failure.error(),
+                    M1FullStepWorkspaceCompositionError::DraftCatchupParent
+                ),
+                1 => assert!(matches!(
+                    failure.error(),
+                    M1FullStepWorkspaceCompositionError::WorkspaceSelection { .. }
+                )),
+                2 => assert!(matches!(
+                    failure.error(),
+                    M1FullStepWorkspaceCompositionError::WorkspaceAllocationAlias { .. }
+                )),
+                _ => unreachable!(),
+            }
+        }
     }
 
     fn exact_workspace_plan(

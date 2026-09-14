@@ -36,6 +36,8 @@ pub enum M1StepDispatchIntent {
     PairedPrefill(Qwen3PlanSelection),
     /// K autoregressive draft decodes followed by one target verification.
     SpeculativeRound(Qwen3PlanSelection),
+    /// One draft decode and a maintenance receipt for a fully accepted parent.
+    DraftCatchup(Qwen3PlanSelection),
 }
 
 impl M1StepDispatchIntent {
@@ -45,7 +47,21 @@ impl M1StepDispatchIntent {
         match self {
             Self::TargetOnly(selection)
             | Self::PairedPrefill(selection)
-            | Self::SpeculativeRound(selection) => selection,
+            | Self::SpeculativeRound(selection)
+            | Self::DraftCatchup(selection) => selection,
+        }
+    }
+
+    /// Returns the canonical selection defining the compact receipt layout.
+    #[must_use]
+    pub const fn completion_selection(self) -> Qwen3PlanSelection {
+        match self {
+            Self::DraftCatchup(_) => Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+            },
+            _ => self.target_selection(),
         }
     }
 
@@ -54,6 +70,7 @@ impl M1StepDispatchIntent {
             Self::TargetOnly(_) => 1,
             Self::PairedPrefill(_) => 2,
             Self::SpeculativeRound(_) => 3,
+            Self::DraftCatchup(_) => 4,
         }
     }
 }
@@ -71,6 +88,10 @@ pub enum M1StepDispatchStage {
     DraftDecode { iteration: u8 },
     /// Target verification and final compact completion.
     TargetVerification { draft_iterations: u8 },
+    /// One draft-only decode of the last accepted candidate.
+    DraftCatchup,
+    /// Only the canonical S1/K0 compact row, not a target model execution.
+    DraftCatchupCompletion,
 }
 
 impl M1StepDispatchStage {
@@ -83,6 +104,8 @@ impl M1StepDispatchStage {
             Self::TargetVerification { draft_iterations } => {
                 record.extend_from_slice(&[5, draft_iterations]);
             }
+            Self::DraftCatchup => record.extend_from_slice(&[6, 0]),
+            Self::DraftCatchupCompletion => record.extend_from_slice(&[7, 0]),
         }
     }
 }
@@ -124,6 +147,8 @@ pub struct M1StepDispatchSegment {
     stage: M1StepDispatchStage,
     dependency: M1StepDispatchDependency,
     expansion: DeclaredM1OperationDispatchExpansion,
+    source_dispatch_start: u32,
+    dispatch_count: u32,
 }
 
 impl M1StepDispatchSegment {
@@ -160,13 +185,20 @@ impl M1StepDispatchSegment {
     /// Number of physical dispatch rows in this segment.
     #[must_use]
     pub const fn dispatch_count(&self) -> u32 {
-        self.expansion.physical_dispatch_count()
+        self.dispatch_count
+    }
+
+    /// First retained row in the complete canonical source expansion.
+    #[must_use]
+    pub const fn source_dispatch_start(&self) -> u32 {
+        self.source_dispatch_start
     }
 
     /// Exact addressless rows in segment-local order.
     #[must_use]
     pub fn rows(&self) -> &[M1OperationDispatchRow] {
-        self.expansion.rows()
+        &self.expansion.rows()[self.source_dispatch_start as usize
+            ..self.source_dispatch_start as usize + self.dispatch_count as usize]
     }
 
     /// Identity of the independently checked operation expansion.
@@ -275,6 +307,10 @@ pub enum M1StepDispatchCompositionError {
     PairedPrefillMode,
     /// The speculative target selection or finite bucket is unsupported.
     SpeculativeSelection,
+    /// Catch-up requires a singleton K4, K8 or K16 speculative parent.
+    DraftCatchupSelection,
+    /// The canonical decode expansion does not end in a sole compact row.
+    DraftCatchupCompletion,
     /// One checked operation expansion could not be derived.
     Expansion(M1OperationDispatchExpansionError),
     /// Checked count or identity arithmetic overflowed.
@@ -308,6 +344,7 @@ pub fn derive_m1_step_dispatch_plan(
         M1StepDispatchIntent::TargetOnly(_) => 1,
         M1StepDispatchIntent::PairedPrefill(_) => 2,
         M1StepDispatchIntent::SpeculativeRound(_) => 17,
+        M1StepDispatchIntent::DraftCatchup(_) => 2,
     });
     let mut dispatch_count = 0_u32;
 
@@ -392,6 +429,36 @@ pub fn derive_m1_step_dispatch_plan(
                 selection,
             )?;
         }
+        M1StepDispatchIntent::DraftCatchup(selection) => {
+            if selection.mode != Qwen3ExecutionMode::Speculative
+                || !matches!(
+                    selection.bucket,
+                    Qwen3PlanBucket::SpeculativeS1K4C8192
+                        | Qwen3PlanBucket::SpeculativeS1K8C8192
+                        | Qwen3PlanBucket::SpeculativeS1K16C8192
+                )
+            {
+                return Err(M1StepDispatchCompositionError::DraftCatchupSelection);
+            }
+            push_segment(
+                operation_plan,
+                &mut segments,
+                &mut dispatch_count,
+                M1StepDispatchStage::DraftCatchup,
+                M1StepDispatchDependency::ExternalInputs,
+                Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    mode: Qwen3ExecutionMode::Decode,
+                    bucket: Qwen3PlanBucket::DecodeS1C8192,
+                },
+            )?;
+            push_catchup_completion_segment(
+                operation_plan,
+                &mut segments,
+                &mut dispatch_count,
+                intent.completion_selection(),
+            )?;
+        }
     }
 
     let mut plan = AddresslessM1StepDispatchPlan {
@@ -448,7 +515,56 @@ fn push_segment(
         dispatch_start: *dispatch_count,
         stage,
         dependency,
+        dispatch_count: expansion.physical_dispatch_count(),
+        source_dispatch_start: 0,
         expansion,
+    });
+    *dispatch_count = next;
+    Ok(())
+}
+
+fn push_catchup_completion_segment(
+    operation_plan: &DeclaredOperationKernelPlan,
+    segments: &mut Vec<M1StepDispatchSegment>,
+    dispatch_count: &mut u32,
+    selection: Qwen3PlanSelection,
+) -> Result<(), M1StepDispatchCompositionError> {
+    let expansion = derive_m1_operation_dispatch_expansion(operation_plan, selection)
+        .map_err(M1StepDispatchCompositionError::Expansion)?;
+    let source_dispatch_start = expansion
+        .physical_dispatch_count()
+        .checked_sub(1)
+        .ok_or(M1StepDispatchCompositionError::DraftCatchupCompletion)?;
+    let compact = expansion
+        .rows()
+        .last()
+        .ok_or(M1StepDispatchCompositionError::DraftCatchupCompletion)?;
+    if compact.kind() != crate::M1OperationDispatchKind::K7Compact
+        || compact.dispatch_index() != source_dispatch_start
+    {
+        return Err(M1StepDispatchCompositionError::DraftCatchupCompletion);
+    }
+    let next = dispatch_count
+        .checked_add(1)
+        .ok_or(M1StepDispatchCompositionError::ArithmeticOverflow)?;
+    if next > M1_MAX_STEP_DISPATCHES_V1 {
+        return Err(M1StepDispatchCompositionError::Capacity {
+            required: next,
+            capacity: M1_MAX_STEP_DISPATCHES_V1,
+        });
+    }
+    let segment_index = u8::try_from(segments.len())
+        .map_err(|_| M1StepDispatchCompositionError::ArithmeticOverflow)?;
+    segments.push(M1StepDispatchSegment {
+        segment_index,
+        dispatch_start: *dispatch_count,
+        stage: M1StepDispatchStage::DraftCatchupCompletion,
+        dependency: M1StepDispatchDependency::PriorDraftArgmax {
+            producer_segment: 0,
+        },
+        expansion,
+        source_dispatch_start,
+        dispatch_count: 1,
     });
     *dispatch_count = next;
     Ok(())
@@ -475,6 +591,11 @@ fn composition_identity(
         encode_selection(&mut record, segment.selection());
         record.extend_from_slice(&segment.dispatch_count().to_le_bytes());
         record.extend_from_slice(segment.expansion_id().as_bytes());
+        if segment.source_dispatch_start != 0 {
+            record.push(0xf0);
+            record.extend_from_slice(&segment.source_dispatch_start.to_le_bytes());
+            record.extend_from_slice(&segment.dispatch_count.to_le_bytes());
+        }
     }
     let mut hasher = Sha256::new();
     hash_field(&mut hasher, STEP_DISPATCH_IDENTITY_DOMAIN)?;
@@ -534,6 +655,96 @@ mod tests {
             mode,
             bucket,
         }
+    }
+
+    #[test]
+    fn catchup_projects_only_canonical_compact_tail_and_preserves_parent_identity() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        let completion_selection =
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let completion = derive_m1_step_dispatch_plan(
+            &operation_plan,
+            M1StepDispatchIntent::TargetOnly(completion_selection),
+        )
+        .unwrap();
+        let mut identities = Vec::new();
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let intent = M1StepDispatchIntent::DraftCatchup(parent);
+            let step = derive_m1_step_dispatch_plan(&operation_plan, intent).unwrap();
+            assert_eq!(step.intent().target_selection(), parent);
+            assert_eq!(step.intent().completion_selection(), completion_selection);
+            assert_eq!(step.dispatch_count(), 425);
+            assert_eq!(step.publication_count(), 1);
+            assert_eq!(step.segments().len(), 2);
+            let draft = &step.segments()[0];
+            assert_eq!(draft.stage(), M1StepDispatchStage::DraftCatchup);
+            assert_eq!(draft.selection().role, Qwen3ModelRole::Draft06B);
+            assert_eq!(draft.dispatch_count(), 424);
+            assert_eq!(draft.source_dispatch_start(), 0);
+            assert_eq!(
+                draft.rows().last().unwrap().kind(),
+                M1OperationDispatchKind::K7Argmax
+            );
+            let receipt = &step.segments()[1];
+            assert_eq!(receipt.stage(), M1StepDispatchStage::DraftCatchupCompletion);
+            assert_eq!(receipt.dispatch_start(), 424);
+            assert_eq!(receipt.source_dispatch_start(), 544);
+            assert_eq!(receipt.dispatch_count(), 1);
+            assert_eq!(receipt.rows(), &completion.segments()[0].rows()[544..]);
+            assert_eq!(
+                receipt.expansion_id(),
+                completion.segments()[0].expansion_id()
+            );
+            assert_eq!(
+                receipt.dependency(),
+                M1StepDispatchDependency::PriorDraftArgmax {
+                    producer_segment: 0,
+                }
+            );
+            assert!(!step.authenticates_artifacts());
+            assert!(!step.grants_execution_authority());
+            assert!(!step.proves_refinement());
+            assert!(!identities.contains(&step.composition_id()));
+            identities.push(step.composition_id());
+        }
+    }
+
+    #[test]
+    fn catchup_rejects_non_singleton_or_non_speculative_parents() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        for parent in [
+            target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+            target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+        ] {
+            assert_eq!(
+                derive_m1_step_dispatch_plan(
+                    &operation_plan,
+                    M1StepDispatchIntent::DraftCatchup(parent)
+                ),
+                Err(M1StepDispatchCompositionError::DraftCatchupSelection)
+            );
+        }
+        let mut parent = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        parent.role = Qwen3ModelRole::Draft06B;
+        assert_eq!(
+            derive_m1_step_dispatch_plan(
+                &operation_plan,
+                M1StepDispatchIntent::DraftCatchup(parent)
+            ),
+            Err(M1StepDispatchCompositionError::TargetRole)
+        );
     }
 
     #[test]

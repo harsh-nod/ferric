@@ -470,7 +470,11 @@ pub fn derive_m1_physical_dispatch_recipe_v1(
         for row in segment.rows() {
             let logical_dispatch_index = segment
                 .dispatch_start()
-                .checked_add(row.dispatch_index())
+                .checked_add(
+                    row.dispatch_index()
+                        .checked_sub(segment.source_dispatch_start())
+                        .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?,
+                )
                 .ok_or(M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
             if logical_dispatch_index != expected_logical_dispatch_index {
                 return Err(M1PhysicalDispatchRecipeErrorV1::DispatchOrder {
