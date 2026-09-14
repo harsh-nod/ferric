@@ -104,13 +104,16 @@ speculative receipt, separate maintenance receipt and both queue transitions
 without fabricating or retagging receipts. Its regression checks public API
 nameability, not native epoch values. Candidate `dd0ec11e` also corrects a
 missing helper import and duplicate inline attribute found by the latest
-remote compile check. Earlier failed checks remain retained; final compilation
-and linked tests have not yet passed. The completed
+remote compile check. Exact dd0 now passes both the engine-library check and
+the actual speculative-smoke adapter-bin check on mi300x, in 8.04 and 9.51
+seconds respectively. Earlier failed checks remain retained. Linked tests
+await additional reviewed workspace cleanup; no GPU validation is claimed.
+The completed
 single-round K4 rejection
 smoke below does not cover that full-acceptance path. No new matched serving
 TTFT/TPOT/throughput or competitor result is available.
 
-The separate all-case R29 candidate uses explicit engineering reference V2
+The all-case R29 implementation uses explicit engineering reference V2
 formats, either a selected canonical case or atomic seven-case execution, one
 model load and two byte-identical runs per case. Its Python gate passes 15
 engineering tests, all 23 legacy tests and the reference policy on mi300x; the
@@ -122,10 +125,17 @@ step hits the unchanged storage cap after nested Cargo drops the outer resource
 environment and starts fresh debug-profile artifacts. After reviewed cleanup,
 the control-only retry passes benchmark policy on unchanged `4b7338df`. Strict
 differential Clippy then rejects one implicit String clone. Follow-up
-`940d37e2` changes only `case.kind.to_owned()` to `case.kind.clone()` and passes
-remote formatting; final-source tests and all three Clippy commands remain
-pending. The original storage stop and lint failure are retained. This
-candidate is not yet integrated. These are CPU fixture checks,
+`940d37e2` changes only `case.kind.to_owned()` to `case.kind.clone()`. Its final
+remote gate passes all eleven phases: formatting, all three strict Clippy
+commands, all 24 differential tests (411.92 seconds, no ignores or filtering),
+both two-test actual-protocol cohorts, 23 legacy and 15 engineering Python
+tests, reference policy and benchmark policy. The original storage stop and
+lint failure are retained. Private integration `10cc6587d198a315678c8e1d939aa8e5163a32f5`,
+tree `047d0fe7a886bb94acbf59b55a6d4ab323cefa54`, includes all seven changed
+files byte-identical to exact 940. Final evidence archive SHA-256 is
+`a05d9b1a63950a01be2334f087b22c7477ccc1f259d75df8d449cbf09bc064dc`.
+The earlier ef203 source-coverage result does not automatically cover these
+new executable bodies; fresh coverage generation remains pending. These are CPU fixture checks,
 not additional GPU numerical results. Python evidence SHA-256 is
 `2912b40195e1d5e2f92da0dc970b55c1fe4bf6eb8f579e79e065ae5c98b0cd70`.
 
@@ -164,6 +174,25 @@ reclaiming 488,812,544 bytes; all 298 protected executables rehash identically
 and 131 unclassified files remain untouched. These cleanups restore space
 under the unchanged shared-stage cap. No foreign work, active cache, current
 tool or independent retained binary is removed.
+
+The completed R29 local worktree is also removed after exact integration and
+archive retention, reclaiming 44,128 KiB. The runtime lane removes its two
+obsolete source snapshots after archive/byte/no-live-use checks, reclaiming
+another 86,884 KiB. Final linked runtime tests still need additional headroom;
+the next cleanup is limited to reviewed completed sources and retained
+duplicates, not active target or shared cache contents.
+
+The kernel follow-on now has a concrete compiler prerequisite. M1's canonical
+weights are physical W[N,K], while the current typed MFMA B loader accepts
+row-major logical B[K,N]. A dedicated fe2o3 worktree is implementing a distinct
+checked column-major B view, authenticated layout propagation and address
+lowering, with explicit new semantic-wire admission. This is reusable compiler
+work only; Ferric owns the subsequent GEMM kernel and schedule. Existing scalar
+GEMM promises ascending separate FP32 operations, so MFMA requires a distinct
+numerical/profile identity rather than relabeling that schedule. Small target
+verification batches M5/M9/M17 must be covered; repeated S1 draft decode stays
+scalar. No new compiler test, emitted MFMA, numerical result or speedup is
+claimed for this in-progress capability.
 
 ## Earlier Integration Checkpoints
 
