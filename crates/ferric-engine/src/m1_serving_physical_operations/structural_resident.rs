@@ -6,6 +6,7 @@ use crate::m1_queue_rearm::structural_draft_catchup::{
     submit_structural_draft_catchup_v1, submit_structural_restore_v1,
     StructuralDraftCatchupScratchV1, StructuralRestoreScratchV1, StructuralTransitionStorageV1,
 };
+use crate::{M1FullStepWorkspacePlans, M1ServingQueueActionV1};
 
 /// Independent, canonical workspace-plan copies for one bounded structural continuation.
 #[derive(Debug)]
@@ -50,6 +51,28 @@ impl M1StructuralResidentCommittedRoundV1 {
     #[must_use]
     pub const fn requires_draft_catchup(&self) -> bool {
         self.pending.is_some()
+    }
+
+    /// Independent model-choice captures joined by the actual serving readbacks.
+    pub fn diagnostic_history(&self) -> &M1ServingPhysicalRunnerDiagnosticHistoryV1 {
+        self.committed.quiescent().diagnostic_history()
+    }
+
+    /// Counts genuinely completed maintenance transitions retained in physical history.
+    #[must_use]
+    pub fn completed_draft_catchup_count(&self) -> usize {
+        match &self.committed.quiescent().state {
+            M1ServingPhysicalRunnerQuiescentStateV1::Rearmed { released, .. } => (0..released
+                .round_history_len())
+                .filter(|&index| {
+                    released.round_history(index).is_some_and(
+                        crate::M1RearmRoundHistoryEntryV1::has_structural_draft_catchup,
+                    )
+                })
+                .count(),
+            M1ServingPhysicalRunnerQuiescentStateV1::First { .. }
+            | M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled { .. } => 0,
+        }
     }
 }
 
@@ -135,7 +158,7 @@ impl<'a, const C: usize>
                 .committed_tokens
                 .checked_add(width)
                 .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
-            || self.engine.state(projection.request) != Some(crate::RequestState::Ready)
+            || self.engine.state(projection.request) != Some(ferric_spec::RequestState::Ready)
         {
             return Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch);
         }
@@ -705,6 +728,21 @@ impl<'a, const C: usize>
                     (
                         error,
                         released,
+                        outcome,
+                        diagnostic_history,
+                        speculative_preparation,
+                        speculative_recipe,
+                        speculative_scratch,
+                        restore_storage,
+                    ),
+                ));
+            }
+            if deadline_expired() {
+                let closed = released.close(self.engine);
+                return Err(self.structural_failure(
+                    "deadline after maintenance completion",
+                    (
+                        closed,
                         outcome,
                         diagnostic_history,
                         speculative_preparation,

@@ -917,7 +917,7 @@ pub(crate) struct StructuralRestoreScratchV1 {
         Option<crate::authenticated_resident_session::M1AuthenticatedResidentRoleInputStorageV1>,
     draft_pages: Vec<crate::DeviceKvPageLease>,
     target_pages: Vec<crate::DeviceKvPageLease>,
-    draft_reservations: Vec<crate::PendingDeviceKvStepWrite>,
+    draft_reservations: Vec<crate::PendingSpeculativeDraftKvRoundWrite>,
     target_reservations: Vec<crate::PendingDeviceKvStepWrite>,
     draft_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
     target_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,

@@ -142,6 +142,10 @@ pub struct M1RearmRoundHistoryEntryV1 {
 }
 
 impl M1RearmRoundHistoryEntryV1 {
+    pub(crate) const fn has_structural_draft_catchup(&self) -> bool {
+        self.structural_maintenance.is_some()
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub(crate) const fn from_same_native_queue(
         checked: crate::M1CheckedCompletionOutputV1,
