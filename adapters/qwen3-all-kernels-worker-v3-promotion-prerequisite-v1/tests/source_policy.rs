@@ -14,7 +14,7 @@ const UNVERIFIED_BODIES: &str = include_str!("../../../proofs/UNVERIFIED_BODIES"
 const BEHAVIOR_HARNESS: &str = include_str!("behavioral-harness/run.sh");
 const BEHAVIOR_PATCH: &str = include_str!("behavioral-harness/patches/collector-test.patch");
 const BEHAVIOR_README: &str = include_str!("behavioral-harness/README.md");
-const FE2O3_REV: &str = "82d95ca81f3f3a55e1e82b88918a41cca8b20c31";
+const FE2O3_REV: &str = "c6b4050dd6c18e1868b24e4580da3eed8a3d19fa";
 const PACKAGE: &str = "ferric-qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
 const ADAPTER: &str = "adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1";
 
