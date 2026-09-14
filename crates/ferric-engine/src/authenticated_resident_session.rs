@@ -1405,7 +1405,7 @@ impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
 fn close_resident_round_executor<const C: usize>(
     mut engine: Engine<C>,
     executor: M1AuthenticatedResidentRoundExecutorV1,
-    retained: impl fmt::Debug + 'static,
+    retained: impl Any,
 ) -> M1AuthenticatedResidentQueueTeardownV1 {
     match executor {
         M1AuthenticatedResidentRoundExecutorV1::Speculative(executor) => {
