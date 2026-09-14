@@ -47,6 +47,13 @@ allocations/reallocations; formatting and strict engine Clippy pass. This checks
 host planning only, not physical GPU rounds or end-to-end performance. The unused
 clean fe2o3 worktree is removed; the user's dirty original checkout is untouched.
 
+The regenerated source inventory contains 173 modules and 8,252 executable
+bodies: 722 existing verified bodies and 7,530 unverified bodies. Its delta is
+eighteen added unverified bodies and one removed K4-specific helper; all new
+bodies are recorded as `pending-verus`. The 7,512 unchanged rationale records
+remain byte-identical. Seven upstream test-target metadata rows are refreshed
+in each verifier dependency scope. There is no proof-status upgrade.
+
 The cursor gap is a draft-prefix correctness issue; this review did not
 demonstrate a target-token mismatch. Fully accepted rounds may still terminate
 normally when their output policy is complete. Continuing such a request must
