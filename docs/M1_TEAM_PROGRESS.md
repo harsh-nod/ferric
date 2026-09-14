@@ -3,6 +3,41 @@
 Updated: 2026-09-14 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
+## Latest Integration
+
+Private `8113e2314b2e030f93bc27d1281b4caee7e66216`, tree
+`b5e3c150a42de4467e8fd9169d16ea4a7bc78ba9`, combines the engineering numerical
+pipeline and executed draft-initialization helper, then advances the same
+80-file pin roster to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
+Reverse-byte equality passes before refreshing two derived verifier digests.
+The upstream delta adds an inert transition-receipt codec/admission path; it
+does not change KFD/runtime, activate new optimizer behavior or provide the
+missing theorem checker. Full IR/analysis and backend tests pass in the compiler
+lane; new release tools/emission and combined Ferric host validation are pending.
+The ccfd GPU runs below retain their actual source identities.
+
+The numerical pipeline is integrated as `6629dfb3`, byte-identical to reviewed
+agent source `4ac12507` in all eleven changed files. Its separate engineering
+input, capture, reference and comparison commands never enter qualification
+acceptance. Exact 4ac/ccfd passes both capture cohorts (83 tests each, two
+existing ignores each), 37 adapter policies, 17 comparator tests, three strict
+Clippy commands and remote formatting. Python passes 23 existing and eleven
+engineering tests. Both capture and comparator release binaries are retained;
+the comparator's initial stage-cap stop and successful unchanged retry are
+recorded separately. CPU-only real input generation/reopening is running;
+no engineering numerical GPU comparison has completed yet.
+
+The initialization helper is integrated as `3d24f7e5`, with both changed files
+byte-identical to reviewed `abfe390f`. The actual helper plus eight executed
+callee bodies each pass a selected Verus run, 1 verified/0 errors. Ten
+actual-helper mutations fail genuine postconditions, with no VIR errors.
+The pinned 190-file closure matches around all nineteen proof jobs. Success
+establishes the real target/draft initialization cursor relation and one-write
+transition; failure frames the draft at helper entry. A caller's earlier page
+append remains in poisoned custody, not rolled back. Caller routing, leases,
+device writes and completion authority remain unproved. Combined host tests
+and refreshed executable-body inventories are pending.
+
 ## Active Integration
 
 Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
@@ -135,7 +170,14 @@ a later independent check returns to the exact pre-run 298,647,552-byte VRAM
 baseline and zero busy status. No reset is performed. Initialization/upload
 finishes at 246.103 seconds cumulative, followed by a 23.100-second controller
 duration. These remain diagnostic boundaries, not comparable serving metrics.
-The latest speculative mode has not yet been launched.
+The separate bb2/ccfd single-round K4 GPU smoke also passes. Paired prefill
+uses 128 active tokens, including 123 end-of-text suffix tokens, not masked
+padding. The real speculative graph accepts zero draft tokens and emits target
+correction 4710, with checked completion and terminal queue teardown. This
+exercises rejection and retirement, not full acceptance, draft maintenance,
+repeated rounds, numerical correctness or serving performance. A later sysfs
+check confirms return to baseline VRAM without reset. Both run archives and
+their distinct immediate/delayed cleanup observations are retained.
 
 The final d094 source inventory passes remote regeneration, committed-byte
 equality and validation: 173 modules and 8,435 executable-body identities,
@@ -157,6 +199,12 @@ The exact d55/852 release generator separately passes `--check` against committe
 generated sources. This is source equality, not native image or GPU evidence.
 
 Retained local evidence under `.codex-tmp` includes:
+- `ferric-native-ccfd-v1/speculative-k4-evidence-r1/ferric-native-ccfd-speculative-k4-evidence-r1.tar.gz`,
+  SHA-256 `f04e1b431f8d3c8656a76555aaa7cd0d8f55cc8b470811536f8d7f9a3d698b92`.
+- `ferric-catchup-initialize-proof-gate-v1/proof-abfe390f-evidence-r1.tar.gz`,
+  SHA-256 `208ff78e73737cfa01af3cdf6a323ce57419c342b9b8484622488abd2340ee29`.
+- `ferric-engineering-r29-evidence-final.tar.gz`, SHA-256
+  `176ec9eb77a200bdc3aa33900f2e53b4cc06997f05bab9687c2105ce8b4eab88`.
 - `ferric-native-ccfd-v1/target4-evidence-r1/ferric-native-ccfd-target4-evidence-r1.tar.gz`,
   SHA-256 `2a9b13d81098a878ad1f299a7f4f999c368c16aca1a7f906cd9dc283f1e9dffc`.
   The separate `TARGET4_RECEIPT.md` records the delayed settled-GPU observation
@@ -209,7 +257,18 @@ Retained local evidence under `.codex-tmp` includes:
 Earlier compiler, source-macro, stale-README and Clippy failures remain retained
 with their original source identities. No checker or admission rule was relaxed.
 
-The Pages-only checkpoint `524bfb70` is pushed to public main with only public
+The Pages-only checkpoint `454b7cd8` is pushed to public main with only public
+ancestry. Workflow `34900342080` succeeds and all seven live assets match the
+reviewed 550,455-byte artifact. The source/browser archive SHA-256 is
+`a4f8f4cbf235b030ac7e7f50d65c28bf770e01b71b23d454011ac114fe2f0d97`;
+deployment archive SHA-256 is
+`30d9d747d7d9f62cbcb409165a7b47c84297786c834b9e063af3e8ca848aca62`.
+The site reports the separate ccfd four-token and c6 one-token observations,
+current ccfd host tests and d094 scoped coverage. It does not yet report the
+later K4 run or new 4f6 integration; performance data remains unchanged.
+The completed Pages stage/worktree are removed. No private ancestry is pushed.
+
+Earlier Pages-only checkpoint `524bfb70` was pushed to public main with only public
 ancestry and five site-file changes. Remote browser and scope validation pass;
 workflow `34895549244` succeeds for the exact commit and all seven live assets
 match the reviewed artifact (539,684 bytes). Deployment archive SHA-256 is
