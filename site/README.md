@@ -7,17 +7,32 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 14 Resident Checkpoint
+## September 14 Compiler Checkpoint
 
-The current checkpoint records published fe2o3 `85255498a`, 539 backend tests,
-and 37 Ferric kernel host tests. The actual `d55/852` aggregate retry stayed
-within storage controls, but rejected an arithmetic-overflow proof obligation
-at semantic `bb97`, source fingerprint `01a6c27889e4`, line 373, attributed to
-paged `committed_tokens + query_token`. A same-source, same-native-MIR comparison
-stops at a prefill assertion with `829` and this paged assertion with `852`.
-Progression or regression remains unresolved pending isolated assertion checks;
-different first errors alone establish neither.
-The earlier 12 GiB resource stop remains separate. No image was produced.
+Published fe2o3 `c6b4050` passes 543 backend tests, and exact private Ferric
+`f17efe8` passes 37 aggregate host tests. Pristine release compiler tools emit
+the canonical `gfx942:xnack-` code-object V6 engineering HSACO with exact replay.
+Independent structured ELF inspection confirms 12 kernel entries and 12 matching
+descriptors. The image is 103,872 bytes, SHA-256
+`9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1`.
+These are structural symbol-set checks, not descriptor-table ordering, numerical
+execution or native qualification. Engineering authority is none; publication,
+load and launch grants remain false.
+
+The isolated same-source `829/852` comparison resolves the earlier uncertainty:
+49 assertions, one false-to-true proof gain, zero true-to-false losses. The paged
+`committed_tokens + query_token` obligation at `bb97`, line 373 was already
+unproved, not a regression introduced by `852`. The new compiler bounds unsigned
+literal subtraction only below the exact authenticated checked-success edge;
+all producer assertions and limits remain mandatory. The complete aggregate now
+passes. Earlier resource stops and rejected extractions remain separately retained.
+
+Current-pin engine and checker host validation remain pending.
+No GPU execution, model parity, new TTFT/TPOT,
+throughput or serving qualification is claimed. All 33 M1 gates remain open,
+and `performance.js` remains byte-identical.
+
+### Retained Earlier Host Cohorts
 
 Authenticated resident K4/K8/K16 catch-up is integrated. It consumes the missing
 last accepted draft candidate, advances draft KV by one, emits zero served

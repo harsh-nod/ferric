@@ -26,22 +26,42 @@ export function validateResidentCheckpoint(value, updated) {
   const integration = checkpoint.integration;
   exactKeys(integration, ["compiler", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
   const currentCompiler = integration.compiler;
-  exactKeys(currentCompiler, ["source", "backendPassed", "kernelHostPassed", "emissionState",
-    "emissionBlock", "emissionSourceFingerprint", "emissionLine", "attributedExpression",
-    "compilerProgressionOrRegression", "imageProduced", "detail"]);
-  assert.equal(currentCompiler.source, "85255498a021ed2b7a1a511f99f577ee4b11d175");
-  assert.deepEqual([currentCompiler.backendPassed, currentCompiler.kernelHostPassed], [539, 37]);
-  assert.equal(currentCompiler.emissionState, "overflow-proof-rejected");
-  assert.deepEqual([currentCompiler.emissionBlock, currentCompiler.emissionSourceFingerprint,
-    currentCompiler.emissionLine], ["bb97", "01a6c27889e4", 373]);
-  assert.equal(currentCompiler.attributedExpression, "committed_tokens + query_token");
-  assert.equal(currentCompiler.compilerProgressionOrRegression, "unresolved");
-  assert.equal(currentCompiler.imageProduced, false);
-  assert(currentCompiler.detail.includes("actual d55/852 aggregate retry stays within its storage limits"));
-  assert(currentCompiler.detail.includes("rejects the paged committed_tokens + query_token arithmetic-overflow proof obligation"));
-  assert(currentCompiler.detail.includes("same-source, same-native-MIR comparison stops at a prefill assertion with 829 and this paged assertion with 852"));
-  assert(currentCompiler.detail.includes("Progression or regression remains unresolved pending isolated assertion checks"));
-  assert(currentCompiler.detail.includes("earlier 12 GiB resource stop remains retained separately"));
+  exactKeys(currentCompiler, ["source", "ferricSource", "backendPassed", "kernelHostPassed", "emissionState",
+    "emissionExit", "target", "codeObjectVersion", "kernelEntries", "kernelDescriptors", "imageProduced",
+    "imageBytes", "imageSha256", "manifestSha256", "exactOutputReplay", "authority", "grants",
+    "evidenceSha256", "inspectionSha256", "detail", "differential"]);
+  assert.equal(currentCompiler.source, "c6b4050dd6c18e1868b24e4580da3eed8a3d19fa");
+  assert.equal(currentCompiler.ferricSource, "f17efe83d37105c0da78ea2c8bbbe166a0ee4f43");
+  assert.deepEqual([currentCompiler.backendPassed, currentCompiler.kernelHostPassed], [543, 37]);
+  assert.equal(currentCompiler.emissionState, "engineering-emitted");
+  assert.equal(currentCompiler.emissionExit, 0);
+  assert.equal(currentCompiler.target, "gfx942:xnack-");
+  assert.equal(currentCompiler.codeObjectVersion, 6);
+  assert.deepEqual([currentCompiler.kernelEntries, currentCompiler.kernelDescriptors], [12, 12]);
+  assert.equal(currentCompiler.imageProduced, true);
+  assert.equal(currentCompiler.imageBytes, 103872);
+  assert.equal(currentCompiler.imageSha256, "9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1");
+  assert.equal(currentCompiler.manifestSha256, "ff3dfe2c8b75996b52d69c041197ce12ba8f6fde94d31d6f8d8c53be4c6b691d");
+  assert.equal(currentCompiler.exactOutputReplay, true);
+  assert.equal(currentCompiler.authority, "none");
+  assert.deepEqual(currentCompiler.grants, { publication: false, load: false, launch: false });
+  assert.equal(currentCompiler.evidenceSha256, "943179eb018d6d646ea4c5f00609ec5a7b7bc864d9589c7a89e99e2e52dfebea");
+  assert.equal(currentCompiler.inspectionSha256, "08374b532865bef45fd0543e826bea4a5848a701b34782180c4b346edbc4f74d");
+  assert(currentCompiler.detail.includes("all 12 kernel entries and 12 matching descriptors"));
+  assert(currentCompiler.detail.includes("structural symbol sets, not Ferric policy descriptor-table order or numerical execution"));
+  assert(currentCompiler.detail.includes("Publication, load and launch grants all remain false; engineering authority is none"));
+  assert(currentCompiler.detail.includes("No native GPU, model-parity, serving or performance result follows"));
+  const differential = currentCompiler.differential;
+  exactKeys(differential, ["comparedAssertions", "proofGains", "proofLosses", "priorUnprovedBlock",
+    "priorUnprovedLine", "attributedExpression", "evidenceSha256", "detail"]);
+  assert.deepEqual([differential.comparedAssertions, differential.proofGains, differential.proofLosses], [49, 1, 0]);
+  assert.deepEqual([differential.priorUnprovedBlock, differential.priorUnprovedLine], ["bb97", 373]);
+  assert.equal(differential.attributedExpression, "committed_tokens + query_token");
+  assert.equal(differential.evidenceSha256, "6916aeae89906f74bef47c7ad422dbfe34fd4185e77d7b96728ff1750c4231a7");
+  assert(differential.detail.includes("49 assertions, one false-to-true proof gain and zero true-to-false losses"));
+  assert(differential.detail.includes("already unproved, not a regression introduced by 852"));
+  assert(differential.detail.includes("all producer assertions and limits remain mandatory"));
+  assert(differential.detail.includes("earlier 12 GiB resource stop and rejected extractions remain retained separately"));
   const currentResident = integration.resident;
   exactKeys(currentResident, ["windows", "dispatchIntegrated", "focusedPassed", "focusedCompilerSource",
     "maintenanceServedTokens", "warmedAllocationValidated", "detail"]);
@@ -59,7 +79,7 @@ export function validateResidentCheckpoint(value, updated) {
     "generatedRunnerSourceEqualityPassed",
     "adapterPassed", "adapterIgnored", "adapterPoliciesPassed", "ownerPassed", "ownerPoliciesPassed", "detail"]);
   assert.equal(currentHost.source, "d55fd00a44a01dce3f4c8c790b4736e2440a69fa");
-  assert.equal(currentHost.compilerSource, currentCompiler.source);
+  assert.equal(currentHost.compilerSource, "85255498a021ed2b7a1a511f99f577ee4b11d175");
   assert.deepEqual([currentHost.enginePassed, currentHost.engineIgnored, currentHost.doctestsPassed], [697, 9, 171]);
   assert.deepEqual(currentHost.binaryPassed, [11, 2, 75, 2]);
   assert.deepEqual(currentHost.binaryIgnored, [0, 0, 2, 0]);
@@ -84,7 +104,7 @@ export function validateResidentCheckpoint(value, updated) {
   const sourcePolicy = integration.sourcePolicy;
   exactKeys(sourcePolicy, ["compilerSource", "lockedGraphs", "sourceGatePassed", "verifierPassed",
     "sourcePinPassed", "dependencyInventoriesEqual", "evidenceSha256", "detail"]);
-  assert.equal(sourcePolicy.compilerSource, currentCompiler.source);
+  assert.equal(sourcePolicy.compilerSource, "85255498a021ed2b7a1a511f99f577ee4b11d175");
   assert.deepEqual([sourcePolicy.lockedGraphs, sourcePolicy.sourceGatePassed, sourcePolicy.verifierPassed,
     sourcePolicy.sourcePinPassed, sourcePolicy.dependencyInventoriesEqual], [32, 38, 31, 6, 3]);
   assert.equal(sourcePolicy.evidenceSha256, "1074fbf60b9643f13044c13ae2cd12a00502644371ab69a98efec38fce327f63");
@@ -219,6 +239,8 @@ export function validateResidentCheckpoint(value, updated) {
   assert(compiler.detail.includes("The eaa results do not validate e6cfa668"));
   assert(checkpoint.remaining.includes("No native K8/K16 qualification, new TTFT/TPOT/throughput measurement or competitiveness claim"));
   assert(checkpoint.remaining.includes("Historical measurements below are unchanged"));
+  assert(checkpoint.remaining.includes("Current-pin engine and checker host validation remain pending"));
+  assert(checkpoint.remaining.includes("earlier host cohorts are not relabeled as c6b4050 results"));
 }
 
 export function testResidentCheckpointRejections(value, updated) {
@@ -233,13 +255,30 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.compiler.backendPassed += 1; },
     (x) => { x.integration.compiler.kernelHostPassed += 1; },
     (x) => { x.integration.compiler.emissionState = "produced"; },
-    (x) => { x.integration.compiler.emissionBlock = "bb81"; },
-    (x) => { x.integration.compiler.emissionSourceFingerprint = "09ab2715abb3"; },
-    (x) => { x.integration.compiler.emissionLine = 378; },
-    (x) => { x.integration.compiler.attributedExpression = "query_position + 1"; },
-    (x) => { x.integration.compiler.compilerProgressionOrRegression = "regression"; },
-    (x) => { x.integration.compiler.compilerProgressionOrRegression = "progression"; },
-    (x) => { x.integration.compiler.imageProduced = true; },
+    (x) => { x.integration.compiler.ferricSource = x.integration.host.source; },
+    (x) => { x.integration.compiler.emissionExit = 1; },
+    (x) => { x.integration.compiler.target = "gfx950:xnack-"; },
+    (x) => { x.integration.compiler.codeObjectVersion = 5; },
+    (x) => { x.integration.compiler.kernelEntries += 1; },
+    (x) => { x.integration.compiler.kernelDescriptors -= 1; },
+    (x) => { x.integration.compiler.imageProduced = false; },
+    (x) => { x.integration.compiler.imageBytes += 1; },
+    (x) => { x.integration.compiler.imageSha256 = x.integration.compiler.manifestSha256; },
+    (x) => { x.integration.compiler.manifestSha256 = x.integration.compiler.imageSha256; },
+    (x) => { x.integration.compiler.exactOutputReplay = false; },
+    (x) => { x.integration.compiler.authority = "qualified"; },
+    (x) => { x.integration.compiler.grants.publication = true; },
+    (x) => { x.integration.compiler.grants.load = true; },
+    (x) => { x.integration.compiler.grants.launch = true; },
+    (x) => { x.integration.compiler.evidenceSha256 = x.integration.compiler.inspectionSha256; },
+    (x) => { x.integration.compiler.inspectionSha256 = x.integration.compiler.evidenceSha256; },
+    (x) => { x.integration.compiler.differential.comparedAssertions += 1; },
+    (x) => { x.integration.compiler.differential.proofGains = 0; },
+    (x) => { x.integration.compiler.differential.proofLosses = 1; },
+    (x) => { x.integration.compiler.differential.priorUnprovedBlock = "bb81"; },
+    (x) => { x.integration.compiler.differential.priorUnprovedLine = 378; },
+    (x) => { x.integration.compiler.differential.attributedExpression = "query_position + 1"; },
+    (x) => { x.integration.compiler.differential.evidenceSha256 = x.integration.compiler.evidenceSha256; },
     (x) => { x.integration.resident.windows.push(32); },
     (x) => { x.integration.resident.dispatchIntegrated = false; },
     (x) => { x.integration.resident.focusedPassed += 1; },
@@ -248,6 +287,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.resident.warmedAllocationValidated = true; },
     (x) => { x.integration.host.source = x.integration.prepack.producerSource; },
     (x) => { x.integration.host.compilerSource = x.integration.prepack.compilerSource; },
+    (x) => { x.integration.host.compilerSource = x.integration.compiler.source; },
     (x) => { x.integration.host.enginePassed += 1; },
     (x) => { x.integration.host.engineIgnored = 0; },
     (x) => { x.integration.host.binaryPassed[2] += 2; },
@@ -270,6 +310,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.coverage.newProofQualification = true; },
     (x) => { x.integration.coverage.evidenceSha256 = x.integration.sourcePolicy.evidenceSha256; },
     (x) => { x.integration.sourcePolicy.compilerSource = x.integration.prepack.compilerSource; },
+    (x) => { x.integration.sourcePolicy.compilerSource = x.integration.compiler.source; },
     (x) => { x.integration.sourcePolicy.lockedGraphs += 1; },
     (x) => { x.integration.sourcePolicy.sourceGatePassed += 1; },
     (x) => { x.integration.sourcePolicy.verifierPassed += 1; },
