@@ -5,35 +5,47 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Active Integration
 
-Private integration `6474fb5` advances the 79 active dependency-pin files to
-fe2o3 `dc8e7f84fdcbc18fd85012f70f053f43c41f8fbe`, tree
-`15a76ccc6c79de61389d8c849f93f9b8f0375865`. Exact reverse substitution
-reproduces the prior files; the only additional changes refresh two derived
-verifier manifest/lock hashes. Historical images and benchmark receipts retain
-their actual producers. The installed ae267 KFD worker's declared dependency
-closure remains byte-identical through dc8; it is not relabeled as a dc8 build.
+Private integration `0b2d53a` advances the 79 active dependency-pin files to
+published fe2o3 `eaa057ac34f8fc3cfda3dd2c2cb7df058560de06`, tree
+`d356bb5f5f7ffbb1e5d4b46991f246cf3edc176b`. Exact reverse substitution
+reproduces `8d29d70` except for two separately validated derived verifier
+manifest/lock hashes. Historical images and benchmark receipts retain their
+actual producers. The installed ae267 KFD worker's receipt-derived nine-crate
+source closure, workspace manifests and toolchain remain byte-identical through
+dc8 and eaa; it is not relabeled as a new build. All builds, tests and formatting
+run on mi300x, not locally.
 
 | Team | Current Work | Acceptance Still Required |
 | --- | --- | --- |
-| Compiler | The dc8 CLI/backend builds and 964 focused tests pass on mi300x, with one ignored. Canonical aggregate emission stops at the race-analysis peak-storage bound. A scoped fix is being developed on newer public main c76f844. | Preserve both exact-fallback and Presburger resource bounds, pass regressions, emit the actual aggregate, and inspect ABI/resources. No GPU launch or protected publication is implied by emission. |
-| Serving | Private 5c74b6f implements exact S1/K4, K8 and K16 selection through paired prefill, registry reconciliation, queue storage and readback. Private 624d9a2 exposes that selection through the sealed production owner plan. Existing K4 constructors and omitted-field canonical bytes remain compatible; S8 is not added. | Engine host tests at 53a9fa8 pass: 659 passed, nine ignored. Corrected adapter/service checks at 6f0621d are pending, as are authenticated gfx942 execution and serving qualification. |
+| Compiler | Resource fix eaa057ac is rebased on c76f844 and pushed to main. All 1,006 Pliron tests and strict Clippy pass; the 13 focused tests are a subset. Exact published CLI/backend builds and 33 aggregate host tests pass. | Actual aggregate emission now rejects an unproven nonzero control divisor. Attribute the kernel/expression, repair the appropriate layer, emit the aggregate and inspect ABI/resources. No image or GPU result exists for this attempt. |
+| Serving | Private 5c74b6f implements S1/K4, K8 and K16 through prefill, registry, queue storage and readback. Private 624d9a2 exposes selection through the sealed owner plan. Private 8d29d70 fixes recipe/preparation workspace identities in the real builder. Legacy canonical bytes and K4 wrappers remain compatible; S8 is not added. | Public-eaa host suite at 9e4d818 passes 659 engine tests (nine ignored), 109 adapter tests (one ignored), 37 adapter policies and 31 verifier policies. The service passes 16 tests and three policies. Authenticated gfx942 execution and serving qualification remain open. |
 | Verification | Review found the existing full-accept draft cursor gap. The resident path now rejects another common-anchor round when target/draft cursors differ. K16 storage distinguishes seventeen logical verification choices from thirty-two physical rows. | A real authenticated draft catch-up dispatch, completion-bound cursor advance and repeated full-accept execution. The engineering catch-up path is not a substitute. |
 
-The compiler rejection occurs at the existing GEMM vector root with 385 projected
-blocks and 77,791,232 invocations. It is the compiler's deterministic analysis
-budget, not the process memory limit. The accounting predates dc8, so this is not
-identified as a dc8 regression. Review found that the exact-address fallback is
-unreachable for this launch, but other over-cap launches can still enter bounded
-Presburger relation enumeration. The proposed fix must distinguish those paths;
-no analysis limit or proof requirement is being bypassed.
+The earlier dc8 rejection occurred at the existing GEMM vector root with 385
+projected blocks and 77,791,232 invocations. Its deterministic resource accounting
+predates dc8; it was not an OS memory limit or an identified dc8 regression.
+Published eaa distinguishes unreachable exact fallback from reachable bounded
+Presburger enumeration, preserving mandatory checks and hard limits. Compiler
+test archive `de075f4d` retains both the initial fixture failure and corrected
+passing run. Exact eaa emission passes the earlier resource blocker, then rejects
+"a division or remainder used for deterministic control lacks a statically nonzero
+divisor". The diagnostic does not identify the root, so the new failure is not
+attributed to GEMM. Archive `4655edd6` and emission log `8529eed1` retain this
+failure; no image, replay or native execution is claimed. Diagnostic root and
+expression attribution is the next compiler step, before kernel specialization.
 
 The first host attempts retained an upstream feature-environment failure and a
 test-only coordinator API error before the successful engine suite. Subsequent
 adapter compilation found an existing numerical module missing its batch-feature
 gate. Private 6f0621d adds that gate, a source-policy regression check, and an
 assertion consuming the resident test's must-use round outcome. These corrections
-do not enable engineering features in the protected service. All builds and tests
-run on mi300x; no new GPU workload or performance comparison has run here.
+do not enable engineering features in the protected service. The corrected
+deadline policies at `2e073b5` pass, including eighteen bounded-wait mutations and
+five terminal-custody mutations. All 32 locked metadata graphs pass. At
+`8d6813f`, the isolated warmed planning test passes for K4, K8 and K16 with zero
+allocations/reallocations; formatting and strict engine Clippy pass. This checks
+host planning only, not physical GPU rounds or end-to-end performance. The unused
+clean fe2o3 worktree is removed; the user's dirty original checkout is untouched.
 
 The cursor gap is a draft-prefix correctness issue; this review did not
 demonstrate a target-token mismatch. Fully accepted rounds may still terminate
