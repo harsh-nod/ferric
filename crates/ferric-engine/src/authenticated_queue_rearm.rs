@@ -7514,11 +7514,6 @@ fn rearm_authenticated_draft_catchup_queue_transition(
             saved,
         ));
     }
-    macro_rules! fail_transition {
-        ($source:expr, $retained:expr) => {
-            return Err((retain_queue_rearm_failure($source, $retained), saved))
-        };
-    }
     let expected_observation = detached.observation();
     let (_, lower, witness, operations, custody) = detached.into_rearm_parts();
     let mut custody = custody.into_rearm_parts();
@@ -7607,29 +7602,37 @@ fn rearm_authenticated_draft_catchup_queue_transition(
             )
         }
         (_, plans, images) => {
-            fail_transition!(
-                terminal_unbound(
-                    M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
-                    lower,
-                    (
-                        witness,
-                        operations,
-                        custody,
-                        plans,
-                        images,
-                        step,
-                        recipe,
-                        workspace_ranges,
-                        draft_slot
-                    )
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_unbound(
+                        M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+                        lower,
+                        (
+                            witness,
+                            operations,
+                            custody,
+                            plans,
+                            images,
+                            step,
+                            recipe,
+                            workspace_ranges,
+                            draft_slot,
+                        ),
+                    ),
+                    (),
                 ),
-                ()
-            );
+                saved,
+            ));
         }
     };
     let (lower, workspace_owners, workspace_ranges) = match replacement {
         Ok(value) => value,
-        Err(source) => fail_transition!(source, (witness, operations, custody, step, recipe)),
+        Err(source) => {
+            return Err((
+                retain_queue_rearm_failure(source, (witness, operations, custody, step, recipe)),
+                saved,
+            ));
+        }
     };
     custody.workspace_owners = workspace_owners;
     let output = match &transition {
@@ -7644,14 +7647,17 @@ fn rearm_authenticated_draft_catchup_queue_transition(
         Ok(output) => output,
         Err(output) => {
             custody.completion_output = *output;
-            fail_transition!(
-                terminal_unbound(
-                    M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
-                    lower,
-                    (witness, operations, custody, step, recipe, workspace_ranges)
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_unbound(
+                        M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+                        lower,
+                        (witness, operations, custody, step, recipe, workspace_ranges),
+                    ),
+                    (),
                 ),
-                ()
-            );
+                saved,
+            ));
         }
     };
     let reset = match &transition {
@@ -7672,40 +7678,48 @@ fn rearm_authenticated_draft_catchup_queue_transition(
     let (lower, output) = match reset {
         Ok(value) => value,
         Err(failure) => {
-            fail_transition!(
-                terminal_custody(failure.phase, failure.custody),
-                (
-                    witness,
-                    operations,
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_custody(failure.phase, failure.custody),
                     (
-                        custody.catalog_id,
-                        custody.selection,
-                        custody.physical_recipe,
-                        custody.workspace_composition,
-                        custody.workspace_owners,
-                        custody.partitioned_memory,
-                        custody.source_rows,
-                        custody.bound_rows,
-                        custody.retired_rollover_custody,
+                        witness,
+                        operations,
+                        (
+                            custody.catalog_id,
+                            custody.selection,
+                            custody.physical_recipe,
+                            custody.workspace_composition,
+                            custody.workspace_owners,
+                            custody.partitioned_memory,
+                            custody.source_rows,
+                            custody.bound_rows,
+                            custody.retired_rollover_custody,
+                        ),
+                        step,
+                        recipe,
+                        workspace_ranges,
                     ),
-                    step,
-                    recipe,
-                    workspace_ranges
-                )
-            );
+                ),
+                saved,
+            ));
         }
     };
     custody.completion_output = output;
     let capture = match retained_host_capture_ranges(&custody.completion_output) {
         Ok(value) => value,
-        Err(()) => fail_transition!(
-            terminal_unbound(
-                M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
-                lower,
-                (witness, operations, custody, step, recipe, workspace_ranges)
-            ),
-            ()
-        ),
+        Err(()) => {
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_unbound(
+                        M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
+                        lower,
+                        (witness, operations, custody, step, recipe, workspace_ranges),
+                    ),
+                    (),
+                ),
+                saved,
+            ));
+        }
     };
     let (source_rows, bound_rows) = match &transition {
         M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(_) => {
@@ -7731,14 +7745,19 @@ fn rearm_authenticated_draft_catchup_queue_transition(
             .expect("preflight retained bound-row storage"),
     ) {
         Ok(rows) => rows,
-        Err(()) => fail_transition!(
-            terminal_unbound(
-                M1AuthenticatedQueueRearmTerminalPhaseV1::BoundRowRebuild,
-                lower,
-                (witness, operations, custody, step, recipe, workspace_ranges)
-            ),
-            ()
-        ),
+        Err(()) => {
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_unbound(
+                        M1AuthenticatedQueueRearmTerminalPhaseV1::BoundRowRebuild,
+                        lower,
+                        (witness, operations, custody, step, recipe, workspace_ranges),
+                    ),
+                    (),
+                ),
+                saved,
+            ));
+        }
     };
     if let M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(pending) = &transition {
         saved = Some(M1AuthenticatedDraftCatchupRetainedBindingsV1 {
@@ -7761,14 +7780,19 @@ fn rearm_authenticated_draft_catchup_queue_transition(
         &mut storage.packet_batch,
     ) {
         Ok(batch) => batch,
-        Err(source) => fail_transition!(
-            terminal_unbound(
-                M1AuthenticatedQueueRearmTerminalPhaseV1::PacketLowering,
-                lower,
-                (witness, operations, source, step, workspace_ranges)
-            ),
-            ()
-        ),
+        Err(source) => {
+            return Err((
+                retain_queue_rearm_failure(
+                    terminal_unbound(
+                        M1AuthenticatedQueueRearmTerminalPhaseV1::PacketLowering,
+                        lower,
+                        (witness, operations, source, step, workspace_ranges),
+                    ),
+                    (),
+                ),
+                saved,
+            ));
+        }
     };
     let bound = match (storage.shape, batch) {
         (
