@@ -38,7 +38,9 @@ use ferric_m1_engineering_execution_v1::r33_production_backend::{
 use ferric_m1_engineering_execution_v1::r33_service::{
     HeldM1R33ServiceBundleV1, M1R33DaemonCoordinatorV1, M1R33UnixServerV1,
 };
-use ferric_m1_engineering_execution_v1::r33_wire::M1_R33_WINDOWS_PER_START_V1;
+use ferric_m1_engineering_execution_v1::r33_wire::{
+    M1_R33_WINDOWS_PER_START_V1, M1R33WorkloadRequestV1,
+};
 use ferric_qwen3_all_kernels_worker_v3_verifier_v1::{
     M1AllKernelsProductionProtectedVerifierV1,
     protected_receipt::M1AllKernelsProtectedVerifierTrustPolicyV1,
@@ -99,6 +101,40 @@ const TARGET_SPECULATIVE: Qwen3PlanSelection = Qwen3PlanSelection {
     bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
 };
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+enum OwnerSpeculativeWindowV1 {
+    #[serde(rename = "s1-k4")]
+    K4,
+    #[serde(rename = "s1-k8")]
+    K8,
+    #[serde(rename = "s1-k16")]
+    K16,
+}
+
+impl OwnerSpeculativeWindowV1 {
+    const fn target(self) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            bucket: match self {
+                Self::K4 => Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Self::K8 => Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Self::K16 => Qwen3PlanBucket::SpeculativeS1K16C8192,
+            },
+            ..TARGET_SPECULATIVE
+        }
+    }
+}
+
+fn deserialize_speculative_window<'de, D>(
+    deserializer: D,
+) -> Result<Option<OwnerSpeculativeWindowV1>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+    OwnerSpeculativeWindowV1::deserialize(serde::de::value::StringDeserializer::new(value))
+        .map(Some)
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct ClosurePlanV1 {
@@ -145,9 +181,21 @@ struct OwnerPlanV1 {
     server_start: u64,
     service_plan_path: String,
     service_plan_sha256: String,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_speculative_window"
+    )]
+    speculative_window: Option<OwnerSpeculativeWindowV1>,
 }
 
 impl OwnerPlanV1 {
+    fn target_speculative(&self) -> Qwen3PlanSelection {
+        self.speculative_window
+            .unwrap_or(OwnerSpeculativeWindowV1::K4)
+            .target()
+    }
+
     fn validate(&self) -> OwnerResult<()> {
         if self.authority != OWNER_AUTHORITY_V1 || self.format != OWNER_PLAN_FORMAT_V1 {
             return Err("owner-plan-fixed-fields: authority or format rejected".to_owned());
@@ -371,8 +419,6 @@ fn resident_windows(
     owner_plan_sha256: [u8; 32],
     bundle: &HeldM1R33ServiceBundleV1,
 ) -> OwnerResult<Vec<M1R33AuthenticatedResidentWindowBindingV1>> {
-    let timeout = M1QueueWaitTimeoutV1::new(plan.queue_wait_timeout_ms)
-        .ok_or_else(|| "owner-plan-queue-timeout: unsupported value".to_owned())?;
     let start = usize::try_from(plan.server_start)
         .ok()
         .and_then(|start| start.checked_mul(M1_R33_WINDOWS_PER_START_V1))
@@ -392,82 +438,7 @@ fn resident_windows(
                 "resident-window-{window_index}: singleton request required"
             ));
         };
-        let expected_output_tokens = u32::try_from(request.expected_output_tokens)
-            .map_err(|_| format!("resident-window-{window_index}: output bound overflow"))?;
-        let successor = expected_output_tokens
-            .checked_sub(1)
-            .ok_or_else(|| format!("resident-window-{window_index}: zero output rejected"))?;
-        let prefill = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
-            Ok(M1FullStepWorkspacePlans::paired_prefill(
-                workspace_plan(
-                    &owner_plan_sha256,
-                    plan.server_start,
-                    window_index,
-                    0,
-                    copy,
-                    DRAFT_PREFILL,
-                )?,
-                workspace_plan(
-                    &owner_plan_sha256,
-                    plan.server_start,
-                    window_index,
-                    0,
-                    copy,
-                    TARGET_PREFILL,
-                )?,
-            ))
-        };
-        let bootstrap = M1AuthenticatedS1T128PrefillBootstrapInputV1::new(
-            request.prompt_tokens.clone(),
-            successor,
-            prefill(0)?,
-            prefill(1)?,
-        )
-        .map_err(|failure| {
-            format!(
-                "resident-window-{window_index}: S1/T128 bootstrap rejected: {:?}",
-                failure.error()
-            )
-        })?;
-        let mut rounds = Vec::new();
-        rounds
-            .try_reserve_exact(successor as usize)
-            .map_err(|_| format!("resident-window-{window_index}: round allocation failed"))?;
-        for round_index in 0..successor as usize {
-            let speculative = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
-                Ok(M1FullStepWorkspacePlans::speculative_round(
-                    workspace_plan(
-                        &owner_plan_sha256,
-                        plan.server_start,
-                        window_index,
-                        round_index,
-                        copy,
-                        DRAFT_DECODE,
-                    )?,
-                    workspace_plan(
-                        &owner_plan_sha256,
-                        plan.server_start,
-                        window_index,
-                        round_index,
-                        copy,
-                        TARGET_SPECULATIVE,
-                    )?,
-                ))
-            };
-            rounds.push(
-                M1AuthenticatedResidentRoundPlansV1::new(speculative(2)?, speculative(3)?)
-                    .map_err(|_| {
-                        format!("resident-window-{window_index}: round-plan identity mismatch")
-                    })?,
-            );
-        }
-        let input = M1AuthenticatedResidentWindowInputV1::new(
-            bootstrap,
-            rounds,
-            plan.diagnostic_ring_bytes,
-            timeout,
-        )
-        .map_err(|_| format!("resident-window-{window_index}: resident input rejected"))?;
+        let input = resident_window_input(plan, owner_plan_sha256, window_index, request)?;
         bindings.push(
             M1R33AuthenticatedResidentWindowBindingV1::bind(window, input).map_err(|failure| {
                 format!(
@@ -478,6 +449,109 @@ fn resident_windows(
         );
     }
     Ok(bindings)
+}
+
+fn resident_window_input(
+    plan: &OwnerPlanV1,
+    owner_plan_sha256: [u8; 32],
+    window_index: usize,
+    request: &M1R33WorkloadRequestV1,
+) -> OwnerResult<M1AuthenticatedResidentWindowInputV1> {
+    let timeout = M1QueueWaitTimeoutV1::new(plan.queue_wait_timeout_ms)
+        .ok_or_else(|| "owner-plan-queue-timeout: unsupported value".to_owned())?;
+    let target_speculative = plan.target_speculative();
+    let expected_output_tokens = u32::try_from(request.expected_output_tokens)
+        .map_err(|_| format!("resident-window-{window_index}: output bound overflow"))?;
+    let successor = expected_output_tokens
+        .checked_sub(1)
+        .ok_or_else(|| format!("resident-window-{window_index}: zero output rejected"))?;
+    let prefill = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
+        Ok(M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(
+                &owner_plan_sha256,
+                plan.server_start,
+                window_index,
+                0,
+                copy,
+                DRAFT_PREFILL,
+            )?,
+            workspace_plan(
+                &owner_plan_sha256,
+                plan.server_start,
+                window_index,
+                0,
+                copy,
+                TARGET_PREFILL,
+            )?,
+        ))
+    };
+    let bootstrap = match plan.speculative_window {
+        None => M1AuthenticatedS1T128PrefillBootstrapInputV1::new(
+            request.prompt_tokens.clone(),
+            successor,
+            prefill(0)?,
+            prefill(1)?,
+        ),
+        Some(_) => M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+            target_speculative,
+            request.prompt_tokens.clone(),
+            successor,
+            prefill(0)?,
+            prefill(1)?,
+        ),
+    }
+    .map_err(|failure| {
+        format!(
+            "resident-window-{window_index}: S1/T128 bootstrap rejected: {:?}",
+            failure.error()
+        )
+    })?;
+    let mut rounds = Vec::new();
+    rounds
+        .try_reserve_exact(successor as usize)
+        .map_err(|_| format!("resident-window-{window_index}: round allocation failed"))?;
+    for round_index in 0..successor as usize {
+        let speculative = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
+            Ok(M1FullStepWorkspacePlans::speculative_round(
+                workspace_plan(
+                    &owner_plan_sha256,
+                    plan.server_start,
+                    window_index,
+                    round_index,
+                    copy,
+                    DRAFT_DECODE,
+                )?,
+                workspace_plan(
+                    &owner_plan_sha256,
+                    plan.server_start,
+                    window_index,
+                    round_index,
+                    copy,
+                    target_speculative,
+                )?,
+            ))
+        };
+        rounds.push(
+            M1AuthenticatedResidentRoundPlansV1::new(speculative(2)?, speculative(3)?).map_err(
+                |_| format!("resident-window-{window_index}: round-plan identity mismatch"),
+            )?,
+        );
+    }
+    match plan.speculative_window {
+        None => M1AuthenticatedResidentWindowInputV1::new(
+            bootstrap,
+            rounds,
+            plan.diagnostic_ring_bytes,
+            timeout,
+        ),
+        Some(_) => M1AuthenticatedResidentWindowInputV1::new_with_speculative_successor(
+            bootstrap,
+            rounds,
+            plan.diagnostic_ring_bytes,
+            timeout,
+        ),
+    }
+    .map_err(|_| format!("resident-window-{window_index}: resident input rejected"))
 }
 
 #[derive(Clone, Copy)]
@@ -1076,9 +1150,14 @@ fn serve(expected_owner_plan_sha256: [u8; 32]) -> OwnerResult<()> {
         model.draft_weights,
     )
     .map_err(|failure| format!("physical-model-memory: {failure:?}"))?;
-    let backend = M1R33AuthenticatedProductionBackendV1::new_with_s1_k4_resident_windows(
-        runner, memory, windows,
-    )
+    let backend = match plan.speculative_window {
+        None => M1R33AuthenticatedProductionBackendV1::new_with_s1_k4_resident_windows(
+            runner, memory, windows,
+        ),
+        Some(_) => M1R33AuthenticatedProductionBackendV1::new_with_s1_finite_resident_windows(
+            runner, memory, windows,
+        ),
+    }
     .map_err(|failure| format!("resident-backend-admission: {failure:?}"))?;
     let server =
         M1R33UnixServerV1::bind(&bundle).map_err(|error| format!("r33-listener-bind: {error}"))?;
@@ -1456,12 +1535,203 @@ mod tests {
             server_start: 0,
             service_plan_path: "/srv/ferric/service.json".to_owned(),
             service_plan_sha256: IDENTITY.to_owned(),
+            speculative_window: None,
         }
     }
 
     #[test]
     fn exact_external_plan_is_accepted() {
         plan().validate().unwrap();
+    }
+
+    fn canonical_plan_bytes(plan: &OwnerPlanV1) -> Vec<u8> {
+        let mut bytes = serde_json::to_vec_pretty(plan).unwrap();
+        bytes.push(b'\n');
+        bytes
+    }
+
+    #[test]
+    fn legacy_owner_plan_canonical_bytes_and_k4_default_are_unchanged() {
+        let legacy = format!(
+            r#"{{
+  "authority": "externally-supervised-production-capabilities-only",
+  "closure": {{
+    "compiler": "{IDENTITY}",
+    "compiler_configuration": "{IDENTITY}",
+    "executable_catalog": "{IDENTITY}",
+    "fe2o3_source": "{IDENTITY}",
+    "ferric_source": "{IDENTITY}",
+    "kernel_abi_catalog": "{IDENTITY}",
+    "kernel_proof_set": "{IDENTITY}",
+    "qualification_protocol": "{IDENTITY}",
+    "runtime_abi": "{IDENTITY}",
+    "runtime_contract": "{IDENTITY}",
+    "target_contract": "{IDENTITY}",
+    "tcb_report": "{IDENTITY}",
+    "validator_registry": "{IDENTITY}"
+  }},
+  "diagnostic_ring_bytes": 4096,
+  "format": "FERRIC-M1-R33-PRODUCTION-OWNER-PLAN-V1",
+  "gpu_unique_id": 1,
+  "model_snapshot_path": "/srv/ferric/model",
+  "protected_verifier": {{
+    "checker_measurement_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+    "expected_gid": 1234,
+    "expected_path": "/run/ferric/verifier.sock",
+    "expected_uid": 1234,
+    "timeout_ms": 10000,
+    "verifier_measurement_sha256": "{IDENTITY}",
+    "verifying_key_hex": "{KEY}"
+  }},
+  "queue_wait_timeout_ms": 1000,
+  "selector_manifest_path": "/srv/ferric/selector.json",
+  "selector_manifest_sha256": "{IDENTITY}",
+  "server_start": 0,
+  "service_plan_path": "/srv/ferric/service.json",
+  "service_plan_sha256": "{IDENTITY}"
+}}
+"#
+        );
+        assert_eq!(canonical_plan_bytes(&plan()), legacy.as_bytes());
+        let decoded = decode_owner_plan(legacy.as_bytes()).unwrap();
+        assert_eq!(decoded.speculative_window, None);
+        assert_eq!(decoded.target_speculative(), TARGET_SPECULATIVE);
+        assert_eq!(canonical_plan_bytes(&decoded), legacy.as_bytes());
+    }
+
+    #[test]
+    fn finite_owner_plan_selection_has_exact_canonical_spelling_and_target() {
+        for (selection, spelling, bucket) in [
+            (
+                OwnerSpeculativeWindowV1::K4,
+                "s1-k4",
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            ),
+            (
+                OwnerSpeculativeWindowV1::K8,
+                "s1-k8",
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+            ),
+            (
+                OwnerSpeculativeWindowV1::K16,
+                "s1-k16",
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ),
+        ] {
+            let mut plan = plan();
+            plan.speculative_window = Some(selection);
+            let bytes = canonical_plan_bytes(&plan);
+            assert!(
+                std::str::from_utf8(&bytes)
+                    .unwrap()
+                    .contains(&format!("\"speculative_window\": \"{spelling}\""))
+            );
+            let decoded = decode_owner_plan(&bytes).unwrap();
+            assert_eq!(decoded.speculative_window, Some(selection));
+            assert_eq!(
+                decoded.target_speculative(),
+                Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Target8B,
+                    mode: Qwen3ExecutionMode::Speculative,
+                    bucket,
+                }
+            );
+            assert_eq!(canonical_plan_bytes(&decoded), bytes);
+            let compact = serde_json::to_vec(&plan).unwrap();
+            assert!(decode_owner_plan(&compact).is_err());
+        }
+    }
+
+    #[test]
+    fn explicit_invalid_speculative_selections_never_default_to_k4() {
+        for invalid in [
+            serde_json::json!(null),
+            serde_json::json!(4),
+            serde_json::json!(8.0),
+            serde_json::json!(true),
+            serde_json::json!("s1-k32"),
+            serde_json::json!("s8-k4"),
+            serde_json::json!("K4"),
+            serde_json::json!("s1-k4 "),
+            serde_json::json!(""),
+            serde_json::json!(["s1-k4"]),
+            serde_json::json!({"s1-k4": null}),
+        ] {
+            let mut value = serde_json::to_value(plan()).unwrap();
+            value
+                .as_object_mut()
+                .unwrap()
+                .insert("speculative_window".to_owned(), invalid);
+            assert!(serde_json::from_value::<OwnerPlanV1>(value.clone()).is_err());
+            let mut bytes = serde_json::to_vec_pretty(&value).unwrap();
+            bytes.push(b'\n');
+            assert!(decode_owner_plan(&bytes).is_err());
+        }
+        let mut plan = plan();
+        plan.speculative_window = Some(OwnerSpeculativeWindowV1::K8);
+        let canonical = String::from_utf8(canonical_plan_bytes(&plan)).unwrap();
+        let duplicate = canonical.replace(
+            "\"speculative_window\": \"s1-k8\"",
+            "\"speculative_window\": \"s1-k8\",\n  \"speculative_window\": \"s1-k4\"",
+        );
+        assert!(decode_owner_plan(duplicate.as_bytes()).is_err());
+    }
+
+    #[test]
+    fn owner_selection_reaches_real_resident_input_and_workload_binding() {
+        use ferric_m1_engineering_execution_v1::r33_service::M1R33WorkloadWindowV1;
+        use ferric_m1_engineering_execution_v1::r33_wire::{M1R33CollectorRowV1, M1R33WorkV1};
+
+        let request = M1R33WorkloadRequestV1 {
+            expected_output_tokens: 3,
+            prompt_tokens: vec![7; 128],
+            request_ordinal: 0,
+        };
+        let window = M1R33WorkloadWindowV1 {
+            requests: vec![request.clone()],
+            row: M1R33CollectorRowV1 {
+                expected_work: M1R33WorkV1 {
+                    input_tokens: 128,
+                    output_tokens: 3,
+                    successful_requests: 1,
+                    total_tokens: 131,
+                },
+                id: "resident-plan-binding".to_owned(),
+                ordinal: 0,
+                phase: "warmup".to_owned(),
+                server_start: 0,
+                window: 0,
+            },
+        };
+        let mut plan_digests = BTreeSet::new();
+        let mut prefill_workspace_ids = BTreeSet::new();
+        for selection in [
+            None,
+            Some(OwnerSpeculativeWindowV1::K4),
+            Some(OwnerSpeculativeWindowV1::K8),
+            Some(OwnerSpeculativeWindowV1::K16),
+        ] {
+            let mut plan = plan();
+            plan.speculative_window = selection;
+            let bytes = canonical_plan_bytes(&plan);
+            let digest: [u8; 32] = Sha256::digest(&bytes).into();
+            assert!(plan_digests.insert(digest));
+            let plan = decode_owner_plan(&bytes).unwrap();
+            let workspace = workspace_plan(&digest, 0, 0, 0, 0, TARGET_PREFILL).unwrap();
+            assert!(prefill_workspace_ids.insert(workspace.workspace_id()));
+            assert!(!workspace.grants_runtime_authority());
+            let input = resident_window_input(&plan, digest, 0, &request).unwrap();
+            assert_eq!(input.successor_plan().target(), plan.target_speculative());
+            assert_eq!(input.successor_plan().draft(), DRAFT_DECODE);
+            assert_eq!(input.expected_output_tokens(), 3);
+            assert_eq!(input.prompt_tokens(), request.prompt_tokens);
+            M1R33AuthenticatedResidentWindowBindingV1::bind(&window, input).unwrap();
+
+            let input = resident_window_input(&plan, digest, 0, &request).unwrap();
+            let mut mismatched = window.clone();
+            mismatched.requests[0].prompt_tokens[0] = 8;
+            assert!(M1R33AuthenticatedResidentWindowBindingV1::bind(&mismatched, input).is_err());
+        }
     }
 
     #[test]
