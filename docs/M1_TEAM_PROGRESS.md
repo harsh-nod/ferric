@@ -5,16 +5,31 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Latest Integration
 
-Private `8113e2314b2e030f93bc27d1281b4caee7e66216`, tree
+Production checkpoint `8113e2314b2e030f93bc27d1281b4caee7e66216`, tree
 `b5e3c150a42de4467e8fd9169d16ea4a7bc78ba9`, combines the engineering numerical
 pipeline and executed draft-initialization helper, then advances the same
 80-file pin roster to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
 Reverse-byte equality passes before refreshing two derived verifier digests.
 The upstream delta adds an inert transition-receipt codec/admission path; it
 does not change KFD/runtime, activate new optimizer behavior or provide the
-missing theorem checker. Full IR/analysis and backend tests pass in the compiler
-lane; new release tools/emission and combined Ferric host validation are pending.
-The ccfd GPU runs below retain their actual source identities.
+missing theorem checker. Full IR/analysis, 543 backend and 37 aggregate tests,
+release tools, actual emission and independent twelve-entry/descriptor ELF
+inspection pass. The 103,616-byte 4f6 image has SHA-256
+`6f77d6813e6a2c9fd20c8b50eaffe0feb4435f00ac65192e9574a3637b6e5284`;
+its manifest is `39cf7d5a915f759cb289e2f48b63acbd725904bb22aa14439bbda575074b3d3f`.
+It has exact output replay but no GPU validation. The ccfd GPU runs below retain
+their actual source identities.
+
+Current private integration `500838ee078dc001f4f26857daf08424b4c908e8`, tree
+`ae110bfc0ea86a7a445efe26a9670021d450aaec`, adds only two test corrections:
+an inclusive range required by strict Clippy, and a checker listener test race.
+The original full checker cohort failed twice; an unchanged isolated retry
+passed. Diagnostic instrumentation retained child stderr and naturally exposed
+ENOENT from inspecting the socket pathname after the listener deliberately
+unlinked it. The test now checks socket/0600 readiness before connecting and
+waits for unlink before Begin, retaining the full credentialed exchange and
+original deadlines. No production listener behavior changed. Exact amended
+host/source validation is pending; the earlier failures are not relabeled.
 
 The numerical pipeline is integrated as `6629dfb3`, byte-identical to reviewed
 agent source `4ac12507` in all eleven changed files. Its separate engineering
@@ -24,8 +39,24 @@ existing ignores each), 37 adapter policies, 17 comparator tests, three strict
 Clippy commands and remote formatting. Python passes 23 existing and eleven
 engineering tests. Both capture and comparator release binaries are retained;
 the comparator's initial stage-cap stop and successful unchanged retry are
-recorded separately. CPU-only real input generation/reopening is running;
-no engineering numerical GPU comparison has completed yet.
+recorded separately. CPU-only real input generation/reopening now passes,
+including the exact twenty-file bundle and byte-identical invocation output.
+
+The first real engineering numerical case `prefill-s1-t128.001` completes on
+mi300x physical GPU 1: native capture, pinned independent BF16/SDPA reference
+and selected comparison all exit zero. The reference loads once and executes
+twice with byte-identical outputs. Across all 151,936 finite logits, both
+producers select token 198; token mismatch count is zero. Maximum monotonic
+BF16 ULP distance is 31,121, so the rows are not identical. Independent
+explanatory diagnostics report maximum absolute error 0.0703125, RMSE
+0.01524191977257529, relative L2 error 0.01284705380109194 and cosine similarity
+0.9999202347605426; top-ten ordering matches. No reviewed tolerance is inferred
+from these observations. This is one case, not all seven R29 cases or a gate
+closure. Its binary/reference source remains 4ac12507/ccfd, not 8113/4f6.
+Evidence archive SHA-256 is
+`816f162e5a2d3229239dc305e8658f8c570a269b44a077787d916030ec60335c`.
+Both GPU phases return to their exact idle memory baseline. Completed owned
+run/control/cache stages are removed after retention, reclaiming 350,916 KiB.
 
 The initialization helper is integrated as `3d24f7e5`, with both changed files
 byte-identical to reviewed `abfe390f`. The actual helper plus eight executed
@@ -35,10 +66,25 @@ The pinned 190-file closure matches around all nineteen proof jobs. Success
 establishes the real target/draft initialization cursor relation and one-write
 transition; failure frames the draft at helper entry. A caller's earlier page
 append remains in poisoned custody, not rolled back. Caller routing, leases,
-device writes and completion authority remain unproved. Combined host tests
-and refreshed executable-body inventories are pending.
+device writes and completion authority remain unproved. Exact 8113 passes 125
+spec tests and 698 engine library tests with nine existing ignores, including
+the new initialization and failure-custody tests. Adapter 109/one ignored,
+37 policies, engineering capture 83/two ignored, numerical seven and owner
+16 plus three policy tests pass. Final amended validation and refreshed
+executable-body inventories remain pending. The old completed release target
+is removed only after exact retention/provenance/no-live-use checks, reclaiming
+2,060,340 KiB; independent binaries, current debug artifacts and sources remain.
 
-## Active Integration
+The structural resident-loop team is implementing genuine repeated speculative
+rounds. Audit found that ordinary structural continuation accepted unequal
+target/draft cursors after full acceptance. The new path must reject that reuse,
+execute the actual 425-packet draft catch-up and restore the original K4 shape
+without promoting engineering artifacts to authenticated authority. This work
+is not yet integrated or GPU tested. The completed single-round K4 rejection
+smoke below does not cover that full-acceptance path. No new matched serving
+TTFT/TPOT/throughput or competitor result is available.
+
+## Earlier Integration Checkpoints
 
 Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
 `9c7bf3ffa948acdcb65b766a18b1ada757a20db1`, pins published fe2o3
