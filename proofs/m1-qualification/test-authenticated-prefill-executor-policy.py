@@ -48,7 +48,8 @@ def main() -> None:
     ordered = [
         "M1AuthenticatedPhysicalQueueSessionV1::create(",
         ".submit()",
-        "published.wait_for(queue_wait_timeout.milliseconds())",
+        "let Some(wait_timeout) = deadline_expired(Boundary::BeforeCompletionWait, queue_wait_timeout)",
+        "published.wait_for(wait_timeout.milliseconds())",
         "completed.recycle()",
         "recycled.observe_completion()",
         "failure.retry()",

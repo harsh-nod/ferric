@@ -465,14 +465,15 @@ fn resident_window_input(
     let successor = expected_output_tokens
         .checked_sub(1)
         .ok_or_else(|| format!("resident-window-{window_index}: zero output rejected"))?;
-    let prefill = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
+    // Recipe and preparation own separate plans for the same future allocation.
+    let prefill = || -> OwnerResult<M1FullStepWorkspacePlans> {
         Ok(M1FullStepWorkspacePlans::paired_prefill(
             workspace_plan(
                 &owner_plan_sha256,
                 plan.server_start,
                 window_index,
                 0,
-                copy,
+                0,
                 DRAFT_PREFILL,
             )?,
             workspace_plan(
@@ -480,7 +481,7 @@ fn resident_window_input(
                 plan.server_start,
                 window_index,
                 0,
-                copy,
+                0,
                 TARGET_PREFILL,
             )?,
         ))
@@ -489,15 +490,15 @@ fn resident_window_input(
         None => M1AuthenticatedS1T128PrefillBootstrapInputV1::new(
             request.prompt_tokens.clone(),
             successor,
-            prefill(0)?,
-            prefill(1)?,
+            prefill()?,
+            prefill()?,
         ),
         Some(_) => M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
             target_speculative,
             request.prompt_tokens.clone(),
             successor,
-            prefill(0)?,
-            prefill(1)?,
+            prefill()?,
+            prefill()?,
         ),
     }
     .map_err(|failure| {
@@ -511,14 +512,14 @@ fn resident_window_input(
         .try_reserve_exact(successor as usize)
         .map_err(|_| format!("resident-window-{window_index}: round allocation failed"))?;
     for round_index in 0..successor as usize {
-        let speculative = |copy| -> OwnerResult<M1FullStepWorkspacePlans> {
+        let speculative = || -> OwnerResult<M1FullStepWorkspacePlans> {
             Ok(M1FullStepWorkspacePlans::speculative_round(
                 workspace_plan(
                     &owner_plan_sha256,
                     plan.server_start,
                     window_index,
                     round_index,
-                    copy,
+                    2,
                     DRAFT_DECODE,
                 )?,
                 workspace_plan(
@@ -526,13 +527,13 @@ fn resident_window_input(
                     plan.server_start,
                     window_index,
                     round_index,
-                    copy,
+                    2,
                     target_speculative,
                 )?,
             ))
         };
         rounds.push(
-            M1AuthenticatedResidentRoundPlansV1::new(speculative(2)?, speculative(3)?).map_err(
+            M1AuthenticatedResidentRoundPlansV1::new(speculative()?, speculative()?).map_err(
                 |_| format!("resident-window-{window_index}: round-plan identity mismatch"),
             )?,
         );
@@ -1725,7 +1726,7 @@ mod tests {
             assert_eq!(input.successor_plan().draft(), DRAFT_DECODE);
             assert_eq!(input.expected_output_tokens(), 3);
             assert_eq!(input.prompt_tokens(), request.prompt_tokens);
-            M1R33AuthenticatedResidentWindowBindingV1::bind(&window, input).unwrap();
+            let _binding = M1R33AuthenticatedResidentWindowBindingV1::bind(&window, input).unwrap();
 
             let input = resident_window_input(&plan, digest, 0, &request).unwrap();
             let mut mismatched = window.clone();

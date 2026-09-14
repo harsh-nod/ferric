@@ -92,7 +92,7 @@ fn finite_resident_selection_is_only_from_the_sealed_canonical_owner_plan() {
         "let target_speculative = plan.target_speculative();",
         "M1AuthenticatedS1T128PrefillBootstrapInputV1::new(",
         "M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(",
-        "M1AuthenticatedResidentRoundPlansV1::new(speculative(2)?, speculative(3)?)",
+        "M1AuthenticatedResidentRoundPlansV1::new(speculative()?, speculative()?)",
         "M1AuthenticatedResidentWindowInputV1::new(",
         "M1AuthenticatedResidentWindowInputV1::new_with_speculative_successor(",
     ] {

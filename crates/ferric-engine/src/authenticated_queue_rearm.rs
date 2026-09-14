@@ -182,7 +182,9 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
         let target_page_capacity = match plans {
             Some(plans) => {
                 let plan = crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(plans.target().selection())?;
-                if plans.draft().map(|draft| draft.selection()) != Some(plan.draft()) {
+                if plans.draft().map(AddresslessM1StepWorkspacePlan::selection)
+                    != Some(plan.draft())
+                {
                     return None;
                 }
                 let shape =

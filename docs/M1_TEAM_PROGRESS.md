@@ -15,9 +15,25 @@ closure remains byte-identical through dc8; it is not relabeled as a dc8 build.
 
 | Team | Current Work | Acceptance Still Required |
 | --- | --- | --- |
-| Compiler | Cold dc8 CLI/backend build on mi300x, followed by focused compiler regressions and the canonical twelve-root gfx942 aggregate. | Successful tests, actual emission and ABI/resource inspection. No GPU launch or protected publication is implied by emission. |
-| Serving | Extend the authenticated resident owner from fixed S1/K4 to the existing S1/K4, K8 and K16 plans. Carry the exact plan through paired prefill, registry reconciliation, queue storage and readback. Existing K4 constructors remain exact wrappers; S8 is not added. | Remote compilation/tests, negative cases, and authenticated gfx942 execution. These source changes are not yet a serving qualification. |
+| Compiler | The dc8 CLI/backend builds and 964 focused tests pass on mi300x, with one ignored. Canonical aggregate emission stops at the race-analysis peak-storage bound. A scoped fix is being developed on newer public main c76f844. | Preserve both exact-fallback and Presburger resource bounds, pass regressions, emit the actual aggregate, and inspect ABI/resources. No GPU launch or protected publication is implied by emission. |
+| Serving | Private 5c74b6f implements exact S1/K4, K8 and K16 selection through paired prefill, registry reconciliation, queue storage and readback. Private 624d9a2 exposes that selection through the sealed production owner plan. Existing K4 constructors and omitted-field canonical bytes remain compatible; S8 is not added. | Engine host tests at 53a9fa8 pass: 659 passed, nine ignored. Corrected adapter/service checks at 6f0621d are pending, as are authenticated gfx942 execution and serving qualification. |
 | Verification | Review found the existing full-accept draft cursor gap. The resident path now rejects another common-anchor round when target/draft cursors differ. K16 storage distinguishes seventeen logical verification choices from thirty-two physical rows. | A real authenticated draft catch-up dispatch, completion-bound cursor advance and repeated full-accept execution. The engineering catch-up path is not a substitute. |
+
+The compiler rejection occurs at the existing GEMM vector root with 385 projected
+blocks and 77,791,232 invocations. It is the compiler's deterministic analysis
+budget, not the process memory limit. The accounting predates dc8, so this is not
+identified as a dc8 regression. Review found that the exact-address fallback is
+unreachable for this launch, but other over-cap launches can still enter bounded
+Presburger relation enumeration. The proposed fix must distinguish those paths;
+no analysis limit or proof requirement is being bypassed.
+
+The first host attempts retained an upstream feature-environment failure and a
+test-only coordinator API error before the successful engine suite. Subsequent
+adapter compilation found an existing numerical module missing its batch-feature
+gate. Private 6f0621d adds that gate, a source-policy regression check, and an
+assertion consuming the resident test's must-use round outcome. These corrections
+do not enable engineering features in the protected service. All builds and tests
+run on mi300x; no new GPU workload or performance comparison has run here.
 
 The cursor gap is a draft-prefix correctness issue; this review did not
 demonstrate a target-token mismatch. Fully accepted rounds may still terminate

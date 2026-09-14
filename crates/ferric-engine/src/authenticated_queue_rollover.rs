@@ -127,8 +127,14 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
         let prefill = paired_prefill_plan(new_window_plans.target().selection())?;
         if new_window_plans.kind() != M1FullStepWorkspaceInputKind::PairedPrefill
             || successor_plans.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound
-            || new_window_plans.draft().map(|draft| draft.selection()) != Some(prefill.draft())
-            || successor_plans.draft().map(|draft| draft.selection()) != Some(successor.draft())
+            || new_window_plans
+                .draft()
+                .map(ferric_build::AddresslessM1StepWorkspacePlan::selection)
+                != Some(prefill.draft())
+            || successor_plans
+                .draft()
+                .map(ferric_build::AddresslessM1StepWorkspacePlan::selection)
+                != Some(successor.draft())
             || admit_m1_production_rollover_transition_v1(prefill, successor).is_none()
         {
             return None;

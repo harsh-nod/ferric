@@ -154,10 +154,11 @@ pub(crate) fn s1_t128_successor_target_tail_pages_v1(
     {
         return None;
     }
-    let logical_rows = crate::M1SpeculativePhysicalShapeV1::from_selection(successor.target())
-        .ok()?
-        .draft_tokens() as u32
-        + 1;
+    let logical_rows = u32::from(
+        crate::M1SpeculativePhysicalShapeV1::from_selection(successor.target())
+            .ok()?
+            .draft_tokens(),
+    ) + 1;
     let tokens = 128_u32.checked_add(maximum_output_tokens.max(logical_rows))?;
     if tokens > M1_MAX_CONTEXT_TOKENS {
         return None;

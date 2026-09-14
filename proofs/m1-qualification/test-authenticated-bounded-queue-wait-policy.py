@@ -46,6 +46,7 @@ def validate(sources: dict[str, str]) -> None:
     serving = sources["serving"]
     rollover = sources["rollover"]
     r33 = sources["r33"]
+    prefill = sources["prefill"]
 
     timeout_type = require(queue, "pub struct M1QueueWaitTimeoutV1(NonZeroU32);", "opaque timeout")
     require(queue[timeout_type:], "pub const fn new(milliseconds: u32) -> Option<Self>", "zero-rejecting timeout constructor")
@@ -100,7 +101,7 @@ def validate(sources: dict[str, str]) -> None:
         raise PolicyError("rollover completion permits post-publication timeout substitution")
     require(
         rollover_completion,
-        "self.complete_round_with_deadline(engine, controls, |_, timeout| Some(timeout))",
+        "self.complete_round_with_deadline_and_scratch(engine, controls, None, None, |_, timeout| {\n            Some(timeout)\n        })",
         "deadline-aware rollover completion delegation",
     )
     deadline_rollover_completion = function(
@@ -108,18 +109,54 @@ def validate(sources: dict[str, str]) -> None:
         "pub(crate) fn complete_round_with_deadline<const C: usize, D>(",
         "deadline-aware rollover completion",
     )
-    if deadline_rollover_completion.count("queue_wait_timeout,") != 3:
-        raise PolicyError("deadline-aware rollover completion lost retained timeout custody")
     require(
         deadline_rollover_completion,
+        "self.complete_round_with_deadline_and_scratch(\n            engine,\n            controls,\n            None,\n            None,\n            deadline_expired,\n        )",
+        "deadline callback forwarding into common completion",
+    )
+    common_completion = function(
+        speculative,
+        "pub(crate) fn complete_round_with_deadline_and_scratch<const C: usize, D>(",
+        "common deadline-aware rollover completion",
+    )
+    if common_completion.count("queue_wait_timeout,") != 3:
+        raise PolicyError("deadline-aware rollover completion lost retained timeout custody")
+    require(
+        common_completion,
+        "complete_round_core_with_deadline::<M1NativeRearmedQueueEffectsV1, _, _, C>(",
+        "deadline-aware shared readback core",
+    )
+    require(
+        common_completion,
         "deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout)",
         "retained pre-settlement timeout consumption",
     )
     require(
-        deadline_rollover_completion,
+        common_completion,
         "deadline_expired(Boundary::AfterSettlement, queue_wait_timeout)",
         "retained post-settlement timeout consumption",
     )
+
+    prefill_completion = function(
+        prefill,
+        "pub(crate) fn execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1<const C: usize>(",
+        "deadline-aware paired-prefill completion",
+    )
+    reduced_timeout = require(
+        prefill_completion,
+        "let Some(wait_timeout) = deadline_expired(Boundary::BeforeCompletionWait, queue_wait_timeout)",
+        "deadline-reduced prefill wait budget",
+    )
+    bounded_wait = require(
+        prefill_completion,
+        "published.wait_for(wait_timeout.milliseconds())",
+        "deadline-reduced prefill wait",
+    )
+    expired = prefill_completion[reduced_timeout:bounded_wait]
+    require(expired, "published.close_in_flight()", "expired prefill queue closure")
+    require(expired, "return Err(terminal_failure(", "expired prefill terminal return")
+    if prefill_completion.count("published.wait_for(") != 1:
+        raise PolicyError("prefill must have exactly one deadline-reduced wait")
 
     submit_rollover = function(rollover, "pub fn submit_m1_authenticated_speculative_rollover_v1<const C: usize>(", "rollover submit")
     require(submit_rollover, "queue_wait_timeout: crate::M1QueueWaitTimeoutV1", "prepublication rollover timeout")
@@ -156,6 +193,8 @@ def expect_rejected(label: str, sources: dict[str, str]) -> None:
 
 
 def mutated(sources: dict[str, str], name: str, old: str, new: str) -> dict[str, str]:
+    if old not in sources[name]:
+        raise PolicyError(f"hostile mutation target missing in {name}: {old}")
     changed = dict(sources)
     changed[name] = changed[name].replace(old, new, 1)
     return changed
@@ -173,6 +212,7 @@ def main() -> None:
         "serving": engine / "m1_serving_physical_operations.rs",
         "rollover": engine / "authenticated_queue_rollover.rs",
         "r33": root / "adapters/m1-engineering-execution-v1/src/r33_lifecycle.rs",
+        "prefill": engine / "authenticated_prefill_executor.rs",
     }
     sources = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
     validate(sources)
@@ -186,6 +226,12 @@ def main() -> None:
         ("serving unbounded wait", "serving", ".wait_for(self.queue_wait_timeout.milliseconds())", ".wait()"),
         ("serving unbounded raw rearm", "serving", "published.wait_for(self.queue_wait_timeout.milliseconds(), self.engine)", "published.wait(self.engine)"),
         ("R33 timeout erasure", "r33", "queue_wait_timeout: M1QueueWaitTimeoutV1,", ""),
+        ("rollover shared-core bypass", "speculative", "self.complete_round_with_deadline_and_scratch(engine, controls, None, None, |_, timeout|", "self.complete_round_unbounded(engine, controls, None, None, |_, timeout|"),
+        ("rollover deadline callback erasure", "speculative", "            None,\n            None,\n            deadline_expired,\n        )", "            None,\n            None,\n            |_, timeout| Some(timeout),\n        )"),
+        ("pre-settlement deadline erasure", "speculative", "deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout)", "Some(queue_wait_timeout)"),
+        ("post-settlement deadline erasure", "speculative", "deadline_expired(Boundary::AfterSettlement, queue_wait_timeout)", "Some(queue_wait_timeout)"),
+        ("prefill configured-budget substitution", "prefill", "published.wait_for(wait_timeout.milliseconds())", "published.wait_for(queue_wait_timeout.milliseconds())"),
+        ("prefill remaining-budget erasure", "prefill", "let Some(wait_timeout) = deadline_expired(Boundary::BeforeCompletionWait, queue_wait_timeout)", "let Some(wait_timeout) = Some(queue_wait_timeout)"),
     ]:
         expect_rejected(label, mutated(sources, name, old, new))
 
@@ -213,7 +259,7 @@ def main() -> None:
 
     deadline_completion = function(
         sources["speculative"],
-        "pub(crate) fn complete_round_with_deadline<const C: usize, D>(",
+        "pub(crate) fn complete_round_with_deadline_and_scratch<const C: usize, D>(",
         "deadline-aware rollover completion",
     )
     erased_timeout = deadline_completion.replace("queue_wait_timeout,", "", 1)
@@ -226,7 +272,7 @@ def main() -> None:
     print(
         "PASS: authenticated production waits combine progress and monotonic wall bounds, "
         "terminalize through race-aware KFD wait_for(0), retain timeout custody, fault rearm "
-        "Engine state, and reject 12 hostile mutations"
+        "Engine state, preserve deadline-reduced prefill waits, and reject 18 hostile mutations"
     )
 
 

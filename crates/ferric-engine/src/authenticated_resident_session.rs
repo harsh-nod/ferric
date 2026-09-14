@@ -290,7 +290,10 @@ impl M1AuthenticatedResidentWindowInputV1 {
         ) != Some(plan)
             || rounds.iter().any(|round| {
                 round.preparation.target().selection() != plan.target()
-                    || round.preparation.draft().map(|draft| draft.selection())
+                    || round
+                        .preparation
+                        .draft()
+                        .map(ferric_build::AddresslessM1StepWorkspacePlan::selection)
                         != Some(plan.draft())
             })
         {
