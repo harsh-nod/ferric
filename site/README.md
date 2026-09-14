@@ -7,17 +7,45 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 14 Compiler Checkpoint
+## September 14 Native And Compiler Checkpoint
 
-Published fe2o3 `c6b4050` passes 543 backend tests, and exact private Ferric
-`f17efe8` passes 37 aggregate host tests. Pristine release compiler tools emit
+Exact `bb2/ccfd` target-only execution on mi300x completes the same five-token
+raw prompt with four IDs `[12095,13,576,6722]`, text ` Paris. The capital`,
+hardware completion and exit 0. These match the first four IDs from the
+independently frozen historical BF16/SDPA reference. This one-prompt token-prefix
+spot check is not an R29 logit comparison, general numerical validation,
+speculative catch-up, R33 qualification or serving performance. Its retained
+archive SHA-256 is `2a9b13d81098a878ad1f299a7f4f999c368c16aca1a7f906cd9dc283f1e9dffc`.
+
+The immediate archived after-state still reports 56,838,090,752 VRAM bytes,
+zero selected KFD-process memory and busy 0. A later independent direct sysfs
+check observes return to the exact 298,647,552-byte baseline and busy 0. This
+delayed observation is separate; the original archive is not rewritten. No
+device reset or foreign-process termination was performed.
+
+The separate `6651f2d/c6b4050` target-only native smoke on mi300x passes with
+the earlier `f17/c6` image: prompt `The capital of France is` (five token IDs)
+produces one token, ID 12095, text ` Paris`. Hardware completion is observed,
+the process exits 0 and selected-device memory returns to baseline. Its archive
+SHA-256 is `0dc8ca2a724bde837750bae565a4224feae03e6f88fde50913ed35c58199999d`.
+Authority is none; benchmark comparability, worker-v3 authentication,
+compiler-origin authentication and current-publication selection remain false.
+This is not general numerical parity, speculative catch-up, serving,
+performance or M1 qualification. Raw controller offsets are excluded from
+TTFT/TPOT and the performance data.
+
+Separately, published fe2o3 `ccfd43d6` passes 1,021 Pliron library tests,
+58 integration tests, 13 doctests and 543 backend tests. Exact private Ferric
+`bb2b012` passes 37 aggregate host tests. Pristine release compiler tools emit
 the canonical `gfx942:xnack-` code-object V6 engineering HSACO with exact replay.
 Independent structured ELF inspection confirms 12 kernel entries and 12 matching
 descriptors. The image is 103,872 bytes, SHA-256
-`9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1`.
+`46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c`.
 These are structural symbol-set checks, not descriptor-table ordering, numerical
 execution or native qualification. Engineering authority is none; publication,
 load and launch grants remain false.
+This newer image differs from c6 and has its own separate four-token native
+observation. The c6 result is not relabeled as latest-compiler hardware evidence.
 
 The isolated same-source `829/852` comparison resolves the earlier uncertainty:
 49 assertions, one false-to-true proof gain, zero true-to-false losses. The paged
@@ -27,10 +55,27 @@ literal subtraction only below the exact authenticated checked-success edge;
 all producer assertions and limits remain mandatory. The complete aggregate now
 passes. Earlier resource stops and rejected extractions remain separately retained.
 
-Current-pin engine and checker host validation remain pending.
-No GPU execution, model parity, new TTFT/TPOT,
-throughput or serving qualification is claimed. All 33 M1 gates remain open,
-and `performance.js` remains byte-identical.
+Exact `bb2/ccfd` passes all 71 host and metadata phases. Spec passes 123 tests;
+engine passes 697 library tests (nine ignored), binary suites 11/2/75/2 (two
+ignored), and 171 doctests. Checker passes 81 library, 27 integration (three
+ignored), and six doc tests with normal host features `[]`. Adapter passes
+109 tests (one ignored), 37 policies and seven host numerical tests; owner
+passes 16 tests and three policies. All five scoped strict Clippy checks pass.
+All 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin
+policies and three dependency inventory comparisons pass. The target-smoke,
+speculative-smoke and R29-capture release binaries are built and source-bound,
+not GPU-qualified by those builds.
+
+Final `d094/ccfd` source coverage also matches the committed manifest exactly:
+173 modules, 8,435 bodies, 723 verified labels and 7,712 unverified identities.
+All 722 prior verified records are unchanged. The added helper label is backed
+by its scoped Verus run with six executed callees and seven rejected executable
+mutations, not whole-crate or physical catch-up verification. The engine
+preflight and full physical catch-up chain remain unverified. Host tests and
+binaries remain at bb2; d094 adds documentation and reviewed inventories only.
+
+No new TTFT/TPOT, throughput, general numerical parity or serving qualification
+is claimed. All 33 M1 gates remain open, and `performance.js` remains byte-identical.
 
 ### Retained Earlier Host Cohorts
 

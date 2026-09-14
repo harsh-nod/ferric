@@ -8,30 +8,31 @@ function exactKeys(value, expected) {
 export function validateResidentCheckpoint(value, updated) {
   const checkpoint = JSON.parse(JSON.stringify(value));
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
-    "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuMeasurement",
+    "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuObservation",
     "newPerformanceMeasurement", "overview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
   assert.equal(updated, "2026-09-14");
   assert.equal(checkpoint.date, updated);
   assert.equal(checkpoint.implementationPrivate, true);
   assert.equal(checkpoint.m1OpenGates, 33);
   assert.equal(checkpoint.fullAcceptanceCatchupImplemented, true);
-  for (const key of ["nativeServingQualified",
-    "newGpuMeasurement", "newPerformanceMeasurement"]) {
+  assert.equal(checkpoint.newGpuObservation, true);
+  for (const key of ["nativeServingQualified", "newPerformanceMeasurement"]) {
     assert.equal(checkpoint[key], false, key);
   }
-  assert.equal(checkpoint.scope, "Private authenticated resident serving; host and compiler progress only");
+  assert.equal(checkpoint.scope, "Private resident integration; source-bound engineering observations, not qualification");
   assert(checkpoint.overview.includes("draft KV catch-up is integrated and host-tested"));
-  assert(checkpoint.overview.includes("All 33 M1 gates remain open; this checkpoint adds no GPU or performance result"));
+  assert(checkpoint.overview.includes("All 33 M1 gates remain open; no new serving or performance result is claimed"));
+  assert(checkpoint.overview.includes("one-prompt historical reference spot check"));
 
   const integration = checkpoint.integration;
-  exactKeys(integration, ["compiler", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  exactKeys(integration, ["compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
   const currentCompiler = integration.compiler;
   exactKeys(currentCompiler, ["source", "ferricSource", "backendPassed", "kernelHostPassed", "emissionState",
     "emissionExit", "target", "codeObjectVersion", "kernelEntries", "kernelDescriptors", "imageProduced",
-    "imageBytes", "imageSha256", "manifestSha256", "exactOutputReplay", "authority", "grants",
+    "imageBytes", "imageSha256", "manifestSha256", "nativeGpuTested", "exactOutputReplay", "authority", "grants",
     "evidenceSha256", "inspectionSha256", "detail", "differential"]);
-  assert.equal(currentCompiler.source, "c6b4050dd6c18e1868b24e4580da3eed8a3d19fa");
-  assert.equal(currentCompiler.ferricSource, "f17efe83d37105c0da78ea2c8bbbe166a0ee4f43");
+  assert.equal(currentCompiler.source, "ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2");
+  assert.equal(currentCompiler.ferricSource, "bb2b0123f4f96410269a098d7cba8aa7bb950008");
   assert.deepEqual([currentCompiler.backendPassed, currentCompiler.kernelHostPassed], [543, 37]);
   assert.equal(currentCompiler.emissionState, "engineering-emitted");
   assert.equal(currentCompiler.emissionExit, 0);
@@ -40,17 +41,20 @@ export function validateResidentCheckpoint(value, updated) {
   assert.deepEqual([currentCompiler.kernelEntries, currentCompiler.kernelDescriptors], [12, 12]);
   assert.equal(currentCompiler.imageProduced, true);
   assert.equal(currentCompiler.imageBytes, 103872);
-  assert.equal(currentCompiler.imageSha256, "9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1");
-  assert.equal(currentCompiler.manifestSha256, "ff3dfe2c8b75996b52d69c041197ce12ba8f6fde94d31d6f8d8c53be4c6b691d");
+  assert.equal(currentCompiler.imageSha256, "46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c");
+  assert.equal(currentCompiler.manifestSha256, "339ea2c2c4528a28d7ca16085a31c57070a304b4a2b5454ef118e4ce0a0d66a2");
+  assert.equal(currentCompiler.nativeGpuTested, true);
   assert.equal(currentCompiler.exactOutputReplay, true);
   assert.equal(currentCompiler.authority, "none");
   assert.deepEqual(currentCompiler.grants, { publication: false, load: false, launch: false });
-  assert.equal(currentCompiler.evidenceSha256, "943179eb018d6d646ea4c5f00609ec5a7b7bc864d9589c7a89e99e2e52dfebea");
-  assert.equal(currentCompiler.inspectionSha256, "08374b532865bef45fd0543e826bea4a5848a701b34782180c4b346edbc4f74d");
+  assert.equal(currentCompiler.evidenceSha256, "3eb1c0834b2ab957efa13b063921a25516713c4bb1a0c89cb0cd5fe1fa828107");
+  assert.equal(currentCompiler.inspectionSha256, "4e760c7cd716a3d73a11d68a19efe62ab03e8f8fb508f8b0e5861181bad11a3a");
   assert(currentCompiler.detail.includes("all 12 kernel entries and 12 matching descriptors"));
   assert(currentCompiler.detail.includes("structural symbol sets, not Ferric policy descriptor-table order or numerical execution"));
   assert(currentCompiler.detail.includes("Publication, load and launch grants all remain false; engineering authority is none"));
-  assert(currentCompiler.detail.includes("No native GPU, model-parity, serving or performance result follows"));
+  assert(currentCompiler.detail.includes("newer image differs from c6 and has its own separate four-token native observation"));
+  assert(currentCompiler.detail.includes("earlier native smoke is not relabeled as ccfd"));
+  assert(currentCompiler.detail.includes("Emission alone establishes no model-parity, serving or performance result"));
   const differential = currentCompiler.differential;
   exactKeys(differential, ["comparedAssertions", "proofGains", "proofLosses", "priorUnprovedBlock",
     "priorUnprovedLine", "attributedExpression", "evidenceSha256", "detail"]);
@@ -62,6 +66,89 @@ export function validateResidentCheckpoint(value, updated) {
   assert(differential.detail.includes("already unproved, not a regression introduced by 852"));
   assert(differential.detail.includes("all producer assertions and limits remain mandatory"));
   assert(differential.detail.includes("earlier 12 GiB resource stop and rejected extractions remain retained separately"));
+  const { detail: latestNativeDetail, cleanupDetail, ...latestNativeFields } = integration.latestNativeSmoke;
+  assert.deepEqual(latestNativeFields, {
+    source: "bb2b0123f4f96410269a098d7cba8aa7bb950008",
+    compilerSource: "ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2",
+    binarySha256: "fe475d52f5b3b6f3ee5c35a3c947874b03f35c463f0e71c10f118de581759eba",
+    imageSha256: "46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c",
+    evidenceSha256: "2a9b13d81098a878ad1f299a7f4f999c368c16aca1a7f906cd9dc283f1e9dffc",
+    reportSha256: "4d02407107a46ac88c1b621fa64d099779f77d9f341a77b9e1136c65e548c00e",
+    referenceResultSha256: "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+    target: "gfx942:xnack-", promptIds: [785, 6722, 315, 9625, 374],
+    outputIds: [12095, 13, 576, 6722], outputText: " Paris. The capital",
+    termination: "max-new-tokens", exit: 0, hardwareCompletionObserved: true,
+    historicalReferencePrefixMatched: true, authority: "none", benchmarkComparable: false,
+    workerV3Authenticated: false, compilerOriginAuthenticated: false, currentPublicationSelected: false,
+    generalNumericalParity: false, r29LogitComparison: false, r33Qualified: false,
+    immediateDeviceMemoryBytes: 56838090752, laterDeviceMemoryBytes: 298647552,
+    immediateBaselineRestored: false, laterBaselineRestored: true,
+    cleanupObservation: "later-independent-sysfs-check", deviceReset: false,
+  });
+  assert.equal(latestNativeFields.source, currentCompiler.ferricSource);
+  assert.equal(latestNativeFields.imageSha256, currentCompiler.imageSha256);
+  assert(latestNativeDetail.includes("four IDs [12095, 13, 576, 6722], text \" Paris. The capital\""));
+  assert(latestNativeDetail.includes("one-prompt token-prefix spot check, not an R29 logit comparison"));
+  assert(latestNativeDetail.includes("general numerical validation, speculative catch-up or R33 serving qualification"));
+  assert(latestNativeDetail.includes("Controller offsets are not comparable TTFT, TPOT or throughput"));
+  assert(cleanupDetail.includes("immediate archived after-state still reports 56,838,090,752 VRAM bytes"));
+  assert(cleanupDetail.includes("later independent direct sysfs check observes return to the exact 298,647,552-byte baseline"));
+  assert(cleanupDetail.includes("delayed check is separate from the immutable archive; the original after-state is not rewritten"));
+  assert(cleanupDetail.includes("No device reset or foreign-process termination was performed"));
+  const { detail: nativeDetail, ...nativeFields } = integration.nativeSmoke;
+  assert.deepEqual(nativeFields, {
+    binarySource: "6651f2d1a1739f30c35a4a5c34d2c900be1c5d06",
+    compilerSource: "c6b4050dd6c18e1868b24e4580da3eed8a3d19fa",
+    artifactSource: "f17efe83d37105c0da78ea2c8bbbe166a0ee4f43",
+    binarySha256: "18ff100fde890a25bbeb0588c0723e741674f737a6a31af5a37e4e2255a29e43",
+    imageSha256: "9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1",
+    evidenceSha256: "0dc8ca2a724bde837750bae565a4224feae03e6f88fde50913ed35c58199999d",
+    reportSha256: "e6cf51add84b633e57b05f4a2a92ba71e6ce5a91642c58f3ac27a4f658171d62",
+    target: "gfx942:xnack-", prompt: "The capital of France is",
+    promptIds: [785, 6722, 315, 9625, 374], outputIds: [12095], outputText: " Paris", exit: 0,
+    hardwareCompletionObserved: true, deviceMemoryBaselineRestored: true,
+    authority: "none", benchmarkComparable: false, workerV3Authenticated: false,
+    compilerOriginAuthenticated: false, currentPublicationSelected: false,
+    generalNumericalParity: false, servingQualified: false,
+  });
+  assert(nativeDetail.includes("five-token prompt \"The capital of France is\" produces one token: ID 12095, \" Paris\""));
+  assert(nativeDetail.includes("earlier f17/c6 image, not the newer bb2/ccfd image"));
+  assert(nativeDetail.includes("do not establish general numerical parity, speculative catch-up, serving readiness, performance or M1 qualification"));
+  assert(nativeDetail.includes("Raw controller offsets are not serving TTFT/TPOT and are excluded from the performance data"));
+  const { detail: currentHostDetail, ...currentHostFields } = integration.currentHost;
+  assert.deepEqual(currentHostFields, {
+    source: "bb2b0123f4f96410269a098d7cba8aa7bb950008",
+    compilerSource: "ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2",
+    phasesPassed: 71, specPassed: 123, enginePassed: 697, engineIgnored: 9,
+    binaryPassed: [11, 2, 75, 2], binaryIgnored: [0, 0, 2, 0], engineDoctestsPassed: 171,
+    checkerPassed: 81, checkerIntegrationPassed: 27, checkerIgnored: 3, checkerDoctestsPassed: 6,
+    normalHostFeatures: [], adapterPassed: 109, adapterIgnored: 1, adapterPoliciesPassed: 37,
+    numericalHostPassed: 7, ownerPassed: 16, ownerPoliciesPassed: 3, lockedGraphs: 32,
+    sourceGatePassed: 38, verifierPoliciesPassed: 31, sourcePinPoliciesPassed: 6, dependencyInventoriesEqual: 3,
+    strictClippyPackages: ["spec", "engine", "checker", "engineering-adapter", "protected-owner"],
+    releaseBinaryNames: ["ferric-m1-engineering-target-smoke", "ferric-m1-engineering-speculative-smoke", "ferric-m1-engineering-r29-capture"],
+    releaseBinarySha256: ["fe475d52f5b3b6f3ee5c35a3c947874b03f35c463f0e71c10f118de581759eba", "3756e98b53833c9cda5603ddf572a66c0c69a926fa9d77b825fcda6dd4040a05", "fbc0e505782252308e0920f9b1c4edd47ff3d937e90905eb31da8580dad66e9c"],
+    evidenceSha256: "4848bf1306627d8c4b932ac75decf83d9efd20252b2183bb8699e89cf7536fe9",
+    releaseEvidenceSha256: "4a18fe27f2449896169dfc2b9e9426a959695ac9253b37ad0cab40e7866fa0b2",
+    gpuExecution: false, servingQualified: false,
+  });
+  assert(currentHostDetail.includes("all 71 host and metadata phases with exit 0"));
+  assert(currentHostDetail.includes("normal fe2o3_host artifact has features=[]"));
+  assert(currentHostDetail.includes("building them is not GPU execution or qualification"));
+  assert(currentHostDetail.includes("Earlier cohorts below retain their own source identities"));
+  const { detail: currentCoverageDetail, ...currentCoverageFields } = integration.currentCoverage;
+  assert.deepEqual(currentCoverageFields, {
+    source: "d09430897232759fb9bbb2a3485f60da69bef890",
+    compilerSource: "ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2",
+    modules: 173, identities: 8435, verifiedLabels: 723, previousVerifiedPreserved: 722,
+    unverified: 7712, metadataPhasesPassed: 8, committedManifestEqual: true,
+    wholeCrateVerified: false, physicalCatchupVerified: false,
+    evidenceSha256: "209c1e49d96e91a93010e248a444db0f2b2e92bbba8ee7a801aee899b04d179d",
+  });
+  assert(currentCoverageDetail.includes("helper and six executed callees verified individually"));
+  assert(currentCoverageDetail.includes("seven sensitive executable mutations rejected"));
+  assert(currentCoverageDetail.includes("not whole-crate verification or GPU/page-lease/queue-completion refinement"));
+  assert(currentCoverageDetail.includes("engine preflight and complete physical catch-up chain remain unverified"));
   const currentResident = integration.resident;
   exactKeys(currentResident, ["windows", "dispatchIntegrated", "focusedPassed", "focusedCompilerSource",
     "maintenanceServedTokens", "warmedAllocationValidated", "detail"]);
@@ -239,8 +326,8 @@ export function validateResidentCheckpoint(value, updated) {
   assert(compiler.detail.includes("The eaa results do not validate e6cfa668"));
   assert(checkpoint.remaining.includes("No native K8/K16 qualification, new TTFT/TPOT/throughput measurement or competitiveness claim"));
   assert(checkpoint.remaining.includes("Historical measurements below are unchanged"));
-  assert(checkpoint.remaining.includes("Current-pin engine and checker host validation remain pending"));
-  assert(checkpoint.remaining.includes("earlier host cohorts are not relabeled as c6b4050 results"));
+  assert(checkpoint.remaining.includes("Current-pin engine and checker host validation pass"));
+  assert(checkpoint.remaining.includes("neither target-only observation qualifies resident speculative serving"));
 }
 
 export function testResidentCheckpointRejections(value, updated) {
@@ -249,7 +336,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.m1OpenGates = 32; },
     (x) => { x.nativeServingQualified = true; },
     (x) => { x.fullAcceptanceCatchupImplemented = false; },
-    (x) => { x.newGpuMeasurement = true; },
+    (x) => { x.newGpuObservation = false; },
     (x) => { x.newPerformanceMeasurement = true; },
     (x) => { x.integration.compiler.source = x.followup.runtimeGetter.source; },
     (x) => { x.integration.compiler.backendPassed += 1; },
@@ -265,6 +352,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.compiler.imageBytes += 1; },
     (x) => { x.integration.compiler.imageSha256 = x.integration.compiler.manifestSha256; },
     (x) => { x.integration.compiler.manifestSha256 = x.integration.compiler.imageSha256; },
+    (x) => { x.integration.compiler.nativeGpuTested = false; },
     (x) => { x.integration.compiler.exactOutputReplay = false; },
     (x) => { x.integration.compiler.authority = "qualified"; },
     (x) => { x.integration.compiler.grants.publication = true; },
@@ -279,6 +367,95 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.compiler.differential.priorUnprovedLine = 378; },
     (x) => { x.integration.compiler.differential.attributedExpression = "query_position + 1"; },
     (x) => { x.integration.compiler.differential.evidenceSha256 = x.integration.compiler.evidenceSha256; },
+    (x) => { x.integration.latestNativeSmoke.source = x.integration.nativeSmoke.binarySource; },
+    (x) => { x.integration.latestNativeSmoke.compilerSource = x.integration.nativeSmoke.compilerSource; },
+    (x) => { x.integration.latestNativeSmoke.binarySha256 = x.integration.nativeSmoke.binarySha256; },
+    (x) => { x.integration.latestNativeSmoke.imageSha256 = x.integration.nativeSmoke.imageSha256; },
+    (x) => { x.integration.latestNativeSmoke.evidenceSha256 = x.integration.latestNativeSmoke.reportSha256; },
+    (x) => { x.integration.latestNativeSmoke.reportSha256 = x.integration.latestNativeSmoke.evidenceSha256; },
+    (x) => { x.integration.latestNativeSmoke.referenceResultSha256 = x.integration.latestNativeSmoke.reportSha256; },
+    (x) => { x.integration.latestNativeSmoke.target = "gfx950:xnack-"; },
+    (x) => { x.integration.latestNativeSmoke.promptIds.pop(); },
+    (x) => { x.integration.latestNativeSmoke.outputIds.pop(); },
+    (x) => { x.integration.latestNativeSmoke.outputText = " Paris"; },
+    (x) => { x.integration.latestNativeSmoke.termination = "eos"; },
+    (x) => { x.integration.latestNativeSmoke.exit = 1; },
+    (x) => { x.integration.latestNativeSmoke.hardwareCompletionObserved = false; },
+    (x) => { x.integration.latestNativeSmoke.historicalReferencePrefixMatched = false; },
+    (x) => { x.integration.latestNativeSmoke.authority = "qualified"; },
+    (x) => { x.integration.latestNativeSmoke.benchmarkComparable = true; },
+    (x) => { x.integration.latestNativeSmoke.workerV3Authenticated = true; },
+    (x) => { x.integration.latestNativeSmoke.compilerOriginAuthenticated = true; },
+    (x) => { x.integration.latestNativeSmoke.currentPublicationSelected = true; },
+    (x) => { x.integration.latestNativeSmoke.generalNumericalParity = true; },
+    (x) => { x.integration.latestNativeSmoke.r29LogitComparison = true; },
+    (x) => { x.integration.latestNativeSmoke.r33Qualified = true; },
+    (x) => { x.integration.latestNativeSmoke.immediateDeviceMemoryBytes = x.integration.latestNativeSmoke.laterDeviceMemoryBytes; },
+    (x) => { x.integration.latestNativeSmoke.laterDeviceMemoryBytes += 1; },
+    (x) => { x.integration.latestNativeSmoke.immediateBaselineRestored = true; },
+    (x) => { x.integration.latestNativeSmoke.laterBaselineRestored = false; },
+    (x) => { x.integration.latestNativeSmoke.cleanupObservation = "immediate-archived-after-state"; },
+    (x) => { x.integration.latestNativeSmoke.deviceReset = true; },
+    (x) => { x.integration.latestNativeSmoke.detail = "General model parity established."; },
+    (x) => { x.integration.latestNativeSmoke.cleanupDetail = "Immediate archive showed baseline memory."; },
+    (x) => { x.integration.nativeSmoke.binarySource = x.integration.currentHost.source; },
+    (x) => { x.integration.nativeSmoke.compilerSource = x.integration.compiler.source; },
+    (x) => { x.integration.nativeSmoke.artifactSource = x.integration.compiler.ferricSource; },
+    (x) => { x.integration.nativeSmoke.binarySha256 = x.integration.currentHost.releaseBinarySha256[0]; },
+    (x) => { x.integration.nativeSmoke.imageSha256 = x.integration.compiler.imageSha256; },
+    (x) => { x.integration.nativeSmoke.evidenceSha256 = x.integration.nativeSmoke.reportSha256; },
+    (x) => { x.integration.nativeSmoke.reportSha256 = x.integration.nativeSmoke.evidenceSha256; },
+    (x) => { x.integration.nativeSmoke.target = "gfx950:xnack-"; },
+    (x) => { x.integration.nativeSmoke.prompt = "Paris"; },
+    (x) => { x.integration.nativeSmoke.promptIds.pop(); },
+    (x) => { x.integration.nativeSmoke.outputIds[0] += 1; },
+    (x) => { x.integration.nativeSmoke.outputIds.push(13); },
+    (x) => { x.integration.nativeSmoke.outputText = "Paris"; },
+    (x) => { x.integration.nativeSmoke.exit = 1; },
+    (x) => { x.integration.nativeSmoke.hardwareCompletionObserved = false; },
+    (x) => { x.integration.nativeSmoke.deviceMemoryBaselineRestored = false; },
+    (x) => { x.integration.nativeSmoke.authority = "qualified"; },
+    (x) => { x.integration.nativeSmoke.benchmarkComparable = true; },
+    (x) => { x.integration.nativeSmoke.workerV3Authenticated = true; },
+    (x) => { x.integration.nativeSmoke.compilerOriginAuthenticated = true; },
+    (x) => { x.integration.nativeSmoke.currentPublicationSelected = true; },
+    (x) => { x.integration.nativeSmoke.generalNumericalParity = true; },
+    (x) => { x.integration.nativeSmoke.servingQualified = true; },
+    (x) => { x.integration.nativeSmoke.detail = "Numerically qualified serving."; },
+    (x) => { x.integration.currentHost.source = x.integration.host.source; },
+    (x) => { x.integration.currentHost.compilerSource = x.integration.host.compilerSource; },
+    (x) => { x.integration.currentHost.phasesPassed += 1; },
+    (x) => { x.integration.currentHost.specPassed += 1; },
+    (x) => { x.integration.currentHost.enginePassed += 1; },
+    (x) => { x.integration.currentHost.engineIgnored = 0; },
+    (x) => { x.integration.currentHost.binaryPassed[2] += 2; },
+    (x) => { x.integration.currentHost.binaryIgnored[2] = 0; },
+    (x) => { x.integration.currentHost.engineDoctestsPassed += 1; },
+    (x) => { x.integration.currentHost.checkerPassed += 1; },
+    (x) => { x.integration.currentHost.checkerIntegrationPassed += 1; },
+    (x) => { x.integration.currentHost.checkerIgnored = 0; },
+    (x) => { x.integration.currentHost.checkerDoctestsPassed += 1; },
+    (x) => { x.integration.currentHost.normalHostFeatures.push("testing"); },
+    (x) => { x.integration.currentHost.numericalHostPassed += 1; },
+    (x) => { x.integration.currentHost.dependencyInventoriesEqual = 2; },
+    (x) => { x.integration.currentHost.strictClippyPackages.pop(); },
+    (x) => { x.integration.currentHost.releaseBinaryNames.pop(); },
+    (x) => { x.integration.currentHost.releaseBinarySha256[0] = x.integration.nativeSmoke.binarySha256; },
+    (x) => { x.integration.currentHost.evidenceSha256 = x.integration.currentHost.releaseEvidenceSha256; },
+    (x) => { x.integration.currentHost.gpuExecution = true; },
+    (x) => { x.integration.currentHost.servingQualified = true; },
+    (x) => { x.integration.currentHost.detail = "Production serving qualified."; },
+    (x) => { x.integration.currentCoverage.source = x.integration.currentHost.source; },
+    (x) => { x.integration.currentCoverage.identities += 1; },
+    (x) => { x.integration.currentCoverage.verifiedLabels += 6; },
+    (x) => { x.integration.currentCoverage.previousVerifiedPreserved += 1; },
+    (x) => { x.integration.currentCoverage.unverified = 0; },
+    (x) => { x.integration.currentCoverage.metadataPhasesPassed += 1; },
+    (x) => { x.integration.currentCoverage.committedManifestEqual = false; },
+    (x) => { x.integration.currentCoverage.wholeCrateVerified = true; },
+    (x) => { x.integration.currentCoverage.physicalCatchupVerified = true; },
+    (x) => { x.integration.currentCoverage.evidenceSha256 = x.integration.currentHost.evidenceSha256; },
+    (x) => { x.integration.currentCoverage.detail = "Whole physical catch-up verified."; },
     (x) => { x.integration.resident.windows.push(32); },
     (x) => { x.integration.resident.dispatchIntegrated = false; },
     (x) => { x.integration.resident.focusedPassed += 1; },
