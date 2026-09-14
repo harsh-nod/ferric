@@ -735,6 +735,8 @@ target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179f
 target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|opts|test|bin|2024|false|false|true|required-features=none|path=tests/opts/main.rs
 target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|pass|test|bin|2024|false|false|true|required-features=none|path=tests/pass.rs
 target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|pliron|lib|lib|2024|true|true|true|required-features=none|path=src/lib.rs
+target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|rewrite_observer_contract|test|bin|2024|false|false|true|required-features=none|path=tests/rewrite_observer_contract.rs
+target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|rewrite_observer|test|bin|2024|false|false|true|required-features=none|path=tests/rewrite_observer.rs
 target=git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#pliron@0.17.0|rewriter|test|bin|2024|false|false|true|required-features=none|path=tests/rewriter.rs
 target=path+repo://adapters/qwen3-all-kernels-worker-v3-source-pin-v1#ferric-qwen3-all-kernels-worker-v3-source-pin-v1@0.1.0|ferric-qwen3-all-kernels-worker-v3-source-pin-v1|bin|bin|2024|true|false|true|required-features=none|path=src/main.rs
 target=path+repo://adapters/qwen3-all-kernels-worker-v3-source-pin-v1#ferric-qwen3-all-kernels-worker-v3-source-pin-v1@0.1.0|ferric_qwen3_all_kernels_worker_v3_source_pin_v1|lib|lib|2024|true|true|true|required-features=none|path=src/lib.rs
