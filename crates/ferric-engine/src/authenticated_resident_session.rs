@@ -3468,7 +3468,8 @@ mod tests {
                                 &[M1SpeculativeMemberControlV1::continuing(request)],
                             )
                             .unwrap();
-                        coordinator.commit_preflighted_round(prepared).unwrap();
+                        let outcome = coordinator.commit_preflighted_round(prepared).unwrap();
+                        assert_eq!(outcome.next_active_roster().is_empty(), output_limit == 1);
                         let snapshot = coordinator.member(request).unwrap();
                         assert_eq!(
                             resident_common_anchor_is_ready(

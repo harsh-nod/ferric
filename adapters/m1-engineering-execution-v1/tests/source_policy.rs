@@ -216,6 +216,12 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             "#[cfg(feature = \"tp-batch-engineering\")]\npub mod {module};"
         )));
     }
+    let execution = include_str!("../src/tp_execution.rs");
+    for module in ["batched", "numerical"] {
+        assert!(execution.contains(&format!(
+            "#[cfg(feature = \"tp-batch-engineering\")]\npub mod {module};"
+        )));
+    }
 }
 
 #[test]
