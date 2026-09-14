@@ -20,18 +20,24 @@ all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin
 policies, source coverage and byte equality for the three regenerated TCB
 inventories. The full engine host results below remain bound to 852.
 
-Latest integration `f17efe83d37105c0da78ea2c8bbbe166a0ee4f43`, tree
+Compiler-tested integration `f17efe83d37105c0da78ea2c8bbbe166a0ee4f43`, tree
 `a3292fb909cbbaddff4d25a323a9f9421b760258`, pins published fe2o3
 `c6b4050dd6c18e1868b24e4580da3eed8a3d19fa`. This is the same 80-file
 reverse-byte-equal migration with separately checked derived digests and remote
 formatting. Fresh c6 consumer and source-policy validation remain separate
 obligations; earlier 82/852 results are not relabeled.
 
+The combined code candidate is `6651f2d1a1739f30c35a4a5c34d2c900be1c5d06`,
+tree `0c98c7de8f5b791ed9fd23cd8fa6f6cdedede556`, still pinned to c6b. It
+integrates the executed catch-up metadata helper and independent-checker IPC
+client, plus two remotely identified formatting corrections. Current-pin host,
+source-policy and source-inventory checks are pending on this exact snapshot.
+
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published CLI/backend builds, source/pin/worker closure, all 37 aggregate host tests and vendor closure pass. | Actual 12-root gfx942 emission at exact f17/c6b. No new image, native handoff or GPU result. |
+| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published tools, all 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. | Reopen the engineering image through the real adapter, build the current native smoke binary and exercise an idle GPU. The emitted artifact grants no protected publication, load or launch authority. |
 | Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
-| Verification | Source inventory covers 173 modules and 8,433 executable identities: 181 added pending-Verus bodies, 7,711 unverified total and 722 unchanged existing verified labels. All prior rationale rows remain unchanged. Exact 61a9/82 passes the complete metadata/source-policy gate described above. | A candidate same-source one-token draft catch-up helper is wired into the actual runtime; direct Verus checks, explicit callee closure and sensitive mutations are in progress. Its scope is the metadata commit, full selected-state frame and conditional target/draft cursor equality, not parent, page-write, lease or completion authentication. Broader M1 proofs and hardware qualification remain open. |
+| Verification | Exact 940a/82 verifies the new executed catch-up helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations each fail a genuine postcondition, not parsing or typing. The pinned 190-file Verus/vstd closure matches before and after every run. Root reviewed and integrated the byte-identical two-file change. | Establish the caller's cursor relation through the actual completion/ownership path. The helper covers the metadata commit, full selected-state frame and conditional cursor equality, not parent, page-write, lease or completion authentication. Current 6651/c6 host and inventory checks, broader M1 proofs and hardware qualification remain open. |
 
 The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
 terminal full acceptance, foreign coordinators, substituted choices, zero
@@ -57,8 +63,23 @@ mandatory obligation; the result cannot prove its own producer. Tests reject
 eleven missing, changed, non-dominating or escaped authority cases, signed and
 out-of-width literals, and preserve the existing evaluator work limit. No
 kernel guards or additional evaluator calls were introduced. Actual aggregate
-emission, rather than these host fixtures, must establish that this resolves
-the observed kernel rejection.
+emission now succeeds at exact f17/c6b, resolving this observed rejection.
+
+The emitted code-object V6 targets `gfx942:xnack-`, contains 103,872 bytes and
+has SHA-256 `9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1`.
+Its engineering manifest SHA-256 is
+`ff3dfe2c8b75996b52d69c041197ce12ba8f6fde94d31d6f8d8c53be4c6b691d`.
+The compiler-bound inert handoff is 414,259 bytes. Actual output replay is
+byte-identical. Independent structured ELF inspection confirms exactly twelve
+defined global entry functions and twelve matching 64-byte descriptors; this
+set equality does not attest Ferric policy descriptor-table ordering. Authority
+is `none`, and publication/load/launch grants remain false. No GPU has run.
+
+The last complete source inventory remains the earlier 173-module,
+8,433-identity checkpoint: 7,711 unverified and 722 unchanged existing verified
+labels. The selected new proof does not rewrite those labels or establish a
+whole-crate proof. Newly integrated executable bodies still require refreshed
+source coverage with truthfully bounded proof status.
 
 Canonical target/draft admission, full streaming prepack and separate persisted
 snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
@@ -82,6 +103,12 @@ Retained local evidence under `.codex-tmp` includes:
   SHA-256 `6916aeae89906f74bef47c7ad422dbfe34fd4185e77d7b96728ff1750c4231a7`.
 - `ferric-divisor-diagnostic-gate-v1/acquisition-literal-subtract/literal-subtract-r3-evidence.tar.gz`,
   SHA-256 `5db7a2048a60d5790767f0eeb4f8a5860df4349c9db6da0dff3544ba53e0c031`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-literal-emission/literal-published-emission-evidence.tar.gz`,
+  SHA-256 `943179eb018d6d646ea4c5f00609ec5a7b7bc864d9589c7a89e99e2e52dfebea`.
+- `ferric-catchup-metadata-proof-gate-v1/proof-evidence-r1.tar.gz`, SHA-256
+  `2bd13649ff143a15a989c508e2bd30aa9d2777f9485256edc06b0b8daf5f3ea7`.
+- `ferric-checker-ipc-gate-v1/checker-evidence-r8.tar.gz`, SHA-256
+  `b0b2b7d65326607298332a6289448633f5d60f6173ec3484bbae95a06f46fd0b`.
 - `ferric-divisor-diagnostic-gate-v1/acquisition-polarity/polarity-evidence.tar.gz`,
   SHA-256 `6a8ed82ec6eee1d8fda59833745df6847718093b7f9c3eb7e4d4d164a4be40bb`.
 - `ferric-m1-bundle-current-v1/evidence-r1.tar.gz`, SHA-256
@@ -113,9 +140,14 @@ correctness or competitiveness result is claimed.
 The next native path has an additional explicit boundary: engineering HSACO
 emission does not produce an authenticated Worker V3 selector. The protected
 compiler profile and supervisor socket are not provisioned on mi300x. Ferric's
-protected verifier's concrete independent-checker IPC client is implemented in
-an isolated candidate branch. Eleven focused tests pass at exact 8ad882f4/82d;
-final lint, full-service and normal-production dependency checks are pending.
+concrete independent-checker IPC client is now integrated. Exact agent source
+20175f93/82d passes 81 service library tests (including eleven checker tests),
+27 integration tests with three existing ignores, six compile-fail doctests,
+strict all-target Clippy and a normal-only production check. Actual normal
+compiler-artifact receipts show no fe2o3-host test-support features. Two root-owned
+wrapping-only formatting failures are corrected in 6651; current-c6 validation
+is pending. Earlier resource-cap stops and the relocated test-factory policy
+failure are retained separately, not counted as successful tests.
 It sends every envelope and HSACO byte to the pinned preopened endpoint under
 one absolute deadline and rejects mismatched results or ambiguous channel
 reuse. The supervisor admission is explicitly unsafe and requires a separately
