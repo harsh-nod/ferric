@@ -99,10 +99,13 @@ target/draft cursors after full acceptance. The new path must reject that reuse,
 execute the actual 425-packet draft catch-up and restore the original K4 shape
 without promoting engineering artifacts to authenticated authority. This work
 now has an explicit bounded repeated CLI in its separate worktree, but is not
-yet integrated or GPU tested. An independent review identified missing public
-distinction between the original speculative receipt and the later maintenance
-receipt/queue transitions; the team is adding read-only history accessors and
-regressions without fabricating or retagging receipts. The completed
+yet integrated or GPU tested. The reviewed history fix exposes the original
+speculative receipt, separate maintenance receipt and both queue transitions
+without fabricating or retagging receipts. Its regression checks public API
+nameability, not native epoch values. Candidate `dd0ec11e` also corrects a
+missing helper import and duplicate inline attribute found by the latest
+remote compile check. Earlier failed checks remain retained; final compilation
+and linked tests have not yet passed. The completed
 single-round K4 rejection
 smoke below does not cover that full-acceptance path. No new matched serving
 TTFT/TPOT/throughput or competitor result is available.
@@ -116,18 +119,34 @@ The Rust input generator is updated to recognize V2, with a regression using
 the actual protocol bytes. Exact combined candidate `4b7338df` passes all 24
 differential tests and both focused protocol-test cohorts. Its benchmark-policy
 step hits the unchanged storage cap after nested Cargo drops the outer resource
-environment and starts fresh debug-profile artifacts. The stop is retained;
-policy and strict Clippy completion await cleanup and a control-only retry.
-This candidate is not yet integrated. These are CPU fixture checks,
+environment and starts fresh debug-profile artifacts. After reviewed cleanup,
+the control-only retry passes benchmark policy on unchanged `4b7338df`. Strict
+differential Clippy then rejects one implicit String clone. Follow-up
+`940d37e2` changes only `case.kind.to_owned()` to `case.kind.clone()` and passes
+remote formatting; final-source tests and all three Clippy commands remain
+pending. The original storage stop and lint failure are retained. This
+candidate is not yet integrated. These are CPU fixture checks,
 not additional GPU numerical results. Python evidence SHA-256 is
 `2912b40195e1d5e2f92da0dc970b55c1fe4bf6eb8f579e79e065ae5c98b0cd70`.
 
 A fresh upstream fetch now finds fe2o3
-`748e716335b537eb82549aa492e9fa012cc92dfe`, two commits beyond the validated
-4f6 pin. The seven-file delta adds inert lineage records and explicit V2
-entry-reachable induction analysis/replay; no KFD/runtime files change. This
-new version has not yet passed Ferric's compiler/consumer gate. Existing tests,
-artifacts and GPU results keep their actual older producer identities.
+`0fe50455b2fb65744048789bfc05f720313a12c5`, three commits beyond the validated
+4f6 pin. The delta adds inert lineage records, explicit V2 entry-reachable
+induction analysis/replay, and an optional immutable canonical analysis scope;
+no KFD/runtime files change. Separate Ferric candidate `f9ff2f3c`, tree
+`5322132be9403e3f56a8ae43589f8e55b556a8c2`, updates the same 80-file dependency
+roster and exactly two derived verifier digests. Independent remote static
+checks pass for 42 manifests, 32 lockfiles, 86 compiler/runtime manifest pins
+and 1,539 lock package entries, plus exact scope/reverse-byte/hash checks.
+The M0 binder's separate e527 proof-contracts identity is explicitly preserved
+as required by the M0/M1 manifests; that crate is byte-unchanged through 0fe.
+The initial overbroad all-pin assertion failure is retained, not hidden by
+rewriting M0 proof identities. Static evidence archive SHA-256 is
+`b1772379d463d444e3272ea7eb4e628d1fb07afa4f0d98a79cf533529a606d30`.
+Actual locked dependency resolution, compiler/consumer tests and emission
+remain pending. Existing artifacts and GPU results keep their older producer
+identities. The completed candidate worktree is removed after archive
+retention, reclaiming 44,108 KiB; the remote static-check stage is also removed.
 
 Completed historical source cleanup removes only twelve fully reconstructed,
 unused snapshots after fresh owner/inode/hash/roster/no-live-use checks,
@@ -135,6 +154,16 @@ reclaiming 515,568 KiB. The initial ordering-only cleanup failure and corrected
 pass are both retained. Current source/build/cache/tool roots are untouched;
 archive SHA-256 is
 `9fc9b5c50e16b647f40a6fe543814a3a2b4eb08561d26d0e9cd59757b54ff5d8`.
+
+A subsequent reviewed cleanup removes four completed gate source snapshots,
+reclaiming 173,076 KiB after full archive/roster/byte/state/no-live-use checks.
+Its retained completion archive SHA-256 is
+`e7261750434de5c16e33c8103334558334150ca211f348d8d140019a8dea4991`.
+The R29 lane separately removes exactly 1,212 unused default-profile artifacts,
+reclaiming 488,812,544 bytes; all 298 protected executables rehash identically
+and 131 unclassified files remain untouched. These cleanups restore space
+under the unchanged shared-stage cap. No foreign work, active cache, current
+tool or independent retained binary is removed.
 
 ## Earlier Integration Checkpoints
 
