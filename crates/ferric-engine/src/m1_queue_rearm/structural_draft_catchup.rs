@@ -346,8 +346,9 @@ type CompletionOwner =
 type SpeculativeOwner = BoundM1StepWorkspaceSubleases<
     { crate::M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1 },
 >;
-type RestorePhase<const N: usize> =
-    crate::physical_queue_lifecycle::M1PhysicalQueuePhaseCaseV1<ServiceQueueSessionV1<N>>;
+type RestorePhase<const N: usize> = crate::physical_queue_lifecycle::M1PhysicalQueuePhaseCaseV1<
+    fe2o3_service_host::ServicePublishedQueueSessionV1<N>,
+>;
 
 pub(crate) struct StructuralTransitionStorageV1 {
     parent: Qwen3PlanSelection,
@@ -701,6 +702,7 @@ fn replace_structural_workspaces(
     Ok((owners.0, custody))
 }
 
+#[inline(never)]
 #[inline(never)]
 fn lower_structural_batch<'a, const N: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
@@ -1267,6 +1269,7 @@ impl StructuralDraftCatchupReleasedV1 {
 }
 
 #[allow(clippy::too_many_arguments)]
+#[inline(never)]
 fn submit_structural_restore_case<'a, const N: usize>(
     transition: StructuralTransitionPartsV1,
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
@@ -1274,7 +1277,7 @@ fn submit_structural_restore_case<'a, const N: usize>(
     predecessor_generation: u64,
     slot: Box<core::mem::MaybeUninit<RestorePhase<N>>>,
     storage: &mut StructuralTransitionStorageV1,
-    wrap: impl FnOnce(Box<RestorePhase<N>>) -> M1PhysicalQueueSessionV1,
+    wrap: impl FnOnce(Box<RestorePhase<N>>) -> M1PhysicalPublishedQueueSessionV1,
 ) -> Result<
     (
         M1PhysicalPublishedQueueSessionV1,
@@ -1323,6 +1326,15 @@ fn submit_structural_restore_case<'a, const N: usize>(
                 ))
             }
         };
+    let lower = match lower.submit() {
+        Ok(lower) => lower,
+        Err(error) => {
+            return Err(submission_failure(
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                (error, custody, step, saved, observation, slot),
+            ))
+        }
+    };
     let case = Box::write(
         slot,
         RestorePhase::from_queue_rearm(
@@ -1331,13 +1343,7 @@ fn submit_structural_restore_case<'a, const N: usize>(
             step,
         ),
     );
-    match wrap(case).submit() {
-        Ok(queue) => Ok((queue, saved, observation)),
-        Err(error) => Err(submission_failure(
-            M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
-            (error, saved, observation),
-        )),
-    }
+    Ok((wrap(case), saved, observation))
 }
 
 pub(crate) fn submit_structural_restore_v1<'a>(
@@ -1402,7 +1408,7 @@ pub(crate) fn submit_structural_restore_v1<'a>(
                 generation,
                 phase,
                 storage,
-                M1PhysicalQueueSessionV1::SpeculativeK4,
+                M1PhysicalPublishedQueueSessionV1::SpeculativeK4,
             )
         }
         ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192 => {
@@ -1414,7 +1420,7 @@ pub(crate) fn submit_structural_restore_v1<'a>(
                 generation,
                 phase,
                 storage,
-                M1PhysicalQueueSessionV1::SpeculativeK8,
+                M1PhysicalPublishedQueueSessionV1::SpeculativeK8,
             )
         }
         ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192 => {
@@ -1429,7 +1435,7 @@ pub(crate) fn submit_structural_restore_v1<'a>(
                 generation,
                 phase,
                 storage,
-                M1PhysicalQueueSessionV1::SpeculativeK16,
+                M1PhysicalPublishedQueueSessionV1::SpeculativeK16,
             )
         }
         _ => unreachable!("preflight exact singleton speculative parent"),
@@ -1875,4 +1881,123 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
     };
     prepare_m1_long_lived_queue_rearm_v1(engine, reserved, runner, plans)
         .map_err(StructuralDraftCatchupFailureV1::new)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parent(bucket: ferric_spec::Qwen3PlanBucket) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: ferric_spec::Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        }
+    }
+
+    fn recipe(intent: crate::M1StepDispatchIntent) -> AddresslessM1PhysicalBufferRecipeV1 {
+        let (kernargs, workspaces) = crate::physical_buffer_recipe::tests::exact_inputs(intent, 10);
+        crate::derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap()
+    }
+
+    #[test]
+    fn structural_transition_storage_uses_actual_425_and_selected_speculative_recipes() {
+        for (bucket, packets, width) in [
+            (ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192, 2242, 5),
+            (ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192, 3938, 9),
+            (
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192,
+                7330,
+                17,
+            ),
+        ] {
+            let parent = parent(bucket);
+            let catchup = recipe(crate::M1StepDispatchIntent::DraftCatchup(parent));
+            let speculative = recipe(crate::M1StepDispatchIntent::SpeculativeRound(parent));
+            assert_eq!(catchup.rows().len(), 425);
+            assert_eq!(speculative.rows().len(), packets);
+            let enter = StructuralTransitionStorageV1::try_new(parent, true, &catchup).unwrap();
+            let mut restore =
+                StructuralTransitionStorageV1::try_new(parent, false, &speculative).unwrap();
+            assert!(enter
+                .rows
+                .as_ref()
+                .unwrap()
+                .has_capacity_for(catchup.rows()));
+            assert!(restore
+                .rows
+                .as_ref()
+                .unwrap()
+                .has_capacity_for(speculative.rows()));
+            assert_eq!(enter.packet_buffers.len(), 425);
+            assert_eq!(restore.packet_buffers.len(), packets);
+            assert!(enter
+                .packet_buffers
+                .iter()
+                .zip(catchup.rows())
+                .all(|(buffers, row)| buffers.capacity() >= row.buffers().len()));
+            assert!(restore
+                .packet_buffers
+                .iter()
+                .zip(speculative.rows())
+                .all(|(buffers, row)| buffers.capacity() >= row.buffers().len()));
+            assert!(enter.completion_owner.is_some() && enter.speculative_owner.is_none());
+            assert!(restore.completion_owner.is_none() && restore.speculative_owner.is_some());
+            assert!(restore.has_restore_phase());
+            assert_eq!(
+                usize::from(restore.phase_k4.is_some())
+                    + usize::from(restore.phase_k8.is_some())
+                    + usize::from(restore.phase_k16.is_some()),
+                1
+            );
+            match bucket {
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192 => drop(restore.phase_k4.take()),
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192 => drop(restore.phase_k8.take()),
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192 => {
+                    drop(restore.phase_k16.take())
+                }
+                _ => unreachable!(),
+            }
+            assert!(!restore.has_restore_phase());
+            let scratch = StructuralRestoreScratchV1::try_new(
+                parent,
+                speculative.workspace_composition().workspace_plans(),
+            )
+            .unwrap();
+            assert!(scratch.draft_pages.capacity() >= 1);
+            assert!(
+                scratch.target_pages.capacity()
+                    >= (width as u32).div_ceil(M1_KV_PAGE_TOKENS) as usize
+            );
+            let maintenance = StructuralDraftCatchupScratchV1::try_new(
+                parent,
+                catchup.workspace_composition().workspace_plans(),
+            )
+            .unwrap();
+            assert!(maintenance.page_leases.capacity() >= 1);
+            assert!(maintenance.readback.is_some());
+        }
+    }
+
+    #[test]
+    fn structural_transition_storage_rejects_cross_parent_and_wrong_direction() {
+        let k4 = parent(ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let k8 = parent(ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192);
+        let catchup = recipe(crate::M1StepDispatchIntent::DraftCatchup(k4));
+        let speculative = recipe(crate::M1StepDispatchIntent::SpeculativeRound(k4));
+        assert!(StructuralTransitionStorageV1::try_new(k8, true, &catchup).is_none());
+        assert!(StructuralTransitionStorageV1::try_new(k8, false, &speculative).is_none());
+        assert!(StructuralTransitionStorageV1::try_new(k4, false, &catchup).is_none());
+        assert!(StructuralTransitionStorageV1::try_new(k4, true, &speculative).is_none());
+        assert!(StructuralDraftCatchupScratchV1::try_new(
+            k8,
+            catchup.workspace_composition().workspace_plans()
+        )
+        .is_none());
+        assert!(StructuralRestoreScratchV1::try_new(
+            k8,
+            speculative.workspace_composition().workspace_plans()
+        )
+        .is_none());
+    }
 }

@@ -530,6 +530,62 @@ pub(crate) fn settle_structural_draft_catchup_v1<const C: usize>(
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct StructuralDraftCatchupMemberInputV1 {
+    draft_committed: u32,
+    target_committed: u32,
+    token: ferric_spec::TokenId,
+    next_anchor: ferric_spec::TokenId,
+}
+
+fn structural_draft_catchup_member_input(
+    parent: Qwen3PlanSelection,
+    member: &crate::M1SpeculativeMemberRoundOutcomeV1,
+    choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
+) -> Result<Option<StructuralDraftCatchupMemberInputV1>, ()> {
+    if parent.role != ferric_spec::Qwen3ModelRole::Target8B
+        || parent.mode != ferric_spec::Qwen3ExecutionMode::Speculative
+        || !matches!(
+            parent.bucket,
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192
+        )
+        || choices.shape().selection() != parent
+        || choices.live_sequences() != 1
+        || choices.dispatch_generation() == 0
+    {
+        return Err(());
+    }
+    let candidates = choices.draft_choices_for_lane(0).ok_or(())?;
+    let k = choices.shape().draft_tokens();
+    if candidates.len() != usize::from(k) {
+        return Err(());
+    }
+    if member.status() != M1SpeculativeMemberStatusV1::Active {
+        return Ok(None);
+    }
+    let target_committed = member.target_settlement().commit_end();
+    let draft_committed = member.draft_settlement().commit_end();
+    if target_committed == draft_committed {
+        return Ok(None);
+    }
+    let token = *candidates.last().ok_or(())?;
+    if member.accepted_draft_tokens() != k
+        || member.accepted_prefix_tokens().last() != Some(&token)
+        || draft_committed.checked_add(1) != Some(target_committed)
+        || target_committed > ferric_spec::M1_MAX_CONTEXT_TOKENS
+    {
+        return Err(());
+    }
+    Ok(Some(StructuralDraftCatchupMemberInputV1 {
+        draft_committed,
+        target_committed,
+        token,
+        next_anchor: member.next_draft_anchor().ok_or(())?,
+    }))
+}
+
 fn joined_structural_draft_catchup_pending(
     coordinator: &crate::M1SpeculativeGenerationLoopV1,
     committed: &M1ServingCommittedSpeculativeRoundV1<M1ServingPhysicalRunnerQuiescentV1>,
@@ -564,39 +620,23 @@ fn joined_structural_draft_catchup_pending(
     let [member] = outcome.members() else {
         return Err(());
     };
-    if member.status() != M1SpeculativeMemberStatusV1::Active {
-        return Ok(None);
-    }
-    let target_committed = member.target_settlement().commit_end();
-    let draft_committed = member.draft_settlement().commit_end();
-    if target_committed == draft_committed {
-        return Ok(None);
-    }
-    let snapshot = coordinator.member(member.request()).ok_or(())?;
     let history = quiescent.diagnostic_history();
     let (Some(M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(choices)), Some(binding)) =
         (history.evidence().last(), history.bindings().last())
     else {
         return Err(());
     };
-    let candidates = choices.draft_choices_for_lane(0).ok_or(())?;
-    let token = *candidates.last().ok_or(())?;
-    let k = choices.shape().draft_tokens();
-    if choices.shape().selection() != parent
-        || choices.live_sequences() != 1
-        || candidates.len() != usize::from(k)
-        || choices.dispatch_generation() == 0
-        || choices.dispatch_generation() != released.checked().dispatch_generation()
+    let Some(input) = structural_draft_catchup_member_input(parent, member, choices)? else {
+        return Ok(None);
+    };
+    let snapshot = coordinator.member(member.request()).ok_or(())?;
+    if choices.dispatch_generation() != released.checked().dispatch_generation()
         || binding.plan() != committed.plan()
         || binding.epoch() != outcome.completed_epoch()
         || binding.requests() != [member.request()]
-        || member.accepted_draft_tokens() != k
-        || member.accepted_prefix_tokens().last() != Some(&token)
         || snapshot.status() != M1SpeculativeMemberStatusV1::Active
-        || snapshot.target_committed_tokens() != target_committed
-        || snapshot.draft_committed_tokens() != draft_committed
-        || draft_committed.checked_add(1) != Some(target_committed)
-        || target_committed > ferric_spec::M1_MAX_CONTEXT_TOKENS
+        || snapshot.target_committed_tokens() != input.target_committed
+        || snapshot.draft_committed_tokens() != input.draft_committed
     {
         return Err(());
     }
@@ -608,10 +648,10 @@ fn joined_structural_draft_catchup_pending(
         completed_round: outcome.completed_round(),
         prior_epoch: outcome.completed_epoch(),
         epoch: CompletionEpoch::new(outcome.completed_epoch().value().checked_add(1).ok_or(())?),
-        draft_committed,
-        target_committed,
-        token,
-        next_anchor: member.next_draft_anchor().ok_or(())?,
+        draft_committed: input.draft_committed,
+        target_committed: input.target_committed,
+        token: input.token,
+        next_anchor: input.next_anchor,
         prior_dispatch_generation: choices.dispatch_generation(),
     }))
 }

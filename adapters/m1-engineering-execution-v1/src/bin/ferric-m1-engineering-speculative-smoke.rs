@@ -3,6 +3,7 @@
 //! Authority-free paired-prefill to S1/K4 hardware diagnostic.
 
 mod smoke_bootstrap;
+mod speculative_resident_smoke;
 mod startup_diagnostics;
 
 use fe2o3_kfd::{DeviceSelector, GFX942_MAX_FIXED_DISPATCH_DATA_V1, OpenedKfd};
@@ -99,9 +100,15 @@ fn main() -> ExitCode {
 
 fn run(arguments: &[OsString]) -> SmokeResult<()> {
     let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
-    let [prepacked_root, observation_root, gpu_unique_id, prompt] = arguments else {
-        return Err("usage: ferric-m1-engineering-speculative-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT".to_owned());
+    let (base, resident_limit) = match arguments {
+        [prepacked_root, observation_root, gpu_unique_id, prompt] =>
+            ([prepacked_root, observation_root, gpu_unique_id, prompt], None),
+        [prepacked_root, observation_root, gpu_unique_id, prompt, limit] =>
+            ([prepacked_root, observation_root, gpu_unique_id, prompt], Some(speculative_resident_smoke::parse_limit(limit)?)),
+        _ => return Err("usage: ferric-m1-engineering-speculative-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]".to_owned()),
     };
+    let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15 * 60);
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
@@ -142,7 +149,16 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
     diagnostics.completed(EngineeringStartupPhaseV1::KfdBind);
     let initialized = bound.initialize_memory(checked)?;
     diagnostics.completed(EngineeringStartupPhaseV1::InitializeMemoryAllocationUpload);
-    execute_and_report(initialized, facts, &diagnostics)
+    match resident_limit {
+        Some(limit) => speculative_resident_smoke::execute_and_report(
+            initialized,
+            facts,
+            &diagnostics,
+            limit,
+            deadline,
+        ),
+        None => execute_and_report(initialized, facts, &diagnostics),
+    }
 }
 
 fn execute_and_report(

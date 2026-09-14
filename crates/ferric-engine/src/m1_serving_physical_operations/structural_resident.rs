@@ -158,7 +158,8 @@ impl<'a, const C: usize>
                 .committed_tokens
                 .checked_add(width)
                 .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
-            || self.engine.state(projection.request) != Some(ferric_spec::RequestState::Ready)
+            || self.engine.state(projection.request)
+                != Some(ferric_spec::scheduling::RequestState::Ready)
         {
             return Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch);
         }
@@ -233,6 +234,10 @@ impl<'a, const C: usize>
                 .as_ref()
                 .is_none_or(|provider| provider.pending_generation_count() != 0)
             || self.identity != quiescent.adapter_identity()
+            || current
+                .pending
+                .as_ref()
+                .is_some_and(|pending| pending.adapter_identity != self.identity)
             || self.phase
                 != (M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
                     epoch: quiescent.epoch(),
@@ -1006,10 +1011,14 @@ impl<'a, const C: usize>
         let crate::M1ServingPhysicalQueueCustodyV1::Quiescent { custody, .. } = physical else {
             unreachable!("committed physical owner is quiescent")
         };
-        let M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
-            released,
-            diagnostic_history,
-        } = custody.state
+        let M1ServingPhysicalRunnerQuiescentV1 {
+            state:
+                M1ServingPhysicalRunnerQuiescentStateV1::Rearmed {
+                    released,
+                    diagnostic_history,
+                },
+            ..
+        } = custody
         else {
             return Err(
                 self.structural_failure("terminal speculative queue shape", (custody, outcome))
@@ -1025,6 +1034,242 @@ impl<'a, const C: usize>
                 "terminal queue teardown",
                 (error, diagnostic_history, outcome),
             )),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{CompletionWireExpectation, CompletionWireSemanticExpectation};
+    use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
+    use ferric_spec::{Identity, StepPlan, TokenId};
+
+    fn parent(k: u8) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: ferric_spec::Qwen3ModelRole::Target8B,
+            mode: ferric_spec::Qwen3ExecutionMode::Speculative,
+            bucket: match k {
+                4 => Qwen3PlanBucket::SpeculativeS1K4C8192,
+                8 => Qwen3PlanBucket::SpeculativeS1K8C8192,
+                16 => Qwen3PlanBucket::SpeculativeS1K16C8192,
+                _ => panic!("singleton K"),
+            },
+        }
+    }
+
+    // Inert host completion data only; this creates no native queue or read lease.
+    fn member_fixture(
+        k: u8,
+        accepted: u8,
+        committed: u32,
+        cap: u32,
+        cancel: bool,
+        stop: bool,
+    ) -> (
+        crate::M1SpeculativeRoundOutcomeV1,
+        M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        let selection = parent(k);
+        let request = RequestId::new(0, 1);
+        let epoch = CompletionEpoch::new(1);
+        let plan_id = Identity::new([0x69; 32]);
+        let candidates: Vec<TokenId> = (0..u32::from(k)).map(|index| 100 + index).collect();
+        let mut target = candidates.clone();
+        target.push(900);
+        if accepted < k {
+            target[usize::from(accepted)] = 800;
+        }
+        let mut emitted = candidates[..usize::from(accepted)].to_vec();
+        emitted.push(target[usize::from(accepted)]);
+        let mut bytes = vec![0_u8; CompletionLayout::RECORD_BYTES_USIZE];
+        bytes[CompletionLayout::REQUEST_SLOT_OFFSET..CompletionLayout::REQUEST_SLOT_OFFSET + 4]
+            .copy_from_slice(&request.slot().to_le_bytes());
+        bytes[CompletionLayout::REQUEST_GENERATION_OFFSET
+            ..CompletionLayout::REQUEST_GENERATION_OFFSET + 4]
+            .copy_from_slice(&request.generation().to_le_bytes());
+        bytes[CompletionLayout::COMPLETION_EPOCH_OFFSET
+            ..CompletionLayout::COMPLETION_EPOCH_OFFSET + 8]
+            .copy_from_slice(&epoch.value().to_le_bytes());
+        bytes[CompletionLayout::PLAN_IDENTITY_OFFSET
+            ..CompletionLayout::PLAN_IDENTITY_OFFSET + CompletionLayout::PLAN_IDENTITY_BYTES]
+            .copy_from_slice(plan_id.as_bytes());
+        bytes[CompletionLayout::ACCEPTED_DRAFT_TOKENS_OFFSET] = accepted;
+        bytes[CompletionLayout::EMITTED_TOKEN_COUNT_OFFSET] = emitted.len().try_into().unwrap();
+        for (index, token) in emitted.into_iter().enumerate() {
+            let offset = CompletionLayout::token_offset(index).unwrap();
+            bytes[offset..offset + 4].copy_from_slice(&token.to_le_bytes());
+        }
+        let scheduled = M1ScheduledDispatchV1::for_test(epoch, &[request]);
+        let plan = StepPlan::new(request, epoch, plan_id, selection);
+        let observed = crate::M1ObservedCompletionImageV1::from_bytes_for_test(
+            crate::m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            7,
+            5,
+            384,
+            bytes.into_boxed_slice(),
+        )
+        .unwrap();
+        let expectations = [CompletionWireExpectation::new(
+            &plan,
+            CompletionWireSemanticExpectation::Speculative {
+                draft_tokens: &candidates,
+                target_choices: &target,
+            },
+        )];
+        let checked = crate::completed_readback_join::check_m1_completed_output_v1(
+            &observed,
+            selection,
+            &scheduled,
+            &expectations,
+        )
+        .unwrap();
+        let stop_tokens = if stop {
+            vec![candidates[usize::from(k - 1)]]
+        } else {
+            Vec::new()
+        };
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(cap, &stop_tokens).unwrap();
+        let seed = crate::M1SpeculativeMemberSeedV1::new(request, 50, committed, committed, policy);
+        let mut coordinator =
+            crate::M1SpeculativeGenerationLoopV1::new(selection, &[seed]).unwrap();
+        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+        let control = if cancel {
+            crate::M1SpeculativeMemberControlV1::cancelling(
+                request,
+                crate::M1SpeculativeCancellationReasonV1::ServerShutdown,
+            )
+        } else {
+            crate::M1SpeculativeMemberControlV1::continuing(request)
+        };
+        let outcome = coordinator
+            .complete_checked_round(binding, &checked, &[control])
+            .unwrap();
+        let choices = crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+            selection,
+            7,
+            &candidates,
+            &target,
+        );
+        (outcome, choices)
+    }
+
+    #[test]
+    fn structural_catchup_all_acceptances_use_last_checked_candidate_only_for_active_full_round() {
+        for k in [4, 8, 16] {
+            for accepted in 0..=k {
+                let (outcome, choices) = member_fixture(k, accepted, 128, 64, false, false);
+                let input = structural_draft_catchup_member_input(
+                    parent(k),
+                    &outcome.members()[0],
+                    &choices,
+                )
+                .unwrap();
+                if accepted == k {
+                    let input = input.expect("active full acceptance requires one draft write");
+                    assert_eq!(input.draft_committed, 128 + u32::from(k));
+                    assert_eq!(input.target_committed, input.draft_committed + 1);
+                    assert_eq!(input.token, 100 + u32::from(k) - 1);
+                    assert_eq!(input.next_anchor, 900);
+                    assert_ne!(input.token, input.next_anchor);
+                    assert_ne!(input.token, 50);
+                } else {
+                    assert_eq!(input, None);
+                    assert_eq!(
+                        outcome.members()[0].target_settlement().commit_end(),
+                        outcome.members()[0].draft_settlement().commit_end()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn structural_catchup_terminal_full_acceptance_skips_output_limit_cancel_and_stop() {
+        for k in [4, 8, 16] {
+            for cap in [1, u32::from(k), u32::from(k) + 1] {
+                let (outcome, choices) = member_fixture(k, k, 128, cap, false, false);
+                assert!(outcome.next_active_roster().is_empty());
+                assert_eq!(
+                    structural_draft_catchup_member_input(
+                        parent(k),
+                        &outcome.members()[0],
+                        &choices
+                    ),
+                    Ok(None)
+                );
+            }
+            for (cancel, stop) in [(true, false), (false, true)] {
+                let (outcome, choices) = member_fixture(k, k, 128, 64, cancel, stop);
+                assert!(outcome.next_active_roster().is_empty());
+                assert_eq!(
+                    structural_draft_catchup_member_input(
+                        parent(k),
+                        &outcome.members()[0],
+                        &choices
+                    ),
+                    Ok(None)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn structural_catchup_boundaries_preserve_end_exclusive_missing_position() {
+        for k in [4, 8, 16] {
+            for committed in [127, 128, 143, 144, 8192 - u32::from(k) - 1] {
+                let (outcome, choices) = member_fixture(k, k, committed, 64, false, false);
+                let input = structural_draft_catchup_member_input(
+                    parent(k),
+                    &outcome.members()[0],
+                    &choices,
+                )
+                .unwrap()
+                .unwrap();
+                assert_eq!(input.draft_committed, committed + u32::from(k));
+                assert_eq!(input.target_committed, committed + u32::from(k) + 1);
+                assert!(input.target_committed <= 8192);
+            }
+        }
+    }
+
+    #[test]
+    fn structural_catchup_rejects_last_choice_generation_and_parent_substitution() {
+        for k in [4, 8, 16] {
+            let (outcome, choices) = member_fixture(k, k, 128, 64, false, false);
+            let member = &outcome.members()[0];
+            let mut candidates = choices.draft_choices_for_lane(0).unwrap().to_vec();
+            let target = choices.target_choices_for_lane(0).unwrap();
+            candidates[usize::from(k - 1)] = 900;
+            let wrong_last =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    parent(k),
+                    7,
+                    &candidates,
+                    target,
+                );
+            assert!(structural_draft_catchup_member_input(parent(k), member, &wrong_last).is_err());
+            let zero_generation =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    parent(k),
+                    0,
+                    choices.draft_choices_for_lane(0).unwrap(),
+                    target,
+                );
+            assert!(
+                structural_draft_catchup_member_input(parent(k), member, &zero_generation).is_err()
+            );
+            let mut wrong_parent = parent(k);
+            wrong_parent.role = ferric_spec::Qwen3ModelRole::Draft06B;
+            assert!(structural_draft_catchup_member_input(wrong_parent, member, &choices).is_err());
+            assert!(structural_draft_catchup_member_input(
+                parent(if k == 4 { 8 } else { 4 }),
+                member,
+                &choices
+            )
+            .is_err());
         }
     }
 }
