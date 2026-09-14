@@ -105,6 +105,7 @@ pub(crate) struct M1AuthenticatedRearmPublicationHostStorageV1 {
     shape: M1PhysicalFixedBatchShapeV1,
     workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
     bound_rows: Option<crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1>,
+    diagnostic_reset: Option<crate::completion_output::M1AuthenticatedDiagnosticResetHostStorageV1>,
     packet_batch: crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1,
     phase: Option<
         Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
@@ -176,6 +177,15 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
             selection,
             shape,
             workspace_ranges,
+            diagnostic_reset: if catchup {
+                None
+            } else {
+                Some(
+                    crate::completion_output::M1AuthenticatedDiagnosticResetHostStorageV1::try_new(
+                        selection,
+                    )?,
+                )
+            },
             bound_rows: Some(
                 crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
                     shape.packet_count(),
@@ -7391,6 +7401,10 @@ fn preflight_authenticated_draft_catchup_queue_transition(
                     _ => false,
                 }
                 && storage.speculative_owner.is_some()
+                && storage
+                    .diagnostic_reset
+                    .as_ref()
+                    .is_some_and(|reset| reset.accepts_parent(pending.parent()))
                 && old.completion_output().draft_catchup_parent_selection()
                     == Some(pending.parent())
                 && saved.is_some_and(|saved| {
@@ -7620,33 +7634,47 @@ fn rearm_authenticated_draft_catchup_queue_transition(
             );
         }
     };
-    let (lower, output) =
-        match reset_retained_authenticated_diagnostic_capture(lower, custody.completion_output) {
-            Ok(value) => value,
-            Err(failure) => {
-                fail_transition!(
-                    terminal_custody(failure.phase, failure.custody),
+    let reset = match &transition {
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(_) => {
+            reset_retained_authenticated_diagnostic_capture(lower, custody.completion_output)
+        }
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(_) => {
+            reset_retained_authenticated_diagnostic_capture_with_storage(
+                lower,
+                custody.completion_output,
+                storage
+                    .diagnostic_reset
+                    .take()
+                    .expect("preflight retained exact diagnostic sentinel images"),
+            )
+        }
+    };
+    let (lower, output) = match reset {
+        Ok(value) => value,
+        Err(failure) => {
+            fail_transition!(
+                terminal_custody(failure.phase, failure.custody),
+                (
+                    witness,
+                    operations,
                     (
-                        witness,
-                        operations,
-                        (
-                            custody.catalog_id,
-                            custody.selection,
-                            custody.physical_recipe,
-                            custody.workspace_composition,
-                            custody.workspace_owners,
-                            custody.partitioned_memory,
-                            custody.source_rows,
-                            custody.bound_rows,
-                            custody.retired_rollover_custody,
-                        ),
-                        step,
-                        recipe,
-                        workspace_ranges
-                    )
-                );
-            }
-        };
+                        custody.catalog_id,
+                        custody.selection,
+                        custody.physical_recipe,
+                        custody.workspace_composition,
+                        custody.workspace_owners,
+                        custody.partitioned_memory,
+                        custody.source_rows,
+                        custody.bound_rows,
+                        custody.retired_rollover_custody,
+                    ),
+                    step,
+                    recipe,
+                    workspace_ranges
+                )
+            );
+        }
+    };
     custody.completion_output = output;
     let capture = match retained_host_capture_ranges(&custody.completion_output) {
         Ok(value) => value,
