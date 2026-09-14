@@ -171,6 +171,122 @@ impl M1AuthenticatedResidentQueueTeardownV1 {
 pub struct M1AuthenticatedResidentRoundPlansV1 {
     recipe: crate::runner::M1PhysicalRunnerRecipeInputV1,
     preparation: M1FullStepWorkspacePlans,
+    catchup: Option<M1AuthenticatedResidentDraftCatchupPlansV1>,
+}
+
+/// Optional pre-clock maintenance inputs for one possible successor round.
+#[must_use = "preallocated catch-up plans remain paired with their exact parent"]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentDraftCatchupPlansV1 {
+    parent: Qwen3PlanSelection,
+    recipe: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    preparation: M1FullStepWorkspacePlans,
+    scratch: Box<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupScratchV1>,
+}
+
+impl M1AuthenticatedResidentDraftCatchupPlansV1 {
+    fn try_new(speculative: &M1FullStepWorkspacePlans) -> Option<Self> {
+        let parent = speculative.target().selection();
+        let recipe = derive_resident_draft_catchup_plans(speculative)?;
+        let preparation = derive_resident_draft_catchup_plans(speculative)?;
+        let scratch = Box::new(
+            crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupScratchV1::try_new(
+                parent,
+                &preparation,
+            )?,
+        );
+        Some(Self {
+            parent,
+            recipe: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe),
+            preparation,
+            scratch,
+        })
+    }
+
+    fn prepare_recipe(&mut self, runner: &M1AuthenticatedPhysicalRunnerV1) -> bool {
+        let pending = core::mem::replace(
+            &mut self.recipe,
+            crate::runner::M1PhysicalRunnerRecipeInputV1::Empty,
+        );
+        let (prepared, accepted) = pending.prepare(
+            runner,
+            crate::M1StepDispatchIntent::DraftCatchup(self.parent),
+        );
+        self.recipe = prepared;
+        accepted
+            && self
+                .recipe
+                .prepared_recipe()
+                .is_some_and(|recipe| self.scratch.prepare_recipe(recipe))
+    }
+
+    pub(crate) const fn parent(&self) -> Qwen3PlanSelection {
+        self.parent
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        Qwen3PlanSelection,
+        crate::runner::M1PhysicalRunnerRecipeInputV1,
+        M1FullStepWorkspacePlans,
+        Box<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupScratchV1>,
+    ) {
+        (self.parent, self.recipe, self.preparation, self.scratch)
+    }
+}
+
+fn derive_resident_draft_catchup_plans(
+    speculative: &M1FullStepWorkspacePlans,
+) -> Option<M1FullStepWorkspacePlans> {
+    if speculative.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound {
+        return None;
+    }
+    let parent = speculative.target().selection();
+    let selected =
+        crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(parent)?;
+    let draft = speculative.draft()?;
+    if draft.selection() != selected.draft()
+        || draft.allocation().allocation_id() == speculative.target().allocation().allocation_id()
+    {
+        return None;
+    }
+    let completion = crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+    Some(M1FullStepWorkspacePlans::draft_catchup(
+        parent,
+        derive_resident_maintenance_workspace(
+            selected.draft(),
+            draft.allocation().allocation_id(),
+        )?,
+        derive_resident_maintenance_workspace(
+            completion,
+            speculative.target().allocation().allocation_id(),
+        )?,
+    ))
+}
+
+fn derive_resident_maintenance_workspace(
+    selection: Qwen3PlanSelection,
+    allocation_id: ferric_spec::Identity,
+) -> Option<ferric_build::AddresslessM1StepWorkspacePlan> {
+    let requirements = ferric_build::m1_step_workspace_requirements(selection).ok()?;
+    let mut ranges = Vec::new();
+    ranges.try_reserve_exact(requirements.ranges().len()).ok()?;
+    ranges.extend_from_slice(requirements.ranges());
+    let available =
+        ferric_build::AvailableM1StepWorkspace::new(ferric_build::M1StepWorkspaceDeclaration::new(
+            selection,
+            ferric_build::DeclaredM1StepWorkspaceAllocation::new(
+                allocation_id,
+                requirements.allocation_byte_len(),
+                requirements.allocation_alignment(),
+            ),
+            ranges.into_boxed_slice(),
+        ));
+    match ferric_build::plan_addressless_m1_step_workspace(selection, available) {
+        ferric_build::M1StepWorkspacePlanOutcome::Planned(plan) => Some(plan),
+        ferric_build::M1StepWorkspacePlanOutcome::Rejected(_) => None,
+    }
 }
 
 impl M1AuthenticatedResidentRoundPlansV1 {
@@ -187,10 +303,30 @@ impl M1AuthenticatedResidentRoundPlansV1 {
         {
             return Err((recipe, preparation));
         }
+        let catchup =
+            if crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+                preparation.target().selection(),
+            )
+            .is_some()
+            {
+                let Some(catchup) =
+                    M1AuthenticatedResidentDraftCatchupPlansV1::try_new(&preparation)
+                else {
+                    return Err((recipe, preparation));
+                };
+                Some(catchup)
+            } else {
+                None
+            };
         Ok(Self {
             recipe: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe),
             preparation,
+            catchup,
         })
+    }
+
+    pub(crate) fn take_catchup(&mut self) -> Option<M1AuthenticatedResidentDraftCatchupPlansV1> {
+        self.catchup.take()
     }
 
     fn prepare_recipe(
@@ -207,7 +343,10 @@ impl M1AuthenticatedResidentRoundPlansV1 {
             crate::M1StepDispatchIntent::SpeculativeRound(plan.target()),
         );
         self.recipe = prepared;
-        accepted
+        let catchup_prepared = self.catchup.as_mut().is_some_and(|catchup| {
+            catchup.parent == plan.target() && catchup.prepare_recipe(runner)
+        });
+        accepted && catchup_prepared
     }
 }
 
@@ -3367,6 +3506,112 @@ mod tests {
             .unwrap(),
             vec![M1AuthenticatedResidentRoundPlansV1::new(round(), round()).unwrap()],
         )
+    }
+
+    #[test]
+    fn resident_catchup_plans_preserve_parent_and_allocation_ids_with_canonical_decode_layouts() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let selected = singleton_plan(bucket);
+            let ordinary = || {
+                M1FullStepWorkspacePlans::speculative_round(
+                    workspace(selected.draft(), 3),
+                    workspace(selected.target(), 4),
+                )
+            };
+            let expected = M1FullStepWorkspacePlans::draft_catchup(
+                selected.target(),
+                workspace(selected.draft(), 3),
+                workspace(
+                    crate::M1StepDispatchIntent::DraftCatchup(selected.target())
+                        .completion_selection(),
+                    4,
+                ),
+            );
+            let mut round =
+                M1AuthenticatedResidentRoundPlansV1::new(ordinary(), ordinary()).unwrap();
+            let catchup = round
+                .take_catchup()
+                .expect("singleton maintenance was preallocated");
+            assert!(round.take_catchup().is_none());
+            assert_eq!(catchup.parent(), selected.target());
+            assert_eq!(catchup.preparation, expected);
+            assert_eq!(catchup.recipe.workspace_plans(), Some(&expected));
+            assert_eq!(
+                catchup
+                    .preparation
+                    .draft()
+                    .unwrap()
+                    .allocation()
+                    .allocation_id(),
+                round
+                    .preparation
+                    .draft()
+                    .unwrap()
+                    .allocation()
+                    .allocation_id()
+            );
+            assert_eq!(
+                catchup.preparation.target().allocation().allocation_id(),
+                round.preparation.target().allocation().allocation_id()
+            );
+            assert_ne!(
+                catchup.preparation.target().workspace_id(),
+                round.preparation.target().workspace_id()
+            );
+            let (parent, recipe, preparation, _scratch) = catchup.into_parts();
+            assert_eq!(parent, selected.target());
+            assert_eq!(recipe.workspace_plans(), Some(&preparation));
+        }
+    }
+
+    #[test]
+    fn resident_catchup_plan_derivation_rejects_aliases_wrong_draft_and_non_speculative_inputs() {
+        let selected = singleton_plan(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let aliased = || {
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(selected.draft(), 3),
+                workspace(selected.target(), 3),
+            )
+        };
+        assert!(derive_resident_draft_catchup_plans(&aliased()).is_none());
+        assert!(M1AuthenticatedResidentRoundPlansV1::new(aliased(), aliased()).is_err());
+        let wrong_draft = M1FullStepWorkspacePlans::speculative_round(
+            workspace(
+                Qwen3PlanSelection {
+                    bucket: Qwen3PlanBucket::DecodeS8C8192,
+                    ..selected.draft()
+                },
+                3,
+            ),
+            workspace(selected.target(), 4),
+        );
+        assert!(derive_resident_draft_catchup_plans(&wrong_draft).is_none());
+        let prefill = M1FullStepWorkspacePlans::paired_prefill(
+            workspace(DRAFT_PREFILL, 1),
+            workspace(TARGET_PREFILL, 2),
+        );
+        assert!(derive_resident_draft_catchup_plans(&prefill).is_none());
+        let non_singleton = M1FullStepWorkspacePlans::speculative_round(
+            workspace(
+                Qwen3PlanSelection {
+                    bucket: Qwen3PlanBucket::DecodeS8C8192,
+                    ..selected.draft()
+                },
+                3,
+            ),
+            workspace(
+                Qwen3PlanSelection {
+                    bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+                    ..selected.target()
+                },
+                4,
+            ),
+        );
+        assert!(derive_resident_draft_catchup_plans(&non_singleton).is_none());
     }
 
     #[test]
