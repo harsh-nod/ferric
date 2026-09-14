@@ -4163,6 +4163,7 @@ fn path_name(path: &SynPath) -> String {
 const QUALIFICATION_CAPTURE_ROOT_SOURCE: &str =
     "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs";
 const QUALIFICATION_CAPTURE_SIBLING_MODULES: &[(&str, bool)] = &[
+    ("engineering_r29_inputs", false),
     ("input_bundle", false),
     ("m1_r30_canary_partial_capture", false),
     ("m1_r30_capture_composition", false),
@@ -7683,6 +7684,58 @@ mod tests {
             assert_eq!(
                 validate_module_fixture(&declaration, super::QUALIFICATION_CAPTURE_ROOT_SOURCE,),
                 Ok(())
+            );
+        }
+
+        for (declaration, source) in [
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                "crates/ferric-engine/src/lib.rs",
+            ),
+            (
+                "#[path = \"../engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"/tmp/engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"input_bundle.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] mod renamed;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] pub mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] pub(crate) mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[allow(dead_code)] #[path = \"engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[cfg(test)] #[path = \"engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] mod engineering_r29_inputs {}",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+            (
+                "#[path = \"engineering_r29_inputs.rs\"] #[path = \"engineering_r29_inputs.rs\"] mod engineering_r29_inputs;",
+                super::QUALIFICATION_CAPTURE_ROOT_SOURCE,
+            ),
+        ] {
+            assert!(
+                validate_module_fixture(declaration, source).is_err(),
+                "engineering sibling escaped its exact private path: {declaration}"
             );
         }
 
