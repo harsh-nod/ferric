@@ -60,7 +60,7 @@
 
   document.querySelector("[data-milestone-name]").textContent = project.milestone.name;
   document.querySelector("[data-milestone-label]").textContent = project.milestone.label;
-  document.querySelector("[data-milestone-summary]").textContent = project.liveC1Checkpoint.overview;
+  document.querySelector("[data-milestone-summary]").textContent = project.residentCheckpoint.overview;
   document.querySelector("[data-milestone-dot]").classList.add(
     `dot-${project.milestone.state}`,
   );
@@ -68,6 +68,45 @@
   const updated = document.querySelector("[data-updated]");
   updated.dateTime = project.updated;
   updated.textContent = `Updated ${project.updated}`;
+
+  const resident = project.residentCheckpoint;
+  const residentProgress = document.querySelector("[data-resident-progress]");
+  residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Finite singleton windows: K4, K8 and K16"),
+    element("p", "", resident.selection.detail),
+    element("h3", "", "Host validation and qualification boundary"),
+    element("p", "", resident.host.detail),
+    element("h3", "", "Compiler and canonical gfx942 extraction"),
+    element("p", "", resident.compiler.detail),
+    element("p", "", resident.overview),
+    element("p", "", resident.remaining));
+  const residentDetails = element("details", "performance-identities");
+  residentDetails.append(element("summary", "", "Checkpoint source identities"));
+  const residentPins = element("dl", "observation-facts");
+  for (const [label, value] of [
+    ["Private resident implementation", resident.selection.residentSource],
+    ["Private sealed owner-plan selection", resident.selection.ownerSource],
+    ["Private combined host snapshot", resident.host.engine.source],
+    ["Private service identity repair", resident.host.service.source],
+    ["Private focused source-policy checks", resident.host.policySource],
+    ["Private allocation-free planning check", resident.host.allocationFreePlanningSource],
+    ["Private source-inventory snapshot", resident.host.sourceInventory.source],
+    ["Source-inventory tree", resident.host.sourceInventory.tree],
+    ["Verified-modules inventory SHA-256", resident.host.sourceInventory.manifestSha256],
+    ["Final source-gate evidence SHA-256", resident.host.sourceInventory.evidenceSha256],
+    ["Earlier compiler build and extraction", resident.compiler.testedSource],
+    ["Compiler repair base", resident.compiler.repairBase],
+    ["Published compiler repair", resident.compiler.publishedSource],
+    ["Newer observed upstream; migration and revalidation pending", resident.compiler.observedLatestSource],
+    ["Compiler test evidence SHA-256", resident.compiler.evidenceSha256],
+    ["Private aggregate snapshot", resident.compiler.aggregateSource],
+    ["Aggregate build and emission evidence SHA-256", resident.compiler.aggregateEvidenceSha256],
+    ["Unattributed emission failure log SHA-256", resident.compiler.emissionLogSha256],
+  ]) {
+    residentPins.append(element("dt", "", label), element("dd", "", value));
+  }
+  residentDetails.append(residentPins);
+  residentProgress.append(residentDetails);
 
   const performance = window.FERRIC_PERFORMANCE;
   const measured = document.querySelector("[data-performance]");
@@ -767,6 +806,11 @@
   measured.append(provenance);
 
   const readiness = document.querySelector("[data-readiness]");
+  const residentRow = element("div", "readiness-row");
+  const residentHeading = element("div", "readiness-row-heading");
+  residentHeading.append(element("strong", "", "Authenticated singleton serving"), stateTag("integration"));
+  residentRow.append(residentHeading, element("p", "", resident.overview));
+  readiness.append(residentRow, element("h3", "", "Earlier attention checkpoints"));
   const routeCount = project.attentionReadiness.length + project.routeReadiness.length;
   const currentCount = routeCount + project.latestReadiness.length;
   [...project.attentionReadiness, ...project.routeReadiness, ...project.latestReadiness, ...project.readiness].forEach((item, index) => {

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { validateResidentCheckpoint } from "./validate-resident-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -469,6 +470,11 @@ export async function validateLiveC1CheckpointEvidence(root, project) {
   const baseline = projectFrom(await pinned("live-c1-baseline-project.js",
     "f7b007301cb69f43c719e3bb5388eead8d198cbbce27747f30b87d63e13cfb57"));
   const historical = clone(project);
+  if (historical.residentCheckpoint !== undefined) {
+    validateResidentCheckpoint(historical.residentCheckpoint, historical.updated);
+    delete historical.residentCheckpoint;
+    historical.updated = "2026-09-13";
+  }
   delete historical.liveC1Checkpoint;
   assert.equal(historical.updated, "2026-09-13", "current refresh date");
   assert.equal(baseline.updated, "2026-09-12", "historical snapshot date");

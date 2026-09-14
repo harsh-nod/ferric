@@ -17,12 +17,15 @@ import { validateSubmissionCheckpoint, testSubmissionCheckpointRejections,
 import { validateResidualDiagnostic, testResidualDiagnosticRejections } from "./validate-residual-diagnostic.mjs";
 import { validateC1Checkpoint, testC1CheckpointRejections } from "./validate-c1-checkpoint.mjs";
 import { validateLiveC1Checkpoint, testLiveC1CheckpointRejections } from "./validate-live-c1-checkpoint.mjs";
+import { validateResidentCheckpoint, testResidentCheckpointRejections } from "./validate-resident-checkpoint.mjs";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
 const dataSource = await readFile(join(siteRoot, "data/project.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(dataSource, context, { filename: "site/data/project.js" });
 const project = context.window.FERRIC_PROJECT;
+validateResidentCheckpoint(project.residentCheckpoint, project.updated);
+testResidentCheckpointRejections(project.residentCheckpoint, project.updated);
 validateCompetitiveness(project.competitivenessSprint);
 testCompetitivenessRejections(project.competitivenessSprint);
 validateFollowup(project.competitivenessFollowup);
@@ -101,6 +104,7 @@ assertExactKeys(
   project,
   [
     "updated",
+    "residentCheckpoint",
     "repository",
     "fe2o3Repository",
     "current",
@@ -2134,6 +2138,7 @@ const indexSource = await readFile(join(siteRoot, "index.html"), "utf8");
 const appSource = await readFile(join(siteRoot, "app.js"), "utf8");
 for (const target of [
   "data-readiness",
+  "data-resident-progress",
   "data-performance",
   "data-attention-progress",
   "data-envelope",

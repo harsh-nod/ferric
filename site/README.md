@@ -7,6 +7,28 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
+## September 14 Resident Checkpoint
+
+The additive `residentCheckpoint` distinguishes private authenticated singleton
+K4/K8/K16 selection from native qualification. It records separate host snapshots,
+the real owner-builder identity repair, and the public fe2o3 resource-accounting
+fix. The 13 focused compiler regressions are a subset of the 1,006 passing Pliron
+tests, not additional tests. The old dc8 resource-limit failure is retained
+separately. At eaa, CLI/backend builds and 33 gfx942 aggregate host tests pass,
+but actual aggregate emission rejects a deterministic-control divisor without
+static nonzero evidence. Kernel attribution is unknown. Exit 1 produces no
+image, replay or GPU result.
+Newer upstream `e6cfa668` was observed afterward; migration and revalidation are
+pending. All compiler build, test and emission results stay bound to `eaa057ac`.
+
+Authenticated draft KV catch-up is not implemented: active full acceptance fails
+closed before continuation. All 33 M1 gates remain open. There is no new native
+K8/K16 result, GPU measurement or TTFT/TPOT/throughput claim. Every historical
+project object, including the prior V15 checkpoint, and all of `performance.js`
+remain unchanged. `validate-resident-checkpoint.mjs` rejects scope, source, count,
+catch-up and qualification mutations. The earlier live-C1 evidence validator
+checks this new object before removing it for the original historical comparison.
+
 ## September 12 Matched Cell
 
 The new `matched128` section is pending root review and Pages-only publication.

@@ -19,6 +19,7 @@ const viewports = [
 ];
 const dynamicRoots = [
   "[data-readiness]",
+  "[data-resident-progress]",
   "[data-performance]",
   "[data-attention-progress]",
   "[data-submission-progress]",
@@ -39,6 +40,20 @@ const dynamicRoots = [
   "[data-gates]",
 ];
 const requiredClaims = [
+  "Updated 2026-09-14",
+  "Authenticated resident serving",
+  "Finite singleton windows: K4, K8 and K16",
+  "Continuing full acceptance fails closed because authenticated draft KV catch-up is not implemented",
+  "All 33 M1 gates remain open; this checkpoint adds no GPU or performance result",
+  "Host validation and qualification boundary",
+  "The 722 existing verified bodies are unchanged; 7,530 remain unverified, including 18 new pending-Verus rows",
+  "Compiler and canonical gfx942 extraction",
+  "All 1,006 Pliron tests pass with zero ignores, including the 13 focused regressions",
+  "Kernel attribution is unknown; this is not identified as a GEMM failure",
+  "Exit 1 produces no image, replay or GPU result",
+  "The eaa results do not validate e6cfa668",
+  "77,791,232-invocation launch",
+  "Historical measurements below are unchanged",
   "C1 live route: context8192 HTTP",
   "199.719",
   "154.310",
@@ -1072,7 +1087,8 @@ try {
     if (screenshotRoot) {
       if (name === "desktop" || name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; });
-        for (const [heading, suffix] of [["Attention attribution and validation", "attention-attribution"],
+        for (const [heading, suffix] of [["Authenticated resident serving", "resident-checkpoint"],
+          ["Attention attribution and validation", "attention-attribution"],
           ["Wave attention / v11: context8192 HTTP", "live-http"],
           ["Current parallel checkpoint", "live-teams"],
           ["C1 live route: context8192 HTTP", "live-c1-http"],
