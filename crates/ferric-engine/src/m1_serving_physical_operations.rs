@@ -340,6 +340,9 @@ pub(crate) struct M1StructuralDraftCatchupCompletedV1 {
 }
 
 impl M1StructuralDraftCatchupCompletedV1 {
+    pub(crate) const fn receipt(&self) -> &crate::M1ObservedCompletionImageV1 {
+        &self.receipt
+    }
     pub(crate) const fn pending(&self) -> &M1StructuralDraftCatchupPendingV1 {
         &self.pending
     }

@@ -117,6 +117,17 @@ pub(crate) struct StructuralDraftCatchupRestoreCustodyV1 {
     entered: M1QueueRolloverObservationV1,
 }
 
+impl StructuralDraftCatchupRestoreCustodyV1 {
+    pub(super) const fn observation(
+        &self,
+    ) -> (
+        &crate::M1ObservedCompletionImageV1,
+        M1QueueRolloverObservationV1,
+    ) {
+        (self.completed.receipt(), self.entered)
+    }
+}
+
 struct StructuralTransitionPartsV1 {
     lower: ServiceQueueUnboundSessionV1,
     custody: M1PhysicalQueueBatchRearmPartsV1,

@@ -142,8 +142,28 @@ pub struct M1RearmRoundHistoryEntryV1 {
 }
 
 impl M1RearmRoundHistoryEntryV1 {
-    pub(crate) const fn has_structural_draft_catchup(&self) -> bool {
+    /// Distinguishes a served round followed by completed structural maintenance.
+    #[must_use]
+    pub const fn has_structural_draft_catchup(&self) -> bool {
         self.structural_maintenance.is_some()
+    }
+
+    /// Actual maintenance receipt at E+1 and entry rollover from served E to E+1.
+    ///
+    /// The inert receipt grants no served-token acceptance. `checked()` remains
+    /// the original served receipt at E; `rollover_observation()` separately
+    /// records restoration from the physical frontier E+1 to E+2. Maintenance
+    /// does not create an additional speculative-round history entry.
+    #[must_use]
+    pub fn structural_draft_catchup_observation(
+        &self,
+    ) -> Option<(
+        &crate::M1ObservedCompletionImageV1,
+        M1QueueRolloverObservationV1,
+    )> {
+        self.structural_maintenance
+            .as_ref()
+            .map(|owner| owner.observation())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -209,6 +229,7 @@ impl M1RearmRoundHistoryEntryV1 {
         self
     }
 
+    /// Original served completion, never relabeled as a later maintenance completion.
     pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
         &self.checked
     }
@@ -238,6 +259,8 @@ impl M1RearmRoundHistoryEntryV1 {
         self.total_released
     }
 
+    /// Physical predecessor frontier, which can follow `checked()` by maintenance.
+    /// See `structural_draft_catchup_observation()` for the separate E+1 receipt.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
         self.queue_observation
@@ -248,7 +271,8 @@ impl M1RearmRoundHistoryEntryV1 {
         self.device
     }
 
-    /// Native rollover evidence when this round replaced its predecessor queue.
+    /// Native rollover from the physical predecessor frontier to the next queue.
+    /// After structural maintenance this is E+1 to E+2, not served E to E+2.
     #[must_use]
     pub const fn rollover_observation(&self) -> Option<M1QueueRolloverObservationV1> {
         self.rollover
@@ -3774,6 +3798,7 @@ struct M1RearmContinuationCustodyV1 {
     selected: Vec<ActiveDeviceKvCache>,
     parked: Vec<ActiveDeviceKvCache>,
     terminal: Vec<M1ReleasedTerminalDeviceKvMemberV1>,
+    // Physical frontier; prior_checked remains the served receipt across maintenance.
     previous_epoch: CompletionEpoch,
     prior_checked: crate::M1CheckedCompletionOutputV1,
     logical_accepted_counts: Box<[u32]>,
@@ -8685,6 +8710,16 @@ pub struct M1RearmedCompletionOutcomeV1 {
 }
 
 impl M1RearmedCompletionOutcomeV1 {
+    /// Separate maintenance receipt and entry transition following `prior_checked()`.
+    #[must_use]
+    pub fn prior_structural_draft_catchup_observation(
+        &self,
+    ) -> Option<(
+        &crate::M1ObservedCompletionImageV1,
+        M1QueueRolloverObservationV1,
+    )> {
+        self.history.latest().structural_draft_catchup_observation()
+    }
     pub const fn outcome(&self) -> &crate::M1CompletedStepOutcomeV1 {
         &self.outcome
     }
@@ -8699,6 +8734,7 @@ impl M1RearmedCompletionOutcomeV1 {
         self.terminal.len()
     }
 
+    /// Physical predecessor frontier; it may be later than `prior_checked()`.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
         self.history.latest().queue_observation()
@@ -8719,6 +8755,7 @@ impl M1RearmedCompletionOutcomeV1 {
         self.history.latest().total_released()
     }
 
+    /// Original served receipt, excluding any separately retained maintenance.
     pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
         self.history.latest().checked()
     }
@@ -9098,6 +9135,16 @@ pub(crate) fn preflight_all_terminal_rearm_shutdown(
 }
 
 impl M1LongLivedQueueReleasedRoundV1 {
+    /// Separate maintenance receipt and entry transition following `prior_checked()`.
+    #[must_use]
+    pub fn prior_structural_draft_catchup_observation(
+        &self,
+    ) -> Option<(
+        &crate::M1ObservedCompletionImageV1,
+        M1QueueRolloverObservationV1,
+    )> {
+        self.history.latest().structural_draft_catchup_observation()
+    }
     pub const fn current_released(&self) -> &M1ReleasedCompletedStepV1 {
         &self.released
     }
@@ -9112,6 +9159,7 @@ impl M1LongLivedQueueReleasedRoundV1 {
         self.terminal.len()
     }
 
+    /// Original served receipt, excluding any separately retained maintenance.
     pub const fn prior_checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
         self.history.latest().checked()
     }
@@ -9141,6 +9189,7 @@ impl M1LongLivedQueueReleasedRoundV1 {
         self.history.latest().total_released()
     }
 
+    /// Physical predecessor frontier; it may be later than `prior_checked()`.
     #[must_use]
     pub const fn queue_observation(&self) -> ComputeAqlQueueObservationV1 {
         self.history.latest().queue_observation()
@@ -13754,6 +13803,31 @@ mod tests {
         let _: QualifiedPreflightHistory =
             M1RearmedQualifiedCompletionPreflightFailureV1::round_history;
         let _: QualifiedTeardownFailureHistory = M1RearmedQualifiedTeardownFailureV1::round_history;
+    }
+
+    #[test]
+    fn structural_history_exposes_separate_served_receipt_maintenance_and_both_rollovers() {
+        type MaintenanceObservation<'a> = Option<(
+            &'a crate::M1ObservedCompletionImageV1,
+            crate::M1QueueRolloverObservationV1,
+        )>;
+        let _: for<'a> fn(&'a crate::M1RearmRoundHistoryEntryV1) -> MaintenanceObservation<'a> =
+            crate::M1RearmRoundHistoryEntryV1::structural_draft_catchup_observation;
+        let _: fn(&crate::M1RearmRoundHistoryEntryV1) -> bool =
+            crate::M1RearmRoundHistoryEntryV1::has_structural_draft_catchup;
+        let _: for<'a> fn(
+            &'a crate::M1RearmRoundHistoryEntryV1,
+        ) -> &'a crate::M1CheckedCompletionOutputV1 = crate::M1RearmRoundHistoryEntryV1::checked;
+        let _: fn(
+            &crate::M1RearmRoundHistoryEntryV1,
+        ) -> Option<crate::M1QueueRolloverObservationV1> =
+            crate::M1RearmRoundHistoryEntryV1::rollover_observation;
+        let _: for<'a> fn(&'a crate::M1RearmedCompletionOutcomeV1) -> MaintenanceObservation<'a> =
+            crate::M1RearmedCompletionOutcomeV1::prior_structural_draft_catchup_observation;
+        let _: for<'a> fn(
+            &'a crate::M1LongLivedQueueReleasedRoundV1,
+        ) -> MaintenanceObservation<'a> =
+            crate::M1LongLivedQueueReleasedRoundV1::prior_structural_draft_catchup_observation;
     }
 
     #[test]

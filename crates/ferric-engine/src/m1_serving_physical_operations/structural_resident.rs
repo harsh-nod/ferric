@@ -8,6 +8,13 @@ use crate::m1_queue_rearm::structural_draft_catchup::{
 };
 use crate::{M1FullStepWorkspacePlans, M1ServingQueueActionV1};
 
+fn structural_first_logical_span_is_unreserved(
+    committed: Option<u32>,
+    resident: Option<u32>,
+) -> bool {
+    committed == Some(1) && resident == Some(1)
+}
+
 /// Independent, canonical workspace-plan copies for one bounded structural continuation.
 #[derive(Debug)]
 pub struct M1StructuralResidentRoundInputV1 {
@@ -114,6 +121,10 @@ impl<'a, const C: usize>
 
     /// Reserves the first speculative logical span from this adapter's real paired-prefill custody.
     ///
+    /// Paired prefill commits one logical output anchor while both physical KV
+    /// roles commit all 128 input tokens. Physical context bounds are checked
+    /// against those KV cursors, not the separate logical completion count.
+    ///
     /// # Errors
     /// Rejects any unrelated owner, registry batch, cursor or Engine phase without mutation.
     pub fn reserve_structural_first_speculative_span(
@@ -160,6 +171,10 @@ impl<'a, const C: usize>
                 .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
             || self.engine.state(projection.request)
                 != Some(ferric_spec::scheduling::RequestState::Ready)
+            || !structural_first_logical_span_is_unreserved(
+                self.engine.committed_tokens(projection.request),
+                self.engine.resident_tokens(projection.request),
+            )
         {
             return Err(M1ServingPhysicalRunnerOperationErrorV1::PlanMismatch);
         }
@@ -1044,6 +1059,34 @@ mod tests {
     use crate::{CompletionWireExpectation, CompletionWireSemanticExpectation};
     use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
     use ferric_spec::{Identity, StepPlan, TokenId};
+
+    #[test]
+    fn structural_first_span_rejects_duplicate_or_prompt_length_logical_reservation() {
+        assert!(structural_first_logical_span_is_unreserved(
+            Some(1),
+            Some(1)
+        ));
+        for width in [5, 9, 17] {
+            let committed = Some(1);
+            let resident = Some(1 + width);
+            let before = (committed, resident);
+            assert!(!structural_first_logical_span_is_unreserved(
+                committed, resident
+            ));
+            assert_eq!((committed, resident), before);
+        }
+        for (committed, resident) in [
+            (None, None),
+            (Some(0), Some(1)),
+            (Some(128), Some(128)),
+            (Some(1), Some(128)),
+            (Some(1), None),
+        ] {
+            assert!(!structural_first_logical_span_is_unreserved(
+                committed, resident
+            ));
+        }
+    }
 
     fn parent(k: u8) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
