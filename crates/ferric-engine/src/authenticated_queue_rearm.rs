@@ -26,7 +26,8 @@ use fe2o3_service_host::{DeviceWorkspaceRoleV1, HostDownloadRoleV1, ServiceDevic
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
     completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3ModelRole,
-    Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
+    Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs, M1_KV_PAGE_TOKENS,
+    M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::m1_queue_rearm::{
@@ -100,16 +101,29 @@ pub(crate) struct M1AuthenticatedResidentCompletionScratchV1 {
 
 #[derive(Debug)]
 pub(crate) struct M1AuthenticatedRearmPublicationHostStorageV1 {
+    selection: Qwen3PlanSelection,
+    shape: M1PhysicalFixedBatchShapeV1,
     workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
     bound_rows: Option<crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1>,
     packet_batch: crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1,
     phase: Option<
         Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
     >,
+    phase_k8: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
+    >,
+    phase_k16: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
+    >,
 }
 
 impl M1AuthenticatedRearmPublicationHostStorageV1 {
-    fn try_new() -> Option<Self> {
+    fn try_new(selection: Qwen3PlanSelection) -> Option<Self> {
+        let plan =
+            crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+                selection,
+            )?;
+        let shape = plan.shape();
         let mut workspace_ranges = Vec::new();
         workspace_ranges
             .try_reserve_exact(
@@ -118,21 +132,33 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
             )
             .ok()?;
         Some(Self {
+            selection,
+            shape,
             workspace_ranges,
             bound_rows: Some(
                 crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                    shape.packet_count(),
                     16,
                 )?,
             ),
-            packet_batch:
-                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new(),
-            phase: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            packet_batch: if shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new()
+            } else {
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(shape)?
+            },
+            phase: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            phase_k8: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            phase_k16: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
         })
     }
 
     fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
-        recipe.rows().len() == M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+        recipe.workspace_composition().dispatch_plan().intent()
+            == M1StepDispatchIntent::SpeculativeRound(self.selection)
+            && recipe.rows().len() == self.shape.packet_count()
             && self.packet_batch.prepare_recipe(recipe)
     }
 }
@@ -153,6 +179,18 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
         member_capacity: usize,
         plans: Option<&M1FullStepWorkspacePlans>,
     ) -> Option<Self> {
+        let target_page_capacity = match plans {
+            Some(plans) => {
+                let plan = crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(plans.target().selection())?;
+                if plans.draft().map(|draft| draft.selection()) != Some(plan.draft()) {
+                    return None;
+                }
+                let shape =
+                    crate::M1SpeculativePhysicalShapeV1::from_selection(plan.target()).ok()?;
+                (usize::from(shape.draft_tokens()) + 1).div_ceil(M1_KV_PAGE_TOKENS as usize)
+            }
+            None => 1,
+        };
         let mut members = Vec::new();
         let mut dispositions = Vec::new();
         let mut selected_slots = Vec::new();
@@ -179,7 +217,7 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
             let mut draft = Vec::new();
             let mut target = Vec::new();
             draft.try_reserve_exact(1).ok()?;
-            target.try_reserve_exact(1).ok()?;
+            target.try_reserve_exact(target_page_capacity).ok()?;
             draft_page_leases.push(draft);
             target_page_leases.push(target);
         }
@@ -227,7 +265,7 @@ impl M1AuthenticatedResidentCompletionScratchV1 {
                 None => None,
             },
             publication: match plans {
-                Some(_) => Some(M1AuthenticatedRearmPublicationHostStorageV1::try_new()?),
+                Some(plans) => Some(M1AuthenticatedRearmPublicationHostStorageV1::try_new(plans.target().selection())?),
                 None => None,
             },
             readback: match plans {
@@ -6612,7 +6650,7 @@ fn rearm_m1_authenticated_detached_queue_core_v1(
             operations,
             step,
             expected_observation,
-            None,
+            storage.as_mut().and_then(|storage| storage.phase_k8.take()),
             M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
         ),
         (
@@ -6625,7 +6663,9 @@ fn rearm_m1_authenticated_detached_queue_core_v1(
             operations,
             step,
             expected_observation,
-            None,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.phase_k16.take()),
             M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
         ),
         (_, batch) => Err(terminal_unbound(
@@ -6641,6 +6681,72 @@ mod tests {
     use super::*;
     use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use ferric_spec::Identity;
+
+    #[test]
+    fn finite_resident_scratch_binds_typed_phase_and_worst_case_tail_pages() {
+        use ferric_build::{
+            m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+            AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation,
+            M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+        };
+        use ferric_spec::Qwen3PlanBucket;
+        let workspace = |selection, byte| {
+            let requirements = m1_step_workspace_requirements(selection).unwrap();
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+            }
+        };
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4_usize),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            let target = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Speculative,
+                bucket,
+            };
+            let plan =
+                crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+                    target,
+                )
+                .unwrap();
+            let plans = M1FullStepWorkspacePlans::speculative_round(
+                workspace(plan.draft(), 1),
+                workspace(target, 2),
+            );
+            let scratch =
+                M1AuthenticatedResidentCompletionScratchV1::try_new_for_plans(1, &plans).unwrap();
+            let publication = scratch.publication.as_ref().unwrap();
+            assert_eq!(publication.selection, target);
+            assert_eq!(publication.shape, plan.shape());
+            assert_eq!(publication.phase.is_some(), width == 4);
+            assert_eq!(publication.phase_k8.is_some(), width == 8);
+            assert_eq!(publication.phase_k16.is_some(), width == 16);
+            let target_capacity = scratch.target_page_leases[0].capacity();
+            assert!(target_capacity >= (width + 1).div_ceil(16));
+            for cursor in [127_usize, 128, 143, 144, 255, 256, 8_192 - width - 1] {
+                let missing = (cursor + width + 1).div_ceil(16) - cursor.div_ceil(16);
+                assert!(missing <= target_capacity, "cursor {cursor}, K{width}");
+            }
+        }
+        let unsupported = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+        };
+        assert!(M1AuthenticatedRearmPublicationHostStorageV1::try_new(unsupported).is_none());
+    }
 
     #[derive(Debug)]
     struct ModelPreparedRearmV1 {

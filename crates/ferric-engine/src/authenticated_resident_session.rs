@@ -1,4 +1,4 @@
-//! Bounded authenticated S1/K4 resident execution across R33 windows.
+//! Bounded authenticated singleton K4/K8/K16 resident execution across R33 windows.
 //!
 //! This owner composes existing authenticated queue, registry, speculative,
 //! and new-window typestates. It accepts only addressless workspace plans and
@@ -16,9 +16,7 @@ use ferric_spec::{
 
 use crate::authenticated_queue_rollover::schedule_m1_authenticated_speculative_new_window_resident_v1;
 use crate::{
-    prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
     prepare_m1_authenticated_speculative_new_window_v1,
-    reconcile_m1_authenticated_s1_t128_prefill_registry_v1,
     submit_m1_authenticated_speculative_new_window_v1,
     submit_m1_authenticated_speculative_rollover_v1, Engine, M1AuthenticatedPhysicalRunnerV1,
     M1AuthenticatedPrefillRegistryFirstRoundInputsV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
@@ -246,6 +244,36 @@ impl M1AuthenticatedResidentWindowInputV1 {
             Vec<M1AuthenticatedResidentRoundPlansV1>,
         ),
     > {
+        if bootstrap.successor_plan().target().bucket != Qwen3PlanBucket::SpeculativeS1K4C8192 {
+            return Err((bootstrap, rounds));
+        }
+        Self::new_with_speculative_successor(
+            bootstrap,
+            rounds,
+            diagnostic_ring_bytes,
+            queue_wait_timeout,
+        )
+    }
+
+    /// Uses the checked singleton K4/K8/K16 successor retained by bootstrap.
+    ///
+    /// # Errors
+    ///
+    /// Retains every owner if any round differs from that exact target/draft
+    /// plan, or if the bounded output, plan count, or ring checks fail.
+    #[allow(clippy::result_large_err)]
+    pub fn new_with_speculative_successor(
+        bootstrap: M1AuthenticatedS1T128PrefillBootstrapInputV1,
+        rounds: Vec<M1AuthenticatedResidentRoundPlansV1>,
+        diagnostic_ring_bytes: u32,
+        queue_wait_timeout: M1QueueWaitTimeoutV1,
+    ) -> Result<
+        Self,
+        (
+            M1AuthenticatedS1T128PrefillBootstrapInputV1,
+            Vec<M1AuthenticatedResidentRoundPlansV1>,
+        ),
+    > {
         let Some(output_tokens) = bootstrap.maximum_successor_output_tokens().checked_add(1) else {
             return Err((bootstrap, rounds));
         };
@@ -256,20 +284,18 @@ impl M1AuthenticatedResidentWindowInputV1 {
         {
             return Err((bootstrap, rounds));
         }
-        let Ok(plan) = M1ServingPlanV1::new(
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode: Qwen3ExecutionMode::Speculative,
-                bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-            },
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                mode: Qwen3ExecutionMode::Decode,
-                bucket: Qwen3PlanBucket::DecodeS1C8192,
-            },
-        ) else {
+        let plan = bootstrap.successor_plan();
+        if crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+            plan.target(),
+        ) != Some(plan)
+            || rounds.iter().any(|round| {
+                round.preparation.target().selection() != plan.target()
+                    || round.preparation.draft().map(|draft| draft.selection())
+                        != Some(plan.draft())
+            })
+        {
             return Err((bootstrap, rounds));
-        };
+        }
         let Some(successor_plans) = rounds.first().map(|round| &round.preparation) else {
             return Err((bootstrap, rounds));
         };
@@ -300,26 +326,19 @@ impl M1AuthenticatedResidentWindowInputV1 {
         self.bootstrap.maximum_successor_output_tokens() + 1
     }
 
+    /// Exact singleton successor bound before all per-window preparation.
+    #[must_use]
+    pub const fn successor_plan(&self) -> M1ServingPlanV1 {
+        self.bootstrap.successor_plan()
+    }
+
     /// Derives all addressless physical recipes before a measurement clock is
     /// captured. Rejection retains every recipe input inside this owner.
     pub fn prepare_for_authenticated_runner(
         &mut self,
         runner: &M1AuthenticatedPhysicalRunnerV1,
     ) -> bool {
-        let Ok(plan) = M1ServingPlanV1::new(
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode: Qwen3ExecutionMode::Speculative,
-                bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-            },
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                mode: Qwen3ExecutionMode::Decode,
-                bucket: Qwen3PlanBucket::DecodeS1C8192,
-            },
-        ) else {
-            return false;
-        };
+        let plan = self.bootstrap.successor_plan();
         let mut accepted = self.bootstrap.prepare_recipe(runner);
         if self.rounds.len() != self.storage.round_inputs.len() {
             return false;
@@ -980,13 +999,21 @@ fn next_round_inputs(
     plans: M1AuthenticatedResidentRoundPlansV1,
     mut storage: M1AuthenticatedResidentRoundInputStorageV1,
 ) -> Option<M1AuthenticatedSpeculativePhysicalRoundInputsV1> {
-    if plan.target().bucket != Qwen3PlanBucket::SpeculativeS1K4C8192
+    if crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+        plan.target(),
+    ) != Some(plan)
+        || executor.selection() != plan.target()
         || executor.active_roster().as_slice() != [request]
     {
         return None;
     }
     let snapshot = executor.member_snapshot(request)?;
-    if snapshot.status() != M1SpeculativeMemberStatusV1::Active {
+    if snapshot.status() != M1SpeculativeMemberStatusV1::Active
+        || !resident_common_anchor_is_ready(
+            snapshot.target_committed_tokens(),
+            snapshot.draft_committed_tokens(),
+        )
+    {
         return None;
     }
     let runner = executor.retained_logical_runner();
@@ -1022,6 +1049,11 @@ fn next_round_inputs(
             storage.completion_scratch,
         ),
     )
+}
+
+fn resident_common_anchor_is_ready(target_committed: u32, draft_committed: u32) -> bool {
+    // A fully accepted round needs a separately completed draft catch-up step.
+    target_committed == draft_committed
 }
 
 pub(crate) trait M1AuthenticatedResidentSameShapeExecutorV1<const C: usize>: Sized {
@@ -1463,7 +1495,7 @@ where
     }
 }
 
-/// Executes the first S1/T128 window through repeated authenticated S1/K4
+/// Executes the first S1/T128 window through its exact singleton speculative
 /// rounds until checked policy reaches an all-terminal state.
 ///
 /// # Panics
@@ -1539,7 +1571,7 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
             )),
         ));
     }
-    let prepared = match prepare_m1_authenticated_s1_t128_prefill_prepublication_v1(
+    let prepared = match crate::authenticated_prefill_bootstrap::prepare_m1_authenticated_s1_t128_finite_prefill_prepublication_v1(
         engine,
         runner,
         model_memory,
@@ -1600,7 +1632,7 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         }
     };
     let reconciled =
-        match reconcile_m1_authenticated_s1_t128_prefill_registry_v1(registry, executed) {
+        match crate::m1_serving_registry::reconcile_m1_authenticated_s1_t128_finite_prefill_registry_v1(registry, executed) {
             Ok(reconciled) => reconciled,
             Err(failure) => {
                 return Err(resident_failure(
@@ -2043,8 +2075,8 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
     })
 }
 
-/// Replaces one all-terminal S1/K4 generation with the next authenticated
-/// S1/T128 window, then executes its finite S1/K4 successor to completion.
+/// Replaces one all-terminal singleton generation with the next authenticated
+/// S1/T128 window, retaining the same exact speculative successor selection.
 ///
 /// # Panics
 ///
@@ -2082,6 +2114,7 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
     if completed_windows >= M1_AUTHENTICATED_RESIDENT_WINDOWS_V1
         || engine.is_faulted()
         || !executor.is_complete()
+        || input.successor_plan() != plan
     {
         let engine_quarantined = engine.is_faulted();
         let teardown =
@@ -3264,6 +3297,192 @@ mod tests {
 
     #[global_allocator]
     pub(crate) static TEST_ALLOCATOR: &stats_alloc::StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
+    fn singleton_plan(bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
+        crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Speculative,
+                bucket,
+            },
+        )
+        .unwrap()
+    }
+
+    fn workspace(
+        selection: Qwen3PlanSelection,
+        byte: u8,
+    ) -> ferric_build::AddresslessM1StepWorkspacePlan {
+        use ferric_build::{
+            m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+            AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation,
+            M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+        };
+        let requirements = m1_step_workspace_requirements(selection).unwrap();
+        let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+            selection,
+            DeclaredM1StepWorkspaceAllocation::new(
+                ferric_spec::Identity::new([byte; 32]),
+                requirements.allocation_byte_len(),
+                requirements.allocation_alignment(),
+            ),
+            requirements.ranges().to_vec().into_boxed_slice(),
+        ));
+        match plan_addressless_m1_step_workspace(selection, available) {
+            M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+            M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+        }
+    }
+
+    fn finite_input_parts(
+        selected: M1ServingPlanV1,
+        round_selected: M1ServingPlanV1,
+    ) -> (
+        M1AuthenticatedS1T128PrefillBootstrapInputV1,
+        Vec<M1AuthenticatedResidentRoundPlansV1>,
+    ) {
+        let prefill = || {
+            M1FullStepWorkspacePlans::paired_prefill(
+                workspace(DRAFT_PREFILL, 1),
+                workspace(TARGET_PREFILL, 2),
+            )
+        };
+        let round = || {
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(round_selected.draft(), 3),
+                workspace(round_selected.target(), 4),
+            )
+        };
+        (
+            M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+                selected.target(),
+                vec![70; 128],
+                1,
+                prefill(),
+                prefill(),
+            )
+            .unwrap(),
+            vec![M1AuthenticatedResidentRoundPlansV1::new(round(), round()).unwrap()],
+        )
+    }
+
+    #[test]
+    fn finite_resident_inputs_allocate_exact_logical_rows_and_reject_cross_plan_rounds() {
+        let plans = [
+            singleton_plan(Qwen3PlanBucket::SpeculativeS1K4C8192),
+            singleton_plan(Qwen3PlanBucket::SpeculativeS1K8C8192),
+            singleton_plan(Qwen3PlanBucket::SpeculativeS1K16C8192),
+        ];
+        for selected in plans {
+            let (bootstrap, rounds) = finite_input_parts(selected, selected);
+            let input = M1AuthenticatedResidentWindowInputV1::new_with_speculative_successor(
+                bootstrap,
+                rounds,
+                4096,
+                M1QueueWaitTimeoutV1::new(1000).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(input.successor_plan(), selected);
+            let storage = input.storage.round_inputs.front().unwrap();
+            let width = crate::M1SpeculativePhysicalShapeV1::from_selection(selected.target())
+                .unwrap()
+                .draft_tokens() as usize;
+            assert_eq!(storage.target.tokens.len(), width + 1);
+            assert_eq!(storage.draft.tokens.len(), 1);
+            assert_eq!(storage.target.tokens, vec![0; width + 1]);
+            drop(input);
+            for wrong in plans.into_iter().filter(|other| *other != selected) {
+                let (bootstrap, rounds) = finite_input_parts(selected, wrong);
+                let failure = M1AuthenticatedResidentWindowInputV1::new_with_speculative_successor(
+                    bootstrap,
+                    rounds,
+                    4096,
+                    M1QueueWaitTimeoutV1::new(1000).unwrap(),
+                )
+                .unwrap_err();
+                assert_eq!(failure.0.successor_plan(), selected);
+                assert_eq!(
+                    failure.1[0].preparation.target().selection(),
+                    wrong.target()
+                );
+            }
+            let (bootstrap, rounds) = finite_input_parts(selected, selected);
+            assert_eq!(
+                M1AuthenticatedResidentWindowInputV1::new(
+                    bootstrap,
+                    rounds,
+                    4096,
+                    M1QueueWaitTimeoutV1::new(1000).unwrap(),
+                )
+                .is_ok(),
+                selected.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192,
+            );
+        }
+    }
+
+    #[test]
+    fn finite_resident_continuation_rejects_uncompleted_full_acceptance_catchup() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let plan = singleton_plan(bucket);
+            let width = crate::M1SpeculativePhysicalShapeV1::from_selection(plan.target())
+                .unwrap()
+                .draft_tokens();
+            for cursor in [127, 128, 143, 144] {
+                for accepted in 0..=width {
+                    for output_limit in [1, 128] {
+                        let request = RequestId::new(0, 1);
+                        let policy =
+                            crate::M1SpeculativeGenerationPolicyV1::new(output_limit, &[999])
+                                .unwrap();
+                        let mut coordinator = M1SpeculativeGenerationLoopV1::new(
+                            plan.target(),
+                            &[M1SpeculativeMemberSeedV1::new(
+                                request, 70, cursor, cursor, policy,
+                            )],
+                        )
+                        .unwrap();
+                        let epoch = CompletionEpoch::new(1);
+                        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+                        let emitted = vec![80; usize::from(accepted) + 1];
+                        let observations = [
+                            crate::speculative_generation_loop::CheckedMemberObservationV1 {
+                                request,
+                                semantics: crate::CheckedCompletionSemantics::Speculative {
+                                    accepted_draft_tokens: accepted,
+                                    correction_or_bonus: 80,
+                                },
+                                emitted: crate::M1SpeculativeTokenBlockV1::from_slice(&emitted)
+                                    .unwrap(),
+                            },
+                        ];
+                        let prepared = coordinator
+                            .preflight_observed_round(
+                                binding,
+                                plan.target(),
+                                epoch,
+                                &observations,
+                                &[M1SpeculativeMemberControlV1::continuing(request)],
+                            )
+                            .unwrap();
+                        coordinator.commit_preflighted_round(prepared).unwrap();
+                        let snapshot = coordinator.member(request).unwrap();
+                        assert_eq!(
+                            resident_common_anchor_is_ready(
+                                snapshot.target_committed_tokens(),
+                                snapshot.draft_committed_tokens(),
+                            ),
+                            accepted < width
+                        );
+                        assert_eq!(coordinator.is_complete(), output_limit == 1);
+                    }
+                }
+            }
+        }
+    }
 
     fn advance_registry_round(
         registry: &mut M1ServingRegistryV1<1>,

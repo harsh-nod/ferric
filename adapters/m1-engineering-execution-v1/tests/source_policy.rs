@@ -26,6 +26,8 @@ const ENGINE_AUTHENTICATED_TARGET_WINDOW_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_target_window_executor.rs");
 const ENGINE_AUTHENTICATED_RESIDENT_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/authenticated_resident_session.rs");
+const ENGINE_AUTHENTICATED_PACKET_SOURCE: &str =
+    include_str!("../../../crates/ferric-engine/src/physical_fixed_batch.rs");
 const ENGINE_SERVING_PHYSICAL_INPUT_PROVIDER_SOURCE: &str =
     include_str!("../../../crates/ferric-engine/src/m1_serving_physical_input_provider.rs");
 const ENGINE_QUALIFICATION_CAPTURE_SOURCE: &str =
@@ -1869,6 +1871,68 @@ fn authenticated_target_window_has_real_timing_and_checked_token_causality() {
 }
 
 #[test]
+fn authenticated_resident_packet_storage_is_selected_and_consumed_without_fallback() {
+    let production = ENGINE_AUTHENTICATED_PACKET_SOURCE
+        .split_once("#[cfg(test)]")
+        .map_or(ENGINE_AUTHENTICATED_PACKET_SOURCE, |(source, _)| source);
+    for required in [
+        "new_for_speculative_shape",
+        "speculative_shape: M1PhysicalFixedBatchShapeV1",
+        "fn has_case(",
+        "fn ready_for_recipe(",
+        "!storage.ready_for_recipe(shape, recipe.rows())",
+        "storage.speculative_k4.take()",
+        "storage.speculative_k8.take()",
+        "storage.speculative_k16.take()",
+        "storage.speculative_lowering.take()",
+    ] {
+        assert!(
+            production.contains(required),
+            "resident packet storage lost {required}"
+        );
+    }
+    let lowering = production
+        .split_once("fn build_m1_authenticated_rollover_packet_batch_core_v1(")
+        .unwrap()
+        .1
+        .split_once("fn validate_authenticated_queue_packet_inputs(")
+        .unwrap()
+        .0;
+    assert!(
+        lowering
+            .find("!storage.ready_for_recipe(shape, recipe.rows())")
+            .unwrap()
+            < lowering.find("match shape {").unwrap(),
+        "resident storage must be checked before a typed slot is consumed",
+    );
+    for (start, end) in [
+        (
+            "M1PhysicalFixedBatchShapeV1::SpeculativeK4 =>",
+            "M1PhysicalFixedBatchShapeV1::SpeculativeK8 =>",
+        ),
+        (
+            "M1PhysicalFixedBatchShapeV1::SpeculativeK8 =>",
+            "M1PhysicalFixedBatchShapeV1::SpeculativeK16 =>",
+        ),
+        (
+            "M1PhysicalFixedBatchShapeV1::SpeculativeK16 =>",
+            "\n    }\n}",
+        ),
+    ] {
+        let body = lowering
+            .split_once(start)
+            .unwrap()
+            .1
+            .split_once(end)
+            .unwrap()
+            .0;
+        assert!(body.contains("lower_authenticated_queue_packet_case_core("));
+        assert!(body.contains("storage.speculative_lowering.take()"));
+        assert!(!body.contains("lower_authenticated_queue_packet_case("));
+    }
+}
+
+#[test]
 fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
     let engine_production = ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE
         .split_once("#[cfg(test)]")
@@ -1886,6 +1950,12 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
         "const PREFILL_WIDTH: usize = 128;",
         "PrefillS1T128",
         "SpeculativeS1K4C8192",
+        "SpeculativeS1K8C8192",
+        "SpeculativeS1K16C8192",
+        "new_with_speculative_successor",
+        "admitted_s1_t128_speculative_successor_v1",
+        "admit_m1_production_rollover_transition_v1(prefill, successor)",
+        "reserve_finite_speculative_rollover_output(successor.target())",
         "prompt_tokens.len() != PREFILL_WIDTH",
         "engine.admit()",
         "engine.append_tentative(request, 1)",
@@ -1911,7 +1981,7 @@ fn authenticated_prefill_bootstrap_is_exact_owned_and_stops_before_execution() {
     assert!(
         !ENGINE_AUTHENTICATED_PREFILL_BOOTSTRAP_SOURCE
             .contains("reserve_finite_speculative_rollover_outputs"),
-        "fixed S1/K4 bootstrap must not reserve every speculative output shape"
+        "a selected singleton bootstrap must not reserve every speculative output shape"
     );
     assert_eq!(
         R33_PRODUCTION_BACKEND_SOURCE

@@ -1815,19 +1815,19 @@ fn validate_authenticated_prefill_registry_reconciliation_v1<const C: usize>(
         authenticated_s1_t128_prefill_selection(Qwen3ModelRole::Draft06B),
     )
     .map_err(|_| M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
-    let successor = M1ServingPlanV1::new(
-        authenticated_s1_k4_selection(Qwen3ModelRole::Target8B),
-        authenticated_s1_k4_selection(Qwen3ModelRole::Draft06B),
-    )
-    .map_err(|_| M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
+    let successor = completed
+        .singleton_speculative_successor()
+        .ok_or(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
     let maximum_output_tokens = completed.generation_policy().max_output_tokens();
     let Some(total_context) = 128_u32.checked_add(maximum_output_tokens) else {
         return Err(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch);
     };
-    let expected_target_tail_pages = total_context
-        .div_ceil(M1_KV_PAGE_TOKENS)
-        .saturating_sub(128_u32.div_ceil(M1_KV_PAGE_TOKENS))
-        as usize;
+    let expected_target_tail_pages =
+        crate::authenticated_prefill_bootstrap::s1_t128_successor_target_tail_pages_v1(
+            successor,
+            maximum_output_tokens,
+        )
+        .ok_or(M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch)?;
     if completed.prompt_tokens().len() != 128
         || maximum_output_tokens == 0
         || total_context > 8_192
@@ -1986,6 +1986,32 @@ fn validate_authenticated_prefill_registry_reconciliation_v1<const C: usize>(
 /// Any mismatch retains the consumed registry and physical success owner in
 /// opaque failure custody.
 pub fn reconcile_m1_authenticated_s1_t128_prefill_registry_v1<const C: usize>(
+    registry: M1ServingRegistryV1<C>,
+    completed: M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+) -> Result<
+    M1AuthenticatedPrefillRegistryReconciledV1<C>,
+    Box<M1AuthenticatedPrefillRegistryReconciliationFailureV1<C>>,
+> {
+    let legacy = M1ServingPlanV1::new(
+        authenticated_s1_k4_selection(Qwen3ModelRole::Target8B),
+        authenticated_s1_k4_selection(Qwen3ModelRole::Draft06B),
+    )
+    .ok();
+    if completed.singleton_speculative_successor().is_none()
+        || completed.singleton_speculative_successor() != legacy
+    {
+        return Err(Box::new(
+            M1AuthenticatedPrefillRegistryReconciliationFailureV1 {
+                error: M1AuthenticatedPrefillRegistryReconciliationErrorV1::ProfileMismatch,
+                _registry: registry,
+                _completed: completed,
+            },
+        ));
+    }
+    reconcile_m1_authenticated_s1_t128_finite_prefill_registry_v1(registry, completed)
+}
+
+pub(crate) fn reconcile_m1_authenticated_s1_t128_finite_prefill_registry_v1<const C: usize>(
     mut registry: M1ServingRegistryV1<C>,
     completed: M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
 ) -> Result<

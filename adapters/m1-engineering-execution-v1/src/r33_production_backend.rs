@@ -827,6 +827,7 @@ fn exact_resident_roster(windows: &[M1R33AuthenticatedResidentWindowBindingV1]) 
                 == Some(first.row_ordinal)
                 && windows.iter().enumerate().all(|(sequence, window)| {
                     window.server_start == first.server_start
+                        && window.input.successor_plan() == first.input.successor_plan()
                         && first.row_ordinal.checked_add(sequence as u64)
                             == Some(window.row_ordinal)
                 })
@@ -936,6 +937,31 @@ impl M1R33AuthenticatedProductionBackendV1 {
     /// 20-window sequence for one server start.
     #[allow(clippy::result_large_err)]
     pub fn new_with_s1_k4_resident_windows(
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        model_memory: M1PartitionedModelMemoryKvPoolV1,
+        windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
+    ) -> Result<Self, M1R33AuthenticatedResidentAdmissionFailureV1> {
+        if windows.iter().any(|window| {
+            window.input.successor_plan().target().bucket
+                != ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192
+        }) {
+            return Err(M1R33AuthenticatedResidentAdmissionFailureV1 {
+                runner,
+                model_memory,
+                windows,
+            });
+        }
+        Self::new_with_s1_finite_resident_windows(runner, model_memory, windows)
+    }
+
+    /// Consumes 20 singleton windows bound to one exact K4, K8, or K16 plan.
+    ///
+    /// # Errors
+    ///
+    /// Retains every owner if the ordered row roster, shared successor plan,
+    /// or any pre-clock physical recipe preparation rejects.
+    #[allow(clippy::result_large_err)]
+    pub fn new_with_s1_finite_resident_windows(
         runner: M1AuthenticatedPhysicalRunnerV1,
         model_memory: M1PartitionedModelMemoryKvPoolV1,
         mut windows: Vec<M1R33AuthenticatedResidentWindowBindingV1>,
@@ -1977,6 +2003,62 @@ mod tests {
         resident_input_with_output(prompt, 4).unwrap()
     }
 
+    fn finite_resident_input(bucket: Qwen3PlanBucket) -> M1AuthenticatedResidentWindowInputV1 {
+        let target = Qwen3PlanSelection {
+            bucket,
+            ..TARGET_SPECULATIVE
+        };
+        let prefill = || {
+            M1FullStepWorkspacePlans::paired_prefill(
+                workspace_plan(DRAFT_PREFILL, 1),
+                workspace_plan(TARGET_PREFILL, 2),
+            )
+        };
+        let round = || {
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace_plan(DRAFT_DECODE, 3),
+                workspace_plan(target, 4),
+            )
+        };
+        let bootstrap =
+            M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+                target,
+                vec![1; 128],
+                3,
+                prefill(),
+                prefill(),
+            )
+            .unwrap();
+        let rounds = (0..3)
+            .map(|_| M1AuthenticatedResidentRoundPlansV1::new(round(), round()).unwrap())
+            .collect();
+        M1AuthenticatedResidentWindowInputV1::new_with_speculative_successor(
+            bootstrap,
+            rounds,
+            4096,
+            M1QueueWaitTimeoutV1::new(1000).unwrap(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn finite_resident_binding_retains_singleton_request_and_exact_successor() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let window = r33_window(vec![1; 128], 4);
+            let input = finite_resident_input(bucket);
+            let binding = M1R33AuthenticatedResidentWindowBindingV1::bind(&window, input).unwrap();
+            assert_eq!(binding.input.successor_plan().target().bucket, bucket);
+            assert!(binding.matches(&window));
+            let mut wrong = window.clone();
+            wrong.requests[0].request_ordinal = 1;
+            assert!(!binding.matches(&wrong));
+        }
+    }
+
     #[test]
     fn resident_input_capacity_accepts_128_and_rejects_129() {
         assert_eq!(
@@ -2050,6 +2132,13 @@ mod tests {
                 .unwrap(),
             );
         }
+        assert!(exact_resident_roster(&bindings));
+        let legacy = core::mem::replace(
+            &mut bindings[7].input,
+            finite_resident_input(Qwen3PlanBucket::SpeculativeS1K8C8192),
+        );
+        assert!(!exact_resident_roster(&bindings));
+        bindings[7].input = legacy;
         assert!(exact_resident_roster(&bindings));
         bindings[7].row_ordinal += 1;
         assert!(!exact_resident_roster(&bindings));

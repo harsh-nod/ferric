@@ -1,8 +1,9 @@
 //! Authenticated fresh-engine bootstrap through paired-prefill prepublication.
 //!
-//! This boundary is deliberately limited to the first production profile that
-//! Ferric can describe exactly: one Qwen3 request in `PrefillS1T128`, followed
-//! by `SpeculativeS1K4C8192`. It admits and schedules the request, binds the
+//! This boundary admits one Qwen3 request in `PrefillS1T128`. The legacy input
+//! and preparation entrypoints retain their exact K4 successor contract. The
+//! explicit finite constructor binds an already-admitted singleton K4, K8, or
+//! K16 successor for resident execution. It schedules the request and binds the
 //! exact pretokenized row into both model roles, reserves model KV and rollover
 //! custody, and produces an authenticated prepublication batch. It does not
 //! create or submit a queue, observe a clock, read a token, or claim serving.
@@ -56,6 +57,7 @@ const DRAFT_SUCCESSOR: Qwen3PlanSelection = Qwen3PlanSelection {
 /// Stable rejection of an exact S1/T128 pretokenized bootstrap input.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1AuthenticatedS1T128PrefillBootstrapInputErrorV1 {
+    UnsupportedSuccessor { actual: Qwen3PlanSelection },
     PromptLength { required: usize, actual: usize },
     TokenOutOfRange { column: usize, token: TokenId },
     InvalidOutputLimit { actual: u32 },
@@ -123,6 +125,44 @@ pub struct M1AuthenticatedS1T128PrefillBootstrapInputV1 {
     policy: M1SpeculativeGenerationPolicyV1,
     preparation_plans: M1FullStepWorkspacePlans,
     recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    successor: M1ServingPlanV1,
+}
+
+pub(crate) fn admitted_s1_t128_speculative_successor_v1(
+    target: Qwen3PlanSelection,
+) -> Option<M1ServingPlanV1> {
+    if !matches!(
+        target.bucket,
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+            | Qwen3PlanBucket::SpeculativeS1K8C8192
+            | Qwen3PlanBucket::SpeculativeS1K16C8192
+    ) {
+        return None;
+    }
+    let successor = M1ServingPlanV1::new(target, DRAFT_SUCCESSOR).ok()?;
+    let prefill = M1ServingPlanV1::new(TARGET_PREFILL, DRAFT_PREFILL).ok()?;
+    crate::m1_serving_registry::admit_m1_production_rollover_transition_v1(prefill, successor)?;
+    Some(successor)
+}
+
+pub(crate) fn s1_t128_successor_target_tail_pages_v1(
+    successor: M1ServingPlanV1,
+    maximum_output_tokens: u32,
+) -> Option<usize> {
+    if admitted_s1_t128_speculative_successor_v1(successor.target()) != Some(successor)
+        || maximum_output_tokens == 0
+    {
+        return None;
+    }
+    let logical_rows = crate::M1SpeculativePhysicalShapeV1::from_selection(successor.target())
+        .ok()?
+        .draft_tokens() as u32
+        + 1;
+    let tokens = 128_u32.checked_add(maximum_output_tokens.max(logical_rows))?;
+    if tokens > M1_MAX_CONTEXT_TOKENS {
+        return None;
+    }
+    usize::try_from(tokens.div_ceil(M1_KV_PAGE_TOKENS) - 128_u32.div_ceil(M1_KV_PAGE_TOKENS)).ok()
 }
 
 impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
@@ -143,6 +183,39 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
         preparation_plans: M1FullStepWorkspacePlans,
         recipe_plans: M1FullStepWorkspacePlans,
     ) -> Result<Self, M1AuthenticatedS1T128PrefillBootstrapInputFailureV1> {
+        Self::new_with_speculative_successor(
+            TARGET_SUCCESSOR,
+            prompt_tokens,
+            maximum_successor_output_tokens,
+            preparation_plans,
+            recipe_plans,
+        )
+    }
+
+    /// Selects one already-admitted singleton K4, K8, or K16 successor.
+    ///
+    /// # Errors
+    ///
+    /// Retains every input on an unsupported successor or the same prompt,
+    /// output-policy, and paired-prefill rejection enforced by `new`.
+    pub fn new_with_speculative_successor(
+        target: Qwen3PlanSelection,
+        prompt_tokens: Vec<TokenId>,
+        maximum_successor_output_tokens: u32,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Result<Self, M1AuthenticatedS1T128PrefillBootstrapInputFailureV1> {
+        let Some(successor) = admitted_s1_t128_speculative_successor_v1(target) else {
+            return Err(input_failure(
+                M1AuthenticatedS1T128PrefillBootstrapInputErrorV1::UnsupportedSuccessor {
+                    actual: target,
+                },
+                prompt_tokens,
+                maximum_successor_output_tokens,
+                preparation_plans,
+                recipe_plans,
+            ));
+        };
         if prompt_tokens.len() != PREFILL_WIDTH {
             return Err(input_failure(
                 M1AuthenticatedS1T128PrefillBootstrapInputErrorV1::PromptLength {
@@ -234,6 +307,7 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
             policy,
             preparation_plans,
             recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+            successor,
         })
     }
 
@@ -245,6 +319,12 @@ impl M1AuthenticatedS1T128PrefillBootstrapInputV1 {
     #[must_use]
     pub const fn maximum_successor_output_tokens(&self) -> u32 {
         self.policy.max_output_tokens()
+    }
+
+    /// Exact immutable plan selected before authenticated prefill publication.
+    #[must_use]
+    pub const fn successor_plan(&self) -> M1ServingPlanV1 {
+        self.successor
     }
 
     pub(crate) const fn preparation_plans(&self) -> &M1FullStepWorkspacePlans {
@@ -568,6 +648,27 @@ fn lease_pages(
 /// failure.
 #[allow(clippy::too_many_lines)]
 pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize>(
+    engine: Engine<C>,
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    memory: M1PartitionedModelMemoryKvPoolV1,
+    input: M1AuthenticatedS1T128PrefillBootstrapInputV1,
+) -> Result<
+    M1AuthenticatedS1T128PrefillPrepublicationV1<C>,
+    Box<M1AuthenticatedS1T128PrefillBootstrapFailureV1<C>>,
+> {
+    if input.successor.target() != TARGET_SUCCESSOR {
+        return Err(terminal_failure(
+            engine,
+            M1AuthenticatedS1T128PrefillBootstrapPhaseV1::RolloverIntentBinding,
+            M1AuthenticatedS1T128PrefillBootstrapErrorV1::LowerRejected,
+            (runner, memory, input),
+        ));
+    }
+    prepare_m1_authenticated_s1_t128_finite_prefill_prepublication_v1(engine, runner, memory, input)
+}
+
+#[allow(clippy::too_many_lines)]
+pub(crate) fn prepare_m1_authenticated_s1_t128_finite_prefill_prepublication_v1<const C: usize>(
     mut engine: Engine<C>,
     runner: M1AuthenticatedPhysicalRunnerV1,
     mut memory: M1PartitionedModelMemoryKvPoolV1,
@@ -589,6 +690,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
         policy,
         preparation_plans,
         recipe_plans,
+        successor,
     } = input;
     let request = match engine.admit() {
         Ok(request) => request,
@@ -892,9 +994,11 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    let successor_target_page_count = active_tokens
-        .checked_add(policy.max_output_tokens())
-        .map_or(u32::MAX, |tokens| tokens.div_ceil(M1_KV_PAGE_TOKENS));
+    let successor_target_page_count =
+        s1_t128_successor_target_tail_pages_v1(successor, policy.max_output_tokens())
+            .and_then(|pages| u32::try_from(pages).ok())
+            .and_then(|pages| page_count.checked_add(pages))
+            .unwrap_or(u32::MAX);
     let mut target_rollover_pages = Vec::new();
     if target_rollover_pages
         .try_reserve_exact(successor_target_page_count.saturating_sub(page_count) as usize)
@@ -1021,9 +1125,9 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    let successor = match M1ServingPlanV1::new(TARGET_SUCCESSOR, DRAFT_SUCCESSOR) {
-        Ok(successor) => successor,
-        Err(error) => {
+    let successor = match admitted_s1_t128_speculative_successor_v1(successor.target()) {
+        Some(successor) => successor,
+        None => {
             return Err(terminal_failure(
                 engine,
                 M1AuthenticatedS1T128PrefillBootstrapPhaseV1::RolloverIntentBinding,
@@ -1038,7 +1142,7 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
                     target_rollover_pages,
                     draft_rollover_page,
                     prepared,
-                    error,
+                    successor,
                 ),
             ));
         }
@@ -1092,7 +1196,16 @@ pub fn prepare_m1_authenticated_s1_t128_prefill_prepublication_v1<const C: usize
             ));
         }
     };
-    if let Err(error) = allocated.reserve_s1_k4_rollover_output() {
+    let reserve_output = if successor.target() == TARGET_SUCCESSOR {
+        allocated
+            .reserve_s1_k4_rollover_output()
+            .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)
+    } else {
+        allocated
+            .reserve_finite_speculative_rollover_output(successor.target())
+            .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)
+    };
+    if let Err(error) = reserve_output {
         return Err(terminal_failure(
             engine,
             M1AuthenticatedS1T128PrefillBootstrapPhaseV1::RolloverOutputReservation,
@@ -1277,6 +1390,101 @@ mod tests {
         .unwrap();
         assert_eq!(input.prompt_tokens(), [1; 128]);
         assert_eq!(input.maximum_successor_output_tokens(), 32);
+        assert_eq!(input.successor_plan().target(), TARGET_SUCCESSOR);
+    }
+
+    #[test]
+    fn singleton_successor_constructor_binds_each_finite_plan_and_tail() {
+        for (bucket, tail_pages) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 2),
+        ] {
+            let target = Qwen3PlanSelection {
+                bucket,
+                ..TARGET_SUCCESSOR
+            };
+            for limit in [1, 3, 127] {
+                let (preparation, recipe) = plans();
+                let input =
+                    M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+                        target,
+                        vec![7; 128],
+                        limit,
+                        preparation,
+                        recipe,
+                    )
+                    .unwrap();
+                assert_eq!(input.successor_plan().target(), target);
+                assert_eq!(input.successor_plan().draft(), DRAFT_SUCCESSOR);
+                assert_eq!(input.maximum_successor_output_tokens(), limit);
+                let expected = if limit == 127 { 8 } else { tail_pages };
+                assert_eq!(
+                    s1_t128_successor_target_tail_pages_v1(input.successor_plan(), limit),
+                    Some(expected)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn singleton_successor_rejects_role_mode_and_unsupported_bucket_without_losing_inputs() {
+        for target in [
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..TARGET_SUCCESSOR
+            },
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Decode,
+                ..TARGET_SUCCESSOR
+            },
+            Qwen3PlanSelection {
+                bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+                ..TARGET_SUCCESSOR
+            },
+            TARGET_PREFILL,
+        ] {
+            let (preparation, recipe) = plans();
+            let failure =
+                M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+                    target,
+                    vec![7; 128],
+                    3,
+                    preparation,
+                    recipe,
+                )
+                .unwrap_err();
+            assert_eq!(
+                failure.error(),
+                M1AuthenticatedS1T128PrefillBootstrapInputErrorV1::UnsupportedSuccessor {
+                    actual: target
+                }
+            );
+            let (prompt, limit, preparation, recipe) = failure.into_parts();
+            assert_eq!(prompt, vec![7; 128]);
+            assert_eq!(limit, 3);
+            assert_eq!(preparation, recipe);
+        }
+    }
+
+    #[test]
+    fn singleton_successor_context_bound_includes_direct_prefill_choice() {
+        let target = Qwen3PlanSelection {
+            bucket: Qwen3PlanBucket::SpeculativeS1K16C8192,
+            ..TARGET_SUCCESSOR
+        };
+        for (limit, accepted) in [(8_063, true), (8_064, false), (u32::MAX, false)] {
+            let (preparation, recipe) = plans();
+            let result =
+                M1AuthenticatedS1T128PrefillBootstrapInputV1::new_with_speculative_successor(
+                    target,
+                    vec![7; 128],
+                    limit,
+                    preparation,
+                    recipe,
+                );
+            assert_eq!(result.is_ok(), accepted);
+        }
     }
 
     #[test]

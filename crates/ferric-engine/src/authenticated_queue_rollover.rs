@@ -65,11 +65,20 @@ use crate::{
 /// lower queue and its Ferric custody. They cannot mint queue authority.
 #[derive(Debug)]
 pub(crate) struct M1AuthenticatedResidentQueuePhaseStorageV1 {
+    prefill_selection: ferric_spec::Qwen3PlanSelection,
+    successor_selection: ferric_spec::Qwen3PlanSelection,
+    successor_shape: M1PhysicalFixedBatchShapeV1,
     paired_prefill: Option<
         Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1>>,
     >,
     speculative_k4: Option<
         Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>>,
+    >,
+    speculative_k8: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>>,
+    >,
+    speculative_k16: Option<
+        Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     >,
     replaced_lanes: Vec<bool>,
     physical_member_intents: Option<Vec<M1AuthenticatedSpeculativeRolloverMemberIntentV1>>,
@@ -110,6 +119,24 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
         new_window_plans: &M1FullStepWorkspacePlans,
         successor_plans: &M1FullStepWorkspacePlans,
     ) -> Option<Self> {
+        let successor =
+            crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+                successor_plans.target().selection(),
+            )?;
+        let successor_shape = successor.shape();
+        let prefill = paired_prefill_plan(new_window_plans.target().selection())?;
+        if new_window_plans.kind() != M1FullStepWorkspaceInputKind::PairedPrefill
+            || successor_plans.kind() != M1FullStepWorkspaceInputKind::SpeculativeRound
+            || new_window_plans.draft().map(|draft| draft.selection()) != Some(prefill.draft())
+            || successor_plans.draft().map(|draft| draft.selection()) != Some(successor.draft())
+            || admit_m1_production_rollover_transition_v1(prefill, successor).is_none()
+        {
+            return None;
+        }
+        let target_rows = crate::M1SpeculativePhysicalShapeV1::from_selection(successor.target())
+            .ok()?
+            .draft_tokens() as usize
+            + 1;
         let mut replaced_lanes = Vec::new();
         replaced_lanes
             .try_reserve_exact(M1_MAX_ACTIVE_SEQUENCES as usize)
@@ -127,8 +154,16 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
             .try_reserve_additional(crate::M1_MAX_REARM_ROUND_HISTORY_V1)
             .ok()?;
         Some(Self {
+            prefill_selection: prefill.target(),
+            successor_selection: successor.target(),
+            successor_shape,
             paired_prefill: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
-            speculative_k4: Some(Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            speculative_k4: (successor_shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            speculative_k8: (successor_shape == M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            speculative_k16: (successor_shape == M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
             replaced_lanes,
             physical_member_intents: Some(resident_vec_with_capacity(1)?),
             new_window_selected: resident_vec_with_capacity(1)?,
@@ -142,7 +177,9 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
             )?,
             successor_projections: resident_vec_with_capacity(1)?,
             successor_draft_page_leases: page_roster(1)?,
-            successor_target_page_leases: page_roster(1)?,
+            successor_target_page_leases: page_roster(
+                target_rows.div_ceil(M1_KV_PAGE_TOKENS as usize),
+            )?,
             successor_selected: resident_vec_with_capacity(1)?,
             successor_draft_reservations: resident_vec_with_capacity(1)?,
             successor_target_reservations: resident_vec_with_capacity(1)?,
@@ -184,12 +221,15 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
             ),
             successor_bound_rows: Some(
                 crate::m1_queue_rearm::M1RolloverBoundRowsHostStorageV1::try_new(
-                    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+                    successor_shape.packet_count(),
                     16,
                 )?,
             ),
-            packet_batches:
-                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new(),
+            packet_batches: if successor_shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new()
+            } else {
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(successor_shape)?
+            },
             successor_round_history,
             successor_lineage_seeds: resident_vec_with_capacity(1)?,
         })
@@ -200,8 +240,12 @@ impl M1AuthenticatedResidentQueuePhaseStorageV1 {
         new_window: &AddresslessM1PhysicalBufferRecipeV1,
         successor: &AddresslessM1PhysicalBufferRecipeV1,
     ) -> bool {
-        new_window.rows().len() == M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
-            && successor.rows().len() == M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1
+        new_window.workspace_composition().dispatch_plan().intent()
+            == M1StepDispatchIntent::PairedPrefill(self.prefill_selection)
+            && new_window.rows().len() == M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
+            && successor.workspace_composition().dispatch_plan().intent()
+                == M1StepDispatchIntent::SpeculativeRound(self.successor_selection)
+            && successor.rows().len() == self.successor_shape.packet_count()
             && self.packet_batches.prepare_recipe(new_window)
             && self.packet_batches.prepare_recipe(successor)
     }
@@ -9605,7 +9649,9 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 operations,
                 step,
                 predecessor_generation,
-                None,
+                resident_phase_storage
+                    .as_mut()
+                    .and_then(|storage| storage.speculative_k8.take()),
                 M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
             ) {
                 Ok(value) => value,
@@ -9629,7 +9675,9 @@ fn submit_m1_authenticated_speculative_rollover_pending_v1<const C: usize>(
                 operations,
                 step,
                 predecessor_generation,
-                None,
+                resident_phase_storage
+                    .as_mut()
+                    .and_then(|storage| storage.speculative_k16.take()),
                 M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
             ) {
                 Ok(value) => value,

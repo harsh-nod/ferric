@@ -1,9 +1,37 @@
 # M1 Team Progress
 
-Updated: 2026-09-13 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-14 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
-Current upstream fe2o3 main resolves to
+## Active Integration
+
+Private integration `6474fb5` advances the 79 active dependency-pin files to
+fe2o3 `dc8e7f84fdcbc18fd85012f70f053f43c41f8fbe`, tree
+`15a76ccc6c79de61389d8c849f93f9b8f0375865`. Exact reverse substitution
+reproduces the prior files; the only additional changes refresh two derived
+verifier manifest/lock hashes. Historical images and benchmark receipts retain
+their actual producers. The installed ae267 KFD worker's declared dependency
+closure remains byte-identical through dc8; it is not relabeled as a dc8 build.
+
+| Team | Current Work | Acceptance Still Required |
+| --- | --- | --- |
+| Compiler | Cold dc8 CLI/backend build on mi300x, followed by focused compiler regressions and the canonical twelve-root gfx942 aggregate. | Successful tests, actual emission and ABI/resource inspection. No GPU launch or protected publication is implied by emission. |
+| Serving | Extend the authenticated resident owner from fixed S1/K4 to the existing S1/K4, K8 and K16 plans. Carry the exact plan through paired prefill, registry reconciliation, queue storage and readback. Existing K4 constructors remain exact wrappers; S8 is not added. | Remote compilation/tests, negative cases, and authenticated gfx942 execution. These source changes are not yet a serving qualification. |
+| Verification | Review found the existing full-accept draft cursor gap. The resident path now rejects another common-anchor round when target/draft cursors differ. K16 storage distinguishes seventeen logical verification choices from thirty-two physical rows. | A real authenticated draft catch-up dispatch, completion-bound cursor advance and repeated full-accept execution. The engineering catch-up path is not a substitute. |
+
+The cursor gap is a draft-prefix correctness issue; this review did not
+demonstrate a target-token mismatch. Fully accepted rounds may still terminate
+normally when their output policy is complete. Continuing such a request must
+fail closed until the missing last accepted draft token has been processed by
+a real catch-up step. Host cursor adjustment would not repair its KV contents.
+
+No new TTFT, TPOT or throughput result is claimed by this implementation work.
+S8 authenticated cohorts, mixed-active admission, cooperative gfx942 kernels
+and the remaining M1 proof/hardware/performance obligations remain open.
+
+## Earlier Checkpoints
+
+At the September 13 checkpoint, upstream fe2o3 main resolved to
 `b9ab3553d1e7f87751a24892ba66a591408ee31f`, fetched without changing the
 existing dirty fe2o3 worktree. This adds shared bounded semantic verification
 and canonical V12 admission; it is a substantive compiler change, not a
@@ -13,7 +41,7 @@ not relabel its actual producer. A separate compiler migration still needs a
 fresh build, verifier/consumer regressions and V15 emission/ABI checks. No
 fe2o3 source edits or push were required for the completed comparison.
 
-The frozen comparison and active integration remain pinned to
+The frozen comparison and then-active integration were pinned to
 `c9c7036cf98034b638886f54a745701e70ac3571`, with Pliron
 `9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two commits since ae267
 change private SSA operation-order verification/resource accounting, then add

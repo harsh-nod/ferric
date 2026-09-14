@@ -70,13 +70,25 @@ const M1_AUTHENTICATED_SPECULATIVE_DRAFT_RANGE_NAMES_V1: [&str;
     "draft-8", "draft-9", "draft-10", "draft-11", "draft-12", "draft-13", "draft-14", "draft-15",
 ];
 
-/// Pre-clock storage for the exact resident S1/K4 readback and semantic join.
+/// Pre-clock storage for one exact resident S1/K4, K8, or K16 readback.
 #[derive(Debug)]
 pub(crate) struct M1AuthenticatedResidentReadbackHostStorageV1 {
+    selection: ferric_spec::Qwen3PlanSelection,
+    buffers: M1AuthenticatedResidentReadbackBuffersV1,
+    readback_case: M1AuthenticatedResidentReadbackCaseHostStorageV1,
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedResidentReadbackBuffersV1 {
     completion: M1ObservedCompletionHostStorageV1,
     choices: M1SpeculativeDiagnosticChoicesHostStorageV1,
     checked: M1CheckedCompletionHostStorageV1,
-    readback_case: Option<
+    detached_case: Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedResidentReadbackCaseHostStorageV1 {
+    K4(
         Box<
             MaybeUninit<
                 M1AuthenticatedPhysicalReadbackQueueCaseV1<
@@ -84,23 +96,81 @@ pub(crate) struct M1AuthenticatedResidentReadbackHostStorageV1 {
                 >,
             >,
         >,
-    >,
-    detached_case: Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
+    ),
+    K8(
+        Box<
+            MaybeUninit<
+                M1AuthenticatedPhysicalReadbackQueueCaseV1<
+                    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+    K16(
+        Box<
+            MaybeUninit<
+                M1AuthenticatedPhysicalReadbackQueueCaseV1<
+                    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+                >,
+            >,
+        >,
+    ),
+}
+
+fn resident_speculative_readback_shape(
+    selection: ferric_spec::Qwen3PlanSelection,
+) -> Option<M1PhysicalFixedBatchShapeV1> {
+    let shape = crate::m1_speculative_diagnostic_choices_shape_v1(selection).ok()?;
+    if shape.sequences() != 1 {
+        return None;
+    }
+    match shape.draft_tokens() {
+        4 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK4),
+        8 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK8),
+        16 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK16),
+        _ => None,
+    }
+}
+
+fn resident_speculative_readback_binding_matches(
+    retained_selection: ferric_spec::Qwen3PlanSelection,
+    queue_selection: ferric_spec::Qwen3PlanSelection,
+    member_count: usize,
+    packet_count: usize,
+) -> bool {
+    retained_selection == queue_selection
+        && member_count == 1
+        && resident_speculative_readback_shape(retained_selection)
+            .is_some_and(|shape| shape.packet_count() == packet_count)
 }
 
 impl M1AuthenticatedResidentReadbackHostStorageV1 {
     pub(crate) fn try_new(selection: ferric_spec::Qwen3PlanSelection) -> Option<Self> {
-        if !m1_speculative_diagnostic_is_s1_k4_selection_v1(selection) {
-            return None;
-        }
+        let shape = resident_speculative_readback_shape(selection)?;
         let completion_shape = crate::m1_completion_output_shape_v1(selection).ok()?;
         let choice_shape = crate::m1_speculative_diagnostic_choices_shape_v1(selection).ok()?;
+        let readback_case = match shape {
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K4(Box::new_uninit())
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K8(Box::new_uninit())
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K16(Box::new_uninit())
+            }
+            M1PhysicalFixedBatchShapeV1::TargetOnly
+            | M1PhysicalFixedBatchShapeV1::PairedPrefill => return None,
+        };
         Some(Self {
-            completion: M1ObservedCompletionHostStorageV1::try_new(completion_shape, 1)?,
-            choices: M1SpeculativeDiagnosticChoicesHostStorageV1::try_new(choice_shape)?,
-            checked: M1CheckedCompletionHostStorageV1::try_new(1)?,
-            readback_case: Some(Box::new_uninit()),
-            detached_case: Some(Box::new_uninit()),
+            selection,
+            buffers: M1AuthenticatedResidentReadbackBuffersV1 {
+                completion: M1ObservedCompletionHostStorageV1::try_new(completion_shape, 1)?,
+                choices: M1SpeculativeDiagnosticChoicesHostStorageV1::try_new(choice_shape)?,
+                checked: M1CheckedCompletionHostStorageV1::try_new(1)?,
+                detached_case: Some(Box::new_uninit()),
+            },
+            readback_case,
         })
     }
 }
@@ -1774,18 +1844,15 @@ impl M1AuthenticatedResidentPhysicalReadbackFailureV1 {
         })
     }
 
-    fn from_k4(
+    fn from_speculative<const N: usize>(
         error: M1AuthenticatedResidentPhysicalReadbackErrorV1,
-        case: Box<
-            M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1>,
-        >,
+        case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
+        wrap: fn(
+            Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
+        ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
         retained: impl fmt::Debug + 'static,
     ) -> Box<Self> {
-        Self::new(
-            error,
-            M1AuthenticatedPhysicalRecycledQueueSessionV1::SpeculativeK4(case),
-            retained,
-        )
+        Self::new(error, wrap(case), retained)
     }
 
     fn from_prefill(
@@ -2028,23 +2095,98 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
         Box<M1AuthenticatedResidentPhysicalReadbackFailureV1>,
     > {
-        let mut case = match self {
-            Self::SpeculativeK4(case) => case,
-            queue => {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
-                    queue,
-                    storage,
-                ));
-            }
-        };
         let M1AuthenticatedResidentReadbackHostStorageV1 {
+            selection,
+            buffers,
+            readback_case,
+        } = storage;
+        match (self, readback_case) {
+            (
+                Self::SpeculativeK4(case),
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K4(readback_case),
+            ) => Self::read_and_check_resident_speculative_case(
+                case,
+                expected_dispatch_generation,
+                selection,
+                buffers,
+                readback_case,
+                Self::SpeculativeK4,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4,
+            ),
+            (
+                Self::SpeculativeK8(case),
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K8(readback_case),
+            ) => Self::read_and_check_resident_speculative_case(
+                case,
+                expected_dispatch_generation,
+                selection,
+                buffers,
+                readback_case,
+                Self::SpeculativeK8,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK8,
+            ),
+            (
+                Self::SpeculativeK16(case),
+                M1AuthenticatedResidentReadbackCaseHostStorageV1::K16(readback_case),
+            ) => Self::read_and_check_resident_speculative_case(
+                case,
+                expected_dispatch_generation,
+                selection,
+                buffers,
+                readback_case,
+                Self::SpeculativeK16,
+                M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK16,
+            ),
+            (queue, readback_case) => Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                queue,
+                (selection, buffers, readback_case),
+            )),
+        }
+    }
+
+    fn read_and_check_resident_speculative_case<const N: usize>(
+        mut case: Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
+        expected_dispatch_generation: u64,
+        selection: ferric_spec::Qwen3PlanSelection,
+        buffers: M1AuthenticatedResidentReadbackBuffersV1,
+        readback_case: Box<MaybeUninit<M1AuthenticatedPhysicalReadbackQueueCaseV1<N>>>,
+        wrap_recycled: fn(
+            Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<N>>,
+        ) -> M1AuthenticatedPhysicalRecycledQueueSessionV1,
+        wrap_readback: fn(
+            Box<M1AuthenticatedPhysicalReadbackQueueCaseV1<N>>,
+        ) -> M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    ) -> Result<
+        M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        Box<M1AuthenticatedResidentPhysicalReadbackFailureV1>,
+    > {
+        let binding_matches = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            resident_speculative_readback_binding_matches(
+                selection,
+                custody.selection(),
+                step.scheduled_dispatch().member_count(),
+                N,
+            )
+        };
+        if !binding_matches {
+            return Err(
+                M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    case,
+                    wrap_recycled,
+                    (selection, buffers, readback_case),
+                ),
+            );
+        }
+        let M1AuthenticatedResidentReadbackBuffersV1 {
             mut completion,
             mut choices,
             checked,
-            mut readback_case,
             detached_case,
-        } = storage;
+        } = buffers;
+        let mut readback_case = Some(readback_case);
 
         let completion_copy = {
             let (lower, custody, _step) = case.recycled_observation_parts();
@@ -2067,11 +2209,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             }
         };
         if let Err(error) = completion_copy {
-            return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                error,
-                case,
-                (completion, choices, checked, readback_case, detached_case),
-            ));
+            return Err(
+                M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                    error,
+                    case,
+                    wrap_recycled,
+                    (completion, choices, checked, readback_case, detached_case),
+                ),
+            );
         }
 
         let choice_copy = {
@@ -2145,11 +2290,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             }
         };
         if let Err(error) = choice_copy {
-            return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                error,
-                case,
-                (completion, choices, checked, readback_case, detached_case),
-            ));
+            return Err(
+                M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                    error,
+                    case,
+                    wrap_recycled,
+                    (completion, choices, checked, readback_case, detached_case),
+                ),
+            );
         }
 
         let image = {
@@ -2168,11 +2316,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         let image = match image {
             Ok(image) => image,
             Err((source, completion)) => {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Observation(source),
-                    case,
-                    (completion, choices, checked, readback_case, detached_case),
-                ));
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Observation(source),
+                        case,
+                        wrap_recycled,
+                        (completion, choices, checked, readback_case, detached_case),
+                    ),
+                );
             }
         };
         let diagnostic_choices = {
@@ -2191,11 +2342,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         let diagnostic_choices = match diagnostic_choices {
             Ok(choices) => choices,
             Err(source) => {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Choices(source),
-                    case,
-                    (image, checked, readback_case, detached_case),
-                ));
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Choices(source),
+                        case,
+                        wrap_recycled,
+                        (image, checked, readback_case, detached_case),
+                    ),
+                );
             }
         };
 
@@ -2203,17 +2357,20 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             let (_lower, custody, step) = case.recycled_observation_parts();
             let scheduled = step.scheduled_dispatch();
             if scheduled.member_count() != 1 {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
-                    case,
-                    (
-                        image,
-                        diagnostic_choices,
-                        checked,
-                        readback_case,
-                        detached_case,
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                        case,
+                        wrap_recycled,
+                        (
+                            image,
+                            diagnostic_choices,
+                            checked,
+                            readback_case,
+                            detached_case,
+                        ),
                     ),
-                ));
+                );
             }
             let semantic = CompletionWireSemanticExpectation::Speculative {
                 draft_tokens: diagnostic_choices.draft_choices_for_lane(0).unwrap_or(&[]),
@@ -2232,30 +2389,36 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                     .is_some(),
                 &[semantic],
             ) {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
-                    case,
-                    (
-                        image,
-                        diagnostic_choices,
-                        checked,
-                        readback_case,
-                        detached_case,
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                        case,
+                        wrap_recycled,
+                        (
+                            image,
+                            diagnostic_choices,
+                            checked,
+                            readback_case,
+                            detached_case,
+                        ),
                     ),
-                ));
+                );
             }
             let Some(plan) = step.target_plans()[0].as_ref() else {
-                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
-                    case,
-                    (
-                        image,
-                        diagnostic_choices,
-                        checked,
-                        readback_case,
-                        detached_case,
+                return Err(
+                    M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                        case,
+                        wrap_recycled,
+                        (
+                            image,
+                            diagnostic_choices,
+                            checked,
+                            readback_case,
+                            detached_case,
+                        ),
                     ),
-                ));
+                );
             };
             let expectations = [CompletionWireExpectation::new(plan, semantic)];
             match check_m1_completed_output_with_storage_v1(
@@ -2267,11 +2430,14 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
             ) {
                 Ok(checked) => checked,
                 Err(source) => {
-                    return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::from_k4(
-                        M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
-                        case,
-                        (image, diagnostic_choices, readback_case, detached_case),
-                    ));
+                    return Err(
+                        M1AuthenticatedResidentPhysicalReadbackFailureV1::from_speculative(
+                            M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                            case,
+                            wrap_recycled,
+                            (image, diagnostic_choices, readback_case, detached_case),
+                        ),
+                    );
                 }
             }
         };
@@ -2304,7 +2470,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                 .copied()
                 .unwrap_or(u32::MAX),
             completed: M1AuthenticatedPhysicalCompletedReadbackV1 {
-                queue: M1AuthenticatedPhysicalReadbackQueueSessionV1::SpeculativeK4(readback_case),
+                queue: wrap_readback(readback_case),
                 checked,
                 completion,
                 kv,
@@ -4728,14 +4894,143 @@ impl M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
 mod tests {
     use super::{
         authenticated_direct_semantics, is_authenticated_s1_k4_first_dispatch_generation,
+        resident_speculative_readback_binding_matches, resident_speculative_readback_shape,
         validate_generic_observed_semantics, M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
-        M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
+        M1AuthenticatedResidentReadbackCaseHostStorageV1,
+        M1AuthenticatedResidentReadbackHostStorageV1, M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
     };
     use crate::{
         CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
-        M1ObservedDirectDiagnosticChoicesV1,
+        M1ObservedDirectDiagnosticChoicesV1, M1PhysicalFixedBatchShapeV1,
     };
-    use ferric_spec::M1_MAX_ACTIVE_SEQUENCES;
+    use ferric_spec::{
+        Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+        M1_MAX_ACTIVE_SEQUENCES,
+    };
+
+    fn resident_selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        }
+    }
+
+    #[test]
+    fn resident_readback_preallocates_only_exact_singleton_shape_and_logical_choices() {
+        for (bucket, draft_tokens, expected_shape) in [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                4_usize,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                8,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                16,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        ] {
+            let selection = resident_selection(bucket);
+            let mut storage = M1AuthenticatedResidentReadbackHostStorageV1::try_new(selection)
+                .expect("finite singleton readback storage");
+            assert_eq!(storage.selection, selection);
+            assert_eq!(
+                resident_speculative_readback_shape(selection),
+                Some(expected_shape),
+            );
+            assert!(matches!(
+                (&storage.readback_case, expected_shape),
+                (
+                    M1AuthenticatedResidentReadbackCaseHostStorageV1::K4(_),
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                ) | (
+                    M1AuthenticatedResidentReadbackCaseHostStorageV1::K8(_),
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+                ) | (
+                    M1AuthenticatedResidentReadbackCaseHostStorageV1::K16(_),
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+                )
+            ));
+            assert_eq!(
+                storage.buffers.choices.draft_bytes_mut().unwrap().len(),
+                draft_tokens * 4,
+            );
+            assert_eq!(
+                storage.buffers.choices.target_bytes_mut().unwrap().len(),
+                (draft_tokens + 1) * 4,
+            );
+            assert!(storage.buffers.detached_case.is_some());
+        }
+    }
+
+    #[test]
+    fn resident_readback_rejects_other_roles_modes_and_sequence_buckets() {
+        let target = resident_selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        for selection in [
+            resident_selection(Qwen3PlanBucket::SpeculativeS8K4C8192),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..target
+            },
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Decode,
+                ..target
+            },
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+        ] {
+            assert!(resident_speculative_readback_shape(selection).is_none());
+            assert!(M1AuthenticatedResidentReadbackHostStorageV1::try_new(selection).is_none());
+        }
+    }
+
+    #[test]
+    fn resident_readback_binding_requires_exact_selection_roster_and_packet_count() {
+        let selections = [
+            resident_selection(Qwen3PlanBucket::SpeculativeS1K4C8192),
+            resident_selection(Qwen3PlanBucket::SpeculativeS1K8C8192),
+            resident_selection(Qwen3PlanBucket::SpeculativeS1K16C8192),
+        ];
+        for retained in selections {
+            let packets = resident_speculative_readback_shape(retained)
+                .unwrap()
+                .packet_count();
+            for queue in selections {
+                assert_eq!(
+                    resident_speculative_readback_binding_matches(retained, queue, 1, packets),
+                    retained == queue,
+                );
+            }
+            for members in [0, 2, 8] {
+                assert!(!resident_speculative_readback_binding_matches(
+                    retained, retained, members, packets,
+                ));
+            }
+            for wrong_packets in [0, packets - 1, packets + 1] {
+                assert!(!resident_speculative_readback_binding_matches(
+                    retained,
+                    retained,
+                    1,
+                    wrong_packets,
+                ));
+            }
+        }
+        let s8 = resident_selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        assert!(!resident_speculative_readback_binding_matches(
+            s8,
+            s8,
+            1,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4.packet_count(),
+        ));
+    }
 
     #[test]
     fn generic_readback_denies_diagnostic_capture_routes() {

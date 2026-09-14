@@ -114,9 +114,26 @@ accepted `measure` boundary. Success retains terminal execution custody and
 enters `Faulted`; a second window is rejected. It therefore cannot satisfy the
 required 20-window R33 run and is not a qualification result.
 
-Neither authenticated constructor routes through the structural physical
-runner. The legacy constructor observes no clock or token and never constructs
-a measurement report.
+`new_with_s1_k4_resident_windows` consumes the complete ordered twenty-window
+roster and retains the authenticated instance across completed windows. The
+finite-plan constructor `new_with_s1_finite_resident_windows` additionally
+accepts S1/K8 or S1/K16, with one exact successor selection shared by every
+window. Each window starts with S1/T128 paired prefill. Its bootstrap and
+resident input constructors must explicitly select the same successor; the
+legacy constructors remain K4-only. Queue slots, packet lowering, readback and
+KV tail storage are prepared for that selected plan before measurement.
+
+The resident path currently fails closed if another round would use a common
+anchor while the draft KV cursor trails the target after full acceptance.
+An authenticated draft catch-up dispatch is still required for that case;
+changing the host cursor would not populate the missing KV token. A terminal
+full-accept round does not need another proposal round. This finite source
+extension is not S8 support, continuous admission, physical qualification or
+a measured speculative speedup.
+
+None of these authenticated constructors routes through the structural
+physical runner. The legacy prepublication-only constructor observes no clock
+or token and never constructs a measurement report.
 
 ## Eight-GPU Engineering Execution
 

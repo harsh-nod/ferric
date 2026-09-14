@@ -1112,6 +1112,7 @@ pub(crate) fn build_m1_authenticated_rollover_packet_batch_v1(
 }
 
 pub(crate) struct M1AuthenticatedRolloverPacketBatchHostStorageV1 {
+    speculative_shape: M1PhysicalFixedBatchShapeV1,
     paired_prefill: Option<
         Box<
             core::mem::MaybeUninit<
@@ -1126,8 +1127,22 @@ pub(crate) struct M1AuthenticatedRolloverPacketBatchHostStorageV1 {
             >,
         >,
     >,
+    speculative_k8: Option<
+        Box<
+            core::mem::MaybeUninit<
+                M1AuthenticatedQueuePacketBatchCaseV1<M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    >,
+    speculative_k16: Option<
+        Box<
+            core::mem::MaybeUninit<
+                M1AuthenticatedQueuePacketBatchCaseV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>,
+            >,
+        >,
+    >,
     paired_prefill_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
-    speculative_k4_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
+    speculative_lowering: Option<M1AuthenticatedPacketArrayHostStorageV1>,
 }
 
 struct M1AuthenticatedPacketArrayHostStorageV1 {
@@ -1148,34 +1163,95 @@ impl M1AuthenticatedPacketArrayHostStorageV1 {
         }
         Some(Self { inputs, buffers })
     }
+
+    fn fits(&self, rows: &[M1PhysicalBufferRecipeRowV1]) -> bool {
+        self.inputs.capacity() >= rows.len()
+            && self.buffers.len() == rows.len()
+            && self
+                .buffers
+                .iter()
+                .zip(rows)
+                .all(|(buffers, row)| buffers.capacity() >= row.buffers().len())
+    }
 }
 
 impl core::fmt::Debug for M1AuthenticatedRolloverPacketBatchHostStorageV1 {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedRolloverPacketBatchHostStorageV1")
+            .field("speculative_shape", &self.speculative_shape)
             .field("paired_prefill", &self.paired_prefill.is_some())
             .field("speculative_k4", &self.speculative_k4.is_some())
+            .field("speculative_k8", &self.speculative_k8.is_some())
+            .field("speculative_k16", &self.speculative_k16.is_some())
             .field(
                 "paired_prefill_lowering",
                 &self.paired_prefill_lowering.is_some(),
             )
-            .field(
-                "speculative_k4_lowering",
-                &self.speculative_k4_lowering.is_some(),
-            )
+            .field("speculative_lowering", &self.speculative_lowering.is_some())
             .finish()
     }
 }
 
 impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
     pub(crate) fn new() -> Self {
-        Self {
-            paired_prefill: Some(Box::new_uninit()),
-            speculative_k4: Some(Box::new_uninit()),
-            paired_prefill_lowering: None,
-            speculative_k4_lowering: None,
+        Self::new_for_speculative_shape(M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+            .expect("the legacy resident packet shape is speculative K4")
+    }
+
+    pub(crate) fn new_for_speculative_shape(shape: M1PhysicalFixedBatchShapeV1) -> Option<Self> {
+        if !matches!(
+            shape,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+        ) {
+            return None;
         }
+        Some(Self {
+            speculative_shape: shape,
+            paired_prefill: Some(Box::new_uninit()),
+            speculative_k4: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4)
+                .then(Box::new_uninit),
+            speculative_k8: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK8)
+                .then(Box::new_uninit),
+            speculative_k16: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK16)
+                .then(Box::new_uninit),
+            paired_prefill_lowering: None,
+            speculative_lowering: None,
+        })
+    }
+
+    fn has_case(&self, shape: M1PhysicalFixedBatchShapeV1) -> bool {
+        match shape {
+            M1PhysicalFixedBatchShapeV1::PairedPrefill => self.paired_prefill.is_some(),
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+                shape == self.speculative_shape && self.speculative_k4.is_some()
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+                shape == self.speculative_shape && self.speculative_k8.is_some()
+            }
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                shape == self.speculative_shape && self.speculative_k16.is_some()
+            }
+            M1PhysicalFixedBatchShapeV1::TargetOnly => false,
+        }
+    }
+
+    fn ready_for_recipe(
+        &self,
+        shape: M1PhysicalFixedBatchShapeV1,
+        rows: &[M1PhysicalBufferRecipeRowV1],
+    ) -> bool {
+        if !self.has_case(shape) || rows.len() != shape.packet_count() {
+            return false;
+        }
+        let lowering = if shape == M1PhysicalFixedBatchShapeV1::PairedPrefill {
+            &self.paired_prefill_lowering
+        } else {
+            &self.speculative_lowering
+        };
+        lowering.as_ref().is_some_and(|storage| storage.fits(rows))
     }
 
     pub(crate) fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
@@ -1184,6 +1260,9 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
         ) else {
             return false;
         };
+        if !self.has_case(shape) || recipe.rows().len() != shape.packet_count() {
+            return false;
+        }
         let Some(lowering) = M1AuthenticatedPacketArrayHostStorageV1::try_new(recipe.rows()) else {
             return false;
         };
@@ -1192,13 +1271,13 @@ impl M1AuthenticatedRolloverPacketBatchHostStorageV1 {
                 self.paired_prefill_lowering = Some(lowering);
                 true
             }
-            M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
-                self.speculative_k4_lowering = Some(lowering);
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                self.speculative_lowering = Some(lowering);
                 true
             }
-            M1PhysicalFixedBatchShapeV1::TargetOnly
-            | M1PhysicalFixedBatchShapeV1::SpeculativeK8
-            | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => false,
+            M1PhysicalFixedBatchShapeV1::TargetOnly => false,
         }
     }
 }
@@ -1283,6 +1362,17 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
             custody,
         ));
     }
+    if storage
+        .as_ref()
+        .is_some_and(|storage| !storage.ready_for_recipe(shape, recipe.rows()))
+    {
+        return Err(reject(
+            M1PhysicalFixedBatchBuildErrorV1::HostAllocation,
+            recipe,
+            bound_rows,
+            custody,
+        ));
+    }
     match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => {
             lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
@@ -1311,17 +1401,35 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
                 .and_then(|storage| storage.speculative_k4.take()),
             storage
                 .as_mut()
-                .and_then(|storage| storage.speculative_k4_lowering.take()),
+                .and_then(|storage| storage.speculative_lowering.take()),
         )
         .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK4),
-        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
-            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
-                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK8)
-        }
-        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
-            lower_authenticated_queue_packet_case(witness, recipe, bound_rows, custody)
-                .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK16)
-        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => lower_authenticated_queue_packet_case_core(
+            witness,
+            recipe,
+            bound_rows,
+            custody,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_k8.take()),
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_lowering.take()),
+        )
+        .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK8),
+        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => lower_authenticated_queue_packet_case_core(
+            witness,
+            recipe,
+            bound_rows,
+            custody,
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_k16.take()),
+            storage
+                .as_mut()
+                .and_then(|storage| storage.speculative_lowering.take()),
+        )
+        .map(M1AuthenticatedQueuePacketBatchV1::SpeculativeK16),
     }
 }
 
@@ -2125,10 +2233,11 @@ mod tests {
     use super::{
         classify_shape, m1_physical_fixed_batch_shape_for_intent_v1,
         validate_completion_output_shape, validate_packet_row, validate_row_count,
-        M1PhysicalFixedBatchBuildErrorV1, M1PhysicalFixedBatchRowSetV1,
-        M1PhysicalFixedBatchShapeV1, PacketRowMetadataV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-        M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-        M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+        M1AuthenticatedRolloverPacketBatchHostStorageV1, M1PhysicalFixedBatchBuildErrorV1,
+        M1PhysicalFixedBatchRowSetV1, M1PhysicalFixedBatchShapeV1, PacketRowMetadataV1,
+        M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+        M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+        M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
     };
     use crate::{m1_completion_output_shape_v1, M1PhysicalProgramV1, M1StepDispatchIntent};
     use ferric_spec::Identity;
@@ -2139,6 +2248,110 @@ mod tests {
             mode,
             bucket,
         }
+    }
+
+    #[test]
+    fn resident_packet_storage_prepares_only_the_selected_finite_shape() {
+        let cases = [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            ),
+        ];
+        let recipe = |intent| {
+            let (kernargs, workspaces) =
+                crate::physical_buffer_recipe::tests::exact_inputs(intent, 10);
+            crate::derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap()
+        };
+        let prefill = recipe(M1StepDispatchIntent::PairedPrefill(target(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        )));
+        for (_, selected) in cases {
+            let mut storage =
+                M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(
+                    selected,
+                )
+                .unwrap();
+            assert!(storage.paired_prefill.is_some());
+            assert_eq!(
+                storage.speculative_k4.is_some(),
+                selected == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+            );
+            assert_eq!(
+                storage.speculative_k8.is_some(),
+                selected == M1PhysicalFixedBatchShapeV1::SpeculativeK8
+            );
+            assert_eq!(
+                storage.speculative_k16.is_some(),
+                selected == M1PhysicalFixedBatchShapeV1::SpeculativeK16
+            );
+            assert!(!storage
+                .ready_for_recipe(M1PhysicalFixedBatchShapeV1::PairedPrefill, prefill.rows()));
+            assert!(storage.prepare_recipe(&prefill));
+            assert!(storage
+                .ready_for_recipe(M1PhysicalFixedBatchShapeV1::PairedPrefill, prefill.rows()));
+            for (bucket, shape) in cases {
+                let successor = recipe(M1StepDispatchIntent::SpeculativeRound(target(
+                    Qwen3ExecutionMode::Speculative,
+                    bucket,
+                )));
+                assert!(!storage.ready_for_recipe(shape, successor.rows()));
+                assert_eq!(storage.prepare_recipe(&successor), shape == selected);
+                assert_eq!(
+                    storage.ready_for_recipe(shape, successor.rows()),
+                    shape == selected
+                );
+                if shape == selected {
+                    drop(storage.speculative_lowering.as_mut().unwrap().buffers.pop());
+                    assert!(!storage.ready_for_recipe(shape, successor.rows()));
+                    assert!(storage.prepare_recipe(&successor));
+                    match shape {
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK4 => {
+                            drop(storage.speculative_k4.take());
+                        }
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK8 => {
+                            drop(storage.speculative_k8.take());
+                        }
+                        M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+                            drop(storage.speculative_k16.take());
+                        }
+                        _ => unreachable!(),
+                    }
+                    assert!(!storage.ready_for_recipe(shape, successor.rows()));
+                    assert!(!storage.prepare_recipe(&successor));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn resident_packet_storage_rejects_non_speculative_constructor_shapes() {
+        for shape in [
+            M1PhysicalFixedBatchShapeV1::TargetOnly,
+            M1PhysicalFixedBatchShapeV1::PairedPrefill,
+        ] {
+            assert!(
+                M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(shape)
+                    .is_none()
+            );
+        }
+        let legacy = M1AuthenticatedRolloverPacketBatchHostStorageV1::new();
+        assert_eq!(
+            legacy.speculative_shape,
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        );
+        assert!(legacy.speculative_k4.is_some());
+        assert!(legacy.speculative_k8.is_none());
+        assert!(legacy.speculative_k16.is_none());
     }
 
     #[test]

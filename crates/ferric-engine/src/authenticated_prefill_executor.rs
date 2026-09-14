@@ -359,6 +359,18 @@ impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {
         &self.successor.rollover_intent
     }
 
+    pub(crate) fn singleton_speculative_successor(&self) -> Option<crate::M1ServingPlanV1> {
+        let physical = self.released.checked().speculative_rollover_intent()?;
+        let intent =
+            crate::authenticated_queue_rollover::join_m1_authenticated_prefill_registry_intent_v1(
+                physical,
+                self.rollover_intent(),
+            )?;
+        crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+            intent.speculative_selection,
+        )
+    }
+
     /// Inert queue configuration retained for the later rollover slice.
     #[must_use]
     pub const fn diagnostic_ring_bytes(&self) -> u32 {
