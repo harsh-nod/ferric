@@ -3477,7 +3477,7 @@ mod tests {
                             ),
                             accepted < width
                         );
-                        assert_eq!(coordinator.is_complete(), output_limit == 1);
+                        assert_eq!(coordinator.active_count() == 0, output_limit == 1);
                     }
                 }
             }
