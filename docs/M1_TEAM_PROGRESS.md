@@ -11,13 +11,17 @@ Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
 `161c385576d45d4e634ba179fa93a545b91124e6`. The 80-file pin migration reverses
 byte-for-byte to its parent before two separately checked derived verifier
 manifest/lock digests. Historical tool and binary producers are not relabeled.
-A fresh fetch finds newer upstream `82d95ca81f3f3a55e1e82b88918a41cca8b20c31`,
-which indexes checked control flow and transport pipeline catalogs. Its review,
-integration and revalidation are pending; the results below remain bound to 852.
+Latest integration `61a9ab324cdd0a6e745aa838d0d0f1ca1ac137f5`, tree
+`daaec77b5a07a7c749c9719d387e7dad8f28ee03`, advances that same 80-file roster
+to upstream `82d95ca81f3f3a55e1e82b88918a41cca8b20c31`, which indexes checked
+control flow and transport pipeline catalogs. The reverse-byte comparison and
+two derived digests are checked; remote formatting passes. Fresh locked graphs
+and source-policy validation are in progress. The completed host results below
+remain bound to 852, not this newer dependency pin.
 
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Published 852 adds the strict `Ge` false-success upper bound with the existing statement-stability and edge-dominance checks. Five focused tests and all 539 backend tests pass. Normalized strict Clippy has no delta against 829; upstream is not lint-clean. Exact release tools build and all 37 aggregate host tests pass. Actual aggregate emission rejects paged `committed_tokens + query_token`, semantic bb97, source fingerprint `01a6c27889e4`, line 373. | Compare individual proof results across unchanged 829 and 852 inputs before attributing progression or regression, resolve the remaining obligation without bypassing it, and integrate latest upstream. No new image, native handoff or GPU result. |
+| Compiler / Kernels | Published 852 adds the strict `Ge` false-success upper bound with the existing statement-stability and edge-dominance checks. Five focused tests and all 539 backend tests pass. Normalized strict Clippy has no delta against 829; upstream is not lint-clean. Exact release tools build and all 37 aggregate host tests pass. Actual aggregate emission rejects paged `committed_tokens + query_token`, semantic bb97, source fingerprint `01a6c27889e4`, line 373. A complete isolated-root comparison now confirms this assertion was already unproved under 829; no assertion regressed. | Develop and validate the missing authenticated unsigned-subtraction result bound on latest upstream, then retry aggregate emission. No new image, native handoff or GPU result. |
 | Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
 | Verification | Source inventory now covers 173 modules and 8,433 executable identities: 181 added pending-Verus bodies, 7,711 unverified total and 722 unchanged existing verified labels. All prior rationale rows remain unchanged. Exact d55/852 passes all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin policies, source coverage and byte equality for all three regenerated dependency TCB inventories. | Physical catch-up and broader M1 proofs, authenticated S8/mixed-active execution and hardware qualification. The selected earlier four-item `kv_physical` proof remains exact-source evidence, not a proof of the new physical catch-up implementation. No M1 gate closure follows. |
 
@@ -34,8 +38,12 @@ retry completed within its controls and rejected the arithmetic assertion above.
 The same-source comparison uses byte-identical native MIR but 829 stops first at
 a prefill assertion. A scratch-only isolated paged root also changes its first
 failure (829 line 454 versus 852 line 373); source-line order is not canonical
-semantic-block order. These first-error differences do not establish a compiler
-regression or prove that the later assertion was previously accepted.
+semantic-block order. A subsequent full comparison of all 49 isolated paged
+assertions finds zero true-to-false changes. 852 newly proves bb33/line 454;
+bb97/line 373 is the only remaining unproved assertion and was already unproved
+under 829. This is forward proof progress, not an observed regression. The
+missing precision is the successful checked `8192 - committed_tokens` result:
+its obvious unsigned upper bound is not retained by the current evaluator.
 
 Canonical target/draft admission, full streaming prepack and separate persisted
 snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
@@ -68,13 +76,27 @@ with their original source identities. No checker or admission rule was relaxed.
 
 The Pages-only checkpoint `e033bc15` is pushed to public main with only public
 ancestry and five site-file changes. Remote browser and scope validation pass;
-its workflow and live-asset verification are pending. Performance data is
-unchanged. Completed runtime and proof worktrees have been
+workflow `34890957135` succeeds for the exact commit and all seven live assets
+match the reviewed artifact (537,436 bytes). Deployment archive SHA-256 is
+`0d75096db5548deb2d575fcc0fe7527ff65a866c77e8478fd8f205e115cfd537`.
+Its historical compiler-diagnosis checkpoint predates the full assertion-vector
+comparison above. Performance data is unchanged. The completed Pages worktree
+and owned stage are removed (3,064 and 111,060 KiB respectively).
+Completed runtime and proof worktrees have been
 removed after exact-source/evidence checks, as has the obsolete owned compiler
 stage in `/tmp` (1,073,320 KiB reclaimed). Active build caches, the new model
 snapshot, original dirty worktrees and other users' state remain untouched.
 All executable validation runs on mi300x. No new TTFT, TPOT, throughput, GPU
 correctness or competitiveness result is claimed.
+
+The next native path has an additional explicit boundary: engineering HSACO
+emission does not produce an authenticated Worker V3 selector. The protected
+compiler profile and supervisor socket are not provisioned on mi300x. Ferric's
+protected verifier also lacks a concrete independent-checker IPC provider;
+implementation of that bounded, measured, exact-payload client is in progress.
+It must connect the real service contract without fabricating theorem results.
+Actual checker authority, protected compiler/current records, separate signing
+authority, durable antirollback state and reviewed deployment remain required.
 
 ## Prior Initial 829 Checkpoint
 
