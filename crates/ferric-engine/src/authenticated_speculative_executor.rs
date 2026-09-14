@@ -7706,6 +7706,188 @@ mod tests {
         .unwrap()
     }
 
+    fn pending_join_fixture(
+        bucket: Qwen3PlanBucket,
+        accepted: u8,
+        policy: crate::M1SpeculativeGenerationPolicyV1,
+        cancelling: bool,
+        epoch: CompletionEpoch,
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1SpeculativeRoundOutcomeV1,
+        M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        let selection = selection(bucket);
+        let request = RequestId::new(0, 1);
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(
+            selection,
+            &[M1SpeculativeMemberSeedV1::new(request, 70, 10, 10, policy)],
+        )
+        .unwrap();
+        let width = coordinator.shape().draft_tokens();
+        let draft: Vec<_> = (100..100 + u32::from(width)).collect();
+        let mut target = draft.clone();
+        target.push(700);
+        target[usize::from(accepted)] = 700;
+        let mut emitted = draft[..usize::from(accepted)].to_vec();
+        emitted.push(700);
+        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+        let control = if cancelling {
+            M1SpeculativeMemberControlV1::cancelling(
+                request,
+                crate::M1SpeculativeCancellationReasonV1::Client,
+            )
+        } else {
+            M1SpeculativeMemberControlV1::continuing(request)
+        };
+        let preflighted = coordinator
+            .preflight_observed_round(
+                binding,
+                selection,
+                epoch,
+                &[CheckedMemberObservationV1 {
+                    request,
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: accepted,
+                        correction_or_bonus: 700,
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&emitted).unwrap(),
+                }],
+                &[control],
+            )
+            .unwrap();
+        let outcome = coordinator.commit_preflighted_round(preflighted).unwrap();
+        let choices = crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+            selection, 41, &draft, &target,
+        );
+        (coordinator, outcome, choices)
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_mints_only_full_active_acceptance_for_every_k() {
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            for accepted in 0..=width {
+                let (coordinator, outcome, choices) = pending_join_fixture(
+                    bucket,
+                    accepted,
+                    crate::M1SpeculativeGenerationPolicyV1::new(64, &[]).unwrap(),
+                    false,
+                    CompletionEpoch::new(7),
+                );
+                let before = coordinator.member(RequestId::new(0, 1)).unwrap();
+                let pending =
+                    joined_draft_catchup_pending(&coordinator, &outcome, &choices).unwrap();
+                if accepted < width {
+                    assert!(pending.is_none(), "{bucket:?} accepted={accepted}");
+                    assert_eq!(
+                        before.target_committed_tokens(),
+                        before.draft_committed_tokens()
+                    );
+                } else {
+                    let pending = pending.unwrap();
+                    assert_eq!(pending.coordinator_identity(), coordinator.identity());
+                    assert_eq!(pending.parent(), selection(bucket));
+                    assert_eq!(pending.request(), before.request());
+                    assert_eq!(pending.completed_round(), 0);
+                    assert_eq!(pending.prior_epoch(), CompletionEpoch::new(7));
+                    assert_eq!(pending.epoch(), CompletionEpoch::new(8));
+                    assert_eq!(pending.prior_dispatch_generation(), 41);
+                    assert_eq!(pending.draft_committed(), 10 + u32::from(width));
+                    assert_eq!(pending.target_committed(), pending.draft_committed() + 1);
+                    assert_eq!(pending.token(), 99 + u32::from(width));
+                    assert_ne!(pending.token(), 70);
+                    assert_ne!(pending.token(), before.next_anchor());
+                    assert_eq!(before.next_anchor(), 700);
+                }
+                assert_eq!(coordinator.member(before.request()), Some(before));
+                assert_eq!(coordinator.next_round(), 1);
+                assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(7)));
+            }
+        }
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_does_not_mint_for_terminal_full_acceptance() {
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            for (limit, stop, cancelling) in [
+                (1, None, false),
+                (u32::from(width) + 1, None, false),
+                (64, Some(100), false),
+                (64, Some(700), false),
+                (64, None, true),
+            ] {
+                let stops: Vec<_> = stop.into_iter().collect();
+                let (coordinator, outcome, choices) = pending_join_fixture(
+                    bucket,
+                    width,
+                    crate::M1SpeculativeGenerationPolicyV1::new(limit, &stops).unwrap(),
+                    cancelling,
+                    CompletionEpoch::new(7),
+                );
+                assert_ne!(
+                    outcome.members()[0].status(),
+                    M1SpeculativeMemberStatusV1::Active
+                );
+                assert!(
+                    joined_draft_catchup_pending(&coordinator, &outcome, &choices)
+                        .unwrap()
+                        .is_none()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_rejects_foreign_owner_wrong_choices_and_exhausted_epoch() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(64, &[]).unwrap();
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            let (coordinator, outcome, choices) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(7));
+            let (other, _, _) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(7));
+            assert!(joined_draft_catchup_pending(&other, &outcome, &choices).is_err());
+            let zero_generation =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    selection(bucket),
+                    0,
+                    choices.draft_choice_matrix(),
+                    choices.target_choice_matrix(),
+                );
+            assert!(
+                joined_draft_catchup_pending(&coordinator, &outcome, &zero_generation).is_err()
+            );
+            let mut wrong_draft = choices.draft_choice_matrix().to_vec();
+            *wrong_draft.last_mut().unwrap() = 701;
+            let wrong_choices =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    selection(bucket),
+                    41,
+                    &wrong_draft,
+                    choices.target_choice_matrix(),
+                );
+            assert!(joined_draft_catchup_pending(&coordinator, &outcome, &wrong_choices).is_err());
+            let (wrong_coordinator, wrong_outcome, _) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(u64::MAX));
+            assert!(
+                joined_draft_catchup_pending(&wrong_coordinator, &wrong_outcome, &choices).is_err()
+            );
+            assert_eq!(coordinator.next_round(), 1);
+            assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(7)));
+        }
+    }
+
     fn model_lineage(
         coordinator: &M1SpeculativeGenerationLoopV1,
     ) -> M1AuthenticatedSpeculativeCausalLineageV1 {

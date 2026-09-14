@@ -1134,6 +1134,55 @@ fn transpose_draft_choices_with_storage(
     Ok(lane_major.into_boxed_slice())
 }
 
+// Synthetic diagnostic data only: this fixture carries no queue or completed-read lease.
+#[cfg(test)]
+pub(crate) fn synthetic_observed_choices_for_test(
+    selection: Qwen3PlanSelection,
+    dispatch_generation: u64,
+    draft: &[TokenId],
+    target: &[TokenId],
+) -> M1ObservedSpeculativeDiagnosticChoicesV1 {
+    let shape = m1_speculative_diagnostic_choices_shape_v1(selection).unwrap();
+    assert_eq!(shape.sequences(), 1);
+    let draft_bytes: Box<[u8]> = draft.iter().flat_map(|token| token.to_le_bytes()).collect();
+    let target_bytes: Box<[u8]> = target
+        .iter()
+        .flat_map(|token| token.to_le_bytes())
+        .collect();
+    let draft_choice_matrix = decode_choice_matrix(
+        &draft_bytes,
+        1,
+        shape.draft_tokens(),
+        1,
+        ChoiceMatrixLayout::IterationMajor,
+    )
+    .unwrap();
+    let target_choice_matrix = decode_choice_matrix(
+        &target_bytes,
+        1,
+        shape.draft_tokens() + 1,
+        1,
+        ChoiceMatrixLayout::SequenceMajor,
+    )
+    .unwrap();
+    let lane_major_draft_choices =
+        transpose_draft_choices(&draft_choice_matrix, 1, shape.draft_tokens()).unwrap();
+    M1ObservedSpeculativeDiagnosticChoicesV1 {
+        shape,
+        live_sequences: 1,
+        dispatch_generation,
+        legacy_k4_draft_choices: lane_major_draft_choices[..4].try_into().unwrap(),
+        legacy_k4_target_choices: target_choice_matrix[..5].try_into().unwrap(),
+        draft_sha256: Sha256::digest(&draft_bytes).into(),
+        target_sha256: Sha256::digest(&target_bytes).into(),
+        backing: M1ObservedSpeculativeDiagnosticChoiceBackingV1::Resident { target_bytes },
+        draft_bytes,
+        draft_choice_matrix,
+        lane_major_draft_choices,
+        target_choice_matrix,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

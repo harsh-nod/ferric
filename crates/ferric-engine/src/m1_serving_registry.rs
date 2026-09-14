@@ -1651,17 +1651,6 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         Ok(())
     }
 
-    pub(crate) fn preflight_draft_catchup_completion(
-        &self,
-        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
-    ) -> Result<(), M1ServingRegistryErrorV1> {
-        self.validate_draft_catchup_completion(
-            M1ServingDraftCatchupKeyV1::from_pending(completed.pending()),
-            completed.dispatch_generation(),
-        )
-        .map(|_| ())
-    }
-
     pub(crate) fn complete_draft_catchup(
         &mut self,
         completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
