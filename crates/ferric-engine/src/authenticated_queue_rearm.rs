@@ -3067,6 +3067,7 @@ pub enum M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1 {
     QueueSubmit,
 }
 
+#[derive(Debug)]
 enum AuthenticatedSubmissionOpaqueCustodyV1 {
     Released(Box<dyn fmt::Debug>),
     Quarantined(Box<dyn fmt::Debug>),
@@ -6956,15 +6957,17 @@ fn rearm_authenticated_draft_catchup_queue_transition(
                     (
                         witness,
                         operations,
-                        custody.catalog_id,
-                        custody.selection,
-                        custody.physical_recipe,
-                        custody.workspace_composition,
-                        custody.workspace_owners,
-                        custody.partitioned_memory,
-                        custody.source_rows,
-                        custody.bound_rows,
-                        custody.retired_rollover_custody,
+                        (
+                            custody.catalog_id,
+                            custody.selection,
+                            custody.physical_recipe,
+                            custody.workspace_composition,
+                            custody.workspace_owners,
+                            custody.partitioned_memory,
+                            custody.source_rows,
+                            custody.bound_rows,
+                            custody.retired_rollover_custody,
+                        ),
                         step,
                         recipe,
                         workspace_ranges
