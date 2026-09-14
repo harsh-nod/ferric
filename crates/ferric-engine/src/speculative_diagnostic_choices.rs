@@ -657,7 +657,9 @@ fn speculative_choice_initial_image(
     Ok(image.into_boxed_slice())
 }
 
-fn replacement_image(extent: u64) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
+pub(crate) fn replacement_image(
+    extent: u64,
+) -> Result<Box<[u8]>, M1SpeculativeDiagnosticChoicesErrorV1> {
     let requested =
         usize::try_from(extent).map_err(|_| M1SpeculativeDiagnosticChoicesErrorV1::Overflow)?;
     speculative_choice_initial_image(requested)

@@ -218,6 +218,66 @@ struct M1DraftCatchupOutputCustodyV1 {
     speculative_diagnostic_choices: BoundM1SpeculativeDiagnosticChoicesV1,
 }
 
+/// Preclock invalid-token images for one exact speculative-output restoration.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDiagnosticResetHostStorageV1 {
+    shape: crate::M1SpeculativeDiagnosticChoicesShapeV1,
+    draft_image: Box<[u8]>,
+    target_image: Box<[u8]>,
+}
+
+impl M1AuthenticatedDiagnosticResetHostStorageV1 {
+    pub(crate) fn try_new(parent: Qwen3PlanSelection) -> Option<Self> {
+        exact_s1_speculative_catchup_output_transition(
+            m1_completion_output_shape_v1(parent).ok()?,
+        )?;
+        let shape = crate::m1_speculative_diagnostic_choices_shape_v1(parent).ok()?;
+        let draft_image =
+            crate::speculative_diagnostic_choices::replacement_image(shape.draft_extent_bytes())
+                .ok()?;
+        let target_image =
+            crate::speculative_diagnostic_choices::replacement_image(shape.target_extent_bytes())
+                .ok()?;
+        Some(Self {
+            shape,
+            draft_image,
+            target_image,
+        })
+    }
+
+    pub(crate) fn accepts_parent(&self, parent: Qwen3PlanSelection) -> bool {
+        self.shape.selection() == parent
+            && m1_completion_output_shape_v1(parent)
+                .ok()
+                .and_then(exact_s1_speculative_catchup_output_transition)
+                .is_some()
+            && crate::m1_speculative_diagnostic_choices_shape_v1(parent)
+                .is_ok_and(|shape| shape == self.shape)
+            && usize::try_from(self.shape.draft_extent_bytes()) == Ok(self.draft_image.len())
+            && usize::try_from(self.shape.target_extent_bytes()) == Ok(self.target_image.len())
+            && self.draft_image.iter().all(|byte| *byte == u8::MAX)
+            && self.target_image.iter().all(|byte| *byte == u8::MAX)
+    }
+
+    pub(crate) fn matches_restored_output(&self, output: &BoundM1CompletionOutputV1) -> bool {
+        self.accepts_parent(output.shape().selection())
+            && output.can_retarget_exact_s1_speculative_to_draft_catchup(self.shape.selection())
+            && output
+                .speculative_diagnostic_choices()
+                .is_some_and(|choices| {
+                    choices.shape() == self.shape
+                        && choices.retained_draft_range().extent_bytes()
+                            == self.shape.draft_extent_bytes()
+                        && choices.retained_target_range().extent_bytes()
+                            == self.shape.target_extent_bytes()
+                })
+    }
+
+    pub(crate) fn into_images(self) -> (Box<[u8]>, Box<[u8]>) {
+        (self.draft_image, self.target_image)
+    }
+}
+
 impl BoundM1CompletionOutputV1 {
     /// Returns the exact target selection and output geometry.
     #[must_use]
@@ -865,6 +925,78 @@ mod tests {
         ] {
             let shape = m1_completion_output_shape_v1(selection).unwrap();
             assert!(exact_s1_speculative_catchup_output_transition(shape).is_none());
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_preserves_exact_unwritten_choice_sentinels() {
+        for (bucket, draft_bytes, target_bytes) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 16, 20),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 32, 36),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 64, 68),
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let storage = M1AuthenticatedDiagnosticResetHostStorageV1::try_new(parent).unwrap();
+            assert!(storage.accepts_parent(parent));
+            assert_eq!(storage.draft_image.len(), draft_bytes);
+            assert_eq!(storage.target_image.len(), target_bytes);
+            for image in [&*storage.draft_image, &*storage.target_image] {
+                for word in image.chunks_exact(4) {
+                    let token = u32::from_le_bytes(word.try_into().unwrap());
+                    assert_eq!(token, u32::MAX);
+                    assert!(token >= ferric_spec::QWEN3_VOCABULARY_SIZE);
+                    assert_ne!(token, 0);
+                }
+            }
+            let draft_ptr = storage.draft_image.as_ptr();
+            let target_ptr = storage.target_image.as_ptr();
+            let (draft_image, target_image) = storage.into_images();
+            assert_eq!(draft_image.as_ptr(), draft_ptr);
+            assert_eq!(target_image.as_ptr(), target_ptr);
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_rejects_cross_parent_zero_and_extent_drift() {
+        let parents = [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ]
+        .map(|bucket| target(Qwen3ExecutionMode::Speculative, bucket));
+        for parent in parents {
+            let mut storage = M1AuthenticatedDiagnosticResetHostStorageV1::try_new(parent).unwrap();
+            for other in parents {
+                assert_eq!(storage.accepts_parent(other), parent == other);
+            }
+            storage.draft_image[..4].fill(0);
+            assert!(!storage.accepts_parent(parent));
+            storage.draft_image[..4].fill(u8::MAX);
+            storage.target_image[..4].fill(0);
+            assert!(!storage.accepts_parent(parent));
+            storage.target_image[..4].fill(u8::MAX);
+            assert!(storage.accepts_parent(parent));
+            storage.target_image = vec![u8::MAX; storage.target_image.len() + 4].into_boxed_slice();
+            assert!(!storage.accepts_parent(parent));
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_rejects_non_singleton_speculative_selections() {
+        for selection in [
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+            target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+            target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Speculative,
+                bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+            },
+        ] {
+            assert!(M1AuthenticatedDiagnosticResetHostStorageV1::try_new(selection).is_none());
         }
     }
 

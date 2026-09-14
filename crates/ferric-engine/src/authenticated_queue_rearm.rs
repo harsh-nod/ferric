@@ -6141,7 +6141,7 @@ fn authenticated_diagnostic_capture_reset_update_failure(
 
 fn reset_retained_authenticated_diagnostic_capture(
     lower: AuthenticatedServiceQueueUnboundSessionV1,
-    mut completion: crate::BoundM1CompletionOutputV1,
+    completion: crate::BoundM1CompletionOutputV1,
 ) -> Result<
     (
         AuthenticatedServiceQueueUnboundSessionV1,
@@ -6149,6 +6149,48 @@ fn reset_retained_authenticated_diagnostic_capture(
     ),
     AuthenticatedDiagnosticCaptureResetFailureV1,
 > {
+    reset_retained_authenticated_diagnostic_capture_core(lower, completion, None)
+}
+
+fn reset_retained_authenticated_diagnostic_capture_with_storage(
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    completion: crate::BoundM1CompletionOutputV1,
+    storage: crate::completion_output::M1AuthenticatedDiagnosticResetHostStorageV1,
+) -> Result<
+    (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        crate::BoundM1CompletionOutputV1,
+    ),
+    AuthenticatedDiagnosticCaptureResetFailureV1,
+> {
+    reset_retained_authenticated_diagnostic_capture_core(lower, completion, Some(storage))
+}
+
+fn reset_retained_authenticated_diagnostic_capture_core(
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    mut completion: crate::BoundM1CompletionOutputV1,
+    storage: Option<crate::completion_output::M1AuthenticatedDiagnosticResetHostStorageV1>,
+) -> Result<
+    (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        crate::BoundM1CompletionOutputV1,
+    ),
+    AuthenticatedDiagnosticCaptureResetFailureV1,
+> {
+    if storage
+        .as_ref()
+        .is_some_and(|storage| !storage.matches_restored_output(&completion))
+    {
+        return Err(authenticated_diagnostic_capture_reset_unbound_failure(
+            M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
+            lower,
+            (
+                completion,
+                storage,
+                crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift,
+            ),
+        ));
+    }
     if completion.direct_diagnostic_choices().is_some() {
         let (old, image) = {
             let choices = completion
@@ -6197,24 +6239,30 @@ fn reset_retained_authenticated_diagnostic_capture(
             let choices = completion
                 .speculative_diagnostic_choices()
                 .expect("presence checked above");
-            let draft_image = match choices.replacement_draft_image() {
-                Ok(image) => image,
-                Err(error) => {
-                    return Err(authenticated_diagnostic_capture_reset_unbound_failure(
-                        M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
-                        lower,
-                        (completion, error),
-                    ));
-                }
-            };
-            let target_image = match choices.replacement_target_image() {
-                Ok(image) => image,
-                Err(error) => {
-                    return Err(authenticated_diagnostic_capture_reset_unbound_failure(
-                        M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeTargetChoiceReplacement,
-                        lower,
-                        (completion, draft_image, error),
-                    ));
+            let (draft_image, target_image) = match storage {
+                Some(storage) => storage.into_images(),
+                None => {
+                    let draft_image = match choices.replacement_draft_image() {
+                        Ok(image) => image,
+                        Err(error) => {
+                            return Err(authenticated_diagnostic_capture_reset_unbound_failure(
+                                M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeDraftChoiceReplacement,
+                                lower,
+                                (completion, error),
+                            ));
+                        }
+                    };
+                    let target_image = match choices.replacement_target_image() {
+                        Ok(image) => image,
+                        Err(error) => {
+                            return Err(authenticated_diagnostic_capture_reset_unbound_failure(
+                                M1AuthenticatedQueueRearmTerminalPhaseV1::SpeculativeTargetChoiceReplacement,
+                                lower,
+                                (completion, draft_image, error),
+                            ));
+                        }
+                    };
+                    (draft_image, target_image)
                 }
             };
             (
