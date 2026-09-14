@@ -342,9 +342,8 @@ pub fn derive_m1_step_dispatch_plan(
 
     let mut segments = Vec::with_capacity(match intent {
         M1StepDispatchIntent::TargetOnly(_) => 1,
-        M1StepDispatchIntent::PairedPrefill(_) => 2,
+        M1StepDispatchIntent::PairedPrefill(_) | M1StepDispatchIntent::DraftCatchup(_) => 2,
         M1StepDispatchIntent::SpeculativeRound(_) => 17,
-        M1StepDispatchIntent::DraftCatchup(_) => 2,
     });
     let mut dispatch_count = 0_u32;
 

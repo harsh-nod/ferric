@@ -160,8 +160,8 @@ impl M1FullStepWorkspacePlans {
         match self {
             Self::TargetOnly { .. } => None,
             Self::PairedPrefill { draft, .. } => Some(draft),
-            Self::SpeculativeRound { draft_decode, .. } => Some(draft_decode),
-            Self::DraftCatchup { draft_decode, .. } => Some(draft_decode),
+            Self::SpeculativeRound { draft_decode, .. }
+            | Self::DraftCatchup { draft_decode, .. } => Some(draft_decode),
         }
     }
 
@@ -832,8 +832,8 @@ fn validate_composition(
 
     let expected_segment_count = match contract.kind {
         M1FullStepWorkspaceInputKind::TargetOnly => 1,
-        M1FullStepWorkspaceInputKind::PairedPrefill => 2,
-        M1FullStepWorkspaceInputKind::DraftCatchup => 2,
+        M1FullStepWorkspaceInputKind::PairedPrefill
+        | M1FullStepWorkspaceInputKind::DraftCatchup => 2,
         M1FullStepWorkspaceInputKind::SpeculativeRound => {
             let (_, iterations) = contract
                 .speculative_shape
