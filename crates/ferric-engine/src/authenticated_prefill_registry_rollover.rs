@@ -665,6 +665,17 @@ impl<const C: usize> M1AuthenticatedPrefillRegistryPublishedFirstRoundV1<C> {
             ));
         }
         registry.apply_preflighted_completion(epoch, &[disposition]);
+        if let Some(pending) = physical.executor().draft_catchup_pending() {
+            if let Err(error) = registry.register_draft_catchup_pending(pending) {
+                engine.quarantine_m1_queue_rearm_failure();
+                let disposition = physical.close_for_resident(&mut engine);
+                return Err(first_round_failure(
+                    M1AuthenticatedPrefillRegistryFirstRoundStageV1::RegistryCompletion,
+                    true,
+                    teardown_from_disposition(disposition, (engine, registry, residue, error)),
+                ));
+            }
+        }
         Ok(M1AuthenticatedPrefillRegistryCompletedFirstRoundV1 {
             registry,
             engine,
@@ -1056,7 +1067,22 @@ mod tests {
         let physical = complete.find("published.complete_round").unwrap();
         let registry_preflight = complete.find("preflight_completion_exact_for").unwrap();
         let registry_commit = complete.find("apply_preflighted_completion").unwrap();
+        let pending_owner = complete
+            .find("physical.executor().draft_catchup_pending()")
+            .unwrap();
+        let pending_registration = complete
+            .find("registry.register_draft_catchup_pending(pending)")
+            .unwrap();
+        let return_joined = complete
+            .find("Ok(M1AuthenticatedPrefillRegistryCompletedFirstRoundV1")
+            .unwrap();
         assert!(physical < registry_preflight && registry_preflight < registry_commit);
+        assert!(registry_commit < pending_owner && pending_owner < pending_registration);
+        assert!(pending_registration < return_joined);
+        let maintenance_failure = &complete[pending_registration..return_joined];
+        assert!(maintenance_failure.contains("engine.quarantine_m1_queue_rearm_failure()"));
+        assert!(maintenance_failure.contains("physical.close_for_resident(&mut engine)"));
+        assert!(maintenance_failure.contains("(engine, registry, residue, error)"));
         assert!(!complete.contains("M1CheckedCompletionOutputV1"));
         assert!(!complete.contains("M1ObservedSpeculativeDiagnosticChoicesV1"));
     }
