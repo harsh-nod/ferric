@@ -2299,16 +2299,23 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                 Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::CompletionCanary)
             } else {
                 let range = output.retained_host_dispatch_range();
-                match completion.bytes_mut() {
-                    Some(destination) => lower
-                        .read_completed_into(lower.completed_read_request(range), destination)
-                        .map_err(
-                            |source| M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
-                                range: "completion",
-                                source,
-                            },
-                        ),
-                    None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                let read_request = lower.completed_read_request(range);
+                if expected_dispatch_generation == 0
+                    || read_request.dispatch_generation() != expected_dispatch_generation
+                {
+                    Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape)
+                } else {
+                    match completion.bytes_mut() {
+                        Some(destination) => lower
+                            .read_completed_into(read_request, destination)
+                            .map_err(|source| {
+                                M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                    range: "completion",
+                                    source,
+                                }
+                            }),
+                        None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                    }
                 }
             }
         };
@@ -2581,16 +2588,23 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                 Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::CompletionCanary)
             } else {
                 let range = output.retained_host_dispatch_range();
-                match completion.bytes_mut() {
-                    Some(destination) => lower
-                        .read_completed_into(lower.completed_read_request(range), destination)
-                        .map_err(
-                            |source| M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
-                                range: "completion",
-                                source,
-                            },
-                        ),
-                    None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                let read_request = lower.completed_read_request(range);
+                if expected_dispatch_generation == 0
+                    || read_request.dispatch_generation() != expected_dispatch_generation
+                {
+                    Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape)
+                } else {
+                    match completion.bytes_mut() {
+                        Some(destination) => lower
+                            .read_completed_into(read_request, destination)
+                            .map_err(|source| {
+                                M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                    range: "completion",
+                                    source,
+                                }
+                            }),
+                        None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                    }
                 }
             }
         };
