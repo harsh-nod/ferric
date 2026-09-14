@@ -681,3 +681,158 @@ fn aggregate_paged_decode_authenticates_every_coordinate_divisor() {
         assert_eq!(compact.matches(guard).count(), 1, "guard count for {guard}");
     }
 }
+
+fn paged_decode_coordinate_expressions() -> Vec<(String, syn::Expr)> {
+    let parsed = syn::parse_file(include_str!("../src/paged_decode.rs")).unwrap();
+    let function = parsed
+        .items
+        .iter()
+        .find_map(|item| match item {
+            Item::Fn(function) if function.sig.ident == "qwen3_paged_gqa_decode_bf16_f32_v1" => {
+                Some(function)
+            }
+            _ => None,
+        })
+        .unwrap();
+    let names = [
+        "query_head",
+        "position",
+        "query_token",
+        "sequence",
+        "kv_head",
+    ];
+    let expressions = function
+        .block
+        .stmts
+        .iter()
+        .filter_map(|statement| {
+            let syn::Stmt::Local(local) = statement else {
+                return None;
+            };
+            let syn::Pat::Ident(pattern) = &local.pat else {
+                return None;
+            };
+            let name = pattern.ident.to_string();
+            names
+                .contains(&name.as_str())
+                .then(|| (name, *local.init.as_ref().unwrap().expr.clone()))
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        expressions
+            .iter()
+            .map(|(name, _)| name.as_str())
+            .collect::<Vec<_>>(),
+        names
+    );
+    expressions
+}
+
+#[test]
+fn aggregate_paged_decode_coordinate_operators_have_literal_nonzero_rhs() {
+    use syn::visit::Visit;
+    struct CoordinateDivisors(usize);
+    impl<'ast> Visit<'ast> for CoordinateDivisors {
+        fn visit_expr_binary(&mut self, expression: &'ast syn::ExprBinary) {
+            if matches!(expression.op, syn::BinOp::Div(_) | syn::BinOp::Rem(_)) {
+                let syn::Expr::Lit(literal) = expression.right.as_ref() else {
+                    panic!("coordinate divisor must be a literal, not a finite-value phi");
+                };
+                let syn::Lit::Int(divisor) = &literal.lit else {
+                    panic!("coordinate divisor must be an integer");
+                };
+                assert!(divisor.base10_parse::<usize>().unwrap() > 0);
+                self.0 += 1;
+            }
+            syn::visit::visit_expr_binary(self, expression);
+        }
+    }
+    let mut divisors = CoordinateDivisors(0);
+    for (_, expression) in paged_decode_coordinate_expressions() {
+        divisors.visit_expr(&expression);
+    }
+    assert_eq!(divisors.0, 18);
+}
+
+fn evaluate_coordinate(expression: &syn::Expr, values: &[(&str, usize)]) -> usize {
+    match expression {
+        syn::Expr::Lit(literal) => match &literal.lit {
+            syn::Lit::Int(value) => value.base10_parse().unwrap(),
+            _ => panic!("unexpected coordinate literal"),
+        },
+        syn::Expr::Path(path) => {
+            let name = path.path.get_ident().unwrap();
+            values
+                .iter()
+                .find_map(|(key, value)| (name == *key).then_some(*value))
+                .unwrap()
+        }
+        syn::Expr::Binary(binary) => {
+            let left = evaluate_coordinate(&binary.left, values);
+            let right = evaluate_coordinate(&binary.right, values);
+            match binary.op {
+                syn::BinOp::Div(_) => left / right,
+                syn::BinOp::Rem(_) => left % right,
+                syn::BinOp::Eq(_) => usize::from(left == right),
+                _ => panic!("unexpected coordinate binary operator"),
+            }
+        }
+        syn::Expr::If(branch) => {
+            if evaluate_coordinate(&branch.cond, values) != 0 {
+                evaluate_coordinate_block(&branch.then_branch, values)
+            } else {
+                evaluate_coordinate(&branch.else_branch.as_ref().unwrap().1, values)
+            }
+        }
+        syn::Expr::Block(block) => evaluate_coordinate_block(&block.block, values),
+        _ => panic!("unexpected coordinate expression"),
+    }
+}
+
+fn evaluate_coordinate_block(block: &syn::Block, values: &[(&str, usize)]) -> usize {
+    let [syn::Stmt::Expr(expression, None)] = block.stmts.as_slice() else {
+        panic!("coordinate branch must remain one scalar expression");
+    };
+    evaluate_coordinate(expression, values)
+}
+
+#[test]
+fn aggregate_paged_decode_literal_coordinates_match_all_profile_lanes() {
+    use ferric_qwen3_all_kernels_device_v1::paged_decode::QWEN3_PAGED_DECODE_PROFILES_V1;
+    let expressions = paged_decode_coordinate_expressions();
+    assert_eq!(QWEN3_PAGED_DECODE_PROFILES_V1.len(), 14);
+    for profile in QWEN3_PAGED_DECODE_PROFILES_V1 {
+        for global in 0..profile.query_elements / 2 {
+            let vector = global / 64;
+            let mut values = vec![
+                ("target", usize::from(profile.query_heads == 32)),
+                ("vector", vector),
+                ("active_tokens", profile.active_tokens),
+            ];
+            for (name, expression) in &expressions {
+                let value = evaluate_coordinate(expression, &values);
+                values.push((name.as_str(), value));
+            }
+            let expected_head = vector % profile.query_heads;
+            let expected_position = vector / profile.query_heads;
+            let expected = [
+                expected_head,
+                expected_position,
+                expected_position % profile.active_tokens,
+                expected_position / profile.active_tokens,
+                expected_head / profile.gqa_group_size,
+            ];
+            assert_eq!(
+                values[3..]
+                    .iter()
+                    .map(|(_, value)| *value)
+                    .collect::<Vec<_>>(),
+                expected,
+                "profile {profile:?}, vector {vector}, lane {}",
+                global % 64
+            );
+            assert!(expected[3] < profile.sequences);
+            assert!(expected[4] < 8);
+        }
+    }
+}

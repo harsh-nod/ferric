@@ -318,11 +318,44 @@ pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
 
     let vector = global / 64;
     let local = global % 64;
-    let query_head = vector % query_heads;
-    let position = vector / query_heads;
-    let query_token = position % active_tokens;
-    let sequence = position / active_tokens;
-    let kv_head = query_head / gqa_group_size;
+    // Keep the closed profile divisors literal in the projected operations.
+    let query_head = if target { vector % 32 } else { vector % 16 };
+    let position = if target { vector / 32 } else { vector / 16 };
+    let query_token = if active_tokens == 1 {
+        0
+    } else if active_tokens == 4 {
+        position % 4
+    } else if active_tokens == 5 {
+        position % 5
+    } else if active_tokens == 8 {
+        position % 8
+    } else if active_tokens == 9 {
+        position % 9
+    } else if active_tokens == 16 {
+        position % 16
+    } else {
+        position % 17
+    };
+    let sequence = if active_tokens == 1 {
+        position
+    } else if active_tokens == 4 {
+        position / 4
+    } else if active_tokens == 5 {
+        position / 5
+    } else if active_tokens == 8 {
+        position / 8
+    } else if active_tokens == 9 {
+        position / 9
+    } else if active_tokens == 16 {
+        position / 16
+    } else {
+        position / 17
+    };
+    let kv_head = if target {
+        query_head / 4
+    } else {
+        query_head / 2
+    };
     if sequence >= sequences || kv_head >= QWEN3_PAGED_DECODE_KV_HEADS_V1 {
         fe2o3_device::trap();
     }
