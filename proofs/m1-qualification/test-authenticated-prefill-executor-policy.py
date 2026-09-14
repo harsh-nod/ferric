@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -18,6 +19,29 @@ def require(source: str, needle: str, label: str) -> int:
     if position < 0:
         fail(f"authenticated prefill executor lost {label}")
     return position
+
+
+def failure_surface_is_closed(source: str) -> bool:
+    methods = re.findall(r"\bfn\s+([A-Za-z_]\w*)\s*(?:<|\()", source)
+    if any(
+        forbidden in method
+        for method in methods
+        for forbidden in ["retry", "prepublication", "queue", "released"]
+    ):
+        return False
+    return all(
+        required in source
+        for required in [
+            "pub(crate) fn into_resident_teardown(",
+            "self: Box<Self>",
+            "M1AuthenticatedResidentQueueTeardownV1",
+            "Status::NoQueue => Teardown::no_queue(self)",
+            "Status::Released => Teardown::released(self)",
+            "Status::Quarantined => Teardown::quarantined(self)",
+            "M1CaptureQuarantinedEngineV1<C>",
+            "(self.engine, self.stage, self.error, self.retained.0)",
+        ]
+    )
 
 
 def main() -> None:
@@ -119,9 +143,19 @@ def main() -> None:
     failure_impl = production.split(
         "impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionFailureV1<C>", 1
     )[1].split("fn terminal_failure", 1)[0]
-    for forbidden in ["retry", "prepublication", "queue(", "released("]:
-        if forbidden in failure_impl:
-            fail(f"terminal failure surface exposes {forbidden}")
+    if not failure_surface_is_closed(failure_impl):
+        fail("terminal failure surface exposes recovery or loses closed teardown custody")
+    for method in ["retry", "into_prepublication", "queue", "released"]:
+        hostile = failure_impl.replace("pub const fn stage(", f"pub const fn {method}(", 1)
+        if hostile == failure_impl or failure_surface_is_closed(hostile):
+            fail(f"terminal failure policy accepts forbidden method {method}")
+    hostile = failure_impl.replace(
+        "Status::Quarantined => Teardown::quarantined(self)",
+        "Status::Quarantined => Teardown::released(self)",
+        1,
+    )
+    if hostile == failure_impl or failure_surface_is_closed(hostile):
+        fail("terminal failure policy accepts quarantine relabeling")
     require(
         production,
         "OpaqueM1AuthenticatedS1T128PrefillExecutionCustodyV1(Box<dyn fmt::Debug>)",
