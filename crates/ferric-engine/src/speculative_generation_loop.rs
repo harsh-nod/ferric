@@ -884,6 +884,8 @@ pub enum M1SpeculativeGenerationLoopErrorV1 {
     HostAllocation,
     CoordinatorIdentityExhausted,
     CoordinatorIdentityMismatch,
+    /// Maintenance completion does not match the exact active one-token gap.
+    DraftCatchupState,
 }
 
 impl fmt::Display for M1SpeculativeGenerationLoopErrorV1 {
@@ -907,6 +909,23 @@ pub struct M1SpeculativeGenerationLoopV1 {
     last_epoch: Option<CompletionEpoch>,
 }
 
+// Private validation input, not a physical-completion witness. Production
+// callers can reach the transition only through the sealed completed owner.
+#[derive(Clone, Copy)]
+struct M1DraftCatchupCoordinatorTransitionV1 {
+    coordinator_identity: M1SpeculativeCoordinatorIdentityV1,
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    completed_round: u64,
+    prior_epoch: CompletionEpoch,
+    epoch: CompletionEpoch,
+    draft_committed: u32,
+    target_committed: u32,
+    token: TokenId,
+    prior_dispatch_generation: u64,
+    dispatch_generation: u64,
+}
+
 /// Preallocated member storage for one resident speculative coordinator.
 ///
 /// The concrete member state remains private so callers can provide capacity
@@ -927,6 +946,66 @@ impl M1SpeculativeGenerationLoopStorageV1 {
 impl M1SpeculativeGenerationLoopV1 {
     pub(crate) const fn identity(&self) -> M1SpeculativeCoordinatorIdentityV1 {
         self.identity
+    }
+
+    /// Advances only the draft cursor and physical epoch after checked maintenance.
+    pub(crate) fn commit_authenticated_draft_catchup(
+        &mut self,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
+        let pending = completed.pending();
+        self.commit_draft_catchup_transition(M1DraftCatchupCoordinatorTransitionV1 {
+            coordinator_identity: pending.coordinator_identity(),
+            parent: pending.parent(),
+            request: pending.request(),
+            completed_round: pending.completed_round(),
+            prior_epoch: pending.prior_epoch(),
+            epoch: pending.epoch(),
+            draft_committed: pending.draft_committed(),
+            target_committed: pending.target_committed(),
+            token: pending.token(),
+            prior_dispatch_generation: pending.prior_dispatch_generation(),
+            dispatch_generation: completed.dispatch_generation(),
+        })
+    }
+
+    fn commit_draft_catchup_transition(
+        &mut self,
+        transition: M1DraftCatchupCoordinatorTransitionV1,
+    ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
+        if transition.coordinator_identity != self.identity {
+            return Err(M1SpeculativeGenerationLoopErrorV1::CoordinatorIdentityMismatch);
+        }
+        if transition.parent != self.shape.selection() {
+            return Err(M1SpeculativeGenerationLoopErrorV1::SelectionDrift {
+                expected: self.shape.selection(),
+                actual: transition.parent,
+            });
+        }
+        let [member] = self.members.as_slice() else {
+            return Err(M1SpeculativeGenerationLoopErrorV1::DraftCatchupState);
+        };
+        if self.shape.sequences() != 1
+            || transition.completed_round.checked_add(1) != Some(self.next_round)
+            || transition.prior_epoch.value() == 0
+            || self.last_epoch != Some(transition.prior_epoch)
+            || transition.prior_epoch.value().checked_add(1) != Some(transition.epoch.value())
+            || transition.prior_dispatch_generation == 0
+            || transition.prior_dispatch_generation.checked_add(1)
+                != Some(transition.dispatch_generation)
+            || member.request != transition.request
+            || member.status != M1SpeculativeMemberStatusV1::Active
+            || member.draft_committed_tokens != transition.draft_committed
+            || member.target_committed_tokens != transition.target_committed
+            || transition.draft_committed.checked_add(1) != Some(transition.target_committed)
+            || transition.target_committed > M1_MAX_CONTEXT_TOKENS
+            || transition.token >= QWEN3_VOCABULARY_SIZE
+        {
+            return Err(M1SpeculativeGenerationLoopErrorV1::DraftCatchupState);
+        }
+        self.members[0].draft_committed_tokens = transition.target_committed;
+        self.last_epoch = Some(transition.epoch);
+        Ok(())
     }
 
     pub(crate) fn bootstrap_seed_snapshot(
@@ -2056,6 +2135,159 @@ mod tests {
                 .unwrap();
             assert_eq!(binding.members().len(), usize::from(sequences));
         }
+    }
+
+    #[test]
+    fn catchup_transition_advances_only_draft_and_epoch_for_each_singleton_width() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let (mut coordinator, transition) = completed_full_round_for_catchup(bucket);
+            let before = coordinator.member(request(0)).unwrap();
+            let policy = coordinator.members[0].policy;
+            let capacity = coordinator.members.capacity();
+            coordinator
+                .commit_draft_catchup_transition(transition)
+                .unwrap();
+            let after = coordinator.member(request(0)).unwrap();
+            assert_eq!(
+                after.draft_committed_tokens(),
+                before.target_committed_tokens()
+            );
+            assert_eq!(
+                after.target_committed_tokens(),
+                before.target_committed_tokens()
+            );
+            assert_eq!(after.generated_tokens(), before.generated_tokens());
+            assert_eq!(after.next_anchor(), before.next_anchor());
+            assert_eq!(after.status(), before.status());
+            assert_eq!(coordinator.members[0].policy, policy);
+            assert_eq!(coordinator.members.capacity(), capacity);
+            assert_eq!(coordinator.next_round(), 1);
+            assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(8)));
+            assert!(coordinator
+                .commit_draft_catchup_transition(transition)
+                .is_err());
+            assert_eq!(coordinator.member(request(0)), Some(after));
+            assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(8)));
+            assert!(matches!(
+                coordinator.bind_round(1, CompletionEpoch::new(8), &[request(0)]),
+                Err(M1SpeculativeGenerationLoopErrorV1::EpochSequence { .. })
+            ));
+            let next = coordinator
+                .bind_round(1, CompletionEpoch::new(9), &[request(0)])
+                .unwrap();
+            assert_eq!(
+                next.members()[0].target_pre_committed(),
+                after.target_committed_tokens()
+            );
+            assert_eq!(
+                next.members()[0].draft_pre_committed(),
+                after.target_committed_tokens()
+            );
+            assert_eq!(next.members()[0].round_anchor(), before.next_anchor());
+        }
+    }
+
+    #[test]
+    fn catchup_transition_rejects_mismatched_or_terminal_state_without_mutation() {
+        for case in 0..17 {
+            let (mut coordinator, mut transition) =
+                completed_full_round_for_catchup(Qwen3PlanBucket::SpeculativeS1K4C8192);
+            match case {
+                0 => {
+                    transition.coordinator_identity =
+                        M1SpeculativeCoordinatorIdentityV1::fresh().unwrap()
+                }
+                1 => transition.parent = selection(Qwen3PlanBucket::SpeculativeS1K8C8192),
+                2 => transition.request = request(1),
+                3 => transition.completed_round = u64::MAX,
+                4 => transition.prior_epoch = CompletionEpoch::new(6),
+                5 => transition.epoch = CompletionEpoch::new(9),
+                6 => transition.draft_committed += 1,
+                7 => transition.target_committed += 1,
+                8 => transition.token = QWEN3_VOCABULARY_SIZE,
+                9 => transition.prior_dispatch_generation = u64::MAX,
+                10 => transition.dispatch_generation += 1,
+                11 => {
+                    coordinator.members[0].status = M1SpeculativeMemberStatusV1::Cancelled(
+                        M1SpeculativeCancellationReasonV1::Client,
+                    )
+                }
+                12 => {
+                    transition.draft_committed = transition.target_committed;
+                    coordinator.members[0].draft_committed_tokens = transition.draft_committed;
+                }
+                13 => coordinator.last_epoch = None,
+                14 => {
+                    transition.prior_epoch = CompletionEpoch::new(u64::MAX);
+                    transition.epoch = CompletionEpoch::new(0);
+                    coordinator.last_epoch = Some(transition.prior_epoch);
+                }
+                15 => {
+                    transition.parent = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+                    coordinator.shape =
+                        M1SpeculativePhysicalShapeV1::from_selection(transition.parent).unwrap();
+                }
+                16 => {
+                    coordinator.members[0].status = M1SpeculativeMemberStatusV1::Completed(
+                        M1SpeculativeTerminalReasonV1::OutputLimit,
+                    )
+                }
+                _ => unreachable!(),
+            }
+            let before = coordinator.member(request(0));
+            let next_round = coordinator.next_round();
+            let last_epoch = coordinator.last_epoch();
+            assert!(
+                coordinator
+                    .commit_draft_catchup_transition(transition)
+                    .is_err(),
+                "case {case}"
+            );
+            assert_eq!(coordinator.member(request(0)), before, "case {case}");
+            assert_eq!(coordinator.next_round(), next_round, "case {case}");
+            assert_eq!(coordinator.last_epoch(), last_epoch, "case {case}");
+        }
+    }
+
+    fn completed_full_round_for_catchup(
+        bucket: Qwen3PlanBucket,
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1DraftCatchupCoordinatorTransitionV1,
+    ) {
+        let mut coordinator =
+            M1SpeculativeGenerationLoopV1::new(selection(bucket), &[seed(0, 64)]).unwrap();
+        let width = coordinator.shape().draft_tokens();
+        let tokens: Vec<_> = (100..=100 + u32::from(width)).collect();
+        let binding = coordinator
+            .bind_round(0, CompletionEpoch::new(7), &[request(0)])
+            .unwrap();
+        complete_test_round(
+            &mut coordinator,
+            binding,
+            &[observation(request(0), width, &tokens)],
+            &[M1SpeculativeMemberControlV1::continuing(request(0))],
+        )
+        .unwrap();
+        let member = coordinator.member(request(0)).unwrap();
+        let transition = M1DraftCatchupCoordinatorTransitionV1 {
+            coordinator_identity: coordinator.identity(),
+            parent: coordinator.shape().selection(),
+            request: request(0),
+            completed_round: 0,
+            prior_epoch: CompletionEpoch::new(7),
+            epoch: CompletionEpoch::new(8),
+            draft_committed: member.draft_committed_tokens(),
+            target_committed: member.target_committed_tokens(),
+            token: tokens[usize::from(width) - 1],
+            prior_dispatch_generation: 41,
+            dispatch_generation: 42,
+        };
+        (coordinator, transition)
     }
 
     #[test]

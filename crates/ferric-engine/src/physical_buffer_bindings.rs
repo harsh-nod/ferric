@@ -292,6 +292,8 @@ pub enum M1PhysicalBufferBindingErrorV1 {
         /// Rejected source count.
         actual: usize,
     },
+    /// A maintenance output tag is absent, substituted, or attached to an ordinary step.
+    CompletionOutputIntent,
     /// A compact source and retained host output name different exact shapes.
     CompletionOutputShape {
         /// Global physical row.
@@ -608,6 +610,10 @@ fn preflight_completion_output(
     completion_output: &BoundM1CompletionOutputV1,
     partitioned_memory: &M1PartitionedModelMemoryKvPoolV1,
 ) -> Result<CompletionOutputBindingRangeV1, M1PhysicalBufferBindingErrorV1> {
+    validate_completion_output_intent(
+        recipe.workspace_composition().dispatch_plan().intent(),
+        completion_output.draft_catchup_parent_selection(),
+    )?;
     let mut matches = recipe.rows().iter().flat_map(|row| {
         row.buffers().iter().filter_map(move |buffer| {
             let M1PhysicalBufferSourceV1::CompletionOutput { sequences } = buffer.source() else {
@@ -656,6 +662,22 @@ fn preflight_completion_output(
             .completion_canary()
             .map(crate::BoundM1CompletionCanaryV1::snapshot_range),
     })
+}
+
+fn validate_completion_output_intent(
+    intent: M1StepDispatchIntent,
+    catchup_parent: Option<ferric_spec::Qwen3PlanSelection>,
+) -> Result<(), M1PhysicalBufferBindingErrorV1> {
+    let expected = match intent {
+        M1StepDispatchIntent::DraftCatchup(parent) => Some(parent),
+        M1StepDispatchIntent::TargetOnly(_)
+        | M1StepDispatchIntent::PairedPrefill(_)
+        | M1StepDispatchIntent::SpeculativeRound(_) => None,
+    };
+    if catchup_parent != expected {
+        return Err(M1PhysicalBufferBindingErrorV1::CompletionOutputIntent);
+    }
+    Ok(())
 }
 
 fn preflight_qualification_logits(
@@ -709,7 +731,7 @@ fn preflight_direct_diagnostic_choices(
     let (selection, target_segment) = match intent {
         M1StepDispatchIntent::TargetOnly(selection) => (selection, 0),
         M1StepDispatchIntent::PairedPrefill(selection) => (selection, 1),
-        M1StepDispatchIntent::SpeculativeRound(_) => {
+        M1StepDispatchIntent::SpeculativeRound(_) | M1StepDispatchIntent::DraftCatchup(_) => {
             return Err(M1PhysicalBufferBindingErrorV1::DirectDiagnosticChoicesIntent)
         }
     };
@@ -1637,9 +1659,9 @@ mod tests {
         qualification_logits_source_isolation, resolve_rows_with_backend, sentinel_geometry,
         speculative_diagnostic_choice_source_isolation,
         speculative_diagnostic_draft_choice_geometry, validate_argument_ordinal,
-        validate_completion_output_shape, validate_row_metadata_entry, BindingRowMetadata,
-        M1PhysicalBufferBindingErrorV1, M1PhysicalBufferResolutionBackendV1,
-        SpeculativeDiagnosticChoiceSourceRouteV1,
+        validate_completion_output_intent, validate_completion_output_shape,
+        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
+        M1PhysicalBufferResolutionBackendV1, SpeculativeDiagnosticChoiceSourceRouteV1,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
@@ -2328,6 +2350,44 @@ mod tests {
                 (catchup_choices, completion_choices, host_receipts),
                 (1, 1, 1)
             );
+        }
+    }
+
+    #[test]
+    fn catchup_output_tag_is_required_only_for_the_exact_maintenance_parent() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let intent = M1StepDispatchIntent::DraftCatchup(parent);
+            validate_completion_output_intent(intent, Some(parent)).unwrap();
+            for wrong in [None, Some(intent.completion_selection())] {
+                assert!(matches!(
+                    validate_completion_output_intent(intent, wrong),
+                    Err(M1PhysicalBufferBindingErrorV1::CompletionOutputIntent)
+                ));
+            }
+            for ordinary in complete_intents() {
+                validate_completion_output_intent(ordinary, None).unwrap();
+                assert!(matches!(
+                    validate_completion_output_intent(ordinary, Some(parent)),
+                    Err(M1PhysicalBufferBindingErrorV1::CompletionOutputIntent)
+                ));
+            }
+            let other = if bucket == Qwen3PlanBucket::SpeculativeS1K4C8192 {
+                Qwen3PlanBucket::SpeculativeS1K8C8192
+            } else {
+                Qwen3PlanBucket::SpeculativeS1K4C8192
+            };
+            assert!(matches!(
+                validate_completion_output_intent(
+                    intent,
+                    Some(target(Qwen3ExecutionMode::Speculative, other)),
+                ),
+                Err(M1PhysicalBufferBindingErrorV1::CompletionOutputIntent)
+            ));
         }
     }
 
