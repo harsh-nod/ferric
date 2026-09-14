@@ -11,19 +11,27 @@ Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
 `161c385576d45d4e634ba179fa93a545b91124e6`. The 80-file pin migration reverses
 byte-for-byte to its parent before two separately checked derived verifier
 manifest/lock digests. Historical tool and binary producers are not relabeled.
-Latest integration `61a9ab324cdd0a6e745aa838d0d0f1ca1ac137f5`, tree
+Intermediate integration `61a9ab324cdd0a6e745aa838d0d0f1ca1ac137f5`, tree
 `daaec77b5a07a7c749c9719d387e7dad8f28ee03`, advances that same 80-file roster
 to upstream `82d95ca81f3f3a55e1e82b88918a41cca8b20c31`, which indexes checked
 control flow and transport pipeline catalogs. The reverse-byte comparison and
-two derived digests are checked; remote formatting passes. Fresh locked graphs
-and source-policy validation are in progress. The completed host results below
-remain bound to 852, not this newer dependency pin.
+two derived digests are checked; remote formatting passes. Exact 61a9/82 passes
+all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin
+policies, source coverage and byte equality for the three regenerated TCB
+inventories. The full engine host results below remain bound to 852.
+
+Latest integration `f17efe83d37105c0da78ea2c8bbbe166a0ee4f43`, tree
+`a3292fb909cbbaddff4d25a323a9f9421b760258`, pins published fe2o3
+`c6b4050dd6c18e1868b24e4580da3eed8a3d19fa`. This is the same 80-file
+reverse-byte-equal migration with separately checked derived digests and remote
+formatting. Fresh c6 consumer and source-policy validation remain separate
+obligations; earlier 82/852 results are not relabeled.
 
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Published 852 adds the strict `Ge` false-success upper bound with the existing statement-stability and edge-dominance checks. Five focused tests and all 539 backend tests pass. Normalized strict Clippy has no delta against 829; upstream is not lint-clean. Exact release tools build and all 37 aggregate host tests pass. Actual aggregate emission rejects paged `committed_tokens + query_token`, semantic bb97, source fingerprint `01a6c27889e4`, line 373. A complete isolated-root comparison now confirms this assertion was already unproved under 829; no assertion regressed. | Develop and validate the missing authenticated unsigned-subtraction result bound on latest upstream, then retry aggregate emission. No new image, native handoff or GPU result. |
+| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published CLI/backend builds, source/pin/worker closure, all 37 aggregate host tests and vendor closure pass. | Actual 12-root gfx942 emission at exact f17/c6b. No new image, native handoff or GPU result. |
 | Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
-| Verification | Source inventory now covers 173 modules and 8,433 executable identities: 181 added pending-Verus bodies, 7,711 unverified total and 722 unchanged existing verified labels. All prior rationale rows remain unchanged. Exact d55/852 passes all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin policies, source coverage and byte equality for all three regenerated dependency TCB inventories. | Physical catch-up and broader M1 proofs, authenticated S8/mixed-active execution and hardware qualification. The selected earlier four-item `kv_physical` proof remains exact-source evidence, not a proof of the new physical catch-up implementation. No M1 gate closure follows. |
+| Verification | Source inventory covers 173 modules and 8,433 executable identities: 181 added pending-Verus bodies, 7,711 unverified total and 722 unchanged existing verified labels. All prior rationale rows remain unchanged. Exact 61a9/82 passes the complete metadata/source-policy gate described above. | A candidate same-source one-token draft catch-up helper is wired into the actual runtime; direct Verus checks, explicit callee closure and sensitive mutations are in progress. Its scope is the metadata commit, full selected-state frame and conditional target/draft cursor equality, not parent, page-write, lease or completion authentication. Broader M1 proofs and hardware qualification remain open. |
 
 The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
 terminal full acceptance, foreign coordinators, substituted choices, zero
@@ -42,8 +50,15 @@ semantic-block order. A subsequent full comparison of all 49 isolated paged
 assertions finds zero true-to-false changes. 852 newly proves bb33/line 454;
 bb97/line 373 is the only remaining unproved assertion and was already unproved
 under 829. This is forward proof progress, not an observed regression. The
-missing precision is the successful checked `8192 - committed_tokens` result:
-its obvious unsigned upper bound is not retained by the current evaluator.
+missing precision was the successful checked `8192 - committed_tokens` result.
+Published c6b now retains that unsigned bound only after the existing exact
+checked-success authentication. The producer assertion remains an independent
+mandatory obligation; the result cannot prove its own producer. Tests reject
+eleven missing, changed, non-dominating or escaped authority cases, signed and
+out-of-width literals, and preserve the existing evaluator work limit. No
+kernel guards or additional evaluator calls were introduced. Actual aggregate
+emission, rather than these host fixtures, must establish that this resolves
+the observed kernel rejection.
 
 Canonical target/draft admission, full streaming prepack and separate persisted
 snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
@@ -61,6 +76,12 @@ Retained local evidence under `.codex-tmp` includes:
   `5001522110d67c40ac177aae320da36f842092e148dce0f752818eac87190ad7`.
 - `ferric-upstream-852-metadata-v1/metadata-852-evidence-r1.tar.gz`, SHA-256
   `1074fbf60b9643f13044c13ae2cd12a00502644371ab69a98efec38fce327f63`.
+- `ferric-upstream-82-metadata-v1/metadata-82-evidence-r1.tar.gz`, SHA-256
+  `09a16fad2b3d5630287c5882e6c90cf5fdec916461b3d65eb4eb361c44a2c6b5`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-assertion-differential/assertion-differential-evidence.tar.gz`,
+  SHA-256 `6916aeae89906f74bef47c7ad422dbfe34fd4185e77d7b96728ff1750c4231a7`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-literal-subtract/literal-subtract-r3-evidence.tar.gz`,
+  SHA-256 `5db7a2048a60d5790767f0eeb4f8a5860df4349c9db6da0dff3544ba53e0c031`.
 - `ferric-divisor-diagnostic-gate-v1/acquisition-polarity/polarity-evidence.tar.gz`,
   SHA-256 `6a8ed82ec6eee1d8fda59833745df6847718093b7f9c3eb7e4d4d164a4be40bb`.
 - `ferric-m1-bundle-current-v1/evidence-r1.tar.gz`, SHA-256
@@ -92,9 +113,13 @@ correctness or competitiveness result is claimed.
 The next native path has an additional explicit boundary: engineering HSACO
 emission does not produce an authenticated Worker V3 selector. The protected
 compiler profile and supervisor socket are not provisioned on mi300x. Ferric's
-protected verifier also lacks a concrete independent-checker IPC provider;
-implementation of that bounded, measured, exact-payload client is in progress.
-It must connect the real service contract without fabricating theorem results.
+protected verifier's concrete independent-checker IPC client is implemented in
+an isolated candidate branch. Eleven focused tests pass at exact 8ad882f4/82d;
+final lint, full-service and normal-production dependency checks are pending.
+It sends every envelope and HSACO byte to the pinned preopened endpoint under
+one absolute deadline and rejects mismatched results or ambiguous channel
+reuse. The supervisor admission is explicitly unsafe and requires a separately
+measured real checker. Neither the client nor its tests supply theorem results.
 Actual checker authority, protected compiler/current records, separate signing
 authority, durable antirollback state and reviewed deployment remain required.
 
