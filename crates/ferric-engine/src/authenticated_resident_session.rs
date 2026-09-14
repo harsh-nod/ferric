@@ -3807,6 +3807,28 @@ mod tests {
     #[global_allocator]
     pub(crate) static TEST_ALLOCATOR: &stats_alloc::StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
+    #[test]
+    fn restored_round_deadline_keeps_cancellation_classification() {
+        for stage in [
+            crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait,
+            crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::DiagnosticReadback,
+        ] {
+            let failure = M1AuthenticatedResidentRoundExecutionFailureV1::Restoring(
+                crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupRestoreFailureV1::Ordinary(
+                    Box::new(crate::M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+                        stage,
+                        disposition: crate::authenticated_speculative_executor::quarantined_disposition("inert failure-classification fixture"),
+                    }),
+                ),
+            );
+            assert_eq!(
+                failure.is_deadline(),
+                stage == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+            );
+        }
+    }
+
     fn singleton_plan(bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
         crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
             Qwen3PlanSelection {

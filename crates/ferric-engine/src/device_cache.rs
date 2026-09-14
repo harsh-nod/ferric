@@ -9342,10 +9342,10 @@ mod tests {
 
     #[test]
     fn draft_catchup_initializes_and_commits_only_one_token_with_preallocated_spans() {
-        for bucket in [
-            Qwen3PlanBucket::SpeculativeS1K4C8192,
-            Qwen3PlanBucket::SpeculativeS1K8C8192,
-            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        for (bucket, candidates) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
         ] {
             for committed in [15_u32, 16, 127, 128, 143, 144, 8191] {
                 let mut cache = catchup_cache(bucket, committed);
@@ -9409,6 +9409,59 @@ mod tests {
                 );
                 assert_eq!(cache.projection().draft.committed_tokens, committed + 1);
                 assert_eq!(cache.projection().target, before_target);
+
+                // The ordinary full-width path must remain usable after maintenance.
+                let next_committed = committed + 1;
+                for (role, active_tokens, allocation) in [
+                    (Qwen3ModelRole::Target8B, candidates + 1, 71),
+                    (Qwen3ModelRole::Draft06B, candidates, 72),
+                ] {
+                    let before = cache.projection();
+                    let first_new_page = next_committed.div_ceil(M1_KV_PAGE_TOKENS);
+                    let end = next_committed + active_tokens;
+                    let missing =
+                        usize::try_from(end.div_ceil(M1_KV_PAGE_TOKENS) - first_new_page).unwrap();
+                    let next = cache.reserve_step_write(
+                        request(),
+                        role,
+                        next_committed,
+                        active_tokens,
+                        CompletionEpoch::new(33),
+                        if end > 8192 {
+                            Vec::new()
+                        } else {
+                            leases(role, first_new_page, missing, allocation)
+                        },
+                    );
+                    if end > 8192 {
+                        assert_eq!(
+                            next.unwrap_err().error(),
+                            DeviceKvCacheError::Physical(PhysicalKvError::ContextExceeded)
+                        );
+                        assert_eq!(cache.projection(), before);
+                        continue;
+                    }
+                    let next = next.unwrap();
+                    assert_eq!(next.committed_tokens(), next_committed);
+                    assert_eq!(next.active_tokens(), active_tokens);
+                    let DeviceKvStepCompletionOutcome::Completed(completed) =
+                        complete_step(cache, next, 33)
+                    else {
+                        panic!("ordinary successor completion rejected after maintenance");
+                    };
+                    let (mut next_cache, initialized, _completion) = completed.into_parts();
+                    next_cache
+                        .settle_completed_step(&initialized, 1, CompletionEpoch::new(33))
+                        .unwrap();
+                    cache = next_cache;
+                }
+                let expected = if next_committed == 8192 {
+                    next_committed
+                } else {
+                    next_committed + 1
+                };
+                assert_eq!(cache.projection().draft.committed_tokens, expected);
+                assert_eq!(cache.projection().target.committed_tokens, expected);
             }
         }
     }

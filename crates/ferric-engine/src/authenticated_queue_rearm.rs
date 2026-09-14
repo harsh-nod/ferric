@@ -2902,12 +2902,20 @@ pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
             .expect("checked page admission storage"),
     ) {
         Ok(admission) => admission,
-        source => {
+        Err(source) => {
+            let (error, storage) = source.into_parts();
             return Err(close_draft_catchup_scheduled(
                 engine,
                 scheduled,
-                (source, plans, recipe, draft_inputs, completion_inputs),
-            ))
+                (
+                    error,
+                    storage,
+                    plans,
+                    recipe,
+                    draft_inputs,
+                    completion_inputs,
+                ),
+            ));
         }
     };
     let leases = match scheduled
