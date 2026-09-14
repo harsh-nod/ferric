@@ -105,7 +105,11 @@ fn bootstrap_fixture_dependencies_are_test_only() {
         .expect("checker transport uses the canonical production safety-property type");
     assert!(!production_host.contains("features"));
     assert!(!production.contains("worker-v3-verifier-test-support"));
-    assert!(development.lines().any(|line| line.starts_with("fe2o3-host =")));
+    assert!(
+        development
+            .lines()
+            .any(|line| line.starts_with("fe2o3-host ="))
+    );
     assert!(development.contains("worker-v3-verifier-test-support"));
 }
 

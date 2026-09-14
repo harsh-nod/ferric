@@ -21,11 +21,10 @@ mod signer_ipc;
 
 pub use checker_ipc::{
     INDEPENDENT_CHECKER_CHUNK_BYTES_V1, INDEPENDENT_CHECKER_MAX_PACKET_BYTES_V1,
-    IndependentCheckerAdmissionFailureV1, IndependentCheckerContextV1,
-    IndependentCheckerCustodyV1, IndependentCheckerEndpointV1, IndependentCheckerErrorV1,
-    IndependentCheckerFailureV1, IndependentCheckerPayloadReceiverV1, IndependentCheckerRequestV1,
-    IndependentCheckerResponseV1, PreopenedIndependentCheckerClientV1,
-    independent_checker_protocol_identity_v1,
+    IndependentCheckerAdmissionFailureV1, IndependentCheckerContextV1, IndependentCheckerCustodyV1,
+    IndependentCheckerEndpointV1, IndependentCheckerErrorV1, IndependentCheckerFailureV1,
+    IndependentCheckerPayloadReceiverV1, IndependentCheckerRequestV1, IndependentCheckerResponseV1,
+    PreopenedIndependentCheckerClientV1, independent_checker_protocol_identity_v1,
 };
 pub use current_record_ipc::{
     PREOPENED_PROTECTED_COMPILER_CURRENT_REQUEST_BYTES_V1,
