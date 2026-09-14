@@ -614,6 +614,87 @@ struct M1AuthenticatedNewWindowPageBindingAdmissionV1 {
     alignment: u64,
 }
 
+#[derive(Debug, Default)]
+struct M1AuthenticatedPageAdmissionHostBuffersV1 {
+    lanes: Vec<M1AuthenticatedNewWindowLaneAdmissionV1>,
+    planes: Vec<M1AuthenticatedNewWindowPlaneAdmissionV1>,
+    pages: Vec<M1AuthenticatedNewWindowPageAdmissionV1>,
+    bindings: Vec<M1AuthenticatedNewWindowPageBindingAdmissionV1>,
+    leases: Vec<DeviceKvPageLease>,
+}
+
+/// Pre-clock capacity for a singleton draft catch-up's optional new page.
+#[derive(Debug)]
+pub(crate) struct M1DraftCatchupPageAdmissionHostStorageV1 {
+    buffers: M1AuthenticatedPageAdmissionHostBuffersV1,
+}
+
+impl M1DraftCatchupPageAdmissionHostStorageV1 {
+    pub(crate) fn try_new() -> Option<Self> {
+        let mut buffers = M1AuthenticatedPageAdmissionHostBuffersV1::default();
+        buffers.lanes.try_reserve_exact(1).ok()?;
+        buffers
+            .planes
+            .try_reserve_exact(M1_DRAFT_KV_PLANE_SUBLEASES_V1 + M1_TARGET_KV_PLANE_SUBLEASES_V1)
+            .ok()?;
+        buffers.pages.try_reserve_exact(1).ok()?;
+        buffers
+            .bindings
+            .try_reserve_exact(M1_DRAFT_KV_PLANE_SUBLEASES_V1)
+            .ok()?;
+        buffers.leases.try_reserve_exact(1).ok()?;
+        Some(Self { buffers })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1DraftCatchupPageAdmissionFailureV1 {
+    error: M1DeviceKvArenaLeaseErrorV1,
+    storage: M1DraftCatchupPageAdmissionHostStorageV1,
+}
+
+impl M1DraftCatchupPageAdmissionFailureV1 {
+    pub(crate) fn new(
+        error: M1DeviceKvArenaLeaseErrorV1,
+        storage: M1DraftCatchupPageAdmissionHostStorageV1,
+    ) -> Box<Self> {
+        Box::new(Self { error, storage })
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1DeviceKvArenaLeaseErrorV1,
+        M1DraftCatchupPageAdmissionHostStorageV1,
+    ) {
+        (self.error, self.storage)
+    }
+}
+
+fn draft_catchup_page_lane(
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    draft_committed: u32,
+    target_committed: u32,
+) -> Result<M1AuthenticatedNewWindowLaneAdmissionV1, M1DeviceKvArenaLeaseErrorV1> {
+    if crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(parent)
+        .is_none()
+        || request.slot() >= M1_MAX_ACTIVE_SEQUENCES
+        || request.generation() == 0
+        || draft_committed.checked_add(1) != Some(target_committed)
+        || target_committed > 8192
+    {
+        return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+    }
+    M1AuthenticatedNewWindowLaneAdmissionV1::checked(
+        request,
+        draft_committed / M1_KV_PAGE_TOKENS,
+        u32::from(draft_committed.is_multiple_of(M1_KV_PAGE_TOKENS)),
+        0,
+        0,
+    )
+}
+
 #[allow(clippy::too_many_arguments)]
 fn authenticated_new_window_plane_admission_matches(
     admission: &M1AuthenticatedNewWindowPlaneAdmissionV1,
@@ -1490,6 +1571,40 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         self.admit_authenticated_page_set(queue, lanes)
     }
 
+    pub(crate) fn admit_authenticated_draft_catchup_page_set(
+        &self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+        mut storage: M1DraftCatchupPageAdmissionHostStorageV1,
+    ) -> Result<M1AuthenticatedNewWindowPageSetAdmissionV1, Box<M1DraftCatchupPageAdmissionFailureV1>>
+    {
+        if queue.detached_dispatch_generation() != authorized.prior_dispatch_generation()
+            || authorized.prior_dispatch_generation() == 0
+            || authorized.prior_epoch().value().checked_add(1) != Some(authorized.epoch().value())
+            || !storage.buffers.lanes.is_empty()
+            || storage.buffers.lanes.capacity() < 1
+        {
+            return Err(M1DraftCatchupPageAdmissionFailureV1::new(
+                M1DeviceKvArenaLeaseErrorV1::PageOutOfRange,
+                storage,
+            ));
+        }
+        let lane = match draft_catchup_page_lane(
+            authorized.parent(),
+            authorized.request(),
+            authorized.draft_committed(),
+            authorized.target_committed(),
+        ) {
+            Ok(lane) => lane,
+            Err(error) => return Err(M1DraftCatchupPageAdmissionFailureV1::new(error, storage)),
+        };
+        storage.buffers.lanes.push(lane);
+        match self.admit_authenticated_page_set_with_storage(queue, &mut storage.buffers, false) {
+            Ok(admission) => Ok(admission),
+            Err(error) => Err(M1DraftCatchupPageAdmissionFailureV1::new(error, storage)),
+        }
+    }
+
     pub(crate) fn validate_authenticated_empty_successor_page_set(
         &self,
         queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
@@ -1542,7 +1657,27 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
         lanes: Vec<M1AuthenticatedNewWindowLaneAdmissionV1>,
     ) -> Result<M1AuthenticatedNewWindowPageSetAdmissionV1, M1DeviceKvArenaLeaseErrorV1> {
-        validate_authenticated_page_span_roster(&lanes)?;
+        let mut storage = M1AuthenticatedPageAdmissionHostBuffersV1 {
+            lanes,
+            ..M1AuthenticatedPageAdmissionHostBuffersV1::default()
+        };
+        self.admit_authenticated_page_set_with_storage(queue, &mut storage, true)
+    }
+
+    fn admit_authenticated_page_set_with_storage(
+        &self,
+        queue: &fe2o3_host::AuthenticatedServiceQueueUnboundSessionV1,
+        storage: &mut M1AuthenticatedPageAdmissionHostBuffersV1,
+        allow_growth: bool,
+    ) -> Result<M1AuthenticatedNewWindowPageSetAdmissionV1, M1DeviceKvArenaLeaseErrorV1> {
+        let M1AuthenticatedPageAdmissionHostBuffersV1 {
+            lanes,
+            planes,
+            pages,
+            bindings,
+            leases,
+        } = storage;
+        validate_authenticated_page_span_roster(lanes)?;
         self.model_memory
             .revalidate_for_kv_partition()
             .map_err(M1DeviceKvArenaLeaseErrorV1::ModelMemory)?;
@@ -1576,30 +1711,39 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             })
             .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
 
-        let mut planes = Vec::new();
-        let mut pages = Vec::new();
-        let mut bindings = Vec::new();
-        let mut leases = Vec::new();
-        planes
-            .try_reserve_exact(self.target_planes.len() + self.draft_planes.len())
-            .map_err(|_| M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
-                role: Qwen3ModelRole::Draft06B,
+        if !planes.is_empty() || !pages.is_empty() || !bindings.is_empty() || !leases.is_empty() {
+            return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        if allow_growth {
+            planes
+                .try_reserve_exact(self.target_planes.len() + self.draft_planes.len())
+                .map_err(|_| M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                    role: Qwen3ModelRole::Draft06B,
+                })?;
+            pages.try_reserve_exact(total_pages).map_err(|_| {
+                M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                    role: Qwen3ModelRole::Draft06B,
+                }
             })?;
-        pages.try_reserve_exact(total_pages).map_err(|_| {
-            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+            bindings.try_reserve_exact(total_bindings).map_err(|_| {
+                M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                    role: Qwen3ModelRole::Draft06B,
+                }
+            })?;
+            leases.try_reserve_exact(total_pages).map_err(|_| {
+                M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
+                    role: Qwen3ModelRole::Draft06B,
+                }
+            })?;
+        } else if planes.capacity() < self.target_planes.len() + self.draft_planes.len()
+            || pages.capacity() < total_pages
+            || bindings.capacity() < total_bindings
+            || leases.capacity() < total_pages
+        {
+            return Err(M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
                 role: Qwen3ModelRole::Draft06B,
-            }
-        })?;
-        bindings.try_reserve_exact(total_bindings).map_err(|_| {
-            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
-                role: Qwen3ModelRole::Draft06B,
-            }
-        })?;
-        leases.try_reserve_exact(total_pages).map_err(|_| {
-            M1DeviceKvArenaLeaseErrorV1::HostLedgerAllocation {
-                role: Qwen3ModelRole::Draft06B,
-            }
-        })?;
+            });
+        }
 
         for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
             let member_count = self.plane_count(role);
@@ -1633,7 +1777,7 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             }
         }
 
-        for lane in &lanes {
+        for lane in lanes.iter() {
             for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
                 let (first_page, page_count) = lane.role_span(role);
                 let end_page = first_page
@@ -1730,11 +1874,11 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
             detached_dispatch_generation: queue.detached_dispatch_generation(),
             target_plane_count: self.target_planes.len(),
             draft_plane_count: self.draft_planes.len(),
-            lanes: lanes.into_boxed_slice(),
-            planes: planes.into_boxed_slice(),
-            pages: pages.into_boxed_slice(),
-            bindings: bindings.into_boxed_slice(),
-            leases,
+            lanes: core::mem::take(lanes).into_boxed_slice(),
+            planes: core::mem::take(planes).into_boxed_slice(),
+            pages: core::mem::take(pages).into_boxed_slice(),
+            bindings: core::mem::take(bindings).into_boxed_slice(),
+            leases: core::mem::take(leases),
         })
     }
 
@@ -7722,6 +7866,82 @@ mod tests {
 
     fn identity(tag: u8) -> Identity {
         Identity::new([tag; 32])
+    }
+
+    #[test]
+    fn draft_catchup_page_span_reserves_only_the_missing_draft_boundary_page() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Speculative,
+                bucket,
+            };
+            for (draft, count) in [(31, 0), (32, 1), (33, 0), (8191, 0)] {
+                let lane = draft_catchup_page_lane(parent, request(), draft, draft + 1).unwrap();
+                assert_eq!(lane.request, request());
+                assert_eq!(
+                    lane.role_span(Qwen3ModelRole::Draft06B),
+                    (draft / M1_KV_PAGE_TOKENS, count)
+                );
+                assert_eq!(lane.role_span(Qwen3ModelRole::Target8B), (0, 0));
+                validate_authenticated_page_span_roster(&[lane]).unwrap();
+            }
+            for (draft, target) in [(32, 32), (32, 34), (8192, 8193), (u32::MAX, 0)] {
+                assert!(draft_catchup_page_lane(parent, request(), draft, target).is_err());
+            }
+            for invalid_request in [RequestId::new(32, 1), RequestId::new(3, 0)] {
+                assert!(draft_catchup_page_lane(parent, invalid_request, 32, 33).is_err());
+            }
+            assert!(draft_catchup_page_lane(
+                Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    ..parent
+                },
+                request(),
+                32,
+                33
+            )
+            .is_err());
+            assert!(draft_catchup_page_lane(
+                Qwen3PlanSelection {
+                    bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+                    ..parent
+                },
+                request(),
+                32,
+                33
+            )
+            .is_err());
+        }
+    }
+
+    #[test]
+    fn draft_catchup_page_admission_preallocates_both_plane_rosters_and_one_draft_page() {
+        let storage = M1DraftCatchupPageAdmissionHostStorageV1::try_new().unwrap();
+        assert!(storage.buffers.lanes.capacity() >= 1);
+        assert!(
+            storage.buffers.planes.capacity()
+                >= M1_DRAFT_KV_PLANE_SUBLEASES_V1 + M1_TARGET_KV_PLANE_SUBLEASES_V1
+        );
+        assert!(storage.buffers.pages.capacity() >= 1);
+        assert!(storage.buffers.bindings.capacity() >= M1_DRAFT_KV_PLANE_SUBLEASES_V1);
+        assert!(storage.buffers.leases.capacity() >= 1);
+        assert!(storage.buffers.lanes.is_empty());
+        assert!(storage.buffers.planes.is_empty());
+        assert!(storage.buffers.pages.is_empty());
+        assert!(storage.buffers.bindings.is_empty());
+        assert!(storage.buffers.leases.is_empty());
+        let failure = M1DraftCatchupPageAdmissionFailureV1::new(
+            M1DeviceKvArenaLeaseErrorV1::PageOutOfRange,
+            storage,
+        );
+        let (error, retained) = failure.into_parts();
+        assert!(matches!(error, M1DeviceKvArenaLeaseErrorV1::PageOutOfRange));
+        assert!(retained.buffers.bindings.capacity() >= M1_DRAFT_KV_PLANE_SUBLEASES_V1);
     }
 
     #[test]

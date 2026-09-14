@@ -3147,6 +3147,37 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         }
     }
 
+    pub(crate) fn admit_authenticated_draft_catchup_page_set(
+        &self,
+        authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+        storage: crate::device_cache::M1DraftCatchupPageAdmissionHostStorageV1,
+    ) -> Result<
+        crate::device_cache::M1AuthenticatedNewWindowPageSetAdmissionV1,
+        Box<crate::device_cache::M1DraftCatchupPageAdmissionFailureV1>,
+    > {
+        if resident_speculative_readback_shape(authorized.parent()) != Some(self.shape())
+            || self.custody().selection() != authorized.parent()
+        {
+            return Err(
+                crate::device_cache::M1DraftCatchupPageAdmissionFailureV1::new(
+                    crate::M1DeviceKvArenaLeaseErrorV1::PageOutOfRange,
+                    storage,
+                ),
+            );
+        }
+        let case = match self {
+            Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case,
+        };
+        case.custody
+            .partitioned_memory()
+            .admit_authenticated_draft_catchup_page_set(&case.lower, authorized, storage)
+    }
+
     pub(crate) fn validate_authenticated_empty_successor_page_set(
         &self,
         lanes: &[crate::device_cache::M1AuthenticatedNewWindowLaneAdmissionV1],
