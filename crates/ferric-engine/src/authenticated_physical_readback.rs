@@ -21,8 +21,8 @@ use fe2o3_service_host::{
     ServiceQueueReleaseFailureV1,
 };
 use ferric_spec::{
-    completion::CompletionEpoch, Identity, Qwen3ExecutionMode, Qwen3ModelRole, RequestId, TokenId,
-    M1_MAX_ACTIVE_SEQUENCES,
+    completion::CompletionEpoch, Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanSelection,
+    RequestId, TokenId, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::authenticated_kernel_programs::M1AuthenticatedProgramCatalogWitnessV1;
@@ -51,9 +51,10 @@ use crate::{
     M1ObservedCompletionImageV1, M1ObservedDirectDiagnosticChoicesV1,
     M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalFixedBatchShapeV1,
     M1PhysicalQueueBatchCustodyV1, M1PrepublicationStepCustodyV1, M1ScheduledDispatchV1,
-    M1SpeculativeDiagnosticChoicesErrorV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1,
+    M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Explicit authority demotion for authenticated first-publication S1/K4 diagnostics.
@@ -144,6 +145,138 @@ fn resident_speculative_readback_binding_matches(
             .is_some_and(|shape| shape.packet_count() == packet_count)
 }
 
+fn draft_catchup_readback_binding_matches(
+    parent: Qwen3PlanSelection,
+    queue_selection: Qwen3PlanSelection,
+    output_parent: Option<Qwen3PlanSelection>,
+    completion_selection: Qwen3PlanSelection,
+    member_count: usize,
+) -> bool {
+    resident_speculative_readback_shape(parent).is_some()
+        && queue_selection == parent
+        && output_parent == Some(parent)
+        && member_count == 1
+        && completion_selection
+            == crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection()
+}
+
+fn check_draft_catchup_step_binding(
+    parent: Qwen3PlanSelection,
+    step: &M1PrepublicationStepCustodyV1,
+) -> Result<(RequestId, Identity), M1CompletedOutputCheckErrorV1> {
+    let invalid = || {
+        M1CompletedOutputCheckErrorV1::Output(
+            crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift,
+        )
+    };
+    let scheduled = step.scheduled_dispatch();
+    if scheduled.member_count() != 1 || step.target_plans()[1..].iter().any(Option::is_some) {
+        return Err(invalid());
+    }
+    let request = scheduled.member(0).ok_or_else(invalid)?;
+    let plan = step.target_plans()[0].as_ref().ok_or_else(invalid)?;
+    let completion_selection =
+        crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+    if plan.selection() != completion_selection {
+        return Err(M1CompletedOutputCheckErrorV1::PlanSelectionDrift {
+            lane: 0,
+            expected: completion_selection,
+            actual: plan.selection(),
+        });
+    }
+    if plan.request() != request {
+        return Err(M1CompletedOutputCheckErrorV1::RequestOrderDrift {
+            lane: 0,
+            expected: request,
+            actual: plan.request(),
+        });
+    }
+    if plan.completion_epoch() != scheduled.epoch() {
+        return Err(M1CompletedOutputCheckErrorV1::PlanEpochDrift {
+            lane: 0,
+            expected: scheduled.epoch(),
+            actual: plan.completion_epoch(),
+        });
+    }
+    let M1FullStepKvReservationCustodyV1::DraftCatchup {
+        parent: kv_parent,
+        target_allocation_id,
+        draft,
+    } = step.kv_reservations()
+    else {
+        return Err(invalid());
+    };
+    let draft_selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        ..parent
+    };
+    if *kv_parent != parent
+        || !target_allocation_id.is_present()
+        || !draft.allocation_id().is_present()
+        || draft.selection()
+            != (Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..completion_selection
+            })
+        || draft.reservations().len() != 1
+    {
+        return Err(invalid());
+    }
+    let pending = &draft.reservations()[0];
+    if !pending.is_authenticated_draft_catchup()
+        || pending.selection() != draft_selection
+        || pending.request() != request
+        || pending.epoch() != scheduled.epoch()
+        || pending.active_tokens() != 1
+    {
+        return Err(invalid());
+    }
+    Ok((request, *plan.plan_id()))
+}
+
+fn check_draft_catchup_receipt_image(
+    image: &M1ObservedCompletionImageV1,
+    request: RequestId,
+    epoch: CompletionEpoch,
+    plan_id: Identity,
+) -> Result<(), M1CompletedOutputCheckErrorV1> {
+    let selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Decode,
+        bucket: ferric_spec::Qwen3PlanBucket::DecodeS1C8192,
+    };
+    if image.selection() != selection || image.dispatch_generation() == 0 {
+        return Err(M1CompletedOutputCheckErrorV1::Output(
+            crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift,
+        ));
+    }
+    if image.epoch() != epoch {
+        return Err(M1CompletedOutputCheckErrorV1::ObservationEpochDrift {
+            expected: epoch,
+            actual: image.epoch(),
+        });
+    }
+    if image.records().len() != 1 {
+        return Err(M1CompletedOutputCheckErrorV1::ExpectationCount {
+            expected: 1,
+            actual: image.records().len(),
+        });
+    }
+    // K0 validates an inert completion marker only. Its GPU argmax token is not
+    // a target-authoritative choice and is never published by this boundary.
+    ferric_spec::validate_compact_completion(
+        image.records()[0].record(),
+        request,
+        epoch,
+        &plan_id,
+        0,
+    )
+    .map_err(|source| M1CompletedOutputCheckErrorV1::LiveRecord {
+        lane: 0,
+        source: crate::CompletionWireError::Logical(source),
+    })
+}
+
 impl M1AuthenticatedResidentReadbackHostStorageV1 {
     pub(crate) fn try_new(selection: ferric_spec::Qwen3PlanSelection) -> Option<Self> {
         let shape = resident_speculative_readback_shape(selection)?;
@@ -160,7 +293,8 @@ impl M1AuthenticatedResidentReadbackHostStorageV1 {
                 M1AuthenticatedResidentReadbackCaseHostStorageV1::K16(Box::new_uninit())
             }
             M1PhysicalFixedBatchShapeV1::TargetOnly
-            | M1PhysicalFixedBatchShapeV1::PairedPrefill => return None,
+            | M1PhysicalFixedBatchShapeV1::PairedPrefill
+            | M1PhysicalFixedBatchShapeV1::DraftCatchup => return None,
         };
         Some(Self {
             selection,
@@ -172,6 +306,99 @@ impl M1AuthenticatedResidentReadbackHostStorageV1 {
             },
             readback_case,
         })
+    }
+}
+
+/// Pre-clock storage for one maintenance receipt, never a served-token result.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupReadbackHostStorageV1 {
+    parent: Qwen3PlanSelection,
+    completion: M1ObservedCompletionHostStorageV1,
+    readback_case: Box<
+        MaybeUninit<
+            M1AuthenticatedPhysicalReadbackQueueCaseV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>,
+        >,
+    >,
+    detached_case: Option<Box<MaybeUninit<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>>>,
+}
+
+impl M1AuthenticatedDraftCatchupReadbackHostStorageV1 {
+    pub(crate) fn try_new(parent: Qwen3PlanSelection) -> Option<Self> {
+        resident_speculative_readback_shape(parent)?;
+        let selection = crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+        let shape = crate::m1_completion_output_shape_v1(selection).ok()?;
+        Some(Self {
+            parent,
+            completion: M1ObservedCompletionHostStorageV1::try_new(shape, 1)?,
+            readback_case: Box::new_uninit(),
+            detached_case: Some(Box::new_uninit()),
+        })
+    }
+}
+
+/// Queue and draft-write authority after the maintenance-only wire check.
+/// No conversion to an ordinary checked completion or served token is provided.
+#[must_use = "maintenance completion must settle its exact draft reservation or be quarantined"]
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupCompletedReadbackV1 {
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    completion_plan_id: Identity,
+    queue: M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    image: M1ObservedCompletionImageV1,
+    lineage: Option<
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    >,
+    rollover_intent: Option<
+        crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+    >,
+}
+
+impl M1AuthenticatedDraftCatchupCompletedReadbackV1 {
+    pub(crate) const fn parent_selection(&self) -> Qwen3PlanSelection {
+        self.parent
+    }
+
+    pub(crate) const fn request(&self) -> RequestId {
+        self.request
+    }
+
+    pub(crate) const fn completion_epoch(&self) -> CompletionEpoch {
+        self.image.epoch()
+    }
+
+    pub(crate) const fn dispatch_generation(&self) -> u64 {
+        self.image.dispatch_generation()
+    }
+
+    pub(crate) const fn completion_plan_identity(&self) -> Identity {
+        self.completion_plan_id
+    }
+
+    pub(crate) fn into_completion_parts(
+        self,
+    ) -> (
+        M1AuthenticatedPhysicalReadbackQueueSessionV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+        M1ObservedCompletionImageV1,
+        Option<
+            crate::authenticated_speculative_executor::M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        >,
+        Option<
+            crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeRolloverPhysicalIntentV1,
+        >,
+    ){
+        (
+            self.queue,
+            self.completion,
+            self.kv,
+            self.image,
+            self.lineage,
+            self.rollover_intent,
+        )
     }
 }
 
@@ -1660,6 +1887,12 @@ fn observe_case<const N: usize>(
 ) -> Result<Box<M1AuthenticatedObservedCompletionCaseV1<N>>, Box<ObserveCaseFailureV1<N>>> {
     let (lower, custody, step) = case.recycled_observation_parts();
     let output = custody.completion_output();
+    if output.is_draft_catchup() {
+        return Err(Box::new(ObserveCaseFailureV1::BeforeCopy {
+            error: draft_catchup_ordinary_observation_error(),
+            case,
+        }));
+    }
     let output_shape = output.shape();
     let range = output.retained_host_dispatch_range();
     let canary = output.completion_canary();
@@ -1882,6 +2115,157 @@ impl M1AuthenticatedResidentPhysicalReadbackFailureV1 {
 }
 
 impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
+    pub(crate) fn read_and_check_draft_catchup_completion_with_storage(
+        self,
+        expected_dispatch_generation: u64,
+        storage: M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedDraftCatchupCompletedReadbackV1,
+        Box<M1AuthenticatedResidentPhysicalReadbackFailureV1>,
+    > {
+        let mut case = match self {
+            Self::DraftCatchup(case) => case,
+            queue => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape,
+                    queue,
+                    storage,
+                ));
+            }
+        };
+        let binding = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            if !draft_catchup_readback_binding_matches(
+                storage.parent,
+                custody.selection(),
+                output.draft_catchup_parent_selection(),
+                output.shape().selection(),
+                step.scheduled_dispatch().member_count(),
+            ) || output.completion_canary().is_some()
+                || output.direct_diagnostic_choices().is_some()
+                || output.speculative_diagnostic_choices().is_some()
+                || output.qualification_logits().is_some()
+            {
+                Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape)
+            } else {
+                check_draft_catchup_step_binding(storage.parent, step)
+                    .map_err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Join)
+            }
+        };
+        let (request, completion_plan_id) = match binding {
+            Ok(binding) => binding,
+            Err(error) => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    error,
+                    Self::DraftCatchup(case),
+                    storage,
+                ));
+            }
+        };
+        let M1AuthenticatedDraftCatchupReadbackHostStorageV1 {
+            parent,
+            mut completion,
+            readback_case,
+            detached_case,
+        } = storage;
+        let copied = {
+            let (lower, custody, _step) = case.recycled_observation_parts();
+            let range = custody.completion_output().retained_host_dispatch_range();
+            let read_request = lower.completed_read_request(range);
+            let actual_generation = read_request.dispatch_generation();
+            if expected_dispatch_generation == 0
+                || actual_generation != expected_dispatch_generation
+            {
+                Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape)
+            } else {
+                match completion.bytes_mut() {
+                    Some(destination) => lower
+                        .read_completed_into(read_request, destination)
+                        .map(|()| actual_generation)
+                        .map_err(
+                            |source| M1AuthenticatedResidentPhysicalReadbackErrorV1::Queue {
+                                range: "draft-catchup-completion",
+                                source,
+                            },
+                        ),
+                    None => Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Storage),
+                }
+            }
+        };
+        let actual_generation = match copied {
+            Ok(generation) => generation,
+            Err(error) => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    error,
+                    Self::DraftCatchup(case),
+                    (parent, completion, readback_case, detached_case),
+                ));
+            }
+        };
+        let image = {
+            let (_lower, custody, step) = case.recycled_observation_parts();
+            let output = custody.completion_output();
+            observe_m1_completed_output_with_storage_v1(
+                output.shape(),
+                crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection(),
+                step.scheduled_dispatch(),
+                actual_generation,
+                output.data_index(),
+                output.retained_host_dispatch_range().offset_bytes(),
+                completion,
+            )
+        };
+        let image = match image {
+            Ok(image) => image,
+            Err((source, completion)) => {
+                return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                    M1AuthenticatedResidentPhysicalReadbackErrorV1::Observation(source),
+                    Self::DraftCatchup(case),
+                    (parent, completion, readback_case, detached_case),
+                ));
+            }
+        };
+        let checked = check_draft_catchup_receipt_image(
+            &image,
+            request,
+            case.scheduled_dispatch().epoch(),
+            completion_plan_id,
+        );
+        if let Err(source) = checked {
+            return Err(M1AuthenticatedResidentPhysicalReadbackFailureV1::new(
+                M1AuthenticatedResidentPhysicalReadbackErrorV1::Join(source),
+                Self::DraftCatchup(case),
+                (parent, image, readback_case, detached_case),
+            ));
+        }
+        let (lower, witness, operations, custody, step) = (*case).into_recycled_parts();
+        let (scheduled, _plans, kv, lineage, rollover_intent) =
+            step.into_parts_with_speculative_lineage();
+        let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+        let readback_case = Box::write(
+            readback_case,
+            M1AuthenticatedPhysicalReadbackQueueCaseV1 {
+                lower,
+                witness,
+                operations,
+                custody,
+                resident_detached_case: detached_case,
+            },
+        );
+        Ok(M1AuthenticatedDraftCatchupCompletedReadbackV1 {
+            parent,
+            request,
+            completion_plan_id,
+            queue: M1AuthenticatedPhysicalReadbackQueueSessionV1::DraftCatchup(readback_case),
+            completion,
+            kv,
+            image,
+            lineage,
+            rollover_intent,
+        })
+    }
+
     pub(crate) fn read_and_check_paired_prefill_completion_with_storage(
         self,
         expected_dispatch_generation: u64,
@@ -1909,7 +2293,9 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         let completion_copy = {
             let (lower, custody, _step) = case.recycled_observation_parts();
             let output = custody.completion_output();
-            if output.completion_canary().is_some() {
+            if output.is_draft_catchup() {
+                Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::Shape)
+            } else if output.completion_canary().is_some() {
                 Err(M1AuthenticatedResidentPhysicalReadbackErrorV1::CompletionCanary)
             } else {
                 let range = output.retained_host_dispatch_range();
@@ -2168,7 +2554,7 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
                 custody.selection(),
                 step.scheduled_dispatch().member_count(),
                 N,
-            )
+            ) && !custody.completion_output().is_draft_catchup()
         };
         if !binding_matches {
             return Err(
@@ -2496,6 +2882,12 @@ impl M1AuthenticatedPhysicalRecycledQueueSessionV1 {
         M1AuthenticatedCompletionObservationFailureV1,
     > {
         match self {
+            queue @ Self::DraftCatchup(_) => Err(M1AuthenticatedCompletionObservationFailureV1 {
+                error: draft_catchup_ordinary_observation_error(),
+                custody: M1AuthenticatedCompletionObservationFailureCustodyV1::Recycled(Box::new(
+                    queue,
+                )),
+            }),
             Self::TargetOnly(case) => observe_case(case)
                 .map(M1AuthenticatedObservedCompletionOutputV1::TargetOnly)
                 .map_err(|failure| {
@@ -2684,6 +3076,8 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1 {
 #[must_use = "the live detached authenticated queue and Ferric custody must remain retained"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
+    /// Detached draft maintenance queue with suspended speculative output custody.
+    DraftCatchup(Box<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>),
     /// Detached target-only queue.
     TargetOnly(Box<M1AuthenticatedPhysicalReadbackDetachedQueueCaseV1>),
     /// Detached paired-prefill queue.
@@ -2700,6 +3094,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2710,6 +3105,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub(crate) fn program_families_match(&self) -> bool {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2726,6 +3122,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     > {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2742,6 +3139,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     ) -> Result<(), crate::M1DeviceKvArenaLeaseErrorV1> {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2761,6 +3159,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     > {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2775,6 +3174,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
@@ -2788,6 +3188,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2800,6 +3201,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn device(&self) -> Gfx942DeviceBinding {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2812,6 +3214,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn observation(&self) -> ComputeAqlQueueObservationV1 {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2824,6 +3227,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn program_catalog_id(&self) -> Identity {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2836,6 +3240,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn runner_declaration_id(&self) -> Identity {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2848,6 +3253,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn kernel_catalog_id(&self) -> Identity {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2860,6 +3266,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
     pub const fn detached_dispatch_generation(&self) -> u64 {
         match self {
             Self::TargetOnly(case)
+            | Self::DraftCatchup(case)
             | Self::PairedPrefill(case)
             | Self::SpeculativeK4(case)
             | Self::SpeculativeK8(case)
@@ -2877,6 +3284,7 @@ impl M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1 {
         M1PhysicalQueueBatchCustodyV1,
     ) {
         let (shape, case) = match self {
+            Self::DraftCatchup(case) => (M1PhysicalFixedBatchShapeV1::DraftCatchup, case),
             Self::TargetOnly(case) => (M1PhysicalFixedBatchShapeV1::TargetOnly, case),
             Self::PairedPrefill(case) => (M1PhysicalFixedBatchShapeV1::PairedPrefill, case),
             Self::SpeculativeK4(case) => (M1PhysicalFixedBatchShapeV1::SpeculativeK4, case),
@@ -3388,6 +3796,9 @@ fn release_authenticated_recycled_queue(
     Box<M1AuthenticatedPhysicalReadbackQueueReleaseFailureV1>,
 > {
     match queue {
+        M1AuthenticatedPhysicalRecycledQueueSessionV1::DraftCatchup(case) => {
+            release_authenticated_phase_case(case, M1PhysicalFixedBatchShapeV1::DraftCatchup)
+        }
         M1AuthenticatedPhysicalRecycledQueueSessionV1::TargetOnly(case) => {
             release_authenticated_phase_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
         }
@@ -3539,6 +3950,9 @@ fn finish_authenticated_readback_teardown(
 #[must_use = "authenticated post-readback queue custody must remain retained"]
 #[derive(Debug)]
 pub enum M1AuthenticatedPhysicalReadbackQueueSessionV1 {
+    DraftCatchup(
+        Box<M1AuthenticatedPhysicalReadbackQueueCaseV1<M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1>>,
+    ),
     TargetOnly(
         Box<M1AuthenticatedPhysicalReadbackQueueCaseV1<M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1>>,
     ),
@@ -3561,6 +3975,7 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
     /// preflight. This exposes no mutable or program authority.
     pub(crate) const fn operations(&self) -> &DeclaredOperationKernelPlan {
         match self {
+            Self::DraftCatchup(case) => &case.operations,
             Self::TargetOnly(case) => &case.operations,
             Self::PairedPrefill(case) => &case.operations,
             Self::SpeculativeK4(case) => &case.operations,
@@ -3578,6 +3993,7 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
@@ -3590,6 +4006,7 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
     #[must_use = "Ferric custody remains paired with the authenticated queue"]
     pub const fn custody(&self) -> &M1PhysicalQueueBatchCustodyV1 {
         match self {
+            Self::DraftCatchup(case) => &case.custody,
             Self::TargetOnly(case) => &case.custody,
             Self::PairedPrefill(case) => &case.custody,
             Self::SpeculativeK4(case) => &case.custody,
@@ -3600,6 +4017,7 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
 
     pub(crate) fn custody_mut(&mut self) -> &mut M1PhysicalQueueBatchCustodyV1 {
         match self {
+            Self::DraftCatchup(case) => &mut case.custody,
             Self::TargetOnly(case) => &mut case.custody,
             Self::PairedPrefill(case) => &mut case.custody,
             Self::SpeculativeK4(case) => &mut case.custody,
@@ -3612,6 +4030,7 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
         match self {
+            Self::DraftCatchup(case) => case.witness.catalog_id(),
             Self::TargetOnly(case) => case.witness.catalog_id(),
             Self::PairedPrefill(case) => case.witness.catalog_id(),
             Self::SpeculativeK4(case) => case.witness.catalog_id(),
@@ -3632,6 +4051,10 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
         Box<M1AuthenticatedPhysicalReadbackQueueOperationFailureV1>,
     > {
         match self {
+            Self::DraftCatchup(case) => {
+                detach_authenticated_readback_case(case, M1PhysicalFixedBatchShapeV1::DraftCatchup)
+                    .map(M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1::DraftCatchup)
+            }
             Self::TargetOnly(case) => {
                 detach_authenticated_readback_case(case, M1PhysicalFixedBatchShapeV1::TargetOnly)
                     .map(M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1::TargetOnly)
@@ -3669,6 +4092,10 @@ impl M1AuthenticatedPhysicalReadbackQueueSessionV1 {
         Box<M1AuthenticatedPhysicalPostReadbackQueueReleaseFailureV1>,
     > {
         match self {
+            Self::DraftCatchup(case) => release_authenticated_post_readback_case(
+                case,
+                M1PhysicalFixedBatchShapeV1::DraftCatchup,
+            ),
             Self::TargetOnly(case) => release_authenticated_post_readback_case(
                 case,
                 M1PhysicalFixedBatchShapeV1::TargetOnly,
@@ -3768,6 +4195,24 @@ enum M1AuthenticatedCompletionEvidenceJoinAuthorityV1 {
     SpeculativeDiagnostic,
 }
 
+fn draft_catchup_ordinary_observation_error() -> M1CompletionObservationErrorV1 {
+    M1CompletionObservationErrorV1::Image(crate::M1ObservedCompletionImageErrorV1::Output(
+        crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift,
+    ))
+}
+
+fn validate_served_output_maintenance_tag(
+    maintenance: bool,
+) -> Result<(), M1CompletedOutputCheckErrorV1> {
+    if maintenance {
+        Err(M1CompletedOutputCheckErrorV1::Output(
+            crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift,
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 fn validate_generic_observed_semantics(
     authority: M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
     qualification_capture_enabled: bool,
@@ -3812,6 +4257,11 @@ fn check_observed_case<const N: usize>(
     authority: M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
     semantics: &[CompletionWireSemanticExpectation<'_>],
 ) -> CheckObservedCaseResultV1<N> {
+    if let Err(error) = validate_served_output_maintenance_tag(
+        case.case.custody().completion_output().is_draft_catchup(),
+    ) {
+        return Err((error, case));
+    }
     let scheduled = case.case.scheduled_dispatch();
     if semantics.len() != scheduled.member_count() {
         return Err((
@@ -4893,16 +5343,22 @@ impl M1AuthenticatedSpeculativeK4DiagnosticSemanticTeardownFailureV1 {
 #[cfg(test)]
 mod tests {
     use super::{
-        authenticated_direct_semantics, is_authenticated_s1_k4_first_dispatch_generation,
+        authenticated_direct_semantics, check_draft_catchup_receipt_image,
+        draft_catchup_readback_binding_matches, is_authenticated_s1_k4_first_dispatch_generation,
         resident_speculative_readback_binding_matches, resident_speculative_readback_shape,
-        validate_generic_observed_semantics, M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
+        validate_generic_observed_semantics, validate_served_output_maintenance_tag,
+        M1AuthenticatedCompletionEvidenceJoinAuthorityV1,
+        M1AuthenticatedDraftCatchupReadbackHostStorageV1,
         M1AuthenticatedResidentReadbackCaseHostStorageV1,
         M1AuthenticatedResidentReadbackHostStorageV1, M1_AUTHENTICATED_S1_K4_DIAGNOSTIC_STATUS_V1,
     };
     use crate::{
         CompletionWireSemanticExpectation, M1CompletedOutputCheckErrorV1,
-        M1ObservedDirectDiagnosticChoicesV1, M1PhysicalFixedBatchShapeV1,
+        M1ObservedCompletionImageV1, M1ObservedDirectDiagnosticChoicesV1,
+        M1PhysicalFixedBatchShapeV1,
     };
+    use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as ReceiptLayout;
+    use ferric_spec::{completion::CompletionEpoch, Identity, RequestId};
     use ferric_spec::{
         Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
         M1_MAX_ACTIVE_SEQUENCES,
@@ -4914,6 +5370,171 @@ mod tests {
             mode: Qwen3ExecutionMode::Speculative,
             bucket,
         }
+    }
+
+    #[test]
+    fn maintenance_readback_storage_is_exact_singleton_without_diagnostic_buffers() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = resident_selection(bucket);
+            let mut storage = M1AuthenticatedDraftCatchupReadbackHostStorageV1::try_new(parent)
+                .expect("one preallocated maintenance receipt");
+            assert_eq!(storage.parent, parent);
+            assert_eq!(storage.completion.bytes_mut().unwrap().len(), 120);
+            assert!(storage.detached_case.is_some());
+            let completion =
+                crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+            assert!(draft_catchup_readback_binding_matches(
+                parent,
+                parent,
+                Some(parent),
+                completion,
+                1
+            ));
+            for other in [
+                resident_selection(Qwen3PlanBucket::SpeculativeS1K4C8192),
+                resident_selection(Qwen3PlanBucket::SpeculativeS1K8C8192),
+                resident_selection(Qwen3PlanBucket::SpeculativeS1K16C8192),
+            ] {
+                if other != parent {
+                    assert!(!draft_catchup_readback_binding_matches(
+                        parent,
+                        other,
+                        Some(parent),
+                        completion,
+                        1
+                    ));
+                    assert!(!draft_catchup_readback_binding_matches(
+                        parent,
+                        parent,
+                        Some(other),
+                        completion,
+                        1
+                    ));
+                }
+            }
+            assert!(!draft_catchup_readback_binding_matches(
+                parent, parent, None, completion, 1
+            ));
+            assert!(!draft_catchup_readback_binding_matches(
+                parent,
+                parent,
+                Some(parent),
+                parent,
+                1
+            ));
+            for members in [0, 2, 8] {
+                assert!(!draft_catchup_readback_binding_matches(
+                    parent,
+                    parent,
+                    Some(parent),
+                    completion,
+                    members
+                ));
+            }
+        }
+        for parent in [
+            resident_selection(Qwen3PlanBucket::SpeculativeS8K4C8192),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..resident_selection(Qwen3PlanBucket::SpeculativeS1K4C8192)
+            },
+            Qwen3PlanSelection {
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+                ..resident_selection(Qwen3PlanBucket::SpeculativeS1K4C8192)
+            },
+        ] {
+            assert!(M1AuthenticatedDraftCatchupReadbackHostStorageV1::try_new(parent).is_none());
+        }
+    }
+
+    fn maintenance_receipt_bytes() -> [u8; ReceiptLayout::RECORD_BYTES_USIZE] {
+        let mut bytes = [0; ReceiptLayout::RECORD_BYTES_USIZE];
+        bytes[ReceiptLayout::REQUEST_SLOT_OFFSET..][..4].copy_from_slice(&3_u32.to_le_bytes());
+        bytes[ReceiptLayout::REQUEST_GENERATION_OFFSET..][..4]
+            .copy_from_slice(&7_u32.to_le_bytes());
+        bytes[ReceiptLayout::COMPLETION_EPOCH_OFFSET..][..8].copy_from_slice(&11_u64.to_le_bytes());
+        bytes[ReceiptLayout::PLAN_IDENTITY_OFFSET..][..32].copy_from_slice(&[9; 32]);
+        bytes[ReceiptLayout::EMITTED_TOKEN_COUNT_OFFSET] = 1;
+        bytes[ReceiptLayout::token_offset(0).unwrap()..][..4]
+            .copy_from_slice(&41_u32.to_le_bytes());
+        bytes
+    }
+
+    fn maintenance_test_image(
+        bytes: [u8; ReceiptLayout::RECORD_BYTES_USIZE],
+    ) -> M1ObservedCompletionImageV1 {
+        let selection = crate::M1StepDispatchIntent::DraftCatchup(resident_selection(
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        ))
+        .completion_selection();
+        let scheduled = crate::M1ScheduledDispatchV1::for_test(
+            CompletionEpoch::new(11),
+            &[RequestId::new(3, 7)],
+        );
+        M1ObservedCompletionImageV1::from_bytes_for_test(
+            crate::m1_completion_output_shape_v1(selection).unwrap(),
+            selection,
+            &scheduled,
+            2,
+            4,
+            0,
+            Box::new(bytes),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn maintenance_wire_marker_rejects_stale_identity_acceptance_and_padding() {
+        let check = |bytes| {
+            check_draft_catchup_receipt_image(
+                &maintenance_test_image(bytes),
+                RequestId::new(3, 7),
+                CompletionEpoch::new(11),
+                Identity::new([9; 32]),
+            )
+        };
+        let valid = maintenance_receipt_bytes();
+        assert!(check(valid).is_ok());
+        for offset in [
+            ReceiptLayout::REQUEST_SLOT_OFFSET,
+            ReceiptLayout::REQUEST_GENERATION_OFFSET,
+            ReceiptLayout::COMPLETION_EPOCH_OFFSET,
+            ReceiptLayout::PLAN_IDENTITY_OFFSET,
+            ReceiptLayout::ACCEPTED_DRAFT_TOKENS_OFFSET,
+            ReceiptLayout::EMITTED_TOKEN_COUNT_OFFSET,
+            ReceiptLayout::token_offset(1).unwrap(),
+        ] {
+            let mut changed = valid;
+            changed[offset] += 1;
+            assert!(check(changed).is_err(), "mutated receipt offset {offset}");
+        }
+        let mut invalid_token = valid;
+        invalid_token[ReceiptLayout::token_offset(0).unwrap()..][..4]
+            .copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(check(invalid_token).is_err());
+        assert!(check_draft_catchup_receipt_image(
+            &maintenance_test_image(valid),
+            RequestId::new(3, 7),
+            CompletionEpoch::new(12),
+            Identity::new([9; 32])
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn maintenance_tag_never_authorizes_an_ordinary_served_join() {
+        assert!(validate_served_output_maintenance_tag(false).is_ok());
+        assert!(matches!(
+            validate_served_output_maintenance_tag(true),
+            Err(M1CompletedOutputCheckErrorV1::Output(
+                crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift
+            )),
+        ));
     }
 
     #[test]
