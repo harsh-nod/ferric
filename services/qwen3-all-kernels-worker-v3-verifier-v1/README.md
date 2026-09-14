@@ -2,8 +2,8 @@
 
 This standalone package owns Ferric's fail-closed V2 service orchestration for
 the 12-entry Qwen3 aggregate roster. It is deliberately outside the legacy
-Ferric workspace and uses fe2o3's multi-phase Worker V3 transport at commit
-`3546d54d2c4a913f5d079701aed557d0a378bba8`.
+Ferric workspace and uses fe2o3's multi-phase Worker V3 transport at the exact
+revision pinned in this package's `Cargo.toml` and `Cargo.lock`.
 
 The foundation provides:
 
@@ -19,6 +19,8 @@ The foundation provides:
 - canonical V2 envelope and compiler-current-record association;
 - explicit protected current-record, independent checker, and external signer
   provider contracts;
+- a descriptor-only independent-checker client implementing the real service
+  provider contract with bounded, complete envelope and HSACO byte carriage;
 - a descriptor-only protected compiler-current client for one
   supervisor-preopened connected `SOCK_SEQPACKET` endpoint, pinned to one
   protocol, measured provider, compiler policy, and fresh admission session;
@@ -167,6 +169,27 @@ compiler policy or live session store; store a private key; run an independent
 checker; or launch a protected deployment. Signer
 authority is unchanged: Its descriptor checks and wire protocol grant no production authority.
 Head-store authority exists only through its explicit unsafe supervisor admission.
+
+The independent-checker client uses one supervisor-preopened connected
+`SOCK_SEQPACKET` endpoint, pinned to its object identity, exact peer PID/UID/GID,
+distinct checker UID, checker measurement, policy, fresh admission session and
+nonzero request sequence. It transmits the complete Begin frame, compiler claims
+and current-authentication transcript, followed by every exact envelope and HSACO
+byte in ordered chunks of at most 16 KiB, with a fixed 32-KiB packet cap. One
+unchanged absolute deadline covers the exchange. The terminal response must join
+the entire request and all twelve ordered result entries before the client
+constructs the service's checked claim set. Pre-send input or deadline rejection
+retains custody; an invalid endpoint, prequeued traffic or ambiguous post-send
+failure permanently poisons and closes the endpoint.
+
+Its codecs and bounded payload assembler are inert transport data, not theorem
+authority. Production admission remains an explicit unsafe supervisor contract
+requiring a separately measured checker that actually replays finalization and
+proves every required property against the supplied bytes, plus a fresh exclusive
+connection and restart-safe admission state. The actual theorem-checker process,
+measurement provisioning, protected deployment and other authority providers
+remain unimplemented or externally provisioned. This client neither promotes an
+engineering image nor establishes proof or deployment closure.
 
 The private `0700` directory excludes different-UID path mutation. Like any
 pathname API, it cannot exclude a concurrent rename by another thread or

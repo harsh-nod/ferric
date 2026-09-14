@@ -1588,7 +1588,7 @@ fn validate_admission_coordinates(
     Ok(())
 }
 
-fn validate_endpoint<const REQUIRE_DISTINCT_UID: bool>(
+pub(crate) fn validate_endpoint<const REQUIRE_DISTINCT_UID: bool>(
     peer: &OwnedFd,
     endpoint: ProtectedCompilerCurrentEndpointIdentityV1,
     expected_peer: ProtectedCompilerCurrentPeerIdentityV1,

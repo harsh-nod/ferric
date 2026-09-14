@@ -95,10 +95,17 @@ fn bootstrap_fixture_dependencies_are_test_only() {
     let (production, development) = SERVICE_MANIFEST
         .split_once("[dev-dependencies]")
         .expect("service manifest has an explicit test-dependency boundary");
-    for dependency in ["fe2o3-host", "ferric-build", "ferric-engine"] {
+    for dependency in ["ferric-build", "ferric-engine"] {
         assert!(!production.lines().any(|line| line.starts_with(dependency)));
         assert!(development.lines().any(|line| line.starts_with(dependency)));
     }
+    let production_host = production
+        .lines()
+        .find(|line| line.starts_with("fe2o3-host ="))
+        .expect("checker transport uses the canonical production safety-property type");
+    assert!(!production_host.contains("features"));
+    assert!(!production.contains("worker-v3-verifier-test-support"));
+    assert!(development.lines().any(|line| line.starts_with("fe2o3-host =")));
     assert!(development.contains("worker-v3-verifier-test-support"));
 }
 

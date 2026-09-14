@@ -1323,6 +1323,27 @@ fn sha256(bytes: &[u8]) -> [u8; 32] {
 }
 
 #[cfg(test)]
+pub(crate) fn checker_input_for_test<'a>(
+    request: &'a WorkerV3VerificationRequestV1,
+    envelope_bytes: &'a [u8],
+    envelope: &'a WorkerV3LoadEnvelopeWireV2,
+    hsaco_bytes: &'a [u8],
+    compiler_claims: &'a M1AllKernelsProtectedReceiptCompilerClaimsV1,
+    current_authentication: &'a AuthenticatedCompilerCurrentRecordV1,
+    deadline: AbsoluteSessionDeadlineV1,
+) -> IndependentCheckerInputV1<'a> {
+    IndependentCheckerInputV1 {
+        request,
+        envelope_bytes,
+        envelope,
+        hsaco_bytes,
+        compiler_claims,
+        current_authentication,
+        deadline,
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use std::fs::File;
     use std::io::{self, Write};
