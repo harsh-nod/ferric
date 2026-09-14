@@ -1,0 +1,27 @@
+{
+  "authority": "none",
+  "files": [
+    {
+      "bytes": 22856,
+      "path": "engineering_run.py",
+      "sha256": "89e1aee53f6e5629b02abaa768e0e35984e972f483db4aed489571e80cfc9488"
+    },
+    {
+      "bytes": 621,
+      "path": "pyproject.toml",
+      "sha256": "ca74b9a61e2c698f2b8443766b5efbf57afa69746db65122ed309e67c364e91e"
+    },
+    {
+      "bytes": 79377,
+      "path": "run.py",
+      "sha256": "720d123576f524e640c2072316465c6a16ac0bde8bf53178a390bd5f4ea7a696"
+    },
+    {
+      "bytes": 59174,
+      "path": "uv.lock",
+      "sha256": "1307400cd3725b0d3936ce99e722b885fd05b07d0951f08d049c922520f7811c"
+    }
+  ],
+  "format": "FERRIC-M1-ENGINEERING-REFERENCE-IMPLEMENTATION-V1",
+  "python": "3.12"
+}

@@ -1,3 +1,4 @@
+use super::engineering_r29_inputs::{self, EngineeringCoordinatesV1};
 use super::{
     aggregate_identity, build_authenticated_sequential_plan_catalog,
     build_preliminary_identity_closure, canonical_bytes, complete_closure,
@@ -7,11 +8,12 @@ use super::{
     parse_environment_document, parse_identities, parse_input_tokens, parse_plan_document,
     parse_workload_document, require_identity, require_relative, require_sha256,
     require_supported_capture, rows_for_kind, secure_parent, selection_json, sha256_array,
-    sha256_hex, string_field, validate_plan_identities, validate_roster_document, CaptureResult,
-    ClosureIdentities, DifferentialPlan, M1R29CaptureProgramSourceV1, ModelInputBytes,
-    PersistedM1R29CaptureProgramSourceV1, PlanCase, SecureDirectory, StagingOutput,
-    DECODE_CONTEXT_LENGTH, DIFFERENTIAL_KINDS, DIFFERENTIAL_NONCLAIM, ENVIRONMENT_FORMAT,
-    M1_QUALIFICATION_TOKENS_PER_LANE, PLAN_FORMAT, ROSTER_FORMAT, TARGET, WORKLOAD_FORMAT,
+    sha256_hex, string_field, validate_plan_identity_bindings, validate_roster_document,
+    CaptureResult, ClosureIdentities, DifferentialPlan, M1R29CaptureProgramSourceV1,
+    ModelInputBytes, PersistedM1R29CaptureProgramSourceV1, PlanCase, PlanIdentityBindingsV1,
+    SecureDirectory, StagingOutput, DECODE_CONTEXT_LENGTH, DIFFERENTIAL_KINDS,
+    DIFFERENTIAL_NONCLAIM, ENVIRONMENT_FORMAT, M1_QUALIFICATION_TOKENS_PER_LANE, PLAN_FORMAT,
+    ROSTER_FORMAT, TARGET, WORKLOAD_FORMAT,
 };
 use ferric_spec::{Qwen3ExecutionMode, Qwen3PlanSelection};
 use rustix::fs::Dir;
@@ -57,6 +59,129 @@ struct ReconstructedInputs {
     declaration: ferric_build::GeneratedRunnerDeclaration,
     deployment: ferric_spec::DeploymentBundle,
     model: ModelInputBytes,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(super) enum InputDocumentPurposeV1 {
+    Qualification,
+    EngineeringCoordinates,
+}
+
+impl InputDocumentPurposeV1 {
+    fn plan_bindings(self, value: &Value) -> CaptureResult<PlanIdentityBindingsV1> {
+        match self {
+            Self::Qualification => Ok(parse_closure_document(value)?.plan_bindings()),
+            Self::EngineeringCoordinates => {
+                Ok(EngineeringCoordinatesV1::parse(value)?.plan_bindings())
+            }
+        }
+    }
+
+    fn validate_policy(self, value: &Value) -> CaptureResult<()> {
+        match self {
+            Self::Qualification => validate_acceptance_policy(value),
+            Self::EngineeringCoordinates => engineering_r29_inputs::validate_policy(value),
+        }
+    }
+}
+
+pub(super) fn engineering_inputs<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+    validate_existing: bool,
+) -> CaptureResult<()> {
+    let [prepacked_root, artifact_root, reference_implementation_path, reference_protocol_path, gpu_unique_id, output] =
+        arguments
+    else {
+        return Err("usage: ferric-m1-engineering-r29-capture generate-engineering-inputs|validate-engineering-inputs SNAPSHOT ENGINEERING-ARTIFACT REFERENCE-IMPLEMENTATION REFERENCE-PROTOCOL GPU-ID OUTPUT".to_owned());
+    };
+    let gpu_unique_id = parse_gpu_unique_id(gpu_unique_id)?;
+    let implementation =
+        measure_engineering_reference(Path::new(reference_implementation_path), false)?;
+    let protocol = measure_engineering_reference(Path::new(reference_protocol_path), true)?;
+    let executable = current_executable_sha256()?;
+    let artifacts = S::reopen(Path::new(artifact_root))?;
+    let artifact_coordinates = S::engineering_coordinates(&artifacts)?;
+    if artifact_coordinates.program_catalog != S::program_catalog_id(&artifacts) {
+        return Err(
+            "engineering artifact coordinate catalog differs from the admitted artifact".to_owned(),
+        );
+    }
+    let snapshot = SecureDirectory::open(Path::new(prepacked_root), "prepacked snapshot root")?;
+    let model = load_model_inputs(&snapshot)?;
+    let admission = model.authenticate()?;
+    let deployment = *admission.prepacked().deployment();
+    let catalog = build_authenticated_sequential_plan_catalog(admission)
+        .map_err(|error| format!("cannot build engineering model plan: {error:?}"))?;
+    let coordinates = EngineeringCoordinatesV1::from_catalog(&catalog, artifact_coordinates)?;
+    let external = coordinates.external_inputs(&catalog)?;
+    let identity_closure = build_preliminary_identity_closure(catalog, external)
+        .map_err(|error| format!("cannot build engineering runner coordinates: {error:?}"))?;
+    let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
+        .map_err(|error| format!("cannot generate engineering runner declaration: {error:?}"))?;
+    let reconstructed = ReconstructedInputs {
+        declaration,
+        deployment,
+        model,
+    };
+    let closure_bytes = coordinates.bytes()?;
+    let policy_bytes = canonical_bytes(&engineering_r29_inputs::policy_value())?;
+    let documents = build_input_documents_with_bindings(
+        &closure_bytes,
+        &policy_bytes,
+        gpu_unique_id,
+        &executable,
+        &implementation,
+        &protocol,
+        &reconstructed,
+        coordinates.plan_bindings(),
+    )?;
+    let plan = validate_protocol_documents_for_purpose(
+        &documents,
+        gpu_unique_id,
+        coordinates.plan_bindings(),
+        &reconstructed,
+        InputDocumentPurposeV1::EngineeringCoordinates,
+    )?;
+    let invocation_map = invocation_map_for_purpose::<S>(
+        Path::new(output),
+        Path::new(prepacked_root),
+        Path::new(artifact_root),
+        gpu_unique_id,
+        &plan,
+        InputDocumentPurposeV1::EngineeringCoordinates,
+    )?;
+    if validate_existing {
+        require_published_roster(Path::new(output))?;
+        compare_published_documents(Path::new(output), &documents)?;
+    } else {
+        publish_documents(&documents, Path::new(output))?;
+    }
+    write_invocation_map(&invocation_map)
+}
+
+fn measure_engineering_reference(path: &Path, protocol: bool) -> CaptureResult<String> {
+    let (value, bytes) = read_canonical_external(path, "engineering reference record")?;
+    let object = value
+        .as_object()
+        .ok_or_else(|| "engineering reference record must be an object".to_owned())?;
+    expect_string(object, "authority", "none")?;
+    expect_string(
+        object,
+        "format",
+        if protocol {
+            "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1"
+        } else {
+            "FERRIC-M1-ENGINEERING-REFERENCE-IMPLEMENTATION-V1"
+        },
+    )?;
+    if protocol && field(object, "qualification")? != &Value::Bool(false) {
+        return Err("engineering reference protocol must disclaim qualification".to_owned());
+    }
+    let digest = measure_regular_file(path, "engineering reference record")?;
+    if digest != sha256_hex(&bytes) {
+        return Err("engineering reference record changed during measurement".to_owned());
+    }
+    Ok(digest)
 }
 
 pub(super) fn generate_inputs(arguments: &[OsString]) -> CaptureResult<()> {
@@ -223,6 +348,31 @@ fn build_input_documents(
     reference_protocol: &str,
     reconstructed: &ReconstructedInputs,
 ) -> CaptureResult<InputDocuments> {
+    let closure_value = parse_canonical(closure_bytes, "qualification closure")?;
+    let bindings = parse_closure_document(&closure_value)?.plan_bindings();
+    build_input_documents_with_bindings(
+        closure_bytes,
+        policy_bytes,
+        gpu_unique_id,
+        executable,
+        reference_implementation,
+        reference_protocol,
+        reconstructed,
+        bindings,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_input_documents_with_bindings(
+    closure_bytes: &[u8],
+    policy_bytes: &[u8],
+    gpu_unique_id: u64,
+    executable: &str,
+    reference_implementation: &str,
+    reference_protocol: &str,
+    reconstructed: &ReconstructedInputs,
+    bindings: PlanIdentityBindingsV1,
+) -> CaptureResult<InputDocuments> {
     let cases = build_case_documents()?;
     let environment_bytes = canonical_bytes(&json!({
         "format": ENVIRONMENT_FORMAT,
@@ -236,7 +386,7 @@ fn build_input_documents(
     }))?;
     let mut identities = derived_identities(
         &cases.cases,
-        closure_bytes,
+        bindings,
         policy_bytes,
         &environment_bytes,
         executable,
@@ -304,7 +454,7 @@ fn assemble_input_documents(
 #[allow(clippy::too_many_arguments)]
 fn derived_identities(
     cases: &[PlanCase],
-    closure_bytes: &[u8],
+    bindings: PlanIdentityBindingsV1,
     policy_bytes: &[u8],
     environment_bytes: &[u8],
     executable: &str,
@@ -315,8 +465,6 @@ fn derived_identities(
     require_sha256(executable)?;
     require_sha256(reference_implementation)?;
     require_sha256(reference_protocol)?;
-    let closure_value = parse_canonical(closure_bytes, "qualification closure")?;
-    let closure = parse_closure_document(&closure_value)?;
     let deployment = &reconstructed.deployment;
     let declaration = &reconstructed.declaration;
     let model = &reconstructed.model;
@@ -349,7 +497,7 @@ fn derived_identities(
         ("benchmark-executable".to_owned(), executable.to_owned()),
         (
             "benchmark-protocol".to_owned(),
-            hex_identity(closure.qualification_protocol),
+            hex_identity(bindings.protocol),
         ),
         ("config".to_owned(), hex_identity(config)),
         (
@@ -359,11 +507,11 @@ fn derived_identities(
         ("environment".to_owned(), sha256_hex(environment_bytes)),
         (
             "fe2o3-source-closure".to_owned(),
-            hex_identity(closure.fe2o3_source),
+            hex_identity(bindings.fe2o3_source),
         ),
         (
             "ferric-source-closure".to_owned(),
-            hex_identity(closure.ferric_source),
+            hex_identity(bindings.ferric_source),
         ),
         (
             "generated-plan".to_owned(),
@@ -527,6 +675,29 @@ fn validate_protocol_documents(
     closure: &ClosureIdentities,
     reconstructed: &ReconstructedInputs,
 ) -> CaptureResult<DifferentialPlan> {
+    let value = parse_canonical(
+        document_bytes(documents, CLOSURE_PATH)?,
+        "qualification closure",
+    )?;
+    if parse_closure_document(&value)? != *closure {
+        return Err("bundled qualification closure identity roster drifted".to_owned());
+    }
+    validate_protocol_documents_for_purpose(
+        documents,
+        gpu_unique_id,
+        closure.plan_bindings(),
+        reconstructed,
+        InputDocumentPurposeV1::Qualification,
+    )
+}
+
+fn validate_protocol_documents_for_purpose(
+    documents: &InputDocuments,
+    gpu_unique_id: u64,
+    bindings: PlanIdentityBindingsV1,
+    reconstructed: &ReconstructedInputs,
+    purpose: InputDocumentPurposeV1,
+) -> CaptureResult<DifferentialPlan> {
     if documents.files.len() != EXACT_BUNDLE_FILE_COUNT {
         return Err("qualification input bundle file roster drifted".to_owned());
     }
@@ -543,7 +714,7 @@ fn validate_protocol_documents(
         document_bytes(documents, CLOSURE_PATH)?,
         "qualification closure",
     )?;
-    if parse_closure_document(&closure_value)? != *closure {
+    if purpose.plan_bindings(&closure_value)? != bindings {
         return Err("bundled qualification closure identity roster drifted".to_owned());
     }
     let environment_bytes = document_bytes(documents, ENVIRONMENT_PATH)?;
@@ -558,7 +729,7 @@ fn validate_protocol_documents(
     )?;
     let policy_bytes = document_bytes(documents, ACCEPTANCE_POLICY_PATH)?;
     let policy = parse_canonical(policy_bytes, "differential acceptance policy")?;
-    validate_acceptance_policy(&policy)?;
+    purpose.validate_policy(&policy)?;
     require_identity(
         plan.identity("differential-acceptance-policy")?,
         &sha256_hex(policy_bytes),
@@ -571,10 +742,10 @@ fn validate_protocol_documents(
         let tokens = document_bytes(documents, &token_path(&case.kind))?;
         parse_input_tokens(tokens, &workload, case)?;
         require_supported_capture(&workload)?;
-        validate_plan_identities(
+        validate_plan_identity_bindings(
             &plan,
             case,
-            closure,
+            bindings,
             &reconstructed.declaration,
             &reconstructed.deployment,
             &reconstructed.model,
@@ -779,6 +950,24 @@ fn invocation_map_bytes<S: M1R29CaptureProgramSourceV1>(
     gpu_unique_id: u64,
     plan: &DifferentialPlan,
 ) -> CaptureResult<Vec<u8>> {
+    invocation_map_for_purpose::<S>(
+        bundle,
+        prepacked_root,
+        artifact_root,
+        gpu_unique_id,
+        plan,
+        InputDocumentPurposeV1::Qualification,
+    )
+}
+
+fn invocation_map_for_purpose<S: M1R29CaptureProgramSourceV1>(
+    bundle: &Path,
+    prepacked_root: &Path,
+    artifact_root: &Path,
+    gpu_unique_id: u64,
+    plan: &DifferentialPlan,
+    purpose: InputDocumentPurposeV1,
+) -> CaptureResult<Vec<u8>> {
     let plan_path = bundle.join(PLAN_PATH);
     let roster_path = bundle.join(ROSTER_PATH);
     let closure_path = bundle.join(CLOSURE_PATH);
@@ -788,30 +977,40 @@ fn invocation_map_bytes<S: M1R29CaptureProgramSourceV1>(
         .iter()
         .map(|case| {
             let output = bundle.with_file_name(format!("{}.capture.bundle", case.kind));
+            let mut arguments = vec![
+                path_string(&plan_path)?.to_owned(),
+                path_string(&roster_path)?.to_owned(),
+                case.id.clone(),
+                path_string(&bundle.join(workload_path(&case.kind)))?.to_owned(),
+                path_string(prepacked_root)?.to_owned(),
+                path_string(artifact_root)?.to_owned(),
+                path_string(&closure_path)?.to_owned(),
+                path_string(&environment_path)?.to_owned(),
+                gpu_unique_id.to_string(),
+                path_string(&output)?.to_owned(),
+            ];
+            if purpose == InputDocumentPurposeV1::EngineeringCoordinates {
+                arguments.insert(0, "capture-engineering".to_owned());
+            }
             Ok(json!({
-                "arguments": [
-                    path_string(&plan_path)?,
-                    path_string(&roster_path)?,
-                    case.id,
-                    path_string(&bundle.join(workload_path(&case.kind)))?,
-                    path_string(prepacked_root)?,
-                    path_string(artifact_root)?,
-                    path_string(&closure_path)?,
-                    path_string(&environment_path)?,
-                    gpu_unique_id.to_string(),
-                    path_string(&output)?,
-                ],
+                "arguments": arguments,
                 "case_id": case.id,
                 "kind": case.kind,
             }))
         })
         .collect::<CaptureResult<Vec<_>>>()?;
-    canonical_bytes(&json!({
+    let mut document = json!({
         "command": S::CAPTURE_COMMAND,
         "format": S::INVOCATION_FORMAT,
         "invocations": invocations,
         "plan_sha256": plan.sha256(),
-    }))
+    });
+    if purpose == InputDocumentPurposeV1::EngineeringCoordinates {
+        document["format"] = json!("FERRIC-M1-ENGINEERING-R29-INVOCATIONS-V1");
+        document["authority"] = json!("none");
+        document["qualification"] = json!(false);
+    }
+    canonical_bytes(&document)
 }
 
 fn write_invocation_map(bytes: &[u8]) -> CaptureResult<()> {
@@ -1162,5 +1361,122 @@ mod tests {
                 .components()
                 .all(|component| matches!(component, Component::Normal(_)))
         }));
+    }
+
+    #[test]
+    fn engineering_and_qualification_input_formats_are_disjoint() {
+        let coordinates = engineering_r29_inputs::coordinate_fixture();
+        let closure =
+            parse_canonical(&coordinates.bytes().unwrap(), "engineering fixture").unwrap();
+        let purpose = InputDocumentPurposeV1::EngineeringCoordinates;
+        assert_eq!(
+            purpose.plan_bindings(&closure).unwrap(),
+            coordinates.plan_bindings()
+        );
+        assert!(InputDocumentPurposeV1::Qualification
+            .plan_bindings(&closure)
+            .is_err());
+        let diagnostic = engineering_r29_inputs::policy_value();
+        purpose.validate_policy(&diagnostic).unwrap();
+        assert!(validate_acceptance_policy(&diagnostic).is_err());
+        let qualification_policy =
+            parse_canonical(&policy_bytes(), "qualification policy").unwrap();
+        assert!(purpose.validate_policy(&qualification_policy).is_err());
+    }
+
+    #[test]
+    fn engineering_invocations_preserve_seven_cases_and_select_only_the_explicit_route() {
+        let documents = fixture_documents();
+        let bytes = document_bytes(&documents, PLAN_PATH).unwrap().to_vec();
+        let value = parse_canonical(&bytes, "fixture plan").unwrap();
+        let plan = parse_plan_document(&value, bytes).unwrap();
+        let arguments = (
+            Path::new("bundle"),
+            Path::new("snapshot"),
+            Path::new("artifact"),
+        );
+        let qualified_bytes = invocation_map_bytes::<PersistedM1R29CaptureProgramSourceV1>(
+            arguments.0,
+            arguments.1,
+            arguments.2,
+            7,
+            &plan,
+        )
+        .unwrap();
+        let qualified = parse_canonical(&qualified_bytes, "qualified invocations").unwrap();
+        let engineering_bytes = invocation_map_for_purpose::<PersistedM1R29CaptureProgramSourceV1>(
+            arguments.0,
+            arguments.1,
+            arguments.2,
+            7,
+            &plan,
+            InputDocumentPurposeV1::EngineeringCoordinates,
+        )
+        .unwrap();
+        let engineering = parse_canonical(&engineering_bytes, "engineering invocations").unwrap();
+        assert_eq!(engineering["authority"], "none");
+        assert_eq!(engineering["qualification"], false);
+        assert_ne!(qualified["format"], engineering["format"]);
+        let new = engineering["invocations"].as_array().unwrap();
+        let old = qualified["invocations"].as_array().unwrap();
+        assert_eq!(new.len(), 7);
+        for (new, old) in new.iter().zip(old) {
+            assert_eq!(new["case_id"], old["case_id"]);
+            assert_eq!(new["kind"], old["kind"]);
+            let new_args = new["arguments"].as_array().unwrap();
+            assert_eq!(new_args[0], "capture-engineering");
+            assert_eq!(&new_args[1..], old["arguments"].as_array().unwrap());
+        }
+    }
+
+    #[test]
+    fn engineering_reference_measurement_rejects_qualification_and_rebinds_mutation() {
+        let temporary = TestDirectory::new();
+        let path = temporary.0.join("reference.json");
+        let value = json!({"authority": "none", "format": "FERRIC-M1-ENGINEERING-REFERENCE-IMPLEMENTATION-V1"});
+        let bytes = canonical_bytes(&value).unwrap();
+        fs::write(&path, &bytes).unwrap();
+        let original = measure_engineering_reference(&path, false).unwrap();
+        assert_eq!(original, sha256_hex(&bytes));
+        assert!(measure_engineering_reference(&path, true).is_err());
+        let mut changed = value;
+        changed["source_binding"] = json!("new engineering source measurement");
+        fs::write(&path, canonical_bytes(&changed).unwrap()).unwrap();
+        assert_ne!(
+            measure_engineering_reference(&path, false).unwrap(),
+            original
+        );
+        changed["format"] = json!("FERRIC-M1-REFERENCE-IMPLEMENTATION-V1");
+        fs::write(&path, canonical_bytes(&changed).unwrap()).unwrap();
+        assert!(measure_engineering_reference(&path, false).is_err());
+    }
+
+    #[test]
+    fn both_qualification_input_commands_reject_engineering_closure_before_artifact_use() {
+        let temporary = TestDirectory::new();
+        let closure = temporary.0.join("engineering-closure.json");
+        fs::write(
+            &closure,
+            engineering_r29_inputs::coordinate_fixture()
+                .bytes()
+                .unwrap(),
+        )
+        .unwrap();
+        let bundle = temporary.0.join("bundle");
+        publish_documents(&fixture_documents(), &bundle).unwrap();
+        let args = [
+            OsString::from("missing-snapshot"),
+            OsString::from("missing-artifact"),
+            closure.into_os_string(),
+            OsString::from("missing-policy"),
+            OsString::from("missing-reference"),
+            OsString::from("missing-protocol"),
+            OsString::from("7"),
+            bundle.into_os_string(),
+        ];
+        for result in [generate_inputs(&args), validate_inputs(&args)] {
+            let error = result.unwrap_err();
+            assert!(error.contains("qualification closure"), "{error}");
+        }
     }
 }

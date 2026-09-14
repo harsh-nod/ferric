@@ -24,6 +24,8 @@ use std::process::ExitCode;
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
+mod engineering_differential;
+
 const PAIRS_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-PAIRS-V2";
 const OUTPUT_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-OUTPUT-V1";
 const RAW_RECORD_FORMAT: &str = "FERRIC-M1-DIFFERENTIAL-RAW-RECORD-V1";
@@ -710,6 +712,18 @@ fn write_new_at(
 
 fn main() -> ExitCode {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    if arguments
+        .first()
+        .is_some_and(|command| command == "compare-engineering-selected")
+    {
+        return match engineering_differential::command(&arguments) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("FAIL: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     if arguments
         .first()
         .is_some_and(|command| command == "write-pairs")
@@ -1963,30 +1977,65 @@ fn parse_output(
     producer: &str,
     context: &OutputContext<'_>,
 ) -> BenchResult<Output> {
+    parse_output_for_purpose(root, path, producer, context, OutputPurpose::Existing)
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum OutputPurpose {
+    Existing,
+    EngineeringReference,
+}
+
+fn parse_output_for_purpose(
+    root: &SecureInputDirectory,
+    path: &Path,
+    producer: &str,
+    context: &OutputContext<'_>,
+    purpose: OutputPurpose,
+) -> BenchResult<Output> {
     let description = format!("{producer} output manifest");
     let (value, bytes, manifest_identity) = root.read_canonical(path, &description)?;
-    let output = object(
-        &value,
-        &[
-            "authority",
-            "case_id",
-            "environment_sha256",
-            "format",
-            "input_sha256",
-            "kind",
-            "logits",
-            "plan_sha256",
-            "producer",
-            "producer_sha256",
-            "protocol_sha256",
-            "runner_transcript_sha256",
-            "shape",
-            "tokens",
-            "workload_sha256",
-        ],
-        &description,
-    )?;
-    expect(output, "authority", OUTPUT_AUTHORITY, "output authority")?;
+    let mut fields = vec![
+        "authority",
+        "case_id",
+        "environment_sha256",
+        "format",
+        "input_sha256",
+        "kind",
+        "logits",
+        "plan_sha256",
+        "producer",
+        "producer_sha256",
+        "protocol_sha256",
+        "runner_transcript_sha256",
+        "shape",
+        "tokens",
+        "workload_sha256",
+    ];
+    let (authority, format) = match purpose {
+        OutputPurpose::Existing => (OUTPUT_AUTHORITY, OUTPUT_FORMAT),
+        OutputPurpose::EngineeringReference => {
+            engineering_differential::require_selected_case(context.case_id, &context.case.kind)?;
+            if producer != "reference" {
+                return Err("engineering reference format requires reference producer".to_owned());
+            }
+            fields.extend(["nonclaim", "qualification"]);
+            ("none", engineering_differential::REFERENCE_FORMAT)
+        }
+    };
+    let output = object(&value, &fields, &description)?;
+    expect(output, "authority", authority, "output authority")?;
+    if purpose == OutputPurpose::EngineeringReference {
+        expect(
+            output,
+            "nonclaim",
+            engineering_differential::REFERENCE_NONCLAIM,
+            "engineering reference nonclaim",
+        )?;
+        if field(output, "qualification", &description)? != &Value::Bool(false) {
+            return Err("engineering reference must disclaim qualification".to_owned());
+        }
+    }
     expect(output, "case_id", context.case_id, "output case id")?;
     expect(
         output,
@@ -1994,7 +2043,7 @@ fn parse_output(
         identity(context.identities, "environment")?,
         "output environment identity",
     )?;
-    expect(output, "format", OUTPUT_FORMAT, "output format")?;
+    expect(output, "format", format, "output format")?;
     expect(
         output,
         "input_sha256",
@@ -2518,7 +2567,7 @@ mod tests {
 
     static TEST_NONCE: AtomicU64 = AtomicU64::new(0);
 
-    struct TestDirectory(PathBuf);
+    pub(super) struct TestDirectory(PathBuf);
 
     impl TestDirectory {
         fn new() -> Self {
@@ -2575,11 +2624,11 @@ mod tests {
         })
     }
 
-    struct PairsFixture {
-        temporary: TestDirectory,
-        plan: PathBuf,
-        captures: PathBuf,
-        references: PathBuf,
+    pub(super) struct PairsFixture {
+        pub(super) temporary: TestDirectory,
+        pub(super) plan: PathBuf,
+        pub(super) captures: PathBuf,
+        pub(super) references: PathBuf,
         output: PathBuf,
     }
 
@@ -2729,7 +2778,7 @@ mod tests {
         })
     }
 
-    fn pairs_fixture() -> PairsFixture {
+    pub(super) fn pairs_fixture() -> PairsFixture {
         let temporary = TestDirectory::new();
         let plan = temporary.0.join("plan.json");
         let captures = temporary.0.join("captures");

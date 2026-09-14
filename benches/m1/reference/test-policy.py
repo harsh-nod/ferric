@@ -13,12 +13,16 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 EXPECTED_FILES = {
+    "engineering-implementation.json",
+    "engineering-protocol.json",
+    "engineering_run.py",
     "implementation.json",
     "protocol.json",
     "pyproject.toml",
     "run.py",
     "test-policy.py",
     "test_reference.py",
+    "test_engineering_reference.py",
     "uv.lock",
 }
 DIRECT_PINS = {

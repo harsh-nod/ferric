@@ -18,7 +18,9 @@ use ferric_m1_engineering_execution_v1::{
     reopen_m1_engineering_aggregate_artifact_v1,
 };
 use ferric_spec::Identity;
-use qualification_capture::{CaptureResult, M1R29CaptureProgramSourceV1};
+use qualification_capture::{
+    CaptureResult, EngineeringArtifactCoordinatesV1, M1R29CaptureProgramSourceV1,
+};
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::ExitCode;
@@ -43,6 +45,18 @@ impl M1R29CaptureProgramSourceV1 for EngineeringAggregateProgramSourceV1 {
         artifact.program_catalog_id()
     }
 
+    fn engineering_coordinates(
+        artifact: &Self::Artifact,
+    ) -> CaptureResult<EngineeringArtifactCoordinatesV1> {
+        Ok(EngineeringArtifactCoordinatesV1 {
+            manifest: artifact.manifest_id(),
+            hsaco: artifact.hsaco_id(),
+            compiler_handoff: artifact.compiler_handoff_id(),
+            canonical_descriptor: artifact.canonical_descriptor_id(),
+            program_catalog: artifact.program_catalog_id(),
+        })
+    }
+
     fn bind(
         artifact: Self::Artifact,
         publication: ferric_build::PublishedRunnerDeclaration,
@@ -65,6 +79,19 @@ fn main() -> ExitCode {
 
 fn run(arguments: &[OsString]) -> CaptureResult<()> {
     match arguments.first().and_then(|argument| argument.to_str()) {
+        Some("generate-engineering-inputs") => {
+            qualification_capture::generate_engineering_r29_inputs::<
+                EngineeringAggregateProgramSourceV1,
+            >(&arguments[1..], false)
+        }
+        Some("validate-engineering-inputs") => {
+            qualification_capture::generate_engineering_r29_inputs::<
+                EngineeringAggregateProgramSourceV1,
+            >(&arguments[1..], true)
+        }
+        Some("capture-engineering") => qualification_capture::run_engineering_r29_capture::<
+            EngineeringAggregateProgramSourceV1,
+        >(&arguments[1..]),
         Some("generate-inputs") => qualification_capture::generate_technical_r29_inputs::<
             EngineeringAggregateProgramSourceV1,
         >(&arguments[1..]),

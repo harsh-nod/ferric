@@ -109,8 +109,11 @@ use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 
+#[path = "engineering_r29_inputs.rs"]
+mod engineering_r29_inputs;
 #[path = "input_bundle.rs"]
 mod input_bundle;
+pub(crate) use engineering_r29_inputs::EngineeringArtifactCoordinatesV1;
 #[path = "m1_r30_canary_partial_capture.rs"]
 mod m1_r30_canary_partial_capture;
 #[path = "m1_r30_capture_composition.rs"]
@@ -256,6 +259,11 @@ pub(crate) trait M1R29CaptureProgramSourceV1 {
     fn pre_capture(root: &Path) -> CaptureResult<()>;
     fn reopen(root: &Path) -> CaptureResult<Self::Artifact>;
     fn program_catalog_id(artifact: &Self::Artifact) -> Identity;
+    fn engineering_coordinates(
+        _artifact: &Self::Artifact,
+    ) -> CaptureResult<EngineeringArtifactCoordinatesV1> {
+        Err("this program source does not admit engineering coordinate inputs".to_owned())
+    }
     fn bind(
         artifact: Self::Artifact,
         publication: ferric_build::PublishedRunnerDeclaration,
@@ -1379,6 +1387,23 @@ struct ClosureIdentities {
     target_contract: Identity,
     tcb_report: Identity,
     validator_registry: Identity,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PlanIdentityBindingsV1 {
+    ferric_source: Identity,
+    fe2o3_source: Identity,
+    protocol: Identity,
+}
+
+impl ClosureIdentities {
+    const fn plan_bindings(self) -> PlanIdentityBindingsV1 {
+        PlanIdentityBindingsV1 {
+            ferric_source: self.ferric_source,
+            fe2o3_source: self.fe2o3_source,
+            protocol: self.qualification_protocol,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -4124,6 +4149,25 @@ pub(crate) fn run_technical_r29_capture<S: M1R29CaptureProgramSourceV1>(
     run_capture_with_program_source::<S>(arguments, CapturePurposeV1::TechnicalPrequalification)
 }
 
+#[allow(dead_code)] // Only the excluded engineering adapter exposes these commands.
+pub(crate) fn generate_engineering_r29_inputs<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+    validate_existing: bool,
+) -> CaptureResult<()> {
+    input_bundle::engineering_inputs::<S>(arguments, validate_existing)
+}
+
+#[allow(dead_code)] // Never routed by the qualification executable.
+pub(crate) fn run_engineering_r29_capture<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+) -> CaptureResult<()> {
+    run_capture_with_input_purpose::<S>(
+        arguments,
+        CapturePurposeV1::TechnicalPrequalification,
+        input_bundle::InputDocumentPurposeV1::EngineeringCoordinates,
+    )
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CapturePurposeV1 {
     Qualification,
@@ -4145,6 +4189,28 @@ fn run_capture_with_program_source<S: M1R29CaptureProgramSourceV1>(
     arguments: &[OsString],
     purpose: CapturePurposeV1,
 ) -> CaptureResult<()> {
+    run_capture_with_input_purpose::<S>(
+        arguments,
+        purpose,
+        input_bundle::InputDocumentPurposeV1::Qualification,
+    )
+}
+
+enum CaptureIdentityInputsV1 {
+    Qualification(ClosureIdentities),
+    Engineering(engineering_r29_inputs::EngineeringCoordinatesV1),
+}
+
+fn run_capture_with_input_purpose<S: M1R29CaptureProgramSourceV1>(
+    arguments: &[OsString],
+    purpose: CapturePurposeV1,
+    input_purpose: input_bundle::InputDocumentPurposeV1,
+) -> CaptureResult<()> {
+    if input_purpose == input_bundle::InputDocumentPurposeV1::EngineeringCoordinates
+        && purpose != CapturePurposeV1::TechnicalPrequalification
+    {
+        return Err("engineering inputs cannot enter qualification capture".to_owned());
+    }
     let [plan_path, roster_path, case_id, workload_path, prepacked_root, artifact_root, closure_path, environment_path, gpu_unique_id, output] =
         arguments
     else {
@@ -4180,7 +4246,18 @@ fn run_capture_with_program_source<S: M1R29CaptureProgramSourceV1>(
         );
     }
     let input_tokens = load_input_tokens(Path::new(workload_path), &workload, &case)?;
-    let closure = load_closure(Path::new(closure_path))?;
+    let closure = match input_purpose {
+        input_bundle::InputDocumentPurposeV1::Qualification => {
+            CaptureIdentityInputsV1::Qualification(load_closure(Path::new(closure_path))?)
+        }
+        input_bundle::InputDocumentPurposeV1::EngineeringCoordinates => {
+            let (root, relative) = secure_parent(Path::new(closure_path), "engineering closure")?;
+            let (value, _) = root.read_canonical(&relative, "engineering closure")?;
+            CaptureIdentityInputsV1::Engineering(
+                engineering_r29_inputs::EngineeringCoordinatesV1::parse(&value)?,
+            )
+        }
+    };
     let environment_bytes = load_environment(Path::new(environment_path), gpu_unique_id)?;
     require_identity(
         plan.identity("environment")?,
@@ -4203,12 +4280,51 @@ fn run_capture_with_program_source<S: M1R29CaptureProgramSourceV1>(
     let deployment = *runner_admission.prepacked().deployment();
     let plan_catalog = build_authenticated_sequential_plan_catalog(runner_admission)
         .map_err(|error| format!("cannot build authenticated plan catalog: {error:?}"))?;
-    let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)?;
+    let (external, bindings) = match &closure {
+        CaptureIdentityInputsV1::Qualification(closure) => (
+            complete_closure(closure, &plan_catalog, executable_catalog_id)?,
+            closure.plan_bindings(),
+        ),
+        CaptureIdentityInputsV1::Engineering(provided) => {
+            let artifact_coordinates = S::engineering_coordinates(&artifacts)?;
+            if artifact_coordinates.program_catalog != executable_catalog_id {
+                return Err("engineering artifact catalog coordinate differs from the admitted program source".to_owned());
+            }
+            let actual = engineering_r29_inputs::EngineeringCoordinatesV1::from_catalog(
+                &plan_catalog,
+                artifact_coordinates,
+            )?;
+            if *provided != actual {
+                return Err(
+                    "engineering closure does not bind the actual artifact and model-plan bytes"
+                        .to_owned(),
+                );
+            }
+            (
+                actual.external_inputs(&plan_catalog)?,
+                actual.plan_bindings(),
+            )
+        }
+    };
     let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
         .map_err(|error| format!("cannot build runner identity closure: {error:?}"))?;
     let declaration = generate_qwen3_gfx942_runner_declaration(identity_closure)
         .map_err(|error| format!("cannot generate authenticated runner declaration: {error:?}"))?;
-    validate_plan_identities(&plan, &case, &closure, &declaration, &deployment, &model)?;
+    match &closure {
+        CaptureIdentityInputsV1::Qualification(closure) => {
+            validate_plan_identities(&plan, &case, closure, &declaration, &deployment, &model)?;
+        }
+        CaptureIdentityInputsV1::Engineering(_) => {
+            validate_plan_identity_bindings(
+                &plan,
+                &case,
+                bindings,
+                &declaration,
+                &deployment,
+                &model,
+            )?;
+        }
+    }
     require_supported_capture(&workload)?;
     let publication = publish_qwen3_gfx942_runner_declaration(declaration)
         .map_err(|error| format!("cannot publish runner declaration: {error:?}"))?;
@@ -8341,19 +8457,37 @@ fn validate_plan_identities(
     deployment: &ferric_spec::DeploymentBundle,
     model: &ModelInputBytes,
 ) -> CaptureResult<()> {
+    validate_plan_identity_bindings(
+        plan,
+        case,
+        closure.plan_bindings(),
+        declaration,
+        deployment,
+        model,
+    )
+}
+
+fn validate_plan_identity_bindings(
+    plan: &DifferentialPlan,
+    case: &PlanCase,
+    bindings: PlanIdentityBindingsV1,
+    declaration: &ferric_build::GeneratedRunnerDeclaration,
+    deployment: &ferric_spec::DeploymentBundle,
+    model: &ModelInputBytes,
+) -> CaptureResult<()> {
     require_identity(
         plan.identity("ferric-source-closure")?,
-        &hex_identity(closure.ferric_source),
+        &hex_identity(bindings.ferric_source),
         "Ferric source closure",
     )?;
     require_identity(
         plan.identity("fe2o3-source-closure")?,
-        &hex_identity(closure.fe2o3_source),
+        &hex_identity(bindings.fe2o3_source),
         "fe2o3 source closure",
     )?;
     require_identity(
         plan.identity("benchmark-protocol")?,
-        &hex_identity(closure.qualification_protocol),
+        &hex_identity(bindings.protocol),
         "qualification protocol",
     )?;
     require_identity(
