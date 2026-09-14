@@ -50,6 +50,9 @@ use ferric_build::{
     QWEN3_KV_ARENA_ALIGNMENT_V1, QWEN3_KV_PAGE_BYTES_V1,
 };
 use ferric_spec::completion::CompletionEpoch;
+use ferric_spec::paged_kv_refinement::{
+    commit_initialized_draft_catchup_kv, PhysicalKvCatchupCommitError,
+};
 use ferric_spec::{
     append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
     commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
@@ -6638,7 +6641,36 @@ impl ActiveDeviceKvCache {
         }
         let request = initialized.request();
         let role = initialized.selection().role;
-        self.accept_initialized(request, role, accepted_tokens)?;
+        if matches!(
+            initialized.binding.purpose,
+            PendingStepWritePurpose::DraftCatchup { .. }
+        ) && role == Qwen3ModelRole::Draft06B
+        {
+            self.preflight_accept_initialized(request, role)?;
+            let selection = self.common.draft.selection();
+            commit_initialized_draft_catchup_kv(
+                &self.common.target.physical,
+                &mut self.common.draft.physical,
+                request,
+                selection,
+                initialized.epoch(),
+                after_epoch,
+                accepted_tokens,
+            )
+            .map_err(|error| match error {
+                PhysicalKvCatchupCommitError::CompletionEpochMismatch => {
+                    DeviceKvCacheError::CompletionEpochMismatch
+                }
+                PhysicalKvCatchupCommitError::AcceptedCountMismatch => {
+                    DeviceKvCacheError::StepActiveLengthMismatch
+                }
+                PhysicalKvCatchupCommitError::Physical(error) => {
+                    DeviceKvCacheError::Physical(error)
+                }
+            })?;
+        } else {
+            self.accept_initialized(request, role, accepted_tokens)?;
+        }
         let rejected_tokens = initialized
             .active_tokens()
             .checked_sub(accepted_tokens)
@@ -6933,16 +6965,26 @@ impl ActiveDeviceKvCache {
         role: Qwen3ModelRole,
         accepted_tokens: u32,
     ) -> Result<(), DeviceKvCacheError> {
-        self.common.validate_request(request)?;
+        self.preflight_accept_initialized(request, role)?;
         let cache = self.common.role_mut(role);
+        let selection = cache.selection();
+        commit_physical_kv(&mut cache.physical, request, selection, accepted_tokens)?;
+        Ok(())
+    }
+
+    fn preflight_accept_initialized(
+        &self,
+        request: RequestId,
+        role: Qwen3ModelRole,
+    ) -> Result<(), DeviceKvCacheError> {
+        self.common.validate_request(request)?;
+        let cache = self.common.role(role);
         if cache.pending.is_some() {
             return Err(DeviceKvCacheError::PendingWriteExists);
         }
         if !DeviceKvCacheCommon::owned_table_matches(cache) {
             return Err(DeviceKvCacheError::OwnedPageTableDrift);
         }
-        let selection = cache.selection();
-        commit_physical_kv(&mut cache.physical, request, selection, accepted_tokens)?;
         Ok(())
     }
 
@@ -9394,15 +9436,55 @@ mod tests {
                 else {
                     panic!("exact maintenance completion rejected");
                 };
-                let (mut cache, initialized, _completion) = completed.into_parts();
+                let (mut cache, mut initialized, _completion) = completed.into_parts();
                 assert_eq!(initialized.page_table.as_ptr(), table_address);
                 assert_eq!(initialized.write_pages.as_ptr(), spans_address);
                 assert_eq!(cache.projection().draft.committed_tokens, committed);
                 assert_eq!(cache.projection().draft.resident_tokens, committed + 1);
+                let before_settlement = cache.projection();
+                for (epoch, accepted, expected) in [
+                    (31, 0, DeviceKvCacheError::CompletionEpochMismatch),
+                    (31, 1, DeviceKvCacheError::CompletionEpochMismatch),
+                    (32, 0, DeviceKvCacheError::StepActiveLengthMismatch),
+                    (32, 2, DeviceKvCacheError::StepActiveLengthMismatch),
+                ] {
+                    assert_eq!(
+                        cache.settle_completed_step(
+                            &initialized,
+                            accepted,
+                            CompletionEpoch::new(epoch)
+                        ),
+                        Err(expected)
+                    );
+                    assert_eq!(cache.projection(), before_settlement);
+                }
+                initialized.binding.request =
+                    RequestId::new(request().slot(), request().generation() + 1);
                 assert_eq!(
-                    cache.settle_completed_step(&initialized, 0, CompletionEpoch::new(32)),
-                    Err(DeviceKvCacheError::StepActiveLengthMismatch)
+                    cache.settle_completed_step(&initialized, 1, CompletionEpoch::new(32)),
+                    Err(DeviceKvCacheError::WrongRequest)
                 );
+                initialized.binding.request = request();
+                assert_eq!(cache.projection(), before_settlement);
+                cache.common.draft.pending = Some(PendingWriteState::Step(initialized.binding));
+                assert_eq!(
+                    cache.settle_completed_step(&initialized, 1, CompletionEpoch::new(32)),
+                    Err(DeviceKvCacheError::PendingWriteExists)
+                );
+                cache.common.draft.pending = None;
+                assert_eq!(cache.projection(), before_settlement);
+                let owned_page = cache.common.draft.active_pages[0].page;
+                cache.common.draft.active_pages[0].page = PhysicalPageId::new(
+                    Qwen3ModelRole::Draft06B,
+                    owned_page.index(),
+                    owned_page.generation() + 1,
+                );
+                assert_eq!(
+                    cache.settle_completed_step(&initialized, 1, CompletionEpoch::new(32)),
+                    Err(DeviceKvCacheError::OwnedPageTableDrift)
+                );
+                cache.common.draft.active_pages[0].page = owned_page;
+                assert_eq!(cache.projection(), before_settlement);
                 assert_eq!(
                     cache.settle_completed_step(&initialized, 1, CompletionEpoch::new(32)),
                     Ok(0)

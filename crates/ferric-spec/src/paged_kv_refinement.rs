@@ -143,6 +143,14 @@ pub enum PhysicalKvError {
     InvalidQuiescenceAuthority,
 }
 
+/// Rejections of the executed one-token maintenance metadata commit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhysicalKvCatchupCommitError {
+    CompletionEpochMismatch,
+    AcceptedCountMismatch,
+    Physical(PhysicalKvError),
+}
+
 /// Private, non-clone authority. The crate-local logical composition produces
 /// this value only after observing an exact scheduler completion; no public
 /// source-level constructor exists.
@@ -1273,6 +1281,86 @@ pub fn commit_physical_kv(
     }
     state.committed_tokens += accepted_tokens;
     Ok(())
+}
+
+/// Conditional cursor relation, not an authentication or device-write witness.
+pub closed spec fn initialized_draft_catchup_cursor_pair(
+    target: &PhysicalKvState,
+    draft: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+) -> bool {
+    &&& same_request(target.request, request)
+    &&& same_request(draft.request, request)
+    &&& target.selection.role == Qwen3ModelRole::Target8B
+    &&& selection.role == Qwen3ModelRole::Draft06B
+    &&& draft.selection == selection
+    &&& target.resident_tokens == target.committed_tokens
+    &&& draft.resident_tokens as int == draft.committed_tokens as int + 1
+    &&& target.committed_tokens == draft.resident_tokens
+}
+
+/// Commits the one initialized token used by the engine's draft catch-up path.
+///
+/// Epoch and accepted-count checks execute here even when the caller has
+/// preflighted them. The target is borrowed immutably. Its relation to the
+/// selected owner is conditional; this function does not authenticate a parent
+/// plan, page lease, completed queue or initialized device write.
+///
+/// # Errors
+///
+/// Preserves epoch-before-count rejection order, then returns the unchanged
+/// physical commit error. Every failure leaves the selected state unchanged.
+pub fn commit_initialized_draft_catchup_kv(
+    _target: &PhysicalKvState,
+    selected: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    initialized_epoch: CompletionEpoch,
+    after_epoch: CompletionEpoch,
+    accepted_tokens: u32,
+) -> (result: Result<(), PhysicalKvCatchupCommitError>)
+    ensures
+        result.is_ok() == (
+            initialized_epoch.value == after_epoch.value
+                && accepted_tokens == 1
+                && commit_enabled(old(selected), request, selection, 1)
+        ),
+        result.is_ok() ==> commit_transition(old(selected), final(selected), 1),
+        result.is_err() ==> *final(selected) == *old(selected),
+        match result {
+            Err(PhysicalKvCatchupCommitError::CompletionEpochMismatch) =>
+                initialized_epoch.value != after_epoch.value,
+            Err(PhysicalKvCatchupCommitError::AcceptedCountMismatch) =>
+                initialized_epoch.value == after_epoch.value && accepted_tokens != 1,
+            Err(PhysicalKvCatchupCommitError::Physical(_)) =>
+                initialized_epoch.value == after_epoch.value && accepted_tokens == 1,
+            Ok(()) => true,
+        },
+        result.is_ok()
+            && initialized_draft_catchup_cursor_pair(_target, old(selected), request, selection)
+            ==> {
+                &&& final(selected).abstraction_spec().committed_tokens
+                    == _target.abstraction_spec().committed_tokens
+                &&& final(selected).abstraction_spec().resident_tokens
+                    == _target.abstraction_spec().resident_tokens
+            },
+{
+    proof {
+        reveal(initialized_draft_catchup_cursor_pair);
+        reveal(commit_transition);
+        reveal(PhysicalKvState::abstraction_spec);
+    }
+    if initialized_epoch.value != after_epoch.value {
+        return Err(PhysicalKvCatchupCommitError::CompletionEpochMismatch);
+    }
+    if accepted_tokens != 1 {
+        return Err(PhysicalKvCatchupCommitError::AcceptedCountMismatch);
+    }
+    match commit_physical_kv(selected, request, selection, 1) {
+        Ok(()) => Ok(()),
+        Err(error) => Err(PhysicalKvCatchupCommitError::Physical(error)),
+    }
 }
 
 pub closed spec fn rollback_enabled(
@@ -2568,6 +2656,155 @@ mod tests {
             write_physical_token(state, request(), selection, position).unwrap();
         }
         page
+    }
+
+    fn initialized_catchup_pair(
+        bucket: Qwen3PlanBucket,
+        committed: u32,
+    ) -> (PhysicalKvState, PhysicalKvState, Qwen3PlanSelection) {
+        let target_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        };
+        let draft_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..target_selection
+        };
+        let mut target = PhysicalKvState::new(request(), target_selection).unwrap();
+        let mut draft = PhysicalKvState::new(request(), draft_selection).unwrap();
+        for (state, selection) in [
+            (&mut target, target_selection),
+            (&mut draft, draft_selection),
+        ] {
+            for page in 0..(committed + 1).div_ceil(M1_KV_PAGE_TOKENS) {
+                let count = (committed + 1 - page * M1_KV_PAGE_TOKENS).min(M1_KV_PAGE_TOKENS);
+                append_and_write(state, selection, page, count);
+            }
+        }
+        commit_physical_kv(&mut target, request(), target_selection, committed + 1).unwrap();
+        commit_physical_kv(&mut draft, request(), draft_selection, committed).unwrap();
+        (target, draft, draft_selection)
+    }
+
+    #[test]
+    fn catchup_commit_advances_one_metadata_cursor_and_frames_physical_storage() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for committed in [0, 15, 16, 8191] {
+                let (target, mut draft, selection) = initialized_catchup_pair(bucket, committed);
+                let request_before = draft.request;
+                let lifecycle_before = draft.lifecycle;
+                let capacity_before = draft.max_context_tokens;
+                let page_count_before = draft.page_count;
+                let table_before = draft.page_table;
+                let slots_before = draft.page_slots;
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                )
+                .unwrap();
+                assert_eq!(draft.request, request_before);
+                assert_eq!(draft.selection, selection);
+                assert_eq!(draft.lifecycle, lifecycle_before);
+                assert_eq!(draft.max_context_tokens, capacity_before);
+                assert_eq!(draft.committed_tokens, committed + 1);
+                assert_eq!(draft.resident_tokens, committed + 1);
+                assert_eq!(target.committed_tokens, committed + 1);
+                assert_eq!(target.resident_tokens, committed + 1);
+                assert_eq!(draft.page_count, page_count_before);
+                assert_eq!(draft.page_table, table_before);
+                assert_eq!(draft.page_slots, slots_before);
+            }
+        }
+    }
+
+    #[test]
+    fn catchup_commit_rejections_preserve_state_and_epoch_precedes_count() {
+        let (target, mut draft, selection) =
+            initialized_catchup_pair(Qwen3PlanBucket::SpeculativeS1K16C8192, 15);
+        let logical_before = draft.logical_state();
+        let table_before = draft.page_table;
+        let slots_before = draft.page_slots;
+        for (after_epoch, accepted, expected) in [
+            (31, 0, PhysicalKvCatchupCommitError::CompletionEpochMismatch),
+            (31, 1, PhysicalKvCatchupCommitError::CompletionEpochMismatch),
+            (32, 0, PhysicalKvCatchupCommitError::AcceptedCountMismatch),
+            (32, 2, PhysicalKvCatchupCommitError::AcceptedCountMismatch),
+        ] {
+            assert_eq!(
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(after_epoch),
+                    accepted,
+                ),
+                Err(expected)
+            );
+            assert_eq!(draft.logical_state(), logical_before);
+            assert_eq!(draft.page_table, table_before);
+            assert_eq!(draft.page_slots, slots_before);
+        }
+        for (supplied_request, supplied_selection) in [
+            (
+                RequestId::new(request().slot(), request().generation() + 1),
+                selection,
+            ),
+            (request(), target.selection()),
+        ] {
+            assert!(matches!(
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    supplied_request,
+                    supplied_selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                ),
+                Err(PhysicalKvCatchupCommitError::Physical(_))
+            ));
+            assert_eq!(draft.logical_state(), logical_before);
+            assert_eq!(draft.page_table, table_before);
+            assert_eq!(draft.page_slots, slots_before);
+        }
+        commit_initialized_draft_catchup_kv(
+            &target,
+            &mut draft,
+            request(),
+            selection,
+            CompletionEpoch::new(32),
+            CompletionEpoch::new(32),
+            1,
+        )
+        .unwrap();
+        let committed_before = draft.logical_state();
+        assert!(matches!(
+            commit_initialized_draft_catchup_kv(
+                &target,
+                &mut draft,
+                request(),
+                selection,
+                CompletionEpoch::new(32),
+                CompletionEpoch::new(32),
+                1,
+            ),
+            Err(PhysicalKvCatchupCommitError::Physical(_))
+        ));
+        assert_eq!(draft.logical_state(), committed_before);
+        assert_eq!(draft.page_table, table_before);
+        assert_eq!(draft.page_slots, slots_before);
     }
 
     #[test]
