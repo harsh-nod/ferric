@@ -7,7 +7,39 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 14 Native And Compiler Checkpoint
+## September 14 Selected Numerical And Latest Compiler Checkpoint
+
+Exact `4ac1250/ccfd` capture, independent canonical Qwen3-8B BF16/SDPA reference,
+and comparison each exit 0 for `prefill-s1-t128.001`. This is one generated
+128-token input, not the earlier English or speculative padded prompt. All
+151,936 logits are finite; both select token 198 with identical top-10 token
+ordering. The rows are **not byte-identical**: maximum BF16 ULP error 31,121,
+maximum absolute error 0.0703125, RMSE 0.01524191977257529, cosine similarity
+0.9999202347605426, 20,968 exact BF16 matches and 619 opposite nonzero signs.
+The reference repeats twice byte-identically within one model load, not two
+fresh launches. This is one of seven planned R29 cases, with no reviewed
+tolerance acceptance, full R29 comparison, qualification or benchmark result.
+The retained archive SHA-256 is
+`816f162e5a2d3229239dc305e8658f8c570a269b44a077787d916030ec60335c`.
+
+Separately, latest published fe2o3 `4f6f65ce` and private Ferric `8113e231`
+pass the changed kernel-ir/analysis full suites, 543 backend tests and all
+37 aggregate host tests. Pristine release tools emit/replay the canonical
+gfx942:xnack- V6 image. Structural ELF inspection confirms 12 kernel entries
+and 12 matching descriptors, not policy descriptor-table order. The image is
+103,616 bytes, SHA-256
+`6f77d6813e6a2c9fd20c8b50eaffe0feb4435f00ac65192e9574a3637b6e5284`.
+It differs from ccfd despite unchanged kernel bodies and has **not been GPU or
+numerically tested**. Engineering authority is none; all publication/load/launch
+grants remain false. Installed workers retain their actual older producer
+identities. Latest evidence SHA-256 is
+`6208de3c1329e000c5393739b600d6e04b49b4b20dff4fb8dfc5443a8e65d3cb`.
+
+All 33 M1 gates remain open. No TTFT, TPOT or throughput values are added;
+`performance.js` is unchanged. Latest combined host validation is separate from
+the historical bb2/ccfd host and d094 coverage records retained below.
+
+### Retained Native And Compiler Checkpoint
 
 Exact `bb2/ccfd` target-only execution on mi300x completes the same five-token
 raw prompt with four IDs `[12095,13,576,6722]`, text ` Paris. The capital`,

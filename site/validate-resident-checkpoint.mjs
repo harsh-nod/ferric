@@ -22,10 +22,61 @@ export function validateResidentCheckpoint(value, updated) {
   assert.equal(checkpoint.scope, "Private resident integration; source-bound engineering observations, not qualification");
   assert(checkpoint.overview.includes("draft KV catch-up is integrated and host-tested"));
   assert(checkpoint.overview.includes("All 33 M1 gates remain open; no new serving or performance result is claimed"));
-  assert(checkpoint.overview.includes("one-prompt historical reference spot check"));
+  assert(checkpoint.overview.includes("rows are not byte-identical and no tolerance is accepted"));
+  assert(checkpoint.overview.includes("that image is not GPU-tested"));
 
   const integration = checkpoint.integration;
-  exactKeys(integration, ["compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  exactKeys(integration, ["selectedNumerical", "latestCompiler", "compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  const { detail: numericalDetail, boundary: numericalBoundary, ...numerical } = integration.selectedNumerical;
+  assert.deepEqual(numerical, {
+    source: "4ac1250735c1e774356c901aede91066d05816f1",
+    compilerSource: "ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2",
+    artifactSource: "bb2b0123f4f96410269a098d7cba8aa7bb950008",
+    imageSha256: "46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c",
+    evidenceSha256: "816f162e5a2d3229239dc305e8658f8c570a269b44a077787d916030ec60335c",
+    comparisonSha256: "38a39f82dd2df55060acdf27e68813ad13f09f3d4cdb76d9ccbbdf61ddaba665",
+    diagnosticsSha256: "7f2ec61f0d47a3bc0ab738f5e94f049161b29e6364f88a0d029c6a55ead673df",
+    caseId: "prefill-s1-t128.001", inputTokens: 128, completedCases: 1, fullRosterCases: 7,
+    target: "gfx942:xnack-", captureExit: 0, referenceExit: 0, comparisonExit: 0,
+    comparedLogits: 151936, finite: true, ferricToken: 198, referenceToken: 198, tokenMismatches: 0,
+    maximumLogitUlpError: 31121, maximumAbsoluteError: 0.0703125,
+    rootMeanSquaredError: 0.01524191977257529, cosineSimilarity: 0.9999202347605426,
+    exactBf16Matches: 20968, oppositeNonzeroSigns: 619,
+    top10TokenOrder: [198, 220, 63477, 271, 151645, 80126, 2529, 46556, 33179, 279],
+    identicalTop10Order: true, logitRowsByteIdentical: false, authority: "none",
+    toleranceAccepted: false, fullR29Comparison: false, qualification: false, benchmarkComparable: false,
+  });
+  for (const claim of ["one generated 128-token input", "not the earlier five-token English prompt or speculative padded prompt",
+    "151,936 compared logits are finite", "both select token 198", "rows are not byte-identical",
+    "maximum BF16 ULP error is 31,121", "maximum absolute error 0.0703125",
+    "RMSE 0.01524191977257529", "cosine similarity 0.9999202347605426",
+    "20,968 exact BF16 matches and 619 opposite nonzero signs",
+    "within one model load, not two fresh launches"]) assert(numericalDetail.includes(claim), claim);
+  for (const claim of ["one of seven planned R29 cases", "not a tolerance acceptance or full R29 comparison",
+    "Authority is none", "qualification and benchmark comparability remain false",
+    "does not GPU-validate the newer 4f6 image", "Historical performance data remains unchanged"]) {
+    assert(numericalBoundary.includes(claim), claim);
+  }
+  const { detail: latestCompilerDetail, ...latestCompiler } = integration.latestCompiler;
+  assert.deepEqual(latestCompiler, {
+    source: "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4",
+    ferricSource: "8113e2314b2e030f93bc27d1281b4caee7e66216",
+    kernelIrPassed: 298, kernelAnalysisPassed: 125, backendPassed: 543, kernelHostPassed: 37,
+    emissionExit: 0, target: "gfx942:xnack-", codeObjectVersion: 6, kernelEntries: 12, kernelDescriptors: 12,
+    imageBytes: 103616,
+    imageSha256: "6f77d6813e6a2c9fd20c8b50eaffe0feb4435f00ac65192e9574a3637b6e5284",
+    manifestSha256: "39cf7d5a915f759cb289e2f48b63acbd725904bb22aa14439bbda575074b3d3f",
+    evidenceSha256: "6208de3c1329e000c5393739b600d6e04b49b4b20dff4fb8dfc5443a8e65d3cb",
+    inspectionSha256: "70625b50d7be703fa5eee1256f9879380d5d8d248437ddcc984604fd06e7f216",
+    exactOutputReplay: true, nativeGpuTested: false, authority: "none",
+    grants: { publication: false, load: false, launch: false },
+  });
+  for (const claim of ["543 backend tests and 37 aggregate host tests", "12 kernel entries and 12 matching descriptors",
+    "HSACO is 103,616 bytes", "unchanged aggregate kernel bodies", "not policy descriptor-table ordering",
+    "has not been GPU or numerically tested", "publication, load and launch grants remain false",
+    "actual older producer identities, not 4f6 labels"]) assert(latestCompilerDetail.includes(claim), claim);
+  assert.notEqual(numerical.imageSha256, latestCompiler.imageSha256);
+  assert.notEqual(numerical.compilerSource, latestCompiler.source);
   const currentCompiler = integration.compiler;
   exactKeys(currentCompiler, ["source", "ferricSource", "backendPassed", "kernelHostPassed", "emissionState",
     "emissionExit", "target", "codeObjectVersion", "kernelEntries", "kernelDescriptors", "imageProduced",
@@ -326,7 +377,7 @@ export function validateResidentCheckpoint(value, updated) {
   assert(compiler.detail.includes("The eaa results do not validate e6cfa668"));
   assert(checkpoint.remaining.includes("No native K8/K16 qualification, new TTFT/TPOT/throughput measurement or competitiveness claim"));
   assert(checkpoint.remaining.includes("Historical measurements below are unchanged"));
-  assert(checkpoint.remaining.includes("Current-pin engine and checker host validation pass"));
+  assert(checkpoint.remaining.includes("Latest combined host validation is separate from the retained bb2/ccfd cohorts"));
   assert(checkpoint.remaining.includes("neither target-only observation qualifies resident speculative serving"));
 }
 
@@ -338,6 +389,42 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.fullAcceptanceCatchupImplemented = false; },
     (x) => { x.newGpuObservation = false; },
     (x) => { x.newPerformanceMeasurement = true; },
+    (x) => { x.integration.selectedNumerical.compilerSource = x.integration.latestCompiler.source; },
+    (x) => { x.integration.selectedNumerical.source = x.integration.latestCompiler.ferricSource; },
+    (x) => { x.integration.selectedNumerical.imageSha256 = x.integration.latestCompiler.imageSha256; },
+    (x) => { x.integration.selectedNumerical.evidenceSha256 = x.integration.selectedNumerical.comparisonSha256; },
+    (x) => { x.integration.selectedNumerical.comparisonSha256 = x.integration.selectedNumerical.diagnosticsSha256; },
+    (x) => { x.integration.selectedNumerical.caseId = "prefill-s1-t2048.001"; },
+    (x) => { x.integration.selectedNumerical.inputTokens = 5; },
+    (x) => { x.integration.selectedNumerical.completedCases = 7; },
+    (x) => { x.integration.selectedNumerical.comparedLogits -= 1; },
+    (x) => { x.integration.selectedNumerical.ferricToken = 12095; },
+    (x) => { x.integration.selectedNumerical.maximumLogitUlpError = 0; },
+    (x) => { x.integration.selectedNumerical.maximumAbsoluteError = 0; },
+    (x) => { x.integration.selectedNumerical.rootMeanSquaredError = 0; },
+    (x) => { x.integration.selectedNumerical.cosineSimilarity = 1; },
+    (x) => { x.integration.selectedNumerical.exactBf16Matches = 151936; },
+    (x) => { x.integration.selectedNumerical.oppositeNonzeroSigns = 0; },
+    (x) => { x.integration.selectedNumerical.top10TokenOrder.reverse(); },
+    (x) => { x.integration.selectedNumerical.logitRowsByteIdentical = true; },
+    (x) => { x.integration.selectedNumerical.toleranceAccepted = true; },
+    (x) => { x.integration.selectedNumerical.fullR29Comparison = true; },
+    (x) => { x.integration.selectedNumerical.qualification = true; },
+    (x) => { x.integration.selectedNumerical.benchmarkComparable = true; },
+    (x) => { x.integration.selectedNumerical.authority = "qualified"; },
+    (x) => { x.integration.selectedNumerical.detail = "All logits match exactly."; },
+    (x) => { x.integration.selectedNumerical.boundary = "R29 acceptance passed."; },
+    (x) => { x.integration.latestCompiler.source = x.integration.compiler.source; },
+    (x) => { x.integration.latestCompiler.ferricSource = x.integration.compiler.ferricSource; },
+    (x) => { x.integration.latestCompiler.imageSha256 = x.integration.compiler.imageSha256; },
+    (x) => { x.integration.latestCompiler.imageBytes = x.integration.compiler.imageBytes; },
+    (x) => { x.integration.latestCompiler.kernelEntries = 11; },
+    (x) => { x.integration.latestCompiler.kernelDescriptors = 13; },
+    (x) => { x.integration.latestCompiler.nativeGpuTested = true; },
+    (x) => { x.integration.latestCompiler.exactOutputReplay = false; },
+    (x) => { x.integration.latestCompiler.authority = "qualified"; },
+    (x) => { x.integration.latestCompiler.grants.launch = true; },
+    (x) => { x.integration.latestCompiler.detail = "Latest compiler image GPU-qualified."; },
     (x) => { x.integration.compiler.source = x.followup.runtimeGetter.source; },
     (x) => { x.integration.compiler.backendPassed += 1; },
     (x) => { x.integration.compiler.kernelHostPassed += 1; },
