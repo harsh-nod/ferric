@@ -712,10 +712,9 @@ fn write_new_at(
 
 fn main() -> ExitCode {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
-    if arguments
-        .first()
-        .is_some_and(|command| command == "compare-engineering-selected")
-    {
+    if arguments.first().is_some_and(|command| {
+        command == "compare-engineering-selected" || command == "compare-engineering-suite"
+    }) {
         return match engineering_differential::command(&arguments) {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
@@ -2015,7 +2014,7 @@ fn parse_output_for_purpose(
     let (authority, format) = match purpose {
         OutputPurpose::Existing => (OUTPUT_AUTHORITY, OUTPUT_FORMAT),
         OutputPurpose::EngineeringReference => {
-            engineering_differential::require_selected_case(context.case_id, &context.case.kind)?;
+            engineering_differential::require_canonical_case(context.case_id, &context.case.kind)?;
             if producer != "reference" {
                 return Err("engineering reference format requires reference producer".to_owned());
             }
