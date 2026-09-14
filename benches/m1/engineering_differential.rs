@@ -416,7 +416,7 @@ fn compare_case(
     }
     let mut pair = Pair {
         case_id: case_id.to_owned(),
-        kind: case.kind.to_owned(),
+        kind: case.kind.clone(),
         ferric,
         reference: reference_output,
         runner_transcript_sha256: runner_sha256,
