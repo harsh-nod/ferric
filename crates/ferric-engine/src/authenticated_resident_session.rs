@@ -3633,19 +3633,16 @@ mod tests {
     #[test]
     #[ignore = "must run alone because the allocator counter is process-global"]
     fn warmed_resident_production_planning_round_allocates_zero_times() {
-        let plan = M1ServingPlanV1::new(
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Target8B,
-                mode: Qwen3ExecutionMode::Speculative,
-                bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-            },
-            Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                mode: Qwen3ExecutionMode::Decode,
-                bucket: Qwen3PlanBucket::DecodeS1C8192,
-            },
-        )
-        .unwrap();
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            assert_warmed_resident_planning_is_allocation_free(singleton_plan(bucket));
+        }
+    }
+
+    fn assert_warmed_resident_planning_is_allocation_free(plan: M1ServingPlanV1) {
         let prefill = M1ServingPlanV1::new(TARGET_PREFILL, DRAFT_PREFILL).unwrap();
         let request = RequestId::new(0, 1);
         let mut registry = M1ServingRegistryV1::<1>::new().unwrap();
