@@ -226,6 +226,9 @@ impl M1ServingQueuedSameShapeRearmV1 {
         expected_live_lanes: usize,
         member: &M1ServingCommittedSpeculativeMemberBindingV1,
     ) -> bool {
+        if member.draft_committed != member.target_committed {
+            return false;
+        }
         let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
             draft_decode,
             target_speculative,

@@ -508,7 +508,6 @@ impl M1AuthenticatedPhysicalPacketBatchV1 {
     pub(crate) const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
-            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,
@@ -598,6 +597,7 @@ impl M1PhysicalFixedBatchV1<'_> {
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
         match self {
             Self::TargetOnly(_) => M1PhysicalFixedBatchShapeV1::TargetOnly,
+            Self::DraftCatchup(_) => M1PhysicalFixedBatchShapeV1::DraftCatchup,
             Self::PairedPrefill(_) => M1PhysicalFixedBatchShapeV1::PairedPrefill,
             Self::SpeculativeK4(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK4,
             Self::SpeculativeK8(_) => M1PhysicalFixedBatchShapeV1::SpeculativeK8,

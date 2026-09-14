@@ -597,6 +597,66 @@ pub struct M1ServingPhysicalPublishedV1<P> {
     batch: M1ServingBatchPlanV1,
 }
 
+pub(crate) fn record_structural_resident_publication<const C: usize, O>(
+    custody: O::Published,
+    reservation: M1ServingPublicationReservationV1,
+    registry: &mut M1ServingRegistryV1<C>,
+    operations: &O,
+) -> Result<
+    M1ServingPhysicalPublishedV1<O::Published>,
+    Box<(
+        M1ServingPhysicalBridgeErrorV1<O::Error>,
+        O::Published,
+        M1ServingPublicationReservationV1,
+    )>,
+>
+where
+    O: M1ServingPhysicalOperationsV1,
+{
+    let batch = reservation.physical_batch();
+    if !matches!(
+        batch.action(),
+        M1ServingQueueActionV1::SameShapeRearm
+            | M1ServingQueueActionV1::QuiescentDraftCatchupRestore { .. }
+    ) {
+        return Err(Box::new((
+            M1ServingPhysicalBridgeErrorV1::Registry(
+                M1ServingRegistryErrorV1::QueueTransitionUnsupported,
+            ),
+            custody,
+            reservation,
+        )));
+    }
+    if let Err(error) = registry.preflight_publication(&reservation) {
+        return Err(Box::new((
+            M1ServingPhysicalBridgeErrorV1::Registry(error),
+            custody,
+            reservation,
+        )));
+    }
+    if let Err(error) =
+        validate_scheduled_dispatch(operations.scheduled_dispatch(&custody), &reservation)
+    {
+        return Err(Box::new((error, custody, reservation)));
+    }
+    let registry_identity = reservation.registry_identity();
+    match registry.record_publication(reservation) {
+        Ok(()) => Ok(M1ServingPhysicalRawPublishedV1 {
+            registry_identity,
+            plan: batch.plan(),
+            epoch: batch.epoch(),
+            custody,
+            batch,
+        }
+        .activate()),
+        Err(failure) => Err(Box::new((
+            M1ServingPhysicalBridgeErrorV1::Registry(failure.error()),
+            custody,
+            failure.into_reservation(),
+        ))),
+    }
+}
+
 impl<P> M1ServingPhysicalPublishedV1<P> {
     #[must_use]
     pub const fn plan(&self) -> M1ServingPlanV1 {

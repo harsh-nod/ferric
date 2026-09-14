@@ -666,6 +666,12 @@ impl M1PhysicalRunnerV1 {
         })
     }
 
+    pub(crate) fn structural_resident_program_catalog(
+        &self,
+    ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+        self.source.content_bound_program_catalog_v1()
+    }
+
     /// Revalidates the retained structural program source and replaces one completed S1 paired
     /// prefill queue with its exact native S1/K4 successor generation.
     ///

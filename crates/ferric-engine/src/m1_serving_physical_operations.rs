@@ -275,6 +275,347 @@ impl M1ServingPhysicalRunnerAdapterIdentityV1 {
     }
 }
 
+/// Structural maintenance intent retained with the same committed physical owner.
+/// This is not an authenticated Worker V3 capability.
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupPendingV1 {
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    adapter_identity: M1ServingPhysicalRunnerAdapterIdentityV1,
+    parent: ferric_spec::Qwen3PlanSelection,
+    request: RequestId,
+    completed_round: u64,
+    prior_epoch: CompletionEpoch,
+    epoch: CompletionEpoch,
+    draft_committed: u32,
+    target_committed: u32,
+    token: ferric_spec::TokenId,
+    next_anchor: ferric_spec::TokenId,
+    prior_dispatch_generation: u64,
+}
+
+impl M1StructuralDraftCatchupPendingV1 {
+    pub(crate) const fn coordinator_identity(
+        &self,
+    ) -> crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1 {
+        self.coordinator_identity
+    }
+    pub(crate) const fn parent(&self) -> ferric_spec::Qwen3PlanSelection {
+        self.parent
+    }
+    pub(crate) const fn request(&self) -> RequestId {
+        self.request
+    }
+    pub(crate) const fn completed_round(&self) -> u64 {
+        self.completed_round
+    }
+    pub(crate) const fn prior_epoch(&self) -> CompletionEpoch {
+        self.prior_epoch
+    }
+    pub(crate) const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+    pub(crate) const fn draft_committed(&self) -> u32 {
+        self.draft_committed
+    }
+    pub(crate) const fn target_committed(&self) -> u32 {
+        self.target_committed
+    }
+    pub(crate) const fn token(&self) -> ferric_spec::TokenId {
+        self.token
+    }
+    pub(crate) const fn next_anchor(&self) -> ferric_spec::TokenId {
+        self.next_anchor
+    }
+    pub(crate) const fn prior_dispatch_generation(&self) -> u64 {
+        self.prior_dispatch_generation
+    }
+}
+
+/// Issued only after the structural maintenance receipt and draft KV settle.
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupCompletedV1 {
+    pending: M1StructuralDraftCatchupPendingV1,
+    dispatch_generation: u64,
+    receipt: crate::M1ObservedCompletionImageV1,
+}
+
+impl M1StructuralDraftCatchupCompletedV1 {
+    pub(crate) const fn pending(&self) -> &M1StructuralDraftCatchupPendingV1 {
+        &self.pending
+    }
+    pub(crate) const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+    pub(crate) const fn completion_epoch(&self) -> CompletionEpoch {
+        self.receipt.epoch()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupPhysicalSettlementV1 {
+    pub(crate) lower: fe2o3_service_host::ServiceRecycledQueueSessionV1<425>,
+    pub(crate) custody: crate::M1PhysicalQueueBatchCustodyV1,
+    pub(crate) cache: ActiveDeviceKvCache,
+    pub(crate) completed: M1StructuralDraftCatchupCompletedV1,
+    pub(crate) initialized: crate::device_cache::InertInitializedDeviceKvStepWrite,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupSettlementFailureV1 {
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl fmt::Display for M1StructuralDraftCatchupSettlementFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "structural maintenance settlement retains custody: {:?}",
+            self.retained
+        )
+    }
+}
+
+pub(crate) fn settle_structural_draft_catchup_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    runner: &crate::LogicalRunnerDeclaration,
+    pending: M1StructuralDraftCatchupPendingV1,
+    readback: crate::physical_queue_lifecycle::M1StructuralDraftCatchupReadbackV1,
+    cache: ActiveDeviceKvCache,
+) -> Result<
+    M1StructuralDraftCatchupPhysicalSettlementV1,
+    Box<M1StructuralDraftCatchupSettlementFailureV1>,
+> {
+    let (lower, custody, completion, kv, image) = readback.into_parts();
+    let projection = cache.projection();
+    let pending_write = match &kv {
+        crate::M1FullStepKvReservationCustodyV1::DraftCatchup {
+            parent,
+            target_allocation_id,
+            draft,
+        } if *parent == pending.parent()
+            && Some(*target_allocation_id) == projection.target_arena_allocation_id
+            && Some(draft.allocation_id()) == projection.draft_arena_allocation_id
+            && draft.reservations().len() == 1 =>
+        {
+            draft.reservations().first()
+        }
+        _ => None,
+    };
+    let receipt_matches = runner
+        .bind_step_plan(
+            pending.request(),
+            pending.epoch(),
+            crate::M1StepDispatchIntent::DraftCatchup(pending.parent()).completion_selection(),
+        )
+        .is_ok_and(|plan| {
+            crate::authenticated_physical_readback::check_draft_catchup_receipt_image(
+                &image,
+                pending.request(),
+                pending.epoch(),
+                *plan.plan_id(),
+            )
+            .is_ok()
+        });
+    if !receipt_matches
+        || engine.is_faulted()
+        || custody.selection() != pending.parent()
+        || custody.completion_output().draft_catchup_parent_selection() != Some(pending.parent())
+        || pending.prior_dispatch_generation().checked_add(1) != Some(image.dispatch_generation())
+        || completion.epoch() != pending.epoch()
+        || projection.request != pending.request()
+        || projection.device != custody.device()
+        || projection.target.committed_tokens != pending.target_committed()
+        || projection.target.resident_tokens != pending.target_committed()
+        || projection.draft.committed_tokens != pending.draft_committed()
+        || projection.draft.resident_tokens != pending.draft_committed()
+        || pending.draft_committed().checked_add(1) != Some(pending.target_committed())
+        || engine.pending_batch_member_count() != 1
+        || engine.pending_member(0) != Some(pending.request())
+        || engine.state(pending.request()) != Some(ferric_spec::scheduling::RequestState::InFlight)
+        || !pending_write.is_some_and(|write| write.matches_structural_draft_catchup(&pending))
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+            retained: Box::new((
+                "maintenance binding",
+                lower,
+                custody,
+                pending,
+                completion,
+                kv,
+                image,
+                cache,
+            )),
+        }));
+    }
+    let write = pending_write.expect("checked maintenance reservation");
+    if let Err(error) = cache
+        .preflight_step_completion(write, &completion)
+        .and_then(|()| cache.preflight_step_settlement(write, 1, pending.epoch()))
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+            retained: Box::new((error, lower, custody, pending, completion, kv, image, cache)),
+        }));
+    }
+    if let Err(error) = engine.preflight_complete_exact(&completion, &[0]) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+            retained: Box::new((error, lower, custody, pending, completion, kv, image, cache)),
+        }));
+    }
+    let crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } = kv else {
+        unreachable!("checked maintenance reservation");
+    };
+    let mut reservations = draft.into_reservations().into_iter();
+    let write = reservations
+        .next()
+        .expect("checked singleton maintenance reservation");
+    let (mut cache, initialized, completion) = match cache.complete_step_write(write, completion) {
+        crate::device_cache::DeviceKvStepCompletionOutcome::Completed(completed) => {
+            completed.into_parts()
+        }
+        error => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+                retained: Box::new((error, lower, custody, pending, image, reservations)),
+            }));
+        }
+    };
+    let settlement = cache.settle_completed_step(&initialized, 1, pending.epoch());
+    let settled = cache.projection();
+    if settlement != Ok(0)
+        || settled.target != projection.target
+        || settled.draft.committed_tokens != pending.target_committed()
+        || settled.draft.resident_tokens != pending.target_committed()
+        || settled.target_write_pending
+        || settled.draft_write_pending
+        || settled.target_active_pages != projection.target_active_pages
+        || settled.target_retired_pages != projection.target_retired_pages
+        || settled.draft_retired_pages != projection.draft_retired_pages
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+            retained: Box::new((
+                "maintenance settlement projection",
+                settlement,
+                lower,
+                custody,
+                pending,
+                completion,
+                initialized,
+                image,
+                cache,
+            )),
+        }));
+    }
+    match engine.complete_exact(completion, &[0]) {
+        Ok(1) => Ok(M1StructuralDraftCatchupPhysicalSettlementV1 {
+            lower,
+            custody,
+            cache,
+            initialized,
+            completed: M1StructuralDraftCatchupCompletedV1 {
+                pending,
+                dispatch_generation: image.dispatch_generation(),
+                receipt: image,
+            },
+        }),
+        error => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+                retained: Box::new((error, lower, custody, pending, initialized, image, cache)),
+            }))
+        }
+    }
+}
+
+fn joined_structural_draft_catchup_pending(
+    coordinator: &crate::M1SpeculativeGenerationLoopV1,
+    committed: &M1ServingCommittedSpeculativeRoundV1<M1ServingPhysicalRunnerQuiescentV1>,
+) -> Result<Option<M1StructuralDraftCatchupPendingV1>, ()> {
+    let outcome = committed.outcome();
+    let parent = committed.plan().target();
+    let quiescent = committed.quiescent();
+    let released = match &quiescent.state {
+        M1ServingPhysicalRunnerQuiescentStateV1::First { released, .. } => released,
+        M1ServingPhysicalRunnerQuiescentStateV1::Rearmed { released, .. } => {
+            released.current_released()
+        }
+        M1ServingPhysicalRunnerQuiescentStateV1::Unscheduled { .. } => return Err(()),
+    };
+    if !matches!(
+        parent.bucket,
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+            | Qwen3PlanBucket::SpeculativeS1K8C8192
+            | Qwen3PlanBucket::SpeculativeS1K16C8192
+    ) || parent.role != ferric_spec::Qwen3ModelRole::Target8B
+        || parent.mode != ferric_spec::Qwen3ExecutionMode::Speculative
+        || outcome.selection() != parent
+        || released.checked().selection() != parent
+        || released.checked().epoch() != outcome.completed_epoch()
+        || quiescent.epoch != outcome.completed_epoch()
+        || outcome.coordinator_identity() != coordinator.identity()
+        || outcome.completed_round().checked_add(1) != Some(coordinator.next_round())
+        || coordinator.last_epoch() != Some(outcome.completed_epoch())
+    {
+        return Err(());
+    }
+    let [member] = outcome.members() else {
+        return Err(());
+    };
+    if member.status() != M1SpeculativeMemberStatusV1::Active {
+        return Ok(None);
+    }
+    let target_committed = member.target_settlement().commit_end();
+    let draft_committed = member.draft_settlement().commit_end();
+    if target_committed == draft_committed {
+        return Ok(None);
+    }
+    let snapshot = coordinator.member(member.request()).ok_or(())?;
+    let history = quiescent.diagnostic_history();
+    let (Some(M1ServingPhysicalRunnerReadbackEvidenceV1::SpeculativeK4(choices)), Some(binding)) =
+        (history.evidence().last(), history.bindings().last())
+    else {
+        return Err(());
+    };
+    let candidates = choices.draft_choices_for_lane(0).ok_or(())?;
+    let token = *candidates.last().ok_or(())?;
+    let k = choices.shape().draft_tokens();
+    if choices.shape().selection() != parent
+        || choices.live_sequences() != 1
+        || candidates.len() != usize::from(k)
+        || choices.dispatch_generation() == 0
+        || choices.dispatch_generation() != released.checked().dispatch_generation()
+        || binding.plan() != committed.plan()
+        || binding.epoch() != outcome.completed_epoch()
+        || binding.requests() != [member.request()]
+        || member.accepted_draft_tokens() != k
+        || member.accepted_prefix_tokens().last() != Some(&token)
+        || snapshot.status() != M1SpeculativeMemberStatusV1::Active
+        || snapshot.target_committed_tokens() != target_committed
+        || snapshot.draft_committed_tokens() != draft_committed
+        || draft_committed.checked_add(1) != Some(target_committed)
+        || target_committed > ferric_spec::M1_MAX_CONTEXT_TOKENS
+    {
+        return Err(());
+    }
+    Ok(Some(M1StructuralDraftCatchupPendingV1 {
+        coordinator_identity: coordinator.identity(),
+        adapter_identity: quiescent.adapter_identity,
+        parent,
+        request: member.request(),
+        completed_round: outcome.completed_round(),
+        prior_epoch: outcome.completed_epoch(),
+        epoch: CompletionEpoch::new(outcome.completed_epoch().value().checked_add(1).ok_or(())?),
+        draft_committed,
+        target_committed,
+        token,
+        next_anchor: member.next_draft_anchor().ok_or(())?,
+        prior_dispatch_generation: choices.dispatch_generation(),
+    }))
+}
+
 /// Opaque diagnostic evidence history retained inside lifecycle custody.
 #[must_use = "diagnostic evidence must remain retained"]
 #[derive(Debug)]
@@ -1142,6 +1483,8 @@ pub struct M1ServingPhysicalRunnerOperationsV1<'a, const C: usize, P> {
     phase: M1ServingPhysicalRunnerAdapterPhaseV1,
     active_plan: Option<M1ServingPlanV1>,
 }
+
+pub(crate) mod structural_resident;
 
 impl<'a, const C: usize, P> M1ServingPhysicalRunnerOperationsV1<'a, C, P> {
     /// Creates a physical adapter with a unique process-local custody identity.
@@ -4673,19 +5016,32 @@ mod tests {
 
         let request = RequestId::new(7, 1);
         let epoch = CompletionEpoch::new(3);
-        let exact = queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 0);
+        let exact = queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 133, 0);
         let authority = M1CommittedSpeculativeRearmMemberAuthorityV1 {
             request,
             anchor: Some(900),
             target_committed: 133,
-            draft_committed: 132,
+            draft_committed: 133,
         };
         assert_eq!(
             validate_committed_speculative_rearm_input(&exact, &[request], [authority].into_iter(),),
             Ok(())
         );
 
-        let substituted_anchor = queued_s1_k4_rearm_test_input(request, epoch, 901, 133, 132, 0);
+        let unfilled_draft = queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 0);
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &unfilled_draft,
+                &[request],
+                [M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                    draft_committed: 132,
+                    ..authority
+                }]
+                .into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
+        let substituted_anchor = queued_s1_k4_rearm_test_input(request, epoch, 901, 133, 133, 0);
         assert_eq!(
             validate_committed_speculative_rearm_input(
                 &substituted_anchor,
@@ -4694,7 +5050,7 @@ mod tests {
             ),
             Err(Unavailable::CommittedInputMismatch)
         );
-        let substituted_cursor = queued_s1_k4_rearm_test_input(request, epoch, 900, 134, 132, 0);
+        let substituted_cursor = queued_s1_k4_rearm_test_input(request, epoch, 900, 134, 133, 0);
         assert_eq!(
             validate_committed_speculative_rearm_input(
                 &substituted_cursor,
@@ -4704,7 +5060,7 @@ mod tests {
             Err(Unavailable::CommittedInputMismatch)
         );
         let substituted_draft_cursor =
-            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 131, 0);
+            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 0);
         assert_eq!(
             validate_committed_speculative_rearm_input(
                 &substituted_draft_cursor,
@@ -4714,7 +5070,7 @@ mod tests {
             Err(Unavailable::CommittedInputMismatch)
         );
         let nonzero_future_placeholder =
-            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 132, 1);
+            queued_s1_k4_rearm_test_input(request, epoch, 900, 133, 133, 1);
         assert_eq!(
             validate_committed_speculative_rearm_input(
                 &nonzero_future_placeholder,

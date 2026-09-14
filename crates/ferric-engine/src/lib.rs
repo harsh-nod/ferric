@@ -574,6 +574,10 @@ pub use m1_serving_physical_input_provider::{
     M1ServingQueuedGenerationPhaseV1, M1ServingQueuedPairedPrefillNewWindowV1,
     M1ServingQueuedS1K4RolloverV1, M1ServingQueuedSameShapeRearmV1,
 };
+pub use m1_serving_physical_operations::structural_resident::{
+    M1StructuralResidentCommittedRoundV1, M1StructuralResidentFailureV1,
+    M1StructuralResidentRoundInputV1,
+};
 pub use m1_serving_physical_operations::{
     M1ServingFirstReadbackStateV1, M1ServingPhysicalInputProviderV1,
     M1ServingPhysicalRunnerDiagnosticBindingV1, M1ServingPhysicalRunnerDiagnosticHistoryV1,

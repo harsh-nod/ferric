@@ -969,6 +969,26 @@ impl M1SpeculativeGenerationLoopV1 {
         })
     }
 
+    pub(crate) fn commit_structural_draft_catchup(
+        &mut self,
+        completed: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupCompletedV1,
+    ) -> Result<(), M1SpeculativeGenerationLoopErrorV1> {
+        let pending = completed.pending();
+        self.commit_draft_catchup_transition(M1DraftCatchupCoordinatorTransitionV1 {
+            coordinator_identity: pending.coordinator_identity(),
+            parent: pending.parent(),
+            request: pending.request(),
+            completed_round: pending.completed_round(),
+            prior_epoch: pending.prior_epoch(),
+            epoch: pending.epoch(),
+            draft_committed: pending.draft_committed(),
+            target_committed: pending.target_committed(),
+            token: pending.token(),
+            prior_dispatch_generation: pending.prior_dispatch_generation(),
+            dispatch_generation: completed.dispatch_generation(),
+        })
+    }
+
     fn commit_draft_catchup_transition(
         &mut self,
         transition: M1DraftCatchupCoordinatorTransitionV1,

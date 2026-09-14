@@ -2349,6 +2349,75 @@ pub enum M1PhysicalReadbackDetachedQueueSessionV1 {
 }
 
 impl M1PhysicalReadbackDetachedQueueSessionV1 {
+    pub(crate) fn lease_structural_speculative_page(
+        &mut self,
+        parent: ferric_spec::Qwen3PlanSelection,
+        request: ferric_spec::RequestId,
+        role: ferric_spec::Qwen3ModelRole,
+        page: u32,
+    ) -> Result<crate::DeviceKvPageLease, crate::M1DeviceKvArenaLeaseErrorV1> {
+        if self.custody().selection() != parent
+            || !matches!(
+                parent.bucket,
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192
+                    | ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192
+                    | ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192
+            )
+            || self.detached_dispatch_generation() == 0
+        {
+            return Err(crate::M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        let case = match self {
+            Self::SpeculativeK4(case) | Self::SpeculativeK8(case) | Self::SpeculativeK16(case) => {
+                case
+            }
+            Self::TargetOnly(_) | Self::PairedPrefill(_) => {
+                return Err(crate::M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+            }
+        };
+        case.custody
+            .partitioned_memory_mut()
+            .lease_page_for_detached_queue(&case.lower, request, role, page)
+    }
+
+    pub(crate) fn lease_structural_draft_catchup_page(
+        &mut self,
+        authorized: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+    ) -> Result<crate::DeviceKvPageLease, crate::M1DeviceKvArenaLeaseErrorV1> {
+        if self.custody().selection() != authorized.parent()
+            || self.detached_dispatch_generation() != authorized.prior_dispatch_generation()
+            || authorized.prior_epoch().value().checked_add(1) != Some(authorized.epoch().value())
+            || authorized.draft_committed().checked_add(1) != Some(authorized.target_committed())
+            || authorized.target_committed() > ferric_spec::M1_MAX_CONTEXT_TOKENS
+            || !authorized
+                .draft_committed()
+                .is_multiple_of(ferric_spec::M1_KV_PAGE_TOKENS)
+            || !matches!(
+                self.shape(),
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                    | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+                    | M1PhysicalFixedBatchShapeV1::SpeculativeK16
+            )
+        {
+            return Err(crate::M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
+        }
+        let case = match self {
+            Self::TargetOnly(case)
+            | Self::PairedPrefill(case)
+            | Self::SpeculativeK4(case)
+            | Self::SpeculativeK8(case)
+            | Self::SpeculativeK16(case) => case,
+        };
+        case.custody
+            .partitioned_memory_mut()
+            .lease_page_for_detached_queue(
+                &case.lower,
+                authorized.request(),
+                ferric_spec::Qwen3ModelRole::Draft06B,
+                authorized.draft_committed() / ferric_spec::M1_KV_PAGE_TOKENS,
+            )
+    }
+
     /// Returns the exact former M1 publication shape.
     #[must_use]
     pub const fn shape(&self) -> M1PhysicalFixedBatchShapeV1 {
@@ -5499,6 +5568,294 @@ fn submit_case<const N: usize>(
             lower, custody, step,
         ))),
         Err(lower) => Err(operation_failure(shape, step, lower, custody)),
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupReadbackHostStorageV1 {
+    parent: ferric_spec::Qwen3PlanSelection,
+    completion: crate::observed_completion::M1ObservedCompletionHostStorageV1,
+}
+
+impl M1StructuralDraftCatchupReadbackHostStorageV1 {
+    pub(crate) fn try_new(parent: ferric_spec::Qwen3PlanSelection) -> Option<Self> {
+        if parent.role != ferric_spec::Qwen3ModelRole::Target8B
+            || parent.mode != Qwen3ExecutionMode::Speculative
+            || !matches!(
+                parent.bucket,
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192
+                    | ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192
+                    | ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192
+            )
+        {
+            return None;
+        }
+        let shape = crate::m1_completion_output_shape_v1(
+            crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection(),
+        )
+        .ok()?;
+        Some(Self {
+            parent,
+            completion: crate::observed_completion::M1ObservedCompletionHostStorageV1::try_new(
+                shape, 1,
+            )?,
+        })
+    }
+}
+
+/// Separate structural maintenance phase; ordinary serving joins cannot consume it.
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupPublishedV1 {
+    case: M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<425>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupQueueFailureV1 {
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl M1StructuralDraftCatchupQueueFailureV1 {
+    fn new(retained: impl fmt::Debug + 'static) -> Self {
+        Self {
+            retained: Box::new(retained),
+        }
+    }
+}
+
+impl fmt::Display for M1StructuralDraftCatchupQueueFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "structural draft catch-up retains failed custody: {:?}",
+            self.retained
+        )
+    }
+}
+
+impl std::error::Error for M1StructuralDraftCatchupQueueFailureV1 {}
+
+#[derive(Debug)]
+pub(crate) struct M1StructuralDraftCatchupReadbackV1 {
+    lower: ServiceRecycledQueueSessionV1<425>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    completion: ExactCompletion,
+    kv: M1FullStepKvReservationCustodyV1,
+    image: M1ObservedCompletionImageV1,
+}
+
+impl M1StructuralDraftCatchupReadbackV1 {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        ServiceRecycledQueueSessionV1<425>,
+        M1PhysicalQueueBatchCustodyV1,
+        ExactCompletion,
+        M1FullStepKvReservationCustodyV1,
+        M1ObservedCompletionImageV1,
+    ) {
+        (
+            self.lower,
+            self.custody,
+            self.completion,
+            self.kv,
+            self.image,
+        )
+    }
+}
+
+pub(crate) fn publish_m1_structural_draft_catchup_v1(
+    lower: ServiceQueueSessionV1<425>,
+    custody: M1PhysicalQueueBatchCustodyV1,
+    step: M1PrepublicationStepCustodyV1,
+) -> Result<M1StructuralDraftCatchupPublishedV1, M1StructuralDraftCatchupQueueFailureV1> {
+    let parent = custody.selection();
+    if custody.completion_output().draft_catchup_parent_selection() != Some(parent)
+        || crate::authenticated_physical_readback::check_draft_catchup_step_binding(parent, &step)
+            .is_err()
+    {
+        return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+            "maintenance publication binding",
+            lower,
+            custody,
+            step,
+        )));
+    }
+    match lower.submit() {
+        Ok(lower) => Ok(M1StructuralDraftCatchupPublishedV1 {
+            case: M1PhysicalQueuePhaseCaseV1::new(lower, custody, step),
+        }),
+        Err(error) => Err(M1StructuralDraftCatchupQueueFailureV1::new((
+            error, custody, step,
+        ))),
+    }
+}
+
+impl M1StructuralDraftCatchupPublishedV1 {
+    pub(crate) const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
+        self.case.scheduled_dispatch()
+    }
+
+    pub(crate) fn read_and_check(
+        self,
+        expected_dispatch_generation: u64,
+        timeout_ms: u32,
+        storage: M1StructuralDraftCatchupReadbackHostStorageV1,
+    ) -> Result<M1StructuralDraftCatchupReadbackV1, M1StructuralDraftCatchupQueueFailureV1> {
+        use crate::authenticated_physical_readback::{
+            check_draft_catchup_receipt_image, check_draft_catchup_step_binding,
+            draft_catchup_readback_binding_matches,
+        };
+        let (lower, custody, step) = self.case.into_parts();
+        let completed = wait_with_completion_progress_deadline_policy::<425, _, _, _>(
+            lower,
+            M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+            timeout_ms,
+            |published| {
+                published.poll_with_progress().map(|outcome| match outcome {
+                    ServiceQueuePollWithProgressV1::Pending { session, progress } => {
+                        CompletionProgressPollV1::Pending {
+                            session,
+                            progress: M1CompletionProgressObservationV1::from_service(progress),
+                        }
+                    }
+                    ServiceQueuePollWithProgressV1::Ready { session, progress } => {
+                        CompletionProgressPollV1::Ready {
+                            session,
+                            progress: M1CompletionProgressObservationV1::from_service(progress),
+                        }
+                    }
+                })
+            },
+            || {
+                std::thread::sleep(std::time::Duration::from_micros(
+                    M1_COMPLETION_PROGRESS_PENDING_SCAN_PAUSE_MICROS_V1,
+                ))
+            },
+            |published| published.wait_for(0),
+        );
+        let lower = match completed {
+            Ok(lower) => lower,
+            Err(CompletionProgressWaitFailureV1::Lower(error)) => {
+                return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                    error, custody, step, storage,
+                )));
+            }
+            Err(CompletionProgressWaitFailureV1::Policy { lower, diagnostic }) => {
+                return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                    lower, diagnostic, custody, step, storage,
+                )));
+            }
+        };
+        let mut case = match lower.recycle() {
+            Ok(lower) => M1PhysicalQueuePhaseCaseV1::new(lower, custody, step),
+            Err(error) => {
+                return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                    error, custody, step, storage,
+                )))
+            }
+        };
+        let output = case.custody.completion_output();
+        if !draft_catchup_readback_binding_matches(
+            storage.parent,
+            case.custody.selection(),
+            output.draft_catchup_parent_selection(),
+            output.shape().selection(),
+            case.step.scheduled_dispatch().member_count(),
+        ) || output.completion_canary().is_some()
+            || output.direct_diagnostic_choices().is_some()
+            || output.speculative_diagnostic_choices().is_some()
+            || output.qualification_logits().is_some()
+        {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                "maintenance readback binding",
+                case,
+                storage,
+            )));
+        }
+        let (request, plan_id) = match check_draft_catchup_step_binding(storage.parent, &case.step)
+        {
+            Ok(binding) => binding,
+            Err(error) => {
+                return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                    error, case, storage,
+                )))
+            }
+        };
+        let output_shape = output.shape();
+        let data_index = output.data_index();
+        let range = output.retained_host_dispatch_range();
+        let read_request = case.lower.completed_read_request(range);
+        let generation = read_request.dispatch_generation();
+        if expected_dispatch_generation == 0 || generation != expected_dispatch_generation {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                "maintenance dispatch generation",
+                case,
+                storage,
+            )));
+        }
+        let M1StructuralDraftCatchupReadbackHostStorageV1 {
+            parent,
+            mut completion,
+        } = storage;
+        let Some(destination) = completion.bytes_mut() else {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                "maintenance readback storage",
+                case,
+                parent,
+                completion,
+            )));
+        };
+        if let Err(error) = case.lower.read_completed_into(read_request, destination) {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                error, case, parent, completion,
+            )));
+        }
+        let image = match crate::observed_completion::observe_m1_completed_output_with_storage_v1(
+            output_shape,
+            crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection(),
+            case.step.scheduled_dispatch(),
+            generation,
+            data_index,
+            range.offset_bytes(),
+            completion,
+        ) {
+            Ok(image) => image,
+            Err(error) => {
+                return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                    error, case, parent,
+                )))
+            }
+        };
+        if let Err(error) =
+            check_draft_catchup_receipt_image(&image, request, case.queue_epoch(), plan_id)
+        {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                error, case, image,
+            )));
+        }
+        let (lower, custody, step) = case.into_parts();
+        let (scheduled, plans, kv, lineage, rollover) = step.into_parts_with_speculative_lineage();
+        if lineage.is_some() || rollover.is_some() {
+            return Err(M1StructuralDraftCatchupQueueFailureV1::new((
+                "foreign authenticated lineage",
+                lower,
+                custody,
+                scheduled,
+                plans,
+                kv,
+                lineage,
+                rollover,
+                image,
+            )));
+        }
+        let completion = ExactCompletion::from_completed_m1_queue_readback(scheduled);
+        Ok(M1StructuralDraftCatchupReadbackV1 {
+            lower,
+            custody,
+            completion,
+            kv,
+            image,
+        })
     }
 }
 

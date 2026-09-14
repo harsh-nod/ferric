@@ -145,7 +145,7 @@ fn resident_speculative_readback_binding_matches(
             .is_some_and(|shape| shape.packet_count() == packet_count)
 }
 
-fn draft_catchup_readback_binding_matches(
+pub(crate) fn draft_catchup_readback_binding_matches(
     parent: Qwen3PlanSelection,
     queue_selection: Qwen3PlanSelection,
     output_parent: Option<Qwen3PlanSelection>,
@@ -160,7 +160,7 @@ fn draft_catchup_readback_binding_matches(
             == crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection()
 }
 
-fn check_draft_catchup_step_binding(
+pub(crate) fn check_draft_catchup_step_binding(
     parent: Qwen3PlanSelection,
     step: &M1PrepublicationStepCustodyV1,
 ) -> Result<(RequestId, Identity), M1CompletedOutputCheckErrorV1> {
@@ -234,7 +234,7 @@ fn check_draft_catchup_step_binding(
     Ok((request, *plan.plan_id()))
 }
 
-fn check_draft_catchup_receipt_image(
+pub(crate) fn check_draft_catchup_receipt_image(
     image: &M1ObservedCompletionImageV1,
     request: RequestId,
     epoch: CompletionEpoch,

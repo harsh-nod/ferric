@@ -17,6 +17,8 @@
 
 use core::fmt;
 
+pub(crate) mod structural_draft_catchup;
+
 use fe2o3_kfd::{
     ComputeAqlQueueDestroyedV1, ComputeAqlQueueObservationV1, Gfx942DeviceContentDescriptorV1,
 };
@@ -135,6 +137,8 @@ pub struct M1RearmRoundHistoryEntryV1 {
     rollover: Option<M1QueueRolloverObservationV1>,
     maintenance:
         Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
+    structural_maintenance:
+        Option<structural_draft_catchup::StructuralDraftCatchupRestoreCustodyV1>,
 }
 
 impl M1RearmRoundHistoryEntryV1 {
@@ -160,6 +164,7 @@ impl M1RearmRoundHistoryEntryV1 {
             device,
             rollover: None,
             maintenance: None,
+            structural_maintenance: None,
         }
     }
 
@@ -186,6 +191,7 @@ impl M1RearmRoundHistoryEntryV1 {
             device,
             rollover,
             maintenance: None,
+            structural_maintenance: None,
         }
     }
 
@@ -3773,6 +3779,8 @@ struct M1RearmContinuationCustodyV1 {
     total_released: usize,
     history: M1RearmRoundHistoryV1,
     rollover: Option<M1QueueRolloverObservationV1>,
+    structural_maintenance:
+        Option<structural_draft_catchup::StructuralDraftCatchupRestoreCustodyV1>,
 }
 
 /// Published next generation on the same native queue, paired with all cache custody.
@@ -9588,6 +9596,7 @@ impl M1RearmedCompletedReadbackV1 {
             device,
             rollover: carry.rollover,
             maintenance: None,
+            structural_maintenance: carry.structural_maintenance,
         });
         Ok(M1RearmedCompletionOutcomeV1 {
             outcome,
@@ -9800,7 +9809,7 @@ fn diagnostic_capture_reset_failure(
 
 fn reset_retained_diagnostic_capture(
     lower: ServiceQueueUnboundSessionV1,
-    mut completion: crate::BoundM1CompletionOutputV1,
+    completion: crate::BoundM1CompletionOutputV1,
 ) -> Result<
     (
         ServiceQueueUnboundSessionV1,
@@ -9808,6 +9817,29 @@ fn reset_retained_diagnostic_capture(
     ),
     DiagnosticCaptureResetFailureV1,
 > {
+    reset_retained_diagnostic_capture_core(lower, completion, None)
+}
+
+fn reset_retained_diagnostic_capture_core(
+    lower: ServiceQueueUnboundSessionV1,
+    mut completion: crate::BoundM1CompletionOutputV1,
+    storage: Option<crate::completion_output::M1AuthenticatedDiagnosticResetHostStorageV1>,
+) -> Result<
+    (
+        ServiceQueueUnboundSessionV1,
+        crate::BoundM1CompletionOutputV1,
+    ),
+    DiagnosticCaptureResetFailureV1,
+> {
+    if storage
+        .as_ref()
+        .is_some_and(|storage| !storage.matches_restored_output(&completion))
+    {
+        return Err(diagnostic_capture_reset_failure(
+            M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeDraftChoiceReplacement,
+            (lower, completion, storage),
+        ));
+    }
     if completion.direct_diagnostic_choices().is_some() {
         let (old, image) = {
             let choices = completion
@@ -9853,22 +9885,28 @@ fn reset_retained_diagnostic_capture(
             let choices = completion
                 .speculative_diagnostic_choices()
                 .expect("presence checked above");
-            let draft_image = match choices.replacement_draft_image() {
-                Ok(image) => image,
-                Err(error) => {
-                    return Err(diagnostic_capture_reset_failure(
+            let (draft_image, target_image) = match storage {
+                Some(storage) => storage.into_images(),
+                None => {
+                    let draft_image = match choices.replacement_draft_image() {
+                        Ok(image) => image,
+                        Err(error) => {
+                            return Err(diagnostic_capture_reset_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeDraftChoiceReplacement,
                         (lower, completion, error),
                     ));
-                }
-            };
-            let target_image = match choices.replacement_target_image() {
-                Ok(image) => image,
-                Err(error) => {
-                    return Err(diagnostic_capture_reset_failure(
+                        }
+                    };
+                    let target_image = match choices.replacement_target_image() {
+                        Ok(image) => image,
+                        Err(error) => {
+                            return Err(diagnostic_capture_reset_failure(
                         M1LongLivedQueueRearmSubmissionPhaseV1::SpeculativeTargetChoiceReplacement,
                         (lower, completion, draft_image, error),
                     ));
+                        }
+                    };
+                    (draft_image, target_image)
                 }
             };
             (
@@ -10488,6 +10526,7 @@ fn finish_staged_rearm_submission(
             total_released: post.total_released,
             history: post.history,
             rollover: None,
+            structural_maintenance: None,
         },
         queue_observation: expected_observation,
         device,
@@ -11221,6 +11260,7 @@ fn submit_m1_finite_speculative_queue_rollover_inner_v1(
             total_released: residue.total_released,
             history: M1RearmRoundHistoryV1::Empty,
             rollover: Some(rollover_observation),
+            structural_maintenance: None,
         },
         queue_observation: predecessor_observation,
         device,
@@ -12649,6 +12689,7 @@ fn submit_m1_all_terminal_paired_prefill_new_window_inner_v1<'a, const C: usize>
             total_released: residue.total_released,
             history: residue.history,
             rollover: Some(rollover_observation),
+            structural_maintenance: None,
         },
         queue_observation: predecessor_observation,
         device,
@@ -13273,6 +13314,7 @@ mod tests {
             total_released: 0,
             history: M1RearmRoundHistoryV1::Empty,
             rollover: None,
+            structural_maintenance: None,
         }
     }
 

@@ -4684,6 +4684,22 @@ pub(crate) fn m1_speculative_draft_round_shape_v1(
 }
 
 impl PendingDeviceKvStepWrite {
+    pub(crate) fn matches_structural_draft_catchup(
+        &self,
+        authorized: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+    ) -> bool {
+        self.binding.purpose
+            == PendingStepWritePurpose::DraftCatchup {
+                parent: authorized.parent(),
+                prior_epoch: authorized.prior_epoch(),
+            }
+            && self.request() == authorized.request()
+            && self.epoch() == authorized.epoch()
+            && self.committed_tokens() == authorized.draft_committed()
+            && self.end_tokens() == authorized.target_committed()
+            && self.active_tokens() == 1
+    }
+
     pub(crate) const fn is_authenticated_draft_catchup(&self) -> bool {
         matches!(
             self.binding.purpose,
@@ -5855,6 +5871,39 @@ impl ActiveDeviceKvCache {
             new_page_leases,
             PendingStepWritePurpose::Ordinary,
             None,
+        )
+    }
+
+    pub(crate) fn reserve_structural_draft_catchup_write(
+        &mut self,
+        authorized: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+        new_page_leases: Vec<DeviceKvPageLease>,
+        storage: &mut M1DraftCatchupKvWriteHostStorageV1,
+    ) -> Result<PendingDeviceKvStepWrite, Box<DeviceKvStepReservationFailure>> {
+        if self.common.target.selection() != authorized.parent()
+            || self.common.target.pending.is_some()
+            || self.common.target.logical().lifecycle != PhysicalKvLifecycle::Active
+            || self.common.target.logical().committed_tokens != authorized.target_committed()
+            || self.common.target.logical().resident_tokens != authorized.target_committed()
+            || authorized.draft_committed().checked_add(1) != Some(authorized.target_committed())
+        {
+            return Err(Box::new(DeviceKvStepReservationFailure {
+                error: DeviceKvCacheError::StepCommittedPositionMismatch,
+                page_leases: new_page_leases,
+            }));
+        }
+        self.reserve_step_write_for_purpose(
+            authorized.request(),
+            Qwen3ModelRole::Draft06B,
+            authorized.draft_committed(),
+            1,
+            authorized.epoch(),
+            new_page_leases,
+            PendingStepWritePurpose::DraftCatchup {
+                parent: authorized.parent(),
+                prior_epoch: authorized.prior_epoch(),
+            },
+            Some(storage),
         )
     }
 

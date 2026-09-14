@@ -772,21 +772,78 @@ pub(crate) fn bind_m1_draft_catchup_kv_workspace_table_with_storage_v1(
     storage: M1KvWorkspaceTableHostStorageV1,
     authorized: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
 ) -> Result<BoundM1DraftCatchupKvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
-    bind_m1_kv_workspace_table_core_v1(inputs, reservations, Some(storage), Some(authorized)).map(
-        |table| BoundM1DraftCatchupKvWorkspaceTableV1 {
-            parent: authorized.parent(),
-            table,
-        },
+    bind_m1_kv_workspace_table_core_v1(
+        inputs,
+        reservations,
+        Some(storage),
+        Some(M1DraftCatchupWorkspaceAuthorizationV1::Authenticated(
+            authorized,
+        )),
     )
+    .map(|table| BoundM1DraftCatchupKvWorkspaceTableV1 {
+        parent: authorized.parent(),
+        table,
+    })
+}
+
+pub(crate) fn bind_m1_structural_draft_catchup_kv_workspace_table_with_storage_v1(
+    inputs: ValidatedM1StepInputs,
+    reservations: Vec<PendingDeviceKvStepWrite>,
+    storage: M1KvWorkspaceTableHostStorageV1,
+    authorized: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+) -> Result<BoundM1DraftCatchupKvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
+    bind_m1_kv_workspace_table_core_v1(
+        inputs,
+        reservations,
+        Some(storage),
+        Some(M1DraftCatchupWorkspaceAuthorizationV1::Structural(
+            authorized,
+        )),
+    )
+    .map(|table| BoundM1DraftCatchupKvWorkspaceTableV1 {
+        parent: authorized.parent(),
+        table,
+    })
+}
+
+#[derive(Clone, Copy)]
+enum M1DraftCatchupWorkspaceAuthorizationV1<'a> {
+    Authenticated(
+        &'a crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    ),
+    Structural(&'a crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1),
+}
+
+impl M1DraftCatchupWorkspaceAuthorizationV1<'_> {
+    const fn token(self) -> ferric_spec::TokenId {
+        match self {
+            Self::Authenticated(authorized) => authorized.token(),
+            Self::Structural(authorized) => authorized.token(),
+        }
+    }
+
+    const fn parent(self) -> Qwen3PlanSelection {
+        match self {
+            Self::Authenticated(authorized) => authorized.parent(),
+            Self::Structural(authorized) => authorized.parent(),
+        }
+    }
+
+    fn matches(self, pending: &PendingDeviceKvStepWrite) -> bool {
+        match self {
+            Self::Authenticated(authorized) => {
+                pending.matches_authenticated_draft_catchup(authorized)
+            }
+            Self::Structural(authorized) => pending.matches_structural_draft_catchup(authorized),
+        }
+    }
 }
 
 fn bind_m1_kv_workspace_table_core_v1(
     inputs: ValidatedM1StepInputs,
     reservations: Vec<PendingDeviceKvStepWrite>,
     storage: Option<M1KvWorkspaceTableHostStorageV1>,
-    catchup: Option<
-        &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
-    >,
+    catchup: Option<M1DraftCatchupWorkspaceAuthorizationV1<'_>>,
 ) -> Result<BoundM1KvWorkspaceTableV1, Box<M1KvWorkspaceTableBindingFailureV1>> {
     let live_lanes = usize::try_from(inputs.live_lane_count()).unwrap_or(usize::MAX);
     if reservations.len() != live_lanes {
@@ -812,7 +869,7 @@ fn bind_m1_kv_workspace_table_core_v1(
             || inputs.token_ids().first() != Some(&authorized.token())
             || reservations
                 .first()
-                .is_none_or(|pending| !pending.matches_authenticated_draft_catchup(authorized))
+                .is_none_or(|pending| !authorized.matches(pending))
         {
             return reject(
                 M1KvWorkspaceTableBindingErrorV1::ReservationSelection {
@@ -891,7 +948,7 @@ fn bind_m1_kv_workspace_table_core_v1(
     let mut allocation_id = None;
     for (lane, reservation) in reservations.iter().enumerate() {
         let selection_matches = match catchup {
-            Some(authorized) => reservation.matches_authenticated_draft_catchup(authorized),
+            Some(authorized) => authorized.matches(reservation),
             None => {
                 reservation.selection() == selection
                     && !reservation.is_authenticated_draft_catchup()

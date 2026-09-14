@@ -634,6 +634,23 @@ struct M1ServingDraftCatchupKeyV1 {
 }
 
 impl M1ServingDraftCatchupKeyV1 {
+    fn from_structural_pending(
+        pending: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+    ) -> Self {
+        Self {
+            coordinator: pending.coordinator_identity(),
+            parent: pending.parent(),
+            request: pending.request(),
+            completed_round: pending.completed_round(),
+            prior_epoch: pending.prior_epoch(),
+            epoch: pending.epoch(),
+            draft_committed: pending.draft_committed(),
+            target_committed: pending.target_committed(),
+            token: pending.token(),
+            prior_dispatch_generation: pending.prior_dispatch_generation(),
+        }
+    }
+
     fn from_pending(
         pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
     ) -> Self {
@@ -1204,6 +1221,48 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
         self.register_draft_catchup_key(M1ServingDraftCatchupKeyV1::from_pending(pending))
+    }
+
+    pub(crate) fn register_structural_draft_catchup_pending(
+        &mut self,
+        pending: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.register_draft_catchup_key(M1ServingDraftCatchupKeyV1::from_structural_pending(
+            pending,
+        ))
+    }
+
+    pub(crate) fn reserve_structural_draft_catchup_publication(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        pending: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reserve_draft_catchup_key(
+            batch,
+            M1ServingDraftCatchupKeyV1::from_structural_pending(pending),
+        )
+    }
+
+    pub(crate) fn reserve_structural_draft_catchup_restore_publication(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        completed: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupCompletedV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reserve_draft_catchup_restore_key(
+            batch,
+            M1ServingDraftCatchupKeyV1::from_structural_pending(completed.pending()),
+            completed.dispatch_generation(),
+        )
+    }
+
+    pub(crate) fn complete_structural_draft_catchup(
+        &mut self,
+        completed: &crate::m1_serving_physical_operations::M1StructuralDraftCatchupCompletedV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.complete_draft_catchup_key(
+            M1ServingDraftCatchupKeyV1::from_structural_pending(completed.pending()),
+            completed.dispatch_generation(),
+        )
     }
 
     fn register_draft_catchup_key(
