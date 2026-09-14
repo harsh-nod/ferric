@@ -46,22 +46,32 @@ occurrence handling and tests; KFD/runtime sources are unchanged from c6.
 Fresh ccfd Pliron tests pass: 1,021 library, 58 integration and 13 doctests,
 including all fifteen new focused tests. All 543 backend tests and exact
 release CLI/backend builds also pass. Matching bb2 source, worker-closure,
-37 aggregate host tests and vendoring pass. The next prelaunch check stops at
-the unchanged 12-GiB owned-stage cap before overlay/emission starts. That
-resource stop is retained separately from compiler failures; a same-source
-retry follows cleanup of completed owned duplicates. Emission is still pending.
+37 aggregate host tests and vendoring pass. Initial overlay/emission attempts
+stop at the unchanged 12-GiB owned-stage cap. Those resource stops are retained
+separately from compiler failures. After bounded cleanup of completed owned
+outputs, same-source overlay and actual emission pass with exact replay and
+all twelve expected entry/descriptor pairs. The latest 103,872-byte HSACO has
+SHA-256 `46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c`;
+its manifest SHA-256 is
+`339ea2c2c4528a28d7ca16085a31c57070a304b4a2b5454ef118e4ce0a0d66a2`.
+It differs from c6 and does not inherit c6 native results.
 Exact bb2/ccfd passes 123 spec tests, 697 engine library tests with nine existing
 ignores, binary groups 11/2/75/2 with two existing ignores in the 75-test group,
 171 doctests, strict spec/engine Clippy and formatting. The checker normal-only
 production build passes with actual `fe2o3_host` artifact features `[]`.
-Full checker/adapter/owner, policy and inventory gates are running or pending.
-Historical c6/82/852 results are not relabeled.
+All 71 host phases finish successfully, including checker/adapter/owner tests,
+strict Clippy, policies, 32 locked graphs, 38 source-gate tests and byte equality
+for all three regenerated TCB inventories. Three independent release binaries
+(target, speculative and R29 engineering diagnostics) also build successfully.
+Historical c6/82/852 results are not relabeled. The later docs/inventory-only
+checkpoint `d09430897232759fb9bbb2a3485f60da69bef890` does not change the bb2
+production-code or binary identity.
 
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published tools, all 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. The real adapter reopens that image and the 6651/c6 one-token GPU smoke succeeds. | Finish latest ccfd/bb2 aggregate emission and numerical comparison. The emitted artifact and engineering smoke grant no protected publication or qualification authority. |
-| Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
-| Verification | Exact 940a/82 verifies the new executed catch-up helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations each fail a genuine postcondition, not parsing or typing. The pinned 190-file Verus/vstd closure matches before and after every run. Root reviewed and integrated the byte-identical two-file change. | Establish the caller's cursor relation through the actual completion/ownership path. The helper covers the metadata commit, full selected-state frame and conditional cursor equality, not parent, page-write, lease or completion authentication. Remaining bb2/ccfd host and inventory checks, broader M1 proofs and hardware qualification remain open. |
+| Compiler / Kernels | Published c6b resolves the checked unsigned-subtraction assertion. Latest bb2/ccfd tools, 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. The latest four-token GPU smoke succeeds. | Full numerical comparison and kernel hardware validation. The emitted artifact and engineering smoke grant no protected publication or qualification authority. |
+| Runtime / Integration | The resident loop implements the 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. All 71 bb2/ccfd host phases pass, including 697 engine library tests, service/adapter/owner checks and strict Clippy. Three engineering release binaries build. | Single-round speculative smoke, then repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. Host tests do not establish completed physical catch-up or served-request execution. |
+| Verification | Exact 940a/82 verifies the executed catch-up metadata helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations fail genuine postconditions. The integrated helper is byte-identical. Final d094 coverage regeneration and equality pass. | The next executed initialization helper is implemented separately and undergoing its first proof run. Caller routing, page append, lease and completion authentication, broader M1 proofs and hardware qualification remain open. |
 
 The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
 terminal full acceptance, foreign coordinators, substituted choices, zero
@@ -114,11 +124,28 @@ One token is not TPOT-eligible. This establishes prompt-to-token execution for
 this exact path, not numerical parity, speculative catch-up, serving readiness,
 performance competitiveness or protected qualification. All 33 gates stay open.
 
-The last complete source inventory remains the earlier 173-module,
-8,433-identity checkpoint: 7,711 unverified and 722 unchanged existing verified
-labels. The selected new proof does not rewrite those labels or establish a
-whole-crate proof. Newly integrated executable bodies still require refreshed
-source coverage with truthfully bounded proof status.
+The separate latest bb2/ccfd four-token run on mi300x physical GPU 1 finishes
+at 2026-09-14T21:30:31Z with exit zero and observed hardware completion. The
+same five-token raw prompt produces IDs `[12095,13,576,6722]`, decoded as
+` Paris. The capital`. This matches the first four tokens of the retained
+independent BF16/SDPA reference frozen before the candidate result was read.
+It is a one-prompt token spot check, not full numerical parity or an R29 logit
+comparison. The immediate after-state records memory still being released;
+a later independent check returns to the exact pre-run 298,647,552-byte VRAM
+baseline and zero busy status. No reset is performed. Initialization/upload
+finishes at 246.103 seconds cumulative, followed by a 23.100-second controller
+duration. These remain diagnostic boundaries, not comparable serving metrics.
+The latest speculative mode has not yet been launched.
+
+The final d094 source inventory passes remote regeneration, committed-byte
+equality and validation: 173 modules and 8,435 executable-body identities,
+with 7,712 unverified and 723 verified labels. All earlier 722 verified records
+are unchanged. The added verified label is the executed metadata-commit helper
+covered by the scoped proof described above; the new engine preflight remains
+pending. This does not establish a whole-crate or physical catch-up proof.
+The verification team's next actual initialization helper is implemented in
+a separate candidate, with its selected-body Verus run in progress; it is not
+integrated or claimed proved here.
 
 Canonical target/draft admission, full streaming prepack and separate persisted
 snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
@@ -130,6 +157,18 @@ The exact d55/852 release generator separately passes `--check` against committe
 generated sources. This is source equality, not native image or GPU evidence.
 
 Retained local evidence under `.codex-tmp` includes:
+- `ferric-native-ccfd-v1/target4-evidence-r1/ferric-native-ccfd-target4-evidence-r1.tar.gz`,
+  SHA-256 `2a9b13d81098a878ad1f299a7f4f999c368c16aca1a7f906cd9dc283f1e9dffc`.
+  The separate `TARGET4_RECEIPT.md` records the delayed settled-GPU observation
+  and cleanup of the owned completed run, without rewriting its raw after-state.
+- `ferric-current-c6-host-gate-v1/host-bb2-ccfd-evidence-r1.tar.gz`, SHA-256
+  `4848bf1306627d8c4b932ac75decf83d9efd20252b2183bb8699e89cf7536fe9`.
+- `ferric-current-c6-host-gate-v1/release-bb2-ccfd-evidence-r1.tar.gz`, SHA-256
+  `4a18fe27f2449896169dfc2b9e9426a959695ac9253b37ad0cab40e7866fa0b2`.
+- `ferric-current-c6-host-gate-v1/coverage-d094-ccfd-evidence-r1.tar.gz`, SHA-256
+  `209c1e49d96e91a93010e248a444db0f2b2e92bbba8ee7a801aee899b04d179d`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-ccfd-emission/ccfd-published-evidence.tar.gz`,
+  SHA-256 `3eb1c0834b2ab957efa13b063921a25516713c4bb1a0c89cb0cd5fe1fa828107`.
 - `ferric-draft-catchup-gate-v1/host-evidence-r10.tar.gz`, SHA-256
   `5bb81795371f3cb9340cfd8dd9208276a5bd5492457b43404e2696d2f1d13036`.
 - `ferric-catchup-inventory-v1/catchup-inventory-evidence-r4.tar.gz`, SHA-256
@@ -196,9 +235,14 @@ Engineering R29 capture already emits real BF16 logit rows and argmax tokens,
 but the existing reference/comparator correctly rejects its nonqualifying
 transcript. A separate selected-case engineering comparison path is now under
 implementation, retaining numerical and identity checks without producing
-qualification acceptance. The first planned case is `prefill-s1-t128.001`;
-the existing decode cases require 8,192 teacher-forced rounds. Authentic closure,
-policy and measured reference inputs are still required before capture.
+qualification acceptance. The selected comparator prototype passes 17 Rust
+tests and strict Clippy. The extended engineering reference/input candidate
+passes 23 existing and eleven new Python tests plus policy checks; its new
+Rust input/capture path is not yet tested or integrated. Its schemas explicitly
+remain separate from qualification closure and acceptance policy. The first
+planned case is `prefill-s1-t128.001`; existing decode cases require 8,192
+teacher-forced rounds. An isolated, version-checked reference environment is
+prepared remotely; it has not yet run the numerical comparison on the GPU.
 
 The next native path has an additional explicit boundary: engineering HSACO
 emission does not produce an authenticated Worker V3 selector. The protected
@@ -209,7 +253,7 @@ concrete independent-checker IPC client is now integrated. Exact agent source
 strict all-target Clippy and a normal-only production check. Actual normal
 compiler-artifact receipts show no fe2o3-host test-support features. Two root-owned
 wrapping-only formatting failures are corrected in 6651; the full latest-pin
-service checks remain in progress. Earlier resource-cap stops and the relocated
+service checks now pass in the bb2/ccfd host suite. Earlier resource-cap stops and the relocated
 test-factory policy failure are retained separately, not counted as successful
 tests.
 It sends every envelope and HSACO byte to the pinned preopened endpoint under
