@@ -27,17 +27,41 @@ reverse-byte-equal migration with separately checked derived digests and remote
 formatting. Fresh c6 consumer and source-policy validation remain separate
 obligations; earlier 82/852 results are not relabeled.
 
-The combined code candidate is `6651f2d1a1739f30c35a4a5c34d2c900be1c5d06`,
+The c6 combined code candidate is `6651f2d1a1739f30c35a4a5c34d2c900be1c5d06`,
 tree `0c98c7de8f5b791ed9fd23cd8fa6f6cdedede556`, still pinned to c6b. It
 integrates the executed catch-up metadata helper and independent-checker IPC
-client, plus two remotely identified formatting corrections. Current-pin host,
-source-policy and source-inventory checks are pending on this exact snapshot.
+client, plus two remotely identified formatting corrections. Two focused spec
+tests and the engine initialization/settlement test pass on this exact source.
+The release engineering target-smoke binary builds successfully; its independent
+11,783,960-byte copy has SHA-256
+`18ff100fde890a25bbeb0588c0723e741674f737a6a31af5a37e4e2255a29e43`.
+These are host results, not GPU correctness or serving measurements.
+
+Current integration `bb2b0123f4f96410269a098d7cba8aa7bb950008`, tree
+`b15664e855b5494eb312242dfdd26d266fba432a`, advances the same 80-file roster
+to the latest fetched fe2o3 main `ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2`.
+Reverse-byte comparison, the two derived verifier digests and remote formatting
+pass. The upstream delta is confined to semantic-SSA transparent-borrow
+occurrence handling and tests; KFD/runtime sources are unchanged from c6.
+Fresh ccfd Pliron tests pass: 1,021 library, 58 integration and 13 doctests,
+including all fifteen new focused tests. All 543 backend tests and exact
+release CLI/backend builds also pass. Matching bb2 source, worker-closure,
+37 aggregate host tests and vendoring pass. The next prelaunch check stops at
+the unchanged 12-GiB owned-stage cap before overlay/emission starts. That
+resource stop is retained separately from compiler failures; a same-source
+retry follows cleanup of completed owned duplicates. Emission is still pending.
+Exact bb2/ccfd passes 123 spec tests, 697 engine library tests with nine existing
+ignores, binary groups 11/2/75/2 with two existing ignores in the 75-test group,
+171 doctests, strict spec/engine Clippy and formatting. The checker normal-only
+production build passes with actual `fe2o3_host` artifact features `[]`.
+Full checker/adapter/owner, policy and inventory gates are running or pending.
+Historical c6/82/852 results are not relabeled.
 
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published tools, all 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. | Reopen the engineering image through the real adapter, build the current native smoke binary and exercise an idle GPU. The emitted artifact grants no protected publication, load or launch authority. |
+| Compiler / Kernels | Published c6b, rebased onto 82d before root push, bounds a successful authenticated unsigned literal subtraction by `[0,K]`. Four focused and all 543 backend tests pass; latest kernel-analysis passes 122 tests. Strict Clippy has no normalized delta against 82d, which is not lint-clean. Exact published tools, all 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. The real adapter reopens that image and the 6651/c6 one-token GPU smoke succeeds. | Finish latest ccfd/bb2 aggregate emission and numerical comparison. The emitted artifact and engineering smoke grant no protected publication or qualification authority. |
 | Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
-| Verification | Exact 940a/82 verifies the new executed catch-up helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations each fail a genuine postcondition, not parsing or typing. The pinned 190-file Verus/vstd closure matches before and after every run. Root reviewed and integrated the byte-identical two-file change. | Establish the caller's cursor relation through the actual completion/ownership path. The helper covers the metadata commit, full selected-state frame and conditional cursor equality, not parent, page-write, lease or completion authentication. Current 6651/c6 host and inventory checks, broader M1 proofs and hardware qualification remain open. |
+| Verification | Exact 940a/82 verifies the new executed catch-up helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations each fail a genuine postcondition, not parsing or typing. The pinned 190-file Verus/vstd closure matches before and after every run. Root reviewed and integrated the byte-identical two-file change. | Establish the caller's cursor relation through the actual completion/ownership path. The helper covers the metadata commit, full selected-state frame and conditional cursor equality, not parent, page-write, lease or completion authentication. Remaining bb2/ccfd host and inventory checks, broader M1 proofs and hardware qualification remain open. |
 
 The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
 terminal full acceptance, foreign coordinators, substituted choices, zero
@@ -73,7 +97,22 @@ The compiler-bound inert handoff is 414,259 bytes. Actual output replay is
 byte-identical. Independent structured ELF inspection confirms exactly twelve
 defined global entry functions and twelve matching 64-byte descriptors; this
 set equality does not attest Ferric policy descriptor-table ordering. Authority
-is `none`, and publication/load/launch grants remain false. No GPU has run.
+is `none`, and publication/load/launch grants remain false.
+
+The bounded one-token engineering smoke on mi300x physical GPU 1 succeeds,
+using the exact 6651/c6 binary, f17/c6 artifact and bed11d00/829 snapshot.
+The five-token raw prompt `The capital of France is` produces token 12095,
+decoded as ` Paris`, with actual hardware completion and terminal exit zero.
+Artifact admission, model preparation, KFD binding, memory initialization and
+controller execution all complete. Selected-device memory returns to its
+298,647,552-byte baseline and busy status returns to zero; the existing foreign
+queues remain on GPU 0. All run resource guards pass. No reset is performed.
+Initialization/upload completes at 240.793 seconds cumulative; controller
+duration is 14.714 seconds and its first-token offset is 13.608 seconds.
+These are raw engineering diagnostics, not comparable TTFT/TPOT measurements.
+One token is not TPOT-eligible. This establishes prompt-to-token execution for
+this exact path, not numerical parity, speculative catch-up, serving readiness,
+performance competitiveness or protected qualification. All 33 gates stay open.
 
 The last complete source inventory remains the earlier 173-module,
 8,433-identity checkpoint: 7,711 unverified and 722 unchanged existing verified
@@ -109,6 +148,15 @@ Retained local evidence under `.codex-tmp` includes:
   `2bd13649ff143a15a989c508e2bd30aa9d2777f9485256edc06b0b8daf5f3ea7`.
 - `ferric-checker-ipc-gate-v1/checker-evidence-r8.tar.gz`, SHA-256
   `b0b2b7d65326607298332a6289448633f5d60f6173ec3484bbae95a06f46fd0b`.
+- `ferric-current-c6-host-gate-v1/smoke-6651-c6-evidence-r1.tar.gz`, SHA-256
+  `864bb8bd823d1a4e44e664383857e58886c007d18ce118d59872b0a735d110eb`.
+  This retains the exact source-byte comparison, focused host logs, release
+  build logs and independent smoke binary; it is not native-run evidence.
+- `ferric-native-target-c6-v1/evidence-r1/native-target-c6-evidence-r1.tar.gz`,
+  SHA-256 `0dc8ca2a724bde837750bae565a4224feae03e6f88fde50913ed35c58199999d`.
+  This separately retains the reviewed control, exact native binary, actual
+  report, startup diagnostics, resources and before/after GPU facts. Its
+  authority remains `none`; it is not a qualification receipt.
 - `ferric-divisor-diagnostic-gate-v1/acquisition-polarity/polarity-evidence.tar.gz`,
   SHA-256 `6a8ed82ec6eee1d8fda59833745df6847718093b7f9c3eb7e4d4d164a4be40bb`.
 - `ferric-m1-bundle-current-v1/evidence-r1.tar.gz`, SHA-256
@@ -122,20 +170,35 @@ Retained local evidence under `.codex-tmp` includes:
 Earlier compiler, source-macro, stale-README and Clippy failures remain retained
 with their original source identities. No checker or admission rule was relaxed.
 
-The Pages-only checkpoint `e033bc15` is pushed to public main with only public
+The Pages-only checkpoint `524bfb70` is pushed to public main with only public
 ancestry and five site-file changes. Remote browser and scope validation pass;
-workflow `34890957135` succeeds for the exact commit and all seven live assets
-match the reviewed artifact (537,436 bytes). Deployment archive SHA-256 is
-`0d75096db5548deb2d575fcc0fe7527ff65a866c77e8478fd8f205e115cfd537`.
-Its historical compiler-diagnosis checkpoint predates the full assertion-vector
-comparison above. Performance data is unchanged. The completed Pages worktree
-and owned stage are removed (3,064 and 111,060 KiB respectively).
+workflow `34895549244` succeeds for the exact commit and all seven live assets
+match the reviewed artifact (539,684 bytes). Deployment archive SHA-256 is
+`29cbdf447565b5ba65b519ad37ae911026703c8284c6e3598d525bca2c1f8540`.
+The site reports the c6/f17 emission and resolved assertion comparison while
+keeping current-pin host validation pending. Performance data is unchanged.
+The completed Pages worktree and owned stage are removed; the stage cleanup
+reclaims 74,500 KiB. No private implementation ancestry is published.
 Completed runtime and proof worktrees have been
 removed after exact-source/evidence checks, as has the obsolete owned compiler
 stage in `/tmp` (1,073,320 KiB reclaimed). Active build caches, the new model
 snapshot, original dirty worktrees and other users' state remain untouched.
+The shared host stage additionally reclaims 6,730,804 KiB from exactly 2,542
+obsolete owned build outputs after source provenance, hash and no-live-use
+checks. Obsolete ae441/829/852 compiler tool copies reclaim another 596,056 KiB
+after retained-archive and no-live-use checks; c6 tools and native inputs remain.
+The completed native smoke run and control stages are removed after archive
+acquisition and no-live-use checks, reclaiming another 14,792 KiB.
 All executable validation runs on mi300x. No new TTFT, TPOT, throughput, GPU
 correctness or competitiveness result is claimed.
+
+Engineering R29 capture already emits real BF16 logit rows and argmax tokens,
+but the existing reference/comparator correctly rejects its nonqualifying
+transcript. A separate selected-case engineering comparison path is now under
+implementation, retaining numerical and identity checks without producing
+qualification acceptance. The first planned case is `prefill-s1-t128.001`;
+the existing decode cases require 8,192 teacher-forced rounds. Authentic closure,
+policy and measured reference inputs are still required before capture.
 
 The next native path has an additional explicit boundary: engineering HSACO
 emission does not produce an authenticated Worker V3 selector. The protected
@@ -145,9 +208,10 @@ concrete independent-checker IPC client is now integrated. Exact agent source
 27 integration tests with three existing ignores, six compile-fail doctests,
 strict all-target Clippy and a normal-only production check. Actual normal
 compiler-artifact receipts show no fe2o3-host test-support features. Two root-owned
-wrapping-only formatting failures are corrected in 6651; current-c6 validation
-is pending. Earlier resource-cap stops and the relocated test-factory policy
-failure are retained separately, not counted as successful tests.
+wrapping-only formatting failures are corrected in 6651; the full latest-pin
+service checks remain in progress. Earlier resource-cap stops and the relocated
+test-factory policy failure are retained separately, not counted as successful
+tests.
 It sends every envelope and HSACO byte to the pinned preopened endpoint under
 one absolute deadline and rejects mismatched results or ambiguous channel
 reuse. The supervisor admission is explicitly unsafe and requires a separately
