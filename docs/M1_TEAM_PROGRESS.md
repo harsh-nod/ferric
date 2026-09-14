@@ -5,42 +5,74 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Active Integration
 
-Private integration `5b2537fcf9962d94f94f9c92a590f1d5b2cf7f2c`, tree
-`395b6b7fc098a77764769e85127775c7b0588481`, pins published fe2o3
-`82950a3cfc7b0192159fb7afcd1b89fb48d56053`. Pliron remains
-`161c385576d45d4e634ba179fa93a545b91124e6`. The compiler candidate for the next
-failure is not yet published or consumed by this snapshot.
+Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
+`9c7bf3ffa948acdcb65b766a18b1ada757a20db1`, pins published fe2o3
+`85255498a021ed2b7a1a511f99f577ee4b11d175`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. The 80-file pin migration reverses
+byte-for-byte to its parent before two separately checked derived verifier
+manifest/lock digests. Historical tool and binary producers are not relabeled.
+A fresh fetch finds newer upstream `82d95ca81f3f3a55e1e82b88918a41cca8b20c31`,
+which indexes checked control flow and transport pipeline catalogs. Its review,
+integration and revalidation are pending; the results below remain bound to 852.
 
 | Team | Completed Since Prior Checkpoint | Work In Progress |
 | --- | --- | --- |
-| Compiler / Kernels | Exact published 829 tools build and actual extraction passes the paged-attention guarded addition. Ferric `dc32a474`, integrated as `7baa73a8`, specializes five causal-prefill coordinate expressions; all 37 aggregate host tests pass, including actual-source AST equivalence over eight admitted profiles. Actual extraction passes that divisor check, then stops at prefill `cache_head_base + kv_head`, source line 318. A separate fixture reproduces the unrecognized `Ge(value, 8)` false-success edge on unchanged 829. | Validate the narrow compiler comparison-polarity repair, rebase on latest main before publication, update Ferric's pin, and retry actual aggregate emission. No new image, native handoff or GPU result. |
-| Runtime / Integration | The real resident loop now performs the 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Snapshot `61173085` on 829 passes `cargo check --tests` and all 693 engine library tests, with nine existing ignores. Snapshot `446ac5db` passes 20 focused catch-up tests, including the actual joined-Pending factory, real KV component settlement followed by ordinary continuation, all singleton widths and context/page boundaries. | Full combined-tree engine, adapter, protected-owner, strict Clippy and warmed-planning checks. Repeated native full-accept maintenance/restore, cancellation/fault paths and physical generation accounting still require execution evidence. |
-| Verification | Exact b039/829 passes all 32 locked graphs, 38 sourcegate tests, 31 verifier policies and byte equality for three regenerated dependency TCB inventories. The stale source-pin README is fixed, and its six policies pass on 61173085. Source review confirms surviving verified device getters are unchanged and the four `kv_physical` theorem bodies still exactly match the selected bd2 Verus evidence. | Regenerate source coverage with new runtime bodies pending Verus. Actual sourcegate on 8c7dab35 rejected a forbidden local macro; 5b2537fc expands all seven uses with identical retained owners, without relaxing the checker. The amended gate is pending. No physical catch-up proof or M1 gate closure follows. |
+| Compiler / Kernels | Published 852 adds the strict `Ge` false-success upper bound with the existing statement-stability and edge-dominance checks. Five focused tests and all 539 backend tests pass. Normalized strict Clippy has no delta against 829; upstream is not lint-clean. Exact release tools build and all 37 aggregate host tests pass. Actual aggregate emission rejects paged `committed_tokens + query_token`, semantic bb97, source fingerprint `01a6c27889e4`, line 373. | Compare individual proof results across unchanged 829 and 852 inputs before attributing progression or regression, resolve the remaining obligation without bypassing it, and integrate latest upstream. No new image, native handoff or GPU result. |
+| Runtime / Integration | The resident loop performs the real 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Exact d55/852 passes 697 engine library tests (nine existing ignores), binary cohorts 11/2/75/2 (two ignores in the 75-test cohort), 171 doctests, 143 build tests, 109 adapter tests (one ignore), 37 adapter policies, 16 protected-owner tests and three owner policies. Engine, adapter and owner strict all-target Clippy pass. The isolated warmed host-planning allocation check passes. | Repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. The host-planning test does not establish allocation-free physical catch-up or served-request execution. |
+| Verification | Source inventory now covers 173 modules and 8,433 executable identities: 181 added pending-Verus bodies, 7,711 unverified total and 722 unchanged existing verified labels. All prior rationale rows remain unchanged. Exact d55/852 passes all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin policies, source coverage and byte equality for all three regenerated dependency TCB inventories. | Physical catch-up and broader M1 proofs, authenticated S8/mixed-active execution and hardware qualification. The selected earlier four-item `kv_physical` proof remains exact-source evidence, not a proof of the new physical catch-up implementation. No M1 gate closure follows. |
 
-The focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
+The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
 terminal full acceptance, foreign coordinators, substituted choices, zero
 generation and epoch exhaustion. Their observations are diagnostic test fixtures,
 not native queue or completed-read witnesses. The KV tests use real component
 transitions but do not execute GPU kernels. Maintenance emits no served token and
 does not increment the logical speculative round; only its physical epoch advances.
 
-Retained local evidence under `.codex-tmp` includes:
-- `ferric-draft-catchup-gate-v1/catchup-resident-engine-r6.stdout`, SHA-256
-  `ac0f7b41fc6a4306f0d452204d89affeaf38da361adb8e2a258394d6d7d7185c`,
-  with raw command, timestamps, stderr and successful exit alongside it.
-- `ferric-draft-catchup-gate-v1/catchup-focused-r7.stdout`, SHA-256
-  `ad18937e0dd2076f0526441af1ac2b89279f4b7fcf398579bbeee740f1dc4888`.
-  Earlier compile failures remain retained rather than replaced by passing logs.
-- `ferric-upstream-829-metadata-v1/metadata-829-evidence-r2.tar.gz`, SHA-256
-  `609394aa7a28e97f5ad20b0fec9fd6146182a3b7779f0ca96a300c261bedfb02`.
-  This preserves the original README-policy failure; the successful rerun is in
-  the runtime evidence directory. Future pin migrations must include that README
-  in addition to the prior 79-file roster.
+The first 852 emission attempt hit the 12-GiB owned-stage cap and is retained as
+a resource stop. After removing completed owned duplicate inputs, the unchanged
+retry completed within its controls and rejected the arithmetic assertion above.
+The same-source comparison uses byte-identical native MIR but 829 stops first at
+a prefill assertion. A scratch-only isolated paged root also changes its first
+failure (829 line 454 versus 852 line 373); source-line order is not canonical
+semantic-block order. These first-error differences do not establish a compiler
+regression or prove that the later assertion was previously accepted.
 
-The Pages-only public `a7a38b26` deployment remains live and byte-verified. Its
-checkpoint predates this resident integration; its performance data is unchanged.
-Completed owned Pages and kernel worktrees/stages have been removed after evidence
-acquisition. Active build caches and other users' worktrees remain untouched.
+Canonical target/draft admission, full streaming prepack and separate persisted
+snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
+The new snapshot has all eleven canonical files, including 16,381,470,720 target
+and 1,503,264,768 draft weight bytes. Both processes reproduce bundle identity
+`6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b`.
+The old six-file snapshot is retained as an explicit rejected input, not modified.
+The exact d55/852 release generator separately passes `--check` against committed
+generated sources. This is source equality, not native image or GPU evidence.
+
+Retained local evidence under `.codex-tmp` includes:
+- `ferric-draft-catchup-gate-v1/host-evidence-r10.tar.gz`, SHA-256
+  `5bb81795371f3cb9340cfd8dd9208276a5bd5492457b43404e2696d2f1d13036`.
+- `ferric-catchup-inventory-v1/catchup-inventory-evidence-r4.tar.gz`, SHA-256
+  `5001522110d67c40ac177aae320da36f842092e148dce0f752818eac87190ad7`.
+- `ferric-upstream-852-metadata-v1/metadata-852-evidence-r1.tar.gz`, SHA-256
+  `1074fbf60b9643f13044c13ae2cd12a00502644371ab69a98efec38fce327f63`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-polarity/polarity-evidence.tar.gz`,
+  SHA-256 `6a8ed82ec6eee1d8fda59833745df6847718093b7f9c3eb7e4d4d164a4be40bb`.
+- `ferric-m1-bundle-current-v1/evidence-r1.tar.gz`, SHA-256
+  `54547e1b14bb419f189d35b98c698d4928a4e9adb37ca232c01cba546fd1d60d`.
+  This contains the prepack CLI, controls, logs and non-weight snapshot files;
+  the large weights remain only in the owned remote snapshot for native use.
+- `ferric-m1-bundle-current-v1/generated-source-evidence-r1.tar.gz`, SHA-256
+  `ca256a209e92e4808781cc2f80774132bc30cc653d584d5b804f69a4d639f1ad`.
+  This separately retains the d55/852 generator and actual source-check logs.
+
+Earlier compiler, source-macro, stale-README and Clippy failures remain retained
+with their original source identities. No checker or admission rule was relaxed.
+
+The Pages-only checkpoint `e033bc15` is pushed to public main with only public
+ancestry and five site-file changes. Remote browser and scope validation pass;
+its workflow and live-asset verification are pending. Performance data is
+unchanged. Completed runtime and proof worktrees have been
+removed after exact-source/evidence checks, as has the obsolete owned compiler
+stage in `/tmp` (1,073,320 KiB reclaimed). Active build caches, the new model
+snapshot, original dirty worktrees and other users' state remain untouched.
 All executable validation runs on mi300x. No new TTFT, TPOT, throughput, GPU
 correctness or competitiveness result is claimed.
 
