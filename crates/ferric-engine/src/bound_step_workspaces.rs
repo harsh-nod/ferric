@@ -15,9 +15,9 @@ use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRangeRole};
 
 use crate::{
     AddresslessM1FullStepWorkspaceComposition, BoundM1StepWorkspaceSubleases,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole, M1SpeculativeDraftChoiceSubrange,
-    M1SpeculativeDraftMetadataSubrange, M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
-    M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+    M1DraftCatchupChoiceSubrange, M1FullStepWorkspaceInputKind, M1FullStepWorkspaceRole,
+    M1SpeculativeDraftChoiceSubrange, M1SpeculativeDraftMetadataSubrange, M1StepDispatchStage,
+    M1StepWorkspaceDispatchRangeError, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
     M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
 };
@@ -57,6 +57,13 @@ pub enum M1FullStepWorkspaceSubleaseOwners {
         /// Exact target speculative owner.
         target_speculative: Box<TargetSpeculativeWorkspaceOwner>,
     },
+    /// One-token draft maintenance and its ordinary target completion workspace.
+    DraftCatchup {
+        /// Exact draft decode owner.
+        draft_decode: Box<DraftWorkspaceOwner>,
+        /// Exact one-token completion owner.
+        completion: Box<TargetWorkspaceOwner>,
+    },
 }
 
 impl M1FullStepWorkspaceSubleaseOwners {
@@ -89,6 +96,18 @@ impl M1FullStepWorkspaceSubleaseOwners {
         }
     }
 
+    /// Wraps exact draft-decode and one-token completion owners.
+    #[must_use = "the draft and completion workspace owners remain retained"]
+    pub fn draft_catchup(
+        draft_decode: DraftWorkspaceOwner,
+        completion: TargetWorkspaceOwner,
+    ) -> Self {
+        Self::DraftCatchup {
+            draft_decode: Box::new(draft_decode),
+            completion: Box::new(completion),
+        }
+    }
+
     /// Returns the exact finite owner-input shape.
     #[must_use]
     pub const fn kind(&self) -> M1FullStepWorkspaceInputKind {
@@ -96,6 +115,7 @@ impl M1FullStepWorkspaceSubleaseOwners {
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
         }
     }
 
@@ -123,6 +143,16 @@ impl M1FullStepWorkspaceSubleaseOwners {
                     target_speculative.member_count(),
                 ),
             },
+            Self::DraftCatchup {
+                draft_decode,
+                completion,
+            } => M1FullStepWorkspaceOwnerMetadata::DraftCatchup {
+                draft: WorkspaceOwnerMetadata::new(
+                    draft_decode.plan(),
+                    draft_decode.member_count(),
+                ),
+                target: WorkspaceOwnerMetadata::new(completion.plan(), completion.member_count()),
+            },
         }
     }
 
@@ -139,6 +169,17 @@ impl M1FullStepWorkspaceSubleaseOwners {
                     .revalidate_dispatch_ranges(allocations)
                     .map_err(|error| allocation_error(M1FullStepWorkspaceRole::Draft, error))?;
                 target
+                    .revalidate_dispatch_ranges(allocations)
+                    .map_err(|error| allocation_error(M1FullStepWorkspaceRole::Target, error))
+            }
+            Self::DraftCatchup {
+                draft_decode,
+                completion,
+            } => {
+                draft_decode
+                    .revalidate_dispatch_ranges(allocations)
+                    .map_err(|error| allocation_error(M1FullStepWorkspaceRole::Draft, error))?;
+                completion
                     .revalidate_dispatch_ranges(allocations)
                     .map_err(|error| allocation_error(M1FullStepWorkspaceRole::Target, error))
             }
@@ -238,6 +279,12 @@ pub enum M1FullStepWorkspaceSubleaseBindingError {
         /// Slice position being validated.
         position: usize,
     },
+    /// A non-maintenance segment retains a catch-up completion choice range.
+    UnexpectedCatchupChoiceSubrange { position: usize },
+    /// A draft catch-up segment is missing its exact completion choice range.
+    MissingCatchupChoiceSubrange { position: usize },
+    /// A catch-up choice range has wrong identity, stage, role, or geometry.
+    CatchupChoiceSubrange { position: usize },
     /// A non-draft segment unexpectedly retains speculative metadata-row declarations.
     UnexpectedDraftMetadataSubrange {
         /// Slice position being validated.
@@ -322,6 +369,8 @@ pub enum M1FullStepWorkspaceDispatchRangeError {
     },
     /// The segment has no speculative target choice row.
     DraftChoiceSubrangeUnavailable { segment_index: u8 },
+    /// The segment has no exact one-token catch-up completion choice range.
+    CatchupChoiceSubrangeUnavailable { segment_index: u8 },
     /// The target-verification segment has no exact draft anchor-token source.
     DraftAnchorUnavailable { segment_index: u8 },
     /// The segment has no speculative target draft-position row.
@@ -440,6 +489,64 @@ impl BoundM1FullStepWorkspaceSubleases {
         self.composition
             .segment_binding(producer_segment)?
             .draft_choice_subrange()
+    }
+
+    /// Returns the exact completion `Choices` range for draft maintenance.
+    #[must_use]
+    pub fn catchup_choice_subrange(
+        &self,
+        producer_segment: u8,
+    ) -> Option<M1DraftCatchupChoiceSubrange> {
+        self.composition
+            .segment_binding(producer_segment)?
+            .catchup_choice_subrange()
+    }
+
+    /// Resolves only the checked scalar destination of the draft catch-up argmax.
+    ///
+    /// # Errors
+    ///
+    /// Rejects other phases, absent or mismatched choice metadata, and stale
+    /// allocation owners without granting general cross-workspace access.
+    pub(crate) fn catchup_choice_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        producer_segment: u8,
+    ) -> Result<ServiceDeviceDispatchRangeV1, M1FullStepWorkspaceDispatchRangeError> {
+        let unavailable =
+            || M1FullStepWorkspaceDispatchRangeError::CatchupChoiceSubrangeUnavailable {
+                segment_index: producer_segment,
+            };
+        if self.input_kind() != M1FullStepWorkspaceInputKind::DraftCatchup {
+            return Err(unavailable());
+        }
+        let segment = self
+            .composition
+            .dispatch_plan()
+            .segments()
+            .get(usize::from(producer_segment))
+            .ok_or_else(unavailable)?;
+        let row = self
+            .catchup_choice_subrange(producer_segment)
+            .ok_or_else(unavailable)?;
+        validate_catchup_choice_binding(
+            usize::from(producer_segment),
+            segment.segment_index(),
+            segment.stage(),
+            Some(row),
+            owners_target(self.owners.metadata()),
+        )
+        .map_err(|_| unavailable())?;
+        self.workspace_dispatch_subrange(
+            allocations,
+            M1FullStepWorkspaceRole::Target,
+            M1StepWorkspaceRangeRole::Choices,
+            row.range(),
+        )
+        .map_err(|error| M1FullStepWorkspaceDispatchRangeError::Range {
+            workspace: M1FullStepWorkspaceRole::Target,
+            error,
+        })
     }
 
     /// Returns the exact addressless target `DraftPositionIds` row for one draft segment.
@@ -652,7 +759,10 @@ impl BoundM1FullStepWorkspaceSubleases {
         match (&self.owners, workspace) {
             (
                 M1FullStepWorkspaceSubleaseOwners::TargetOnly { target }
-                | M1FullStepWorkspaceSubleaseOwners::PairedPrefill { target, .. },
+                | M1FullStepWorkspaceSubleaseOwners::PairedPrefill { target, .. }
+                | M1FullStepWorkspaceSubleaseOwners::DraftCatchup {
+                    completion: target, ..
+                },
                 M1FullStepWorkspaceRole::Target,
             ) => target.dispatch_subrange(allocations, role, range),
             (
@@ -660,7 +770,8 @@ impl BoundM1FullStepWorkspaceSubleases {
                 M1FullStepWorkspaceRole::Draft,
             ) => draft.dispatch_subrange(allocations, role, range),
             (
-                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound { draft_decode, .. },
+                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound { draft_decode, .. }
+                | M1FullStepWorkspaceSubleaseOwners::DraftCatchup { draft_decode, .. },
                 M1FullStepWorkspaceRole::Draft,
             ) => draft_decode.dispatch_subrange(allocations, role, range),
             (
@@ -680,7 +791,10 @@ impl BoundM1FullStepWorkspaceSubleases {
         match (&self.owners, workspace) {
             (
                 M1FullStepWorkspaceSubleaseOwners::TargetOnly { target }
-                | M1FullStepWorkspaceSubleaseOwners::PairedPrefill { target, .. },
+                | M1FullStepWorkspaceSubleaseOwners::PairedPrefill { target, .. }
+                | M1FullStepWorkspaceSubleaseOwners::DraftCatchup {
+                    completion: target, ..
+                },
                 M1FullStepWorkspaceRole::Target,
             ) => Some(target.plan()),
             (
@@ -688,7 +802,8 @@ impl BoundM1FullStepWorkspaceSubleases {
                 M1FullStepWorkspaceRole::Draft,
             ) => Some(draft.plan()),
             (
-                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound { draft_decode, .. },
+                M1FullStepWorkspaceSubleaseOwners::SpeculativeRound { draft_decode, .. }
+                | M1FullStepWorkspaceSubleaseOwners::DraftCatchup { draft_decode, .. },
                 M1FullStepWorkspaceRole::Draft,
             ) => Some(draft_decode.plan()),
             (
@@ -758,6 +873,10 @@ enum M1FullStepWorkspaceOwnerMetadata<'a> {
         draft: WorkspaceOwnerMetadata<'a>,
         target: WorkspaceOwnerMetadata<'a>,
     },
+    DraftCatchup {
+        draft: WorkspaceOwnerMetadata<'a>,
+        target: WorkspaceOwnerMetadata<'a>,
+    },
 }
 
 impl M1FullStepWorkspaceOwnerMetadata<'_> {
@@ -766,6 +885,7 @@ impl M1FullStepWorkspaceOwnerMetadata<'_> {
             Self::TargetOnly { .. } => M1FullStepWorkspaceInputKind::TargetOnly,
             Self::PairedPrefill { .. } => M1FullStepWorkspaceInputKind::PairedPrefill,
             Self::SpeculativeRound { .. } => M1FullStepWorkspaceInputKind::SpeculativeRound,
+            Self::DraftCatchup { .. } => M1FullStepWorkspaceInputKind::DraftCatchup,
         }
     }
 }
@@ -790,7 +910,8 @@ fn validate_bound_full_step_workspace_metadata(
             target,
         )?,
         M1FullStepWorkspaceOwnerMetadata::PairedPrefill { draft, target }
-        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { draft, target } => {
+        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { draft, target }
+        | M1FullStepWorkspaceOwnerMetadata::DraftCatchup { draft, target } => {
             validate_workspace_owner(
                 M1FullStepWorkspaceRole::Draft,
                 composition.workspace_plans().draft().ok_or(
@@ -839,6 +960,13 @@ fn validate_bound_full_step_workspace_metadata(
             owner,
             Some(owners_target(owners)),
         )?;
+        validate_catchup_choice_binding(
+            position,
+            segment.segment_index(),
+            segment.stage(),
+            binding.catchup_choice_subrange(),
+            owners_target(owners),
+        )?;
     }
     Ok(())
 }
@@ -847,7 +975,8 @@ fn owners_target(owners: M1FullStepWorkspaceOwnerMetadata<'_>) -> WorkspaceOwner
     match owners {
         M1FullStepWorkspaceOwnerMetadata::TargetOnly { target }
         | M1FullStepWorkspaceOwnerMetadata::PairedPrefill { target, .. }
-        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { target, .. } => target,
+        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { target, .. }
+        | M1FullStepWorkspaceOwnerMetadata::DraftCatchup { target, .. } => target,
     }
 }
 
@@ -857,7 +986,8 @@ fn owners_draft(
     match owners {
         M1FullStepWorkspaceOwnerMetadata::TargetOnly { .. } => None,
         M1FullStepWorkspaceOwnerMetadata::PairedPrefill { draft, .. }
-        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { draft, .. } => Some(draft),
+        | M1FullStepWorkspaceOwnerMetadata::SpeculativeRound { draft, .. }
+        | M1FullStepWorkspaceOwnerMetadata::DraftCatchup { draft, .. } => Some(draft),
     }
 }
 
@@ -916,10 +1046,11 @@ fn validate_segment_workspace_binding(
     let expected_role = match stage {
         M1StepDispatchStage::TargetOnly
         | M1StepDispatchStage::TargetPrefill
-        | M1StepDispatchStage::TargetVerification { .. } => M1FullStepWorkspaceRole::Target,
-        M1StepDispatchStage::DraftPrefill | M1StepDispatchStage::DraftDecode { .. } => {
-            M1FullStepWorkspaceRole::Draft
-        }
+        | M1StepDispatchStage::TargetVerification { .. }
+        | M1StepDispatchStage::DraftCatchupCompletion => M1FullStepWorkspaceRole::Target,
+        M1StepDispatchStage::DraftPrefill
+        | M1StepDispatchStage::DraftDecode { .. }
+        | M1StepDispatchStage::DraftCatchup => M1FullStepWorkspaceRole::Draft,
     };
     if binding_role != expected_role {
         return Err(M1FullStepWorkspaceSubleaseBindingError::SegmentWorkspaceRole { position });
@@ -984,6 +1115,52 @@ fn validate_segment_workspace_binding(
                 role: M1StepWorkspaceRangeRole::DraftContextLengths,
             },
         );
+    }
+    Ok(())
+}
+
+fn validate_catchup_choice_binding(
+    position: usize,
+    segment_index: u8,
+    stage: M1StepDispatchStage,
+    choice: Option<M1DraftCatchupChoiceSubrange>,
+    completion: WorkspaceOwnerMetadata<'_>,
+) -> Result<(), M1FullStepWorkspaceSubleaseBindingError> {
+    if stage != M1StepDispatchStage::DraftCatchup {
+        return if choice.is_some() {
+            Err(
+                M1FullStepWorkspaceSubleaseBindingError::UnexpectedCatchupChoiceSubrange {
+                    position,
+                },
+            )
+        } else {
+            Ok(())
+        };
+    }
+    let row = choice.ok_or(
+        M1FullStepWorkspaceSubleaseBindingError::MissingCatchupChoiceSubrange { position },
+    )?;
+    let invalid = || M1FullStepWorkspaceSubleaseBindingError::CatchupChoiceSubrange { position };
+    let range = row.range();
+    let range_end = range.checked_end().ok_or_else(invalid)?;
+    let selection = completion.plan.selection();
+    if position != 0
+        || segment_index != 0
+        || row.producer_segment() != segment_index
+        || row.completion_segment() != 1
+        || selection.role != ferric_spec::Qwen3ModelRole::Target8B
+        || selection.mode != ferric_spec::Qwen3ExecutionMode::Decode
+        || selection.bucket != ferric_spec::Qwen3PlanBucket::DecodeS1C8192
+        || row.completion_workspace_id() != completion.plan.workspace_id()
+        || row.completion_allocation_id() != completion.plan.allocation().allocation_id()
+        || completion.plan.range(M1StepWorkspaceRangeRole::Choices) != Some(range)
+        || range.role() != M1StepWorkspaceRangeRole::Choices
+        || range.byte_len() != U32_BYTES
+        || range.alignment() != U32_BYTES
+        || !range.offset().is_multiple_of(U32_BYTES)
+        || range_end > completion.plan.allocation().byte_len()
+    {
+        return Err(invalid());
     }
     Ok(())
 }
@@ -1387,6 +1564,166 @@ mod tests {
             case_count += 1;
         }
         assert_eq!(case_count, 15);
+    }
+
+    #[test]
+    fn all_catchup_parents_join_exact_draft_and_completion_owner_metadata() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        let draft_selection = selection(
+            Qwen3ModelRole::Draft06B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        );
+        let completion_selection =
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let dispatch = derive_m1_step_dispatch_plan(
+                &operation_plan,
+                M1StepDispatchIntent::DraftCatchup(parent),
+            )
+            .unwrap();
+            let composition = composed(compose_addressless_m1_full_step_workspaces(
+                dispatch,
+                M1FullStepWorkspacePlans::draft_catchup(
+                    parent,
+                    exact_workspace_plan(draft_selection, 52),
+                    exact_workspace_plan(completion_selection, 53),
+                ),
+            ));
+            let draft = exact_workspace_plan(draft_selection, 52);
+            let completion = exact_workspace_plan(completion_selection, 53);
+            let draft_metadata =
+                WorkspaceOwnerMetadata::new(&draft, M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1);
+            let completion_metadata = WorkspaceOwnerMetadata::new(
+                &completion,
+                M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+            );
+            validate_bound_full_step_workspace_metadata(
+                &composition,
+                M1FullStepWorkspaceOwnerMetadata::DraftCatchup {
+                    draft: draft_metadata,
+                    target: completion_metadata,
+                },
+            )
+            .unwrap();
+            assert!(matches!(
+                validate_bound_full_step_workspace_metadata(
+                    &composition,
+                    M1FullStepWorkspaceOwnerMetadata::PairedPrefill {
+                        draft: draft_metadata,
+                        target: completion_metadata,
+                    },
+                ),
+                Err(M1FullStepWorkspaceSubleaseBindingError::OwnerInputKind { .. })
+            ));
+            let row = composition
+                .segment_binding(0)
+                .unwrap()
+                .catchup_choice_subrange()
+                .unwrap();
+            assert_eq!(row.producer_segment(), 0);
+            assert_eq!(row.completion_segment(), 1);
+            assert_eq!(
+                Some(row.range()),
+                completion.range(M1StepWorkspaceRangeRole::Choices)
+            );
+            assert_eq!(row.range().byte_len(), 4);
+            assert!(composition
+                .segment_binding(1)
+                .unwrap()
+                .catchup_choice_subrange()
+                .is_none());
+        }
+    }
+
+    #[test]
+    fn catchup_choice_binding_rejects_wrong_phase_index_and_completion_owner() {
+        let operation_plan = public_operation_kernel_plan_fixture();
+        let parent = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let completion_selection =
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let dispatch = derive_m1_step_dispatch_plan(
+            &operation_plan,
+            M1StepDispatchIntent::DraftCatchup(parent),
+        )
+        .unwrap();
+        let composition = composed(compose_addressless_m1_full_step_workspaces(
+            dispatch,
+            M1FullStepWorkspacePlans::draft_catchup(
+                parent,
+                exact_workspace_plan(
+                    selection(
+                        Qwen3ModelRole::Draft06B,
+                        Qwen3ExecutionMode::Decode,
+                        Qwen3PlanBucket::DecodeS1C8192,
+                    ),
+                    54,
+                ),
+                exact_workspace_plan(completion_selection, 55),
+            ),
+        ));
+        let row = composition
+            .segment_binding(0)
+            .unwrap()
+            .catchup_choice_subrange();
+        let completion = exact_workspace_plan(completion_selection, 55);
+        let owner =
+            WorkspaceOwnerMetadata::new(&completion, M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1);
+        assert!(matches!(
+            validate_catchup_choice_binding(0, 0, M1StepDispatchStage::DraftCatchup, None, owner),
+            Err(M1FullStepWorkspaceSubleaseBindingError::MissingCatchupChoiceSubrange { .. })
+        ));
+        for stage in [
+            M1StepDispatchStage::TargetOnly,
+            M1StepDispatchStage::DraftDecode { iteration: 0 },
+            M1StepDispatchStage::DraftCatchupCompletion,
+        ] {
+            assert!(matches!(
+                validate_catchup_choice_binding(0, 0, stage, row, owner),
+                Err(
+                    M1FullStepWorkspaceSubleaseBindingError::UnexpectedCatchupChoiceSubrange { .. }
+                )
+            ));
+        }
+        for (position, segment_index) in [(1, 0), (0, 1)] {
+            assert!(matches!(
+                validate_catchup_choice_binding(
+                    position,
+                    segment_index,
+                    M1StepDispatchStage::DraftCatchup,
+                    row,
+                    owner,
+                ),
+                Err(M1FullStepWorkspaceSubleaseBindingError::CatchupChoiceSubrange { .. })
+            ));
+        }
+        for wrong_completion in [
+            exact_workspace_plan(completion_selection, 56),
+            exact_workspace_plan(parent, 55),
+            exact_workspace_plan(
+                target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192),
+                55,
+            ),
+        ] {
+            assert!(matches!(
+                validate_catchup_choice_binding(
+                    0,
+                    0,
+                    M1StepDispatchStage::DraftCatchup,
+                    row,
+                    WorkspaceOwnerMetadata::new(&wrong_completion, wrong_completion.ranges().len(),),
+                ),
+                Err(M1FullStepWorkspaceSubleaseBindingError::CatchupChoiceSubrange { .. })
+            ));
+        }
     }
 
     #[test]

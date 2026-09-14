@@ -1464,6 +1464,26 @@ fn resolve_production_ordinary_source(
                 })
                 .map(ResolvedM1PhysicalBufferRangeV1::Device)
         }
+        M1PhysicalBufferSourceV1::DraftCatchupChoices(expected) => {
+            if row.stage() != crate::M1StepDispatchStage::DraftCatchup
+                || row.segment_index() != expected.producer_segment()
+                || context
+                    .workspaces
+                    .catchup_choice_subrange(expected.producer_segment())
+                    != Some(expected)
+            {
+                return Err(M1PhysicalBufferBindingErrorV1::RowMetadata { dispatch_index });
+            }
+            context
+                .partitioned_memory
+                .catchup_choice_dispatch_range(context.workspaces, expected.producer_segment())
+                .map_err(|error| M1PhysicalBufferBindingErrorV1::WorkspaceRange {
+                    dispatch_index,
+                    argument,
+                    error,
+                })
+                .map(ResolvedM1PhysicalBufferRangeV1::Device)
+        }
         M1PhysicalBufferSourceV1::SpeculativeDraftChoices(expected) => {
             if context
                 .workspaces
@@ -2249,6 +2269,69 @@ mod tests {
     }
 
     #[test]
+    fn catchup_parents_keep_choices_on_device_and_emit_one_host_receipt() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let intent =
+                M1StepDispatchIntent::DraftCatchup(target(Qwen3ExecutionMode::Speculative, bucket));
+            let recipe = exact_recipe(intent, 218);
+            recipe.revalidate().unwrap();
+            assert!(first_materialization_requirement(&recipe).is_none());
+            let mut backend = DiagnosticOffResolutionBackendV1;
+            let resolved =
+                resolve_rows_with_backend(recipe.kernarg_recipe(), recipe.rows(), &mut backend)
+                    .unwrap();
+            assert_eq!(resolved.len(), 425);
+            let mut catchup_choices = 0;
+            let mut completion_choices = 0;
+            let mut host_receipts = 0;
+            for (source_row, resolved_row) in recipe.rows().iter().zip(resolved.iter()) {
+                for buffer in &resolved_row.buffers {
+                    match buffer.source {
+                        M1PhysicalBufferSourceV1::DraftCatchupChoices(choice) => {
+                            catchup_choices += 1;
+                            assert_eq!(source_row.stage(), M1StepDispatchStage::DraftCatchup);
+                            assert_eq!(source_row.segment_index(), choice.producer_segment());
+                            assert_eq!(choice.range().byte_len(), 4);
+                        }
+                        M1PhysicalBufferSourceV1::Workspace {
+                            workspace: M1FullStepWorkspaceRole::Target,
+                            range: M1StepWorkspaceRangeRole::Choices,
+                        } => {
+                            completion_choices += 1;
+                            assert_eq!(source_row.dispatch_index(), 424);
+                            assert_eq!(
+                                source_row.stage(),
+                                M1StepDispatchStage::DraftCatchupCompletion
+                            );
+                        }
+                        M1PhysicalBufferSourceV1::CompletionOutput { sequences } => {
+                            host_receipts += 1;
+                            assert_eq!(sequences, 1);
+                            assert_eq!(source_row.dispatch_index(), 424);
+                            assert_eq!(source_row.selection(), intent.completion_selection());
+                            assert_eq!(buffer.route, TestResolutionRouteV1::HostVisible);
+                            continue;
+                        }
+                        M1PhysicalBufferSourceV1::KvCachePlane { role, .. } => {
+                            assert_eq!(role, Qwen3ModelRole::Draft06B);
+                        }
+                        _ => {}
+                    }
+                    assert_eq!(buffer.route, TestResolutionRouteV1::Device);
+                }
+            }
+            assert_eq!(
+                (catchup_choices, completion_choices, host_receipts),
+                (1, 1, 1)
+            );
+        }
+    }
+
+    #[test]
     fn hostile_completion_selection_and_source_extent_fail_exactly() {
         let exact = target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS8C8192);
         let stale = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
@@ -2626,10 +2709,11 @@ mod tests {
         match stage {
             M1StepDispatchStage::TargetOnly
             | M1StepDispatchStage::TargetPrefill
-            | M1StepDispatchStage::TargetVerification { .. } => M1FullStepWorkspaceRole::Target,
-            M1StepDispatchStage::DraftPrefill | M1StepDispatchStage::DraftDecode { .. } => {
-                M1FullStepWorkspaceRole::Draft
-            }
+            | M1StepDispatchStage::TargetVerification { .. }
+            | M1StepDispatchStage::DraftCatchupCompletion => M1FullStepWorkspaceRole::Target,
+            M1StepDispatchStage::DraftPrefill
+            | M1StepDispatchStage::DraftDecode { .. }
+            | M1StepDispatchStage::DraftCatchup => M1FullStepWorkspaceRole::Draft,
         }
     }
 
