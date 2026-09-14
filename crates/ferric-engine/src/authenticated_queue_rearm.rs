@@ -235,6 +235,20 @@ pub(crate) struct M1AuthenticatedDraftCatchupScratchV1 {
 }
 
 impl M1AuthenticatedDraftCatchupScratchV1 {
+    pub(crate) fn take_publication(
+        &mut self,
+    ) -> Option<M1AuthenticatedRearmPublicationHostStorageV1> {
+        self.publication.take()
+    }
+
+    pub(crate) fn take_readback(
+        &mut self,
+    ) -> Option<
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    > {
+        self.readback.take()
+    }
+
     pub(crate) fn try_new(
         parent: Qwen3PlanSelection,
         plans: &M1FullStepWorkspacePlans,
@@ -931,6 +945,37 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
             Some(scratch),
         )
     }
+
+    pub(crate) fn schedule_draft_catchup<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+        scratch: &mut M1AuthenticatedDraftCatchupScratchV1,
+    ) -> Result<
+        M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
+    > {
+        if scratch.parent != pending.parent()
+            || self.released.checked().selection() != pending.parent()
+            || self.released.checked().epoch() != pending.prior_epoch()
+            || self.released.checked().dispatch_generation() != pending.prior_dispatch_generation()
+            || self.released.members().len() != 1
+            || !self.parked.is_empty()
+            || !self.released.members().iter().all(|member| matches!(member,
+                M1ReleasedDeviceKvMemberV1::Active(cache) if cache.projection().request == pending.request()))
+        {
+            return Err(authenticated_schedule_rejection(
+                M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(M1LongLivedQueueRearmScheduleErrorV1::Detach),
+                self,
+            ));
+        }
+        self.schedule_next_exact_resident(
+            engine,
+            pending.epoch(),
+            &[pending.request()],
+            &mut scratch.scheduling,
+        )
+    }
 }
 
 /// Clean authenticated queue teardown retaining complete released-round lineage.
@@ -1132,6 +1177,44 @@ pub enum M1AuthenticatedRetainedStepPlanErrorV1 {
 }
 
 impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
+    fn matches_draft_catchup_restore(
+        &self,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> bool {
+        let pending = completed.pending();
+        self.queue.shape() == M1PhysicalFixedBatchShapeV1::DraftCatchup
+            && self.queue.custody().selection() == pending.parent()
+            && self
+                .queue
+                .custody()
+                .completion_output()
+                .draft_catchup_parent_selection()
+                == Some(pending.parent())
+            && self.queue.detached_dispatch_generation() == completed.dispatch_generation()
+            && exact_next_epoch(completed.completion_epoch()) == Some(self.scheduled.epoch())
+            && self.scheduled.member_count() == 1
+            && self.scheduled.member(0) == Some(pending.request())
+            && self.selected.len() == 1
+            && self.selected[0].projection().request == pending.request()
+            && self.prior_checked.epoch() == pending.prior_epoch()
+            && self.prior_checked.dispatch_generation() == pending.prior_dispatch_generation()
+            && self.prior_checked.selection() == pending.parent()
+    }
+
+    pub(crate) fn derive_draft_catchup_restore_recipe_input(
+        &self,
+        recipe: crate::runner::M1PhysicalRunnerRecipeInputV1,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> Result<M1PhysicalRunnerRecipeOutcomeV1, crate::runner::M1PhysicalRunnerRecipeInputV1> {
+        if !self.matches_draft_catchup_restore(completed) {
+            return Err(recipe);
+        }
+        Ok(recipe.derive(
+            self.queue.operations(),
+            M1StepDispatchIntent::SpeculativeRound(completed.pending().parent()),
+        ))
+    }
+
     /// Exact once-issued next scheduler batch.
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         &self.scheduled
@@ -2083,6 +2166,9 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
     mut scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
     inputs: M1LongLivedQueueRearmKvInputsV1,
     mut resident_scratch: Option<&mut M1AuthenticatedResidentCompletionScratchV1>,
+    restored: Option<
+        &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    >,
 ) -> Result<
     M1AuthenticatedReservedLongLivedQueueRearmV1,
     M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
@@ -2264,7 +2350,8 @@ fn reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
                 M1PhysicalFixedBatchShapeV1::SpeculativeK4
                     | M1PhysicalFixedBatchShapeV1::SpeculativeK8
                     | M1PhysicalFixedBatchShapeV1::SpeculativeK16
-            );
+            ) || restored
+                .is_some_and(|completed| scheduled.matches_draft_catchup_restore(completed));
             let draft_live = usize::try_from(draft_decode.live_lane_count()).ok();
             if !speculative_shape
                 || !authenticated_input_roster_matches(&scheduled, &target_speculative)
@@ -2496,7 +2583,8 @@ pub fn reserve_m1_authenticated_long_lived_queue_rearm_kv_v1<const C: usize>(
             (scheduled, inputs),
         ));
     }
-    match reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(scheduled, inputs, None) {
+    match reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(scheduled, inputs, None, None)
+    {
         Ok(reserved) => Ok(reserved),
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -2524,6 +2612,7 @@ pub(crate) fn reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1<con
         scheduled,
         inputs,
         Some(scratch),
+        None,
     ) {
         Ok(reserved) => Ok(reserved),
         Err(failure) => {
@@ -2531,6 +2620,41 @@ pub(crate) fn reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1<con
             Err(failure)
         }
     }
+}
+
+pub(crate) fn reserve_authenticated_draft_catchup_restore_kv_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    inputs: M1LongLivedQueueRearmKvInputsV1,
+    scratch: &mut M1AuthenticatedResidentCompletionScratchV1,
+    completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+) -> Result<
+    M1AuthenticatedReservedLongLivedQueueRearmV1,
+    M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+> {
+    if engine.is_faulted()
+        || !scheduled.matches_draft_catchup_restore(completed)
+        || !matches!(
+            &inputs,
+            M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
+        )
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(authenticated_kv_reservation_failure(
+            M1LongLivedQueueRearmKvReservationPhaseV1::Preflight,
+            (scheduled, inputs),
+        ));
+    }
+    reserve_m1_authenticated_long_lived_queue_rearm_kv_inner_v1(
+        scheduled,
+        inputs,
+        Some(scratch),
+        Some(completed),
+    )
+    .map_err(|failure| {
+        engine.quarantine_m1_queue_rearm_failure();
+        failure
+    })
 }
 
 #[derive(Debug)]
@@ -3309,6 +3433,45 @@ struct M1AuthenticatedRearmContinuationCustodyV1 {
     rollover: Option<crate::M1QueueRolloverObservationV1>,
     new_window_bridge:
         Option<crate::authenticated_queue_rollover::M1AuthenticatedSpeculativeNewWindowBridgeV1>,
+    catchup_pending: Option<(
+        crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+        M1AuthenticatedDraftCatchupRetainedBindingsV1,
+    )>,
+    maintenance: Option<M1AuthenticatedDraftCatchupRestoreCustodyV1>,
+}
+
+impl M1AuthenticatedRearmContinuationCustodyV1 {
+    fn expected_dispatch_generation(&self) -> Option<u64> {
+        if let Some(maintenance) = &self.maintenance {
+            maintenance.completed.dispatch_generation().checked_add(1)
+        } else {
+            self.rollover.as_ref().map_or_else(
+                || self.prior_checked.dispatch_generation().checked_add(1),
+                |rollover| Some(rollover.replacement_dispatch_generation()),
+            )
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupRestoreCustodyV1 {
+    completed: crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    initialized: crate::device_cache::InertInitializedDeviceKvStepWrite,
+    saved: M1AuthenticatedDraftCatchupRetainedBindingsV1,
+}
+
+impl M1AuthenticatedDraftCatchupRestoreCustodyV1 {
+    pub(crate) const fn completed(
+        &self,
+    ) -> &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1 {
+        &self.completed
+    }
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedDraftCatchupPublicationV1 {
+    Enter(crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1),
+    Restore(M1AuthenticatedDraftCatchupRestoreCustodyV1),
 }
 
 /// Published authenticated next generation on the same native queue.
@@ -3378,6 +3541,8 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
                 history,
                 rollover: Some(rollover),
                 new_window_bridge: None,
+                catchup_pending: None,
+                maintenance: None,
             },
             queue_observation,
             device,
@@ -3419,6 +3584,8 @@ impl M1AuthenticatedRearmedPublishedQueueV1 {
                 history,
                 rollover: Some(rollover),
                 new_window_bridge: Some(new_window_bridge),
+                catchup_pending: None,
+                maintenance: None,
             },
             queue_observation,
             device,
@@ -3697,6 +3864,341 @@ pub struct M1AuthenticatedRearmedRecycledQueueV1 {
     carry: M1AuthenticatedRearmContinuationCustodyV1,
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedRearmedDraftCatchupReadbackV1 {
+    readback:
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupCompletedReadbackV1,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupReleasedRoundV1 {
+    queue: M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    carry: M1AuthenticatedRearmContinuationCustodyV1,
+    restored: M1AuthenticatedDraftCatchupRestoreCustodyV1,
+    queue_observation: ComputeAqlQueueObservationV1,
+    device: Gfx942DeviceBinding,
+}
+
+impl M1AuthenticatedRearmedDraftCatchupReadbackV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            readback,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let (queue, completion, kv, image, lineage, rollover) = readback.into_completion_parts();
+        let retained = (
+            completion,
+            kv,
+            image,
+            lineage,
+            rollover,
+            carry,
+            queue_observation,
+            device,
+        );
+        match queue.destroy_and_release() {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, retained))),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((quarantined, retained))),
+        }
+    }
+
+    pub(crate) fn complete<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedDraftCatchupReleasedRoundV1,
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeFailureDispositionV1,
+    > {
+        if self.carry.selected.len() != 1
+            || !self.carry.parked.is_empty()
+            || self.carry.catchup_pending.is_none()
+            || self.carry.maintenance.is_some()
+            || self.carry.new_window_bridge.is_some()
+        {
+            return Err(match self.close(engine) {
+                crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(retained) => crate::authenticated_speculative_executor::released_disposition(retained),
+                crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(retained) => crate::authenticated_speculative_executor::quarantined_disposition(retained),
+            });
+        }
+        let Self {
+            readback,
+            mut carry,
+            queue_observation,
+            device,
+        } = self;
+        let (pending, saved) = carry
+            .catchup_pending
+            .take()
+            .expect("maintenance pending owner checked");
+        let cache = carry
+            .selected
+            .pop()
+            .expect("singleton maintenance cache checked");
+        match crate::authenticated_speculative_executor::settle_authenticated_draft_catchup_v1(
+            engine, pending, readback, cache,
+        ) {
+            Ok(settled) => {
+                carry.selected.push(settled.cache);
+                Ok(M1AuthenticatedDraftCatchupReleasedRoundV1 {
+                    queue: settled.queue,
+                    carry,
+                    restored: M1AuthenticatedDraftCatchupRestoreCustodyV1 {
+                        completed: settled.completed,
+                        initialized: settled.initialized,
+                        saved,
+                    },
+                    queue_observation,
+                    device,
+                })
+            }
+            Err(failure) => {
+                Err(failure
+                    .close(engine)
+                    .retain((carry, saved, queue_observation, device)))
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedDraftCatchupRestoreScheduleFailureV1 {
+    Rejected(Box<M1AuthenticatedDraftCatchupReleasedRoundV1>),
+    Terminal(
+        crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+}
+
+impl M1AuthenticatedDraftCatchupReleasedRoundV1 {
+    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.queue.logical_runner()
+    }
+
+    pub(crate) const fn completed(
+        &self,
+    ) -> &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1 {
+        &self.restored.completed
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeFailureDispositionV1
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            queue,
+            carry,
+            restored,
+            queue_observation,
+            device,
+        } = self;
+        let retained = (carry, restored, queue_observation, device);
+        match queue.destroy_and_release() {
+            Ok(released) => crate::authenticated_speculative_executor::released_disposition((
+                released, retained,
+            )),
+            Err(quarantined) => crate::authenticated_speculative_executor::quarantined_disposition(
+                (quarantined, retained),
+            ),
+        }
+    }
+
+    pub(crate) fn schedule_restore<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        epoch: CompletionEpoch,
+        request: RequestId,
+    ) -> Result<
+        (
+            M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            M1AuthenticatedDraftCatchupRestoreCustodyV1,
+        ),
+        M1AuthenticatedDraftCatchupRestoreScheduleFailureV1,
+    > {
+        let pending = self.restored.completed.pending();
+        let projection = self
+            .carry
+            .selected
+            .first()
+            .map(ActiveDeviceKvCache::projection);
+        if engine.is_faulted()
+            || engine.state(request) != Some(RequestState::Ready)
+            || exact_next_epoch(self.restored.completed.completion_epoch()) != Some(epoch)
+            || request != pending.request()
+            || self.carry.selected.len() != 1
+            || !self.carry.parked.is_empty()
+            || self.carry.catchup_pending.is_some()
+            || self.carry.maintenance.is_some()
+            || self.carry.new_window_bridge.is_some()
+            || self.queue.shape() != M1PhysicalFixedBatchShapeV1::DraftCatchup
+            || self.queue.custody().selection() != pending.parent()
+            || self
+                .queue
+                .custody()
+                .completion_output()
+                .draft_catchup_parent_selection()
+                != Some(pending.parent())
+            || self.carry.prior_checked.epoch() != pending.prior_epoch()
+            || self.carry.prior_checked.dispatch_generation() != pending.prior_dispatch_generation()
+            || self.carry.prior_checked.selection() != pending.parent()
+            || !projection.is_some_and(|projection| {
+                projection.request == request
+                    && projection.device == self.device
+                    && projection.draft.committed_tokens == pending.target_committed()
+                    && projection.draft.resident_tokens == pending.target_committed()
+                    && projection.target.committed_tokens == pending.target_committed()
+                    && projection.target.resident_tokens == pending.target_committed()
+                    && !projection.draft_write_pending
+                    && !projection.target_write_pending
+            })
+        {
+            return Err(
+                M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Rejected(Box::new(self)),
+            );
+        }
+        let Self {
+            queue,
+            carry,
+            restored,
+            queue_observation,
+            device,
+        } = self;
+        let queue = match queue.detach() {
+            Ok(queue) => queue,
+            Err(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(
+                    M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Terminal(
+                        crate::authenticated_speculative_executor::quarantined_disposition((
+                            failure,
+                            carry,
+                            restored,
+                            queue_observation,
+                            device,
+                        )),
+                    ),
+                );
+            }
+        };
+        let dispatched = engine.dispatch_m1_exact_ready(epoch, &[request]);
+        let scheduled = match dispatched {
+            Ok(scheduled)
+                if scheduled.epoch() == epoch
+                    && scheduled.member_count() == 1
+                    && scheduled.member(0) == Some(request)
+                    && queue.detached_dispatch_generation()
+                        == restored.completed.dispatch_generation() =>
+            {
+                scheduled
+            }
+            source => {
+                engine.quarantine_m1_queue_rearm_failure();
+                let (shape, lower, witness, operations, custody) = queue.into_rearm_parts();
+                let retained = close_prepared_rearm_submission_core(
+                    lower,
+                    (
+                        shape,
+                        witness,
+                        operations,
+                        custody,
+                        carry,
+                        restored,
+                        source,
+                        queue_observation,
+                        device,
+                    ),
+                );
+                return Err(
+                    M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Terminal(
+                        M1AuthenticatedDraftCatchupPreparationFailureV1 { custody: retained }
+                            .into_disposition(),
+                    ),
+                );
+            }
+        };
+        Ok((
+            M1AuthenticatedScheduledLongLivedQueueRearmV1 {
+                queue,
+                scheduled,
+                selected: carry.selected,
+                parked: carry.parked,
+                terminal: carry.terminal,
+                prior_checked: carry.prior_checked,
+                logical_accepted_counts: carry.logical_accepted_counts,
+                externally_published_counts: carry.externally_published_counts,
+                release_counts: carry.release_counts,
+                completed_members: carry.completed_members,
+                total_released: carry.total_released,
+                history: carry.history,
+            },
+            restored,
+        ))
+    }
+}
+
+impl M1AuthenticatedRearmedRecycledQueueV1 {
+    pub(crate) fn read_and_check_draft_catchup(
+        self,
+        storage: crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    ) -> Result<
+        M1AuthenticatedRearmedDraftCatchupReadbackV1,
+        Box<M1AuthenticatedRearmedResidentReadbackFailureV1>,
+    > {
+        let Self {
+            queue,
+            carry,
+            queue_observation,
+            device,
+        } = self;
+        let generation = carry
+            .catchup_pending
+            .as_ref()
+            .filter(|(pending, _)| {
+                pending.prior_epoch() == carry.prior_checked.epoch()
+                    && pending.prior_dispatch_generation()
+                        == carry.prior_checked.dispatch_generation()
+                    && pending.parent() == carry.prior_checked.selection()
+                    && carry.maintenance.is_none()
+                    && carry.rollover.is_none()
+            })
+            .and_then(|(pending, _)| pending.prior_dispatch_generation().checked_add(1));
+        let Some(generation) = generation else {
+            return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
+                    queue,
+                    storage: Box::new(storage),
+                },
+                carry,
+                queue_observation,
+                device,
+            }));
+        };
+        match queue.read_and_check_draft_catchup_completion_with_storage(generation, storage) {
+            Ok(readback) => Ok(M1AuthenticatedRearmedDraftCatchupReadbackV1 {
+                readback,
+                carry,
+                queue_observation,
+                device,
+            }),
+            Err(source) => Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
+                source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::Physical(source),
+                carry,
+                queue_observation,
+                device,
+            })),
+        }
+    }
 }
 
 /// Physical observation or semantic-join rejection with complete rearm custody.
@@ -4258,10 +4760,7 @@ impl M1AuthenticatedRearmedRecycledQueueV1 {
             queue_observation,
             device,
         } = self;
-        let expected_dispatch_generation = carry.rollover.as_ref().map_or_else(
-            || carry.prior_checked.dispatch_generation().checked_add(1),
-            |rollover| Some(rollover.replacement_dispatch_generation()),
-        );
+        let expected_dispatch_generation = carry.expected_dispatch_generation();
         let Some(expected_dispatch_generation) = expected_dispatch_generation else {
             return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
                 source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
@@ -4316,10 +4815,7 @@ impl M1AuthenticatedRearmedRecycledQueueV1 {
             queue_observation,
             device,
         } = self;
-        let expected_dispatch_generation = carry.rollover.as_ref().map_or_else(
-            || carry.prior_checked.dispatch_generation().checked_add(1),
-            |rollover| Some(rollover.replacement_dispatch_generation()),
-        );
+        let expected_dispatch_generation = carry.expected_dispatch_generation();
         let Some(expected_dispatch_generation) = expected_dispatch_generation else {
             return Err(Box::new(M1AuthenticatedRearmedResidentReadbackFailureV1 {
                 source: M1AuthenticatedRearmedResidentReadbackFailureSourceV1::DispatchGeneration {
@@ -4773,7 +5269,9 @@ impl M1AuthenticatedRearmedCompletedReadbackV1 {
                 device,
             ),
         };
-        let history = carry.history.append(history_entry);
+        let history = carry
+            .history
+            .append(history_entry.retain_authenticated_maintenance(carry.maintenance));
         Ok(M1AuthenticatedRearmedCompletionOutcomeV1 {
             outcome,
             release_scratch,
@@ -5586,7 +6084,7 @@ pub fn submit_m1_authenticated_long_lived_queue_rearm_v1<const C: usize>(
     M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
 > {
-    submit_m1_authenticated_long_lived_queue_rearm_core_v1(engine, prepared, recipe, None)
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(engine, prepared, recipe, None, None)
 }
 
 pub(crate) fn submit_m1_authenticated_long_lived_queue_rearm_resident_v1<const C: usize>(
@@ -5598,7 +6096,51 @@ pub(crate) fn submit_m1_authenticated_long_lived_queue_rearm_resident_v1<const C
     M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
 > {
-    submit_m1_authenticated_long_lived_queue_rearm_core_v1(engine, prepared, recipe, Some(storage))
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(
+        engine,
+        prepared,
+        recipe,
+        Some(storage),
+        None,
+    )
+}
+
+pub(crate) fn submit_authenticated_draft_catchup_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    storage: M1AuthenticatedRearmPublicationHostStorageV1,
+    pending: crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+) -> Result<
+    M1AuthenticatedRearmedPublishedQueueV1,
+    M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+> {
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(
+        engine,
+        prepared,
+        recipe,
+        Some(storage),
+        Some(M1AuthenticatedDraftCatchupPublicationV1::Enter(pending)),
+    )
+}
+
+pub(crate) fn submit_authenticated_draft_catchup_restore_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    storage: Option<M1AuthenticatedRearmPublicationHostStorageV1>,
+    restored: M1AuthenticatedDraftCatchupRestoreCustodyV1,
+) -> Result<
+    M1AuthenticatedRearmedPublishedQueueV1,
+    M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+> {
+    submit_m1_authenticated_long_lived_queue_rearm_core_v1(
+        engine,
+        prepared,
+        recipe,
+        storage,
+        Some(M1AuthenticatedDraftCatchupPublicationV1::Restore(restored)),
+    )
 }
 
 fn submit_m1_authenticated_long_lived_queue_rearm_core_v1<const C: usize>(
@@ -5606,12 +6148,13 @@ fn submit_m1_authenticated_long_lived_queue_rearm_core_v1<const C: usize>(
     prepared: M1AuthenticatedPreparedLongLivedQueueRearmV1,
     recipe: AddresslessM1PhysicalBufferRecipeV1,
     mut storage: Option<M1AuthenticatedRearmPublicationHostStorageV1>,
+    transition: Option<M1AuthenticatedDraftCatchupPublicationV1>,
 ) -> Result<
     M1AuthenticatedRearmedPublishedQueueV1,
     M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
 > {
     if engine.is_faulted() {
-        let retained = close_prepared_rearm_submission(prepared, recipe);
+        let retained = close_prepared_rearm_submission(prepared, recipe).retain(transition);
         return Err(authenticated_classified_submission_failure(
             M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::EngineFaulted,
             retained,
@@ -5636,8 +6179,13 @@ fn submit_m1_authenticated_long_lived_queue_rearm_core_v1<const C: usize>(
     } = remainder;
     let queue_observation = queue.observation();
     let device = queue.device();
-    let previous_epoch = prior_checked.epoch();
-    let carry = M1AuthenticatedRearmContinuationCustodyV1 {
+    let previous_epoch = match &transition {
+        Some(M1AuthenticatedDraftCatchupPublicationV1::Restore(restored)) => {
+            restored.completed.completion_epoch()
+        }
+        _ => prior_checked.epoch(),
+    };
+    let mut carry = M1AuthenticatedRearmContinuationCustodyV1 {
         selected,
         parked,
         terminal: terminal_members,
@@ -5651,14 +6199,90 @@ fn submit_m1_authenticated_long_lived_queue_rearm_core_v1<const C: usize>(
         history,
         rollover: None,
         new_window_bridge: None,
+        catchup_pending: None,
+        maintenance: None,
     };
-    let queue = match rearm_m1_authenticated_detached_queue_core_v1(
-        queue,
-        prepared,
-        recipe,
-        queue_observation,
-        storage.as_mut(),
-    ) {
+    let rebound = match transition {
+        None => rearm_m1_authenticated_detached_queue_core_v1(
+            queue,
+            prepared,
+            recipe,
+            queue_observation,
+            storage.as_mut(),
+        ),
+        Some(transition) => {
+            let Some(storage) = storage.as_mut() else {
+                let retained = M1AuthenticatedScheduledRemainderV1 {
+                    queue,
+                    selected: carry.selected,
+                    parked: carry.parked,
+                    terminal: carry.terminal,
+                    prior_checked: carry.prior_checked,
+                    logical_accepted_counts: carry.logical_accepted_counts,
+                    externally_published_counts: carry.externally_published_counts,
+                    release_counts: carry.release_counts,
+                    completed_members: carry.completed_members,
+                    total_released: carry.total_released,
+                    history: carry.history,
+                }
+                .close((prepared, recipe, transition));
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(authenticated_classified_submission_failure(
+                    M1AuthenticatedLongLivedQueueRearmSubmissionPhaseV1::RebindPreflight,
+                    retained,
+                ));
+            };
+            match transition {
+                M1AuthenticatedDraftCatchupPublicationV1::Enter(pending) => {
+                    match rearm_authenticated_draft_catchup_queue_transition(
+                        queue,
+                        prepared,
+                        recipe,
+                        M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(&pending),
+                        None,
+                        storage,
+                    ) {
+                        Ok((queue, saved)) => {
+                            carry.catchup_pending = Some((pending, saved));
+                            Ok(queue)
+                        }
+                        Err((failure, saved)) => {
+                            Err(retain_queue_rearm_failure(failure, (pending, saved)))
+                        }
+                    }
+                }
+                M1AuthenticatedDraftCatchupPublicationV1::Restore(restored) => {
+                    let M1AuthenticatedDraftCatchupRestoreCustodyV1 {
+                        completed,
+                        initialized,
+                        saved,
+                    } = restored;
+                    match rearm_authenticated_draft_catchup_queue_transition(
+                        queue,
+                        prepared,
+                        recipe,
+                        M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(&completed),
+                        Some(saved),
+                        storage,
+                    ) {
+                        Ok((queue, saved)) => {
+                            carry.maintenance = Some(M1AuthenticatedDraftCatchupRestoreCustodyV1 {
+                                completed,
+                                initialized,
+                                saved,
+                            });
+                            Ok(queue)
+                        }
+                        Err((failure, saved)) => Err(retain_queue_rearm_failure(
+                            failure,
+                            (completed, initialized, saved),
+                        )),
+                    }
+                }
+            }
+        }
+    };
+    let queue = match rebound {
         Ok(queue) => queue,
         Err(M1AuthenticatedQueueRearmFailureV1::Rejected(rejection)) => {
             let error = rejection.error();

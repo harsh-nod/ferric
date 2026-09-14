@@ -86,6 +86,8 @@ pub(crate) struct M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
     completed_rounds: u64,
     last_epoch: CompletionEpoch,
     draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
+    restoration:
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
     physical_history: Option<crate::m1_queue_rearm::M1RearmRoundHistoryV1>,
 }
@@ -105,6 +107,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             completed_rounds,
             last_epoch,
             draft_catchup,
+            restoration,
             prior_windows,
         } = lineage;
         let archived = Self {
@@ -117,6 +120,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             completed_rounds,
             last_epoch,
             draft_catchup,
+            restoration,
             queue_wait_timeout,
             physical_history: None,
         };
@@ -135,6 +139,7 @@ impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
             self.completed_rounds,
             self.last_epoch,
             &self.draft_catchup,
+            &self.restoration,
             self.queue_wait_timeout,
             &self.physical_history,
         );
@@ -163,6 +168,8 @@ pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
     completed_rounds: u64,
     last_epoch: CompletionEpoch,
     draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
+    restoration:
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
     pub(crate) prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
 }
 
@@ -522,6 +529,203 @@ pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
     released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
     lineage: M1AuthenticatedSpeculativeCausalLineageV1,
     queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupReadyV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupReleasedRoundV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+impl M1AuthenticatedDraftCatchupReadyV1 {
+    pub(crate) const fn completed(&self) -> &M1AuthenticatedDraftCatchupCompletedV1 {
+        self.released.completed()
+    }
+
+    pub(crate) const fn selection(&self) -> Qwen3PlanSelection {
+        self.coordinator.shape().selection()
+    }
+
+    pub(crate) fn active_roster(&self) -> crate::M1SpeculativeActiveRosterV1 {
+        self.coordinator.active_roster()
+    }
+
+    pub(crate) fn member_snapshot(
+        &self,
+        request: RequestId,
+    ) -> Option<crate::M1SpeculativeMemberSnapshotV1> {
+        self.coordinator.member(request)
+    }
+
+    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.released.retained_logical_runner()
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        } = self;
+        released
+            .close(engine)
+            .retain((coordinator, lineage, queue_wait_timeout))
+    }
+
+    pub(crate) fn execute_round<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        deadline: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedDraftCatchupRestoreFailureV1,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        let epoch = self
+            .completed()
+            .completion_epoch()
+            .value()
+            .checked_add(1)
+            .map(CompletionEpoch::new);
+        let roster = self.coordinator.active_roster();
+        let binding = epoch.and_then(|epoch| {
+            self.coordinator
+                .bind_round(self.coordinator.next_round(), epoch, &roster)
+                .ok()
+        });
+        let valid = !engine.is_faulted()
+            && roster.as_slice() == [self.completed().pending().request()]
+            && self.lineage.draft_catchup.is_none()
+            && self.lineage.restoration.is_none()
+            && self.lineage.last_epoch == self.completed().completion_epoch()
+            && self.coordinator.last_epoch() == Some(self.completed().completion_epoch())
+            && inputs.recipe_workspace_plans.workspace_plans()
+                == Some(&inputs.preparation_workspace_plans)
+            && inputs.preparation_workspace_plans.kind()
+                == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
+            && inputs.preparation_workspace_plans.target().selection() == self.selection()
+            && inputs.resident_completion_scratch.is_some()
+            && matches!(
+                &inputs.kv,
+                M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+            )
+            && binding.as_ref().is_some_and(|binding| {
+                authenticated_speculative_round_inputs_match_binding(&inputs.kv, binding)
+            });
+        if !valid {
+            return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Retry(
+                Box::new((self, inputs)),
+            ));
+        }
+        let binding = binding.expect("restored logical round was checked");
+        let epoch = epoch.expect("restored epoch was checked");
+        let Self {
+            coordinator,
+            released,
+            mut lineage,
+            queue_wait_timeout,
+        } = self;
+        let (scheduled, restored) = match released.schedule_restore(engine, epoch, roster[0]) {
+            Ok(scheduled) => scheduled,
+            Err(crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Rejected(released)) => {
+                return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Retry(Box::new((
+                    Self { coordinator, released: *released, lineage, queue_wait_timeout }, inputs,
+                ))));
+            }
+            Err(crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Terminal(disposition)) => {
+                return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Closed(disposition.retain((coordinator, lineage, inputs, binding, queue_wait_timeout))));
+            }
+        };
+        lineage.restoration = Some(restored);
+        M1AuthenticatedSpeculativePhysicalExecutorV1::execute_scheduled_round(
+            engine,
+            coordinator,
+            binding,
+            lineage,
+            scheduled,
+            inputs,
+            queue_wait_timeout,
+            post_submit,
+            deadline,
+        )
+        .map_err(|failure| {
+            M1AuthenticatedDraftCatchupRestoreFailureV1::Ordinary(close_pending_round_failure(
+                engine, failure,
+            ))
+        })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedDraftCatchupRestoreFailureV1 {
+    Retry(
+        Box<(
+            M1AuthenticatedDraftCatchupReadyV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
+    Closed(M1AuthenticatedSpeculativeFailureDispositionV1),
+    Ordinary(Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>),
+}
+
+impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::Retry(retained) => {
+                let (ready, inputs) = *retained;
+                ready.close(engine).retain(inputs)
+            }
+            Self::Closed(disposition) => disposition,
+            Self::Ordinary(failure) => failure.close_for_resident(engine),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
+    Retry {
+        executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
+        plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+    },
+    Closed {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedDraftCatchupExecutionFailureV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::Retry { executor, plans } => {
+                match executor.destroy_queue_and_retain_state(engine) {
+                    Ok(released) => released_disposition((released, plans)),
+                    Err(quarantined) => quarantined_disposition((quarantined, plans)),
+                }
+            }
+            Self::Closed { stage, disposition } => disposition.retain(stage),
+        }
+    }
 }
 
 /// Clean queue teardown retaining the final logical coordinator state.
@@ -1651,6 +1855,163 @@ trait M1RearmedQueueEffectsV1 {
 
 struct M1NativeRearmedQueueEffectsV1;
 
+struct M1NativeDraftCatchupQueueEffectsV1;
+
+impl M1RearmedQueueEffectsV1 for M1NativeDraftCatchupQueueEffectsV1 {
+    type Prepared = (
+        crate::M1AuthenticatedPreparedLongLivedQueueRearmV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+        crate::authenticated_queue_rearm::M1AuthenticatedRearmPublicationHostStorageV1,
+        M1AuthenticatedDraftCatchupPendingV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Published = (
+        crate::M1AuthenticatedRearmedPublishedQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Completed = (
+        crate::M1AuthenticatedRearmedCompletedQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Recycled = (
+        crate::M1AuthenticatedRearmedRecycledQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Diagnostic =
+        crate::authenticated_queue_rearm::M1AuthenticatedRearmedDraftCatchupReadbackV1;
+    type SubmitFailure = (
+        crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type ProgressFailure = (
+        Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type ReadbackFailure =
+        Box<crate::authenticated_queue_rearm::M1AuthenticatedRearmedResidentReadbackFailureV1>;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, publication, pending, readback): Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(engine, prepared, recipe),
+            (publication, pending, readback),
+        )
+    }
+
+    fn submit<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, publication, pending, readback): Self::Prepared,
+    ) -> Result<Self::Published, Self::SubmitFailure> {
+        match crate::authenticated_queue_rearm::submit_authenticated_draft_catchup_v1(
+            engine,
+            prepared,
+            recipe,
+            publication,
+            pending,
+        ) {
+            Ok(published) => Ok((published, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn classify_submit_failure(
+        (failure, readback): Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        if failure.queue_released() {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(
+                Box::new((failure, readback)),
+            )
+        } else {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+                Box::new((failure, readback)),
+            )
+        }
+    }
+
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback): Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            published.close_in_flight(engine),
+            readback,
+        )
+    }
+
+    fn wait<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback): Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::ProgressFailure> {
+        match published.wait_for(timeout.milliseconds(), engine) {
+            Ok(completed) => Ok((completed, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+            Box::new(failure),
+        )
+    }
+
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback): Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            completed.close_completed(engine),
+            readback,
+        )
+    }
+
+    fn recycle<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback): Self::Completed,
+    ) -> Result<Self::Recycled, Self::ProgressFailure> {
+        match completed.recycle(engine) {
+            Ok(recycled) => Ok((recycled, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        (recycled, readback): Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            recycled.close_recycled(engine),
+            readback,
+        )
+    }
+
+    fn readback(
+        (recycled, readback): Self::Recycled,
+    ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+        recycled.read_and_check_draft_catchup(readback)
+    }
+
+    fn close_readback_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ReadbackFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        failure.close(engine)
+    }
+
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        diagnostic.close(engine)
+    }
+}
+
 #[derive(Debug)]
 enum M1NativeRearmedReadbackFailureV1 {
     Ordinary(Box<crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureV1>),
@@ -1667,6 +2028,7 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
         Option<
             crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
         >,
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
     );
     type Published = (
         crate::M1AuthenticatedRearmedPublishedQueueV1,
@@ -1703,22 +2065,28 @@ impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
 
     fn close_prepared<const C: usize>(
         engine: &mut Engine<C>,
-        (prepared, recipe, _publication_storage, _readback_storage): Self::Prepared,
+        (prepared, recipe, publication_storage, readback_storage, restored): Self::Prepared,
     ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
-        crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(
-            engine, prepared, recipe,
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(
+                engine, prepared, recipe,
+            ),
+            (publication_storage, readback_storage, restored),
         )
     }
 
     fn submit<const C: usize>(
         engine: &mut Engine<C>,
-        (prepared, recipe, storage, readback_storage): Self::Prepared,
+        (prepared, recipe, storage, readback_storage, restored): Self::Prepared,
     ) -> Result<Self::Published, Self::SubmitFailure> {
-        let submitted = match storage {
-            Some(storage) => crate::authenticated_queue_rearm::submit_m1_authenticated_long_lived_queue_rearm_resident_v1(
+        let submitted = match (restored, storage) {
+            (Some(restored), storage) => crate::authenticated_queue_rearm::submit_authenticated_draft_catchup_restore_v1(
+                engine, prepared, recipe, storage, restored,
+            ),
+            (None, Some(storage)) => crate::authenticated_queue_rearm::submit_m1_authenticated_long_lived_queue_rearm_resident_v1(
                 engine, prepared, recipe, storage,
             ),
-            None => submit_m1_authenticated_long_lived_queue_rearm_v1(engine, prepared, recipe),
+            (None, None) => submit_m1_authenticated_long_lived_queue_rearm_v1(engine, prepared, recipe),
         };
         match submitted {
             Ok(published) => Ok((published, readback_storage)),
@@ -4446,6 +4814,7 @@ impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
             completed_rounds: 0,
             last_epoch: epoch,
             draft_catchup: None,
+            restoration: None,
             prior_windows: Vec::new(),
         };
         let prepared = match prepare_coordinator_round_core(
@@ -5178,6 +5547,7 @@ impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
             completed_rounds: 0,
             last_epoch: self.epoch,
             draft_catchup: None,
+            restoration: None,
             prior_windows: self.prior_windows,
         };
         prepare_coordinator_round_core(
@@ -5452,6 +5822,210 @@ fn terminal_quarantine<const C: usize>(
 }
 
 impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
+    pub(crate) const fn draft_catchup_pending(
+        &self,
+    ) -> Option<&M1AuthenticatedDraftCatchupPendingV1> {
+        self.lineage.draft_catchup.as_ref()
+    }
+
+    pub(crate) fn execute_draft_catchup<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        mut plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+        post_submit: F,
+        mut deadline: D,
+    ) -> Result<M1AuthenticatedDraftCatchupReadyV1, M1AuthenticatedDraftCatchupExecutionFailureV1>
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        let ready = !engine.is_faulted()
+            && self.active_count() == 1
+            && plans.parent() == self.selection()
+            && self.lineage.draft_catchup.as_ref().is_some_and(|pending| {
+                pending.coordinator_identity() == self.coordinator.identity()
+                    && pending.parent() == self.selection()
+                    && pending.completed_round().checked_add(1)
+                        == Some(self.coordinator.next_round())
+                    && self.coordinator.last_epoch() == Some(pending.prior_epoch())
+                    && self.lineage.last_epoch == pending.prior_epoch()
+                    && self.coordinator.active_roster().as_slice() == [pending.request()]
+                    && self
+                        .coordinator
+                        .member(pending.request())
+                        .is_some_and(|member| {
+                            member.status() == M1SpeculativeMemberStatusV1::Active
+                                && member.draft_committed_tokens() == pending.draft_committed()
+                                && member.target_committed_tokens() == pending.target_committed()
+                        })
+            });
+        if !ready {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Retry {
+                executor: Box::new(self),
+                plans,
+            });
+        }
+        let Self {
+            coordinator,
+            released,
+            mut lineage,
+            queue_wait_timeout,
+        } = self;
+        let pending = lineage
+            .draft_catchup
+            .as_ref()
+            .expect("checked pending catch-up");
+        let scheduled = match released.schedule_draft_catchup(engine, pending, plans.scratch_mut())
+        {
+            Ok(scheduled) => scheduled,
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Rejected(rejected)) => {
+                let (_, released) = rejected.into_parts();
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Retry {
+                    executor: Box::new(Self {
+                        coordinator,
+                        released,
+                        lineage,
+                        queue_wait_timeout,
+                    }),
+                    plans,
+                });
+            }
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Terminal(terminal)) => {
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Schedule,
+                    disposition: quarantined_disposition((
+                        terminal,
+                        coordinator,
+                        lineage,
+                        plans,
+                        queue_wait_timeout,
+                    )),
+                });
+            }
+        };
+        let pending = lineage
+            .draft_catchup
+            .take()
+            .expect("same pending catch-up remains retained");
+        let (_, recipe_input, preparation, mut scratch) = plans.into_parts();
+        let (prepared, recipe) =
+            match crate::authenticated_queue_rearm::prepare_authenticated_draft_catchup_v1(
+                engine,
+                scheduled,
+                &pending,
+                preparation,
+                recipe_input,
+                &mut scratch,
+            ) {
+                Ok(prepared) => prepared,
+                Err(failure) => {
+                    return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::WorkspacePreparation,
+                        disposition: failure.into_disposition().retain((
+                            coordinator,
+                            lineage,
+                            pending,
+                            scratch,
+                            queue_wait_timeout,
+                        )),
+                    })
+                }
+            };
+        let storage = (scratch.take_publication(), scratch.take_readback());
+        let (Some(publication), Some(readback)) = storage else {
+            let closure = crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(engine, prepared, recipe);
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::WorkspacePreparation,
+                disposition: disposition_with_logical(
+                    closure,
+                    (
+                        coordinator,
+                        lineage,
+                        pending,
+                        scratch,
+                        storage,
+                        queue_wait_timeout,
+                    ),
+                ),
+            });
+        };
+        let (diagnostic, (mut coordinator, mut lineage, scratch)) =
+            execute_round_core_with_post_submit_and_deadline::<
+                M1NativeDraftCatchupQueueEffectsV1,
+                _,
+                _,
+                _,
+                _,
+                C,
+            >(
+                engine,
+                (prepared, recipe, publication, pending, readback),
+                (coordinator, lineage, scratch),
+                queue_wait_timeout,
+                post_submit,
+                &mut deadline,
+            )
+            .map_err(|(stage, disposition)| {
+                M1AuthenticatedDraftCatchupExecutionFailureV1::Closed { stage, disposition }
+            })?;
+        if deadline(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: disposition_with_logical(
+                    diagnostic.close(engine),
+                    (coordinator, lineage, scratch, queue_wait_timeout),
+                ),
+            });
+        }
+        let released = match diagnostic.complete(engine) {
+            Ok(released) => released,
+            Err(disposition) => {
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PhysicalCompletion,
+                    disposition: disposition.retain((coordinator, lineage, scratch)),
+                })
+            }
+        };
+        if coordinator
+            .commit_authenticated_draft_catchup(released.completed())
+            .is_err()
+        {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorCommit,
+                disposition: released
+                    .close(engine)
+                    .retain((coordinator, lineage, scratch)),
+            });
+        }
+        lineage.last_epoch = released.completed().completion_epoch();
+        if !coordinator.matches_causal_lineage(
+            lineage.selection,
+            &lineage.initial_seeds,
+            &lineage.generated,
+            lineage.completed_rounds,
+            Some(lineage.last_epoch),
+        ) || deadline(Boundary::AfterSettlement, queue_wait_timeout).is_none()
+        {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                disposition: released
+                    .close(engine)
+                    .retain((coordinator, lineage, scratch)),
+            });
+        }
+        Ok(M1AuthenticatedDraftCatchupReadyV1 {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        })
+    }
+
     pub(crate) fn try_reserve_resident_window_history(
         &mut self,
         additional: usize,
@@ -5707,6 +6281,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             ),
             active_count: self.active_count(),
             inputs_match: self.lineage.draft_catchup.is_none()
+                && self.lineage.restoration.is_none()
                 && inputs.recipe_workspace_plans.workspace_plans()
                     == Some(&inputs.preparation_workspace_plans)
                 && inputs
@@ -5848,6 +6423,56 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 ));
             }
         };
+        Self::execute_scheduled_round(
+            engine,
+            coordinator,
+            binding,
+            lineage,
+            scheduled,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                controls,
+                resident_completion_scratch,
+            },
+            queue_wait_timeout,
+            post_submit,
+            deadline_expired,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn execute_scheduled_round<const C: usize, F, E, D>(
+        engine: &mut Engine<C>,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        binding: crate::M1SpeculativeRoundBindingV1,
+        mut lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        scheduled: crate::M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        post_submit: F,
+        mut deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+            kv,
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+            mut resident_completion_scratch,
+        } = inputs;
         let (scheduled, kv) = match kv {
             M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(kv) => (scheduled, kv),
             M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
@@ -5893,7 +6518,37 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 }
             }
         };
-        let recipe = match scheduled.derive_retained_step_recipe_input(recipe_workspace_plans) {
+        let recipe_outcome = match lineage.restoration.as_ref() {
+            Some(restored) => match scheduled.derive_draft_catchup_restore_recipe_input(
+                recipe_workspace_plans,
+                restored.completed(),
+            ) {
+                Ok(outcome) => outcome,
+                Err(recipe_workspace_plans) => {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    return Err(Box::new(
+                        PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                            stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Recipe,
+                            custody:
+                                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(
+                                    Box::new((
+                                        coordinator,
+                                        binding,
+                                        scheduled,
+                                        kv,
+                                        preparation_workspace_plans,
+                                        controls,
+                                        recipe_workspace_plans,
+                                    )),
+                                ),
+                            lineage: Some(lineage),
+                        },
+                    ));
+                }
+            },
+            None => scheduled.derive_retained_step_recipe_input(recipe_workspace_plans),
+        };
+        let recipe = match recipe_outcome {
             M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
             M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
                 engine.quarantine_m1_queue_rearm_failure();
@@ -5916,11 +6571,14 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 ));
             }
         };
-        let reserved_result = match resident_completion_scratch.as_deref_mut() {
-            Some(scratch) => crate::authenticated_queue_rearm::reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1(
+        let reserved_result = match (resident_completion_scratch.as_deref_mut(), lineage.restoration.as_ref()) {
+            (Some(scratch), Some(restored)) => crate::authenticated_queue_rearm::reserve_authenticated_draft_catchup_restore_kv_v1(
+                engine, scheduled, kv, scratch, restored.completed(),
+            ),
+            (Some(scratch), None) => crate::authenticated_queue_rearm::reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1(
                 engine, scheduled, kv, scratch,
             ),
-            None => reserve_m1_authenticated_long_lived_queue_rearm_kv_v1(engine, scheduled, kv),
+            (None, _) => reserve_m1_authenticated_long_lived_queue_rearm_kv_v1(engine, scheduled, kv),
         };
         let reserved =
             match reserved_result {
@@ -5979,6 +6637,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             .and_then(
                 crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1::take_readback,
             );
+        let restoration = lineage.restoration.take();
         let (diagnostic, (coordinator, binding, controls, lineage)) =
             execute_round_core_with_post_submit_and_deadline::<
                 M1NativeRearmedQueueEffectsV1,
@@ -5989,7 +6648,13 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 C,
             >(
                 engine,
-                (prepared, recipe, publication_storage, readback_storage),
+                (
+                    prepared,
+                    recipe,
+                    publication_storage,
+                    readback_storage,
+                    restoration,
+                ),
                 (coordinator, binding, controls, lineage),
                 queue_wait_timeout,
                 post_submit,
@@ -7069,6 +7734,7 @@ mod tests {
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(39),
             draft_catchup: None,
+            restoration: None,
             prior_windows: Vec::new(),
         }
     }
@@ -7934,6 +8600,7 @@ mod tests {
             completed_rounds: 0,
             last_epoch: CompletionEpoch::new(7),
             draft_catchup: None,
+            restoration: None,
             prior_windows: Vec::new(),
         };
         let _ = coordinator

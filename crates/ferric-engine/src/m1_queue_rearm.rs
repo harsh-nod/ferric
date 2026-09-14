@@ -133,6 +133,8 @@ pub struct M1RearmRoundHistoryEntryV1 {
     queue_observation: ComputeAqlQueueObservationV1,
     device: Gfx942DeviceBinding,
     rollover: Option<M1QueueRolloverObservationV1>,
+    maintenance:
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
 }
 
 impl M1RearmRoundHistoryEntryV1 {
@@ -157,6 +159,7 @@ impl M1RearmRoundHistoryEntryV1 {
             queue_observation,
             device,
             rollover: None,
+            maintenance: None,
         }
     }
 
@@ -182,7 +185,18 @@ impl M1RearmRoundHistoryEntryV1 {
             queue_observation,
             device,
             rollover,
+            maintenance: None,
         }
+    }
+
+    pub(crate) fn retain_authenticated_maintenance(
+        mut self,
+        maintenance: Option<
+            crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1,
+        >,
+    ) -> Self {
+        self.maintenance = maintenance;
+        self
     }
 
     pub const fn checked(&self) -> &crate::M1CheckedCompletionOutputV1 {
@@ -9573,6 +9587,7 @@ impl M1RearmedCompletedReadbackV1 {
             queue_observation,
             device,
             rollover: carry.rollover,
+            maintenance: None,
         });
         Ok(M1RearmedCompletionOutcomeV1 {
             outcome,

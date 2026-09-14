@@ -224,6 +224,12 @@ impl M1AuthenticatedResidentDraftCatchupPlansV1 {
         self.parent
     }
 
+    pub(crate) fn scratch_mut(
+        &mut self,
+    ) -> &mut crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupScratchV1 {
+        &mut self.scratch
+    }
+
     pub(crate) fn into_parts(
         self,
     ) -> (
