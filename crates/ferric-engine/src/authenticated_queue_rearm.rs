@@ -2775,7 +2775,7 @@ impl M1AuthenticatedDraftCatchupPreparationFailureV1 {
     }
 }
 
-fn close_draft_catchup_scheduled<const C: usize>(
+pub(crate) fn close_draft_catchup_scheduled<const C: usize>(
     engine: &mut Engine<C>,
     scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
     retained: impl fmt::Debug + 'static,
@@ -3990,7 +3990,7 @@ pub(crate) enum M1AuthenticatedDraftCatchupRestoreScheduleFailureV1 {
 }
 
 impl M1AuthenticatedDraftCatchupReleasedRoundV1 {
-    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+    pub(crate) const fn retained_logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
         self.queue.logical_runner()
     }
 

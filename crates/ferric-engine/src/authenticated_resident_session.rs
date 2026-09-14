@@ -1140,7 +1140,7 @@ fn preallocate_resident_round_inputs(
 }
 
 fn next_round_inputs(
-    executor: &M1AuthenticatedSpeculativePhysicalExecutorV1,
+    executor: &M1AuthenticatedResidentRoundExecutorV1,
     request: RequestId,
     plan: M1ServingPlanV1,
     epoch: CompletionEpoch,
@@ -1209,6 +1209,20 @@ pub(crate) trait M1AuthenticatedResidentSameShapeExecutorV1<const C: usize>: Siz
     type Evidence: fmt::Debug + 'static;
     type Failure: fmt::Debug + 'static;
 
+    fn pending_draft_catchup(
+        &self,
+    ) -> Option<&crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1>
+    {
+        None
+    }
+
+    fn completed_draft_catchup(
+        &self,
+    ) -> Option<&crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1>
+    {
+        None
+    }
+
     fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
         self,
         engine: &mut Engine<C>,
@@ -1231,6 +1245,13 @@ impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
     type Inputs = M1AuthenticatedSpeculativePhysicalRoundInputsV1;
     type Evidence = M1ObservedSpeculativeDiagnosticChoicesV1;
     type Failure = Box<crate::M1AuthenticatedSpeculativePhysicalRoundFailureV1>;
+
+    fn pending_draft_catchup(
+        &self,
+    ) -> Option<&crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1>
+    {
+        self.draft_catchup_pending()
+    }
 
     fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
         self,
@@ -1256,6 +1277,244 @@ impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
         )
         .map(crate::M1AuthenticatedSpeculativePhysicalRoundSuccessV1::into_parts)
     }
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedResidentRoundExecutorV1 {
+    Speculative(M1AuthenticatedSpeculativePhysicalExecutorV1),
+    Restoring(crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupReadyV1),
+}
+
+impl M1AuthenticatedResidentRoundExecutorV1 {
+    fn selection(&self) -> Qwen3PlanSelection {
+        match self {
+            Self::Speculative(executor) => executor.selection(),
+            Self::Restoring(executor) => executor.selection(),
+        }
+    }
+
+    fn active_roster(&self) -> crate::M1SpeculativeActiveRosterV1 {
+        match self {
+            Self::Speculative(executor) => executor.active_roster(),
+            Self::Restoring(executor) => executor.active_roster(),
+        }
+    }
+
+    fn member_snapshot(&self, request: RequestId) -> Option<crate::M1SpeculativeMemberSnapshotV1> {
+        match self {
+            Self::Speculative(executor) => executor.member_snapshot(request),
+            Self::Restoring(executor) => executor.member_snapshot(request),
+        }
+    }
+
+    fn retained_logical_runner(&self) -> &crate::LogicalRunnerDeclaration {
+        match self {
+            Self::Speculative(executor) => executor.retained_logical_runner(),
+            Self::Restoring(executor) => executor.retained_logical_runner(),
+        }
+    }
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedResidentRoundExecutionFailureV1 {
+    Speculative(Box<crate::M1AuthenticatedSpeculativePhysicalRoundFailureV1>),
+    Restoring(
+        crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupRestoreFailureV1,
+    ),
+}
+
+impl M1AuthenticatedResidentRoundExecutionFailureV1 {
+    fn is_deadline(&self) -> bool {
+        matches!(self, Self::Speculative(failure) if failure.stage() == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
+    }
+
+    fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::Speculative(failure) => failure.close_for_resident(engine),
+            Self::Restoring(failure) => failure.close(engine),
+        }
+    }
+}
+
+impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
+    for M1AuthenticatedResidentRoundExecutorV1
+{
+    type Inputs = M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+    type Evidence = M1ObservedSpeculativeDiagnosticChoicesV1;
+    type Failure = M1AuthenticatedResidentRoundExecutionFailureV1;
+
+    fn pending_draft_catchup(
+        &self,
+    ) -> Option<&crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1>
+    {
+        match self {
+            Self::Speculative(executor) => executor.draft_catchup_pending(),
+            Self::Restoring(_) => None,
+        }
+    }
+
+    fn completed_draft_catchup(
+        &self,
+    ) -> Option<&crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1>
+    {
+        match self {
+            Self::Speculative(_) => None,
+            Self::Restoring(executor) => Some(executor.completed()),
+        }
+    }
+
+    fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: Self::Inputs,
+        post_submit: F,
+        deadline: &mut D,
+    ) -> Result<(Self, M1SpeculativeRoundOutcomeV1, Self::Evidence), Self::Failure>
+    where
+        F: FnOnce() -> Result<(), J>,
+        J: fmt::Debug + 'static,
+        D: FnMut(
+            M1AuthenticatedResidentDeadlineBoundaryV1,
+            M1QueueWaitTimeoutV1,
+        ) -> Option<M1QueueWaitTimeoutV1>,
+    {
+        let result = match self {
+            Self::Speculative(executor) => executor
+                .execute_round_with_post_submit_and_deadline(engine, inputs, post_submit, deadline)
+                .map_err(M1AuthenticatedResidentRoundExecutionFailureV1::Speculative),
+            Self::Restoring(executor) => executor
+                .execute_round(engine, inputs, post_submit, deadline)
+                .map_err(M1AuthenticatedResidentRoundExecutionFailureV1::Restoring),
+        }?;
+        let (executor, outcome, evidence) = result.into_parts();
+        Ok((Self::Speculative(executor), outcome, evidence))
+    }
+}
+
+fn close_resident_round_executor<const C: usize>(
+    mut engine: Engine<C>,
+    executor: M1AuthenticatedResidentRoundExecutorV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedResidentQueueTeardownV1 {
+    match executor {
+        M1AuthenticatedResidentRoundExecutorV1::Speculative(executor) => {
+            close_resident_executor(engine, executor, retained)
+        }
+        M1AuthenticatedResidentRoundExecutorV1::Restoring(executor) => {
+            let disposition = executor.close(&mut engine);
+            M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(disposition)
+                .retain((engine, retained))
+        }
+    }
+}
+
+fn close_pending_catchup_executor<const C: usize>(
+    engine: &mut Engine<C>,
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+) -> crate::M1AuthenticatedSpeculativeFailureDispositionV1 {
+    engine.quarantine_m1_queue_rearm_failure();
+    match executor.destroy_queue_and_retain_state(engine) {
+        Ok(released) => crate::authenticated_speculative_executor::released_disposition(released),
+        Err(quarantined) => {
+            crate::authenticated_speculative_executor::quarantined_disposition(quarantined)
+        }
+    }
+}
+
+fn prepare_resident_round_executor<const C: usize, D>(
+    registry: &mut M1ServingRegistryV1<C>,
+    engine: &mut Engine<C>,
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    request: RequestId,
+    plan: M1ServingPlanV1,
+    plans: &mut M1AuthenticatedResidentRoundPlansV1,
+    deadline: &mut D,
+) -> Result<
+    M1AuthenticatedResidentRoundExecutorV1,
+    (
+        M1AuthenticatedResidentStageV1,
+        crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    D: FnMut(
+        M1AuthenticatedResidentDeadlineBoundaryV1,
+        M1QueueWaitTimeoutV1,
+    ) -> Option<M1QueueWaitTimeoutV1>,
+{
+    let Some(pending) = executor.draft_catchup_pending() else {
+        return Ok(M1AuthenticatedResidentRoundExecutorV1::Speculative(
+            executor,
+        ));
+    };
+    let observed = registry.plan_next();
+    let batch = match observed {
+        Ok(Some(batch))
+            if batch.plan() == plan
+                && batch.requests() == [request]
+                && batch.epoch() == pending.epoch()
+                && pending.request() == request
+                && pending.parent() == plan.target()
+                && batch.action()
+                    == (M1ServingQueueActionV1::QuiescentDraftCatchup { parent: plan }) =>
+        {
+            batch
+        }
+        observed => {
+            return Err((
+                M1AuthenticatedResidentStageV1::RegistryPlan,
+                close_pending_catchup_executor(engine, executor).retain(observed),
+            ))
+        }
+    };
+    let reservation = match registry.reserve_draft_catchup_publication(batch, pending) {
+        Ok(reservation) => reservation,
+        Err(error) => {
+            return Err((
+                M1AuthenticatedResidentStageV1::RegistryReservation,
+                close_pending_catchup_executor(engine, executor).retain(error),
+            ))
+        }
+    };
+    let Some(catchup) = plans.take_catchup() else {
+        let abort = registry.abort_publication(reservation);
+        return Err((
+            M1AuthenticatedResidentStageV1::LogicalInputs,
+            close_pending_catchup_executor(engine, executor).retain(abort),
+        ));
+    };
+    let mut reservation = Some(reservation);
+    let ready = match executor.execute_draft_catchup(
+        engine,
+        catchup,
+        || {
+            registry.record_publication(
+                reservation
+                    .take()
+                    .expect("maintenance publication retains its registry reservation"),
+            )
+        },
+        deadline,
+    ) {
+        Ok(ready) => ready,
+        Err(failure) => {
+            let abort = reservation.map(|reservation| registry.abort_publication(reservation));
+            return Err((
+                M1AuthenticatedResidentStageV1::SameShapeRound,
+                failure.close(engine).retain(abort),
+            ));
+        }
+    };
+    if let Err(error) = registry.complete_draft_catchup(ready.completed()) {
+        return Err((
+            M1AuthenticatedResidentStageV1::RegistryCompletion,
+            ready.close(engine).retain(error),
+        ));
+    }
+    Ok(M1AuthenticatedResidentRoundExecutorV1::Restoring(ready))
 }
 
 pub(crate) struct M1AuthenticatedResidentSameShapeRoundCoreSuccessV1<E, const C: usize>
@@ -1323,6 +1582,11 @@ where
         outcome: M1SpeculativeRoundOutcomeV1,
         evidence: E::Evidence,
     },
+    RegistryMaintenance {
+        registry: M1ServingRegistryV1<C>,
+        executor: E,
+        error: crate::M1ServingRegistryErrorV1,
+    },
 }
 
 impl<E, const C: usize> fmt::Debug for M1AuthenticatedResidentSameShapeRoundCoreFailureV1<E, C>
@@ -1337,6 +1601,7 @@ where
             Self::Physical { .. } => "Physical",
             Self::RegistryCompletion { .. } => "RegistryCompletion",
             Self::Retention { .. } => "Retention",
+            Self::RegistryMaintenance { .. } => "RegistryMaintenance",
         };
         formatter
             .debug_struct("M1AuthenticatedResidentSameShapeRoundCoreFailureV1")
@@ -1382,7 +1647,12 @@ where
         Ok(Some(batch))
             if batch.plan() == plan
                 && batch.requests() == [request]
-                && batch.action() == M1ServingQueueActionV1::SameShapeRearm =>
+                && batch.action()
+                    == if executor.completed_draft_catchup().is_some() {
+                        M1ServingQueueActionV1::QuiescentDraftCatchupRestore { parent: plan }
+                    } else {
+                        M1ServingQueueActionV1::SameShapeRearm
+                    } =>
         {
             batch
         }
@@ -1405,7 +1675,11 @@ where
             },
         ));
     };
-    let reservation = match registry.reserve_publication(batch) {
+    let reservation_result = match executor.completed_draft_catchup() {
+        Some(completed) => registry.reserve_draft_catchup_restore_publication(batch, completed),
+        None => registry.reserve_publication(batch),
+    };
+    let reservation = match reservation_result {
         Ok(reservation) => reservation,
         Err(error) => {
             return Err(Box::new(
@@ -1485,17 +1759,28 @@ where
         ));
     }
     registry.apply_preflighted_completion(epoch, &[disposition]);
+    if let Some(pending) = executor.pending_draft_catchup() {
+        if let Err(error) = registry.register_draft_catchup_pending(pending) {
+            return Err(Box::new(
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryMaintenance {
+                    registry,
+                    executor,
+                    error,
+                },
+            ));
+        }
+    }
     Ok(M1AuthenticatedResidentSameShapeRoundCoreSuccessV1 { registry, executor })
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn execute_m1_authenticated_resident_same_shape_round_v1<R, D, const C: usize>(
-    registry: M1ServingRegistryV1<C>,
+    mut registry: M1ServingRegistryV1<C>,
     mut engine: Engine<C>,
     executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
     request: RequestId,
     plan: M1ServingPlanV1,
-    plans: M1AuthenticatedResidentRoundPlansV1,
+    mut plans: M1AuthenticatedResidentRoundPlansV1,
     storage: M1AuthenticatedResidentRoundInputStorageV1,
     mut evidence: Vec<M1AuthenticatedResidentRoundEvidenceV1>,
     mut tokens: Vec<TokenId>,
@@ -1519,6 +1804,25 @@ where
         M1QueueWaitTimeoutV1,
     ) -> Option<M1QueueWaitTimeoutV1>,
 {
+    let executor = match prepare_resident_round_executor(
+        &mut registry,
+        &mut engine,
+        executor,
+        request,
+        plan,
+        &mut plans,
+        deadline,
+    ) {
+        Ok(executor) => executor,
+        Err((stage, disposition)) => {
+            return Err(resident_failure(
+                stage,
+                true,
+                M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(disposition)
+                    .retain((registry, engine, plans, storage, evidence, tokens, retained)),
+            ))
+        }
+    };
     let result = execute_m1_authenticated_resident_same_shape_round_core_v1(
         registry,
         &mut engine,
@@ -1546,7 +1850,20 @@ where
     match result {
         Ok(success) => {
             let (registry, executor) = success.into_parts();
-            Ok((registry, engine, executor, evidence, tokens, retained))
+            match executor {
+                M1AuthenticatedResidentRoundExecutorV1::Speculative(executor) => {
+                    Ok((registry, engine, executor, evidence, tokens, retained))
+                }
+                executor => Err(resident_failure(
+                    M1AuthenticatedResidentStageV1::SameShapeRound,
+                    true,
+                    close_resident_round_executor(
+                        engine,
+                        executor,
+                        (registry, evidence, tokens, retained),
+                    ),
+                )),
+            }
         }
         Err(failure) => {
             engine.quarantine_m1_queue_rearm_failure();
@@ -1557,7 +1874,7 @@ where
                     observed,
                 } => (
                     M1AuthenticatedResidentStageV1::RegistryPlan,
-                    close_resident_executor(
+                    close_resident_round_executor(
                         engine,
                         executor,
                         (registry, observed, retained, evidence, tokens),
@@ -1568,7 +1885,7 @@ where
                     executor,
                 } => (
                     M1AuthenticatedResidentStageV1::LogicalInputs,
-                    close_resident_executor(
+                    close_resident_round_executor(
                         engine,
                         executor,
                         (registry, retained, evidence, tokens),
@@ -1581,7 +1898,7 @@ where
                     error,
                 } => (
                     M1AuthenticatedResidentStageV1::RegistryReservation,
-                    close_resident_executor(
+                    close_resident_round_executor(
                         engine,
                         executor,
                         (registry, inputs, error, retained, evidence, tokens),
@@ -1592,14 +1909,12 @@ where
                     failure,
                     abort,
                 } => {
-                    let stage = if failure.stage()
-                        == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
-                    {
+                    let stage = if failure.is_deadline() {
                         M1AuthenticatedResidentStageV1::Cancellation
                     } else {
                         M1AuthenticatedResidentStageV1::SameShapeRound
                     };
-                    let disposition = failure.close_for_resident(&mut engine);
+                    let disposition = failure.close(&mut engine);
                     (
                         stage,
                         M1AuthenticatedResidentQueueTeardownV1::from_speculative_disposition(
@@ -1616,7 +1931,7 @@ where
                     error,
                 } => (
                     M1AuthenticatedResidentStageV1::RegistryCompletion,
-                    close_resident_executor(
+                    close_resident_round_executor(
                         engine,
                         executor,
                         (
@@ -1631,10 +1946,22 @@ where
                     evidence: choices,
                 } => (
                     M1AuthenticatedResidentStageV1::Input,
-                    close_resident_executor(
+                    close_resident_round_executor(
                         engine,
                         executor,
                         (registry, outcome, choices, retained, evidence, tokens),
+                    ),
+                ),
+                M1AuthenticatedResidentSameShapeRoundCoreFailureV1::RegistryMaintenance {
+                    registry,
+                    executor,
+                    error,
+                } => (
+                    M1AuthenticatedResidentStageV1::RegistryCompletion,
+                    close_resident_round_executor(
+                        engine,
+                        executor,
+                        (registry, error, retained, evidence, tokens),
                     ),
                 ),
             };
@@ -3196,6 +3523,30 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
     }
     registry.apply_preflighted_completion(epoch, &[disposition]);
     let mut round_input_storage = round_inputs;
+    if let Some(pending) = executor.draft_catchup_pending() {
+        if let Err(error) = registry.register_draft_catchup_pending(pending) {
+            engine.quarantine_m1_queue_rearm_failure();
+            let teardown = close_resident_executor(
+                engine,
+                executor,
+                (
+                    registry,
+                    outcome,
+                    choices,
+                    rounds,
+                    evidence,
+                    unused_plans,
+                    round_input_storage,
+                    error,
+                ),
+            );
+            return Err(resident_failure(
+                M1AuthenticatedResidentStageV1::RegistryCompletion,
+                true,
+                teardown,
+            ));
+        }
+    }
     if round_input_storage.len() != rounds.len() {
         engine.quarantine_m1_queue_rearm_failure();
         let teardown = close_resident_executor(

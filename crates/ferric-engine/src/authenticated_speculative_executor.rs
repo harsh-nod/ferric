@@ -6259,7 +6259,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         engine: &mut Engine<C>,
         inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
         post_submit: F,
-        mut deadline_expired: D,
+        deadline_expired: D,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
@@ -6272,8 +6272,6 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             crate::M1QueueWaitTimeoutV1,
         ) -> Option<crate::M1QueueWaitTimeoutV1>,
     {
-        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
-
         let facts = M1PreDetachRoundFactsV1 {
             profile_matches: production_entry_profile_matches(
                 self.selection(),
@@ -6529,19 +6527,13 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                     return Err(Box::new(
                         PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
                             stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Recipe,
-                            custody:
-                                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(
-                                    Box::new((
-                                        coordinator,
-                                        binding,
-                                        scheduled,
-                                        kv,
-                                        preparation_workspace_plans,
-                                        controls,
-                                        recipe_workspace_plans,
-                                    )),
-                                ),
-                            lineage: Some(lineage),
+                            custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                                crate::authenticated_queue_rearm::close_draft_catchup_scheduled(engine, scheduled, (
+                                    coordinator, binding, kv, preparation_workspace_plans, controls,
+                                    recipe_workspace_plans, resident_completion_scratch, lineage,
+                                )).into_disposition(),
+                            ),
+                            lineage: None,
                         },
                     ));
                 }
