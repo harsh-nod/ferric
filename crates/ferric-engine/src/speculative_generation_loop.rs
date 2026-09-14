@@ -2266,13 +2266,15 @@ mod tests {
         let binding = coordinator
             .bind_round(0, CompletionEpoch::new(7), &[request(0)])
             .unwrap();
-        complete_test_round(
+        let outcome = complete_test_round(
             &mut coordinator,
             binding,
             &[observation(request(0), width, &tokens)],
             &[M1SpeculativeMemberControlV1::continuing(request(0))],
         )
         .unwrap();
+        assert_eq!(outcome.next_active_roster(), &[request(0)]);
+        assert_eq!(outcome.members()[0].published().as_slice(), tokens);
         let member = coordinator.member(request(0)).unwrap();
         let transition = M1DraftCatchupCoordinatorTransitionV1 {
             coordinator_identity: coordinator.identity(),
