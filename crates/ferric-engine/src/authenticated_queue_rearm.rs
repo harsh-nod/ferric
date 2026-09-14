@@ -115,15 +115,31 @@ pub(crate) struct M1AuthenticatedRearmPublicationHostStorageV1 {
     phase_k16: Option<
         Box<M1AuthenticatedPhysicalQueuePhaseSlotV1<M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1>>,
     >,
+    phase_catchup: Option<
+        Box<
+            M1AuthenticatedPhysicalQueuePhaseSlotV1<
+                { crate::M1_DRAFT_CATCHUP_FIXED_BATCH_PACKETS_V1 },
+            >,
+        >,
+    >,
 }
 
 impl M1AuthenticatedRearmPublicationHostStorageV1 {
     fn try_new(selection: Qwen3PlanSelection) -> Option<Self> {
+        Self::try_new_inner(selection, false)
+    }
+
+    fn try_new_inner(selection: Qwen3PlanSelection, catchup: bool) -> Option<Self> {
         let plan =
             crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
                 selection,
             )?;
-        let shape = plan.shape();
+        let speculative_shape = plan.shape();
+        let shape = if catchup {
+            M1PhysicalFixedBatchShapeV1::DraftCatchup
+        } else {
+            speculative_shape
+        };
         let mut workspace_ranges = Vec::new();
         workspace_ranges
             .try_reserve_exact(
@@ -141,10 +157,10 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
                     16,
                 )?,
             ),
-            packet_batch: if shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
+            packet_batch: if speculative_shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4 {
                 crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new()
             } else {
-                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(shape)?
+                crate::physical_fixed_batch::M1AuthenticatedRolloverPacketBatchHostStorageV1::new_for_speculative_shape(speculative_shape)?
             },
             phase: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK4)
                 .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
@@ -152,14 +168,91 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
                 .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
             phase_k16: (shape == M1PhysicalFixedBatchShapeV1::SpeculativeK16)
                 .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            phase_catchup: catchup
+                .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
         })
     }
 
     fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
-        recipe.workspace_composition().dispatch_plan().intent()
-            == M1StepDispatchIntent::SpeculativeRound(self.selection)
+        let intent = if self.shape == M1PhysicalFixedBatchShapeV1::DraftCatchup {
+            M1StepDispatchIntent::DraftCatchup(self.selection)
+        } else {
+            M1StepDispatchIntent::SpeculativeRound(self.selection)
+        };
+        recipe.workspace_composition().dispatch_plan().intent() == intent
             && recipe.rows().len() == self.shape.packet_count()
             && self.packet_batch.prepare_recipe(recipe)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupScratchV1 {
+    parent: Qwen3PlanSelection,
+    write: crate::device_cache::M1DraftCatchupKvWriteHostStorageV1,
+    page_leases: Vec<crate::DeviceKvPageLease>,
+    reservations: Vec<crate::PendingDeviceKvStepWrite>,
+    draft_table: Option<crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1>,
+    completion_page_indices: Option<Box<[u32]>>,
+    workspace_images: Option<crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1>,
+    publication: Option<M1AuthenticatedRearmPublicationHostStorageV1>,
+    readback: Option<
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    >,
+}
+
+impl M1AuthenticatedDraftCatchupScratchV1 {
+    pub(crate) fn try_new(
+        parent: Qwen3PlanSelection,
+        plans: &M1FullStepWorkspacePlans,
+    ) -> Option<Self> {
+        crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(parent)?;
+        let M1FullStepWorkspacePlans::DraftCatchup {
+            parent: declared_parent,
+            draft_decode,
+            completion,
+        } = plans
+        else {
+            return None;
+        };
+        let decode = M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+        if *declared_parent != parent
+            || completion.selection() != decode
+            || draft_decode.selection()
+                != (Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    ..decode
+                })
+            || draft_decode.allocation().allocation_id() == completion.allocation().allocation_id()
+        {
+            return None;
+        }
+        let mut page_leases = Vec::new();
+        page_leases.try_reserve_exact(1).ok()?;
+        let mut reservations = Vec::new();
+        reservations.try_reserve_exact(1).ok()?;
+        let mut completion_page_indices = Vec::new();
+        completion_page_indices.try_reserve_exact(512).ok()?;
+        completion_page_indices.resize(512, 0);
+        Some(Self {
+            parent,
+            write: crate::device_cache::M1DraftCatchupKvWriteHostStorageV1::try_new()?,
+            page_leases,
+            reservations,
+            draft_table: Some(crate::kv_workspace_authority::M1KvWorkspaceTableHostStorageV1::try_new(1)?),
+            completion_page_indices: Some(completion_page_indices.into_boxed_slice()),
+            workspace_images: Some(crate::m1_prepublication::M1FullStepWorkspaceImageHostStorageV1::try_new(plans)?),
+            publication: Some(M1AuthenticatedRearmPublicationHostStorageV1::try_new_inner(parent, true)?),
+            readback: Some(crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1::try_new(parent)?),
+        })
+    }
+
+    pub(crate) fn prepare_recipe(&mut self, recipe: &AddresslessM1PhysicalBufferRecipeV1) -> bool {
+        recipe.workspace_composition().dispatch_plan().intent()
+            == M1StepDispatchIntent::DraftCatchup(self.parent)
+            && self
+                .publication
+                .as_mut()
+                .is_some_and(|storage| storage.prepare_recipe(recipe))
     }
 }
 

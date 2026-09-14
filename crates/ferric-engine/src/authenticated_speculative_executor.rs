@@ -224,6 +224,7 @@ impl M1AuthenticatedDraftCatchupPendingV1 {
 pub(crate) struct M1AuthenticatedDraftCatchupCompletedV1 {
     pending: M1AuthenticatedDraftCatchupPendingV1,
     dispatch_generation: u64,
+    receipt: crate::M1ObservedCompletionImageV1,
 }
 
 impl M1AuthenticatedDraftCatchupCompletedV1 {
@@ -232,6 +233,208 @@ impl M1AuthenticatedDraftCatchupCompletedV1 {
     }
     pub(crate) const fn dispatch_generation(&self) -> u64 {
         self.dispatch_generation
+    }
+
+    pub(crate) const fn completion_epoch(&self) -> CompletionEpoch {
+        self.receipt.epoch()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupPhysicalSettlementV1 {
+    pub(crate) queue: crate::M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    pub(crate) cache: ActiveDeviceKvCache,
+    pub(crate) completed: M1AuthenticatedDraftCatchupCompletedV1,
+    pub(crate) initialized: crate::device_cache::InertInitializedDeviceKvStepWrite,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupSettlementFailureV1 {
+    queue: crate::M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl M1AuthenticatedDraftCatchupSettlementFailureV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { queue, retained } = self;
+        match queue.destroy_and_release() {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
+}
+
+/// Settles only the physically completed missing draft token. The K0 compact
+/// word is diagnostic, so Engine completion receives zero served tokens.
+pub(crate) fn settle_authenticated_draft_catchup_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: M1AuthenticatedDraftCatchupPendingV1,
+    readback: crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupCompletedReadbackV1,
+    cache: ActiveDeviceKvCache,
+) -> Result<
+    M1AuthenticatedDraftCatchupPhysicalSettlementV1,
+    Box<M1AuthenticatedDraftCatchupSettlementFailureV1>,
+> {
+    let receipt_matches = readback.parent_selection() == pending.parent()
+        && readback.request() == pending.request()
+        && readback.completion_epoch() == pending.epoch()
+        && pending.prior_dispatch_generation().checked_add(1)
+            == Some(readback.dispatch_generation());
+    let dispatch_generation = readback.dispatch_generation();
+    let completion_plan_identity = readback.completion_plan_identity();
+    let (queue, completion, kv, image, lineage, rollover_intent) = readback.into_completion_parts();
+    let projection = cache.projection();
+    let pending_write = match &kv {
+        crate::M1FullStepKvReservationCustodyV1::DraftCatchup {
+            parent,
+            target_allocation_id,
+            draft,
+        } if *parent == pending.parent()
+            && Some(*target_allocation_id) == projection.target_arena_allocation_id
+            && Some(draft.allocation_id()) == projection.draft_arena_allocation_id
+            && draft.reservations().len() == 1 =>
+        {
+            draft.reservations().first()
+        }
+        _ => None,
+    };
+    let binding_matches = receipt_matches
+        && !engine.is_faulted()
+        && lineage.is_none()
+        && rollover_intent.is_none()
+        && queue.shape() == crate::M1PhysicalFixedBatchShapeV1::DraftCatchup
+        && queue.custody().selection() == pending.parent()
+        && queue
+            .custody()
+            .completion_output()
+            .draft_catchup_parent_selection()
+            == Some(pending.parent())
+        && completion.epoch() == pending.epoch()
+        && projection.request == pending.request()
+        && projection.device == queue.custody().device()
+        && projection.target.committed_tokens == pending.target_committed()
+        && projection.target.resident_tokens == pending.target_committed()
+        && projection.draft.committed_tokens == pending.draft_committed()
+        && projection.draft.resident_tokens == pending.draft_committed()
+        && pending.draft_committed().checked_add(1) == Some(pending.target_committed())
+        && engine.pending_batch_member_count() == 1
+        && engine.pending_member(0) == Some(pending.request())
+        && engine.state(pending.request()) == Some(ferric_spec::scheduling::RequestState::InFlight)
+        && queue
+            .logical_runner()
+            .bind_step_plan(
+                pending.request(),
+                pending.epoch(),
+                crate::M1StepDispatchIntent::DraftCatchup(pending.parent()).completion_selection(),
+            )
+            .is_ok_and(|plan| *plan.plan_id() == completion_plan_identity)
+        && pending_write.is_some_and(|write| write.matches_authenticated_draft_catchup(&pending));
+    if !binding_matches {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((
+                "maintenance binding",
+                pending,
+                completion,
+                kv,
+                image,
+                lineage,
+                rollover_intent,
+                cache,
+            )),
+        }));
+    }
+    let write = pending_write.expect("maintenance reservation shape was checked");
+    if let Err(error) = cache
+        .preflight_step_completion(write, &completion)
+        .and_then(|()| cache.preflight_step_settlement(write, 1, pending.epoch()))
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((error, pending, completion, kv, image, cache)),
+        }));
+    }
+    if let Err(error) = engine.preflight_complete_exact(&completion, &[0]) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((error, pending, completion, kv, image, cache)),
+        }));
+    }
+    let crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } = kv else {
+        unreachable!("maintenance reservation shape was checked")
+    };
+    let mut reservations = draft.into_reservations().into_iter();
+    let write = reservations
+        .next()
+        .expect("exactly one maintenance reservation");
+    let (mut cache, initialized, completion) = match cache.complete_step_write(write, completion) {
+        crate::device_cache::DeviceKvStepCompletionOutcome::Completed(completed) => {
+            completed.into_parts()
+        }
+        source => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+                queue,
+                retained: Box::new((source, pending, image, reservations)),
+            }));
+        }
+    };
+    let settlement = cache.settle_completed_step(&initialized, 1, pending.epoch());
+    if settlement != Ok(0) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((settlement, pending, completion, initialized, image, cache)),
+        }));
+    }
+    let settled = cache.projection();
+    if settled.target != projection.target
+        || settled.draft.committed_tokens != pending.target_committed()
+        || settled.draft.resident_tokens != pending.target_committed()
+        || settled.target_write_pending
+        || settled.draft_write_pending
+        || settled.target_active_pages != projection.target_active_pages
+        || settled.target_retired_pages != projection.target_retired_pages
+        || settled.draft_retired_pages != projection.draft_retired_pages
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((
+                "maintenance settlement projection",
+                pending,
+                completion,
+                initialized,
+                image,
+                cache,
+            )),
+        }));
+    }
+    match engine.complete_exact(completion, &[0]) {
+        Ok(1) => Ok(M1AuthenticatedDraftCatchupPhysicalSettlementV1 {
+            queue,
+            cache,
+            completed: M1AuthenticatedDraftCatchupCompletedV1 {
+                pending,
+                dispatch_generation,
+                receipt: image,
+            },
+            initialized,
+        }),
+        result => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+                queue,
+                retained: Box::new((result, pending, initialized, image, cache)),
+            }))
+        }
     }
 }
 
