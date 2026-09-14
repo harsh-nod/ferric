@@ -149,6 +149,8 @@ pub enum M1CompletionOutputErrorV1 {
     },
     /// Owner revalidation derived a different host dispatch range.
     DispatchRangeDrift,
+    /// Maintenance-only output custody cannot authorize a served completion.
+    DraftCatchupCustodyDrift,
     /// A completed byte copy differs from the exact full output extent.
     ReadbackExtentDrift {
         /// Exact required bytes.
@@ -205,6 +207,15 @@ pub struct BoundM1CompletionOutputV1 {
     direct_diagnostic_choices: Option<BoundM1DirectDiagnosticChoicesV1>,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
     speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
+    draft_catchup: Option<M1DraftCatchupOutputCustodyV1>,
+}
+
+#[derive(Debug)]
+struct M1DraftCatchupOutputCustodyV1 {
+    parent_shape: M1CompletionOutputShapeV1,
+    dispatch_range: ServiceHostDispatchRangeV1,
+    data_index: usize,
+    speculative_diagnostic_choices: BoundM1SpeculativeDiagnosticChoicesV1,
 }
 
 impl BoundM1CompletionOutputV1 {
@@ -235,13 +246,21 @@ impl BoundM1CompletionOutputV1 {
     /// Returns direct target choice capture when explicitly enabled.
     #[must_use = "direct diagnostic choice custody remains paired with compact output"]
     pub const fn direct_diagnostic_choices(&self) -> Option<&BoundM1DirectDiagnosticChoicesV1> {
-        self.direct_diagnostic_choices.as_ref()
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.direct_diagnostic_choices.as_ref()
+        }
     }
 
     pub(crate) fn direct_diagnostic_choices_mut(
         &mut self,
     ) -> Option<&mut BoundM1DirectDiagnosticChoicesV1> {
-        self.direct_diagnostic_choices.as_mut()
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.direct_diagnostic_choices.as_mut()
+        }
     }
 
     /// Returns qualification-only logits capture when explicitly enabled.
@@ -255,13 +274,102 @@ impl BoundM1CompletionOutputV1 {
     pub const fn speculative_diagnostic_choices(
         &self,
     ) -> Option<&BoundM1SpeculativeDiagnosticChoicesV1> {
-        self.speculative_diagnostic_choices.as_ref()
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.speculative_diagnostic_choices.as_ref()
+        }
     }
 
     pub(crate) fn speculative_diagnostic_choices_mut(
         &mut self,
     ) -> Option<&mut BoundM1SpeculativeDiagnosticChoicesV1> {
-        self.speculative_diagnostic_choices.as_mut()
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.speculative_diagnostic_choices.as_mut()
+        }
+    }
+
+    pub(crate) const fn is_draft_catchup(&self) -> bool {
+        self.draft_catchup.is_some()
+    }
+
+    pub(crate) const fn draft_catchup_parent_selection(&self) -> Option<Qwen3PlanSelection> {
+        match self.draft_catchup.as_ref() {
+            Some(custody) => Some(custody.parent_shape.selection()),
+            None => None,
+        }
+    }
+
+    pub(crate) fn can_retarget_exact_s1_speculative_to_draft_catchup(
+        &self,
+        parent: Qwen3PlanSelection,
+    ) -> bool {
+        self.shape.selection() == parent
+            && exact_s1_speculative_catchup_output_transition(self.shape).is_some()
+            && self.completion_canary.is_none()
+            && self.direct_diagnostic_choices.is_none()
+            && self.qualification_logits.is_none()
+            && self.draft_catchup.is_none()
+            && self
+                .speculative_diagnostic_choices
+                .as_ref()
+                .is_some_and(|choices| choices.shape().selection() == parent)
+    }
+
+    /// Suspends the original choice owner inside the same linear output owner.
+    /// The allocation key is never replaced; only its identical S1 shape changes.
+    pub(crate) fn retarget_exact_s1_speculative_to_draft_catchup(
+        mut self,
+        parent: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        if !self.can_retarget_exact_s1_speculative_to_draft_catchup(parent) {
+            return Err(Box::new(self));
+        }
+        let Some(next) = exact_s1_speculative_catchup_output_transition(self.shape) else {
+            return Err(Box::new(self));
+        };
+        let Some(choices) = self.speculative_diagnostic_choices.take() else {
+            return Err(Box::new(self));
+        };
+        self.draft_catchup = Some(M1DraftCatchupOutputCustodyV1 {
+            parent_shape: self.shape,
+            dispatch_range: self.dispatch_range,
+            data_index: self.data_index,
+            speculative_diagnostic_choices: choices,
+        });
+        self.shape = next;
+        Ok(self)
+    }
+
+    /// Restores the exact suspended attachment after checked maintenance.
+    pub(crate) fn restore_exact_s1_speculative_after_draft_catchup(
+        mut self,
+        parent: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        let valid = self.draft_catchup.as_ref().is_some_and(|custody| {
+            custody.parent_shape.selection() == parent
+                && exact_s1_speculative_catchup_output_transition(custody.parent_shape)
+                    == Some(self.shape)
+                && custody.dispatch_range == self.dispatch_range
+                && custody.data_index == self.data_index
+                && custody.speculative_diagnostic_choices.shape().selection() == parent
+        });
+        if !valid
+            || self.completion_canary.is_some()
+            || self.direct_diagnostic_choices.is_some()
+            || self.qualification_logits.is_some()
+            || self.speculative_diagnostic_choices.is_some()
+        {
+            return Err(Box::new(self));
+        }
+        let Some(custody) = self.draft_catchup.take() else {
+            return Err(Box::new(self));
+        };
+        self.shape = custody.parent_shape;
+        self.speculative_diagnostic_choices = Some(custody.speculative_diagnostic_choices);
+        Ok(self)
     }
 
     /// Retargets the bare S1 prefill output binding for the exact S1 direct
@@ -280,6 +388,7 @@ impl BoundM1CompletionOutputV1 {
             || self.direct_diagnostic_choices.is_some()
             || self.qualification_logits.is_some()
             || self.speculative_diagnostic_choices.is_some()
+            || self.draft_catchup.is_some()
         {
             return Err(Box::new(self));
         }
@@ -297,6 +406,7 @@ impl BoundM1CompletionOutputV1 {
                 && self.direct_diagnostic_choices.is_none()
                 && self.qualification_logits.is_none()
                 && self.speculative_diagnostic_choices.is_none()
+                && self.draft_catchup.is_none()
         })
     }
 
@@ -337,6 +447,14 @@ impl BoundM1CompletionOutputV1 {
         selection: Qwen3PlanSelection,
     ) -> Result<ServiceHostDispatchRangeV1, M1CompletionOutputErrorV1> {
         self.shape.revalidate_selection(selection)?;
+        if self.is_draft_catchup()
+            && (self.completion_canary.is_some()
+                || self.direct_diagnostic_choices.is_some()
+                || self.qualification_logits.is_some()
+                || self.speculative_diagnostic_choices.is_some())
+        {
+            return Err(M1CompletionOutputErrorV1::DraftCatchupCustodyDrift);
+        }
         let (allocation_extent, interior_offset) = match self.completion_canary {
             Some(canary) => (
                 canary.layout().snapshot_extent_bytes(),
@@ -387,6 +505,31 @@ fn exact_s1_prefill_decode_output_transition(
         && prior.sequences() == 1
         && prior.sequences() == next.sequences()
         && prior.extent_bytes() == next.extent_bytes()
+}
+
+fn exact_s1_speculative_catchup_output_transition(
+    parent: M1CompletionOutputShapeV1,
+) -> Option<M1CompletionOutputShapeV1> {
+    let selection = parent.selection();
+    if selection.role != Qwen3ModelRole::Target8B
+        || selection.mode != Qwen3ExecutionMode::Speculative
+        || !matches!(
+            selection.bucket,
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192
+        )
+    {
+        return None;
+    }
+    let completion = m1_completion_output_shape_v1(Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Decode,
+        bucket: Qwen3PlanBucket::DecodeS1C8192,
+    })
+    .ok()?;
+    (parent.sequences() == 1 && parent.extent_bytes() == completion.extent_bytes())
+        .then_some(completion)
 }
 
 /// Derives the exact M1 compact-output geometry for one target selection.
@@ -453,6 +596,7 @@ pub fn allocate_m1_completion_output_v1(
         direct_diagnostic_choices: None,
         qualification_logits: None,
         speculative_diagnostic_choices: None,
+        draft_catchup: None,
     })
 }
 
@@ -502,6 +646,7 @@ pub fn allocate_m1_guarded_completion_output_v1(
         direct_diagnostic_choices: None,
         qualification_logits: None,
         speculative_diagnostic_choices: None,
+        draft_catchup: None,
     })
 }
 
@@ -681,6 +826,45 @@ mod tests {
             assert!(!exact_s1_prefill_decode_output_transition(
                 prefill, rejected
             ));
+        }
+    }
+
+    #[test]
+    fn draft_catchup_retarget_admits_only_exact_singleton_speculative_shapes() {
+        let decode = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ))
+        .unwrap();
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent =
+                m1_completion_output_shape_v1(target(Qwen3ExecutionMode::Speculative, bucket))
+                    .unwrap();
+            assert_eq!(
+                exact_s1_speculative_catchup_output_transition(parent),
+                Some(decode)
+            );
+            let mut wrong_extent = parent;
+            wrong_extent.extent_bytes += 4;
+            assert!(exact_s1_speculative_catchup_output_transition(wrong_extent).is_none());
+            let mut wrong_width = parent;
+            wrong_width.sequences = 2;
+            assert!(exact_s1_speculative_catchup_output_transition(wrong_width).is_none());
+        }
+        for selection in [
+            decode.selection(),
+            target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+            target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+        ] {
+            let shape = m1_completion_output_shape_v1(selection).unwrap();
+            assert!(exact_s1_speculative_catchup_output_transition(shape).is_none());
         }
     }
 
