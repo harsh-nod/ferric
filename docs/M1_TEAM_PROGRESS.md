@@ -5,6 +5,52 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Active Integration
 
+Private integration `b039c17d3287c25d3611e3e2be544003bd9c5a30`, tree
+`a6ccddda03b079664bd0a40708a802362d829390`, pins published fe2o3
+`82950a3cfc7b0192159fb7afcd1b89fb48d56053`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. All 79 active pin files reverse
+exactly to their parent before refreshing the two derived verifier manifest
+and lockfile SHA-256 arrays. Historical binary producers remain unchanged.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler / Kernels | Actual aggregate extraction at ae441 attributes the divisor rejection to paged GQA coordinates at line 322. Ferric `6da025e` specializes five coordinate expressions with literal divisors; all 35 aggregate host tests pass, including AST equivalence across 14 profiles. Actual extraction then reaches an unproved overflow assertion at line 378. Native and NLL MIR identify the guarded `query_position + 1`. The statement-ordered upper-bound repair is rebased onto newer upstream `5a762019f`, validated and pushed as `82950a3cf`. Exact rebased suites pass: compiler-lineage 38, kernel-analysis 115, focused backend 2, full backend 536. Strict Clippy has no added/removed normalized fingerprint against 5a; it is not an upstream lint-clean result. | Build exact published tools and emit the new aggregate. The host regressions do not prove the actual aggregate now emits. No new image or GPU result. |
+| Runtime / Integration | Published fe2o3 `b750` exposes the generation held by a completed-read request; service-host 43, service qualification 45 and three pure KFD tests pass. Local Ferric adds preallocated catch-up inputs/pages, checked one-token draft settlement with zero logical output, exact readback generation checks, retained original bindings and distinct maintenance/restore queue transitions. Registry `06502842` retains Pending/InFlight/Completed phases, including abort and cancellation custody. | Integrate maintenance execution, checked readback and restoration into the real resident loop. Later runtime `12598683` is under integration and is not part of the green full host snapshot below. Same-owner witness registration and intermediate physical epochs still need actual resident tests. |
+| Verification | Private `fc194dac` with published b750 passes 34 focused registry tests and 693 full engine library tests, with nine existing ignores. This includes seven new metadata-only registry tests and three diagnostic-reset tests covering K4/K8/K16, exact extents, invalid-token sentinels and rejected substitutions. Earlier selected Verus `kv_physical` remains 4 verified, 0 errors at bd2/e6. | Fresh 829 dependency graphs, source policies and structured TCB equality; latest source coverage with new bodies truthfully unverified; real resident witness/failure tests. No warmed catch-up allocation, physical catch-up proof or gate closure is established by these host tests. |
+
+The registry keeps the logical speculative parent while exposing the actual
+425-packet maintenance shape. A sealed pending witness is required before
+maintenance publication; aborting either publication retains the obligation.
+Ordinary completion cannot settle maintenance. A checked maintenance witness
+advances the physical epoch without adding a served token or speculative round;
+the next real speculative publication restores the original K4/K8/K16 shape.
+The tests exercise metadata keys, not fabricated physical completion witnesses.
+
+The diagnostic reset uses the canonical `u32::MAX` unwritten-token sentinel,
+not zero. Exact draft/target extents are 16/20, 32/36 and 64/68 bytes for the
+three singleton widths. Missing device writes must not become valid token zero.
+Independent source review found no further concrete registry or lower restore
+defect, but the real resident association remains a separate integration test.
+
+Evidence acquired locally includes:
+- `ferric-catchup-composition-v1/REGISTRY_RESET_RECEIPT.md` and raw logs. The exact
+  fc194 source archive SHA-256 is
+  `321c3cd04fb2dc990e08d7460de05fbee1c16fbb1036ae5346e35dd85ff3f76a`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-paged-getter/paged-and-getter-evidence.tar.gz`,
+  SHA-256 `cf6e686834c3f7ce714d3dfc83c8e49e1c7cc734cc5ddcbe4c1e1e3300258b1e`.
+  It retains the host/getter gates, archive mode-control failures and actual
+  overflow rejection. The newer MIR and 829 tests are separate evidence.
+- Pages-only public commit `a7a38b26` deployed successfully in workflow
+  `34883199424`. All seven live assets match reviewed source bytes (530,597 bytes).
+  Performance data is unchanged. Its clean worktree and owned 35 MiB remote stage
+  were removed after evidence acquisition; no private implementation was pushed.
+
+All builds, tests, proof runs and formatters remain on mi300x. No new TTFT, TPOT,
+throughput, GPU correctness result or competitiveness claim follows. The 693-test
+suite is bound to b750, not the later 829 pin or later resident integration.
+
+## Prior Ae441 Checkpoint
+
 Private integration `6d10fb900574dcdd11d84364f54b8d90ced4856a`, tree
 `3fb0f878ae22b5c72697b9f18ebf18c0aa36d69a`, pins published fe2o3
 `ae441734f27ef35c26baf7b3a6281852cd544de9`. Pliron remains
