@@ -965,12 +965,24 @@ impl M1AuthenticatedLongLivedQueueReleasedRoundV1 {
         M1AuthenticatedScheduledLongLivedQueueRearmV1,
         M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
     > {
+        let available = self
+            .released
+            .members()
+            .len()
+            .checked_add(self.parked.len())
+            .and_then(|count| count.checked_add(self.terminal.len()));
         if scratch.parent != pending.parent()
             || self.released.checked().selection() != pending.parent()
             || self.released.checked().epoch() != pending.prior_epoch()
             || self.released.checked().dispatch_generation() != pending.prior_dispatch_generation()
             || self.released.members().len() != 1
             || !self.parked.is_empty()
+            || !available.is_some_and(|available| {
+                scratch.scheduling.selected_slots.capacity() >= 1
+                    && scratch.scheduling.selected.capacity() >= 1
+                    && scratch.scheduling.parked.capacity() >= available
+                    && scratch.scheduling.terminal.capacity() >= available
+            })
             || !self.released.members().iter().all(|member| matches!(member,
                 M1ReleasedDeviceKvMemberV1::Active(cache) if cache.projection().request == pending.request()))
         {

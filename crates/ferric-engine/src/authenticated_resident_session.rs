@@ -1325,7 +1325,12 @@ enum M1AuthenticatedResidentRoundExecutionFailureV1 {
 
 impl M1AuthenticatedResidentRoundExecutionFailureV1 {
     fn is_deadline(&self) -> bool {
-        matches!(self, Self::Speculative(failure) if failure.stage() == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
+        match self {
+            Self::Speculative(failure) => {
+                failure.stage() == crate::M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+            }
+            Self::Restoring(failure) => failure.is_deadline(),
+        }
     }
 
     fn close<const C: usize>(
@@ -1502,10 +1507,12 @@ where
         Ok(ready) => ready,
         Err(failure) => {
             let abort = reservation.map(|reservation| registry.abort_publication(reservation));
-            return Err((
-                M1AuthenticatedResidentStageV1::SameShapeRound,
-                failure.close(engine).retain(abort),
-            ));
+            let stage = if failure.is_deadline() {
+                M1AuthenticatedResidentStageV1::Cancellation
+            } else {
+                M1AuthenticatedResidentStageV1::SameShapeRound
+            };
+            return Err((stage, failure.close(engine).retain(abort)));
         }
     };
     if let Err(error) = registry.complete_draft_catchup(ready.completed()) {

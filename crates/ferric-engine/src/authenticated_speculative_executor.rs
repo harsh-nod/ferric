@@ -684,6 +684,10 @@ pub(crate) enum M1AuthenticatedDraftCatchupRestoreFailureV1 {
 }
 
 impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
+    pub(crate) fn is_deadline(&self) -> bool {
+        matches!(self, Self::Ordinary(failure) if failure.stage() == M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
+    }
+
     pub(crate) fn close<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -712,6 +716,16 @@ pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
 }
 
 impl M1AuthenticatedDraftCatchupExecutionFailureV1 {
+    pub(crate) fn is_deadline(&self) -> bool {
+        matches!(
+            self,
+            Self::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                ..
+            }
+        )
+    }
+
     pub(crate) fn close<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -6003,16 +6017,21 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             });
         }
         lineage.last_epoch = released.completed().completion_epoch();
-        if !coordinator.matches_causal_lineage(
+        let lineage_matches = coordinator.matches_causal_lineage(
             lineage.selection,
             &lineage.initial_seeds,
             &lineage.generated,
             lineage.completed_rounds,
             Some(lineage.last_epoch),
-        ) || deadline(Boundary::AfterSettlement, queue_wait_timeout).is_none()
-        {
+        );
+        let within_deadline = deadline(Boundary::AfterSettlement, queue_wait_timeout).is_some();
+        if !lineage_matches || !within_deadline {
             return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
-                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                stage: if lineage_matches {
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+                } else {
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage
+                },
                 disposition: released
                     .close(engine)
                     .retain((coordinator, lineage, scratch)),
