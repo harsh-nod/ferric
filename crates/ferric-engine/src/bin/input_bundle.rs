@@ -169,7 +169,7 @@ fn measure_engineering_reference(path: &Path, protocol: bool) -> CaptureResult<S
         object,
         "format",
         if protocol {
-            "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1"
+            "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V2"
         } else {
             "FERRIC-M1-ENGINEERING-REFERENCE-IMPLEMENTATION-V1"
         },
@@ -1449,6 +1449,36 @@ mod tests {
         changed["format"] = json!("FERRIC-M1-REFERENCE-IMPLEMENTATION-V1");
         fs::write(&path, canonical_bytes(&changed).unwrap()).unwrap();
         assert!(measure_engineering_reference(&path, false).is_err());
+    }
+
+    #[test]
+    fn engineering_reference_protocol_measures_current_v2_and_rejects_legacy() {
+        let temporary = TestDirectory::new();
+        let path = temporary.0.join("reference-protocol.json");
+        let bytes = include_bytes!("../../../../benches/m1/reference/engineering-protocol.json");
+        fs::write(&path, bytes).unwrap();
+        assert_eq!(
+            measure_engineering_reference(&path, true).unwrap(),
+            sha256_hex(bytes)
+        );
+        assert!(measure_engineering_reference(&path, false).is_err());
+        let protocol = parse_canonical(bytes, "actual engineering protocol").unwrap();
+        for format in [
+            "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1",
+            "FERRIC-M1-REFERENCE-PROTOCOL-V3",
+            "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V3",
+        ] {
+            let mut changed = protocol.clone();
+            changed["format"] = json!(format);
+            fs::write(&path, canonical_bytes(&changed).unwrap()).unwrap();
+            assert!(measure_engineering_reference(&path, true).is_err());
+        }
+        for qualification in [Value::Bool(true), Value::Null, json!("false")] {
+            let mut changed = protocol.clone();
+            changed["qualification"] = qualification;
+            fs::write(&path, canonical_bytes(&changed).unwrap()).unwrap();
+            assert!(measure_engineering_reference(&path, true).is_err());
+        }
     }
 
     #[test]

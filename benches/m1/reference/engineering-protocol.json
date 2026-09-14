@@ -5,8 +5,16 @@
     "path": "protocol.json",
     "sha256": "2ff279a2beda4917774bee3674a83a3f8db4943bf242fb5612c453d7fea255be"
   },
-  "case_id": "prefill-s1-t128.001",
-  "format": "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1",
+  "case_ids": [
+    "decode-s1-c8192.001",
+    "decode-s32-c8192.001",
+    "decode-s8-c8192.001",
+    "prefill-s1-t128.001",
+    "prefill-s1-t2048.001",
+    "prefill-s1-t512.001",
+    "prefill-s8-t128.001"
+  ],
+  "format": "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V2",
   "input": {
     "closure_format": "FERRIC-M1-ENGINEERING-REPRODUCIBILITY-CLOSURE-V1",
     "derivation": "ferric.m1.r29-engineering-coordinates.v1",
@@ -14,7 +22,7 @@
   },
   "invocation": {
     "arguments": [
-      "CASE-ID",
+      "CASE-ID-OR-all",
       "IMPLEMENTATION-MANIFEST",
       "PROTOCOL",
       "PLAN",
@@ -24,10 +32,10 @@
       "OUTPUT-ROOT"
     ],
     "command": "VENV/bin/python -I engineering_run.py",
-    "mode": "selected-case-single-model-load-two-byte-identical-executions"
+    "mode": "selected-or-seven-case-single-model-load-two-byte-identical-executions-per-case"
   },
-  "nonclaim": "Selected-case engineering reference bytes only. Authority is none; this is not a qualification result, reviewed tolerance, benchmark, protected publication, full seven-case R29 comparison, or M1 gate closure.",
-  "output_format": "FERRIC-M1-ENGINEERING-REFERENCE-OUTPUT-V1",
+  "nonclaim": "Engineering reference bytes only. Authority is none; this is not a qualification result, reviewed tolerance, benchmark, protected publication, or M1 gate closure.",
+  "output_format": "FERRIC-M1-ENGINEERING-REFERENCE-OUTPUT-V2",
   "qualification": false,
   "target": "gfx942:xnack-"
 }

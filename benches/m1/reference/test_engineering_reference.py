@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPU-only selected engineering tests, with no GPU or authority fixtures."""
+"""CPU-only fixed-roster engineering tests, with no GPU or authority fixtures."""
 
 from __future__ import annotations
 
@@ -45,7 +45,8 @@ def selected_fixture():
 
 
 def write_capture(root, files):
-    bundle = root / f"{engineering.KIND}.capture.bundle"
+    runner = core.parse_canonical(files["runner.json"], "fixture runner")
+    bundle = root / f"{runner['kind']}.capture.bundle"
     bundle.mkdir(parents=True)
     for name, data in files.items():
         (bundle / name).write_bytes(data)
@@ -126,6 +127,54 @@ def engineering_workload_fixture():
     value["input_sha256"] = core.sha256_bytes(files["benchmark-input.json"])
     files["plan.json"] = core.canonical_bytes(value)
     return core.parse_plan(value, files["plan.json"]), files
+
+
+def case_fixture(kind):
+    plan, _, files = selected_fixture()
+    case = next(case for case in plan.cases if case.kind == kind)
+    rows, width, mode = core.CASE_GEOMETRY[kind]
+    workload = core.Workload(
+        data=b"workload", case=case,
+        lanes=tuple(core.Lane(active_length=1 if mode == "decode" else width, context_length=8191 if mode == "decode" else 0) for _ in range(rows)),
+        tokens=tuple(tuple((lane * 10 + index) % 1000 for index in range(width)) for lane in range(rows)),
+    )
+    row_bytes = core.VOCABULARY_SIZE * core.BF16_BYTES
+    logits = bytearray(rows * row_bytes)
+    for row in range(rows):
+        struct.pack_into("<H", logits, row * row_bytes + row * core.BF16_BYTES, 0x3F80)
+    files["logits.bf16le"] = bytes(logits)
+    files["tokens.u32le"] = struct.pack(f"<{rows}I", *range(rows))
+    runner = core.parse_canonical(files["runner.json"], "fixture runner")
+    runner.update({
+        "case_id": case.case_id, "kind": kind,
+        "input_sha256": case.input_sha256, "workload_sha256": case.workload_sha256,
+        "selection": {"bucket": kind, "mode": mode, "role": "target-8b"},
+        "logits_sha256": core.sha256_bytes(files["logits.bf16le"]),
+        "tokens_sha256": core.sha256_bytes(files["tokens.u32le"]),
+        "logits_row_sha256": [core.sha256_bytes(files["logits.bf16le"][row * row_bytes:(row + 1) * row_bytes]) for row in range(rows)],
+    })
+    if mode == "decode":
+        runner["dispatch_generation"] = 8192
+        runner["execution"] = {
+            "context_plan_sha256": plan.identities[f"dispatch-graph-{kind}"],
+            "declared_workload_binding_sha256": "a" * 64,
+            "first_dispatch_generation": 1, "first_epoch": 1,
+            "mode": "teacher-forced-c8192",
+            "ordered_lane_bindings": [{"lane_identity_sha256": format(row + 1, "064x"), "lane_ordinal": row, "token_sequence_identity_sha256": format(row + 2, "064x")} for row in range(rows)],
+            "round_count": 8192, "round_history_sha256": "b" * 64,
+            "terminal_dispatch_generation": 8192, "terminal_epoch": 8192,
+            "terminal_ordinal": 8191,
+        }
+    files["runner.json"] = core.canonical_bytes(runner)
+    output = core.parse_canonical(files["output.json"], "fixture output")
+    output.update({"case_id": case.case_id, "kind": kind, "input_sha256": case.input_sha256,
+                   "workload_sha256": case.workload_sha256, "shape": {"rows": rows, "vocabulary_size": core.VOCABULARY_SIZE},
+                   "runner_transcript_sha256": core.sha256_bytes(files["runner.json"])})
+    for field, name in (("logits", "logits.bf16le"), ("tokens", "tokens.u32le")):
+        output[field]["bytes"] = len(files[name])
+        output[field]["sha256"] = core.sha256_bytes(files[name])
+    files["output.json"] = core.canonical_bytes(output)
+    return plan, workload, files
 
 
 class EngineeringReferenceTests(unittest.TestCase):
@@ -279,20 +328,128 @@ class EngineeringReferenceTests(unittest.TestCase):
 
     def test_protocol_measurement_and_selected_case_fail_closed(self):
         root = Path(__file__).parent
-        for case in ("", "decode-s1-c8192.001", "prefill-s1-t128", "prefill-s1-t512.001"):
+        for case in ("", "all", "decode-s1-c8192.002", "prefill-s1-t128", "prefill-s1-t256.001"):
             with self.assertRaises(core.ReferenceFailure):
                 engineering.require_selected_case(case)
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary)
             (target / "protocol.json").write_bytes((root / "protocol.json").read_bytes())
             protocol = json.loads((root / "engineering-protocol.json").read_bytes())
-            for key, value in (("qualification", True), ("case_id", "prefill-s1-t512.001"), ("authority", "qualified"), ("extra", 0)):
+            for key, value in (("qualification", True), ("case_ids", [engineering.CASE_ID]), ("format", "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1"), ("authority", "qualified"), ("extra", 0)):
                 changed = dict(protocol)
                 changed[key] = value
                 path = target / "engineering-protocol.json"
                 path.write_bytes(core.canonical_bytes(changed))
                 with self.assertRaises(core.ReferenceFailure):
                     engineering.authenticate_artifacts(root / "engineering-implementation.json", path)
+
+    def test_all_seven_capture_shapes_and_rowwise_reference_argmax(self):
+        total_rows = 0
+        for kind in core.CASE_KINDS:
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                plan, workload, files = case_fixture(kind)
+                root = Path(temporary)
+                write_capture(root, files)
+                with core.SecureDirectory.open(root, "fixture captures") as captures:
+                    transcript = engineering.load_capture(captures, plan, workload, 7, coordinate_fixture(plan, files))
+                output = core.parse_canonical(engineering.reference_manifest(plan, workload, transcript, files["logits.bf16le"], files["tokens.u32le"]), "reference output")
+                rows, _, _ = core.CASE_GEOMETRY[kind]
+                total_rows += rows
+                self.assertEqual(output["shape"]["rows"], rows)
+                self.assertEqual(output["case_id"], f"{kind}.001")
+                self.assertEqual(output["format"], "FERRIC-M1-ENGINEERING-REFERENCE-OUTPUT-V2")
+                bad_tokens = files["tokens.u32le"][:-4] + struct.pack("<I", rows)
+                with self.assertRaises(core.ReferenceFailure):
+                    engineering.reference_manifest(plan, workload, transcript, files["logits.bf16le"], bad_tokens)
+                bad_logits = files["logits.bf16le"][:-2] + struct.pack("<H", 0x7F80)
+                with self.assertRaises(core.ReferenceFailure):
+                    engineering.reference_manifest(plan, workload, transcript, bad_logits, files["tokens.u32le"])
+        self.assertEqual(total_rows, 52)
+
+    def test_multilane_capture_rejects_row_permutation_and_decode_history_drift(self):
+        plan, workload, files = case_fixture("decode-s8-c8192")
+        base = core.parse_canonical(files["runner.json"], "runner")
+        mutations = [
+            ("logits_row_sha256", list(reversed(base["logits_row_sha256"]))),
+            ("logits_row_sha256", base["logits_row_sha256"][:-1]),
+            ("execution", {**base["execution"], "round_count": 8191}),
+            ("execution", {**base["execution"], "terminal_ordinal": 8190}),
+            ("execution", {**base["execution"], "context_plan_sha256": "f" * 64}),
+            ("execution", {**base["execution"], "ordered_lane_bindings": list(reversed(base["execution"]["ordered_lane_bindings"]))}),
+            ("case_id", "prefill-s8-t128.001"),
+        ]
+        for key, value in mutations:
+            with self.subTest(key=key, value=value), tempfile.TemporaryDirectory() as temporary:
+                changed = {**base, key: value}
+                data = {**files, "runner.json": core.canonical_bytes(changed)}
+                manifest = core.parse_canonical(data["output.json"], "output")
+                manifest["runner_transcript_sha256"] = core.sha256_bytes(data["runner.json"])
+                data["output.json"] = core.canonical_bytes(manifest)
+                root = Path(temporary)
+                write_capture(root, data)
+                with core.SecureDirectory.open(root, "captures") as captures:
+                    with self.assertRaises(core.ReferenceFailure):
+                        engineering.load_capture(captures, plan, workload, 7, coordinate_fixture(plan, files))
+
+    def test_case_selection_is_exact_and_publisher_rejects_partial_suite(self):
+        self.assertEqual(engineering.select_case_ids("all"), engineering.CASE_IDS)
+        for kind, case_id in zip(core.CASE_KINDS, engineering.CASE_IDS, strict=True):
+            self.assertEqual(engineering.select_case_ids(case_id), (case_id,))
+            engineering.require_selected_case(case_id, kind)
+            with self.assertRaises(core.ReferenceFailure):
+                engineering.require_selected_case(case_id, "wrong-kind")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for selection in ((), (engineering.CASE_ID, engineering.CASE_ID), tuple(reversed(engineering.CASE_IDS)), ("unknown",)):
+                with self.assertRaises(core.ReferenceFailure):
+                    engineering.SelectedPublisher(root / "invalid", selection)
+            plan, workload, files = case_fixture("decode-s1-c8192")
+            transcript = parsed_transcript(plan, workload, files)
+            bundle = core.ReferenceBundle(case=workload.case, logits=files["logits.bf16le"], tokens=files["tokens.u32le"], runner=transcript.data,
+                                          manifest=engineering.reference_manifest(plan, workload, transcript, files["logits.bf16le"], files["tokens.u32le"]))
+            with engineering.SelectedPublisher(root / "partial", engineering.CASE_IDS) as publisher:
+                publisher.add(bundle)
+                with self.assertRaises(core.ReferenceFailure):
+                    publisher.publish()
+            self.assertFalse((root / "partial").exists())
+
+    def test_seven_case_orchestration_loads_once_executes_each_twice_and_publishes_atomically(self):
+        cases = [case_fixture(kind) for kind in core.CASE_KINDS]
+        plan = cases[0][0]
+        for last_mismatch in (False, True):
+            with self.subTest(last_mismatch=last_mismatch), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                captures = root / "captures"
+                results = []
+                for _, _, files in cases:
+                    write_capture(captures, files)
+                    pair = (files["logits.bf16le"], files["tokens.u32le"])
+                    results.extend((pair, pair))
+                if last_mismatch:
+                    results[-1] = (results[-1][0], results[-1][1][:-4] + struct.pack("<I", 100))
+                plan_path = root / "plan.json"
+                plan_path.write_bytes(plan.data)
+                output = root / "reference"
+                workloads = tuple(case[1] for case in cases)
+                with mock.patch.object(core, "require_isolated_python"), mock.patch.object(core, "require_virtual_environment"), \
+                     mock.patch.object(engineering, "authenticate_artifacts", return_value=(plan.identities["reference-implementation"], plan.identities["reference-protocol"])), \
+                     mock.patch.object(engineering, "load_engineering_workloads", return_value=(workloads, 7, coordinate_fixture(plan, cases[0][2]))), \
+                     mock.patch.object(core, "authenticate_model_source") as source, \
+                     mock.patch.object(core, "load_dependencies"), mock.patch.object(core, "load_model") as model, \
+                     mock.patch.object(core, "execute_workload", side_effect=results) as execute:
+                    arguments = ["all", "implementation", "protocol", str(plan_path), "inputs", "model", str(captures), str(output)]
+                    if last_mismatch:
+                        with self.assertRaises(core.ReferenceFailure):
+                            engineering.run(arguments)
+                    else:
+                        engineering.run(arguments)
+                        source.return_value.__enter__.return_value.validate.assert_called_once()
+                    model.assert_called_once()
+                    self.assertEqual(execute.call_count, 14)
+                    self.assertEqual([call.args[2] for call in execute.call_args_list], [workload for workload in workloads for _ in range(2)])
+                self.assertEqual(output.exists(), not last_mismatch)
+                if output.exists():
+                    self.assertEqual({path.name for path in output.iterdir()}, {f"{kind}.reference.bundle" for kind in core.CASE_KINDS})
 
     def test_engineering_common_documents_rederive_coordinates_and_disclaim_acceptance(self):
         plan, files = engineering_common_fixture()

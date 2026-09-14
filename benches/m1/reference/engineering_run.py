@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Selected-case engineering reference bytes; never qualification acceptance."""
+"""Fixed-roster engineering reference bytes; never qualification acceptance."""
 
 from __future__ import annotations
 
@@ -26,9 +26,10 @@ core = _load_reference_core()
 Failure = core.ReferenceFailure
 CASE_ID = "prefill-s1-t128.001"
 KIND = "prefill-s1-t128"
+CASE_IDS = tuple(f"{kind}.001" for kind in core.CASE_KINDS)
 IMPLEMENTATION_FORMAT = "FERRIC-M1-ENGINEERING-REFERENCE-IMPLEMENTATION-V1"
-PROTOCOL_FORMAT = "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V1"
-OUTPUT_FORMAT = "FERRIC-M1-ENGINEERING-REFERENCE-OUTPUT-V1"
+PROTOCOL_FORMAT = "FERRIC-M1-ENGINEERING-REFERENCE-PROTOCOL-V2"
+OUTPUT_FORMAT = "FERRIC-M1-ENGINEERING-REFERENCE-OUTPUT-V2"
 CAPTURE_FORMAT = "FERRIC-M1-TECHNICAL-PREQUALIFICATION-CAPTURE-V1"
 CLOSURE_FORMAT = "FERRIC-M1-ENGINEERING-REPRODUCIBILITY-CLOSURE-V1"
 POLICY_FORMAT = "FERRIC-M1-ENGINEERING-DIAGNOSTIC-POLICY-V1"
@@ -43,15 +44,22 @@ CAPTURE_NONCLAIM = (
     "m1.r29 closure."
 )
 NONCLAIM = (
-    "Selected-case engineering reference bytes only. Authority is none; this is "
+    "Engineering reference bytes only. Authority is none; this is "
     "not a qualification result, reviewed tolerance, benchmark, protected "
-    "publication, full seven-case R29 comparison, or M1 gate closure."
+    "publication, or M1 gate closure."
 )
 
 
-def require_selected_case(case_id: str) -> None:
-    if case_id != CASE_ID:
-        raise Failure("engineering reference supports only prefill-s1-t128.001")
+def require_selected_case(case_id: str, kind: str | None = None) -> None:
+    if case_id not in CASE_IDS or (kind is not None and case_id != f"{kind}.001"):
+        raise Failure("engineering reference requires one of the seven canonical case IDs")
+
+
+def select_case_ids(selector: str) -> tuple[str, ...]:
+    if selector == "all":
+        return CASE_IDS
+    require_selected_case(selector)
+    return (selector,)
 
 
 def authenticate_artifacts(implementation: Path, protocol: Path) -> tuple[str, str]:
@@ -89,23 +97,25 @@ def authenticate_artifacts(implementation: Path, protocol: Path) -> tuple[str, s
         value, protocol_data, _ = protocol_parent.read_canonical(protocol_name, "engineering protocol")
         document = core.exact_object(
             value,
-            ("authority", "base_protocol", "case_id", "format", "input", "invocation", "nonclaim", "output_format", "qualification", "target"),
+            ("authority", "base_protocol", "case_ids", "format", "input", "invocation", "nonclaim", "output_format", "qualification", "target"),
             "engineering protocol",
         )
         for key, expected in (
-            ("authority", "none"), ("case_id", CASE_ID),
+            ("authority", "none"),
             ("format", PROTOCOL_FORMAT), ("nonclaim", NONCLAIM),
             ("output_format", OUTPUT_FORMAT), ("target", core.TARGET),
         ):
             core.expect_string(document, key, expected, "engineering protocol")
         if document["qualification"] is not False:
             raise Failure("engineering protocol must explicitly disclaim qualification")
+        if document["case_ids"] != list(CASE_IDS):
+            raise Failure("engineering protocol must bind the exact seven-case roster")
         if document["input"] != {"closure_format": CLOSURE_FORMAT, "derivation": DERIVATION, "policy_format": POLICY_FORMAT}:
             raise Failure("engineering input protocol drifted")
         if document["invocation"] != {
-            "arguments": ["CASE-ID", "IMPLEMENTATION-MANIFEST", "PROTOCOL", "PLAN", "INPUT-BUNDLE", "MODEL-SOURCE", "FERRIC-CAPTURE-ROOT", "OUTPUT-ROOT"],
+            "arguments": ["CASE-ID-OR-all", "IMPLEMENTATION-MANIFEST", "PROTOCOL", "PLAN", "INPUT-BUNDLE", "MODEL-SOURCE", "FERRIC-CAPTURE-ROOT", "OUTPUT-ROOT"],
             "command": "VENV/bin/python -I engineering_run.py",
-            "mode": "selected-case-single-model-load-two-byte-identical-executions",
+            "mode": "selected-or-seven-case-single-model-load-two-byte-identical-executions-per-case",
         }:
             raise Failure("engineering reference invocation drifted")
         base = core.exact_object(document["base_protocol"], ("bytes", "path", "sha256"), "base reference protocol")
@@ -211,7 +221,8 @@ def load_engineering_workloads(input_path: Path, plan: Any) -> tuple[tuple[Any, 
 
 
 def parse_capture(value: Any, data: bytes, plan: Any, workload: Any, gpu_unique_id: int) -> Any:
-    require_selected_case(workload.case.case_id)
+    require_selected_case(workload.case.case_id, workload.case.kind)
+    rows, _, mode = core.CASE_GEOMETRY[workload.case.kind]
     document = core.exact_object(
         value,
         ("artifact_authority", "authority", "benchmark_executable_sha256", "benchmark_protocol_sha256", "case_id", "compact_sha256", "device_identity_sha256", "dispatch_generation", "environment_sha256", "execution", "format", "gpu_unique_id", "input_sha256", "kernel_artifact_manifest_sha256", "kind", "logits_row_sha256", "logits_sha256", "nonclaim", "plan_sha256", "program_catalog_sha256", "runner_declaration_sha256", "selection", "status", "target", "tokens_sha256", "workload_sha256"),
@@ -222,11 +233,11 @@ def parse_capture(value: Any, data: bytes, plan: Any, workload: Any, gpu_unique_
         "authority": "aggregate-engineering-observation-only",
         "benchmark_executable_sha256": plan.identities["benchmark-executable"],
         "benchmark_protocol_sha256": plan.identities["benchmark-protocol"],
-        "case_id": CASE_ID,
+        "case_id": workload.case.case_id,
         "environment_sha256": plan.identities["environment"],
         "format": CAPTURE_FORMAT,
         "input_sha256": workload.case.input_sha256,
-        "kind": KIND,
+        "kind": workload.case.kind,
         "nonclaim": CAPTURE_NONCLAIM,
         "plan_sha256": plan.sha256,
         "runner_declaration_sha256": plan.identities["generated-plan"],
@@ -242,19 +253,20 @@ def parse_capture(value: Any, data: bytes, plan: Any, workload: Any, gpu_unique_
     generation = core.integer_field(document, "dispatch_generation", "engineering capture transcript")
     if generation == 0:
         raise Failure("engineering capture generation must be nonzero")
-    if document["selection"] != {"bucket": KIND, "mode": "prefill", "role": "target-8b"}:
+    if document["selection"] != {"bucket": workload.case.kind, "mode": mode, "role": "target-8b"}:
         raise Failure("engineering capture selection drifted")
-    hashes = core.exact_array(document["logits_row_sha256"], 1, "engineering capture row hashes")
-    core.require_sha256(hashes[0], "engineering capture row hash")
-    if hashes[0] != document["logits_sha256"]:
+    hashes = core.exact_array(document["logits_row_sha256"], rows, "engineering capture row hashes")
+    for digest in hashes:
+        core.require_sha256(digest, "engineering capture row hash")
+    if rows == 1 and hashes[0] != document["logits_sha256"]:
         raise Failure("engineering single-row identity differs from the logit payload")
     core._validate_capture_execution(document["execution"], plan, workload, generation)
     return core.CaptureTranscript(data=data, sha256=core.sha256_bytes(data), case=workload.case)
 
 
 def load_capture(captures: Any, plan: Any, workload: Any, gpu_unique_id: int, coordinates: dict[str, Any]) -> Any:
-    require_selected_case(workload.case.case_id)
-    with captures.child(f"{KIND}.capture.bundle", "engineering capture bundle") as bundle:
+    require_selected_case(workload.case.case_id, workload.case.kind)
+    with captures.child(f"{workload.case.kind}.capture.bundle", "engineering capture bundle") as bundle:
         if bundle.entries() != {"logits.bf16le", "output.json", "runner.json", "tokens.u32le"}:
             raise Failure("engineering capture file roster drifted")
         value, data, _ = bundle.read_canonical("runner.json", "engineering capture transcript")
@@ -267,18 +279,22 @@ def load_capture(captures: Any, plan: Any, workload: Any, gpu_unique_id: int, co
 
 
 def reference_manifest(plan: Any, workload: Any, transcript: Any, logits: bytes, tokens: bytes) -> bytes:
-    require_selected_case(workload.case.case_id)
-    if len(logits) != core.VOCABULARY_SIZE * 2 or len(tokens) != 4:
+    require_selected_case(workload.case.case_id, workload.case.kind)
+    rows, _, _ = core.CASE_GEOMETRY[workload.case.kind]
+    row_bytes = core.VOCABULARY_SIZE * core.BF16_BYTES
+    if len(logits) != rows * row_bytes or len(tokens) != rows * core.TOKEN_BYTES:
         raise Failure("engineering reference output extent drifted")
-    if core.bf16_argmax(logits) != int.from_bytes(tokens, "little"):
-        raise Failure("engineering reference token differs from finite BF16 argmax")
+    for row in range(rows):
+        token_offset = row * core.TOKEN_BYTES
+        if core.bf16_argmax(logits[row * row_bytes:(row + 1) * row_bytes]) != int.from_bytes(tokens[token_offset:token_offset + core.TOKEN_BYTES], "little"):
+            raise Failure("engineering reference token differs from finite BF16 argmax")
     return core.canonical_bytes({
         "authority": "none",
-        "case_id": CASE_ID,
+        "case_id": workload.case.case_id,
         "environment_sha256": plan.identities["environment"],
         "format": OUTPUT_FORMAT,
         "input_sha256": workload.case.input_sha256,
-        "kind": KIND,
+        "kind": workload.case.kind,
         "logits": {"bytes": len(logits), "encoding": "bf16-le", "path": "logits.bf16le", "sha256": core.sha256_bytes(logits)},
         "nonclaim": NONCLAIM,
         "plan_sha256": plan.sha256,
@@ -287,23 +303,32 @@ def reference_manifest(plan: Any, workload: Any, transcript: Any, logits: bytes,
         "protocol_sha256": plan.identities["reference-protocol"],
         "qualification": False,
         "runner_transcript_sha256": transcript.sha256,
-        "shape": {"rows": 1, "vocabulary_size": core.VOCABULARY_SIZE},
+        "shape": {"rows": rows, "vocabulary_size": core.VOCABULARY_SIZE},
         "tokens": {"bytes": len(tokens), "encoding": "u32-le", "path": "tokens.u32le", "sha256": core.sha256_bytes(tokens)},
         "workload_sha256": workload.case.workload_sha256,
     })
 
 
 class SelectedPublisher(core.OutputPublisher):
+    def __init__(self, output: Path, case_ids: tuple[str, ...] = (CASE_ID,)) -> None:
+        if not case_ids or case_ids != tuple(case for case in CASE_IDS if case in case_ids):
+            raise Failure("engineering publisher requires an ordered canonical case selection")
+        self.expected_case_ids = case_ids
+        self.expected_bundle_names = [f"{core.CASE_KINDS[CASE_IDS.index(case)]}.reference.bundle" for case in case_ids]
+        super().__init__(output)
+
     def add(self, bundle: Any) -> None:
-        require_selected_case(bundle.case.case_id)
+        require_selected_case(bundle.case.case_id, bundle.case.kind)
+        if bundle.case.case_id not in self.expected_case_ids:
+            raise Failure("engineering publisher received an unselected case")
         value = core.parse_canonical(bundle.manifest, "engineering reference output")
         if value.get("format") != OUTPUT_FORMAT or value.get("authority") != "none" or value.get("qualification") is not False:
             raise Failure("engineering publisher rejects qualification output")
         super().add(bundle)
 
     def publish(self) -> None:
-        if self.bundle_names != [f"{KIND}.reference.bundle"]:
-            raise Failure("engineering publisher requires the exact selected case")
+        if self.bundle_names != self.expected_bundle_names:
+            raise Failure("engineering publisher requires the exact selected case roster")
         self.validate_staging()
         os.fsync(self.staging.fd)
         with self.parent.child(self.staging_name, "rebound engineering staging root") as rebound:
@@ -318,8 +343,8 @@ def run(arguments: list[str]) -> None:
     core.require_isolated_python()
     core.require_virtual_environment()
     if len(arguments) != 8:
-        raise Failure("usage: engineering_run.py CASE-ID IMPLEMENTATION-MANIFEST PROTOCOL PLAN INPUT-BUNDLE MODEL-SOURCE FERRIC-CAPTURE-ROOT OUTPUT-ROOT")
-    require_selected_case(arguments[0])
+        raise Failure("usage: engineering_run.py CASE-ID-OR-all IMPLEMENTATION-MANIFEST PROTOCOL PLAN INPUT-BUNDLE MODEL-SOURCE FERRIC-CAPTURE-ROOT OUTPUT-ROOT")
+    case_ids = select_case_ids(arguments[0])
     implementation, protocol, plan_path, inputs, model_path, capture_path, output = map(Path, arguments[1:])
     measured = authenticate_artifacts(implementation, protocol)
     value, data, _ = core.read_canonical_path(plan_path, "benchmark plan")
@@ -327,36 +352,41 @@ def run(arguments: list[str]) -> None:
     if measured != (plan.identities["reference-implementation"], plan.identities["reference-protocol"]):
         raise Failure("engineering reference implementation/protocol differs from the plan")
     workloads, gpu_unique_id, coordinates = load_engineering_workloads(inputs, plan)
-    selected = tuple(workload for workload in workloads if workload.case.case_id == CASE_ID)
-    if len(selected) != 1:
-        raise Failure("plan must contain exactly one selected engineering case")
-    workload = selected[0]
+    selected = tuple(workload for workload in workloads if workload.case.case_id in case_ids)
+    if tuple(workload.case.case_id for workload in selected) != case_ids:
+        raise Failure("plan must contain the exact ordered selected engineering cases")
+    transcripts = []
     with core.SecureDirectory.open(capture_path, "engineering capture root") as captures:
-        if captures.entries() != {f"{KIND}.capture.bundle"}:
-            raise Failure("engineering capture root must contain only the selected case")
-        transcript = load_capture(captures, plan, workload, gpu_unique_id, coordinates)
+        if captures.entries() != {f"{workload.case.kind}.capture.bundle" for workload in selected}:
+            raise Failure("engineering capture root must contain exactly the selected cases")
+        for workload in selected:
+            transcripts.append(load_capture(captures, plan, workload, gpu_unique_id, coordinates))
+    bundles = []
     with core.authenticate_model_source(model_path) as model_source:
         dependencies = core.load_dependencies()
         model = core.load_model(dependencies, model_source)
-        logits, tokens = core.execute_workload(model, dependencies.torch, workload)
-        repeated = core.execute_workload(model, dependencies.torch, workload)
-        if repeated != (logits, tokens):
-            raise Failure("engineering reference repeated execution was not byte-identical")
+        for workload, transcript in zip(selected, transcripts, strict=True):
+            logits, tokens = core.execute_workload(model, dependencies.torch, workload)
+            repeated = core.execute_workload(model, dependencies.torch, workload)
+            if repeated != (logits, tokens):
+                raise Failure(f"engineering reference repeated execution was not byte-identical: {workload.case.case_id}")
+            bundles.append(core.ReferenceBundle(
+                case=workload.case, logits=logits, tokens=tokens, runner=transcript.data,
+                manifest=reference_manifest(plan, workload, transcript, logits, tokens),
+            ))
         model_source.validate()
     if authenticate_artifacts(implementation, protocol) != measured:
         raise Failure("engineering reference implementation/protocol changed during execution")
     final_value, final_data, _ = core.read_canonical_path(plan_path, "benchmark plan")
     if final_data != data or core.parse_plan(final_value, final_data) != plan:
         raise Failure("engineering reference plan changed during execution")
-    bundle = core.ReferenceBundle(
-        case=workload.case, logits=logits, tokens=tokens, runner=transcript.data,
-        manifest=reference_manifest(plan, workload, transcript, logits, tokens),
-    )
-    with SelectedPublisher(output) as publisher:
-        publisher.add(bundle)
+    with SelectedPublisher(output, case_ids) as publisher:
+        for bundle in bundles:
+            publisher.add(bundle)
         publisher.publish()
     print(f"output={output}")
     print(f"plan_sha256={plan.sha256}")
+    print(f"completed_cases={len(bundles)}")
     print("status=ENGINEERING_SELECTED_REFERENCE_PUBLISHED authority=none qualification=false")
 
 
