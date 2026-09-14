@@ -3,7 +3,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
-use std::os::unix::fs::{PermissionsExt, symlink};
+use std::os::unix::fs::{FileTypeExt, PermissionsExt, symlink};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -832,18 +832,27 @@ fn one_shot_listener_serves_one_exact_credentialed_path_session_at_mode_0600() {
         child_pid,
     )
     .unwrap();
-    let outcome = run_ferric_protected_verifier_listener_session_v2(&path, &mut config).unwrap();
+    let outcome = run_ferric_protected_verifier_listener_session_v2(&path, &mut config);
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "one-shot listener client failed with {}; listener failure: {:?}; stderr: {}",
+        output.status,
+        outcome.as_ref().err(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let outcome = outcome.unwrap_or_else(|failure| {
+        panic!(
+            "one-shot listener failed: {failure:?}; client status: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
+        )
+    });
     assert!(matches!(
         outcome,
         FerricProtectedVerifierServiceOutcomeV1::Completed(_)
     ));
     assert!(!path.exists());
-    let output = child.wait_with_output().unwrap();
-    assert!(
-        output.status.success(),
-        "one-shot listener client failed: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
 }
 
 #[test]
@@ -1085,6 +1094,7 @@ fn spawn_connected_path_client(path: &std::path::Path) -> std::process::Child {
         .arg("--exact")
         .arg("connected_path_client_helper")
         .arg("--ignored")
+        .arg("--nocapture")
         .env("FERRIC_CONNECTED_PATH_CLIENT", path)
         .env("FERRIC_EXPECT_SOCKET_MODE", "0600")
         .stdin(Stdio::null())
@@ -1114,7 +1124,31 @@ fn connected_path_client_helper() {
     };
     let path = PathBuf::from(path);
     let deadline = Instant::now() + Duration::from_secs(5);
+    let expect_one_shot_path = std::env::var_os("FERRIC_EXPECT_SOCKET_MODE").is_some();
     let client = loop {
+        if expect_one_shot_path {
+            match std::fs::symlink_metadata(&path) {
+                Ok(metadata)
+                    if metadata.file_type().is_socket()
+                        && metadata.permissions().mode() & 0o7777 == 0o600 => {}
+                Ok(metadata) => {
+                    assert!(
+                        Instant::now() < deadline,
+                        "listener did not become a mode-0600 socket: {:?}, {:o}",
+                        metadata.file_type(),
+                        metadata.permissions().mode() & 0o7777
+                    );
+                    thread::sleep(Duration::from_millis(1));
+                    continue;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    assert!(Instant::now() < deadline, "listener path did not appear");
+                    thread::sleep(Duration::from_millis(1));
+                    continue;
+                }
+                Err(error) => panic!("inspect listener before connect: {error}"),
+            }
+        }
         let client = socket_with(
             AddressFamily::UNIX,
             SocketType::SEQPACKET,
@@ -1134,9 +1168,21 @@ fn connected_path_client_helper() {
             Err(error) => panic!("connect to listener: {error}"),
         }
     };
-    if std::env::var_os("FERRIC_EXPECT_SOCKET_MODE").is_some() {
-        let metadata = std::fs::symlink_metadata(&path).unwrap();
-        assert_eq!(metadata.permissions().mode() & 0o7777, 0o600);
+    if expect_one_shot_path {
+        // The one-shot listener unlinks after accept, before the credentialed Begin exchange.
+        loop {
+            match std::fs::symlink_metadata(&path) {
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => break,
+                Ok(_) => {
+                    assert!(
+                        Instant::now() < deadline,
+                        "listener did not unlink its accepted socket"
+                    );
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(error) => panic!("inspect accepted listener cleanup: {error}"),
+            }
+        }
     }
     thread::sleep(Duration::from_millis(25));
     let request = request();
