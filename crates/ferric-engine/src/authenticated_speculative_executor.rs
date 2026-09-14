@@ -717,11 +717,13 @@ impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
 pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
     Retry {
         executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
-        plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+        plans:
+            Box<crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1>,
     },
     DeadlineRetry {
         executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
-        plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+        plans:
+            Box<crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1>,
     },
     Closed {
         stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
@@ -5896,7 +5898,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         if !ready {
             return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Retry {
                 executor: Box::new(self),
-                plans,
+                plans: Box::new(plans),
             });
         }
         if deadline(
@@ -5908,7 +5910,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
             return Err(
                 M1AuthenticatedDraftCatchupExecutionFailureV1::DeadlineRetry {
                     executor: Box::new(self),
-                    plans,
+                    plans: Box::new(plans),
                 },
             );
         }
@@ -5934,7 +5936,7 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                         lineage,
                         queue_wait_timeout,
                     }),
-                    plans,
+                    plans: Box::new(plans),
                 });
             }
             Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Terminal(terminal)) => {

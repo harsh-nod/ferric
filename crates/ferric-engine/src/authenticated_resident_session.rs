@@ -1283,6 +1283,8 @@ impl<const C: usize> M1AuthenticatedResidentSameShapeExecutorV1<C>
 }
 
 #[derive(Debug)]
+// The resident success path switches phases without allocating another owner box.
+#[allow(clippy::large_enum_variant)]
 enum M1AuthenticatedResidentRoundExecutorV1 {
     Speculative(M1AuthenticatedSpeculativePhysicalExecutorV1),
     Restoring(crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupReadyV1),
@@ -1864,15 +1866,17 @@ where
                 M1AuthenticatedResidentRoundExecutorV1::Speculative(executor) => {
                     Ok((registry, engine, executor, evidence, tokens, retained))
                 }
-                executor => Err(resident_failure(
-                    M1AuthenticatedResidentStageV1::SameShapeRound,
-                    true,
-                    close_resident_round_executor(
-                        engine,
-                        executor,
-                        (registry, evidence, tokens, retained),
-                    ),
-                )),
+                executor @ M1AuthenticatedResidentRoundExecutorV1::Restoring(_) => {
+                    Err(resident_failure(
+                        M1AuthenticatedResidentStageV1::SameShapeRound,
+                        true,
+                        close_resident_round_executor(
+                            engine,
+                            executor,
+                            (registry, evidence, tokens, retained),
+                        ),
+                    ))
+                }
             }
         }
         Err(failure) => {

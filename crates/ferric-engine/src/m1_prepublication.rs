@@ -174,9 +174,10 @@ impl M1FullStepKvReservationCustodyV1 {
     #[must_use]
     pub const fn draft_allocation_id(&self) -> Option<Identity> {
         match self {
-            Self::DraftCatchup { draft, .. } => Some(draft.allocation_id()),
+            Self::DraftCatchup { draft, .. } | Self::PairedPrefill { draft, .. } => {
+                Some(draft.allocation_id())
+            }
             Self::TargetOnly { .. } => None,
-            Self::PairedPrefill { draft, .. } => Some(draft.allocation_id()),
             Self::SpeculativeRound { draft_decode, .. } => Some(draft_decode.allocation_id()),
         }
     }

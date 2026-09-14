@@ -1227,6 +1227,10 @@ impl core::fmt::Debug for M1AuthenticatedRolloverPacketBatchHostStorageV1 {
                 "paired_prefill_lowering",
                 &self.paired_prefill_lowering.is_some(),
             )
+            .field(
+                "draft_catchup_lowering",
+                &self.draft_catchup_lowering.is_some(),
+            )
             .field("speculative_lowering", &self.speculative_lowering.is_some())
             .finish()
     }

@@ -2915,7 +2915,7 @@ fn requested_workspace_range(
         M1PhysicalBufferSourceV1::DraftCatchupChoices(row) => {
             if composition
                 .segment_binding(row.producer_segment())
-                .and_then(|binding| binding.catchup_choice_subrange())
+                .and_then(crate::M1FullStepWorkspaceSegmentBinding::catchup_choice_subrange)
                 != Some(row)
             {
                 return Err(());

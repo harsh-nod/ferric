@@ -1227,9 +1227,10 @@ impl M1AuthenticatedScheduledLongLivedQueueRearmV1 {
         &self,
         recipe: crate::runner::M1PhysicalRunnerRecipeInputV1,
         completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
-    ) -> Result<M1PhysicalRunnerRecipeOutcomeV1, crate::runner::M1PhysicalRunnerRecipeInputV1> {
+    ) -> Result<M1PhysicalRunnerRecipeOutcomeV1, Box<crate::runner::M1PhysicalRunnerRecipeInputV1>>
+    {
         if !self.matches_draft_catchup_restore(completed) {
-            return Err(recipe);
+            return Err(Box::new(recipe));
         }
         Ok(recipe.derive(
             self.queue.operations(),
@@ -2673,9 +2674,8 @@ pub(crate) fn reserve_authenticated_draft_catchup_restore_kv_v1<const C: usize>(
         Some(scratch),
         Some(completed),
     )
-    .map_err(|failure| {
+    .inspect_err(|_| {
         engine.quarantine_m1_queue_rearm_failure();
-        failure
     })
 }
 
@@ -2791,12 +2791,12 @@ pub(crate) fn close_draft_catchup_scheduled<const C: usize>(
     engine: &mut Engine<C>,
     scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
     retained: impl fmt::Debug + 'static,
-) -> Box<M1AuthenticatedDraftCatchupPreparationFailureV1> {
+) -> M1AuthenticatedDraftCatchupPreparationFailureV1 {
     engine.quarantine_m1_queue_rearm_failure();
     let (dispatch, remainder) = M1AuthenticatedScheduledRemainderV1::from_scheduled(scheduled);
-    Box::new(M1AuthenticatedDraftCatchupPreparationFailureV1 {
+    M1AuthenticatedDraftCatchupPreparationFailureV1 {
         custody: remainder.close((dispatch, retained)),
-    })
+    }
 }
 
 pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
@@ -2811,7 +2811,7 @@ pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
         M1AuthenticatedPreparedLongLivedQueueRearmV1,
         AddresslessM1PhysicalBufferRecipeV1,
     ),
-    Box<M1AuthenticatedDraftCatchupPreparationFailureV1>,
+    M1AuthenticatedDraftCatchupPreparationFailureV1,
 > {
     let shape = crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
         pending.parent(),
@@ -2886,7 +2886,7 @@ pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
         M1StepDispatchIntent::DraftCatchup(pending.parent()),
     ) {
         M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-        source => {
+        source @ M1PhysicalRunnerRecipeOutcomeV1::Rejected(_) => {
             return Err(close_draft_catchup_scheduled(
                 engine,
                 scheduled,
@@ -2980,9 +2980,9 @@ pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
             Ok(prepared) => prepared,
             source => {
                 engine.quarantine_m1_queue_rearm_failure();
-                return Err(Box::new(M1AuthenticatedDraftCatchupPreparationFailureV1 {
+                return Err(M1AuthenticatedDraftCatchupPreparationFailureV1 {
                     custody: remainder.close((source, recipe)),
-                }));
+                });
             }
         };
     Ok((
@@ -3499,6 +3499,8 @@ impl M1AuthenticatedDraftCatchupRestoreCustodyV1 {
 }
 
 #[derive(Debug)]
+// Keep both move-only phase owners inline to avoid allocation during publication.
+#[allow(clippy::large_enum_variant)]
 enum M1AuthenticatedDraftCatchupPublicationV1 {
     Enter(crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1),
     Restore(M1AuthenticatedDraftCatchupRestoreCustodyV1),
@@ -7252,7 +7254,7 @@ fn retain_queue_rearm_failure(
             failure.custody = failure.custody.retain(retained);
             M1AuthenticatedQueueRearmFailureV1::Terminal(failure)
         }
-        failure => terminal(
+        failure @ M1AuthenticatedQueueRearmFailureV1::Rejected(_) => terminal(
             M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
             (failure, retained),
         ),
