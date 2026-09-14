@@ -20,7 +20,7 @@ its manifest is `39cf7d5a915f759cb289e2f48b63acbd725904bb22aa14439bbda575074b3d3
 It has exact output replay but no GPU validation. The ccfd GPU runs below retain
 their actual source identities.
 
-Current private integration `500838ee078dc001f4f26857daf08424b4c908e8`, tree
+Test-correction checkpoint `500838ee078dc001f4f26857daf08424b4c908e8`, tree
 `ae110bfc0ea86a7a445efe26a9670021d450aaec`, adds only two test corrections:
 an inclusive range required by strict Clippy, and a checker listener test race.
 The original full checker cohort failed twice; an unchanged isolated retry
@@ -28,8 +28,25 @@ passed. Diagnostic instrumentation retained child stderr and naturally exposed
 ENOENT from inspecting the socket pathname after the listener deliberately
 unlinked it. The test now checks socket/0600 readiness before connecting and
 waits for unlink before Begin, retaining the full credentialed exchange and
-original deadlines. No production listener behavior changed. Exact amended
-host/source validation is pending; the earlier failures are not relabeled.
+original deadlines. No production listener behavior changed. Exact 5008 passes
+strict engine/checker Clippy, formatting, the focused initialization-custody
+test, 81 checker library and 27 integration tests with three existing ignores,
+six documentation tests, and ten deterministic unlink-before-Begin repeats.
+The earlier failures remain retained rather than relabeled.
+
+Private integration `ef203560abdea979fec74fabbe6d1a47aeb7a521`, tree
+`c380d245fb8cb00ff2c21632cbdc825a14461938`, also admits the exact private
+engineering R29 input sibling in the source gate and refreshes both body
+inventories. Exact 3e74 passes all 32 locked graphs, 38 source-gate tests and
+byte equality for all three dependency TCB inventories. Fresh final ef203
+metadata and actual source-gate checking pass: 175 modules, 8,466 executable
+bodies, 724 verified labels and 7,742 unverified bodies. All 30 new engineering
+capture/comparison bodies are proof-pending; only the separately proved actual
+initialization helper gains a verified label. No prior labels are changed.
+Host/metadata evidence SHA-256 is
+`5d1f8144e4b2528046989aa8c00b7908113556e7aad7707fdf44242db19eac32`;
+final coverage evidence is
+`a6a1b9a78a2568f00d39772a83074598b6acc6592f28c8d9fe52a8529e71d1eb`.
 
 The numerical pipeline is integrated as `6629dfb3`, byte-identical to reviewed
 agent source `4ac12507` in all eleven changed files. Its separate engineering
@@ -70,8 +87,9 @@ device writes and completion authority remain unproved. Exact 8113 passes 125
 spec tests and 698 engine library tests with nine existing ignores, including
 the new initialization and failure-custody tests. Adapter 109/one ignored,
 37 policies, engineering capture 83/two ignored, numerical seven and owner
-16 plus three policy tests pass. Final amended validation and refreshed
-executable-body inventories remain pending. The old completed release target
+16 plus three policy tests pass. The final test-correction and executable-body
+inventory checks above now pass at their stated source identities. The old
+completed release target
 is removed only after exact retention/provenance/no-live-use checks, reclaiming
 2,060,340 KiB; independent binaries, current debug artifacts and sources remain.
 
@@ -80,9 +98,43 @@ rounds. Audit found that ordinary structural continuation accepted unequal
 target/draft cursors after full acceptance. The new path must reject that reuse,
 execute the actual 425-packet draft catch-up and restore the original K4 shape
 without promoting engineering artifacts to authenticated authority. This work
-is not yet integrated or GPU tested. The completed single-round K4 rejection
+now has an explicit bounded repeated CLI in its separate worktree, but is not
+yet integrated or GPU tested. An independent review identified missing public
+distinction between the original speculative receipt and the later maintenance
+receipt/queue transitions; the team is adding read-only history accessors and
+regressions without fabricating or retagging receipts. The completed
+single-round K4 rejection
 smoke below does not cover that full-acceptance path. No new matched serving
 TTFT/TPOT/throughput or competitor result is available.
+
+The separate all-case R29 candidate uses explicit engineering reference V2
+formats, either a selected canonical case or atomic seven-case execution, one
+model load and two byte-identical runs per case. Its Python gate passes 15
+engineering tests, all 23 legacy tests and the reference policy on mi300x; the
+five legacy reference implementation/protocol/dependency files are unchanged.
+The Rust input generator is updated to recognize V2, with a regression using
+the actual protocol bytes. Exact combined candidate `4b7338df` passes all 24
+differential tests and both focused protocol-test cohorts. Its benchmark-policy
+step hits the unchanged storage cap after nested Cargo drops the outer resource
+environment and starts fresh debug-profile artifacts. The stop is retained;
+policy and strict Clippy completion await cleanup and a control-only retry.
+This candidate is not yet integrated. These are CPU fixture checks,
+not additional GPU numerical results. Python evidence SHA-256 is
+`2912b40195e1d5e2f92da0dc970b55c1fe4bf6eb8f579e79e065ae5c98b0cd70`.
+
+A fresh upstream fetch now finds fe2o3
+`748e716335b537eb82549aa492e9fa012cc92dfe`, two commits beyond the validated
+4f6 pin. The seven-file delta adds inert lineage records and explicit V2
+entry-reachable induction analysis/replay; no KFD/runtime files change. This
+new version has not yet passed Ferric's compiler/consumer gate. Existing tests,
+artifacts and GPU results keep their actual older producer identities.
+
+Completed historical source cleanup removes only twelve fully reconstructed,
+unused snapshots after fresh owner/inode/hash/roster/no-live-use checks,
+reclaiming 515,568 KiB. The initial ordering-only cleanup failure and corrected
+pass are both retained. Current source/build/cache/tool roots are untouched;
+archive SHA-256 is
+`9fc9b5c50e16b647f40a6fe543814a3a2b4eb08561d26d0e9cd59757b54ff5d8`.
 
 ## Earlier Integration Checkpoints
 
