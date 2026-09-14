@@ -2274,7 +2274,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(outcome.next_active_roster(), &[request(0)]);
-        assert_eq!(outcome.members()[0].published().as_slice(), tokens);
+        assert_eq!(outcome.members()[0].published().tokens(), tokens);
         let member = coordinator.member(request(0)).unwrap();
         let transition = M1DraftCatchupCoordinatorTransitionV1 {
             coordinator_identity: coordinator.identity(),
