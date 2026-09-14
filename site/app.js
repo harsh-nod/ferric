@@ -72,11 +72,19 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Latest compiler and catch-up integration"),
+    element("p", "", resident.followup.compilerDiagnostic.detail),
+    element("p", "", resident.followup.coordinateRepair.detail),
+    element("p", "", resident.followup.runtimeGetter.detail),
+    element("h3", "", "Scoped cursor proof and resident work"),
+    element("p", "", resident.followup.cursorProof.detail),
+    element("p", "", resident.followup.catchup.detail),
     element("h3", "", "Finite singleton windows: K4, K8 and K16"),
     element("p", "", resident.selection.detail),
-    element("h3", "", "Host validation and qualification boundary"),
+    element("h3", "", "Earlier host validation and qualification boundary"),
     element("p", "", resident.host.detail),
-    element("h3", "", "Compiler and canonical gfx942 extraction"),
+    element("h3", "", "Earlier compiler and canonical gfx942 extraction"),
+    element("p", "performance-scope", "The following eaa observations predate the attributed divisor and overflow diagnostics above; migration was pending at that checkpoint."),
     element("p", "", resident.compiler.detail),
     element("p", "", resident.overview),
     element("p", "", resident.remaining));
@@ -84,6 +92,14 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
+    ["Published typed compiler diagnostic", resident.followup.compilerDiagnostic.source],
+    ["Private literal-coordinate repair", resident.followup.coordinateRepair.source],
+    ["Coordinate and getter evidence SHA-256", resident.followup.coordinateRepair.evidenceSha256],
+    ["Published completed-read generation getter", resident.followup.runtimeGetter.source],
+    ["Private Ferric repin; combined validation pending", resident.followup.runtimeGetter.ferricPinSource],
+    ["Private selected cursor-proof source", resident.followup.cursorProof.source],
+    ["Cursor-proof compiler pin", resident.followup.cursorProof.compilerSource],
+    ["Selected Verus evidence SHA-256", resident.followup.cursorProof.evidenceSha256],
     ["Private resident implementation", resident.selection.residentSource],
     ["Private sealed owner-plan selection", resident.selection.ownerSource],
     ["Private combined host snapshot", resident.host.engine.source],
@@ -97,11 +113,11 @@
     ["Earlier compiler build and extraction", resident.compiler.testedSource],
     ["Compiler repair base", resident.compiler.repairBase],
     ["Published compiler repair", resident.compiler.publishedSource],
-    ["Newer observed upstream; migration and revalidation pending", resident.compiler.observedLatestSource],
+    ["Upstream observed at the earlier eaa checkpoint", resident.compiler.observedLatestSource],
     ["Compiler test evidence SHA-256", resident.compiler.evidenceSha256],
     ["Private aggregate snapshot", resident.compiler.aggregateSource],
     ["Aggregate build and emission evidence SHA-256", resident.compiler.aggregateEvidenceSha256],
-    ["Unattributed emission failure log SHA-256", resident.compiler.emissionLogSha256],
+    ["Earlier unattributed emission failure log SHA-256", resident.compiler.emissionLogSha256],
   ]) {
     residentPins.append(element("dt", "", label), element("dd", "", value));
   }

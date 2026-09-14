@@ -9,6 +9,29 @@ locally, and remove the private stage after archiving evidence.
 
 ## September 14 Resident Checkpoint
 
+The follow-up records published fe2o3 diagnostic `ae441`, rebased onto `836afb284`,
+and its separate backend/lineage/analysis/IR host suites. Actual aggregate
+extraction attributed the earlier divisor failure to paged GQA coordinates.
+Private Ferric `6da025e` uses literal coordinates and passes 35 host tests,
+including actual AST equivalence for 14 profiles. Actual gfx942 extraction then
+passes the divisor check but rejects an overflow assertion at `bb81`, source
+fingerprint `09ab2715abb3`, line 378. Optimized MIR attributes the guarded
+`query_position + 1`; this is not a verified compiler fix or a produced image.
+
+Published fe2o3 `b750` exposes the generation retained by the owned completed-read
+request. Its 43 service-host, 45 service-qualification and three pure KFD tests
+pass; private Ferric `7c3f9729` pins it, with combined engine validation pending.
+Pinned Verus verifies only the selected `kv_physical` module at `bd2/e6`:
+4 verified, 0 errors, exact 190-file distribution closure before and after.
+That source-settlement result is not whole-crate or physical catch-up proof.
+Catch-up composition, bindings, coordinator, typed KV, maintenance readback and
+preclock storage are implemented locally; resident dispatch is still under
+integration. Continuing full acceptance remains fail-closed. No warmed catch-up
+allocation claim, image, GPU run or performance observation follows.
+
+The earlier checkpoint below remains source-bound, not revalidated by these
+newer results:
+
 The additive `residentCheckpoint` distinguishes private authenticated singleton
 K4/K8/K16 selection from native qualification. It records separate host snapshots,
 the real owner-builder identity repair, and the public fe2o3 resource-accounting
@@ -21,8 +44,7 @@ image, replay or GPU result.
 Newer upstream `e6cfa668` was observed afterward; migration and revalidation are
 pending. All compiler build, test and emission results stay bound to `eaa057ac`.
 
-Authenticated draft KV catch-up is not implemented: active full acceptance fails
-closed before continuation. All 33 M1 gates remain open. There is no new native
+All 33 M1 gates remain open. There is no new native
 K8/K16 result, GPU measurement or TTFT/TPOT/throughput claim. Every historical
 project object, including the prior V15 checkpoint, and all of `performance.js`
 remain unchanged. `validate-resident-checkpoint.mjs` rejects scope, source, count,

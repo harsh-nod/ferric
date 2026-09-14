@@ -9,7 +9,7 @@ export function validateResidentCheckpoint(value, updated) {
   const checkpoint = JSON.parse(JSON.stringify(value));
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
     "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuMeasurement",
-    "newPerformanceMeasurement", "overview", "selection", "host", "compiler", "remaining"]);
+    "newPerformanceMeasurement", "overview", "followup", "selection", "host", "compiler", "remaining"]);
   assert.equal(updated, "2026-09-14");
   assert.equal(checkpoint.date, updated);
   assert.equal(checkpoint.implementationPrivate, true);
@@ -19,8 +19,56 @@ export function validateResidentCheckpoint(value, updated) {
     assert.equal(checkpoint[key], false, key);
   }
   assert.equal(checkpoint.scope, "Private authenticated resident serving; host and compiler progress only");
-  assert(checkpoint.overview.includes("Continuing full acceptance fails closed because authenticated draft KV catch-up is not implemented"));
+  assert(checkpoint.overview.includes("resident dispatch is still under integration and continuing full acceptance remains fail-closed"));
   assert(checkpoint.overview.includes("All 33 M1 gates remain open; this checkpoint adds no GPU or performance result"));
+
+  const followup = checkpoint.followup;
+  exactKeys(followup, ["compilerDiagnostic", "coordinateRepair", "runtimeGetter", "cursorProof", "catchup"]);
+  const diagnostic = followup.compilerDiagnostic;
+  exactKeys(diagnostic, ["source", "rebaseBase", "backendPassed", "lineagePassed", "analysisPassed", "irPassed", "detail"]);
+  assert.equal(diagnostic.source, "ae441734f27ef35c26baf7b3a6281852cd544de9");
+  assert.equal(diagnostic.rebaseBase, "836afb2841f92fae4f9675a91947de23a3faa1a9");
+  assert.deepEqual([diagnostic.backendPassed, diagnostic.lineagePassed, diagnostic.analysisPassed, diagnostic.irPassed], [534, 30, 97, 291]);
+  assert(diagnostic.detail.includes("without weakening the nonzero-divisor check"));
+  assert(diagnostic.detail.includes("paged GQA coordinate calculation at line 322, rather than GEMM"));
+  const coordinate = followup.coordinateRepair;
+  exactKeys(coordinate, ["source", "hostPassed", "equivalentProfiles", "emissionExit", "emissionBlock", "emissionSourceFingerprint", "emissionLine", "exactRootEmitted", "imageProduced", "compilerFixValidated", "evidenceSha256", "detail"]);
+  assert.equal(coordinate.source, "6da025e3017c555f4425a4fc26c0cab0805d7811");
+  assert.deepEqual([coordinate.hostPassed, coordinate.equivalentProfiles, coordinate.emissionExit], [35, 14, 1]);
+  assert.deepEqual([coordinate.emissionBlock, coordinate.emissionSourceFingerprint, coordinate.emissionLine], ["bb81", "09ab2715abb3", 378]);
+  assert.equal(coordinate.exactRootEmitted, false);
+  assert.equal(coordinate.imageProduced, false);
+  assert.equal(coordinate.compilerFixValidated, false);
+  assert.equal(coordinate.evidenceSha256, "cf6e686834c3f7ce714d3dfc83c8e49e1c7cc734cc5ddcbe4c1e1e3300258b1e");
+  assert(coordinate.detail.includes("actual AST equivalence across 14 profiles"));
+  assert(coordinate.detail.includes("diagnostic attribution, not a validated compiler repair"));
+  assert(coordinate.detail.includes("No image, replay or GPU result was produced"));
+  const getter = followup.runtimeGetter;
+  exactKeys(getter, ["source", "ferricPinSource", "servicePassed", "qualificationPassed", "pureKfdPassed", "combinedEngineValidationPending", "detail"]);
+  assert.equal(getter.source, "b75096cf947fcb45dd9a579b68b0372882282e6d");
+  assert.equal(getter.ferricPinSource, "7c3f9729e6af1747a02e2392a9728305f5f53078");
+  assert.deepEqual([getter.servicePassed, getter.qualificationPassed, getter.pureKfdPassed], [43, 45, 3]);
+  assert.equal(getter.combinedEngineValidationPending, true);
+  assert(getter.detail.includes("earlier green host suites are not relabeled as current results"));
+  const proof = followup.cursorProof;
+  exactKeys(proof, ["source", "compilerSource", "module", "verusVersion", "verified", "errors", "closureFiles", "wholeCrateVerified", "physicalCatchupVerified", "evidenceSha256", "detail"]);
+  assert.equal(proof.source, "bd2f2464f7583e8b35d7d250a761f40b8808fb3c");
+  assert.equal(proof.compilerSource, "e6cfa668f21e5b80d2e70730ed61602c1aaf5804");
+  assert.equal(proof.module, "kv_physical");
+  assert.equal(proof.verusVersion, "0.2026.08.02.b677dd5");
+  assert.deepEqual([proof.verified, proof.errors, proof.closureFiles], [4, 0, 190]);
+  assert.equal(proof.wholeCrateVerified, false);
+  assert.equal(proof.physicalCatchupVerified, false);
+  assert.equal(proof.evidenceSha256, "4d58e31661411697cc82bd09eb0ce055374f71f2cea65b911d64a88b0457dc57");
+  assert(proof.detail.includes("not whole-crate verification or a proof of physical catch-up, queue ownership or device execution"));
+  const catchup = followup.catchup;
+  exactKeys(catchup, ["windows", "privateComponentsImplemented", "residentDispatchIntegrated", "warmedAllocationValidated", "detail"]);
+  assert.deepEqual(catchup.windows, [4, 8, 16]);
+  assert.equal(catchup.privateComponentsImplemented, true);
+  assert.equal(catchup.residentDispatchIntegrated, false);
+  assert.equal(catchup.warmedAllocationValidated, false);
+  assert(catchup.detail.includes("advances draft KV by one and emits no served token"));
+  assert(catchup.detail.includes("No warmed allocation-free catch-up or end-to-end serving result is claimed"));
 
   const selection = checkpoint.selection;
   exactKeys(selection, ["windows", "prefill", "residentSource", "ownerSource", "legacyCanonicalBytesPreserved", "detail"]);
@@ -123,6 +171,21 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.compiler.aggregateHostPassed += 1; },
     (x) => { x.compiler.emissionExit = 0; },
     (x) => { x.compiler.emissionFailureRoot = "GEMM"; },
+    (x) => { x.followup.compilerDiagnostic.backendPassed += 1; },
+    (x) => { x.followup.compilerDiagnostic.rebaseBase = x.followup.compilerDiagnostic.source; },
+    (x) => { x.followup.coordinateRepair.hostPassed += 1; },
+    (x) => { x.followup.coordinateRepair.equivalentProfiles += 1; },
+    (x) => { x.followup.coordinateRepair.emissionExit = 0; },
+    (x) => { x.followup.coordinateRepair.exactRootEmitted = true; },
+    (x) => { x.followup.coordinateRepair.imageProduced = true; },
+    (x) => { x.followup.coordinateRepair.compilerFixValidated = true; },
+    (x) => { x.followup.runtimeGetter.combinedEngineValidationPending = false; },
+    (x) => { x.followup.cursorProof.compilerSource = x.followup.runtimeGetter.source; },
+    (x) => { x.followup.cursorProof.verified += 1; },
+    (x) => { x.followup.cursorProof.wholeCrateVerified = true; },
+    (x) => { x.followup.cursorProof.physicalCatchupVerified = true; },
+    (x) => { x.followup.catchup.residentDispatchIntegrated = true; },
+    (x) => { x.followup.catchup.warmedAllocationValidated = true; },
     (x) => { x.overview = "Catch-up and all M1 gates are complete."; },
     (x) => { x.remaining = "New competitive performance result."; },
     (x) => { x.uncheckedAuthority = true; },

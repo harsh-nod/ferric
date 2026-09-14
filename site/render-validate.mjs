@@ -43,11 +43,20 @@ const requiredClaims = [
   "Updated 2026-09-14",
   "Authenticated resident serving",
   "Finite singleton windows: K4, K8 and K16",
-  "Continuing full acceptance fails closed because authenticated draft KV catch-up is not implemented",
+  "resident dispatch is still under integration and continuing full acceptance remains fail-closed",
   "All 33 M1 gates remain open; this checkpoint adds no GPU or performance result",
-  "Host validation and qualification boundary",
+  "Latest compiler and catch-up integration",
+  "paged GQA coordinate calculation at line 322, rather than GEMM",
+  "actual AST equivalence across 14 profiles",
+  "bb81, source fingerprint 09ab2715abb3, line 378",
+  "diagnostic attribution, not a validated compiler repair",
+  "New combined Ferric engine validation against this pin is pending",
+  "4 verified, 0 errors, with the exact 190-file verifier distribution closure",
+  "not whole-crate verification or a proof of physical catch-up",
+  "No warmed allocation-free catch-up or end-to-end serving result is claimed",
+  "Earlier host validation and qualification boundary",
   "The 722 existing verified bodies are unchanged; 7,530 remain unverified, including 18 new pending-Verus rows",
-  "Compiler and canonical gfx942 extraction",
+  "Earlier compiler and canonical gfx942 extraction",
   "All 1,006 Pliron tests pass with zero ignores, including the 13 focused regressions",
   "Kernel attribution is unknown; this is not identified as a GEMM failure",
   "Exit 1 produces no image, replay or GPU result",
@@ -768,7 +777,7 @@ if (screenshotRoot) {
   await mkdir(screenshotRoot, { recursive: true });
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, args: ["--disable-gpu"] });
 try {
   for (const [name, width, height] of viewports) {
     const page = await browser.newPage({ viewport: { width, height } });
@@ -1165,7 +1174,7 @@ try {
 }
 
 if (process.env.FERRIC_EXHAUSTIVE_WIDTHS === "1") {
-  const sweepBrowser = await chromium.launch({ headless: true });
+  const sweepBrowser = await chromium.launch({ headless: true, args: ["--disable-gpu"] });
   try {
     const page = await sweepBrowser.newPage({ viewport: { width: 320, height: 900 } });
     await page.goto(pageUrl, { waitUntil: "load" });
