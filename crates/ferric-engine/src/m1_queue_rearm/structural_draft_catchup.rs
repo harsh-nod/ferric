@@ -714,7 +714,6 @@ fn replace_structural_workspaces(
 }
 
 #[inline(never)]
-#[inline(never)]
 fn lower_structural_batch<'a, const N: usize>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
     physical: &crate::AddresslessM1PhysicalDispatchRecipeV1,

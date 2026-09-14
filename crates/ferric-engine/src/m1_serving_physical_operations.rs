@@ -13,7 +13,7 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, RequestId};
+use ferric_spec::{completion::CompletionEpoch, Qwen3PlanBucket, Qwen3PlanSelection, RequestId};
 
 use crate::m1_queue_rearm::{
     preflight_m1_all_terminal_paired_prefill_new_window_v1,
