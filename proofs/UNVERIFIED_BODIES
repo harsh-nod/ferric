@@ -2548,6 +2548,7 @@ unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine:
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::map_initialized|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::new|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::new_with_page_generations|pending-verus|m1-device-cache-proof-pending
+unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::preflight_accept_initialized|pending-verus|m1-finite-resident-runtime-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::preflight_quiescent_reselection|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::preflight_quiescent_reselection_permits|pending-verus|m1-device-cache-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/device_cache.rs|ferric_engine::device_cache::ActiveDeviceKvCache::preflight_retirement_after_step|pending-verus|m1-device-cache-proof-pending
