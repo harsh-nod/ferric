@@ -583,7 +583,7 @@ impl M1AuthenticatedDraftCatchupReadyV1 {
         engine: &mut Engine<C>,
         inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
         post_submit: F,
-        deadline: D,
+        mut deadline: D,
     ) -> Result<
         M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
         M1AuthenticatedDraftCatchupRestoreFailureV1,
@@ -632,6 +632,9 @@ impl M1AuthenticatedDraftCatchupReadyV1 {
                 Box::new((self, inputs)),
             ));
         }
+        if deadline(crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1::BeforeDraftCatchupRestoreSchedule, self.queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::DeadlineRetry(Box::new((self, inputs))));
+        }
         let binding = binding.expect("restored logical round was checked");
         let epoch = epoch.expect("restored epoch was checked");
         let Self {
@@ -679,13 +682,20 @@ pub(crate) enum M1AuthenticatedDraftCatchupRestoreFailureV1 {
             M1AuthenticatedSpeculativePhysicalRoundInputsV1,
         )>,
     ),
+    DeadlineRetry(
+        Box<(
+            M1AuthenticatedDraftCatchupReadyV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
     Closed(M1AuthenticatedSpeculativeFailureDispositionV1),
     Ordinary(Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>),
 }
 
 impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
     pub(crate) fn is_deadline(&self) -> bool {
-        matches!(self, Self::Ordinary(failure) if failure.stage() == M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
+        matches!(self, Self::DeadlineRetry(_))
+            || matches!(self, Self::Ordinary(failure) if failure.stage() == M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
     }
 
     pub(crate) fn close<const C: usize>(
@@ -693,7 +703,7 @@ impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
         engine: &mut Engine<C>,
     ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
         match self {
-            Self::Retry(retained) => {
+            Self::Retry(retained) | Self::DeadlineRetry(retained) => {
                 let (ready, inputs) = *retained;
                 ready.close(engine).retain(inputs)
             }
@@ -709,6 +719,10 @@ pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
         executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
         plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
     },
+    DeadlineRetry {
+        executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
+        plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+    },
     Closed {
         stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
         disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
@@ -717,13 +731,14 @@ pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
 
 impl M1AuthenticatedDraftCatchupExecutionFailureV1 {
     pub(crate) fn is_deadline(&self) -> bool {
-        matches!(
-            self,
-            Self::Closed {
-                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
-                ..
-            }
-        )
+        matches!(self, Self::DeadlineRetry { .. })
+            || matches!(
+                self,
+                Self::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    ..
+                }
+            )
     }
 
     pub(crate) fn close<const C: usize>(
@@ -731,7 +746,7 @@ impl M1AuthenticatedDraftCatchupExecutionFailureV1 {
         engine: &mut Engine<C>,
     ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
         match self {
-            Self::Retry { executor, plans } => {
+            Self::Retry { executor, plans } | Self::DeadlineRetry { executor, plans } => {
                 match executor.destroy_queue_and_retain_state(engine) {
                     Ok(released) => released_disposition((released, plans)),
                     Err(quarantined) => quarantined_disposition((quarantined, plans)),
@@ -5884,6 +5899,19 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 plans,
             });
         }
+        if deadline(
+            Boundary::BeforeDraftCatchupSchedule,
+            self.queue_wait_timeout,
+        )
+        .is_none()
+        {
+            return Err(
+                M1AuthenticatedDraftCatchupExecutionFailureV1::DeadlineRetry {
+                    executor: Box::new(self),
+                    plans,
+                },
+            );
+        }
         let Self {
             coordinator,
             released,
@@ -5922,6 +5950,17 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
                 });
             }
         };
+        if deadline(Boundary::BeforeDraftCatchupPreparation, queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: crate::authenticated_queue_rearm::close_draft_catchup_scheduled(
+                    engine,
+                    scheduled,
+                    (coordinator, lineage, plans, queue_wait_timeout),
+                )
+                .into_disposition(),
+            });
+        }
         let pending = lineage
             .draft_catchup
             .take()
@@ -6483,6 +6522,25 @@ impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
         ) -> Option<crate::M1QueueWaitTimeoutV1>,
     {
         use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        if lineage.restoration.is_some()
+            && deadline_expired(Boundary::BeforeDraftCatchupPreparation, queue_wait_timeout)
+                .is_none()
+        {
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        crate::authenticated_queue_rearm::close_draft_catchup_scheduled(
+                            engine,
+                            scheduled,
+                            (coordinator, binding, lineage, inputs, queue_wait_timeout),
+                        )
+                        .into_disposition(),
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
         let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
             kv,
             recipe_workspace_plans,
