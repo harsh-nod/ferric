@@ -9584,7 +9584,7 @@ mod tests {
 
         let other_request = RequestId::new(request().slot(), request().generation() + 1);
         let mut drifted_target = PhysicalKvState::new(other_request, parent).unwrap();
-        for position in 0..committed + 1 {
+        for position in 0..=committed {
             if position % M1_KV_PAGE_TOKENS == 0 {
                 let page =
                     cache.common.target.active_pages[(position / M1_KV_PAGE_TOKENS) as usize].page;
