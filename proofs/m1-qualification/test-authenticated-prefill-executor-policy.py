@@ -208,8 +208,24 @@ def main() -> None:
         "execute_m1_authenticated_s1_t128_paired_prefill_v1(",
         "MI300X fixture production prefill execution",
     )
-    require(fixture, ") = executed.into_parts();", "MI300X fixture linear success handoff")
-    require(fixture, "let anchor = first_token;", "post-join first-token rollover anchor")
+    cursor = 0
+    for needle in [
+        "let request = executed.request();",
+        "let anchor = executed.first_token();",
+        "let reconciled = reconcile_m1_authenticated_s1_t128_prefill_registry_v1(",
+        "            executed,\n        )",
+        "reconciled.schedule_first_speculative_round(rollover_inputs)",
+        "scheduled.prepare(&logical_runner)",
+        "prepared.publish()",
+        ".complete_round(vec![M1SpeculativeMemberControlV1::continuing(request)])",
+        "assert_eq!(completed.first_token(), anchor);",
+    ]:
+        position = fixture.find(needle, cursor)
+        if position < 0:
+            fail(f"MI300X fixture authenticated registry handoff lost {needle}")
+        cursor = position + len(needle)
+    if "executed.into_parts()" in fixture:
+        fail("MI300X fixture bypasses the authenticated registry handoff")
     require(
         fixture,
         "assert!(failure.engine_quarantined());",
