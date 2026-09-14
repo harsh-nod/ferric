@@ -843,7 +843,7 @@ impl<const C: usize> M1AuthenticatedResidentWindowSuccessV1<C> {
 }
 
 #[derive(Debug)]
-struct M1AuthenticatedResidentRoleInputStorageV1 {
+pub(crate) struct M1AuthenticatedResidentRoleInputStorageV1 {
     lanes: Vec<Option<ferric_spec::StepPlan>>,
     tokens: Vec<TokenId>,
     positions: Vec<u32>,
@@ -852,7 +852,7 @@ struct M1AuthenticatedResidentRoleInputStorageV1 {
 }
 
 impl M1AuthenticatedResidentRoleInputStorageV1 {
-    fn try_new(width: usize) -> Option<Self> {
+    pub(crate) fn try_new(width: usize) -> Option<Self> {
         let mut lanes = Vec::new();
         let mut tokens = Vec::new();
         let mut positions = Vec::new();
@@ -873,7 +873,7 @@ impl M1AuthenticatedResidentRoleInputStorageV1 {
         })
     }
 
-    fn fill(
+    pub(crate) fn fill(
         mut self,
         runner: &crate::LogicalRunnerDeclaration,
         selection: ferric_spec::Qwen3PlanSelection,

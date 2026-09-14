@@ -3395,6 +3395,16 @@ pub(crate) struct M1RolloverBoundRowsHostStorageV1 {
 }
 
 impl M1RolloverBoundRowsHostStorageV1 {
+    pub(crate) fn has_capacity_for(&self, source_rows: &[M1PhysicalBufferRecipeRowV1]) -> bool {
+        self.rows.capacity() >= source_rows.len()
+            && self.buffers.len() >= source_rows.len()
+            && self
+                .buffers
+                .iter()
+                .zip(source_rows)
+                .all(|(storage, row)| storage.capacity() >= row.buffers().len())
+    }
+
     pub(crate) fn try_new(row_count: usize, buffers_per_row: usize) -> Option<Self> {
         let mut rows = Vec::new();
         let mut buffers = Vec::new();

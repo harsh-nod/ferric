@@ -122,6 +122,31 @@ pub(crate) struct M1AuthenticatedRearmPublicationHostStorageV1 {
             >,
         >,
     >,
+    draft_owner: Option<
+        Box<
+            core::mem::MaybeUninit<
+                BoundM1StepWorkspaceSubleases<{ crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1 }>,
+            >,
+        >,
+    >,
+    completion_owner: Option<
+        Box<
+            core::mem::MaybeUninit<
+                BoundM1StepWorkspaceSubleases<
+                    { crate::M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1 },
+                >,
+            >,
+        >,
+    >,
+    speculative_owner: Option<
+        Box<
+            core::mem::MaybeUninit<
+                BoundM1StepWorkspaceSubleases<
+                    { crate::M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1 },
+                >,
+            >,
+        >,
+    >,
 }
 
 impl M1AuthenticatedRearmPublicationHostStorageV1 {
@@ -144,7 +169,7 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
         workspace_ranges
             .try_reserve_exact(
                 crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
-                    + crate::M1_TARGET_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
+                    + crate::M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1,
             )
             .ok()?;
         Some(Self {
@@ -170,6 +195,9 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
                 .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
             phase_catchup: catchup
                 .then(|| Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::empty())),
+            draft_owner: Some(Box::new_uninit()),
+            completion_owner: catchup.then(Box::new_uninit),
+            speculative_owner: (!catchup).then(Box::new_uninit),
         })
     }
 
@@ -188,6 +216,12 @@ impl M1AuthenticatedRearmPublicationHostStorageV1 {
 #[derive(Debug)]
 pub(crate) struct M1AuthenticatedDraftCatchupScratchV1 {
     parent: Qwen3PlanSelection,
+    scheduling: M1AuthenticatedResidentCompletionScratchV1,
+    draft_inputs:
+        Option<crate::authenticated_resident_session::M1AuthenticatedResidentRoleInputStorageV1>,
+    completion_inputs:
+        Option<crate::authenticated_resident_session::M1AuthenticatedResidentRoleInputStorageV1>,
+    page_admission: Option<crate::device_cache::M1DraftCatchupPageAdmissionHostStorageV1>,
     write: crate::device_cache::M1DraftCatchupKvWriteHostStorageV1,
     page_leases: Vec<crate::DeviceKvPageLease>,
     reservations: Vec<crate::PendingDeviceKvStepWrite>,
@@ -235,6 +269,10 @@ impl M1AuthenticatedDraftCatchupScratchV1 {
         completion_page_indices.resize(512, 0);
         Some(Self {
             parent,
+            scheduling: M1AuthenticatedResidentCompletionScratchV1::try_new(1)?,
+            draft_inputs: Some(crate::authenticated_resident_session::M1AuthenticatedResidentRoleInputStorageV1::try_new(1)?),
+            completion_inputs: Some(crate::authenticated_resident_session::M1AuthenticatedResidentRoleInputStorageV1::try_new(1)?),
+            page_admission: Some(crate::device_cache::M1DraftCatchupPageAdmissionHostStorageV1::try_new()?),
             write: crate::device_cache::M1DraftCatchupKvWriteHostStorageV1::try_new()?,
             page_leases,
             reservations,
@@ -2508,6 +2546,298 @@ struct M1AuthenticatedScheduledRemainderV1 {
     completed_members: usize,
     total_released: usize,
     history: M1RearmRoundHistoryV1,
+}
+
+impl M1AuthenticatedScheduledRemainderV1 {
+    fn from_scheduled(
+        scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    ) -> (M1ScheduledDispatchV1, Self) {
+        let M1AuthenticatedScheduledLongLivedQueueRearmV1 {
+            queue,
+            scheduled,
+            selected,
+            parked,
+            terminal,
+            prior_checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+        } = scheduled;
+        (
+            scheduled,
+            Self {
+                queue,
+                selected,
+                parked,
+                terminal,
+                prior_checked,
+                logical_accepted_counts,
+                externally_published_counts,
+                release_counts,
+                completed_members,
+                total_released,
+                history,
+            },
+        )
+    }
+
+    fn close(self, retained: impl fmt::Debug + 'static) -> AuthenticatedSubmissionOpaqueCustodyV1 {
+        let Self {
+            queue,
+            selected,
+            parked,
+            terminal,
+            prior_checked,
+            logical_accepted_counts,
+            externally_published_counts,
+            release_counts,
+            completed_members,
+            total_released,
+            history,
+        } = self;
+        let (shape, lower, witness, operations, custody) = queue.into_rearm_parts();
+        close_prepared_rearm_submission_core(
+            lower,
+            (
+                (
+                    shape, witness, operations, custody, selected, parked, terminal,
+                ),
+                (
+                    prior_checked,
+                    logical_accepted_counts,
+                    externally_published_counts,
+                    release_counts,
+                    completed_members,
+                    total_released,
+                    history,
+                    retained,
+                ),
+            ),
+        )
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupPreparationFailureV1 {
+    custody: AuthenticatedSubmissionOpaqueCustodyV1,
+}
+
+impl M1AuthenticatedDraftCatchupPreparationFailureV1 {
+    pub(crate) fn into_disposition(
+        self,
+    ) -> crate::authenticated_speculative_executor::M1AuthenticatedSpeculativeFailureDispositionV1
+    {
+        match self.custody {
+            AuthenticatedSubmissionOpaqueCustodyV1::Released(retained) => {
+                crate::authenticated_speculative_executor::released_disposition(retained)
+            }
+            AuthenticatedSubmissionOpaqueCustodyV1::Quarantined(retained) => {
+                crate::authenticated_speculative_executor::quarantined_disposition(retained)
+            }
+        }
+    }
+}
+
+fn close_draft_catchup_scheduled<const C: usize>(
+    engine: &mut Engine<C>,
+    scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    retained: impl fmt::Debug + 'static,
+) -> Box<M1AuthenticatedDraftCatchupPreparationFailureV1> {
+    engine.quarantine_m1_queue_rearm_failure();
+    let (dispatch, remainder) = M1AuthenticatedScheduledRemainderV1::from_scheduled(scheduled);
+    Box::new(M1AuthenticatedDraftCatchupPreparationFailureV1 {
+        custody: remainder.close((dispatch, retained)),
+    })
+}
+
+pub(crate) fn prepare_authenticated_draft_catchup_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    mut scheduled: M1AuthenticatedScheduledLongLivedQueueRearmV1,
+    pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    plans: M1FullStepWorkspacePlans,
+    recipe_input: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    scratch: &mut M1AuthenticatedDraftCatchupScratchV1,
+) -> Result<
+    (
+        M1AuthenticatedPreparedLongLivedQueueRearmV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+    ),
+    Box<M1AuthenticatedDraftCatchupPreparationFailureV1>,
+> {
+    let shape = crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+        pending.parent(),
+    );
+    if engine.is_faulted()
+        || scratch.parent != pending.parent()
+        || scheduled.selected.len() != 1
+        || scheduled.selected[0].projection().request != pending.request()
+        || scheduled.scheduled.member_count() != 1
+        || scheduled.scheduled.member(0) != Some(pending.request())
+        || scheduled.scheduled.epoch() != pending.epoch()
+        || scheduled.prior_checked.epoch() != pending.prior_epoch()
+        || scheduled.prior_checked.selection() != pending.parent()
+        || scheduled.prior_checked.dispatch_generation() != pending.prior_dispatch_generation()
+        || shape.is_none_or(|shape| shape.shape() != scheduled.queue.shape())
+        || scheduled.queue.detached_dispatch_generation() != pending.prior_dispatch_generation()
+        || plans.kind() != M1FullStepWorkspaceInputKind::DraftCatchup
+        || scratch.reservations.capacity() < 1
+        || !scratch.reservations.is_empty()
+        || scratch.draft_inputs.is_none()
+        || scratch.completion_inputs.is_none()
+        || scratch.page_admission.is_none()
+        || scratch.draft_table.is_none()
+        || scratch.workspace_images.is_none()
+        || scratch.completion_page_indices.is_none()
+    {
+        return Err(close_draft_catchup_scheduled(
+            engine,
+            scheduled,
+            ("maintenance preparation", plans, recipe_input),
+        ));
+    }
+    let completion_selection =
+        M1StepDispatchIntent::DraftCatchup(pending.parent()).completion_selection();
+    let draft_selection = Qwen3PlanSelection {
+        role: Qwen3ModelRole::Draft06B,
+        ..completion_selection
+    };
+    let draft_inputs = scratch
+        .draft_inputs
+        .take()
+        .expect("checked draft input storage")
+        .fill(
+            scheduled.queue.operations().runner(),
+            draft_selection,
+            pending.request(),
+            pending.epoch(),
+            pending.token(),
+            pending.draft_committed(),
+        );
+    let completion_inputs = scratch
+        .completion_inputs
+        .take()
+        .expect("checked receipt input storage")
+        .fill(
+            scheduled.queue.operations().runner(),
+            completion_selection,
+            pending.request(),
+            pending.epoch(),
+            pending.token(),
+            pending.draft_committed(),
+        );
+    let (Some(draft_inputs), Some(completion_inputs)) = (draft_inputs, completion_inputs) else {
+        return Err(close_draft_catchup_scheduled(
+            engine,
+            scheduled,
+            ("maintenance input binding", plans, recipe_input),
+        ));
+    };
+    let recipe = match recipe_input.derive(
+        scheduled.queue.operations(),
+        M1StepDispatchIntent::DraftCatchup(pending.parent()),
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        source => {
+            return Err(close_draft_catchup_scheduled(
+                engine,
+                scheduled,
+                (source, plans, draft_inputs, completion_inputs),
+            ))
+        }
+    };
+    let admission = match scheduled.queue.admit_authenticated_draft_catchup_page_set(
+        pending,
+        scratch
+            .page_admission
+            .take()
+            .expect("checked page admission storage"),
+    ) {
+        Ok(admission) => admission,
+        source => {
+            return Err(close_draft_catchup_scheduled(
+                engine,
+                scheduled,
+                (source, plans, recipe, draft_inputs, completion_inputs),
+            ))
+        }
+    };
+    let leases = match scheduled
+        .queue
+        .commit_authenticated_successor_page_set(admission)
+    {
+        Ok(leases) => leases,
+        source => {
+            return Err(close_draft_catchup_scheduled(
+                engine,
+                scheduled,
+                (source, plans, recipe, draft_inputs, completion_inputs),
+            ))
+        }
+    };
+    let reservation = match scheduled.selected[0].reserve_authenticated_draft_catchup_write(
+        pending,
+        leases,
+        &mut scratch.write,
+    ) {
+        Ok(reservation) => reservation,
+        source => {
+            return Err(close_draft_catchup_scheduled(
+                engine,
+                scheduled,
+                (source, plans, recipe, draft_inputs, completion_inputs),
+            ))
+        }
+    };
+    scratch.reservations.push(reservation);
+    let table = match crate::kv_workspace_authority::bind_m1_draft_catchup_kv_workspace_table_with_storage_v1(
+        draft_inputs, core::mem::take(&mut scratch.reservations), scratch.draft_table.take().expect("checked draft table storage"), pending,
+    ) {
+        Ok(table) => table,
+        source => return Err(close_draft_catchup_scheduled(engine, scheduled, (source, plans, recipe, completion_inputs))),
+    };
+    let tables = M1FullStepKvWorkspaceTablesV1::DraftCatchup {
+        draft: table,
+        completion: completion_inputs,
+        completion_page_indices: scratch
+            .completion_page_indices
+            .take()
+            .expect("checked inert completion page table"),
+        target_allocation_id: scheduled
+            .queue
+            .custody()
+            .partitioned_memory()
+            .allocation_id(Qwen3ModelRole::Target8B),
+    };
+    let (dispatch, remainder) = M1AuthenticatedScheduledRemainderV1::from_scheduled(scheduled);
+    let prepared =
+        match crate::m1_prepublication::prepare_m1_scheduled_workspace_images_with_storage_v1(
+            dispatch,
+            remainder.queue.operations().runner(),
+            plans,
+            tables,
+            scratch
+                .workspace_images
+                .take()
+                .expect("checked workspace image storage"),
+        ) {
+            Ok(prepared) => prepared,
+            source => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(Box::new(M1AuthenticatedDraftCatchupPreparationFailureV1 {
+                    custody: remainder.close((source, recipe)),
+                }));
+            }
+        };
+    Ok((
+        M1AuthenticatedPreparedLongLivedQueueRearmV1 {
+            prepared,
+            remainder,
+        },
+        recipe,
+    ))
 }
 
 /// Stable authenticated workspace-preparation failure class.
@@ -6171,6 +6501,618 @@ where
         None => Box::new(M1AuthenticatedPhysicalQueuePhaseSlotV1::occupied(owner)),
     };
     Ok(wrap(phase))
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupRetainedBindingsV1 {
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    catalog_id: ferric_spec::Identity,
+    prior_epoch: CompletionEpoch,
+    prior_dispatch_generation: u64,
+    source_rows: Box<[crate::M1PhysicalBufferRecipeRowV1]>,
+    bound_rows: Box<[crate::M1BoundPhysicalBufferRowV1]>,
+}
+
+enum M1AuthenticatedDraftCatchupQueueTransitionV1<'a> {
+    Enter(&'a crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1),
+    Restore(&'a crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1),
+}
+
+impl M1AuthenticatedDraftCatchupQueueTransitionV1<'_> {
+    fn pending(
+        &self,
+    ) -> &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1 {
+        match self {
+            Self::Enter(pending) => pending,
+            Self::Restore(completed) => completed.pending(),
+        }
+    }
+
+    fn intent(&self) -> M1StepDispatchIntent {
+        match self {
+            Self::Enter(pending) => M1StepDispatchIntent::DraftCatchup(pending.parent()),
+            Self::Restore(completed) => {
+                M1StepDispatchIntent::SpeculativeRound(completed.pending().parent())
+            }
+        }
+    }
+}
+
+fn retain_queue_rearm_failure(
+    failure: M1AuthenticatedQueueRearmFailureV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedQueueRearmFailureV1 {
+    match failure {
+        M1AuthenticatedQueueRearmFailureV1::Terminal(mut failure) => {
+            failure.custody = failure.custody.retain(retained);
+            M1AuthenticatedQueueRearmFailureV1::Terminal(failure)
+        }
+        failure => terminal(
+            M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+            (failure, retained),
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+fn replace_authenticated_catchup_workspace_pair<
+    const OLD_TARGET: usize,
+    const NEW_TARGET: usize,
+>(
+    lower: AuthenticatedServiceQueueUnboundSessionV1,
+    old_draft: &BoundM1StepWorkspaceSubleases<{ crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1 }>,
+    old_target: &BoundM1StepWorkspaceSubleases<OLD_TARGET>,
+    draft_plan: Box<AddresslessM1StepWorkspacePlan>,
+    target_plan: Box<AddresslessM1StepWorkspacePlan>,
+    draft_bytes: Box<[u8]>,
+    target_bytes: Box<[u8]>,
+    target_slot: M1InitializedWorkspaceSlotV1,
+    mut workspace_ranges: Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
+    wrap: impl FnOnce(
+        BoundM1StepWorkspaceSubleases<{ crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1 }>,
+        BoundM1StepWorkspaceSubleases<NEW_TARGET>,
+    ) -> M1FullStepWorkspaceSubleaseOwners,
+) -> Result<
+    (
+        AuthenticatedServiceQueueUnboundSessionV1,
+        M1FullStepWorkspaceSubleaseOwners,
+        Vec<crate::m1_queue_rearm::FreshWorkspaceRangeV1>,
+    ),
+    M1AuthenticatedQueueRearmFailureV1,
+> {
+    let descriptors = descriptor(
+        M1InitializedWorkspaceSlotV1::SpeculativeDraftDecode,
+        &draft_bytes,
+    )
+    .and_then(|draft| descriptor(target_slot, &target_bytes).map(|target| (draft, target)));
+    let (draft_descriptor, target_descriptor) = match descriptors {
+        Ok(value) => value,
+        Err(()) => {
+            return Err(terminal_unbound(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceContent,
+                lower,
+                (
+                    draft_plan,
+                    target_plan,
+                    draft_bytes,
+                    target_bytes,
+                    workspace_ranges,
+                ),
+            ))
+        }
+    };
+    let (lower, draft, draft_ranges) = match replace_authenticated_workspace(
+        lower,
+        old_draft,
+        *draft_plan,
+        draft_bytes,
+        draft_descriptor,
+    ) {
+        Ok(value) => value,
+        Err(failure) => {
+            return Err(terminal_workspace_failure(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::DraftWorkspaceReplacement,
+                failure,
+                (target_plan, target_bytes, workspace_ranges),
+            ))
+        }
+    };
+    let (lower, target, target_ranges) = match replace_authenticated_rollover_workspace(
+        lower,
+        old_target,
+        *target_plan,
+        target_bytes,
+        target_descriptor,
+    ) {
+        Ok(value) => value,
+        Err(failure) => {
+            return Err(terminal_workspace_failure(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::TargetWorkspaceReplacement,
+                failure,
+                (draft, draft_ranges, workspace_ranges),
+            ))
+        }
+    };
+    workspace_ranges.clear();
+    if workspace_ranges.capacity() < draft_ranges.len() + target_ranges.len() {
+        return Err(terminal_unbound(
+            M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
+            lower,
+            (draft, target, draft_ranges, target_ranges, workspace_ranges),
+        ));
+    }
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Draft,
+        &draft,
+        draft_ranges,
+    );
+    append_workspace_ranges(
+        &mut workspace_ranges,
+        M1FullStepWorkspaceRole::Target,
+        &target,
+        target_ranges,
+    );
+    Ok((lower, wrap(draft, target), workspace_ranges))
+}
+
+fn preflight_authenticated_draft_catchup_queue_transition(
+    detached: &M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    prepared: &M1PreparedScheduledWorkspaceImagesV1,
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    transition: &M1AuthenticatedDraftCatchupQueueTransitionV1<'_>,
+    saved: Option<&M1AuthenticatedDraftCatchupRetainedBindingsV1>,
+    storage: &M1AuthenticatedRearmPublicationHostStorageV1,
+) -> bool {
+    let pending = transition.pending();
+    let Some(parent) =
+        crate::authenticated_prefill_bootstrap::admitted_s1_t128_speculative_successor_v1(
+            pending.parent(),
+        )
+    else {
+        return false;
+    };
+    let old = detached.custody();
+    let scheduled = prepared.step().scheduled_dispatch();
+    let (old_draft_plan, old_target_plan) = match old.workspace_owners() {
+        M1FullStepWorkspaceSubleaseOwners::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+        } => (draft_decode.plan(), target_speculative.plan()),
+        M1FullStepWorkspaceSubleaseOwners::DraftCatchup {
+            draft_decode,
+            completion,
+        } => (draft_decode.plan(), completion.plan()),
+        _ => return false,
+    };
+    let phase_matches = match transition {
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(_) => {
+            detached.shape() == parent.shape()
+                && saved.is_none()
+                && detached.detached_dispatch_generation() == pending.prior_dispatch_generation()
+                && scheduled.epoch() == pending.epoch()
+                && prepared.kind() == M1FullStepWorkspaceInputKind::DraftCatchup
+                && storage.shape == M1PhysicalFixedBatchShapeV1::DraftCatchup
+                && storage.phase_catchup.is_some()
+                && storage.completion_owner.is_some()
+                && old
+                    .completion_output()
+                    .can_retarget_exact_s1_speculative_to_draft_catchup(pending.parent())
+                && matches!(prepared.step().kv_reservations(), M1FullStepKvReservationCustodyV1::DraftCatchup { parent, draft, .. }
+                    if *parent == pending.parent() && draft.reservations().len() == 1
+                        && draft.reservations()[0].matches_authenticated_draft_catchup(pending))
+        }
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(completed) => {
+            detached.shape() == M1PhysicalFixedBatchShapeV1::DraftCatchup
+                && detached.detached_dispatch_generation() == completed.dispatch_generation()
+                && completed.completion_epoch() == pending.epoch()
+                && exact_next_epoch(pending.epoch()) == Some(scheduled.epoch())
+                && prepared.kind() == M1FullStepWorkspaceInputKind::SpeculativeRound
+                && storage.shape == parent.shape()
+                && match parent.shape() {
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK4 => storage.phase.is_some(),
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK8 => storage.phase_k8.is_some(),
+                    M1PhysicalFixedBatchShapeV1::SpeculativeK16 => storage.phase_k16.is_some(),
+                    _ => false,
+                }
+                && storage.speculative_owner.is_some()
+                && old.completion_output().draft_catchup_parent_selection()
+                    == Some(pending.parent())
+                && saved.is_some_and(|saved| {
+                    saved.parent == pending.parent()
+                        && saved.request == pending.request()
+                        && saved.coordinator_identity == pending.coordinator_identity()
+                        && saved.catalog_id == old.catalog_id()
+                        && saved.prior_epoch == pending.prior_epoch()
+                        && saved.prior_dispatch_generation == pending.prior_dispatch_generation()
+                        && saved.source_rows.len() == parent.shape().packet_count()
+                        && saved.bound_rows.len() == saved.source_rows.len()
+                })
+        }
+    };
+    phase_matches
+        && scheduled.member_count() == 1
+        && scheduled.member(0) == Some(pending.request())
+        && old.selection() == pending.parent()
+        && storage.selection == pending.parent()
+        && storage
+            .bound_rows
+            .as_ref()
+            .is_some_and(|rows| rows.has_capacity_for(recipe.rows()))
+        && storage.draft_owner.is_some()
+        && recipe.workspace_composition().dispatch_plan().intent() == transition.intent()
+        && recipe.workspace_composition().workspace_plans() == prepared.plans()
+        && recipe.rows().len() == storage.shape.packet_count()
+        && recipe.kernarg_recipe().images().len() == storage.shape.packet_count()
+        && !recipe.requires_future_materialization()
+        && prepared.step().kv_reservations().target_selection() == pending.parent()
+        && prepared
+            .step()
+            .kv_reservations()
+            .all_devices_match(old.device())
+        && validate_kv_arena_ids(
+            prepared.kind(),
+            prepared.step().kv_reservations().target_allocation_id(),
+            prepared.step().kv_reservations().draft_allocation_id(),
+            old.partitioned_memory()
+                .allocation_id(Qwen3ModelRole::Target8B),
+            old.partitioned_memory()
+                .allocation_id(Qwen3ModelRole::Draft06B),
+        )
+        .is_ok()
+        && prepared.plans().draft().is_some_and(|draft| {
+            old_draft_plan.allocation().allocation_id() == draft.allocation().allocation_id()
+        })
+        && old_target_plan.allocation().allocation_id()
+            == prepared.plans().target().allocation().allocation_id()
+}
+
+#[allow(clippy::type_complexity)]
+fn rearm_authenticated_draft_catchup_queue_transition(
+    detached: M1AuthenticatedPhysicalReadbackDetachedQueueSessionV1,
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    transition: M1AuthenticatedDraftCatchupQueueTransitionV1<'_>,
+    mut saved: Option<M1AuthenticatedDraftCatchupRetainedBindingsV1>,
+    storage: &mut M1AuthenticatedRearmPublicationHostStorageV1,
+) -> Result<
+    (
+        M1AuthenticatedPhysicalQueueSessionV1,
+        M1AuthenticatedDraftCatchupRetainedBindingsV1,
+    ),
+    (
+        M1AuthenticatedQueueRearmFailureV1,
+        Option<M1AuthenticatedDraftCatchupRetainedBindingsV1>,
+    ),
+> {
+    if !preflight_authenticated_draft_catchup_queue_transition(
+        &detached,
+        &prepared,
+        &recipe,
+        &transition,
+        saved.as_ref(),
+        storage,
+    ) {
+        return Err((
+            M1AuthenticatedQueueRearmFailureV1::Rejected(Box::new(
+                M1AuthenticatedQueueRearmRejectionV1 {
+                    error: M1AuthenticatedQueueRearmPreflightErrorV1::ShapeKind,
+                    detached,
+                    prepared,
+                    recipe,
+                },
+            )),
+            saved,
+        ));
+    }
+    macro_rules! fail_transition {
+        ($source:expr, $retained:expr) => {
+            return Err((retain_queue_rearm_failure($source, $retained), saved))
+        };
+    }
+    let expected_observation = detached.observation();
+    let (_, lower, witness, operations, custody) = detached.into_rearm_parts();
+    let mut custody = custody.into_rearm_parts();
+    let (plans, images, step) = prepared.into_rearm_parts();
+    let workspace_ranges = core::mem::take(&mut storage.workspace_ranges);
+    let draft_slot = storage
+        .draft_owner
+        .take()
+        .expect("preflight retained draft slot");
+    let replacement = match (&custody.workspace_owners, plans, images) {
+        (
+            M1FullStepWorkspaceSubleaseOwners::SpeculativeRound {
+                draft_decode: old_draft,
+                target_speculative: old_target,
+            },
+            M1FullStepWorkspacePlans::DraftCatchup {
+                draft_decode,
+                completion,
+                ..
+            },
+            M1FullStepWorkspaceImagesV1::DraftCatchup {
+                draft_decode: draft_bytes,
+                completion: target_bytes,
+            },
+        ) if matches!(
+            transition,
+            M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(_)
+        ) =>
+        {
+            let target_slot = storage
+                .completion_owner
+                .take()
+                .expect("preflight retained completion slot");
+            replace_authenticated_catchup_workspace_pair(
+                lower,
+                old_draft,
+                old_target,
+                draft_decode,
+                completion,
+                draft_bytes,
+                target_bytes,
+                M1InitializedWorkspaceSlotV1::TargetOnlyTarget,
+                workspace_ranges,
+                |draft, target| M1FullStepWorkspaceSubleaseOwners::DraftCatchup {
+                    draft_decode: Box::write(draft_slot, draft),
+                    completion: Box::write(target_slot, target),
+                },
+            )
+        }
+        (
+            M1FullStepWorkspaceSubleaseOwners::DraftCatchup {
+                draft_decode: old_draft,
+                completion: old_target,
+            },
+            M1FullStepWorkspacePlans::SpeculativeRound {
+                draft_decode,
+                target_speculative,
+            },
+            M1FullStepWorkspaceImagesV1::SpeculativeRound {
+                draft_decode: draft_bytes,
+                target_speculative: target_bytes,
+            },
+        ) if matches!(
+            transition,
+            M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(_)
+        ) =>
+        {
+            let target_slot = storage
+                .speculative_owner
+                .take()
+                .expect("preflight retained speculative slot");
+            replace_authenticated_catchup_workspace_pair(
+                lower,
+                old_draft,
+                old_target,
+                draft_decode,
+                target_speculative,
+                draft_bytes,
+                target_bytes,
+                M1InitializedWorkspaceSlotV1::SpeculativeTarget,
+                workspace_ranges,
+                |draft, target| M1FullStepWorkspaceSubleaseOwners::SpeculativeRound {
+                    draft_decode: Box::write(draft_slot, draft),
+                    target_speculative: Box::write(target_slot, target),
+                },
+            )
+        }
+        (_, plans, images) => {
+            fail_transition!(
+                terminal_unbound(
+                    M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+                    lower,
+                    (
+                        witness,
+                        operations,
+                        custody,
+                        plans,
+                        images,
+                        step,
+                        recipe,
+                        workspace_ranges,
+                        draft_slot
+                    )
+                ),
+                ()
+            );
+        }
+    };
+    let (lower, workspace_owners, workspace_ranges) = match replacement {
+        Ok(value) => value,
+        Err(source) => fail_transition!(source, (witness, operations, custody, step, recipe)),
+    };
+    custody.workspace_owners = workspace_owners;
+    let output = match &transition {
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(pending) => custody
+            .completion_output
+            .retarget_exact_s1_speculative_to_draft_catchup(pending.parent()),
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(completed) => custody
+            .completion_output
+            .restore_exact_s1_speculative_after_draft_catchup(completed.pending().parent()),
+    };
+    custody.completion_output = match output {
+        Ok(output) => output,
+        Err(output) => {
+            custody.completion_output = *output;
+            fail_transition!(
+                terminal_unbound(
+                    M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+                    lower,
+                    (witness, operations, custody, step, recipe, workspace_ranges)
+                ),
+                ()
+            );
+        }
+    };
+    let (lower, output) =
+        match reset_retained_authenticated_diagnostic_capture(lower, custody.completion_output) {
+            Ok(value) => value,
+            Err(failure) => {
+                fail_transition!(
+                    terminal_custody(failure.phase, failure.custody),
+                    (
+                        witness,
+                        operations,
+                        custody.catalog_id,
+                        custody.selection,
+                        custody.physical_recipe,
+                        custody.workspace_composition,
+                        custody.workspace_owners,
+                        custody.partitioned_memory,
+                        custody.source_rows,
+                        custody.bound_rows,
+                        custody.retired_rollover_custody,
+                        step,
+                        recipe,
+                        workspace_ranges
+                    )
+                );
+            }
+        };
+    custody.completion_output = output;
+    let capture = match retained_host_capture_ranges(&custody.completion_output) {
+        Ok(value) => value,
+        Err(()) => fail_transition!(
+            terminal_unbound(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::WorkspaceRangeRebinding,
+                lower,
+                (witness, operations, custody, step, recipe, workspace_ranges)
+            ),
+            ()
+        ),
+    };
+    let (source_rows, bound_rows) = match &transition {
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(_) => {
+            (&*custody.source_rows, &*custody.bound_rows)
+        }
+        M1AuthenticatedDraftCatchupQueueTransitionV1::Restore(_) => {
+            let saved = saved
+                .as_ref()
+                .expect("restoration preflight retained predecessor bindings");
+            (&*saved.source_rows, &*saved.bound_rows)
+        }
+    };
+    let bound_rows = match crate::m1_queue_rearm::build_rollover_bound_rows_with_storage(
+        recipe.rows(),
+        source_rows,
+        bound_rows,
+        recipe.workspace_composition(),
+        &workspace_ranges,
+        &capture,
+        storage
+            .bound_rows
+            .take()
+            .expect("preflight retained bound-row storage"),
+    ) {
+        Ok(rows) => rows,
+        Err(()) => fail_transition!(
+            terminal_unbound(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::BoundRowRebuild,
+                lower,
+                (witness, operations, custody, step, recipe, workspace_ranges)
+            ),
+            ()
+        ),
+    };
+    if let M1AuthenticatedDraftCatchupQueueTransitionV1::Enter(pending) = &transition {
+        saved = Some(M1AuthenticatedDraftCatchupRetainedBindingsV1 {
+            parent: pending.parent(),
+            request: pending.request(),
+            coordinator_identity: pending.coordinator_identity(),
+            catalog_id: custody.catalog_id,
+            prior_epoch: pending.prior_epoch(),
+            prior_dispatch_generation: pending.prior_dispatch_generation(),
+            source_rows: core::mem::take(&mut custody.source_rows),
+            bound_rows: core::mem::take(&mut custody.bound_rows),
+        });
+    }
+    let batch = match build_m1_authenticated_rollover_packet_batch_with_storage_v1(
+        &witness,
+        &operations,
+        recipe,
+        bound_rows,
+        M1PhysicalQueueBatchCustodyV1::from_rearm_parts(custody),
+        &mut storage.packet_batch,
+    ) {
+        Ok(batch) => batch,
+        Err(source) => fail_transition!(
+            terminal_unbound(
+                M1AuthenticatedQueueRearmTerminalPhaseV1::PacketLowering,
+                lower,
+                (witness, operations, source, step, workspace_ranges)
+            ),
+            ()
+        ),
+    };
+    let bound = match (storage.shape, batch) {
+        (
+            M1PhysicalFixedBatchShapeV1::DraftCatchup,
+            M1AuthenticatedQueuePacketBatchV1::DraftCatchup(batch),
+        ) => bind_authenticated_case(
+            lower,
+            *batch,
+            witness,
+            operations,
+            step,
+            expected_observation,
+            storage.phase_catchup.take(),
+            M1AuthenticatedPhysicalQueueSessionV1::DraftCatchup,
+        ),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            M1AuthenticatedQueuePacketBatchV1::SpeculativeK4(batch),
+        ) => bind_authenticated_case(
+            lower,
+            *batch,
+            witness,
+            operations,
+            step,
+            expected_observation,
+            storage.phase.take(),
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK4,
+        ),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            M1AuthenticatedQueuePacketBatchV1::SpeculativeK8(batch),
+        ) => bind_authenticated_case(
+            lower,
+            *batch,
+            witness,
+            operations,
+            step,
+            expected_observation,
+            storage.phase_k8.take(),
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK8,
+        ),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            M1AuthenticatedQueuePacketBatchV1::SpeculativeK16(batch),
+        ) => bind_authenticated_case(
+            lower,
+            *batch,
+            witness,
+            operations,
+            step,
+            expected_observation,
+            storage.phase_k16.take(),
+            M1AuthenticatedPhysicalQueueSessionV1::SpeculativeK16,
+        ),
+        (_, batch) => Err(terminal_unbound(
+            M1AuthenticatedQueueRearmTerminalPhaseV1::ShapeJoin,
+            lower,
+            (witness, operations, batch, step),
+        )),
+    };
+    match bound {
+        Ok(queue) => Ok((
+            queue,
+            saved.expect("entry or restoration retains predecessor bindings"),
+        )),
+        Err(source) => Err((source, saved)),
+    }
 }
 
 pub(crate) fn rearm_m1_authenticated_detached_queue_v1(
