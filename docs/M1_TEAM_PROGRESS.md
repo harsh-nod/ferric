@@ -5,6 +5,47 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Active Integration
 
+Private integration `5b2537fcf9962d94f94f9c92a590f1d5b2cf7f2c`, tree
+`395b6b7fc098a77764769e85127775c7b0588481`, pins published fe2o3
+`82950a3cfc7b0192159fb7afcd1b89fb48d56053`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. The compiler candidate for the next
+failure is not yet published or consumed by this snapshot.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler / Kernels | Exact published 829 tools build and actual extraction passes the paged-attention guarded addition. Ferric `dc32a474`, integrated as `7baa73a8`, specializes five causal-prefill coordinate expressions; all 37 aggregate host tests pass, including actual-source AST equivalence over eight admitted profiles. Actual extraction passes that divisor check, then stops at prefill `cache_head_base + kv_head`, source line 318. A separate fixture reproduces the unrecognized `Ge(value, 8)` false-success edge on unchanged 829. | Validate the narrow compiler comparison-polarity repair, rebase on latest main before publication, update Ferric's pin, and retry actual aggregate emission. No new image, native handoff or GPU result. |
+| Runtime / Integration | The real resident loop now performs the 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. Snapshot `61173085` on 829 passes `cargo check --tests` and all 693 engine library tests, with nine existing ignores. Snapshot `446ac5db` passes 20 focused catch-up tests, including the actual joined-Pending factory, real KV component settlement followed by ordinary continuation, all singleton widths and context/page boundaries. | Full combined-tree engine, adapter, protected-owner, strict Clippy and warmed-planning checks. Repeated native full-accept maintenance/restore, cancellation/fault paths and physical generation accounting still require execution evidence. |
+| Verification | Exact b039/829 passes all 32 locked graphs, 38 sourcegate tests, 31 verifier policies and byte equality for three regenerated dependency TCB inventories. The stale source-pin README is fixed, and its six policies pass on 61173085. Source review confirms surviving verified device getters are unchanged and the four `kv_physical` theorem bodies still exactly match the selected bd2 Verus evidence. | Regenerate source coverage with new runtime bodies pending Verus. Actual sourcegate on 8c7dab35 rejected a forbidden local macro; 5b2537fc expands all seven uses with identical retained owners, without relaxing the checker. The amended gate is pending. No physical catch-up proof or M1 gate closure follows. |
+
+The focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
+terminal full acceptance, foreign coordinators, substituted choices, zero
+generation and epoch exhaustion. Their observations are diagnostic test fixtures,
+not native queue or completed-read witnesses. The KV tests use real component
+transitions but do not execute GPU kernels. Maintenance emits no served token and
+does not increment the logical speculative round; only its physical epoch advances.
+
+Retained local evidence under `.codex-tmp` includes:
+- `ferric-draft-catchup-gate-v1/catchup-resident-engine-r6.stdout`, SHA-256
+  `ac0f7b41fc6a4306f0d452204d89affeaf38da361adb8e2a258394d6d7d7185c`,
+  with raw command, timestamps, stderr and successful exit alongside it.
+- `ferric-draft-catchup-gate-v1/catchup-focused-r7.stdout`, SHA-256
+  `ad18937e0dd2076f0526441af1ac2b89279f4b7fcf398579bbeee740f1dc4888`.
+  Earlier compile failures remain retained rather than replaced by passing logs.
+- `ferric-upstream-829-metadata-v1/metadata-829-evidence-r2.tar.gz`, SHA-256
+  `609394aa7a28e97f5ad20b0fec9fd6146182a3b7779f0ca96a300c261bedfb02`.
+  This preserves the original README-policy failure; the successful rerun is in
+  the runtime evidence directory. Future pin migrations must include that README
+  in addition to the prior 79-file roster.
+
+The Pages-only public `a7a38b26` deployment remains live and byte-verified. Its
+checkpoint predates this resident integration; its performance data is unchanged.
+Completed owned Pages and kernel worktrees/stages have been removed after evidence
+acquisition. Active build caches and other users' worktrees remain untouched.
+All executable validation runs on mi300x. No new TTFT, TPOT, throughput, GPU
+correctness or competitiveness result is claimed.
+
+## Prior Initial 829 Checkpoint
+
 Private integration `b039c17d3287c25d3611e3e2be544003bd9c5a30`, tree
 `a6ccddda03b079664bd0a40708a802362d829390`, pins published fe2o3
 `82950a3cfc7b0192159fb7afcd1b89fb48d56053`. Pliron remains
