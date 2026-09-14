@@ -196,6 +196,10 @@ pub enum M1ServingQueueActionV1 {
     FreshLaunch,
     /// The existing rearm path may reuse the same exact physical plan.
     SameShapeRearm,
+    /// A sealed full-acceptance witness requires one draft-only maintenance step.
+    QuiescentDraftCatchup { parent: M1ServingPlanV1 },
+    /// Checked maintenance must restore the original speculative physical shape.
+    QuiescentDraftCatchupRestore { parent: M1ServingPlanV1 },
     /// The prior generation is quiescent, but its physical custody must be
     /// rebuilt before this roster can be published.
     QuiescentRollover {
@@ -311,6 +315,8 @@ pub enum M1ServingRegistryErrorV1 {
     HostAllocation,
     RegistryIdentityExhausted,
     RegistryIdentityMismatch,
+    DraftCatchupWitnessRequired,
+    DraftCatchupPhaseMismatch,
 }
 
 /// One exact completion disposition in scheduler roster order.
@@ -610,6 +616,73 @@ struct M1ServingReservedBatchV1 {
     plan: M1ServingPlanV1,
     epoch: CompletionEpoch,
     action: M1ServingQueueActionV1,
+    draft_catchup: Option<M1ServingDraftCatchupKeyV1>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct M1ServingDraftCatchupKeyV1 {
+    coordinator: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    completed_round: u64,
+    prior_epoch: CompletionEpoch,
+    epoch: CompletionEpoch,
+    draft_committed: u32,
+    target_committed: u32,
+    token: ferric_spec::TokenId,
+    prior_dispatch_generation: u64,
+}
+
+impl M1ServingDraftCatchupKeyV1 {
+    fn from_pending(
+        pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    ) -> Self {
+        Self {
+            coordinator: pending.coordinator_identity(),
+            parent: pending.parent(),
+            request: pending.request(),
+            completed_round: pending.completed_round(),
+            prior_epoch: pending.prior_epoch(),
+            epoch: pending.epoch(),
+            draft_committed: pending.draft_committed(),
+            target_committed: pending.target_committed(),
+            token: pending.token(),
+            prior_dispatch_generation: pending.prior_dispatch_generation(),
+        }
+    }
+
+    fn valid_for(self, plan: M1ServingPlanV1) -> bool {
+        self.parent == plan.target()
+            && plan.mode() == Qwen3ExecutionMode::Speculative
+            && plan.sequence_capacity() == 1
+            && self.request.generation() != 0
+            && self.completed_round.checked_add(1).is_some()
+            && self.prior_epoch.value() != 0
+            && self.prior_epoch.value().checked_add(1) == Some(self.epoch.value())
+            && self.prior_dispatch_generation != 0
+            && self.prior_dispatch_generation.checked_add(1).is_some()
+            && self.draft_committed.checked_add(1) == Some(self.target_committed)
+            && self.target_committed <= ferric_spec::M1_MAX_CONTEXT_TOKENS
+            && self.token < ferric_spec::QWEN3_VOCABULARY_SIZE
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1ServingDraftCatchupPhaseV1 {
+    Pending(M1ServingDraftCatchupKeyV1),
+    InFlight(M1ServingDraftCatchupKeyV1),
+    Completed {
+        key: M1ServingDraftCatchupKeyV1,
+        dispatch_generation: u64,
+    },
+}
+
+impl M1ServingDraftCatchupPhaseV1 {
+    const fn key(self) -> M1ServingDraftCatchupKeyV1 {
+        match self {
+            Self::Pending(key) | Self::InFlight(key) | Self::Completed { key, .. } => key,
+        }
+    }
 }
 
 /// Fail-closed rejection while reconciling a real authenticated paired-prefill
@@ -793,6 +866,7 @@ pub struct M1ServingRegistryV1<const C: usize> {
     bound_plan: Option<M1ServingPlanV1>,
     reservation: Option<M1ServingReservedBatchV1>,
     in_flight: Option<M1ServingInFlightBatchV1>,
+    draft_catchup: Option<M1ServingDraftCatchupPhaseV1>,
     next_reservation_id: u64,
     submitted_epoch: u64,
     completed_epoch: u64,
@@ -818,6 +892,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             bound_plan: None,
             reservation: None,
             in_flight: None,
+            draft_catchup: None,
             next_reservation_id: 1,
             submitted_epoch: 0,
             completed_epoch: 0,
@@ -829,6 +904,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             && self.bound_plan.is_none()
             && self.reservation.is_none()
             && self.in_flight.is_none()
+            && self.draft_catchup.is_none()
             && self.next_reservation_id == 1
             && self.submitted_epoch == 0
             && self.completed_epoch == 0
@@ -905,6 +981,25 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         self.bound_plan
     }
 
+    /// Physical queue shape; the logical bound plan remains the speculative parent.
+    #[must_use]
+    pub const fn bound_shape(&self) -> Option<M1PhysicalFixedBatchShapeV1> {
+        if matches!(
+            self.draft_catchup,
+            Some(
+                M1ServingDraftCatchupPhaseV1::InFlight(_)
+                    | M1ServingDraftCatchupPhaseV1::Completed { .. }
+            )
+        ) {
+            Some(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+        } else {
+            match self.bound_plan {
+                Some(plan) => Some(plan.shape()),
+                None => None,
+            }
+        }
+    }
+
     #[must_use]
     pub const fn has_in_flight_batch(&self) -> bool {
         self.in_flight.is_some()
@@ -930,9 +1025,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         let Some(bound) = self.bound_plan else {
             return Ok(M1ServingQuiescentQueueActionV1::NoQueue);
         };
-        if self.next_ready_plan().is_some_and(|next| {
-            next == bound || admit_m1_production_rollover_transition_v1(bound, next).is_some()
-        }) {
+        if self.ready_work_needs_bound_queue(bound) {
             Ok(M1ServingQuiescentQueueActionV1::RetainForReadyWork { bound })
         } else {
             Ok(M1ServingQuiescentQueueActionV1::Retire { bound })
@@ -958,12 +1051,11 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if self.bound_plan != Some(bound) {
             return Err(M1ServingRegistryErrorV1::QueuePlanMismatch);
         }
-        if self.next_ready_plan().is_some_and(|next| {
-            next == bound || admit_m1_production_rollover_transition_v1(bound, next).is_some()
-        }) {
+        if self.ready_work_needs_bound_queue(bound) {
             return Err(M1ServingRegistryErrorV1::ReadyWorkRequiresQueue);
         }
         self.bound_plan = None;
+        self.draft_catchup = None;
         Ok(())
     }
 
@@ -981,6 +1073,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         next: M1ServingPlanV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
         self.reject_live_reservation()?;
+        if self.draft_catchup.is_some() {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
         let entry = self.entry_mut(request)?;
         if entry.phase != M1ServingRequestPhaseV1::Ready || entry.last_quiescence.is_none() {
             return Err(M1ServingRegistryErrorV1::TransitionRequiresQuiescence);
@@ -1040,23 +1135,35 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         };
         let limit = C.min(selected_plan.sequence_capacity());
         let mut requests = M1ServingInlineRosterV1::new();
-        for entry in self
-            .entries
-            .iter()
-            .filter(|entry| {
-                entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == selected_plan
-            })
-            .take(limit)
-        {
+        if let Some(phase) = self.draft_catchup {
+            let key = phase.key();
+            if self.entry(key.request).is_none_or(|entry| {
+                entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != selected_plan
+            }) {
+                return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+            }
             requests
-                .try_push(entry.request)
+                .try_push(key.request)
                 .map_err(|_| M1ServingRegistryErrorV1::CapacityExceedsM1)?;
+        } else {
+            for entry in self
+                .entries
+                .iter()
+                .filter(|entry| {
+                    entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == selected_plan
+                })
+                .take(limit)
+            {
+                requests
+                    .try_push(entry.request)
+                    .map_err(|_| M1ServingRegistryErrorV1::CapacityExceedsM1)?;
+            }
         }
         let next_epoch = self
             .submitted_epoch
             .checked_add(1)
             .ok_or(M1ServingRegistryErrorV1::CompletionEpochMismatch)?;
-        let action = classify_queue_action(self.bound_plan, selected_plan)?;
+        let action = self.classify_next_queue_action(selected_plan)?;
         Ok(Some(M1ServingBatchPlanV1 {
             plan: selected_plan,
             requests,
@@ -1080,7 +1187,107 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         if self.in_flight.is_some() {
             return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
         }
+        if matches!(
+            batch.action,
+            M1ServingQueueActionV1::QuiescentDraftCatchup { .. }
+                | M1ServingQueueActionV1::QuiescentDraftCatchupRestore { .. }
+        ) {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired);
+        }
         self.validate_next_batch(&batch)?;
+        self.reserve_validated_batch(batch, None)
+    }
+
+    /// Records the sealed full-acceptance obligation before next-step planning.
+    pub(crate) fn register_draft_catchup_pending(
+        &mut self,
+        pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.register_draft_catchup_key(M1ServingDraftCatchupKeyV1::from_pending(pending))
+    }
+
+    fn register_draft_catchup_key(
+        &mut self,
+        key: M1ServingDraftCatchupKeyV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
+        if self.in_flight.is_some() {
+            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        }
+        if self.draft_catchup.is_some() {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        let parent = self
+            .bound_plan
+            .ok_or(M1ServingRegistryErrorV1::QueuePlanMismatch)?;
+        self.validate_draft_catchup_ready_key(parent, key)?;
+        self.draft_catchup = Some(M1ServingDraftCatchupPhaseV1::Pending(key));
+        Ok(())
+    }
+
+    pub(crate) fn reserve_draft_catchup_publication(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        pending: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupPendingV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reserve_draft_catchup_key(batch, M1ServingDraftCatchupKeyV1::from_pending(pending))
+    }
+
+    fn reserve_draft_catchup_key(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        key: M1ServingDraftCatchupKeyV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
+        if self.in_flight.is_some() {
+            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        }
+        self.validate_next_batch(&batch)?;
+        self.validate_draft_catchup_start(&batch, key)?;
+        self.reserve_validated_batch(batch, Some(key))
+    }
+
+    pub(crate) fn reserve_draft_catchup_restore_publication(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reserve_draft_catchup_restore_key(
+            batch,
+            M1ServingDraftCatchupKeyV1::from_pending(completed.pending()),
+            completed.dispatch_generation(),
+        )
+    }
+
+    fn reserve_draft_catchup_restore_key(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        key: M1ServingDraftCatchupKeyV1,
+        dispatch_generation: u64,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
+        if self.in_flight.is_some() {
+            return Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight);
+        }
+        if self.draft_catchup
+            != Some(M1ServingDraftCatchupPhaseV1::Completed {
+                key,
+                dispatch_generation,
+            })
+            || batch.requests.as_slice() != [key.request]
+            || batch.plan.target() != key.parent
+        {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        self.validate_next_batch(&batch)?;
+        self.reserve_validated_batch(batch, None)
+    }
+
+    fn reserve_validated_batch(
+        &mut self,
+        batch: M1ServingBatchPlanV1,
+        draft_catchup: Option<M1ServingDraftCatchupKeyV1>,
+    ) -> Result<M1ServingPublicationReservationV1, M1ServingRegistryErrorV1> {
         let following_id = self
             .next_reservation_id
             .checked_add(1)
@@ -1091,6 +1298,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             plan: batch.plan,
             epoch: batch.epoch,
             action: batch.action,
+            draft_catchup,
         });
         self.next_reservation_id = following_id;
         Ok(M1ServingPublicationReservationV1 {
@@ -1157,6 +1365,12 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }
         if self.in_flight.is_some() {
             return reject(M1ServingRegistryErrorV1::BatchAlreadyInFlight, requests);
+        }
+        if self.draft_catchup.is_some() {
+            return reject(
+                M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch,
+                requests,
+            );
         }
         let Some(prior) = self.bound_plan else {
             return reject(M1ServingRegistryErrorV1::QueuePlanMismatch, requests);
@@ -1266,6 +1480,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             plan,
             epoch: CompletionEpoch::new(next_epoch),
             action,
+            draft_catchup: None,
         });
         self.next_reservation_id = following_id;
         let predecessors = core::mem::replace(&mut self.entries, next_entries);
@@ -1404,7 +1619,22 @@ impl<const C: usize> M1ServingRegistryV1<C> {
                 reservation: Box::new(reservation),
             });
         }
+        let maintenance_key = self
+            .reservation
+            .as_ref()
+            .and_then(|live| live.draft_catchup);
         let batch = reservation.batch;
+        match batch.action {
+            M1ServingQueueActionV1::QuiescentDraftCatchup { .. } => {
+                self.draft_catchup = Some(M1ServingDraftCatchupPhaseV1::InFlight(
+                    maintenance_key.expect("validated maintenance reservation retains its key"),
+                ));
+            }
+            M1ServingQueueActionV1::QuiescentDraftCatchupRestore { .. } => {
+                self.draft_catchup = None;
+            }
+            _ => {}
+        }
         for entry in &mut self.entries {
             if batch.requests.contains(&entry.request) {
                 entry.phase = M1ServingRequestPhaseV1::InFlight { epoch: batch.epoch };
@@ -1419,6 +1649,79 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             epoch: batch.epoch,
         });
         Ok(())
+    }
+
+    pub(crate) fn preflight_draft_catchup_completion(
+        &self,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.validate_draft_catchup_completion(
+            M1ServingDraftCatchupKeyV1::from_pending(completed.pending()),
+            completed.dispatch_generation(),
+        )
+        .map(|_| ())
+    }
+
+    pub(crate) fn complete_draft_catchup(
+        &mut self,
+        completed: &crate::authenticated_speculative_executor::M1AuthenticatedDraftCatchupCompletedV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        self.complete_draft_catchup_key(
+            M1ServingDraftCatchupKeyV1::from_pending(completed.pending()),
+            completed.dispatch_generation(),
+        )
+    }
+
+    fn complete_draft_catchup_key(
+        &mut self,
+        key: M1ServingDraftCatchupKeyV1,
+        dispatch_generation: u64,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        let disposition = self.validate_draft_catchup_completion(key, dispatch_generation)?;
+        self.apply_validated_completion(key.epoch, &[disposition]);
+        self.draft_catchup = Some(M1ServingDraftCatchupPhaseV1::Completed {
+            key,
+            dispatch_generation,
+        });
+        Ok(())
+    }
+
+    fn validate_draft_catchup_completion(
+        &self,
+        key: M1ServingDraftCatchupKeyV1,
+        dispatch_generation: u64,
+    ) -> Result<M1ServingCompletionDispositionV1, M1ServingRegistryErrorV1> {
+        self.reject_live_reservation()?;
+        let in_flight = self
+            .in_flight
+            .as_ref()
+            .ok_or(M1ServingRegistryErrorV1::NoBatchInFlight)?;
+        if self.draft_catchup != Some(M1ServingDraftCatchupPhaseV1::InFlight(key))
+            || !key.valid_for(in_flight.plan)
+            || key.prior_dispatch_generation.checked_add(1) != Some(dispatch_generation)
+            || in_flight.requests.as_slice() != [key.request]
+            || in_flight.epoch != key.epoch
+            || self.bound_plan != Some(in_flight.plan)
+            || self.submitted_epoch != key.epoch.value()
+            || self.completed_epoch != key.prior_epoch.value()
+        {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        let entry = self
+            .entry(key.request)
+            .ok_or(M1ServingRegistryErrorV1::UnknownRequest)?;
+        if entry.plan != in_flight.plan || entry.last_quiescence != Some(key.prior_epoch) {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        match entry.phase {
+            M1ServingRequestPhaseV1::InFlight { epoch } if epoch == key.epoch => {
+                Ok(M1ServingCompletionDispositionV1::Continue(entry.plan))
+            }
+            M1ServingRequestPhaseV1::CancellationPending { epoch } if epoch == key.epoch => {
+                Ok(M1ServingCompletionDispositionV1::Retire)
+            }
+            _ => Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch),
+        }
     }
 
     pub(crate) fn preflight_completion_exact_for(
@@ -1478,6 +1781,9 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         dispositions: &[M1ServingCompletionDispositionV1],
     ) -> Result<(), M1ServingRegistryErrorV1> {
         self.reject_live_reservation()?;
+        if self.draft_catchup.is_some() {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired);
+        }
         let Some(in_flight) = self.in_flight.as_ref() else {
             return Err(M1ServingRegistryErrorV1::NoBatchInFlight);
         };
@@ -1553,11 +1859,100 @@ impl<const C: usize> M1ServingRegistryV1<C> {
     }
 
     fn next_ready_plan(&self) -> Option<M1ServingPlanV1> {
+        if let Some(phase) = self.draft_catchup {
+            let key = phase.key();
+            if let Some(entry) = self.entry(key.request).filter(|entry| {
+                entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan.target() == key.parent
+            }) {
+                return Some(entry.plan);
+            }
+        }
         self.entries
             .iter()
             .filter(|entry| entry.phase == M1ServingRequestPhaseV1::Ready)
             .min_by_key(|entry| plan_priority(entry.plan))
             .map(|entry| entry.plan)
+    }
+
+    fn ready_work_needs_bound_queue(&self, bound: M1ServingPlanV1) -> bool {
+        if let Some(phase) = self.draft_catchup {
+            let key = phase.key();
+            return key.parent == bound.target()
+                && self.entry(key.request).is_some_and(|entry| {
+                    entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == bound
+                });
+        }
+        self.next_ready_plan().is_some_and(|next| {
+            next == bound || admit_m1_production_rollover_transition_v1(bound, next).is_some()
+        })
+    }
+
+    fn classify_next_queue_action(
+        &self,
+        selected_plan: M1ServingPlanV1,
+    ) -> Result<M1ServingQueueActionV1, M1ServingRegistryErrorV1> {
+        match self.draft_catchup {
+            None => classify_queue_action(self.bound_plan, selected_plan),
+            Some(M1ServingDraftCatchupPhaseV1::Pending(key))
+                if self.bound_plan == Some(selected_plan)
+                    && key.parent == selected_plan.target()
+                    && self.entry(key.request).is_some_and(|entry| {
+                        entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == selected_plan
+                    }) =>
+            {
+                Ok(M1ServingQueueActionV1::QuiescentDraftCatchup {
+                    parent: selected_plan,
+                })
+            }
+            Some(M1ServingDraftCatchupPhaseV1::Completed { key, .. })
+                if self.bound_plan == Some(selected_plan)
+                    && key.parent == selected_plan.target()
+                    && self.entry(key.request).is_some_and(|entry| {
+                        entry.phase == M1ServingRequestPhaseV1::Ready && entry.plan == selected_plan
+                    }) =>
+            {
+                Ok(M1ServingQueueActionV1::QuiescentDraftCatchupRestore {
+                    parent: selected_plan,
+                })
+            }
+            Some(_) => Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch),
+        }
+    }
+
+    fn validate_draft_catchup_start(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+        key: M1ServingDraftCatchupKeyV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        if self.draft_catchup != Some(M1ServingDraftCatchupPhaseV1::Pending(key))
+            || batch.action
+                != (M1ServingQueueActionV1::QuiescentDraftCatchup { parent: batch.plan })
+            || batch.requests.as_slice() != [key.request]
+            || batch.epoch != key.epoch
+        {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        self.validate_draft_catchup_ready_key(batch.plan, key)
+    }
+
+    fn validate_draft_catchup_ready_key(
+        &self,
+        parent: M1ServingPlanV1,
+        key: M1ServingDraftCatchupKeyV1,
+    ) -> Result<(), M1ServingRegistryErrorV1> {
+        if !key.valid_for(parent)
+            || self.bound_plan != Some(parent)
+            || self.submitted_epoch != key.prior_epoch.value()
+            || self.completed_epoch != key.prior_epoch.value()
+            || self.entry(key.request).is_none_or(|entry| {
+                entry.phase != M1ServingRequestPhaseV1::Ready
+                    || entry.plan != parent
+                    || entry.last_quiescence != Some(key.prior_epoch)
+            })
+        {
+            return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+        }
+        Ok(())
     }
 
     fn entry_mut(
@@ -1582,6 +1977,17 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         &self,
         batch: &M1ServingBatchPlanV1,
     ) -> Result<(), M1ServingRegistryErrorV1> {
+        if let Some(phase) = self.draft_catchup {
+            let key = phase.key();
+            if batch.requests.as_slice() != [key.request]
+                || self.entry(key.request).is_none_or(|entry| {
+                    entry.phase != M1ServingRequestPhaseV1::Ready || entry.plan != batch.plan
+                })
+            {
+                return Err(M1ServingRegistryErrorV1::PublicationReservationMismatch);
+            }
+            return Ok(());
+        }
         let limit = C.min(batch.plan.sequence_capacity());
         let mut expected_count = 0;
         for entry in self
@@ -1617,7 +2023,7 @@ impl<const C: usize> M1ServingRegistryV1<C> {
             .submitted_epoch
             .checked_add(1)
             .ok_or(M1ServingRegistryErrorV1::CompletionEpochMismatch)?;
-        let action = classify_queue_action(self.bound_plan, selected_plan)?;
+        let action = self.classify_next_queue_action(selected_plan)?;
         if batch.plan != selected_plan
             || batch.epoch != CompletionEpoch::new(next_epoch)
             || batch.action != action
@@ -1649,6 +2055,34 @@ impl<const C: usize> M1ServingRegistryV1<C> {
         }
         if reservation.batch.epoch.value() != self.submitted_epoch.saturating_add(1) {
             return Err(M1ServingRegistryErrorV1::CompletionEpochMismatch);
+        }
+        match reservation.batch.action {
+            M1ServingQueueActionV1::QuiescentDraftCatchup { parent } => {
+                let key = live
+                    .draft_catchup
+                    .ok_or(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired)?;
+                if parent != reservation.batch.plan {
+                    return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+                }
+                self.validate_draft_catchup_start(&reservation.batch, key)?;
+            }
+            M1ServingQueueActionV1::QuiescentDraftCatchupRestore { parent } => {
+                let Some(M1ServingDraftCatchupPhaseV1::Completed { key, .. }) = self.draft_catchup
+                else {
+                    return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+                };
+                if live.draft_catchup.is_some()
+                    || parent != reservation.batch.plan
+                    || reservation.batch.requests.as_slice() != [key.request]
+                {
+                    return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+                }
+                self.validate_next_batch(&reservation.batch)?;
+            }
+            _ if live.draft_catchup.is_some() || self.draft_catchup.is_some() => {
+                return Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch);
+            }
+            _ => {}
         }
         self.validate_ready_roster(&reservation.batch)
     }
@@ -2338,6 +2772,536 @@ mod tests {
     ) {
         let reservation = registry.reserve_publication(batch).unwrap();
         registry.record_publication(reservation).unwrap();
+    }
+
+    #[derive(Debug, Eq, PartialEq)]
+    struct CatchupRegistrySnapshot {
+        entries: Vec<M1ServingEntryV1>,
+        bound: Option<M1ServingPlanV1>,
+        reservation: Option<(
+            u64,
+            M1ServingPlanV1,
+            CompletionEpoch,
+            M1ServingQueueActionV1,
+            Option<M1ServingDraftCatchupKeyV1>,
+        )>,
+        in_flight: Option<(M1ServingPlanV1, Vec<RequestId>, CompletionEpoch)>,
+        phase: Option<M1ServingDraftCatchupPhaseV1>,
+        next_reservation: u64,
+        submitted: u64,
+        completed: u64,
+    }
+
+    fn catchup_snapshot(registry: &M1ServingRegistryV1<2>) -> CatchupRegistrySnapshot {
+        CatchupRegistrySnapshot {
+            entries: registry.entries.clone(),
+            bound: registry.bound_plan,
+            reservation: registry.reservation.as_ref().map(|live| {
+                (
+                    live.id,
+                    live.plan,
+                    live.epoch,
+                    live.action,
+                    live.draft_catchup,
+                )
+            }),
+            in_flight: registry
+                .in_flight
+                .as_ref()
+                .map(|live| (live.plan, live.requests.to_vec(), live.epoch)),
+            phase: registry.draft_catchup,
+            next_reservation: registry.next_reservation_id,
+            submitted: registry.submitted_epoch,
+            completed: registry.completed_epoch,
+        }
+    }
+
+    // These fixtures exercise registry metadata only; they do not mint physical witnesses.
+    fn catchup_registry(
+        parent: M1ServingPlanV1,
+    ) -> (M1ServingRegistryV1<2>, M1ServingDraftCatchupKeyV1) {
+        use crate::speculative_generation_loop::{
+            M1SpeculativeGenerationLoopV1, M1SpeculativeGenerationPolicyV1,
+            M1SpeculativeMemberSeedV1,
+        };
+        let request = RequestId::new(0, 1);
+        let mut registry = M1ServingRegistryV1::<2>::new().unwrap();
+        registry.admit(request, prefill_s1()).unwrap();
+        let dispositions = [M1ServingCompletionDispositionV1::Continue(parent)];
+        publish_and_complete(&mut registry, &dispositions);
+        publish_and_complete(&mut registry, &dispositions);
+        let coordinator = M1SpeculativeGenerationLoopV1::new(
+            parent.target(),
+            &[M1SpeculativeMemberSeedV1::new(
+                request,
+                70,
+                10,
+                10,
+                M1SpeculativeGenerationPolicyV1::new(64, &[999]).unwrap(),
+            )],
+        )
+        .unwrap();
+        let k = match parent.target().bucket {
+            Qwen3PlanBucket::SpeculativeS1K4C8192 => 4,
+            Qwen3PlanBucket::SpeculativeS1K8C8192 => 8,
+            Qwen3PlanBucket::SpeculativeS1K16C8192 => 16,
+            _ => panic!("fixture requires a canonical singleton speculative parent"),
+        };
+        let key = M1ServingDraftCatchupKeyV1 {
+            coordinator: coordinator.identity(),
+            parent: parent.target(),
+            request,
+            completed_round: 0,
+            prior_epoch: CompletionEpoch::new(2),
+            epoch: CompletionEpoch::new(3),
+            draft_committed: 10 + k,
+            target_committed: 11 + k,
+            token: 71,
+            prior_dispatch_generation: 41,
+        };
+        (registry, key)
+    }
+
+    fn publish_catchup(registry: &mut M1ServingRegistryV1<2>, key: M1ServingDraftCatchupKeyV1) {
+        registry.register_draft_catchup_key(key).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        let reservation = registry.reserve_draft_catchup_key(batch, key).unwrap();
+        registry.record_publication(reservation).unwrap();
+    }
+
+    #[test]
+    fn draft_catchup_k4_k8_k16_preserves_obligation_across_both_publication_aborts() {
+        for parent in [speculative_s1(), speculative_s1_k8(), speculative_s1_k16()] {
+            let (mut registry, key) = catchup_registry(parent);
+            registry.register_draft_catchup_key(key).unwrap();
+            assert_eq!(registry.bound_shape(), Some(parent.shape()));
+            let batch = registry.plan_next().unwrap().unwrap();
+            assert_eq!(batch.requests(), &[key.request]);
+            assert_eq!(batch.epoch(), key.epoch);
+            assert_eq!(
+                batch.action(),
+                M1ServingQueueActionV1::QuiescentDraftCatchup { parent }
+            );
+            let before = catchup_snapshot(&registry);
+            assert_eq!(
+                registry.reserve_publication(batch.duplicate()),
+                Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+            let reserved = registry.reserve_draft_catchup_key(batch, key).unwrap();
+            let first_id = reserved.id;
+            registry.abort_publication(reserved).unwrap();
+            let mut after_abort = catchup_snapshot(&registry);
+            assert_eq!(after_abort.next_reservation, before.next_reservation + 1);
+            after_abort.next_reservation = before.next_reservation;
+            assert_eq!(after_abort, before);
+            let retry = registry.plan_next().unwrap().unwrap();
+            let reserved = registry.reserve_draft_catchup_key(retry, key).unwrap();
+            assert!(reserved.id > first_id);
+            registry.record_publication(reserved).unwrap();
+            assert_eq!(registry.bound_plan(), Some(parent));
+            assert_eq!(
+                registry.bound_shape(),
+                Some(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+            );
+            let before = catchup_snapshot(&registry);
+            assert_eq!(
+                complete_exact(
+                    &mut registry,
+                    key.epoch,
+                    &[M1ServingCompletionDispositionV1::Continue(parent)]
+                ),
+                Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+            registry.complete_draft_catchup_key(key, 42).unwrap();
+            assert_eq!(
+                registry.phase(key.request),
+                Some(M1ServingRequestPhaseV1::Ready)
+            );
+            assert_eq!((registry.submitted_epoch, registry.completed_epoch), (3, 3));
+            assert_eq!(registry.bound_plan(), Some(parent));
+            assert_eq!(
+                registry.bound_shape(),
+                Some(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+            );
+            let before = catchup_snapshot(&registry);
+            assert_eq!(
+                registry.complete_draft_catchup_key(key, 42),
+                Err(M1ServingRegistryErrorV1::NoBatchInFlight)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+            let restore = registry.plan_next().unwrap().unwrap();
+            assert_eq!(restore.epoch(), CompletionEpoch::new(4));
+            assert_eq!(
+                restore.action(),
+                M1ServingQueueActionV1::QuiescentDraftCatchupRestore { parent }
+            );
+            assert_eq!(
+                registry.reserve_publication(restore.duplicate()),
+                Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+            let reserved = registry
+                .reserve_draft_catchup_restore_key(restore, key, 42)
+                .unwrap();
+            registry.abort_publication(reserved).unwrap();
+            let mut after_abort = catchup_snapshot(&registry);
+            assert_eq!(after_abort.next_reservation, before.next_reservation + 1);
+            after_abort.next_reservation = before.next_reservation;
+            assert_eq!(after_abort, before);
+            let restore = registry.plan_next().unwrap().unwrap();
+            let reserved = registry
+                .reserve_draft_catchup_restore_key(restore, key, 42)
+                .unwrap();
+            registry.record_publication(reserved).unwrap();
+            assert_eq!(registry.draft_catchup, None);
+            assert_eq!(registry.bound_shape(), Some(parent.shape()));
+            complete_exact(
+                &mut registry,
+                CompletionEpoch::new(4),
+                &[M1ServingCompletionDispositionV1::Continue(parent)],
+            )
+            .unwrap();
+            assert_eq!(
+                registry.plan_next().unwrap().unwrap().action(),
+                M1ServingQueueActionV1::SameShapeRearm
+            );
+        }
+    }
+
+    #[test]
+    fn draft_catchup_rejects_invalid_registration_without_mutation() {
+        let parent = speculative_s1_k16();
+        let (mut registry, key) = catchup_registry(parent);
+        let invalid = [
+            M1ServingDraftCatchupKeyV1 {
+                request: RequestId::new(0, 2),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                request: RequestId::new(0, 0),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                parent: speculative_s1().target(),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                completed_round: u64::MAX,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_epoch: CompletionEpoch::new(0),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_epoch: CompletionEpoch::new(1),
+                epoch: CompletionEpoch::new(2),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                epoch: CompletionEpoch::new(4),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_dispatch_generation: 0,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_dispatch_generation: u64::MAX,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                draft_committed: key.target_committed,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                draft_committed: u32::MAX,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                draft_committed: 8192,
+                target_committed: 8193,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                token: ferric_spec::QWEN3_VOCABULARY_SIZE,
+                ..key
+            },
+        ];
+        let before = catchup_snapshot(&registry);
+        for candidate in invalid {
+            assert_eq!(
+                registry.register_draft_catchup_key(candidate),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch),
+                "{candidate:?}"
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+        registry.register_draft_catchup_key(key).unwrap();
+        let before = catchup_snapshot(&registry);
+        assert_eq!(
+            registry.register_draft_catchup_key(key),
+            Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+        assert_eq!(
+            registry.transition(key.request, decode_s1()),
+            Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+    }
+
+    #[test]
+    fn draft_catchup_rejects_substituted_keys_and_dispatch_generations() {
+        let parent = speculative_s1_k8();
+        let (mut registry, key) = catchup_registry(parent);
+        let (_, other_key) = catchup_registry(parent);
+        assert_ne!(key.coordinator, other_key.coordinator);
+        let substitutions = [
+            M1ServingDraftCatchupKeyV1 {
+                coordinator: other_key.coordinator,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                request: RequestId::new(0, 2),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                parent: speculative_s1().target(),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                completed_round: 1,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_epoch: CompletionEpoch::new(1),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                epoch: CompletionEpoch::new(4),
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                prior_dispatch_generation: 42,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                draft_committed: key.draft_committed + 1,
+                target_committed: key.target_committed + 1,
+                ..key
+            },
+            M1ServingDraftCatchupKeyV1 {
+                token: key.token + 1,
+                ..key
+            },
+        ];
+        registry.register_draft_catchup_key(key).unwrap();
+        let before = catchup_snapshot(&registry);
+        for candidate in substitutions {
+            let batch = registry.plan_next().unwrap().unwrap();
+            assert_eq!(
+                registry.reserve_draft_catchup_key(batch, candidate),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+        let batch = registry.plan_next().unwrap().unwrap();
+        let reserved = registry.reserve_draft_catchup_key(batch, key).unwrap();
+        registry.record_publication(reserved).unwrap();
+        let before = catchup_snapshot(&registry);
+        for candidate in substitutions {
+            assert_eq!(
+                registry.complete_draft_catchup_key(candidate, 42),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+        for generation in [0, 41, 43, u64::MAX] {
+            assert_eq!(
+                registry.complete_draft_catchup_key(key, generation),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+        registry.complete_draft_catchup_key(key, 42).unwrap();
+        let before = catchup_snapshot(&registry);
+        for candidate in substitutions {
+            let restore = registry.plan_next().unwrap().unwrap();
+            assert_eq!(
+                registry.reserve_draft_catchup_restore_key(restore, candidate, 42),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+        for generation in [0, 41, 43, u64::MAX] {
+            let restore = registry.plan_next().unwrap().unwrap();
+            assert_eq!(
+                registry.reserve_draft_catchup_restore_key(restore, key, generation),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(catchup_snapshot(&registry), before);
+        }
+    }
+
+    #[test]
+    fn draft_catchup_prioritizes_exact_request_over_older_ready_member() {
+        let parent = speculative_s1();
+        let (mut registry, key) = catchup_registry(parent);
+        let other = M1ServingEntryV1 {
+            request: RequestId::new(1, 1),
+            plan: parent,
+            phase: M1ServingRequestPhaseV1::Ready,
+            last_quiescence: Some(key.prior_epoch),
+        };
+        registry.entries.insert(0, other);
+        registry.register_draft_catchup_key(key).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        assert_eq!(batch.requests(), &[key.request]);
+        let mut substituted = batch.duplicate();
+        substituted.requests = M1ServingInlineRosterV1::new();
+        substituted.requests.try_push(other.request).unwrap();
+        let before = catchup_snapshot(&registry);
+        assert_eq!(
+            registry.reserve_draft_catchup_key(substituted, key),
+            Err(M1ServingRegistryErrorV1::PublicationReservationMismatch)
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+        let reserved = registry.reserve_draft_catchup_key(batch, key).unwrap();
+        registry.record_publication(reserved).unwrap();
+        registry.complete_draft_catchup_key(key, 42).unwrap();
+        assert_eq!(registry.entries[0], other);
+        let restore = registry.plan_next().unwrap().unwrap();
+        assert_eq!(restore.requests(), &[key.request]);
+        assert_eq!(
+            restore.action(),
+            M1ServingQueueActionV1::QuiescentDraftCatchupRestore { parent }
+        );
+    }
+
+    #[test]
+    fn draft_catchup_cancelled_quiescent_member_requires_queue_retirement_before_other_work() {
+        for completed in [false, true] {
+            let parent = speculative_s1_k16();
+            let (mut registry, key) = catchup_registry(parent);
+            if completed {
+                publish_catchup(&mut registry, key);
+                registry.complete_draft_catchup_key(key, 42).unwrap();
+            } else {
+                registry.register_draft_catchup_key(key).unwrap();
+            }
+            let other = RequestId::new(1, 1);
+            registry.admit(other, prefill_s1()).unwrap();
+            let quiescence = if completed {
+                key.epoch
+            } else {
+                key.prior_epoch
+            };
+            assert_eq!(
+                registry.cancel(key.request).unwrap(),
+                M1ServingRequestPhaseV1::Retired {
+                    quiescence: M1ServingQuiescenceV1::Completed(quiescence),
+                }
+            );
+            assert_eq!(
+                registry.plan_next(),
+                Err(M1ServingRegistryErrorV1::DraftCatchupPhaseMismatch)
+            );
+            assert_eq!(
+                registry.quiescent_queue_action().unwrap(),
+                M1ServingQuiescentQueueActionV1::Retire { bound: parent }
+            );
+            assert_eq!(
+                registry.bound_shape(),
+                Some(if completed {
+                    M1PhysicalFixedBatchShapeV1::DraftCatchup
+                } else {
+                    parent.shape()
+                })
+            );
+            registry.record_quiescent_queue_retirement(parent).unwrap();
+            assert_eq!(registry.draft_catchup, None);
+            assert_eq!(registry.bound_shape(), None);
+            let next = registry.plan_next().unwrap().unwrap();
+            assert_eq!(next.requests(), &[other]);
+            assert_eq!(next.action(), M1ServingQueueActionV1::FreshLaunch);
+            assert_eq!(next.epoch().value(), quiescence.value() + 1);
+        }
+    }
+
+    #[test]
+    fn draft_catchup_in_flight_cancellation_requires_checked_maintenance_completion() {
+        let parent = speculative_s1_k8();
+        let (mut registry, key) = catchup_registry(parent);
+        publish_catchup(&mut registry, key);
+        assert_eq!(
+            registry.cancel(key.request).unwrap(),
+            M1ServingRequestPhaseV1::CancellationPending { epoch: key.epoch }
+        );
+        let before = catchup_snapshot(&registry);
+        assert_eq!(
+            registry.record_quiescent_queue_retirement(parent),
+            Err(M1ServingRegistryErrorV1::BatchAlreadyInFlight)
+        );
+        assert_eq!(
+            complete_exact(
+                &mut registry,
+                key.epoch,
+                &[M1ServingCompletionDispositionV1::Retire]
+            ),
+            Err(M1ServingRegistryErrorV1::DraftCatchupWitnessRequired)
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+        registry.complete_draft_catchup_key(key, 42).unwrap();
+        assert_eq!(
+            registry.phase(key.request),
+            Some(M1ServingRequestPhaseV1::Retired {
+                quiescence: M1ServingQuiescenceV1::Completed(key.epoch),
+            })
+        );
+        assert!(registry.plan_next().unwrap().is_none());
+        assert_eq!(
+            registry.bound_shape(),
+            Some(M1PhysicalFixedBatchShapeV1::DraftCatchup)
+        );
+        registry.record_quiescent_queue_retirement(parent).unwrap();
+        assert_eq!(registry.draft_catchup, None);
+    }
+
+    #[test]
+    fn draft_catchup_rejected_publication_retains_the_exact_reservation() {
+        let parent = speculative_s1();
+        let (mut registry, key) = catchup_registry(parent);
+        let (other, _) = catchup_registry(parent);
+        registry.register_draft_catchup_key(key).unwrap();
+        let batch = registry.plan_next().unwrap().unwrap();
+        let mut reserved = registry.reserve_draft_catchup_key(batch, key).unwrap();
+        let before = catchup_snapshot(&registry);
+        reserved.registry_identity = other.identity;
+        let failure = registry.record_publication(reserved).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::RegistryIdentityMismatch
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+        let mut reserved = failure.into_reservation();
+        reserved.registry_identity = registry.identity;
+        reserved.batch.action = M1ServingQueueActionV1::SameShapeRearm;
+        let failure = registry.abort_publication(reserved).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            M1ServingRegistryErrorV1::PublicationReservationMismatch
+        );
+        assert_eq!(catchup_snapshot(&registry), before);
+        let mut reserved = failure.into_reservation();
+        reserved.batch.action = M1ServingQueueActionV1::QuiescentDraftCatchup { parent };
+        registry.abort_publication(reserved).unwrap();
+        assert_eq!(
+            registry.draft_catchup,
+            Some(M1ServingDraftCatchupPhaseV1::Pending(key))
+        );
     }
 
     #[test]
