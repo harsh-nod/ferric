@@ -1375,7 +1375,9 @@ fn validate_rearm_eligibility(
         | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
             selection.mode == Qwen3ExecutionMode::Speculative
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => false,
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            false
+        }
     };
     let qualification_shape_is_supported = !qualification_logits_enabled
         || (shape == M1PhysicalFixedBatchShapeV1::TargetOnly
@@ -10074,7 +10076,7 @@ fn finish_rearm_submission(
                 }
             }
         }
-        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::DraftCatchup => {
             return Err(submission_failure(
                 M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
                 (lower, custody, catalog, images, step),
@@ -11119,7 +11121,9 @@ fn submit_m1_finite_speculative_queue_rollover_inner_v1(
                 }
             }
         }
-        M1PhysicalFixedBatchShapeV1::TargetOnly | M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+        M1PhysicalFixedBatchShapeV1::TargetOnly
+        | M1PhysicalFixedBatchShapeV1::PairedPrefill
+        | M1PhysicalFixedBatchShapeV1::DraftCatchup => {
             unreachable!("finite-speculative successor shape was preflighted")
         }
     };

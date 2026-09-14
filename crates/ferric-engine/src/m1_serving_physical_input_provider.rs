@@ -1036,6 +1036,9 @@ fn dispatch_intent(plan: M1ServingPlanV1) -> M1StepDispatchIntent {
 
 fn semantic_evidence(plan: M1ServingPlanV1) -> M1ServingPreparedSemanticEvidenceV1 {
     match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted standalone serving plan")
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
             M1ServingPreparedSemanticEvidenceV1::Direct
         }
@@ -1134,6 +1137,9 @@ fn expected_first_publication_allocation_count(
     finite_speculative_successor: Option<Qwen3PlanSelection>,
 ) -> usize {
     let workspace_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted first-publication plan")
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill => M1_PAIRED_WORKSPACE_ALLOCATION_COUNT_V1,
         M1PhysicalFixedBatchShapeV1::TargetOnly => M1_TARGET_ONLY_WORKSPACE_ALLOCATION_COUNT_V1,
         M1PhysicalFixedBatchShapeV1::SpeculativeK4
@@ -1143,6 +1149,9 @@ fn expected_first_publication_allocation_count(
         }
     };
     let diagnostic_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted first-publication plan")
+        }
         M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
             M1_DIRECT_DIAGNOSTIC_ALLOCATION_COUNT_V1
         }

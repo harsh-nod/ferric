@@ -804,6 +804,11 @@ impl M1FullStepWorkspaceImageHostStorageV1 {
             | M1FullStepWorkspacePlans::SpeculativeRound {
                 draft_decode: draft,
                 target_speculative: target,
+            }
+            | M1FullStepWorkspacePlans::DraftCatchup {
+                draft_decode: draft,
+                completion: target,
+                ..
             } => Some(Self {
                 draft: Some(Self::allocate_image(draft)?),
                 target: Some(Self::allocate_image(target)?),

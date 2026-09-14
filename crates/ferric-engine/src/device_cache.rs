@@ -4596,13 +4596,13 @@ impl PendingDeviceKvStepWrite {
 
     #[must_use]
     pub const fn page_table(&self) -> &[DeviceKvStepPageIdentity] {
-        &self.page_table
+        self.page_table.as_slice()
     }
 
     /// Exact nonempty per-page spans partitioning the step-write interval.
     #[must_use]
     pub const fn write_pages(&self) -> &[DeviceKvStepPageBinding] {
-        &self.write_pages
+        self.write_pages.as_slice()
     }
 
     /// Number of page leases retained for page-table positions not yet bound.
@@ -4718,11 +4718,11 @@ impl InertInitializedDeviceKvStepWrite {
     }
 
     pub(crate) const fn page_table(&self) -> &[DeviceKvStepPageIdentity] {
-        &self.page_table
+        self.page_table.as_slice()
     }
 
     pub(crate) const fn write_pages(&self) -> &[DeviceKvStepPageBinding] {
-        &self.write_pages
+        self.write_pages.as_slice()
     }
 }
 
