@@ -12,10 +12,10 @@ default = ["gfx950"]
 gfx950 = []
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "82950a3cfc7b0192159fb7afcd1b89fb48d56053", version = "=0.1.0" }
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "85255498a021ed2b7a1a511f99f577ee4b11d175", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "82950a3cfc7b0192159fb7afcd1b89fb48d56053", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "85255498a021ed2b7a1a511f99f577ee4b11d175", version = "=0.1.0" }
 
 [dev-dependencies]
 quote = "=1.0.47"
