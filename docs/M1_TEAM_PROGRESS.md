@@ -5,6 +5,48 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Active Integration
 
+Private integration `6d10fb900574dcdd11d84364f54b8d90ced4856a`, tree
+`3fb0f878ae22b5c72697b9f18ebf18c0aa36d69a`, pins published fe2o3
+`ae441734f27ef35c26baf7b3a6281852cd544de9`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. The 79-file pin migration reverses
+exactly to its parent before the two derived verifier manifest/lock digests
+are refreshed. No kernel bytes or historical producer identities change.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler | Bounded typed divisor diagnostics retain root, innermost assignment, source and operand context without changing the nonzero acceptance predicate. Root fetched, rebased onto new main `836afb284`, validated and pushed `ae441734f` to main. Exact rebased tests pass: compiler-lineage 30, kernel-analysis 97, kernel-ir 291, focused backend 16 and full backend 534. Strict Clippy has no fingerprint delta against pristine 836; upstream is not lint-clean. | Build exact published release CLI/backend and emit the matching aggregate. The prior divisor failure still lacks actual root attribution until that run. No new image or GPU result. |
+| Runtime / Integration | Local commits `f8c8071`, `385f687` and `68e1f68` add parent-bound K4/K8/K16 catch-up composition, exact workspace/buffer bindings, maintenance output-tag checks and a sealed coordinator transition. | Integrate authenticated reservation, queue/registry phases, readback and resident execution. The new engine changes are remotely formatted but not yet compiled/tested together; full acceptance still fails closed before another ordinary round. |
+| Verification | Actual Verus run on `bd2f246` with e6/Pliron161 verifies four items in selected `kv_physical`, zero errors, with exact pinned 190-file closure before/after. Root integrates the strengthened relation as `e6f5151`. | Implement private maintenance receipt/readback and validate the combined runtime checkpoint. This proof does not establish the physical catch-up path or close a roadmap gate. |
+
+Catch-up composition is 424 canonical draft-decode rows followed by the single
+canonical target compact row. The full source expansion identity is retained
+even though only its last row is projected. Draft argmax writes the exact
+four-byte completion `Choices` range consumed by compact; no target KV row runs.
+The coordinator transition requires matching parent/request/coordinator,
+round, consecutive physical epoch and dispatch generation, active member and
+an exact one-token cursor gap. It changes only draft committed position and
+last physical epoch, leaving target position, output count, bonus anchor and
+logical round count unchanged. Focused positive/rejection tests are added but
+await the combined host run.
+
+The preceding e6 migration passes all 32 locked metadata graphs, 38 source-gate
+tests and 31 verifier-policy tests. At immutable `e6f5151`, fresh root/verifier/
+source-gate metadata and regenerated production/dev/full dependency inventories
+match committed bytes. Inventory deltas are only the two new Pliron test targets
+in each verifier scope. These results remain bound to e6; the newer ae441 pins
+still need their own metadata and consumer validation. New catch-up executable
+bodies also need refreshed source coverage with truthful unverified status.
+
+Retained local evidence includes `ferric-catchup-proof-gate-v1/proof-evidence-r2.tar.gz`
+(SHA-256 `4d58e31661411697cc82bd09eb0ce055374f71f2cea65b911d64a88b0457dc57`)
+and `ferric-divisor-diagnostic-gate-v1/acquisition-ae441-tests/ae441-tests-evidence.tar.gz`
+(SHA-256 `cc74d89c88943c2fe9208e3db4925f827e1d7e12f3097e899c1e947ea770e14e`),
+under the owned `.codex-tmp` evidence root. No new TTFT, TPOT, throughput,
+hardware qualification or performance parity is claimed. Builds, proofs,
+tests and formatting run only on mi300x, in bounded owned scratch storage.
+
+## Prior Eaa Checkpoint
+
 Private integration `0b2d53a` advances the 79 active dependency-pin files to
 published fe2o3 `eaa057ac34f8fc3cfda3dd2c2cb7df058560de06`, tree
 `d356bb5f5f7ffbb1e5d4b46991f246cf3edc176b`. Exact reverse substitution
