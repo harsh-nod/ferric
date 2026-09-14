@@ -15,6 +15,14 @@ source closure, workspace manifests and toolchain remain byte-identical through
 dc8 and eaa; it is not relabeled as a new build. All builds, tests and formatting
 run on mi300x, not locally.
 
+A final upstream check finds the newer `e6cfa668f21e5b80d2e70730ed61602c1aaf5804`,
+which advances Pliron to `161c385576d45d4e634ba179fa93a545b91124e6` for rewrite
+observers and dead internal block-argument elimination. The divisor predicate
+and eaa resource fix are unchanged. The KFD crate trees remain unchanged, but
+the workspace manifest/lock do not. This newer revision is tracked, not yet
+validated here: migration requires refreshed dependency inventories, compiler
+builds/tests and aggregate emission. The results below remain bound to eaa.
+
 | Team | Current Work | Acceptance Still Required |
 | --- | --- | --- |
 | Compiler | Resource fix eaa057ac is rebased on c76f844 and pushed to main. All 1,006 Pliron tests and strict Clippy pass; the 13 focused tests are a subset. Exact published CLI/backend builds and 33 aggregate host tests pass. | Actual aggregate emission now rejects an unproven nonzero control divisor. Attribute the kernel/expression, repair the appropriate layer, emit the aggregate and inspect ABI/resources. No image or GPU result exists for this attempt. |
@@ -53,6 +61,10 @@ eighteen added unverified bodies and one removed K4-specific helper; all new
 bodies are recorded as `pending-verus`. The 7,512 unchanged rationale records
 remain byte-identical. Seven upstream test-target metadata rows are refreshed
 in each verifier dependency scope. There is no proof-status upgrade.
+Final validation at `dd5ade0` passes source coverage, regenerated coverage and
+dependency-inventory equality, fresh locked metadata, and both policy checks.
+The retained final source archive has SHA-256
+`f2d73e96953334cc7d9cf934288a6c15ea8b1d533d2a25a7ba02e82bfa17c5f0`.
 
 The cursor gap is a draft-prefix correctness issue; this review did not
 demonstrate a target-token mismatch. Fully accepted rounds may still terminate
