@@ -9,6 +9,9 @@
 //! The two finite schedule classes share a 16x16 Wave64 tile. The reference
 //! source transfers one A value per K step; the vectorized-A source transfers
 //! four adjacent A values and applies their products in ascending order.
+//! The separate MFMA catalog preserves M=1 and selects a K16 BF16/FP32 MFMA
+//! schedule for every multi-row profile. It has distinct arithmetic/profile
+//! identities and is not represented by the legacy scalar LLVM renderer.
 //!
 //! The catalog, source pin, compiler handoff, Worker transcript inspection,
 //! and checked buffer binding do not establish numerical, operator, race,
@@ -59,6 +62,10 @@ pub const QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1: &str =
 /// Exact vectorized-A-schedule AMDHSA descriptor symbol.
 pub const QWEN3_GEMM_VECTORIZED_DESCRIPTOR_SYMBOL_V1: &str =
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1.kd";
+/// Exact attributed BF16 MFMA schedule entry.
+pub const QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1: &str = "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1";
+/// Exact attributed BF16 MFMA schedule descriptor.
+pub const QWEN3_GEMM_MFMA_DESCRIPTOR_SYMBOL_V1: &str = "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1.kd";
 /// Exact BF16 token-embedding bit-copy kernel entry.
 pub const QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1: &str =
     "ferric_qwen3_token_embedding_bf16_copy_v1";
@@ -316,6 +323,8 @@ pub enum Qwen3GemmScheduleV1 {
     ReferenceWave64V1 = 1,
     /// Four-element contiguous A transfer with ascending scalar products.
     VectorizedA4Wave64V1 = 2,
+    /// Wave64 BF16 K16 MFMA over native row-major W[N,K] without a transpose copy.
+    MfmaBf16K16Wave64V1 = 3,
 }
 
 impl Qwen3GemmScheduleV1 {
@@ -325,6 +334,7 @@ impl Qwen3GemmScheduleV1 {
         match self {
             Self::ReferenceWave64V1 => QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
             Self::VectorizedA4Wave64V1 => QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
+            Self::MfmaBf16K16Wave64V1 => QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1,
         }
     }
 }
@@ -345,6 +355,9 @@ pub enum Qwen3GemmNumericalPolicyV1 {
     /// BF16 inputs/output, ascending separate FP32 mul/add, optional widened
     /// BF16 residual, and BF16 RNE narrowing.
     Bf16StorageAscendingFp32Bf16Rne = 1,
+    /// Ascending K16 BF16 MFMA instructions with FP32 accumulators, optional
+    /// widened BF16 residual after the complete dot, then one BF16 RNE narrowing.
+    Bf16StorageMfmaK16Fp32Bf16Rne = 2,
 }
 
 /// SHA-256 identity of one exact profile record.
@@ -377,6 +390,24 @@ pub struct Qwen3GemmProfileV1 {
 }
 
 impl Qwen3GemmProfileV1 {
+    fn checked_mfma(
+        bucket: Qwen3GemmBucketV1,
+        operation: Qwen3GemmOperationV1,
+    ) -> Result<Self, Qwen3GemmCatalogErrorV1> {
+        let mut profile = Self::checked(bucket, operation)?;
+        let [m, _, k] = profile.dimensions;
+        if m > 1 {
+            if !k.is_multiple_of(16) {
+                return Err(Qwen3GemmCatalogErrorV1::ArithmeticInvariant);
+            }
+            profile.schedule = Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1;
+            profile.numerical_policy = Qwen3GemmNumericalPolicyV1::Bf16StorageMfmaK16Fp32Bf16Rne;
+            profile.reduction_phases = k / 16;
+            profile.identity = Qwen3GemmProfileIdentityV1(hash(PROFILE_DOMAIN, &profile.encode()));
+        }
+        Ok(profile)
+    }
+
     fn checked(
         bucket: Qwen3GemmBucketV1,
         operation: Qwen3GemmOperationV1,
@@ -510,7 +541,8 @@ impl Qwen3GemmProfileV1 {
         self.aql_grid_workitems
     }
 
-    /// Exact number of four-element source reduction phases.
+    /// Exact number of source reduction phases: K/4 for the legacy catalog,
+    /// or K/16 for the MFMA schedule.
     #[must_use]
     pub const fn reduction_phases(self) -> u32 {
         self.reduction_phases
@@ -604,12 +636,33 @@ impl Qwen3GemmProfileCatalogV1 {
     ///
     /// Returns an error if any exact profile geometry or catalog extent is invalid.
     pub fn canonical() -> Result<Self, Qwen3GemmCatalogErrorV1> {
+        Self::build(false)
+    }
+
+    /// Constructs all 176 profiles with MFMA for M>1 and the unchanged M=1 path.
+    ///
+    /// This is a distinct catalog, not evidence that an old scalar artifact
+    /// implements MFMA. The caller must bind its attributed kernel source and
+    /// matching emitted program before dispatching these profiles.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any profile geometry or K16 reduction extent is invalid.
+    pub fn canonical_mfma() -> Result<Self, Qwen3GemmCatalogErrorV1> {
+        Self::build(true)
+    }
+
+    fn build(mfma: bool) -> Result<Self, Qwen3GemmCatalogErrorV1> {
         let mut profiles = Vec::with_capacity(QWEN3_GEMM_PROFILE_COUNT_V1);
         for role in QWEN3_GEMM_ROLES_V1 {
             for kind in QWEN3_GEMM_BUCKET_KINDS_V1 {
                 let bucket = Qwen3GemmBucketV1::new(role, kind);
                 for operation in QWEN3_GEMM_OPERATIONS_V1 {
-                    profiles.push(Qwen3GemmProfileV1::checked(bucket, operation)?);
+                    profiles.push(if mfma {
+                        Qwen3GemmProfileV1::checked_mfma(bucket, operation)?
+                    } else {
+                        Qwen3GemmProfileV1::checked(bucket, operation)?
+                    });
                 }
             }
         }
@@ -1920,6 +1973,11 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 }
 
 fn emit_gemm_kernel(output: &mut String, symbol: &str, schedule: Qwen3GemmScheduleV1) {
+    assert_ne!(
+        schedule,
+        Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1,
+        "MFMA requires attributed Rust compilation, not the legacy scalar renderer"
+    );
     writeln!(
         output,
         "define amdgpu_kernel void @{symbol}(ptr addrspace(1) noalias nocapture readonly align 2 %a.data, i64 %a.len, ptr addrspace(1) noalias nocapture readonly align 2 %b.data, i64 %b.len, ptr addrspace(1) noalias nocapture align 2 %c.data, i64 %c.len, i32 %m, i32 %n, i32 %k, i32 %beta.bits) #0 !reqd_work_group_size !0 !kernel_arg_access_qual !1 !kernel_arg_type !2 !kernel_arg_base_type !2 !kernel_arg_type_qual !3 {{\nentry:"
@@ -1984,6 +2042,7 @@ reduce.cond:
     match schedule {
         Qwen3GemmScheduleV1::ReferenceWave64V1 => emit_reference_reduction(output),
         Qwen3GemmScheduleV1::VectorizedA4Wave64V1 => emit_vectorized_reduction(output),
+        Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1 => unreachable!("checked scalar renderer"),
     }
     output.push_str(
         r"
@@ -2039,6 +2098,9 @@ fn emit_machine_classifier(output: &mut String, schedule: Qwen3GemmScheduleV1) {
             &[17, 32, 40, 128, 512, 1_024, 2_048],
             &[16, 32, 128, 512, 1_024, 2_048],
         ),
+        Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1 => {
+            unreachable!("MFMA has no legacy scalar LLVM classifier")
+        }
     };
     let target_rows = emit_allowed_rows(output, "target", "%m", target_rows);
     let draft_rows = emit_allowed_rows(output, "draft", "%m", draft_rows);
@@ -3326,6 +3388,91 @@ mod tests {
             .collect::<BTreeSet<_>>();
         assert_eq!(identities.len(), QWEN3_GEMM_PROFILE_COUNT_V1);
         assert!(!first.grants_authority());
+    }
+
+    #[test]
+    fn mfma_catalog_preserves_all_176_geometries_and_has_distinct_arithmetic_identities() {
+        let scalar = Qwen3GemmProfileCatalogV1::canonical().unwrap();
+        let mfma = Qwen3GemmProfileCatalogV1::canonical_mfma().unwrap();
+        assert_eq!(mfma, Qwen3GemmProfileCatalogV1::canonical_mfma().unwrap());
+        assert_eq!(mfma.profiles().len(), 176);
+        assert_ne!(mfma.identity(), scalar.identity());
+        assert!(!mfma.grants_authority());
+        let mut identities = BTreeSet::new();
+        for (old, new) in scalar.profiles().iter().zip(mfma.profiles()) {
+            assert!(identities.insert(new.identity()));
+            assert_eq!(old.bucket(), new.bucket());
+            assert_eq!(old.operation(), new.operation());
+            assert_eq!(old.dimensions(), new.dimensions());
+            assert_eq!(old.strides(), new.strides());
+            assert_eq!(old.storage_elements(), new.storage_elements());
+            assert_eq!(
+                old.hsa_adapter_block_counts(),
+                new.hsa_adapter_block_counts()
+            );
+            assert_eq!(old.aql_grid_workitems(), new.aql_grid_workitems());
+            assert_eq!(old.alpha_bits(), new.alpha_bits());
+            assert_eq!(old.beta_bits(), new.beta_bits());
+            if new.dimensions()[0] == 1 {
+                assert_eq!(new, old);
+            } else {
+                assert_eq!(new.schedule(), Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1);
+                assert_eq!(
+                    new.numerical_policy(),
+                    Qwen3GemmNumericalPolicyV1::Bf16StorageMfmaK16Fp32Bf16Rne
+                );
+                assert_eq!(new.reduction_phases(), new.dimensions()[2] / 16);
+                assert_ne!(new.identity(), old.identity());
+                assert_ne!(
+                    qwen3_gemm_kernel_ir_v1(*new).identity(),
+                    qwen3_gemm_kernel_ir_v1(*old).identity()
+                );
+                assert_eq!(
+                    new.schedule().kernel_symbol(),
+                    QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1
+                );
+            }
+        }
+        assert_eq!(identities.len(), 176);
+    }
+
+    #[test]
+    fn mfma_target_verification_keeps_exact_small_and_partial_tile_rows() {
+        let catalog = Qwen3GemmProfileCatalogV1::canonical_mfma().unwrap();
+        for m in [5, 9, 17, 40] {
+            let profiles = catalog.profiles().iter().filter(|profile| {
+                profile.bucket().role() == Qwen3GemmModelRoleV1::Target8B
+                    && profile.dimensions()[0] == m
+            });
+            let mut count = 0;
+            for profile in profiles {
+                let [rows, n, _] = profile.dimensions();
+                assert_eq!(rows, m);
+                assert_eq!(profile.schedule(), Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1);
+                assert_eq!(profile.storage_elements()[2], u64::from(m) * u64::from(n));
+                assert_eq!(
+                    profile.hsa_adapter_block_counts()[0],
+                    m.div_ceil(16) * n.div_ceil(16)
+                );
+                count += 1;
+            }
+            assert_eq!(count, QWEN3_GEMM_OPERATION_COUNT_V1);
+        }
+    }
+
+    #[test]
+    fn legacy_scalar_renderer_rejects_mfma_before_emitting_any_bytes() {
+        let mut output = String::new();
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            emit_gemm_kernel(
+                &mut output,
+                QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1,
+                Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1,
+            );
+        }));
+        assert!(result.is_err());
+        assert!(output.is_empty());
+        assert!(!canonical_qwen3_gemm_llvm().contains(QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1));
     }
 
     #[test]

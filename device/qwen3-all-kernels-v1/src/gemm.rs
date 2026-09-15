@@ -7,13 +7,16 @@
 //! identity-prepacked row-major Qwen weights `[N,K]`, producing `A * W^T`.
 
 use fe2o3_device::{
-    Bf16, DisjointSlice, Index1D, Tiled2D, WriteOnlyDisjointSlice, kernel, memory, thread,
+    Bf16, Bf16MfmaAMatrix, Bf16MfmaBColumnMajorMatrix, DeviceMatrix, DisjointSlice,
+    F32AccumulatorFragment, Index1D, Tiled2D, Wave64, WaveLane, WriteOnlyDisjointSlice, kernel,
+    memory, thread,
 };
 
 pub const QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1: &str =
     "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1";
 pub const QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1: &str =
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1";
+pub const QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1: &str = "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1";
 pub const QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1: &str =
     "ferric_qwen3_token_embedding_bf16_copy_v1";
 pub const QWEN3_GEMM_WORKGROUP_V1: [u32; 3] = [64, 1, 1];
@@ -93,6 +96,14 @@ macro_rules! embedding_profile_is_admitted_v1 {
     };
 }
 
+macro_rules! mfma_profile_is_admitted_v1 {
+    ($m:expr, $n:expr, $k:expr, $beta_bits:expr) => {
+        ($m > 1
+            && (reference_profile_is_admitted_v1!($m, $n, $k, $beta_bits)
+                || vectorized_profile_is_admitted_v1!($m, $n, $k, $beta_bits)))
+    };
+}
+
 #[must_use]
 pub const fn qwen3_gemm_reference_profile_is_admitted_v1(
     m: u32,
@@ -111,6 +122,16 @@ pub const fn qwen3_gemm_vectorized_profile_is_admitted_v1(
     beta_bits: u32,
 ) -> bool {
     vectorized_profile_is_admitted_v1!(m, n, k, beta_bits)
+}
+
+#[must_use]
+pub const fn qwen3_gemm_mfma_profile_is_admitted_v1(
+    m: u32,
+    n: u32,
+    k: u32,
+    beta_bits: u32,
+) -> bool {
+    mfma_profile_is_admitted_v1!(m, n, k, beta_bits)
 }
 
 #[must_use]
@@ -551,6 +572,142 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     }
 }
 
+/// Wave64 MFMA over canonical A[M,K] and W[N,K], without transposed weights.
+/// Every lane participates in each K16 step, including partial output tiles.
+/// MFMA arithmetic is a distinct schedule from the ascending scalar kernels.
+#[kernel(
+    typed,
+    launch(
+        required = [64, 1, 1],
+        max = [64, 1, 1],
+        max_grid = [1215488, 1, 1]
+    ),
+    control_flow(loop_bounds(768))
+)]
+#[allow(clippy::too_many_arguments)]
+pub fn ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1(
+    a: &[u16],
+    b: &[u16],
+    mut c: DisjointSlice<u16, Tiled2D<Index1D, 64, 16, 16, 4>>,
+    m: u32,
+    n: u32,
+    k: u32,
+    beta_bits: u32,
+) {
+    if !mfma_profile_is_admitted_v1!(m, n, k, beta_bits) {
+        fe2o3_device::trap();
+    }
+    let m = m as usize;
+    let n = n as usize;
+    let k = k as usize;
+    if m < 2_049 && n < 151_937 && k < 12_289 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if m <= 1 || n == 0 || k == 0 || k % 16 != 0 {
+        fe2o3_device::trap();
+    }
+    if a.len() != m * k || b.len() != n * k || c.len() != m * n {
+        fe2o3_device::trap();
+    }
+    let invocation = thread::index_1d();
+    let raw = invocation.get();
+    let tiles_per_row = (n + 15) / 16;
+    let tile_rows = (m + 15) / 16;
+    let expected_extent = tiles_per_row * tile_rows * 64;
+    let launch_extent = (thread::grid_dim_x() as usize) * (thread::block_dim_x() as usize);
+    if launch_extent != expected_extent {
+        fe2o3_device::trap();
+    }
+    let tile_index = raw / 64;
+    if tile_index >= tiles_per_row * tile_rows {
+        fe2o3_device::trap();
+    }
+    let (tile_row, tile_column) = if n == 1_024 {
+        (tile_index / 64, tile_index % 64)
+    } else if n == 2_048 {
+        (tile_index / 128, tile_index % 128)
+    } else if n == 3_072 {
+        (tile_index / 192, tile_index % 192)
+    } else if n == 4_096 {
+        (tile_index / 256, tile_index % 256)
+    } else if n == 12_288 {
+        (tile_index / 768, tile_index % 768)
+    } else if n == 151_936 {
+        (tile_index / 9_496, tile_index % 9_496)
+    } else {
+        fe2o3_device::trap();
+    };
+    if tile_row < 128 && tile_column < 9_496 && tile_column < tiles_per_row {
+    } else {
+        fe2o3_device::trap();
+    }
+    let lane = WaveLane::<Wave64>::current();
+    let Ok(left) = Bf16MfmaAMatrix::row_major(a, 0, m, k, k) else {
+        fe2o3_device::trap();
+    };
+    let Ok(right) = Bf16MfmaBColumnMajorMatrix::column_major(b, 0, k, n, k) else {
+        fe2o3_device::trap();
+    };
+    let matrix = DeviceMatrix::current();
+    let mut accumulator = F32AccumulatorFragment::zero(&lane);
+    let reduction_phases = k / 16;
+    let mut phase = 0_usize;
+    while phase < reduction_phases {
+        if phase < 768 {
+        } else {
+            fe2o3_device::trap();
+        }
+        let left_fragment = left.load_m16k16(&lane, tile_row * 16, phase * 16);
+        let right_fragment = right.load_k16n16(&lane, phase * 16, tile_column * 16);
+        accumulator = matrix.multiply_accumulate(left_fragment, right_fragment, accumulator);
+        phase += 1;
+    }
+    let [mut value_0, mut value_1, mut value_2, mut value_3] = accumulator.into_values();
+    let row_base = tile_row * 16 + (raw % 64 / 16) * 4;
+    let column = tile_column * 16 + raw % 16;
+    let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
+        fe2o3_device::trap();
+    };
+    let beta_one = beta_bits == 1_065_353_216;
+    if row_base < m && column < n {
+        let Some(output) = c.get_tiled_2d_mut(&tile, 0, m, n, n) else {
+            fe2o3_device::trap();
+        };
+        if beta_one {
+            value_0 = value_0 + Bf16::from_bits(*output).to_f32();
+        }
+        *output = Bf16::from_f32(value_0).to_bits();
+    }
+    if row_base + 1 < m && column < n {
+        let Some(output) = c.get_tiled_2d_mut(&tile, 1, m, n, n) else {
+            fe2o3_device::trap();
+        };
+        if beta_one {
+            value_1 = value_1 + Bf16::from_bits(*output).to_f32();
+        }
+        *output = Bf16::from_f32(value_1).to_bits();
+    }
+    if row_base + 2 < m && column < n {
+        let Some(output) = c.get_tiled_2d_mut(&tile, 2, m, n, n) else {
+            fe2o3_device::trap();
+        };
+        if beta_one {
+            value_2 = value_2 + Bf16::from_bits(*output).to_f32();
+        }
+        *output = Bf16::from_f32(value_2).to_bits();
+    }
+    if row_base + 3 < m && column < n {
+        let Some(output) = c.get_tiled_2d_mut(&tile, 3, m, n, n) else {
+            fe2o3_device::trap();
+        };
+        if beta_one {
+            value_3 = value_3 + Bf16::from_bits(*output).to_f32();
+        }
+        *output = Bf16::from_f32(value_3).to_bits();
+    }
+}
+
 #[kernel(
     typed,
     launch(
@@ -649,6 +806,86 @@ pub fn ferric_qwen3_token_embedding_bf16_copy_v1(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mfma_classifier_covers_all_multirow_shapes_without_admitting_decode_s1() {
+        let target_shapes = [
+            (4_096, 4_096, 0),
+            (4_096, 4_096, 1_065_353_216),
+            (1_024, 4_096, 0),
+            (12_288, 4_096, 0),
+            (4_096, 12_288, 1_065_353_216),
+            (151_936, 4_096, 0),
+        ];
+        let draft_shapes = [
+            (2_048, 1_024, 0),
+            (1_024, 1_024, 0),
+            (1_024, 2_048, 1_065_353_216),
+            (3_072, 1_024, 0),
+            (1_024, 3_072, 1_065_353_216),
+            (151_936, 1_024, 0),
+        ];
+        for (shapes, rows) in [
+            (
+                target_shapes,
+                &[5, 8, 9, 17, 32, 40, 128, 512, 1_024, 2_048][..],
+            ),
+            (draft_shapes, &[4, 8, 16, 32, 128, 512, 1_024, 2_048][..]),
+        ] {
+            for (n, k, beta) in shapes {
+                for m in 0..=2_049 {
+                    assert_eq!(
+                        qwen3_gemm_mfma_profile_is_admitted_v1(m, n, k, beta),
+                        rows.contains(&m),
+                        "M={m}, N={n}, K={k}, beta={beta}"
+                    );
+                }
+                assert!(!qwen3_gemm_mfma_profile_is_admitted_v1(1, n, k, beta));
+                assert!(!qwen3_gemm_mfma_profile_is_admitted_v1(rows[0], n, k, 7));
+                assert!(!qwen3_gemm_mfma_profile_is_admitted_v1(
+                    rows[0],
+                    n,
+                    k - 1,
+                    beta
+                ));
+                assert!(!qwen3_gemm_mfma_profile_is_admitted_v1(
+                    rows[0],
+                    n - 1,
+                    k,
+                    beta
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn mfma_wave64_tiles_cover_tail_rows_once_without_padding_output() {
+        for m in [4_usize, 5, 8, 9, 16, 17, 32, 40, 128, 512, 1_024, 2_048] {
+            for n in [1_024_usize, 2_048, 3_072, 4_096, 12_288, 151_936] {
+                let tile_rows = m.div_ceil(16);
+                let tile_columns = n / 16;
+                // First/last column tiles have the same lane ownership at every stride.
+                for tile_column in [0, tile_columns - 1] {
+                    let mut writes_per_row = std::vec![0_u8; m];
+                    for tile_row in 0..tile_rows {
+                        for lane in 0..64 {
+                            let row_base = tile_row * 16 + (lane / 16) * 4;
+                            let column = tile_column * 16 + lane % 16;
+                            assert!(column < n);
+                            for component in 0..4 {
+                                let row = row_base + component;
+                                if row < m {
+                                    assert!(row * n + column < m * n);
+                                    writes_per_row[row] += 1;
+                                }
+                            }
+                        }
+                    }
+                    assert!(writes_per_row.iter().all(|count| *count == 16));
+                }
+            }
+        }
+    }
 
     #[test]
     fn finite_profile_classifiers_accept_boundary_members() {
