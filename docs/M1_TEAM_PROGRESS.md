@@ -40,16 +40,25 @@ floors. Exactly 26 obsolete root-level archives were removed after independent
 local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
 root filesystem. Root checked receipt SHA-256
 `719924e84f54794601984fee34176d297be4c109de2f038a66360a908398a767`.
-Root free space subsequently fell to 16,295,560 KiB, below the unchanged
-23,068,672 KiB floor. The combined inventory identifies 37,283 byte-retained
-duplicate files and 504 disposable `.rlib`/`.rmeta` files, totaling 3,098,548 KiB.
-Root checked the inventory archive and all fifteen referenced local archives;
-all 2,240 noncandidate files and every directory remain protected. No combined
-deletion is yet admitted, and its complete proposed reclaim would still be
-insufficient to restore admission. Immediate `/tmp/ferric-*` ownership inventory
-found no other significant completed stage. The separate completed numerical
-tmpfs stage remains intact after two cleanup attempts stopped on incomplete
-process visibility.
+Root free space subsequently fell below 16,295,560 KiB. The separately reviewed
+combined cleanup is now terminal with exit zero: 37,283 byte-retained duplicate
+files and 504 disposable `.rlib`/`.rmeta` files removed, reclaiming 3,098,548 KiB.
+Root checked the inventory, all fifteen local archive inputs, actual terminal
+result, no-use census, exact transport identity rechecks and final receipt.
+All 2,240 noncandidate files remain byte/stat-equal and every directory is
+preserved. Compiled library bytes were discarded, not claimed archived; source
+and producer records remain retained. Scope-specific identified SSH transport
+visibility limitations are recorded, not represented as global process
+visibility. Receipt SHA-256:
+`12862dc7365442b9e04ad6a15be556507ae3857da10a14079fa07502d6f14952`;
+retained archive SHA-256:
+`ce51b417fac05d17d6c7d26a7f17d458588b971aa90092cfccdea533ce76e309`.
+Root free space after cleanup is 19,279,236 KiB, still 3,789,436 KiB below the
+unchanged 23,068,672 KiB floor. No workload resumed. Immediate `/tmp/ferric-*`
+ownership inventory found no other significant completed stage; other observed
+names without matching ownership records were not recursively inspected or
+deleted. The separate completed numerical tmpfs stage remains intact after two
+cleanup attempts stopped on incomplete process visibility.
 
 Test-only source `33a31333` derives the actual K4 speculative and maintenance
 recipes and exercises `2242 -> 425 -> 2242` routing through the production
