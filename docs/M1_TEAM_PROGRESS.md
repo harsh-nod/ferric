@@ -14,12 +14,15 @@ maintenance transition. No new performance result is available.
 
 The compiler candidate is now `d3a52cd2`, rebased onto freshly fetched upstream
 `bf0f4841`; all twelve patches are unchanged by range-diff and all seventeen
-remote host phases pass. Its actual emitter-tool rebuild is running. There is
-still no thirteen-root MFMA device image or numerical GPU result.
+remote host phases pass. Its actual emitter-tool rebuild stopped at the shared
+root-filesystem reserve, before tool copying or emission. There is still no
+thirteen-root MFMA device image or numerical GPU result.
 
 The retirement preflight has an actual scoped Verus pass on `cf329240`. The
 commit proof remains failing on `5a689e7d`, now at the pre-update untouched-slot
-snapshot assertion. This does not establish the complete retirement transition;
+snapshot assertion. Successor `339c2561` explicitly instantiates the original
+prefix quantifier, but its next run stopped at the root-filesystem reserve before
+Verus launched. This does not establish the complete retirement transition;
 current-source dependency proofs, actual-body negatives and integration remain
 pending. All proof labels and all 33 M1 gates remain unchanged.
 
@@ -74,10 +77,16 @@ This is not a maintenance defect fix. The one-shot R5 native diagnostic exits
 reported and stdout is empty. The guard cannot read the process group of a
 KFD PID that disappears before capture; no positive foreign selected-GPU usage
 or ownership attribution is established. Only the owned group is terminated.
-Terminal evidence capture is pending; the actual maintenance inner condition
-remains unknown. A narrower selected-GPU ownership-query order is under review,
+Root checked all 27 R5 payload hashes and its retained raw failure in archive
+`af4f5d9c0c6b44f302f004a72baf49dd4db37c2eefd839dfbb0052b60359d83a`.
+Fresh selected GPU memory is 298,647,552 bytes, with no selected usage or queues
+and no owned group. It differs from that attempt's 298,721,280-byte prelaunch
+observation, so its exact-baseline cleanup check remains false; scratch was not
+deleted. The actual maintenance inner condition remains unknown. A narrower
+selected-GPU ownership-query order and 25 mock cases are reviewed but untested,
 without removing checks on unreadable or conflicting selected-GPU facts.
-The run used the same legacy twelve-kernel image and model bundle as c5, not
+The earlier R4 maintenance failure used the same legacy twelve-kernel image
+and model bundle as c5, not
 the MFMA candidate. Root independently checked the actual stderr, executable
 producer and all 22 native payload hashes in archive
 `916bd86e04abbb382916b7bc841a19d6d11c118a227686e3c3937cb18e111ce9`.
@@ -354,10 +363,14 @@ are a subset of the backend cohort. Four artifact-freshness checks pass; reused
 first-party bytes are bound to the current d3 builds, not relabeled older output.
 Root checked archive
 `a353a7939bb87de5c32da3169c555f117b07bbe1cca9c23505e9d5521bb40a8f`
-and its actual phase/test summary. The actual d3 tool rebuild is running after
+and its actual phase/test summary. The actual d3 tool rebuild was admitted after
 verified removal of ten locally retained duplicate archives, reclaiming
 481,796 KiB. No source, cache, existing tool or image was deleted.
-There is no d3 strict-Clippy or native-emission pass. The upstream must be
+The CLI release build then stopped with exit 125 when shared root free space
+fell below the unchanged 22 GiB reserve. The compiler stage remained below its
+12 GiB cap. No CLI copy, backend build or device emission ran; this is a resource
+stop, not a compiler semantic failure. There is no d3 strict-Clippy or
+native-emission pass. The upstream must be
 freshly fetched and rebased again before any push to main. Ferric integration still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
