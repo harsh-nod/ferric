@@ -31,7 +31,7 @@ pending. All proof labels and all 33 M1 gates remain unchanged.
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
 | Compiler / Kernels | Rebased twelve patches onto `83986180`; preparing exact obsolete-stage cleanup and source/cache transition. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
-| Runtime / Integration | Audited maintenance bindings without finding a concrete defect; adding actual 425-row enter/restore routing coverage. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
+| Runtime / Integration | Audited maintenance bindings without finding a concrete defect; committed test-only 425-row enter/restore routing coverage at `33a31333`. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
 | Verification | Prepared the `339c2561` commit-proof correction and source-bound positive/negative controls. | Actual commit proof, six current-source positives and 24 actual-body negatives; synthetic checker tests remain separate. |
 | Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `c6a06626`. | Remote Pages validation and reviewed publication; no deployment claimed. |
 
@@ -40,11 +40,25 @@ floors. Exactly 26 obsolete root-level archives were removed after independent
 local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
 root filesystem. Root checked receipt SHA-256
 `719924e84f54794601984fee34176d297be4c109de2f038a66360a908398a767`.
-The last recorded root free space was 20,134,456 KiB, below the unchanged
-23,068,672 KiB floor. Additional old source/evidence duplicates and disposable
-libraries are being inventoried; no further deletion is yet admitted. The
-separate completed numerical tmpfs stage remains intact after two cleanup
-attempts stopped on incomplete process visibility.
+Root free space subsequently fell to 16,295,560 KiB, below the unchanged
+23,068,672 KiB floor. The combined inventory identifies 37,283 byte-retained
+duplicate files and 504 disposable `.rlib`/`.rmeta` files, totaling 3,098,548 KiB.
+Root checked the inventory archive and all fifteen referenced local archives;
+all 2,240 noncandidate files and every directory remain protected. No combined
+deletion is yet admitted, and its complete proposed reclaim would still be
+insufficient to restore admission. Immediate `/tmp/ferric-*` ownership inventory
+found no other significant completed stage. The separate completed numerical
+tmpfs stage remains intact after two cleanup attempts stopped on incomplete
+process visibility.
+
+Test-only source `33a31333` derives the actual K4 speculative and maintenance
+recipes and exercises `2242 -> 425 -> 2242` routing through the production
+source-selection helpers. It checks inert fresh-generation tags, retained
+model/KV identities, catch-up choice routing and rejection cases. Root reviewed
+the source and diff whitespace check; no formatter, compiler, test or Clippy
+has run on this addition. It does not exercise sealed service allocation
+witnesses, publication or native queue execution, and it is not a maintenance
+defect fix. The frozen native executable and source remain `00ac6a22`.
 
 ## Recorded Runtime Evidence
 
