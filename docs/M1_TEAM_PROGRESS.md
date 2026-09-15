@@ -5,6 +5,46 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The recorded runtime checkpoint is `c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56`,
+still pinned to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
+Its committed coverage, source-tool closure, all 32 locked/offline dependency
+graphs and three dependency TCB comparisons pass. The exact standalone
+speculative-smoke debug binary is built, with SHA-256
+`4151c135ff693e1d66a1b8004a3d31488dd227ee0c50ce45b90a025f0e488e2a`.
+The eight-token repeated K4 attempt stopped before inference when its GPU-use
+guard detected a PID outside the owned process group. It used the unchanged
+twelve-kernel 8113/4f6 image and retains that image's original producer identity.
+The c5 checkpoint changes only documentation and body ledgers from the executable
+source below; it does not relabel the earlier test or GPU results.
+
+The native control exited 126 after approximately 14 minutes 25 seconds, not
+at either deadline. Debug CPU model preparation took 604.307 seconds; KFD
+binding completed, but no prefill or speculative-round output was produced.
+The detected PID had already exited before attribution could be captured, so
+its ownership remains unresolved. The control stopped only the owned process
+group. Fresh KFD/DRM observations confirm no owned processes or selected queues
+remain and GPU memory returned to the exact 298,647,552-byte baseline. The
+retained archive has SHA-256
+`66575e9bd00b950ed0a592c931de6e7ae672da2ca27e50017d4f853d76af89ae`.
+This is a failed engineering attempt, not a native continuation result or a
+performance measurement. The completed native stage is removed after archive
+acquisition and fresh no-use checks, reclaiming 42,936 KiB while preserving the
+model, artifact and evidence.
+
+The exact c5/4f6 optimized standalone build now passes on mi300x. Its normal,
+non-test executable has no optional features, optimization level three and
+`fresh=false`; it is 14,133,320 bytes with SHA-256
+`d6d6f7af56957d0987d0e2cb01d4d2b75766fcc1f95f43fb19da39c7ff294819`.
+Fresh metadata, all 1,145 source files and 205 directories, before/after source
+equality, actual artifact identities and the no-RPATH/RUNPATH check pass.
+The build used a separate bounded 3 GiB target, with the shared 10 GiB cap
+unchanged and automatic Cargo cache cleanup disabled. Its retained archive has
+SHA-256 `5c5399489e1d208e90fa5e82f2bc0843f9fe956c72e6d5dc72aa5329b4db6a4a`;
+all 51 retained payload hashes are independently checked. This is a build
+result, not a new GPU result or a measured startup improvement. More complete
+detected-PID diagnostics are being prepared for the next native attempt;
+initialization and foreign-use checks are not bypassed.
+
 Private runtime integration `dfb4c5140b9c50ad936e27f1850541043135130b`, tree
 `b3da45f59cb9f346078c20daa5ce6bff0735eaf9`, passes 707 engine library tests
 with nine existing ignores, separate binary cohorts of 11, 2, 84 (two existing
@@ -35,11 +75,15 @@ surviving full rows verbatim. The ledger now has 7,833 unverified bodies:
 metadata/TCB checks, coverage generation and the generated candidate's
 self-check: 177 modules and 8,557 bodies, with all 724 existing verified rows
 unchanged. The generated coverage is integrated in this checkpoint; final
-committed-source equality remains to be checked. No proof or qualification
-status is upgraded. The coverage evidence archive has SHA-256
+committed-source equality and the direct committed-coverage check now pass
+at c5, including exact before/after checks of all 1,145 files and 205
+directories. No proof or qualification status is upgraded. The 0a coverage
+evidence archive has SHA-256
 `14280d3c014afd90641e88c7c54c90259dc6f5c0e527757879b2170bd12c6922`.
+The final c5 gate and standalone binary evidence archive has SHA-256
+`11670d90819a8ed3a731ec733e94434805ad9b929e4b2efe55ed8666b2b775f4`.
 
-The kernel/integration lane now has a separate, unvalidated MFMA strategy
+The kernel/integration lane now has a separate, host-tested MFMA strategy
 candidate. It retains the legacy twelve-program scalar catalog and adds an
 explicit thirteen-program attributed catalog. Strategy and executable-catalog
 identity are checked through runner, operation plan, dispatch and packet
@@ -54,16 +98,43 @@ engine or adapter. Correction `0e3f77c5` exposes the same 108 admitted shape
 tuples as plain Boolean expressions, with an independent host-oracle
 comparison over literal-boundary partitions. Its retry compiles the aggregate
 device crate, then finds a missing strategy argument in engine operation-plan
-validation. The two-line forwarding correction `ce2d3c1f` is awaiting its
-compile retry. No MFMA device image exists yet. Source-gate commit `8fc15929` admits the exact
+validation. The two-line forwarding correction `ce2d3c1f` passes the engine
+library and actual engineering-R29 capture binary compile checks, all 709
+engine library tests with nine existing ignores, and all eleven aggregate
+source-contract tests. These checks use the same complete b86 overlay, not
+the newer compiler candidate. The first linked-test attempt completed the
+eleven source tests but stopped at its original 2 GiB scratch cap before
+engine tests. After audited cleanup and an explicitly reviewed 3 GiB total
+cap, the unchanged engine cohort passed. Both attempts remain distinct.
+The passing engine evidence archive has SHA-256
+`20045976f0abc71e65e9a86a132cb685c29b67fce8e494de7c78353c308ac92c`.
+The first adapter cohort passed 97 tests and rejected thirteen service tests
+before socket creation because the control's temporary path exceeded the
+unchanged 100-byte limit. A shorter owned temporary-directory control passes
+110 adapter library tests with one existing ignore, 87 engineering capture
+tests with two existing ignores, and 38 source-policy tests on unchanged ce2.
+Source-gate testing exposed both unsuitable overlay lockfiles in its repository
+fixtures and a stale single-roster test anchor. Test-only successor `cbf49f06`
+mutates legacy and MFMA marker ordering separately; all 42 source-gate tests
+pass against its pristine source and original locks. No production admission
+or parser check was weakened. The original failed runs remain retained.
+Scoped Clippy then found one introduced redundant method-call closure.
+The exact method-reference correction `1fc91418`, still using the complete b86
+overlay, passes strict engine-library and selected adapter/capture/source-policy
+Clippy, plus all eight focused physical-program catalog tests. Its source and
+locks remain equal before/after. No lint suppression or semantic change is
+introduced. No MFMA device image or GPU result exists yet; singleton decode
+still selects scalar GEMV. Source-gate commit `8fc15929` admits the exact
 new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
 is still required.
 
-Fresh fe2o3 upstream is `bf30fe9fc24ad5d81042f9217e3be0b0d1182a47`, six
+The most recently fetched fe2o3 upstream is
+`bf30fe9fc24ad5d81042f9217e3be0b0d1182a47`, six
 commits beyond 0fe, in kernel analysis and Pliron pipeline verification with
 no KFD/runtime or device source changes. The column-major BF16 MFMA candidate
-is now rebased as `a9a72c41f8353f88df32aab6f7863b8c4c28668b`, with all eight
-candidate commits unchanged by range-diff. It is not yet revalidated and no
+was rebased as `a9a72c41f8353f88df32aab6f7863b8c4c28668b`, with all eight
+candidate commits unchanged by range-diff. The current successor is
+`5602c4889142571d7d82041b8a9bdef369799af1`; revalidation is underway and no
 candidate commit has been pushed. Ferric integration still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
@@ -80,9 +151,29 @@ redundant lane-varying fixture guard. Fixture-only correction `eec1d434`
 removes that guard while retaining exact launch geometry and checked tail
 writes. Its successor export reaches the real two-phase reduction loop but
 rejects unresolved loop-branch uniformity. Both failures occur in the first
-row-major case, before testing the column-major case. General loop analysis
-is being investigated; the reduction loop and convergence rejection policy
-are not bypassed.
+row-major case, before testing the column-major case. The unknown value was
+traced to direct launch-geometry queries in pre-loop guards, not unsupported
+induction generally. Root-reviewed `998c5a99` preserves authenticated direct
+geometry queries as bounded, unconstrained analysis arguments; it does not
+replace actual geometry with maximum-grid constants or change the runtime ABI.
+The production code compiled, but its driver test used a nonexistent unsigned16
+type shorthand. Test-only successor 5602 uses the actual canonical KIR type.
+All four new geometry tests, the existing geometry-wrapper non-purity negative
+and the actual paired export now pass. Row-major retains semantic MIR V11;
+column-major uses V15 with its authenticated constructor/load and rejects V14.
+Both keep three source/KIR arguments and the exact 48-byte, alignment-eight
+kernarg map. Production KIR identity V9 and canonical KIR V10 remain distinct.
+The exact candidate release CLI/proxy and CLI-bound backend/extractor now
+build successfully. Exact ce2 source preparation, the dependency-only private
+5602 overlay, locked/offline metadata and the union vendor byte checks also
+pass. HSACO emission and the real thirteen-root Ferric aggregate are still
+pending: post-vendor capacity is below the previously observed emission
+transient, so emission has not been launched. Neither the reduction loop nor
+the convergence rejection policy is bypassed, and the 12 GiB cap is unchanged.
+Completed compiler cleanup removed exactly fifty obsolete test executables,
+reclaiming 541,048 KiB after retaining their complete archive locally. Removing
+the two redundant remote archives reclaimed another 144,272 KiB; the local
+archives, current tools, libraries, source and retained images remain intact.
 
 The Pages checkpoint `5fe89b3e` is deployed; its seven live assets match the
 validated bytes. Its isolated worktree and 82,380 KiB remote stage are removed.
@@ -93,10 +184,10 @@ trybuild output. Current source, tools, models, caches and active dependencies
 are retained; compiled trybuild cache bytes were explicitly discarded, not
 claimed archived.
 
-There are no new GPU, numerical-acceptance, Verus, or matched performance
-results at this checkpoint. All 33 M1 gates remain open. The next hardware
-priorities are a current-compiler aggregate, repeated K4 execution including
-natural full acceptance, and the remaining numerical cases.
+There are no new successful GPU inference, numerical-acceptance, Verus, or
+matched performance results at this checkpoint. All 33 M1 gates remain open.
+The next hardware priorities are a current-compiler aggregate, repeated K4
+execution including natural full acceptance, and the remaining numerical cases.
 
 ## Earlier Integration
 
