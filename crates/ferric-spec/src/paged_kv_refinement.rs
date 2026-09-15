@@ -2808,6 +2808,46 @@ pub closed spec fn retirement_metadata_batch_transition(
         )
 }
 
+/// Exposes the selected page's successor without granting native reuse authority.
+pub proof fn retirement_metadata_batch_selected_page_successor(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    retired_at: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        retirement_metadata_batch_transition(before, after, selected),
+        physical_page_is_retired_at_epoch(before, request, role, retired_at, retired),
+        retired.index_spec() < selected.len(),
+        selected[retired.index_spec() as int],
+        released_generation_matches(released, retired),
+    ensures
+        physical_page_is_free_generation(after, released),
+        after.abstraction_spec() == before.abstraction_spec(),
+{
+    reveal(retirement_metadata_batch_transition);
+    reveal(retirement_metadata_mask_prepared);
+    reveal(retirement_metadata_prefix_transition);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(released_generation_matches);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(role_matches);
+    assert(before.page_slots@[retired.index as int].generation < u32::MAX);
+    assert(after.page_slots@[retired.index as int] == PhysicalPageSlot {
+        generation: (retired.generation as int + 1) as u32,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    });
+    assert(released.index == retired.index);
+    assert(released.generation == (retired.generation as int + 1) as u32);
+}
+
 /// An exclusively borrowed, checked metadata-only retirement batch.
 ///
 /// Dropping the batch does not mutate its state. Committing updates only that
