@@ -39,6 +39,96 @@ const CAPABILITY_SOURCE: &str =
 
 const FE2O3_REVISION: &str = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9";
 
+fn explicit_mfma_route_policy(source: &str, cli: &str) -> bool {
+    let compact = source
+        .split_whitespace()
+        .collect::<String>()
+        .replace(",)", ")");
+    let cli_run = cli
+        .split("fn run(arguments:")
+        .nth(1)
+        .and_then(|tail| tail.split("#[cfg(test)]").next());
+    let Some(cli_run) = cli_run else {
+        return false;
+    };
+    for (command, call) in [
+        (
+            "generate-engineering-mfma-inputs",
+            "generate_engineering_r29_inputs::<EngineeringAggregateProgramSourceV1<true>>(&arguments[1..],false)",
+        ),
+        (
+            "validate-engineering-mfma-inputs",
+            "generate_engineering_r29_inputs::<EngineeringAggregateProgramSourceV1<true>>(&arguments[1..],true)",
+        ),
+        (
+            "capture-engineering-mfma",
+            "run_engineering_r29_capture::<EngineeringAggregateProgramSourceV1<true>>(&arguments[1..])",
+        ),
+    ] {
+        let Some(arm) = cli_run
+            .split(&format!("Some(\"{command}\")"))
+            .nth(1)
+            .and_then(|tail| tail.split("Some(").next())
+        else {
+            return false;
+        };
+        let arm = arm
+            .split_whitespace()
+            .collect::<String>()
+            .replace(",>", ">");
+        if !arm.contains(call) {
+            return false;
+        }
+    }
+    compact.contains("reopen_m1_engineering_aggregate_artifact_with_strategy_v1(root.as_ref(),M1PhysicalProgramStrategyV1::LegacyScalar12)")
+        && compact.contains("reopen_m1_engineering_aggregate_artifact_with_strategy_v1(root.as_ref(),M1PhysicalProgramStrategyV1::AttributedMfma13)")
+        && compact.contains("M1PhysicalProgramStrategyV1::LegacyScalar12=>{admit_m1_non_authoritative_program_artifact_v1(source_capability)}")
+        && compact.contains("M1PhysicalProgramStrategyV1::AttributedMfma13=>{admit_m1_non_authoritative_mfma_program_artifact_v1(source_capability)}")
+}
+
+#[test]
+fn mfma_capture_has_explicit_recorded_route_without_legacy_or_authority_fallback() {
+    assert!(explicit_mfma_route_policy(SOURCE, R29_TECHNICAL_CLI_SOURCE));
+    let input_source = include_str!("../../../crates/ferric-engine/src/bin/input_bundle.rs");
+    assert!(
+        input_source.contains("arguments.insert(0, S::ENGINEERING_CAPTURE_SUBCOMMAND.to_owned());")
+    );
+    assert!(
+        ENGINE_QUALIFICATION_CAPTURE_SOURCE.contains(
+            "const ENGINEERING_CAPTURE_SUBCOMMAND: &'static str = \"capture-engineering\";"
+        )
+    );
+    let cli_provider = R29_TECHNICAL_CLI_SOURCE
+        .split("    fn reopen(root:")
+        .nth(1)
+        .unwrap()
+        .split("    fn program_catalog_id(")
+        .next()
+        .unwrap();
+    assert!(cli_provider.contains("reopen_m1_engineering_mfma_aggregate_artifact_v1(root)"));
+    assert!(cli_provider.contains("reopen_m1_engineering_aggregate_artifact_v1(root)"));
+    assert!(!cli_provider.contains("or_else"));
+    assert!(!cli_provider.contains("std::env"));
+    for (old, replacement) in [
+        (
+            "EngineeringAggregateProgramSourceV1<true>",
+            "EngineeringAggregateProgramSourceV1<false>",
+        ),
+        (
+            "Some(\"capture-engineering-mfma\")",
+            "Some(\"capture-unrecorded-mfma\")",
+        ),
+        (
+            "generate_engineering_r29_inputs::<",
+            "generate_technical_r29_inputs::<",
+        ),
+    ] {
+        let hostile = R29_TECHNICAL_CLI_SOURCE.replacen(old, replacement, 1);
+        assert_ne!(hostile, R29_TECHNICAL_CLI_SOURCE);
+        assert!(!explicit_mfma_route_policy(SOURCE, &hostile));
+    }
+}
+
 #[test]
 fn paged_draft_canary_is_separate_and_non_authoritative() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();

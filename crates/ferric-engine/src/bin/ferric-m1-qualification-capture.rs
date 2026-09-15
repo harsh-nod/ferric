@@ -255,6 +255,7 @@ pub(crate) trait M1R29CaptureProgramSourceV1 {
     type Artifact;
     const CAPTURE_COMMAND: &'static str;
     const INVOCATION_FORMAT: &'static str;
+    const ENGINEERING_CAPTURE_SUBCOMMAND: &'static str = "capture-engineering";
 
     fn pre_capture(root: &Path) -> CaptureResult<()>;
     fn reopen(root: &Path) -> CaptureResult<Self::Artifact>;

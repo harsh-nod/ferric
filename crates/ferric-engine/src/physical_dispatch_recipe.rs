@@ -242,12 +242,19 @@ impl M1PhysicalDispatchRecipeRowV1 {
 #[derive(Debug, Eq, PartialEq)]
 pub struct AddresslessM1PhysicalDispatchRecipeV1 {
     version: u32,
+    program_strategy: crate::M1PhysicalProgramStrategyV1,
     composition_id: Identity,
     dispatch_count: u32,
     rows: Box<[M1PhysicalDispatchRecipeRowV1]>,
 }
 
 impl AddresslessM1PhysicalDispatchRecipeV1 {
+    /// Exact program roster and arithmetic strategy inherited from the step.
+    #[must_use]
+    pub const fn program_strategy(&self) -> crate::M1PhysicalProgramStrategyV1 {
+        self.program_strategy
+    }
+
     /// Recipe format version.
     #[must_use]
     pub const fn version(&self) -> u32 {
@@ -348,9 +355,11 @@ struct CanonicalPhysicalProfiles {
 }
 
 impl CanonicalPhysicalProfiles {
-    fn new() -> Result<Self, M1PhysicalDispatchRecipeErrorV1> {
+    fn new(
+        strategy: crate::M1PhysicalProgramStrategyV1,
+    ) -> Result<Self, M1PhysicalDispatchRecipeErrorV1> {
         Ok(Self {
-            gemm: gemm::Qwen3GemmProfileCatalogV1::canonical().map_err(|_| {
+            gemm: strategy.gemm_profiles().map_err(|_| {
                 M1PhysicalDispatchRecipeErrorV1::CanonicalProfileCatalog(
                     M1PhysicalProfileFamilyV1::Gemm,
                 )
@@ -427,7 +436,7 @@ pub fn derive_m1_physical_dispatch_recipe_v1(
             capacity: M1_MAX_STEP_DISPATCHES_V1,
         });
     }
-    let profiles = CanonicalPhysicalProfiles::new()?;
+    let profiles = CanonicalPhysicalProfiles::new(step.program_strategy())?;
     let capacity = usize::try_from(physical_dispatch_count)
         .map_err(|_| M1PhysicalDispatchRecipeErrorV1::ArithmeticOverflow)?;
     let mut rows = Vec::with_capacity(capacity);
@@ -536,6 +545,7 @@ pub fn derive_m1_physical_dispatch_recipe_v1(
     }
     Ok(AddresslessM1PhysicalDispatchRecipeV1 {
         version: M1_PHYSICAL_DISPATCH_RECIPE_VERSION_V1,
+        program_strategy: step.program_strategy(),
         composition_id: step.composition_id(),
         dispatch_count: physical_dispatch_index,
         rows: rows.into_boxed_slice(),
@@ -626,6 +636,7 @@ fn resolve_physical_profile(
                 gemm::Qwen3GemmScheduleV1::VectorizedA4Wave64V1 => {
                     M1PhysicalProgramV1::GemmVectorized
                 }
+                gemm::Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1 => M1PhysicalProgramV1::GemmMfma,
             };
             Ok(ResolvedPhysicalProfile {
                 program,

@@ -20,7 +20,10 @@ use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::{Identity, Qwen3PlanSelection, RequestId, StepPlan};
 
 use crate::m1_prepublication::build_m1_authenticated_prepublication_batch_v1;
-use crate::operation_kernel_plan::derive_canonical_operation_bindings;
+use crate::operation_kernel_plan::{
+    bind_declared_operation_kernel_plan_with_strategy, derive_canonical_operation_bindings,
+    derive_canonical_operation_bindings_with_strategy,
+};
 use crate::{
     allocate_initialized_m1_model_memory_on_device_v1, allocate_m1_prepublication_workspaces_v1,
     bind_declared_operation_kernel_plan, bind_m1_partitioned_model_memory_kv_pool_v1,
@@ -118,6 +121,12 @@ impl LogicalRunnerDeclaration {
     #[must_use]
     pub const fn kernel_catalog_id(&self) -> Identity {
         self.publication.kernel_catalog_id()
+    }
+
+    /// Returns the physical executable catalog retained by the declaration.
+    #[must_use]
+    pub const fn executable_catalog_id(&self) -> Identity {
+        self.publication.executable_catalog_id()
     }
 
     /// Returns the retained preliminary closure identity.
@@ -875,17 +884,20 @@ pub fn bind_m1_physical_runner_v1(
     }
     let runner = LogicalRunnerDeclaration::from_published(publication);
     let families = programs.family_artifacts().to_vec().into_boxed_slice();
-    let operations = match derive_canonical_operation_bindings(&runner, &families) {
-        Ok(operations) => operations,
-        Err(error) => {
-            return Err(M1PhysicalRunnerBindFailureV1::Canonical {
-                error,
-                programs: Box::new(programs),
-                runner: Box::new(runner),
-            })
-        }
-    };
-    match bind_declared_operation_kernel_plan(runner, families, operations) {
+    let strategy = programs.program_strategy();
+    let operations =
+        match derive_canonical_operation_bindings_with_strategy(&runner, &families, strategy) {
+            Ok(operations) => operations,
+            Err(error) => {
+                return Err(M1PhysicalRunnerBindFailureV1::Canonical {
+                    error,
+                    programs: Box::new(programs),
+                    runner: Box::new(runner),
+                })
+            }
+        };
+    match bind_declared_operation_kernel_plan_with_strategy(runner, families, operations, strategy)
+    {
         OperationKernelPlanOutcome::Bound(operations) => Ok(M1AuthenticatedPhysicalRunnerV1 {
             programs,
             operations,
@@ -1014,19 +1026,22 @@ pub fn bind_non_authoritative_structural_m1_physical_runner_v1(
     }
     let runner = LogicalRunnerDeclaration::from_published(publication);
     let families = non_authoritative_aggregate_family_artifacts(&artifact);
-    let operations = match derive_canonical_operation_bindings(&runner, &families) {
-        Ok(operations) => operations,
-        Err(error) => {
-            return Err(
-                M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Canonical {
-                    error,
-                    artifact: Box::new(artifact),
-                    runner: Box::new(runner),
-                },
-            );
-        }
-    };
-    match bind_declared_operation_kernel_plan(runner, families, operations) {
+    let strategy = artifact.program_strategy();
+    let operations =
+        match derive_canonical_operation_bindings_with_strategy(&runner, &families, strategy) {
+            Ok(operations) => operations,
+            Err(error) => {
+                return Err(
+                    M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1::Canonical {
+                        error,
+                        artifact: Box::new(artifact),
+                        runner: Box::new(runner),
+                    },
+                );
+            }
+        };
+    match bind_declared_operation_kernel_plan_with_strategy(runner, families, operations, strategy)
+    {
         OperationKernelPlanOutcome::Bound(operations) => Ok(M1PhysicalRunnerV1 {
             source: M1StructuralProgramSourceV1::NonAuthoritative(Box::new(artifact)),
             operations,
@@ -1648,8 +1663,9 @@ mod tests {
             "return Err(M1PhysicalRunnerBindFailureV1::ExecutableCatalog {\n            expected,\n            actual,\n            programs: Box::new(programs),\n            publication: Box::new(publication),\n        });",
             "let runner = LogicalRunnerDeclaration::from_published(publication);",
             "let families = programs.family_artifacts().to_vec().into_boxed_slice();",
-            "derive_canonical_operation_bindings(&runner, &families)",
-            "bind_declared_operation_kernel_plan(runner, families, operations)",
+            "let strategy = programs.program_strategy();",
+            "derive_canonical_operation_bindings_with_strategy(",
+            "bind_declared_operation_kernel_plan_with_strategy(",
             "Ok(M1AuthenticatedPhysicalRunnerV1 {\n            programs,\n            operations,\n        })",
         ];
         let mut cursor = 0;
@@ -1661,6 +1677,18 @@ mod tests {
                 return false;
             };
             cursor += offset + required.len();
+        }
+        let compact = binding
+            .split_whitespace()
+            .collect::<String>()
+            .replace(",)", ")");
+        for exact in [
+            "derive_canonical_operation_bindings_with_strategy(&runner,&families,strategy)",
+            "bind_declared_operation_kernel_plan_with_strategy(runner,families,operations,strategy)",
+        ] {
+            if compact.matches(exact).count() != 1 {
+                return false;
+            }
         }
         if binding
             .matches("LogicalRunnerDeclaration::from_published(publication)")
@@ -1751,10 +1779,18 @@ mod tests {
                 ),
             ),
             (
+                "caller strategy substitution",
+                mutate_authenticated_catalog_bind(
+                    RUNNER_SOURCE,
+                    "let strategy = programs.program_strategy();",
+                    "let strategy = crate::M1PhysicalProgramStrategyV1::LegacyScalar12;",
+                ),
+            ),
+            (
                 "non-authoritative binding substitution",
                 mutate_authenticated_catalog_bind(
                 RUNNER_SOURCE,
-                "bind_declared_operation_kernel_plan(runner, families, operations)",
+                "bind_declared_operation_kernel_plan_with_strategy(",
                 "bind_non_authoritative_structural_m1_physical_runner_v1(\n        runner, families, operations,\n    )",
                 ),
             ),

@@ -16,8 +16,10 @@ use ferric_spec::Identity;
 use sha2::{Digest, Sha256};
 
 use crate::physical_program_catalog::{
-    bind_content_bound_m1_program_catalog_from_uniform_artifact_v1, ContentBoundM1ProgramCatalogV1,
-    M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramSourceContractV1,
+    bind_content_bound_m1_program_catalog_from_uniform_artifact_v1,
+    bind_content_bound_m1_program_catalog_from_uniform_artifact_with_strategy_v1,
+    ContentBoundM1ProgramCatalogV1, M1PhysicalProgramCatalogErrorV1,
+    M1PhysicalProgramSourceContractV1, M1PhysicalProgramStrategyV1,
 };
 
 /// Structural rejection of one authority-free aggregate program object.
@@ -79,6 +81,7 @@ pub struct M1NonAuthoritativeProgramArtifactV1 {
     plan: LoadPlan,
     source: M1PhysicalProgramSourceContractV1,
     program_catalog_id: Identity,
+    strategy: M1PhysicalProgramStrategyV1,
 }
 
 impl fmt::Debug for M1NonAuthoritativeProgramArtifactV1 {
@@ -98,11 +101,25 @@ impl M1NonAuthoritativeProgramArtifactV1 {
     pub(crate) fn content_bound_program_catalog_v1(
         &self,
     ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
-        bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
+        if self.strategy == M1PhysicalProgramStrategyV1::LegacyScalar12 {
+            return bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
+                self.source_capability.hsaco_bytes(),
+                self.plan,
+                self.source,
+            );
+        }
+        bind_content_bound_m1_program_catalog_from_uniform_artifact_with_strategy_v1(
             self.source_capability.hsaco_bytes(),
             self.plan,
             self.source,
+            self.strategy,
         )
+    }
+
+    /// Exact program strategy checked against the retained aggregate bytes.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.strategy
     }
 
     /// Identity of the external non-authoritative observation.
@@ -135,7 +152,7 @@ impl M1NonAuthoritativeProgramArtifactV1 {
         self.source_capability.compiler_handoff_len()
     }
 
-    /// Domain-separated identity of the twelve exact selected programs.
+    /// Domain-separated identity of the exact selected program strategy.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
         self.program_catalog_id
@@ -236,6 +253,32 @@ pub fn admit_m1_non_authoritative_program_artifact_v1(
     source_capability: M1NonAuthoritativeProgramSourceCapabilityV1,
 ) -> Result<M1NonAuthoritativeProgramArtifactV1, M1NonAuthoritativeProgramArtifactAdmissionFailureV1>
 {
+    admit_m1_non_authoritative_program_artifact_with_strategy_v1(
+        source_capability,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+/// Admits the exact thirteen-root MFMA aggregate without granting authority.
+///
+/// # Errors
+/// Returns unchanged source custody unless the actual object has the exact MFMA
+/// roster, target and reconciled source ABI. This is not Worker V3 authentication.
+pub fn admit_m1_non_authoritative_mfma_program_artifact_v1(
+    source_capability: M1NonAuthoritativeProgramSourceCapabilityV1,
+) -> Result<M1NonAuthoritativeProgramArtifactV1, M1NonAuthoritativeProgramArtifactAdmissionFailureV1>
+{
+    admit_m1_non_authoritative_program_artifact_with_strategy_v1(
+        source_capability,
+        M1PhysicalProgramStrategyV1::AttributedMfma13,
+    )
+}
+
+fn admit_m1_non_authoritative_program_artifact_with_strategy_v1(
+    source_capability: M1NonAuthoritativeProgramSourceCapabilityV1,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<M1NonAuthoritativeProgramArtifactV1, M1NonAuthoritativeProgramArtifactAdmissionFailureV1>
+{
     let compiler_handoff_len = source_capability.compiler_handoff_len();
     if !compiler_handoff_is_nonempty_v1(compiler_handoff_len) {
         return Err(M1NonAuthoritativeProgramArtifactAdmissionFailureV1 {
@@ -262,19 +305,20 @@ pub fn admit_m1_non_authoritative_program_artifact_v1(
         compiler_handoff_len,
     );
     let program_catalog_id = {
-        let catalog = match bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
-            bytes, plan, source,
-        ) {
-            Ok(catalog) => catalog,
-            Err(error) => {
-                return Err(M1NonAuthoritativeProgramArtifactAdmissionFailureV1 {
-                    error: M1NonAuthoritativeProgramArtifactErrorV1::ProgramCatalog(Box::new(
-                        error,
-                    )),
-                    source_capability: Box::new(source_capability),
-                });
-            }
-        };
+        let catalog =
+            match bind_content_bound_m1_program_catalog_from_uniform_artifact_with_strategy_v1(
+                bytes, plan, source, strategy,
+            ) {
+                Ok(catalog) => catalog,
+                Err(error) => {
+                    return Err(M1NonAuthoritativeProgramArtifactAdmissionFailureV1 {
+                        error: M1NonAuthoritativeProgramArtifactErrorV1::ProgramCatalog(Box::new(
+                            error,
+                        )),
+                        source_capability: Box::new(source_capability),
+                    });
+                }
+            };
         catalog.catalog_id()
     };
     let hsaco_id = Identity::new(digest(bytes));
@@ -284,6 +328,7 @@ pub fn admit_m1_non_authoritative_program_artifact_v1(
         plan,
         source,
         program_catalog_id,
+        strategy,
     })
 }
 
@@ -341,5 +386,33 @@ mod tests {
         ));
         assert_eq!(failure.source_capability().hsaco_bytes().as_ptr(), pointer);
         assert_eq!(failure.source_capability().compiler_handoff_len(), 4);
+    }
+
+    #[test]
+    fn mfma_rejections_retain_exact_source_without_authority_or_fallback() {
+        for handoff_len in [0, 4] {
+            let bytes = vec![1_u8, 2, 3, 4].into_boxed_slice();
+            let pointer = bytes.as_ptr();
+            let failure =
+                admit_m1_non_authoritative_mfma_program_artifact_v1(source(handoff_len, bytes))
+                    .expect_err("MFMA admission must not replace a failed source");
+            assert_eq!(failure.source_capability().hsaco_bytes().as_ptr(), pointer);
+            assert_eq!(
+                failure.source_capability().compiler_handoff_len(),
+                handoff_len
+            );
+            assert_eq!(failure.source_capability().hsaco_bytes(), &[1, 2, 3, 4]);
+            if handoff_len == 0 {
+                assert!(matches!(
+                    failure.error(),
+                    M1NonAuthoritativeProgramArtifactErrorV1::EmptyCompilerHandoff
+                ));
+            } else {
+                assert!(matches!(
+                    failure.error(),
+                    M1NonAuthoritativeProgramArtifactErrorV1::Loader(_)
+                ));
+            }
+        }
     }
 }

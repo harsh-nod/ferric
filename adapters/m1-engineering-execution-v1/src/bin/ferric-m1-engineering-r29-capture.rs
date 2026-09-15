@@ -15,7 +15,7 @@ mod qualification_capture;
 
 use ferric_m1_engineering_execution_v1::{
     M1EngineeringAggregateArtifactV1, bind_engineering_structural_m1_physical_runner_v1,
-    reopen_m1_engineering_aggregate_artifact_v1,
+    reopen_m1_engineering_aggregate_artifact_v1, reopen_m1_engineering_mfma_aggregate_artifact_v1,
 };
 use ferric_spec::Identity;
 use qualification_capture::{
@@ -25,20 +25,29 @@ use std::ffi::OsString;
 use std::path::Path;
 use std::process::ExitCode;
 
-struct EngineeringAggregateProgramSourceV1;
+struct EngineeringAggregateProgramSourceV1<const MFMA: bool = false>;
 
-impl M1R29CaptureProgramSourceV1 for EngineeringAggregateProgramSourceV1 {
+impl<const MFMA: bool> M1R29CaptureProgramSourceV1 for EngineeringAggregateProgramSourceV1<MFMA> {
     type Artifact = M1EngineeringAggregateArtifactV1;
     const CAPTURE_COMMAND: &'static str = "ferric-m1-engineering-r29-capture";
     const INVOCATION_FORMAT: &'static str = "FERRIC-M1-TECHNICAL-PREQUALIFICATION-INVOCATIONS-V1";
+    const ENGINEERING_CAPTURE_SUBCOMMAND: &'static str = if MFMA {
+        "capture-engineering-mfma"
+    } else {
+        "capture-engineering"
+    };
 
     fn pre_capture(_root: &Path) -> CaptureResult<()> {
         Ok(())
     }
 
     fn reopen(root: &Path) -> CaptureResult<Self::Artifact> {
-        reopen_m1_engineering_aggregate_artifact_v1(root)
-            .map_err(|error| format!("cannot admit aggregate engineering artifact: {error}"))
+        let artifact = if MFMA {
+            reopen_m1_engineering_mfma_aggregate_artifact_v1(root)
+        } else {
+            reopen_m1_engineering_aggregate_artifact_v1(root)
+        };
+        artifact.map_err(|error| format!("cannot admit aggregate engineering artifact: {error}"))
     }
 
     fn program_catalog_id(artifact: &Self::Artifact) -> Identity {
@@ -79,6 +88,19 @@ fn main() -> ExitCode {
 
 fn run(arguments: &[OsString]) -> CaptureResult<()> {
     match arguments.first().and_then(|argument| argument.to_str()) {
+        Some("generate-engineering-mfma-inputs") => {
+            qualification_capture::generate_engineering_r29_inputs::<
+                EngineeringAggregateProgramSourceV1<true>,
+            >(&arguments[1..], false)
+        }
+        Some("validate-engineering-mfma-inputs") => {
+            qualification_capture::generate_engineering_r29_inputs::<
+                EngineeringAggregateProgramSourceV1<true>,
+            >(&arguments[1..], true)
+        }
+        Some("capture-engineering-mfma") => qualification_capture::run_engineering_r29_capture::<
+            EngineeringAggregateProgramSourceV1<true>,
+        >(&arguments[1..]),
         Some("generate-engineering-inputs") => {
             qualification_capture::generate_engineering_r29_inputs::<
                 EngineeringAggregateProgramSourceV1,
@@ -102,6 +124,48 @@ fn run(arguments: &[OsString]) -> CaptureResult<()> {
             qualification_capture::run_technical_r29_capture::<EngineeringAggregateProgramSourceV1>(
                 arguments,
             )
+        }
+    }
+}
+
+#[cfg(test)]
+mod mfma_command_tests {
+    use super::*;
+
+    #[test]
+    fn explicit_mfma_provider_records_a_disjoint_capture_subcommand() {
+        assert_eq!(
+            EngineeringAggregateProgramSourceV1::<false>::ENGINEERING_CAPTURE_SUBCOMMAND,
+            "capture-engineering"
+        );
+        assert_eq!(
+            EngineeringAggregateProgramSourceV1::<true>::ENGINEERING_CAPTURE_SUBCOMMAND,
+            "capture-engineering-mfma"
+        );
+        assert_eq!(
+            EngineeringAggregateProgramSourceV1::<false>::CAPTURE_COMMAND,
+            EngineeringAggregateProgramSourceV1::<true>::CAPTURE_COMMAND
+        );
+        let source = include_str!("ferric-m1-engineering-r29-capture.rs");
+        let provider = source
+            .split("    fn reopen(root:")
+            .nth(1)
+            .unwrap()
+            .split("    fn program_catalog_id(")
+            .next()
+            .unwrap();
+        assert!(provider.contains("if MFMA {\n            reopen_m1_engineering_mfma_aggregate_artifact_v1(root)\n        } else {\n            reopen_m1_engineering_aggregate_artifact_v1(root)"));
+        assert!(!provider.contains("std::env"));
+    }
+
+    #[test]
+    fn explicit_mfma_commands_reject_missing_inputs_before_artifact_or_gpu_use() {
+        for command in [
+            "generate-engineering-mfma-inputs",
+            "validate-engineering-mfma-inputs",
+            "capture-engineering-mfma",
+        ] {
+            assert!(run(&[OsString::from(command)]).is_err());
         }
     }
 }

@@ -990,7 +990,7 @@ fn invocation_map_for_purpose<S: M1R29CaptureProgramSourceV1>(
                 path_string(&output)?.to_owned(),
             ];
             if purpose == InputDocumentPurposeV1::EngineeringCoordinates {
-                arguments.insert(0, "capture-engineering".to_owned());
+                arguments.insert(0, S::ENGINEERING_CAPTURE_SUBCOMMAND.to_owned());
             }
             Ok(json!({
                 "arguments": arguments,
@@ -1427,6 +1427,81 @@ mod tests {
             assert_eq!(new_args[0], "capture-engineering");
             assert_eq!(&new_args[1..], old["arguments"].as_array().unwrap());
         }
+    }
+
+    struct MfmaInvocationSource;
+
+    impl M1R29CaptureProgramSourceV1 for MfmaInvocationSource {
+        type Artifact = ();
+        const CAPTURE_COMMAND: &'static str = PersistedM1R29CaptureProgramSourceV1::CAPTURE_COMMAND;
+        const INVOCATION_FORMAT: &'static str =
+            PersistedM1R29CaptureProgramSourceV1::INVOCATION_FORMAT;
+        const ENGINEERING_CAPTURE_SUBCOMMAND: &'static str = "capture-engineering-mfma";
+
+        fn pre_capture(_: &Path) -> CaptureResult<()> {
+            Err("invocation-only fixture".to_owned())
+        }
+        fn reopen(_: &Path) -> CaptureResult<Self::Artifact> {
+            Err("invocation-only fixture".to_owned())
+        }
+        fn program_catalog_id(_: &Self::Artifact) -> ferric_spec::Identity {
+            unreachable!("invocation-only fixture")
+        }
+        fn bind(
+            _: Self::Artifact,
+            _: ferric_build::PublishedRunnerDeclaration,
+        ) -> CaptureResult<ferric_engine::M1PhysicalRunnerV1> {
+            Err("invocation-only fixture".to_owned())
+        }
+    }
+
+    #[test]
+    fn mfma_engineering_invocation_records_provider_route_without_changing_qualification() {
+        let documents = fixture_documents();
+        let bytes = document_bytes(&documents, PLAN_PATH).unwrap().to_vec();
+        let value = parse_canonical(&bytes, "fixture plan").unwrap();
+        let plan = parse_plan_document(&value, bytes).unwrap();
+        let inputs = (
+            Path::new("bundle"),
+            Path::new("snapshot"),
+            Path::new("artifact"),
+        );
+        let legacy = invocation_map_for_purpose::<PersistedM1R29CaptureProgramSourceV1>(
+            inputs.0,
+            inputs.1,
+            inputs.2,
+            7,
+            &plan,
+            InputDocumentPurposeV1::EngineeringCoordinates,
+        )
+        .unwrap();
+        let mfma = invocation_map_for_purpose::<MfmaInvocationSource>(
+            inputs.0,
+            inputs.1,
+            inputs.2,
+            7,
+            &plan,
+            InputDocumentPurposeV1::EngineeringCoordinates,
+        )
+        .unwrap();
+        let mut expected = parse_canonical(&legacy, "legacy invocations").unwrap();
+        for case in expected["invocations"].as_array_mut().unwrap() {
+            assert_eq!(case["arguments"][0], "capture-engineering");
+            case["arguments"][0] = json!("capture-engineering-mfma");
+        }
+        assert_ne!(legacy, mfma);
+        assert_eq!(
+            parse_canonical(&mfma, "MFMA invocations").unwrap(),
+            expected
+        );
+        assert_eq!(
+            invocation_map_bytes::<PersistedM1R29CaptureProgramSourceV1>(
+                inputs.0, inputs.1, inputs.2, 7, &plan
+            )
+            .unwrap(),
+            invocation_map_bytes::<MfmaInvocationSource>(inputs.0, inputs.1, inputs.2, 7, &plan)
+                .unwrap()
+        );
     }
 
     #[test]

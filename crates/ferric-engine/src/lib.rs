@@ -89,12 +89,13 @@ pub use authenticated_kernel_acquisition::{
     M1WorkerV3RosterAcquisitionFailureV1, M1WorkerV3RosterAcquisitionStageV1,
 };
 pub use authenticated_kernel_programs::{
+    admit_m1_authenticated_mfma_worker_v3_programs_v1,
     admit_m1_authenticated_worker_v3_programs_v1, require_m1_authenticated_roster_acquisition_v1,
-    M1AuthenticatedProgramSetIntakeErrorV1, M1AuthenticatedProgramSetIntakeFailureV1,
-    M1AuthenticatedProgramSetIntakePhaseV1, M1AuthenticatedRosterAcquisitionRequiredV1,
-    M1AuthenticatedWorkerV3ProgramSetResidueV1, M1AuthenticatedWorkerV3ProgramSetV1,
-    M1AuthenticatedWorkerV3RosterV1, M1_AUTHENTICATED_PROGRAM_TARGET_V1,
-    M1_AUTHENTICATED_ROSTER_COUNT_V1,
+    M1AuthenticatedMfmaWorkerV3RosterV1, M1AuthenticatedProgramSetIntakeErrorV1,
+    M1AuthenticatedProgramSetIntakeFailureV1, M1AuthenticatedProgramSetIntakePhaseV1,
+    M1AuthenticatedRosterAcquisitionRequiredV1, M1AuthenticatedWorkerV3ProgramSetResidueV1,
+    M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedWorkerV3RosterV1,
+    M1_AUTHENTICATED_PROGRAM_TARGET_V1, M1_AUTHENTICATED_ROSTER_COUNT_V1,
 };
 pub use authenticated_physical_queue::{
     M1AuthenticatedPhysicalCompletedQueueSessionV1, M1AuthenticatedPhysicalDetachedQueueSessionV1,
@@ -624,6 +625,7 @@ pub use model_memory_allocations::{
     ModelMemoryDispatchRangeErrorV1, SelectedModelMemoryAllocationIdentitiesV1,
 };
 pub use non_authoritative_program_artifact::{
+    admit_m1_non_authoritative_mfma_program_artifact_v1,
     admit_m1_non_authoritative_program_artifact_v1,
     M1NonAuthoritativeProgramArtifactAdmissionFailureV1, M1NonAuthoritativeProgramArtifactErrorV1,
     M1NonAuthoritativeProgramArtifactV1,
@@ -694,7 +696,8 @@ pub use physical_kernarg_recipe::{
 pub use physical_program_catalog::{
     bind_content_bound_m1_program_catalog_v1, ContentBoundM1ProgramCatalogV1,
     InspectedM1KernelArtifacts, M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramFamilyV1,
-    M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1PhysicalProgramStrategyV1, M1PhysicalProgramV1, M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1,
+    M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 pub use physical_queue_lifecycle::{
     m1_completion_progress_total_scan_bound_v1, M1CompletedReadbackJoinErrorV1,

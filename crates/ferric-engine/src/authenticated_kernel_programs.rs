@@ -19,6 +19,7 @@ use ferric_build::M1KernelArtifactFamilyV1;
 use ferric_kernels::KernelFamily;
 use ferric_qwen3_all_kernels_device_v1::{
     gemm::{
+        ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker as GemmMfmaMarkerV1,
         ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker as GemmReferenceMarkerV1,
         ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker as GemmVectorizedMarkerV1,
         ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker as TokenEmbeddingMarkerV1,
@@ -36,12 +37,15 @@ use ferric_qwen3_all_kernels_device_v1::{
         qwen3_rope_v1_gpu::Marker as RopeMarkerV1,
     },
     swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker as SwiGluMarkerV1,
-    M1AllKernelsWorkerV3RosterV1,
+    M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
 };
 use ferric_spec::Identity;
 use sha2::{Digest, Sha256};
 
-use crate::{DeclaredKernelFamilyArtifact, M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1};
+use crate::{
+    DeclaredKernelFamilyArtifact, M1PhysicalProgramStrategyV1, M1PhysicalProgramV1,
+    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+};
 
 const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-catalog.v2";
@@ -49,6 +53,8 @@ const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-map.v2";
 const M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] =
     [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3];
+const M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1] =
+    [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3, 12];
 
 /// Exact production target admitted by the M1 physical runner.
 pub const M1_AUTHENTICATED_PROGRAM_TARGET_V1: &str = "gfx942:xnack-";
@@ -59,16 +65,20 @@ pub const M1_AUTHENTICATED_ROSTER_COUNT_V1: usize = 1;
 pub type M1AuthenticatedWorkerV3RosterV1 =
     AuthenticatedWorkerV3RosterV1<M1AllKernelsWorkerV3RosterV1>;
 
+/// Separate authenticated custody for the attributed thirteen-root MFMA roster.
+pub type M1AuthenticatedMfmaWorkerV3RosterV1 =
+    AuthenticatedWorkerV3RosterV1<M1AllKernelsMfmaWorkerV3RosterV1>;
+
 /// Owners retained when exact M1 program-set intake rejects.
 #[must_use = "rejected authenticated owners must remain classified"]
-pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+pub struct M1AuthenticatedWorkerV3ProgramSetResidueV1<R = M1AllKernelsWorkerV3RosterV1> {
     /// Erased set containing the aggregate roster after successful composition.
     pub programs: Option<AuthenticatedWorkerV3ProgramSetV1>,
     /// The uncomposed or rejected aggregate roster owner.
-    pub roster: Option<M1AuthenticatedWorkerV3RosterV1>,
+    pub roster: Option<AuthenticatedWorkerV3RosterV1<R>>,
 }
 
-impl fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1 {
+impl<R> fmt::Debug for M1AuthenticatedWorkerV3ProgramSetResidueV1<R> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedWorkerV3ProgramSetResidueV1")
@@ -152,13 +162,13 @@ impl Error for M1AuthenticatedProgramSetIntakeErrorV1 {
 
 /// Intake failure retaining every aggregate owner available at the rejection.
 #[must_use = "intake failure retains authenticated roster custody"]
-pub struct M1AuthenticatedProgramSetIntakeFailureV1 {
+pub struct M1AuthenticatedProgramSetIntakeFailureV1<R = M1AllKernelsWorkerV3RosterV1> {
     phase: M1AuthenticatedProgramSetIntakePhaseV1,
     error: Box<M1AuthenticatedProgramSetIntakeErrorV1>,
-    residue: Box<M1AuthenticatedWorkerV3ProgramSetResidueV1>,
+    residue: Box<M1AuthenticatedWorkerV3ProgramSetResidueV1<R>>,
 }
 
-impl M1AuthenticatedProgramSetIntakeFailureV1 {
+impl<R> M1AuthenticatedProgramSetIntakeFailureV1<R> {
     /// Returns the exact rejection phase.
     #[must_use]
     pub const fn phase(&self) -> M1AuthenticatedProgramSetIntakePhaseV1 {
@@ -177,13 +187,13 @@ impl M1AuthenticatedProgramSetIntakeFailureV1 {
     ) -> (
         M1AuthenticatedProgramSetIntakePhaseV1,
         M1AuthenticatedProgramSetIntakeErrorV1,
-        M1AuthenticatedWorkerV3ProgramSetResidueV1,
+        M1AuthenticatedWorkerV3ProgramSetResidueV1<R>,
     ) {
         (self.phase, *self.error, *self.residue)
     }
 }
 
-impl fmt::Debug for M1AuthenticatedProgramSetIntakeFailureV1 {
+impl<R> fmt::Debug for M1AuthenticatedProgramSetIntakeFailureV1<R> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("M1AuthenticatedProgramSetIntakeFailureV1")
@@ -200,7 +210,8 @@ pub struct M1AuthenticatedWorkerV3ProgramSetV1 {
     programs: AuthenticatedWorkerV3ProgramSetV1,
     family_artifacts: Box<[DeclaredKernelFamilyArtifact]>,
     catalog_id: Identity,
-    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+    strategy: M1PhysicalProgramStrategyV1,
+    service_program_indices: [usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1],
 }
 
 /// Ferric-only identity and role map retained while fe2o3 owns executable custody.
@@ -209,10 +220,15 @@ pub struct M1AuthenticatedWorkerV3ProgramSetV1 {
 pub(crate) struct M1AuthenticatedProgramCatalogWitnessV1 {
     family_artifacts: Box<[DeclaredKernelFamilyArtifact]>,
     catalog_id: Identity,
-    service_program_indices: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+    strategy: M1PhysicalProgramStrategyV1,
+    service_program_indices: [usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1],
 }
 
 impl M1AuthenticatedProgramCatalogWitnessV1 {
+    pub(crate) const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.strategy
+    }
+
     pub(crate) const fn catalog_id(&self) -> Identity {
         self.catalog_id
     }
@@ -222,7 +238,17 @@ impl M1AuthenticatedProgramCatalogWitnessV1 {
     }
 
     pub(crate) const fn service_program_index(&self, program: M1PhysicalProgramV1) -> usize {
-        self.service_program_indices[program.program_index()]
+        match self.try_service_program_index(program) {
+            Some(index) => index,
+            None => panic!("program is absent from the authenticated strategy"),
+        }
+    }
+
+    pub(crate) const fn try_service_program_index(
+        &self,
+        program: M1PhysicalProgramV1,
+    ) -> Option<usize> {
+        checked_service_program_index(self.strategy, &self.service_program_indices, program)
     }
 }
 
@@ -251,6 +277,7 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
             M1AuthenticatedProgramCatalogWitnessV1 {
                 family_artifacts: self.family_artifacts,
                 catalog_id: self.catalog_id,
+                strategy: self.strategy,
                 service_program_indices: self.service_program_indices,
             },
         )
@@ -264,6 +291,7 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
             programs,
             family_artifacts: witness.family_artifacts,
             catalog_id: witness.catalog_id,
+            strategy: witness.strategy,
             service_program_indices: witness.service_program_indices,
         }
     }
@@ -292,10 +320,29 @@ impl M1AuthenticatedWorkerV3ProgramSetV1 {
         self.catalog_id
     }
 
+    /// Exact strategy fixed by typed roster admission, not a caller preference.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.strategy
+    }
+
     /// Resolves one stable Ferric program role to its aggregate service index.
+    ///
+    /// # Panics
+    /// Panics if the requested program is absent from the admitted strategy.
+    /// Use [`Self::try_service_program_index`] for a role not already roster-bound.
     #[must_use]
     pub const fn service_program_index(&self, program: M1PhysicalProgramV1) -> usize {
-        self.service_program_indices[program.program_index()]
+        match self.try_service_program_index(program) {
+            Some(index) => index,
+            None => panic!("program is absent from the authenticated strategy"),
+        }
+    }
+
+    /// Resolves a role only if it belongs to the exact authenticated strategy.
+    #[must_use]
+    pub const fn try_service_program_index(&self, program: M1PhysicalProgramV1) -> Option<usize> {
+        checked_service_program_index(self.strategy, &self.service_program_indices, program)
     }
 
     /// Resolves a compiler-generated marker in the retained program set.
@@ -366,7 +413,31 @@ pub fn require_m1_authenticated_roster_acquisition_v1(
 pub fn admit_m1_authenticated_worker_v3_programs_v1(
     roster: M1AuthenticatedWorkerV3RosterV1,
 ) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1> {
-    if let Err(error) = validate_roster(&roster) {
+    admit_authenticated_programs_with_strategy(roster, M1PhysicalProgramStrategyV1::LegacyScalar12)
+}
+
+/// Admits only the separate authenticated thirteen-root MFMA roster.
+///
+/// # Errors
+/// Requires the same current-publication, protected verification, exact source,
+/// target and service-index checks as legacy admission, retaining all failures.
+pub fn admit_m1_authenticated_mfma_worker_v3_programs_v1(
+    roster: M1AuthenticatedMfmaWorkerV3RosterV1,
+) -> Result<
+    M1AuthenticatedWorkerV3ProgramSetV1,
+    M1AuthenticatedProgramSetIntakeFailureV1<M1AllKernelsMfmaWorkerV3RosterV1>,
+> {
+    admit_authenticated_programs_with_strategy(
+        roster,
+        M1PhysicalProgramStrategyV1::AttributedMfma13,
+    )
+}
+
+fn admit_authenticated_programs_with_strategy<R: CompilerGeneratedKernelExpectationRosterV1>(
+    roster: AuthenticatedWorkerV3RosterV1<R>,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<M1AuthenticatedWorkerV3ProgramSetV1, M1AuthenticatedProgramSetIntakeFailureV1<R>> {
+    if let Err(error) = validate_roster(&roster, strategy) {
         return Err(intake_failure(
             M1AuthenticatedProgramSetIntakePhaseV1::Preflight,
             error,
@@ -377,7 +448,7 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
         ));
     }
 
-    let roster_catalog_id = authenticated_catalog_id(&roster);
+    let roster_catalog_id = authenticated_catalog_id(&roster, strategy);
     let family_artifacts = authenticated_family_artifacts(&roster);
     let programs = match AuthenticatedWorkerV3ProgramSetV1::from_roster(roster) {
         Ok(programs) => programs,
@@ -395,12 +466,12 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
     };
 
     if programs.roster_count() != M1_AUTHENTICATED_ROSTER_COUNT_V1
-        || programs.program_count() != M1_PHYSICAL_PROGRAM_COUNT_V1
+        || programs.program_count() != strategy.program_count()
     {
         let error = M1AuthenticatedProgramSetIntakeErrorV1::AggregateCount {
             expected_rosters: M1_AUTHENTICATED_ROSTER_COUNT_V1,
             actual_rosters: programs.roster_count(),
-            expected_programs: M1_PHYSICAL_PROGRAM_COUNT_V1,
+            expected_programs: strategy.program_count(),
             actual_programs: programs.program_count(),
         };
         return Err(intake_failure(
@@ -413,7 +484,7 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
         ));
     }
 
-    let service_program_indices = match authenticated_program_indices(&programs) {
+    let service_program_indices = match authenticated_program_indices(&programs, strategy) {
         Ok(indices) => indices,
         Err(error) => {
             return Err(intake_failure(
@@ -426,21 +497,25 @@ pub fn admit_m1_authenticated_worker_v3_programs_v1(
             ));
         }
     };
-    let catalog_id =
-        authenticated_catalog_id_with_program_map(roster_catalog_id, &service_program_indices);
+    let catalog_id = authenticated_catalog_id_with_program_map(
+        roster_catalog_id,
+        &service_program_indices,
+        strategy,
+    );
     Ok(M1AuthenticatedWorkerV3ProgramSetV1 {
         programs,
         family_artifacts,
         catalog_id,
+        strategy,
         service_program_indices,
     })
 }
 
-fn intake_failure(
+fn intake_failure<R>(
     phase: M1AuthenticatedProgramSetIntakePhaseV1,
     error: M1AuthenticatedProgramSetIntakeErrorV1,
-    residue: M1AuthenticatedWorkerV3ProgramSetResidueV1,
-) -> M1AuthenticatedProgramSetIntakeFailureV1 {
+    residue: M1AuthenticatedWorkerV3ProgramSetResidueV1<R>,
+) -> M1AuthenticatedProgramSetIntakeFailureV1<R> {
     M1AuthenticatedProgramSetIntakeFailureV1 {
         phase,
         error: Box::new(error),
@@ -448,8 +523,9 @@ fn intake_failure(
     }
 }
 
-fn validate_roster(
-    roster: &M1AuthenticatedWorkerV3RosterV1,
+fn validate_roster<R: CompilerGeneratedKernelExpectationRosterV1>(
+    roster: &AuthenticatedWorkerV3RosterV1<R>,
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<(), M1AuthenticatedProgramSetIntakeErrorV1> {
     let expected_target =
         AmdTargetId::parse(M1_AUTHENTICATED_PROGRAM_TARGET_V1).expect("fixed target is canonical");
@@ -463,11 +539,11 @@ fn validate_roster(
             actual: roster.target(),
         });
     }
-    if roster.entry_count() != M1_PHYSICAL_PROGRAM_COUNT_V1
-        || M1AllKernelsWorkerV3RosterV1::ENTRIES.len() != M1_PHYSICAL_PROGRAM_COUNT_V1
+    if roster.entry_count() != strategy.program_count()
+        || R::ENTRIES.len() != strategy.program_count()
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::EntryCount {
-            expected: M1_PHYSICAL_PROGRAM_COUNT_V1,
+            expected: strategy.program_count(),
             actual: roster.entry_count(),
         });
     }
@@ -485,10 +561,11 @@ fn validate_roster(
     {
         return Err(M1AuthenticatedProgramSetIntakeErrorV1::EmptyFinalizedArtifact);
     }
-    let mut bindings = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
-    for (ordinal, entry) in M1AllKernelsWorkerV3RosterV1::ENTRIES.iter().enumerate() {
+    let mut bindings = Vec::with_capacity(strategy.program_count());
+    for (ordinal, entry) in R::ENTRIES.iter().enumerate() {
         if entry.logical_name() != entry.export_name()
-            || !M1PhysicalProgramV1::ALL
+            || !strategy
+                .program_roster()
                 .iter()
                 .any(|program| program.kernel_symbol() == entry.export_name())
         {
@@ -521,9 +598,23 @@ fn validate_roster(
     Ok(())
 }
 
+const fn checked_service_program_index(
+    strategy: M1PhysicalProgramStrategyV1,
+    indices: &[usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1],
+    program: M1PhysicalProgramV1,
+) -> Option<usize> {
+    let ordinal = program.program_index();
+    if ordinal >= strategy.program_count() || indices[ordinal] >= strategy.program_count() {
+        None
+    } else {
+        Some(indices[ordinal])
+    }
+}
+
 fn authenticated_program_indices(
     programs: &AuthenticatedWorkerV3ProgramSetV1,
-) -> Result<[usize; M1_PHYSICAL_PROGRAM_COUNT_V1], M1AuthenticatedProgramSetIntakeErrorV1> {
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<[usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1], M1AuthenticatedProgramSetIntakeErrorV1> {
     let actual = [
         programs.program_index::<GemmReferenceMarkerV1>().ok(),
         programs.program_index::<GemmVectorizedMarkerV1>().ok(),
@@ -537,12 +628,21 @@ fn authenticated_program_indices(
         programs.program_index::<LogitsArgmaxMarkerV1>().ok(),
         programs.program_index::<LogitsCompactMarkerV1>().ok(),
         programs.program_index::<SpeculativeAssemblyMarkerV1>().ok(),
+        programs.program_index::<GemmMfmaMarkerV1>().ok(),
     ];
-    let mut indices = [0; M1_PHYSICAL_PROGRAM_COUNT_V1];
-    for ((program, actual), expected_service_index) in M1PhysicalProgramV1::ALL
-        .into_iter()
+    let expected: &[usize] = match strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => &M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1,
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => {
+            &M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1
+        }
+    };
+    let mut indices = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+    for ((program, actual), expected_service_index) in strategy
+        .program_roster()
+        .iter()
+        .copied()
         .zip(actual)
-        .zip(M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
+        .zip(expected.iter().copied())
     {
         if actual != Some(expected_service_index) {
             return Err(M1AuthenticatedProgramSetIntakeErrorV1::ProgramIndex {
@@ -558,13 +658,19 @@ fn authenticated_program_indices(
 
 fn authenticated_catalog_id_with_program_map(
     roster_catalog_id: Identity,
-    service_program_indices: &[usize; M1_PHYSICAL_PROGRAM_COUNT_V1],
+    service_program_indices: &[usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Identity {
     let mut digest = Sha256::new();
     digest.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2);
     digest.update(roster_catalog_id.as_bytes());
-    for (program, service_index) in M1PhysicalProgramV1::ALL
-        .into_iter()
+    if strategy == M1PhysicalProgramStrategyV1::AttributedMfma13 {
+        digest.update(b"ferric.m1.attributed-mfma-program-strategy.v1");
+    }
+    for (program, service_index) in strategy
+        .program_roster()
+        .iter()
+        .copied()
         .zip(service_program_indices)
     {
         digest.update([program as u8]);
@@ -573,8 +679,8 @@ fn authenticated_catalog_id_with_program_map(
     Identity::new(digest.finalize().into())
 }
 
-fn authenticated_family_artifacts(
-    roster: &M1AuthenticatedWorkerV3RosterV1,
+fn authenticated_family_artifacts<R: CompilerGeneratedKernelExpectationRosterV1>(
+    roster: &AuthenticatedWorkerV3RosterV1<R>,
 ) -> Box<[DeclaredKernelFamilyArtifact]> {
     let compiler_handoff = Identity::new(*roster.compiler_handoff_identity().sha256());
     let finalized = Identity::new(roster.verification().finalized_hsaco_sha256());
@@ -593,7 +699,10 @@ fn authenticated_family_artifacts(
         .into_boxed_slice()
 }
 
-fn authenticated_catalog_id(roster: &M1AuthenticatedWorkerV3RosterV1) -> Identity {
+fn authenticated_catalog_id<R: CompilerGeneratedKernelExpectationRosterV1>(
+    roster: &AuthenticatedWorkerV3RosterV1<R>,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Identity {
     let verification = roster.verification();
     let compiler_module = roster.compiler_module_identity();
     let compiler_handoff = roster.compiler_handoff_identity();
@@ -601,7 +710,10 @@ fn authenticated_catalog_id(roster: &M1AuthenticatedWorkerV3RosterV1) -> Identit
     let mut digest = Sha256::new();
     digest.update(M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2);
     digest.update((M1_AUTHENTICATED_ROSTER_COUNT_V1 as u64).to_le_bytes());
-    digest.update((M1_PHYSICAL_PROGRAM_COUNT_V1 as u64).to_le_bytes());
+    digest.update((strategy.program_count() as u64).to_le_bytes());
+    if strategy == M1PhysicalProgramStrategyV1::AttributedMfma13 {
+        digest.update(b"ferric.m1.attributed-mfma-program-strategy.v1");
+    }
     digest.update(compiler_module.sha256());
     digest.update(compiler_module.byte_len().to_le_bytes());
     digest.update(compiler_handoff.sha256());
@@ -686,6 +798,111 @@ mod tests {
         ];
         assert_eq!(actual, [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3]);
         assert_eq!(actual, M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
+    }
+
+    #[test]
+    fn mfma_roster_has_separate_exact_markers_and_service_order() {
+        let entries = M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES;
+        assert_eq!(entries.len(), M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1);
+        assert!(entries
+            .windows(2)
+            .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id()));
+        for (program, &index) in M1PhysicalProgramV1::MFMA_ALL
+            .iter()
+            .zip(&M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
+        {
+            assert_eq!(entries[index].export_name(), program.kernel_symbol());
+            assert_eq!(entries[index].logical_name(), program.kernel_symbol());
+            assert_ne!(entries[index].generated_host_contract_identity(), [0; 32]);
+        }
+        assert_eq!(
+            entries[12].kernel_binding_id(),
+            GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1
+        );
+        assert!(!M1AllKernelsWorkerV3RosterV1::ENTRIES
+            .iter()
+            .any(|entry| entry.kernel_binding_id() == GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1));
+    }
+
+    #[test]
+    fn legacy_program_map_hash_bytes_ignore_unused_capacity_and_mfma_is_separate() {
+        let roster_id = Identity::new([41; 32]);
+        let mut indices = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+        indices[..12].copy_from_slice(&M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
+        let legacy = authenticated_catalog_id_with_program_map(
+            roster_id,
+            &indices,
+            M1PhysicalProgramStrategyV1::LegacyScalar12,
+        );
+        let mut previous = Sha256::new();
+        previous.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2);
+        previous.update(roster_id.as_bytes());
+        for (program, index) in M1PhysicalProgramV1::ALL
+            .into_iter()
+            .zip(M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
+        {
+            previous.update([program as u8]);
+            previous.update((index as u64).to_le_bytes());
+        }
+        assert_eq!(legacy, Identity::new(previous.finalize().into()));
+        indices[12] = 12;
+        assert_eq!(
+            legacy,
+            authenticated_catalog_id_with_program_map(
+                roster_id,
+                &indices,
+                M1PhysicalProgramStrategyV1::LegacyScalar12
+            )
+        );
+        assert_ne!(
+            legacy,
+            authenticated_catalog_id_with_program_map(
+                roster_id,
+                &indices,
+                M1PhysicalProgramStrategyV1::AttributedMfma13
+            )
+        );
+    }
+
+    #[test]
+    fn checked_service_lookup_never_exposes_absent_or_out_of_range_indices() {
+        use M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
+        let mut indices = M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1;
+        for program in M1PhysicalProgramV1::ALL {
+            assert_eq!(
+                checked_service_program_index(LegacyScalar12, &indices, program),
+                Some(indices[program.program_index()])
+            );
+        }
+        assert_eq!(
+            checked_service_program_index(LegacyScalar12, &indices, M1PhysicalProgramV1::GemmMfma),
+            None
+        );
+        assert_eq!(
+            checked_service_program_index(
+                AttributedMfma13,
+                &indices,
+                M1PhysicalProgramV1::GemmMfma
+            ),
+            Some(12)
+        );
+        indices[0] = usize::MAX;
+        assert_eq!(
+            checked_service_program_index(
+                LegacyScalar12,
+                &indices,
+                M1PhysicalProgramV1::GemmReference
+            ),
+            None
+        );
+        assert_eq!(
+            checked_service_program_index(
+                AttributedMfma13,
+                &indices,
+                M1PhysicalProgramV1::GemmReference
+            ),
+            None
+        );
     }
 
     #[test]

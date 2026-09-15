@@ -878,7 +878,9 @@ fn validate_mapping_input(input: MappingInput) -> Result<(), M1PhysicalBufferRec
         | Qwen3Operator::DownResidual
         | Qwen3Operator::LogitsProjection => matches!(
             input.program,
-            M1PhysicalProgramV1::GemmReference | M1PhysicalProgramV1::GemmVectorized
+            M1PhysicalProgramV1::GemmReference
+                | M1PhysicalProgramV1::GemmVectorized
+                | M1PhysicalProgramV1::GemmMfma
         ),
         Qwen3Operator::InputRmsNorm
         | Qwen3Operator::QueryRmsNorm
@@ -1740,7 +1742,8 @@ pub(crate) mod tests {
         M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
         M1PhysicalBufferSourceV1, MappingInput, M1_PHYSICAL_BUFFER_RECIPE_VERSION_V1,
     };
-    use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
+    use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture_with_strategy;
+    use crate::M1PhysicalProgramStrategyV1;
     use crate::{
         compose_addressless_m1_full_step_workspaces, derive_m1_physical_dispatch_recipe_v1,
         derive_m1_physical_kernarg_recipe_v1, derive_m1_step_dispatch_plan,
@@ -1871,7 +1874,22 @@ pub(crate) mod tests {
         AddresslessM1PhysicalKernargRecipeV1,
         AddresslessM1FullStepWorkspaceComposition,
     ) {
-        let operation_plan = public_operation_kernel_plan_fixture();
+        exact_inputs_with_strategy(
+            intent,
+            identity_byte,
+            M1PhysicalProgramStrategyV1::LegacyScalar12,
+        )
+    }
+
+    pub(crate) fn exact_inputs_with_strategy(
+        intent: M1StepDispatchIntent,
+        identity_byte: u8,
+        strategy: M1PhysicalProgramStrategyV1,
+    ) -> (
+        AddresslessM1PhysicalKernargRecipeV1,
+        AddresslessM1FullStepWorkspaceComposition,
+    ) {
+        let operation_plan = public_operation_kernel_plan_fixture_with_strategy(strategy);
         let physical_step = derive_m1_step_dispatch_plan(&operation_plan, intent).unwrap();
         let physical = derive_m1_physical_dispatch_recipe_v1(&physical_step).unwrap();
         let kernargs = derive_m1_physical_kernarg_recipe_v1(physical).unwrap();
@@ -1910,10 +1928,157 @@ pub(crate) mod tests {
         (kernargs, workspaces)
     }
 
+    #[test]
+    fn mfma_complete_steps_preserve_native_weight_buffers_and_exact_kernarg_layouts() {
+        let profiles = M1PhysicalProgramStrategyV1::AttributedMfma13
+            .gemm_profiles()
+            .unwrap();
+        let catchups = [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ]
+        .map(|bucket| {
+            M1StepDispatchIntent::DraftCatchup(target(Qwen3ExecutionMode::Speculative, bucket))
+        });
+        let mut seen_projections = HashSet::new();
+        for intent in complete_intents().into_iter().chain(catchups) {
+            let (legacy_kernargs, legacy_workspaces) = exact_inputs(intent, 180);
+            let (kernargs, workspaces) = exact_inputs_with_strategy(
+                intent,
+                180,
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+            );
+            assert_ne!(
+                kernargs.source_recipe().composition_id(),
+                legacy_kernargs.source_recipe().composition_id()
+            );
+            assert_eq!(kernargs.images().len(), legacy_kernargs.images().len());
+            for ((row, image), legacy_image) in kernargs
+                .source_recipe()
+                .rows()
+                .iter()
+                .zip(kernargs.images())
+                .zip(legacy_kernargs.images())
+            {
+                assert_eq!(image.bytes(), legacy_image.bytes());
+                assert_eq!(image.program(), row.program());
+                let Some(profile) = profiles
+                    .profiles()
+                    .iter()
+                    .find(|profile| profile.identity().as_bytes() == row.profile_id().as_bytes())
+                else {
+                    assert!(!matches!(
+                        row.program(),
+                        M1PhysicalProgramV1::GemmReference
+                            | M1PhysicalProgramV1::GemmVectorized
+                            | M1PhysicalProgramV1::GemmMfma
+                    ));
+                    continue;
+                };
+                let [m, n, k] = profile.dimensions();
+                let expected_program = if m == 1 {
+                    M1PhysicalProgramV1::GemmReference
+                } else {
+                    M1PhysicalProgramV1::GemmMfma
+                };
+                assert_eq!(row.program(), expected_program);
+                assert_eq!(row.geometry().workgroup(), [64, 1, 1]);
+                assert_eq!(
+                    row.geometry().grid(),
+                    [m.div_ceil(16) * n.div_ceil(16) * 64, 1, 1]
+                );
+                assert_eq!(profile.strides(), [k, k, n]);
+                for (offset, expected) in [8, 24, 40].into_iter().zip([
+                    u64::from(m) * u64::from(k),
+                    u64::from(n) * u64::from(k),
+                    u64::from(m) * u64::from(n),
+                ]) {
+                    assert_eq!(
+                        u64::from_le_bytes(image.bytes()[offset..offset + 8].try_into().unwrap()),
+                        expected
+                    );
+                }
+                for (offset, expected) in
+                    [48, 52, 56, 60]
+                        .into_iter()
+                        .zip([m, n, k, profile.beta_bits()])
+                {
+                    assert_eq!(
+                        u32::from_le_bytes(image.bytes()[offset..offset + 4].try_into().unwrap()),
+                        expected
+                    );
+                }
+                seen_projections.insert(row.program());
+            }
+            let legacy =
+                derive_m1_physical_buffer_recipe_v1(legacy_kernargs, legacy_workspaces).unwrap();
+            let recipe = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap();
+            assert_eq!(recipe.rows().len(), legacy.rows().len());
+            for (row, old) in recipe.rows().iter().zip(legacy.rows()) {
+                assert_eq!(row.buffers(), old.buffers());
+                assert_eq!(row.buffers().len(), expected_pointer_count(row.program()));
+            }
+            assert!(!recipe.binds_device_memory());
+            assert!(!recipe.grants_packet_or_queue_authority());
+            assert!(!recipe.proves_execution_or_refinement());
+            recipe.revalidate().unwrap();
+        }
+        assert_eq!(
+            seen_projections,
+            [
+                M1PhysicalProgramV1::GemmReference,
+                M1PhysicalProgramV1::GemmMfma
+            ]
+            .into_iter()
+            .collect()
+        );
+    }
+
+    #[test]
+    fn cross_strategy_workspace_join_rejects_even_identical_singleton_kernel_images() {
+        let intent = M1StepDispatchIntent::TargetOnly(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ));
+        for (source, workspace_strategy) in [
+            (
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+            ),
+            (
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+            ),
+        ] {
+            let (kernargs, _) = exact_inputs_with_strategy(intent, 180, source);
+            let (_, workspaces) = exact_inputs_with_strategy(intent, 180, workspace_strategy);
+            let kernel_identity = kernargs.source_recipe().composition_id();
+            let workspace_identity = workspaces.dispatch_plan().composition_id();
+            let failure = derive_m1_physical_buffer_recipe_v1(kernargs, workspaces).unwrap_err();
+            assert_eq!(
+                failure.error(),
+                M1PhysicalBufferRecipeErrorV1::CompositionIdentity
+            );
+            let (_, kernargs, workspaces) = failure.into_parts();
+            assert_eq!(kernargs.source_recipe().composition_id(), kernel_identity);
+            assert_eq!(
+                workspaces.dispatch_plan().composition_id(),
+                workspace_identity
+            );
+            assert_eq!(kernargs.source_recipe().program_strategy(), source);
+            assert_eq!(
+                workspaces.dispatch_plan().program_strategy(),
+                workspace_strategy
+            );
+        }
+    }
+
     fn expected_pointer_count(program: M1PhysicalProgramV1) -> usize {
         match program {
             M1PhysicalProgramV1::GemmReference
             | M1PhysicalProgramV1::GemmVectorized
+            | M1PhysicalProgramV1::GemmMfma
             | M1PhysicalProgramV1::TokenEmbedding
             | M1PhysicalProgramV1::SwiGlu
             | M1PhysicalProgramV1::SpeculativeTokenAssembly => 3,

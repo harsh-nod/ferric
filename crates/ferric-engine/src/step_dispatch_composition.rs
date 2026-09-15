@@ -18,6 +18,7 @@ use sha2::{Digest, Sha256};
 use crate::{
     derive_m1_operation_dispatch_expansion, DeclaredM1OperationDispatchExpansion,
     DeclaredOperationKernelPlan, M1OperationDispatchExpansionError, M1OperationDispatchRow,
+    M1PhysicalProgramStrategyV1,
 };
 
 const STEP_DISPATCH_IDENTITY_DOMAIN: &[u8] = b"ferric.m1.step-dispatch-composition.v1";
@@ -220,15 +221,23 @@ impl M1StepDispatchSegment {
 #[derive(Debug, Eq, PartialEq)]
 pub struct AddresslessM1StepDispatchPlan {
     version: u32,
+    program_strategy: M1PhysicalProgramStrategyV1,
     composition_id: Identity,
     intent: M1StepDispatchIntent,
     runner_declaration_id: Identity,
     kernel_catalog_id: Identity,
+    executable_catalog_id: Identity,
     dispatch_count: u32,
     segments: Box<[M1StepDispatchSegment]>,
 }
 
 impl AddresslessM1StepDispatchPlan {
+    /// Program roster and arithmetic strategy retained from the operation plan.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.program_strategy
+    }
+
     /// Composition format version.
     #[must_use]
     pub const fn version(&self) -> u32 {
@@ -257,6 +266,12 @@ impl AddresslessM1StepDispatchPlan {
     #[must_use]
     pub const fn kernel_catalog_id(&self) -> Identity {
         self.kernel_catalog_id
+    }
+
+    /// Exact declared physical executable catalog bound by the runner publication.
+    #[must_use]
+    pub const fn executable_catalog_id(&self) -> Identity {
+        self.executable_catalog_id
     }
 
     /// Total physical dispatch rows in the single publication shape.
@@ -462,10 +477,12 @@ pub fn derive_m1_step_dispatch_plan(
 
     let mut plan = AddresslessM1StepDispatchPlan {
         version: M1_STEP_DISPATCH_COMPOSITION_VERSION,
+        program_strategy: operation_plan.program_strategy(),
         composition_id: Identity::new([0; 32]),
         intent,
         runner_declaration_id: operation_plan.runner_declaration_id(),
         kernel_catalog_id: operation_plan.kernel_catalog_id(),
+        executable_catalog_id: operation_plan.executable_catalog_id(),
         dispatch_count,
         segments: segments.into_boxed_slice(),
     };
@@ -598,6 +615,9 @@ fn composition_identity(
     }
     let mut hasher = Sha256::new();
     hash_field(&mut hasher, STEP_DISPATCH_IDENTITY_DOMAIN)?;
+    if plan.program_strategy == M1PhysicalProgramStrategyV1::AttributedMfma13 {
+        hash_field(&mut hasher, b"ferric.m1.attributed-mfma13.v1")?;
+    }
     hash_field(&mut hasher, &record)?;
     Ok(Identity::new(hasher.finalize().into()))
 }
@@ -643,10 +663,13 @@ mod tests {
         derive_m1_step_dispatch_plan, M1StepDispatchCompositionError, M1StepDispatchDependency,
         M1StepDispatchIntent, M1StepDispatchStage,
     };
-    use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture;
+    use crate::operation_kernel_plan::tests::{
+        public_operation_kernel_plan_fixture, public_operation_kernel_plan_fixture_with_strategy,
+    };
     use crate::physical_fixed_batch::validate_authenticated_operation_plan_v1;
     use crate::M1OperationDispatchKind;
     use crate::M1PhysicalFixedBatchBuildErrorV1;
+    use crate::M1PhysicalProgramStrategyV1;
 
     const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {
@@ -654,6 +677,48 @@ mod tests {
             mode,
             bucket,
         }
+    }
+
+    #[test]
+    fn strategy_and_executable_catalog_are_retained_even_for_scalar_singleton_decode() {
+        let legacy = public_operation_kernel_plan_fixture();
+        let explicit_legacy = public_operation_kernel_plan_fixture_with_strategy(
+            M1PhysicalProgramStrategyV1::LegacyScalar12,
+        );
+        let mfma = public_operation_kernel_plan_fixture_with_strategy(
+            M1PhysicalProgramStrategyV1::AttributedMfma13,
+        );
+        let intent = M1StepDispatchIntent::TargetOnly(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ));
+        let scalar_step = derive_m1_step_dispatch_plan(&legacy, intent).unwrap();
+        let explicit_scalar_step = derive_m1_step_dispatch_plan(&explicit_legacy, intent).unwrap();
+        let mfma_step = derive_m1_step_dispatch_plan(&mfma, intent).unwrap();
+        assert_eq!(scalar_step, explicit_scalar_step);
+        assert_eq!(
+            mfma_step.program_strategy(),
+            M1PhysicalProgramStrategyV1::AttributedMfma13
+        );
+        assert_eq!(
+            mfma_step.executable_catalog_id(),
+            mfma.executable_catalog_id()
+        );
+        assert_eq!(
+            scalar_step.executable_catalog_id(),
+            legacy.executable_catalog_id()
+        );
+        assert_eq!(scalar_step.intent(), mfma_step.intent());
+        assert_eq!(scalar_step.dispatch_count(), mfma_step.dispatch_count());
+        assert_ne!(scalar_step.composition_id(), mfma_step.composition_id());
+        assert_eq!(
+            validate_authenticated_operation_plan_v1(&legacy, &mfma_step),
+            Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy),
+        );
+        assert_eq!(
+            validate_authenticated_operation_plan_v1(&mfma, &scalar_step),
+            Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy),
+        );
     }
 
     #[test]

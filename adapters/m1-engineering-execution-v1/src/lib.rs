@@ -36,15 +36,19 @@ use std::path::Path;
 use fe2o3_host::CompilerGeneratedKernelExpectationRosterV1;
 use ferric_build::PublishedRunnerDeclaration;
 use ferric_engine::{
-    ContentBoundM1ProgramCatalogV1, LogicalRunnerDeclaration, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    ContentBoundM1ProgramCatalogV1, LogicalRunnerDeclaration,
     M1NonAuthoritativeProgramArtifactAdmissionFailureV1, M1NonAuthoritativeProgramArtifactErrorV1,
     M1NonAuthoritativeProgramArtifactV1, M1NonAuthoritativeStructuralPhysicalRunnerBindFailureV1,
-    M1PhysicalProgramCatalogErrorV1, M1PhysicalRunnerV1, OperationKernelPlanError,
-    OperationKernelPlanFailure, admit_m1_non_authoritative_program_artifact_v1,
+    M1PhysicalProgramCatalogErrorV1, M1PhysicalProgramStrategyV1, M1PhysicalRunnerV1,
+    OperationKernelPlanError, OperationKernelPlanFailure,
+    admit_m1_non_authoritative_mfma_program_artifact_v1,
+    admit_m1_non_authoritative_program_artifact_v1,
     bind_non_authoritative_structural_m1_physical_runner_v1,
 };
 use ferric_non_authoritative_program_source_v1::M1NonAuthoritativeProgramSourceCapabilityV1;
-use ferric_qwen3_all_kernels_device_v1::M1AllKernelsWorkerV3RosterV1;
+use ferric_qwen3_all_kernels_device_v1::{
+    M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
+};
 use ferric_spec::Identity;
 use rustix::fd::OwnedFd;
 use rustix::fs::{CWD, Dir, FileType, Mode, OFlags, ResolveFlags, fstat, openat2};
@@ -266,6 +270,12 @@ impl fmt::Debug for M1EngineeringAggregateArtifactV1 {
 }
 
 impl M1EngineeringAggregateArtifactV1 {
+    /// Exact strategy admitted from the manifest, descriptors and retained object.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.structural.program_strategy()
+    }
+
     /// SHA-256 identity of the exact canonical observation manifest bytes.
     #[must_use]
     pub const fn manifest_id(&self) -> Identity {
@@ -296,7 +306,7 @@ impl M1EngineeringAggregateArtifactV1 {
         self.structural.canonical_descriptor_id()
     }
 
-    /// Ferric-domain-separated identity of all twelve current structural programs.
+    /// Ferric-domain-separated identity of the exact selected structural programs.
     #[must_use]
     pub const fn program_catalog_id(&self) -> Identity {
         self.structural.program_catalog_id()
@@ -450,7 +460,30 @@ pub fn bind_engineering_structural_m1_physical_runner_v1(
 pub fn reopen_m1_engineering_aggregate_artifact_v1(
     root: impl AsRef<Path>,
 ) -> Result<M1EngineeringAggregateArtifactV1, M1EngineeringAggregateArtifactOpenErrorV1> {
-    let root_path = root.as_ref();
+    reopen_m1_engineering_aggregate_artifact_with_strategy_v1(
+        root.as_ref(),
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+/// Reopens only an attributed thirteen-root MFMA engineering observation.
+///
+/// # Errors
+/// Applies the same bounded filesystem, canonical-manifest, content, descriptor
+/// and source-custody checks as legacy admission, with an exact separate roster.
+pub fn reopen_m1_engineering_mfma_aggregate_artifact_v1(
+    root: impl AsRef<Path>,
+) -> Result<M1EngineeringAggregateArtifactV1, M1EngineeringAggregateArtifactOpenErrorV1> {
+    reopen_m1_engineering_aggregate_artifact_with_strategy_v1(
+        root.as_ref(),
+        M1PhysicalProgramStrategyV1::AttributedMfma13,
+    )
+}
+
+fn reopen_m1_engineering_aggregate_artifact_with_strategy_v1(
+    root_path: &Path,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<M1EngineeringAggregateArtifactV1, M1EngineeringAggregateArtifactOpenErrorV1> {
     if root_path
         .parent()
         .and_then(Path::file_name)
@@ -475,7 +508,7 @@ pub fn reopen_m1_engineering_aggregate_artifact_v1(
         M1EngineeringAggregateArtifactFileV1::Manifest,
         ReadBound::Maximum(MAX_MANIFEST_BYTES_V1),
     )?;
-    let (manifest, facts) = decode_manifest(&manifest_bytes)?;
+    let (manifest, facts) = decode_manifest_with_strategy(&manifest_bytes, strategy)?;
     let hsaco_len = usize::try_from(facts.hsaco.byte_len)
         .ok()
         .filter(|length| *length <= MAX_HSACO_BYTES_V1)
@@ -501,7 +534,7 @@ pub fn reopen_m1_engineering_aggregate_artifact_v1(
     let inspection = fe2o3_hsaco_finalize::inspect_finalized(&hsaco_bytes).map_err(|error| {
         M1EngineeringAggregateArtifactOpenErrorV1::FinalizedHsaco(Box::new(error))
     })?;
-    validate_inspection(&manifest, &facts, &inspection)?;
+    validate_inspection(&manifest, &facts, &inspection, strategy)?;
 
     let source_capability =
         M1NonAuthoritativeProgramSourceCapabilityV1::from_observed_engineering_parts_v1(
@@ -511,8 +544,15 @@ pub fn reopen_m1_engineering_aggregate_artifact_v1(
             facts.compiler_handoff.byte_len,
             hsaco_bytes.into_boxed_slice(),
         );
-    let structural = admit_m1_non_authoritative_program_artifact_v1(source_capability)
-        .map_err(engine_admission_error)?;
+    let structural = match strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => {
+            admit_m1_non_authoritative_program_artifact_v1(source_capability)
+        }
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => {
+            admit_m1_non_authoritative_mfma_program_artifact_v1(source_capability)
+        }
+    }
+    .map_err(engine_admission_error)?;
 
     Ok(M1EngineeringAggregateArtifactV1::from_structural(
         structural,
@@ -645,8 +685,19 @@ struct ManifestGrantsV1 {
     launch: bool,
 }
 
+#[cfg(test)]
 fn decode_manifest(
     bytes: &[u8],
+) -> Result<
+    (EngineeringManifestV1, ValidatedManifestFactsV1),
+    M1EngineeringAggregateArtifactOpenErrorV1,
+> {
+    decode_manifest_with_strategy(bytes, M1PhysicalProgramStrategyV1::LegacyScalar12)
+}
+
+fn decode_manifest_with_strategy(
+    bytes: &[u8],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<
     (EngineeringManifestV1, ValidatedManifestFactsV1),
     M1EngineeringAggregateArtifactOpenErrorV1,
@@ -666,15 +717,23 @@ fn decode_manifest(
     if canonical != bytes {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::NonCanonicalManifest);
     }
-    let facts = validate_manifest(&manifest)?;
+    let facts = validate_manifest_with_strategy(&manifest, strategy)?;
     Ok((manifest, facts))
 }
 
+#[cfg(test)]
 fn validate_manifest(
     manifest: &EngineeringManifestV1,
 ) -> Result<ValidatedManifestFactsV1, M1EngineeringAggregateArtifactOpenErrorV1> {
+    validate_manifest_with_strategy(manifest, M1PhysicalProgramStrategyV1::LegacyScalar12)
+}
+
+fn validate_manifest_with_strategy(
+    manifest: &EngineeringManifestV1,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<ValidatedManifestFactsV1, M1EngineeringAggregateArtifactOpenErrorV1> {
     let facts = validate_manifest_profile(manifest, AGGREGATE_CRATE_NAME_V1, GFX942_XNACK_MINUS)?;
-    validate_manifest_kernel_roster(&manifest.hsaco.kernel_names)?;
+    validate_manifest_kernel_roster(&manifest.hsaco.kernel_names, strategy)?;
     Ok(facts)
 }
 
@@ -886,9 +945,10 @@ fn validate_execution(
 
 fn validate_manifest_kernel_roster(
     kernel_names: &[String],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<(), M1EngineeringAggregateArtifactOpenErrorV1> {
-    let expected = M1AllKernelsWorkerV3RosterV1::ENTRIES;
-    if kernel_names.len() != M1_PHYSICAL_PROGRAM_COUNT_V1 || expected.len() != kernel_names.len() {
+    let expected = expected_roster(strategy);
+    if kernel_names.len() != strategy.program_count() || expected.len() != kernel_names.len() {
         return policy("hsaco.kernel_names");
     }
     let mut actual = kernel_names.iter().map(String::as_str).collect::<Vec<_>>();
@@ -908,6 +968,7 @@ fn validate_inspection(
     manifest: &EngineeringManifestV1,
     facts: &ValidatedManifestFactsV1,
     inspection: &fe2o3_hsaco_finalize::FinalizedDescriptorInspection,
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<(), M1EngineeringAggregateArtifactOpenErrorV1> {
     if inspection.hsaco().target().to_string() != GFX942_XNACK_MINUS
         || inspection.hsaco().code_object_version().number() != 6
@@ -940,15 +1001,35 @@ fn validate_inspection(
             )
         })
         .collect::<Vec<_>>();
-    if !current_ferric_descriptor_roster_matches(&descriptor_coordinates) {
+    if !current_ferric_descriptor_roster_matches_with_strategy(&descriptor_coordinates, strategy) {
         return Err(M1EngineeringAggregateArtifactOpenErrorV1::CurrentFerricDescriptorRoster);
     }
     Ok(())
 }
 
+fn expected_roster(
+    strategy: M1PhysicalProgramStrategyV1,
+) -> &'static [fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1] {
+    match strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => M1AllKernelsWorkerV3RosterV1::ENTRIES,
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES,
+    }
+}
+
+#[cfg(test)]
 fn current_ferric_descriptor_roster_matches(actual: &[(&str, &str, &str)]) -> bool {
-    let expected = M1AllKernelsWorkerV3RosterV1::ENTRIES;
-    if actual.len() != M1_PHYSICAL_PROGRAM_COUNT_V1 || actual.len() != expected.len() {
+    current_ferric_descriptor_roster_matches_with_strategy(
+        actual,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+fn current_ferric_descriptor_roster_matches_with_strategy(
+    actual: &[(&str, &str, &str)],
+    strategy: M1PhysicalProgramStrategyV1,
+) -> bool {
+    let expected = expected_roster(strategy);
+    if actual.len() != strategy.program_count() || actual.len() != expected.len() {
         return false;
     }
 
@@ -1225,6 +1306,7 @@ fn hex(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
+    use ferric_engine::M1_PHYSICAL_PROGRAM_COUNT_V1;
     use std::fs;
     use std::os::unix::fs::symlink;
     use std::path::PathBuf;
@@ -1261,6 +1343,67 @@ mod tests {
         assert_eq!(failure.compiler_handoff_len(), 4);
         assert_eq!(failure.hsaco_bytes().as_ptr(), pointer);
         assert_eq!(failure.hsaco_bytes(), &[1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn explicit_mfma_manifest_and_descriptor_rosters_reject_cross_strategy_inputs() {
+        use M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
+        for strategy in [LegacyScalar12, AttributedMfma13] {
+            let other = if strategy == LegacyScalar12 {
+                AttributedMfma13
+            } else {
+                LegacyScalar12
+            };
+            let mut candidate = manifest(&[1, 2, 3, 4]);
+            candidate.hsaco.kernel_names = expected_roster(strategy)
+                .iter()
+                .map(|entry| entry.export_name().to_owned())
+                .collect();
+            assert!(decode_manifest_with_strategy(&encode(&candidate), strategy).is_ok());
+            assert!(matches!(
+                decode_manifest_with_strategy(&encode(&candidate), other),
+                Err(M1EngineeringAggregateArtifactOpenErrorV1::ManifestPolicy {
+                    field: "hsaco.kernel_names"
+                })
+            ));
+            let descriptor_symbols = expected_roster(strategy)
+                .iter()
+                .map(|entry| format!("{}.kd", entry.export_name()))
+                .collect::<Vec<_>>();
+            let mut coordinates = expected_roster(strategy)
+                .iter()
+                .zip(&descriptor_symbols)
+                .map(|(entry, descriptor)| {
+                    (
+                        entry.logical_name(),
+                        entry.export_name(),
+                        descriptor.as_str(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            assert!(current_ferric_descriptor_roster_matches_with_strategy(
+                &coordinates,
+                strategy
+            ));
+            assert!(!current_ferric_descriptor_roster_matches_with_strategy(
+                &coordinates,
+                other
+            ));
+            coordinates.reverse();
+            assert!(current_ferric_descriptor_roster_matches_with_strategy(
+                &coordinates,
+                strategy
+            ));
+            coordinates[0] = coordinates[1];
+            assert!(!current_ferric_descriptor_roster_matches_with_strategy(
+                &coordinates,
+                strategy
+            ));
+            candidate.hsaco.kernel_names[0] = candidate.hsaco.kernel_names[1].clone();
+            assert!(decode_manifest_with_strategy(&encode(&candidate), strategy).is_err());
+            candidate.hsaco.kernel_names[0] = "unrecognized_kernel".to_owned();
+            assert!(decode_manifest_with_strategy(&encode(&candidate), strategy).is_err());
+        }
     }
 
     struct TestDirectory(PathBuf);

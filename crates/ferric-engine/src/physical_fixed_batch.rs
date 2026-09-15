@@ -24,8 +24,8 @@ use crate::{
     DeclaredOperationKernelPlan, Gfx942DeviceBinding, M1AuthenticatedWorkerV3ProgramSetV1,
     M1BoundPhysicalBufferRowV1, M1CompletionOutputShapeV1, M1FullStepWorkspaceSubleaseOwners,
     M1PartitionedModelMemoryKvPoolV1, M1PartitionedModelMemoryKvQueueCustodyV1,
-    M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramV1,
-    M1StepDispatchCompositionError, M1StepDispatchIntent, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalKernargImageV1, M1PhysicalProgramStrategyV1,
+    M1PhysicalProgramV1, M1StepDispatchCompositionError, M1StepDispatchIntent,
 };
 
 /// Exact packet count of every target-only M1 step.
@@ -686,6 +686,8 @@ pub enum M1PhysicalFixedBatchBuildErrorV1 {
     HostAllocation,
     /// Selected program roster cardinality drifted.
     ProgramCount { expected: usize, actual: usize },
+    /// Artifact, operation plan, or packet recipe selects a different exact strategy.
+    ProgramStrategy,
     /// Detached queue custody names another authenticated program catalog.
     ProgramCatalogIdentity,
     /// Authenticated program families differ from the generated operation plan.
@@ -976,7 +978,12 @@ pub(crate) fn build_m1_authenticated_physical_packet_batch_v1(
     bindings: BoundM1PhysicalBufferBindingsV1,
 ) -> Result<M1AuthenticatedPhysicalPacketBatchV1, M1AuthenticatedPhysicalPacketBatchBuildFailureV1>
 {
-    let shape = match validate_bound_inputs(programs.program_count(), &bindings) {
+    let shape = match validate_bound_inputs(
+        programs.program_count(),
+        programs.program_strategy(),
+        programs.catalog_id(),
+        &bindings,
+    ) {
         Ok(shape) => shape,
         Err(error) => {
             return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
@@ -986,6 +993,12 @@ pub(crate) fn build_m1_authenticated_physical_packet_batch_v1(
         }
     };
     let dispatch_plan = bindings.workspace_bindings().composition().dispatch_plan();
+    if programs.program_strategy() != operations.program_strategy() {
+        return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
+            error: M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy,
+            bindings: Box::new(bindings),
+        });
+    }
     if programs.family_artifacts() != operations.families() {
         return Err(M1AuthenticatedPhysicalPacketBatchBuildFailureV1 {
             error: M1PhysicalFixedBatchBuildErrorV1::ProgramFamilyArtifacts,
@@ -1397,6 +1410,14 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
             custody,
         ));
     }
+    if witness.program_strategy() != operations.program_strategy() {
+        return Err(reject(
+            M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy,
+            recipe,
+            bound_rows,
+            custody,
+        ));
+    }
     if let Err(error) = validate_authenticated_operation_plan_v1(
         operations,
         recipe.workspace_composition().dispatch_plan(),
@@ -1404,7 +1425,9 @@ fn build_m1_authenticated_rollover_packet_batch_core_v1(
         return Err(reject(error, recipe, bound_rows, custody));
     }
     let shape = match validate_packet_inputs(PacketValidationInputsV1 {
-        program_count: M1_PHYSICAL_PROGRAM_COUNT_V1,
+        program_count: witness.program_strategy().program_count(),
+        program_strategy: witness.program_strategy(),
+        executable_catalog_id: witness.catalog_id(),
         physical_recipe: recipe.kernarg_recipe().source_recipe(),
         images: recipe.kernarg_recipe().images(),
         workspace_composition: recipe.workspace_composition(),
@@ -1526,11 +1549,16 @@ fn validate_authenticated_queue_packet_inputs(
     if witness.family_artifacts() != operations.families() {
         return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramFamilyArtifacts);
     }
+    if witness.program_strategy() != operations.program_strategy() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy);
+    }
 
     let physical_recipe = recipe.kernarg_recipe().source_recipe();
     let workspace_composition = recipe.workspace_composition();
     let shape = validate_packet_inputs(PacketValidationInputsV1 {
-        program_count: M1_PHYSICAL_PROGRAM_COUNT_V1,
+        program_count: witness.program_strategy().program_count(),
+        program_strategy: witness.program_strategy(),
+        executable_catalog_id: witness.catalog_id(),
         physical_recipe,
         images: recipe.kernarg_recipe().images(),
         workspace_composition,
@@ -1564,6 +1592,12 @@ pub(crate) fn validate_authenticated_operation_plan_v1(
     operations: &DeclaredOperationKernelPlan,
     dispatch_plan: &crate::AddresslessM1StepDispatchPlan,
 ) -> Result<(), M1PhysicalFixedBatchBuildErrorV1> {
+    if dispatch_plan.program_strategy() != operations.program_strategy() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy);
+    }
+    if dispatch_plan.executable_catalog_id() != operations.executable_catalog_id() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCatalogIdentity);
+    }
     if dispatch_plan.runner_declaration_id() != operations.runner_declaration_id() {
         return Err(M1PhysicalFixedBatchBuildErrorV1::RunnerDeclarationIdentity);
     }
@@ -1582,15 +1616,24 @@ fn validate_inputs(
     catalog: &ContentBoundM1ProgramCatalogV1<'_>,
     bindings: &BoundM1PhysicalBufferBindingsV1,
 ) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
-    validate_bound_inputs(catalog.program_count(), bindings)
+    validate_bound_inputs(
+        catalog.program_count(),
+        catalog.program_strategy(),
+        catalog.catalog_id(),
+        bindings,
+    )
 }
 
 fn validate_bound_inputs(
     program_count: usize,
+    program_strategy: M1PhysicalProgramStrategyV1,
+    executable_catalog_id: Identity,
     bindings: &BoundM1PhysicalBufferBindingsV1,
 ) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
     validate_packet_inputs(PacketValidationInputsV1 {
         program_count,
+        program_strategy,
+        executable_catalog_id,
         physical_recipe: bindings.kernarg_recipe().source_recipe(),
         images: bindings.kernarg_recipe().images(),
         workspace_composition: bindings.workspace_bindings().composition(),
@@ -1605,6 +1648,8 @@ fn validate_bound_inputs(
 
 struct PacketValidationInputsV1<'a> {
     program_count: usize,
+    program_strategy: M1PhysicalProgramStrategyV1,
+    executable_catalog_id: Identity,
     physical_recipe: &'a AddresslessM1PhysicalDispatchRecipeV1,
     images: &'a [M1PhysicalKernargImageV1],
     workspace_composition: &'a AddresslessM1FullStepWorkspaceComposition,
@@ -1614,11 +1659,41 @@ struct PacketValidationInputsV1<'a> {
     draft_catchup_parent: Option<Qwen3PlanSelection>,
 }
 
+fn validate_program_catalog_join(
+    program_count: usize,
+    program_strategy: M1PhysicalProgramStrategyV1,
+    executable_catalog_id: Identity,
+    physical_recipe: &AddresslessM1PhysicalDispatchRecipeV1,
+    dispatch_plan: &crate::AddresslessM1StepDispatchPlan,
+) -> Result<(), M1PhysicalFixedBatchBuildErrorV1> {
+    if program_count != program_strategy.program_count() {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCount {
+            expected: program_strategy.program_count(),
+            actual: program_count,
+        });
+    }
+    if physical_recipe.program_strategy() != program_strategy
+        || dispatch_plan.program_strategy() != program_strategy
+        || physical_recipe
+            .rows()
+            .iter()
+            .any(|row| !program_strategy.program_roster().contains(&row.program()))
+    {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy);
+    }
+    if dispatch_plan.executable_catalog_id() != executable_catalog_id {
+        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCatalogIdentity);
+    }
+    Ok(())
+}
+
 fn validate_packet_inputs(
     inputs: PacketValidationInputsV1<'_>,
 ) -> Result<M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchBuildErrorV1> {
     let PacketValidationInputsV1 {
         program_count,
+        program_strategy,
+        executable_catalog_id,
         physical_recipe,
         images,
         workspace_composition,
@@ -1627,12 +1702,13 @@ fn validate_packet_inputs(
         completion_output_shape,
         draft_catchup_parent,
     } = inputs;
-    if program_count != M1_PHYSICAL_PROGRAM_COUNT_V1 {
-        return Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCount {
-            expected: M1_PHYSICAL_PROGRAM_COUNT_V1,
-            actual: program_count,
-        });
-    }
+    validate_program_catalog_join(
+        program_count,
+        program_strategy,
+        executable_catalog_id,
+        physical_recipe,
+        workspace_composition.dispatch_plan(),
+    )?;
 
     if physical_recipe.composition_id() != workspace_composition.dispatch_plan().composition_id() {
         return Err(M1PhysicalFixedBatchBuildErrorV1::CompositionIdentity);
@@ -2354,6 +2430,80 @@ mod tests {
             role: Qwen3ModelRole::Target8B,
             mode,
             bucket,
+        }
+    }
+
+    #[test]
+    fn catalog_join_rejects_cross_strategy_and_same_strategy_wrong_artifact() {
+        use crate::operation_kernel_plan::tests::public_operation_kernel_plan_fixture_with_strategy;
+        use crate::M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
+        let intent = M1StepDispatchIntent::TargetOnly(target(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        ));
+        for strategy in [LegacyScalar12, AttributedMfma13] {
+            let operations = public_operation_kernel_plan_fixture_with_strategy(strategy);
+            let step = crate::derive_m1_step_dispatch_plan(&operations, intent).unwrap();
+            let physical = crate::derive_m1_physical_dispatch_recipe_v1(&step).unwrap();
+            let id = operations.executable_catalog_id();
+            assert!(super::validate_program_catalog_join(
+                strategy.program_count(),
+                strategy,
+                id,
+                &physical,
+                &step
+            )
+            .is_ok());
+            let mut changed = *id.as_bytes();
+            changed[0] ^= 1;
+            assert!(matches!(
+                super::validate_program_catalog_join(
+                    strategy.program_count(),
+                    strategy,
+                    Identity::new(changed),
+                    &physical,
+                    &step
+                ),
+                Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCatalogIdentity)
+            ));
+            let other = if strategy == LegacyScalar12 {
+                AttributedMfma13
+            } else {
+                LegacyScalar12
+            };
+            assert!(matches!(
+                super::validate_program_catalog_join(
+                    other.program_count(),
+                    other,
+                    id,
+                    &physical,
+                    &step
+                ),
+                Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy)
+            ));
+            assert!(matches!(
+                super::validate_program_catalog_join(
+                    other.program_count(),
+                    strategy,
+                    id,
+                    &physical,
+                    &step
+                ),
+                Err(M1PhysicalFixedBatchBuildErrorV1::ProgramCount { .. })
+            ));
+            let foreign_operations = public_operation_kernel_plan_fixture_with_strategy(other);
+            let foreign_step =
+                crate::derive_m1_step_dispatch_plan(&foreign_operations, intent).unwrap();
+            assert!(matches!(
+                super::validate_program_catalog_join(
+                    strategy.program_count(),
+                    strategy,
+                    id,
+                    &physical,
+                    &foreign_step
+                ),
+                Err(M1PhysicalFixedBatchBuildErrorV1::ProgramStrategy)
+            ));
         }
     }
 

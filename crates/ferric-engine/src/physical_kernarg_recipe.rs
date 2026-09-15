@@ -325,9 +325,16 @@ struct CanonicalKernargProfiles {
 }
 
 impl CanonicalKernargProfiles {
+    #[cfg(test)]
     fn new() -> Result<Self, M1PhysicalKernargRecipeErrorV1> {
+        Self::new_with_strategy(crate::M1PhysicalProgramStrategyV1::LegacyScalar12)
+    }
+
+    fn new_with_strategy(
+        strategy: crate::M1PhysicalProgramStrategyV1,
+    ) -> Result<Self, M1PhysicalKernargRecipeErrorV1> {
         Ok(Self {
-            gemm: gemm::Qwen3GemmProfileCatalogV1::canonical().map_err(|_| {
+            gemm: strategy.gemm_profiles().map_err(|_| {
                 M1PhysicalKernargRecipeErrorV1::CanonicalProfileCatalog(
                     M1PhysicalProfileFamilyV1::Gemm,
                 )
@@ -532,7 +539,7 @@ fn derive_images(
             actual: source.rows().len(),
         });
     }
-    let catalogs = CanonicalKernargProfiles::new()?;
+    let catalogs = CanonicalKernargProfiles::new_with_strategy(source.program_strategy())?;
     let rows = source
         .rows()
         .iter()
@@ -732,6 +739,7 @@ fn check_row(
     let pointer_offsets = match expected_program {
         M1PhysicalProgramV1::GemmReference
         | M1PhysicalProgramV1::GemmVectorized
+        | M1PhysicalProgramV1::GemmMfma
         | M1PhysicalProgramV1::TokenEmbedding
         | M1PhysicalProgramV1::SwiGlu
         | M1PhysicalProgramV1::SpeculativeTokenAssembly => &[0, 16, 32][..],
@@ -903,6 +911,7 @@ fn encode_gemm(
     let program = match profile.schedule() {
         gemm::Qwen3GemmScheduleV1::ReferenceWave64V1 => M1PhysicalProgramV1::GemmReference,
         gemm::Qwen3GemmScheduleV1::VectorizedA4Wave64V1 => M1PhysicalProgramV1::GemmVectorized,
+        gemm::Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1 => M1PhysicalProgramV1::GemmMfma,
     };
     let mut image = check_row(
         row,
@@ -1468,6 +1477,7 @@ mod tests {
         match program {
             M1PhysicalProgramV1::GemmReference
             | M1PhysicalProgramV1::GemmVectorized
+            | M1PhysicalProgramV1::GemmMfma
             | M1PhysicalProgramV1::TokenEmbedding
             | M1PhysicalProgramV1::SwiGlu
             | M1PhysicalProgramV1::SpeculativeTokenAssembly => &[0, 16, 32],

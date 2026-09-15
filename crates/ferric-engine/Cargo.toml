@@ -33,6 +33,7 @@ fe2o3-amd-target.workspace = true
 fe2o3-aql.workspace = true
 fe2o3-artifact-transaction.workspace = true
 fe2o3-host.workspace = true
+fe2o3-hsaco.workspace = true
 fe2o3-kfd.workspace = true
 fe2o3-runtime-protocol.workspace = true
 fe2o3-service-host.workspace = true
@@ -49,7 +50,6 @@ sha2.workspace = true
 vstd.workspace = true
 
 [dev-dependencies]
-fe2o3-hsaco.workspace = true
 ferric-build = { path = "../ferric-build", features = ["test-fixtures"] }
 stats_alloc = "=0.1.10"
 

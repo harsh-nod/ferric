@@ -5,7 +5,7 @@ use fe2o3_host::{
 #[test]
 fn aggregate_roster_has_exact_global_marker_order() {
     use ferric_qwen3_all_kernels_device_v1::{
-        M1AllKernelsWorkerV3RosterV1,
+        M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
         gemm::{
             ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker as GemmMfma,
             ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker as GemmReference,
@@ -41,7 +41,17 @@ fn aggregate_roster_has_exact_global_marker_order() {
         RmsNorm::KERNEL_BINDING_ID_V1,
         GemmMfma::KERNEL_BINDING_ID_V1,
     ];
-    let entries = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+    let entries = M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES;
+    let legacy = M1AllKernelsWorkerV3RosterV1::ENTRIES;
+    assert_eq!(legacy.len(), 12);
+    for (retained, current) in legacy.iter().zip(entries) {
+        assert_eq!(retained.kernel_binding_id(), current.kernel_binding_id());
+        assert_eq!(
+            retained.generated_host_contract_identity(),
+            current.generated_host_contract_identity()
+        );
+        assert_eq!(retained.export_name(), current.export_name());
+    }
     assert_eq!(entries.len(), expected.len());
     assert_eq!(
         entries

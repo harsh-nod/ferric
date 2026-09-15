@@ -3,7 +3,7 @@
 //! The compiler-facing Qwen owners have already checked their Worker lineage,
 //! complete HSACO inventory, ABI, resources, and allocation-free load plan.
 //! This module revalidates those retained bytes through the generic fe2o3
-//! loader and binds the twelve exact entry points needed by packet lowering.
+//! loader and binds the exact selected scalar or MFMA program roster.
 //! It does not independently approve deployment bytes, allocate or load an
 //! image, construct kernargs, publish a queue, observe completion, prove
 //! refinement, or report hardware or performance evidence.
@@ -24,6 +24,48 @@ const PROGRAM_SOURCE_CONTRACT_IDENTITY_DOMAIN: &[u8] =
 
 /// Exact number of selected entry points across the seven M1 kernel artifacts.
 pub const M1_PHYSICAL_PROGRAM_COUNT_V1: usize = 12;
+
+/// Exact program count for the separately attributed MFMA aggregate.
+pub const M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1: usize = 13;
+
+/// Closed program and numerical-profile strategy retained by artifact custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1PhysicalProgramStrategyV1 {
+    /// The unchanged scalar/vectorized twelve-program catalog.
+    LegacyScalar12,
+    /// The thirteen-program attributed aggregate with multi-row MFMA GEMM.
+    AttributedMfma13,
+}
+
+impl M1PhysicalProgramStrategyV1 {
+    /// Exact stable ordinal roster required by this strategy.
+    #[must_use]
+    pub const fn program_roster(self) -> &'static [M1PhysicalProgramV1] {
+        match self {
+            Self::LegacyScalar12 => &M1PhysicalProgramV1::ALL,
+            Self::AttributedMfma13 => &M1PhysicalProgramV1::MFMA_ALL,
+        }
+    }
+
+    /// Exact selected program count, not an upper bound.
+    #[must_use]
+    pub const fn program_count(self) -> usize {
+        self.program_roster().len()
+    }
+
+    /// Returns the profile catalog whose numerical policy belongs to this strategy.
+    ///
+    /// # Errors
+    /// Returns a checked canonical profile construction error.
+    pub fn gemm_profiles(
+        self,
+    ) -> Result<gemm::Qwen3GemmProfileCatalogV1, gemm::Qwen3GemmCatalogErrorV1> {
+        match self {
+            Self::LegacyScalar12 => gemm::Qwen3GemmProfileCatalogV1::canonical(),
+            Self::AttributedMfma13 => gemm::Qwen3GemmProfileCatalogV1::canonical_mfma(),
+        }
+    }
+}
 
 /// Compiler-handoff lineage used to bind a program-specific Ferric ABI roster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -72,6 +114,8 @@ pub enum M1PhysicalProgramV1 {
     LogitsCompact = 10,
     /// In-batch speculative target-token assembly infrastructure path.
     SpeculativeTokenAssembly = 11,
+    /// BF16 K16 MFMA with FP32 accumulation for multi-row GEMM.
+    GemmMfma = 12,
 }
 
 impl M1PhysicalProgramV1 {
@@ -91,6 +135,23 @@ impl M1PhysicalProgramV1 {
         Self::SpeculativeTokenAssembly,
     ];
 
+    /// The attributed MFMA roster preserves all legacy ordinals and appends MFMA.
+    pub const MFMA_ALL: [Self; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1] = [
+        Self::GemmReference,
+        Self::GemmVectorized,
+        Self::TokenEmbedding,
+        Self::RmsNorm,
+        Self::Rope,
+        Self::PagedKvWrite,
+        Self::GqaPrefill,
+        Self::PagedGqaDecode,
+        Self::SwiGlu,
+        Self::LogitsArgmax,
+        Self::LogitsCompact,
+        Self::SpeculativeTokenAssembly,
+        Self::GemmMfma,
+    ];
+
     /// Stable structural program ordinal.
     ///
     /// Authenticated Worker V3 service indices are resolved independently from canonical
@@ -106,6 +167,7 @@ impl M1PhysicalProgramV1 {
         match self {
             Self::GemmReference => gemm::QWEN3_GEMM_REFERENCE_KERNEL_SYMBOL_V1,
             Self::GemmVectorized => gemm::QWEN3_GEMM_VECTORIZED_KERNEL_SYMBOL_V1,
+            Self::GemmMfma => gemm::QWEN3_GEMM_MFMA_KERNEL_SYMBOL_V1,
             Self::TokenEmbedding => gemm::QWEN3_TOKEN_EMBEDDING_KERNEL_SYMBOL_V1,
             Self::RmsNorm => rmsnorm::QWEN3_RMSNORM_KERNEL_SYMBOL_V1,
             Self::Rope => rope_kv::QWEN3_ROPE_KERNEL_SYMBOL_V1,
@@ -146,7 +208,7 @@ impl M1PhysicalProgramV1 {
     #[must_use]
     pub const fn family(self) -> M1PhysicalProgramFamilyV1 {
         match self {
-            Self::GemmReference | Self::GemmVectorized | Self::TokenEmbedding => {
+            Self::GemmReference | Self::GemmVectorized | Self::GemmMfma | Self::TokenEmbedding => {
                 M1PhysicalProgramFamilyV1::Gemm
             }
             Self::RmsNorm => M1PhysicalProgramFamilyV1::RmsNorm,
@@ -277,6 +339,10 @@ impl fmt::Debug for InspectedM1KernelArtifacts<'_> {
 /// Failure while revalidating and selecting a physical program.
 #[derive(Debug)]
 pub enum M1PhysicalProgramCatalogErrorV1 {
+    /// Whole-object inspection rejected the uniform aggregate before selection.
+    AggregateInspection(fe2o3_hsaco::InspectionError),
+    /// The actual aggregate inventory differs from the exact selected strategy.
+    AggregateRoster(M1PhysicalProgramStrategyV1),
     /// The generic allocation-free COV6 loader rejected retained bytes.
     Loader {
         /// Program whose containing bytes were rejected.
@@ -310,7 +376,7 @@ impl fmt::Display for M1PhysicalProgramCatalogErrorV1 {
 
 impl std::error::Error for M1PhysicalProgramCatalogErrorV1 {}
 
-/// Content-bound custody of the twelve exact selected kernel entry points.
+/// Content-bound custody of one exact selected scalar or MFMA program roster.
 ///
 /// The selected closures borrow their exact inspected Worker output bytes. This
 /// owner intentionally does not implement `Clone` and must be consumed to move
@@ -323,7 +389,8 @@ impl std::error::Error for M1PhysicalProgramCatalogErrorV1 {}
 /// ```
 pub struct ContentBoundM1ProgramCatalogV1<'a> {
     catalog_id: Identity,
-    programs: [ValidatedKernelEnvelope<'a>; M1_PHYSICAL_PROGRAM_COUNT_V1],
+    strategy: M1PhysicalProgramStrategyV1,
+    programs: Box<[ValidatedKernelEnvelope<'a>]>,
 }
 
 impl fmt::Debug for ContentBoundM1ProgramCatalogV1<'_> {
@@ -346,19 +413,38 @@ impl<'a> ContentBoundM1ProgramCatalogV1<'a> {
     /// Exact selected program count.
     #[must_use]
     pub const fn program_count(&self) -> usize {
-        M1_PHYSICAL_PROGRAM_COUNT_V1
+        self.strategy.program_count()
+    }
+
+    /// Strategy derived from the exact admitted artifact roster.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.strategy
     }
 
     /// Borrows one exact selected-kernel closure by stable program ordinal.
+    ///
+    /// # Panics
+    /// Panics if the requested program is absent from this catalog's strategy.
+    /// Use [`Self::try_program`] when the program is not already roster-bound.
     #[must_use]
     pub fn program(&self, program: M1PhysicalProgramV1) -> &ValidatedKernelEnvelope<'a> {
         &self.programs[program.program_index()]
     }
 
+    /// Looks up a program without assuming that it belongs to this exact roster.
+    #[must_use]
+    pub fn try_program(
+        &self,
+        program: M1PhysicalProgramV1,
+    ) -> Option<&ValidatedKernelEnvelope<'a>> {
+        self.programs.get(program.program_index())
+    }
+
     /// Consumes the Ferric catalog into fe2o3's expected stable program order.
     #[must_use]
     pub fn into_programs(self) -> Vec<ValidatedKernelEnvelope<'a>> {
-        Vec::from(self.programs)
+        self.programs.into_vec()
     }
 
     /// Worker output inspection is not an independent deployment approval.
@@ -393,6 +479,7 @@ pub fn bind_content_bound_m1_program_catalog_v1(
     bind_content_bound_catalog_from_source(
         |program| artifacts.bytes_plan_and_source(program),
         M1PhysicalProgramAbiNamesV1::LegacySemantic,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
     )
 }
 
@@ -411,6 +498,7 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_persisted_v1<'bytes>(
             )
         },
         M1PhysicalProgramAbiNamesV1::LegacySemantic,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
     )
 }
 
@@ -419,10 +507,56 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_v1(
     plan: LoadPlan,
     source: M1PhysicalProgramSourceContractV1,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+    bind_content_bound_m1_program_catalog_from_uniform_artifact_with_strategy_v1(
+        bytes,
+        plan,
+        source,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_with_strategy_v1(
+    bytes: &[u8],
+    plan: LoadPlan,
+    source: M1PhysicalProgramSourceContractV1,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<ContentBoundM1ProgramCatalogV1<'_>, M1PhysicalProgramCatalogErrorV1> {
+    let inspection = fe2o3_hsaco::inspect(bytes)
+        .map_err(M1PhysicalProgramCatalogErrorV1::AggregateInspection)?;
+    if !aggregate_roster_matches(
+        strategy,
+        inspection.kernels().iter().map(|kernel| kernel.name()),
+    ) {
+        return Err(M1PhysicalProgramCatalogErrorV1::AggregateRoster(strategy));
+    }
     bind_content_bound_catalog_from_source(
         |_| (bytes, plan, source),
         M1PhysicalProgramAbiNamesV1::CompilerAggregatePositional,
+        strategy,
     )
+}
+
+fn aggregate_roster_matches<'a>(
+    strategy: M1PhysicalProgramStrategyV1,
+    names: impl Iterator<Item = &'a str>,
+) -> bool {
+    let mut seen = [false; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+    let mut count = 0;
+    for name in names {
+        let Some(index) = strategy
+            .program_roster()
+            .iter()
+            .position(|program| program.kernel_symbol() == name)
+        else {
+            return false;
+        };
+        if seen[index] {
+            return false;
+        }
+        seen[index] = true;
+        count += 1;
+    }
+    count == strategy.program_count()
 }
 
 #[derive(Clone, Copy)]
@@ -436,15 +570,17 @@ fn bind_content_bound_catalog_from_source<'a>(
         M1PhysicalProgramV1,
     ) -> (&'a [u8], LoadPlan, M1PhysicalProgramSourceContractV1),
     abi_names: M1PhysicalProgramAbiNamesV1,
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<ContentBoundM1ProgramCatalogV1<'a>, M1PhysicalProgramCatalogErrorV1> {
-    let programs = M1PhysicalProgramV1::ALL.map(|program| {
+    let programs = strategy.program_roster().iter().copied().map(|program| {
         let (bytes, retained_plan, source_contract) = source(program);
         bind_program(bytes, retained_plan, source_contract, program, abi_names)
     });
-    let programs = collect_programs(programs)?;
-    let catalog_id = program_catalog_identity(&programs);
+    let programs = programs.collect::<Result<Vec<_>, _>>()?.into_boxed_slice();
+    let catalog_id = program_catalog_identity(&programs, strategy);
     Ok(ContentBoundM1ProgramCatalogV1 {
         catalog_id,
+        strategy,
         programs,
     })
 }
@@ -518,9 +654,9 @@ fn program_dispatch_abi(
     program: M1PhysicalProgramV1,
 ) -> &'static [KernelGlobalBufferAbiV1<'static>] {
     match program {
-        M1PhysicalProgramV1::GemmReference | M1PhysicalProgramV1::GemmVectorized => {
-            &gemm::QWEN3_GEMM_GLOBAL_BUFFER_ABI_V1
-        }
+        M1PhysicalProgramV1::GemmReference
+        | M1PhysicalProgramV1::GemmVectorized
+        | M1PhysicalProgramV1::GemmMfma => &gemm::QWEN3_GEMM_GLOBAL_BUFFER_ABI_V1,
         M1PhysicalProgramV1::TokenEmbedding => &gemm::QWEN3_TOKEN_EMBEDDING_GLOBAL_BUFFER_ABI_V1,
         M1PhysicalProgramV1::RmsNorm => &rmsnorm::QWEN3_RMSNORM_GLOBAL_BUFFER_ABI_V1,
         M1PhysicalProgramV1::Rope => &rope_kv::QWEN3_ROPE_GLOBAL_BUFFER_ABI_V1,
@@ -566,30 +702,18 @@ const fn family_index(family: M1PhysicalProgramFamilyV1) -> usize {
     }
 }
 
-fn collect_programs(
-    programs: [Result<ValidatedKernelEnvelope<'_>, M1PhysicalProgramCatalogErrorV1>;
-        M1_PHYSICAL_PROGRAM_COUNT_V1],
-) -> Result<
-    [ValidatedKernelEnvelope<'_>; M1_PHYSICAL_PROGRAM_COUNT_V1],
-    M1PhysicalProgramCatalogErrorV1,
-> {
-    let mut validated = Vec::with_capacity(M1_PHYSICAL_PROGRAM_COUNT_V1);
-    for program in programs {
-        validated.push(program?);
-    }
-    validated
-        .try_into()
-        .map_err(|_| unreachable!("the fixed program roster has exact cardinality"))
-}
-
 fn program_catalog_identity(
-    programs: &[ValidatedKernelEnvelope<'_>; M1_PHYSICAL_PROGRAM_COUNT_V1],
+    programs: &[ValidatedKernelEnvelope<'_>],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Identity {
     let mut hasher = Sha256::new();
     hasher.update((PROGRAM_CATALOG_IDENTITY_DOMAIN.len() as u64).to_le_bytes());
     hasher.update(PROGRAM_CATALOG_IDENTITY_DOMAIN);
-    hasher.update((M1_PHYSICAL_PROGRAM_COUNT_V1 as u64).to_le_bytes());
-    for (program, envelope) in M1PhysicalProgramV1::ALL.into_iter().zip(programs) {
+    hasher.update((strategy.program_count() as u64).to_le_bytes());
+    if strategy == M1PhysicalProgramStrategyV1::AttributedMfma13 {
+        hasher.update(b"ferric.m1.attributed-mfma-program-strategy.v1");
+    }
+    for (program, envelope) in strategy.program_roster().iter().copied().zip(programs) {
         hasher.update([program as u8]);
         hasher.update((program.kernel_symbol().len() as u64).to_le_bytes());
         hasher.update(program.kernel_symbol().as_bytes());
@@ -608,8 +732,9 @@ mod tests {
     use std::collections::HashSet;
 
     use super::{
-        compiler_aggregate_dispatch_abi, program_dispatch_abi, program_source_contract_identity,
-        M1PhysicalProgramSourceContractV1, M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+        aggregate_roster_matches, compiler_aggregate_dispatch_abi, program_dispatch_abi,
+        program_source_contract_identity, M1PhysicalProgramSourceContractV1,
+        M1PhysicalProgramStrategyV1, M1PhysicalProgramV1, M1_PHYSICAL_PROGRAM_COUNT_V1,
     };
 
     const PHYSICAL_PROGRAM_CATALOG_SOURCE: &str = include_str!("physical_program_catalog.rs");
@@ -688,6 +813,54 @@ mod tests {
     }
 
     #[test]
+    fn scalar_and_mfma_rosters_are_exact_and_preserve_legacy_ordinals() {
+        use M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
+        assert_eq!(M1_PHYSICAL_PROGRAM_COUNT_V1, 12);
+        assert_eq!(LegacyScalar12.program_roster(), M1PhysicalProgramV1::ALL);
+        assert_eq!(AttributedMfma13.program_count(), 13);
+        assert_eq!(
+            &AttributedMfma13.program_roster()[..12],
+            LegacyScalar12.program_roster()
+        );
+        assert_eq!(
+            AttributedMfma13.program_roster()[12],
+            M1PhysicalProgramV1::GemmMfma
+        );
+        for strategy in [LegacyScalar12, AttributedMfma13] {
+            let mut names = strategy
+                .program_roster()
+                .iter()
+                .map(|program| program.kernel_symbol())
+                .collect::<Vec<_>>();
+            assert!(aggregate_roster_matches(strategy, names.iter().copied()));
+            names.reverse();
+            assert!(aggregate_roster_matches(strategy, names.iter().copied()));
+            assert!(!aggregate_roster_matches(
+                strategy,
+                names[..names.len() - 1].iter().copied()
+            ));
+            names[0] = names[1];
+            assert!(!aggregate_roster_matches(strategy, names.iter().copied()));
+            names[0] = "unrecognized_kernel";
+            assert!(!aggregate_roster_matches(strategy, names.iter().copied()));
+        }
+        assert!(!aggregate_roster_matches(
+            LegacyScalar12,
+            AttributedMfma13
+                .program_roster()
+                .iter()
+                .map(|program| program.kernel_symbol())
+        ));
+        assert!(!aggregate_roster_matches(
+            AttributedMfma13,
+            LegacyScalar12
+                .program_roster()
+                .iter()
+                .map(|program| program.kernel_symbol())
+        ));
+    }
+
+    #[test]
     fn canonical_dispatch_abi_roster_covers_exactly_54_global_arguments() {
         let mut total = 0usize;
         for program in M1PhysicalProgramV1::ALL {
@@ -711,9 +884,9 @@ mod tests {
     }
 
     #[test]
-    fn compiler_aggregate_projects_all_twelve_programs_to_positional_names_only() {
+    fn compiler_aggregate_projects_all_thirteen_programs_to_positional_names_only() {
         let mut total = 0usize;
-        for program in M1PhysicalProgramV1::ALL {
+        for program in M1PhysicalProgramV1::MFMA_ALL {
             let semantic = program_dispatch_abi(program);
             let positional = compiler_aggregate_dispatch_abi(program);
             assert_eq!(positional.len(), semantic.len());
@@ -732,7 +905,7 @@ mod tests {
             }
             total += positional.len();
         }
-        assert_eq!(total, 54);
+        assert_eq!(total, 57);
     }
 
     #[test]

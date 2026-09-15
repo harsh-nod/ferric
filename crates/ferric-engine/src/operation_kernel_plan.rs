@@ -29,7 +29,7 @@ use ferric_spec::{
 #[allow(unused_imports)]
 use vstd::prelude::*;
 
-use crate::{LogicalRunnerDeclaration, LogicalRunnerError};
+use crate::{LogicalRunnerDeclaration, LogicalRunnerError, M1PhysicalProgramStrategyV1};
 
 const FAMILY_COUNT: usize = 7;
 
@@ -686,19 +686,27 @@ pub enum OperationKernelPlanError {
 #[derive(Debug, Eq, PartialEq)]
 pub struct OperationKernelPlanFailure {
     error: OperationKernelPlanError,
+    program_strategy: M1PhysicalProgramStrategyV1,
     runner: LogicalRunnerDeclaration,
     families: Box<[DeclaredKernelFamilyArtifact]>,
     operations: Box<[DeclaredOperationKernelBinding]>,
 }
 
 impl OperationKernelPlanFailure {
+    /// Exact arithmetic/program strategy retained by the failed attempt.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.program_strategy
+    }
+
     /// Returns the diagnostic without consuming retained custody.
     #[must_use]
     pub const fn error(&self) -> OperationKernelPlanError {
         self.error
     }
 
-    /// Recovers every exact unchanged input for correction or retry.
+    /// Recovers the exact unchanged declarations for correction or retry.
+    /// Read [`Self::program_strategy`] before consuming this legacy-shaped tuple.
     #[must_use]
     pub fn into_parts(
         self,
@@ -723,12 +731,19 @@ impl OperationKernelPlanFailure {
 /// ```
 #[derive(Debug, Eq, PartialEq)]
 pub struct DeclaredOperationKernelPlan {
+    program_strategy: M1PhysicalProgramStrategyV1,
     runner: LogicalRunnerDeclaration,
     families: Box<[DeclaredKernelFamilyArtifact]>,
     operations: Box<[DeclaredOperationKernelBinding]>,
 }
 
 impl DeclaredOperationKernelPlan {
+    /// Exact program roster and arithmetic strategy selected by the artifact path.
+    #[must_use]
+    pub const fn program_strategy(&self) -> M1PhysicalProgramStrategyV1 {
+        self.program_strategy
+    }
+
     /// Borrows the exact published runner retained by this physical plan.
     ///
     /// This is declaration custody only. Physical execution still requires the
@@ -748,6 +763,12 @@ impl DeclaredOperationKernelPlan {
     #[must_use]
     pub const fn kernel_catalog_id(&self) -> Identity {
         self.runner.kernel_catalog_id()
+    }
+
+    /// Exact declared executable catalog retained by the published runner.
+    #[must_use]
+    pub const fn executable_catalog_id(&self) -> Identity {
+        self.runner.executable_catalog_id()
     }
 
     /// Exact K1-K7 family build/artifact/layout declarations.
@@ -851,8 +872,20 @@ pub(crate) fn derive_canonical_operation_bindings(
     runner: &LogicalRunnerDeclaration,
     families: &[DeclaredKernelFamilyArtifact],
 ) -> Result<Box<[DeclaredOperationKernelBinding]>, OperationKernelPlanError> {
+    derive_canonical_operation_bindings_with_strategy(
+        runner,
+        families,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+pub(crate) fn derive_canonical_operation_bindings_with_strategy(
+    runner: &LogicalRunnerDeclaration,
+    families: &[DeclaredKernelFamilyArtifact],
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Result<Box<[DeclaredOperationKernelBinding]>, OperationKernelPlanError> {
     validate_families(families)?;
-    let catalogs = CanonicalCatalogs::build()?;
+    let catalogs = CanonicalCatalogs::build_with_strategy(strategy)?;
     let mut operations = Vec::new();
     operations
         .try_reserve_exact(runner.operation_count())
@@ -912,14 +945,30 @@ pub fn bind_declared_operation_kernel_plan(
     families: Box<[DeclaredKernelFamilyArtifact]>,
     operations: Box<[DeclaredOperationKernelBinding]>,
 ) -> OperationKernelPlanOutcome {
-    match validate_plan(&runner, &families, &operations) {
+    bind_declared_operation_kernel_plan_with_strategy(
+        runner,
+        families,
+        operations,
+        M1PhysicalProgramStrategyV1::LegacyScalar12,
+    )
+}
+
+pub(crate) fn bind_declared_operation_kernel_plan_with_strategy(
+    runner: LogicalRunnerDeclaration,
+    families: Box<[DeclaredKernelFamilyArtifact]>,
+    operations: Box<[DeclaredOperationKernelBinding]>,
+    strategy: M1PhysicalProgramStrategyV1,
+) -> OperationKernelPlanOutcome {
+    match validate_plan(&runner, &families, &operations, strategy) {
         Ok(()) => OperationKernelPlanOutcome::Bound(DeclaredOperationKernelPlan {
+            program_strategy: strategy,
             runner,
             families,
             operations,
         }),
         Err(error) => OperationKernelPlanOutcome::Rejected(OperationKernelPlanFailure {
             error,
+            program_strategy: strategy,
             runner,
             families,
             operations,
@@ -939,9 +988,17 @@ struct CanonicalCatalogs {
 }
 
 impl CanonicalCatalogs {
+    #[cfg(test)]
     fn build() -> Result<Self, OperationKernelPlanError> {
+        Self::build_with_strategy(M1PhysicalProgramStrategyV1::LegacyScalar12)
+    }
+
+    fn build_with_strategy(
+        strategy: M1PhysicalProgramStrategyV1,
+    ) -> Result<Self, OperationKernelPlanError> {
         Ok(Self {
-            gemm: gemm::Qwen3GemmProfileCatalogV1::canonical()
+            gemm: strategy
+                .gemm_profiles()
                 .map_err(|_| OperationKernelPlanError::CanonicalCatalog)?,
             embedding: gemm::Qwen3TokenEmbeddingProfileCatalogV1::canonical()
                 .map_err(|_| OperationKernelPlanError::CanonicalCatalog)?,
@@ -971,6 +1028,7 @@ fn validate_plan(
     runner: &LogicalRunnerDeclaration,
     families: &[DeclaredKernelFamilyArtifact],
     candidates: &[DeclaredOperationKernelBinding],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<(), OperationKernelPlanError> {
     if runner.plan_count() != M1_KERNEL_PLAN_COUNT {
         return Err(OperationKernelPlanError::PublishedPlanCount {
@@ -1021,7 +1079,7 @@ fn validate_operation_sequence(
     families: &[DeclaredKernelFamilyArtifact],
     candidates: &[DeclaredOperationKernelBinding],
 ) -> Result<(), OperationKernelPlanError> {
-    let catalogs = CanonicalCatalogs::build()?;
+    let catalogs = CanonicalCatalogs::build_with_strategy(strategy)?;
     validate_operation_sequence_with_catalogs(
         generated,
         runner_declaration_id,
@@ -1481,13 +1539,15 @@ pub(crate) mod tests {
     };
 
     use super::{
-        bind_declared_operation_kernel_plan, derive_canonical_operation_bindings, expected_family,
-        resolve_profile, validate_families, validate_operation_sequence_with_catalogs,
-        CanonicalCatalogs, DeclaredKernelFamilyArtifact, DeclaredOperationIdentity,
-        DeclaredOperationKernelBinding, DeclaredOperationKernelPlan, LogicalRunnerDeclaration,
-        OperationKernelIdentityComponent, OperationKernelPlanError, OperationKernelPlanOutcome,
-        FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
+        bind_declared_operation_kernel_plan, bind_declared_operation_kernel_plan_with_strategy,
+        derive_canonical_operation_bindings, derive_canonical_operation_bindings_with_strategy,
+        expected_family, resolve_profile, validate_families,
+        validate_operation_sequence_with_catalogs, CanonicalCatalogs, DeclaredKernelFamilyArtifact,
+        DeclaredOperationIdentity, DeclaredOperationKernelBinding, DeclaredOperationKernelPlan,
+        LogicalRunnerDeclaration, OperationKernelIdentityComponent, OperationKernelPlanError,
+        OperationKernelPlanOutcome, FAMILIES, M1_B3_PLAN_BUCKETS, M1_KERNEL_OPERATION_BINDINGS,
     };
+    use crate::M1PhysicalProgramStrategyV1;
 
     const TARGET_OPERATIONS: usize = 11 * 544;
     const DRAFT_OPERATIONS: usize = 11 * 424;
@@ -1663,8 +1723,10 @@ pub(crate) mod tests {
         }
     }
 
-    fn public_profile_fixtures() -> Vec<PublicProfileFixture> {
-        let gemm = gemm::Qwen3GemmProfileCatalogV1::canonical().expect("public GEMM catalog");
+    fn public_profile_fixtures_with_strategy(
+        strategy: M1PhysicalProgramStrategyV1,
+    ) -> Vec<PublicProfileFixture> {
+        let gemm = strategy.gemm_profiles().expect("public GEMM catalog");
         let embedding = gemm::Qwen3TokenEmbeddingProfileCatalogV1::canonical()
             .expect("public embedding catalog");
         let rmsnorm =
@@ -1867,11 +1929,21 @@ pub(crate) mod tests {
         Box<[DeclaredKernelFamilyArtifact]>,
         Box<[DeclaredOperationKernelBinding]>,
     ) {
+        public_runner_fixture_with_strategy(M1PhysicalProgramStrategyV1::LegacyScalar12)
+    }
+
+    fn public_runner_fixture_with_strategy(
+        strategy: M1PhysicalProgramStrategyV1,
+    ) -> (
+        LogicalRunnerDeclaration,
+        Box<[DeclaredKernelFamilyArtifact]>,
+        Box<[DeclaredOperationKernelBinding]>,
+    ) {
         let declaration =
             generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
                 .expect("generated runner from compact sealed fixture");
         let families = family_artifacts();
-        let profiles = public_profile_fixtures();
+        let profiles = public_profile_fixtures_with_strategy(strategy);
         let operations = public_operation_bindings(&declaration, &families, &profiles);
         let publication = publish_qwen3_gfx942_runner_declaration(declaration)
             .expect("published runner from compact sealed fixture");
@@ -1890,6 +1962,84 @@ pub(crate) mod tests {
             panic!("exact published runner must bind");
         };
         plan
+    }
+
+    pub(crate) fn public_operation_kernel_plan_fixture_with_strategy(
+        strategy: M1PhysicalProgramStrategyV1,
+    ) -> DeclaredOperationKernelPlan {
+        let (runner, families, operations) = public_runner_fixture_with_strategy(strategy);
+        let OperationKernelPlanOutcome::Bound(plan) =
+            bind_declared_operation_kernel_plan_with_strategy(
+                runner, families, operations, strategy,
+            )
+        else {
+            panic!("exact published runner must bind with its selected strategy");
+        };
+        plan
+    }
+
+    #[test]
+    fn explicit_strategies_bind_independent_public_catalogs_and_preserve_legacy_profiles() {
+        for strategy in [
+            M1PhysicalProgramStrategyV1::LegacyScalar12,
+            M1PhysicalProgramStrategyV1::AttributedMfma13,
+        ] {
+            let (runner, families, expected) = public_runner_fixture_with_strategy(strategy);
+            let actual =
+                derive_canonical_operation_bindings_with_strategy(&runner, &families, strategy)
+                    .expect("independent public catalog bindings resolve");
+            assert_eq!(actual, expected);
+            if strategy == M1PhysicalProgramStrategyV1::LegacyScalar12 {
+                assert_eq!(
+                    actual,
+                    derive_canonical_operation_bindings(&runner, &families).unwrap()
+                );
+            }
+            let OperationKernelPlanOutcome::Bound(plan) =
+                bind_declared_operation_kernel_plan_with_strategy(
+                    runner, families, actual, strategy,
+                )
+            else {
+                panic!("matching catalog and strategy must bind");
+            };
+            assert_eq!(plan.program_strategy(), strategy);
+            assert_eq!(plan.operations().len(), M1_KERNEL_OPERATION_BINDINGS);
+        }
+    }
+
+    #[test]
+    fn cross_strategy_bindings_are_rejected_with_exact_declarations_retained() {
+        for (source, requested) in [
+            (
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+            ),
+            (
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+            ),
+        ] {
+            let (runner, families, operations) = public_runner_fixture_with_strategy(source);
+            let runner_id = runner.declaration_id();
+            let expected_families = families.clone();
+            let expected_operations = operations.clone();
+            let OperationKernelPlanOutcome::Rejected(failure) =
+                bind_declared_operation_kernel_plan_with_strategy(
+                    runner, families, operations, requested,
+                )
+            else {
+                panic!("a profile catalog cannot be relabeled as the other strategy");
+            };
+            assert_eq!(failure.program_strategy(), requested);
+            assert!(matches!(
+                failure.error(),
+                OperationKernelPlanError::ProfileCatalogIdentity(_)
+            ));
+            let (_, runner, families, operations) = failure.into_parts();
+            assert_eq!(runner.declaration_id(), runner_id);
+            assert_eq!(families, expected_families);
+            assert_eq!(operations, expected_operations);
+        }
     }
 
     #[test]

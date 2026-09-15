@@ -608,6 +608,7 @@ const SOURCE_PIN_TARGETS: &[ExpectedSourcePinTarget] = &[
     },
 ];
 const AGGREGATE_ROSTER_NAME: &str = "M1AllKernelsWorkerV3RosterV1";
+const AGGREGATE_MFMA_ROSTER_NAME: &str = "M1AllKernelsMfmaWorkerV3RosterV1";
 const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
     (
         "PagedKvWrite",
@@ -669,9 +670,26 @@ const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
     "GemmVectorized",
     "LowestIdArgmax",
     "RmsNorm",
+];
+const AGGREGATE_MFMA_ROSTER_MARKERS: &[&str] = &[
+    "GemmReference",
+    "SwiGlu",
+    "Rope",
+    "SpeculativeAssembly",
+    "TokenEmbedding",
+    "PagedDecode",
+    "Prefill",
+    "PagedKvWrite",
+    "CompactCompletion",
+    "GemmVectorized",
+    "LowestIdArgmax",
+    "RmsNorm",
     "GemmMfma",
 ];
-const AGGREGATE_HOST_REEXPORT: &[&str] = &["host_roster", "M1AllKernelsWorkerV3RosterV1"];
+const AGGREGATE_HOST_REEXPORTS: &[&[&str]] = &[
+    &["host_roster", "M1AllKernelsWorkerV3RosterV1"],
+    &["host_roster", "M1AllKernelsMfmaWorkerV3RosterV1"],
+];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[
     "ferric_engine::cache::KvPool::new_bounded",
     "ferric_engine::system::Engine::new",
@@ -4863,7 +4881,7 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
     let Some((_, items)) = &item.content else {
         return Err("aggregate host roster module body is absent".to_owned());
     };
-    if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 1 {
+    if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 2 {
         return Err("aggregate host roster module item count drifted".to_owned());
     }
     for (item, (expected_alias, expected_path)) in items.iter().zip(AGGREGATE_ROSTER_ALIASES.iter())
@@ -4877,35 +4895,39 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
             ));
         }
     }
-    let Item::Macro(roster) = &items[AGGREGATE_ROSTER_ALIASES.len()] else {
-        return Err("aggregate generated roster macro is absent or reordered".to_owned());
-    };
-    if !exact_path_segments(
-        &roster.mac.path,
-        &[
-            "fe2o3_host",
-            "compiler_generated_kernel_expectation_roster_v1",
-        ],
-    ) || !matches!(&roster.mac.delimiter, verus_syn::MacroDelimiter::Brace(_))
-    {
-        return Err("aggregate generated roster macro path drifted".to_owned());
+    for (item, (name, markers)) in items[AGGREGATE_ROSTER_ALIASES.len()..].iter().zip([
+        (AGGREGATE_ROSTER_NAME, AGGREGATE_ROSTER_MARKERS),
+        (AGGREGATE_MFMA_ROSTER_NAME, AGGREGATE_MFMA_ROSTER_MARKERS),
+    ]) {
+        let Item::Macro(roster) = item else {
+            return Err("aggregate generated roster macro is absent or reordered".to_owned());
+        };
+        if !exact_path_segments(
+            &roster.mac.path,
+            &[
+                "fe2o3_host",
+                "compiler_generated_kernel_expectation_roster_v1",
+            ],
+        ) || !matches!(&roster.mac.delimiter, verus_syn::MacroDelimiter::Brace(_))
+        {
+            return Err("aggregate generated roster macro path drifted".to_owned());
+        }
+        parse_generated_roster_declaration(roster, name, markers)?;
     }
-    parse_generated_roster_declaration(roster, AGGREGATE_ROSTER_NAME, AGGREGATE_ROSTER_MARKERS)?;
     Ok(())
 }
 
-fn validate_aggregate_host_reexport(item: &verus_syn::ItemUse) -> GateResult<()> {
+fn validate_aggregate_host_reexport(
+    item: &verus_syn::ItemUse,
+    expected: &[&str],
+) -> GateResult<()> {
     validate_aggregate_host_cfg(&item.attrs)?;
     if !matches!(&item.vis, Visibility::Public(_)) || item.leading_colon.is_some() {
         return Err("aggregate roster host re-export visibility drifted".to_owned());
     }
     let mut path = Vec::new();
     aggregate_use_path(&item.tree, &mut path)?;
-    if path
-        .iter()
-        .map(String::as_str)
-        .ne(AGGREGATE_HOST_REEXPORT.iter().copied())
-    {
+    if path.iter().map(String::as_str).ne(expected.iter().copied()) {
         return Err(format!(
             "aggregate roster host re-export path drifted: {path:?}"
         ));
@@ -4958,7 +4980,7 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
     ];
     let mut modules = Vec::new();
     let mut host_roster = None;
-    let mut host_reexport = None;
+    let mut host_reexports = Vec::new();
     for item in &file.items {
         match item {
             Item::Mod(module) if module.ident == "host_roster" => {
@@ -4983,11 +5005,7 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
                 modules.push(module.ident.to_string());
             }
             Item::Use(item_use) => {
-                if host_reexport.replace(item_use).is_some() {
-                    return Err(
-                        "aggregate host roster re-export is declared more than once".to_owned()
-                    );
-                }
+                host_reexports.push(item_use);
             }
             _ => {
                 return Err("aggregate runtime library contains an unadmitted root item".to_owned())
@@ -5002,9 +5020,12 @@ fn validate_aggregate_runtime_roster_file(file: &File) -> GateResult<()> {
     validate_aggregate_host_roster_module(
         host_roster.ok_or_else(|| "aggregate host roster module is absent".to_owned())?,
     )?;
-    validate_aggregate_host_reexport(
-        host_reexport.ok_or_else(|| "aggregate host roster re-export is absent".to_owned())?,
-    )?;
+    if host_reexports.len() != AGGREGATE_HOST_REEXPORTS.len() {
+        return Err("aggregate host roster re-export count drifted".to_owned());
+    }
+    for (item, expected) in host_reexports.into_iter().zip(AGGREGATE_HOST_REEXPORTS) {
+        validate_aggregate_host_reexport(item, expected)?;
+    }
     Ok(())
 }
 
@@ -7649,6 +7670,84 @@ mod tests {
             "            SwiGlu,\n            GemmReference,",
         );
         assert!(validate_aggregate_source(&reordered).is_err());
+    }
+
+    #[test]
+    fn aggregate_runtime_requires_both_distinct_generated_rosters() {
+        for duplicate in [false, true] {
+            let mut file = verus_syn::parse_file(AGGREGATE_RUNTIME_SOURCE).unwrap();
+            let host = file
+                .items
+                .iter_mut()
+                .find_map(|item| match item {
+                    Item::Mod(module) if module.ident == "host_roster" => Some(module),
+                    _ => None,
+                })
+                .unwrap();
+            let (_, items) = host.content.as_mut().unwrap();
+            let mfma = items.last().unwrap().clone();
+            assert!(matches!(&mfma, Item::Macro(_)));
+            if duplicate {
+                items.push(mfma);
+            } else {
+                items.pop().unwrap();
+            }
+            assert!(validate_aggregate_runtime_roster_file(&file).is_err());
+        }
+        let duplicate_name = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "pub struct M1AllKernelsMfmaWorkerV3RosterV1 = [",
+            "pub struct M1AllKernelsWorkerV3RosterV1 = [",
+        );
+        assert!(validate_aggregate_source(&duplicate_name).is_err());
+        for replacement in [
+            "            RmsNorm,",
+            "            GemmMfma,\n            RmsNorm,",
+            "            RmsNorm,\n            GemmReference,",
+            "            RmsNorm,\n            GemmMfma,\n            GemmMfma,",
+        ] {
+            let changed = replace_once(
+                AGGREGATE_RUNTIME_SOURCE,
+                "            RmsNorm,\n            GemmMfma,",
+                replacement,
+            );
+            assert!(validate_aggregate_source(&changed).is_err());
+        }
+    }
+
+    #[test]
+    fn aggregate_runtime_requires_exact_separate_ordered_host_reexports() {
+        let legacy = "#[cfg(not(target_arch = \"amdgpu\"))]\npub use host_roster::M1AllKernelsWorkerV3RosterV1;";
+        let mfma = "#[cfg(not(target_arch = \"amdgpu\"))]\npub use host_roster::M1AllKernelsMfmaWorkerV3RosterV1;";
+        for replacement in [
+            String::new(),
+            legacy.to_owned(),
+            format!("{mfma}\n{mfma}"),
+            "pub use host_roster::M1AllKernelsMfmaWorkerV3RosterV1;".to_owned(),
+            "#[cfg(not(target_arch = \"amdgpu\"))]\npub use host_roster::M1AllKernelsMfmaWorkerV3RosterV1 as M1AllKernelsWorkerV3RosterV1;".to_owned(),
+            "#[cfg(not(target_arch = \"amdgpu\"))]\npub use host_roster::*;".to_owned(),
+        ] {
+            let changed = replace_once(AGGREGATE_RUNTIME_SOURCE, mfma, &replacement);
+            assert!(validate_aggregate_source(&changed).is_err());
+        }
+        let combined = format!("{legacy}\n\n{mfma}");
+        for replacement in [
+            format!("{mfma}\n\n{legacy}"),
+            "#[cfg(not(target_arch = \"amdgpu\"))]\npub use host_roster::{M1AllKernelsWorkerV3RosterV1, M1AllKernelsMfmaWorkerV3RosterV1};".to_owned(),
+        ] {
+            let changed = replace_once(AGGREGATE_RUNTIME_SOURCE, &combined, &replacement);
+            assert!(validate_aggregate_source(&changed).is_err());
+        }
+    }
+
+    #[test]
+    fn aggregate_runtime_rejects_mfma_marker_alias_substitution() {
+        let changed = replace_once(
+            AGGREGATE_RUNTIME_SOURCE,
+            "type GemmMfma = super::gemm::ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker;",
+            "type GemmMfma = super::gemm::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker;",
+        );
+        assert!(validate_aggregate_source(&changed).is_err());
     }
 
     #[test]

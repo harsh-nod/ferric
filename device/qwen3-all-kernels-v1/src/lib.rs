@@ -31,8 +31,26 @@ mod host_roster {
     type Rope = super::rope_kv::qwen3_rope_v1_gpu::Marker;
 
     fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
-        /// All 13 aggregate markers in exact compiler descriptor-table order.
+        /// Retained scalar twelve-entry roster; not a claim about a new emission.
         pub struct M1AllKernelsWorkerV3RosterV1 = [
+            GemmReference,
+            SwiGlu,
+            Rope,
+            SpeculativeAssembly,
+            TokenEmbedding,
+            PagedDecode,
+            Prefill,
+            PagedKvWrite,
+            CompactCompletion,
+            GemmVectorized,
+            LowestIdArgmax,
+            RmsNorm,
+        ];
+    }
+
+    fe2o3_host::compiler_generated_kernel_expectation_roster_v1! {
+        /// All thirteen attributed markers in compiler descriptor-table order.
+        pub struct M1AllKernelsMfmaWorkerV3RosterV1 = [
             GemmReference,
             SwiGlu,
             Rope,
@@ -52,3 +70,6 @@ mod host_roster {
 
 #[cfg(not(target_arch = "amdgpu"))]
 pub use host_roster::M1AllKernelsWorkerV3RosterV1;
+
+#[cfg(not(target_arch = "amdgpu"))]
+pub use host_roster::M1AllKernelsMfmaWorkerV3RosterV1;
