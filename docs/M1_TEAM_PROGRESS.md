@@ -5,7 +5,35 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-The subsequent 32-token c5/4f6 attempt fails at ordinary speculative target
+Runtime candidate `cdc084206dae4332c8f4dcea0f6b59302ac6db1a` now repairs
+cache-local retired-page generations at the shared completed-step return.
+The existing joined completion, pool-ticket and whole-roster checks run first;
+exclusive borrowed metadata guards preflight both roles of every member before
+any generation changes. Output allocation, including boxing, precedes commit.
+Failure preserves the original completed ownership graph. The stale-generation
+check, native lease custody and completion requirements are unchanged.
+All fourteen host phases pass: 129 spec tests, 713 engine tests with nine
+existing ignores, four spec and 171 engine doctests, strict all-target spec and
+engine Clippy, 109 adapter tests with one existing ignore, 15 speculative CLI
+tests and 37 source-policy tests. Focused tests reproduce page-nine rollback
+and reuse at cursor 142, both roles, stale leases and late-member rejection.
+This new metadata transition is not yet Verus-verified or GPU-tested.
+
+Separate diagnostic fix `d74302d6b82315f9d1c6cc973d15b17b4e5a8382` passes
+all six host phases, including three retained-owner tests, three bounded-output
+tests, strict engine/CLI Clippy and 37 source policies. Its errors report copied
+facts without recursively formatting retained owners; CLI failure output is
+bounded to 4,096 bytes. Root checked the raw results and all 62 retained payload
+hashes in archive
+`d2d33376e91d3a179677f1ff90f89f86c9548eecaa7df9ae6f9e2e4882257d42`.
+
+Adjacent lifecycle review confirms structural new-request admission already
+snapshots reused pool generations before leasing. It also finds a separate
+authenticated-path ordering defect: that path commits leases before requesting
+the Free-only generation snapshot. A separate correction is being implemented;
+it must prepare all caches before lease commitment, not weaken the Free check.
+
+The earlier 32-token c5/4f6 attempt fails at ordinary speculative target
 reservation with `Physical(PageGenerationMismatch)`. Its retained diagnostic
 shows target cursor 142, physical slot nine still retired at generation one
 after epoch ten, and a newly returned/released pool lease for that index at
@@ -24,9 +52,9 @@ the separately recorded fresh state returns to the exact 298,647,552-byte
 baseline with no owned group, selected queues or selected per-process VRAM.
 No reset or foreign intervention occurred. Archive SHA-256
 `d901a98e4ca873467027f094dd1d177dabf206e632609d1198368cae38e74493`
-and all 27 native payload hashes are independently checked. The runtime team is
-implementing a separate bounded diagnostic correction while the physical-slot
-release composition is reviewed. Neither correction is validated yet.
+and all 27 native payload hashes are independently checked. The host-validated
+successors above do not relabel that native failure. Its completed owned stage
+is removed after retention and fresh no-use checks, reclaiming 78,664 KiB.
 
 The optimized c5/4f6 native attempt now completes five real speculative K4
 rounds and publishes eight tokens on an idle gfx942 GPU. The observed accepted
@@ -166,21 +194,23 @@ The exact method-reference correction `1fc91418`, still using the complete b86
 overlay, passes strict engine-library and selected adapter/capture/source-policy
 Clippy, plus all eight focused physical-program catalog tests. Its source and
 locks remain equal before/after. No lint suppression or semantic change is
-introduced. No MFMA device image or GPU result exists yet; singleton decode
+introduced. No Ferric MFMA aggregate image or GPU result exists yet; singleton decode
 still selects scalar GEMV. Source-gate commit `8fc15929` admits the exact
 new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
 is still required.
 
 The most recently fetched fe2o3 upstream is
-`9c2a10e73ff72269d00ab9c51b299c44c7de2de5`, two commits beyond bf30. The new
-delta streams semantic-SSA replay one function at a time and boxes private cold
-projection diagnostics; source review finds no KFD/runtime or device change.
-Its new replay-identity/error-precedence and concrete-error-chain tests still
-need to run against the rebased candidate. The column-major BF16 MFMA candidate
-was rebased as `a9a72c41f8353f88df32aab6f7863b8c4c28668b`, with all eight
-candidate commits unchanged by range-diff. The current successor is
-`5602c4889142571d7d82041b8a9bdef369799af1`; revalidation is underway and no
-candidate commit has been pushed. Ferric integration still pins 4f6. Prior
+`6f8d0d5da4f999b1f13dd2727d0f294a694bd835`, three commits beyond bf30. The
+delta streams semantic-SSA replay one function at a time, boxes private cold
+projection diagnostics and shares the private SSA event-emission grammar.
+Source review finds no KFD/runtime or device change. Root rebased the local
+candidate onto this main as `67851ab970b363f45e7c60ad62f014f858ccf100`;
+all ten candidate patches are unchanged by range-diff and the worktree is clean.
+The new replay, diagnostic and event-order/early-denial tests still need to run
+against that rebased candidate. Remote tools and the current emission inputs
+remain frozen at `5602c4889142571d7d82041b8a9bdef369799af1`; they are not
+relabeled as 67851. No candidate commit has been pushed. Ferric integration
+still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
 
@@ -231,8 +261,27 @@ and the exact 1,576-file/103-directory roster, only the failed extraction scratc
 is discarded, reclaiming 802,212 KiB. Its compiled caches are explicitly not
 byte-archived; the retained compact evidence has SHA-256
 `e190e665402d5c1e05ab0efdd103aa8d994a1c80a1b8bde4fe5e948971430d5a`.
-More obsolete-cache reclamation is being reviewed before any retry; the cap
-remains unchanged.
+Further reviewed cleanup removes 648 obsolete first-party debug cache files,
+reclaiming 1,943,840 KiB while preserving all 1,445 protected current-source and
+executable-closure paths. Compiled cache bytes are explicitly discarded, not
+claimed archived. The retained inventory and attribution archive is
+`a1c5ad474e34e9d27ef2294d0d28ecb0ed1eb110e8c3d676d102066f2d668411`.
+The stage cap remains unchanged.
+
+The unchanged 5602 row-major and column-major fixtures now both emit actual
+gfx942 COV6 HSACOs and pass exact replay and read-only ELF/MFMA inspection.
+The images are 12,208 and 12,048 bytes respectively; each contains actual
+`v_mfma_f32_16x16x16_bf16` instructions. The original row inspection rejected
+an incorrect expected mnemonic spelling; the corrected read-only inspection
+passes on the same image, with both records retained. Evidence archives are
+`519982e9bd41847163bb03a27719e3d503d223fec658292adca24814162ddf3a`
+and `fcc43eb604aea87e7943afd20fef8d29b16cd32764b36cff82f9de7c82b3ea62`.
+These are compiler fixtures, not the Ferric aggregate or GPU execution.
+The aggregate remains pending. Two vendor-view transitions stopped before any
+package moves on unreadable short-lived transports; no process identity or
+foreign-use conclusion is inferred after they disappeared. A separately copied,
+byte-checked 198-package input view is being prepared so unrelated transports
+do not require exceptions to the existing move/no-use policy.
 Completed compiler cleanup removed exactly fifty obsolete test executables,
 reclaiming 541,048 KiB after retaining their complete archive locally. Removing
 the two redundant remote archives reclaimed another 144,272 KiB; the local
@@ -250,8 +299,22 @@ earlier signed-pattern cancellation that could hide an omitted 48-phase block;
 new regressions cover that block across all 108 references and reject an actual
 small-case incomplete output. Single-phase loss can still be hidden by BF16
 rounding, so this is not a traversal proof or general numerical qualification.
-All five source hashes match remote formatting output. There is no Cargo test,
-compile or GPU result yet, and dependency/coverage regeneration remains pending.
+All five source hashes match remote formatting output. Its first host gate
+passes all ten probe tests but finds a stale six-versus-seven dependency-count
+assertion; test-only `c9d86317` corrects it. Strict Clippy then rejects a 64 KiB
+executable-hashing stack buffer. Successor
+`5df6d1e135dd6f52c1a13f578facbd63259341e4` uses the existing 8 KiB streaming
+buffer pattern without changing hash or length checks. With the complete
+private 5602 dependency overlay, it passes compilation, all ten probe tests,
+all 39 source policies, strict selected-probe Clippy and the actual CPU-only
+list command. Independent list checking covers all 108 exact shape/stride/grid
+contracts and 160 distinct source profiles. Source-before/after and full locked
+metadata equality pass. Archive SHA-256 is
+`7a97291a46586d68c886489b2aa5e1ffd08450f537abd693a5153f04fdbd3215`;
+the final normal probe executable is
+`e741e00a19189562cf4320e4b53a31e9ee6989b8da7be129740ee2fa6be428a9`.
+Both failed predecessors remain retained. No GPU numerical execution has run,
+and dependency/coverage regeneration remains pending.
 
 Pages-only checkpoint `5d3d93d3e7f08645273d274bc35efbc79133e686` is deployed
 successfully in workflow 34926507415. Root reviewed the complete six-file delta,
@@ -274,9 +337,9 @@ claimed archived.
 
 The new GPU result is limited to the zero/partial K4 continuation described
 above. There are no new numerical-acceptance, Verus or matched performance
-results, and all 33 M1 gates remain open. The next priorities are the shared
-physical-page generation repair and its regressions, a current-compiler MFMA
-aggregate, then sustained hardware continuation and the remaining numerical
+results, and all 33 M1 gates remain open. The next priorities are the separate
+authenticated admission-order repair, a current-compiler MFMA aggregate,
+sustained hardware continuation with the tested generation repair, and the remaining numerical
 cases. The failed 32-token attempt is not bypassed to obtain a shorter success.
 
 ## Earlier Integration
