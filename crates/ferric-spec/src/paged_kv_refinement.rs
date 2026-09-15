@@ -2735,7 +2735,7 @@ pub closed spec fn retirement_metadata_batch_enabled(
     role: Qwen3ModelRole,
     pages: Seq<PhysicalKvRetiredPageMetadataV1>,
 ) -> bool {
-    retirement_metadata_roster_prefix_valid(state, request, role, pages, pages.len())
+    retirement_metadata_roster_prefix_valid(state, request, role, pages, pages.len() as int)
 }
 
 closed spec fn retirement_metadata_mask_matches_prefix(
@@ -2909,7 +2909,7 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
                 &&& *final(state) == *final(batch.state)
                 &&& batch.prepared_spec()
                 &&& retirement_metadata_mask_matches_prefix(
-                    batch.selected_spec(), pages@, pages@.len(),
+                    batch.selected_spec(), pages@, pages@.len() as int,
                 )
             }
             Err(_) => *final(state) == *old(state),
