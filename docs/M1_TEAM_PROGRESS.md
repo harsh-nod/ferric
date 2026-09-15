@@ -12,11 +12,13 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The compiler candidate is now `d3a52cd2`, rebased onto freshly fetched upstream
-`bf0f4841`; all twelve patches are unchanged by range-diff and all seventeen
-remote host phases pass. Its actual emitter-tool rebuild stopped at the shared
-root-filesystem reserve, before tool copying or emission. There is still no
-thirteen-root MFMA device image or numerical GPU result.
+The compiler candidate is now `7f5f15de`, rebased onto freshly fetched upstream
+`83986180`; all twelve patches are unchanged by range-diff. Its predecessor
+`d3a52cd2`, on upstream `bf0f4841`, passed all seventeen remote host phases,
+but those results do not validate the new upstream's SSA replay changes.
+The d3 emitter-tool rebuild stopped at the shared root-filesystem reserve,
+before tool copying or emission. There is still no thirteen-root MFMA device
+image or numerical GPU result.
 
 The retirement preflight has an actual scoped Verus pass on `cf329240`. The
 commit proof remains failing on `5a689e7d`, now at the pre-update untouched-slot
@@ -25,6 +27,24 @@ prefix quantifier, but its next run stopped at the root-filesystem reserve befor
 Verus launched. This does not establish the complete retirement transition;
 current-source dependency proofs, actual-body negatives and integration remain
 pending. All proof labels and all 33 M1 gates remain unchanged.
+
+| Team | Current Work | Next Evidence Required |
+| --- | --- | --- |
+| Compiler / Kernels | Rebased twelve patches onto `83986180`; preparing exact obsolete-stage cleanup and source/cache transition. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
+| Runtime / Integration | Audited maintenance bindings without finding a concrete defect; adding actual 425-row enter/restore routing coverage. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
+| Verification | Prepared the `339c2561` commit-proof correction and source-bound positive/negative controls. | Actual commit proof, six current-source positives and 24 actual-body negatives; synthetic checker tests remain separate. |
+| Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `c6a06626`. | Remote Pages validation and reviewed publication; no deployment claimed. |
+
+Shared-host resource restoration is in progress without lowering workload
+floors. Exactly 26 obsolete root-level archives were removed after independent
+local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
+root filesystem. Root checked receipt SHA-256
+`719924e84f54794601984fee34176d297be4c109de2f038a66360a908398a767`.
+The last recorded root free space was 20,134,456 KiB, below the unchanged
+23,068,672 KiB floor. Additional old source/evidence duplicates and disposable
+libraries are being inventoried; no further deletion is yet admitted. The
+separate completed numerical tmpfs stage remains intact after two cleanup
+attempts stopped on incomplete process visibility.
 
 ## Recorded Runtime Evidence
 
@@ -370,8 +390,17 @@ The CLI release build then stopped with exit 125 when shared root free space
 fell below the unchanged 22 GiB reserve. The compiler stage remained below its
 12 GiB cap. No CLI copy, backend build or device emission ran; this is a resource
 stop, not a compiler semantic failure. There is no d3 strict-Clippy or
-native-emission pass. The upstream must be
-freshly fetched and rebased again before any push to main. Ferric integration still pins 4f6. Prior
+native-emission pass. A subsequent canonical fetch finds
+`83986180401671aeedf89017d2f52a744c28714b`, adding optional exact source-to-SSA
+occurrence capture and shared replay-driver plumbing. No KFD or device files
+change in that upstream commit. Root preserves d3 at
+`codex/mfma-column-major-b-d3-hostchecked` and rebases all twelve unchanged
+patches onto that main as `7f5f15de5aaa63b79cb35033a983f58fff1cb61f`, tree
+`2a49a5c6d80621539f9b5a80f02ecb3f5601b918`. Range-diff and diff whitespace
+checks pass; no build or test of that source has run. The d3 partial tool
+artifacts require reconciliation before a new source transition. Canonical
+upstream must still be checked again before any push to main.
+Ferric integration still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
 
