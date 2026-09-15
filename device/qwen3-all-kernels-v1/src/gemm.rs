@@ -594,7 +594,39 @@ pub fn ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1(
     k: u32,
     beta_bits: u32,
 ) {
-    if !mfma_profile_is_admitted_v1!(m, n, k, beta_bits) {
+    let target_shape_is_admitted =
+        (n == 4_096 && k == 4_096 && (beta_bits == 0 || beta_bits == 1_065_353_216))
+            || (n == 1_024 && k == 4_096 && beta_bits == 0)
+            || (n == 12_288 && k == 4_096 && beta_bits == 0)
+            || (n == 4_096 && k == 12_288 && beta_bits == 1_065_353_216)
+            || (n == 151_936 && k == 4_096 && beta_bits == 0);
+    let draft_shape_is_admitted = (n == 2_048 && k == 1_024 && beta_bits == 0)
+        || (n == 1_024 && k == 1_024 && beta_bits == 0)
+        || (n == 1_024 && k == 2_048 && beta_bits == 1_065_353_216)
+        || (n == 3_072 && k == 1_024 && beta_bits == 0)
+        || (n == 1_024 && k == 3_072 && beta_bits == 1_065_353_216)
+        || (n == 151_936 && k == 1_024 && beta_bits == 0);
+    let profile_is_admitted = ((m == 5
+        || m == 8
+        || m == 9
+        || m == 17
+        || m == 32
+        || m == 40
+        || m == 128
+        || m == 512
+        || m == 1_024
+        || m == 2_048)
+        && target_shape_is_admitted)
+        || ((m == 4
+            || m == 8
+            || m == 16
+            || m == 32
+            || m == 128
+            || m == 512
+            || m == 1_024
+            || m == 2_048)
+            && draft_shape_is_admitted);
+    if !profile_is_admitted {
         fe2o3_device::trap();
     }
     let m = m as usize;

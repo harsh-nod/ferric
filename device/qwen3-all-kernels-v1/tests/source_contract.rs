@@ -82,10 +82,7 @@ fn shared_family_sources_expose_exactly_thirteen_kernel_roots() {
                 "gemm",
                 "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1".to_owned()
             ),
-            (
-                "gemm",
-                "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1".to_owned()
-            ),
+            ("gemm", "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1".to_owned()),
             (
                 "gemm",
                 "ferric_qwen3_token_embedding_bf16_copy_v1".to_owned()
@@ -664,6 +661,166 @@ fn aggregate_gemm_roots_fail_closed_before_column_arithmetic_and_b_reads() {
     assert!(compact_proof.contains("pubprooffnqwen3_native_weight_vector4_indices_are_in_bounds("));
     assert!(compact_proof.contains("reduction+3<k"));
     assert!(compact_proof.contains("qwen3_native_weight_index_spec(column,reduction+3,k)<n*k"));
+}
+
+#[test]
+fn aggregate_mfma_plain_admission_matches_independent_host_oracle() {
+    use ferric_qwen3_all_kernels_device_v1::gemm::qwen3_gemm_mfma_profile_is_admitted_v1;
+    use std::collections::BTreeMap;
+    use syn::visit::Visit;
+
+    fn evaluate(expression: &syn::Expr, values: &BTreeMap<String, u32>) -> u32 {
+        match expression {
+            syn::Expr::Lit(literal) => match &literal.lit {
+                syn::Lit::Int(value) => value.base10_parse().unwrap(),
+                _ => panic!("MFMA admission requires integer literals"),
+            },
+            syn::Expr::Path(path) => values[&path.path.get_ident().unwrap().to_string()],
+            syn::Expr::Paren(parenthesized) => evaluate(&parenthesized.expr, values),
+            syn::Expr::Binary(binary) => {
+                let left = evaluate(&binary.left, values);
+                let right = evaluate(&binary.right, values);
+                u32::from(match binary.op {
+                    syn::BinOp::Eq(_) => left == right,
+                    syn::BinOp::And(_) => left != 0 && right != 0,
+                    syn::BinOp::Or(_) => left != 0 || right != 0,
+                    _ => panic!("unexpected MFMA admission operator"),
+                })
+            }
+            _ => panic!("opaque or unsupported MFMA admission expression"),
+        }
+    }
+
+    struct Boundaries(BTreeMap<String, Vec<u32>>);
+    impl<'ast> Visit<'ast> for Boundaries {
+        fn visit_expr_binary(&mut self, binary: &'ast syn::ExprBinary) {
+            if matches!(binary.op, syn::BinOp::Eq(_)) {
+                let (syn::Expr::Path(path), syn::Expr::Lit(literal)) =
+                    (binary.left.as_ref(), binary.right.as_ref())
+                else {
+                    panic!("admission comparisons must bind one input to one literal");
+                };
+                let syn::Lit::Int(value) = &literal.lit else {
+                    panic!("admission comparison must use an integer");
+                };
+                self.0
+                    .get_mut(&path.path.get_ident().unwrap().to_string())
+                    .unwrap()
+                    .push(value.base10_parse().unwrap());
+            }
+            syn::visit::visit_expr_binary(self, binary);
+        }
+    }
+
+    let parsed = syn::parse_file(include_str!("../src/gemm.rs")).unwrap();
+    let root = parsed
+        .items
+        .iter()
+        .find_map(|item| match item {
+            Item::Fn(function)
+                if function.sig.ident == "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1" =>
+            {
+                Some(function)
+            }
+            _ => None,
+        })
+        .unwrap();
+    let names = [
+        "target_shape_is_admitted",
+        "draft_shape_is_admitted",
+        "profile_is_admitted",
+    ];
+    let mut expressions = Vec::new();
+    // Include oracle constants independently; AST constants extend these partitions.
+    let mut boundaries = Boundaries(BTreeMap::from([
+        (
+            "m".to_owned(),
+            vec![1, 4, 5, 8, 9, 16, 17, 32, 40, 128, 512, 1_024, 2_048],
+        ),
+        (
+            "n".to_owned(),
+            vec![1_024, 2_048, 3_072, 4_096, 12_288, 151_936],
+        ),
+        ("k".to_owned(), vec![1_024, 2_048, 3_072, 4_096, 12_288]),
+        ("beta_bits".to_owned(), vec![0, 1_065_353_216]),
+    ]));
+    for (statement, expected) in root.block.stmts.iter().zip(names) {
+        let syn::Stmt::Local(local) = statement else {
+            panic!("expected admission local")
+        };
+        let syn::Pat::Ident(binding) = &local.pat else {
+            panic!("expected named admission local")
+        };
+        assert_eq!(binding.ident, expected);
+        let expression = &local.init.as_ref().unwrap().expr;
+        boundaries.visit_expr(expression);
+        expressions.push((expected, expression));
+    }
+    assert_eq!(expressions.len(), 3);
+    let syn::Stmt::Expr(syn::Expr::If(guard), None) = &root.block.stmts[3] else {
+        panic!("expected admission guard")
+    };
+    let syn::Expr::Unary(condition) = guard.cond.as_ref() else {
+        panic!("expected negated admission")
+    };
+    assert!(matches!(condition.op, syn::UnOp::Not(_)));
+    let syn::Expr::Path(path) = condition.expr.as_ref() else {
+        panic!("expected admission binding")
+    };
+    assert!(path.path.is_ident("profile_is_admitted"));
+    assert!(guard.else_branch.is_none());
+    let [syn::Stmt::Expr(syn::Expr::Call(call), Some(_))] = guard.then_branch.stmts.as_slice()
+    else {
+        panic!("expected fail-closed trap")
+    };
+    let syn::Expr::Path(path) = call.func.as_ref() else {
+        panic!("expected trap function")
+    };
+    assert_eq!(
+        path.path
+            .segments
+            .iter()
+            .map(|part| part.ident.to_string())
+            .collect::<Vec<_>>(),
+        ["fe2o3_device", "trap"]
+    );
+    assert!(call.args.is_empty());
+    for values in boundaries.0.values_mut() {
+        let original = values.clone();
+        values.extend([0, u32::MAX]);
+        for value in original {
+            values.extend([value.saturating_sub(1), value.saturating_add(1)]);
+        }
+        values.sort_unstable();
+        values.dedup();
+    }
+    let mut admitted = 0;
+    for &m in &boundaries.0["m"] {
+        for &n in &boundaries.0["n"] {
+            for &k in &boundaries.0["k"] {
+                for &beta_bits in &boundaries.0["beta_bits"] {
+                    let mut values = BTreeMap::from([
+                        ("m".to_owned(), m),
+                        ("n".to_owned(), n),
+                        ("k".to_owned(), k),
+                        ("beta_bits".to_owned(), beta_bits),
+                    ]);
+                    for (name, expression) in &expressions {
+                        let value = evaluate(expression, &values);
+                        values.insert((*name).to_owned(), value);
+                    }
+                    let actual = values["profile_is_admitted"] != 0;
+                    assert_eq!(
+                        actual,
+                        qwen3_gemm_mfma_profile_is_admitted_v1(m, n, k, beta_bits),
+                        "m={m}, n={n}, k={k}, beta_bits={beta_bits}"
+                    );
+                    admitted += usize::from(actual);
+                }
+            }
+        }
+    }
+    assert_eq!(admitted, 108);
 }
 
 #[test]
