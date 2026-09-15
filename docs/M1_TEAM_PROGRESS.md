@@ -5,6 +5,26 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
+`4f6f65ce`. Its optimized build and six successor host phases pass. The full
+720-pass/9-ignored engine result belongs to its diagnostic predecessor `ba6f8c9c`;
+00ac changes only three lifetime spellings. The source-bound 32-token R5 native
+diagnostic stopped before inference on a process-observation race, not the
+maintenance transition. No new performance result is available.
+
+The compiler candidate is now `d3a52cd2`, rebased onto freshly fetched upstream
+`bf0f4841`; all twelve patches are unchanged by range-diff and all seventeen
+remote host phases pass. Its actual emitter-tool rebuild is running. There is
+still no thirteen-root MFMA device image or numerical GPU result.
+
+The retirement preflight has an actual scoped Verus pass on `cf329240`. The
+commit proof remains failing on `5a689e7d`, now at the pre-update untouched-slot
+snapshot assertion. This does not establish the complete retirement transition;
+current-source dependency proofs, actual-body negatives and integration remain
+pending. All proof labels and all 33 M1 gates remain unchanged.
+
+## Recorded Runtime Evidence
+
 Runtime successor `cef91e5c202f77f660b9e83780d67783fd3e49d0` passes all
 six authenticated-admission host phases: normal engine check, eight new-window
 tests, one reused-generation snapshot test, 715 engine tests with nine existing
@@ -35,9 +55,28 @@ The bounded diagnostic retains custody but does not expose the inner submission
 phase. Diagnostic-only successor `ba6f8c9ca7557214c808c81bb490601d285136e6`
 now preserves copied submission phase, inner transition stage and error class
 through maintenance and restore failures without formatting retained owners.
-It adds five focused custody/diagnostic tests. Remote formatting passes;
-the seven-phase host gate has not run. This is not a maintenance defect fix,
-and the actual failing inner condition remains unknown.
+It adds five focused custody/diagnostic tests. The host gate passes compilation,
+those five tests and the full engine suite (720 passed, nine existing ignores),
+then fails strict Clippy on one elidable named lifetime. Evidence remains at
+`ff078bb5b238738e144de52322af3f37313057b90a4090d1e4d5131dc8de58d8`.
+Successor `00ac6a22cb65b478b00cc7f1dccdb98c7de6fe67` changes only the three
+lifetime spellings. Its six-phase gate passes normal check, all five focused
+tests, strict all-target engine Clippy and 37 adapter policies. Root verified all
+63 retained payloads and exact source-before/after equality in archive
+`20ae08c1a49e0e0a3600cb607739fd697d599f03ca47ad76ddf435e97d217ff5`.
+The independent normal opt3 release also passes: executable SHA-256
+`03bf2d118e2b5aeecafd75c0e009ca985aa526bef11186bcb652f33f45e6049a`,
+14,195,008 bytes, no optional features and no RPATH/RUNPATH. Root checked all
+49 retained payloads, actual producer and source equality in release archive
+`e297d997f77857a1b9cb07793b7346f9b931b45791991a84c5b53de853ea806a`.
+This is not a maintenance defect fix. The one-shot R5 native diagnostic exits
+126 after approximately eight seconds. Only artifact-admission startup is
+reported and stdout is empty. The guard cannot read the process group of a
+KFD PID that disappears before capture; no positive foreign selected-GPU usage
+or ownership attribution is established. Only the owned group is terminated.
+Terminal evidence capture is pending; the actual maintenance inner condition
+remains unknown. A narrower selected-GPU ownership-query order is under review,
+without removing checks on unreadable or conflicting selected-GPU facts.
 The run used the same legacy twelve-kernel image and model bundle as c5, not
 the MFMA candidate. Root independently checked the actual stderr, executable
 producer and all 22 native payload hashes in archive
@@ -75,8 +114,20 @@ retained frontend failures, not failed or successful theorem queries. Successor
 `79c81638416fbb7894e793d41ea6d21d83154050` adds defined public closed
 current/future specification views while keeping runtime fields private. The
 future view uses the required prophetic mode annotation, not a trust exemption.
-The next six-job positive gate is prepared but not launched; no positive proof query or
-any of the 24 actual-body mutations has run. No proof labels have changed.
+That revision first encounters another public-contract/private-helper frontend
+error. The visibility-only correction `cf329240` reaches Verus: the actual
+preflight passes two solver queries for one executable body. The original
+checker incorrectly expected one query; a corrected checker accepts the retained
+unchanged raw result after reconciling the pinned Verus loop-query counter.
+Its synthetic checker tests pass all nineteen expected outcomes (one accepted,
+eighteen rejected); these are not actual-body mutation results.
+The actual commit then fails its loop invariant. Ghost-only diagnostic successor
+`19ea4e1a` isolates unselected-slot preservation; `5a689e7d` introduces explicit
+pointwise preservation but still fails the pre-update snapshot assertion.
+The latter raw solver failure is retained in archive
+`f08b13f7c2e32b1282d51fe559477039834abd79b8203e3af0453f3a4be9ad93`.
+No contract or executable behavior was weakened. The remaining current-source
+positive jobs and all 24 actual-body mutations are pending. No proof labels have changed.
 The engine's whole-member and native lease composition remains an independent
 obligation.
 
@@ -282,19 +333,32 @@ not additional unique coverage. Reused production artifacts are checked against
 the fresh 201 build; the test executable is rebuilt. Root checked the archive
 SHA-256 `fd167de7230a0968832cbb552f253fce20c44387797f41f872ceb90d7365d0ac`,
 all nine terminal phase statuses and the raw test summaries. The compiler
-worker reports that the separate strict Clippy gate exits 101 with 17 library
-diagnostics; test-target linting did not complete. Raw evidence retention and
-source-impact classification are pending, so no baseline-lint equivalence is
-claimed. The source-bound emitter rebuild and full
+worker's separate strict Clippy gate exits 101 with 17 library diagnostics;
+test-target linting did not complete. Root checked the raw failure archive
+`69ba1ac0daf9963f1ef3a7d58bcc0de1b0df4a14df10b4b9f91be6121c8548a3`
+and source classification: no candidate-introduced trigger was identified, but
+this is not a matched pristine Clippy run or baseline-lint equivalence.
+The source-bound emitter rebuild and full
 thirteen-kernel MFMA image are still pending; the host result does not establish
 that the original aggregate emission now succeeds.
 Retained emission tools remain frozen at
 `5602c4889142571d7d82041b8a9bdef369799af1`; they are not relabeled as 18f.
-No candidate commit has been pushed. The shared upstream ref has since advanced
-to `bf0f4841774de433d5f02a863f684f4675f699ac`, adding projected call destination
-evaluation-order handling. That change is not covered by the 18f results;
-review and rebase are pending. The upstream must be freshly fetched and rebased
-again before any push to main. Ferric integration still pins 4f6. Prior
+No candidate commit has been pushed. Canonical upstream was freshly fetched at
+`bf0f4841774de433d5f02a863f684f4675f699ac`, adding projected call destination
+evaluation-order handling. Root reviewed the production delta and clean rebase
+`d3a52cd2f3939fb415b0980ab3fd0a3298e8b36e`; all twelve patches are unchanged
+by range-diff. All seventeen source-bound remote host phases pass: 565 backend,
+159 lowerer library plus 58 lowerer integration, 1,123 Pliron plus two CFG,
+140 analysis and one explicit paired storage-export test. Nine focused tests
+are a subset of the backend cohort. Four artifact-freshness checks pass; reused
+first-party bytes are bound to the current d3 builds, not relabeled older output.
+Root checked archive
+`a353a7939bb87de5c32da3169c555f117b07bbe1cca9c23505e9d5521bb40a8f`
+and its actual phase/test summary. The actual d3 tool rebuild is running after
+verified removal of ten locally retained duplicate archives, reclaiming
+481,796 KiB. No source, cache, existing tool or image was deleted.
+There is no d3 strict-Clippy or native-emission pass. The upstream must be
+freshly fetched and rebased again before any push to main. Ferric integration still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
 
