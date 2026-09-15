@@ -2671,9 +2671,10 @@ fn preflight_page_return_ledgers(
         Qwen3ModelRole::Target8B => target_pages,
         Qwen3ModelRole::Draft06B => draft_pages,
     };
-    let state = match ledger.get(global_index) {
-        Some(state) => Some(*state),
-        None => None,
+    let state = if global_index < ledger.len() {
+        Some(ledger[global_index])
+    } else {
+        None
     };
     preflight_page_return_identity(
         expected_device,
