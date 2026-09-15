@@ -14,8 +14,14 @@ maintenance transition. No new performance result is available.
 
 The local compiler candidate is now `12845295`, rebased onto observed upstream
 `48323569`. All twelve local patches are unchanged by range-diff from the
-previous `86ccc2a5` candidate; the worktree is clean. This newest candidate has
-not yet completed validation or been pushed. Its source archive SHA-256 is
+previous `86ccc2a5` candidate; the worktree is clean. This candidate passes its
+14-phase R10 remote host delta campaign and has not been pushed. Full source,
+raw results and identity checks are retained locally at archive SHA-256
+`b3cfc86c7c0c6d7c858b4751d8d0a9197a77cb663c67a46cd028f6ce3e9cfaaa`.
+Independent archive review found no source, raw-phase, selected-test, artifact
+reuse or paired-export mismatch. Compiled executable hashes and producers are
+retained; this archive does not contain those executable bytes.
+Its source archive SHA-256 is
 `80af541343a5474bbde0588f340c1882ac66df690f902b2026eb1cfa1699d7bc`.
 The preceding `86ccc2a5` on `bd4d5f42` passes its 23-phase R9 remote host
 campaign, including backend, lowerer, Pliron,
@@ -28,12 +34,14 @@ This is a delta host campaign, not a rerun of all predecessor suites or a new
 release-tool/emission result. No push has occurred; a fresh upstream check is
 required before pushing. Clarification is pending on whether the existing
 GitHub-hosted push CI is allowed under the mi300x-only build restriction.
-Upstream `48323569` adds immutable-slice helper lowering. The R10 remote delta
-campaign is running: backend, AMDGPU and lowerer phases and their fresh artifact
-checks pass; paired export completion and full retention are pending. The actual
+Upstream `48323569` adds immutable-slice helper lowering. R10 passes backend,
+AMDGPU and lowerer phases, their fresh artifact checks and paired BF16 exports
+for semantic wire versions 11 and 15. The actual
 wrapper-PATH assembler is Ubuntu LLVM 18.1.3 at `/usr/bin/llvm-as`, resolved to
-`/usr/lib/llvm-18/bin/llvm-as`; its identity was captured before execution and
-must still match afterward. Ferric still uses its
+`/usr/lib/llvm-18/bin/llvm-as`; its resolved identity and version match before
+and after execution. The compiler-module suite has 26 passes and one existing
+physical gfx1151 test ignored. Unchanged R9 suites were not repeated; no new
+release-tool, emission, strict Clippy or hardware result is claimed. Ferric still uses its
 existing `4f6f65ce` pin; no newer compiler result is attributed to that runtime.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
@@ -221,11 +229,21 @@ Its source archive SHA-256 is
 Successor `47d07cee` changes only the optional state read to an explicitly
 bounds-checked slice index, without a lint exception or contract change.
 Independent review found equivalent behavior and error ordering; remote
-formatting matches. Fresh host, strict Verus and actual-body negative execution
-are pending. Its source archive SHA-256 is
+formatting matches. Its fresh host R2 run passed all eight source-before checks,
+formatting, locked metadata, compilation and both exact ledger regressions.
+The root SSH session then ended with transport exit 255 (server not responding)
+during the full engine suite. The remote campaign's terminal and source-after
+states are unknown; this is neither a host pass nor an observed test failure.
+Strict Clippy completion was not observed. No blind rerun or proof-source
+transition is authorized while the original run may remain live. Strict Verus
+and actual-body negative execution are pending. Its source archive SHA-256 is
 `6670dd515627fa70c32a6e41aa2d38d51605dace5842a0d15ec3841d631523e3`.
 Prepared R8 proof controls were never launched; their R9 successor targets the
 corrected source and must wait for the new host run and evidence retention.
+Before R2, exact retained-artifact cleanup removed the obsolete R1 test
+executable and thirteen retired source archives, reclaiming 179,180 KiB on
+mi300x. All fourteen have checked local byte retention; current sources,
+required archives, dependency libraries and shared caches were preserved.
 The wrapper's completion custody and cross-call ticket/ledger continuity remain
 outside these helper contracts. No fe2o3 pin or native executable has changed.
 All 33 M1 gates remain open.
@@ -239,8 +257,8 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. R10 is running after scoped retained-artifact cleanup; older R9 and frozen e0 results retain their identities. | Complete and retain current delta validation before any push; release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Ledger candidate `efa069bd` passes 726 tests but fails Clippy; corrected `47d07cee` awaits validation. | Exact-source host/proof gates; idle selected GPU for the R6 native maintenance diagnostic. |
+| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. All 14 R10 host phases pass and are retained; older R9 and frozen e0 results retain their identities. | Fresh upstream check and push-CI clarification; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Ledger candidate `efa069bd` passes 726 tests but fails Clippy; corrected `47d07cee` passes two targeted tests, then SSH drops during the full suite. Remote terminal state is unknown. | Recover owned-run terminal evidence before any rerun or proof transition; exact-source host/proof gates and idle selected GPU for native R6. |
 | Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. All seven index negatives now pass with full evidence retained. | Verify actual ledger composition and negative mutations, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
