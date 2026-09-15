@@ -12,24 +12,34 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The local compiler candidate is now `e3c359fb`, rebased onto newly observed
+Compiler `e3c359fb` is now published to fe2o3 main, rebased onto freshly fetched
 upstream `2585ce64`. All twelve patches are unchanged by range-diff; the tip's
-message additionally contains `[skip ci]` under the user's explicit instruction
-to skip GitHub CI for this push and keep all builds on mi300x. The message-only
-message is preserved by the rebase. The current tree is
+message contains `[skip ci]` under the user's explicit instruction to skip
+GitHub CI for this push and keep all builds on mi300x. The normal, non-force
+push completed successfully. At 23:48:06 UTC, GitHub reports the exact main SHA,
+zero workflow runs and zero check runs for this commit. No workflow or branch
+protection was changed. The published tree is
 `1590682689fa240ebd0d10ccf63b488008c794f4`.
 The new upstream adds internal scalar-helper-result LLVM struct lowering,
 integer wrapping and launch-index fixes, a test-only simulator dependency and
-regression module separation. R12's first six remote phases pass, including
-the exact source transition and dependency-policy tests. The next CI harness
-phase fails on its expected argv: the remote wrapper exports `LD_LIBRARY_PATH`,
-so the captured command includes an additional legitimate environment-unset
-argument. No compiler build ran. A same-source continuation will clear only
-that variable for the CI harness and preserve the completed phases. Full
-prebuild failure evidence is retained locally at SHA-256
+regression module separation. All 19 R12 remote host phases now pass: 1,030 Rust
+tests, zero failures, one existing physical gfx1151 ignore, nine dependency-policy
+tests and the CI dispatch harness. Current-source artifact freshness and exact
+paired V11/V15 BF16 exports pass. Independent review checked the retained raw
+results, source identity, actual Cargo producers and byte-checked artifact reuse.
+The full 13,891,856-byte source/result archive is retained locally at SHA-256
+`e4334c6b7db87c97b494d8c70b0d1d7a8c86c6201b5780f5bbf9e916ac31ba48`.
+This is a host delta, not a new release-tool, emission, strict Clippy or GPU result.
+
+The initial CI harness attempt failed before compiler builds on an environment-
+dependent argv expectation. Its continuation cleared only `LD_LIBRARY_PATH` for
+that harness and preserved the six completed phases. Full prebuild failure
+evidence is retained locally at SHA-256
 `47740391eff1045047f7fbd243ee6159c312b2e243edd6e8a309f1f24ac63993`;
-the earlier source9c2e R11 controls were never launched. The candidate is not pushed. Its source
-archive SHA-256 is
+the earlier source9c2e R11 controls were never launched. The first result retainer
+then rejected paired-test JSON interleaved with the named test line. R3 accepted
+the exact framing while retaining all test checks and the failed attempt; no
+compiler test was rerun for that correction. The published source archive SHA-256 is
 `f0e6c827c1743a292b7c76a1b289f16fe0ca41328d3d8bf56bdc911cc8ea3689`.
 
 Previous compiler `12845295` on `48323569` has all twelve patches unchanged
@@ -49,12 +59,12 @@ Source-bound artifact freshness checks pass, and the older e0/5602 tools remain
 unchanged. Full source, raw phases and receipts are retained locally with checked
 archive SHA-256
 `b530f254a2a0f26b25be7ee85ad471b73db8cd4cbf9b8fe147f1a59aa0220528`.
-This is a delta host campaign, not a rerun of all predecessor suites or a new
-release-tool/emission result. No push has occurred; a fresh upstream check is
-required before pushing. The user explicitly requires GitHub CI to be skipped
-for this push. Actual remote API checks currently report main unprotected and
-no applicable branch rules; no workflow, protection or check-status changes
-have been made. The skip marker affects push/PR triggers, not other event types.
+This predecessor is a delta host campaign, not a rerun of all earlier suites or
+a new release-tool/emission result. The successor push described above followed
+a fresh fetch and explicit rebase check. Actual remote API checks report main
+unprotected and no applicable branch rules; no workflow, protection or check-
+status changes have been made. The skip marker affects push/PR triggers, not
+other event types.
 Upstream `48323569` adds immutable-slice helper lowering. R10 passes backend,
 AMDGPU and lowerer phases, their fresh artifact checks and paired BF16 exports
 for semantic wire versions 11 and 15. The actual
@@ -312,13 +322,13 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `e3c359fb` on `2585ce64` preserves all twelve patches and the approved CI-skip message. R12 first six phases pass, then its CI harness stops before builds on an environment-dependent argv expectation; failure retained. | Same-source R12 continuation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests; full evidence independently reviewed. The approved skip marker produced no observed GitHub workflow or check run. | Current-source release tools, coherent Ferric dependency refresh and numerical GPU qualification. |
 | Runtime / Integration | Ledger helper source47 is integrated at `66e32993` with exact device-cache bytes. Source47 passes eight host phases, 726 tests, strict engine/spec Clippy, nine selected helper proofs and six ledger negatives; evidence independently reviewed and retained. | Caller/whole-roster composition; idle admitted GPU for native validation. |
 | Verification | Nine actual source47 helper bodies and six actual ledger negatives pass retained, independently reviewed evidence. Earlier six metadata positives, 24 negatives, selected-page lemma and seven index negatives remain retained. | Prove ticket/lease sequence agreement, unique role/index returns and remaining-ticket preservation through the actual caller loop; native completion custody. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
-from Ferric's `4f6f65ce` pin through observed public `2179a6f4`. A coherent dependency
+from Ferric's `4f6f65ce` pin through published `e3c359fb`. A coherent dependency
 refresh is still required across 80 pin-bearing files: 30 manifests, 30 locks
 and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
 and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
