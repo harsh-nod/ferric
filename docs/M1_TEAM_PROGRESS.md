@@ -12,11 +12,18 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The local compiler candidate is now `1985f1d7`, rebased onto observed upstream
-`df04c62e`; all twelve patches are unchanged by range-diff against `e0d108b2`.
-The successor adds upstream shared-slice helper ABI and rank-one tile mapping
-changes. Its new host campaign remains unrun, and origin/main has subsequently
-advanced again; no latest-upstream validation or push is claimed.
+The local compiler candidate is now `86ccc2a5`, rebased onto observed upstream
+`bd4d5f42`; all twelve patches are unchanged by range-diff against `1985f1d7`.
+Its 23-phase R9 remote host campaign passes, including backend, lowerer, Pliron,
+tile mapping, frozen MIR v13/v14, macro closure and paired BF16 export coverage.
+Source-bound artifact freshness checks pass, and the older e0/5602 tools remain
+unchanged. Full source, raw phases and receipts are retained locally with checked
+archive SHA-256
+`b530f254a2a0f26b25be7ee85ad471b73db8cd4cbf9b8fe147f1a59aa0220528`.
+This is a delta host campaign, not a rerun of all predecessor suites or a new
+release-tool/emission result. No push has occurred; a fresh upstream check is
+required before pushing. Clarification is pending on whether the existing
+GitHub-hosted push CI is allowed under the mi300x-only build restriction.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
 Its expanded 42-phase remote host campaign passes, including the
@@ -55,7 +62,8 @@ image emission and read-only inspection only: publication/load/launch grants
 remain false, no GPU ran, and no numerical or performance result is claimed.
 The full frozen emission input/result archive is retained locally and checked at
 SHA-256 `f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
-The remote source remains frozen at `e0d108b2`; no successor transition ran.
+The active remote compiler source has transitioned to `86ccc2a5`; the e0 emission
+inputs and tools remain separately frozen and are not relabeled as current.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -89,9 +97,8 @@ the completed builds. The continuation passes 717 engine library tests, nine
 expected ignored cases, and strict all-target engine/spec Clippy. Both test
 phases reuse the original source-bound executable with unchanged SHA-256.
 All source after-checks and frozen native identity checks pass. These host
-results belong to the older helper branch, not a rerun of current integration.
-Its engine contracts are not integrated. The first actual engine helper proof
-passes as described below; the other five helpers remain unproved.
+results belong to the older helper branch. Its exact engine contracts are now
+integrated and validated separately at `8fa40b3a`, as described below.
 The combined R2/R3 source archives, raw logs and exact test executable are retained
 locally at SHA-256
 `8c16063a5347595b4c7de05d823f92ab485fa1bf062bc2f849f1a8d55a920514`.
@@ -100,10 +107,9 @@ The actual selected-page successor lemma at `457ca0aa` passes pinned Verus:
 one proof-mode query, zero errors, exact source and verifier closure checks.
 Its raw output and full source archive are retained locally at SHA-256
 `840a54180641bc211e005b3307ab937f9df1538ad6af99ddbdb8852762b9e27d`.
-Only this pure proof lemma is integrated at `54cdb41a`; the entire spec file is
+This pure proof lemma was integrated at `54cdb41a`; the entire spec file is
 byte-identical to the actual `457ca0aa` proof input. Newer integration engine
-work remains intact, and no whole-branch merge or new integration host campaign
-is claimed.
+work remains intact; the later helper integration changes only `device_cache.rs`.
 This establishes only its stated metadata implication; whole-roster/native
 composition remains unproved. The first genuine engine helper campaign now
 passes pinned `cargo-verus check` on the actual `457ca0aa` source, with dependency
@@ -118,6 +124,30 @@ The preceding R1 attempt stopped on a snapshot allowlist omission; R2 stopped
 on cargo-verus argument ordering before verification. Both failures are retained
 separately. No stub or ordinary host artifact substitution was used, and this
 is not an entire-engine or caller-composition proof.
+
+R4 now proves the other five actual engine helpers on `457ca0aa`:
+`page_return_device_matches`, `page_return_request_matches`,
+`page_return_role_matches`, `preflight_page_return_identity` and
+`commit_page_return_state`. Each selected exec body reports one verified query,
+zero errors and nonzero solver work. Root artifacts are freshly generated for
+each selection; all 284 dependency artifacts, source and verifier identities
+remain unchanged, and R3 evidence preservation passes. Full R4 evidence is
+retained locally at checked archive SHA-256
+`0f4f391d77a5d35504ed725f914df19bb86d943b047228231a67f9bc984c1d26`.
+All six helper bodies now have actual proof results, but their actual-body
+negative mutations and caller/whole-roster/native composition remain outstanding.
+
+Current integration `8fa40b3a` applies the exact verified helper engine bytes
+without merging the older branch. All eight remote host phases pass: formatting,
+locked metadata, engine check, both exact regressions, 723 engine tests with nine
+ignored, and strict all-target engine/spec Clippy. All four source before/after
+checks and frozen native identity checks pass. The full evidence archive includes
+the exact test executable and actual Cargo producers; local SHA-256 is
+`450e70c1efc74fb5648c9ab58a0c0a748718cd08ec8e4af6e38e88f946714c2f`.
+This does not rebuild or relabel the native executable or change the fe2o3 pin.
+Separate proof candidate `79f74a3e` extracts the actual global page-index core
+with bounds and error contracts plus host regressions. Its R5 proof controls are
+reviewed but unrun; the candidate has no host/proof pass and is not integrated.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -129,9 +159,9 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Frozen `e0d108b2` passes 42 host phases, four tool phases and actual thirteen-root emission/inspection. Local successor `1985f1d7` preserves all twelve patches. | Successor host validation, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Additional verified metadata lemma integrated at `54cdb41a`. Predecessor `78c9c9f0` passes all eight host phases; helper candidate passes both regressions, 717 tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
-| Verification | Six scoped positives and 24 actual-body negatives retained; selected-page lemma integrated. Actual `returned_page_state` helper passes pinned cargo-verus on `457ca0aa`; engine contracts remain separate. | Remaining five engine helpers and whole-roster/native composition proofs; synthetic checker tests remain separate. |
+| Compiler / Kernels | Current `86ccc2a5` on observed upstream `bd4d5f42` passes 23 delta host phases. Frozen `e0d108b2` retains 42 host phases, four tool phases and thirteen-root emission/inspection. | Fresh upstream check before push, current release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Exact helper contracts integrated at `8fa40b3a`; eight remote host phases pass, including both regressions, 723 engine tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
+| Verification | Six metadata positives and 24 negatives retained; selected-page lemma and six actual engine helper proofs pass. Global-index core candidate `79f74a3e` is unverified and separate. | Global-index core, helper negative mutations and whole-roster/native composition proofs. |
 | Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
@@ -202,7 +232,30 @@ negative proof campaign is yet admitted.
 
 ## Resource Recovery
 
-The latest user-authorized local-home cleanup removed the redundant `artifacts`
+The latest user-authorized home cleanup removed 4,201,396 KiB (about 4.01 GiB).
+Of this, 4,064,232 KiB was disposable `target/debug/{deps,build,incremental}`
+cache in the already-trashed `fe2o3-runtime-LCD8Sxfn/repo` clone. Its clean Git
+status, HEAD, source, logs and other repository files remain unchanged. The other
+137,164 KiB was the historical Ferric `acquired-native` extraction, whose 108
+paths exactly matched the union of three retained archives; all three complete
+tar comparisons and pre/post archive hash checks passed. Scoped lsof checks
+reported no users or visibility warnings. Filesystem availability afterward was
+86,141,424 KiB (about 82.15 GiB); this shared filesystem figure is not the cleanup
+size. All five registered Ferric worktrees remain preserved: integration/proof
+are active, Pages and scratch are dirty, and the original checkout has conflicts.
+No local build or test ran. Full scope, inventory and terminal log are retained
+in `.codex-tmp/cleanup-unused-home-20260915-r2/`.
+
+Before the current integration host gate, scoped mi300x cleanup removed two
+fully retained predecessor test executables and one duplicate archive,
+reclaiming exactly 220,296 KiB. The runtime stage decreased from 9,477,696 to
+9,257,400 KiB without changing sources, libraries or the frozen native binary.
+The older executable's separately retained archive is locally checked at SHA-256
+`42dedf2937b178461c4e8dacfa3d54cb1a8aadd09b1fa68f3b5ef9434f29a443`.
+The current integration test has since reused one filename with new bytes;
+the historical cleanup control must not be reused against that path.
+
+The preceding local-home cleanup removed the redundant `artifacts`
 subdirectories from `ferric-layer-c1-runtime-diagnostic-gate-v1/host-r1-failed-retained`
 and `host-r2-retained`: 1,454,364 KiB (about 1.39 GiB). Every surviving entry was
 compared against its canonical archive before removal, allowing only SSH/local
