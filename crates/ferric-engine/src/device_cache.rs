@@ -8568,8 +8568,14 @@ mod tests {
             ),
         ] {
             let request = RequestId::new(slot, generation);
-            assert_eq!(global_page_index_core(request, physical_index), Ok(expected));
-            assert_eq!(global_page_index(request, physical_index).unwrap(), expected);
+            assert_eq!(
+                global_page_index_core(request, physical_index),
+                Ok(expected)
+            );
+            assert_eq!(
+                global_page_index(request, physical_index).unwrap(),
+                expected
+            );
         }
         for request in [
             RequestId::new(0, 0),
