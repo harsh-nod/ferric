@@ -14117,8 +14117,7 @@ mod tests {
                 })
                 .map(|source| (source, Range::Retained(source)))
                 .collect::<Vec<_>>();
-            let diagnostic =
-                speculative_capture_ranges(101, 201, 4, 211, 301).map(Range::Capture);
+            let diagnostic = speculative_capture_ranges(101, 201, 4, 211, 301).map(Range::Capture);
             let ordinary = RetainedCaptureRangesV1 {
                 completion_output: Range::Capture(101),
                 semantic: RetainedSemanticCaptureRangesV1::Ordinary,
@@ -14177,10 +14176,8 @@ mod tests {
                                 assert_eq!(workspace, expected);
                                 assert_eq!(range, plan.range(role).unwrap());
                             }
-                            if matches!(
-                                source,
-                                M1PhysicalBufferSourceV1::WorkspaceSentinel { .. }
-                            ) {
+                            if matches!(source, M1PhysicalBufferSourceV1::WorkspaceSentinel { .. })
+                            {
                                 sentinels += 1;
                             }
                             let request = requested_workspace_range(
@@ -14203,10 +14200,7 @@ mod tests {
                             }
                         }
                         Range::Capture(id) => {
-                            if matches!(
-                                source,
-                                M1PhysicalBufferSourceV1::CompletionOutput { .. }
-                            ) {
+                            if matches!(source, M1PhysicalBufferSourceV1::CompletionOutput { .. }) {
                                 assert_eq!(id, 101);
                                 completions += 1;
                             } else {
@@ -14273,7 +14267,9 @@ mod tests {
                     )
                 })
                 .unwrap();
-            assert!(!maintenance.iter().any(|(source, _)| *source == missing_target.0));
+            assert!(!maintenance
+                .iter()
+                .any(|(source, _)| *source == missing_target.0));
             assert!(route(&speculative, &maintenance, diagnostic, 13).is_err());
             let mut inconsistent = saved.clone();
             let duplicate = inconsistent
