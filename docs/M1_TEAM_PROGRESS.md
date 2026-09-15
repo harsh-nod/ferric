@@ -5,6 +5,29 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The subsequent 32-token c5/4f6 attempt fails at ordinary speculative target
+reservation with `Physical(PageGenerationMismatch)`. Its retained diagnostic
+shows target cursor 142, physical slot nine still retired at generation one
+after epoch ten, and a newly returned/released pool lease for that index at
+generation two. Source review identifies a shared completed-step return defect:
+the pool ledger advances its generation, but `take_retired_pages` only removes
+the cache's retired lease vector and never advances the request-local physical
+slot. The generation check is correct and must remain. A whole-roster,
+completion-bound transition of both records is required before another run.
+
+The process aborts after formatting a 66,300,297-byte retained-owner diagnostic.
+The outer guard then sees the known native PID disappear during its process
+group check and exits 126; this is not evidence of foreign GPU use. Stdout is
+empty, so no 32-token, completed-round-count or full-acceptance result is claimed.
+The immediate after-state still has 69,029,134,336 bytes of selected GPU memory;
+the separately recorded fresh state returns to the exact 298,647,552-byte
+baseline with no owned group, selected queues or selected per-process VRAM.
+No reset or foreign intervention occurred. Archive SHA-256
+`d901a98e4ca873467027f094dd1d177dabf206e632609d1198368cae38e74493`
+and all 27 native payload hashes are independently checked. The runtime team is
+implementing a separate bounded diagnostic correction while the physical-slot
+release composition is reviewed. Neither correction is validated yet.
+
 The optimized c5/4f6 native attempt now completes five real speculative K4
 rounds and publishes eight tokens on an idle gfx942 GPU. The observed accepted
 draft-prefix lengths are `[0, 0, 1, 2, 0]`; epochs and dispatch generations
@@ -194,10 +217,22 @@ extraction; no column-major or Ferric aggregate attempt follows that failure.
 The installed rustc tree has only 6,561 entries. Lock-derived complete per-mode
 vendor views fit separately: 305 packages/19,825 entries for the original
 workspace fixtures and 198 packages/11,215 entries for standalone ce2. A
-storage-neutral whole-package partition is being prepared; no source or
-manifest change or entry-bound increase is required by that proposal. HSACO
-emission remains pending. Neither the reduction loop nor the convergence
-rejection policy is bypassed, and the 12 GiB cap is unchanged.
+storage-neutral whole-package partition now passes, preserving every package
+file and leaving all manifests unchanged. Both original fixtures pass locked,
+offline metadata checks in an empty Cargo home. The next actual row-major
+extraction reaches Cargo/build-std, then exits 125 at the unchanged 12 GiB stage
+cap. Its 802,232 KiB transient growth includes workspace incremental caches;
+the extraction boundary clears the outer environment, so the outer
+`CARGO_INCREMENTAL=0` does not disable those caches. No semantic compiler error,
+HSACO, column-major run or aggregate run is attributed to that stopped attempt.
+Neither the reduction loop nor the convergence rejection policy is bypassed.
+After preserving raw logs, all 145 generated metadata files, tool-copy equality
+and the exact 1,576-file/103-directory roster, only the failed extraction scratch
+is discarded, reclaiming 802,212 KiB. Its compiled caches are explicitly not
+byte-archived; the retained compact evidence has SHA-256
+`e190e665402d5c1e05ab0efdd103aa8d994a1c80a1b8bde4fe5e948971430d5a`.
+More obsolete-cache reclamation is being reviewed before any retry; the cap
+remains unchanged.
 Completed compiler cleanup removed exactly fifty obsolete test executables,
 reclaiming 541,048 KiB after retaining their complete archive locally. Removing
 the two redundant remote archives reclaimed another 144,272 KiB; the local
@@ -205,12 +240,31 @@ archives, current tools, libraries, source and retained images remain intact.
 The completed MFMA check and formatting stages are also removed after exact
 inventory and fresh no-use checks, reclaiming 2,968,964 KiB. Source, test evidence
 and claimed executables are retained; disposable private build caches were
-discarded, not claimed archived. A separate engineering-only MFMA numerical
-probe is being implemented using the existing checked service lifecycle and
-the canonical 108-shape catalog; it has no host or GPU result yet.
+discarded, not claimed archived. The separate engineering-only MFMA numerical
+probe is committed privately at `ee44cb2565a9445ce90876209a92f777e5c130b7`.
+It uses strict thirteen-program artifact admission, the existing checked service
+lifecycle, generation-bound guarded C readback and the canonical 108-case
+catalog. Its signed sparse fixture tests layout, tails and residuals; a second
+positive fixture contributes in every K16 phase. Review found and corrected an
+earlier signed-pattern cancellation that could hide an omitted 48-phase block;
+new regressions cover that block across all 108 references and reject an actual
+small-case incomplete output. Single-phase loss can still be hidden by BF16
+rounding, so this is not a traversal proof or general numerical qualification.
+All five source hashes match remote formatting output. There is no Cargo test,
+compile or GPU result yet, and dependency/coverage regeneration remains pending.
 
-The Pages checkpoint `5fe89b3e` is deployed; its seven live assets match the
-validated bytes. Its isolated worktree and 82,380 KiB remote stage are removed.
+Pages-only checkpoint `5d3d93d3e7f08645273d274bc35efbc79133e686` is deployed
+successfully in workflow 34926507415. Root reviewed the complete six-file delta,
+all 34 source hashes, source equality, raw QA/native-report association and
+desktop/mobile screenshots. The remote browser gate passes all 1,121 widths
+from 320 through 1440 pixels plus eight named viewports. All seven live assets
+match the validated 574,624-byte artifact, and historical performance data is
+unchanged. Only public Pages ancestry and site changes were pushed. The owned
+clean worktree (3,164 KiB) and completed remote frontend stage (75,904 KiB) are
+removed after retention and no-use checks. This public checkpoint records the
+successful short R2 run, not success for the newer R3 failure described above.
+The earlier Pages checkpoint `5fe89b3e` and its 82,380 KiB completed remote stage
+retain their distinct deployment/cleanup evidence.
 The completed runtime worktree is removed after integration/evidence checks.
 Further reviewed cleanup reclaims 1,675,048 KiB of obsolete runtime artifacts,
 578,572 KiB of completed review scratch, and 503,972 KiB of completed compiler
@@ -220,9 +274,10 @@ claimed archived.
 
 The new GPU result is limited to the zero/partial K4 continuation described
 above. There are no new numerical-acceptance, Verus or matched performance
-results, and all 33 M1 gates remain open. The next hardware priorities are a
-current-compiler aggregate, natural full-acceptance continuation and the
-remaining numerical cases.
+results, and all 33 M1 gates remain open. The next priorities are the shared
+physical-page generation repair and its regressions, a current-compiler MFMA
+aggregate, then sustained hardware continuation and the remaining numerical
+cases. The failed 32-token attempt is not bypassed to obtain a shorter success.
 
 ## Earlier Integration
 
