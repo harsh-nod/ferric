@@ -1,6 +1,18 @@
 //! Explicit, nonqualifying repeated K4 smoke using the real structural resident controller.
 
-use super::*;
+use super::{
+    ActiveDeviceKvCache, CompletionEpoch, DRAFT_DECODE, DRAFT_PREFILL, Engine,
+    EngineeringObservationFacts, EngineeringStartupDiagnosticsV1, EngineeringStartupPhaseV1,
+    M1FiniteSpeculativeQueueRolloverKvInputsV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspacePlans, M1ServingCompletionDispositionV1, M1ServingPhysicalQueueCustodyV1,
+    M1ServingPlanV1, M1ServingRegistryV1, M1SpeculativeGenerationLoopV1,
+    M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
+    QWEN3_END_OF_TEXT_TOKEN, Qwen3ModelRole, Qwen3PlanSelection, SmokeResult,
+    SpecialTokenDecodePolicy, TARGET_PREFILL, TARGET_SPECULATIVE, TokenizerExecutionLimits, Value,
+    Write, bind_m1_kv_workspace_table_v1, bytes_hex, elapsed_ns, fail_stop, identity_hex, json,
+    lease_pages, monotonic_raw_ns, prefill_workspace_plans, require_or_abort, smoke_bootstrap,
+    speculative_workspace_plans, step_inputs, verification_name, workspace_plan,
+};
 use ferric_engine::{
     CheckedCompletionSemantics, M1QueueWaitTimeoutV1, M1QueuedServingPhysicalInputProviderV1,
     M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerReadbackEvidenceV1,

@@ -108,7 +108,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         _ => return Err("usage: ferric-m1-engineering-speculative-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]".to_owned()),
     };
     let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15 * 60);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_mins(15);
     let gpu_unique_id = gpu_unique_id
         .to_str()
         .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?

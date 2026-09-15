@@ -4981,7 +4981,7 @@ mod tests {
         let retired = RequestId::new(1, 1);
         let third = RequestId::new(2, 1);
         let active_roster = [first, third];
-        let members = [
+        let mut members = [
             crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
                 first,
                 M1SpeculativeMemberStatusV1::Active,
@@ -5016,6 +5016,59 @@ mod tests {
             None,
         ));
         let mut provider = Some(M1QueuedServingPhysicalInputProviderV1::new());
+        let original_input = std::ptr::from_ref(input.as_ref());
+        let failure = try_enqueue_committed_speculative_rearm(
+            &mut provider,
+            identity,
+            M1ServingPhysicalRunnerAdapterPhaseV1::Quiescent {
+                epoch: completed_epoch,
+            },
+            Some(plan),
+            identity,
+            completed_epoch,
+            plan,
+            plan.target(),
+            completed_epoch,
+            &active_roster,
+            &members,
+            input,
+        )
+        .expect_err("ordinary rearm cannot reuse the bonus before draft catch-up");
+        let M1ServingPhysicalRunnerSpeculativeRearmEnqueueFailureV1::Unavailable { source, input } =
+            failure
+        else {
+            panic!("cursor rejection must retain the unqueued input")
+        };
+        assert_eq!(
+            source,
+            M1ServingPhysicalRunnerGenerationEnqueueUnavailableV1::CommittedInputMismatch
+        );
+        assert_eq!(std::ptr::from_ref(input.as_ref()), original_input);
+        assert_eq!(provider.as_ref().unwrap().pending_generation_count(), 0);
+
+        members[0] = crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
+            first,
+            M1SpeculativeMemberStatusV1::Active,
+            Some(501),
+            130,
+            130,
+        );
+        members[2] = crate::M1SpeculativeMemberRoundOutcomeV1::for_serving_rearm_test(
+            third,
+            M1SpeculativeMemberStatusV1::Active,
+            Some(503),
+            330,
+            330,
+        );
+        let input = Box::new(queued_speculative_rearm_test_input(
+            plan,
+            &active_roster,
+            next_epoch,
+            &[501, 503],
+            &[130, 330],
+            &[130, 330],
+            None,
+        ));
 
         try_enqueue_committed_speculative_rearm(
             &mut provider,
@@ -5168,7 +5221,7 @@ mod tests {
         let epoch = CompletionEpoch::new(3);
         let anchors = [900, 901, 902];
         let target_committed = [133, 211, 377];
-        let draft_committed = [132, 210, 376];
+        let draft_committed = target_committed;
         let authorities = [
             M1CommittedSpeculativeRearmMemberAuthorityV1 {
                 request: requests[0],
@@ -5202,11 +5255,33 @@ mod tests {
             validate_committed_speculative_rearm_input(&exact, &requests, authorities.into_iter(),),
             Ok(())
         );
+        let unfilled_draft = [132, 210, 376];
+        let unfilled_input = queued_speculative_rearm_test_input(
+            plan,
+            &requests,
+            epoch,
+            &anchors,
+            &target_committed,
+            &unfilled_draft,
+            None,
+        );
+        let mut unfilled_authorities = authorities;
+        for (authority, committed) in unfilled_authorities.iter_mut().zip(unfilled_draft) {
+            authority.draft_committed = committed;
+        }
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &unfilled_input,
+                &requests,
+                unfilled_authorities.into_iter(),
+            ),
+            Err(Unavailable::CommittedInputMismatch)
+        );
 
         let full_requests: Vec<_> = (0..8).map(|lane| RequestId::new(10 + lane, 1)).collect();
         let full_anchors: Vec<_> = (0_u32..8).map(|lane| 1_000 + lane).collect();
         let full_target_committed: Vec<_> = (0_u32..8).map(|lane| 200 + lane).collect();
-        let full_draft_committed: Vec<_> = (0_u32..8).map(|lane| 190 + lane).collect();
+        let full_draft_committed = full_target_committed.clone();
         let full_authorities: Vec<_> = (0..8)
             .map(|lane| M1CommittedSpeculativeRearmMemberAuthorityV1 {
                 request: full_requests[lane],
@@ -5228,9 +5303,33 @@ mod tests {
             validate_committed_speculative_rearm_input(
                 &full,
                 &full_requests,
-                full_authorities.into_iter(),
+                full_authorities.iter().copied(),
             ),
             Ok(())
+        );
+        let unfilled_full_draft: Vec<_> = (0_u32..8).map(|lane| 190 + lane).collect();
+        let unfilled_full = queued_speculative_rearm_test_input(
+            plan,
+            &full_requests,
+            epoch,
+            &full_anchors,
+            &full_target_committed,
+            &unfilled_full_draft,
+            None,
+        );
+        let unfilled_full_authorities = full_authorities.into_iter().zip(unfilled_full_draft).map(
+            |(mut authority, committed)| {
+                authority.draft_committed = committed;
+                authority
+            },
+        );
+        assert_eq!(
+            validate_committed_speculative_rearm_input(
+                &unfilled_full,
+                &full_requests,
+                unfilled_full_authorities,
+            ),
+            Err(Unavailable::CommittedInputMismatch)
         );
 
         let mut swapped = authorities;
@@ -5330,7 +5429,7 @@ mod tests {
             request,
             anchor: Some(900),
             target_committed: 133,
-            draft_committed: 132,
+            draft_committed: 133,
         };
         for (target_bucket, final_column) in [
             (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
@@ -5348,7 +5447,7 @@ mod tests {
                 epoch,
                 &[900],
                 &[133],
-                &[132],
+                &[133],
                 None,
             );
             assert_eq!(
@@ -5359,13 +5458,34 @@ mod tests {
                 ),
                 Ok(())
             );
-            let nonzero_final_placeholder = queued_speculative_rearm_test_input(
+            let unfilled_draft = queued_speculative_rearm_test_input(
                 plan,
                 &[request],
                 epoch,
                 &[900],
                 &[133],
                 &[132],
+                None,
+            );
+            assert_eq!(
+                validate_committed_speculative_rearm_input(
+                    &unfilled_draft,
+                    &[request],
+                    [M1CommittedSpeculativeRearmMemberAuthorityV1 {
+                        draft_committed: 132,
+                        ..authority
+                    }]
+                    .into_iter(),
+                ),
+                Err(Unavailable::CommittedInputMismatch)
+            );
+            let nonzero_final_placeholder = queued_speculative_rearm_test_input(
+                plan,
+                &[request],
+                epoch,
+                &[900],
+                &[133],
+                &[133],
                 Some((0, final_column, 77)),
             );
             assert_eq!(

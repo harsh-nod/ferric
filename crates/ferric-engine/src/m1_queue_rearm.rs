@@ -163,7 +163,7 @@ impl M1RearmRoundHistoryEntryV1 {
     )> {
         self.structural_maintenance
             .as_ref()
-            .map(|owner| owner.observation())
+            .map(structural_draft_catchup::StructuralDraftCatchupRestoreCustodyV1::observation)
     }
 
     #[allow(clippy::too_many_arguments)]

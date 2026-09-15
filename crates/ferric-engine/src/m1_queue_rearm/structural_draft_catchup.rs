@@ -1,6 +1,26 @@
 //! Structural draft maintenance. No authenticated program capability is issued here.
 
-use super::*;
+use super::{
+    append_workspace_ranges, build_rollover_bound_rows_with_storage, fmt,
+    prepare_m1_long_lived_queue_rearm_v1, replace_rollover_workspace,
+    reserve_m1_long_lived_queue_rearm_kv_v1, reset_retained_diagnostic_capture_core,
+    retained_host_capture_ranges, submission_failure, AddresslessM1PhysicalBufferRecipeV1,
+    BoundM1StepWorkspaceSubleases, CompletionEpoch, ContentBoundM1ProgramCatalogV1, Engine,
+    FreshWorkspaceRangeV1, LogicalRunnerDeclaration, LowerBatchFailureV1, LowerBatchInputV1,
+    M1BoundPhysicalBufferRowV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
+    M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
+    M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmSubmissionFailureV1,
+    M1LongLivedQueueRearmSubmissionPhaseV1, M1PhysicalBufferRecipeRowV1,
+    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1,
+    M1PhysicalQueueBatchRearmPartsV1, M1PreparedLongLivedQueueRearmV1,
+    M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1,
+    M1QueueRolloverObservationV1, M1RearmContinuationCustodyV1, M1RearmedPublishedQueueV1,
+    M1RolloverBoundRowsHostStorageV1, M1ScheduledDispatchV1, M1ScheduledLongLivedQueueRearmV1,
+    Qwen3ExecutionMode, Qwen3PlanSelection, RequestId, RequestState, ScheduledRemainderV1,
+    ServiceFixedBatchV1, ServiceFixedDispatchBufferV1, ServiceFixedDispatchPacketV1,
+    ServiceQueueSessionV1, ServiceQueueUnboundSessionV1, M1_KV_PAGE_TOKENS,
+};
 use crate::m1_serving_physical_operations::M1StructuralDraftCatchupPendingV1;
 
 #[derive(Debug)]
@@ -1027,9 +1047,9 @@ impl StructuralDraftCatchupReleasedV1 {
             || epoch.is_none()
             || engine.state(request) != Some(RequestState::Ready)
             || !matches!(width, 5 | 9 | 17)
-            || !committed
+            || committed
                 .checked_add(width)
-                .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
+                .is_none_or(|end| end > ferric_spec::M1_MAX_CONTEXT_TOKENS)
             || scratch.parent != parent
             || plans.target().selection() != parent
             || scratch.draft_inputs.is_none()
@@ -1807,9 +1827,9 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
         || plans.target().selection() != parent
         || scheduled.prior_checked.selection() != parent
         || !matches!(width, 5 | 9 | 17)
-        || !committed
+        || committed
             .checked_add(width)
-            .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
+            .is_none_or(|end| end > ferric_spec::M1_MAX_CONTEXT_TOKENS)
         || scratch.draft_inputs.is_none()
         || scratch.target_inputs.is_none()
         || !scratch.draft_pages.is_empty()
@@ -1913,7 +1933,11 @@ mod tests {
     #[test]
     fn structural_transition_storage_uses_actual_425_and_selected_speculative_recipes() {
         for (bucket, packets, width) in [
-            (ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192, 2242, 5),
+            (
+                ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192,
+                2242,
+                5_u32,
+            ),
             (ferric_spec::Qwen3PlanBucket::SpeculativeS1K8C8192, 3938, 9),
             (
                 ferric_spec::Qwen3PlanBucket::SpeculativeS1K16C8192,
@@ -1975,10 +1999,7 @@ mod tests {
             )
             .unwrap();
             assert!(scratch.draft_pages.capacity() >= 1);
-            assert!(
-                scratch.target_pages.capacity()
-                    >= (width as u32).div_ceil(M1_KV_PAGE_TOKENS) as usize
-            );
+            assert!(scratch.target_pages.capacity() >= width.div_ceil(M1_KV_PAGE_TOKENS) as usize);
             let maintenance = StructuralDraftCatchupScratchV1::try_new(
                 parent,
                 catchup.workspace_composition().workspace_plans(),

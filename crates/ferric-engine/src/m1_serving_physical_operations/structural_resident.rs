@@ -1,6 +1,16 @@
 //! Real structural resident transitions. These owners never grant authenticated admission.
 
-use super::*;
+use super::{
+    fmt, joined_structural_draft_catchup_pending, schedule_m1_long_lived_queue_rearm_exact_v1,
+    validate_custody_guard, M1QueuedServingPhysicalInputProviderV1, M1ServingBatchPlanV1,
+    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalOperationsV1,
+    M1ServingPhysicalReadbackV1, M1ServingPhysicalRunnerAdapterPhaseV1,
+    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerOperationErrorV1,
+    M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerPublishedStateV1,
+    M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentStateV1,
+    M1ServingPhysicalRunnerQuiescentV1, M1ServingPhysicalRunnerReadbackV1,
+    M1ServingPreparedSemanticEvidenceV1, M1StructuralDraftCatchupPendingV1,
+};
 use crate::m1_queue_rearm::structural_draft_catchup::{
     prepare_structural_draft_catchup_v1, prepare_structural_speculative_rearm_v1,
     submit_structural_draft_catchup_v1, submit_structural_restore_v1,
@@ -26,6 +36,7 @@ pub struct M1StructuralResidentRoundInputV1 {
 
 impl M1StructuralResidentRoundInputV1 {
     /// Retains addressless plans; admission occurs against the joined physical owner.
+    #[must_use]
     pub fn new(
         speculative_preparation: M1FullStepWorkspacePlans,
         speculative_recipe: M1FullStepWorkspacePlans,
@@ -50,7 +61,6 @@ pub struct M1StructuralResidentCommittedRoundV1 {
 }
 
 impl M1StructuralResidentCommittedRoundV1 {
-    #[must_use]
     pub const fn outcome(&self) -> &crate::M1SpeculativeRoundOutcomeV1 {
         self.committed.outcome()
     }
@@ -164,11 +174,11 @@ impl<'a, const C: usize>
             || projection.target.committed_tokens != projection.draft.committed_tokens
             || projection.target.committed_tokens != projection.target.resident_tokens
             || projection.draft.committed_tokens != projection.draft.resident_tokens
-            || !projection
+            || projection
                 .target
                 .committed_tokens
                 .checked_add(width)
-                .is_some_and(|end| end <= ferric_spec::M1_MAX_CONTEXT_TOKENS)
+                .is_none_or(|end| end > ferric_spec::M1_MAX_CONTEXT_TOKENS)
             || self.engine.state(projection.request)
                 != Some(ferric_spec::scheduling::RequestState::Ready)
             || !structural_first_logical_span_is_unreserved(
@@ -343,71 +353,70 @@ impl<'a, const C: usize>
                 ),
             ));
         }
-        let (maintenance_prepared, mut enter_storage, mut restore_storage) =
-            if current.pending.is_some() {
-                let Some(scratch) =
-                    StructuralDraftCatchupScratchV1::try_new(parent, &catchup_preparation)
-                else {
+        let (maintenance_prepared, enter_storage, restore_storage) = if current.pending.is_some() {
+            let Some(scratch) =
+                StructuralDraftCatchupScratchV1::try_new(parent, &catchup_preparation)
+            else {
+                return Err(self.structural_failure(
+                    "maintenance scratch",
+                    (
+                        batch,
+                        current,
+                        speculative_preparation,
+                        speculative_recipe,
+                        catchup_preparation,
+                        catchup_recipe,
+                        speculative_scratch,
+                    ),
+                ));
+            };
+            let recipe = match self.runner.derive_step_recipe(
+                crate::M1StepDispatchIntent::DraftCatchup(parent),
+                catchup_recipe,
+            ) {
+                crate::M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+                crate::M1PhysicalRunnerRecipeOutcomeV1::Rejected(error) => {
                     return Err(self.structural_failure(
-                        "maintenance scratch",
+                        "maintenance recipe",
                         (
+                            error,
                             batch,
                             current,
                             speculative_preparation,
                             speculative_recipe,
                             catchup_preparation,
-                            catchup_recipe,
-                            speculative_scratch,
-                        ),
-                    ));
-                };
-                let recipe = match self.runner.derive_step_recipe(
-                    crate::M1StepDispatchIntent::DraftCatchup(parent),
-                    catchup_recipe,
-                ) {
-                    crate::M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
-                    crate::M1PhysicalRunnerRecipeOutcomeV1::Rejected(error) => {
-                        return Err(self.structural_failure(
-                            "maintenance recipe",
-                            (
-                                error,
-                                batch,
-                                current,
-                                speculative_preparation,
-                                speculative_recipe,
-                                catchup_preparation,
-                                scratch,
-                                speculative_scratch,
-                            ),
-                        ))
-                    }
-                };
-                let enter = StructuralTransitionStorageV1::try_new(parent, true, &recipe);
-                let restore =
-                    StructuralTransitionStorageV1::try_new(parent, false, &speculative_recipe);
-                let (Some(enter), Some(restore)) = (enter, restore) else {
-                    return Err(self.structural_failure(
-                        "transition scratch",
-                        (
-                            batch,
-                            current,
-                            speculative_preparation,
-                            speculative_recipe,
-                            catchup_preparation,
-                            recipe,
                             scratch,
                             speculative_scratch,
                         ),
-                    ));
-                };
-                (
-                    Some((catchup_preparation, recipe, scratch)),
-                    Some(enter),
-                    Some(restore),
-                )
-            } else {
-                (None, None, None)
+                    ))
+                }
             };
+            let enter = StructuralTransitionStorageV1::try_new(parent, true, &recipe);
+            let restore =
+                StructuralTransitionStorageV1::try_new(parent, false, &speculative_recipe);
+            let (Some(enter), Some(restore)) = (enter, restore) else {
+                return Err(self.structural_failure(
+                    "transition scratch",
+                    (
+                        batch,
+                        current,
+                        speculative_preparation,
+                        speculative_recipe,
+                        catchup_preparation,
+                        recipe,
+                        scratch,
+                        speculative_scratch,
+                    ),
+                ));
+            };
+            (
+                Some((catchup_preparation, recipe, scratch)),
+                Some(enter),
+                Some(restore),
+            )
+        } else {
+            (None, None, None)
+        };
         if deadline_expired() {
             return Err(self.structural_failure(
                 "deadline before scheduling",
@@ -468,7 +477,20 @@ impl<'a, const C: usize>
         let M1StructuralResidentCommittedRoundV1 { committed, pending } = current;
         let (_, physical, outcome) = committed.into_parts();
         let crate::M1ServingPhysicalQueueCustodyV1::Quiescent { plan, custody } = physical else {
-            unreachable!("joined commit retains quiescent physical custody")
+            return Err(self.structural_failure(
+                "continuation physical owner",
+                (
+                    (physical, outcome, reservation, pending),
+                    (
+                        speculative_preparation,
+                        speculative_recipe,
+                        speculative_scratch,
+                        maintenance_prepared,
+                        enter_storage,
+                        restore_storage,
+                    ),
+                ),
+            ));
         };
         let M1ServingPhysicalRunnerQuiescentV1 { state, .. } = custody;
         let (scheduled, diagnostic_history) = match state {
@@ -519,8 +541,27 @@ impl<'a, const C: usize>
             }
         };
         let (published, reservation) = if let Some(pending) = pending {
-            let (catchup_preparation, catchup_recipe, mut catchup_scratch) =
-                maintenance_prepared.expect("full acceptance prepared maintenance");
+            let (
+                (catchup_preparation, catchup_recipe, mut catchup_scratch),
+                mut enter_storage,
+                mut restore_storage,
+            ) = match (maintenance_prepared, enter_storage, restore_storage) {
+                (Some(prepared), Some(enter), Some(restore)) => (prepared, enter, restore),
+                retained => {
+                    return Err(self.structural_failure(
+                        "missing maintenance storage",
+                        (
+                            (scheduled, reservation, pending, outcome, diagnostic_history),
+                            (
+                                speculative_preparation,
+                                speculative_recipe,
+                                speculative_scratch,
+                                retained,
+                            ),
+                        ),
+                    ))
+                }
+            };
             if deadline_expired() {
                 return Err(self.structural_failure(
                     "deadline before maintenance preparation",
@@ -622,9 +663,7 @@ impl<'a, const C: usize>
                 catalog,
                 &pending,
                 self.ring_bytes,
-                enter_storage
-                    .as_mut()
-                    .expect("preclock maintenance storage"),
+                &mut enter_storage,
             ) {
                 Ok(published) => published,
                 Err(error) => {
@@ -679,11 +718,13 @@ impl<'a, const C: usize>
                     ),
                 ));
             }
-            let remaining_ms = deadline
-                .saturating_duration_since(std::time::Instant::now())
-                .as_millis()
-                .min(u128::from(self.queue_wait_timeout.milliseconds()))
-                as u32;
+            let remaining_ms = u32::try_from(
+                deadline
+                    .saturating_duration_since(std::time::Instant::now())
+                    .as_millis(),
+            )
+            .unwrap_or(u32::MAX)
+            .min(self.queue_wait_timeout.milliseconds());
             if remaining_ms == 0 {
                 return Err(self.structural_failure(
                     "deadline before maintenance readback",
@@ -700,14 +741,28 @@ impl<'a, const C: usize>
                     ),
                 ));
             }
+            let Some(readback_storage) = catchup_scratch.take_readback() else {
+                return Err(self.structural_failure(
+                    "missing maintenance readback storage",
+                    (
+                        (published, pending, outcome, diagnostic_history),
+                        (
+                            catchup_scratch,
+                            speculative_preparation,
+                            speculative_recipe,
+                            speculative_scratch,
+                            enter_storage,
+                            restore_storage,
+                        ),
+                    ),
+                ));
+            };
             let released = match published.read_and_settle(
                 self.engine,
                 self.runner.logical_runner(),
                 pending,
                 remaining_ms,
-                catchup_scratch
-                    .take_readback()
-                    .expect("preclock maintenance readback"),
+                readback_storage,
             ) {
                 Ok(released) => released,
                 Err(error) => {
@@ -873,7 +928,7 @@ impl<'a, const C: usize>
                 speculative_recipe,
                 catalog,
                 self.ring_bytes,
-                restore_storage.as_mut().expect("preclock restore storage"),
+                &mut restore_storage,
             ) {
                 Ok(published) => published,
                 Err(error) => {
@@ -982,11 +1037,13 @@ impl<'a, const C: usize>
         M1ServingPhysicalReadbackV1<M1ServingPhysicalRunnerReadbackV1>,
         M1StructuralResidentFailureV1<'a>,
     > {
-        let remaining_ms = deadline
-            .saturating_duration_since(std::time::Instant::now())
-            .as_millis()
-            .min(u128::from(self.queue_wait_timeout.milliseconds()))
-            as u32;
+        let remaining_ms = u32::try_from(
+            deadline
+                .saturating_duration_since(std::time::Instant::now())
+                .as_millis(),
+        )
+        .unwrap_or(u32::MAX)
+        .min(self.queue_wait_timeout.milliseconds());
         let Some(timeout) = crate::M1QueueWaitTimeoutV1::new(remaining_ms) else {
             return Err(self.structural_failure("deadline before speculative readback", published));
         };
@@ -1024,7 +1081,7 @@ impl<'a, const C: usize>
         }
         let (_, physical, outcome) = current.committed.into_parts();
         let crate::M1ServingPhysicalQueueCustodyV1::Quiescent { custody, .. } = physical else {
-            unreachable!("committed physical owner is quiescent")
+            return Err(self.structural_failure("terminal physical owner", (physical, outcome)));
         };
         let M1ServingPhysicalRunnerQuiescentV1 {
             state:
@@ -1056,9 +1113,16 @@ impl<'a, const C: usize>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CompletionWireExpectation, CompletionWireSemanticExpectation};
+    use crate::m1_serving_physical_operations::structural_draft_catchup_member_input;
+    use crate::{
+        CompletionWireExpectation, CompletionWireSemanticExpectation,
+        M1ObservedSpeculativeDiagnosticChoicesV1, M1ScheduledDispatchV1,
+    };
     use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
-    use ferric_spec::{Identity, StepPlan, TokenId};
+    use ferric_spec::{
+        CompletionEpoch, Identity, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, StepPlan,
+        TokenId,
+    };
 
     #[test]
     fn structural_first_span_rejects_duplicate_or_prompt_length_logical_reservation() {
