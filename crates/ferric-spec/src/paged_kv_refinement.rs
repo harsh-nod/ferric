@@ -2895,6 +2895,26 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
                 };
             }
             index += 1;
+            proof {
+                assert(selected@.len() == M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(0 <= index <= M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(state.immutable_frame(&before));
+                assert(state.lifecycle == before.lifecycle);
+                assert(state.resident_tokens == before.resident_tokens);
+                assert(state.committed_tokens == before.committed_tokens);
+                assert(state.page_count == before.page_count);
+                assert(state.page_table == before.page_table);
+                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && slot_index < index && selected@[slot_index] ==>
+                    state.page_slots@[slot_index] == (PhysicalPageSlot {
+                        generation: (before.page_slots@[slot_index].generation as int + 1) as u32,
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }));
+                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < index && selected@[slot_index]) ==>
+                    state.page_slots@[slot_index] == before.page_slots@[slot_index]);
+            }
         }
     }
 }
