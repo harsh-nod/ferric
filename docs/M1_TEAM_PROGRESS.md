@@ -12,31 +12,86 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The compiler candidate is now `7f5f15de`, rebased onto freshly fetched upstream
-`83986180`; all twelve patches are unchanged by range-diff. Its predecessor
-`d3a52cd2`, on upstream `bf0f4841`, passed all seventeen remote host phases,
-but those results do not validate the new upstream's SSA replay changes.
-The d3 emitter-tool rebuild stopped at the shared root-filesystem reserve,
-before tool copying or emission. There is still no thirteen-root MFMA device
-image or numerical GPU result.
+The compiler candidate is now `2e9ecd23`, rebased onto observed upstream
+`638e1169`; all twelve patches are unchanged by range-diff. Eight new upstream
+commits include semantic-query library changes used by the CLI. The new remote
+27-phase campaign passes, including new source-bound semantic-query coverage.
+Its full source and raw phase evidence are retained locally with checked archive
+SHA-256 `d0ce5dfde70467ffaa3c9fc03655323bd409cdf34627653f7bf6a284d96f39f7`.
+No strict compiler Clippy pass is claimed by this campaign.
+The completed 24-phase host result belongs to predecessor `06e25566` on
+`d2e2ff47`, including artifact freshness, backend, lowerer, Pliron, analysis,
+optimizer, MIR-model and paired BF16 fixture coverage. Neither result relabels
+the preserved older emitter tools. Release tools and full aggregate emission
+remain outstanding; the compiler stage is 11,267,416 KiB after host tests, above
+the unchanged 10,485,760 KiB next-build admission threshold. Retired artifact
+cleanup is required before the tool build. There is no thirteen-root MFMA
+device image or numerical GPU result.
 
-The retirement preflight has an actual scoped Verus pass on `cf329240`. The
-commit proof remains failing on `5a689e7d`, now at the pre-update untouched-slot
-snapshot assertion. Successor `339c2561` explicitly instantiates the original
-prefix quantifier, but its next run stopped at the root-filesystem reserve before
-Verus launched. This does not establish the complete retirement transition;
-current-source dependency proofs, actual-body negatives and integration remain
-pending. All proof labels and all 33 M1 gates remain unchanged.
+The retirement proof reached Verus on `339c2561` and failed at its pre-update
+snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
+body and loop, then all five current-source preflight/dependency bodies pass.
+The six source-bound results total nine verified queries and zero errors under
+pinned Verus `b677dd5`. This is scoped metadata verification, not whole-crate,
+engine-composition or native-authority proof. All 24 actual-body mutations now
+produce checked semantic verification failures. R16 accepted the fifth retained
+bounds-precondition diagnostic without rerunning it, then completed the remaining
+nineteen cases; the continuation exited zero. The first-five raw archive is
+retained locally and independently reviewed. Full six-positive/24-negative
+retention also exited zero; root downloaded and checked archive SHA-256
+`b3c0760fcc2480913b2fdc72cc2167de68f4049dc06f1482974d38a5d94524e8`.
+The ten single-file proof commits are now integrated at Ferric `78c9c9f0`;
+the spec file matches the verified `bd8e22f7` bytes exactly. Its expanded remote
+host campaign passes all eight phases: format, exact locked metadata, 130 spec
+library tests, four spec doctests, engine library check, 721 engine tests with
+nine ignored, and strict all-target Clippy for both crates. Source-before/after
+checks and the frozen native binary identity also pass. Full evidence, including
+the actual test binaries, is retained locally with checked archive SHA-256
+`4df5ca07179c43a3947e6130814db351ea17014dc6ccce7ec323a875f7f97cf3`.
+Candidate `a7d58129` adds contracts around the actual pool-return helpers and
+two host regressions; it is not yet verified or integrated. Whole-roster/native
+composition remains unproved.
+All 33 M1 gates remain open.
+
+Routing-test source `45a211e5` passes remote format, exact locked metadata,
+engine library check, the single 425-row enter/restore regression and strict
+all-target Clippy. Both frozen source trees and the native `00ac6a22` executable
+remain unchanged by the run. All 25 actual mock GPU-guard fixtures also pass.
+R6 native controls preserve those tested guard bodies, but no launch occurred:
+the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Rebased twelve patches onto `83986180`; completed reviewed cleanup and source/cache transition control review. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
-| Runtime / Integration | Audited maintenance bindings without finding a concrete defect; committed test-only 425-row enter/restore routing coverage at `33a31333`. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
-| Verification | Prepared the `339c2561` commit-proof correction and source-bound positive/negative controls. | Actual commit proof, six current-source positives and 24 actual-body negatives; synthetic checker tests remain separate. |
-| Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `9a5bd74d`. | Remote Pages validation and reviewed publication; no deployment claimed. |
+| Compiler / Kernels | Rebased twelve unchanged patches onto `638e1169`; all 27 host phases pass on `2e9ecd23`. | Scoped cache cleanup, source-bound release tools and actual thirteen-root device emission. |
+| Runtime / Integration | Verified spec file integrated at `78c9c9f0`; all eight host phases pass. Routing and 25 mock guard cases previously pass. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
+| Verification | Six scoped positives and 24 checked actual-body negatives retained; actual pool-return helper candidate `a7d58129` awaits validation. | Direct helper and whole-roster/native composition proofs; synthetic checker tests remain separate. |
+| Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
 
-Shared-host resource restoration did not restore workload admission; no further
-owned cleanup is scheduled and no workload floor is lowered. Exactly 26
+The upstream freshness audit found no service-host, KFD or runtime source changes
+from Ferric's `4f6f65ce` pin to observed public `638e1169`. A coherent dependency
+refresh is still required across 80 files, including 42 manifests and 32 locked
+graphs; two new compiler dependency edges must be included. The frozen native
+artifact is not relabeled as using the newer upstream revision.
+
+Pages payload SHA-256 is
+`54165bf91f64fc9ef93b4d52d34c6e5d0ebac4bd8c13d745702cfaf81e6f19d9`.
+All 34 source files match the uploaded payload after validation. The admitted
+artifact has exactly seven static files totaling 589,025 bytes. Raw QA evidence
+archive SHA-256 is
+`b1a04f4974e699547f95649d4464bae188ee784c30640949da55a5c3bec97609`.
+The completed private Pages stage and input directory were removed after local
+retention and no-use checks; the shared browser cache was preserved. Existing
+public-main workflows would start GitHub-hosted builds. Publication is awaiting
+approval for an exact `pages/prebuilt` allowance in the existing protected Pages
+environment; the proposed orphan branch contains only the admitted static
+artifact and a deploy-only workflow. No environment protection has changed.
+
+### Earlier Stopped Checkpoint
+
+The following records predate the completed host campaigns above.
+The earlier scoped shared-host cleanup did not restore workload admission.
+The subsequent user-authorized cache cleanup is recorded below; no workload
+floor is lowered. Exactly 26
 obsolete root-level archives were removed after independent
 local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
 root filesystem. Root checked receipt SHA-256
@@ -78,17 +133,75 @@ evidence. The approved `339c2561` commit-only Verus diagnostic remains the next
 actual proof run after resource recovery. No current-source R13 positive or
 negative proof campaign is yet admitted.
 
-## Validation Blocker
+## Resource Recovery
 
-A subsequent root-owned read-only SSH probe records 19,239,820 KiB free on `/`
-and 142,096,292 KiB on `/run/user/1002`. Root free is still 3,828,852 KiB below
-the unchanged 23,068,672 KiB admission floor. The same root-filesystem blocker
-has persisted across the original resource stops and subsequent goal turns,
-including the completed cleanup. The probe is terminal; all workers report
-no live remote jobs. No additional provenance-established root-filesystem
-cleanup can recover the missing space without touching protected or unrelated
-data. Local builds remain prohibited. Validation requires an external resource
-change, not a relaxation of the guards or another blind retry.
+Completed remote cleanup retained and checked the two obsolete compiler vendor
+trees locally before removing their contents (458,756 KiB). Their archive
+SHA-256 is `083d3e7fa74fc4c257c2c1480d35aa8dc1e0264928c858395df1fbcdd025adef`.
+Two obsolete runtime routing-source copies were also removed after exact source,
+archive and no-use checks; current sources, frozen native inputs and prior
+failure evidence remain intact. The completed Pages stage and input directory
+were removed after QA retention, preserving the shared browser cache.
+
+The subsequent local-home cleanup removed only generated Cargo `deps`, `build`
+and `.fingerprint` contents from the inactive, clean `fe2o3-runtime-integration-r43`
+checkout, plus clean `fe2o3-derived-bindings-main` and `fe2o3-general-compiler`
+worktrees. Both branch tips remain retained. Inode accounting identified
+9,840,236 KiB of releasable cache files, excluding 593,404 KiB still linked by
+preserved binaries; the two worktrees occupied 132,492 KiB. Local free space
+rose from 77,538,464 to 87,516,748 KiB during cleanup, approximately 9.5 GiB.
+The difference from the selected sizes includes hardlinks, directory metadata
+and concurrent activity. Source remained clean; dirty and active checkouts,
+top-level binaries, logs, model files and evidence were preserved. No local
+build or test ran. The terminal cleanup log is
+`.codex-tmp/local-home-cleanup-20260915.log`, SHA-256
+`68d34772d7b3181ec16406bac148a34c949ae7cf1070b6bee95567b500e59ef6`.
+This local cleanup is separate from the mi300x cleanup described below.
+
+The resumed turn found root free had fallen again to 197,620 KiB. A further
+user-authorized cleanup emptied 87 old Rust incremental-cache directories in
+bounded `/tmp` build targets, skipped 26 recently touched trees, and removed
+43,908,692 KiB of allocated cache data without touching sources or executables.
+Its command exited zero; root free immediately afterward was 42,518,532 KiB.
+Subsequent shared-host space changes provided additional headroom. Compiler,
+runtime and proof host validation then ran under unchanged guards. The new raw
+cleanup log is `.codex-tmp/mi300x-tmp-pr745-cache-cleanup-20260915.log`.
+GPU availability, not root space, currently prevents the native retry.
+
+The following paragraphs retain the earlier resource checkpoints.
+
+An earlier root-owned read-only SSH probe recorded 19,239,820 KiB free on `/`
+and 142,096,292 KiB on `/run/user/1002`. Root free was still 3,828,852 KiB below
+the unchanged 23,068,672 KiB admission floor at that checkpoint, so validation
+remained stopped. The user subsequently authorized home-directory cleanup.
+
+On 2026-09-15, two root-owned SSH cleanup commands completed with exit zero:
+179 Rust incremental-cache directories in `/home/harsh` and nine in explicitly
+selected old `/tmp` build targets were emptied. Their pre-removal allocated
+sizes, excluding retained parent directories, were 278,040,300 KiB and
+11,123,068 KiB respectively. These are disposable rebuild caches, not archived
+artifacts. Each selected tree was user-owned, canonical, on the expected
+filesystem, free of symlinks or special files, and untouched for seven days.
+The user-scoped `lsof` check reported no open file, mapping or working directory
+under the selected roots. It warned about inaccessible Docker/tracefs mounts;
+this is not a claim of complete system-wide process visibility. No process was
+stopped. Sources, Git worktrees, compiled outputs, model files, evidence and
+active Python caches were outside the deletion scope.
+
+Home and root are separate filesystems. Home free space rose from 5,262,160 to
+278,893,300 KiB during its cleanup; root free rose from 17,223,136 to 27,977,876
+KiB during its cleanup. These live filesystem deltas differ from cache sizes
+because of shared-host activity and filesystem accounting. A fresh terminal
+SSH check at `2026-09-15T08:09:22Z` records `/` free at 27,896,212 KiB,
+`/home` at 278,890,388 KiB, `/run/user/1002` at 142,096,292 KiB, and
+MemAvailable at 1,700,723,600 KiB. The observed root-space blocker is cleared,
+with 4,827,540 KiB above the unchanged floor. No workload has resumed and no
+gate or proof label changes. Local builds remain prohibited.
+
+Controls and raw terminal outputs are retained locally in `.codex-tmp/` as
+`mi300x-home-cache-cleanup-20260915.sh`,
+`mi300x-home-cache-cleanup-20260915.log` and
+`mi300x-tmp-cache-cleanup-20260915.log`.
 
 Root reviewed all five prepared `7f5f15de` source/cache transition controls,
 their SHA-256 pins, the exact source archive, and the bundle with already-present
@@ -99,7 +212,7 @@ and requires newly compiled first-party artifacts before allowing same-campaign
 implied. Fresh resource/capacity admission, remote syntax checks and canonical
 upstream reconciliation remain required before execution.
 
-Resume with fresh resource checks once `/` is stably above 22 GiB free. The
+Recheck all resource and per-stage capacity guards before each launch. The
 prepared commit-only Verus diagnostic is the first proof job; runtime guard
 fixtures, routing-test validation and the current compiler host campaign follow
 under their reviewed scopes. Pages QA and publication remain pending. All 33
