@@ -10664,6 +10664,129 @@ mod tests {
     }
 
     #[test]
+    fn authenticated_new_window_generation_snapshot_precedes_leased_state() {
+        let previous = request();
+        let successor = RequestId::new(previous.slot(), previous.generation() + 1);
+        let page_index = 7;
+        let global_index = global_page_index(successor, page_index).unwrap();
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let mut ledger = new_page_ledger(role).unwrap();
+            ledger[global_index] = M1KvPoolPageStateV1::Leased {
+                request: previous,
+                generation: 1,
+            };
+            let old_lease = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                device(),
+                identity(32),
+                previous,
+                PhysicalPageId::new(role, page_index, 1),
+            )
+            .unwrap();
+            let returned = preflight_page_return_identity(
+                device(),
+                identity(32),
+                role,
+                Some(ledger[global_index]),
+                global_index,
+                previous,
+                &old_lease,
+            )
+            .unwrap();
+            commit_page_return_state(&mut ledger[global_index], returned, old_lease);
+
+            let generations =
+                new_window_page_generation_snapshot_from_ledger(&ledger, successor).unwrap();
+            assert_eq!(generations[0], 1);
+            assert_eq!(generations[page_index as usize], 2);
+            let initial = [1; M1_KV_PHYSICAL_PAGE_SLOTS];
+            let (target_generations, draft_generations) = match role {
+                Qwen3ModelRole::Draft06B => (&initial, &generations),
+                Qwen3ModelRole::Target8B => (&generations, &initial),
+            };
+            let mut cache = ActiveDeviceKvCache::new_with_page_generations(
+                device(),
+                successor,
+                selected(
+                    Qwen3ModelRole::Target8B,
+                    Qwen3ExecutionMode::Prefill,
+                    Qwen3PlanBucket::PrefillS1T128,
+                ),
+                selected(
+                    Qwen3ModelRole::Draft06B,
+                    Qwen3ExecutionMode::Prefill,
+                    Qwen3PlanBucket::PrefillS1T128,
+                ),
+                target_generations,
+                draft_generations,
+            )
+            .unwrap();
+
+            // Component fixture only: no authenticated queue or page admission is minted.
+            ledger[global_index] = M1KvPoolPageStateV1::Leased {
+                request: successor,
+                generation: 2,
+            };
+            let leased = ledger.clone();
+            assert_eq!(
+                new_window_page_generation_snapshot_from_ledger(&ledger, successor),
+                Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased)
+            );
+            assert_eq!(ledger, leased);
+            let before = cache.projection();
+            let stale = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                device(),
+                identity(32),
+                successor,
+                PhysicalPageId::new(role, page_index, 1),
+            )
+            .unwrap();
+            let failure = cache
+                .reserve_step_write(
+                    successor,
+                    role,
+                    0,
+                    1,
+                    CompletionEpoch::new(130),
+                    vec![stale],
+                )
+                .unwrap_err();
+            assert_eq!(
+                failure.error(),
+                DeviceKvCacheError::Physical(PhysicalKvError::PageGenerationMismatch)
+            );
+            assert_eq!(cache.projection(), before);
+            let (_, rejected) = failure.into_parts();
+            assert_eq!(rejected.len(), 1);
+            assert_eq!(rejected[0].page().generation(), 1);
+            let exact = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                device(),
+                identity(32),
+                successor,
+                PhysicalPageId::new(role, page_index, 2),
+            )
+            .unwrap();
+            let reservation = cache
+                .reserve_step_write(
+                    successor,
+                    role,
+                    0,
+                    1,
+                    CompletionEpoch::new(130),
+                    vec![exact],
+                )
+                .unwrap();
+            assert_eq!(reservation.page_table()[0].page().generation(), 2);
+            assert_eq!(reservation.page_table()[0].page().index(), page_index);
+            let mut pending = before;
+            match role {
+                Qwen3ModelRole::Draft06B => pending.draft_write_pending = true,
+                Qwen3ModelRole::Target8B => pending.target_write_pending = true,
+            }
+            assert_eq!(cache.projection(), pending);
+        }
+    }
+
+    #[test]
     fn request_bound_page_lease_cannot_cross_request_generations() {
         let mut cache = cache();
         let other_request = RequestId::new(request().slot(), request().generation() + 1);

@@ -8066,6 +8066,57 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
         target_page_leases.push(target);
     }
 
+    // Snapshot the complete Free-generation roster before admission leases any page.
+    for lane in 0..members {
+        let request = scheduled
+            .member(lane)
+            .expect("scheduled roster length was checked");
+        let cache = match partitioned_memory.new_window_device_cache(
+            request,
+            next.target(),
+            next.draft(),
+        ) {
+            Ok(cache) => cache,
+            Err(source) => {
+                return Err(close_new_window_unbound(
+                    engine,
+                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
+                    lower,
+                    (
+                        source,
+                        retired_physical_metadata,
+                        witness,
+                        operations,
+                        catalog_id,
+                        workspace_owners,
+                        partitioned_memory,
+                        prior_output,
+                        old_source_rows,
+                        old_bound_rows,
+                        retired_rollover_custody,
+                        residue,
+                        binding,
+                        draft_prefill,
+                        target_prefill,
+                        preparation_plans,
+                        recipe,
+                        speculative_successor,
+                        member_intents,
+                        prior_windows,
+                        ring_bytes,
+                        next_queue_wait_timeout,
+                        selected,
+                        draft_reservations,
+                        target_reservations,
+                        draft_page_leases,
+                        target_page_leases,
+                    ),
+                ));
+            }
+        };
+        selected.push(cache);
+    }
+
     let mut page_requests =
         [ferric_spec::RequestId::new(u32::MAX, 0); ferric_spec::M1_MAX_ACTIVE_SEQUENCES as usize];
     for (lane, request) in page_requests.iter_mut().take(members).enumerate() {
@@ -8164,50 +8215,6 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
         let request = scheduled
             .member(lane)
             .expect("scheduled roster length was checked");
-        let mut cache = match partitioned_memory.new_window_device_cache(
-            request,
-            next.target(),
-            next.draft(),
-        ) {
-            Ok(cache) => cache,
-            Err(source) => {
-                return Err(close_new_window_unbound(
-                    engine,
-                    M1AuthenticatedSpeculativeRolloverSubmissionStageV1::Preflight,
-                    lower,
-                    (
-                        source,
-                        retired_physical_metadata,
-                        witness,
-                        operations,
-                        catalog_id,
-                        workspace_owners,
-                        partitioned_memory,
-                        prior_output,
-                        old_source_rows,
-                        old_bound_rows,
-                        retired_rollover_custody,
-                        residue,
-                        binding,
-                        draft_prefill,
-                        target_prefill,
-                        preparation_plans,
-                        recipe,
-                        speculative_successor,
-                        member_intents,
-                        prior_windows,
-                        ring_bytes,
-                        next_queue_wait_timeout,
-                        selected,
-                        draft_reservations,
-                        target_reservations,
-                        draft_page_leases,
-                        target_page_leases,
-                        page_leases,
-                    ),
-                ));
-            }
-        };
         let mut draft_leases = core::mem::take(&mut draft_page_leases[lane]);
         let mut target_leases = core::mem::take(&mut target_page_leases[lane]);
         for _ in 0..draft_prefill.active_lengths()[lane].div_ceil(M1_KV_PAGE_TOKENS) {
@@ -8224,7 +8231,7 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                     .expect("the exact admitted target-page roster is complete"),
             );
         }
-        let draft = match cache.reserve_step_write(
+        let draft = match selected[lane].reserve_step_write(
             request,
             Qwen3ModelRole::Draft06B,
             0,
@@ -8240,7 +8247,6 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                     lower,
                     (
                         source,
-                        cache,
                         target_leases,
                         retired_physical_metadata,
                         witness,
@@ -8273,7 +8279,7 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                 ));
             }
         };
-        let target = match cache.reserve_step_write(
+        let target = match selected[lane].reserve_step_write(
             request,
             Qwen3ModelRole::Target8B,
             0,
@@ -8289,7 +8295,6 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                     lower,
                     (
                         source,
-                        cache,
                         draft,
                         retired_physical_metadata,
                         witness,
@@ -8322,7 +8327,6 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
                 ));
             }
         };
-        selected.push(cache);
         draft_reservations.push(draft);
         target_reservations.push(target);
     }
@@ -10213,6 +10217,72 @@ mod tests {
         ));
         assert!(!production
             .contains("pub fn schedule_m1_authenticated_speculative_new_window_successor_v1"));
+    }
+
+    #[test]
+    fn authenticated_new_window_snapshots_all_caches_before_page_admission() {
+        let source = include_str!("authenticated_queue_rollover.rs");
+        let start = source
+            .find("pub fn submit_m1_authenticated_speculative_new_window_v1")
+            .unwrap();
+        let end = source[start..]
+            .find("\nfn submit_m1_authenticated_speculative_rollover_pending_v1")
+            .map(|offset| start + offset)
+            .unwrap();
+        let submit = &source[start..end];
+        let capacity = submit.find("selected.capacity() < members").unwrap();
+        let snapshot = submit
+            .find("partitioned_memory.new_window_device_cache(")
+            .unwrap();
+        let selected = submit.find("selected.push(cache);").unwrap();
+        let admission = submit
+            .find("partitioned_memory.admit_authenticated_new_window_page_set(")
+            .unwrap();
+        let commit = submit
+            .find("partitioned_memory.commit_authenticated_new_window_page_set(")
+            .unwrap();
+        let draft = submit
+            .find("let draft = match selected[lane].reserve_step_write(")
+            .unwrap();
+        let target = submit
+            .find("let target = match selected[lane].reserve_step_write(")
+            .unwrap();
+        let done = submit.find("draft_reservations.push(draft);").unwrap();
+        assert!(capacity < snapshot && snapshot < selected && selected < admission);
+        assert!(admission < commit && commit < draft && draft < target && target < done);
+        assert_eq!(submit.matches("new_window_device_cache(").count(), 1);
+        assert_eq!(submit.matches("selected.push(cache);").count(), 1);
+        assert!(!submit[selected..done].contains("selected.pop("));
+        assert!(!submit[selected..done].contains("selected.remove("));
+        assert!(!submit[selected..done].contains("cache.reserve_step_write("));
+
+        for branch in [
+            &submit[snapshot..selected],
+            &submit[admission..commit],
+            &submit[commit..draft],
+            &submit[draft..target],
+            &submit[target..done],
+        ] {
+            let failure = &branch[branch.find("Err(").unwrap()..];
+            for owner in [
+                "lower,",
+                "partitioned_memory,",
+                "selected,",
+                "draft_reservations,",
+                "target_reservations,",
+                "draft_page_leases,",
+                "target_page_leases,",
+            ] {
+                assert!(failure.contains(owner), "missing retained owner: {owner}");
+            }
+        }
+        assert!(submit[draft..target].contains("target_leases,"));
+        assert!(submit[target..done].contains("draft,"));
+        for failure in [&submit[draft..target], &submit[target..done]] {
+            assert!(failure.contains("source,"));
+            assert!(failure.contains("page_leases,"));
+            assert!(!failure.lines().any(|line| line.trim() == "cache,"));
+        }
     }
 
     #[test]
