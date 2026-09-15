@@ -2738,7 +2738,7 @@ pub closed spec fn retirement_metadata_batch_enabled(
     retirement_metadata_roster_prefix_valid(state, request, role, pages, pages.len() as int)
 }
 
-closed spec fn retirement_metadata_mask_matches_prefix(
+pub closed spec fn retirement_metadata_mask_matches_prefix(
     selected: Seq<bool>,
     pages: Seq<PhysicalKvRetiredPageMetadataV1>,
     processed: int,
