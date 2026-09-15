@@ -24,6 +24,9 @@ This is a delta host campaign, not a rerun of all predecessor suites or a new
 release-tool/emission result. No push has occurred; a fresh upstream check is
 required before pushing. Clarification is pending on whether the existing
 GitHub-hosted push CI is allowed under the mi300x-only build restriction.
+Subsequently observed upstream `48323569` adds immutable-slice helper lowering;
+it has not been rebased into the candidate or validated. Ferric still uses its
+existing `4f6f65ce` pin; no newer compiler result is attributed to that runtime.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
 Its expanded 42-phase remote host campaign passes, including the
@@ -137,7 +140,7 @@ retained locally at checked archive SHA-256
 All six helper bodies now have actual proof results, but their actual-body
 negative mutations and caller/whole-roster/native composition remain outstanding.
 
-Current integration `8fa40b3a` applies the exact verified helper engine bytes
+Earlier integration `8fa40b3a` applies the exact verified helper engine bytes
 without merging the older branch. All eight remote host phases pass: formatting,
 locked metadata, engine check, both exact regressions, 723 engine tests with nine
 ignored, and strict all-target engine/spec Clippy. All four source before/after
@@ -145,9 +148,37 @@ checks and frozen native identity checks pass. The full evidence archive include
 the exact test executable and actual Cargo producers; local SHA-256 is
 `450e70c1efc74fb5648c9ab58a0c0a748718cd08ec8e4af6e38e88f946714c2f`.
 This does not rebuild or relabel the native executable or change the fe2o3 pin.
-Separate proof candidate `79f74a3e` extracts the actual global page-index core
-with bounds and error contracts plus host regressions. Its R5 proof controls are
-reviewed but unrun; the candidate has no host/proof pass and is not integrated.
+Global-index candidate `79f74a3e` extracts the actual production core with bounds
+and error contracts plus host regressions. Its actual R5 run fails parsing an
+unparenthesized cast comparison before SMT: exit 101, zero verified queries.
+The full failure archive is retained locally at SHA-256
+`3785d303da9fc5c1cca0bcabe8cab6a968a56c639140c5a0f7b86006a9b1f2a1`.
+Parentheses-only successor `74c52a73` passes R6 for the actual
+`global_page_index_core` exec body: one verified query, zero errors and nonzero
+solver work (rlimit 154038). Source, dependency and verifier checks pass; all
+284 dependency artifacts and prior R3/R4/R5 evidence remain unchanged. The full
+R6 archive is retained and independently hash-checked locally at
+`311aea52da61ba959640db89afb08a1b00da22f8b91559ef6352e92ca52b8317`.
+This proves the selected core's generation, slot/index bounds, flattening and
+error-precedence contracts, not its native caller or whole-roster composition.
+Seven body-only negative mutations are designed but have not run.
+
+Exact proof-source engine bytes are integrated at `2aae5839`. Its R1 host run
+stops at rustfmt on two test assertions, before compilation or tests. All five
+source after-checks and frozen native identity checks pass. Full failed evidence
+is retained at SHA-256
+`b556ab277af2f3c134ccf053c56229f9d390fab08aa9e038d6ed0d2e8b42f234`.
+Current integration `21818e2a` applies only the formatter's two assertion wraps;
+its production prefix remains byte-identical to proof source `74c52a73`.
+Its separate R2 host campaign passes all eight phases: formatting, locked
+metadata, engine check, both exact regressions, 724 engine tests (nine ignored),
+and strict all-target engine/spec Clippy. All six source before/after checks
+match, and frozen native/proof identities remain unchanged. The exact newly
+built test executable is reused by both regressions and the full suite.
+Full evidence is retained and independently hash-checked locally at
+`4dc705e003d66605aeb10d823487e90b4735bb8abbcc63409821cf406af70427`.
+The earlier 723-test result is not relabeled, and no new native artifact or
+proof execution is claimed for this host campaign.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -159,18 +190,19 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Current `86ccc2a5` on observed upstream `bd4d5f42` passes 23 delta host phases. Frozen `e0d108b2` retains 42 host phases, four tool phases and thirteen-root emission/inspection. | Fresh upstream check before push, current release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Exact helper contracts integrated at `8fa40b3a`; eight remote host phases pass, including both regressions, 723 engine tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
-| Verification | Six metadata positives and 24 negatives retained; selected-page lemma and six actual engine helper proofs pass. Global-index core candidate `79f74a3e` is unverified and separate. | Global-index core, helper negative mutations and whole-roster/native composition proofs. |
-| Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
+| Compiler / Kernels | `86ccc2a5` on `bd4d5f42` passes 23 delta host phases; newer observed `48323569` is unvalidated. Frozen e0 retains its host/tool/emission results. | Fresh rebase and validation before push, current release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Global-index core integrated at `21818e2a`; all eight R2 host phases pass, including 724 engine tests and strict engine/spec Clippy. | Idle selected GPU for the R6 native maintenance diagnostic; coherent dependency refresh. |
+| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. | Actual helper/index negative mutations and whole-roster/native composition proofs. |
+| Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
 from Ferric's `4f6f65ce` pin through observed public `2179a6f4`. A coherent dependency
-refresh is still required across 80 files, including 42 manifests and 32 locked
-graphs; two new compiler dependency edges must be included. The frozen native
+refresh is still required across 80 pin-bearing files: 30 manifests, 30 locks
+and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
+and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
 
-Pages payload SHA-256 is
+Earlier R1 Pages payload SHA-256 is
 `54165bf91f64fc9ef93b4d52d34c6e5d0ebac4bd8c13d745702cfaf81e6f19d9`.
 All 34 source files match the uploaded payload after validation. The admitted
 artifact has exactly seven static files totaling 589,025 bytes. Raw QA evidence
@@ -178,10 +210,42 @@ archive SHA-256 is
 `b1a04f4974e699547f95649d4464bae188ee784c30640949da55a5c3bec97609`.
 The completed private Pages stage and input directory were removed after local
 retention and no-use checks; the shared browser cache was preserved. Existing
-public-main workflows would start GitHub-hosted builds. Publication is awaiting
-approval for an exact `pages/prebuilt` allowance in the existing protected Pages
-environment; the proposed orphan branch contains only the admitted static
-artifact and a deploy-only workflow. No environment protection has changed.
+public-main workflows would start GitHub-hosted builds. R1 is superseded and
+must not be published. The user approved the exact `pages/prebuilt` allowance;
+that branch policy (ID 60080763) is added, preserving `main` (ID 58351133) and
+all other environment settings. The verified before/after policy receipt is
+`b7a117cf8adfe6f7dfc3aa96234286bf54e7e00fd6779bc7d53b33b586ca6f60`.
+Refreshed R4 source payload SHA-256 is
+`f74f03efd3a30f6801a977c4bd32228652fbb3e4d267c70bbfb86601024931c4`.
+All five remote QA phases pass, including data/negative checks, every width
+320 through 1440, and eight rendered viewports. The actual artifact has seven
+files totaling 595,623 bytes. Full R4 evidence is retained locally at checked
+archive SHA-256
+`a3a2c8b221822c6a95dfe6db3234d9f3e7294ab79806e821ec7c25564bbcf296`.
+The first retention attempt rejected the harness's exact umask-derived mode
+differences; the successor preserves that failure and checks all 34 source
+files byte-for-byte with only `0644 -> 0600` allowed. No QA rerun was needed.
+Private site source is committed at `4e16c945`. Parentless publication commit
+`b0d05f47` contains only seven admitted static files and one deploy-only workflow.
+Deployment run `35022808474` succeeds on that exact commit, with deployment
+`6468318802` and artifact `10418551245`. All seven live assets match the admitted
+hashes at both canonical and cache-busted HTTPS URLs, including the site root.
+The refreshed site is live at <https://harsh-nod.github.io/ferric/>. Public main
+remains `5d3d93d3`; the environment and both approved branch policies are
+unchanged after deployment. Publication receipt SHA-256 is
+`42530d1cd8a9f36d9a7863c89a5552700c95c8492521e249b89126ba05d261de`.
+No private implementation ancestry, compiler source or build workflow was pushed.
+The clean private Pages worktree was removed after commit and no-use review,
+reclaiming 3,208 KiB; its source branch remains retained. The deployed snapshot
+still marks 218's host campaign pending at its freeze time; the later 724-test
+result above is a separate record and does not retroactively alter that snapshot.
+The completed remote R4 QA, input, controls and both retention directories are
+removed after local archival and a fresh inventory-bound no-use check. Exactly
+417 regular files and three symlinks were removed, reclaiming 51,604 KiB.
+Generated dependencies are explicitly disposable, not claimed archived. Shared
+browser caches and runtime/compiler/proof stages are untouched. The cleanup
+receipt is retained locally at SHA-256
+`9bb812c1d8d8a3ef0252e90c92cd5711286c0dc658f1b867c368b79d8841cc02`.
 
 ### Earlier Stopped Checkpoint
 
@@ -232,6 +296,20 @@ negative proof campaign is yet admitted.
 
 ## Resource Recovery
 
+The global-index integration campaign removed two fully retained obsolete
+runtime files, reclaiming 131,228 KiB (stage 9,406,228 to 9,275,000 KiB).
+Receipt SHA-256 is
+`dd9462e123e9bf84d35eaa01bf2efb06491a790467bdfcb3425091d77a8aaae6`.
+This cleanup used its direct timeout/CPU-affinity invocation, not the later
+resource wrapper. Before R2, a separate wrapper-bounded cleanup removed exactly
+eight duplicate archives whose full local byte copies were hash-checked:
+100,983,416 bytes, 98,632 KiB allocated, stage 9,346,720 to 9,248,088 KiB.
+Its downloaded receipt SHA-256 is
+`dd2bf89c369237975bad2ca9beb79cd27d4e9e44dab3013e0957fa849c4e8bea`.
+Both preserve sources, native/proof identities, required libraries and shared
+caches. Same-user inode/lsof inspections retain explicit identified process
+visibility limitations; they do not establish system-wide quiescence.
+
 The latest user-authorized home cleanup removed 4,201,396 KiB (about 4.01 GiB).
 Of this, 4,064,232 KiB was disposable `target/debug/{deps,build,incremental}`
 cache in the already-trashed `fe2o3-runtime-LCD8Sxfn/repo` clone. Its clean Git
@@ -241,12 +319,12 @@ paths exactly matched the union of three retained archives; all three complete
 tar comparisons and pre/post archive hash checks passed. Scoped lsof checks
 reported no users or visibility warnings. Filesystem availability afterward was
 86,141,424 KiB (about 82.15 GiB); this shared filesystem figure is not the cleanup
-size. All five registered Ferric worktrees remain preserved: integration/proof
+size. At that cleanup, all five registered Ferric worktrees were preserved: integration/proof
 are active, Pages and scratch are dirty, and the original checkout has conflicts.
 No local build or test ran. Full scope, inventory and terminal log are retained
 in `.codex-tmp/cleanup-unused-home-20260915-r2/`.
 
-Before the current integration host gate, scoped mi300x cleanup removed two
+Before the earlier helper integration host gate, scoped mi300x cleanup removed two
 fully retained predecessor test executables and one duplicate archive,
 reclaiming exactly 220,296 KiB. The runtime stage decreased from 9,477,696 to
 9,257,400 KiB without changing sources, libraries or the frozen native binary.
