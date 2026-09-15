@@ -1069,6 +1069,7 @@ fn validate_plan(
         runner.kernel_catalog_id(),
         families,
         candidates,
+        strategy,
     )
 }
 
@@ -1078,6 +1079,7 @@ fn validate_operation_sequence(
     kernel_catalog_id: Identity,
     families: &[DeclaredKernelFamilyArtifact],
     candidates: &[DeclaredOperationKernelBinding],
+    strategy: M1PhysicalProgramStrategyV1,
 ) -> Result<(), OperationKernelPlanError> {
     let catalogs = CanonicalCatalogs::build_with_strategy(strategy)?;
     validate_operation_sequence_with_catalogs(
