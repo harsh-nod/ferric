@@ -33,7 +33,7 @@ pending. All proof labels and all 33 M1 gates remain unchanged.
 | Compiler / Kernels | Rebased twelve patches onto `83986180`; preparing exact obsolete-stage cleanup and source/cache transition. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
 | Runtime / Integration | Audited maintenance bindings without finding a concrete defect; committed test-only 425-row enter/restore routing coverage at `33a31333`. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
 | Verification | Prepared the `339c2561` commit-proof correction and source-bound positive/negative controls. | Actual commit proof, six current-source positives and 24 actual-body negatives; synthetic checker tests remain separate. |
-| Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `c6a06626`. | Remote Pages validation and reviewed publication; no deployment claimed. |
+| Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `9a5bd74d`. | Remote Pages validation and reviewed publication; no deployment claimed. |
 
 Shared-host resource restoration is in progress without lowering workload
 floors. Exactly 26 obsolete root-level archives were removed after independent
@@ -68,6 +68,14 @@ the source and diff whitespace check; no formatter, compiler, test or Clippy
 has run on this addition. It does not exercise sealed service allocation
 witnesses, publication or native queue execution, and it is not a maintenance
 defect fix. The frozen native executable and source remain `00ac6a22`.
+Its host gate is reviewed and approved only after fresh resource admission:
+remote format check, exact 4f6 metadata, library check, the single regression
+with an exact source manifest and newly compiled test producer, and strict
+all-target Clippy. No gate phase has run. The 29-case synthetic proof-checker
+gate is likewise reviewed but unrun; it is not actual Verus or body-mutation
+evidence. The approved `339c2561` commit-only Verus diagnostic remains the next
+actual proof run after resource recovery. No current-source R13 positive or
+negative proof campaign is yet admitted.
 
 ## Recorded Runtime Evidence
 
