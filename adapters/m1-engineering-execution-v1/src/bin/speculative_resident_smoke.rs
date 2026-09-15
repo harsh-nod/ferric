@@ -527,6 +527,7 @@ fn validate_resident_report(report: &Value) -> SmokeResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ferric_spec::Qwen3ExecutionMode;
 
     #[test]
     fn resident_cli_limit_is_bounded_and_canonical() {
