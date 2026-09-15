@@ -19,9 +19,28 @@ directories. Evidence archive SHA-256:
 `cc97f0c54410b119005ad2dc8ae5152b24e2fce7df0a4ae85c090e633a620bdf`.
 The failed 1ac evidence remains separate at
 `38593dfa6be478d65fff33d4586c9a99e6cae6b31fa4df47533abdf242261588`.
-An optimized cef/4f6 build is running in the existing bounded release target,
-preserving the independent c5 executable and evidence. No successor native
-run or new proof result is claimed yet.
+The optimized cef/4f6 release build also passes in the independent bounded
+release target. The normal non-test executable has SHA-256
+`6b243c6fdbf1f1d906cb8a3a17201c3f7b03e61768cc02d7dac94bb87b428545`
+and is 14,147,584 bytes. Root independently checked all 49 retained payload
+hashes, the actual compiler artifact, source equality and producer association
+in archive `4d62ad0969b1f5e989e4d57f31d0074238a7ac64506dfb82b7f3bbc265010fdc`.
+The prior c5 executable and evidence remain unchanged.
+
+The subsequent cef/4f6 32-token native attempt is terminal with exit 134 at
+`maintenance publication`, while attempting the optional 425-packet draft
+maintenance transition. No completed token/round JSON report was emitted, so
+no completed round count, full-acceptance result or 32-token success is claimed.
+The bounded diagnostic retains custody but does not expose the inner submission
+phase; source-level diagnosis and diagnostic propagation are in progress.
+The run used the same legacy twelve-kernel image and model bundle as c5, not
+the MFMA candidate. Root independently checked the actual stderr, executable
+producer and all 22 native payload hashes in archive
+`916bd86e04abbb382916b7bc841a19d6d11c118a227686e3c3937cb18e111ce9`.
+Both the immediate after-state and the separate fresh state show the exact
+298,647,552-byte selected GPU baseline, no selected queues or VRAM users, and
+no owned process group. No GPU reset or foreign intervention occurred. This
+is a retained hardware failure, not a benchmark or M1 qualification receipt.
 
 Runtime candidate `cdc084206dae4332c8f4dcea0f6b59302ac6db1a` now repairs
 cache-local retired-page generations at the shared completed-step return.
@@ -37,10 +56,15 @@ tests and 37 source-policy tests. Focused tests reproduce page-nine rollback
 and reuse at cursor 142, both roles, stale leases and late-member rejection.
 Root independently checked all 118 retained payload hashes in archive
 `800b7943ab0f76d59a851036992e009a1c74805806be00ea2485d6d10a517330`.
-This new metadata transition is not yet Verus-verified or GPU-tested. A separate
-proof worktree is implementing direct contracts for the actual preflight and
-commit bodies; the engine's whole-member and native lease composition remains
-an independent obligation.
+The cef native attempt above includes this transition, but does not qualify
+it or the overall run. Separate proof candidate `dce398da` now contains direct
+contracts for the actual preflight and commit bodies, bounded loops and exact
+state-frame tests. Remote formatting passes. Its first proof gate stopped
+before invoking Verus because the prepared and observed source rosters used
+different sort orders; all 1,145 source hashes match. A control-only correction
+is pending, with six selected positive jobs and 24 actual-body mutations still
+unexecuted. No proof labels have changed. The engine's whole-member and native
+lease composition remains an independent obligation.
 
 Separate diagnostic fix `d74302d6b82315f9d1c6cc973d15b17b4e5a8382` passes
 all six host phases, including three retained-owner tests, three bounded-output
