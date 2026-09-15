@@ -2842,6 +2842,15 @@ pub struct PhysicalKvRetirementMetadataBatchV1<'a> {
 }
 
 impl PhysicalKvRetirementMetadataBatchV1<'_> {
+    pub closed spec fn current_state_spec(&self) -> PhysicalKvState {
+        mut_ref_current(self.state)
+    }
+
+    #[verifier::prophetic]
+    pub closed spec fn future_state_spec(&self) -> PhysicalKvState {
+        mut_ref_future(self.state)
+    }
+
     pub closed spec fn prepared_spec(&self) -> bool {
         retirement_metadata_mask_prepared(&*self.state, self.selected@)
     }
@@ -2853,10 +2862,12 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
     pub fn commit(self)
         requires self.prepared_spec(),
         ensures retirement_metadata_batch_transition(
-            &*old(self.state), &*final(self.state), self.selected_spec(),
+            &self.current_state_spec(), &self.future_state_spec(), self.selected_spec(),
         ),
     {
         proof {
+            reveal(PhysicalKvRetirementMetadataBatchV1::current_state_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::future_state_spec);
             reveal(PhysicalKvRetirementMetadataBatchV1::prepared_spec);
             reveal(PhysicalKvRetirementMetadataBatchV1::selected_spec);
             reveal(retirement_metadata_mask_prepared);
@@ -2905,8 +2916,8 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
         result.is_ok() == retirement_metadata_batch_enabled(old(state), request, role, pages@),
         match result {
             Ok(batch) => {
-                &&& *batch.state == *old(state)
-                &&& *final(state) == *final(batch.state)
+                &&& batch.current_state_spec() == *old(state)
+                &&& *final(state) == batch.future_state_spec()
                 &&& batch.prepared_spec()
                 &&& retirement_metadata_mask_matches_prefix(
                     batch.selected_spec(), pages@, pages@.len() as int,
@@ -2917,6 +2928,8 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
 {
     proof {
         reveal(retirement_metadata_batch_enabled);
+        reveal(PhysicalKvRetirementMetadataBatchV1::current_state_spec);
+        reveal(PhysicalKvRetirementMetadataBatchV1::future_state_spec);
         reveal(retirement_metadata_roster_prefix_valid);
         reveal(retirement_metadata_mask_matches_prefix);
         reveal(retirement_metadata_mask_prepared);
