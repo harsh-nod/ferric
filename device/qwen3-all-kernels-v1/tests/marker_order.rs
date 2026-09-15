@@ -7,6 +7,7 @@ fn aggregate_roster_has_exact_global_marker_order() {
     use ferric_qwen3_all_kernels_device_v1::{
         M1AllKernelsWorkerV3RosterV1,
         gemm::{
+            ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker as GemmMfma,
             ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker as GemmReference,
             ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker as GemmVectorized,
             ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker as TokenEmbedding,
@@ -38,6 +39,7 @@ fn aggregate_roster_has_exact_global_marker_order() {
         GemmVectorized::KERNEL_BINDING_ID_V1,
         LowestIdArgmax::KERNEL_BINDING_ID_V1,
         RmsNorm::KERNEL_BINDING_ID_V1,
+        GemmMfma::KERNEL_BINDING_ID_V1,
     ];
     let entries = M1AllKernelsWorkerV3RosterV1::ENTRIES;
     assert_eq!(entries.len(), expected.len());
@@ -86,6 +88,7 @@ fn aggregate_roster_has_exact_global_marker_order() {
             "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
             "ferric_qwen3_lowest_id_argmax_bf16_v1",
             "qwen3_rmsnorm_v1",
+            "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
         ]
     );
 }

@@ -630,6 +630,10 @@ const AGGREGATE_ROSTER_ALIASES: &[(&str, &str)] = &[
         "super::gemm::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker",
     ),
     (
+        "GemmMfma",
+        "super::gemm::ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker",
+    ),
+    (
         "Prefill",
         "super::prefill::qwen3_gqa_prefill_causal_bf16_f32_v1_gpu::Marker",
     ),
@@ -665,6 +669,7 @@ const AGGREGATE_ROSTER_MARKERS: &[&str] = &[
     "GemmVectorized",
     "LowestIdArgmax",
     "RmsNorm",
+    "GemmMfma",
 ];
 const AGGREGATE_HOST_REEXPORT: &[&str] = &["host_roster", "M1AllKernelsWorkerV3RosterV1"];
 const ENGINE_ALLOCATION_CONSTRUCTORS: &[&str] = &[

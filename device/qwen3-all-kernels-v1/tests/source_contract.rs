@@ -46,7 +46,7 @@ fn aggregate_root_owns_the_seven_canonical_sources_and_target_contract() {
 }
 
 #[test]
-fn shared_family_sources_expose_exactly_twelve_kernel_roots() {
+fn shared_family_sources_expose_exactly_thirteen_kernel_roots() {
     let mut kernels = Vec::new();
     for (family, source) in FAMILY_SOURCES {
         assert!(source.starts_with("#![forbid(unsafe_op_in_unsafe_fn)]\n"));
@@ -81,6 +81,10 @@ fn shared_family_sources_expose_exactly_twelve_kernel_roots() {
             (
                 "gemm",
                 "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1".to_owned()
+            ),
+            (
+                "gemm",
+                "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1".to_owned()
             ),
             (
                 "gemm",

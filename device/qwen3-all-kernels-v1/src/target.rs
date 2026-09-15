@@ -1,4 +1,4 @@
-//! Target selection for the same twelve aggregate kernel bodies.
+//! Target selection for the same thirteen aggregate kernel bodies.
 //!
 //! These are engineering source requirements, not artifact or launch authority.
 
