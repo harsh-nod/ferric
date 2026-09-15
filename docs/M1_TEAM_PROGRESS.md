@@ -30,13 +30,14 @@ pending. All proof labels and all 33 M1 gates remain unchanged.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Rebased twelve patches onto `83986180`; preparing exact obsolete-stage cleanup and source/cache transition. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
+| Compiler / Kernels | Rebased twelve patches onto `83986180`; completed reviewed cleanup and source/cache transition control review. | Fresh host validation, source-bound tools and actual thirteen-root device emission. |
 | Runtime / Integration | Audited maintenance bindings without finding a concrete defect; committed test-only 425-row enter/restore routing coverage at `33a31333`. | Remote host regression and 25 guard fixtures, then a reviewed native diagnostic retry. |
 | Verification | Prepared the `339c2561` commit-proof correction and source-bound positive/negative controls. | Actual commit proof, six current-source positives and 24 actual-body negatives; synthetic checker tests remain separate. |
 | Integration / Pages | Preserved source-specific evidence and prepared isolated Pages candidate `9a5bd74d`. | Remote Pages validation and reviewed publication; no deployment claimed. |
 
-Shared-host resource restoration is in progress without lowering workload
-floors. Exactly 26 obsolete root-level archives were removed after independent
+Shared-host resource restoration did not restore workload admission; no further
+owned cleanup is scheduled and no workload floor is lowered. Exactly 26
+obsolete root-level archives were removed after independent
 local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
 root filesystem. Root checked receipt SHA-256
 `719924e84f54794601984fee34176d297be4c109de2f038a66360a908398a767`.
@@ -76,6 +77,33 @@ gate is likewise reviewed but unrun; it is not actual Verus or body-mutation
 evidence. The approved `339c2561` commit-only Verus diagnostic remains the next
 actual proof run after resource recovery. No current-source R13 positive or
 negative proof campaign is yet admitted.
+
+## Validation Blocker
+
+A subsequent root-owned read-only SSH probe records 19,239,820 KiB free on `/`
+and 142,096,292 KiB on `/run/user/1002`. Root free is still 3,828,852 KiB below
+the unchanged 23,068,672 KiB admission floor. The same root-filesystem blocker
+has persisted across the original resource stops and subsequent goal turns,
+including the completed cleanup. The probe is terminal; all workers report
+no live remote jobs. No additional provenance-established root-filesystem
+cleanup can recover the missing space without touching protected or unrelated
+data. Local builds remain prohibited. Validation requires an external resource
+change, not a relaxation of the guards or another blind retry.
+
+Root reviewed all five prepared `7f5f15de` source/cache transition controls,
+their SHA-256 pins, the exact source archive, and the bundle with already-present
+`bf0f4841` prerequisite. The plan captures every partial d3 release-cache path
+alongside its 173 reported Cargo artifacts, advances git-verified source mtimes,
+and requires newly compiled first-party artifacts before allowing same-campaign
+7f reuse. These controls remain unrun, and no release-tool or native result is
+implied. Fresh resource/capacity admission, remote syntax checks and canonical
+upstream reconciliation remain required before execution.
+
+Resume with fresh resource checks once `/` is stably above 22 GiB free. The
+prepared commit-only Verus diagnostic is the first proof job; runtime guard
+fixtures, routing-test validation and the current compiler host campaign follow
+under their reviewed scopes. Pages QA and publication remain pending. All 33
+M1 gates remain open; the full objective is unchanged.
 
 ## Recorded Runtime Evidence
 
