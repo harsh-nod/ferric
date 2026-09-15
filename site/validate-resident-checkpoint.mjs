@@ -10,12 +10,12 @@ export function validateResidentCheckpoint(value, updated) {
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
     "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuObservation",
     "newPerformanceMeasurement", "overview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
-  assert.equal(updated, "2026-09-14");
+  assert.equal(updated, "2026-09-15");
   assert.equal(checkpoint.date, updated);
   assert.equal(checkpoint.implementationPrivate, true);
   assert.equal(checkpoint.m1OpenGates, 33);
   assert.equal(checkpoint.fullAcceptanceCatchupImplemented, true);
-  assert.equal(checkpoint.newGpuObservation, false);
+  assert.equal(checkpoint.newGpuObservation, true);
   for (const key of ["nativeServingQualified", "newPerformanceMeasurement"]) {
     assert.equal(checkpoint[key], false, key);
   }
@@ -25,12 +25,14 @@ export function validateResidentCheckpoint(value, updated) {
   assert(checkpoint.overview.includes("rows are not byte-identical and no tolerance is accepted"));
   assert(checkpoint.overview.includes("that image is not GPU-tested"));
   assert(checkpoint.overview.includes("actual GPU comparisons remain 1 of 7"));
-  assert(checkpoint.overview.includes("Latest compiler 0fe passes host suites and emits the 12-kernel image"));
+  assert(checkpoint.overview.includes("completes five real K4 rounds and eight tokens with zero/partial acceptance"));
+  assert(checkpoint.overview.includes("full-acceptance catch-up/restore is not observed"));
+  assert(checkpoint.overview.includes("no new MFMA image or GPU result exists"));
 
   const integration = checkpoint.integration;
-  exactKeys(integration, ["hostProgress", "selectedNumerical", "latestCompiler", "compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  exactKeys(integration, ["hostProgress", "sourceCoverage", "nativeResidentAttempt", "optimizedResidentBuild", "nativeResident", "selectedNumerical", "latestCompiler", "compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
   const progress = integration.hostProgress;
-  exactKeys(progress, ["r29", "resident", "mfma", "compiler", "boundary"]);
+  exactKeys(progress, ["r29", "resident", "mfma", "compilerCandidate", "compiler", "boundary"]);
   const expectedProgress = {
     r29: {
       source: "940d37e253841a17741904e814860e110c230b07",
@@ -41,17 +43,32 @@ export function validateResidentCheckpoint(value, updated) {
       fullGpuSuite: false, authority: "none",
     },
     resident: {
-      engineSource: "0536ca48e66a387b623df0c9b8d2d99822f39e58",
-      adapterSource: "dd0ec11ee983eed11a4f7577542aa1afcaea26f3",
-      pendingAdapterSource: "9421a6a887046749961f5e2cbf5e4d4e3e93df75",
-      enginePassed: 706, engineIgnored: 9, engineStrictClippyPassed: true,
-      adapterPassed: 12, finalAdapterValidated: false, nativeRepeatedRounds: false,
+      engineSource: "dfb4c5140b9c50ad936e27f1850541043135130b",
+      adapterSource: "9421a6a887046749961f5e2cbf5e4d4e3e93df75",
+      integratedSource: "c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56",
+      engineEvidenceSha256: "f6aedb5d76b2fa5f5661834c548d2dc7a780035de6430f1adb8f782059256d2c",
+      enginePassed: 707, engineIgnored: 9, engineStrictClippyPassed: true,
+      adapterPassed: 109, adapterIgnored: 1, adapterCliPassed: 12, adapterPolicyPassed: 37,
+      finalAdapterValidated: true, nativeRepeatedRounds: true,
       authority: "none",
     },
     mfma: {
-      source: "8b74ce4338c99df7b592cddbb684c193c68e45da",
-      hostLibraryPassed: 81, strictClippyPassed: true, deviceCompiled: false,
+      source: "ce2d3c1fb57ac4e2a883f1a1a329a17118bd9427",
+      compilerOverlay: "b86d7749a7951864ed8c59863674891a94b2b186",
+      compilerOverlayPublished: false,
+      engineEvidenceSha256: "20045976f0abc71e65e9a86a132cb685c29b67fce8e494de7c78353c308ac92c",
+      adapterEvidenceSha256: "e7fdbc1f3a0d21c28cf8e2a3de9cdaed052e55e38e8745d3d0c8a375cb566239",
+      hostLibraryPassed: 709, hostLibraryIgnored: 9, adapterPassed: 110, adapterIgnored: 1,
+      capturePassed: 87, captureIgnored: 2, policyPassed: 38, sourceContractPassed: 11,
+      clippySource: "1fc91418773be1a08f084f1b9e2b16e75b6ce759", focusedCatalogPassed: 8,
+      clippyEvidenceSha256: "8fb01aefc93b2c19f85c6efd288320a44f3e713593bed4ad65a4e8b7e3b0f201",
+      strictClippyPassed: true, deviceCompiled: false,
       gpuTested: false, performanceMeasured: false, authority: "none",
+    },
+    compilerCandidate: {
+      source: "5602c4889142571d7d82041b8a9bdef369799af1", published: false,
+      directGeometryTestsPassed: 4, pairedStorageExportPassed: true, releaseToolsBuilt: true,
+      imageProduced: false, gpuTested: false, authority: "none",
     },
     compiler: {
       source: "0fe50455b2fb65744048789bfc05f720313a12c5",
@@ -74,13 +91,19 @@ export function validateResidentCheckpoint(value, updated) {
       "All 24 comparison tests, 15 engineering and 23 legacy reference tests",
       "Actual GPU comparisons remain 1 of 7", "remaining six GPU cases have not run",
       "no tolerance acceptance or qualification authority"],
-    resident: ["Exact 0536 passes the full engine package", "706 library tests (nine existing ignores)",
-      "strict all-target Clippy", "earlier dd0 adapter passes 12 tests",
-      "Final adapter validation remains pending", "corrected 942 retry reached the unchanged workspace cap before tests",
-      "earlier test-only import failure is retained separately",
-      "No native repeated-round or catch-up result"],
-    mfma: ["candidate at 8b74 passes all 81 host library tests", "strict library/test Clippy",
-      "no device compilation, GPU execution or performance improvement has been demonstrated"],
+    resident: ["707 engine library tests (nine existing ignores)", "2242-to-425-to-2242",
+      "strict all-target Clippy", "exact 942 results: 109 library tests (one ignore)",
+      "12 speculative CLI tests, 37 source-policy tests", "failures remain retained separately",
+      "without changing the parser or proven initialization helpers",
+      "Host checks alone do not establish native execution or qualification",
+      "not full-acceptance catch-up"],
+    mfma: ["complete unpublished b86 compiler overlay", "709 engine library tests (nine ignores)",
+      "110 adapter library tests (one ignore)", "87 capture tests (two ignores) and 38 policies",
+      "Exact successor 1fc", "do not relabel the full ce2 cohorts",
+      "No MFMA device image, GPU execution or performance improvement has been demonstrated"],
+    compilerCandidate: ["Unpublished compiler candidate 5602", "actual paired row-major/column-major storage exports",
+      "bounded unconstrained launch inputs", "does not substitute maximum-grid constants or bypass convergence checks",
+      "HSACO emission and the real 13-root aggregate remain pending", "no GPU or qualification result"],
     compiler: ["42 lineage, 84 MIR, 1,029 Pliron and 543 backend tests",
       "37 exact f9 aggregate host tests", "unchanged dependency failure",
       "emit and exactly replay the 103,616-byte gfx942 image",
@@ -96,6 +119,67 @@ export function validateResidentCheckpoint(value, updated) {
   for (const claim of ["No new TTFT, TPOT or throughput measurement", "No accepted matched SGLang result is available",
     "Historical performance data is unchanged", "all 33 M1 gates remain open"]) {
     assert(progress.boundary.includes(claim), claim);
+  }
+  const { detail: coverageDetail, ...currentSourceCoverage } = integration.sourceCoverage;
+  assert.deepEqual(currentSourceCoverage, {
+    source: "c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56",
+    compilerSource: "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4",
+    evidenceSha256: "11670d90819a8ed3a731ec733e94434805ad9b929e4b2efe55ed8666b2b775f4",
+    lockedGraphs: 32, dependencyTcbs: 3, modules: 177, bodies: 8557,
+    verifiedBodies: 724, unverifiedBodies: 7833, proofUpgrades: 0, committedEqualityPassed: true,
+  });
+  for (const claim of ["committed coverage equality", "92 new structural-runtime/comparator rows remain proof-pending",
+    "7,741 surviving full rows are unchanged", "No proof label or M1 gate is upgraded",
+    "does not relabel the earlier dfb host tests"]) assert(coverageDetail.includes(claim), claim);
+  const { detail: attemptDetail, ...attempt } = integration.nativeResidentAttempt;
+  assert.deepEqual(attempt, {
+    source: "c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56",
+    compilerSource: "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4",
+    artifactSource: "8113e2314b2e030f93bc27d1281b4caee7e66216",
+    binarySha256: "4151c135ff693e1d66a1b8004a3d31488dd227ee0c50ce45b90a025f0e488e2a",
+    evidenceSha256: "66575e9bd00b950ed0a592c931de6e7ae672da2ca27e50017d4f853d76af89ae",
+    profile: "debug", requestedOutputTokens: 8, exit: 126, stop: "selected-gpu-use-guard",
+    deadlineExpired: false, processAttribution: "unresolved", prefillOutputObserved: false,
+    speculativeRoundOutputObserved: false, catchupObserved: false,
+    deviceMemoryBaselineRestored: true, authority: "none", qualification: false, performanceMeasurement: false,
+  });
+  for (const claim of ["unchanged 8113/4f6 image", "604.307 seconds", "exit 126",
+    "not a deadline or resource-cap stop", "ownership remains unresolved", "Stdout is empty",
+    "no prefill, speculative-round, token or catch-up/restore result is claimed",
+    "298,647,552-byte GPU baseline", "without reset or foreign intervention",
+    "failed engineering attempt, not a native continuation or performance result"]) assert(attemptDetail.includes(claim), claim);
+  const { detail: buildDetail, ...optimizedBuild } = integration.optimizedResidentBuild;
+  assert.deepEqual(optimizedBuild, {
+    source: "c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56",
+    compilerSource: "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4",
+    binarySha256: "d6d6f7af56957d0987d0e2cb01d4d2b75766fcc1f95f43fb19da39c7ff294819",
+    evidenceSha256: "5c5399489e1d208e90fa5e82f2bc0843f9fe956c72e6d5dc72aa5329b4db6a4a",
+    binaryBytes: 14133320, profile: "release", features: [], exit: 0,
+    buildGpuEnabled: false, qualification: false, authority: "none",
+  });
+  for (const claim of ["separate optimized c5/4f6", "GPU access was disabled during the build phase",
+    "does not replace or relabel the debug guard-stop record", "close any M1 gate"]) assert(buildDetail.includes(claim), claim);
+  const { detail: residentNativeDetail, ...nativeResident } = integration.nativeResident;
+  assert.deepEqual(nativeResident, {
+    source: "c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56",
+    compilerSource: "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4",
+    artifactSource: "8113e2314b2e030f93bc27d1281b4caee7e66216",
+    binarySha256: "d6d6f7af56957d0987d0e2cb01d4d2b75766fcc1f95f43fb19da39c7ff294819",
+    evidenceSha256: "c46c0023872f404ddda8140f9162fa2d36785618916266ad41d0240234908870",
+    profile: "release", exit: 0, speculativeRounds: 5, acceptedDraftCounts: [0, 0, 1, 2, 0],
+    epochs: [2, 3, 4, 5, 6], publishedTokenIds: [4710, 32313, 11, 358, 1184, 311, 7071, 700],
+    prefillAnchor: 12, physicalPromptTokens: 128, rawPromptTokens: 5, activeSuffixFill: true,
+    completedDraftCatchups: 0, fullAcceptanceContinuationObserved: false,
+    finalDraftCursor: 136, finalTargetCursor: 136, hardwareCompletionObserved: true,
+    nativeQueueDestroyed: true, deviceMemoryBaselineRestored: true, workerV3Authenticated: false,
+    compilerOriginAuthenticated: false, currentPublicationSelected: false, benchmarkComparable: false,
+    numericalQualification: false, authority: "none",
+  });
+  for (const claim of ["five real K4 rounds", "actual structural registry, bridge and coordinator",
+    "Accepted draft counts are [0, 0, 1, 2, 0]", "full-acceptance maintenance/restore remains unobserved",
+    "actively EOT-filled to 128 tokens, not attention-mask padded", "prefill anchor 12 is excluded",
+    "not ordinary raw-prompt serving or a numerical comparison", "no performance gain or M1 gate closure is claimed"]) {
+    assert(residentNativeDetail.includes(claim), claim);
   }
   const { detail: numericalDetail, boundary: numericalBoundary, ...numerical } = integration.selectedNumerical;
   assert.deepEqual(numerical, {
@@ -138,12 +222,12 @@ export function validateResidentCheckpoint(value, updated) {
     manifestSha256: "39cf7d5a915f759cb289e2f48b63acbd725904bb22aa14439bbda575074b3d3f",
     evidenceSha256: "6208de3c1329e000c5393739b600d6e04b49b4b20dff4fb8dfc5443a8e65d3cb",
     inspectionSha256: "70625b50d7be703fa5eee1256f9879380d5d8d248437ddcc984604fd06e7f216",
-    exactOutputReplay: true, nativeGpuTested: false, authority: "none",
+    exactOutputReplay: true, nativeGpuTested: true, authority: "none",
     grants: { publication: false, load: false, launch: false },
   });
   for (const claim of ["543 backend tests and 37 aggregate host tests", "12 kernel entries and 12 matching descriptors",
     "HSACO is 103,616 bytes", "unchanged aggregate kernel bodies", "not policy descriptor-table ordering",
-    "has not been GPU or numerically tested", "publication, load and launch grants remain false",
+    "separate c5 resident observation now exercises this image on a GPU", "without numerical qualification or relabeling its 8113 producer", "publication, load and launch grants remain false",
     "actual older producer identities, not 4f6 labels"]) assert(latestCompilerDetail.includes(claim), claim);
   assert.notEqual(numerical.imageSha256, latestCompiler.imageSha256);
   assert.notEqual(numerical.compilerSource, latestCompiler.source);
@@ -457,7 +541,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.m1OpenGates = 32; },
     (x) => { x.nativeServingQualified = true; },
     (x) => { x.fullAcceptanceCatchupImplemented = false; },
-    (x) => { x.newGpuObservation = true; },
+    (x) => { x.newGpuObservation = false; },
     (x) => { x.newPerformanceMeasurement = true; },
     (x) => { x.integration.hostProgress.r29.source = x.integration.hostProgress.r29.integratedSource; },
     (x) => { x.integration.hostProgress.r29.comparisonTests = 25; },
@@ -474,8 +558,50 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.hostProgress.resident.enginePassed = 705; },
     (x) => { x.integration.hostProgress.resident.engineIgnored = 0; },
     (x) => { x.integration.hostProgress.resident.adapterPassed = 13; },
-    (x) => { x.integration.hostProgress.resident.finalAdapterValidated = true; },
-    (x) => { x.integration.hostProgress.resident.nativeRepeatedRounds = true; },
+    (x) => { x.integration.hostProgress.resident.finalAdapterValidated = false; },
+    (x) => { x.integration.hostProgress.resident.nativeRepeatedRounds = false; },
+    (x) => { x.integration.sourceCoverage.verifiedBodies = 725; },
+    (x) => { x.integration.sourceCoverage.proofUpgrades = 1; },
+    (x) => { x.integration.sourceCoverage.committedEqualityPassed = false; },
+    (x) => { x.integration.nativeResidentAttempt.exit = 0; },
+    (x) => { x.integration.nativeResidentAttempt.deadlineExpired = true; },
+    (x) => { x.integration.nativeResidentAttempt.processAttribution = "owned-helper"; },
+    (x) => { x.integration.nativeResidentAttempt.profile = "release"; },
+    (x) => { x.integration.nativeResidentAttempt.artifactSource = x.integration.nativeResidentAttempt.source; },
+    (x) => { x.integration.nativeResidentAttempt.prefillOutputObserved = true; },
+    (x) => { x.integration.nativeResidentAttempt.speculativeRoundOutputObserved = true; },
+    (x) => { x.integration.nativeResidentAttempt.catchupObserved = true; },
+    (x) => { x.integration.nativeResidentAttempt.qualification = true; },
+    (x) => { x.integration.nativeResidentAttempt.performanceMeasurement = true; },
+    (x) => { x.integration.nativeResidentAttempt.detail = "Successful repeated GPU serving."; },
+    (x) => { x.integration.optimizedResidentBuild.binarySha256 = x.integration.nativeResidentAttempt.binarySha256; },
+    (x) => { x.integration.optimizedResidentBuild.buildGpuEnabled = true; },
+    (x) => { x.integration.optimizedResidentBuild.features = ["test-support"]; },
+    (x) => { x.integration.optimizedResidentBuild.qualification = true; },
+    (x) => { x.integration.nativeResident.source = x.integration.nativeResident.artifactSource; },
+    (x) => { x.integration.nativeResident.binarySha256 = x.integration.nativeResidentAttempt.binarySha256; },
+    (x) => { x.integration.nativeResident.evidenceSha256 = x.integration.optimizedResidentBuild.evidenceSha256; },
+    (x) => { x.integration.nativeResident.exit = 126; },
+    (x) => { x.integration.nativeResident.speculativeRounds = 4; },
+    (x) => { x.integration.nativeResident.acceptedDraftCounts[0] = 4; },
+    (x) => { x.integration.nativeResident.epochs[2] = 5; },
+    (x) => { x.integration.nativeResident.publishedTokenIds[0] = 12; },
+    (x) => { x.integration.nativeResident.prefillAnchor = 4710; },
+    (x) => { x.integration.nativeResident.physicalPromptTokens = 5; },
+    (x) => { x.integration.nativeResident.activeSuffixFill = false; },
+    (x) => { x.integration.nativeResident.completedDraftCatchups = 1; },
+    (x) => { x.integration.nativeResident.fullAcceptanceContinuationObserved = true; },
+    (x) => { x.integration.nativeResident.finalDraftCursor = 135; },
+    (x) => { x.integration.nativeResident.hardwareCompletionObserved = false; },
+    (x) => { x.integration.nativeResident.nativeQueueDestroyed = false; },
+    (x) => { x.integration.nativeResident.deviceMemoryBaselineRestored = false; },
+    (x) => { x.integration.nativeResident.workerV3Authenticated = true; },
+    (x) => { x.integration.nativeResident.compilerOriginAuthenticated = true; },
+    (x) => { x.integration.nativeResident.currentPublicationSelected = true; },
+    (x) => { x.integration.nativeResident.benchmarkComparable = true; },
+    (x) => { x.integration.nativeResident.numericalQualification = true; },
+    (x) => { x.integration.nativeResident.authority = "qualified"; },
+    (x) => { x.integration.nativeResident.detail = "Full-acceptance serving and performance are qualified."; },
     (x) => { x.integration.hostProgress.resident.detail = "Repeated serving is qualified."; },
     (x) => { x.integration.hostProgress.mfma.hostLibraryPassed = 80; },
     (x) => { x.integration.hostProgress.mfma.strictClippyPassed = false; },
@@ -483,6 +609,11 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.hostProgress.mfma.gpuTested = true; },
     (x) => { x.integration.hostProgress.mfma.performanceMeasured = true; },
     (x) => { x.integration.hostProgress.mfma.detail = "The MFMA image is GPU-tested."; },
+    (x) => { x.integration.hostProgress.mfma.compilerOverlayPublished = true; },
+    (x) => { x.integration.hostProgress.mfma.clippySource = x.integration.hostProgress.mfma.source; },
+    (x) => { x.integration.hostProgress.compilerCandidate.published = true; },
+    (x) => { x.integration.hostProgress.compilerCandidate.imageProduced = true; },
+    (x) => { x.integration.hostProgress.compilerCandidate.gpuTested = true; },
     (x) => { x.integration.hostProgress.compiler.source = x.integration.latestCompiler.source; },
     (x) => { x.integration.hostProgress.compiler.plironPassed = 1028; },
     (x) => { x.integration.hostProgress.compiler.baselineStrictClippyPassed = true; },
@@ -527,7 +658,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.integration.latestCompiler.imageBytes = x.integration.compiler.imageBytes; },
     (x) => { x.integration.latestCompiler.kernelEntries = 11; },
     (x) => { x.integration.latestCompiler.kernelDescriptors = 13; },
-    (x) => { x.integration.latestCompiler.nativeGpuTested = true; },
+    (x) => { x.integration.latestCompiler.nativeGpuTested = false; },
     (x) => { x.integration.latestCompiler.exactOutputReplay = false; },
     (x) => { x.integration.latestCompiler.authority = "qualified"; },
     (x) => { x.integration.latestCompiler.grants.launch = true; },

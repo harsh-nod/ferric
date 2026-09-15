@@ -7,6 +7,36 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
+## September 15 Resident And Host Checkpoint
+
+This public-only checkpoint adds the exact c5/4f6 native guard exit 126, empty
+output and unresolved detected-PID attribution. It records return to the exact
+GPU baseline and evidence-checked owned cleanup without turning the attempt
+into repeated-round, catch-up, numerical or performance success.
+
+The separate optimized c5/4f6 build passes with an independently retained
+14,133,320-byte release executable. GPU access was disabled during that build.
+Its separate native GPU4 attempt exits 0 with five K4 rounds and eight tokens,
+acceptance counts [0, 0, 1, 2, 0], hardware completion and native queue teardown.
+GPU memory returns to the exact baseline. No full-acceptance maintenance/restore
+was observed. The five raw prompt tokens are actively EOT-filled to 128, not
+attention-mask padded; prefill anchor 12 is excluded from the output. This is
+not ordinary raw-prompt serving, numerical qualification or a performance gain.
+The exact native archive SHA-256 is
+`c46c0023872f404ddda8140f9162fa2d36785618916266ad41d0240234908870`.
+The successful release attempt does not relabel the earlier debug failure.
+
+The current c5 coverage is separate from dfb's 707 engine tests and the unchanged
+942 adapter's 109 library, 12 CLI and 37 policy tests. No verified label is
+upgraded. MFMA full host results retain ce2 plus the unpublished b86 overlay;
+scoped strict Clippy and eight focused catalog tests retain successor 1fc.
+Unpublished compiler 5602 has actual paired storage exports and release tools,
+but no HSACO/GPU result. The older 0fe, 4f6 and ccfd images keep their identities.
+
+All 33 M1 gates remain open. The seven-case tooling and single-case numerical
+record are unchanged, as is all historical performance JSON. The implementation
+remains private; only `site/` changes descend from public Pages commit 5fe89b3e.
+
 ## September 14 Seven-Case And Host Progress Checkpoint
 
 Seven-case R29 tooling is integrated at `10cc6587`, byte-identical to the
@@ -20,13 +50,10 @@ Actual GPU comparison coverage remains **1 of 7**, at the retained ccfd
 prefill source below. The other six cases have not run; host fixtures are
 not substituted for hardware evidence or numerical tolerance acceptance.
 
-Repeated resident rounds are implemented in a private candidate. Exact
-`0536` passes the full engine package: 706 library tests (nine existing
-ignores), binary and doc suites, and strict all-target Clippy. The earlier
-`dd0` adapter passes 12 tests. Final adapter validation remains pending: the
-corrected `942` retry reached the unchanged workspace cap before tests; the
-earlier test-only import failure is retained separately. No native repeated-round/catch-up result or
-serving qualification follows.
+The September 14 checkpoint had exact `0536` engine 706/9 and `dd0` adapter
+12 tests, with the `942` adapter retry stopped by the workspace cap. These
+historical records remain separate from the later dfb/942 host passes and c5
+native observation above; original import and resource failures are retained.
 
 The private Ferric MFMA matrix-kernel/catalog candidate `8b74` passes 81 host
 library tests and strict library/test Clippy. Device compilation, GPU execution
@@ -70,10 +97,11 @@ gfx942:xnack- V6 image. Structural ELF inspection confirms 12 kernel entries
 and 12 matching descriptors, not policy descriptor-table order. The image is
 103,616 bytes, SHA-256
 `6f77d6813e6a2c9fd20c8b50eaffe0feb4435f00ac65192e9574a3637b6e5284`.
-It differs from ccfd despite unchanged kernel bodies and has **not been GPU or
-numerically tested**. Engineering authority is none; all publication/load/launch
-grants remain false. Installed workers retain their actual older producer
-identities. Latest evidence SHA-256 is
+It differs from ccfd despite unchanged kernel bodies. The later c5 observation
+above exercises this retained image on a GPU, without numerical qualification
+or changing its 8113 emission producer. Engineering authority is none; all
+publication/load/launch grants remain false. Installed workers retain their
+actual older producer identities. The emission evidence SHA-256 is
 `6208de3c1329e000c5393739b600d6e04b49b4b20dff4fb8dfc5443a8e65d3cb`.
 
 All 33 M1 gates remain open. No TTFT, TPOT or throughput values are added;
