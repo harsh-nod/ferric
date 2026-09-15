@@ -1036,12 +1036,12 @@ impl fmt::Debug for StructuralRolloverFailureV1<'_> {
     }
 }
 
-fn rollover_structural_batch<'a, const N: usize>(
+fn rollover_structural_batch<const N: usize>(
     lower: ServiceQueueUnboundSessionV1,
-    batch: ServiceFixedBatchV1<'a, N>,
+    batch: ServiceFixedBatchV1<'_, N>,
     ring_bytes: u32,
     prior_generation: u64,
-) -> Result<(ServiceQueueSessionV1<N>, M1QueueRolloverObservationV1), StructuralRolloverFailureV1<'a>>
+) -> Result<(ServiceQueueSessionV1<N>, M1QueueRolloverObservationV1), StructuralRolloverFailureV1<'_>>
 {
     let rollover = match lower.rollover(ring_bytes, batch) {
         Ok(rollover) => rollover,
