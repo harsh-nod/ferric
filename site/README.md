@@ -7,7 +7,48 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 14 Selected Numerical And Latest Compiler Checkpoint
+## September 14 Seven-Case And Host Progress Checkpoint
+
+Seven-case R29 tooling is integrated at `10cc6587`, byte-identical to the
+validated `940d37e2` implementation. It validates the complete seven-kind,
+52-row suite, ordered lane identities and actual c8192 execution bindings.
+All 24 comparison tests, 15 engineering and 23 legacy reference tests,
+capture-protocol checks, policy checks and scoped strict Clippy pass. The
+gate archive SHA-256 is
+`a05d9b1a63950a01be2334f087b22c7477ccc1f259d75df8d449cbf09bc064dc`.
+Actual GPU comparison coverage remains **1 of 7**, at the retained ccfd
+prefill source below. The other six cases have not run; host fixtures are
+not substituted for hardware evidence or numerical tolerance acceptance.
+
+Repeated resident rounds are implemented in a private candidate. Exact
+`0536` passes the full engine package: 706 library tests (nine existing
+ignores), binary and doc suites, and strict all-target Clippy. The earlier
+`dd0` adapter passes 12 tests. Final adapter validation remains pending: the
+corrected `942` retry reached the unchanged workspace cap before tests; the
+earlier test-only import failure is retained separately. No native repeated-round/catch-up result or
+serving qualification follows.
+
+The private Ferric MFMA matrix-kernel/catalog candidate `8b74` passes 81 host
+library tests and strict library/test Clippy. Device compilation, GPU execution
+and performance remain untested. Latest checked compiler `0fe50455` passes
+42 lineage, 84 MIR, 1,029 Pliron and 543 backend tests, associated integration/doc
+suites and 37 exact `f9` aggregate host tests. Pristine release tools now emit
+and exactly replay its 103,616-byte gfx942 image, with 12 kernel entries and
+12 descriptors. The HSACO SHA-256 is
+`e17bf955d3de70c44d721cb798785f539915cb003c7b046efd2cce787e2df7c3`;
+evidence archive SHA-256 is
+`539970f202a048cc5cd3664b6fadde528da13fc7e99249bdac7bae82ffe3e45f`.
+This differs from 4f6 and has **no GPU validation**. The unchanged baseline
+dependency Clippy failure and original pre-emission resource stop are retained
+separately. Authority is none; publication/load/launch grants remain false,
+and installed workers keep their actual older producer identities.
+
+All 33 M1 gates remain open. No new TTFT, TPOT, throughput, accepted matched
+SGLang result or reviewed numerical tolerance is added. `performance.js` is
+byte-unchanged. Implementation sources remain private; this public checkpoint
+contains only site data, documentation, rendering and claim checks.
+
+### Retained Selected Numerical And Emission Checkpoint
 
 Exact `4ac1250/ccfd` capture, independent canonical Qwen3-8B BF16/SDPA reference,
 and comparison each exit 0 for `prefill-s1-t128.001`. This is one generated
@@ -22,7 +63,7 @@ tolerance acceptance, full R29 comparison, qualification or benchmark result.
 The retained archive SHA-256 is
 `816f162e5a2d3229239dc305e8658f8c570a269b44a077787d916030ec60335c`.
 
-Separately, latest published fe2o3 `4f6f65ce` and private Ferric `8113e231`
+Separately, emitted fe2o3 `4f6f65ce` and private Ferric `8113e231`
 pass the changed kernel-ir/analysis full suites, 543 backend tests and all
 37 aggregate host tests. Pristine release tools emit/replay the canonical
 gfx942:xnack- V6 image. Structural ELF inspection confirms 12 kernel entries

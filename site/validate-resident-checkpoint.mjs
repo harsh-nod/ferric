@@ -15,7 +15,7 @@ export function validateResidentCheckpoint(value, updated) {
   assert.equal(checkpoint.implementationPrivate, true);
   assert.equal(checkpoint.m1OpenGates, 33);
   assert.equal(checkpoint.fullAcceptanceCatchupImplemented, true);
-  assert.equal(checkpoint.newGpuObservation, true);
+  assert.equal(checkpoint.newGpuObservation, false);
   for (const key of ["nativeServingQualified", "newPerformanceMeasurement"]) {
     assert.equal(checkpoint[key], false, key);
   }
@@ -24,9 +24,79 @@ export function validateResidentCheckpoint(value, updated) {
   assert(checkpoint.overview.includes("All 33 M1 gates remain open; no new serving or performance result is claimed"));
   assert(checkpoint.overview.includes("rows are not byte-identical and no tolerance is accepted"));
   assert(checkpoint.overview.includes("that image is not GPU-tested"));
+  assert(checkpoint.overview.includes("actual GPU comparisons remain 1 of 7"));
+  assert(checkpoint.overview.includes("Latest compiler 0fe passes host suites and emits the 12-kernel image"));
 
   const integration = checkpoint.integration;
-  exactKeys(integration, ["selectedNumerical", "latestCompiler", "compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  exactKeys(integration, ["hostProgress", "selectedNumerical", "latestCompiler", "compiler", "latestNativeSmoke", "nativeSmoke", "currentHost", "currentCoverage", "resident", "host", "coverage", "sourcePolicy", "prepack"]);
+  const progress = integration.hostProgress;
+  exactKeys(progress, ["r29", "resident", "mfma", "compiler", "boundary"]);
+  const expectedProgress = {
+    r29: {
+      source: "940d37e253841a17741904e814860e110c230b07",
+      integratedSource: "10cc6587d198a315678c8e1d939aa8e5163a32f5",
+      evidenceSha256: "a05d9b1a63950a01be2334f087b22c7477ccc1f259d75df8d449cbf09bc064dc",
+      comparisonTests: 24, engineeringReferenceTests: 15, legacyReferenceTests: 23,
+      strictClippyPassed: true, supportedCases: 7, outputRows: 52, gpuComparedCases: 1,
+      fullGpuSuite: false, authority: "none",
+    },
+    resident: {
+      engineSource: "0536ca48e66a387b623df0c9b8d2d99822f39e58",
+      adapterSource: "dd0ec11ee983eed11a4f7577542aa1afcaea26f3",
+      pendingAdapterSource: "9421a6a887046749961f5e2cbf5e4d4e3e93df75",
+      enginePassed: 706, engineIgnored: 9, engineStrictClippyPassed: true,
+      adapterPassed: 12, finalAdapterValidated: false, nativeRepeatedRounds: false,
+      authority: "none",
+    },
+    mfma: {
+      source: "8b74ce4338c99df7b592cddbb684c193c68e45da",
+      hostLibraryPassed: 81, strictClippyPassed: true, deviceCompiled: false,
+      gpuTested: false, performanceMeasured: false, authority: "none",
+    },
+    compiler: {
+      source: "0fe50455b2fb65744048789bfc05f720313a12c5",
+      ferricSource: "f9ff2f3c2dc8e467387f6c5204ff2aedfa952aa9",
+      lineagePassed: 42, mirPassed: 84, plironPassed: 1029, backendPassed: 543,
+      aggregateHostPassed: 37, baselineStrictClippyPassed: false,
+      emissionStarted: true, imageProduced: true, emissionExit: 0, exactOutputReplay: true,
+      target: "gfx942:xnack-", codeObjectVersion: 6, kernelEntries: 12, kernelDescriptors: 12,
+      imageBytes: 103616,
+      imageSha256: "e17bf955d3de70c44d721cb798785f539915cb003c7b046efd2cce787e2df7c3",
+      manifestSha256: "6e80c84941e7c7d7eef2d611cf130ab290b69495a448f6e7ec73ff8659c47138",
+      inspectionSha256: "ae952c85deed06f58e76e251c27153db531bae6c6e0775768b46d8dfe4fff817",
+      evidenceSha256: "539970f202a048cc5cd3664b6fadde528da13fc7e99249bdac7bae82ffe3e45f",
+      grants: { publication: false, load: false, launch: false },
+      gpuTested: false, authority: "none",
+    },
+  };
+  const progressClaims = {
+    r29: ["seven canonical cases and 52 output rows", "real 8,192-token decode histories",
+      "All 24 comparison tests, 15 engineering and 23 legacy reference tests",
+      "Actual GPU comparisons remain 1 of 7", "remaining six GPU cases have not run",
+      "no tolerance acceptance or qualification authority"],
+    resident: ["Exact 0536 passes the full engine package", "706 library tests (nine existing ignores)",
+      "strict all-target Clippy", "earlier dd0 adapter passes 12 tests",
+      "Final adapter validation remains pending", "corrected 942 retry reached the unchanged workspace cap before tests",
+      "earlier test-only import failure is retained separately",
+      "No native repeated-round or catch-up result"],
+    mfma: ["candidate at 8b74 passes all 81 host library tests", "strict library/test Clippy",
+      "no device compilation, GPU execution or performance improvement has been demonstrated"],
+    compiler: ["42 lineage, 84 MIR, 1,029 Pliron and 543 backend tests",
+      "37 exact f9 aggregate host tests", "unchanged dependency failure",
+      "emit and exactly replay the 103,616-byte gfx942 image",
+      "12 kernel entries and 12 descriptors", "differs from 4f6 and has no GPU validation",
+      "earlier pre-emission resource stop remains separate",
+      "publication, load and launch grants remain false", "actual older producer identities"],
+  };
+  for (const [key, expected] of Object.entries(expectedProgress)) {
+    const { detail, ...facts } = progress[key];
+    assert.deepEqual(facts, expected, key);
+    for (const claim of progressClaims[key]) assert(detail.includes(claim), `${key}: ${claim}`);
+  }
+  for (const claim of ["No new TTFT, TPOT or throughput measurement", "No accepted matched SGLang result is available",
+    "Historical performance data is unchanged", "all 33 M1 gates remain open"]) {
+    assert(progress.boundary.includes(claim), claim);
+  }
   const { detail: numericalDetail, boundary: numericalBoundary, ...numerical } = integration.selectedNumerical;
   assert.deepEqual(numerical, {
     source: "4ac1250735c1e774356c901aede91066d05816f1",
@@ -387,8 +457,45 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.m1OpenGates = 32; },
     (x) => { x.nativeServingQualified = true; },
     (x) => { x.fullAcceptanceCatchupImplemented = false; },
-    (x) => { x.newGpuObservation = false; },
+    (x) => { x.newGpuObservation = true; },
     (x) => { x.newPerformanceMeasurement = true; },
+    (x) => { x.integration.hostProgress.r29.source = x.integration.hostProgress.r29.integratedSource; },
+    (x) => { x.integration.hostProgress.r29.comparisonTests = 25; },
+    (x) => { x.integration.hostProgress.r29.engineeringReferenceTests = 14; },
+    (x) => { x.integration.hostProgress.r29.legacyReferenceTests = 22; },
+    (x) => { x.integration.hostProgress.r29.supportedCases = 1; },
+    (x) => { x.integration.hostProgress.r29.outputRows = 7; },
+    (x) => { x.integration.hostProgress.r29.gpuComparedCases = 7; },
+    (x) => { x.integration.hostProgress.r29.fullGpuSuite = true; },
+    (x) => { x.integration.hostProgress.r29.authority = "qualified"; },
+    (x) => { x.integration.hostProgress.r29.detail = "All seven GPU cases passed."; },
+    (x) => { x.integration.hostProgress.resident.engineSource = x.integration.hostProgress.resident.adapterSource; },
+    (x) => { x.integration.hostProgress.resident.pendingAdapterSource = x.integration.hostProgress.resident.adapterSource; },
+    (x) => { x.integration.hostProgress.resident.enginePassed = 705; },
+    (x) => { x.integration.hostProgress.resident.engineIgnored = 0; },
+    (x) => { x.integration.hostProgress.resident.adapterPassed = 13; },
+    (x) => { x.integration.hostProgress.resident.finalAdapterValidated = true; },
+    (x) => { x.integration.hostProgress.resident.nativeRepeatedRounds = true; },
+    (x) => { x.integration.hostProgress.resident.detail = "Repeated serving is qualified."; },
+    (x) => { x.integration.hostProgress.mfma.hostLibraryPassed = 80; },
+    (x) => { x.integration.hostProgress.mfma.strictClippyPassed = false; },
+    (x) => { x.integration.hostProgress.mfma.deviceCompiled = true; },
+    (x) => { x.integration.hostProgress.mfma.gpuTested = true; },
+    (x) => { x.integration.hostProgress.mfma.performanceMeasured = true; },
+    (x) => { x.integration.hostProgress.mfma.detail = "The MFMA image is GPU-tested."; },
+    (x) => { x.integration.hostProgress.compiler.source = x.integration.latestCompiler.source; },
+    (x) => { x.integration.hostProgress.compiler.plironPassed = 1028; },
+    (x) => { x.integration.hostProgress.compiler.baselineStrictClippyPassed = true; },
+    (x) => { x.integration.hostProgress.compiler.emissionStarted = false; },
+    (x) => { x.integration.hostProgress.compiler.imageProduced = false; },
+    (x) => { x.integration.hostProgress.compiler.imageSha256 = x.integration.latestCompiler.imageSha256; },
+    (x) => { x.integration.hostProgress.compiler.exactOutputReplay = false; },
+    (x) => { x.integration.hostProgress.compiler.kernelEntries = 11; },
+    (x) => { x.integration.hostProgress.compiler.kernelDescriptors = 13; },
+    (x) => { x.integration.hostProgress.compiler.grants.launch = true; },
+    (x) => { x.integration.hostProgress.compiler.gpuTested = true; },
+    (x) => { x.integration.hostProgress.compiler.detail = "0fe GPU qualification passed."; },
+    (x) => { x.integration.hostProgress.boundary = "Matched SGLang superiority accepted."; },
     (x) => { x.integration.selectedNumerical.compilerSource = x.integration.latestCompiler.source; },
     (x) => { x.integration.selectedNumerical.source = x.integration.latestCompiler.ferricSource; },
     (x) => { x.integration.selectedNumerical.imageSha256 = x.integration.latestCompiler.imageSha256; },
