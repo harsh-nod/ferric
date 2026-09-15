@@ -2699,8 +2699,6 @@ pub fn release_retired_page(
     Ok(next)
 }
 
-} // verus!
-
 /// Inert description of a retired metadata slot. This is not quiescence or
 /// completion authority and cannot release a native allocation or page lease.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -2709,12 +2707,114 @@ pub struct PhysicalKvRetiredPageMetadataV1 {
     pub after_epoch: CompletionEpoch,
 }
 
+closed spec fn retirement_metadata_roster_prefix_valid(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+    processed: int,
+) -> bool {
+    &&& same_request(state.request, request)
+    &&& role_matches(state.selection.role, role)
+    &&& 0 <= processed <= pages.len() <= M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& forall|position: int| 0 <= position < processed ==> {
+        &&& pages[position].after_epoch.value > 0
+        &&& pages[position].page.generation < u32::MAX
+        &&& physical_page_is_retired_at_epoch(
+            state, request, role, pages[position].after_epoch, pages[position].page,
+        )
+    }
+    &&& forall|left: int, right: int| 0 <= left < right < processed ==>
+        pages[left].page.index != pages[right].page.index
+}
+
+/// Exact checked metadata eligibility, without any native completion authority.
+pub closed spec fn retirement_metadata_batch_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+) -> bool {
+    retirement_metadata_roster_prefix_valid(state, request, role, pages, pages.len())
+}
+
+closed spec fn retirement_metadata_mask_matches_prefix(
+    selected: Seq<bool>,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+    processed: int,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& 0 <= processed <= pages.len()
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+        selected[index] == (exists|position: int| 0 <= position < processed
+            && pages[position].page.index == index)
+}
+
+closed spec fn retirement_metadata_mask_prepared(
+    state: &PhysicalKvState,
+    selected: Seq<bool>,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS
+        && selected[index] ==> {
+        &&& 0 < state.page_slots@[index].generation < u32::MAX
+        &&& match state.page_slots@[index].ownership {
+            PhysicalPageOwnership::Retired { request, role, after_epoch } => {
+                &&& same_request(request, state.request)
+                &&& role_matches(role, state.selection.role)
+                &&& after_epoch.value > 0
+            }
+            _ => false,
+        }
+        &&& !state.table_contains_index_spec(index as u32)
+    }
+}
+
+closed spec fn retirement_metadata_prefix_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+    processed: int,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& 0 <= processed <= M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+        after.page_slots@[index] == if index < processed && selected[index] {
+            PhysicalPageSlot {
+                generation: (before.page_slots@[index].generation as int + 1) as u32,
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            }
+        } else {
+            before.page_slots@[index]
+        }
+}
+
+/// Advances exactly the selected generations and preserves the full remaining state.
+pub closed spec fn retirement_metadata_batch_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+) -> bool {
+    retirement_metadata_mask_prepared(before, selected)
+        && retirement_metadata_prefix_transition(
+            before, after, selected, M1_KV_PHYSICAL_PAGE_SLOTS as int,
+        )
+}
+
 /// An exclusively borrowed, checked metadata-only retirement batch.
 ///
 /// Dropping the batch does not mutate its state. Committing updates only that
 /// borrowed state's selected slots. The caller must separately retain genuine
 /// completion and allocation custody before returning any native page leases.
-/// This Rust borrowing wrapper and its transition are not a verified theorem.
+/// Its source contracts cover only the checked metadata transition. They do
+/// not establish the engine's whole-roster or native lease-return composition.
 ///
 /// ```compile_fail
 /// use ferric_spec::paged_kv_refinement::PhysicalKvRetirementMetadataBatchV1;
@@ -2742,17 +2842,48 @@ pub struct PhysicalKvRetirementMetadataBatchV1<'a> {
 }
 
 impl PhysicalKvRetirementMetadataBatchV1<'_> {
+    pub closed spec fn prepared_spec(&self) -> bool {
+        retirement_metadata_mask_prepared(&*self.state, self.selected@)
+    }
+
+    pub closed spec fn selected_spec(&self) -> Seq<bool> { self.selected@ }
+
     /// Advances only the exclusively borrowed, preflighted metadata slots.
     /// This does not return a lease, free device memory, or mint reuse authority.
-    pub fn commit(self) {
-        for (slot, selected) in self.state.page_slots.iter_mut().zip(self.selected) {
-            if selected {
-                *slot = PhysicalPageSlot {
+    pub fn commit(self)
+        requires self.prepared_spec(),
+        ensures retirement_metadata_batch_transition(
+            &*self.state, &*final(self.state), self.selected_spec(),
+        ),
+    {
+        proof {
+            reveal(Self::prepared_spec);
+            reveal(Self::selected_spec);
+            reveal(retirement_metadata_mask_prepared);
+            reveal(retirement_metadata_batch_transition);
+            reveal(retirement_metadata_prefix_transition);
+            reveal(PhysicalKvState::immutable_frame);
+        }
+        let ghost before = *self.state;
+        let selected = self.selected;
+        let state = self.state;
+        let mut index = 0usize;
+        while index < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                index <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                retirement_metadata_mask_prepared(&before, selected@),
+                retirement_metadata_prefix_transition(&before, state, selected@, index as int),
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - index,
+        {
+            if selected[index] {
+                let slot = state.page_slots[index];
+                state.page_slots[index] = PhysicalPageSlot {
                     generation: slot.generation + 1,
                     ownership: PhysicalPageOwnership::Free,
                     initialized_prefix: 0,
                 };
             }
+            index += 1;
         }
     }
 }
@@ -2769,20 +2900,56 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
     request: RequestId,
     role: Qwen3ModelRole,
     pages: &[PhysicalKvRetiredPageMetadataV1],
-) -> Result<PhysicalKvRetirementMetadataBatchV1<'a>, PhysicalKvError> {
-    if state.request != request {
+) -> (result: Result<PhysicalKvRetirementMetadataBatchV1<'a>, PhysicalKvError>)
+    ensures
+        result.is_ok() == retirement_metadata_batch_enabled(old(state), request, role, pages@),
+        match result {
+            Ok(batch) => {
+                &&& *batch.state == *old(state)
+                &&& *final(state) == *final(batch.state)
+                &&& batch.prepared_spec()
+                &&& retirement_metadata_mask_matches_prefix(
+                    batch.selected_spec(), pages@, pages@.len(),
+                )
+            }
+            Err(_) => *final(state) == *old(state),
+        },
+{
+    proof {
+        reveal(retirement_metadata_batch_enabled);
+        reveal(retirement_metadata_roster_prefix_valid);
+        reveal(retirement_metadata_mask_matches_prefix);
+        reveal(retirement_metadata_mask_prepared);
+        reveal(PhysicalKvRetirementMetadataBatchV1::prepared_spec);
+        reveal(PhysicalKvRetirementMetadataBatchV1::selected_spec);
+        reveal(physical_page_is_retired_at_epoch);
+        reveal(retired_owner_matches);
+        reveal(same_request);
+        reveal(role_matches);
+    }
+    if state.request.slot() != request.slot()
+        || state.request.generation() != request.generation()
+    {
         return Err(PhysicalKvError::RequestMismatch);
     }
-    if state.selection.role != role {
+    if !same_role(state.selection.role, role) {
         return Err(PhysicalKvError::RoleMismatch);
     }
     if pages.len() > M1_KV_PHYSICAL_PAGE_SLOTS {
         return Err(PhysicalKvError::PageOutOfRange);
     }
-    let mut selected = [false; M1_KV_PHYSICAL_PAGE_SLOTS];
-    for retired in pages {
+    let mut selected = vstd::array::array_fill_for_copy_types(false);
+    let mut position = 0usize;
+    while position < pages.len()
+        invariant
+            *state == *old(state),
+            retirement_metadata_roster_prefix_valid(state, request, role, pages@, position as int),
+            retirement_metadata_mask_matches_prefix(selected@, pages@, position as int),
+        decreases pages.len() - position,
+    {
+        let retired = pages[position];
         let page = retired.page;
-        if page.role != role {
+        if !same_role(page.role, role) {
             return Err(PhysicalKvError::RoleMismatch);
         }
         if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
@@ -2799,7 +2966,7 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
         if slot.generation == u32::MAX {
             return Err(PhysicalKvError::GenerationExhausted);
         }
-        if retired.after_epoch.value() == 0 {
+        if retired.after_epoch.value == 0 {
             return Err(PhysicalKvError::ZeroRetirementEpoch);
         }
         match slot.ownership {
@@ -2808,10 +2975,13 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
                 role: owner_role,
                 after_epoch,
             } => {
-                if owner_request != request || owner_role != role {
+                if owner_request.slot() != request.slot()
+                    || owner_request.generation() != request.generation()
+                    || !same_role(owner_role, role)
+                {
                     return Err(PhysicalKvError::PageOwnershipMismatch);
                 }
-                if after_epoch != retired.after_epoch {
+                if after_epoch.value != retired.after_epoch.value {
                     return Err(PhysicalKvError::RetirementEpochMismatch);
                 }
             }
@@ -2821,9 +2991,32 @@ pub fn preflight_retired_page_metadata_batch_v1<'a>(
             return Err(PhysicalKvError::PhysicalAlias);
         }
         selected[index] = true;
+        position += 1;
+    }
+    assert forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS && selected@[index]
+        implies {
+            &&& 0 < state.page_slots@[index].generation < u32::MAX
+            &&& match state.page_slots@[index].ownership {
+                PhysicalPageOwnership::Retired { request: owner, role: owner_role, after_epoch } => {
+                    &&& same_request(owner, state.request)
+                    &&& role_matches(owner_role, state.selection.role)
+                    &&& after_epoch.value > 0
+                }
+                _ => false,
+            }
+            &&& !state.table_contains_index_spec(index as u32)
+        } by {
+        let retired_position = choose|prior: int| 0 <= prior < pages@.len()
+            && pages@[prior].page.index == index;
+        assert(physical_page_is_retired_at_epoch(
+            state, request, role, pages@[retired_position].after_epoch,
+            pages@[retired_position].page,
+        ));
     }
     Ok(PhysicalKvRetirementMetadataBatchV1 { state, selected })
 }
+
+} // verus!
 
 #[cfg(test)]
 mod tests {
@@ -2971,6 +3164,79 @@ mod tests {
             core::mem::size_of::<[PhysicalKvRetiredPageMetadataV1; M1_KV_PHYSICAL_PAGE_SLOTS]>()
                 <= 16 * 1024
         );
+    }
+
+    #[test]
+    fn retirement_metadata_empty_and_sparse_batches_preserve_exact_frame() {
+        for selection in [target_decode(), draft_decode()] {
+            let role = selection.role;
+            let mut state = PhysicalKvState::new(request(), selection).unwrap();
+            let epoch = CompletionEpoch::new(17);
+            for (index, generation) in [(17, 2), (511, u32::MAX - 1)] {
+                state.page_slots[index] = PhysicalPageSlot {
+                    generation,
+                    ownership: PhysicalPageOwnership::Retired {
+                        request: request(),
+                        role,
+                        after_epoch: epoch,
+                    },
+                    initialized_prefix: 9,
+                };
+            }
+            // This independently owned table entry must remain outside the selected mask.
+            state.page_slots[4] = PhysicalPageSlot {
+                generation: 6,
+                ownership: PhysicalPageOwnership::Exclusive {
+                    request: request(),
+                    role,
+                },
+                initialized_prefix: 3,
+            };
+            state.page_table[0] = Some(PhysicalPageId::new(role, 4, 6));
+            state.page_count = 1;
+            state.resident_tokens = 3;
+            state.committed_tokens = 2;
+            let before_slots = state.page_slots;
+            let before_table = state.page_table;
+            let before_logical = state.logical_state();
+            let before_capacity = state.max_context_tokens();
+
+            preflight_retired_page_metadata_batch_v1(&mut state, request(), role, &[])
+                .unwrap()
+                .commit();
+            assert_eq!(state.page_slots, before_slots);
+
+            let pages = [
+                PhysicalKvRetiredPageMetadataV1 {
+                    page: PhysicalPageId::new(role, 511, u32::MAX - 1),
+                    after_epoch: epoch,
+                },
+                PhysicalKvRetiredPageMetadataV1 {
+                    page: PhysicalPageId::new(role, 17, 2),
+                    after_epoch: epoch,
+                },
+            ];
+            preflight_retired_page_metadata_batch_v1(&mut state, request(), role, &pages)
+                .unwrap()
+                .commit();
+            for (index, before) in before_slots.into_iter().enumerate() {
+                let expected = if index == 17 || index == 511 {
+                    PhysicalPageSlot {
+                        generation: before.generation + 1,
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }
+                } else {
+                    before
+                };
+                assert_eq!(state.page_slots[index], expected);
+            }
+            assert_eq!(state.page_table, before_table);
+            assert_eq!(state.logical_state(), before_logical);
+            assert_eq!(state.selection(), selection);
+            assert_eq!(state.max_context_tokens(), before_capacity);
+            assert_eq!(state.page_count(), 1);
+        }
     }
 
     #[test]
