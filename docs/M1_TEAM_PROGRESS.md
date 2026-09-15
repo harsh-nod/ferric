@@ -15,7 +15,7 @@ maintenance transition. No new performance result is available.
 The local compiler candidate is now `12845295`, rebased onto observed upstream
 `48323569`. All twelve local patches are unchanged by range-diff from the
 previous `86ccc2a5` candidate; the worktree is clean. This newest candidate has
-not yet been validated or pushed. Its source archive SHA-256 is
+not yet completed validation or been pushed. Its source archive SHA-256 is
 `80af541343a5474bbde0588f340c1882ac66df690f902b2026eb1cfa1699d7bc`.
 The preceding `86ccc2a5` on `bd4d5f42` passes its 23-phase R9 remote host
 campaign, including backend, lowerer, Pliron,
@@ -28,8 +28,12 @@ This is a delta host campaign, not a rerun of all predecessor suites or a new
 release-tool/emission result. No push has occurred; a fresh upstream check is
 required before pushing. Clarification is pending on whether the existing
 GitHub-hosted push CI is allowed under the mi300x-only build restriction.
-Upstream `48323569` adds immutable-slice helper lowering; its delta tests and
-actual wrapper-PATH LLVM assembler identity still need validation. Ferric still uses its
+Upstream `48323569` adds immutable-slice helper lowering. The R10 remote delta
+campaign is running: backend, AMDGPU and lowerer phases and their fresh artifact
+checks pass; paired export completion and full retention are pending. The actual
+wrapper-PATH assembler is Ubuntu LLVM 18.1.3 at `/usr/bin/llvm-as`, resolved to
+`/usr/lib/llvm-18/bin/llvm-as`; its identity was captured before execution and
+must still match afterward. Ferric still uses its
 existing `4f6f65ce` pin; no newer compiler result is attributed to that runtime.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
@@ -69,8 +73,16 @@ image emission and read-only inspection only: publication/load/launch grants
 remain false, no GPU ran, and no numerical or performance result is claimed.
 The full frozen emission input/result archive is retained locally and checked at
 SHA-256 `f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
-The active remote compiler source has transitioned to `86ccc2a5`; the e0 emission
+The active remote compiler source has transitioned to `12845295`; the e0 emission
 inputs and tools remain separately frozen and are not relabeled as current.
+Before R10, 15 completed R9 test executables were fully retained and removed,
+reclaiming 528,736 KiB. Their archive SHA-256 is
+`ee3112d2d3b8a0e86d3a2257f1d1430b89f7004560ce6eed98e6d18813772562`.
+The first cleanup retention attempt failed before archival or deletion on an
+overbroad process-warning classification; its logs remain retained. The second
+attempt used scoped candidate-inode checks and completed both retention and
+separate deletion. No release tools, current sources or dependency libraries
+were deleted.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -197,12 +209,23 @@ proof execution is claimed for this host campaign.
 Separate candidate `efa069bd` adds actual production ledger preflight/commit
 helpers with exact role/index selection and complete two-ledger frame
 postconditions. Independent review found no production regression and caught a
-test-discrimination gap, fixed before freezing the candidate. It is Contracted,
-not execution-validated or integrated; format-only processing ran on mi300x.
-Strict Verus and actual-body negatives are pending. Its exact-source host run
-has started after all seven source-before checks passed; no host pass is claimed.
+test-discrimination gap, fixed before freezing the candidate. It is Contracted
+and not integrated. Its exact-source host run passes formatting, locked metadata,
+engine check, both new regressions and 726 engine tests with nine ignores, then
+fails strict engine Clippy on `manual_map`. Spec Clippy was not reached. All
+seven source before/after checks match, with native and proof inputs preserved.
+The complete failure evidence and actual test executable are retained locally at
+SHA-256 `5713237da7943871551c8c1894e820cd45f4ae0170194e445b5ad0b36f64bf99`.
 Its source archive SHA-256 is
 `43077663e18600541784643dea5c0e7155854f1d59ee82be7117a9ff91b08977`.
+Successor `47d07cee` changes only the optional state read to an explicitly
+bounds-checked slice index, without a lint exception or contract change.
+Independent review found equivalent behavior and error ordering; remote
+formatting matches. Fresh host, strict Verus and actual-body negative execution
+are pending. Its source archive SHA-256 is
+`6670dd515627fa70c32a6e41aa2d38d51605dace5842a0d15ec3841d631523e3`.
+Prepared R8 proof controls were never launched; their R9 successor targets the
+corrected source and must wait for the new host run and evidence retention.
 The wrapper's completion custody and cross-call ticket/ledger continuity remain
 outside these helper contracts. No fe2o3 pin or native executable has changed.
 All 33 M1 gates remain open.
@@ -216,8 +239,8 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. Its host delta is pending; older R9 and frozen e0 results retain their identities. | Scoped retained-artifact cleanup and current delta validation before any push; release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Separate ledger-composition candidate `efa069bd` is source-reviewed, not validated. | Exact-source host/proof gates; idle selected GPU for the R6 native maintenance diagnostic. |
+| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. R10 is running after scoped retained-artifact cleanup; older R9 and frozen e0 results retain their identities. | Complete and retain current delta validation before any push; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Ledger candidate `efa069bd` passes 726 tests but fails Clippy; corrected `47d07cee` awaits validation. | Exact-source host/proof gates; idle selected GPU for the R6 native maintenance diagnostic. |
 | Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. All seven index negatives now pass with full evidence retained. | Verify actual ledger composition and negative mutations, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
