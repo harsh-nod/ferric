@@ -2853,7 +2853,7 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
     pub fn commit(self)
         requires self.prepared_spec(),
         ensures retirement_metadata_batch_transition(
-            &*self.state, &*final(self.state), self.selected_spec(),
+            &*old(self.state), &*final(self.state), self.selected_spec(),
         ),
     {
         proof {
