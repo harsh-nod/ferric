@@ -2219,15 +2219,12 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         expected_role: Qwen3ModelRole,
         lease: &DeviceKvPageLease,
     ) -> Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1> {
-        let global_index = global_page_index(lease.request, lease.page.index())
-            .map_err(|_| M1KvPageReturnErrorV1::Index)?;
-        preflight_page_return_identity(
+        preflight_page_return_ledgers(
             self.device,
             self.allocation_id(expected_role),
             expected_role,
-            self.page_ledger(expected_role).get(global_index).copied(),
-            global_index,
-            lease.request,
+            &self.target_pages,
+            &self.draft_pages,
             lease,
         )
     }
@@ -2237,8 +2234,12 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         preflighted: M1PreflightedKvPageReturnV1,
         lease: DeviceKvPageLease,
     ) {
-        let state = &mut self.page_ledger_mut(preflighted.role)[preflighted.global_index];
-        commit_page_return_state(state, preflighted, lease);
+        commit_page_return_ledgers(
+            &mut self.target_pages,
+            &mut self.draft_pages,
+            preflighted,
+            lease,
+        );
     }
 
     fn page_ledger(&self, role: Qwen3ModelRole) -> &[M1KvPoolPageStateV1] {
@@ -2433,6 +2434,38 @@ impl M1PreflightedKvPageReturnV1 {
         &&& 0 < lease.page.generation_spec() < u32::MAX
         &&& self.next_generation as int == lease.page.generation_spec() as int + 1
     }
+
+    closed spec fn matches_ledgers_spec(
+        &self,
+        lease: &DeviceKvPageLease,
+        target_pages: Seq<M1KvPoolPageStateV1>,
+        draft_pages: Seq<M1KvPoolPageStateV1>,
+    ) -> bool {
+        let ledger = page_return_ledger_spec(self.role, target_pages, draft_pages);
+        &&& self.matches_lease_spec(lease)
+        &&& self.request.generation_spec() > 0
+        &&& self.request.slot_spec() < M1_MAX_ACTIVE_SEQUENCES
+        &&& self.page.index_spec() < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& self.global_index as int == self.request.slot_spec() as int
+            * M1_KV_PHYSICAL_PAGE_SLOTS as int + self.page.index_spec() as int
+        &&& self.global_index < M1_GLOBAL_KV_PAGE_SLOTS_V1
+        &&& self.global_index < ledger.len()
+        &&& ledger[self.global_index as int] == (M1KvPoolPageStateV1::Leased {
+            request: lease.request,
+            generation: lease.page.generation_spec(),
+        })
+    }
+}
+
+closed spec fn page_return_ledger_spec(
+    role: Qwen3ModelRole,
+    target_pages: Seq<M1KvPoolPageStateV1>,
+    draft_pages: Seq<M1KvPoolPageStateV1>,
+) -> Seq<M1KvPoolPageStateV1> {
+    match role {
+        Qwen3ModelRole::Target8B => target_pages,
+        Qwen3ModelRole::Draft06B => draft_pages,
+    }
 }
 
 fn page_return_device_matches(left: Gfx942DeviceBinding, right: Gfx942DeviceBinding) -> (equal: bool)
@@ -2582,6 +2615,118 @@ fn commit_page_return_state(
         reveal(M1PreflightedKvPageReturnV1::matches_lease_spec);
     }
     *state = returned_page_state(&preflighted);
+}
+
+closed spec fn page_return_ledgers_enabled(
+    expected_device: Gfx942DeviceBinding,
+    expected_allocation_id: Identity,
+    expected_role: Qwen3ModelRole,
+    target_pages: Seq<M1KvPoolPageStateV1>,
+    draft_pages: Seq<M1KvPoolPageStateV1>,
+    lease: &DeviceKvPageLease,
+) -> bool {
+    let index = lease.request.slot_spec() as int * M1_KV_PHYSICAL_PAGE_SLOTS as int
+        + lease.page.index_spec() as int;
+    let ledger = page_return_ledger_spec(expected_role, target_pages, draft_pages);
+    &&& lease.request.generation_spec() > 0
+    &&& lease.request.slot_spec() < M1_MAX_ACTIVE_SEQUENCES
+    &&& lease.page.index_spec() < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& 0 <= index < ledger.len()
+    &&& page_return_identity_enabled(
+        expected_device, expected_allocation_id, expected_role,
+        Some(ledger[index]), lease.request, lease,
+    )
+}
+
+/// Selects the production ledger without changing index-before-identity errors.
+fn preflight_page_return_ledgers(
+    expected_device: Gfx942DeviceBinding,
+    expected_allocation_id: Identity,
+    expected_role: Qwen3ModelRole,
+    target_pages: &[M1KvPoolPageStateV1],
+    draft_pages: &[M1KvPoolPageStateV1],
+    lease: &DeviceKvPageLease,
+) -> (result: Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1>)
+    ensures
+        result.is_ok() == page_return_ledgers_enabled(
+            expected_device, expected_allocation_id, expected_role,
+            target_pages@, draft_pages@, lease,
+        ),
+        result.is_ok() ==> result.unwrap().matches_ledgers_spec(
+            lease, target_pages@, draft_pages@,
+        ),
+{
+    proof {
+        reveal(page_return_ledgers_enabled);
+        reveal(page_return_ledger_spec);
+        reveal(page_return_identity_enabled);
+        reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
+        reveal(M1PreflightedKvPageReturnV1::matches_lease_spec);
+    }
+    let global_index = match global_page_index_core(lease.request, lease.page.index()) {
+        Ok(index) => index,
+        Err(_) => return Err(M1KvPageReturnErrorV1::Index),
+    };
+    let ledger = match expected_role {
+        Qwen3ModelRole::Target8B => target_pages,
+        Qwen3ModelRole::Draft06B => draft_pages,
+    };
+    let state = match ledger.get(global_index) {
+        Some(state) => Some(*state),
+        None => None,
+    };
+    preflight_page_return_identity(
+        expected_device,
+        expected_allocation_id,
+        expected_role,
+        state,
+        global_index,
+        lease.request,
+        lease,
+    )
+}
+
+/// Consumes a ledger-matched pair and frames every other page in both roles.
+fn commit_page_return_ledgers(
+    target_pages: &mut [M1KvPoolPageStateV1],
+    draft_pages: &mut [M1KvPoolPageStateV1],
+    preflighted: M1PreflightedKvPageReturnV1,
+    lease: DeviceKvPageLease,
+)
+    requires preflighted.matches_ledgers_spec(&lease, old(target_pages)@, old(draft_pages)@),
+    ensures
+        final(target_pages)@ == match preflighted.role {
+            Qwen3ModelRole::Target8B => old(target_pages)@.update(
+                preflighted.global_index as int,
+                M1KvPoolPageStateV1::Free {
+                    generation: (lease.page.generation_spec() as int + 1) as u32,
+                },
+            ),
+            Qwen3ModelRole::Draft06B => old(target_pages)@,
+        },
+        final(draft_pages)@ == match preflighted.role {
+            Qwen3ModelRole::Target8B => old(draft_pages)@,
+            Qwen3ModelRole::Draft06B => old(draft_pages)@.update(
+                preflighted.global_index as int,
+                M1KvPoolPageStateV1::Free {
+                    generation: (lease.page.generation_spec() as int + 1) as u32,
+                },
+            ),
+        },
+{
+    proof {
+        reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
+        reveal(page_return_ledger_spec);
+    }
+    let index = preflighted.global_index;
+    match preflighted.role {
+        Qwen3ModelRole::Target8B => {
+            commit_page_return_state(&mut target_pages[index], preflighted, lease);
+        },
+        Qwen3ModelRole::Draft06B => {
+            commit_page_return_state(&mut draft_pages[index], preflighted, lease);
+        },
+    }
 }
 
 } // verus!
@@ -8711,6 +8856,209 @@ mod tests {
             validate_leased_page_state(None, request, 11),
             Err(M1DeviceKvArenaLeaseErrorV1::PageLeaseMismatch)
         ));
+    }
+
+    #[test]
+    fn returned_page_ledgers_select_exact_role_slot_and_frame_both_models() {
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            for (slot, page_index) in [(0, 0), (0, 511), (31, 0), (31, 511)] {
+                let request = RequestId::new(slot, 7);
+                let index = global_page_index(request, page_index).unwrap();
+                let mut target = vec![M1KvPoolPageStateV1::INITIAL; M1_GLOBAL_KV_PAGE_SLOTS_V1];
+                let mut draft = target.clone();
+                let leased = M1KvPoolPageStateV1::Leased {
+                    request,
+                    generation: 11,
+                };
+                match role {
+                    Qwen3ModelRole::Target8B => target[index] = leased,
+                    Qwen3ModelRole::Draft06B => draft[index] = leased,
+                }
+                let mut expected_target = target.clone();
+                let mut expected_draft = draft.clone();
+                let lease = DeviceKvPageLease {
+                    device: device(),
+                    allocation_id: identity(2),
+                    request,
+                    page: PhysicalPageId::new(role, page_index, 11),
+                };
+                let ticket = preflight_page_return_ledgers(
+                    device(),
+                    identity(2),
+                    role,
+                    &target,
+                    &draft,
+                    &lease,
+                )
+                .unwrap();
+                assert_eq!(ticket.global_index, index);
+                assert_eq!(ticket.role, role);
+                assert_eq!(target, expected_target);
+                assert_eq!(draft, expected_draft);
+                commit_page_return_ledgers(&mut target, &mut draft, ticket, lease);
+                match role {
+                    Qwen3ModelRole::Target8B => {
+                        expected_target[index] = M1KvPoolPageStateV1::Free { generation: 12 };
+                    }
+                    Qwen3ModelRole::Draft06B => {
+                        expected_draft[index] = M1KvPoolPageStateV1::Free { generation: 12 };
+                    }
+                }
+                assert_eq!(target, expected_target);
+                assert_eq!(draft, expected_draft);
+            }
+        }
+    }
+
+    #[test]
+    fn returned_page_ledgers_reject_selected_absence_and_preserve_error_order() {
+        let expected_device = device();
+        let mut foreign_device = expected_device;
+        foreign_device.admission_generation += 1;
+        let expected_role = Qwen3ModelRole::Draft06B;
+        let request = RequestId::new(0, 7);
+        let state = M1KvPoolPageStateV1::Leased {
+            request,
+            generation: 11,
+        };
+        let target = [state];
+        let empty = [];
+        for (observed_device, allocation, observed_request, role, index, generation, expected) in [
+            (
+                foreign_device,
+                identity(99),
+                RequestId::new(0, 0),
+                expected_role,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Index,
+            ),
+            (
+                foreign_device,
+                identity(99),
+                RequestId::new(32, 1),
+                expected_role,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Index,
+            ),
+            (
+                foreign_device,
+                identity(99),
+                request,
+                expected_role,
+                512,
+                0,
+                M1KvPageReturnErrorV1::Index,
+            ),
+            (
+                foreign_device,
+                identity(99),
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Device,
+            ),
+            (
+                expected_device,
+                identity(99),
+                request,
+                Qwen3ModelRole::Target8B,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Role,
+            ),
+            (
+                expected_device,
+                identity(99),
+                request,
+                expected_role,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Allocation,
+            ),
+            (
+                expected_device,
+                identity(2),
+                request,
+                expected_role,
+                0,
+                0,
+                M1KvPageReturnErrorV1::Ledger,
+            ),
+            (
+                expected_device,
+                identity(2),
+                request,
+                expected_role,
+                0,
+                11,
+                M1KvPageReturnErrorV1::Ledger,
+            ),
+            (
+                expected_device,
+                identity(2),
+                request,
+                expected_role,
+                0,
+                u32::MAX,
+                M1KvPageReturnErrorV1::Ledger,
+            ),
+        ] {
+            let lease = DeviceKvPageLease {
+                device: observed_device,
+                allocation_id: allocation,
+                request: observed_request,
+                page: PhysicalPageId::new(role, index, generation),
+            };
+            assert_eq!(
+                preflight_page_return_ledgers(
+                    expected_device,
+                    identity(2),
+                    expected_role,
+                    &target,
+                    &empty,
+                    &lease,
+                ),
+                Err(expected),
+            );
+            assert_eq!(target, [state]);
+            assert!(empty.is_empty());
+        }
+
+        for generation in [0, 10, 11, u32::MAX] {
+            let draft = [M1KvPoolPageStateV1::Leased {
+                request,
+                generation,
+            }];
+            let lease = DeviceKvPageLease {
+                device: expected_device,
+                allocation_id: identity(2),
+                request,
+                page: PhysicalPageId::new(expected_role, 0, generation),
+            };
+            let result = preflight_page_return_ledgers(
+                expected_device,
+                identity(2),
+                expected_role,
+                &empty,
+                &draft,
+                &lease,
+            );
+            match generation {
+                0 => assert_eq!(result, Err(M1KvPageReturnErrorV1::Ledger)),
+                u32::MAX => assert_eq!(result, Err(M1KvPageReturnErrorV1::GenerationExhausted)),
+                _ => assert!(result.is_ok()),
+            }
+            assert_eq!(
+                draft,
+                [M1KvPoolPageStateV1::Leased {
+                    request,
+                    generation
+                }]
+            );
+        }
     }
 
     #[test]
