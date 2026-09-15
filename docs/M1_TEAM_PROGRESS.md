@@ -12,9 +12,13 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The local compiler candidate is now `86ccc2a5`, rebased onto observed upstream
-`bd4d5f42`; all twelve patches are unchanged by range-diff against `1985f1d7`.
-Its 23-phase R9 remote host campaign passes, including backend, lowerer, Pliron,
+The local compiler candidate is now `12845295`, rebased onto observed upstream
+`48323569`. All twelve local patches are unchanged by range-diff from the
+previous `86ccc2a5` candidate; the worktree is clean. This newest candidate has
+not yet been validated or pushed. Its source archive SHA-256 is
+`80af541343a5474bbde0588f340c1882ac66df690f902b2026eb1cfa1699d7bc`.
+The preceding `86ccc2a5` on `bd4d5f42` passes its 23-phase R9 remote host
+campaign, including backend, lowerer, Pliron,
 tile mapping, frozen MIR v13/v14, macro closure and paired BF16 export coverage.
 Source-bound artifact freshness checks pass, and the older e0/5602 tools remain
 unchanged. Full source, raw phases and receipts are retained locally with checked
@@ -24,8 +28,8 @@ This is a delta host campaign, not a rerun of all predecessor suites or a new
 release-tool/emission result. No push has occurred; a fresh upstream check is
 required before pushing. Clarification is pending on whether the existing
 GitHub-hosted push CI is allowed under the mi300x-only build restriction.
-Subsequently observed upstream `48323569` adds immutable-slice helper lowering;
-it has not been rebased into the candidate or validated. Ferric still uses its
+Upstream `48323569` adds immutable-slice helper lowering; its delta tests and
+actual wrapper-PATH LLVM assembler identity still need validation. Ferric still uses its
 existing `4f6f65ce` pin; no newer compiler result is attributed to that runtime.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
@@ -161,7 +165,10 @@ R6 archive is retained and independently hash-checked locally at
 `311aea52da61ba959640db89afb08a1b00da22f8b91559ef6352e92ca52b8317`.
 This proves the selected core's generation, slot/index bounds, flattening and
 error-precedence contracts, not its native caller or whole-roster composition.
-Seven body-only negative mutations are designed but have not run.
+Seven body-only negative mutations are now running in the CPU-only R7 campaign.
+Its first generation-guard case has a checked semantic postcondition failure
+and a checked source restoration. The complete campaign and retention remain
+pending; partial progress is not a seven-negative pass.
 
 Exact proof-source engine bytes are integrated at `2aae5839`. Its R1 host run
 stops at rustfmt on two test assertions, before compilation or tests. All five
@@ -179,6 +186,17 @@ Full evidence is retained and independently hash-checked locally at
 `4dc705e003d66605aeb10d823487e90b4735bb8abbcc63409821cf406af70427`.
 The earlier 723-test result is not relabeled, and no new native artifact or
 proof execution is claimed for this host campaign.
+
+Separate candidate `efa069bd` adds actual production ledger preflight/commit
+helpers with exact role/index selection and complete two-ledger frame
+postconditions. Independent review found no production regression and caught a
+test-discrimination gap, fixed before freezing the candidate. It is Contracted,
+not execution-validated or integrated; format-only processing ran on mi300x.
+Strict Verus, actual-body negatives and exact-source host gates are pending.
+Its source archive SHA-256 is
+`43077663e18600541784643dea5c0e7155854f1d59ee82be7117a9ff91b08977`.
+The wrapper's completion custody and cross-call ticket/ledger continuity remain
+outside these helper contracts. No fe2o3 pin or native executable has changed.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -190,9 +208,9 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `86ccc2a5` on `bd4d5f42` passes 23 delta host phases; newer observed `48323569` is unvalidated. Frozen e0 retains its host/tool/emission results. | Fresh rebase and validation before push, current release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Global-index core integrated at `21818e2a`; all eight R2 host phases pass, including 724 engine tests and strict engine/spec Clippy. | Idle selected GPU for the R6 native maintenance diagnostic; coherent dependency refresh. |
-| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. | Actual helper/index negative mutations and whole-roster/native composition proofs. |
+| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. Its host delta is pending; older R9 and frozen e0 results retain their identities. | Scoped retained-artifact cleanup and current delta validation before any push; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Separate ledger-composition candidate `efa069bd` is source-reviewed, not validated. | Exact-source host/proof gates; idle selected GPU for the R6 native maintenance diagnostic. |
+| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. Seven index negatives are running. | Complete and retain R7; verify actual ledger composition and negative mutations, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
