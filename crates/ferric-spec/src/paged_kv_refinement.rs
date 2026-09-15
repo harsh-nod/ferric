@@ -2889,9 +2889,24 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
             let ghost prior_slots = state.page_slots@;
             let ghost prior_index = index;
             proof {
-                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
-                    && !(slot_index < prior_index && selected@[slot_index]) ==>
-                    prior_slots[slot_index] == before.page_slots@[slot_index]);
+                assert forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < prior_index && selected@[slot_index])
+                    implies prior_slots[slot_index] == before.page_slots@[slot_index] by {
+                    reveal(retirement_metadata_prefix_transition);
+                    assert(retirement_metadata_prefix_transition(
+                        &before, state, selected@, prior_index as int,
+                    ));
+                    assert(prior_slots[slot_index] == if slot_index < prior_index
+                        && selected@[slot_index] {
+                        PhysicalPageSlot {
+                            generation: (before.page_slots@[slot_index].generation as int + 1) as u32,
+                            ownership: PhysicalPageOwnership::Free,
+                            initialized_prefix: 0,
+                        }
+                    } else {
+                        before.page_slots@[slot_index]
+                    });
+                }
             }
             if selected[index] {
                 let slot = state.page_slots[index];
