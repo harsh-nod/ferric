@@ -503,8 +503,6 @@ impl std::error::Error for M1QualificationTargetPagePreleaseErrorV1 {
 
 const M1_TARGET_KV_PLANE_SUBLEASES_V1: usize = 72;
 const M1_DRAFT_KV_PLANE_SUBLEASES_V1: usize = 56;
-const M1_GLOBAL_KV_PAGE_SLOTS_V1: usize =
-    M1_MAX_ACTIVE_SEQUENCES as usize * M1_KV_PHYSICAL_PAGE_SLOTS;
 pub(crate) const M1_KV_PAGE_RETURN_ROLE_ORDER_V1: [Qwen3ModelRole; 2] =
     [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B];
 
@@ -520,6 +518,9 @@ type DraftKvPlaneSubleasesV1 = ServiceAllocationSubleaseSetV1<
 >;
 
 verus! {
+
+const M1_GLOBAL_KV_PAGE_SLOTS_V1: usize =
+    M1_MAX_ACTIVE_SEQUENCES as usize * M1_KV_PHYSICAL_PAGE_SLOTS;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum M1KvPoolPageStateV1 {
@@ -4279,24 +4280,86 @@ fn plane_member_index(
         .ok_or(M1DeviceKvArenaLeaseErrorV1::PlaneGeometry { role })
 }
 
+verus! {
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum M1GlobalPageIndexErrorV1 {
+    RequestOutOfRange,
+    PageOutOfRange,
+}
+
+fn global_page_index_core(
+    request: RequestId,
+    physical_index: u32,
+) -> (result: Result<usize, M1GlobalPageIndexErrorV1>)
+    ensures
+        result.is_ok() == (
+            request.generation_spec() > 0
+                && request.slot_spec() < M1_MAX_ACTIVE_SEQUENCES
+                && physical_index < M1_KV_PHYSICAL_PAGE_SLOTS
+        ),
+        match result {
+            Ok(index) => {
+                &&& index as int == request.slot_spec() as int
+                    * M1_KV_PHYSICAL_PAGE_SLOTS as int + physical_index as int
+                &&& index < M1_GLOBAL_KV_PAGE_SLOTS_V1
+                &&& request.slot_spec() as int * M1_KV_PHYSICAL_PAGE_SLOTS as int
+                    <= index as int
+                &&& (index as int) < (request.slot_spec() as int + 1)
+                    * M1_KV_PHYSICAL_PAGE_SLOTS as int
+            },
+            Err(M1GlobalPageIndexErrorV1::RequestOutOfRange) => {
+                request.generation_spec() == 0
+                    || request.slot_spec() >= M1_MAX_ACTIVE_SEQUENCES
+            },
+            Err(M1GlobalPageIndexErrorV1::PageOutOfRange) => {
+                &&& request.generation_spec() > 0
+                &&& request.slot_spec() < M1_MAX_ACTIVE_SEQUENCES
+                &&& physical_index >= M1_KV_PHYSICAL_PAGE_SLOTS
+            },
+        },
+{
+    if request.generation() == 0 || request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
+        return Err(M1GlobalPageIndexErrorV1::RequestOutOfRange);
+    }
+    let local_index = match usize::try_from(physical_index) {
+        Ok(index) => index,
+        Err(_) => return Err(M1GlobalPageIndexErrorV1::PageOutOfRange),
+    };
+    if local_index >= M1_KV_PHYSICAL_PAGE_SLOTS {
+        return Err(M1GlobalPageIndexErrorV1::PageOutOfRange);
+    }
+    let slot = match usize::try_from(request.slot()) {
+        Ok(slot) => slot,
+        Err(_) => return Err(M1GlobalPageIndexErrorV1::PageOutOfRange),
+    };
+    let Some(base) = slot.checked_mul(M1_KV_PHYSICAL_PAGE_SLOTS) else {
+        return Err(M1GlobalPageIndexErrorV1::PageOutOfRange);
+    };
+    let Some(index) = base.checked_add(local_index) else {
+        return Err(M1GlobalPageIndexErrorV1::PageOutOfRange);
+    };
+    if index >= M1_GLOBAL_KV_PAGE_SLOTS_V1 {
+        return Err(M1GlobalPageIndexErrorV1::PageOutOfRange);
+    }
+    Ok(index)
+}
+
+} // verus!
+
 fn global_page_index(
     request: RequestId,
     physical_index: u32,
 ) -> Result<usize, M1DeviceKvArenaLeaseErrorV1> {
-    if request.generation() == 0 || request.slot() >= M1_MAX_ACTIVE_SEQUENCES {
-        return Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange);
+    match global_page_index_core(request, physical_index) {
+        Ok(index) => Ok(index),
+        Err(M1GlobalPageIndexErrorV1::RequestOutOfRange) => {
+            Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+        }
+        Err(M1GlobalPageIndexErrorV1::PageOutOfRange) => {
+            Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+        }
     }
-    let local_index =
-        usize::try_from(physical_index).map_err(|_| M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)?;
-    if local_index >= M1_KV_PHYSICAL_PAGE_SLOTS {
-        return Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange);
-    }
-    usize::try_from(request.slot())
-        .ok()
-        .and_then(|slot| slot.checked_mul(M1_KV_PHYSICAL_PAGE_SLOTS))
-        .and_then(|base| base.checked_add(local_index))
-        .filter(|index| *index < M1_GLOBAL_KV_PAGE_SLOTS_V1)
-        .ok_or(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
 }
 
 fn validate_new_window_request_roster(
@@ -8489,6 +8552,52 @@ mod tests {
             global_page_index(RequestId::new(0, 1), 512),
             Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
         ));
+    }
+
+    #[test]
+    fn global_page_index_core_preserves_extreme_error_precedence() {
+        for (slot, generation, physical_index, expected) in [
+            (0, 1, 0, 0),
+            (0, u32::MAX, 511, M1_KV_PHYSICAL_PAGE_SLOTS - 1),
+            (1, 1, 0, M1_KV_PHYSICAL_PAGE_SLOTS),
+            (
+                M1_MAX_ACTIVE_SEQUENCES - 1,
+                u32::MAX,
+                511,
+                M1_GLOBAL_KV_PAGE_SLOTS_V1 - 1,
+            ),
+        ] {
+            let request = RequestId::new(slot, generation);
+            assert_eq!(global_page_index_core(request, physical_index), Ok(expected));
+            assert_eq!(global_page_index(request, physical_index).unwrap(), expected);
+        }
+        for request in [
+            RequestId::new(0, 0),
+            RequestId::new(M1_MAX_ACTIVE_SEQUENCES, 1),
+            RequestId::new(u32::MAX, u32::MAX),
+        ] {
+            for physical_index in [0, 512, u32::MAX] {
+                assert_eq!(
+                    global_page_index_core(request, physical_index),
+                    Err(M1GlobalPageIndexErrorV1::RequestOutOfRange)
+                );
+                assert!(matches!(
+                    global_page_index(request, physical_index),
+                    Err(M1DeviceKvArenaLeaseErrorV1::RequestOutOfRange)
+                ));
+            }
+        }
+        for physical_index in [512, u32::MAX] {
+            let request = RequestId::new(M1_MAX_ACTIVE_SEQUENCES - 1, u32::MAX);
+            assert_eq!(
+                global_page_index_core(request, physical_index),
+                Err(M1GlobalPageIndexErrorV1::PageOutOfRange)
+            );
+            assert!(matches!(
+                global_page_index(request, physical_index),
+                Err(M1DeviceKvArenaLeaseErrorV1::PageOutOfRange)
+            ));
+        }
     }
 
     #[test]
