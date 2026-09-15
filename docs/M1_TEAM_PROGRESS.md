@@ -165,10 +165,17 @@ R6 archive is retained and independently hash-checked locally at
 `311aea52da61ba959640db89afb08a1b00da22f8b91559ef6352e92ca52b8317`.
 This proves the selected core's generation, slot/index bounds, flattening and
 error-precedence contracts, not its native caller or whole-roster composition.
-Seven body-only negative mutations are now running in the CPU-only R7 campaign.
-Its first generation-guard case has a checked semantic postcondition failure
-and a checked source restoration. The complete campaign and retention remain
-pending; partial progress is not a seven-negative pass.
+All seven body-only negative mutations now pass the CPU-only R7 campaign.
+Generation/slot/page bounds, rejection of a valid page, row stride, page offset
+and error precedence each produce an actual selected exec postcondition failure
+with nonzero SMT work. Parser, compiler, translation and resource failures are
+not accepted. Each mutant is restored to source74 bytes/mode/mtime; intentional
+inode/ctime changes are recorded, and failed root exports are quarantined.
+All 284 dependency artifacts, unmodified source, verifier/configuration closure
+and prior R3-R6 evidence remain unchanged. Full retained R7 evidence is
+179,774,359 bytes, locally hash-checked at
+`6aed4783947f5556a67f414b7eb563afe366819dc421063022b3e5c7a3d56b28`.
+This closes these seven selected negative checks, not an M1 roadmap gate.
 
 Exact proof-source engine bytes are integrated at `2aae5839`. Its R1 host run
 stops at rustfmt on two test assertions, before compilation or tests. All five
@@ -192,7 +199,8 @@ helpers with exact role/index selection and complete two-ledger frame
 postconditions. Independent review found no production regression and caught a
 test-discrimination gap, fixed before freezing the candidate. It is Contracted,
 not execution-validated or integrated; format-only processing ran on mi300x.
-Strict Verus, actual-body negatives and exact-source host gates are pending.
+Strict Verus and actual-body negatives are pending. Its exact-source host run
+has started after all seven source-before checks passed; no host pass is claimed.
 Its source archive SHA-256 is
 `43077663e18600541784643dea5c0e7155854f1d59ee82be7117a9ff91b08977`.
 The wrapper's completion custody and cross-call ticket/ledger continuity remain
@@ -210,7 +218,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 | --- | --- | --- |
 | Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. Its host delta is pending; older R9 and frozen e0 results retain their identities. | Scoped retained-artifact cleanup and current delta validation before any push; release tools, coherent dependency refresh and numerical GPU qualification. |
 | Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Separate ledger-composition candidate `efa069bd` is source-reviewed, not validated. | Exact-source host/proof gates; idle selected GPU for the R6 native maintenance diagnostic. |
-| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. Seven index negatives are running. | Complete and retain R7; verify actual ledger composition and negative mutations, then higher-level/native composition. |
+| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. All seven index negatives now pass with full evidence retained. | Verify actual ledger composition and negative mutations, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
@@ -219,6 +227,16 @@ refresh is still required across 80 pin-bearing files: 30 manifests, 30 locks
 and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
 and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
+
+After R7 retention, the completed clean proof74 worktree was removed, reclaiming
+44,496 KiB locally; its branch, source archives and proof evidence remain.
+Two exact byte-retained remote artifacts (218's test ELF and the obsolete Verus
+seed bundle) were removed after no-use checks, reclaiming 118,600 KiB. The
+runtime stage measured 9,399,884 to 9,281,284 KiB, then 9,295,172 KiB after the
+new host inputs were uploaded, below the unchanged extraction/link reserve.
+Source/proof/native inputs were preserved. The cleanup receipt SHA-256 is
+`f3317ce54ad13f910291da5de4ee98d778dde19f36475e3761909899323fd1b6`.
+No shared cache or foreign workload was removed.
 
 Earlier R1 Pages payload SHA-256 is
 `54165bf91f64fc9ef93b4d52d34c6e5d0ebac4bd8c13d745702cfaf81e6f19d9`.
