@@ -3,13 +3,13 @@
 use super::{
     fmt, joined_structural_draft_catchup_pending, schedule_m1_long_lived_queue_rearm_exact_v1,
     validate_custody_guard, M1QueuedServingPhysicalInputProviderV1, M1ServingBatchPlanV1,
-    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalOperationsV1,
-    M1ServingPhysicalReadbackV1, M1ServingPhysicalRunnerAdapterPhaseV1,
-    M1ServingPhysicalRunnerDiagnosticHistoryV1, M1ServingPhysicalRunnerOperationErrorV1,
-    M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerPublishedStateV1,
-    M1ServingPhysicalRunnerPublishedV1, M1ServingPhysicalRunnerQuiescentStateV1,
-    M1ServingPhysicalRunnerQuiescentV1, M1ServingPhysicalRunnerReadbackV1,
-    M1ServingPreparedSemanticEvidenceV1, M1StructuralDraftCatchupPendingV1,
+    M1ServingCommittedSpeculativeRoundV1, M1ServingPhysicalReadbackV1,
+    M1ServingPhysicalRunnerAdapterPhaseV1, M1ServingPhysicalRunnerDiagnosticHistoryV1,
+    M1ServingPhysicalRunnerOperationErrorV1, M1ServingPhysicalRunnerOperationsV1,
+    M1ServingPhysicalRunnerPublishedStateV1, M1ServingPhysicalRunnerPublishedV1,
+    M1ServingPhysicalRunnerQuiescentStateV1, M1ServingPhysicalRunnerQuiescentV1,
+    M1ServingPhysicalRunnerReadbackV1, M1ServingPreparedSemanticEvidenceV1,
+    M1StructuralDraftCatchupPendingV1,
 };
 use crate::m1_queue_rearm::structural_draft_catchup::{
     prepare_structural_draft_catchup_v1, prepare_structural_speculative_rearm_v1,
@@ -1120,8 +1120,8 @@ mod tests {
     };
     use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1 as CompletionLayout;
     use ferric_spec::{
-        CompletionEpoch, Identity, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, StepPlan,
-        TokenId,
+        completion::CompletionEpoch, Identity, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
+        StepPlan, TokenId,
     };
 
     #[test]
