@@ -98,6 +98,8 @@ impl M1StructuralResidentCommittedRoundV1 {
 pub struct M1StructuralResidentFailureV1<'a> {
     stage: &'static str,
     diagnostic: Option<crate::m1_queue_rearm::M1QueueRearmKvReservationDiagnosticV1>,
+    submission:
+        Option<crate::m1_queue_rearm::structural_draft_catchup::StructuralSubmissionDiagnosticV1>,
     retained: Box<dyn fmt::Debug + 'a>,
 }
 
@@ -108,6 +110,7 @@ impl fmt::Debug for M1StructuralResidentFailureV1<'_> {
             .debug_struct("M1StructuralResidentFailureV1")
             .field("stage", &self.stage)
             .field("diagnostic", &self.diagnostic)
+            .field("submission", &self.submission)
             .field("custody_retained", &true)
             .finish_non_exhaustive()
     }
@@ -120,6 +123,16 @@ impl fmt::Display for M1StructuralResidentFailureV1<'_> {
 }
 
 impl std::error::Error for M1StructuralResidentFailureV1<'_> {}
+
+impl M1StructuralResidentFailureV1<'_> {
+    fn with_submission(
+        mut self,
+        diagnostic: crate::m1_queue_rearm::structural_draft_catchup::StructuralSubmissionDiagnosticV1,
+    ) -> Self {
+        self.submission = Some(diagnostic);
+        self
+    }
+}
 
 impl<'a, const C: usize>
     M1ServingPhysicalRunnerOperationsV1<'a, C, M1QueuedServingPhysicalInputProviderV1>
@@ -134,6 +147,7 @@ impl<'a, const C: usize>
         M1StructuralResidentFailureV1 {
             stage,
             diagnostic: None,
+            submission: None,
             retained: Box::new((retained, self.provider.take())),
         }
     }
@@ -676,20 +690,23 @@ impl<'a, const C: usize>
             ) {
                 Ok(published) => published,
                 Err(error) => {
-                    return Err(self.structural_failure(
-                        "maintenance publication",
-                        (
-                            (error, reservation, pending, outcome, diagnostic_history),
+                    let submission = error.diagnostic();
+                    return Err(self
+                        .structural_failure(
+                            "maintenance publication",
                             (
-                                catchup_scratch,
-                                speculative_preparation,
-                                speculative_recipe,
-                                speculative_scratch,
-                                enter_storage,
-                                restore_storage,
+                                (error, reservation, pending, outcome, diagnostic_history),
+                                (
+                                    catchup_scratch,
+                                    speculative_preparation,
+                                    speculative_recipe,
+                                    speculative_scratch,
+                                    enter_storage,
+                                    restore_storage,
+                                ),
                             ),
-                        ),
-                    ))
+                        )
+                        .with_submission(submission));
                 }
             };
             if published.scheduled_dispatch().epoch() != batch.epoch()
@@ -941,17 +958,20 @@ impl<'a, const C: usize>
             ) {
                 Ok(published) => published,
                 Err(error) => {
-                    return Err(self.structural_failure(
-                        "restore publication",
-                        (
-                            error,
-                            restore_reservation,
-                            outcome,
-                            diagnostic_history,
-                            speculative_scratch,
-                            restore_storage,
-                        ),
-                    ))
+                    let submission = error.diagnostic();
+                    return Err(self
+                        .structural_failure(
+                            "restore publication",
+                            (
+                                error,
+                                restore_reservation,
+                                outcome,
+                                diagnostic_history,
+                                speculative_scratch,
+                                restore_storage,
+                            ),
+                        )
+                        .with_submission(submission));
                 }
             };
             (published, restore_reservation)
@@ -1157,6 +1177,7 @@ mod tests {
         let failure = M1StructuralResidentFailureV1 {
             stage: "ordinary speculative preparation",
             diagnostic: None,
+            submission: None,
             retained: Box::new(Retained(Arc::clone(&drops))),
         };
         for text in [format!("{failure:?}"), format!("{failure}")] {
@@ -1167,6 +1188,56 @@ mod tests {
         assert_eq!(drops.load(Ordering::SeqCst), 0);
         drop(failure);
         assert_eq!(drops.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn structural_resident_submission_diagnostic_preserves_nested_failure_without_formatting_it() {
+        use crate::m1_queue_rearm::structural_draft_catchup::StructuralSubmissionFailureV1;
+        use crate::m1_queue_rearm::M1LongLivedQueueRearmSubmissionPhaseV1;
+        use std::sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        };
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("resident submission custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        for (stage, inner) in [
+            ("maintenance publication", "transition dispatch generation"),
+            ("restore publication", "completion phase retarget"),
+        ] {
+            let drops = Arc::new(AtomicUsize::new(0));
+            let error = StructuralSubmissionFailureV1::new(
+                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                inner,
+                Retained(Arc::clone(&drops)),
+            );
+            let diagnostic = error.diagnostic();
+            let failure = M1StructuralResidentFailureV1 {
+                stage,
+                diagnostic: None,
+                submission: None,
+                retained: Box::new((error, Retained(Arc::clone(&drops)))),
+            }
+            .with_submission(diagnostic);
+            assert_eq!(failure.submission, Some(diagnostic));
+            for text in [format!("{failure:?}"), format!("{failure}")] {
+                assert!(text.len() < 1024);
+                assert!(text.contains(stage));
+                assert!(text.contains(inner));
+                assert!(text.contains("WorkspaceRangeRebinding"));
+            }
+            assert_eq!(drops.load(Ordering::SeqCst), 0);
+            drop(failure);
+            assert_eq!(drops.load(Ordering::SeqCst), 2);
+        }
     }
 
     #[test]

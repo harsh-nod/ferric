@@ -6,13 +6,12 @@ use super::{
     reserve_m1_long_lived_queue_rearm_kv_v1, reset_retained_diagnostic_capture_core,
     retained_host_capture_ranges, submission_failure, AddresslessM1PhysicalBufferRecipeV1,
     BoundM1StepWorkspaceSubleases, CompletionEpoch, ContentBoundM1ProgramCatalogV1, Engine,
-    FreshWorkspaceRangeV1, LogicalRunnerDeclaration, LowerBatchFailureV1, LowerBatchInputV1,
-    M1BoundPhysicalBufferRowV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1,
-    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1FullStepWorkspaceRole,
-    M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
-    M1LongLivedQueueRearmKvInputsV1, M1LongLivedQueueRearmSubmissionFailureV1,
-    M1LongLivedQueueRearmSubmissionPhaseV1, M1PhysicalBufferRecipeRowV1,
-    M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1,
+    FreshWorkspaceRangeV1, LogicalRunnerDeclaration, LowerBatchInputV1, M1BoundPhysicalBufferRowV1,
+    M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind,
+    M1FullStepWorkspacePlans, M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners,
+    M1InitializedWorkspaceSlotV1, M1LongLivedQueueRearmKvInputsV1,
+    M1LongLivedQueueRearmSubmissionFailureV1, M1LongLivedQueueRearmSubmissionPhaseV1,
+    M1PhysicalBufferRecipeRowV1, M1PhysicalPublishedQueueSessionV1, M1PhysicalQueueBatchCustodyV1,
     M1PhysicalQueueBatchRearmPartsV1, M1PreparedLongLivedQueueRearmV1,
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1,
     M1QueueRolloverObservationV1, M1RearmContinuationCustodyV1, M1RearmedPublishedQueueV1,
@@ -96,6 +95,8 @@ impl StructuralDraftCatchupScratchV1 {
 
 pub(crate) struct StructuralDraftCatchupFailureV1 {
     diagnostic: Option<super::M1QueueRearmKvReservationDiagnosticV1>,
+    transition_stage: Option<&'static str>,
+    transition_cause: Option<&'static str>,
     retained: Box<dyn fmt::Debug>,
 }
 
@@ -103,8 +104,20 @@ impl StructuralDraftCatchupFailureV1 {
     fn new(retained: impl fmt::Debug + 'static) -> Self {
         Self {
             diagnostic: None,
+            transition_stage: None,
+            transition_cause: None,
             retained: Box::new(retained),
         }
+    }
+
+    fn at_transition(mut self, stage: &'static str) -> Self {
+        self.transition_stage = Some(stage);
+        self
+    }
+
+    fn with_transition_cause(mut self, cause: Option<&'static str>) -> Self {
+        self.transition_cause = cause;
+        self
     }
 
     pub(crate) const fn diagnostic(&self) -> Option<super::M1QueueRearmKvReservationDiagnosticV1> {
@@ -118,6 +131,8 @@ impl fmt::Debug for StructuralDraftCatchupFailureV1 {
         formatter
             .debug_struct("StructuralDraftCatchupFailureV1")
             .field("diagnostic", &self.diagnostic)
+            .field("transition_stage", &self.transition_stage)
+            .field("transition_cause", &self.transition_cause)
             .field("custody_retained", &true)
             .finish_non_exhaustive()
     }
@@ -130,6 +145,127 @@ impl fmt::Display for StructuralDraftCatchupFailureV1 {
 }
 
 impl std::error::Error for StructuralDraftCatchupFailureV1 {}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct StructuralSubmissionDiagnosticV1 {
+    phase: M1LongLivedQueueRearmSubmissionPhaseV1,
+    stage: &'static str,
+    cause: Option<&'static str>,
+}
+
+pub(crate) struct StructuralSubmissionFailureV1<'a> {
+    diagnostic: StructuralSubmissionDiagnosticV1,
+    retained: M1LongLivedQueueRearmSubmissionFailureV1<'a>,
+}
+
+impl<'a> StructuralSubmissionFailureV1<'a> {
+    pub(crate) fn new(
+        phase: M1LongLivedQueueRearmSubmissionPhaseV1,
+        stage: &'static str,
+        retained: impl fmt::Debug + 'a,
+    ) -> Self {
+        Self {
+            diagnostic: StructuralSubmissionDiagnosticV1 {
+                phase,
+                stage,
+                cause: None,
+            },
+            retained: submission_failure(phase, retained),
+        }
+    }
+
+    pub(crate) const fn diagnostic(&self) -> StructuralSubmissionDiagnosticV1 {
+        self.diagnostic
+    }
+
+    fn with_cause(mut self, cause: Option<&'static str>) -> Self {
+        self.diagnostic.cause = cause;
+        self
+    }
+
+    fn transition(error: StructuralDraftCatchupFailureV1, retained: impl fmt::Debug + 'a) -> Self {
+        let stage = error
+            .transition_stage
+            .unwrap_or("structural queue transition");
+        let cause = error.transition_cause;
+        Self::new(
+            M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+            stage,
+            (error, retained),
+        )
+        .with_cause(cause)
+    }
+
+    fn retain_with(self, retained: impl fmt::Debug + 'a) -> Self {
+        let diagnostic = self.diagnostic();
+        Self::new(diagnostic.phase, diagnostic.stage, (self, retained)).with_cause(diagnostic.cause)
+    }
+}
+
+impl fmt::Debug for StructuralSubmissionFailureV1<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.retained;
+        formatter
+            .debug_struct("StructuralSubmissionFailureV1")
+            .field("diagnostic", &self.diagnostic)
+            .field("custody_retained", &true)
+            .finish_non_exhaustive()
+    }
+}
+
+pub(crate) fn structural_service_error_kind(
+    error: &fe2o3_service_host::ServiceQueueErrorV1,
+) -> &'static str {
+    use fe2o3_service_host::{
+        ServiceAllocationErrorV1 as Allocation, ServiceQueueErrorV1 as Queue,
+    };
+    match error {
+        Queue::Allocation(error) => match error {
+            Allocation::Quarantined => "allocation quarantined",
+            Allocation::AllocationCapacity { .. } => "allocation capacity",
+            Allocation::InvalidExtent => "allocation extent",
+            Allocation::ByteCapacity { .. } => "allocation byte capacity",
+            Allocation::AllocationRegistryReservation => "allocation registry reservation",
+            Allocation::InvalidAlignment => "allocation alignment",
+            Allocation::OwnerBindingMismatch => "allocation owner binding",
+            Allocation::AllocationGenerationMismatch => "allocation generation",
+            Allocation::RoleMismatch => "allocation role",
+            Allocation::KindMismatch => "allocation kind",
+            Allocation::AllocationState => "allocation state",
+            Allocation::InvalidRange => "allocation range",
+            Allocation::AliasingRange => "allocation alias",
+            Allocation::InvalidSubleaseCount => "allocation sublease count",
+            Allocation::AllocationAlreadyPartitioned => "allocation already partitioned",
+            Allocation::SubleaseBindingMismatch => "allocation sublease binding",
+            Allocation::Memory(_) => "allocation native memory",
+        },
+        Queue::BatchContract(contract) => contract,
+        Queue::Kfd(error) => {
+            use fe2o3_kfd::ComputeAqlQueueSessionErrorV1 as Kfd;
+            match error {
+                Kfd::Planning(_) => "KFD resource planning",
+                Kfd::Memory(_) => "KFD memory",
+                Kfd::Completion(_) => "KFD completion",
+                Kfd::DispatchBinding(_) => "KFD dispatch binding",
+                Kfd::Contract(contract) | Kfd::Native(contract) => contract,
+                Kfd::Doorbell(_) => "KFD doorbell",
+                Kfd::Sdma(_) => "KFD SDMA",
+                Kfd::TerminalCreation { stage, .. } => stage,
+            }
+        }
+    }
+}
+
+fn structural_workspace_error_kind<const N: usize>(
+    error: &super::WorkspaceReplacementFailureV1<N>,
+) -> &'static str {
+    match error {
+        super::WorkspaceReplacementFailureV1::Update(error) => {
+            structural_service_error_kind(error.error())
+        }
+        super::WorkspaceReplacementFailureV1::Binding(_) => "replacement workspace binding",
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct StructuralSavedBindingsV1 {
@@ -203,40 +339,68 @@ fn prepare_structural_queue_transition(
                 && saved.coordinator == authorized.coordinator_identity()
         }
     };
-    if storage.parent != parent
-        || custody.selection() != parent
-        || !saved_matches
-        || expected_generation != Some(lower.detached_dispatch_generation())
-        || expected_epoch != Some(prepared.step().scheduled_dispatch().epoch().value())
-        || prepared.step().scheduled_dispatch().member_count() != 1
-        || prepared.step().scheduled_dispatch().member(0) != Some(authorized.request())
-        || recipe.workspace_composition().dispatch_plan().intent() != intent
-        || recipe.workspace_composition().workspace_plans() != prepared.plans()
-        || recipe.requires_future_materialization()
-        || !storage
-            .rows
-            .as_ref()
-            .is_some_and(|rows| rows.has_capacity_for(recipe.rows()))
-        || storage.draft_owner.is_none()
-        || (storage.entering && storage.completion_owner.is_none())
-        || (!storage.entering && storage.speculative_owner.is_none())
-        || (!storage.entering && !storage.has_restore_phase())
-        || !storage.workspace_ranges.is_empty()
-        || storage.workspace_ranges.capacity()
-            < crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
-                + crate::M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1
-        || (storage.entering
-            && !custody
-                .completion_output()
-                .can_retarget_exact_s1_speculative_to_draft_catchup(parent))
-        || (!storage.entering
-            && custody.completion_output().draft_catchup_parent_selection() != Some(parent))
-        || (!storage.entering
-            && !storage
-                .diagnostic_reset
-                .as_ref()
-                .is_some_and(|reset| reset.accepts_parent(parent)))
+    let rejection = if storage.parent != parent {
+        Some("transition storage parent")
+    } else if custody.selection() != parent {
+        Some("transition queue parent")
+    } else if !saved_matches {
+        Some("transition saved bindings")
+    } else if expected_generation != Some(lower.detached_dispatch_generation()) {
+        Some("transition dispatch generation")
+    } else if expected_epoch != Some(prepared.step().scheduled_dispatch().epoch().value()) {
+        Some("transition scheduled epoch")
+    } else if prepared.step().scheduled_dispatch().member_count() != 1 {
+        Some("transition member count")
+    } else if prepared.step().scheduled_dispatch().member(0) != Some(authorized.request()) {
+        Some("transition request")
+    } else if recipe.workspace_composition().dispatch_plan().intent() != intent {
+        Some("transition recipe intent")
+    } else if recipe.workspace_composition().workspace_plans() != prepared.plans() {
+        Some("transition workspace plans")
+    } else if recipe.requires_future_materialization() {
+        Some("transition future materialization")
+    } else if !storage
+        .rows
+        .as_ref()
+        .is_some_and(|rows| rows.has_capacity_for(recipe.rows()))
     {
+        Some("transition bound-row storage")
+    } else if storage.draft_owner.is_none() {
+        Some("transition draft owner storage")
+    } else if storage.entering && storage.completion_owner.is_none() {
+        Some("transition completion owner storage")
+    } else if !storage.entering && storage.speculative_owner.is_none() {
+        Some("transition speculative owner storage")
+    } else if !storage.entering && !storage.has_restore_phase() {
+        Some("transition restore phase storage")
+    } else if !storage.workspace_ranges.is_empty() {
+        Some("transition workspace ranges occupied")
+    } else if storage.workspace_ranges.capacity()
+        < crate::M1_DRAFT_STEP_WORKSPACE_SUBLEASE_COUNT_V1
+            + crate::M1_TARGET_SPECULATIVE_STEP_WORKSPACE_SUBLEASE_COUNT_V1
+    {
+        Some("transition workspace range capacity")
+    } else if storage.entering
+        && !custody
+            .completion_output()
+            .can_retarget_exact_s1_speculative_to_draft_catchup(parent)
+    {
+        Some("transition completion enter binding")
+    } else if !storage.entering
+        && custody.completion_output().draft_catchup_parent_selection() != Some(parent)
+    {
+        Some("transition completion restore binding")
+    } else if !storage.entering
+        && !storage
+            .diagnostic_reset
+            .as_ref()
+            .is_some_and(|reset| reset.accepts_parent(parent))
+    {
+        Some("transition diagnostic reset storage")
+    } else {
+        None
+    };
+    if let Some(stage) = rejection {
         return Err(StructuralDraftCatchupFailureV1::new((
             "structural queue transition preflight",
             lower,
@@ -244,7 +408,8 @@ fn prepare_structural_queue_transition(
             prepared,
             recipe,
             saved,
-        )));
+        ))
+        .at_transition(stage));
     }
     let custody = custody.into_rearm_parts();
     let (plans, images, step) = prepared.into_rearm_parts();
@@ -252,9 +417,13 @@ fn prepare_structural_queue_transition(
         match replace_structural_workspaces(lower, custody, plans, images, storage) {
             Ok(replaced) => replaced,
             Err(error) => {
-                return Err(StructuralDraftCatchupFailureV1::new((
-                    error, step, recipe, saved,
-                )))
+                let stage = error.transition_stage.unwrap_or("workspace replacement");
+                let cause = error.transition_cause;
+                return Err(
+                    StructuralDraftCatchupFailureV1::new((error, step, recipe, saved))
+                        .at_transition(stage)
+                        .with_transition_cause(cause),
+                );
             }
         };
     let output = if storage.entering {
@@ -289,7 +458,8 @@ fn prepare_structural_queue_transition(
                     recipe,
                     saved,
                 ),
-            )))
+            ))
+            .at_transition("completion phase retarget"))
         }
     };
     let (lower, output) = if storage.entering {
@@ -317,7 +487,8 @@ fn prepare_structural_queue_transition(
                         recipe,
                         saved,
                     ),
-                )))
+                ))
+                .at_transition("diagnostic capture reset"))
             }
         }
     };
@@ -332,7 +503,8 @@ fn prepare_structural_queue_transition(
                 step,
                 recipe,
                 saved,
-            )))
+            ))
+            .at_transition("retained capture ranges"))
         }
     };
     let (old_source, old_bound) = match &saved {
@@ -357,7 +529,8 @@ fn prepare_structural_queue_transition(
                 step,
                 recipe,
                 saved,
-            )))
+            ))
+            .at_transition("structural bound rows"))
         }
     };
     let (kernargs, workspace_composition, source_rows) = recipe.into_parts();
@@ -548,7 +721,8 @@ fn replace_structural_workspaces(
                 custody,
                 plans,
                 images,
-            )))
+            ))
+            .at_transition("workspace transition kind"))
         }
     };
     let (draft_plan, target_plan, draft_bytes, target_bytes, target_slot) = pair;
@@ -566,7 +740,8 @@ fn replace_structural_workspaces(
                 target_plan,
                 draft_bytes,
                 target_bytes,
-            )))
+            ))
+            .at_transition("draft content descriptor"))
         }
     };
     let target_descriptor =
@@ -581,7 +756,8 @@ fn replace_structural_workspaces(
                     target_plan,
                     draft_bytes,
                     target_bytes,
-                )))
+                ))
+                .at_transition("target content descriptor"))
             }
         };
     let old_draft = match &custody.workspace_owners {
@@ -604,7 +780,8 @@ fn replace_structural_workspaces(
                 target_plan,
                 draft_bytes,
                 target_bytes,
-            )))
+            ))
+            .at_transition("workspace predecessor"))
         }
     };
     let (lower, draft, draft_ranges): (_, DraftOwner, _) = match replace_rollover_workspace(
@@ -616,12 +793,15 @@ fn replace_structural_workspaces(
     ) {
         Ok(replaced) => replaced,
         Err(error) => {
+            let cause = structural_workspace_error_kind(&error);
             return Err(StructuralDraftCatchupFailureV1::new((
                 error,
                 custody,
                 target_plan,
                 target_bytes,
-            )))
+            ))
+            .at_transition("draft workspace replacement")
+            .with_transition_cause(Some(cause)));
         }
     };
     let owners = match &custody.workspace_owners {
@@ -638,12 +818,15 @@ fn replace_structural_workspaces(
                 ) {
                     Ok(replaced) => replaced,
                     Err(error) => {
+                        let cause = structural_workspace_error_kind(&error);
                         return Err(StructuralDraftCatchupFailureV1::new((
                             error,
                             custody,
                             draft,
                             draft_ranges,
-                        )))
+                        ))
+                        .at_transition("completion workspace replacement")
+                        .with_transition_cause(Some(cause)));
                     }
                 };
             append_workspace_ranges(
@@ -689,12 +872,15 @@ fn replace_structural_workspaces(
                 ) {
                     Ok(replaced) => replaced,
                     Err(error) => {
+                        let cause = structural_workspace_error_kind(&error);
                         return Err(StructuralDraftCatchupFailureV1::new((
                             error,
                             custody,
                             draft,
                             draft_ranges,
-                        )))
+                        ))
+                        .at_transition("speculative workspace replacement")
+                        .with_transition_cause(Some(cause)));
                     }
                 };
             append_workspace_ranges(
@@ -738,11 +924,18 @@ fn replace_structural_workspaces(
                 draft_ranges,
                 target_plan,
                 target_bytes,
-            )))
+            ))
+            .at_transition("workspace successor"))
         }
     };
     custody.workspace_owners = owners.1;
     Ok((owners.0, custody))
+}
+
+struct StructuralLowerBatchFailureV1<'a> {
+    stage: &'static str,
+    catalog: ContentBoundM1ProgramCatalogV1<'a>,
+    images: Box<[crate::M1PhysicalKernargImageV1]>,
 }
 
 #[inline(never)]
@@ -752,20 +945,35 @@ fn lower_structural_batch<'a, const N: usize>(
     images: Box<[crate::M1PhysicalKernargImageV1]>,
     bound: &[M1BoundPhysicalBufferRowV1],
     storage: &mut StructuralTransitionStorageV1,
-) -> Result<ServiceFixedBatchV1<'a, N>, Box<LowerBatchFailureV1<'a>>> {
-    if physical.rows().len() != N
-        || images.len() != N
-        || bound.len() != N
-        || !storage.packet_inputs.is_empty()
-        || storage.packet_inputs.capacity() < N
-        || storage.packet_buffers.len() != N
-        || !storage
-            .packet_buffers
-            .iter()
-            .zip(bound)
-            .all(|(buffers, row)| buffers.capacity() >= row.buffers().len())
+) -> Result<ServiceFixedBatchV1<'a, N>, Box<StructuralLowerBatchFailureV1<'a>>> {
+    let rejection = if physical.rows().len() != N {
+        Some("lowering physical row count")
+    } else if images.len() != N {
+        Some("lowering image count")
+    } else if bound.len() != N {
+        Some("lowering bound row count")
+    } else if !storage.packet_inputs.is_empty() {
+        Some("lowering packet input storage occupied")
+    } else if storage.packet_inputs.capacity() < N {
+        Some("lowering packet input capacity")
+    } else if storage.packet_buffers.len() != N {
+        Some("lowering packet buffer count")
+    } else if !storage
+        .packet_buffers
+        .iter()
+        .zip(bound)
+        .all(|(buffers, row)| buffers.capacity() >= row.buffers().len())
     {
-        return Err(Box::new(LowerBatchFailureV1 { catalog, images }));
+        Some("lowering packet buffer capacity")
+    } else {
+        None
+    };
+    if let Some(stage) = rejection {
+        return Err(Box::new(StructuralLowerBatchFailureV1 {
+            stage,
+            catalog,
+            images,
+        }));
     }
     let mut buffers = core::mem::take(&mut storage.packet_buffers).into_iter();
     for ((image, physical), bound) in images
@@ -787,7 +995,8 @@ fn lower_structural_batch<'a, const N: usize>(
         match core::mem::take(&mut storage.packet_inputs).try_into() {
             Ok(inputs) => inputs,
             Err(inputs) => {
-                return Err(Box::new(LowerBatchFailureV1 {
+                return Err(Box::new(StructuralLowerBatchFailureV1 {
+                    stage: "lowering fixed packet array",
                     catalog,
                     images: inputs
                         .into_iter()
@@ -809,15 +1018,49 @@ fn lower_structural_batch<'a, const N: usize>(
     Ok(ServiceFixedBatchV1::new(catalog.into_programs(), packets))
 }
 
+struct StructuralRolloverFailureV1<'a> {
+    stage: &'static str,
+    cause: Option<&'static str>,
+    retained: Box<dyn fmt::Debug + 'a>,
+}
+
+impl fmt::Debug for StructuralRolloverFailureV1<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.retained;
+        formatter
+            .debug_struct("StructuralRolloverFailureV1")
+            .field("stage", &self.stage)
+            .field("cause", &self.cause)
+            .field("custody_retained", &true)
+            .finish_non_exhaustive()
+    }
+}
+
 fn rollover_structural_batch<'a, const N: usize>(
     lower: ServiceQueueUnboundSessionV1,
     batch: ServiceFixedBatchV1<'a, N>,
     ring_bytes: u32,
     prior_generation: u64,
-) -> Result<(ServiceQueueSessionV1<N>, M1QueueRolloverObservationV1), Box<dyn fmt::Debug + 'a>> {
+) -> Result<(ServiceQueueSessionV1<N>, M1QueueRolloverObservationV1), StructuralRolloverFailureV1<'a>>
+{
     let rollover = match lower.rollover(ring_bytes, batch) {
         Ok(rollover) => rollover,
-        Err(error) => return Err(Box::new(error)),
+        Err(error) => {
+            let stage = match &error {
+                fe2o3_service_host::ServiceQueueRolloverFailureV1::Rejected { .. } => {
+                    "queue rollover rejected"
+                }
+                fe2o3_service_host::ServiceQueueRolloverFailureV1::Terminal { .. } => {
+                    "queue rollover terminal"
+                }
+            };
+            let cause = Some(structural_service_error_kind(error.error()));
+            return Err(StructuralRolloverFailureV1 {
+                stage,
+                cause,
+                retained: Box::new(error),
+            });
+        }
     };
     let observation = M1QueueRolloverObservationV1::new(
         rollover.previous_queue_destroyed(),
@@ -829,11 +1072,11 @@ fn rollover_structural_batch<'a, const N: usize>(
         || observation.previous_dispatch_generation() != prior_generation
         || prior_generation.checked_add(1) != Some(observation.replacement_dispatch_generation())
     {
-        return Err(Box::new((
-            "structural rollover generation",
-            rollover,
-            observation,
-        )));
+        return Err(StructuralRolloverFailureV1 {
+            stage: "structural rollover generation",
+            cause: None,
+            retained: Box::new((rollover, observation)),
+        });
     }
     Ok((rollover.into_queue(), observation))
 }
@@ -1326,7 +1569,7 @@ fn submit_structural_restore_case<'a, const N: usize>(
         StructuralSavedBindingsV1,
         M1QueueRolloverObservationV1,
     ),
-    M1LongLivedQueueRearmSubmissionFailureV1<'a>,
+    StructuralSubmissionFailureV1<'a>,
 > {
     let StructuralTransitionPartsV1 {
         lower,
@@ -1344,8 +1587,9 @@ fn submit_structural_restore_case<'a, const N: usize>(
     ) {
         Ok(batch) => batch,
         Err(error) => {
-            return Err(submission_failure(
+            return Err(StructuralSubmissionFailureV1::new(
                 M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                error.stage,
                 (
                     error.catalog,
                     error.images,
@@ -1362,19 +1606,25 @@ fn submit_structural_restore_case<'a, const N: usize>(
         match rollover_structural_batch(lower, batch, ring_bytes, predecessor_generation) {
             Ok(rolled) => rolled,
             Err(error) => {
-                return Err(submission_failure(
+                let cause = error.cause;
+                return Err(StructuralSubmissionFailureV1::new(
                     M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                    error.stage,
                     (error, custody, step, saved, slot),
-                ))
+                )
+                .with_cause(cause));
             }
         };
     let lower = match lower.submit() {
         Ok(lower) => lower,
         Err(error) => {
-            return Err(submission_failure(
+            let cause = structural_service_error_kind(error.error());
+            return Err(StructuralSubmissionFailureV1::new(
                 M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                "restore queue publication",
                 (error, custody, step, saved, observation, slot),
-            ))
+            )
+            .with_cause(Some(cause)));
         }
     };
     let case = Box::write(
@@ -1394,15 +1644,16 @@ pub(crate) fn submit_structural_restore_v1<'a>(
     catalog: ContentBoundM1ProgramCatalogV1<'a>,
     ring_bytes: u32,
     storage: &mut StructuralTransitionStorageV1,
-) -> Result<M1RearmedPublishedQueueV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+) -> Result<M1RearmedPublishedQueueV1, StructuralSubmissionFailureV1<'a>> {
     if storage.entering
         || !storage.has_restore_phase()
         || prepared.custody.catalog_id() != catalog.catalog_id()
         || prepared.carry.structural_maintenance.is_some()
         || prepared.carry.previous_epoch != prepared.restore.completed.completion_epoch()
     {
-        return Err(submission_failure(
+        return Err(StructuralSubmissionFailureV1::new(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            "restore submission preflight",
             (prepared, recipe, catalog),
         ));
     }
@@ -1433,9 +1684,9 @@ pub(crate) fn submit_structural_restore_v1<'a>(
     ) {
         Ok(transition) => transition,
         Err(error) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
-                (error, carry, completed, initialized, entered, catalog),
+            return Err(StructuralSubmissionFailureV1::transition(
+                error,
+                (carry, completed, initialized, entered, catalog),
             ))
         }
     };
@@ -1484,12 +1735,7 @@ pub(crate) fn submit_structural_restore_v1<'a>(
     };
     let (queue, saved, rollover) = match result {
         Ok(result) => result,
-        Err(error) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
-                (error, carry, completed, initialized, entered),
-            ))
-        }
+        Err(error) => return Err(error.retain_with((carry, completed, initialized, entered))),
     };
     carry.rollover = Some(rollover);
     carry.structural_maintenance = Some(StructuralDraftCatchupRestoreCustodyV1 {
@@ -1513,21 +1759,34 @@ pub(crate) fn submit_structural_draft_catchup_v1<'a>(
     authorized: &M1StructuralDraftCatchupPendingV1,
     ring_bytes: u32,
     storage: &mut StructuralTransitionStorageV1,
-) -> Result<StructuralDraftCatchupPublishedV1, M1LongLivedQueueRearmSubmissionFailureV1<'a>> {
+) -> Result<StructuralDraftCatchupPublishedV1, StructuralSubmissionFailureV1<'a>> {
     let M1PreparedLongLivedQueueRearmV1 {
         prepared,
         remainder,
     } = prepared;
-    if !storage.entering
-        || remainder.queue.custody().catalog_id() != catalog.catalog_id()
-        || remainder.queue.custody().selection() != authorized.parent()
-        || remainder.selected.len() != 1
-        || remainder.selected[0].projection().request != authorized.request()
-        || remainder.prior_checked.epoch() != authorized.prior_epoch()
-        || remainder.prior_checked.dispatch_generation() != authorized.prior_dispatch_generation()
+    let rejection = if !storage.entering {
+        Some("maintenance submission direction")
+    } else if remainder.queue.custody().catalog_id() != catalog.catalog_id() {
+        Some("maintenance submission catalog")
+    } else if remainder.queue.custody().selection() != authorized.parent() {
+        Some("maintenance submission parent")
+    } else if remainder.selected.len() != 1 {
+        Some("maintenance submission member count")
+    } else if remainder.selected[0].projection().request != authorized.request() {
+        Some("maintenance submission request")
+    } else if remainder.prior_checked.epoch() != authorized.prior_epoch() {
+        Some("maintenance submission prior epoch")
+    } else if remainder.prior_checked.dispatch_generation()
+        != authorized.prior_dispatch_generation()
     {
-        return Err(submission_failure(
+        Some("maintenance submission prior generation")
+    } else {
+        None
+    };
+    if let Some(stage) = rejection {
+        return Err(StructuralSubmissionFailureV1::new(
             M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+            stage,
             (prepared, remainder, recipe, catalog),
         ));
     }
@@ -1565,9 +1824,9 @@ pub(crate) fn submit_structural_draft_catchup_v1<'a>(
     ) {
         Ok(transition) => transition,
         Err(error) => {
-            return Err(submission_failure(
-                M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
-                (error, carry, catalog),
+            return Err(StructuralSubmissionFailureV1::transition(
+                error,
+                (carry, catalog),
             ))
         }
     };
@@ -1587,8 +1846,9 @@ pub(crate) fn submit_structural_draft_catchup_v1<'a>(
     ) {
         Ok(batch) => batch,
         Err(error) => {
-            return Err(submission_failure(
+            return Err(StructuralSubmissionFailureV1::new(
                 M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                error.stage,
                 (
                     error.catalog,
                     error.images,
@@ -1609,10 +1869,13 @@ pub(crate) fn submit_structural_draft_catchup_v1<'a>(
     ) {
         Ok(rolled) => rolled,
         Err(error) => {
-            return Err(submission_failure(
+            let cause = error.cause;
+            return Err(StructuralSubmissionFailureV1::new(
                 M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                error.stage,
                 (error, custody, step, carry, saved),
-            ))
+            )
+            .with_cause(cause));
         }
     };
     let custody = M1PhysicalQueueBatchCustodyV1::from_rearm_parts(custody);
@@ -1621,10 +1884,16 @@ pub(crate) fn submit_structural_draft_catchup_v1<'a>(
     ) {
         Ok(published) => published,
         Err(error) => {
-            return Err(submission_failure(
+            let (stage, cause) = error.publication_diagnostic().unwrap_or((
+                "maintenance queue publication",
+                "unspecified publication failure",
+            ));
+            return Err(StructuralSubmissionFailureV1::new(
                 M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                stage,
                 (error, carry, saved, entered),
-            ))
+            )
+            .with_cause(Some(cause)));
         }
     };
     Ok(StructuralDraftCatchupPublishedV1 {
@@ -1923,6 +2192,8 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
             let diagnostic = error.diagnostic();
             return Err(StructuralDraftCatchupFailureV1 {
                 diagnostic,
+                transition_stage: None,
+                transition_cause: None,
                 retained: Box::new((error, plans)),
             });
         }
@@ -1934,6 +2205,115 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn structural_submission_diagnostic_preserves_inner_stage_and_all_custody() {
+        use std::sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        };
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("submission custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        let drops = Arc::new(AtomicUsize::new(0));
+        let transition = StructuralDraftCatchupFailureV1::new(Retained(Arc::clone(&drops)))
+            .at_transition("completion workspace replacement")
+            .with_transition_cause(Some("allocation generation"));
+        let failure =
+            StructuralSubmissionFailureV1::transition(transition, Retained(Arc::clone(&drops)))
+                .retain_with(Retained(Arc::clone(&drops)));
+        assert_eq!(
+            failure.diagnostic(),
+            StructuralSubmissionDiagnosticV1 {
+                phase: M1LongLivedQueueRearmSubmissionPhaseV1::WorkspaceRangeRebinding,
+                stage: "completion workspace replacement",
+                cause: Some("allocation generation"),
+            }
+        );
+        assert_eq!(failure.retained.phase(), failure.diagnostic().phase);
+        let text = format!("{failure:?}");
+        assert!(text.len() < 1024);
+        assert!(text.contains("WorkspaceRangeRebinding"));
+        assert!(text.contains("completion workspace replacement"));
+        assert!(text.contains("allocation generation"));
+        assert_eq!(drops.load(Ordering::SeqCst), 0);
+        drop(failure);
+        assert_eq!(drops.load(Ordering::SeqCst), 3);
+    }
+
+    #[test]
+    fn structural_submission_diagnostic_does_not_retag_restore_failures() {
+        for (phase, stage) in [
+            (
+                M1LongLivedQueueRearmSubmissionPhaseV1::Preflight,
+                "restore submission preflight",
+            ),
+            (
+                M1LongLivedQueueRearmSubmissionPhaseV1::FixedBatchRebuild,
+                "lowering image count",
+            ),
+            (
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueRollover,
+                "queue rollover rejected",
+            ),
+            (
+                M1LongLivedQueueRearmSubmissionPhaseV1::QueueSubmit,
+                "restore queue publication",
+            ),
+        ] {
+            let failure = StructuralSubmissionFailureV1::new(phase, stage, ())
+                .with_cause(Some("allocation sublease binding"));
+            let expected = failure.diagnostic();
+            let failure = failure.retain_with(());
+            assert_eq!(failure.diagnostic(), expected);
+            assert_eq!(failure.retained.phase(), phase);
+        }
+    }
+
+    #[test]
+    fn structural_submission_service_diagnostic_copies_only_error_kind() {
+        use fe2o3_service_host::{
+            ServiceAllocationErrorV1 as Allocation, ServiceQueueErrorV1 as Queue,
+        };
+        for (error, expected) in [
+            (
+                Allocation::AllocationGenerationMismatch,
+                "allocation generation",
+            ),
+            (
+                Allocation::ByteCapacity {
+                    maximum_bytes: u64::MAX,
+                },
+                "allocation byte capacity",
+            ),
+            (
+                Allocation::SubleaseBindingMismatch,
+                "allocation sublease binding",
+            ),
+            (Allocation::OwnerBindingMismatch, "allocation owner binding"),
+            (
+                Allocation::AllocationAlreadyPartitioned,
+                "allocation already partitioned",
+            ),
+        ] {
+            assert_eq!(
+                structural_service_error_kind(&Queue::Allocation(error)),
+                expected
+            );
+        }
+        assert_eq!(
+            structural_service_error_kind(&Queue::BatchContract("device content descriptor")),
+            "device content descriptor"
+        );
+    }
 
     #[test]
     fn structural_catchup_diagnostic_never_formats_or_drops_retained_custody() {

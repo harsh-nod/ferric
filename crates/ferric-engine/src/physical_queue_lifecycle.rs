@@ -5609,26 +5609,43 @@ pub(crate) struct M1StructuralDraftCatchupPublishedV1 {
     case: M1PhysicalQueuePhaseCaseV1<ServicePublishedQueueSessionV1<425>>,
 }
 
-#[derive(Debug)]
 pub(crate) struct M1StructuralDraftCatchupQueueFailureV1 {
+    publication: Option<(&'static str, &'static str)>,
     retained: Box<dyn fmt::Debug>,
 }
 
 impl M1StructuralDraftCatchupQueueFailureV1 {
     fn new(retained: impl fmt::Debug + 'static) -> Self {
         Self {
+            publication: None,
             retained: Box::new(retained),
         }
+    }
+
+    fn at_publication(mut self, stage: &'static str, cause: &'static str) -> Self {
+        self.publication = Some((stage, cause));
+        self
+    }
+
+    pub(crate) const fn publication_diagnostic(&self) -> Option<(&'static str, &'static str)> {
+        self.publication
+    }
+}
+
+impl fmt::Debug for M1StructuralDraftCatchupQueueFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.retained;
+        formatter
+            .debug_struct("M1StructuralDraftCatchupQueueFailureV1")
+            .field("publication", &self.publication)
+            .field("custody_retained", &true)
+            .finish_non_exhaustive()
     }
 }
 
 impl fmt::Display for M1StructuralDraftCatchupQueueFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "structural draft catch-up retains failed custody: {:?}",
-            self.retained
-        )
+        fmt::Debug::fmt(self, formatter)
     }
 }
 
@@ -5669,24 +5686,45 @@ pub(crate) fn publish_m1_structural_draft_catchup_v1(
     step: M1PrepublicationStepCustodyV1,
 ) -> Result<M1StructuralDraftCatchupPublishedV1, M1StructuralDraftCatchupQueueFailureV1> {
     let parent = custody.selection();
-    if custody.completion_output().draft_catchup_parent_selection() != Some(parent)
-        || crate::authenticated_physical_readback::check_draft_catchup_step_binding(parent, &step)
-            .is_err()
-    {
+    if custody.completion_output().draft_catchup_parent_selection() != Some(parent) {
         return Err(M1StructuralDraftCatchupQueueFailureV1::new((
             "maintenance publication binding",
             lower,
             custody,
             step,
-        )));
+        ))
+        .at_publication("maintenance publication binding", "completion parent"));
+    }
+    if let Err(error) =
+        crate::authenticated_physical_readback::check_draft_catchup_step_binding(parent, &step)
+    {
+        let cause = match &error {
+            crate::M1CompletedOutputCheckErrorV1::PlanSelectionDrift { .. } => {
+                "step plan selection"
+            }
+            crate::M1CompletedOutputCheckErrorV1::RequestOrderDrift { .. } => "step request order",
+            crate::M1CompletedOutputCheckErrorV1::PlanEpochDrift { .. } => "step plan epoch",
+            _ => "step draft catchup custody",
+        };
+        return Err(
+            M1StructuralDraftCatchupQueueFailureV1::new((error, lower, custody, step))
+                .at_publication("maintenance publication binding", cause),
+        );
     }
     match lower.submit() {
         Ok(lower) => Ok(M1StructuralDraftCatchupPublishedV1 {
             case: M1PhysicalQueuePhaseCaseV1::new(lower, custody, step),
         }),
-        Err(error) => Err(M1StructuralDraftCatchupQueueFailureV1::new((
-            error, custody, step,
-        ))),
+        Err(error) => {
+            let cause =
+                crate::m1_queue_rearm::structural_draft_catchup::structural_service_error_kind(
+                    error.error(),
+                );
+            Err(
+                M1StructuralDraftCatchupQueueFailureV1::new((error, custody, step))
+                    .at_publication("maintenance lower submit", cause),
+            )
+        }
     }
 }
 
@@ -7735,6 +7773,51 @@ fn operation_failure_with_completion_progress(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn structural_publication_diagnostic_distinguishes_binding_and_submit_without_dropping_custody()
+    {
+        use super::M1StructuralDraftCatchupQueueFailureV1;
+        use std::{
+            fmt,
+            sync::{
+                atomic::{AtomicUsize, Ordering},
+                Arc,
+            },
+        };
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("publication custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        for (stage, cause) in [
+            ("maintenance publication binding", "completion parent"),
+            (
+                "maintenance publication binding",
+                "step draft catchup custody",
+            ),
+            ("maintenance lower submit", "allocation generation"),
+        ] {
+            let drops = Arc::new(AtomicUsize::new(0));
+            let failure = M1StructuralDraftCatchupQueueFailureV1::new(Retained(Arc::clone(&drops)))
+                .at_publication(stage, cause);
+            assert_eq!(failure.publication_diagnostic(), Some((stage, cause)));
+            for text in [format!("{failure:?}"), format!("{failure}")] {
+                assert!(text.len() < 1024);
+                assert!(text.contains(stage));
+                assert!(text.contains(cause));
+            }
+            assert_eq!(drops.load(Ordering::SeqCst), 0);
+            drop(failure);
+            assert_eq!(drops.load(Ordering::SeqCst), 1);
+        }
+    }
+
     use super::{
         checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
         read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
