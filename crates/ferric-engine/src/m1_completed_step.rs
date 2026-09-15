@@ -448,6 +448,10 @@ impl M1CompletedStepTeardownFailureV1 {
 }
 
 impl M1CompletedStepSuccessV1 {
+    pub(crate) fn members_mut(&mut self) -> &mut [M1CompletedDeviceKvMemberV1] {
+        &mut self.members
+    }
+
     pub const fn queue(&self) -> &M1PhysicalReadbackQueueSessionV1 {
         &self.queue
     }
@@ -1140,6 +1144,10 @@ impl M1AuthenticatedCompletedStepTeardownFailureV1 {
 }
 
 impl M1AuthenticatedCompletedStepSuccessV1 {
+    pub(crate) fn members_mut(&mut self) -> &mut [M1CompletedDeviceKvMemberV1] {
+        &mut self.members
+    }
+
     /// Authenticated post-readback queue with no scheduler step attached.
     #[must_use = "authenticated queue custody remains retained"]
     pub const fn queue(&self) -> &M1AuthenticatedPhysicalReadbackQueueSessionV1 {

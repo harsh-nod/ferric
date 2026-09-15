@@ -51,7 +51,9 @@ use ferric_build::{
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::paged_kv_refinement::{
-    commit_initialized_draft_catchup_kv, initialize_draft_catchup_kv, PhysicalKvCatchupCommitError,
+    commit_initialized_draft_catchup_kv, initialize_draft_catchup_kv,
+    preflight_retired_page_metadata_batch_v1, PhysicalKvCatchupCommitError,
+    PhysicalKvRetiredPageMetadataV1, PhysicalKvRetirementMetadataBatchV1,
 };
 use ferric_spec::{
     append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
@@ -5204,6 +5206,41 @@ struct RoleDeviceKvCache {
 }
 
 impl RoleDeviceKvCache {
+    fn preflight_retirement_metadata(
+        &mut self,
+        request: RequestId,
+        role: Qwen3ModelRole,
+    ) -> Result<PhysicalKvRetirementMetadataBatchV1<'_>, DeviceKvCacheError> {
+        if self.retired_pages.len() > M1_KV_PHYSICAL_PAGE_SLOTS {
+            return Err(DeviceKvCacheError::Physical(
+                PhysicalKvError::PageOutOfRange,
+            ));
+        }
+        let mut pages = [PhysicalKvRetiredPageMetadataV1 {
+            page: PhysicalPageId::new(role, 0, 0),
+            after_epoch: CompletionEpoch::new(0),
+        }; M1_KV_PHYSICAL_PAGE_SLOTS];
+        for (destination, retired) in pages.iter_mut().zip(&self.retired_pages) {
+            if !retired.is_quiescent() {
+                return Err(DeviceKvCacheError::UnsettledPriorRetirement);
+            }
+            if retired.lease().request() != request {
+                return Err(DeviceKvCacheError::WrongRequest);
+            }
+            *destination = PhysicalKvRetiredPageMetadataV1 {
+                page: retired.lease().page(),
+                after_epoch: retired.after_epoch(),
+            };
+        }
+        preflight_retired_page_metadata_batch_v1(
+            &mut self.physical,
+            request,
+            role,
+            &pages[..self.retired_pages.len()],
+        )
+        .map_err(DeviceKvCacheError::Physical)
+    }
+
     fn new(request: RequestId, selection: Qwen3PlanSelection) -> Result<Self, DeviceKvCacheError> {
         let physical = PhysicalKvState::new(request, selection)?;
         Ok(Self::from_physical(physical))
@@ -5261,6 +5298,29 @@ fn quiescent_reselection_pair_is_valid(
 }
 
 impl DeviceKvCacheCommon {
+    fn preflight_retirement_metadata(
+        &mut self,
+    ) -> Result<[PhysicalKvRetirementMetadataBatchV1<'_>; 2], (Qwen3ModelRole, DeviceKvCacheError)>
+    {
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            if self.role(role).pending.is_some() {
+                return Err((role, DeviceKvCacheError::PendingWriteExists));
+            }
+            if !Self::owned_table_matches(self.role(role)) {
+                return Err((role, DeviceKvCacheError::OwnedPageTableDrift));
+            }
+        }
+        let draft = self
+            .draft
+            .preflight_retirement_metadata(self.request, Qwen3ModelRole::Draft06B)
+            .map_err(|error| (Qwen3ModelRole::Draft06B, error))?;
+        let target = self
+            .target
+            .preflight_retirement_metadata(self.request, Qwen3ModelRole::Target8B)
+            .map_err(|error| (Qwen3ModelRole::Target8B, error))?;
+        Ok([draft, target])
+    }
+
     fn projection(&self) -> DeviceKvCacheProjection {
         DeviceKvCacheProjection {
             device: self.device,
@@ -5439,6 +5499,13 @@ pub struct ActiveDeviceKvCache {
 }
 
 impl ActiveDeviceKvCache {
+    pub(crate) fn preflight_retirement_metadata(
+        &mut self,
+    ) -> Result<[PhysicalKvRetirementMetadataBatchV1<'_>; 2], (Qwen3ModelRole, DeviceKvCacheError)>
+    {
+        self.common.preflight_retirement_metadata()
+    }
+
     /// Creates empty isolated target and draft page tables.
     ///
     /// # Errors
@@ -7528,6 +7595,13 @@ pub struct SettledQuiescentDeviceKvCache {
 }
 
 impl SettledQuiescentDeviceKvCache {
+    pub(crate) fn preflight_retirement_metadata(
+        &mut self,
+    ) -> Result<[PhysicalKvRetirementMetadataBatchV1<'_>; 2], (Qwen3ModelRole, DeviceKvCacheError)>
+    {
+        self.common.preflight_retirement_metadata()
+    }
+
     #[must_use]
     pub fn projection(&self) -> DeviceKvCacheProjection {
         self.common.projection()
@@ -10887,6 +10961,10 @@ mod tests {
             .unwrap();
         assert!(active.release_state_is_valid());
 
+        for batch in active.preflight_retirement_metadata().unwrap() {
+            batch.commit();
+        }
+
         let returned = active.take_retired_pages(Qwen3ModelRole::Target8B);
         assert_eq!(returned.len(), 1);
         assert_eq!(returned[0].lease().page().index(), 1);
@@ -10895,6 +10973,195 @@ mod tests {
         assert_eq!(projection.target_active_pages, 1);
         assert_eq!(projection.target_retired_pages, 0);
         assert_eq!(projection.target_arena_allocation_id, Some(identity(51)));
+        assert_eq!(active.common.target.physical.page_generation(1), Some(2));
+        let stale = lease(Qwen3ModelRole::Target8B, 1, 51);
+        let failure = active.append_page(request(), stale).unwrap_err();
+        assert_eq!(
+            failure.error(),
+            DeviceKvCacheError::Physical(PhysicalKvError::PageGenerationMismatch)
+        );
+        let next = DeviceKvPageLease::from_contracted_gfx942_allocation(
+            device(),
+            identity(51),
+            request(),
+            PhysicalPageId::new(Qwen3ModelRole::Target8B, 1, 2),
+        )
+        .unwrap();
+        active.append_page(request(), next).unwrap();
+    }
+
+    fn retirement_metadata_cache(request: RequestId) -> ActiveDeviceKvCache {
+        let mut active = cache_for(
+            request,
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        for (role, allocation_tag) in [
+            (Qwen3ModelRole::Draft06B, 71),
+            (Qwen3ModelRole::Target8B, 72),
+        ] {
+            for index in 0..10 {
+                let page = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                    device(),
+                    identity(allocation_tag),
+                    request,
+                    PhysicalPageId::new(role, index, 1),
+                )
+                .unwrap();
+                active.append_page(request, page).unwrap();
+                let start = index * M1_KV_PAGE_TOKENS;
+                for position in start..(start + M1_KV_PAGE_TOKENS).min(145) {
+                    let pending = active
+                        .prepare_write(request, role, position, CompletionEpoch::new(10))
+                        .unwrap();
+                    let initialized = complete(pending, 10).unwrap();
+                    active.apply_initialized_write(initialized).unwrap();
+                }
+            }
+            active.accept_initialized(request, role, 142).unwrap();
+            for _ in 0..3 {
+                active
+                    .rollback_one(request, role, CompletionEpoch::new(10))
+                    .unwrap();
+            }
+        }
+        let (_, completion) = active
+            .settle_retired_epoch(ExactCompletion::from_contracted_hsa_quiescence(
+                CompletionEpoch::new(10),
+            ))
+            .unwrap();
+        assert_eq!(completion.epoch(), CompletionEpoch::new(10));
+        active
+    }
+
+    #[test]
+    fn retirement_metadata_observed_142_to_147_reuses_pool_and_cache_generations() {
+        let mut active = retirement_metadata_cache(request());
+        let mut pool = [M1KvPoolPageStateV1::Leased {
+            request: request(),
+            generation: 1,
+        }; 2];
+        let mut tickets = Vec::new();
+        for (index, role) in M1_KV_PAGE_RETURN_ROLE_ORDER_V1.into_iter().enumerate() {
+            let retired = &active.retired_pages(role)[0];
+            assert_eq!(retired.lease().page().index(), 9);
+            assert_eq!(retired.lease().page().generation(), 1);
+            let ticket = preflight_page_return_identity(
+                device(),
+                retired.lease().allocation_id,
+                role,
+                Some(pool[index]),
+                9,
+                request(),
+                retired.lease(),
+            )
+            .unwrap();
+            tickets.push(ticket);
+        }
+        for batch in active.preflight_retirement_metadata().unwrap() {
+            batch.commit();
+        }
+        for ((index, role), ticket) in M1_KV_PAGE_RETURN_ROLE_ORDER_V1
+            .into_iter()
+            .enumerate()
+            .zip(tickets)
+        {
+            let retired = active.take_retired_pages(role).pop().unwrap();
+            let allocation = retired.lease().allocation_id;
+            commit_page_return_state(&mut pool[index], ticket, retired.into_lease());
+            assert_eq!(pool[index], M1KvPoolPageStateV1::Free { generation: 2 });
+            assert_eq!(
+                active.common.role(role).physical.page_generation(9),
+                Some(2)
+            );
+            let width = if role == Qwen3ModelRole::Target8B {
+                5
+            } else {
+                4
+            };
+            let stale = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                device(),
+                allocation,
+                request(),
+                PhysicalPageId::new(role, 9, 1),
+            )
+            .unwrap();
+            let before = format!("{:?}", active.common.role(role));
+            let failure = active
+                .reserve_step_write(
+                    request(),
+                    role,
+                    142,
+                    width,
+                    CompletionEpoch::new(11),
+                    vec![stale],
+                )
+                .unwrap_err();
+            assert_eq!(
+                failure.error(),
+                DeviceKvCacheError::Physical(PhysicalKvError::PageGenerationMismatch)
+            );
+            assert_eq!(format!("{:?}", active.common.role(role)), before);
+            let next = DeviceKvPageLease::from_contracted_gfx942_allocation(
+                device(),
+                allocation,
+                request(),
+                PhysicalPageId::new(role, 9, 2),
+            )
+            .unwrap();
+            let reservation = active
+                .reserve_step_write(
+                    request(),
+                    role,
+                    142,
+                    width,
+                    CompletionEpoch::new(11),
+                    vec![next],
+                )
+                .unwrap();
+            assert_eq!(
+                active.common.role(role).physical.page_generation(9),
+                Some(2)
+            );
+            assert!(active.common.role(role).pending.is_some());
+            drop(reservation);
+        }
+    }
+
+    #[test]
+    fn retirement_metadata_late_member_failure_preserves_all_roles_and_owners() {
+        for hostile in 0..4 {
+            let first = retirement_metadata_cache(RequestId::new(0, 1));
+            let mut last = retirement_metadata_cache(RequestId::new(1, 1));
+            match hostile {
+                0 => {
+                    last.common.target.retired_pages[0].lease.page =
+                        PhysicalPageId::new(Qwen3ModelRole::Target8B, 9, 2)
+                }
+                1 => last.common.target.retired_pages[0].after_epoch = CompletionEpoch::new(11),
+                2 => last.common.target.retired_pages[0].quiescent = false,
+                3 => last.common.target.retired_pages[0].lease.request = RequestId::new(1, 2),
+                _ => unreachable!(),
+            }
+            let mut members = vec![
+                crate::M1CompletedDeviceKvMemberV1::Active(first),
+                crate::M1CompletedDeviceKvMemberV1::Active(last),
+            ];
+            let before = format!("{members:?}");
+            let error = crate::m1_completed_step_release::preflight_and_commit_retirement_metadata(
+                &mut members,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                crate::M1CompletedStepKvReleaseErrorV1::CacheRetirementMetadata {
+                    lane: 1,
+                    role: Qwen3ModelRole::Target8B,
+                    ..
+                }
+            ));
+            assert_eq!(format!("{members:?}"), before);
+        }
     }
 
     #[test]
@@ -10914,6 +11181,11 @@ mod tests {
             .unwrap();
         let (mut settled, _completion) = quiescent.into_threaded_parts();
         assert!(settled.release_state_is_valid());
+        for batch in settled.preflight_retirement_metadata().unwrap() {
+            batch.commit();
+        }
+        assert_eq!(settled.common.target.physical.page_generation(0), Some(2));
+        assert_eq!(settled.common.draft.physical.page_generation(0), Some(2));
 
         let draft = settled.take_retired_pages(Qwen3ModelRole::Draft06B);
         let target = settled.take_retired_pages(Qwen3ModelRole::Target8B);

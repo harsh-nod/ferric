@@ -61,6 +61,12 @@ pub enum M1CompletedStepKvReleaseErrorV1 {
     ExternallyPublishedCount { lane: usize },
     /// One cache is pending, structurally inconsistent, or in the wrong lifecycle.
     CacheState { lane: usize, role: Qwen3ModelRole },
+    /// Retired cache-local slot metadata disagrees with the checked lease roster.
+    CacheRetirementMetadata {
+        lane: usize,
+        role: Qwen3ModelRole,
+        source: crate::DeviceKvCacheError,
+    },
     /// One cache belongs to a different physical device.
     CacheDevice { lane: usize },
     /// One cache arena identity differs from the queue-retained role owner.
@@ -1200,6 +1206,7 @@ trait M1CompletedStepKvReleaseCarrierV1: Sized {
     fn queue(&self) -> &Self::Queue;
     fn checked(&self) -> &M1CheckedCompletionOutputV1;
     fn members(&self) -> &[M1CompletedDeviceKvMemberV1];
+    fn members_mut(&mut self) -> &mut [M1CompletedDeviceKvMemberV1];
     fn logical_accepted_counts(&self) -> &[u32];
     fn externally_published_counts(&self) -> &[u32];
     fn completed_members(&self) -> usize;
@@ -1230,6 +1237,10 @@ impl M1CompletedStepKvReleaseCarrierV1 for M1CompletedStepSuccessV1 {
 
     fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
         M1CompletedStepSuccessV1::members(self)
+    }
+
+    fn members_mut(&mut self) -> &mut [M1CompletedDeviceKvMemberV1] {
+        M1CompletedStepSuccessV1::members_mut(self)
     }
 
     fn logical_accepted_counts(&self) -> &[u32] {
@@ -1272,6 +1283,10 @@ impl M1CompletedStepKvReleaseCarrierV1 for M1AuthenticatedCompletedStepSuccessV1
 
     fn members(&self) -> &[M1CompletedDeviceKvMemberV1] {
         M1AuthenticatedCompletedStepSuccessV1::members(self)
+    }
+
+    fn members_mut(&mut self) -> &mut [M1CompletedDeviceKvMemberV1] {
+        M1AuthenticatedCompletedStepSuccessV1::members_mut(self)
     }
 
     fn logical_accepted_counts(&self) -> &[u32] {
@@ -1648,6 +1663,32 @@ where
     Ok(plans)
 }
 
+pub(crate) fn preflight_and_commit_retirement_metadata(
+    members: &mut [M1CompletedDeviceKvMemberV1],
+) -> Result<(), M1CompletedStepKvReleaseErrorV1> {
+    let mut batches = Vec::new();
+    batches
+        .try_reserve_exact(members.len())
+        .map_err(|_| M1CompletedStepKvReleaseErrorV1::HostAllocation)?;
+    for (lane, member) in members.iter_mut().enumerate() {
+        let batch = match member {
+            M1CompletedDeviceKvMemberV1::Active(cache) => cache.preflight_retirement_metadata(),
+            M1CompletedDeviceKvMemberV1::Quiescent(cache) => cache.preflight_retirement_metadata(),
+        }
+        .map_err(|(role, source)| {
+            M1CompletedStepKvReleaseErrorV1::CacheRetirementMetadata { lane, role, source }
+        })?;
+        batches.push(batch);
+    }
+    // Every state stays exclusively borrowed until the complete roster passes.
+    // No allocation or fallible operation follows the first commit.
+    for [draft, target] in batches {
+        draft.commit();
+        target.commit();
+    }
+    Ok(())
+}
+
 fn commit_role<Q>(
     queue: &mut Q,
     members: &mut [M1CompletedDeviceKvMemberV1],
@@ -1688,7 +1729,7 @@ struct M1CompletedStepKvReleaseCoreFailureV1<C> {
 }
 
 fn release_m1_completed_step_kv_pages_core_v1<C>(
-    completed: C,
+    mut completed: C,
     scratch: M1CompletedStepKvReleaseScratchV1,
 ) -> Result<M1ReleasedCompletedStepCoreV1<C::Queue>, Box<M1CompletedStepKvReleaseCoreFailureV1<C>>>
 where
@@ -1731,6 +1772,14 @@ where
     }
     release_counts.extend(plans.iter().map(|plan| plan.counts));
     let total_released = release_counts.iter().map(|counts| counts.total()).sum();
+    let release_counts = release_counts.into_boxed_slice();
+
+    if let Err(error) = preflight_and_commit_retirement_metadata(completed.members_mut()) {
+        return Err(Box::new(M1CompletedStepKvReleaseCoreFailureV1 {
+            error,
+            completed,
+        }));
+    }
 
     let (
         mut queue,
@@ -1770,7 +1819,7 @@ where
         members: released_members,
         logical_accepted_counts,
         externally_published_counts,
-        release_counts: release_counts.into_boxed_slice(),
+        release_counts,
         completed_members,
         total_released,
     })
@@ -1864,6 +1913,41 @@ pub(crate) fn release_m1_authenticated_completed_step_kv_pages_with_scratch_v1(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn retirement_metadata_commit_follows_joined_pool_and_allocation_preflight() {
+        let source = include_str!("m1_completed_step_release.rs");
+        let body = source
+            .split("fn release_m1_completed_step_kv_pages_core_v1<C>(")
+            .nth(1)
+            .unwrap()
+            .split("fn release_m1_completed_step_kv_pages_with_storage_v1")
+            .next()
+            .unwrap();
+        let pool = body.find("preflight_all(&completed, plans, seen)").unwrap();
+        let allocation = body
+            .find("release_counts.try_reserve_exact(member_count)")
+            .unwrap();
+        let boxing = body
+            .find("let release_counts = release_counts.into_boxed_slice()")
+            .unwrap();
+        let metadata = body
+            .find("preflight_and_commit_retirement_metadata(completed.members_mut())")
+            .unwrap();
+        let split = body.find("completed.into_release_parts()").unwrap();
+        let release = body
+            .find("commit_role(&mut queue, &mut members, &mut plans, role)")
+            .unwrap();
+        assert!(
+            pool < allocation
+                && allocation < boxing
+                && boxing < metadata
+                && metadata < split
+                && split < release
+        );
+        assert!(!body[metadata..release].contains("try_reserve"));
+        assert!(!body[metadata..release].contains("into_boxed_slice"));
+    }
     use crate::device_cache::test_support::bind_gfx942_device;
     use ferric_spec::{Identity, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection};
 
