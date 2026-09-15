@@ -12,15 +12,18 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The local compiler candidate is now `9c2e5fb4`, rebased onto newly observed
-upstream `ad78fa54`. All twelve patches are unchanged by range-diff; the tip's
+The local compiler candidate is now `e3c359fb`, rebased onto newly observed
+upstream `2585ce64`. All twelve patches are unchanged by range-diff; the tip's
 message additionally contains `[skip ci]` under the user's explicit instruction
 to skip GitHub CI for this push and keep all builds on mi300x. The message-only
-amendment preserves tree `e0639c5f54e0342754ee27c17514738ed32b0b43`.
-The new upstream adds internal scalar-helper-result LLVM struct lowering; its
-R11 remote delta checks are pending. The candidate is not pushed. Its source
+message is preserved by the rebase. The current tree is
+`1590682689fa240ebd0d10ccf63b488008c794f4`.
+The new upstream adds internal scalar-helper-result LLVM struct lowering,
+integer wrapping and launch-index fixes, a test-only simulator dependency and
+regression module separation. R12 remote delta checks are being prepared;
+the earlier source9c2e R11 controls were never launched. The candidate is not pushed. Its source
 archive SHA-256 is
-`a35dd084636d036ebce4a368fe3c57a43e2e6c402e19c5ede6bf710b0c0ab413`.
+`f0e6c827c1743a292b7c76a1b289f16fe0ca41328d3d8bf56bdc911cc8ea3689`.
 
 Previous compiler `12845295` on `48323569` has all twelve patches unchanged
 from `86ccc2a5` by range-diff. That exact predecessor passes its
@@ -258,8 +261,15 @@ Prepared R8 proof controls were never launched; their R9 successor targets the
 corrected source and started only after host completion and full local retention.
 R9 has transitioned the dedicated proof source from 74 to 47 with exact six-file
 checks; the other 1,139 source files, dependencies and verifier closure match.
-Its nine selected actual-body proofs are running; no new proof pass is claimed.
-Actual-body negative execution and higher-level composition remain pending.
+All nine selected actual-body proofs now pass: each has one verified exec
+query, zero errors and nonzero SMT work. Source, all 284 genuine dependency
+artifacts, verifier closure and predecessor evidence remain exact. Full R9
+evidence is retained locally and independently hash-checked at
+`9edd3b9ecbdb8587a22f2ba26a673b040e624514d9d6c4f56e679baab1aacab8`.
+The six actual-body R10 negative checks are running on mi300x. The first two
+wrong-role/wrong-index preflight cases have checked postcondition failures and
+exact restoration; no complete negative-campaign result is claimed yet.
+Higher-level composition remains pending.
 Before R2, exact retained-artifact cleanup removed the obsolete R1 test
 executable and thirteen retired source archives, reclaiming 179,180 KiB on
 mi300x. All fourteen have checked local byte retention; current sources,
@@ -277,9 +287,9 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | New `9c2e5fb4` is rebased on `ad78fa54` with unchanged patches and the approved CI-skip message. Predecessor `12845295` passes all 14 retained R10 host phases; no result is relabeled. | R11 affected-delta validation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Compiler / Kernels | New `e3c359fb` is rebased on `2585ce64` with unchanged patches and the approved CI-skip message. Predecessor `12845295` passes all 14 retained R10 host phases; no result is relabeled. | R12 affected-delta validation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
 | Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Corrected ledger candidate `47d07cee` passes all eight host phases, 726 tests and strict engine/spec Clippy; full evidence is retained after read-only recovery from an SSH interruption. | Complete exact-source proof and negative gates before integration; idle selected GPU for native R6. |
-| Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. All seven index negatives now pass with full evidence retained. | Verify actual ledger composition and negative mutations, then higher-level/native composition. |
+| Verification | Nine actual source47 helper bodies pass retained R9 proofs, including both ledger-composition helpers. Earlier six metadata positives, 24 negatives, selected-page lemma and seven index negatives remain retained. | Complete six actual ledger-body negatives, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
@@ -289,9 +299,16 @@ and 20 policy/source/TCB files. The complete workspace census covers 42 manifest
 and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
 
-The user also authorized `mi350-2` for native validation. A read-only hardware,
-occupancy and compatibility inventory is in progress; no artifact has been
-retargeted and no native launch has occurred there. All builds remain on mi300x.
+The user also authorized `mi350-2` for native validation. Read-only inventory
+finds one physical MI350X/gfx950 (unique ID `10294934887855545115`), not eight;
+the additional render nodes are XCP auxiliary devices. At 23:06:37 UTC it had
+zero utilization but foreign UID12634/PID862305 held three KFD queues and about
+17.7 GiB VRAM, so it was not admitted as unused. Existing gfx950 admission in
+both latest fe2o3 and Ferric's older pin accepts kernel `6.8.0-124-generic`, but
+this host reports `5.18.2-mi300-build-140423-ubuntu-22.04+`. A separately reviewed
+platform/UAPI admission is needed; changing an accepted string is insufficient.
+Exact model/artifact inputs were not found at the known paths. No artifact has
+been retargeted, copied or launched there. All builds remain on mi300x.
 
 After R7 retention, the completed clean proof74 worktree was removed, reclaiming
 44,496 KiB locally; its branch, source archives and proof evidence remain.
