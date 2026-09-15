@@ -12,9 +12,18 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The local compiler candidate is now `12845295`, rebased onto observed upstream
-`48323569`. All twelve local patches are unchanged by range-diff from the
-previous `86ccc2a5` candidate; the worktree is clean. This candidate passes its
+The local compiler candidate is now `9c2e5fb4`, rebased onto newly observed
+upstream `ad78fa54`. All twelve patches are unchanged by range-diff; the tip's
+message additionally contains `[skip ci]` under the user's explicit instruction
+to skip GitHub CI for this push and keep all builds on mi300x. The message-only
+amendment preserves tree `e0639c5f54e0342754ee27c17514738ed32b0b43`.
+The new upstream adds internal scalar-helper-result LLVM struct lowering; its
+R11 remote delta checks are pending. The candidate is not pushed. Its source
+archive SHA-256 is
+`a35dd084636d036ebce4a368fe3c57a43e2e6c402e19c5ede6bf710b0c0ab413`.
+
+Previous compiler `12845295` on `48323569` has all twelve patches unchanged
+from `86ccc2a5` by range-diff. That exact predecessor passes its
 14-phase R10 remote host delta campaign and has not been pushed. Full source,
 raw results and identity checks are retained locally at archive SHA-256
 `b3cfc86c7c0c6d7c858b4751d8d0a9197a77cb663c67a46cd028f6ce3e9cfaaa`.
@@ -32,8 +41,10 @@ archive SHA-256
 `b530f254a2a0f26b25be7ee85ad471b73db8cd4cbf9b8fe147f1a59aa0220528`.
 This is a delta host campaign, not a rerun of all predecessor suites or a new
 release-tool/emission result. No push has occurred; a fresh upstream check is
-required before pushing. Clarification is pending on whether the existing
-GitHub-hosted push CI is allowed under the mi300x-only build restriction.
+required before pushing. The user explicitly requires GitHub CI to be skipped
+for this push. Actual remote API checks currently report main unprotected and
+no applicable branch rules; no workflow, protection or check-status changes
+have been made. The skip marker affects push/PR triggers, not other event types.
 Upstream `48323569` adds immutable-slice helper lowering. R10 passes backend,
 AMDGPU and lowerer phases, their fresh artifact checks and paired BF16 exports
 for semantic wire versions 11 and 15. The actual
@@ -231,15 +242,24 @@ bounds-checked slice index, without a lint exception or contract change.
 Independent review found equivalent behavior and error ordering; remote
 formatting matches. Its fresh host R2 run passed all eight source-before checks,
 formatting, locked metadata, compilation and both exact ledger regressions.
-The root SSH session then ended with transport exit 255 (server not responding)
-during the full engine suite. The remote campaign's terminal and source-after
-states are unknown; this is neither a host pass nor an observed test failure.
-Strict Clippy completion was not observed. No blind rerun or proof-source
-transition is authorized while the original run may remain live. Strict Verus
-and actual-body negative execution are pending. Its source archive SHA-256 is
+The root SSH session ended with transport exit 255 during the full engine suite,
+and two reconnect attempts initially failed. Connectivity subsequently returned;
+read-only recovery found the original campaign terminal at exit 0 with all owned
+groups absent. No rerun was performed. All eight host phases pass, including
+726 engine tests with nine ignores and strict all-target engine/spec Clippy.
+All sixteen source before/after checks and aggregate equality pass. Full source,
+raw phases and the exact newly built test executable are retained locally at
+checked archive SHA-256
+`4e49bda4a4fd73e09aec4feedafb57a152bbb567f3cf8c2ce477d5d2706276fd`.
+The earlier efa test cohort and failure remain separately labeled. Its source
+archive SHA-256 is
 `6670dd515627fa70c32a6e41aa2d38d51605dace5842a0d15ec3841d631523e3`.
 Prepared R8 proof controls were never launched; their R9 successor targets the
-corrected source and must wait for the new host run and evidence retention.
+corrected source and started only after host completion and full local retention.
+R9 has transitioned the dedicated proof source from 74 to 47 with exact six-file
+checks; the other 1,139 source files, dependencies and verifier closure match.
+Its nine selected actual-body proofs are running; no new proof pass is claimed.
+Actual-body negative execution and higher-level composition remain pending.
 Before R2, exact retained-artifact cleanup removed the obsolete R1 test
 executable and thirteen retired source archives, reclaiming 179,180 KiB on
 mi300x. All fourteen have checked local byte retention; current sources,
@@ -257,8 +277,8 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `12845295` is rebased on observed `48323569`, with all 12 patches unchanged. All 14 R10 host phases pass and are retained; older R9 and frozen e0 results retain their identities. | Fresh upstream check and push-CI clarification; release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Ledger candidate `efa069bd` passes 726 tests but fails Clippy; corrected `47d07cee` passes two targeted tests, then SSH drops during the full suite. Remote terminal state is unknown. | Recover owned-run terminal evidence before any rerun or proof transition; exact-source host/proof gates and idle selected GPU for native R6. |
+| Compiler / Kernels | New `9c2e5fb4` is rebased on `ad78fa54` with unchanged patches and the approved CI-skip message. Predecessor `12845295` passes all 14 retained R10 host phases; no result is relabeled. | R11 affected-delta validation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Corrected ledger candidate `47d07cee` passes all eight host phases, 726 tests and strict engine/spec Clippy; full evidence is retained after read-only recovery from an SSH interruption. | Complete exact-source proof and negative gates before integration; idle selected GPU for native R6. |
 | Verification | Six metadata positives and 24 negatives retained; selected-page lemma, six actual engine helpers and global-index core pass scoped proof. All seven index negatives now pass with full evidence retained. | Verify actual ledger composition and negative mutations, then higher-level/native composition. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
@@ -268,6 +288,10 @@ refresh is still required across 80 pin-bearing files: 30 manifests, 30 locks
 and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
 and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
+
+The user also authorized `mi350-2` for native validation. A read-only hardware,
+occupancy and compatibility inventory is in progress; no artifact has been
+retargeted and no native launch has occurred there. All builds remain on mi300x.
 
 After R7 retention, the completed clean proof74 worktree was removed, reclaiming
 44,496 KiB locally; its branch, source archives and proof evidence remain.
