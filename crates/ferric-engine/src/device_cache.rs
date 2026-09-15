@@ -10727,10 +10727,10 @@ mod tests {
                 generation: 2,
             };
             let leased = ledger.clone();
-            assert_eq!(
+            assert!(matches!(
                 new_window_page_generation_snapshot_from_ledger(&ledger, successor),
                 Err(M1DeviceKvArenaLeaseErrorV1::PageAlreadyLeased)
-            );
+            ));
             assert_eq!(ledger, leased);
             let before = cache.projection();
             let stale = DeviceKvPageLease::from_contracted_gfx942_allocation(
