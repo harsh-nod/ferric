@@ -5,25 +5,39 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-Private integration `32eae300d05c47c80d61d0f4d8a2e9cfb0238ddb`, tree
-`c615fb25331a8597f72ecba0d980f5b778edd4a1`, includes the reviewed repeated
-structural speculative loop. All sixteen runtime-changed files are byte-equal
-to tested candidate `9421a6a8`. That exact candidate passes the complete engine
-package: 706 library tests with nine existing ignores, separate binary cohorts,
-and 171 doctests. The adapter passes 109 library tests with one existing ignore,
-12 speculative CLI tests, 37 source-policy tests and strict all-target Clippy;
-engine strict all-target Clippy also passes. Final source checks cover all
-1,145 files and 205 directories before and after execution. These are host
-results, not repeated GPU execution or proof of the full-acceptance path.
+Private runtime integration `dfb4c5140b9c50ad936e27f1850541043135130b`, tree
+`b3da45f59cb9f346078c20daa5ce6bff0735eaf9`, passes 707 engine library tests
+with nine existing ignores, separate binary cohorts of 11, 2, 84 (two existing
+ignores), and 2 tests, plus 171 doctests and strict all-target engine Clippy.
+All 32 locked/offline graphs, three dependency TCB comparisons, the retained
+source-gate tool's complete source/hash checks and raw body inventory pass.
+Before/after source checks cover all 1,145 files and 205 directories. The
+retained evidence archive has SHA-256
+`f6aedb5d76b2fa5f5661834c548d2dc7a780035de6430f1adb8f782059256d2c`.
+The unchanged adapter retains its earlier 9421a6a8 results: 109 library tests
+with one existing ignore, 12 speculative CLI tests, 37 source-policy tests
+and strict all-target Clippy. These are host results, not repeated GPU
+execution or proof of the full-acceptance path.
 
-The combined 32e metadata gate passes all 32 locked/offline graphs, three
-purpose-specific metadata captures, the retained source-gate tool's complete
-source/hash checks and all three dependency TCB comparisons. Its actual body
-inventory stops at a new statement-form `unreachable!` in
-`settle_structural_draft_catchup_v1`. A scoped owner-retaining error correction
-is being prepared; the parser is not relaxed. Fresh body inventory, combined
-host tests and native repeated rounds remain pending. The older coverage
-counts below do not cover this combined source.
+The earlier combined `32eae300` inventory rejected a new statement-form
+`unreachable!` in `settle_structural_draft_catchup_v1`. The dfb correction
+replaces it and two reservation assumptions with explicit errors retaining
+the actual pending reservation, completion and other owned resources. The
+parser is unchanged; the new test checks source/error-tuple shape, not a
+fabricated native completion. Both the original rejection and successor
+passing evidence are retained.
+
+Ledger-only successor `0a93387cc078619757d3de6488cb137544ed74f0` adds 83
+structural runtime and nine all-case R29 comparator bodies as pending-Verus,
+removes the obsolete `require_selected_case` row, and preserves all 7,741
+surviving full rows verbatim. The ledger now has 7,833 unverified bodies:
+7,645 pending-Verus and 188 excluded-presentation. Exact 0a passes fresh
+metadata/TCB checks, coverage generation and the generated candidate's
+self-check: 177 modules and 8,557 bodies, with all 724 existing verified rows
+unchanged. The generated coverage is integrated in this checkpoint; final
+committed-source equality remains to be checked. No proof or qualification
+status is upgraded. The coverage evidence archive has SHA-256
+`14280d3c014afd90641e88c7c54c90259dc6f5c0e527757879b2170bd12c6922`.
 
 The kernel/integration lane now has a separate, unvalidated MFMA strategy
 candidate. It retains the legacy twelve-program scalar catalog and adds an
@@ -33,26 +47,42 @@ joins. New tests cover all fifteen complete step intents plus three catch-up
 intents, exact kernarg and native weight-buffer layouts, and rejection of
 mixed strategies/artifacts. Explicit engineering MFMA input/capture commands
 record the selected route; they grant no qualification authority. Remote
-formatting passes, but this combined candidate has not passed a compile/test
-gate or produced a device image. Its normal `fe2o3-hsaco` dependency edge also
-requires a fresh dependency-inventory check.
+formatting passes. The first exact `7e84909f` compile check, with a complete
+unpublished fe2o3 `b86d7749` dependency overlay and isolated target/cache,
+rejects an opaque expression macro in the MFMA root before compiling the
+engine or adapter. Correction `0e3f77c5` exposes the same 108 admitted shape
+tuples as plain Boolean expressions, with an independent host-oracle
+comparison over literal-boundary partitions. Its retry compiles the aggregate
+device crate, then finds a missing strategy argument in engine operation-plan
+validation. The two-line forwarding correction `ce2d3c1f` is awaiting its
+compile retry. No MFMA device image exists yet. Source-gate commit `8fc15929` admits the exact
+new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
+is still required.
 
-A fresh upstream fetch finds fe2o3
-`125e75807e9ca1d5226967dd9cbbce4051e05361`, five commits beyond 0fe. The delta
-is in kernel analysis and Pliron pipeline verification, with no KFD/runtime
-or device source changes. The column-major BF16 MFMA compiler candidate must
-be rebased and revalidated before push; no candidate commit has been pushed.
-Ferric integration still pins 4f6. Prior pristine 0fe compiler emission produced
-and independently inspected a twelve-entry COV6 image, but is not a validation
-of this newer upstream or the thirteen-entry MFMA candidate.
+Fresh fe2o3 upstream is `bf30fe9fc24ad5d81042f9217e3be0b0d1182a47`, six
+commits beyond 0fe, in kernel analysis and Pliron pipeline verification with
+no KFD/runtime or device source changes. The column-major BF16 MFMA candidate
+is now rebased as `a9a72c41f8353f88df32aab6f7863b8c4c28668b`, with all eight
+candidate commits unchanged by range-diff. It is not yet revalidated and no
+candidate commit has been pushed. Ferric integration still pins 4f6. Prior
+pristine 0fe emission produced an independently inspected twelve-entry COV6
+image, not a validation of this newer upstream or thirteen-entry candidate.
 
 Compiler candidate host cohorts have passed, including 107 device, 87 MIR,
 156 lowering and 545 backend library tests at their recorded candidate sources.
 Strict backend Clippy remains failing. A separate pristine baseline attempt
 encountered cross-source cached metadata before reaching Clippy, so no baseline
-lint equivalence is claimed. The next compiler execution requires explicit
-cache freshness/invalidation; the first Ferric MFMA compile check will use an
-isolated target and an explicitly recorded candidate dependency graph.
+lint equivalence is claimed. Exact first-party fingerprint invalidation was
+completed and archived, followed by a fresh b86 rebuild: all 69 first-party
+artifact records across 63 packages have `fresh=false` and current-source
+manifest identities. The actual paired storage export first rejects a
+redundant lane-varying fixture guard. Fixture-only correction `eec1d434`
+removes that guard while retaining exact launch geometry and checked tail
+writes. Its successor export reaches the real two-phase reduction loop but
+rejects unresolved loop-branch uniformity. Both failures occur in the first
+row-major case, before testing the column-major case. General loop analysis
+is being investigated; the reduction loop and convergence rejection policy
+are not bypassed.
 
 The Pages checkpoint `5fe89b3e` is deployed; its seven live assets match the
 validated bytes. Its isolated worktree and 82,380 KiB remote stage are removed.
