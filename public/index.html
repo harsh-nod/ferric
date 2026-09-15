@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Ferric project status, architecture, capabilities, and M1 qualification progress."
+    />
+    <meta name="theme-color" content="#111917" />
+    <title>Ferric | Project status</title>
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="data/project.js"></script>
+    <script defer src="data/performance.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="wordmark" href="#overview" aria-label="Ferric project status home">
+          <img src="assets/mark.svg" width="28" height="28" alt="" />
+          <span>Ferric</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="#capabilities">Capabilities</a>
+          <a href="#validation">Validation</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#teams">Teams</a>
+          <a href="#performance">Performance</a>
+          <a href="#evidence">Evidence</a>
+        </nav>
+        <a class="repo-link" data-repository href="https://github.com/harsh-nod/ferric">
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="overview band" id="overview" aria-labelledby="overview-title">
+        <div class="shell overview-grid">
+          <div class="overview-copy">
+            <div class="section-label">Proof-carrying LLM inference</div>
+            <h1 id="overview-title">Ferric</h1>
+            <p class="lede">
+              A Rust inference engine building an authority-bound path from authenticated model
+              inputs to Ferric-owned Qwen kernels and fe2o3's direct-KFD runtime. Qwen3-8B runs
+              on eight MI350 GPUs with chunked prefill, paged attention, and resident radix reuse.
+              Bounded resident JSONL and loopback HTTP are implemented in private source;
+              separate wave-attention / v11 and same-binary C1-layer profiles have admitted
+              finite context8192 HTTP measurements.
+              The retained vLLM reference is substantially faster. Standalone draft execution and an
+              independent paged-draft FP32 reference pass; end-to-end speculative serving,
+              SGLang measurements, sustained-load and protected qualification remain open.
+            </p>
+            <div class="milestone-line">
+              <span class="status-dot" data-milestone-dot aria-hidden="true"></span>
+              <strong data-milestone-name>M1</strong>
+              <span data-milestone-label>Qwen3 speculative inference on one gfx942</span>
+            </div>
+            <p class="milestone-summary" data-milestone-summary>
+              Current project data requires JavaScript.
+            </p>
+          </div>
+
+          <aside class="readiness" aria-labelledby="readiness-title">
+            <div class="panel-heading">
+              <h2 id="readiness-title">Current readiness</h2>
+              <time data-updated datetime="2026-09-15">Updated 2026-09-15</time>
+            </div>
+            <div class="readiness-list" data-readiness></div>
+          </aside>
+        </div>
+
+        <div class="shell envelope" aria-label="M1 declared envelope">
+          <div class="envelope-title">Declared M1 envelope</div>
+          <dl data-envelope></dl>
+        </div>
+      </section>
+
+      <section class="band performance-band" id="resident-progress" aria-labelledby="resident-progress-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">September 15 checkpoint</div>
+              <h2 id="resident-progress-title">Authenticated resident serving</h2>
+            </div>
+            <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
+          </div>
+          <div data-resident-progress></div>
+        </div>
+      </section>
+
+      <section class="band performance-band" id="attention-progress" aria-labelledby="attention-progress-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Earlier engineering checkpoint</div>
+              <h2 id="attention-progress-title">Attention attribution and validation</h2>
+            </div>
+            <p>Host attribution, finite-input fixtures and a small native comparison. Not an HTTP serving benchmark.</p>
+          </div>
+          <div data-attention-progress></div>
+          <div data-submission-progress></div>
+        </div>
+      </section>
+
+      <section class="band performance-band" id="performance" aria-labelledby="performance-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Measured engineering progress</div>
+              <h2 id="performance-title">Qwen3-8B measurements</h2>
+            </div>
+            <p>New context8192 live HTTP cohorts, the retained first matched cell, then earlier fixed-workload observations. Not production-serving qualification.</p>
+          </div>
+          <div data-live-http-progress></div>
+          <div data-performance></div>
+        </div>
+      </section>
+
+      <section class="band capabilities-band" id="capabilities" aria-labelledby="capabilities-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Functional surface</div>
+              <h2 id="capabilities-title">What Ferric can do now</h2>
+            </div>
+            <p>
+              Support is exact-configuration specific. An admitted path never implies a
+              fallback or silent generalization.
+            </p>
+          </div>
+          <div class="capability-layout" data-capabilities></div>
+        </div>
+      </section>
+
+      <section class="band validation-band" id="validation" aria-labelledby="validation-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Validation boundary</div>
+              <h2 id="validation-title">Host checks, proofs, and hardware are separate</h2>
+            </div>
+            <p>
+              Every result keeps its source and environment. A scoped proof-release pass does
+              not establish GPU execution, Qwen correctness, performance, or M1 qualification.
+            </p>
+          </div>
+
+          <div class="validation-layout" data-validation></div>
+
+          <div class="transition-heading">
+            <div>
+              <div class="section-label">Production catalog</div>
+              <h3>Exact native rollover transitions</h3>
+            </div>
+            <p>Anything not listed here remains fail-closed.</p>
+          </div>
+          <div class="transition-table-wrap">
+            <table class="transition-table">
+              <caption class="visually-hidden">
+                Exact host-validated production rollover transitions
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Completed plan</th>
+                  <th scope="col">Successor plan</th>
+                  <th scope="col">State</th>
+                </tr>
+              </thead>
+              <tbody data-transitions></tbody>
+            </table>
+          </div>
+          <p class="transition-limit" data-transition-limitation></p>
+        </div>
+      </section>
+
+      <section class="band architecture-band" id="architecture" aria-labelledby="architecture-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Ownership boundary</div>
+              <h2 id="architecture-title">One production path, two repositories</h2>
+            </div>
+            <p>
+              Ferric owns inference semantics and kernels. fe2o3 supplies the reusable compiler
+              and direct-KFD runtime.
+            </p>
+          </div>
+          <figure class="architecture-figure">
+            <img
+              src="assets/architecture.svg"
+              alt="Ferric pipeline from authenticated model bundle through planning, Ferric kernels, fe2o3 compiler and runtime, to a gfx942 device."
+              width="1200"
+              height="420"
+            />
+            <figcaption>
+              The boundary is deliberate: model and inference work stays in Ferric; generic
+              compiler and runtime work stays in fe2o3.
+            </figcaption>
+          </figure>
+          <div class="boundary-grid" data-boundaries></div>
+        </div>
+      </section>
+
+      <section class="band teams-band" id="teams" aria-labelledby="teams-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Parallel execution</div>
+              <h2 id="teams-title">M1 team ledger</h2>
+            </div>
+            <p>
+              Each team reports completed work, its active task, concrete dependencies, the next
+              deliverable, and the latest validation boundary.
+            </p>
+          </div>
+          <h3>Current parallel checkpoint</h3>
+          <div data-live-c1-checkpoint></div>
+          <h3>Retained C1 native diagnostic and integer proof</h3>
+          <div data-c1-checkpoint></div>
+          <h3>Retained HTTP and kernel checkpoints</h3>
+          <div class="team-grid" data-live-http-teams></div>
+          <div data-residual-diagnostic></div>
+          <h3>Earlier team records</h3>
+          <div class="team-grid" data-teams></div>
+        </div>
+      </section>
+
+      <section class="band progress-band" id="progress" aria-labelledby="progress-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <div class="section-label">Live engineering record</div>
+              <h2 id="progress-title">M1 progress</h2>
+            </div>
+            <p>
+              Recent checkpoints are source-bound. Hardware observations retain their exact,
+              narrower authority.
+            </p>
+          </div>
+          <section class="tp-observations" data-tp-observations></section>
+          <article class="observation" data-observation></article>
+          <ol class="timeline" data-progress></ol>
+        </div>
+      </section>
+
+      <section class="band evidence-band" id="evidence" aria-labelledby="evidence-title">
+        <div class="shell evidence-grid">
+          <div>
+            <div class="section-label">Assurance posture</div>
+            <h2 id="evidence-title">A smoke pass is not qualification</h2>
+            <p class="evidence-summary" data-evidence-summary></p>
+            <div class="authority-legend" data-authority-legend></div>
+          </div>
+          <div class="gate-panel">
+            <div class="panel-heading">
+              <h3>M1 closure roster</h3>
+              <span class="state-tag state-open">Open</span>
+            </div>
+            <div class="gate-list" data-gates></div>
+            <p class="gate-note">
+              Counts describe required closure products, not a percent-complete calculation.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="band next-band" aria-labelledby="next-title">
+        <div class="shell next-layout">
+          <div>
+            <div class="section-label">Next engineering checkpoint</div>
+            <h2 id="next-title">Validate each performance change end to end</h2>
+          </div>
+          <p>
+            Next: qualify the larger-KV and ordered-dispatch model paths, broaden measurements,
+            and profile the slow peer-transport runs. Repeat standalone and cumulative profiles with
+            the strict checker before assigning gains. Broaden prompts, output lengths, and
+            concurrency before matched vLLM/SGLang comparisons. Production serving still needs
+            protected authority and qualification. The following production-path evidence is
+            historical and is not the source of the new TP8 performance table.
+
+            Historical private integration eb219f0, tree 046029d, pins all 15 active compiler/runtime locks to
+            published public fe2o3 0ea54ed with no registry drift. The earlier a8 repin changed
+            only three TCB records while four remained byte-exact. This historical checkpoint
+            retains the production owner,
+            resident allocation repair, K3 work-proportional KV-write, verified 63e SHA-256
+            full-block updates, and 6ef opt-in engineering startup diagnostics. The diagnostics are
+            off by default, stderr-only, and do not change stdout JSON or controller timing. The SHA path passed 296 Verus queries
+            with 0 errors, 143 release tests, and seven byte-exact records. Its 1 MiB microbenchmark
+            improved 1.115x to 1.119x, while 63/65-byte cases regressed 0.49% to 1.53%; no
+            end-to-end gain is claimed.
+            The production-used same-shape core measures 0 allocations and 0 reallocations for one
+            round and repeated 16-round execution; a positive control confirms allocator counting.
+            The prior host matrix passes 636 engine tests with 9 hardware ignores plus 171 doctests.
+            Integrated engine check, strict Clippy, and focused allocation validation also pass.
+            This is scoped host evidence, not a claim that the entire externally authorized public
+            entry is allocation-free. No accepted authenticated 20-window run exists.
+
+            The exact canonical Qwen3-8B target, Qwen3-0.6B draft, tokenizer, weights, and numerical
+            input bundle is prepared. The current target-only run completed 32/32 generated tokens
+            on MI300X GPU 3 with status 0 and hardware completion true. All 32 token IDs match both
+            frozen Hugging Face/PyTorch reference passes for the single prompt "The capital of France is".
+            Exact runtime host a6a3f2e used aggregate d33933a emitted from Ferric source 9392755;
+            later integration eb219f0 is not the runtime source. Observation SHA-256 is
+            d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.
+            Diagnostic TTFT was 13.442289487s and mean post-first gap was 2.769104887645161s over
+            31 gaps. Last-token offset was 99.284541004s and controller duration was 100.370762336s.
+            Setup was 246.065540159s: CPU/KFD preparation 82.938930765s plus
+            initialization/allocation/upload 163.126609394s. Whole-process wall was 346.46s.
+            TTFT excludes setup. Startup uses std::Instant while the controller uses MONOTONIC_RAW;
+            cross-clock sums are approximate. These boundaries are not serving latency.
+            Authority is none and benchmark_comparable=false.
+            The r33_tpot_eligible=true field reflects arithmetic cardinality only, not R33 authority.
+
+            The earlier corrected-layout observation remains historical: 8/8 coherent tokens as
+            " Paris. The capital of Italy is Rome", 13.649661699s TTFT,
+            2.7656050044 seconds per post-first token, and 34.094s controller duration.
+            The older 14.36s TTFT and approximately 3.05s TPOT observation used the wrong GEMM layout
+            and is invalid and noncomparable. None of these runs is a controlled K3 speedup comparison.
+            Authenticated R33 still needs the external supervisor/current-record/verifier/model/artifact authority bundle.
+
+            Ferric owns its model-specific kernels and inference semantics, and writes those kernels
+            through fe2o3's Rust-to-KIR-to-LLVM compiler path. The historical compiler here was
+            0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71, tree
+            15f49dde796fe9cbf76274f7d36c7de4c25fef68, confirmed September 9.
+            The matching engineering aggregate emitted all 12 kernels with 26 GuardedStore operations
+            and exact replay: content ID d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40,
+            HSACO SHA-256 33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d,
+            and handoff SHA-256 5d40961ec2fd365835867251330072674bdf16dc48a18c4c2bc446bcd60f28b8.
+            This CPU-only emission opened no GPU and grants no publication, load, or launch authority.
+            The earlier 428 host plus aggregate 528 pre-device probe completed in 98.23 seconds after
+            KFD admission and topology enumeration; it excludes initialize_memory, HBM upload, and dispatch.
+            An independent public-0ea descriptor probe hashed 97.313 GiB in 58.133 seconds and also excludes GPU work.
+
+            Combined host checks at a6a3f2e passed formatting, 10 speculative tests, 17 target tests
+            with one real-GPU test ignored, 20 source-policy tests, strict Clippy, both smoke builds,
+            and 36 source-gate tests. All seven generated records matched, retaining 171 modules and
+            8,207 executable bodies; the 712-record source closure was unchanged.
+            Integrated planner policy at eb219f0 passed 354 deterministic slots and the hostile
+            pin, source, path, publication, topology, and closure-output suite.
+            These scoped checks are not a full Verus rerun or a protected M1 receipt.
+
+            Frozen qualifier source bb50d0e passed the complete developer qualifier: all 10 positive proof packages
+            with 1,586 queries, 0 errors, and 694 bodies, negative actual-body semantic mutations,
+            workspace quality/runtime checks, 197/197 receipt-file hash checks, and a 711-record source-closure check.
+            Receipt SHA-256 c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b
+            excludes all later 63e/6ef/0ea/eb219f0 changes and protected promotion planner/test policy.
+            Protected infrastructure is absent and all 33 M1 exit gates remain open. Implemented loopback
+            HTTP is not a qualified deployed serving endpoint. There is no authenticated A/B,
+            production TTFT/TPOT, vLLM/SGLang baseline, comparable benchmark,
+            protected M1 qualification receipt, or production authority.
+          </p>
+          <a href="https://github.com/harsh-nod/ferric/blob/main/docs/ROADMAP.md" data-roadmap-link>
+            Read the full roadmap <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-inner">
+        <div class="footer-brand">
+          <img src="assets/mark.svg" width="22" height="22" alt="" />
+          <strong>Ferric</strong>
+        </div>
+        <p>Exact configuration. Explicit authority. No fallback path.</p>
+        <a data-repository href="https://github.com/harsh-nod/ferric">Source repository</a>
+      </div>
+    </footer>
+
+    <noscript>
+      <div class="noscript">Enable JavaScript to load the current structured project status.</div>
+    </noscript>
+  </body>
+</html>

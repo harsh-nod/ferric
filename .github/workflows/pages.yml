@@ -1,0 +1,97 @@
+name: pages-prebuilt
+
+on:
+  push:
+    branches:
+      - pages/prebuilt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'harsh-nod/ferric' && github.ref == 'refs/heads/pages/prebuilt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out exact prebuilt revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Authenticate the admitted static artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          test "$GITHUB_REPOSITORY" = harsh-nod/ferric
+          test "$GITHUB_REF" = refs/heads/pages/prebuilt
+          test -d public
+          test ! -L public
+          test -d public/assets
+          test ! -L public/assets
+          test -d public/data
+          test ! -L public/data
+
+          files=(
+            app.js
+            assets/architecture.svg
+            assets/mark.svg
+            data/performance.js
+            data/project.js
+            index.html
+            styles.css
+          )
+          diff -u <(printf '%s\n' "${files[@]}") \
+            <(find public -type f -printf '%P\n' | sort)
+          test -z "$(find public ! -type d ! -type f -print -quit)"
+          test "$(find public -type d -printf '.\n' | wc -l)" -eq 3
+          diff -u \
+            <(printf '%s\n' .github/workflows/pages.yml; printf 'public/%s\n' "${files[@]}") \
+            <(git ls-files | sort)
+
+          total=0
+          for file in "${files[@]}"; do
+            test -f "public/$file"
+            test ! -L "public/$file"
+            test "$(stat -c %h "public/$file")" -eq 1
+            total=$((total + $(stat -c %s "public/$file")))
+          done
+          test "$total" -eq 595623
+          test "$total" -le 2097152
+
+          # mi300x QA archive: a3a2c8b221822c6a95dfe6db3234d9f3e7294ab79806e821ec7c25564bbcf296
+          sha256sum --check --strict <<'SHA256'
+          d9c9e863beacdd3c8df340e31936bdd69e1175877844f47cea4ee83d2a7e3859  public/app.js
+          07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
+          5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
+          05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
+          cf367cfc8d810d7e6de6abb87b5afbbbff02e92d3e9e8749c82debe0e600eed6  public/data/project.js
+          84927238616d4858c0308c95e10ce1c7063d928216e1e4cc28005a65ffb25c93  public/index.html
+          cf1a0f46a4c7db01a1a14c530e3ba145b497e9ab312dbf5fbe35272930d7f8ea  public/styles.css
+          SHA256
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload admitted static files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
