@@ -1,9 +1,74 @@
 # M1 Team Progress
 
-Updated: 2026-09-14 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-15 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
-## Latest Integration
+## Current Checkpoint
+
+Private integration `32eae300d05c47c80d61d0f4d8a2e9cfb0238ddb`, tree
+`c615fb25331a8597f72ecba0d980f5b778edd4a1`, includes the reviewed repeated
+structural speculative loop. All sixteen runtime-changed files are byte-equal
+to tested candidate `9421a6a8`. That exact candidate passes the complete engine
+package: 706 library tests with nine existing ignores, separate binary cohorts,
+and 171 doctests. The adapter passes 109 library tests with one existing ignore,
+12 speculative CLI tests, 37 source-policy tests and strict all-target Clippy;
+engine strict all-target Clippy also passes. Final source checks cover all
+1,145 files and 205 directories before and after execution. These are host
+results, not repeated GPU execution or proof of the full-acceptance path.
+
+The combined 32e metadata gate passes all 32 locked/offline graphs, three
+purpose-specific metadata captures, the retained source-gate tool's complete
+source/hash checks and all three dependency TCB comparisons. Its actual body
+inventory stops at a new statement-form `unreachable!` in
+`settle_structural_draft_catchup_v1`. A scoped owner-retaining error correction
+is being prepared; the parser is not relaxed. Fresh body inventory, combined
+host tests and native repeated rounds remain pending. The older coverage
+counts below do not cover this combined source.
+
+The kernel/integration lane now has a separate, unvalidated MFMA strategy
+candidate. It retains the legacy twelve-program scalar catalog and adds an
+explicit thirteen-program attributed catalog. Strategy and executable-catalog
+identity are checked through runner, operation plan, dispatch and packet
+joins. New tests cover all fifteen complete step intents plus three catch-up
+intents, exact kernarg and native weight-buffer layouts, and rejection of
+mixed strategies/artifacts. Explicit engineering MFMA input/capture commands
+record the selected route; they grant no qualification authority. Remote
+formatting passes, but this combined candidate has not passed a compile/test
+gate or produced a device image. Its normal `fe2o3-hsaco` dependency edge also
+requires a fresh dependency-inventory check.
+
+A fresh upstream fetch finds fe2o3
+`125e75807e9ca1d5226967dd9cbbce4051e05361`, five commits beyond 0fe. The delta
+is in kernel analysis and Pliron pipeline verification, with no KFD/runtime
+or device source changes. The column-major BF16 MFMA compiler candidate must
+be rebased and revalidated before push; no candidate commit has been pushed.
+Ferric integration still pins 4f6. Prior pristine 0fe compiler emission produced
+and independently inspected a twelve-entry COV6 image, but is not a validation
+of this newer upstream or the thirteen-entry MFMA candidate.
+
+Compiler candidate host cohorts have passed, including 107 device, 87 MIR,
+156 lowering and 545 backend library tests at their recorded candidate sources.
+Strict backend Clippy remains failing. A separate pristine baseline attempt
+encountered cross-source cached metadata before reaching Clippy, so no baseline
+lint equivalence is claimed. The next compiler execution requires explicit
+cache freshness/invalidation; the first Ferric MFMA compile check will use an
+isolated target and an explicitly recorded candidate dependency graph.
+
+The Pages checkpoint `5fe89b3e` is deployed; its seven live assets match the
+validated bytes. Its isolated worktree and 82,380 KiB remote stage are removed.
+The completed runtime worktree is removed after integration/evidence checks.
+Further reviewed cleanup reclaims 1,675,048 KiB of obsolete runtime artifacts,
+578,572 KiB of completed review scratch, and 503,972 KiB of completed compiler
+trybuild output. Current source, tools, models, caches and active dependencies
+are retained; compiled trybuild cache bytes were explicitly discarded, not
+claimed archived.
+
+There are no new GPU, numerical-acceptance, Verus, or matched performance
+results at this checkpoint. All 33 M1 gates remain open. The next hardware
+priorities are a current-compiler aggregate, repeated K4 execution including
+natural full acceptance, and the remaining numerical cases.
+
+## Earlier Integration
 
 Production checkpoint `8113e2314b2e030f93bc27d1281b4caee7e66216`, tree
 `b5e3c150a42de4467e8fd9169d16ea4a7bc78ba9`, combines the engineering numerical

@@ -451,7 +451,24 @@ pub(crate) fn settle_structural_draft_catchup_v1<const C: usize>(
             )),
         }));
     }
-    let write = pending_write.expect("checked maintenance reservation");
+    let write = match pending_write {
+        Some(write) => write,
+        None => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+                retained: Box::new((
+                    "missing maintenance reservation",
+                    lower,
+                    custody,
+                    pending,
+                    completion,
+                    kv,
+                    image,
+                    cache,
+                )),
+            }));
+        }
+    };
     if let Err(error) = cache
         .preflight_step_completion(write, &completion)
         .and_then(|()| cache.preflight_step_settlement(write, 1, pending.epoch()))
@@ -467,13 +484,43 @@ pub(crate) fn settle_structural_draft_catchup_v1<const C: usize>(
             retained: Box::new((error, lower, custody, pending, completion, kv, image, cache)),
         }));
     }
-    let crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } = kv else {
-        unreachable!("checked maintenance reservation");
+    let draft = match kv {
+        crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } => draft,
+        kv => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+                retained: Box::new((
+                    "maintenance reservation custody variant",
+                    lower,
+                    custody,
+                    pending,
+                    completion,
+                    kv,
+                    image,
+                    cache,
+                )),
+            }));
+        }
     };
     let mut reservations = draft.into_reservations().into_iter();
-    let write = reservations
-        .next()
-        .expect("checked singleton maintenance reservation");
+    let write = match reservations.next() {
+        Some(write) => write,
+        None => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1StructuralDraftCatchupSettlementFailureV1 {
+                retained: Box::new((
+                    "missing singleton maintenance reservation",
+                    lower,
+                    custody,
+                    pending,
+                    completion,
+                    reservations,
+                    image,
+                    cache,
+                )),
+            }));
+        }
+    };
     let (mut cache, initialized, completion) = match cache.complete_step_write(write, completion) {
         crate::device_cache::DeviceKvStepCompletionOutcome::Completed(completed) => {
             completed.into_parts()
@@ -3846,6 +3893,45 @@ mod tests {
         completed_readback_join::check_m1_completed_output_v1, m1_completion_output_shape_v1,
         CompletionWireExpectation, CompletionWireSemanticExpectation, M1ObservedCompletionImageV1,
     };
+
+    #[test]
+    fn structural_settlement_reservation_guards_keep_explicit_custody_returns() {
+        let source = include_str!("m1_serving_physical_operations.rs");
+        let start = source
+            .find("pub(crate) fn settle_structural_draft_catchup_v1")
+            .unwrap();
+        let function = source[start..]
+            .split("#[derive(Clone, Copy, Debug, Eq, PartialEq)]")
+            .next()
+            .unwrap();
+        assert!(!function.contains("unreachable!("));
+        assert!(!function.contains(".expect("));
+        for guard in [
+            "missing maintenance reservation",
+            "maintenance reservation custody variant",
+            "missing singleton maintenance reservation",
+        ] {
+            let (_, branch) = function.split_once(guard).unwrap();
+            let retained = branch.split_once(")),").unwrap().0;
+            for owner in [
+                "lower,",
+                "custody,",
+                "pending,",
+                "completion,",
+                "image,",
+                "cache,",
+            ] {
+                assert!(retained.contains(owner), "{guard} lost {owner}");
+            }
+            assert!(
+                retained.contains(if guard == "missing singleton maintenance reservation" {
+                    "reservations,"
+                } else {
+                    "kv,"
+                })
+            );
+        }
+    }
 
     fn validate_s1_k4_rollover_anchor(
         input: &M1ServingQueuedS1K4RolloverV1,
