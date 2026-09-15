@@ -12,10 +12,14 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The compiler candidate is now `e0d108b2`, rebased onto observed upstream
-`2179a6f4`; all twelve patches are unchanged by range-diff. The two newest
-upstream commits refresh the local macro-tree pin and add simulator binary32
-sqrt support. Its expanded 42-phase remote host campaign passes, including the
+The local compiler candidate is now `1985f1d7`, rebased onto observed upstream
+`df04c62e`; all twelve patches are unchanged by range-diff against `e0d108b2`.
+The successor adds upstream shared-slice helper ABI and rank-one tile mapping
+changes. Its new host campaign remains unrun, and origin/main has subsequently
+advanced again; no latest-upstream validation or push is claimed.
+The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
+changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
+Its expanded 42-phase remote host campaign passes, including the
 actual paired BF16 exports, macro closure tests, 169 differential simulator rows,
 and production-source sqrt simulation for gfx942 and gfx950. Full source and raw
 phase evidence are retained locally with checked archive SHA-256
@@ -26,7 +30,7 @@ No strict compiler Clippy pass is claimed by this campaign.
 The completed 24-phase host result belongs to predecessor `06e25566` on
 `d2e2ff47`, including artifact freshness, backend, lowerer, Pliron, analysis,
 optimizer, MIR-model and paired BF16 fixture coverage. Neither result relabels
-the preserved older emitter tools. Full aggregate emission remains outstanding.
+the preserved older emitter tools.
 Cleanup removed 50 completed predecessor test executables
 before the new campaign. After its evidence retention, another 48 completed e0
 test executables were removed, preserving all 299 protected non-test artifacts.
@@ -38,9 +42,20 @@ extractor. Actual Cargo producers are newly built, and the backend build script
 binds the exact new CLI hash. The full source archive, four tool binaries, raw
 phase logs and source-binding receipts are retained locally at SHA-256
 `a251638717b58a101c1d0d710c867068be72e8e7102fdc35fc5ea315c57c97f9`.
-After this build the stage is 10,688,940 KiB; further scoped cleanup is needed
-for the full thirteen-root campaign's unchanged preparation reserve. There is
-no thirteen-root MFMA device image or numerical GPU result.
+After this build the stage was 10,688,940 KiB. Subsequent scoped cleanup removed
+24 byte-retained obsolete compiler tool/input files, reducing the measured stage
+by 845,388 KiB while preserving all six empty roots and current tools/source.
+The frozen `e0d108b2` / Ferric `ce2d3c1f` thirteen-root campaign then passed all
+13 preparation, emission, after-check and inspection phases on mi300x. The
+113,192-byte engineering HSACO has SHA-256
+`02c65b859fef7fac778305918a543d215b723f99bf26831210b5df74fa350856`.
+Inspection found exactly 13 entry/descriptor pairs, exact output replay, and an
+actual `v_mfma_f32_16x16x16_bf16` instruction in the MFMA GEMM kernel. This is
+image emission and read-only inspection only: publication/load/launch grants
+remain false, no GPU ran, and no numerical or performance result is claimed.
+The full frozen emission input/result archive is retained locally and checked at
+SHA-256 `f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
+The remote source remains frozen at `e0d108b2`; no successor transition ran.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -114,7 +129,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Rebased twelve unchanged patches onto `2179a6f4`; all 42 host phases and four source-bound tool build/copy phases pass on `e0d108b2`, with full evidence retained. | Scoped stage cleanup and actual thirteen-root device emission. |
+| Compiler / Kernels | Frozen `e0d108b2` passes 42 host phases, four tool phases and actual thirteen-root emission/inspection. Local successor `1985f1d7` preserves all twelve patches. | Successor host validation, coherent dependency refresh and numerical GPU qualification. |
 | Runtime / Integration | Additional verified metadata lemma integrated at `54cdb41a`. Predecessor `78c9c9f0` passes all eight host phases; helper candidate passes both regressions, 717 tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
 | Verification | Six scoped positives and 24 actual-body negatives retained; selected-page lemma integrated. Actual `returned_page_state` helper passes pinned cargo-verus on `457ca0aa`; engine contracts remain separate. | Remaining five engine helpers and whole-roster/native composition proofs; synthetic checker tests remain separate. |
 | Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
@@ -187,7 +202,22 @@ negative proof campaign is yet admitted.
 
 ## Resource Recovery
 
-The latest local-home cleanup removed three redundant historical extractions,
+The latest user-authorized local-home cleanup removed the redundant `artifacts`
+subdirectories from `ferric-layer-c1-runtime-diagnostic-gate-v1/host-r1-failed-retained`
+and `host-r2-retained`: 1,454,364 KiB (about 1.39 GiB). Every surviving entry was
+compared against its canonical archive before removal, allowing only SSH/local
+UID and GID differences. Both local lsof checks found no users or visibility
+warnings. Canonical archives remain hash-checked before and after removal:
+
+- `host-r1-failed.tar.gz`: `43305fcb5c5bba788f8584bc0ced43bf9dfa28181b5288152980c4895a978e46`.
+- `host-r2-complete.tar.gz`: `b8621f4d156961cae72e60184ccf5de2be719e01bdf861e283db6531dda023a8`.
+
+Cleanup records are in `.codex-tmp/cleanup-ferric-diagnostic-extractions-20260915/`.
+All five registered Ferric worktrees were preserved: integration/proof remain
+active, Pages is dirty, and the original and detached scratch checkouts contain
+uncommitted changes. No local builds/tests or unrelated project cleanup ran.
+
+The preceding local-home cleanup removed three redundant historical extractions,
 totaling 3,276,048 KiB (about 3.12 GiB): the layer-C1 host-R3 `artifacts` directory
 and the RMSNorm emission `retained-r3` / `retained-r4` directories. All surviving
 entries were compared against their canonical archives before removal, and
