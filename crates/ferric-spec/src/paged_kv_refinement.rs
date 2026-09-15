@@ -2857,8 +2857,8 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
         ),
     {
         proof {
-            reveal(Self::prepared_spec);
-            reveal(Self::selected_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::prepared_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::selected_spec);
             reveal(retirement_metadata_mask_prepared);
             reveal(retirement_metadata_batch_transition);
             reveal(retirement_metadata_prefix_transition);
