@@ -5,6 +5,24 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+Runtime successor `cef91e5c202f77f660b9e83780d67783fd3e49d0` passes all
+six authenticated-admission host phases: normal engine check, eight new-window
+tests, one reused-generation snapshot test, 715 engine tests with nine existing
+ignores, strict all-target engine Clippy and 37 adapter source policies. The
+production change in `1ac71866` snapshots every new cache before committing
+page leases, then reserves writes through those retained caches. Its initial
+test compile failed because an error enum has no `PartialEq`; cef changes only
+that assertion to pattern matching. No production error trait or generation
+predicate was relaxed. Root checked the passing raw results, all 62 retained
+payload hashes and equal before/after source content for 1,145 files and 205
+directories. Evidence archive SHA-256:
+`cc97f0c54410b119005ad2dc8ae5152b24e2fce7df0a4ae85c090e633a620bdf`.
+The failed 1ac evidence remains separate at
+`38593dfa6be478d65fff33d4586c9a99e6cae6b31fa4df47533abdf242261588`.
+An optimized cef/4f6 build is running in the existing bounded release target,
+preserving the independent c5 executable and evidence. No successor native
+run or new proof result is claimed yet.
+
 Runtime candidate `cdc084206dae4332c8f4dcea0f6b59302ac6db1a` now repairs
 cache-local retired-page generations at the shared completed-step return.
 The existing joined completion, pool-ticket and whole-roster checks run first;
@@ -17,7 +35,12 @@ existing ignores, four spec and 171 engine doctests, strict all-target spec and
 engine Clippy, 109 adapter tests with one existing ignore, 15 speculative CLI
 tests and 37 source-policy tests. Focused tests reproduce page-nine rollback
 and reuse at cursor 142, both roles, stale leases and late-member rejection.
-This new metadata transition is not yet Verus-verified or GPU-tested.
+Root independently checked all 118 retained payload hashes in archive
+`800b7943ab0f76d59a851036992e009a1c74805806be00ea2485d6d10a517330`.
+This new metadata transition is not yet Verus-verified or GPU-tested. A separate
+proof worktree is implementing direct contracts for the actual preflight and
+commit bodies; the engine's whole-member and native lease composition remains
+an independent obligation.
 
 Separate diagnostic fix `d74302d6b82315f9d1c6cc973d15b17b4e5a8382` passes
 all six host phases, including three retained-owner tests, three bounded-output
@@ -29,9 +52,9 @@ hashes in archive
 
 Adjacent lifecycle review confirms structural new-request admission already
 snapshots reused pool generations before leasing. It also finds a separate
-authenticated-path ordering defect: that path commits leases before requesting
-the Free-only generation snapshot. A separate correction is being implemented;
-it must prepare all caches before lease commitment, not weaken the Free check.
+authenticated-path ordering defect: that path committed leases before requesting
+the Free-only generation snapshot. The host-validated cef correction above
+prepares all caches before lease commitment and preserves the Free check.
 
 The earlier 32-token c5/4f6 attempt fails at ordinary speculative target
 reservation with `Physical(PageGenerationMismatch)`. Its retained diagnostic
@@ -200,16 +223,17 @@ new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
 is still required.
 
 The most recently fetched fe2o3 upstream is
-`6f8d0d5da4f999b1f13dd2727d0f294a694bd835`, three commits beyond bf30. The
+`5c0c53c85e4fa748b1d84751cca91f8ea70f8a1a`, four commits beyond bf30. The
 delta streams semantic-SSA replay one function at a time, boxes private cold
-projection diagnostics and shares the private SSA event-emission grammar.
+projection diagnostics, shares the private SSA event-emission grammar and
+shares prepared SSA emission across output sinks.
 Source review finds no KFD/runtime or device change. Root rebased the local
-candidate onto this main as `67851ab970b363f45e7c60ad62f014f858ccf100`;
-all ten candidate patches are unchanged by range-diff and the worktree is clean.
-The new replay, diagnostic and event-order/early-denial tests still need to run
+candidate onto this main as `7074f2b57d97bad12a08c2350de54cdd6baa9e42`;
+all ten candidate patches are unchanged by range-diff. The new replay,
+diagnostic, prepared-emission and event-order/early-denial tests still need to run
 against that rebased candidate. Remote tools and the current emission inputs
 remain frozen at `5602c4889142571d7d82041b8a9bdef369799af1`; they are not
-relabeled as 67851. No candidate commit has been pushed. Ferric integration
+relabeled as 7074. No candidate commit has been pushed. Ferric integration
 still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
@@ -277,11 +301,21 @@ passes on the same image, with both records retained. Evidence archives are
 `519982e9bd41847163bb03a27719e3d503d223fec658292adca24814162ddf3a`
 and `fcc43eb604aea87e7943afd20fef8d29b16cd32764b36cff82f9de7c82b3ea62`.
 These are compiler fixtures, not the Ferric aggregate or GPU execution.
-The aggregate remains pending. Two vendor-view transitions stopped before any
+Two vendor-view transitions stopped before any
 package moves on unreadable short-lived transports; no process identity or
 foreign-use conclusion is inferred after they disappeared. A separately copied,
-byte-checked 198-package input view is being prepared so unrelated transports
-do not require exceptions to the existing move/no-use policy.
+byte-checked 198-package input view now passes with 11,215 entries. Every copied
+inode is distinct and all 365 original packages remain unchanged. Exact ce2
+source checking and locked metadata equality in an empty Cargo home pass.
+The actual ce2/5602 aggregate emission then fails `FE2O3-TENSOR-LAYOUT-002`:
+MFMA block 205 is control-dependent on unresolved loop-header block 105.
+Lowering stops before target IR or artifact emission; no thirteen-root image
+exists. The ranked loop body contains an empty-control analysis split, and
+source review identifies missing projection of retained induction values into
+body predicates as a candidate cause. Exact source-span attribution and the
+compiler repair remain in progress; no kernel guard or convergence check is
+removed. The failure archive is independently hash-checked at
+`6a14af1919ec2970d121270ab6e2b784ac162293670c6da16a393e5658916b2f`.
 Completed compiler cleanup removed exactly fifty obsolete test executables,
 reclaiming 541,048 KiB after retaining their complete archive locally. Removing
 the two redundant remote archives reclaimed another 144,272 KiB; the local
@@ -314,7 +348,9 @@ metadata equality pass. Archive SHA-256 is
 the final normal probe executable is
 `e741e00a19189562cf4320e4b53a31e9ee6989b8da7be129740ee2fa6be428a9`.
 Both failed predecessors remain retained. No GPU numerical execution has run,
-and dependency/coverage regeneration remains pending.
+and dependency/coverage regeneration remains pending. A bounded six-case
+campaign covering draft, target partial-M and beta-one shapes with both fixtures
+is prepared but cannot launch without the actual thirteen-root artifact.
 
 Pages-only checkpoint `5d3d93d3e7f08645273d274bc35efbc79133e686` is deployed
 successfully in workflow 34926507415. Root reviewed the complete six-file delta,
