@@ -12,21 +12,27 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
 
-The compiler candidate is now `2e9ecd23`, rebased onto observed upstream
-`638e1169`; all twelve patches are unchanged by range-diff. Eight new upstream
-commits include semantic-query library changes used by the CLI. The new remote
-27-phase campaign passes, including new source-bound semantic-query coverage.
-Its full source and raw phase evidence are retained locally with checked archive
-SHA-256 `d0ce5dfde70467ffaa3c9fc03655323bd409cdf34627653f7bf6a284d96f39f7`.
+The compiler candidate is now `e0d108b2`, rebased onto observed upstream
+`2179a6f4`; all twelve patches are unchanged by range-diff. The two newest
+upstream commits refresh the local macro-tree pin and add simulator binary32
+sqrt support. Its expanded 42-phase remote host campaign passes, including the
+actual paired BF16 exports, macro closure tests, 169 differential simulator rows,
+and production-source sqrt simulation for gfx942 and gfx950. Full source and raw
+phase evidence are retained locally with checked archive SHA-256
+`0061dda1a6e6347b27ad3a2a25e6dea4fb5a023e95c570d6e8e901c9c4280af9`.
+The prior 27-phase campaign on `2e9ecd23` / `638e1169` remains separately retained
+at `d0ce5dfde70467ffaa3c9fc03655323bd409cdf34627653f7bf6a284d96f39f7`.
 No strict compiler Clippy pass is claimed by this campaign.
 The completed 24-phase host result belongs to predecessor `06e25566` on
 `d2e2ff47`, including artifact freshness, backend, lowerer, Pliron, analysis,
 optimizer, MIR-model and paired BF16 fixture coverage. Neither result relabels
 the preserved older emitter tools. Release tools and full aggregate emission
-remain outstanding; the compiler stage is 11,267,416 KiB after host tests, above
-the unchanged 10,485,760 KiB next-build admission threshold. Retired artifact
-cleanup is required before the tool build. There is no thirteen-root MFMA
-device image or numerical GPU result.
+remain outstanding. Cleanup removed 50 completed predecessor test executables
+before the new campaign. After its evidence retention, another 48 completed e0
+test executables were removed, preserving all 299 protected non-test artifacts.
+The stage is 10,902,192 KiB, still above the unchanged 10,485,760 KiB prelaunch
+threshold. Two obsolete vendor trees need full byte retention before further
+retirement. There is no thirteen-root MFMA device image or numerical GPU result.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -41,16 +47,43 @@ retained locally and independently reviewed. Full six-positive/24-negative
 retention also exited zero; root downloaded and checked archive SHA-256
 `b3c0760fcc2480913b2fdc72cc2167de68f4049dc06f1482974d38a5d94524e8`.
 The ten single-file proof commits are now integrated at Ferric `78c9c9f0`;
-the spec file matches the verified `bd8e22f7` bytes exactly. Its expanded remote
-host campaign passes all eight phases: format, exact locked metadata, 130 spec
+that checkpoint's spec file matches the verified `bd8e22f7` bytes exactly. Its
+expanded remote host campaign passes all eight phases: format, exact locked metadata, 130 spec
 library tests, four spec doctests, engine library check, 721 engine tests with
 nine ignored, and strict all-target Clippy for both crates. Source-before/after
 checks and the frozen native binary identity also pass. Full evidence, including
 the actual test binaries, is retained locally with checked archive SHA-256
 `4df5ca07179c43a3947e6130814db351ea17014dc6ccce7ec323a875f7f97cf3`.
 Candidate `a7d58129` adds contracts around the actual pool-return helpers and
-two host regressions; it is not yet verified or integrated. Whole-roster/native
-composition remains unproved.
+two host regressions. Its host run passed formatting and metadata, then failed
+engine compilation on an unparenthesized enum struct literal in a Verus
+comparison. All three source after-checks and the native binary identity passed.
+Successor `457ca0aa` changes only parentheses around the three affected contract
+comparisons. It passes formatting, locked metadata, engine compilation and both
+new regressions. The first run stopped at the unchanged 1 GiB link reserve after
+its first test; R3 resumes the same source and exact test binary without repeating
+the completed builds. The continuation passes 717 engine library tests, nine
+expected ignored cases, and strict all-target engine/spec Clippy. Both test
+phases reuse the original source-bound executable with unchanged SHA-256.
+All source after-checks and frozen native identity checks pass. These host
+results belong to the older helper branch, not a rerun of current integration.
+Its engine contracts are not integrated, and no engine helper proof is claimed.
+The combined R2/R3 source archives, raw logs and exact test executable are retained
+locally at SHA-256
+`8c16063a5347595b4c7de05d823f92ab485fa1bf062bc2f849f1a8d55a920514`.
+
+The actual selected-page successor lemma at `457ca0aa` passes pinned Verus:
+one proof-mode query, zero errors, exact source and verifier closure checks.
+Its raw output and full source archive are retained locally at SHA-256
+`840a54180641bc211e005b3307ab937f9df1538ad6af99ddbdb8852762b9e27d`.
+Only this pure proof lemma is integrated at `54cdb41a`; the entire spec file is
+byte-identical to the actual `457ca0aa` proof input. Newer integration engine
+work remains intact, and no whole-branch merge or new integration host campaign
+is claimed.
+This establishes only its stated metadata implication; whole-roster/native
+composition remains unproved. The next genuine engine proof can use pinned
+`cargo-verus check` with dependency verification and a dedicated target under
+one-CPU affinity; no stub or ordinary host artifact substitution is admitted.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -62,13 +95,13 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Rebased twelve unchanged patches onto `638e1169`; all 27 host phases pass on `2e9ecd23`. | Scoped cache cleanup, source-bound release tools and actual thirteen-root device emission. |
-| Runtime / Integration | Verified spec file integrated at `78c9c9f0`; all eight host phases pass. Routing and 25 mock guard cases previously pass. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
-| Verification | Six scoped positives and 24 checked actual-body negatives retained; actual pool-return helper candidate `a7d58129` awaits validation. | Direct helper and whole-roster/native composition proofs; synthetic checker tests remain separate. |
+| Compiler / Kernels | Rebased twelve unchanged patches onto `2179a6f4`; all 42 host phases pass on `e0d108b2`, with full evidence retained. | Scoped stage cleanup, source-bound release tools and actual thirteen-root device emission. |
+| Runtime / Integration | Additional verified metadata lemma integrated at `54cdb41a`. Predecessor `78c9c9f0` passes all eight host phases; helper candidate passes both regressions, 717 tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
+| Verification | Six scoped positives and 24 checked actual-body negatives retained; additional selected-page lemma passes at `457ca0aa` and is integrated. Engine helper contracts remain separate. | Direct engine helper and whole-roster/native composition proofs; synthetic checker tests remain separate. |
 | Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
-from Ferric's `4f6f65ce` pin to observed public `638e1169`. A coherent dependency
+from Ferric's `4f6f65ce` pin through observed public `2179a6f4`. A coherent dependency
 refresh is still required across 80 files, including 42 manifests and 32 locked
 graphs; two new compiler dependency edges must be included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
@@ -134,6 +167,33 @@ actual proof run after resource recovery. No current-source R13 positive or
 negative proof campaign is yet admitted.
 
 ## Resource Recovery
+
+The completed e0 campaign's 48 test executables were removed after full source
+and raw producer retention, reclaiming 800,228 KiB from the stage. All 299
+protected non-test artifacts, the partial release cache and older copied tools
+remain byte-identical. Executable bytes were discarded, not archived. The new
+producer archive is retained locally at SHA-256
+`efcb213e60879a33352c86a628cc96a22bb046983e35d63c5b6d692d809c92e6`.
+
+The preceding scoped compiler cleanup removed exactly 50 reproducible test ELFs
+(1,045,732 KiB allocated), with source and actual producer/log evidence retained
+locally. Their executable bytes were discarded, not archived. The raw producer
+archive SHA-256 is
+`08860666269e68cb22c92a5084d52596f3d5c75b93c994927829476981452a13`.
+Runtime cleanup removed two byte-retained host-test executables and their
+duplicate remote archive (126,944 KiB), preserving current sources, libraries
+and the frozen native executable. The local archive remains SHA-checked at
+`4df5ca07179c43a3947e6130814db351ea17014dc6ccce7ec323a875f7f97cf3`.
+Both cleanup paths retain same-user inode/lsof checks and explicitly record
+incomplete visibility of identity-checked SSH transports and the known sd-pam
+process. No shared job was signaled; native GPU admission guards are unchanged.
+
+The failed `a7d58129` host evidence is retained locally at SHA-256
+`1bca153171fdece03f2c0acda5517a8cc12be9c2edef2762e54bab8e83f89a36`.
+After retention, its superseded 1,145-file source copy was removed (43,660 KiB),
+then its duplicate remote archive was removed (21,336 KiB) to restore the runtime
+link reserve. The exact `457ca0aa` test executable, current sources, raw logs,
+libraries and frozen native executable were preserved.
 
 Completed remote cleanup retained and checked the two obsolete compiler vendor
 trees locally before removing their contents (458,756 KiB). Their archive
