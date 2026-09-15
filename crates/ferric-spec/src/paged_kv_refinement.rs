@@ -2785,7 +2785,7 @@ closed spec fn retirement_metadata_prefix_transition(
     &&& after.page_count == before.page_count
     &&& after.page_table == before.page_table
     &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
-        after.page_slots@[index] == if index < processed && selected[index] {
+        #[trigger] after.page_slots@[index] == if index < processed && selected[index] {
             PhysicalPageSlot {
                 generation: (before.page_slots@[index].generation as int + 1) as u32,
                 ownership: PhysicalPageOwnership::Free,
