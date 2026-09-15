@@ -2886,6 +2886,13 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
                 retirement_metadata_prefix_transition(&before, state, selected@, index as int),
             decreases M1_KV_PHYSICAL_PAGE_SLOTS - index,
         {
+            let ghost prior_slots = state.page_slots@;
+            let ghost prior_index = index;
+            proof {
+                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < prior_index && selected@[slot_index]) ==>
+                    prior_slots[slot_index] == before.page_slots@[slot_index]);
+            }
             if selected[index] {
                 let slot = state.page_slots[index];
                 state.page_slots[index] = PhysicalPageSlot {
@@ -2911,9 +2918,19 @@ impl PhysicalKvRetirementMetadataBatchV1<'_> {
                         ownership: PhysicalPageOwnership::Free,
                         initialized_prefix: 0,
                     }));
-                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
-                    && !(slot_index < index && selected@[slot_index]) ==>
-                    state.page_slots@[slot_index] == before.page_slots@[slot_index]);
+                assert forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < index && selected@[slot_index])
+                    implies state.page_slots@[slot_index] == before.page_slots@[slot_index] by {
+                    assert(index == prior_index + 1);
+                    assert(!(slot_index < prior_index && selected@[slot_index]));
+                    assert(prior_slots[slot_index] == before.page_slots@[slot_index]);
+                    if slot_index == prior_index {
+                        assert(!selected@[prior_index as int]);
+                        assert(state.page_slots@[slot_index] == prior_slots[slot_index]);
+                    } else {
+                        assert(state.page_slots@[slot_index] == prior_slots[slot_index]);
+                    }
+                }
             }
         }
     }
