@@ -13991,6 +13991,310 @@ mod tests {
         assert_ne!(generation_one[3], generation_two[3]);
     }
 
+    mod structural_rollover_routing {
+        use super::*;
+
+        // These tags are inert routing observations, not service allocation witnesses.
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        enum Range {
+            Workspace {
+                generation: u64,
+                workspace: M1FullStepWorkspaceRole,
+                range: M1StepWorkspaceRange,
+            },
+            Retained(M1PhysicalBufferSourceV1),
+            Capture(u64),
+        }
+
+        fn recipe(intent: crate::M1StepDispatchIntent) -> AddresslessM1PhysicalBufferRecipeV1 {
+            let (kernargs, composition) =
+                crate::physical_buffer_recipe::tests::exact_inputs(intent, 10);
+            crate::derive_m1_physical_buffer_recipe_v1(kernargs, composition).unwrap()
+        }
+
+        fn route(
+            recipe: &AddresslessM1PhysicalBufferRecipeV1,
+            saved: &[(M1PhysicalBufferSourceV1, Range)],
+            retained: RetainedCaptureRangesV1<Range>,
+            generation: u64,
+        ) -> Result<Vec<RearmBoundRowV1<Range>>, ()> {
+            let mut selection = RearmRangeSelectionV1::new(&retained.semantic);
+            let mut rows = Vec::new();
+            for row in recipe.rows() {
+                let mut buffers = Vec::new();
+                for semantic in row.buffers() {
+                    let source = semantic.source();
+                    let request = requested_workspace_range(
+                        source,
+                        recipe.workspace_composition(),
+                        &retained.semantic,
+                    )?;
+                    let fresh = match request {
+                        RearmRangeRequestV1::FreshWorkspace(workspace, range) => {
+                            Some(Range::Workspace {
+                                generation,
+                                workspace,
+                                range,
+                            })
+                        }
+                        RearmRangeRequestV1::Unchanged => {
+                            let mut matches = saved.iter().filter(|(key, _)| *key == source);
+                            let (_, first) = matches.next().ok_or(())?;
+                            if matches.any(|(_, range)| range != first) {
+                                return Err(());
+                            }
+                            Some(*first)
+                        }
+                        _ => None,
+                    };
+                    buffers.push(RearmBoundRangeV1 {
+                        explicit_argument_index: semantic.explicit_argument_index(),
+                        range: selection.select_fresh(request, fresh, retained)?,
+                    });
+                }
+                rows.push(RearmBoundRowV1 {
+                    dispatch_index: row.dispatch_index(),
+                    profile_id: row.profile_id(),
+                    program: row.program(),
+                    buffers,
+                });
+            }
+            selection.validate()?;
+            Ok(rows)
+        }
+
+        fn roster(
+            recipe: &AddresslessM1PhysicalBufferRecipeV1,
+            rows: &[RearmBoundRowV1<Range>],
+        ) -> Vec<(M1PhysicalBufferSourceV1, Range)> {
+            assert_eq!(recipe.rows().len(), rows.len());
+            recipe
+                .rows()
+                .iter()
+                .zip(rows)
+                .flat_map(|(source, row)| {
+                    assert_eq!(source.dispatch_index(), row.dispatch_index);
+                    assert_eq!(source.profile_id(), row.profile_id);
+                    assert_eq!(source.program(), row.program);
+                    assert_eq!(source.buffers().len(), row.buffers.len());
+                    source
+                        .buffers()
+                        .iter()
+                        .zip(&row.buffers)
+                        .map(|(source, bound)| {
+                            assert_eq!(
+                                source.explicit_argument_index(),
+                                bound.explicit_argument_index,
+                            );
+                            (source.source(), bound.range)
+                        })
+                })
+                .collect()
+        }
+
+        #[test]
+        fn structural_catchup_routes_all_425_rows_and_restores_saved_speculative_ranges() {
+            let parent = selection(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            );
+            let speculative = recipe(crate::M1StepDispatchIntent::SpeculativeRound(parent));
+            let catchup = recipe(crate::M1StepDispatchIntent::DraftCatchup(parent));
+            assert_eq!(speculative.rows().len(), 2242);
+            assert_eq!(catchup.rows().len(), 425);
+
+            let retained = speculative
+                .rows()
+                .iter()
+                .flat_map(|row| row.buffers())
+                .map(|buffer| buffer.source())
+                .filter(|source| {
+                    matches!(
+                        source,
+                        M1PhysicalBufferSourceV1::ModelWeight { .. }
+                            | M1PhysicalBufferSourceV1::KvCachePlane { .. }
+                    )
+                })
+                .map(|source| (source, Range::Retained(source)))
+                .collect::<Vec<_>>();
+            let diagnostic =
+                speculative_capture_ranges(101, 201, 4, 211, 301).map(Range::Capture);
+            let ordinary = RetainedCaptureRangesV1 {
+                completion_output: Range::Capture(101),
+                semantic: RetainedSemanticCaptureRangesV1::Ordinary,
+            };
+            let initial = route(&speculative, &retained, diagnostic, 11).unwrap();
+            let saved = roster(&speculative, &initial);
+            let entered = route(&catchup, &saved, ordinary, 12).unwrap();
+            let restored = route(&speculative, &saved, diagnostic, 13).unwrap();
+            let maintenance = roster(&catchup, &entered);
+
+            for (recipe, rows, capture, generation) in [
+                (&speculative, &initial, diagnostic, 11),
+                (&catchup, &entered, ordinary, 12),
+                (&speculative, &restored, diagnostic, 13),
+            ] {
+                let mut workspaces = [0; 2];
+                let mut sentinels = 0;
+                let mut weights = 0;
+                let mut kv_planes = 0;
+                let mut completions = 0;
+                for (source, bound) in roster(recipe, rows) {
+                    match bound {
+                        Range::Workspace {
+                            generation: actual,
+                            workspace,
+                            range,
+                        } => {
+                            assert_eq!(actual, generation);
+                            let plan = recipe
+                                .workspace_composition()
+                                .workspace_plans()
+                                .workspace(workspace)
+                                .unwrap();
+                            let enclosing = plan.range(range.role()).unwrap();
+                            assert!(range.offset() >= enclosing.offset());
+                            assert!(
+                                range.offset() + range.byte_len()
+                                    <= enclosing.offset() + enclosing.byte_len()
+                            );
+                            assert_eq!(range.offset() % range.alignment(), 0);
+                            let index = match workspace {
+                                M1FullStepWorkspaceRole::Draft => 0,
+                                M1FullStepWorkspaceRole::Target => 1,
+                            };
+                            workspaces[index] += 1;
+                            if let M1PhysicalBufferSourceV1::Workspace {
+                                workspace: expected,
+                                range: role,
+                            }
+                            | M1PhysicalBufferSourceV1::WorkspaceSentinel {
+                                workspace: expected,
+                                range: role,
+                                ..
+                            } = source
+                            {
+                                assert_eq!(workspace, expected);
+                                assert_eq!(range, plan.range(role).unwrap());
+                            }
+                            if matches!(
+                                source,
+                                M1PhysicalBufferSourceV1::WorkspaceSentinel { .. }
+                            ) {
+                                sentinels += 1;
+                            }
+                            let request = requested_workspace_range(
+                                source,
+                                recipe.workspace_composition(),
+                                &capture.semantic,
+                            )
+                            .unwrap();
+                            assert!(RearmRangeSelectionV1::new(&capture.semantic)
+                                .select_fresh::<Range>(request, None, capture)
+                                .is_err());
+                        }
+                        Range::Retained(key) => {
+                            assert_eq!(key, source);
+                            assert!(saved.contains(&(source, bound)));
+                            match source {
+                                M1PhysicalBufferSourceV1::ModelWeight { .. } => weights += 1,
+                                M1PhysicalBufferSourceV1::KvCachePlane { .. } => kv_planes += 1,
+                                _ => panic!("workspace source reused a retained model/KV range"),
+                            }
+                        }
+                        Range::Capture(id) => {
+                            if matches!(
+                                source,
+                                M1PhysicalBufferSourceV1::CompletionOutput { .. }
+                            ) {
+                                assert_eq!(id, 101);
+                                completions += 1;
+                            } else {
+                                assert_ne!(generation, 12);
+                            }
+                        }
+                    }
+                }
+                assert!(workspaces.into_iter().all(|count| count > 0));
+                assert!(sentinels > 0 && weights > 0 && kv_planes > 0);
+                assert_eq!(completions, 1);
+            }
+
+            let choices = maintenance
+                .iter()
+                .filter_map(|(source, bound)| match source {
+                    M1PhysicalBufferSourceV1::DraftCatchupChoices(row) => Some((*row, *bound)),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(choices.len(), 1);
+            let target_choices = catchup
+                .workspace_composition()
+                .workspace_plans()
+                .workspace(M1FullStepWorkspaceRole::Target)
+                .unwrap()
+                .range(ferric_build::M1StepWorkspaceRangeRole::Choices)
+                .unwrap();
+            assert_eq!(choices[0].0.range(), target_choices);
+            assert_eq!(
+                choices[0].1,
+                Range::Workspace {
+                    generation: 12,
+                    workspace: M1FullStepWorkspaceRole::Target,
+                    range: target_choices,
+                },
+            );
+            assert!(maintenance.iter().any(|(source, bound)| {
+                matches!(
+                    source,
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::Choices,
+                    }
+                ) && *bound == choices[0].1
+            }));
+            assert!(requested_workspace_range(
+                M1PhysicalBufferSourceV1::DraftCatchupChoices(choices[0].0),
+                speculative.workspace_composition(),
+                &ordinary.semantic,
+            )
+            .is_err());
+
+            // Maintenance omits target model/KV sources; restoration needs the saved roster.
+            let missing_target = saved
+                .iter()
+                .find(|(source, _)| {
+                    matches!(
+                        source,
+                        M1PhysicalBufferSourceV1::ModelWeight {
+                            role: Qwen3ModelRole::Target8B,
+                            ..
+                        }
+                    )
+                })
+                .unwrap();
+            assert!(!maintenance.iter().any(|(source, _)| *source == missing_target.0));
+            assert!(route(&speculative, &maintenance, diagnostic, 13).is_err());
+            let mut inconsistent = saved.clone();
+            let duplicate = inconsistent
+                .iter_mut()
+                .find(|(source, _)| {
+                    matches!(
+                        source,
+                        M1PhysicalBufferSourceV1::ModelWeight {
+                            role: Qwen3ModelRole::Draft06B,
+                            ..
+                        }
+                    )
+                })
+                .unwrap();
+            let key = duplicate.0;
+            duplicate.1 = Range::Capture(999);
+            assert!(saved.iter().filter(|(source, _)| *source == key).count() > 1);
+            assert!(route(&catchup, &inconsistent, ordinary, 12).is_err());
+        }
+    }
+
     #[test]
     fn direct_capture_rebinds_both_k6_users_to_each_fresh_generation() {
         use crate::physical_buffer_recipe::tests::exact_inputs;
