@@ -20,7 +20,14 @@ message is preserved by the rebase. The current tree is
 `1590682689fa240ebd0d10ccf63b488008c794f4`.
 The new upstream adds internal scalar-helper-result LLVM struct lowering,
 integer wrapping and launch-index fixes, a test-only simulator dependency and
-regression module separation. R12 remote delta checks are being prepared;
+regression module separation. R12's first six remote phases pass, including
+the exact source transition and dependency-policy tests. The next CI harness
+phase fails on its expected argv: the remote wrapper exports `LD_LIBRARY_PATH`,
+so the captured command includes an additional legitimate environment-unset
+argument. No compiler build ran. A same-source continuation will clear only
+that variable for the CI harness and preserve the completed phases. Full
+prebuild failure evidence is retained locally at SHA-256
+`47740391eff1045047f7fbd243ee6159c312b2e243edd6e8a309f1f24ac63993`;
 the earlier source9c2e R11 controls were never launched. The candidate is not pushed. Its source
 archive SHA-256 is
 `f0e6c827c1743a292b7c76a1b289f16fe0ca41328d3d8bf56bdc911cc8ea3689`.
@@ -95,7 +102,8 @@ image emission and read-only inspection only: publication/load/launch grants
 remain false, no GPU ran, and no numerical or performance result is claimed.
 The full frozen emission input/result archive is retained locally and checked at
 SHA-256 `f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
-The active remote compiler source has transitioned to `12845295`; the e0 emission
+The active remote compiler source has transitioned from `12845295` to
+`e3c359fb`; the e0 emission
 inputs and tools remain separately frozen and are not relabeled as current.
 Before R10, 15 completed R9 test executables were fully retained and removed,
 reclaiming 528,736 KiB. Their archive SHA-256 is
@@ -105,6 +113,15 @@ overbroad process-warning classification; its logs remain retained. The second
 attempt used scoped candidate-inode checks and completed both retention and
 separate deletion. No release tools, current sources or dependency libraries
 were deleted.
+Before R12, ten completed R10 test executables were fully retained, then removed
+along with two duplicate source-input archives whose complete bytes were already
+retained locally. Exact identity/no-use checks passed and 425,192 KiB was
+reclaimed. The ten-ELF archive SHA-256 is
+`dd2555b5279b1b8b47f641ad2b20f8ec2b96f8f3d0ff4e8e2f450b9a5a6cbaba`;
+the deletion receipt SHA-256 is
+`31c891c5f36c5d840ef52f54d9ae64703ec6db2a11abcfa4ba4f6fb52501ce31`.
+Current source, dependency libraries, fingerprints, retained evidence and
+compiler tools remain intact.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -266,9 +283,17 @@ query, zero errors and nonzero SMT work. Source, all 284 genuine dependency
 artifacts, verifier closure and predecessor evidence remain exact. Full R9
 evidence is retained locally and independently hash-checked at
 `9edd3b9ecbdb8587a22f2ba26a673b040e624514d9d6c4f56e679baab1aacab8`.
-The six actual-body R10 negative checks are running on mi300x. The first two
-wrong-role/wrong-index preflight cases have checked postcondition failures and
-exact restoration; no complete negative-campaign result is claimed yet.
+All six actual-body R10 negative checks pass on mi300x: wrong preflight role
+and index, wrong commit role and index, missing generation increment and an
+extra write each fail the intended selected postconditions with nonzero SMT.
+All restorations and final source/dependency/configuration/closure checks pass.
+Full evidence is retained locally at SHA-256
+`6b7e66b6501ee62d3700835d2585cfcaf3928273e249daf03ae1dd2bec0c8170`.
+Independent review found no acceptance blocker. The two device-cache commits
+are integrated at `66e32993`; its device-cache bytes exactly match source47
+SHA-256 `e9a426580f8e116a5d3bd860046a333ca62c410d7d73df385af01ffa51fc574d`.
+Only the tracker differs from the full tested source47 tree. Host and proof
+receipts remain attributed to source47, not relabeled as a new full-tree run.
 Higher-level composition remains pending.
 Before R2, exact retained-artifact cleanup removed the obsolete R1 test
 executable and thirteen retired source archives, reclaiming 179,180 KiB on
@@ -287,9 +312,9 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | New `e3c359fb` is rebased on `2585ce64` with unchanged patches and the approved CI-skip message. Predecessor `12845295` passes all 14 retained R10 host phases; no result is relabeled. | R12 affected-delta validation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Integrated `21818e2a` passes 724 engine tests and strict engine/spec Clippy. Corrected ledger candidate `47d07cee` passes all eight host phases, 726 tests and strict engine/spec Clippy; full evidence is retained after read-only recovery from an SSH interruption. | Complete exact-source proof and negative gates before integration; idle selected GPU for native R6. |
-| Verification | Nine actual source47 helper bodies pass retained R9 proofs, including both ledger-composition helpers. Earlier six metadata positives, 24 negatives, selected-page lemma and seven index negatives remain retained. | Complete six actual ledger-body negatives, then higher-level/native composition. |
+| Compiler / Kernels | `e3c359fb` on `2585ce64` preserves all twelve patches and the approved CI-skip message. R12 first six phases pass, then its CI harness stops before builds on an environment-dependent argv expectation; failure retained. | Same-source R12 continuation, fresh upstream check and normal fast-forward main push with CI skipped; release tools, coherent dependency refresh and numerical GPU qualification. |
+| Runtime / Integration | Ledger helper source47 is integrated at `66e32993` with exact device-cache bytes. Source47 passes eight host phases, 726 tests, strict engine/spec Clippy, nine selected helper proofs and six ledger negatives; evidence independently reviewed and retained. | Caller/whole-roster composition; idle admitted GPU for native validation. |
+| Verification | Nine actual source47 helper bodies and six actual ledger negatives pass retained, independently reviewed evidence. Earlier six metadata positives, 24 negatives, selected-page lemma and seven index negatives remain retained. | Prove ticket/lease sequence agreement, unique role/index returns and remaining-ticket preservation through the actual caller loop; native completion custody. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
