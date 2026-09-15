@@ -597,21 +597,21 @@ pub struct M1ServingPhysicalPublishedV1<P> {
     batch: M1ServingBatchPlanV1,
 }
 
-type StructuralResidentPublicationFailureV1<P, E> = Box<(
-    M1ServingPhysicalBridgeErrorV1<E>,
-    P,
-    M1ServingPublicationReservationV1,
-)>;
+type StructuralResidentPublicationResultV1<P, E> = Result<
+    M1ServingPhysicalPublishedV1<P>,
+    Box<(
+        M1ServingPhysicalBridgeErrorV1<E>,
+        P,
+        M1ServingPublicationReservationV1,
+    )>,
+>;
 
 pub(crate) fn record_structural_resident_publication<const C: usize, O>(
     custody: O::Published,
     reservation: M1ServingPublicationReservationV1,
     registry: &mut M1ServingRegistryV1<C>,
     operations: &O,
-) -> Result<
-    M1ServingPhysicalPublishedV1<O::Published>,
-    StructuralResidentPublicationFailureV1<O::Published, O::Error>,
->
+) -> StructuralResidentPublicationResultV1<O::Published, O::Error>
 where
     O: M1ServingPhysicalOperationsV1,
 {
