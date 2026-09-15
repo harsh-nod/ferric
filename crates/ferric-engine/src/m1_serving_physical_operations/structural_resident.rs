@@ -95,19 +95,27 @@ impl M1StructuralResidentCommittedRoundV1 {
 
 /// Fail-closed structural custody, including the provider and any live reservation.
 #[must_use = "failed physical custody must remain retained"]
-#[derive(Debug)]
 pub struct M1StructuralResidentFailureV1<'a> {
     stage: &'static str,
+    diagnostic: Option<crate::m1_queue_rearm::M1QueueRearmKvReservationDiagnosticV1>,
     retained: Box<dyn fmt::Debug + 'a>,
+}
+
+impl fmt::Debug for M1StructuralResidentFailureV1<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.retained;
+        formatter
+            .debug_struct("M1StructuralResidentFailureV1")
+            .field("stage", &self.stage)
+            .field("diagnostic", &self.diagnostic)
+            .field("custody_retained", &true)
+            .finish_non_exhaustive()
+    }
 }
 
 impl fmt::Display for M1StructuralResidentFailureV1<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "structural resident {}: {:?}",
-            self.stage, self.retained
-        )
+        fmt::Debug::fmt(self, formatter)
     }
 }
 
@@ -125,6 +133,7 @@ impl<'a, const C: usize>
         self.phase = M1ServingPhysicalRunnerAdapterPhaseV1::Sealed;
         M1StructuralResidentFailureV1 {
             stage,
+            diagnostic: None,
             retained: Box::new((retained, self.provider.take())),
         }
     }
@@ -958,7 +967,8 @@ impl<'a, const C: usize>
             ) {
                 Ok(prepared) => prepared,
                 Err(error) => {
-                    return Err(self.structural_failure(
+                    let diagnostic = error.diagnostic();
+                    let mut failure = self.structural_failure(
                         "ordinary speculative preparation",
                         (
                             error,
@@ -968,7 +978,9 @@ impl<'a, const C: usize>
                             speculative_recipe,
                             speculative_scratch,
                         ),
-                    ))
+                    );
+                    failure.diagnostic = diagnostic;
+                    return Err(failure);
                 }
             };
             if deadline_expired() {
@@ -1123,6 +1135,39 @@ mod tests {
         completion::CompletionEpoch, Identity, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
         StepPlan, TokenId,
     };
+
+    #[test]
+    fn structural_resident_diagnostic_never_formats_or_drops_retained_custody() {
+        use std::sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        };
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("retained custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        let drops = Arc::new(AtomicUsize::new(0));
+        let failure = M1StructuralResidentFailureV1 {
+            stage: "ordinary speculative preparation",
+            diagnostic: None,
+            retained: Box::new(Retained(Arc::clone(&drops))),
+        };
+        for text in [format!("{failure:?}"), format!("{failure}")] {
+            assert!(text.len() < 1024);
+            assert!(text.contains("ordinary speculative preparation"));
+            assert!(text.contains("custody_retained"));
+        }
+        assert_eq!(drops.load(Ordering::SeqCst), 0);
+        drop(failure);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+    }
 
     #[test]
     fn structural_first_span_rejects_duplicate_or_prompt_length_logical_reservation() {

@@ -670,12 +670,127 @@ fn execute_and_report(
     Ok(())
 }
 
-fn fail_stop(stage: &str, diagnostic: &dyn Debug) -> ! {
-    let _ = writeln!(
-        std::io::stderr().lock(),
-        "FAIL-STOP: {stage}: {diagnostic:?}"
+const FAILURE_DIAGNOSTIC_BYTES: usize = 4096;
+const FAILURE_DIAGNOSTIC_SUFFIX: &[u8] = b" [diagnostic truncated or formatting failed]\n";
+
+struct BoundedFailureDiagnostic {
+    bytes: [u8; FAILURE_DIAGNOSTIC_BYTES],
+    len: usize,
+}
+
+impl std::fmt::Write for BoundedFailureDiagnostic {
+    fn write_str(&mut self, text: &str) -> std::fmt::Result {
+        let remaining = FAILURE_DIAGNOSTIC_BYTES - FAILURE_DIAGNOSTIC_SUFFIX.len() - self.len;
+        let mut copied = text.len().min(remaining);
+        while !text.is_char_boundary(copied) {
+            copied -= 1;
+        }
+        self.bytes[self.len..self.len + copied].copy_from_slice(&text.as_bytes()[..copied]);
+        self.len += copied;
+        if copied == text.len() {
+            Ok(())
+        } else {
+            Err(std::fmt::Error)
+        }
+    }
+}
+
+fn write_bounded_failure(
+    sink: &mut impl std::io::Write,
+    stage: &str,
+    diagnostic: &dyn Debug,
+) -> std::io::Result<()> {
+    let mut buffer = BoundedFailureDiagnostic {
+        bytes: [0; FAILURE_DIAGNOSTIC_BYTES],
+        len: 0,
+    };
+    let formatted = std::fmt::Write::write_fmt(
+        &mut buffer,
+        format_args!("FAIL-STOP: {stage}: {diagnostic:?}"),
     );
+    let suffix = if formatted.is_ok() {
+        b"\n".as_slice()
+    } else {
+        FAILURE_DIAGNOSTIC_SUFFIX
+    };
+    buffer.bytes[buffer.len..buffer.len + suffix.len()].copy_from_slice(suffix);
+    buffer.len += suffix.len();
+    sink.write_all(&buffer.bytes[..buffer.len])
+}
+
+fn fail_stop(stage: &str, diagnostic: &dyn Debug) -> ! {
+    let _ = write_bounded_failure(&mut std::io::stderr().lock(), stage, diagnostic);
     std::process::abort()
+}
+
+#[cfg(test)]
+mod bounded_failure_tests {
+    use super::*;
+
+    struct RepeatedText<'a>(&'a str, usize);
+
+    impl Debug for RepeatedText<'_> {
+        fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            for _ in 0..self.1 {
+                formatter.write_str(self.0)?;
+            }
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn bounded_failure_preserves_compact_error_and_caps_large_diagnostics() {
+        let mut output = Vec::new();
+        write_bounded_failure(&mut output, "reservation", &"PageGenerationMismatch").unwrap();
+        assert_eq!(
+            output,
+            b"FAIL-STOP: reservation: \"PageGenerationMismatch\"\n"
+        );
+        for text in ["x", "\u{e9}", "\u{1f642}"] {
+            output.clear();
+            write_bounded_failure(&mut output, "reservation", &RepeatedText(text, 100_000))
+                .unwrap();
+            assert!(output.len() <= FAILURE_DIAGNOSTIC_BYTES);
+            assert!(std::str::from_utf8(&output).is_ok());
+            assert!(output.ends_with(FAILURE_DIAGNOSTIC_SUFFIX));
+        }
+    }
+
+    #[test]
+    fn bounded_failure_exact_capacity_and_oversized_stage_are_bounded() {
+        let capacity = FAILURE_DIAGNOSTIC_BYTES - FAILURE_DIAGNOSTIC_SUFFIX.len();
+        let mut buffer = BoundedFailureDiagnostic {
+            bytes: [0; FAILURE_DIAGNOSTIC_BYTES],
+            len: 0,
+        };
+        std::fmt::Write::write_str(&mut buffer, &"x".repeat(capacity)).unwrap();
+        assert_eq!(buffer.len, capacity);
+        assert!(std::fmt::Write::write_str(&mut buffer, "x").is_err());
+        assert_eq!(buffer.len, capacity);
+        let mut output = Vec::new();
+        write_bounded_failure(&mut output, &"stage".repeat(10_000), &0).unwrap();
+        assert_eq!(output.len(), FAILURE_DIAGNOSTIC_BYTES);
+        assert!(output.ends_with(FAILURE_DIAGNOSTIC_SUFFIX));
+    }
+
+    #[test]
+    fn bounded_failure_retains_partial_format_and_reports_sink_errors() {
+        struct FormatFailure;
+        impl Debug for FormatFailure {
+            fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("partial")?;
+                Err(std::fmt::Error)
+            }
+        }
+        let mut output = Vec::new();
+        write_bounded_failure(&mut output, "reservation", &FormatFailure).unwrap();
+        assert!(output.starts_with(b"FAIL-STOP: reservation: partial"));
+        assert!(output.ends_with(FAILURE_DIAGNOSTIC_SUFFIX));
+        let mut short_sink = [0_u8; 1];
+        let error =
+            write_bounded_failure(&mut short_sink.as_mut_slice(), "reservation", &0).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::WriteZero);
+    }
 }
 
 fn require_or_abort<T, E: Debug>(result: Result<T, E>, stage: &str) -> T {

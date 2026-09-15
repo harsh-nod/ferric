@@ -94,26 +94,38 @@ impl StructuralDraftCatchupScratchV1 {
     }
 }
 
-#[derive(Debug)]
 pub(crate) struct StructuralDraftCatchupFailureV1 {
+    diagnostic: Option<super::M1QueueRearmKvReservationDiagnosticV1>,
     retained: Box<dyn fmt::Debug>,
 }
 
 impl StructuralDraftCatchupFailureV1 {
     fn new(retained: impl fmt::Debug + 'static) -> Self {
         Self {
+            diagnostic: None,
             retained: Box::new(retained),
         }
+    }
+
+    pub(crate) const fn diagnostic(&self) -> Option<super::M1QueueRearmKvReservationDiagnosticV1> {
+        self.diagnostic
+    }
+}
+
+impl fmt::Debug for StructuralDraftCatchupFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let _ = &self.retained;
+        formatter
+            .debug_struct("StructuralDraftCatchupFailureV1")
+            .field("diagnostic", &self.diagnostic)
+            .field("custody_retained", &true)
+            .finish_non_exhaustive()
     }
 }
 
 impl fmt::Display for StructuralDraftCatchupFailureV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "structural maintenance retains failed custody: {:?}",
-            self.retained
-        )
+        fmt::Debug::fmt(self, formatter)
     }
 }
 
@@ -1907,7 +1919,13 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
     );
     let reserved = match reserve_m1_long_lived_queue_rearm_kv_v1(engine, scheduled, inputs) {
         Ok(reserved) => reserved,
-        Err(error) => return Err(StructuralDraftCatchupFailureV1::new((error, plans))),
+        Err(error) => {
+            let diagnostic = error.diagnostic();
+            return Err(StructuralDraftCatchupFailureV1 {
+                diagnostic,
+                retained: Box::new((error, plans)),
+            });
+        }
     };
     prepare_m1_long_lived_queue_rearm_v1(engine, reserved, runner, plans)
         .map_err(StructuralDraftCatchupFailureV1::new)
@@ -1916,6 +1934,35 @@ pub(crate) fn prepare_structural_speculative_rearm_v1<const C: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn structural_catchup_diagnostic_never_formats_or_drops_retained_custody() {
+        use std::sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        };
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("retained custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        let drops = Arc::new(AtomicUsize::new(0));
+        let failure = StructuralDraftCatchupFailureV1::new(Retained(Arc::clone(&drops)));
+        assert!(failure.diagnostic().is_none());
+        for text in [format!("{failure:?}"), format!("{failure}")] {
+            assert!(text.len() < 1024);
+            assert!(text.contains("custody_retained"));
+        }
+        assert_eq!(drops.load(Ordering::SeqCst), 0);
+        drop(failure);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+    }
 
     fn parent(bucket: ferric_spec::Qwen3PlanBucket) -> Qwen3PlanSelection {
         Qwen3PlanSelection {

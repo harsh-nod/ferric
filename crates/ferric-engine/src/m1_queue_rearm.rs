@@ -2147,13 +2147,43 @@ pub enum M1LongLivedQueueRearmKvReservationPhaseV1 {
 /// partially installed cache marker. All supplied leases, reservations,
 /// selected/parked caches, and the detached queue remain retained internally.
 #[must_use = "terminal reservation failure requires process-level quarantine"]
-#[derive(Debug)]
 pub struct M1LongLivedQueueRearmKvReservationFailureV1 {
     phase: M1LongLivedQueueRearmKvReservationPhaseV1,
+    diagnostic: Option<M1QueueRearmKvReservationDiagnosticV1>,
     retained: OpaqueRearmCustodyV1<'static>,
 }
 
+/// Inert failure facts, never completion or page-reuse authority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct M1QueueRearmKvReservationDiagnosticV1 {
+    pub(crate) phase: M1LongLivedQueueRearmKvReservationPhaseV1,
+    pub(crate) error: crate::DeviceKvCacheError,
+    pub(crate) request: RequestId,
+    pub(crate) scheduled_epoch: CompletionEpoch,
+    pub(crate) prior_dispatch_generation: u64,
+}
+
+impl fmt::Debug for M1LongLivedQueueRearmKvReservationFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1LongLivedQueueRearmKvReservationFailureV1")
+            .field("phase", &self.phase)
+            .field("diagnostic", &self.diagnostic)
+            .field("custody_retained", &self.retains_custody())
+            .finish_non_exhaustive()
+    }
+}
+
 impl M1LongLivedQueueRearmKvReservationFailureV1 {
+    pub(crate) const fn diagnostic(&self) -> Option<M1QueueRearmKvReservationDiagnosticV1> {
+        self.diagnostic
+    }
+
+    fn with_diagnostic(mut self, diagnostic: M1QueueRearmKvReservationDiagnosticV1) -> Self {
+        self.diagnostic = Some(diagnostic);
+        self
+    }
+
     #[must_use]
     pub const fn phase(&self) -> M1LongLivedQueueRearmKvReservationPhaseV1 {
         self.phase
@@ -2177,6 +2207,7 @@ fn kv_reservation_failure(
 ) -> M1LongLivedQueueRearmKvReservationFailureV1 {
     M1LongLivedQueueRearmKvReservationFailureV1 {
         phase,
+        diagnostic: None,
         retained: OpaqueRearmCustodyV1(Box::new(retained)),
     }
 }
@@ -2228,6 +2259,8 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
     mut scheduled: M1ScheduledLongLivedQueueRearmV1,
     inputs: M1LongLivedQueueRearmKvInputsV1,
 ) -> Result<M1ReservedLongLivedQueueRearmV1, M1LongLivedQueueRearmKvReservationFailureV1> {
+    let scheduled_epoch = scheduled.scheduled.epoch();
+    let prior_dispatch_generation = scheduled.queue.detached_dispatch_generation();
     match inputs {
         M1LongLivedQueueRearmKvInputsV1::TargetOnly {
             target,
@@ -2277,6 +2310,15 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
                                 lane,
                                 error,
                             ),
+                        )
+                        .with_diagnostic(
+                            M1QueueRearmKvReservationDiagnosticV1 {
+                                phase: M1LongLivedQueueRearmKvReservationPhaseV1::TargetReservation,
+                                error,
+                                request,
+                                scheduled_epoch,
+                                prior_dispatch_generation,
+                            },
                         ));
                     }
                 }
@@ -2458,6 +2500,15 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
                                 lane,
                                 error,
                             ),
+                        )
+                        .with_diagnostic(
+                            M1QueueRearmKvReservationDiagnosticV1 {
+                                phase: M1LongLivedQueueRearmKvReservationPhaseV1::DraftReservation,
+                                error,
+                                request,
+                                scheduled_epoch,
+                                prior_dispatch_generation,
+                            },
                         ));
                     }
                 }
@@ -2490,6 +2541,15 @@ fn reserve_m1_long_lived_queue_rearm_kv_inner_v1(
                                 lane,
                                 error,
                             ),
+                        )
+                        .with_diagnostic(
+                            M1QueueRearmKvReservationDiagnosticV1 {
+                                phase: M1LongLivedQueueRearmKvReservationPhaseV1::TargetReservation,
+                                error,
+                                request,
+                                scheduled_epoch,
+                                prior_dispatch_generation,
+                            },
                         ));
                     }
                 }
@@ -12973,6 +13033,48 @@ mod tests {
         atomic::{AtomicUsize, Ordering},
         Arc,
     };
+
+    #[test]
+    fn structural_reservation_diagnostic_never_formats_or_drops_retained_custody() {
+        struct Retained(Arc<AtomicUsize>);
+        impl fmt::Debug for Retained {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                panic!("retained custody must not be formatted");
+            }
+        }
+        impl Drop for Retained {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+        let drops = Arc::new(AtomicUsize::new(0));
+        let diagnostic = M1QueueRearmKvReservationDiagnosticV1 {
+            phase: M1LongLivedQueueRearmKvReservationPhaseV1::TargetReservation,
+            error: crate::DeviceKvCacheError::Physical(
+                ferric_spec::paged_kv_refinement::PhysicalKvError::PageGenerationMismatch,
+            ),
+            request: RequestId::new(0, 1),
+            scheduled_epoch: CompletionEpoch::new(11),
+            prior_dispatch_generation: 10,
+        };
+        let failure = kv_reservation_failure(diagnostic.phase, Retained(Arc::clone(&drops)))
+            .with_diagnostic(diagnostic);
+        assert_eq!(failure.diagnostic(), Some(diagnostic));
+        let text = format!("{failure:?}");
+        assert!(text.len() < 1024);
+        for field in [
+            "TargetReservation",
+            "PageGenerationMismatch",
+            "scheduled_epoch",
+            "prior_dispatch_generation",
+            "custody_retained",
+        ] {
+            assert!(text.contains(field));
+        }
+        assert_eq!(drops.load(Ordering::SeqCst), 0);
+        drop(failure);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+    }
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     struct RearmBoundRangeV1<T> {
