@@ -5,14 +5,34 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The optimized c5/4f6 native attempt now completes five real speculative K4
+rounds and publishes eight tokens on an idle gfx942 GPU. The observed accepted
+draft-prefix lengths are `[0, 0, 1, 2, 0]`; epochs and dispatch generations
+advance from two through six, and the final target/draft cursors both equal
+136. This exercises zero- and partial-acceptance continuation through the actual
+structural registry, bridge and coordinator. There are no completed draft
+catch-ups, so continuing full acceptance and the 425-packet maintenance/restore
+path remain unobserved on hardware.
+
+The run uses the retained twelve-kernel 8113/4f6 image, not the MFMA candidate.
+Its 128 physical prompt tokens include active EOT suffix fill, not attention-mask
+padding, and its published tokens exclude the prefill anchor. The control and
+report-consistency check exit zero; queue teardown completes, the owned process
+group is absent, and selected GPU memory returns to its exact 298,647,552-byte
+baseline with no selected queues. The retained archive has SHA-256
+`c46c0023872f404ddda8140f9162fa2d36785618916266ad41d0240234908870`;
+all 25 payload hashes are independently checked. This is a source-bound
+engineering execution result, not target-only parity, authenticated M1
+execution, numerical qualification, production serving or a matched benchmark.
+
 The recorded runtime checkpoint is `c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56`,
 still pinned to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
 Its committed coverage, source-tool closure, all 32 locked/offline dependency
 graphs and three dependency TCB comparisons pass. The exact standalone
 speculative-smoke debug binary is built, with SHA-256
 `4151c135ff693e1d66a1b8004a3d31488dd227ee0c50ce45b90a025f0e488e2a`.
-The eight-token repeated K4 attempt stopped before inference when its GPU-use
-guard detected a PID outside the owned process group. It used the unchanged
+The earlier debug eight-token K4 attempt stopped before inference when its
+GPU-use guard detected a PID outside the owned process group. It used the unchanged
 twelve-kernel 8113/4f6 image and retains that image's original producer identity.
 The c5 checkpoint changes only documentation and body ledgers from the executable
 source below; it does not relabel the earlier test or GPU results.
@@ -41,9 +61,9 @@ The build used a separate bounded 3 GiB target, with the shared 10 GiB cap
 unchanged and automatic Cargo cache cleanup disabled. Its retained archive has
 SHA-256 `5c5399489e1d208e90fa5e82f2bc0843f9fe956c72e6d5dc72aa5329b4db6a4a`;
 all 51 retained payload hashes are independently checked. This is a build
-result, not a new GPU result or a measured startup improvement. More complete
-detected-PID diagnostics are being prepared for the next native attempt;
-initialization and foreign-use checks are not bypassed.
+result, separate from the subsequent native result above; it is not a measured
+serving improvement. The native retry includes more complete detected-PID
+diagnostics. Initialization and foreign-use checks are not bypassed.
 
 Private runtime integration `dfb4c5140b9c50ad936e27f1850541043135130b`, tree
 `b3da45f59cb9f346078c20daa5ce6bff0735eaf9`, passes 707 engine library tests
@@ -129,9 +149,11 @@ new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
 is still required.
 
 The most recently fetched fe2o3 upstream is
-`bf30fe9fc24ad5d81042f9217e3be0b0d1182a47`, six
-commits beyond 0fe, in kernel analysis and Pliron pipeline verification with
-no KFD/runtime or device source changes. The column-major BF16 MFMA candidate
+`9c2a10e73ff72269d00ab9c51b299c44c7de2de5`, two commits beyond bf30. The new
+delta streams semantic-SSA replay one function at a time and boxes private cold
+projection diagnostics; source review finds no KFD/runtime or device change.
+Its new replay-identity/error-precedence and concrete-error-chain tests still
+need to run against the rebased candidate. The column-major BF16 MFMA candidate
 was rebased as `a9a72c41f8353f88df32aab6f7863b8c4c28668b`, with all eight
 candidate commits unchanged by range-diff. The current successor is
 `5602c4889142571d7d82041b8a9bdef369799af1`; revalidation is underway and no
@@ -166,14 +188,26 @@ kernarg map. Production KIR identity V9 and canonical KIR V10 remain distinct.
 The exact candidate release CLI/proxy and CLI-bound backend/extractor now
 build successfully. Exact ce2 source preparation, the dependency-only private
 5602 overlay, locked/offline metadata and the union vendor byte checks also
-pass. HSACO emission and the real thirteen-root Ferric aggregate are still
-pending: post-vendor capacity is below the previously observed emission
-transient, so emission has not been launched. Neither the reduction loop nor
-the convergence rejection policy is bypassed, and the 12 GiB cap is unchanged.
+pass. The first native row-major emission then rejects the union vendor's
+23,310 entries at the unchanged 20,000-entry pinned-tree bound, before Cargo
+extraction; no column-major or Ferric aggregate attempt follows that failure.
+The installed rustc tree has only 6,561 entries. Lock-derived complete per-mode
+vendor views fit separately: 305 packages/19,825 entries for the original
+workspace fixtures and 198 packages/11,215 entries for standalone ce2. A
+storage-neutral whole-package partition is being prepared; no source or
+manifest change or entry-bound increase is required by that proposal. HSACO
+emission remains pending. Neither the reduction loop nor the convergence
+rejection policy is bypassed, and the 12 GiB cap is unchanged.
 Completed compiler cleanup removed exactly fifty obsolete test executables,
 reclaiming 541,048 KiB after retaining their complete archive locally. Removing
 the two redundant remote archives reclaimed another 144,272 KiB; the local
 archives, current tools, libraries, source and retained images remain intact.
+The completed MFMA check and formatting stages are also removed after exact
+inventory and fresh no-use checks, reclaiming 2,968,964 KiB. Source, test evidence
+and claimed executables are retained; disposable private build caches were
+discarded, not claimed archived. A separate engineering-only MFMA numerical
+probe is being implemented using the existing checked service lifecycle and
+the canonical 108-shape catalog; it has no host or GPU result yet.
 
 The Pages checkpoint `5fe89b3e` is deployed; its seven live assets match the
 validated bytes. Its isolated worktree and 82,380 KiB remote stage are removed.
@@ -184,10 +218,11 @@ trybuild output. Current source, tools, models, caches and active dependencies
 are retained; compiled trybuild cache bytes were explicitly discarded, not
 claimed archived.
 
-There are no new successful GPU inference, numerical-acceptance, Verus, or
-matched performance results at this checkpoint. All 33 M1 gates remain open.
-The next hardware priorities are a current-compiler aggregate, repeated K4
-execution including natural full acceptance, and the remaining numerical cases.
+The new GPU result is limited to the zero/partial K4 continuation described
+above. There are no new numerical-acceptance, Verus or matched performance
+results, and all 33 M1 gates remain open. The next hardware priorities are a
+current-compiler aggregate, natural full-acceptance continuation and the
+remaining numerical cases.
 
 ## Earlier Integration
 
