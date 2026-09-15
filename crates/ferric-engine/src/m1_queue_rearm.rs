@@ -14015,7 +14015,7 @@ mod tests {
         fn route(
             recipe: &AddresslessM1PhysicalBufferRecipeV1,
             saved: &[(M1PhysicalBufferSourceV1, Range)],
-            retained: RetainedCaptureRangesV1<Range>,
+            retained: &RetainedCaptureRangesV1<Range>,
             generation: u64,
         ) -> Result<Vec<RearmBoundRowV1<Range>>, ()> {
             let mut selection = RearmRangeSelectionV1::new(&retained.semantic);
@@ -14049,7 +14049,7 @@ mod tests {
                     };
                     buffers.push(RearmBoundRangeV1 {
                         explicit_argument_index: semantic.explicit_argument_index(),
-                        range: selection.select_fresh(request, fresh, retained)?,
+                        range: selection.select_fresh(request, fresh, *retained)?,
                     });
                 }
                 rows.push(RearmBoundRowV1 {
@@ -14106,7 +14106,7 @@ mod tests {
             let retained = speculative
                 .rows()
                 .iter()
-                .flat_map(|row| row.buffers())
+                .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
                 .map(|buffer| buffer.source())
                 .filter(|source| {
                     matches!(
@@ -14122,10 +14122,10 @@ mod tests {
                 completion_output: Range::Capture(101),
                 semantic: RetainedSemanticCaptureRangesV1::Ordinary,
             };
-            let initial = route(&speculative, &retained, diagnostic, 11).unwrap();
+            let initial = route(&speculative, &retained, &diagnostic, 11).unwrap();
             let saved = roster(&speculative, &initial);
-            let entered = route(&catchup, &saved, ordinary, 12).unwrap();
-            let restored = route(&speculative, &saved, diagnostic, 13).unwrap();
+            let entered = route(&catchup, &saved, &ordinary, 12).unwrap();
+            let restored = route(&speculative, &saved, &diagnostic, 13).unwrap();
             let maintenance = roster(&catchup, &entered);
 
             for (recipe, rows, capture, generation) in [
@@ -14270,7 +14270,7 @@ mod tests {
             assert!(!maintenance
                 .iter()
                 .any(|(source, _)| *source == missing_target.0));
-            assert!(route(&speculative, &maintenance, diagnostic, 13).is_err());
+            assert!(route(&speculative, &maintenance, &diagnostic, 13).is_err());
             let mut inconsistent = saved.clone();
             let duplicate = inconsistent
                 .iter_mut()
@@ -14287,7 +14287,7 @@ mod tests {
             let key = duplicate.0;
             duplicate.1 = Range::Capture(999);
             assert!(saved.iter().filter(|(source, _)| *source == key).count() > 1);
-            assert!(route(&catchup, &inconsistent, ordinary, 12).is_err());
+            assert!(route(&catchup, &inconsistent, &ordinary, 12).is_err());
         }
     }
 
