@@ -32,7 +32,12 @@ The subsequent cef/4f6 32-token native attempt is terminal with exit 134 at
 maintenance transition. No completed token/round JSON report was emitted, so
 no completed round count, full-acceptance result or 32-token success is claimed.
 The bounded diagnostic retains custody but does not expose the inner submission
-phase; source-level diagnosis and diagnostic propagation are in progress.
+phase. Diagnostic-only successor `ba6f8c9ca7557214c808c81bb490601d285136e6`
+now preserves copied submission phase, inner transition stage and error class
+through maintenance and restore failures without formatting retained owners.
+It adds five focused custody/diagnostic tests. Remote formatting passes;
+the seven-phase host gate has not run. This is not a maintenance defect fix,
+and the actual failing inner condition remains unknown.
 The run used the same legacy twelve-kernel image and model bundle as c5, not
 the MFMA candidate. Root independently checked the actual stderr, executable
 producer and all 22 native payload hashes in archive
@@ -41,6 +46,9 @@ Both the immediate after-state and the separate fresh state show the exact
 298,647,552-byte selected GPU baseline, no selected queues or VRAM users, and
 no owned process group. No GPU reset or foreign intervention occurred. This
 is a retained hardware failure, not a benchmark or M1 qualification receipt.
+After archive and fresh no-use verification, the exact completed native scratch
+directory was removed, reclaiming 13,920 KiB. Root checked cleanup receipt
+`7e821d50f1a64cb1a90547651b553894fe195f51f7cb6bdbb834bf1f1bf32157`.
 
 Runtime candidate `cdc084206dae4332c8f4dcea0f6b59302ac6db1a` now repairs
 cache-local retired-page generations at the shared completed-step return.
@@ -57,14 +65,20 @@ and reuse at cursor 142, both roles, stale leases and late-member rejection.
 Root independently checked all 118 retained payload hashes in archive
 `800b7943ab0f76d59a851036992e009a1c74805806be00ea2485d6d10a517330`.
 The cef native attempt above includes this transition, but does not qualify
-it or the overall run. Separate proof candidate `dce398da` now contains direct
+it or the overall run. Separate proof candidate `dce398da` contains direct
 contracts for the actual preflight and commit bodies, bounded loops and exact
-state-frame tests. Remote formatting passes. Its first proof gate stopped
-before invoking Verus because the prepared and observed source rosters used
-different sort orders; all 1,145 source hashes match. A control-only correction
-is pending, with six selected positive jobs and 24 actual-body mutations still
-unexecuted. No proof labels have changed. The engine's whole-member and native
-lease composition remains an independent obligation.
+state-frame tests. The first gate stopped on source-roster sort order; after
+that control correction, four actual Verus attempts stopped before proof queries
+on reveal-name syntax, sequence-length types, mutable-reference entry-state
+syntax and private-field access in public contracts, respectively. These are
+retained frontend failures, not failed or successful theorem queries. Successor
+`79c81638416fbb7894e793d41ea6d21d83154050` adds defined public closed
+current/future specification views while keeping runtime fields private. The
+future view uses the required prophetic mode annotation, not a trust exemption.
+The next six-job positive gate is prepared but not launched; no positive proof query or
+any of the 24 actual-body mutations has run. No proof labels have changed.
+The engine's whole-member and native lease composition remains an independent
+obligation.
 
 Separate diagnostic fix `d74302d6b82315f9d1c6cc973d15b17b4e5a8382` passes
 all six host phases, including three retained-owner tests, three bounded-output
@@ -246,19 +260,41 @@ still selects scalar GEMV. Source-gate commit `8fc15929` admits the exact
 new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
 is still required.
 
-The most recently fetched fe2o3 upstream is
+The compiler candidate's validated upstream base is
 `5c0c53c85e4fa748b1d84751cca91f8ea70f8a1a`, four commits beyond bf30. The
 delta streams semantic-SSA replay one function at a time, boxes private cold
 projection diagnostics, shares the private SSA event-emission grammar and
 shares prepared SSA emission across output sinks.
 Source review finds no KFD/runtime or device change. Root rebased the local
 candidate onto this main as `7074f2b57d97bad12a08c2350de54cdd6baa9e42`;
-all ten candidate patches are unchanged by range-diff. The new replay,
-diagnostic, prepared-emission and event-order/early-denial tests still need to run
-against that rebased candidate. Remote tools and the current emission inputs
-remain frozen at `5602c4889142571d7d82041b8a9bdef369799af1`; they are not
-relabeled as 7074. No candidate commit has been pushed. Ferric integration
-still pins 4f6. Prior
+all ten candidate patches are unchanged by range-diff. On top of that source,
+`201136d9` preserves exact live induction comparisons in loop-body predicates,
+addressing the unresolved branch that blocked the full MFMA kernel. Its fresh
+host build passes, with all 70 first-party artifact records across 63 packages
+rebuilt. The first focused run passes eight tests but finds one test expecting
+a later rejection where an existing earlier guard correctly rejects the input.
+Test-only successor `18f8710d4ada318e3a3462cf45984c8dd44c1722` corrects that
+expectation without changing production code. Its complete remote host gate
+passes: nine focused tests, 565 backend tests, 140 kernel-analysis tests,
+1,103 Pliron tests, two CFG integration tests and the explicit paired BF16
+storage export test. The nine focused tests are part of the 565-test cohort,
+not additional unique coverage. Reused production artifacts are checked against
+the fresh 201 build; the test executable is rebuilt. Root checked the archive
+SHA-256 `fd167de7230a0968832cbb552f253fce20c44387797f41f872ceb90d7365d0ac`,
+all nine terminal phase statuses and the raw test summaries. The compiler
+worker reports that the separate strict Clippy gate exits 101 with 17 library
+diagnostics; test-target linting did not complete. Raw evidence retention and
+source-impact classification are pending, so no baseline-lint equivalence is
+claimed. The source-bound emitter rebuild and full
+thirteen-kernel MFMA image are still pending; the host result does not establish
+that the original aggregate emission now succeeds.
+Retained emission tools remain frozen at
+`5602c4889142571d7d82041b8a9bdef369799af1`; they are not relabeled as 18f.
+No candidate commit has been pushed. The shared upstream ref has since advanced
+to `bf0f4841774de433d5f02a863f684f4675f699ac`, adding projected call destination
+evaluation-order handling. That change is not covered by the 18f results;
+review and rebase are pending. The upstream must be freshly fetched and rebased
+again before any push to main. Ferric integration still pins 4f6. Prior
 pristine 0fe emission produced an independently inspected twelve-entry COV6
 image, not a validation of this newer upstream or thirteen-entry candidate.
 
