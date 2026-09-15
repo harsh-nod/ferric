@@ -26,13 +26,21 @@ No strict compiler Clippy pass is claimed by this campaign.
 The completed 24-phase host result belongs to predecessor `06e25566` on
 `d2e2ff47`, including artifact freshness, backend, lowerer, Pliron, analysis,
 optimizer, MIR-model and paired BF16 fixture coverage. Neither result relabels
-the preserved older emitter tools. Release tools and full aggregate emission
-remain outstanding. Cleanup removed 50 completed predecessor test executables
+the preserved older emitter tools. Full aggregate emission remains outstanding.
+Cleanup removed 50 completed predecessor test executables
 before the new campaign. After its evidence retention, another 48 completed e0
 test executables were removed, preserving all 299 protected non-test artifacts.
-The stage is 10,902,192 KiB, still above the unchanged 10,485,760 KiB prelaunch
-threshold. Two obsolete vendor trees need full byte retention before further
-retirement. There is no thirteen-root MFMA device image or numerical GPU result.
+The two obsolete owner vendor trees are now fully archived locally and their
+contents removed, reducing the stage to 10,347,740 KiB and admitting the release
+tool campaign under the unchanged 10,485,760 KiB prelaunch threshold. All four
+tool build/copy phases pass: release CLI and linker proxy, dev-debug0 backend and
+extractor. Actual Cargo producers are newly built, and the backend build script
+binds the exact new CLI hash. The full source archive, four tool binaries, raw
+phase logs and source-binding receipts are retained locally at SHA-256
+`a251638717b58a101c1d0d710c867068be72e8e7102fdc35fc5ea315c57c97f9`.
+After this build the stage is 10,688,940 KiB; further scoped cleanup is needed
+for the full thirteen-root campaign's unchanged preparation reserve. There is
+no thirteen-root MFMA device image or numerical GPU result.
 
 The retirement proof reached Verus on `339c2561` and failed at its pre-update
 snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
@@ -67,7 +75,8 @@ expected ignored cases, and strict all-target engine/spec Clippy. Both test
 phases reuse the original source-bound executable with unchanged SHA-256.
 All source after-checks and frozen native identity checks pass. These host
 results belong to the older helper branch, not a rerun of current integration.
-Its engine contracts are not integrated, and no engine helper proof is claimed.
+Its engine contracts are not integrated. The first actual engine helper proof
+passes as described below; the other five helpers remain unproved.
 The combined R2/R3 source archives, raw logs and exact test executable are retained
 locally at SHA-256
 `8c16063a5347595b4c7de05d823f92ab485fa1bf062bc2f849f1a8d55a920514`.
@@ -81,9 +90,19 @@ byte-identical to the actual `457ca0aa` proof input. Newer integration engine
 work remains intact, and no whole-branch merge or new integration host campaign
 is claimed.
 This establishes only its stated metadata implication; whole-roster/native
-composition remains unproved. The next genuine engine proof can use pinned
-`cargo-verus check` with dependency verification and a dedicated target under
-one-CPU affinity; no stub or ordinary host artifact substitution is admitted.
+composition remains unproved. The first genuine engine helper campaign now
+passes pinned `cargo-verus check` on the actual `457ca0aa` source, with dependency
+verification and a fresh dedicated target under one-CPU affinity. Its selected
+`ferric_engine::device_cache::returned_page_state` exec body has one verified
+query, zero errors and the sole nonzero function solver count. Zero-work rows
+for other helpers are not counted as proof passes. Source, dependency graph,
+Cargo configuration and verifier closure comparisons all match afterward.
+Full source, genuine target artifacts, raw logs and controls are retained at
+SHA-256 `be4fb393ec0f16c36c828f95bb71f4782b260c7aa0718c5c13cfa0660ebe9ac9`.
+The preceding R1 attempt stopped on a snapshot allowlist omission; R2 stopped
+on cargo-verus argument ordering before verification. Both failures are retained
+separately. No stub or ordinary host artifact substitution was used, and this
+is not an entire-engine or caller-composition proof.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -95,9 +114,9 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Rebased twelve unchanged patches onto `2179a6f4`; all 42 host phases pass on `e0d108b2`, with full evidence retained. | Scoped stage cleanup, source-bound release tools and actual thirteen-root device emission. |
+| Compiler / Kernels | Rebased twelve unchanged patches onto `2179a6f4`; all 42 host phases and four source-bound tool build/copy phases pass on `e0d108b2`, with full evidence retained. | Scoped stage cleanup and actual thirteen-root device emission. |
 | Runtime / Integration | Additional verified metadata lemma integrated at `54cdb41a`. Predecessor `78c9c9f0` passes all eight host phases; helper candidate passes both regressions, 717 tests and strict Clippy. | An idle selected GPU and actual R6 native maintenance diagnostic; coherent upstream dependency refresh. |
-| Verification | Six scoped positives and 24 checked actual-body negatives retained; additional selected-page lemma passes at `457ca0aa` and is integrated. Engine helper contracts remain separate. | Direct engine helper and whole-roster/native composition proofs; synthetic checker tests remain separate. |
+| Verification | Six scoped positives and 24 actual-body negatives retained; selected-page lemma integrated. Actual `returned_page_state` helper passes pinned cargo-verus on `457ca0aa`; engine contracts remain separate. | Remaining five engine helpers and whole-roster/native composition proofs; synthetic checker tests remain separate. |
 | Integration / Pages | Current site payload passes remote QA at all 1,121 widths and eight viewports; artifact retained and screenshots inspected. | Approval for the exact prebuilt deployment branch; no deployment claimed. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
@@ -167,6 +186,37 @@ actual proof run after resource recovery. No current-source R13 positive or
 negative proof campaign is yet admitted.
 
 ## Resource Recovery
+
+The latest local-home cleanup removed three redundant historical extractions,
+totaling 3,276,048 KiB (about 3.12 GiB): the layer-C1 host-R3 `artifacts` directory
+and the RMSNorm emission `retained-r3` / `retained-r4` directories. All surviving
+entries were compared against their canonical archives before removal, and
+local lsof checks found no users of the selected paths. The host-R3 comparison
+allows only the expected SSH/local UID and GID differences; the RMSNorm
+comparisons have no differences. No archive, source worktree, model, current
+tool, transport log or unrelated project was removed. Historical extracted-path
+references can be restored from these preserved archives:
+
+- `ferric-layer-c1-wave-gate-v1/host-r3-complete.tar.gz`, SHA-256
+  `4133520637171a25f12c03a9205420293416a12ac0218ccd37684381548a947f`.
+- `ferric-wave-rmsnorm-v15-emission-v1/run-r3/complete.tar.gz`, SHA-256
+  `c4f3be27d412250fe44fe28ff12a26e53e4e486230cab45a7d429f2be059c7a9`.
+- `ferric-wave-rmsnorm-v15-emission-v1/run-r4/complete.tar.gz`, SHA-256
+  `1e21a6ff97f2af54efbdf138abefe08cc12e4a610281b6aea37ffd7785119ec6`.
+
+These paths are relative to `.codex-tmp/`. Full terminal cleanup receipts are in
+`cleanup-ferric-host-r3-extraction-20260915/` and
+`cleanup-ferric-rmsnorm-extractions-20260915/` under the same directory. No local
+build, test, Python or Node invocation was used. Current Ferric
+integration, proof and Pages worktrees remain needed and were preserved.
+
+On mi300x, the obsolete `compiler-column-major-r1/vendor` and
+`vendor-ce2-private-r1` contents were fully archived and checked locally before
+retirement. Their 25,444 files occupied 671,748 KiB; the measured stage reduction
+was 664,292 KiB after retaining cleanup receipts. The complete archive remains
+SHA-256 `07b85bfc2506c431a01f34dcb0066c869711ce649e61c90b4c8e4942c69a04ef`.
+Both empty roots, current source, old copied tools, shared package pool and
+the `compiler-0fe/control/vendor-workspace.toml` policy were preserved.
 
 The completed e0 campaign's 48 test executables were removed after full source
 and raw producer retention, reclaiming 800,228 KiB from the stage. All 299
