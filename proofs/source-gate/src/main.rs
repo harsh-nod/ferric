@@ -117,6 +117,7 @@ const FE2O3_ROOTS: &[(&str, &str)] = &[
     ("ferric-engine", "fe2o3-aql"),
     ("ferric-engine", "fe2o3-artifact-transaction"),
     ("ferric-engine", "fe2o3-host"),
+    ("ferric-engine", "fe2o3-hsaco"),
     ("ferric-engine", "fe2o3-kfd"),
     ("ferric-engine", "fe2o3-runtime-protocol"),
     ("ferric-engine", "fe2o3-service-host"),
@@ -7565,6 +7566,44 @@ mod tests {
     #[test]
     fn aggregate_runtime_roster_source_is_exact() {
         assert_eq!(validate_aggregate_source(AGGREGATE_RUNTIME_SOURCE), Ok(()));
+    }
+
+    #[test]
+    fn engine_hsaco_inspection_requires_the_exact_pinned_dependency_declaration() {
+        let exact = json!({
+            "name": "fe2o3-hsaco",
+            "source": super::FE2O3_SOURCE,
+            "req": "*",
+            "kind": null,
+            "uses_default_features": true,
+            "optional": false,
+            "rename": null,
+            "target": null,
+            "registry": null,
+            "features": [],
+        });
+        assert_eq!(
+            super::validate_fe2o3_root_declaration("ferric-engine", &exact),
+            Ok(true)
+        );
+        assert_eq!(
+            super::validate_fe2o3_root_declaration("ferric-spec", &exact),
+            Ok(false)
+        );
+        for (field, value) in [
+            ("source", json!("git+https://example.invalid/unreviewed")),
+            ("req", json!("^0.1")),
+            ("uses_default_features", json!(false)),
+            ("optional", json!(true)),
+            ("rename", json!("different_inspector")),
+            ("target", json!("cfg(unix)")),
+            ("registry", json!("unreviewed-registry")),
+            ("features", json!(["unreviewed-feature"])),
+        ] {
+            let mut changed = exact.clone();
+            changed[field] = value;
+            assert!(super::validate_fe2o3_root_declaration("ferric-engine", &changed).is_err());
+        }
     }
 
     #[test]
