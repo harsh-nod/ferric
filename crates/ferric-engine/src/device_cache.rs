@@ -283,6 +283,8 @@ impl From<PhysicalKvError> for DeviceKvCacheError {
     }
 }
 
+verus! {
+
 /// Linear custody of one page subrange in a contracted role-scoped arena.
 ///
 /// Fields and construction are crate-private. The production pool retains the
@@ -310,6 +312,8 @@ pub struct DeviceKvPageLease {
     request: RequestId,
     page: PhysicalPageId,
 }
+
+} // verus!
 
 /// Stable rejection from returning a detached, unpublished page roster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -515,6 +519,8 @@ type DraftKvPlaneSubleasesV1 = ServiceAllocationSubleaseSetV1<
     M1_DRAFT_KV_PLANE_SUBLEASES_V1,
 >;
 
+verus! {
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum M1KvPoolPageStateV1 {
     Free { generation: u32 },
@@ -524,6 +530,8 @@ enum M1KvPoolPageStateV1 {
 impl M1KvPoolPageStateV1 {
     const INITIAL: Self = Self::Free { generation: 1 };
 }
+
+} // verus!
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct M1AuthenticatedNewWindowLaneAdmissionV1 {
@@ -2392,6 +2400,8 @@ fn preflight_finite_speculative_output_rotation<T>(
     Ok(reserve_index)
 }
 
+verus! {
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum M1KvPageReturnErrorV1 {
     Device,
@@ -2413,6 +2423,74 @@ pub(crate) struct M1PreflightedKvPageReturnV1 {
     next_generation: u32,
 }
 
+impl M1PreflightedKvPageReturnV1 {
+    pub(crate) closed spec fn matches_lease_spec(&self, lease: &DeviceKvPageLease) -> bool {
+        &&& self.role == lease.page.role_spec()
+        &&& self.request == lease.request
+        &&& self.page == lease.page
+        &&& self.allocation_id == lease.allocation_id
+        &&& 0 < lease.page.generation_spec() < u32::MAX
+        &&& self.next_generation as int == lease.page.generation_spec() as int + 1
+    }
+}
+
+fn page_return_device_matches(left: Gfx942DeviceBinding, right: Gfx942DeviceBinding) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    let equal = left.device_id.equals(&right.device_id)
+        && left.node_id == right.node_id
+        && left.kfd_gpu_id == right.kfd_gpu_id
+        && left.gpu_unique_id == right.gpu_unique_id
+        && left.admission_generation == right.admission_generation
+        && matches!((left.target, right.target),
+            (Target::Gfx942XnackMinus, Target::Gfx942XnackMinus));
+    proof {
+        if equal {
+            Identity::extensional(&left.device_id, &right.device_id);
+        }
+    }
+    equal
+}
+
+fn page_return_request_matches(left: RequestId, right: RequestId) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    let equal = left.slot() == right.slot() && left.generation() == right.generation();
+    proof {
+        if equal {
+            RequestId::extensional(&left, &right);
+        }
+    }
+    equal
+}
+
+fn page_return_role_matches(left: Qwen3ModelRole, right: Qwen3ModelRole) -> (equal: bool)
+    ensures equal == (left == right),
+{
+    matches!((left, right),
+        (Qwen3ModelRole::Draft06B, Qwen3ModelRole::Draft06B)
+            | (Qwen3ModelRole::Target8B, Qwen3ModelRole::Target8B))
+}
+
+closed spec fn page_return_identity_enabled(
+    expected_device: Gfx942DeviceBinding,
+    expected_allocation_id: Identity,
+    expected_role: Qwen3ModelRole,
+    state: Option<M1KvPoolPageStateV1>,
+    expected_request: RequestId,
+    lease: &DeviceKvPageLease,
+) -> bool {
+    &&& lease.device == expected_device
+    &&& lease.request == expected_request
+    &&& lease.page.role_spec() == expected_role
+    &&& lease.allocation_id.bytes_spec() == expected_allocation_id.bytes_spec()
+    &&& 0 < lease.page.generation_spec() < u32::MAX
+    &&& state == Some(M1KvPoolPageStateV1::Leased {
+        request: lease.request,
+        generation: lease.page.generation_spec(),
+    })
+}
+
 fn preflight_page_return_identity(
     expected_device: Gfx942DeviceBinding,
     expected_allocation_id: Identity,
@@ -2421,26 +2499,49 @@ fn preflight_page_return_identity(
     global_index: usize,
     expected_request: RequestId,
     lease: &DeviceKvPageLease,
-) -> Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1> {
-    if lease.device != expected_device {
+) -> (result: Result<M1PreflightedKvPageReturnV1, M1KvPageReturnErrorV1>)
+    ensures
+        result.is_ok() == page_return_identity_enabled(
+            expected_device, expected_allocation_id, expected_role,
+            state, expected_request, lease,
+        ),
+        result.is_ok() ==> {
+            &&& result.unwrap().matches_lease_spec(lease)
+            &&& result.unwrap().global_index == global_index
+        },
+{
+    proof {
+        reveal(page_return_identity_enabled);
+        reveal(M1PreflightedKvPageReturnV1::matches_lease_spec);
+    }
+    if !page_return_device_matches(lease.device, expected_device) {
         return Err(M1KvPageReturnErrorV1::Device);
     }
-    if lease.request != expected_request {
+    if !page_return_request_matches(lease.request, expected_request) {
         return Err(M1KvPageReturnErrorV1::Request);
     }
-    if lease.page.role() != expected_role {
+    if !page_return_role_matches(lease.page.role(), expected_role) {
         return Err(M1KvPageReturnErrorV1::Role);
     }
     if !lease.allocation_id.equals(&expected_allocation_id) {
         return Err(M1KvPageReturnErrorV1::Allocation);
     }
-    validate_leased_page_state(state, lease.request, lease.page.generation())
-        .map_err(|_| M1KvPageReturnErrorV1::Ledger)?;
-    let next_generation = lease
-        .page
-        .generation()
-        .checked_add(1)
-        .ok_or(M1KvPageReturnErrorV1::GenerationExhausted)?;
+    let generation = lease.page.generation();
+    if generation == 0 {
+        return Err(M1KvPageReturnErrorV1::Ledger);
+    }
+    match state {
+        Some(M1KvPoolPageStateV1::Leased { request, generation: current }) => {
+            if !page_return_request_matches(request, lease.request) || current != generation {
+                return Err(M1KvPageReturnErrorV1::Ledger);
+            }
+        }
+        _ => return Err(M1KvPageReturnErrorV1::Ledger),
+    }
+    if generation == u32::MAX {
+        return Err(M1KvPageReturnErrorV1::GenerationExhausted);
+    }
+    let next_generation = generation + 1;
     Ok(M1PreflightedKvPageReturnV1 {
         role: expected_role,
         request: lease.request,
@@ -2451,19 +2552,38 @@ fn preflight_page_return_identity(
     })
 }
 
-const fn returned_page_state(preflighted: &M1PreflightedKvPageReturnV1) -> M1KvPoolPageStateV1 {
+const fn returned_page_state(preflighted: &M1PreflightedKvPageReturnV1) -> (returned: M1KvPoolPageStateV1)
+    ensures returned == (M1KvPoolPageStateV1::Free { generation: preflighted.next_generation }),
+{
     M1KvPoolPageStateV1::Free {
         generation: preflighted.next_generation,
     }
 }
 
+/// Consumes a caller-matched ticket and lease for the unchanged ledger entry.
+/// The caller must separately prove global-slot selection and completion custody.
 fn commit_page_return_state(
     state: &mut M1KvPoolPageStateV1,
     preflighted: M1PreflightedKvPageReturnV1,
     _lease: DeviceKvPageLease,
-) {
+)
+    requires
+        preflighted.matches_lease_spec(&_lease),
+        *old(state) == (M1KvPoolPageStateV1::Leased {
+            request: _lease.request,
+            generation: _lease.page.generation_spec(),
+        }),
+    ensures *final(state) == (M1KvPoolPageStateV1::Free {
+        generation: (_lease.page.generation_spec() as int + 1) as u32,
+    }),
+{
+    proof {
+        reveal(M1PreflightedKvPageReturnV1::matches_lease_spec);
+    }
     *state = returned_page_state(&preflighted);
 }
+
+} // verus!
 
 fn build_exact_reserve_catalog<S: Copy, T, E>(
     selections: &[S],
@@ -8577,6 +8697,128 @@ mod tests {
             ),
             Err(M1KvPageReturnErrorV1::Ledger)
         );
+    }
+
+    #[test]
+    fn returned_page_preflight_checks_complete_device_receipt_before_other_errors() {
+        let expected = device();
+        let request = RequestId::new(3, 7);
+        for field in 0..5 {
+            let mut observed = expected;
+            match field {
+                0 => observed.device_id = identity(99),
+                1 => observed.node_id ^= 1,
+                2 => observed.kfd_gpu_id ^= 1,
+                3 => observed.gpu_unique_id ^= 1,
+                _ => observed.admission_generation ^= 1,
+            }
+            let lease = DeviceKvPageLease {
+                device: observed,
+                allocation_id: identity(98),
+                request: RequestId::new(4, 8),
+                page: PhysicalPageId::new(Qwen3ModelRole::Target8B, 5, 0),
+            };
+            assert_eq!(
+                preflight_page_return_identity(
+                    expected,
+                    identity(2),
+                    Qwen3ModelRole::Draft06B,
+                    None,
+                    global_page_index(request, 5).unwrap(),
+                    request,
+                    &lease,
+                ),
+                Err(M1KvPageReturnErrorV1::Device)
+            );
+        }
+        assert!(page_return_device_matches(expected, expected));
+    }
+
+    #[test]
+    fn returned_page_preflight_preserves_ticket_pairing_and_rejection_order() {
+        let expected_device = device();
+        let allocation = identity(2);
+        let request = RequestId::new(3, 7);
+        let role = Qwen3ModelRole::Draft06B;
+        let page = PhysicalPageId::new(role, 5, 11);
+        let exact = DeviceKvPageLease {
+            device: expected_device,
+            allocation_id: allocation,
+            request,
+            page,
+        };
+        let mut state = M1KvPoolPageStateV1::Leased {
+            request,
+            generation: 11,
+        };
+        let before = state;
+        let ticket = preflight_page_return_identity(
+            expected_device,
+            allocation,
+            role,
+            Some(state),
+            global_page_index(request, page.index()).unwrap(),
+            request,
+            &exact,
+        )
+        .unwrap();
+        for (other_request, other_role, other_allocation, generation, expected_error) in [
+            (
+                RequestId::new(4, 8),
+                Qwen3ModelRole::Target8B,
+                identity(99),
+                0,
+                M1KvPageReturnErrorV1::Request,
+            ),
+            (
+                request,
+                Qwen3ModelRole::Target8B,
+                identity(99),
+                0,
+                M1KvPageReturnErrorV1::Role,
+            ),
+            (
+                request,
+                role,
+                identity(99),
+                0,
+                M1KvPageReturnErrorV1::Allocation,
+            ),
+            (request, role, allocation, 0, M1KvPageReturnErrorV1::Ledger),
+            (
+                request,
+                role,
+                allocation,
+                u32::MAX,
+                M1KvPageReturnErrorV1::Ledger,
+            ),
+        ] {
+            let foreign = DeviceKvPageLease {
+                device: expected_device,
+                allocation_id: other_allocation,
+                request: other_request,
+                page: PhysicalPageId::new(other_role, page.index(), generation),
+            };
+            assert_eq!(
+                preflight_page_return_identity(
+                    expected_device,
+                    ticket.allocation_id,
+                    ticket.role,
+                    Some(state),
+                    ticket.global_index,
+                    ticket.request,
+                    &foreign,
+                ),
+                Err(expected_error)
+            );
+            assert_eq!(state, before);
+            assert_eq!(ticket.request, exact.request);
+            assert_eq!(ticket.page, exact.page);
+            assert_eq!(ticket.allocation_id, exact.allocation_id);
+        }
+        // Only the original matched pair satisfies the private commit contract.
+        commit_page_return_state(&mut state, ticket, exact);
+        assert_eq!(state, M1KvPoolPageStateV1::Free { generation: 12 });
     }
 
     #[test]
