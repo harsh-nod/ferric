@@ -5,6 +5,26 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Atomic Prepack Snapshot Publication
+
+`fee352ed97e27140eb5e98fc1bd94ab93077a536` fixes a canonical prepack output
+race: ordinary directory rename could replace an empty destination created
+after the initial existence check. Publication now uses the existing rustix
+atomic no-replace pattern. A test-only old-code run reproduces the overwrite;
+the corrected executable passes all 12 prepack unit tests on mi300x, including
+normal publication and preservation of empty/nonempty competing destinations.
+Strict binary Clippy, rustfmt and normal source-coverage inventory/generation/
+validation pass. All 1,157 final source identities match; no dependency, TCB,
+coverage roster or proof status changes. Earlier test-import, socket-path and
+metadata-profile failures remain separately retained, not counted as passes.
+
+Archive SHA is
+`ca5338ae52946e9fd9fc53d69213c6f0a27dfd5d0b6ccfb80987ff4b7bb1e48a`
+(14,635,624 bytes). All 169 payloads, the exact 170-member archive roster and
+19 external records are independently checked. The fix changes only the
+Ferric prepack binary; it adds no native/GPU, protected proof or performance
+result and closes no M1 gate. The 6e/abd8 native diagnostic batch stays frozen.
+
 ### Current Compiler Adoption
 
 The current validation batch freezes observed fe2o3 main
