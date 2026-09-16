@@ -9096,7 +9096,10 @@ mod tests {
                 Qwen3ModelRole::Target8B => &mut fixture.target,
                 Qwen3ModelRole::Draft06B => &mut fixture.draft,
             };
-            ledger[index as usize] = M1KvPoolPageStateV1::Leased { request, generation };
+            ledger[index as usize] = M1KvPoolPageStateV1::Leased {
+                request,
+                generation,
+            };
         }
         fixture.target[1] = M1KvPoolPageStateV1::Leased {
             request: RequestId::new(1, 9),
