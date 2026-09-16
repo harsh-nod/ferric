@@ -1,9 +1,22 @@
 # M1 Team Progress
 
-Updated: 2026-09-15 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-16 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
+
+Private integration `07d718a6` brings the six existing MFMA feature commits
+onto the current compiler-pinned source: the BF16 K16 device kernel, separate
+thirteen-program roster, distinct numerical profiles, strategy propagation
+through engine recipes and runner binding, and explicit engineering capture
+admission. LegacyScalar12 remains the default and single-row decode retains
+its scalar/vectorized path. No fe2o3 files are changed by this Ferric feature.
+The 24-file replay preserves current e3 pins, newer runtime hardening and both
+page-return proof files. Its temporary worktree is removed; the candidate
+branch remains. This integration has not yet run host tests, refreshed its
+dependency inventories, emitted a current-source image or run on a GPU.
+The source359e host controls remain a separate, not-yet-launched campaign and
+must not be treated as validation of this larger feature.
 
 Private integration `9e10cc95` coherently updates the 80 active pin-bearing
 files to published fe2o3 `e3c359fb`; formatter-only successor `359e4e12`
