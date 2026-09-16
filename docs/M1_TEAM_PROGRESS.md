@@ -68,8 +68,21 @@ SHA-256 `6c46c97b2ad1ab3c880ea69f32b4a295eadcddbc8eb4b666ecf7299395d1edf4`.
 The 11,351,881-byte archive has SHA-256
 `d3886c416fa71a489632b94cba1970e07c74ae1901b135f3e76ee457fec3859a`;
 all 88 members and 87 payload hashes and sizes pass independent local checks.
-This is build validation only. Matching kernel emission, the M5 GPU capture
-and independent five-position logits comparison have not run on this checkpoint.
+This establishes the matching host executable, not numerical or serving
+validation.
+
+Matching MFMA13 emission subsequently passes all 12 mi300x phases, including
+fresh empty-home metadata parity, exact 13-entry/descriptor inspection, actual
+MFMA instructions, `gfx942:xnack-`, code-object version 6 and exact output replay.
+Source, tool, vendor and control after-checks pass. The reused LLVM worker keeps
+its original `21682228` producer attribution. The 112,680-byte HSACO has SHA-256
+`08b8b24eac612c3c65739cc9703b7822088863819d96ce4ae92470b858c60568`.
+The 2,034,624-byte emission archive has SHA-256
+`4bd5880951496586b7134c9ad00f5512f950ca223c5b8354e1ef00baba026666`;
+all 169 members and 168 payload hashes and sizes pass local custody checks.
+Engineering emission grants remain false. This is not production admission or
+a GPU numerical result. A separate guarded five-position M5 capture has started;
+its outcome and the independent reference comparison are not yet established.
 
 A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
 five commits after `1fad`. The 63-file change introduces kernel-context
@@ -94,7 +107,11 @@ A second separately reviewed cleanup removes exactly 48 unused cache files:
 14 superseded release rlibs and 34 older libtest executables, reclaiming
 440,084 KiB. All 784 protected files, 5,046 source files and 6,878 unselected
 target entries remain unchanged. Fresh compiler-stage allocation is 9,758,752
-KiB; future vendor formation still needs its own bounded admission. The scoped
+KiB. Subsequent bounded vendor formation passes: 198 packages and 11,394 entries,
+with 60 existing package directories moved and 138 missing packages copied.
+All 143 registry rows and original historical inputs remain unchanged; Cargo
+normalizes the 55 exact Git packages offline. Formation and later emission stay
+within their separately reviewed bounds. The scoped
 no-use checks retain their explicit process-visibility limitations. No historical
 test pass or complete byte archive is inferred for the discarded cache.
 
@@ -108,6 +125,10 @@ The site records compiler adoption and prior M5 host/proof evidence, not the
 subsequent tool/release builds or a new performance result. The preceding R15
 UI-label failure remains retained. The completed clean Pages source worktree
 is removed, reclaiming 3,324 KiB while preserving its branch and evidence.
+Five fully retained remote Pages input/build/retention roots are also removed
+after exact fresh inventories and scoped no-use checks: 785 entries and
+78,248 KiB reclaimed. All five roots are confirmed absent; foreign jobs and
+the retained publication checkout are untouched.
 
 ### Earlier Checkpoints
 
