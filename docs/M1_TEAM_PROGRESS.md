@@ -172,8 +172,8 @@ all 2,925 regular members and 2,924 payload hashes pass independent local
 verification. Combined M5 candidate `568882e2` contains the exact proof file
 and import-corrected M5 changes. Its compiler349 host campaign passes and is
 integrated privately at `6b5322dc`; only this progress document differs from
-the tested source tree. The focused Verus result retains its compiler111
-attribution: a fresh compiler349 proof has not run.
+the tested source tree. This original focused Verus result and its nine
+negative mutations retain their compiler111 attribution.
 The fully downloaded and independently verified host and proof archives have
 SHA-256 `f125c669bc7113de2e96304ef0a21db31a0bc89fda044588fcf7e5ce81178065`
 and `c263b3acd0a6c58a8da0da8184677df58c82d9071eda7844cebe70a37d505f86`.
@@ -211,8 +211,32 @@ archives, controls and raw results in a 57,589,388-byte archive, SHA-256
 All 344 members and 343 payload hashes, sizes and modes pass independent local
 checks; the embedded manifest and summary match their separate copies.
 Private integration `6b5322dc` contains the exact tested implementation.
-No M5 native capture, five-position numerical comparison, current349 Verus
-result, serving qualification or new performance result is claimed.
+No M5 native capture, five-position numerical comparison, serving
+qualification or new performance result is claimed.
+
+A separate fresh compiler349 Verus campaign now passes on the exact combined
+`568882e2` source. All 14 phases pass, including seven genuinely rebuilt and
+verified dependency exports and the selected production
+`M1SpeculativeGenerationLoopV1::commit_draft_catchup_transition` method:
+one verified, zero errors, executable mode, solver rlimit 116,015, with
+`--no-cheating`. Complete source/dependency/configuration/Verus-closure and
+artifact after-checks pass, as do preservation checks for all 2,924 retained
+compiler111 evidence files. The fresh target is isolated under the existing
+whole-stage 2 GiB cap; no old proof source or artifact is replaced.
+The 169,061,545-byte archive has SHA-256
+`6013e24b89fb72ca30b8c654a737a3405c6e5ff59f529bc8a2040b986fedf03c`.
+All 1,577 regular members and 1,576 payload hashes pass independent local
+verification. The nine negative mutations have not been rerun on349. This
+remains a single-method proof, not whole-engine, queue/owner or physical-KV
+composition, and does not validate later compiler heads.
+
+A bounded independent source review of the M5 allocation, rearm, binding and
+readback changes finds no actionable issue. It confirms capture exclusion from
+catch-up/general rearm, two target-logit bindings in segment four, complete
+five-row generation/extent checks, and 12 allocations within compiler349's
+unchanged fixed limit of 16. This review does not establish native correctness.
+The completed clean M5 worktree is removed after source/archive and no-use
+checks, reclaiming 44,856 KiB locally; its branch and tested commit remain.
 The reusable compiler lane separately reproduces an earlier admission gap:
 the real-style guarded gather reference rejects `WriteOnlyDisjointSlice<u16>`
 as having no reference ABI relation. The observation harness passes while the
@@ -245,6 +269,14 @@ seven cache-busted live assets match the exact 633,233-byte artifact. Only
 prebuilt assets and workflow hash/size/comment pins change. GitHub runs no
 build or test. This dated snapshot precedes the combined M5 host integration
 above and does not upgrade numerical, serving or performance qualification.
+After verified publication and local evidence retention, the six completed
+R13/R14 remote QA/input/retention directories are removed, reclaiming
+104,329,216 allocated bytes. Both 445-entry deletion journals match the
+reviewed inventories. The first R14 cleanup stops before deletion on an
+unknown transient SSH process visibility gap; an unchanged-control retry
+passes after that process disappears. Process visibility limitations remain
+explicit. The clean completed site worktree is also removed, reclaiming
+3,296 KiB locally while preserving its branch and source archives.
 
 The preceding dated dependency checkpoint was published at static Pages commit
 `bcc6d1badafd7d6bd1641c3c867cffd6cd7e63d2`, from separate Pages source
@@ -1094,7 +1126,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 | --- | --- | --- |
 | Compiler / Kernels | Published core-only `111722028` has zero GitHub runs/checks. Its 13-root MFMA13 engineering emission and replay pass. A separate 349 output-ABI candidate passes three unit tests but fails the ordinary-source positive at the next store-mapping boundary. The narrow resolver successor is rebased onto main `9af22bb5` for remote validation, not published or adopted by Ferric. | Resolve and validate the generic compiler boundary; rebase and retest before any core-only main push with CI skipped. Kernel emission is not numerical qualification. |
 | Runtime / Integration | Exact `2bfce38b`/`111722028` native32 completes 20 speculative rounds, full-accept catch-up and clean teardown. The current111 prefill comparison matches the next token but has max absolute logit error 0.125. Combined M5/catch-up source `568882e2` passes 21 host349 phases and is integrated privately at `6b5322dc`. | Investigate numerical differences, execute actual five-position comparison, broaden continuation/fault coverage and obtain matched TTFT/TPOT/throughput measurements. |
-| Verification | Exact `a9fad31b`/111 verifies the production catch-up transition, one selected method with zero errors. All nine actual-body mutations fail intended postconditions; source restoration and dependency checks pass and the complete campaign is retained. The exact proof source is integrated and host-tested on349. | Obtain fresh focused Verus evidence on the combined source and adopted compiler; prove outer queue/caller and physical KV composition separately. |
+| Verification | Exact `a9fad31b`/111 verifies the production catch-up transition and all nine actual-body mutations fail intended postconditions. Fresh combined `568882e2`/349 separately passes all 14 proof phases and verifies that same selected method with genuine dependency exports. Both campaigns are fully retained; old negatives remain111. | Prove outer queue/caller and physical KV composition separately, preserve exact compiler attribution and obtain native validation of the combined capture path. |
 | Integration / Pages | Private integration now includes the host-tested M5/catch-up source on349. Public static `3e41846` reports the dated native/numerical/proof checkpoint; all 14 live asset checks match mi300x QA. Completed prefill scratch and obsolete111 host-cache cleanup reclaim 350,568,448 and 1,427,656,704 bytes after retention. | Keep dated public scopes truthful, deploy only validated prebuilt assets and remove only completed owned stages/worktrees. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
