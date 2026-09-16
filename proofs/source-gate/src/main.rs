@@ -7703,12 +7703,20 @@ mod tests {
 
     #[test]
     fn aggregate_runtime_roster_rejects_marker_order_drift() {
-        let reordered = replace_once(
-            AGGREGATE_RUNTIME_SOURCE,
-            "            GemmReference,\n            SwiGlu,",
-            "            SwiGlu,\n            GemmReference,",
-        );
-        assert!(validate_aggregate_source(&reordered).is_err());
+        for roster in [
+            "M1AllKernelsWorkerV3RosterV1",
+            "M1AllKernelsMfmaWorkerV3RosterV1",
+        ] {
+            let exact =
+                format!("pub struct {roster} = [\n            GemmReference,\n            SwiGlu,");
+            let hostile =
+                format!("pub struct {roster} = [\n            SwiGlu,\n            GemmReference,");
+            let reordered = replace_once(AGGREGATE_RUNTIME_SOURCE, &exact, &hostile);
+            assert_eq!(
+                validate_aggregate_source(&reordered),
+                Err(format!("generated roster marker order drifted: {roster}")),
+            );
+        }
     }
 
     #[test]

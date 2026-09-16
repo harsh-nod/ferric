@@ -21,9 +21,11 @@ fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
         .collect::<Vec<_>>();
     let expected_source = format!("source = \"{FE2O3_LOCK_SOURCE}\"");
     assert!(fe2o3_sources.len() > 20);
-    assert!(fe2o3_sources
-        .iter()
-        .all(|line| line.trim() == expected_source));
+    assert!(
+        fe2o3_sources
+            .iter()
+            .all(|line| line.trim() == expected_source)
+    );
     assert_eq!(
         LOCK.matches("?rev=e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9#")
             .count(),
