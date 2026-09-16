@@ -24,7 +24,7 @@ second inference project or a parallel compiler path.
 | Tile worker scheduler / numerical handlers | Not implemented by this checkpoint |
 | Full-model decode / performance qualification | Not executed; no claim |
 
-The raw CPU test logs and failing device/compiler probes are in
+The CPU test logs and failing device/compiler probes (device IDs redacted) are in
 [the initial evidence directory](evidence/gfx950-megakernel-42/README.md).
 The host's partition identifier and board identifier are different domains,
 not a decimal/hex parsing error. Fixing that requires a reviewed XCP-to-render

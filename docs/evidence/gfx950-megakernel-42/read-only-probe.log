@@ -1,1 +1,2 @@
-Error: Topology(RenderCorrelationMismatch { node_id: 1, field: "unique_id", kfd: "10294934887855545115", render: "14993081225344063790" })
+Public copy: hardware device identifiers redacted; original retained on the test host.
+Error: Topology(RenderCorrelationMismatch { node_id: 1, field: "unique_id", kfd: "<redacted XCD/XCP identifier>", render: "<redacted board identifier>" })

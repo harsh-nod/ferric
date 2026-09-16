@@ -9,7 +9,10 @@ qualification. The epic's M1-M7 completion gates remain open.
 Source bases: Ferric `5d3d93d3e7f08645273d274bc35efbc79133e686` and fe2o3
 `e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9`. The integrated test logs include the
 changes in this PR; the issue links the exact resulting commits. Checksums in
-`SHA256SUMS` cover these raw logs, not a production source/artifact closure.
+`SHA256SUMS` cover the published logs, not a production source/artifact closure.
+The device probe has hardware identifiers redacted to follow fe2o3's
+contribution policy; it is not a byte-identical raw capture. Original probe
+output remains in the caller-owned evidence directory on the test host.
 
 ## Passing Checks
 
@@ -35,15 +38,16 @@ behavior findings.
 
 ## Rejected Runtime Probe
 
-`read-only-probe.log` is the actual output of:
+`read-only-probe.log` preserves the rejection with device IDs redacted:
 
 ```sh
 cargo run -p fe2o3-kfd --features engineering-gfx950 \
-  --example kfd-gfx950-device-identity -- 10294934887855545115
+  --example kfd-gfx950-device-identity -- "$KFD_DEVICE_UNIQUE_ID"
 ```
 
-The KFD topology reports XCD/XCP identity `0x8edef4bc5067db1b`; the DRM
-parent exposes board identity `0xd0121ff00d36192e`. The common topology
+Set `KFD_DEVICE_UNIQUE_ID` from local topology without publishing its value.
+The KFD topology reports an XCD/XCP identity; the DRM parent exposes a
+different board identity. The common topology
 contract rejects the unequal IDs before acquiring device execution authority.
 The exact driver sources explain the two domains, but the reviewed public ABI
 does not provide a corresponding independent DRM XCD-ID query. A separate
