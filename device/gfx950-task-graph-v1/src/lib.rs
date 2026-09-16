@@ -10,7 +10,9 @@
 //! read-from authority or a general cross-workgroup memory proof.
 
 use fe2o3_device::atomic::Ordering;
-use fe2o3_device::{DeviceGlobalMutPtr, WorkgroupLdsScope, WorkgroupPipeline, kernel, thread};
+use fe2o3_device::{
+    DeviceGlobalMutPtr, StridedReadView2D, WorkgroupLdsScope, WorkgroupPipeline, kernel, thread,
+};
 
 pub const KERNEL_SYMBOL: &str = "ferric_gfx950_task_graph_v1";
 pub const TASKS: usize = 7;
@@ -77,6 +79,13 @@ pub fn ferric_gfx950_task_graph_v1(
     if inputs.len() != INPUT_WORDS || config.len() != 1 {
         fe2o3_device::trap();
     }
+    let input_view = if let Ok(view) =
+        StridedReadView2D::from_shared_slice(inputs, 0, 1, INPUT_WORDS, INPUT_WORDS)
+    {
+        view
+    } else {
+        fe2o3_device::trap()
+    };
     // The typed linear index retains invocation evidence for LDS projection.
     // With the exact 128-lane launch, quotient/remainder are WG/local IDs.
     let global_index = thread::index_1d().get();
@@ -187,7 +196,10 @@ pub fn ferric_gfx950_task_graph_v1(
                 768
             };
             let offset = row_base + lane;
-            let value = inputs[offset];
+            // A total checked load cannot introduce a lane-dependent panic
+            // before the next collective. Invalid coordinates use the same
+            // sentinel as invalid input values and cannot publish success.
+            let value = input_view.load_or(0, offset, MAX_INPUT + 1);
             if value <= MAX_INPUT {
                 contribution = value;
             } else {

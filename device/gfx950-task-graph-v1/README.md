@@ -7,10 +7,12 @@ A host test does not execute or qualify the device entry point.
 
 Current checkpoint: host contract tests and the independent scheduler model
 pass, and production extraction passes source/arithmetic analysis. Extraction
-currently stops at the checked pipeline-convergence gate for nested bounded
-loops and two sequential phases. There is no emitted scheduler HSACO or GPU
-scheduler result at this checkpoint. The generic proof extension is ongoing;
-the gate is not disabled. Projection GPU results are separate evidence.
+last rejected a slice-bounds panic edge inside the collective loop. The source
+now uses a checked total-load view and the existing invalid-input sentinel;
+extraction still rejects because the ranked access projection represents its
+bounds-failure path as a trap rather than an effect-free continuation. There
+is no emitted scheduler HSACO or GPU scheduler result at this checkpoint.
+Proof gates remain enabled. Projection GPU results are separate evidence.
 
 ## Graph and Arithmetic
 
