@@ -107,6 +107,53 @@ group and diagnostic-free selected-path no-use checks, the completed native
 scratch stage is removed: 33 files, three directories, 14,508,032 allocated
 bytes. Reusable model, compiler and release inputs remain on mi300x.
 
+The first independent current111 prefill comparison is now retained. Exact
+`2bfce38b`/`111722028` captures `prefill-s1-t128.001` on GPU 4; the canonical
+PyTorch reference runs twice with byte-identical outputs. Both native processes
+exit 0 and return GPU 4 to its 298,647,552-byte baseline. The comparison covers
+151,936 finite BF16 logit pairs and one token, with zero token mismatches,
+maximum absolute error 0.125, RMSE 0.03982024072957679 and 2,725 bit-identical
+pairs. Maximum BF16 ULP distance is 31,373: that pair crosses zero, from Ferric
+-0.047607421875 to reference 0.04931640625. No reviewed tolerance or numerical
+pass is claimed. Token agreement alone does not close numerical qualification.
+
+The first comparison wrapper exits 1 because it expects the old V1 report
+schema; the actual Rust comparator exits 0 and produces a valid V2 report.
+The corrected wrapper exits 0 in a separate output directory and its report
+is byte-identical to the first report. Both attempts, raw logs, actual capture
+and comparator executable bytes, generated inputs, reference sources and
+output bundles are preserved in the 6,133,251-byte archive with SHA-256
+`e9d233c8d9287ffae71184e7a07c6c064c866bc56c1e80ba643be22313a17f60`.
+All 260 regular members, the exact ordered roster, and all 259 payload hashes
+and sizes pass independent local verification. Model weights, reference caches
+and build targets are excluded. This is not a TTFT/TPOT or serving measurement,
+and does not validate compiler `349b2cd0`.
+
+The separate draft catch-up proof candidate `a9fad31b`, on compiler
+`111722028`, passes its 21 selected host coordinator tests with zero failures
+or ignored tests, plus strict engine all-target Clippy. Verus b677 then verifies
+the actual production `commit_draft_catchup_transition` method: one verified,
+zero errors, with `--no-cheating`, genuine dependency exports and unchanged
+source/dependency after-checks. Its contract covers admission and error
+precedence, exact draft cursor/epoch advancement, and success/failure framing.
+It does not prove the whole engine, sealed owner mapping, queue completion or
+the physical KV join. Nine actual-body negative mutations are prepared but
+have not yet run. This candidate is not yet integrated or validated on 349.
+The fully downloaded and independently verified host and proof archives have
+SHA-256 `f125c669bc7113de2e96304ef0a21db31a0bc89fda044588fcf7e5ce81178065`
+and `c263b3acd0a6c58a8da0da8184677df58c82d9071eda7844cebe70a37d505f86`.
+
+The M5 engineering candidate `cf8dd23e` implements one-shot readback of all
+five real S1/K4 target logit rows and a separate canonical full-prefix
+reference. It includes partial-copy/failed-teardown ownership regressions and
+rejects rearming this capture allocation. Its 14-file host campaign is running
+on compiler `349b2cd0`; no host pass or native/numerical result is claimed yet.
+The reusable compiler lane separately reproduces an earlier admission gap:
+the real-style guarded gather reference rejects `WriteOnlyDisjointSlice<u16>`
+as having no reference ABI relation. The observation harness passes while the
+compiler subprocess exits 101; this is not compiler/proof success. A narrow
+output-only relation fix and rejection regressions are prepared, not validated.
+
 Separately, two redundant remote archive copies are removed after local
 verification, reclaiming 116,240,384 allocated bytes. Their attempted extra
 `fuser -s -- PATH` check rejected the argument separator but returned the same
