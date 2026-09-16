@@ -29,6 +29,16 @@ It passed the same 4096-value GPU workload under a separately derived gamma22
 bound, with mixed-case maximum absolute error `1.1920928955078125e-7`.
 No timing or speedup is inferred from the coalesced layout alone.
 
+The [real-weight projection-to-K-RMSNorm chain](../qualification/gfx950-qwen3-knorm-v1/README.md)
+now passes five GPU cases and ten dispatches. It validates 5120 projection
+values against the independent bound, all 5120 intermediate BF16 keys, and
+all 5120 normalized BF16 outputs exactly against the staged sqrt/div reference.
+The same projection allocation is reused across exact completion without a
+host rewrite. All input/guard/lifecycle checks pass. This establishes a
+two-dispatch correctness baseline with real layer-0 projection and norm weights,
+not a single-launch megakernel, eager-framework bitwise parity, or full Qwen
+generation. RoPE, attention/KV, remaining layers, and token-loop checks remain.
+
 The [finite atomic task graph](../qualification/gfx950-task-graph-v1/README.md)
 also compiles and runs on `mi350-2`: all 20 dispatches passed, with 16 valid
 epochs and four stale-epoch negatives. All 16 valid epochs used both workgroups

@@ -61,5 +61,11 @@ source extraction through semantic MIR, ranked PLIRON, Kernel IR and gfx950 LLVM
 also passes with four checked stores. The emitted LLVM retains two separate
 squares, a pairwise add, six XOR reduction stages (1/2/4/8/16/32), `llvm.sqrt.f32`,
 and an unrelaxed `fdiv`. It disables fast math and contraction and preserves IEEE
-FP32 denormals. These source/IR checks are not native-machine-code validation or
-a GPU numerical result; those require the separate qualification workflow.
+FP32 denormals.
+
+The completion-ordered native chain has now passed five cases on `mi350-2`,
+including all 5120 final BF16 words exactly matching the staged reference.
+Both stages use two wave64 waves per workgroup. The norm stage uses four
+workgroups, 28 SGPRs/19 VGPRs, and no spills, LDS, or private memory. See the
+[bound native evidence](../../qualification/gfx950-qwen3-knorm-v1/README.md#native-gpu-evidence)
+for source/object hashes, projection error bounds, lifecycle checks, and limits.

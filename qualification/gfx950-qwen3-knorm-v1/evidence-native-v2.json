@@ -1,0 +1,327 @@
+{
+  "schema": "ferric-qwen3-knorm-chain-public-evidence-v1",
+  "authority": "none",
+  "status": "pass",
+  "host": "mi350-2",
+  "target": "gfx950",
+  "scope": "real Qwen3-0.6B layer-0 checkpoint weights, synthetic single-token activations, completion-ordered two-dispatch key projection and K-RMSNorm; not model inference or a megakernel",
+  "ferric_source_commit": "e5ed1185c55e8b46dddf3749e2c7ebbfc1b9f89b",
+  "compiler_source_commit": "3dfa5b3fdac1832bd7d8902e32f591d81300d1e3",
+  "probe_source_commit": "28a6d3eee9af35a1f5d70c640396358e3b99b1c5",
+  "compiler_build_provenance_sha256": "d989cfd14d8fb86b905f9817c56832bc7a8c5cbef5eebbbcb446edb7b7837efb",
+  "probe_build_provenance_sha256": "1a71ebe7650288c284ce84f042fb21b75540ecdc9240ddf99d8a379ddc7e3acb",
+  "native_build_inputs_manifest_sha256": "0b6942b7dad750282b7e130a005ec3aef32ce00b07bf0afcbe7ab1c3b8b1c442",
+  "numerical_suite_inputs_manifest_sha256": "b1e796f0dedb6af023750c01a1b9a0e559ab227e6da2d8fde5d2743940237ab7",
+  "artifact_record_sha256": "ad12dbe8b86f29e4ebae0bed945e365da359839400b6968b78ed803ff45caf25",
+  "reference_sha256": "536f5f4e1272ceafb1c8932ae8a2aec9a01bf1b1b2f63cdf159527e784fc5ff2",
+  "probe_sha256": "451b552fc764964acf0948401e6f72484f8a2b2cc45716016c972f1cdaceeaef",
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "build_provenance": "native stages use clean committed Ferric and the immutable compiler built from clean fe2o3 3dfa5b3; probe built from clean Ferric 28a6d3 against an unchanged exact fe2o3 dependency closure at 3dfa5b3, not a claim that the whole live compiler checkout was clean",
+  "native_toolchain": "ROCm 7.2.0 LLVM 22, checked compiler handoffs, code objects V6",
+  "model": {
+    "id": "Qwen/Qwen3-0.6B",
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "checkpoint_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "projection_weight_sha256": "68dd761a149b0ff707ad0c1ac6d61dfed75d6fedfbbdbfedde4889f5ca0706f4",
+    "norm_weight_sha256": "65ba32dce94cb1fde9037d627efd8b734a0e2db04df21ea33c026393371b2c88"
+  },
+  "kernels": [
+    {
+      "stage": "producer",
+      "symbol": "ferric_gfx950_qwen3_kproj_wave64_v1",
+      "source_sha256": "87ede6b189d9413d900f0e096ccec5fade2114fe267f569b8ee8215d013d837c",
+      "object_sha256": "18ea362ab7b6c74ef5618206f60276fc19e4e4b32956176afc39decde7ce4b17",
+      "handoff_sha256": "a123a2993e042b0e334a80e9373e03702814b8019568f112d927abb558e6d359",
+      "llvm_sha256": "8ae5d78900864112cba5fb52cde248c4501509d7fa78fc9ff3fe2f13eb851b35",
+      "metadata_sha256": "8047f782c47cec941d996602b9b631a1d8e1cd5eac5094f6d32cd312f6394a63",
+      "explicit_kernarg_bytes": 48,
+      "workgroup": [
+        128,
+        1,
+        1
+      ],
+      "grid_work_items": [
+        65536,
+        1,
+        1
+      ],
+      "waves_per_workgroup": 2,
+      "wavefront_size": 64,
+      "group_segment_bytes": 0,
+      "private_segment_bytes": 0,
+      "sgpr_count": 24,
+      "vgpr_count": 16,
+      "sgpr_spill_count": 0,
+      "vgpr_spill_count": 0
+    },
+    {
+      "stage": "consumer",
+      "symbol": "ferric_gfx950_qwen3_knorm_v1",
+      "source_sha256": "4a7dbd41ea20f0e62dabcdc4cfcfcc6914c0fe9ce67677d1a122ec457dadfae1",
+      "object_sha256": "a103ac55343836a3f303a1787c1afc9724115e64b13d834c8f0e1577cada26f1",
+      "handoff_sha256": "7c907adf4dbaca7d64e7451082c0f639e67cb5fb99bd06106e99121e4ab38885",
+      "llvm_sha256": "5bc7a065f364368e697f5daa937c6f49ab4ce10ba4203b1baa42febabe5122ed",
+      "metadata_sha256": "2ccfadc07457a421ede78ac0bd1b9c7e813d0953d6c47de34299033f5b6a6052",
+      "explicit_kernarg_bytes": 64,
+      "workgroup": [
+        128,
+        1,
+        1
+      ],
+      "grid_work_items": [
+        512,
+        1,
+        1
+      ],
+      "waves_per_workgroup": 2,
+      "wavefront_size": 64,
+      "group_segment_bytes": 0,
+      "private_segment_bytes": 0,
+      "sgpr_count": 28,
+      "vgpr_count": 19,
+      "sgpr_spill_count": 0,
+      "vgpr_spill_count": 0
+    }
+  ],
+  "graph": {
+    "basis": "fixed engineering graph; not source-to-object or runtime publication authority",
+    "allocation_bytes": [
+      2048,
+      2097152,
+      4096,
+      256,
+      2048,
+      2048
+    ],
+    "producer_buffers": [
+      0,
+      1,
+      2
+    ],
+    "consumer_buffers": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "producer_grid": [
+      65536,
+      1,
+      1
+    ],
+    "consumer_grid": [
+      512,
+      1,
+      1
+    ],
+    "workgroup": [
+      128,
+      1,
+      1
+    ],
+    "consumer_lengths": [
+      1024,
+      128,
+      1024,
+      1024
+    ],
+    "completion_ordered": true,
+    "intermediate_reupload": false
+  },
+  "memory": {
+    "allocation_policy": "VRAM|WRITABLE|PUBLIC; no COHERENT flag",
+    "guard_bytes_each_end": 64,
+    "distinct_allocations": true,
+    "cpu_access_during_dispatch": false,
+    "producer_completion_before_consumer": true,
+    "intermediate_host_readback_between_dispatches": true,
+    "intermediate_host_write_or_reupload": false,
+    "hbm_placement_or_bandwidth_claim": false
+  },
+  "numerical_policy": {
+    "basic_arithmetic": "round-to-nearest ties-even F32, no FMA contraction/reassociation",
+    "composed_interval": "outward BF16 image of independent gamma22 projection bounds, propagated through exact staged sqrt/div consumer operations; not a framework rsqrt enclosure",
+    "composed_model_center": "diagnostic FP64 projection -> BF16 -> FP64 sum/rsqrt -> BF16 normalized -> BF16 gamma product; not pinned-framework bitwise parity",
+    "conditional_domain": "zero or 2^-50 <= abs(BF16 K) <= 2^20; real gamma in [2^-10,2^8]; no nonfinite values",
+    "epsilon_f32": 9.999999974752427e-7,
+    "fixed_before_gpu": true,
+    "id": "qwen3-k-projection-bf16-staged-knorm-sqrt-div-v1",
+    "math_scope": "strict correctly-rounded IEEE F32 sqrt/div source/compiler-TCB contract; no rsqrt equivalence or all-input machine proof",
+    "pairing": "lane and lane+64; two separate F32 squares then F32 add",
+    "projection": {
+      "absolute_bound": "upward((gamma22_upper+gamma64_upper)*upward(sum_abs/(1-gamma64_upper)))",
+      "derivation": "each product traverses at most16 FMA roundings and6 tree additions; (1+gamma16)*(1+gamma6)-1 <= gamma22",
+      "domain": "finite BF16; nonzero product lattice at least2^-126; sum_abs below2^120",
+      "exact_cases": "zero and basis require exact FP32 outputs; cancellation requires exact row0 zero",
+      "fp32_unit_roundoff": 5.960464477539063e-8,
+      "gamma32_upper": 0.0000013113039045742693,
+      "gamma64_upper": 1.1368683772162898e-13,
+      "id": "bf16-exact-fp32-fma16-tree6-gamma22-v1",
+      "reference": "FP64 math.fsum of exactly widened BF16 products; gamma64 covers reference rounding",
+      "rounding_depth_bound": 22,
+      "terms_per_lane": 16,
+      "tree_add_depth": 6,
+      "wave_lanes": 64
+    },
+    "reciprocal_ulp_acceptance": 0,
+    "shape": [
+      8,
+      128
+    ],
+    "sqrt_ulp_acceptance": 0,
+    "staging": "BF16(K); F32 square/tree/mean/epsilon; sqrt; reciprocal; F32 multiply; BF16; F32 gamma multiply; BF16",
+    "xor_reduction_distances": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32
+    ]
+  },
+  "completed_dispatches": 10,
+  "projection_values_checked": 5120,
+  "quantized_values_checked": 5120,
+  "conditional_norm_values_checked": 5120,
+  "composed_interval_values_checked": 5120,
+  "checks": {
+    "source_and_binary_hashes_rechecked": true,
+    "input_immutability_and_all_allocation_guards_passed": true,
+    "projection_unchanged_after_consumer": true,
+    "producer_completion_before_consumer": true,
+    "intermediate_allocation_reused_without_host_write": true,
+    "free_close_and_worker_exit_passed": true
+  },
+  "cases": [
+    {
+      "case": "zero",
+      "status": "pass",
+      "input_sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+      "case_record_sha256": "ef2c43b9f59b1d391313d4e931e0cf48f8da88a107faabbb3aa0d3e220d80de2",
+      "numerical_record_sha256": "ac60e830d4fded47178c2c67d01076be8bb09f36540890d0bf8b2bbe77b83ae5",
+      "report_sha256": "ac13518a7445424faa823ad9434ed46bb3b8841b0c8c483884e97a663faf87bd",
+      "output_hashes": {
+        "output": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+        "projection": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
+        "quantized": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad"
+      },
+      "completed_dispatches": 2,
+      "projection": {
+        "maximum_absolute_error": 0,
+        "maximum_error_to_bound_ratio": 0
+      },
+      "projection_values_checked": 1024,
+      "quantized_values_checked": 1024,
+      "conditional_norm_values_checked": 1024,
+      "conditional_singleton_intervals": 1024,
+      "composed_interval_values_checked": 1024,
+      "composed_model_center_different_values": 0
+    },
+    {
+      "case": "basis",
+      "status": "pass",
+      "input_sha256": "e491595da7b04002378344376d0bc3350fd7ed604a4126922e8f25c4b111fea4",
+      "case_record_sha256": "1b7a42bf06cd648e765c026435d9dc2a90d33d09bbdb23e7e795fd72b7f9f09e",
+      "numerical_record_sha256": "72898a7581c0906e91855b5f2398201dda0eb3a92fa3cd5740c052afd6a48b9d",
+      "report_sha256": "08ae0041690fd270c9ee8d4e778a44f31f99f0a3cd7b696c3db548ce162d761d",
+      "output_hashes": {
+        "output": "0a96ac8811a4e583b4bab86d7afa709e4323d2693b824c7a3714908ebf4e1d5a",
+        "projection": "d4e136c6bed2f40f7fe0f7165d34f222ef57e392f1cf64b5e0e15248ccaf3cdd",
+        "quantized": "7c47dd9d4727b84f63461f227ef40b8bb8e768dbd1926e22ac1b2307893468a1"
+      },
+      "completed_dispatches": 2,
+      "projection": {
+        "maximum_absolute_error": 0,
+        "maximum_error_to_bound_ratio": 0
+      },
+      "projection_values_checked": 1024,
+      "quantized_values_checked": 1024,
+      "conditional_norm_values_checked": 1024,
+      "conditional_singleton_intervals": 1024,
+      "composed_interval_values_checked": 1024,
+      "composed_model_center_different_values": 0
+    },
+    {
+      "case": "mixed",
+      "status": "pass",
+      "input_sha256": "1514456873bd579ed3fb5bcad2c071f69124f34981d795711fd0a3831b60bfb5",
+      "case_record_sha256": "d4aca718dce076e57b7c8796af707f34bfeec3db45a5e0237f5aa0d67d3dfb92",
+      "numerical_record_sha256": "b0dac5d48a2006c2340637945982e7b2500a9f80eff8cae97b4fa7ee13753977",
+      "report_sha256": "84207106bfe79ef64eb5c224bf50319b2d1f882fedfec639eff36ff3dcc6d64f",
+      "output_hashes": {
+        "output": "3a855d608475a226a0e39fb19a02e5979d06814ec1c1f4e870dd1d184c2cf1cd",
+        "projection": "408305448e96ab37e1703133fd0dfabc8238a29b575d2170824cadd455575006",
+        "quantized": "5e476a0783b445b0b114b46d6f98eb801df4dbf1b13a8f06b59936381c75bb37"
+      },
+      "completed_dispatches": 2,
+      "projection": {
+        "maximum_absolute_error": 1.1920928955078125e-7,
+        "maximum_error_to_bound_ratio": 0.005085048481565353
+      },
+      "projection_values_checked": 1024,
+      "quantized_values_checked": 1024,
+      "conditional_norm_values_checked": 1024,
+      "conditional_singleton_intervals": 1024,
+      "composed_interval_values_checked": 1024,
+      "composed_model_center_different_values": 0
+    },
+    {
+      "case": "cancellation",
+      "status": "pass",
+      "input_sha256": "2979958cc2f3f569af6e39c1fbf4d06d4e9383016cd2bd20233cc5d3958ce86d",
+      "case_record_sha256": "5412e4c328334485a0e160a7edbc053fb8f716b1ebae5cc9b6e5a0d6057f9dad",
+      "numerical_record_sha256": "96d5231407fcad9bdb7bd4e502b814fbf51fb538bc2e302f15a05745f91bd320",
+      "report_sha256": "c08b564f934522e6f24cd3d47dd5af593d457541ed6bea4bf653f4ed4434501a",
+      "output_hashes": {
+        "output": "ee17da5bd7e1055ed757ca9c6822d6e84c4aea788f6935640d161d6913619a5d",
+        "projection": "819560afbf5e0ca3fb45899a92a7c2b48d749b30538c58c2e1d59930eace77f3",
+        "quantized": "1b49a82ff893a4e1ad5c29f00cf9aebde9fd0e0764be6a425a4891524bf3a6f6"
+      },
+      "completed_dispatches": 2,
+      "projection": {
+        "maximum_absolute_error": 0,
+        "maximum_error_to_bound_ratio": 0
+      },
+      "projection_values_checked": 1024,
+      "quantized_values_checked": 1024,
+      "conditional_norm_values_checked": 1024,
+      "conditional_singleton_intervals": 1024,
+      "composed_interval_values_checked": 1024,
+      "composed_model_center_different_values": 0
+    },
+    {
+      "case": "epsilon",
+      "status": "pass",
+      "input_sha256": "d13a4ddae7f9770610a325458630c7fa76ef6a2393211dc448f87ff551c2a453",
+      "case_record_sha256": "83a6dbe9b936924bacb4910085b5cbdb2eec9ec98dcf17c1f696fc49d88210c3",
+      "numerical_record_sha256": "7701a79335710cb2cfc07e783276b70516069340ce2f957077399326493c97a6",
+      "report_sha256": "fee44db78b2c031346bb869e580e794d9e1350066a055aaf936bfd22e8320324",
+      "output_hashes": {
+        "output": "b41c3386f7f961e75564f075e51f867da99609c2023b96d847d5684601e82656",
+        "projection": "8276786f4b524713721b91e0307e7b8db2768ca2c89e26986da0667c8681a57a",
+        "quantized": "ad8e56153df179ee81d66fb1b1f29ca878730db604b2edf46608e6273b3347f1"
+      },
+      "completed_dispatches": 2,
+      "projection": {
+        "maximum_absolute_error": 0,
+        "maximum_error_to_bound_ratio": 0
+      },
+      "projection_values_checked": 1024,
+      "quantized_values_checked": 1024,
+      "conditional_norm_values_checked": 1024,
+      "conditional_singleton_intervals": 1024,
+      "composed_interval_values_checked": 1024,
+      "composed_model_center_different_values": 0
+    }
+  ],
+  "retained_evidence_root": "/home/harmenon/ferric-gfx950-42",
+  "retained_native_directory": "evidence/knorm-chain-native-v2",
+  "retained_gpu_directory": "evidence-gpu/knorm-chain-native-v2",
+  "limits": [
+    "No full Qwen model, RoPE, KV cache, logits, or token-loop qualification.",
+    "Two completion-ordered dispatches, not single-launch tensor publication or a megakernel.",
+    "Strict sqrt/div alternative; no bitwise PyTorch rsqrt parity or all-input hardware proof.",
+    "No GPU-event timing, throughput, bandwidth, speedup, or Cohere parity result.",
+    "Protected runtime authority remains closed; engineering execution required explicit unauthenticated-machine-code acknowledgment."
+  ]
+}

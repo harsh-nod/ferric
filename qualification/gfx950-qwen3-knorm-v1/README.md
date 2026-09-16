@@ -3,14 +3,55 @@
 This fixed engineering graph uses real `Qwen/Qwen3-0.6B` checkpoint weights
 with synthetic single-token BF16 activations. An ordinary-buffer wave64 key
 projection is followed by a separate K-RMSNorm dispatch, ending before RoPE.
-The reference and numerical policy are fixed before GPU execution. This file
-does not claim a completed GPU run; dispatch evidence must be bound separately.
+The reference and numerical policy were fixed before GPU execution. The native
+suite has now passed on `mi350-2`; the exact records and limits follow below.
 
 This is not full-model inference, a single-launch megakernel, tensor publication
 through atomic channels, a performance result, or protected-runtime authority.
 No PyTorch/Transformers installation, framework execution, or additional model
 download is needed. Framework source is a semantic reference, not backend-parity
 evidence.
+
+## Native GPU Evidence
+
+[The machine-readable summary](evidence-native-v2.json) binds clean Ferric
+`e5ed1185c55e8b46dddf3749e2c7ebbfc1b9f89b`, the frozen compiler from fe2o3
+`3dfa5b3fdac1832bd7d8902e32f591d81300d1e3`, both HSACO objects, the independent
+reference, and every case/report/raw-output hash. The probe was frozen from
+Ferric `28a6d3eee9af35a1f5d70c640396358e3b99b1c5`; its exact fe2o3 dependency
+closure remained unchanged at `3dfa5b3`, despite parallel edits elsewhere in
+the compiler checkout. This is not a claim that that entire live checkout
+was clean. Source-to-HSACO lowering used the normal checked Rust pipeline.
+
+| Case | Projection max absolute error | Error / bound | Exact BF16 norm matches | Composed enclosure |
+| --- | ---: | ---: | ---: | --- |
+| zero | 0 | 0 | 1024 / 1024 | pass |
+| basis | 0 | 0 | 1024 / 1024 | pass |
+| mixed | 1.1920928955078125e-7 | 0.005085048481565353 | 1024 / 1024 | pass |
+| cancellation | 0 | 0 | 1024 / 1024 | pass |
+| epsilon | 0 | 0 | 1024 / 1024 | pass |
+
+Ten dispatches checked 5120 projection values, 5120 intermediate BF16 keys,
+and 5120 final BF16 norm values. Every conditional consumer interval was a
+singleton; no sqrt/div tolerance was widened. All final values also fell
+inside the independently composed intervals. The diagnostic FP64 model-center
+values happened to agree in these cases, which does not establish framework
+bitwise parity. Input bytes, all six allocation guards, unchanged projection
+storage, producer-before-consumer order, reverse frees, queue close, and worker
+exit passed. The intermediate GPU allocation was reused without host writes;
+the harness did read it back between dispatches for observation.
+
+The producer uses 512 workgroups and the consumer four, each with two wave64
+waves. Their respective SGPR/VGPR counts are 24/16 and 28/19, with zero spills,
+LDS, or private segments. Native consumer ISA contains `v_sqrt_f32` and the
+division refinement/fixup sequence; strict IR sqrt/div semantics are retained.
+These are correctness/resource observations, not a speedup measurement.
+
+Raw records, frozen pre-run references, and manifests remain under
+`/home/harmenon/ferric-gfx950-42/evidence-gpu/knorm-chain-native-v2/`; native
+handoffs/IR/ISA are under `evidence/knorm-chain-native-v2/`. Hardware identifiers
+remain private. Shared-GPU pre/post observations found the same idle foreign
+process and memory usage; no foreign process or device configuration was changed.
 
 ## Checkpoint Identity
 
