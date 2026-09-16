@@ -1,0 +1,96 @@
+{
+  "actual_sha256": "05fd36bb3b0fb276e42fb73393ec6b48337bdb5c9983de0c6ab5bd0a9f381efa",
+  "atol": 2e-05,
+  "authority": "engineering-numerical-check-only",
+  "case": "zero",
+  "case_sha256": "6813e7de5e77d12165ef4c594da00b05fba950ae0ef5a15840954ef9d83cd33c",
+  "compared_values": 10240,
+  "first_failures": [],
+  "format": "ferric.gfx950-decoder-layer-comparison.v1",
+  "full_model": false,
+  "inputs_sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a",
+  "passed": true,
+  "production_qualified": false,
+  "reference_sha256": "38db76640119422e0f969e97eab0d0574ca95adb0d174a73b9c53189664ff619",
+  "rtol": 0.0002,
+  "stages": [
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "input_norm",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "rotated_q",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "rotated_k",
+      "values": 512
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "current_v",
+      "values": 512
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "attention",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "attention_residual",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "post_norm",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "gate",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "up",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "swiglu",
+      "values": 1024
+    },
+    {
+      "failed": 0,
+      "finite_nrmse": 0.0,
+      "max_finite_absolute_error": 0.0,
+      "stage": "final_residual",
+      "values": 1024
+    }
+  ],
+  "weights_sha256": "bc852d7643fc41d8f3d1eef6724bc7755c1fe1ccdc74c8f72899076173a572ca"
+}

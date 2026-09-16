@@ -1,0 +1,23 @@
+{
+  "format": "ferric.gfx950-decoder-runtime-observation.v1",
+  "authority": "engineering-observation-only",
+  "host_alias": "mi350-2",
+  "compiler_changes_commit": "fcf0e090d81d74ed544425c3dc340a7917497211",
+  "compiler_build_identity_note": "Exact pre-commit compiler executable/backend identities are retained in ../build_evidence.json; this commit tracks the compiler changes, not a replacement build identity.",
+  "probe_sha256": "850f45f51e909fdd496d626d71968669477cd36c26cfce6041c071374b8491f0",
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "suite_completed_dispatches": 4,
+  "preceding_smoke_completed_dispatches": 1,
+  "mixed_smoke_and_suite_output_bit_identical": true,
+  "foreign_resident_process_count_before": 1,
+  "foreign_resident_process_count_after": 1,
+  "observed_used_vram_mb_before": 18420,
+  "observed_used_vram_mb_after": 18420,
+  "observed_used_gtt_mb_before": 30,
+  "observed_used_gtt_mb_after": 30,
+  "device_settings_changed": false,
+  "device_reset_performed": false,
+  "foreign_jobs_managed": false,
+  "exclusive_performance_environment": false,
+  "performance_claim": null
+}

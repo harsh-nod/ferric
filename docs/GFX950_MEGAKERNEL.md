@@ -11,7 +11,7 @@ schemas, scheduling primitives, compiler lowering, and runtime ownership belong
 in [fe2o3 #135](https://github.com/harsh-nod/fe2o3/issues/135). Do not create a
 second inference project or a parallel compiler path.
 
-## September 15 Implementation Checkpoint
+## Initial Implementation Checkpoint
 
 | Gate | Observed status |
 | --- | --- |
@@ -30,7 +30,36 @@ The host's partition identifier and board identifier are different domains,
 not a decimal/hex parsing error. A narrowly scoped upstream SPX/XCP0-to-parent
 render contract now retains and independently rechecks both domains. It is
 selected by the exact engineering profile, not by a failed equality comparison.
-Protected production authority remains separately open; no GPU work was run.
+At that initial checkpoint, no GPU work had been run. Protected production
+authority remains separately open.
+
+## GPU Numerical Checkpoint
+
+The next executable slice now compiles and runs end to end on `mi350-2`:
+[fused F32 decoder source](../device/gfx950-decoder-layer-f32-v1/README.md) ->
+ordinary fe2o3 semantic/ranked/formal checks -> gfx950 LLVM/HSACO -> the existing
+direct-KFD engineering worker. One dispatch executes a complete tiny decoder
+layer, retaining eleven stages and forty intermediate/final values per request.
+Two 128-thread workgroups contain two wave64 waves each.
+
+All four numerical families passed: 40,960 values against an independent FP64
+matrix reference, with maximum absolute error `9.224651e-6`. Input immutability,
+output guards, completion and explicit cleanup passed for every dispatch.
+The source, build/tool identities, raw GPU outputs, per-stage comparisons and
+reproduction scripts are in the [numerical evidence package](
+../qualification/gfx950-decoder-layer-f32-v1/README.md).
+
+This is a small F32 layer baseline, not the declared Qwen BF16 model envelope,
+persistent scheduling, cooperative tiling, full-model generation or performance
+qualification. No production deployment or SoTA claim is made. The engineering
+runtime and its operator-trusted machine-code boundary are not promoted to
+Ferric's protected runtime authority.
+
+Upstream compiler work also admits from-start constant slice indices with their
+exact runtime bounds guards and offers opt-in, source-audited MIR inlining.
+Ten ordinary Rust atomic RMW operations reach gfx950 LLVM with ordering and
+returned-value dataflow retained. That compiler test does not establish a GPU
+scheduler, load/store/CAS support, or a cross-workgroup publication protocol.
 
 ## Initial Envelope
 
@@ -59,6 +88,12 @@ artifact-file digests, workload comparability, samples, and ablations. It does
 not replace Ferric's production property/evidence closure and cannot authorize
 a public faster claim by itself. Test fixtures are synthetic validator inputs,
 not benchmark results.
+
+`tools/gfx950-finite-probe` and `qualification/gfx950-decoder-layer-f32-v1` are
+separate engineering execution and numerical tools. They exercise the existing
+direct-KFD worker with fixed ABI/launch/buffer contracts and compare independently
+generated reference data. Their successful GPU observations do not authenticate
+model bundles or close the protected execution/property milestones below.
 
 At the initial inventory, public Ferric main
 `5d3d93d3e7f08645273d274bc35efbc79133e686` contains M0 engine/specification

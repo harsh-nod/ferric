@@ -1,0 +1,353 @@
+{
+  "schema": "FerricGfx950DecoderEngineeringBuildV1",
+  "host": "mi350-2",
+  "scope": "Fixed F32 complete decoder-layer engineering baseline; no model inference, scheduler, performance, production release, or dispatch authority is asserted.",
+  "authority": {
+    "publication": false,
+    "load": false,
+    "launch": false
+  },
+  "source": {
+    "package": "device/gfx950-decoder-layer-f32-v1",
+    "file_sha256": "d48897ddf5f58f50d71f0cc3e54759826fd0944714ddd7e9008718958ae4e845",
+    "dependency_revision": "1989681e50bbc5ab97eadec6f22dd9e7ebca68eb",
+    "compiler_source_base_revision": "1989681e50bbc5ab97eadec6f22dd9e7ebca68eb",
+    "compiler_source_modified": true
+  },
+  "compiler": {
+    "toolchain": "nightly-2026-04-03",
+    "extractor_executable_sha256": "b8dfb43f7da9f2630a43c26b4ac69b1c71342528725d6cdf05e474ec0b5df7cb",
+    "extractor_backend_sha256": "897e16ad11575ece23296df6ec23423ae99ed28b9925a15aeac49a327baa15ab",
+    "rustc_sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+    "cargo_sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+    "note": "These extractor hashes identify extraction 5, not a later compiler rebuild. No extra MIR-inlining flags were enabled."
+  },
+  "extraction": {
+    "script": "extract_engineering.sh",
+    "script_sha256": "82c7412d43c99ec82890e358cc2c9f55e84492d51dbad1ef93367d1cf684bd18",
+    "environment": {
+      "PATH": "/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/local/bin:/usr/bin:/bin",
+      "CARGO_HOME": "/home/harmenon/ferric-gfx950-42/toolchain/cargo",
+      "RUSTUP_HOME": "/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchain",
+      "CARGO_TARGET_DIR": "/home/harmenon/ferric-gfx950-42/target-decoder",
+      "CARGO_BUILD_JOBS": "2",
+      "LD_LIBRARY_PATH": "/home/harmenon/ferric-gfx950-42/target-compiler/debug/deps:/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+      "RUSTC_WRAPPER": "/home/harmenon/ferric-gfx950-42/target-compiler/debug/fe2o3-rustc-extract",
+      "FE2O3_EXTRACT_CRATE_V1": "ferric_gfx950_decoder_layer_f32_v1",
+      "FE2O3_EXTRACT_AMDGPU_COMPILER_HANDOFF_PATH_V1": "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1-handoff-5.json",
+      "RUSTFLAGS": "-Zalways-encode-mir -Copt-level=3 -Ctarget-cpu=gfx950 -Ctarget-feature=-xnack,+wavefrontsize64,-wavefrontsize32"
+    },
+    "argv": [
+      "/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+      "rustc",
+      "--lib",
+      "--manifest-path",
+      "/home/harmenon/ferric-gfx950-42/ferric/device/gfx950-decoder-layer-f32-v1/Cargo.toml",
+      "-Zbuild-std=core",
+      "--target",
+      "amdgcn-amd-amdhsa",
+      "--",
+      "-Zdump-mir=all",
+      "-Zdump-mir-dir=/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-mir-5"
+    ],
+    "environment_note": "The observed RUSTUP_HOME includes an accidental trailing /toolchain. Direct pinned Cargo/rustc executables were selected by PATH, with no rustup shim. A new reproduction should use the actual root/toolchain/rustup directory.",
+    "log": "evidence/decoder-layer-f32-v1-extraction-5.log",
+    "result": "Rust -> semantic MIR -> ranked PLIRON -> Kernel IR V9 with 40 GuardedStore operations -> composed formal/ranked memory -> gfx950:xnack- LLVM -> compiler-bound inert handoff.",
+    "duration_seconds": 116,
+    "handoff_format": "CompilerModuleHandoffV2 binary despite historical .json suffix",
+    "handoff_bytes": 351148,
+    "handoff_sha256": "e43d561d21eba0bd3e81468618ee93c4cb2d33a828415cb67490d15b5ae1d603"
+  },
+  "decode": {
+    "source": "unpack_handoff.rs",
+    "source_sha256": "5dbc8db4b249ec8c7b5777a6c7694dc2247209ad0b0ba91b15559e86111f63ad",
+    "executable_sha256": "5ee0875c2fa519e9eb26aa1c4f1025b9a08c6896e596966577f0aa98eb883385",
+    "compiler_ffi_rlib_sha256": "6521f55ca7b36709b9e4efe98c67273b226be2dbb07344b3209a1dd12931db34",
+    "compile_argv": [
+      "/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "--crate-name",
+      "unpack_handoff",
+      "/home/harmenon/ferric-gfx950-42/evidence/unpack-handoff.rs",
+      "--extern",
+      "fe2o3_compiler_ffi=/home/harmenon/ferric-gfx950-42/target-compiler/debug/deps/libfe2o3_compiler_ffi-59064f3ff11b73dc.rlib",
+      "-L",
+      "dependency=/home/harmenon/ferric-gfx950-42/target-compiler/debug/deps",
+      "-o",
+      "/home/harmenon/ferric-gfx950-42/evidence/unpack-handoff"
+    ],
+    "compile_environment": {
+      "LD_LIBRARY_PATH": "/home/harmenon/ferric-gfx950-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib"
+    },
+    "argv": [
+      "/home/harmenon/ferric-gfx950-42/evidence/unpack-handoff",
+      "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1-handoff-5.json",
+      "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.ll"
+    ],
+    "method": "Upstream CompilerModuleHandoffV2::decode, then unchanged module_bytes(); no IR edits.",
+    "llvm_bytes": 350437,
+    "llvm_sha256": "53d98e267313901b6487ddfe62543283f139c110c598018ee6019501a19746d5"
+  },
+  "native": {
+    "script": "link_engineering.sh",
+    "script_sha256": "088e8c1efe9116770c3959ef012fe7458c2ffead9488324948bfbdc9802fde77",
+    "rocm": "7.2.0",
+    "llvm_version": "AMD LLVM 22.0.0git",
+    "lld_source_revision": "7b800a19466229b8479a78de19143dc33c3ab9b5",
+    "inputs_sha256": [
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/evidence/link-decoder-engineering.sh",
+        "sha256": "088e8c1efe9116770c3959ef012fe7458c2ffead9488324948bfbdc9802fde77"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/ferric/device/gfx950-decoder-layer-f32-v1/src/lib.rs",
+        "sha256": "d48897ddf5f58f50d71f0cc3e54759826fd0944714ddd7e9008718958ae4e845"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/ferric/device/gfx950-decoder-layer-f32-v1/Cargo.lock",
+        "sha256": "12cb3034656d3cb4e33e18daa3c9c552246779bdb9dffb05ca6b07e2f40e0db2"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1-handoff-5.json",
+        "sha256": "e43d561d21eba0bd3e81468618ee93c4cb2d33a828415cb67490d15b5ae1d603"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/evidence/unpack-handoff.rs",
+        "sha256": "5dbc8db4b249ec8c7b5777a6c7694dc2247209ad0b0ba91b15559e86111f63ad"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/evidence/unpack-handoff",
+        "sha256": "5ee0875c2fa519e9eb26aa1c4f1025b9a08c6896e596966577f0aa98eb883385"
+      },
+      {
+        "path": "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.ll",
+        "sha256": "53d98e267313901b6487ddfe62543283f139c110c598018ee6019501a19746d5"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/bin/llvm-link",
+        "sha256": "b0a68455d0b908e6c348b5bbd3d929da71bafd9fb29d11852fddcd8aac8dbc30"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/bin/opt",
+        "sha256": "6efacec6cab881dcf40532a94de501ca61a8a8c5e3864fed60f3f67e054bbbaf"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/bin/llc",
+        "sha256": "68f3b25166a66a3cef1e39487144a1f389038b890eb655b57d8f22925b758c50"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/bin/ld.lld",
+        "sha256": "4636252c2631abbbca6698a9a1702d82f319967b4b2c6c562a44e361d5917b52"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/bin/llvm-readobj",
+        "sha256": "87758ca11352f45fceb183b206a391cbbc40d04454669ce0e5d146a16aafde9e"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/ocml.bc",
+        "sha256": "d0f44a14a2c2692c87922e7321384002fcf53ecddc3822ef1ff996fd48a2a42c"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/ockl.bc",
+        "sha256": "7ff9641e06a947c1b8d04775ca451bab761fa7ce5ee41a7268b901ca284e40cd"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_daz_opt_off.bc",
+        "sha256": "c9e9572e513ca4196996e09ae879b90f02971037986b7023f3a29fef8b8917ec"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_unsafe_math_off.bc",
+        "sha256": "260a7627d71eb37f801802599a8d02db288544103e14349b0313dee2c1b8b7f1"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_finite_only_off.bc",
+        "sha256": "c0eb039142c13db21617a64c1d67a0e68b78fd8f13c4edaa84344cec5a772283"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_correctly_rounded_sqrt_on.bc",
+        "sha256": "c9e9572e513ca4196996e09ae879b90f02971037986b7023f3a29fef8b8917ec"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_wavefrontsize64_on.bc",
+        "sha256": "591bdb893215b1cc211d0f4888879ba1356c8c0f413815c0b2ac69ef86d02ef8"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_isa_version_950.bc",
+        "sha256": "81a5ed69f3537e2a94180b75c6a1582042f6e3790d45bbeaaaf274b688dd9cbd"
+      },
+      {
+        "path": "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_abi_version_600.bc",
+        "sha256": "c1dc77789199879a914892e23b5a1ca7b65ae87bb46a9a05b3ba656c74fdb4c3"
+      }
+    ],
+    "commands": [
+      [
+        "/opt/rocm-7.2.0/lib/llvm/bin/llvm-link",
+        "--only-needed",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.ll",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/ocml.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/ockl.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_daz_opt_off.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_unsafe_math_off.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_finite_only_off.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_correctly_rounded_sqrt_on.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_wavefrontsize64_on.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_isa_version_950.bc",
+        "/opt/rocm-7.2.0/lib/llvm/lib/clang/22/lib/amdgcn/bitcode/oclc_abi_version_600.bc",
+        "-o",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.linked.bc"
+      ],
+      [
+        "/opt/rocm-7.2.0/lib/llvm/bin/opt",
+        "-passes=default<O3>",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.linked.bc",
+        "-o",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.optimized.bc"
+      ],
+      [
+        "/opt/rocm-7.2.0/lib/llvm/bin/llc",
+        "-O3",
+        "-mtriple=amdgcn-amd-amdhsa",
+        "-mcpu=gfx950",
+        "-mattr=-xnack,+wavefrontsize64,-wavefrontsize32",
+        "--amdhsa-code-object-version=6",
+        "-filetype=obj",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.optimized.bc",
+        "-o",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.o"
+      ],
+      [
+        "/opt/rocm-7.2.0/lib/llvm/bin/ld.lld",
+        "-shared",
+        "--no-undefined",
+        "-z",
+        "noexecstack",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.o",
+        "-o",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.hsaco"
+      ],
+      [
+        "/opt/rocm-7.2.0/lib/llvm/bin/llvm-readobj",
+        "--file-headers",
+        "--notes",
+        "--symbols",
+        "/home/harmenon/ferric-gfx950-42/evidence/decoder-layer-f32-v1.hsaco"
+      ]
+    ],
+    "output_sha256": {
+      "linked_bitcode": "cb512b92ddd4b00f82a6bf16664f72a44aa327d105aad4f1a25574f55b4fdab9",
+      "optimized_bitcode": "3896eb5ca45d391a9b1efff76289fc4b83f775886ef0700edd4b7db756c3ef4b",
+      "object": "fe2669f596473c5163b37debcc6630219c7b856e887a0e52273f493162159a59",
+      "hsaco": "bba059db38e010479ad1ba7f6265583983d46642d5c0e7d362b0deecdea00dbc",
+      "llvm_readobj_dump": "afb8e0ada970c87e92b0cf051bf7832769f776c0d213171791e4fd18affa0540"
+    },
+    "inputs_revalidated_after_link": true,
+    "log": "evidence/decoder-layer-f32-v1-native-link-2.log",
+    "limitation": "Not the managed measured-worker or production-qualified finalization route; installed ROCm7.2.0 providers are not relabeled as the reviewed7.2.1 closure."
+  },
+  "observed_elf": {
+    "target": "gfx950:xnack-",
+    "code_object": 6,
+    "symbol": "ferric_gfx950_decoder_layer_f32_v1",
+    "kernarg_bytes": 48,
+    "kernarg_alignment": 8,
+    "implicit_argument_bytes": 0,
+    "implicit_argument_offset": null,
+    "required_workgroup": [
+      128,
+      1,
+      1
+    ],
+    "max_flat_workgroup_size": 128,
+    "max_workgroups": [
+      null,
+      null,
+      null
+    ],
+    "wavefront_size": 64,
+    "group_segment_bytes": 0,
+    "private_segment_bytes": 0,
+    "sgpr_count": 22,
+    "vgpr_count": 96,
+    "sgpr_spill_count": 0,
+    "vgpr_spill_count": 0,
+    "arguments": [
+      {
+        "offset": 0,
+        "bytes": 8,
+        "value_kind": "global_buffer",
+        "access": null,
+        "pointee_alignment": null
+      },
+      {
+        "offset": 8,
+        "bytes": 8,
+        "value_kind": "by_value",
+        "access": null,
+        "pointee_alignment": null
+      },
+      {
+        "offset": 16,
+        "bytes": 8,
+        "value_kind": "global_buffer",
+        "access": null,
+        "pointee_alignment": null
+      },
+      {
+        "offset": 24,
+        "bytes": 8,
+        "value_kind": "by_value",
+        "access": null,
+        "pointee_alignment": null
+      },
+      {
+        "offset": 32,
+        "bytes": 8,
+        "value_kind": "global_buffer",
+        "access": null,
+        "pointee_alignment": null
+      },
+      {
+        "offset": 40,
+        "bytes": 8,
+        "value_kind": "by_value",
+        "access": null,
+        "pointee_alignment": null
+      }
+    ]
+  },
+  "declared_source_contract": {
+    "aql_grid": [
+      256,
+      1,
+      1
+    ],
+    "workgroup": [
+      128,
+      1,
+      1
+    ],
+    "max_workgroups": [
+      2,
+      1,
+      1
+    ],
+    "slice_elements": [
+      3072,
+      110,
+      10240
+    ],
+    "pointer_access": [
+      "read",
+      "read",
+      "write"
+    ],
+    "pointer_pointee_alignment": [
+      4,
+      4,
+      4
+    ],
+    "note": "Caller-visible source declaration, not optional metadata observed in ELF and not launch authority."
+  },
+  "numerical_results": "Separate reference/verify harness owns GPU numerical evidence; this build record makes no GPU-result claim."
+}

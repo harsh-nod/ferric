@@ -1,0 +1,383 @@
+{
+  "atol": 2e-05,
+  "authority": "engineering-observation-only",
+  "compared_values": 40960,
+  "completed_dispatches": 4,
+  "format": "ferric.gfx950-decoder-layer-gpu-evidence.v1",
+  "full_model": false,
+  "grid_work_items": [
+    256,
+    1,
+    1
+  ],
+  "object_sha256": "bba059db38e010479ad1ba7f6265583983d46642d5c0e7d362b0deecdea00dbc",
+  "observations": [
+    {
+      "case": "mixed",
+      "case_sha256": "bcea7486e22ae253369dc49b3437dd215eddeacbc0f32088c7260d665a7fb7ff",
+      "compared_values": 10240,
+      "comparison_report_sha256": "9d582a0c8985982238a1c68244eb4c76e9ec4914a3eae6e7809cdecb1b376441",
+      "dispatch_report_sha256": "7d61e2a3b05ab660abeb248ef94c969d3d2aed4622134cf6bb039d26762414a0",
+      "output_sha256": "2ff280ad1e12e075a50b44be6cf9bff340ae59bc8af0241ab130b8aa1a2901e5",
+      "passed": true,
+      "stages": [
+        {
+          "failed": 0,
+          "finite_nrmse": 6.101366156991599e-08,
+          "max_finite_absolute_error": 3.949246134560269e-07,
+          "stage": "input_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.05364299573977e-08,
+          "max_finite_absolute_error": 3.4325577236149485e-07,
+          "stage": "rotated_q",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.70273241732392e-08,
+          "max_finite_absolute_error": 4.0580991816918655e-07,
+          "stage": "rotated_k",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 7.925609584290384e-08,
+          "max_finite_absolute_error": 3.1804683753300367e-07,
+          "stage": "current_v",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.556526796706411e-08,
+          "max_finite_absolute_error": 4.351964260074226e-07,
+          "stage": "attention",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.9689531364878784e-08,
+          "max_finite_absolute_error": 1.8358019460151809e-06,
+          "stage": "attention_residual",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.262739807205874e-08,
+          "max_finite_absolute_error": 4.17739244806814e-07,
+          "stage": "post_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.786370891602302e-08,
+          "max_finite_absolute_error": 2.5372302903114985e-07,
+          "stage": "gate",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.656352973066481e-08,
+          "max_finite_absolute_error": 4.3401518190488986e-07,
+          "stage": "up",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.530255407315871e-07,
+          "max_finite_absolute_error": 2.915297544481277e-07,
+          "stage": "swiglu",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 2.883672655087675e-08,
+          "max_finite_absolute_error": 3.5034840095704567e-06,
+          "stage": "final_residual",
+          "values": 1024
+        }
+      ]
+    },
+    {
+      "case": "zero",
+      "case_sha256": "6813e7de5e77d12165ef4c594da00b05fba950ae0ef5a15840954ef9d83cd33c",
+      "compared_values": 10240,
+      "comparison_report_sha256": "ac7491dd823409a629a7e0da0cd236427d0f3ca6cb6495eff7796fb12308b237",
+      "dispatch_report_sha256": "596ff5904aaf905f9d71f0e40a52acdfed3418076c1e8a3a43c3bbb8718ccabf",
+      "output_sha256": "05fd36bb3b0fb276e42fb73393ec6b48337bdb5c9983de0c6ab5bd0a9f381efa",
+      "passed": true,
+      "stages": [
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "input_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "rotated_q",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "rotated_k",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "current_v",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "attention",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "attention_residual",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "post_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "gate",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "up",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "swiglu",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 0.0,
+          "max_finite_absolute_error": 0.0,
+          "stage": "final_residual",
+          "values": 1024
+        }
+      ]
+    },
+    {
+      "case": "saturation",
+      "case_sha256": "a88274a6431d0067c737bbf581e8b47e5011495950a334b5ecb0f17348b3efc9",
+      "compared_values": 10240,
+      "comparison_report_sha256": "6c0880613450ca6a2ca1de660d959128c9bd0bd745f1b617b625450e1d1f3ac9",
+      "dispatch_report_sha256": "8dc9450f311723044bc7f4129708ddc9a7e16c355cfd10362e3d41ebf09beede",
+      "output_sha256": "ca72f2ef954422c219487c5e371d4a8fbfd072df223bc3a370a44d648a509a25",
+      "passed": true,
+      "stages": [
+        {
+          "failed": 0,
+          "finite_nrmse": 6.101366156991599e-08,
+          "max_finite_absolute_error": 3.949246134560269e-07,
+          "stage": "input_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.05364299573977e-08,
+          "max_finite_absolute_error": 3.4325577236149485e-07,
+          "stage": "rotated_q",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.70273241732392e-08,
+          "max_finite_absolute_error": 4.0580991816918655e-07,
+          "stage": "rotated_k",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 7.925609584290384e-08,
+          "max_finite_absolute_error": 3.1804683753300367e-07,
+          "stage": "current_v",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.556526796706411e-08,
+          "max_finite_absolute_error": 4.351964260074226e-07,
+          "stage": "attention",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.9689531364878784e-08,
+          "max_finite_absolute_error": 1.8358019460151809e-06,
+          "stage": "attention_residual",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.262739807205874e-08,
+          "max_finite_absolute_error": 4.17739244806814e-07,
+          "stage": "post_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.677980565540912e-08,
+          "max_finite_absolute_error": 6.297426750734303e-06,
+          "stage": "gate",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.656352973066481e-08,
+          "max_finite_absolute_error": 4.3401518190488986e-07,
+          "stage": "up",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.3574598743399687e-07,
+          "max_finite_absolute_error": 9.224650881378693e-06,
+          "stage": "swiglu",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 7.655515085433669e-08,
+          "max_finite_absolute_error": 6.57035512219295e-06,
+          "stage": "final_residual",
+          "values": 1024
+        }
+      ]
+    },
+    {
+      "case": "skewed-attention",
+      "case_sha256": "3ccd511d42642884eda477301ee2b74c904e9fd93ac0e2501b050552c0a4943c",
+      "compared_values": 10240,
+      "comparison_report_sha256": "416c13947fa9ba608e6c9247fab63d1e549f8bd8a05d8901d37a4f7531cae1c6",
+      "dispatch_report_sha256": "ae68de135e35fd86a8e5784a6151d641c100c9cd2d17d054fe4e207b8345afa3",
+      "output_sha256": "d6e8bf970a6817aaab621cde90e11b083f9e445efb982b2977b87eafc9ab4b69",
+      "passed": true,
+      "stages": [
+        {
+          "failed": 0,
+          "finite_nrmse": 6.101366156991599e-08,
+          "max_finite_absolute_error": 3.949246134560269e-07,
+          "stage": "input_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.05364299573977e-08,
+          "max_finite_absolute_error": 3.4325577236149485e-07,
+          "stage": "rotated_q",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 8.70273241732392e-08,
+          "max_finite_absolute_error": 4.0580991816918655e-07,
+          "stage": "rotated_k",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 7.925609584290384e-08,
+          "max_finite_absolute_error": 3.1804683753300367e-07,
+          "stage": "current_v",
+          "values": 512
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.196287419156091e-07,
+          "max_finite_absolute_error": 1.885067282936248e-06,
+          "stage": "attention",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 2.0629571620516474e-08,
+          "max_finite_absolute_error": 1.749155082109155e-06,
+          "stage": "attention_residual",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.887187965962851e-08,
+          "max_finite_absolute_error": 9.66795695944711e-07,
+          "stage": "post_norm",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.1293829122386e-07,
+          "max_finite_absolute_error": 8.520633395514565e-07,
+          "stage": "gate",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 9.803852574479835e-08,
+          "max_finite_absolute_error": 5.607416218023076e-07,
+          "stage": "up",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 1.8320454732785533e-07,
+          "max_finite_absolute_error": 6.199046567734179e-07,
+          "stage": "swiglu",
+          "values": 1024
+        },
+        {
+          "failed": 0,
+          "finite_nrmse": 3.1979712191634474e-08,
+          "max_finite_absolute_error": 3.4420221126651995e-06,
+          "stage": "final_residual",
+          "values": 1024
+        }
+      ]
+    }
+  ],
+  "passed": true,
+  "performance_claim": null,
+  "persistent_scheduler": false,
+  "production_qualified": false,
+  "reference_sha256": "38db76640119422e0f969e97eab0d0574ca95adb0d174a73b9c53189664ff619",
+  "rtol": 0.0002,
+  "source_sha256": "d48897ddf5f58f50d71f0cc3e54759826fd0944714ddd7e9008718958ae4e845",
+  "target": "gfx950:xnack-",
+  "wavefront_size": 64,
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "workgroup": [
+    128,
+    1,
+    1
+  ]
+}
