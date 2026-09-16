@@ -72,8 +72,8 @@ has SHA-256
 `8b9f59a09b6d092326a2d9894c8392967437d283e8b14fbb3fd825ebb28e5a17`;
 all 1,608 members and 1,607 payload hashes and sizes pass independent local
 checks. Matching emission is recorded below; subsequent native/reference
-evidence remains pending. Historical `a0cc9929`/`1fad` results below keep their
-original scope; dependency adoption does not relabel them.
+evidence is separately attributed below. Historical `a0cc9929`/`1fad` results
+keep their original scope; dependency adoption does not relabel them.
 
 All six matching `7f90d187` compiler-tool phases subsequently pass on mi300x.
 The CLI, linker proxy, backend and extractor have actual fresh Cargo producers;
@@ -154,7 +154,7 @@ has SHA-256
 `dfed78d8d1b6fa34bb8755a014710833702141e0585729c23cec6e98f4e072d0`;
 all 210 members and 209 payload hashes and sizes pass independent local
 checks. All remote release/retention sessions are closed. Matching kernel
-emission is recorded below; native/reference validation remains pending. The
+emission and native/reference observations are separately recorded below. The
 newer upstream `e7aff682` is not adopted or validated by this release.
 
 The separate `7f90d187` vendor formation also passes on mi300x: 198 packages,
@@ -201,8 +201,82 @@ SHA-256
 `f69e81901b8da8900198a1b23e89ac2817dffee2c2d1ac9d28350726f5b76d3e`;
 all 46 members and 45 payload hashes and sizes pass independent local checks.
 The receipt records campaign 126, null process exit, absent owned group and
-`capture_pass_validated:false`. The independent reference remains unlaunched;
-there is no new numerical or performance result.
+`capture_pass_validated:false`. No independent reference was launched for that
+failed attempt; the separate successful attempt below does not replace it.
+
+A second, separately admitted capture on the same `011e0aca`/`7f90d187`
+inputs completes with campaign and process exit 0. The owned process group is
+absent, all source/input/control after-checks pass, and GPU4 returns to its
+exact 298,647,552-byte idle baseline. The five-row BF16 payload is 1,519,360
+bytes, SHA-256
+`75f4ad2cebb75a59a9334c6ec3f343bbe577f78a21a9c69001267f3fa3ef0fda`.
+Capture-pass SHA-256 is
+`4f48691a34c7438485dec6864155ced66bab7f88a2281448e3837095215909f4`.
+The 5,581,621-byte retained archive has SHA-256
+`b6ac8787e2d293bb2663d2411912c0155b00922d0d06e9607d8af694a0d02666`;
+all 50 members, 49 payload hashes and sizes, and 15 external records pass
+independent local checks. Target choices are `[4710, 16, 15, 576, 198]`, not
+the historical reference's `[4710, 16, 15, 16, 198]`. Execution success is not
+numerical acceptance.
+
+The separate CPU-only before-comparison identity gate passes all 20 checks,
+including the complete 133-token sequence, both prepacked model identities,
+plan selections, reference configuration and reference implementation. Its
+retained result SHA-256 is
+`9e505948dd304c27c7cb01e3fbca18569709e3c2fea3133ee5daf3f520120d7b`;
+all 12 raw/control records pass independent local hash checks. This gate alone
+does not permit matched error deltas: reference-byte equality must be checked
+after a separately retained reference run. Compiler and Ferric source both
+changed from the historical baseline, so this is not an isolated RMSNorm
+ablation.
+
+The separately admitted independent reference also completes with campaign and
+process exit 0, absent owned process group and exact idle GPU-baseline
+restoration. Two complete 133-token forwards without Ferric KV produce
+byte-identical reference logits, SHA-256
+`49b19632e0df845c92be23e2fc082f7d72ecac8ff5bffbeea53207352e29ae7a`.
+The actual comparison confirms one greedy-token mismatch at position 131:
+Ferric chooses 576 and the reference chooses 16. All five rows are finite.
+The actual K4 round still accepts zero draft tokens and publishes correction
+token 4710, as before; the mismatching verification row is not published in
+this round. It nevertheless remains part of the full-row numerical comparison.
+
+| Position | Maximum Absolute Error | RMSE | Greedy Token Match |
+| --- | --- | --- | --- |
+| 128 | 0.17578125 | 0.03984952303072752 | Yes |
+| 129 | 0.15625 | 0.042706172179349806 | Yes |
+| 130 | 0.125 | 0.03859434864717138 | Yes |
+| 131 | 0.25 | 0.07951165406101306 | No |
+| 132 | 0.15625 | 0.044612988539791336 | Yes |
+
+Maximum BF16 ULP distance is 31,503. Comparison SHA-256 is
+`a073987db9a15a351552d22030274d7ae050b44495f1abff230d3f84c593bdb1`.
+The 2,347,807-byte retained reference archive has SHA-256
+`ed09ff1c5a3a6ca3f712ea4d22dd3e9c3c13893617414eec7b70b12f3ba4bc84`;
+all 59 members, 58 payload hashes and sizes, and 15 external records pass
+independent local checks. No tolerance is accepted, and the successful process
+receipt does not mean numerical conformance. This is an engineering
+observation, not R29/R30 closure, TTFT/TPOT or performance qualification.
+
+The after-comparison identity gate subsequently passes all 22 input checks
+and confirms byte-identical current and historical reference logits. Its
+retained result SHA-256 is
+`e79f681b2c70a871837d769979faffcddcfe3e4398b45bc21574d91baafa1108`;
+all 12 raw/control records pass independent local hash checks. Matched-input
+error deltas between these two checkpoints are therefore reportable: positions
+128, 129 and 132 improve in maximum absolute error and RMSE; position 130 has
+unchanged maximum error and RMSE increases by 0.0073052612174783; position 131
+has maximum error increase by 0.0625 and RMSE increase by 0.003987153587049083.
+This is a mixed result, with one additional argmax mismatch, not a general
+numerical improvement or an isolated causal test of the RMSNorm change.
+
+Separately, an uncommitted model-bundle proof candidate revalidates canonical
+record commitment and destination layout on the exact retained target and
+draft manifests. It adds six focused Rust tests and two actual-body proof
+mutations without new assumptions or trusted external bodies. Formatting,
+compiler-derived inventory regeneration, Rust tests and genuine Verus checks
+remain pending on mi300x. This candidate is not part of the `011e0aca` native
+source and does not close the model-bundle gate merely by existing.
 
 A separate read-only survey of the user-offered `mi350-2` succeeds. It observes
 one KFD gfx950 GPU, 0% busy with 19,314,954,240 bytes already allocated; this
@@ -217,7 +291,8 @@ step arguments reuse retained device subranges. The S1/K4 composition contains
 forwards, a 545-packet target verification and token assembly. Draft M=1 GEMMs
 still use the scalar reference path, while target M=5 uses 16-by-16 MFMA tiles.
 These are source-derived profiling priorities, not measured bottlenecks or
-speedups. Native validation and GPU timing remain the next measurement steps.
+speedups. Numerical investigation and GPU timing remain the next measurement
+steps.
 
 Separately, exact owned compiler-cache cleanup removes 279 obsolete paths
 covering 273 inodes and reclaims 1,449,496 KiB. All nonselected target entries,
