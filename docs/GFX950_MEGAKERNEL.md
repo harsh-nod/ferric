@@ -59,7 +59,30 @@ Upstream compiler work also admits from-start constant slice indices with their
 exact runtime bounds guards and offers opt-in, source-audited MIR inlining.
 Ten ordinary Rust atomic RMW operations reach gfx950 LLVM with ordering and
 returned-value dataflow retained. That compiler test does not establish a GPU
-scheduler, load/store/CAS support, or a cross-workgroup publication protocol.
+scheduler or cross-workgroup publication protocol by itself. Those RMW source
+checks and the GPU scheduler observation below are distinct evidence.
+
+## Atomic Task Graph GPU Checkpoint
+
+The [seven-task atomic integer graph](../device/gfx950-task-graph-v1/README.md)
+now passes the checked ordinary Rust compiler pipeline, emits gfx950 HSACO, and
+runs through the engineering direct-KFD worker. The fixed `mi350-2` suite passed
+20 dispatches: 16 valid epochs and four stale-epoch negatives. It checked 260
+state words: 244 deterministic values and 16 ownership encodings. This includes
+112 exact payload values from the valid epochs. Every valid epoch used both
+128-thread workgroups and recorded four cross-workgroup dependency edges.
+
+The tested Ferric checkpoint is `e3d198ee`; the clean fe2o3 compiler is
+`af4f1460`; HSACO SHA-256 is
+`8f4904773d92c58b0eb2ebb06e0195eac536b5a28f35a92e3b9fa2bda5ba328f`.
+See the [scheduler evidence package](../qualification/gfx950-task-graph-v1/README.md)
+for exact source/tool identities, state checks, and reproduction.
+
+This closes the bounded atomic-integer micrograph execution slice, not general
+tensor visibility, authenticated tiled handlers, full Qwen generation, protected
+runtime authority, or performance qualification. One-resident-worker progress
+is covered by the separate host scheduler model; the observed GPU runs are not
+a proof over all possible interleavings or residency conditions.
 
 ## Initial Envelope
 
@@ -172,9 +195,11 @@ None of these gates is completed by a passing host-side planner test.
 
 ### Atomic Source Vertical Slices
 
-The rejected ordinary Rust atomic fixture is an implementation gap, not proof
-that gfx950 lacks the instructions. Source review found the following exact
-upstream boundaries; a single allowlist or purity annotation cannot close them.
+The initially rejected ordinary Rust atomic fixture identified the following
+upstream boundaries; it did not show that gfx950 lacks the instructions. The RMW
+slice now compiles and executes in the bounded micrograph above. The original
+breakdown below remains useful for broader atomic/handler work; an allowlist or
+purity annotation cannot replace the required effect custody.
 Paths below are relative to the fe2o3 repository.
 
 | Boundary | Existing owner | Required implementation |
@@ -205,8 +230,9 @@ Negative tests must reject spoofed providers, changed helper bodies, stale
 identities, missing provenance, conflicting aliases, unsupported widths and
 orderings, recursion, and arbitrary pointer transformations. Do not identify
 the first rejected callable solely from the diagnostic's numeric callable ID;
-the archived log does not provide its name. This roadmap is not a claim that
-any of these compiler slices is implemented by this Ferric change.
+the archived log does not provide its name. The initial roadmap is not evidence
+for every listed atomic operation; only the explicitly recorded source tests
+and bounded GPU fixture establish their stated slices.
 
 ## Validation And Performance
 

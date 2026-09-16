@@ -5,15 +5,23 @@ not a Qwen kernel, inference engine, performance result, or production authority
 It requires the normal checked source-to-semantic-to-ranked-to-KIR compiler path.
 A host test does not execute or qualify the device entry point.
 
-Current checkpoint: host contract tests and the independent scheduler model
-pass. Production extraction passes source/arithmetic analysis and general
-kernel verification, including finite pipeline convergence. Input and config
-reads use checked total-load views; launch bounds come from the unchanged
-authenticated geometry contract. Translation validation now passes with
-compiler checkpoint `59d7e1b`. AMDGPU target lowering still rejects workgroup
-barrier convergence at `bb116`, operation 8, before target IR emission. There
-is no scheduler HSACO or GPU scheduler result at this checkpoint. All compiler
-gates remain enabled. Projection GPU results are separate evidence.
+Current checkpoint: ordinary Rust passes source, semantic/ranked/formal,
+translation, and target barrier checks, then links into gfx950 HSACO. The fixed
+GPU suite on `mi350-2` passed 20 dispatches: 16 valid epochs and four stale-epoch
+negatives. It checked 260 atomic state words, comprising 244 deterministic values
+and 16 valid ownership encodings. The valid epochs included 112 exact payload
+values. Both workgroups owned tasks and four dependency edges crossed workgroups
+in every valid epoch. These are observed executions of this seven-task graph,
+not a general tensor-publication or scheduler qualification.
+
+The tested Ferric source/dependency checkpoint is `e3d198ee`; the unchanged kernel
+source SHA-256 begins `6d17ed3b`. The clean fe2o3 compiler is `af4f1460`, and the
+HSACO SHA-256 is
+`8f4904773d92c58b0eb2ebb06e0195eac536b5a28f35a92e3b9fa2bda5ba328f`.
+The [GPU evidence and reproduction procedure](../../qualification/gfx950-task-graph-v1/README.md)
+retain exact identities, checks, and limitations. All compiler gates remain
+enabled; linking and execution use the engineering route, not protected
+production authority. Projection GPU results remain separate evidence.
 
 ## Graph and Arithmetic
 

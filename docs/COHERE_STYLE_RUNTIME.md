@@ -29,11 +29,18 @@ It passed the same 4096-value GPU workload under a separately derived gamma22
 bound, with mixed-case maximum absolute error `1.1920928955078125e-7`.
 No timing or speedup is inferred from the coalesced layout alone.
 
-The cooperative task graph and its bounded scheduler are separate from these
-two numerical fixtures. A successful projection does not establish cross-task
+The [finite atomic task graph](../qualification/gfx950-task-graph-v1/README.md)
+also compiles and runs on `mi350-2`: all 20 dispatches passed, with 16 valid
+epochs and four stale-epoch negatives. All 16 valid epochs used both workgroups
+and observed four cross-workgroup dependency edges. Its seven-task integer DAG
+checked 260 state words, including 112 exact valid-epoch payload values; the
+ownership encodings are validated without assuming a deterministic schedule.
+
+This scheduler evidence is separate from the projection and decoder numerical
+fixtures. Atomic integer publication does not establish ordinary cross-task
 tensor visibility, KV correctness, or a production token loop. Full-model
-Qwen3-0.6B/8B generation and matched ROCm performance measurements remain
-open; North Mini Code follows those milestones.
+Qwen3-0.6B/8B generation and matched ROCm performance measurements remain open;
+North Mini Code follows those milestones.
 
 ## Architecture
 
@@ -69,10 +76,16 @@ payload representation is atomic integer state. This does not establish
 ordinary floating-point tensor publication across workgroups; that requires
 its own memory-order and compiler-analysis evidence.
 
-Validation must cover the numerical DAG outputs, task conservation, competing
-claims, last-arriver fan-in, one-resident-worker progress, stale epochs,
-successive launches, buffer guards, unchanged inputs, and resource release.
-Known deadlocking mutants belong in host-model tests, not on a shared GPU.
+The recorded GPU suite checks the exact DAG outputs, completion and ownership,
+stale epochs, successive launches, buffer guards, unchanged inputs, and resource
+release. The separate bounded host model covers competing claims, last-arriver
+fan-in, and one-resident-worker progress; the two-workgroup GPU observations are
+not proof of every residency/interleaving case. Known deadlocking mutants remain
+host-model tests, not experiments on a shared GPU.
+
+The tested source is Ferric `e3d198ee`, compiled by clean fe2o3 `af4f1460` to
+HSACO `8f490477...5ba328f`. The evidence package records the full digests.
+No device-only timing, speedup, or full-model claim follows from this fixture.
 
 ## AMD-Specific Implementation
 
