@@ -5,6 +5,25 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+Private integration `9e10cc95` coherently updates the 80 active pin-bearing
+files to published fe2o3 `e3c359fb`; formatter-only successor `359e4e12`
+preserves that dependency graph. The dependency overlay on `58833759` passes
+42 remote phases, all 32 locked/offline graph checks and 38 freshly built
+source-gate tests. Package versions and registry checksums are unchanged;
+the expected two compiler analysis edges are included in 29 locks. The three
+TCB documents are regenerated and independently checked. Full source, actual
+source-gate executables and raw results are retained locally at SHA-256
+`53d27228aa90f2bd80efeaa79cc23f28746b7a5b5a6b66180011c1412a6ec22f`.
+These results validate the dependency overlay, not the newer engine body.
+
+Candidate `8af1e52b`, included in these successors, moves the actual page-return
+batch loop into a contracted ledger consumer and adds three host regressions.
+The contracts state per-ticket correspondence, unique role/index returns,
+remaining-ticket preservation, exact generation advancement and frames for
+untouched entries. The existing forward zip truncation is preserved. Host
+compilation/tests and Verus verification of this candidate are pending;
+outer-caller completeness and native completion custody remain unproved.
+
 The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 `4f6f65ce`. Its optimized build and six successor host phases pass. The full
 720-pass/9-ignored engine result belongs to its diagnostic predecessor `ba6f8c9c`;
@@ -72,8 +91,9 @@ wrapper-PATH assembler is Ubuntu LLVM 18.1.3 at `/usr/bin/llvm-as`, resolved to
 `/usr/lib/llvm-18/bin/llvm-as`; its resolved identity and version match before
 and after execution. The compiler-module suite has 26 passes and one existing
 physical gfx1151 test ignored. Unchanged R9 suites were not repeated; no new
-release-tool, emission, strict Clippy or hardware result is claimed. Ferric still uses its
-existing `4f6f65ce` pin; no newer compiler result is attributed to that runtime.
+release-tool, emission, strict Clippy or hardware result is claimed. The frozen
+native executable still uses `4f6f65ce`; no newer compiler result is attributed
+to that runtime. The private source dependency refresh is described above.
 The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
 changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
 Its expanded 42-phase remote host campaign passes, including the
@@ -302,7 +322,7 @@ Full evidence is retained locally at SHA-256
 Independent review found no acceptance blocker. The two device-cache commits
 are integrated at `66e32993`; its device-cache bytes exactly match source47
 SHA-256 `e9a426580f8e116a5d3bd860046a333ca62c410d7d73df385af01ffa51fc574d`.
-Only the tracker differs from the full tested source47 tree. Host and proof
+At that checkpoint only the tracker differs from the full tested source47 tree. Host and proof
 receipts remain attributed to source47, not relabeled as a new full-tree run.
 Higher-level composition remains pending.
 Before R2, exact retained-artifact cleanup removed the obsolete R1 test
@@ -310,7 +330,8 @@ executable and thirteen retired source archives, reclaiming 179,180 KiB on
 mi300x. All fourteen have checked local byte retention; current sources,
 required archives, dependency libraries and shared caches were preserved.
 The wrapper's completion custody and cross-call ticket/ledger continuity remain
-outside these helper contracts. No fe2o3 pin or native executable has changed.
+outside these helper contracts. That campaign changed no fe2o3 pin or native
+executable; the later source dependency update does not relabel its results.
 All 33 M1 gates remain open.
 
 Routing-test source `45a211e5` passes remote format, exact locked metadata,
@@ -322,16 +343,16 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests; full evidence independently reviewed. The approved skip marker produced no observed GitHub workflow or check run. | Current-source release tools, coherent Ferric dependency refresh and numerical GPU qualification. |
-| Runtime / Integration | Ledger helper source47 is integrated at `66e32993` with exact device-cache bytes. Source47 passes eight host phases, 726 tests, strict engine/spec Clippy, nine selected helper proofs and six ledger negatives; evidence independently reviewed and retained. | Caller/whole-roster composition; idle admitted GPU for native validation. |
-| Verification | Nine actual source47 helper bodies and six actual ledger negatives pass retained, independently reviewed evidence. Earlier six metadata positives, 24 negatives, selected-page lemma and seven index negatives remain retained. | Prove ticket/lease sequence agreement, unique role/index returns and remaining-ticket preservation through the actual caller loop; native completion custody. |
+| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests; full evidence independently reviewed. The approved skip marker produced no observed GitHub workflow or check run. | Current-source release tools and numerical GPU qualification. |
+| Runtime / Integration | The coherent e3 dependency overlay passes 42 phases, 32 graph checks and 38 source-gate tests. `359e4e12` also includes the new actual batch consumer and three regressions, not yet compiled/tested. Older source47 host/proof results remain separately attributed. | Current-source host suite and caller/whole-roster composition; idle admitted GPU for native validation. |
+| Verification | Nine actual source47 helper bodies and six ledger negatives have retained proof evidence. The new actual batch-loop contracts are implemented but unverified. | Verify the new consumer with genuine current-e3 dependencies; outer-caller completeness and native completion custody. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
-from Ferric's `4f6f65ce` pin through published `e3c359fb`. A coherent dependency
-refresh is still required across 80 pin-bearing files: 30 manifests, 30 locks
+from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
+dependency refresh now covers all 80 pin-bearing files: 30 manifests, 30 locks
 and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
-and 32 locked graphs; two new compiler dependency edges must be included. The frozen native
+and 32 locked graphs; the two new compiler analysis edges are included. The frozen native
 artifact is not relabeled as using the newer upstream revision.
 
 The user also authorized `mi350-2` for native validation. Read-only inventory
