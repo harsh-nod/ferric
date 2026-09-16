@@ -90,6 +90,25 @@ is explicitly incomplete. Only regenerable cache is retired, with no claim of
 a complete byte archive for those discarded files. Existing compiler111 tools,
 MFMA13 objects, model inputs and foreign jobs are untouched.
 
+A second separately reviewed cleanup removes exactly 48 unused cache files:
+14 superseded release rlibs and 34 older libtest executables, reclaiming
+440,084 KiB. All 784 protected files, 5,046 source files and 6,878 unselected
+target entries remain unchanged. Fresh compiler-stage allocation is 9,758,752
+KiB; future vendor formation still needs its own bounded admission. The scoped
+no-use checks retain their explicit process-visibility limitations. No historical
+test pass or complete byte archive is inferred for the discarded cache.
+
+The public Pages checkpoint is now static commit `573a3da5`, deployed by
+successful upload-only run `35081715744`. All site QA ran on mi300x: five phases,
+exhaustive widths 320 through 1440 and 64 screenshots pass. The retained archive
+has SHA-256 `e84fa90c07f6f2a1b07a497a6438babf6f21a5787e1088b9e3916b3011f28c3a`;
+all 134 members and 133 payload hashes and sizes are checked. All seven live
+assets match the admitted artifact, both with and without cache-busting queries.
+The site records compiler adoption and prior M5 host/proof evidence, not the
+subsequent tool/release builds or a new performance result. The preceding R15
+UI-label failure remains retained. The completed clean Pages source worktree
+is removed, reclaiming 3,324 KiB while preserving its branch and evidence.
+
 ### Earlier Checkpoints
 
 All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
