@@ -58,7 +58,7 @@ use sha2::{Digest, Sha256};
 /// Exact manifest schema emitted by `cargo fe2o3 engineering hsaco`.
 ///
 /// The private decoder is frozen against fe2o3 commit
-/// `55d9bfe5746daf29dde35caa2c909c0d55393cda` and rejects canonical-shape drift.
+/// `8af54567c4c143473447d58a27be3d1b384b67e6` and rejects canonical-shape drift.
 pub const M1_ENGINEERING_AGGREGATE_OBSERVATION_SCHEMA_V1: &str = "EngineeringHsacoObservationV1";
 /// Exact manifest filename in one fe2o3 engineering observation directory.
 pub const M1_ENGINEERING_AGGREGATE_MANIFEST_FILENAME_V1: &str = "observation.json";

@@ -1701,7 +1701,7 @@ mod tests {
             assert!(!production_durable.contains(forbidden));
         }
         let manifest = include_str!("../Cargo.toml");
-        assert!(manifest.contains("rev = \"55d9bfe5746daf29dde35caa2c909c0d55393cda\""));
+        assert!(manifest.contains("rev = \"8af54567c4c143473447d58a27be3d1b384b67e6\""));
         assert!(!manifest.contains("branch ="));
     }
 }
