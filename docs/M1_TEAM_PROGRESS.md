@@ -21,8 +21,9 @@ Compared with the previously integrated `2d3ffbed`, 17 upstream files change.
 The newer bounds-witness and affine-index analysis are production compiler
 changes, not merely tests. Runtime/KFD, device code, manifests/locks, pinned
 Pliron `cc902cc8`, toolchain and LLVM-worker subtree remain unchanged; all 53
-compiler vendor manifests match. Fresh compiler package payloads, matching
-tools, emission and native validation are still required. Existing native
+compiler vendor manifests match. Matching tools now pass the separate build
+below; fresh compiler package payloads, emission and native validation are
+still required. Existing native
 results retain their actual `7f90d187` producer, and completed `2d3` tools are
 not relabeled as `abd8` tools.
 
@@ -34,6 +35,34 @@ external execution records are independently checked. The generated patch SHA is
 all 1,157 integrated source identities match the final remote census. This is
 dependency/source-policy adoption, not compiler behavior qualification, GPU
 execution, numerical acceptance, performance evidence or an M1 gate closure.
+
+### Matching abd8 Compiler Tools
+
+All six bounded mi300x phases pass for the canonical `abd8be76` CLI, linker
+proxy, backend and extractor. Each has an actual fresh, non-test producer;
+the backend binds the newly built CLI. All 5,123 compiler source files match
+the canonical archive before/after, and all 34 protected inputs remain
+unchanged. Independent local checks cover all 90 archive members (89 payloads
+plus the manifest), including hashes, sizes, modes and recorded tar metadata,
+and 15 external execution/retention records. Archive SHA-256 is
+`16e2e0bc7c89e6bc41d042ef58e602fa7127ed80bf3b9fc9e6275eccf6b0c8f2`
+(61,914,748 bytes). The actual CLI SHA is
+`52b3a002b20db4b45ba431632a45b5cd12fe78ce2572cac921a74fa0d634f8bb`;
+backend SHA is
+`e608e07e68ffb2ce19ad79f699899a7303dc8e811eb37000f0c6e8ffcf8f88a2`.
+
+The preceding exact cache retirement removes 176 paths / 171 inode groups,
+reclaims 937,684 KiB and preserves private tools, sources, models, vendors,
+retained evidence and all unselected target identities. An initial survey
+fails closed on a disappearing process's inspection gap and is retained;
+the separate successful survey/apply uses the unchanged limited owned-stage
+visibility policy, not a system-wide non-use claim. The actual apply SHA is
+`1b25ef7db9534c2678c012dc11903b5316cef27886503c44d0f9fb5643e516dd`.
+
+These matching engineering tools unblock the next emission work; they are
+not new Ferric kernels, GPU execution, numerical acceptance, protected proof
+qualification or performance evidence. All 33 gates remain open, and prior
+native results retain their actual `7f90d187` compiler producer.
 
 ### Final-RMS Intermediate Capture Candidate
 
