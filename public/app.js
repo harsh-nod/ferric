@@ -72,6 +72,13 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Published compiler adopted: dependency checks passed"),
+    element("p", "", resident.integration.compilerAdoption.detail),
+    element("h3", "", "Earlier 8af smoke checkpoint: scoped host checks passed"),
+    element("p", "performance-scope", "This smoke and verifier-publication record predates the adoption above. Its 8af test attribution and then-pending adoption status are preserved, not current 111 engine-validation claims."),
+    element("p", "", resident.integration.engineeringSmoke.detail),
+    element("h3", "", "Earlier selected-proof and native checkpoints"),
+    element("p", "performance-scope", "The following records preserve their original sources and dated pending states. They do not supersede the current smoke or compiler results above."),
     element("h3", "", "14 selected proofs; maintenance fix host-tested"),
     element("p", "", resident.integration.latestProgress.detail),
     element("h3", "", "Earlier retained checkpoints, including the R4 snapshot"),
@@ -156,11 +163,17 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
-    ["Status tracker source", resident.integration.latestProgress.trackerSource],
+    ["Status tracker source", resident.integration.compilerAdoption.source],
+    ["Ferric dependency pin", resident.integration.compilerAdoption.compilerSource],
+    ["Earlier smoke tracker source", resident.integration.engineeringSmoke.trackerSource],
+    ["MFMA13 engineering smoke source", resident.integration.engineeringSmoke.source],
+    ["MFMA13 smoke validation compiler", resident.integration.engineeringSmoke.compilerPin],
+    ["Earlier published correction; adoption then pending", resident.integration.engineeringSmoke.publishedVerifierSource],
+    ["Earlier proof/native tracker source", resident.integration.latestProgress.trackerSource],
     ["R9 selected proof source", resident.integration.latestProgress.proofSource],
     ["Host-tested maintenance fix", resident.integration.latestProgress.fixSource],
-    ["Latest fetched compiler; adoption pending", resident.integration.latestProgress.latestFetchedCompiler],
-    ["Validated compiler pin", resident.integration.currentValidation.validatedCompilerPin],
+    ["Earlier fetched compiler; adoption then pending", resident.integration.latestProgress.latestFetchedCompiler],
+    ["Earlier validated compiler pin", resident.integration.currentValidation.validatedCompilerPin],
     ["Earlier R4 checkpoint compiler fetch", resident.integration.currentValidation.latestFetchedCompiler],
     ["55-pinned dependency/source-gate evidence SHA-256", resident.integration.currentValidation.precheckEvidenceSha256],
     ["Host R1 source; 1,141 passes / 14 ignored", resident.integration.currentValidation.r1Source],
