@@ -340,6 +340,23 @@ pub struct M1PrepublicationStepCustodyV1 {
 }
 
 impl M1PrepublicationStepCustodyV1 {
+    #[cfg(test)]
+    pub(crate) fn for_step_binding_test(
+        scheduled: M1ScheduledDispatchV1,
+        target_plan: StepPlan,
+        kv: M1FullStepKvReservationCustodyV1,
+    ) -> Self {
+        let mut target_plans = core::array::from_fn(|_| None);
+        target_plans[0] = Some(target_plan);
+        Self {
+            scheduled,
+            target_plans,
+            kv,
+            speculative_lineage: None,
+            speculative_rollover_intent: None,
+        }
+    }
+
     /// Exact scheduler-issued roster.
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         &self.scheduled

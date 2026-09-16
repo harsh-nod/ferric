@@ -213,11 +213,7 @@ pub(crate) fn check_draft_catchup_step_binding(
     if *kv_parent != parent
         || !target_allocation_id.is_present()
         || !draft.allocation_id().is_present()
-        || draft.selection()
-            != (Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                ..completion_selection
-            })
+        || draft.selection() != draft_selection
         || draft.reservations().len() != 1
     {
         return Err(invalid());

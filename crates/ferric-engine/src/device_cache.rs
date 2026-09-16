@@ -10628,6 +10628,95 @@ mod tests {
     }
 
     #[test]
+    fn draft_catchup_step_binding_keeps_speculative_reservation_selection() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for variant in 0..3 {
+                let mut cache = catchup_cache(bucket, 16);
+                let parent = cache.common.target.selection();
+                let draft_selection = Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    ..parent
+                };
+                let completion_selection =
+                    crate::M1StepDispatchIntent::DraftCatchup(parent).completion_selection();
+                let custody_selection = match variant {
+                    0 => draft_selection,
+                    1 => Qwen3PlanSelection {
+                        bucket: if bucket == Qwen3PlanBucket::SpeculativeS1K4C8192 {
+                            Qwen3PlanBucket::SpeculativeS1K8C8192
+                        } else {
+                            Qwen3PlanBucket::SpeculativeS1K4C8192
+                        },
+                        ..draft_selection
+                    },
+                    _ => Qwen3PlanSelection {
+                        role: Qwen3ModelRole::Draft06B,
+                        ..completion_selection
+                    },
+                };
+                let epoch = CompletionEpoch::new(32);
+                let mut storage = M1DraftCatchupKvWriteHostStorageV1::try_new().unwrap();
+                let pending = cache
+                    .reserve_step_write_for_purpose(
+                        request(),
+                        Qwen3ModelRole::Draft06B,
+                        16,
+                        1,
+                        epoch,
+                        leases(Qwen3ModelRole::Draft06B, 1, 1, 72),
+                        PendingStepWritePurpose::DraftCatchup {
+                            parent,
+                            prior_epoch: CompletionEpoch::new(31),
+                        },
+                        Some(&mut storage),
+                    )
+                    .unwrap();
+                assert_eq!(pending.selection(), draft_selection);
+                assert!(pending.is_authenticated_draft_catchup());
+                let step = crate::M1PrepublicationStepCustodyV1::for_step_binding_test(
+                    crate::M1ScheduledDispatchV1::for_test(epoch, &[request()]),
+                    StepPlan::new(request(), epoch, identity(91), completion_selection),
+                    crate::M1FullStepKvReservationCustodyV1::DraftCatchup {
+                        parent,
+                        target_allocation_id: identity(71),
+                        draft: crate::M1KvWorkspaceReservationCustodyV1::for_completed_step_test(
+                            custody_selection,
+                            identity(72),
+                            vec![pending],
+                        ),
+                    },
+                );
+                let result =
+                    crate::authenticated_physical_readback::check_draft_catchup_step_binding(
+                        parent, &step,
+                    );
+                if variant == 0 {
+                    assert_eq!(result.unwrap(), (request(), identity(91)));
+                } else {
+                    assert!(matches!(
+                        result,
+                        Err(crate::M1CompletedOutputCheckErrorV1::Output(
+                            crate::M1CompletionOutputErrorV1::DraftCatchupCustodyDrift
+                        ))
+                    ));
+                }
+                let (_, _, kv) = step.into_parts();
+                let crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } = kv else {
+                    panic!("catchup reservation custody changed");
+                };
+                let mut reservations = draft.into_reservations();
+                assert_eq!(reservations.len(), 1);
+                let pending = reservations.pop().unwrap();
+                assert_eq!(cache.abort_step_write(pending).unwrap().page_count(), 1);
+            }
+        }
+    }
+
+    #[test]
     fn draft_catchup_initializes_and_commits_only_one_token_with_preallocated_spans() {
         for (bucket, candidates) in [
             (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
