@@ -224,8 +224,13 @@ checked before/after, and 2,984 unselected dependency entries remain unchanged.
 Measured runtime usage is 9,134,984 KiB, restoring the unchanged full-source
 launch reserve. Compiler-cache inventory R1 instead stops before deletion on
 one empty metadata file; its strict positive-size assumption requires an exact
-file-scoped successor, not a broadened cleanup roster. Latest-f0b compiler
-validation controls are prepared but not launched. Removal of the two new
+file-scoped successor, not a broadened cleanup roster. R2 admits only that
+exact empty historical test metadata file and succeeds for 228 obsolete files
+(86 rlibs, 142 metadata files), totaling 1,635,144 KiB. The actual inventory
+has SHA-256 `a85f2a8adf9ec8a4db704e89fb3118e06726722401614cb136eeefa587f256b8`.
+No compiler cache files are deleted; retention-only controls are prepared.
+Latest-f0b compiler validation controls pass independent review but are not
+launched. Removal of the two new
 local unpacked proof/native verification copies reclaims 763,552 KiB; checked
 archives, manifests and raw evidence remain retained.
 
@@ -302,8 +307,21 @@ Successor `6c34cbe1` compares it to the speculative draft selection instead,
 leaving all completion-plan, request, epoch, width and ownership guards intact.
 Nine new cases use real pending reservations across K4/K8/K16, accept the exact
 selection and reject wrong-speculative and Decode outer selections. Independent
-review finds no blockers; focused host validation and a rebuilt native retry
-remain pending. The test-only assembly helper grants no production authority.
+review finds no blockers. The test-only assembly helper grants no production
+authority; a rebuilt native retry remains pending.
+
+Focused host validation on exact `6c34cbe1`, still compiler55-pinned, passes
+all 17 phases on mi300x. A distinct fresh engine test ELF passes 27 executions
+covering 26 distinct tests: the nine-case regression runs alone and again in
+the seven-test cache cohort, plus 13 readback, four completion and two dispatch
+tests. No failures or ignores occur. Changed-line formatting, locked/offline
+metadata, all 15 source snapshots, the 1,290 protected-file union, native bytes
+and control after-checks pass. This is not full-engine, Clippy, Verus,
+latest-compiler, GPU or performance qualification. The 36,213,090-byte archive
+has SHA-256 `7632e0f0b2031c1c8ec5bf64b81281baf4d84bf82644ef406ec722719a826044`;
+all 174 payload hashes and the actual test executable are checked locally.
+Its temporary unpacked copy is removed, reclaiming 131,684 KiB. Measured runtime
+usage is now 9,308,300 KiB; the next full-source launch must recheck its reserve.
 
 R6 failure evidence is retained locally in the 3,845,968-byte archive at SHA-256
 `c51d8cb5be5cfbe0970b2fee184cd8854bed862f5e2d101cfb152a1b84ef5043`;
