@@ -28,9 +28,19 @@ During the subsequent emission/build work, upstream advances to `349b2cd0`.
 The fetched five-commit delta changes nine files: exact unsigned-literal formal
 address reasoning and policy-3 semantic replay, with tests and documentation.
 It changes no manifest, lockfile, host or KFD API. No direct Ferric caller of
-the new replay API is found. This newer revision is reviewed, not yet adopted;
-the `111722028` build/emission records below remain explicitly frozen at that
-checkpoint and do not validate the newer compiler.
+the new replay API is found. Private integration `803916c4` now adopts that
+revision after a separate successful 47-phase mi300x campaign: 32 locked graphs,
+42 fresh source-gate tests and four inventory derivations. The exact 80-file
+transition again preserves the runtime inventory and historical property-binder
+pin. All 1,145 local source hashes match the validated remote census; 79 changed
+files independently match revision-only substitution, while the remaining
+source-policy file also updates its two manifest/lockfile hash rows. The
+20,500,070-byte retained archive has SHA-256
+`a9c0daa6a5b7203aae6c7f177827bf4c5fa17855e4e2c7c6f3641c07dc3ef3ba`;
+all 1,604 regular members and 1,603 payload hashes and sizes pass independent
+local checks. No engine, Verus or GPU test is attributed to this adoption.
+The `111722028` build/emission/native records below remain explicitly frozen
+at that checkpoint and do not validate the newer compiler.
 
 The matching engineering CLI, linker proxy, backend and extractor build on
 mi300x from the exact published compiler archive. All six tool-build/copy/source
