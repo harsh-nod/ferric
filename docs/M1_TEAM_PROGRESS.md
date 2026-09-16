@@ -10,6 +10,120 @@ All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
 runs and zero check runs for that commit. It contains only the six-file core
 verifier correction described below, not Ferric kernels or inference code.
 
+Private integration `2bfce38b` now adopts published fe2o3 `111722028` across
+the exact 80 active pin-bearing files. All 47 mi300x validation phases pass:
+32 locked/offline dependency graphs, 42 freshly built source-gate tests, and
+four actual CLI inventory derivations. The three compiler-bearing inventories
+change only their revision; the runtime inventory and historical property-binder
+pin remain unchanged. All 1,145 final local source hashes and the complete
+tracked-file roster match the validated remote snapshot before commit. The
+20,487,388-byte archive has SHA-256
+`ebbfc150c4811e4f314a81f343977d9eac055e353ffc6c6aa17f2dcec59edd67`;
+all 1,604 members pass independent payload, size, mode and numeric ownership
+checks. This is dependency/source-gate coverage, not engine, Verus, native or
+performance qualification. Main still identified `111722028` when this
+checkpoint was adopted.
+
+During the subsequent emission/build work, upstream advances to `349b2cd0`.
+The fetched five-commit delta changes nine files: exact unsigned-literal formal
+address reasoning and policy-3 semantic replay, with tests and documentation.
+It changes no manifest, lockfile, host or KFD API. No direct Ferric caller of
+the new replay API is found. This newer revision is reviewed, not yet adopted;
+the `111722028` build/emission records below remain explicitly frozen at that
+checkpoint and do not validate the newer compiler.
+
+The matching engineering CLI, linker proxy, backend and extractor build on
+mi300x from the exact published compiler archive. All six tool-build/copy/source
+phases pass; selected executables are fresh Cargo products, and the backend
+build-script receipt binds the actual CLI hash. Source before/after censuses
+are identical. CLI and backend receipts have SHA-256
+`4495ea34e77578894895b6ea76a892294f9c2f6f2fcc9994f72bfbb7fc37e67f` and
+`527bd4073fdce65e6fd6d013127e3e1c57c244a0952e97f32ad13add88cc306f`.
+These are engineering tools, not full compiler qualification. Fourteen
+obsolete 8af test executables are removed only after rechecking their retained
+archive identities and lack of live use, reclaiming 475,400 KiB. Their bytes
+remain in the earlier R5 archive; shared libraries and foreign jobs are untouched.
+
+Fresh MFMA13 engineering emission on exact `2bfce38b`/`111722028` passes all
+13 phases on mi300x, including unchanged source/vendor after-checks and empty
+Cargo-home dependency equivalence. The gfx942/COV6 object replays exactly and
+inspection finds all 13 expected entry points and 64-byte descriptors, plus
+the actual `v_mfma_f32_16x16x16_bf16` instruction in the selected GEMM. The
+112,936-byte HSACO has SHA-256
+`f4f365f7a79b56d95eb429b0b5bc5a150f09e9a3fb7923363ac43392ac63878b`;
+its inspection receipt is
+`2275b3eb52a31ad94dc76cfe2bd3cdd94eace306be53ba8e9d25ce00eacfd7c8`.
+The unchanged LLVM worker retains its original `21682228` producer attribution.
+This is emission/ELF inspection only, not GPU or numerical qualification.
+The combined tool/emission archive is 108,806,389 bytes at SHA-256
+`e67e7d0fd91bab2285c8b720ef74a39a2d7707e03291bb1a04f1ba311be72003`.
+Its exact 230-member roster and all payload hashes pass independent local
+verification; all selected remote input identities and both source censuses
+remain unchanged. Build targets and vendor/cache payload trees are excluded.
+
+The matching optimized engineering capture and speculative-smoke binaries now
+build successfully on mi300x. All six release phases and control after-checks
+pass at exact `2bfce38b`/`111722028`, with fresh opt3/debug0/no-feature Cargo
+producers and all 1,145 source files unchanged. The smoke binary is 14,187,984
+bytes with SHA-256
+`4a4b50a3903b88acbc93b10d61f90cf0b09cd53c28fed56895bab679ad71d420`;
+the actual producer receipt is
+`52a037ce547ec0e822531a2123461f93f485a63285375e6a4454b56961071417`.
+The compact 7,426,301-byte release archive has SHA-256
+`3cb470990f937b8f1dd2334be6aa948058b1674fb93cb810a356f818b05b1bd1`;
+all 90 payloads and 91 members pass independent local verification. Build
+success does not establish native catch-up, numerical or serving qualification.
+
+The separate bounded native MFMA13 retry now passes on mi300x GPU 4. It
+publishes 32 tokens over 20 speculative rounds and observes one completed
+draft catch-up after continuing full K4 acceptance. Process, report validation
+and outer control each exit 0; the report recomputes the physical epoch,
+generation, token and maintenance counts. The queue is destroyed normally and
+GPU 4 returns to its starting 298,647,552-byte allocation with no selected
+foreign queues or retention-capture issues. This exercises the previously
+failing catch-up path with the rebuilt binary, not merely its host regression.
+The 3,989,932-byte native archive has SHA-256
+`46c5dc43d7e73cd0a91e00baa7f7b82aee84a9b7bcf2fb76aa2e040455d942f4`;
+all 42 payloads and 43 archive members pass independent local checks. The
+actual native report has SHA-256
+`185100350792c1797ca34a13cf76ce34487b6b7c172442b703659d88a86b31a7`.
+Startup allocation/upload completes at 249.178 seconds; prefill through native
+teardown takes another 118.417 seconds. Neither is TTFT or TPOT. The prompt
+contains active suffix-fill tokens and the 32 outputs exclude the prefill
+anchor. This remains an engineering-only observation, without independent
+numerical parity, serving qualification, a matched benchmark or a closed gate.
+After verified retention, exact file/stat/hash checks, absent owned process
+group and diagnostic-free selected-path no-use checks, the completed native
+scratch stage is removed: 33 files, three directories, 14,508,032 allocated
+bytes. Reusable model, compiler and release inputs remain on mi300x.
+
+Separately, two redundant remote archive copies are removed after local
+verification, reclaiming 116,240,384 allocated bytes. Their attempted extra
+`fuser -s -- PATH` check rejected the argument separator but returned the same
+status as no users; the shell incorrectly continued. This is recorded as an
+invalid no-use check, not evidence of absence. Only the two owned completed
+archive copies were selected; no runtime inputs were removed. The later native
+scratch cleanup above rejects all diagnostic output and uses the supported
+absolute-path invocation. The original check failure remains recorded under
+`.codex-tmp/ferric-compiler111-tools-v1/REMOTE_ARCHIVE_COPY_REMOVAL.md`.
+
+The dated dependency checkpoint is now public at static Pages commit
+`bcc6d1badafd7d6bd1641c3c867cffd6cd7e63d2`, from separate Pages source
+`012d7af8`. All five mi300x QA phases pass, including the 320--1440 width sweep,
+eight viewports and 64 screenshots. The retained 11,313,074-byte archive has
+SHA-256 `4ff3a911384eeca221bcdbf0c09f25dc39f47d1f047286180869c60d7f536caa`;
+all 133 payloads and 134 archive members pass independent checks. Static-only
+deployment run `35063661900` succeeds without GitHub build or test commands.
+All seven canonical and seven cache-busted live assets match the validated
+625,414-byte artifact. The publication covers dependency adoption, not the
+subsequent compiler-tool/emission work or a new native result. Only the approved
+`pages/prebuilt` branch is pushed; private implementation history stays local.
+After archive and no-use rechecks, the three completed Pages directories are
+removed, reclaiming 50,816 KiB. The terminal receipt is
+`a25cad6a58f62612356c554af5c19bc1bdaf8bfa7e0dd52273b8cc2f41724697`;
+its 445-path deletion journal matches the approved inventory exactly. Local
+screenshots and evidence, shared caches and foreign jobs remain untouched.
+
 Private Ferric `f8eed966` adds an explicit leading `--mfma13` option to the
 engineering speculative smoke. The default remains `LegacyScalar12`; one-step
 and resident reports bind their strategy and exact 12/13 program count to the
@@ -839,10 +953,10 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Published `111722028` is rebased onto `d6471109`; 152 affected tests and scoped strict Clippy pass on mi300x, with zero observed GitHub runs/checks. Ferric still pins dependency checkpoint `8af54567`, not latest main. | Adopt current main, rebuild exact compiler tools, emit and numerically validate MFMA kernels. |
-| Runtime / Integration | `f8eed966` adds explicit MFMA13 speculative/resident smoke admission. The separately attributed smoke, source-policy and selected engine/GEMM cohorts pass; strict adapter Clippy passes. | Current-compiler artifact emission and native replay with actual draft catch-up completion. No new TTFT/TPOT/throughput result. |
+| Compiler / Kernels | Published `111722028` is rebased onto `d6471109`; 152 affected tests and scoped strict Clippy pass on mi300x, with zero observed GitHub runs/checks. Matching engineering tools and fresh 13-root MFMA13 emission/replay/ELF inspection pass on `2bfce38b`. | Numerical GPU validation; tool builds and engineering emission are not full compiler qualification. |
+| Runtime / Integration | `2bfce38b`/`111722028` passes dependency/source gates, MFMA13 emission and optimized builds. The new native32 diagnostic passes 20 speculative rounds with one completed full-accept catch-up and clean queue teardown. Earlier host and native cohorts retain their original attribution. | Independent numerical parity, broader continuation/fault coverage and matched TTFT/TPOT/throughput measurement. |
 | Verification | Proof R9 retains 14 selected executions with seven genuine dependency exports at its original source. New host tests do not establish new Verus results. | Outer queue/caller composition, mutation evidence and the changed custody check still require their own proofs. |
-| Integration / Pages | The public site remains the explicitly dated proof-R9/native-R6 checkpoint, deployed through the approved static-only branch. This newer private checkpoint is not presented as published. | Publish the next validated status from the separate Pages source; retain failures and remove only completed owned stages/worktrees. |
+| Integration / Pages | Static-only `bcc6d1b` publishes the validated 111 dependency-adoption checkpoint; mi300x QA and all 14 live asset checks pass. Newer compiler-tool/emission evidence remains private pending the next dated update. | Retain native outcomes and update the site without relabeling historical measurements; remove only completed owned stages/worktrees. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
 from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
