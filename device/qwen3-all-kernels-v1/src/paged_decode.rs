@@ -217,6 +217,8 @@ pub const fn qwen3_paged_decode_profile_for_lengths_v1(
     launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [1280, 1, 1]),
     control_flow(loop_bounds(8192, 128))
 )]
+// Retain explicit FP32 finite-value comparisons in the compiler-facing body.
+#[allow(clippy::manual_range_contains)]
 pub fn qwen3_paged_gqa_decode_bf16_f32_v1(
     q: &[u16],
     k: &[u16],

@@ -115,6 +115,8 @@ macro_rules! qwen3_swiglu_element_v1 {
         max_grid = [12288, 1, 1]
     )
 )]
+// Source contracts retain the macro's primitive FP32 finite-value comparisons.
+#[allow(clippy::manual_range_contains)]
 pub fn qwen3_swiglu_bf16_f32_v1(
     gate: &[u16],
     up: &[u16],

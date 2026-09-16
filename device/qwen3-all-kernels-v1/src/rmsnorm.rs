@@ -366,7 +366,8 @@ pub const fn qwen3_rmsnorm_lengths_are_admitted_v1(
 /// genuinely empty residual and fused-output slices. Fused mode adds the
 /// residual in FP32, writes that sum narrowed to BF16, and normalizes the full
 /// FP32 sum. Every lane owns columns `lane + component * 64` in its row.
-#[allow(clippy::too_many_arguments, clippy::len_zero)]
+// Keep the compiler-facing RMSNorm temporary and serial arithmetic spelling.
+#[allow(clippy::too_many_arguments, clippy::len_zero, clippy::let_and_return)]
 #[kernel(
     typed,
     launch(

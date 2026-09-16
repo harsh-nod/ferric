@@ -152,7 +152,12 @@ pub const fn qwen3_token_embedding_profile_is_admitted_v1(
     ),
     control_flow(loop_bounds(12288))
 )]
-#[allow(clippy::too_many_arguments)]
+// Preserve the compiler-facing tile arithmetic and source-contract recurrence.
+#[allow(
+    clippy::too_many_arguments,
+    clippy::assign_op_pattern,
+    clippy::manual_div_ceil
+)]
 pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     a: &[u16],
     b: &[u16],
@@ -340,7 +345,13 @@ pub fn ferric_qwen3_gemm_reference_bf16_f32_bf16_v1(
     ),
     control_flow(loop_bounds(12288))
 )]
-#[allow(clippy::too_many_arguments)]
+// Preserve source-contract recurrence, tile arithmetic, and divisibility guards.
+#[allow(
+    clippy::too_many_arguments,
+    clippy::assign_op_pattern,
+    clippy::manual_div_ceil,
+    clippy::manual_is_multiple_of
+)]
 pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     a: &[u16],
     b: &[u16],
@@ -584,7 +595,13 @@ pub fn ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1(
     ),
     control_flow(loop_bounds(768))
 )]
-#[allow(clippy::too_many_arguments)]
+// Keep the compiler-facing MFMA tile, divisibility, and beta-update spelling.
+#[allow(
+    clippy::too_many_arguments,
+    clippy::assign_op_pattern,
+    clippy::manual_div_ceil,
+    clippy::manual_is_multiple_of
+)]
 pub fn ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1(
     a: &[u16],
     b: &[u16],

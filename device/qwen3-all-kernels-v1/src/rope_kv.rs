@@ -252,7 +252,12 @@ pub fn qwen3_rope_v1(
     launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [1, 1, 1]),
     control_flow(loop_bounds(2048, 1024))
 )]
-#[allow(clippy::too_many_arguments)]
+// Source contracts pin these explicit nonzero-division and divisibility guards.
+#[allow(
+    clippy::too_many_arguments,
+    clippy::manual_checked_ops,
+    clippy::manual_is_multiple_of
+)]
 pub fn qwen3_paged_kv_write_v1(
     rotated_key_bf16: &[u16],
     value_bf16: &[u16],
