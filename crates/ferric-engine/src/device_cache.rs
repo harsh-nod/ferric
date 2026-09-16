@@ -2803,8 +2803,15 @@ fn commit_page_return_batch_ledgers(
     let ghost count = page_return_batch_len(before_retired, before_tickets);
     let ghost mut cursor: int = 0;
     proof {
+        hide(page_return_batch_ready);
+        hide(page_return_batch_prefix);
         reveal(page_return_batch_len);
-        reveal(page_return_batch_ready);
+        assert forall|index: int| 0 <= index < count implies
+            #[trigger] before_tickets[index].matches_ledgers_spec(
+                &before_retired[index].lease, before_target, before_draft,
+            ) by {
+            reveal(page_return_batch_ready);
+        }
         assert(page_return_batch_prefix(
             before_retired, before_tickets, 0,
             before_target, before_draft, before_target, before_draft,
@@ -2880,18 +2887,19 @@ fn commit_page_return_batch_ledgers(
         }
         commit_page_return_ledgers(target_pages, draft_pages, ticket, retired.into_lease());
         proof {
-            reveal(page_return_batch_ready);
-            reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
-            reveal(page_return_ledger_spec);
             assert forall|index: int| cursor + 1 <= index < count implies
                 #[trigger] before_tickets[index].matches_ledgers_spec(
                     &before_retired[index].lease, target_pages@, draft_pages@,
                 ) by {
+                reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
+                reveal(page_return_ledger_spec);
                 assert(before_tickets[index].matches_ledgers_spec(
                     &before_retired[index].lease, prior_target, prior_draft,
                 ));
                 assert(before_tickets[cursor].role != before_tickets[index].role
-                    || before_tickets[cursor].global_index != before_tickets[index].global_index);
+                    || before_tickets[cursor].global_index != before_tickets[index].global_index) by {
+                    reveal(page_return_batch_ready);
+                }
                 let prior_ledger = page_return_ledger_spec(
                     before_tickets[index].role, prior_target, prior_draft,
                 );
@@ -2915,12 +2923,18 @@ fn commit_page_return_batch_ledgers(
                     ] == (M1KvPoolPageStateV1::Free {
                         generation: (before_retired[index].lease.page.generation_spec() as int + 1) as u32,
                     }) by {
+                    reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
+                    reveal(page_return_ledger_spec);
                     if index < cursor {
                         assert(before_tickets[index].matches_ledgers_spec(
                             &before_retired[index].lease, before_target, before_draft,
-                        ));
+                        )) by {
+                            reveal(page_return_batch_ready);
+                        }
                         assert(before_tickets[index].role != before_tickets[cursor].role
-                            || before_tickets[index].global_index != before_tickets[cursor].global_index);
+                            || before_tickets[index].global_index != before_tickets[cursor].global_index) by {
+                            reveal(page_return_batch_ready);
+                        }
                         let prior_ledger = page_return_ledger_spec(
                             before_tickets[index].role, prior_target, prior_draft,
                         );
