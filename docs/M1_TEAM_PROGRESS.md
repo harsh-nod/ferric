@@ -5,8 +5,8 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-Private integration `ea529fd8` builds on the `5bcf44ed` baseline, which pins
-freshly fetched fe2o3 main `55d9bfe5` across all 80 active pin-bearing files.
+Private integration `2108e736` builds on the `5bcf44ed` baseline, which pins
+the tested fe2o3 checkpoint `55d9bfe5` across all 80 active pin-bearing files.
 Upstream adds enum SSA edge transport
 and authenticated-downcast fixes, plus tutorial source-binding corrections;
 the compiler lockfile and device/host/KFD trees are unchanged from e3. The
@@ -15,6 +15,14 @@ source-gate tests on mi300x. Cargo regenerates exactly the missing normal
 `ferric-engine -> fe2o3-hsaco` edge in four standalone locks. The three scoped
 and combined dependency inventories change only their compiler revision; the
 runtime inventory is byte-identical.
+
+During validation, upstream main advances to `179340e3`; it is freshly fetched
+and reviewed, not yet adopted or validated by Ferric. Its nine commits change
+47 files but no manifests, lockfile, KFD, host or device APIs. The materialized
+compiler owner and ranked-assertion paths change, so actual aggregate emission
+needs fresh checks even though no direct Ferric API break is found. Existing
+55-pinned results are not relabeled as latest-main evidence. New optimizer and
+V12 lowering primitives do not establish production admission or performance.
 
 The first source-gate run genuinely reports 41 passes and one failure: its
 marker-order fixture anchor now occurs in both rosters. Fixture successor
@@ -64,6 +72,18 @@ Clippy phases are unlaunched. All 122 payloads and the actual executable are
 locally checked in the 209,362,975-byte archive at SHA-256
 `36c2d719e509f1f2568975a7e23c09512b7d17a43c789205c66c0f038f8501df`.
 
+Strict Clippy R4 on `873f4958` completes all four phases with classified raw
+diagnostics. Core engine/spec/Qwen passes. The adapter reports one test-module
+ordering lint; `2108e736` moves that module without changing its contents or
+production bodies, and remote edition-2024 formatting passes. Its rerun remains
+pending. Each architecture reports 103 aggregate-kernel style diagnostics.
+Several arithmetic and finite-range spellings are pinned by source contracts;
+narrow function-level exceptions are being reviewed instead of silently
+rewriting the compiler-facing bodies. R4 remains exit 101. All 100 payloads and
+the exact 101-member roster are independently checked in the 218,719,868-byte
+archive at SHA-256
+`aa94caa28aab43cdf7c8c42e34809bffc115f7b6d80fa635e2408f969c753095`.
+
 The actual current-55 batch consumer has now been attempted in Verus. R2 on
 `5bcf44ed` genuinely verifies seven dependency exports but fails engine
 translation on four opaque-datatype field references, before consumer SMT work.
@@ -75,20 +95,35 @@ checks pass. The full 183,762,226-byte failed R3 stage is retained locally at
 SHA-256 `fb16cc8bbe4ce52c62272be106c15b805d782f23320a7244956c2b56d836c9c3`,
 with all 3,734 members and 3,155 file payload hashes checked. `ea529fd8` adds
 17 ghost-only lines connecting entry-state ledgers and explicit per-ticket
-frames; remote formatting passes, but its proof retry is pending. No trust
-annotations, executable behavior changes or weakened contracts are introduced.
+frames. Its R4 retry reaches actual SMT but still fails the final and next-prefix
+obligations and hits the solver rlimit; the former remaining-ticket assertion
+is no longer reported. All seven verified dependency exports and prior raw
+evidence remain unchanged. The full 193,456,937-byte failed stage is retained
+locally at SHA-256
+`e50191a61a5bdf8b09bf25e5a94a2b3988c6f3cf30133377a4aa9383a3de945c`,
+with all 3,885 members and 3,295 file payloads independently checked. Explicit
+entry-vector links and localized pointwise prefix reasoning are the next proof
+work, not a verified result. No trust annotations, executable behavior changes,
+weakened contracts or raised solver bounds are introduced.
 
 Scoped reproducible-cache cleanup removes 23 obsolete engine/build libraries
 and 11 obsolete engineering-adapter libraries, reclaiming 1,041,180 KiB while
 preserving protected sources, artifacts and evidence. A separate no-use scan
 fails on a transient unreadable process and deletes nothing; the fresh retry
-passes after that process is observed absent. The runtime stage after host R3
-is 9,334,764 KiB; another bounded cache review is restoring initial headroom.
+passes after that process is observed absent. A later exact 19-file kernel/spec
+cache cleanup reclaims another 78,620 KiB with all 986 protected inputs unchanged.
+Its complete inventory and deletion journal match locally. The runtime stage
+after host R4 is 9,420,480 KiB, still below its 10 GiB cap; future launches must
+restore their required initial reserve rather than weaken the resource guards.
 Fresh surveys find all eight mi300x GPUs occupied. mi350-2 has one physical
 gfx950 GPU at zero utilization but a foreign process still holds three queues
 and 17.7 GiB, and its kernel/driver profile is not admitted. Compiler55 tool
 refresh, current-source emission and GPU numerical validation remain pending.
 All 33 M1 gates stay open.
+
+Pages-only candidate `318656ca` prepares the newer source-bound status copy;
+its clean temporary worktree is removed. Remote QA and publication have not run,
+and the prepared copy must incorporate the final R4 outcomes before deployment.
 
 The dated Pages R5-R6 snapshot is deployed at public static-only commit
 `f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
