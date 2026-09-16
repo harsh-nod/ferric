@@ -1763,19 +1763,28 @@ impl M1ObservedCompletionOutputV1 {
         // lease. The five rows remain inert evidence beside the independent choices.
         let engineering_logits = match &mut self {
             Self::SpeculativeK4(case) => {
-                if let Some(logits) = case.case.custody.completion_output().engineering_s1_k4_logits() {
+                if let Some(logits) = case
+                    .case
+                    .custody
+                    .completion_output()
+                    .engineering_s1_k4_logits()
+                {
                     let shape = logits.shape();
                     let range = logits.retained_host_dispatch_range();
                     if live_sequences != 1
                         || crate::m1_engineering_s1_k4_logits_shape_v1(
                             case.case.custody.completion_output().shape().selection(),
-                        ).ok() != Some(shape)
+                        )
+                        .ok()
+                            != Some(shape)
                     {
                         return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
                             custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                                 error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
                                 completion: Box::new(self),
-                                partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
+                                partial_choices: retain_all_m1_diagnostic_choice_copies(
+                                    draft, target,
+                                ),
                             },
                         }));
                     }
@@ -1784,13 +1793,17 @@ impl M1ObservedCompletionOutputV1 {
                         Ok(copy) => copy,
                         Err(source) => {
                             return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
-                                custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
-                                    error: M1SpeculativeDiagnosticObservationErrorV1::Queue {
-                                        range: "engineering-s1-k4-logits", source,
+                                custody:
+                                    M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
+                                        error: M1SpeculativeDiagnosticObservationErrorV1::Queue {
+                                            range: "engineering-s1-k4-logits",
+                                            source,
+                                        },
+                                        completion: Box::new(self),
+                                        partial_choices: retain_all_m1_diagnostic_choice_copies(
+                                            draft, target,
+                                        ),
                                     },
-                                    completion: Box::new(self),
-                                    partial_choices: retain_all_m1_diagnostic_choice_copies(draft, target),
-                                },
                             }));
                         }
                     };
@@ -1799,7 +1812,8 @@ impl M1ObservedCompletionOutputV1 {
                     ) {
                         Ok(logits) => Some(logits),
                         Err((error, copy)) => {
-                            let mut partial = retain_all_m1_diagnostic_choice_copies(draft, target).into_vec();
+                            let mut partial =
+                                retain_all_m1_diagnostic_choice_copies(draft, target).into_vec();
                             partial.push(copy);
                             return Err(Box::new(M1SpeculativeDiagnosticObservationFailureV1 {
                                 custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
@@ -1828,7 +1842,11 @@ impl M1ObservedCompletionOutputV1 {
                         custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                             error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
                             completion: Box::new(self),
-                            partial_choices: retain_speculative_copies_with_engineering_logits(draft, target, engineering_logits),
+                            partial_choices: retain_speculative_copies_with_engineering_logits(
+                                draft,
+                                target,
+                                engineering_logits,
+                            ),
                         },
                     }));
                 };
@@ -1845,7 +1863,11 @@ impl M1ObservedCompletionOutputV1 {
                         custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                             error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
                             completion: Box::new(self),
-                            partial_choices: retain_speculative_copies_with_engineering_logits(draft, target, engineering_logits),
+                            partial_choices: retain_speculative_copies_with_engineering_logits(
+                                draft,
+                                target,
+                                engineering_logits,
+                            ),
                         },
                     }));
                 };
@@ -1862,7 +1884,11 @@ impl M1ObservedCompletionOutputV1 {
                         custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                             error: M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
                             completion: Box::new(self),
-                            partial_choices: retain_speculative_copies_with_engineering_logits(draft, target, engineering_logits),
+                            partial_choices: retain_speculative_copies_with_engineering_logits(
+                                draft,
+                                target,
+                                engineering_logits,
+                            ),
                         },
                     }));
                 };
@@ -1873,7 +1899,11 @@ impl M1ObservedCompletionOutputV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                         error: M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape,
                         completion: Box::new(self),
-                        partial_choices: retain_speculative_copies_with_engineering_logits(draft, target, engineering_logits),
+                        partial_choices: retain_speculative_copies_with_engineering_logits(
+                            draft,
+                            target,
+                            engineering_logits,
+                        ),
                     },
                 }))
             }
@@ -1892,7 +1922,11 @@ impl M1ObservedCompletionOutputV1 {
                     custody: M1SpeculativeDiagnosticObservationFailureCustodyV1::Direct {
                         error: M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
                         completion: Box::new(self),
-                        partial_choices: retain_speculative_copies_with_engineering_logits(draft, target, engineering_logits),
+                        partial_choices: retain_speculative_copies_with_engineering_logits(
+                            draft,
+                            target,
+                            engineering_logits,
+                        ),
                     },
                 }));
             }

@@ -2,10 +2,10 @@
 
 //! Authority-free paired-prefill to S1/K4 hardware diagnostic.
 
+mod engineering_m5_capture;
 mod smoke_bootstrap;
 mod speculative_resident_smoke;
 mod startup_diagnostics;
-mod engineering_m5_capture;
 
 use fe2o3_kfd::{DeviceSelector, GFX942_MAX_FIXED_DISPATCH_DATA_V1, OpenedKfd};
 use ferric_build::{
@@ -125,9 +125,13 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
     let (m5_capture, positional) = match positional {
         [flag, directory, remaining @ ..] if flag == "--capture-m5" => {
             if program_strategy != M1PhysicalProgramStrategyV1::AttributedMfma13
-                || directory.is_empty() || directory.as_encoded_bytes().starts_with(b"--")
+                || directory.is_empty()
+                || directory.as_encoded_bytes().starts_with(b"--")
             {
-                return Err("--capture-m5 requires leading --mfma13 and a nonempty output directory".to_owned());
+                return Err(
+                    "--capture-m5 requires leading --mfma13 and a nonempty output directory"
+                        .to_owned(),
+                );
             }
             (Some(Path::new(directory)), remaining)
         }
@@ -142,7 +146,10 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
     };
     let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
     if m5_capture.is_some() && resident_limit.is_some() {
-        return Err("engineering M=5 capture supports exactly one S1/K4 round, not resident execution".to_owned());
+        return Err(
+            "engineering M=5 capture supports exactly one S1/K4 round, not resident execution"
+                .to_owned(),
+        );
     }
     if [prepacked_root, observation_root, gpu_unique_id]
         .iter()
@@ -402,7 +409,8 @@ fn execute_and_report(
         "attach independent paired-prefill choice capture",
     );
     let prefill_queue_data_allocations = allocated.partitioned_memory().retained_allocation_count();
-    if prefill_queue_data_allocations != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS + usize::from(m5_capture.is_some())
+    if prefill_queue_data_allocations
+        != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS + usize::from(m5_capture.is_some())
         || prefill_queue_data_allocations > GFX942_MAX_FIXED_DISPATCH_DATA_V1
     {
         fail_stop(
@@ -1304,15 +1312,50 @@ mod strategy_tests {
 
     #[test]
     fn m5_capture_requires_explicit_mfma_and_exactly_one_round() {
-        let values = arguments(&["--mfma13", "--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt"]);
+        let values = arguments(&[
+            "--mfma13",
+            "--capture-m5",
+            "/tmp/new-capture",
+            "snapshot",
+            "observation",
+            "123",
+            "prompt",
+        ]);
         let parsed = parse_arguments(&values).unwrap();
         assert_eq!(parsed.m5_capture, Some(Path::new("/tmp/new-capture")));
         assert_eq!(parsed.resident_limit, None);
-        assert_eq!(parsed.program_strategy, M1PhysicalProgramStrategyV1::AttributedMfma13);
+        assert_eq!(
+            parsed.program_strategy,
+            M1PhysicalProgramStrategyV1::AttributedMfma13
+        );
         for values in [
-            arguments(&["--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt"]),
-            arguments(&["--mfma13", "--capture-m5", "", "snapshot", "observation", "123", "prompt"]),
-            arguments(&["--mfma13", "--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt", "32"]),
+            arguments(&[
+                "--capture-m5",
+                "/tmp/new-capture",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+            ]),
+            arguments(&[
+                "--mfma13",
+                "--capture-m5",
+                "",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+            ]),
+            arguments(&[
+                "--mfma13",
+                "--capture-m5",
+                "/tmp/new-capture",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+                "32",
+            ]),
         ] {
             assert!(parse_arguments(&values).is_err());
         }

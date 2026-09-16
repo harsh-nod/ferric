@@ -1742,7 +1742,11 @@ fn schedule_m1_long_lived_queue_rearm_inner_v1<const C: usize>(
             .custody()
             .completion_output()
             .qualification_logits()
-            .or(released.queue().custody().completion_output().engineering_s1_k4_logits())
+            .or(released
+                .queue()
+                .custody()
+                .completion_output()
+                .engineering_s1_k4_logits())
             .is_some(),
     ) {
         return Err(schedule_phase_failure(
@@ -2886,7 +2890,9 @@ impl<T> RetainedSemanticCaptureRangesV1<T> {
     const fn captured_logits(&self) -> Option<&T> {
         match self {
             Self::Qualification { logits } => Some(logits),
-            Self::SpeculativeDiagnostic { engineering_logits, .. } => engineering_logits.as_ref(),
+            Self::SpeculativeDiagnostic {
+                engineering_logits, ..
+            } => engineering_logits.as_ref(),
             _ => None,
         }
     }
@@ -3105,15 +3111,21 @@ impl RearmRangeSelectionV1 {
             RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => {
                 RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices: () }
             }
-            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft_tokens, engineering_logits, .. } => {
-                RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
-                    draft: (),
-                    draft_tokens: *draft_tokens,
-                    draft_rows: [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
-                    target: (),
-                    engineering_logits: if engineering_logits.is_some() { Some(()) } else { None },
-                }
-            }
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft_tokens,
+                engineering_logits,
+                ..
+            } => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft: (),
+                draft_tokens: *draft_tokens,
+                draft_rows: [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
+                target: (),
+                engineering_logits: if engineering_logits.is_some() {
+                    Some(())
+                } else {
+                    None
+                },
+            },
         };
         Self {
             completion_output_sources: 0,
@@ -3279,7 +3291,11 @@ impl RearmRangeSelectionV1 {
             RetainedSemanticCaptureRangesV1::Ordinary => (0, 0, 0, 0, 0),
             RetainedSemanticCaptureRangesV1::Qualification { .. } => (2, 0, 0, 0, 0),
             RetainedSemanticCaptureRangesV1::DirectDiagnostic { .. } => (0, 2, 0, 0, 0),
-            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { draft_tokens, engineering_logits, .. } => (
+            RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                draft_tokens,
+                engineering_logits,
+                ..
+            } => (
                 if engineering_logits.is_some() { 2 } else { 0 },
                 0,
                 2,
@@ -10089,9 +10105,13 @@ pub(crate) fn retained_host_capture_ranges(
     if let Some(logits) = engineering {
         let shape = crate::qualification_logits::m1_engineering_s1_k4_logits_shape_v1(
             completion.shape().selection(),
-        ).map_err(|_| ())?;
-        if shape != logits.shape() || qualification.is_some() || direct.is_some()
-            || speculative.is_none() || completion.completion_canary().is_some()
+        )
+        .map_err(|_| ())?;
+        if shape != logits.shape()
+            || qualification.is_some()
+            || direct.is_some()
+            || speculative.is_none()
+            || completion.completion_canary().is_some()
             || completion.is_draft_catchup()
         {
             return Err(());
@@ -10110,7 +10130,8 @@ pub(crate) fn retained_host_capture_ranges(
             draft_tokens: choices.shape().draft_tokens(),
             draft_rows: choices.retained_draft_read_ranges().map_err(|_| ())?,
             target: choices.retained_target_range(),
-            engineering_logits: engineering.map(crate::BoundM1QualificationLogitsV1::retained_host_dispatch_range),
+            engineering_logits: engineering
+                .map(crate::BoundM1QualificationLogitsV1::retained_host_dispatch_range),
         },
         _ => return Err(()),
     };
@@ -14108,24 +14129,41 @@ mod tests {
 
         #[test]
         fn engineering_s1_k4_routes_only_two_target_logits_uses_to_capture() {
-            let target = selection(Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K4C8192);
+            let target = selection(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            );
             let recipe = recipe(crate::M1StepDispatchIntent::SpeculativeRound(target));
-            let saved = recipe.rows().iter().flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+            let saved = recipe
+                .rows()
+                .iter()
+                .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
                 .map(|buffer| (buffer.source(), Range::Retained(buffer.source())))
                 .collect::<Vec<_>>();
             let ordinary = speculative_capture_ranges(101, 201, 4, 211, 301).map(Range::Capture);
             let mut engineering = ordinary;
-            let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic { engineering_logits, .. } = &mut engineering.semantic else { unreachable!() };
+            let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                engineering_logits, ..
+            } = &mut engineering.semantic
+            else {
+                unreachable!()
+            };
             *engineering_logits = Some(Range::Capture(401));
             let before = route(&recipe, &saved, &ordinary, 11).unwrap();
             let after = route(&recipe, &saved, &engineering, 11).unwrap();
             let mut replaced = 0;
-            for ((source, old), (same_source, new)) in roster(&recipe, &before).into_iter().zip(roster(&recipe, &after)) {
+            for ((source, old), (same_source, new)) in roster(&recipe, &before)
+                .into_iter()
+                .zip(roster(&recipe, &after))
+            {
                 assert_eq!(source, same_source);
-                if matches!(source, M1PhysicalBufferSourceV1::Workspace {
-                    workspace: M1FullStepWorkspaceRole::Target,
-                    range: ferric_build::M1StepWorkspaceRangeRole::Logits,
-                }) {
+                if matches!(
+                    source,
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::Logits,
+                    }
+                ) {
                     assert!(matches!(old, Range::Workspace { .. }));
                     assert_eq!(new, Range::Capture(401));
                     replaced += 1;

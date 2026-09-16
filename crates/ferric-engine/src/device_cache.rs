@@ -2360,7 +2360,8 @@ fn finite_speculative_rollover_reserve_projection_is_valid(
         && output.selection == selection
         && (output.attachment == M1CompletionOutputAttachmentProjectionV1::SpeculativeDiagnostic
             || (selection == M1_S1_K4_TARGET_SELECTION_V1
-                && output.attachment == M1CompletionOutputAttachmentProjectionV1::EngineeringS1K4Logits))
+                && output.attachment
+                    == M1CompletionOutputAttachmentProjectionV1::EngineeringS1K4Logits))
 }
 
 fn finite_speculative_rollover_reserve_output_is_valid(
@@ -8310,7 +8311,8 @@ mod tests {
         M1_KV_PHYSICAL_PAGE_SLOTS,
     };
     use M1CompletionOutputAttachmentProjectionV1::{
-        Bare, CompletionCanary, DirectDiagnostic, EngineeringS1K4Logits, Mixed, QualificationLogits, SpeculativeDiagnostic,
+        Bare, CompletionCanary, DirectDiagnostic, EngineeringS1K4Logits, Mixed,
+        QualificationLogits, SpeculativeDiagnostic,
     };
 
     #[test]
@@ -8466,19 +8468,30 @@ mod tests {
     fn engineering_s1_k4_logits_reserve_is_one_round_only() {
         let selection = M1_S1_K4_TARGET_SELECTION_V1;
         let capture = output_projection(selection, EngineeringS1K4Logits);
-        assert!(finite_speculative_rollover_reserve_projection_is_valid(capture, selection));
+        assert!(finite_speculative_rollover_reserve_projection_is_valid(
+            capture, selection
+        ));
         for other in M1_FINITE_SPECULATIVE_TARGET_SELECTIONS_V1 {
             if other != selection {
                 assert!(!finite_speculative_rollover_reserve_projection_is_valid(
-                    output_projection(other, EngineeringS1K4Logits), other,
+                    output_projection(other, EngineeringS1K4Logits),
+                    other,
                 ));
             }
         }
         let direct_selection = prefill_for_finite_speculative(selection);
-        assert_eq!(preflight_finite_speculative_output_rotation(
-            direct_selection, selection, output_projection(direct_selection, DirectDiagnostic),
-            capture, &[] as &[M1CompletionOutputBindingProjectionV1], 1, |value| *value,
-        ), Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift));
+        assert_eq!(
+            preflight_finite_speculative_output_rotation(
+                direct_selection,
+                selection,
+                output_projection(direct_selection, DirectDiagnostic),
+                capture,
+                &[] as &[M1CompletionOutputBindingProjectionV1],
+                1,
+                |value| *value,
+            ),
+            Err(M1FiniteSpeculativeOutputRotationErrorV1::PriorOutputDrift)
+        );
     }
 
     #[test]

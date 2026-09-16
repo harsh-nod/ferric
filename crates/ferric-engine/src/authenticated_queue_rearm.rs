@@ -1750,7 +1750,12 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
             .completion_output()
             .qualification_logits()
             .is_some(),
-        released.queue().custody().completion_output().engineering_s1_k4_logits().is_some(),
+        released
+            .queue()
+            .custody()
+            .completion_output()
+            .engineering_s1_k4_logits()
+            .is_some(),
     ) {
         return Err(authenticated_schedule_rejection(
             M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(error),
@@ -8487,21 +8492,40 @@ mod tests {
             bucket: ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192,
         };
         assert!(validate_authenticated_rearm_eligibility(
-            M1PhysicalFixedBatchShapeV1::SpeculativeK4, selection, false, false,
-        ).is_ok());
-        assert!(matches!(validate_authenticated_rearm_eligibility(
-            M1PhysicalFixedBatchShapeV1::SpeculativeK4, selection, false, true,
-        ), Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)));
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            selection,
+            false,
+            false,
+        )
+        .is_ok());
+        assert!(matches!(
+            validate_authenticated_rearm_eligibility(
+                M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+                selection,
+                false,
+                true,
+            ),
+            Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
+        ));
         let direct = Qwen3PlanSelection {
-            role: Qwen3ModelRole::Target8B, mode: Qwen3ExecutionMode::Decode,
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
             bucket: ferric_spec::Qwen3PlanBucket::DecodeS1C8192,
         };
         assert!(validate_authenticated_rearm_eligibility(
-            M1PhysicalFixedBatchShapeV1::TargetOnly, direct, true, false,
-        ).is_ok());
+            M1PhysicalFixedBatchShapeV1::TargetOnly,
+            direct,
+            true,
+            false,
+        )
+        .is_ok());
         assert!(validate_authenticated_rearm_eligibility(
-            M1PhysicalFixedBatchShapeV1::TargetOnly, direct, false, true,
-        ).is_err());
+            M1PhysicalFixedBatchShapeV1::TargetOnly,
+            direct,
+            false,
+            true,
+        )
+        .is_err());
     }
 
     #[test]

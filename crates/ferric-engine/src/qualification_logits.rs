@@ -472,8 +472,8 @@ pub(crate) fn attach_m1_engineering_s1_k4_logits_v1(
     allocations: &mut ServiceAllocationSessionV1,
     completion: BoundM1CompletionOutputV1,
 ) -> Result<BoundM1CompletionOutputV1, Box<M1QualificationLogitsAllocationFailureV1>> {
-    let result = m1_engineering_s1_k4_logits_shape_v1(completion.shape().selection())
-        .and_then(|_| {
+    let result =
+        m1_engineering_s1_k4_logits_shape_v1(completion.shape().selection()).and_then(|_| {
             if completion.qualification_logits().is_some()
                 || completion.engineering_s1_k4_logits().is_some()
                 || completion.completion_canary().is_some()
@@ -616,8 +616,8 @@ fn validate_engineering_s1_k4_logits(
     geometry().map_err(M1EngineeringS1K4LogitsErrorV1::Geometry)?;
     let mut choices = [0; 5];
     for (index, choice) in choices.iter_mut().enumerate() {
-        let (start, end) = engineering_s1_k4_row_bounds(shape, index)
-            .expect("validated exact S1/K4 geometry");
+        let (start, end) =
+            engineering_s1_k4_row_bounds(shape, index).expect("validated exact S1/K4 geometry");
         *choice = lowest_id_finite_bf16_argmax(&bytes[start..end], index)
             .map_err(M1EngineeringS1K4LogitsErrorV1::Values)?;
     }
@@ -629,14 +629,21 @@ pub(crate) fn observe_m1_engineering_s1_k4_logits_v1(
     range: ServiceHostDispatchRangeV1,
     generation: u64,
     readback: ServiceCompletedReadbackV1,
-) -> Result<M1ObservedEngineeringS1K4LogitsV1, (M1EngineeringS1K4LogitsErrorV1, ServiceCompletedReadbackV1)> {
+) -> Result<
+    M1ObservedEngineeringS1K4LogitsV1,
+    (M1EngineeringS1K4LogitsErrorV1, ServiceCompletedReadbackV1),
+> {
     let coordinates = M1QualificationLogitsRowCoordinatesV1 {
         dispatch_generation: readback.dispatch_generation(),
         offset_bytes: readback.offset_bytes(),
         extent_bytes: u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
     };
     match validate_engineering_s1_k4_logits(
-        shape, range.offset_bytes(), generation, coordinates, readback.bytes(),
+        shape,
+        range.offset_bytes(),
+        generation,
+        coordinates,
+        readback.bytes(),
     ) {
         Ok(choices) => Ok(M1ObservedEngineeringS1K4LogitsV1 {
             shape,
@@ -976,12 +983,21 @@ pub(crate) mod tests {
         for bucket in TARGET_ONLY_BUCKETS {
             assert!(m1_engineering_s1_k4_logits_shape_v1(selection(bucket)).is_err());
         }
-        for bucket in [Qwen3PlanBucket::SpeculativeS8K4C8192, Qwen3PlanBucket::SpeculativeS1K8C8192, Qwen3PlanBucket::SpeculativeS1K16C8192] {
-            assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection { bucket, ..exact }).is_err());
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            assert!(
+                m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection { bucket, ..exact })
+                    .is_err()
+            );
         }
         assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
-            role: Qwen3ModelRole::Draft06B, ..exact
-        }).is_err());
+            role: Qwen3ModelRole::Draft06B,
+            ..exact
+        })
+        .is_err());
     }
 
     #[test]
@@ -990,7 +1006,8 @@ pub(crate) mod tests {
             role: Qwen3ModelRole::Target8B,
             mode: Qwen3ExecutionMode::Speculative,
             bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
-        }).unwrap();
+        })
+        .unwrap();
         let width = usize::try_from(shape.row_bytes()).unwrap();
         let mut bytes = vec![0; usize::try_from(shape.extent_bytes()).unwrap()];
         for index in 0..5 {
@@ -1001,22 +1018,52 @@ pub(crate) mod tests {
         assert_eq!(engineering_s1_k4_row_bounds(shape, 5), None);
         assert_eq!(engineering_s1_k4_row_bounds(shape, usize::MAX), None);
         let coordinates = M1QualificationLogitsRowCoordinatesV1 {
-            dispatch_generation: 9, offset_bytes: 64, extent_bytes: shape.extent_bytes(),
+            dispatch_generation: 9,
+            offset_bytes: 64,
+            extent_bytes: shape.extent_bytes(),
         };
-        assert_eq!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes).unwrap(), [11, 12, 13, 14, 15]);
+        assert_eq!(
+            validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes).unwrap(),
+            [11, 12, 13, 14, 15]
+        );
         for wrong in [
-            M1QualificationLogitsRowCoordinatesV1 { dispatch_generation: 8, ..coordinates },
-            M1QualificationLogitsRowCoordinatesV1 { offset_bytes: 66, ..coordinates },
-            M1QualificationLogitsRowCoordinatesV1 { extent_bytes: shape.extent_bytes() - 2, ..coordinates },
+            M1QualificationLogitsRowCoordinatesV1 {
+                dispatch_generation: 8,
+                ..coordinates
+            },
+            M1QualificationLogitsRowCoordinatesV1 {
+                offset_bytes: 66,
+                ..coordinates
+            },
+            M1QualificationLogitsRowCoordinatesV1 {
+                extent_bytes: shape.extent_bytes() - 2,
+                ..coordinates
+            },
         ] {
-            assert!(matches!(validate_engineering_s1_k4_logits(shape, 64, 9, wrong, &bytes), Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))));
+            assert!(matches!(
+                validate_engineering_s1_k4_logits(shape, 64, 9, wrong, &bytes),
+                Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))
+            ));
         }
-        assert!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes[..bytes.len() - 2]).is_err());
+        assert!(validate_engineering_s1_k4_logits(
+            shape,
+            64,
+            9,
+            coordinates,
+            &bytes[..bytes.len() - 2]
+        )
+        .is_err());
         for index in 0..5 {
             let mut missing = bytes.clone();
             let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
-            set_bf16(&mut missing[start..end], 0, M1_QUALIFICATION_UNWRITTEN_BF16_V1);
-            assert!(matches!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &missing), Err(M1EngineeringS1K4LogitsErrorV1::Values(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token: 0 })) if lane == index));
+            set_bf16(
+                &mut missing[start..end],
+                0,
+                M1_QUALIFICATION_UNWRITTEN_BF16_V1,
+            );
+            assert!(
+                matches!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &missing), Err(M1EngineeringS1K4LogitsErrorV1::Values(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token: 0 })) if lane == index)
+            );
         }
     }
 

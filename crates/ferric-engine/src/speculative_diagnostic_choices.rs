@@ -335,7 +335,9 @@ impl M1ObservedSpeculativeDiagnosticChoicesV1 {
     /// All five target logits rows when the separate engineering attachment
     /// was explicitly reserved before publication; never qualification evidence.
     #[must_use]
-    pub const fn engineering_s1_k4_logits(&self) -> Option<&crate::M1ObservedEngineeringS1K4LogitsV1> {
+    pub const fn engineering_s1_k4_logits(
+        &self,
+    ) -> Option<&crate::M1ObservedEngineeringS1K4LogitsV1> {
         self.engineering_logits.as_ref()
     }
 

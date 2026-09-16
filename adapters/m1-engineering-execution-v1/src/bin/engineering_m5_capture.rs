@@ -13,20 +13,39 @@ use super::{SmokeResult, bytes_hex};
 const FORMAT: &str = "FERRIC-ENGINEERING-S1-K4-ALL-LOGITS-V1";
 
 fn tokens(value: &Value, count: usize, label: &str) -> SmokeResult<Vec<u32>> {
-    let values = value.as_array().filter(|values| values.len() == count)
+    let values = value
+        .as_array()
+        .filter(|values| values.len() == count)
         .ok_or_else(|| format!("{label} must contain exactly {count} tokens"))?;
-    values.iter().map(|value| {
-        value.as_u64().and_then(|token| u32::try_from(token).ok())
-            .filter(|token| *token < QWEN3_VOCABULARY_SIZE)
-            .ok_or_else(|| format!("{label} contains an invalid token"))
-    }).collect()
+    values
+        .iter()
+        .map(|value| {
+            value
+                .as_u64()
+                .and_then(|token| u32::try_from(token).ok())
+                .filter(|token| *token < QWEN3_VOCABULARY_SIZE)
+                .ok_or_else(|| format!("{label} contains an invalid token"))
+        })
+        .collect()
 }
 
 fn sequence(report: &Value) -> SmokeResult<(Vec<u32>, Vec<u32>)> {
-    let prefix = tokens(&report["prompt"]["physical_token_ids"], 128, "physical prefix")?;
-    let anchor = tokens(&json!([report["paired_prefill"]["first_token_id"]]), 1, "anchor")?[0];
+    let prefix = tokens(
+        &report["prompt"]["physical_token_ids"],
+        128,
+        "physical prefix",
+    )?;
+    let anchor = tokens(
+        &json!([report["paired_prefill"]["first_token_id"]]),
+        1,
+        "anchor",
+    )?[0];
     let mut target = vec![anchor];
-    target.extend(tokens(&report["speculative_k4"]["draft_choices"], 4, "actual draft proposals")?);
+    target.extend(tokens(
+        &report["speculative_k4"]["draft_choices"],
+        4,
+        "actual draft proposals",
+    )?);
     Ok((prefix, target))
 }
 
@@ -35,17 +54,24 @@ pub(super) fn publish(
     report: &Value,
     choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
 ) -> SmokeResult<()> {
-    let logits = choices.engineering_s1_k4_logits()
+    let logits = choices
+        .engineering_s1_k4_logits()
         .ok_or_else(|| "requested engineering M=5 logits were not captured".to_owned())?;
     if logits.dispatch_generation() != choices.dispatch_generation()
         || logits.choices() != choices.target_choices()
         || logits.raw_bytes().len() != 5 * QWEN3_VOCABULARY_SIZE as usize * 2
     {
-        return Err("engineering logits generation, shape, or argmax differs from copied target choices".to_owned());
+        return Err(
+            "engineering logits generation, shape, or argmax differs from copied target choices"
+                .to_owned(),
+        );
     }
     let (prefix, target) = sequence(report)?;
-    if tokens(&report["speculative_k4"]["target_choices"], 5, "reported target choices")?
-        != choices.target_choices()
+    if tokens(
+        &report["speculative_k4"]["target_choices"],
+        5,
+        "reported target choices",
+    )? != choices.target_choices()
     {
         return Err("engineering report differs from actual target choices".to_owned());
     }
@@ -80,16 +106,27 @@ pub(super) fn publish(
         "smoke": report,
         "nonclaim": "Engineering differential input only. Not protected R29, general K8/K16 coverage, qualification, production admission, or a performance result.",
     });
-    let parent = directory.parent().ok_or_else(|| "capture output must have a parent".to_owned())?;
-    if !directory.is_absolute() || parent.canonicalize().map_err(|error| error.to_string())? != parent {
+    let parent = directory
+        .parent()
+        .ok_or_else(|| "capture output must have a parent".to_owned())?;
+    if !directory.is_absolute()
+        || parent.canonicalize().map_err(|error| error.to_string())? != parent
+    {
         return Err("capture output requires an absolute canonical parent".to_owned());
     }
-    std::fs::DirBuilder::new().mode(0o700).create(directory)
+    std::fs::DirBuilder::new()
+        .mode(0o700)
+        .create(directory)
         .map_err(|error| format!("cannot create fresh M=5 capture directory: {error}"))?;
     let write = |name: &str, bytes: &[u8]| -> SmokeResult<()> {
-        let mut file = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600)
-            .open(directory.join(name)).map_err(|error| format!("cannot create {name}: {error}"))?;
-        file.write_all(bytes).and_then(|()| file.sync_all())
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(directory.join(name))
+            .map_err(|error| format!("cannot create {name}: {error}"))?;
+        file.write_all(bytes)
+            .and_then(|()| file.sync_all())
             .map_err(|error| format!("cannot publish {name}: {error}"))
     };
     write("target-logits.bf16", logits.raw_bytes())?;

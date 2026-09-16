@@ -630,7 +630,8 @@ impl M1AllocatedScheduledStepV1 {
     pub fn reserve_engineering_s1_k4_logits_output(
         &mut self,
     ) -> Result<(), crate::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
-        self.partitioned_memory.reserve_engineering_s1_k4_logits_output()
+        self.partitioned_memory
+            .reserve_engineering_s1_k4_logits_output()
     }
 
     /// Attaches qualification logits without permitting another device allocation.

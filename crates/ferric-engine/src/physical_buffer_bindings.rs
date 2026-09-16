@@ -774,19 +774,25 @@ fn preflight_engineering_s1_k4_logits(
     };
     let shape = crate::qualification_logits::m1_engineering_s1_k4_logits_shape_v1(selection)
         .map_err(|error| M1PhysicalBufferBindingErrorV1::QualificationLogitsRange { error })?;
-    if shape != logits.shape() || output.qualification_logits().is_some()
-        || output.direct_diagnostic_choices().is_some() || output.completion_canary().is_some()
-        || output.speculative_diagnostic_choices().is_none() || output.is_draft_catchup()
+    if shape != logits.shape()
+        || output.qualification_logits().is_some()
+        || output.direct_diagnostic_choices().is_some()
+        || output.completion_canary().is_some()
+        || output.speculative_diagnostic_choices().is_none()
+        || output.is_draft_catchup()
     {
         return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsIntent);
     }
     let (count, exact) = engineering_s1_k4_logits_source_isolation(recipe, selection);
     if count != 2 || !exact {
         return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsSources {
-            expected: 2, actual: count,
+            expected: 2,
+            actual: count,
         });
     }
-    memory.qualification_logits_dispatch_range(logits, selection).map(Some)
+    memory
+        .qualification_logits_dispatch_range(logits, selection)
+        .map(Some)
         .map_err(|error| M1PhysicalBufferBindingErrorV1::QualificationLogitsRange { error })
 }
 
@@ -795,17 +801,22 @@ fn engineering_s1_k4_logits_source_isolation(
     selection: ferric_spec::Qwen3PlanSelection,
 ) -> (usize, bool) {
     let mut count = 0;
-    let exact = recipe.rows().iter().all(|row| row.buffers().iter().all(|buffer| {
-        if matches!(buffer.source(), M1PhysicalBufferSourceV1::Workspace {
-            workspace: crate::M1FullStepWorkspaceRole::Target,
-            range: ferric_build::M1StepWorkspaceRangeRole::Logits,
-        }) {
-            count += 1;
-            row.segment_index() == 4 && row.selection() == selection
-        } else {
-            true
-        }
-    }));
+    let exact = recipe.rows().iter().all(|row| {
+        row.buffers().iter().all(|buffer| {
+            if matches!(
+                buffer.source(),
+                M1PhysicalBufferSourceV1::Workspace {
+                    workspace: crate::M1FullStepWorkspaceRole::Target,
+                    range: ferric_build::M1StepWorkspaceRangeRole::Logits,
+                }
+            ) {
+                count += 1;
+                row.segment_index() == 4 && row.selection() == selection
+            } else {
+                true
+            }
+        })
+    });
     (count, exact)
 }
 
@@ -2082,11 +2093,20 @@ mod tests {
 
     #[test]
     fn engineering_s1_k4_logits_override_isolated_to_target_segment_four() {
-        let selection = target(Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let selection = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
         let recipe = exact_recipe(M1StepDispatchIntent::SpeculativeRound(selection), 211);
-        assert_eq!(super::engineering_s1_k4_logits_source_isolation(&recipe, selection), (2, true));
+        assert_eq!(
+            super::engineering_s1_k4_logits_source_isolation(&recipe, selection),
+            (2, true)
+        );
         assert!(!qualification_logits_source_isolation(&recipe, selection).1);
-        let other = target(Qwen3ExecutionMode::Speculative, Qwen3PlanBucket::SpeculativeS1K8C8192);
+        let other = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+        );
         assert!(!super::engineering_s1_k4_logits_source_isolation(&recipe, other).1);
         let prefill = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
         let recipe = exact_recipe(M1StepDispatchIntent::TargetOnly(prefill), 210);
