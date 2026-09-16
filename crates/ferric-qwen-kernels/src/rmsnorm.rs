@@ -1766,7 +1766,13 @@ fn build_kernel_function(
         normalized_input,
         inverse_rms,
     );
-    let weighted = builder.float(FloatBinaryOperationV2::Multiply, normalized, weight_f32);
+    let normalized_bf16 = builder.cast(CastOperationV2::FloatTruncate, normalized, bf16_type);
+    let narrowed_normalized = builder.cast(CastOperationV2::FloatExtend, normalized_bf16, f32_type);
+    let weighted = builder.float(
+        FloatBinaryOperationV2::Multiply,
+        narrowed_normalized,
+        weight_f32,
+    );
     let weighted_bf16 = builder.cast(CastOperationV2::FloatTruncate, weighted, bf16_type);
     builder.bf16_store(values.normalized_output, output_index, weighted_bf16);
     builder.instruction_with(
@@ -2883,6 +2889,100 @@ mod tests {
                 [0; 32], [2; 32], [3; 32], [4; 32]
             )),
             Err(PrepareQwen3RmsNormKernelErrorV1::SourceBindings)
+        ));
+    }
+
+    #[test]
+    fn typed_graph_rounds_normalization_before_weighting() {
+        let catalog = Qwen3RmsNormProfileCatalogV1::canonical().unwrap();
+        let handoff = construct_typed_handoff(&catalog, bindings(0x60)).unwrap();
+        let function = handoff
+            .module()
+            .functions()
+            .iter()
+            .find(|function| function.symbol() == QWEN3_RMSNORM_KERNEL_SYMBOL_V1)
+            .unwrap();
+        let instructions = function
+            .blocks()
+            .iter()
+            .flat_map(BasicBlockV2::instructions)
+            .collect::<Vec<_>>();
+        let definitions = instructions
+            .iter()
+            .filter_map(|instruction| {
+                instruction
+                    .result()
+                    .map(|result| (result.id(), instruction.kind()))
+            })
+            .collect::<BTreeMap<_, _>>();
+        let stored_values = instructions
+            .iter()
+            .filter_map(|instruction| match instruction.kind() {
+                InstructionKindV2::Store { pointer, value, .. }
+                    if matches!(
+                        definitions.get(pointer),
+                        Some(InstructionKindV2::GetElementPtr { base, .. })
+                            if *base == ValueIdV2::new(9)
+                    ) =>
+                {
+                    Some(*value)
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(stored_values.len(), 1);
+        let cast_source = |id: ValueIdV2, operation: CastOperationV2, to: ScalarTypeV1| {
+            let Some(InstructionKindV2::Cast {
+                operation: actual_operation,
+                value,
+                to: actual_to,
+            }) = definitions.get(&id)
+            else {
+                panic!("missing rounding cast for {id:?}")
+            };
+            assert_eq!(*actual_operation, operation);
+            assert_eq!(*actual_to, ValueTypeV2::Scalar(to));
+            *value
+        };
+        let multiply_operands = |id: ValueIdV2| {
+            let Some(InstructionKindV2::Binary {
+                operation: BinaryOperationV2::Float(FloatBinaryOperationV2::Multiply),
+                left,
+                right,
+            }) = definitions.get(&id)
+            else {
+                panic!("missing multiplication for {id:?}")
+            };
+            (*left, *right)
+        };
+        let weighted = cast_source(
+            stored_values[0],
+            CastOperationV2::FloatTruncate,
+            ScalarTypeV1::Bf16,
+        );
+        let (normalized_f32, weight_f32) = multiply_operands(weighted);
+        let normalized_bf16 = cast_source(
+            normalized_f32,
+            CastOperationV2::FloatExtend,
+            ScalarTypeV1::F32,
+        );
+        let normalized = cast_source(
+            normalized_bf16,
+            CastOperationV2::FloatTruncate,
+            ScalarTypeV1::Bf16,
+        );
+        let (normalized_input, _) = multiply_operands(normalized);
+        assert!(matches!(
+            definitions.get(&normalized_input),
+            Some(InstructionKindV2::Phi { .. })
+        ));
+        let weight = cast_source(weight_f32, CastOperationV2::FloatExtend, ScalarTypeV1::F32);
+        let Some(InstructionKindV2::Load { pointer, .. }) = definitions.get(&weight) else {
+            panic!("missing weight load")
+        };
+        assert!(matches!(
+            definitions.get(pointer),
+            Some(InstructionKindV2::GetElementPtr { base, .. }) if *base == ValueIdV2::new(5)
         ));
     }
 

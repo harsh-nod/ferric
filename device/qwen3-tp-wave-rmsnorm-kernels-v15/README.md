@@ -35,9 +35,10 @@ input bits; an out-of-view coordinate supplies quiet NaN without a bounds trap,
 sets the sticky invalid flag and reaches both reductions before rejection.
 These are nonvolatile first-pass reads, not a volatile-equivalence claim.
 Input storage must remain immutable through execution. The retained
-second pass rereads each owned input and its weight and uses the old pure
-output path: FP32 division, epsilon addition, sqrt, reciprocal, two separate
-multiplications and BF16 round-to-nearest-even. RowStriped2D<Index1D,64,64>
+second pass rereads each owned input and its weight and uses FP32 division,
+epsilon addition, sqrt, reciprocal and normalization. The normalized value is
+rounded to BF16 before widening for a separate FP32 weight multiplication,
+followed by the final BF16 round-to-nearest-even store. RowStriped2D<Index1D,64,64>
 retains one writer per active element and no writer outside the supplied slice.
 No LDS, global scratch, register-array cache, FMA or approximate rsqrt is added.
 
@@ -46,7 +47,8 @@ No LDS, global scratch, register-array cache, FMA or approximate rsqrt is added.
 This is not the old scalar left fold. A host case with a leading 256 and 4095
 copies of 0.03125 explicitly demonstrates different sum bits. BF16 output bits
 and downstream model tokens may change at rounding boundaries. Universal
-bitwise equivalence is not claimed and no frozen oracle is changed.
+bitwise equivalence is not claimed. The current host oracle models the BF16
+normalization boundary explicitly; historical result archives remain unchanged.
 
 Nonfinite inputs, products and partial sums are recorded without an early
 lane exit. Both collectives execute before the uniform result/invalid check.

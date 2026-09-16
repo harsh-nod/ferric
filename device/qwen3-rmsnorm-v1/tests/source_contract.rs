@@ -195,6 +195,8 @@ fn serial_math_and_row_striped_writes_retain_the_exact_formula_boundaries() {
         "memory::volatile_load(weight_bf16,column)",
         "letnarrowed_fused=Bf16::from_f32(fused)",
         "letnormalized=normalized_input*inverse_rms",
+        "letnarrowed_normalized=Bf16::from_f32(normalized)",
+        "letweighted=narrowed_normalized.to_f32()*weight.to_f32()",
         "letnarrowed_weighted=Bf16::from_f32(weighted)",
     ] {
         assert!(body.contains(marker), "missing numerical marker {marker}");
@@ -226,12 +228,18 @@ fn numerical_path_traps_nonfinite_inputs_intermediates_and_bf16_outputs() {
         "if!denominator.is_finite()||denominator<=0.0",
         "if!inverse_rms.is_finite()",
         "if!narrowed_fused.is_finite()",
+        "if!narrowed_normalized.is_finite()",
         "if!weight.is_finite()",
         "if!normalized.is_finite()||!weighted.is_finite()",
         "if!narrowed_weighted.is_finite()",
     ] {
         assert!(body.contains(marker), "missing finite trap marker {marker}");
     }
+    let intermediate_guard = body.find("if!narrowed_normalized.is_finite()").unwrap();
+    let weighting = body
+        .find("letweighted=narrowed_normalized.to_f32()*weight.to_f32()")
+        .unwrap();
+    assert!(intermediate_guard < weighting);
     assert_eq!(
         body.matches("if!square.is_finite()||!next_sum.is_finite()")
             .count(),

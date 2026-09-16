@@ -286,8 +286,16 @@ fn malformed_source_cannot_relax_guards_association_or_output() {
             "normalized_input / inverse_rms",
         ),
         (
+            "narrowed_normalized.to_f32() * weight.to_f32()",
             "normalized * weight.to_f32()",
-            "weight.to_f32() * normalized",
+        ),
+        (
+            "Bf16::from_f32(normalized)",
+            "Bf16::from_f32(normalized_input)",
+        ),
+        (
+            "if !narrowed_normalized.is_finite()",
+            "if !normalized.is_finite()",
         ),
         ("Bf16::from_f32(weighted)", "Bf16::from_f32(normalized)"),
     ] {

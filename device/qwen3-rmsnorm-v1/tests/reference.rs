@@ -16,6 +16,20 @@ fn narrow_bf16_rne(value: f32) -> u16 {
     ((bits + 0x7fff + retained_lsb) >> 16) as u16
 }
 
+fn weight_normalized(normalized: f32, weight: u16) -> Option<u16> {
+    let narrowed_normalized = widen_bf16(narrow_bf16_rne(normalized));
+    if !normalized.is_finite() || !narrowed_normalized.is_finite() {
+        return None;
+    }
+    let weight_value = widen_bf16(weight);
+    let weighted = narrowed_normalized * weight_value;
+    let narrowed = narrow_bf16_rne(weighted);
+    if !weight_value.is_finite() || !weighted.is_finite() || !widen_bf16(narrowed).is_finite() {
+        return None;
+    }
+    Some(narrowed)
+}
+
 fn serial_square_sum(input: &[u16]) -> f32 {
     input.iter().fold(0.0_f32, |sum, bits| {
         let value = widen_bf16(*bits);
@@ -160,17 +174,7 @@ fn reference_rmsnorm(
                         input_value
                     };
                     let normalized = normalized_input * inverse_rms;
-                    let weight_value = widen_bf16(weight[column]);
-                    let weighted = normalized * weight_value;
-                    let narrowed = narrow_bf16_rne(weighted);
-                    if !weight_value.is_finite()
-                        || !normalized.is_finite()
-                        || !weighted.is_finite()
-                        || !widen_bf16(narrowed).is_finite()
-                    {
-                        return None;
-                    }
-                    normalized_output[index] = narrowed;
+                    normalized_output[index] = weight_normalized(normalized, weight[column])?;
                 }
             }
         }
@@ -255,6 +259,43 @@ fn bf16_narrowing_is_round_to_nearest_ties_to_even() {
     assert_eq!(narrow_bf16_rne(f32::from_bits(0x3f81_8000)), 0x3f82);
     assert_eq!(narrow_bf16_rne(f32::from_bits(0x3f80_8001)), 0x3f81);
     assert_eq!(narrow_bf16_rne(f32::NAN) & 0x7fc0, 0x7fc0);
+}
+
+#[test]
+fn normalized_value_rounds_before_weighting_at_reference_witness() {
+    // Retained HF witness after normalization, independent of device reduction order.
+    let normalized = -1.551_088_1_f32;
+    let weight = narrow_bf16_rne(0.546875);
+    let output = weight_normalized(normalized, weight).unwrap();
+    assert_eq!(widen_bf16(output), -0.8515625);
+    let single_round = narrow_bf16_rne(normalized * widen_bf16(weight));
+    assert_eq!(widen_bf16(single_round), -0.84765625);
+    assert_ne!(output, single_round);
+}
+
+#[test]
+fn normalized_rounding_preserves_signed_zero_and_even_ties() {
+    for (normalized, expected) in [
+        (0x0000_0000, 0x0000),
+        (0x8000_0000, 0x8000),
+        (0x3f80_8000, 0x3f80),
+        (0x3f81_8000, 0x3f82),
+        (0xbf80_8000, 0xbf80),
+        (0xbf81_8000, 0xbf82),
+    ] {
+        assert_eq!(
+            weight_normalized(f32::from_bits(normalized), 0x3f80),
+            Some(expected)
+        );
+    }
+}
+
+#[test]
+fn normalized_rounding_rejects_overflow_even_with_a_small_weight() {
+    let normalized = f32::MAX;
+    let weight = narrow_bf16_rne(0.5);
+    assert!(widen_bf16(narrow_bf16_rne(normalized * widen_bf16(weight))).is_finite());
+    assert!(weight_normalized(normalized, weight).is_none());
 }
 
 #[test]

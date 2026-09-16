@@ -494,11 +494,15 @@ pub fn qwen3_rmsnorm_v1(
                 input_value
             };
             let normalized = normalized_input * inverse_rms;
+            let narrowed_normalized = Bf16::from_f32(normalized);
+            if !narrowed_normalized.is_finite() {
+                fe2o3_device::trap();
+            }
             let weight = Bf16::from_bits(memory::volatile_load(weight_bf16, column));
             if !weight.is_finite() {
                 fe2o3_device::trap();
             }
-            let weighted = normalized * weight.to_f32();
+            let weighted = narrowed_normalized.to_f32() * weight.to_f32();
             if !normalized.is_finite() || !weighted.is_finite() {
                 fe2o3_device::trap();
             }

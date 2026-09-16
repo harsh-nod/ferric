@@ -172,11 +172,15 @@ fn finish_value(input: u16, weight: u16, inverse_rms: f32) -> Result<u16, Reject
         return Err(Reject::Numerical);
     }
     let normalized = input.to_f32() * inverse_rms;
+    let narrowed_normalized = Bf16::from_f32(normalized);
+    if !narrowed_normalized.is_finite() {
+        return Err(Reject::Numerical);
+    }
     let weight = Bf16::from_bits(weight);
     if !weight.is_finite() {
         return Err(Reject::Numerical);
     }
-    let weighted = normalized * weight.to_f32();
+    let weighted = narrowed_normalized.to_f32() * weight.to_f32();
     if !normalized.is_finite() || !weighted.is_finite() {
         return Err(Reject::Numerical);
     }
@@ -239,8 +243,9 @@ fn reference(input: &Fixture, row: usize, column: usize) -> f64 {
         sum += x * x;
     }
     let denominator = (sum / WIDTH as f64 + f64::from(EPSILON)).sqrt();
-    f64::from(value(input.input[row * WIDTH + column])) / denominator
-        * f64::from(value(input.weight[column]))
+    let normalized = f64::from(value(input.input[row * WIDTH + column])) / denominator;
+    let narrowed_normalized = Bf16::from_f32(normalized as f32);
+    f64::from(narrowed_normalized.to_f32()) * f64::from(value(input.weight[column]))
 }
 
 fn compare_reference(input: &Fixture) {
@@ -324,9 +329,16 @@ fn output_rounding_keeps_even_ties_and_rejects_narrowing_overflow() {
         );
     }
     assert_eq!(
-        finish_value(bits(1.0), bits(1.0), f32::MAX),
+        finish_value(bits(1.0), bits(0.5), f32::MAX),
         Err(Reject::Numerical)
     );
+}
+
+#[test]
+fn normalized_value_rounds_before_weighting_at_reference_witness() {
+    let output = finish_value(bits(-1.0), bits(0.546875), 1.551_088_1).unwrap();
+    assert_eq!(value(output), -0.8515625);
+    assert_eq!(value(bits(-1.551_088_1 * 0.546875)), -0.84765625);
 }
 
 #[test]

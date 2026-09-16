@@ -17,6 +17,8 @@ Pure mode requires empty residual and fused-output slices. Fused mode adds BF16
 input and residual in FP32, stores the fused value narrowed to BF16, and uses
 the full FP32 sum for normalization. The source also checks that the physical
 grid has exactly `rows` workgroups before any memory access.
+Normalization is rounded to BF16 before the weight multiplication, widened to
+FP32 for that multiplication, and rounded to BF16 again for the output.
 Every observed BF16 value, FP32 intermediate, and round-to-nearest-even BF16
 result must remain finite or the kernel traps before publishing that result.
 
