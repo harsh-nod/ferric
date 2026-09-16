@@ -55,6 +55,17 @@ this validates the indexed storage path, not inter-workgroup tensor visibility.
 The original potentially aliasing shared-input source remains rejected, and
 protected runtime preparation stays closed without its memory-contract join.
 
+The compiler now also admits [consuming read-only allocations](https://github.com/harsh-nod/fe2o3/blob/a99c9148b4c07f410902e3ff1fbee38e677b9c7b/docs/semantic-read-only-allocation-v30.md)
+alongside indexed atomic state. The original exclusive allocation lease is
+retained while arbitrary-index reads permit many invocations to share immutable
+BF16 weight storage or FP32 inputs. Whole-kernel checks reject writes and escapes,
+including uses before conversion. Both actual Rust element-type fixtures reach
+checked AMDGPU LLVM; source rejection cases and the original atomic controls
+pass, as do 696 compiler tests. This is compiler evidence, not an additional GPU
+result, writable tensor publication, or permission to enter the protected runtime.
+The projection-to-normalization GPU baseline above remains bound to its earlier
+frozen compiler and has not been silently rebuilt against this new source.
+
 This scheduler evidence is separate from the projection and decoder numerical
 fixtures. Atomic integer publication does not establish ordinary cross-task
 tensor visibility, KV correctness, or a production token loop. Full-model
