@@ -37,7 +37,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4";
+const FE2O3_REVISION: &str = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9";
 
 #[test]
 fn paged_draft_canary_is_separate_and_non_authoritative() {

@@ -10,10 +10,10 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
-fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
-fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
-fe2o3-worker-v3-verification-service = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
+fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
+fe2o3-worker-v3-verification-service = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../../adapters/qwen3-all-kernels-worker-v3-verifier-v1" }
 libc = "=0.2.189"
 rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process"] }
@@ -21,10 +21,10 @@ sha2 = { version = "=0.11.0", default-features = false }
 
 [dev-dependencies]
 ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
-fe2o3-compiler-execution-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
-fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0", features = ["worker-v3-verifier-test-support"] }
-fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "4f6f65ce22222bae9ece5c5f08c66e56e022a9e4", version = "=0.1.0" }
+fe2o3-compiler-execution-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
+fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0", features = ["worker-v3-verifier-test-support"] }
+fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9", version = "=0.1.0" }
 ferric-build = { path = "../../crates/ferric-build", features = ["test-fixtures"] }
 ferric-engine = { path = "../../crates/ferric-engine" }
 tempfile = "=3.27.0"
