@@ -3,8 +3,8 @@ const LOCK: &str = include_str!("../Cargo.lock");
 const TOOLCHAIN: &str = include_str!("../rust-toolchain.toml");
 const README: &str = include_str!("../README.md");
 
-const FE2O3_REVISION: &str = "abd8be76fadc74b09cc40533e775949471358a74";
-const FE2O3_LOCK_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=abd8be76fadc74b09cc40533e775949471358a74#abd8be76fadc74b09cc40533e775949471358a74";
+const FE2O3_REVISION: &str = "9f8ffda4df3647d0ed7c424f16a6ff0111a32a69";
+const FE2O3_LOCK_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=9f8ffda4df3647d0ed7c424f16a6ff0111a32a69#9f8ffda4df3647d0ed7c424f16a6ff0111a32a69";
 
 #[test]
 fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
@@ -27,7 +27,7 @@ fn manifest_and_complete_lock_closure_pin_exact_reviewed_fe2o3_source() {
             .all(|line| line.trim() == expected_source)
     );
     assert_eq!(
-        LOCK.matches("?rev=abd8be76fadc74b09cc40533e775949471358a74#")
+        LOCK.matches("?rev=9f8ffda4df3647d0ed7c424f16a6ff0111a32a69#")
             .count(),
         fe2o3_sources.len()
     );
