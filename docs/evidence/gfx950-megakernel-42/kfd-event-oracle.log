@@ -1,0 +1,51 @@
+version=1.18
+create_event=0xc0204b08
+destroy_event=0x40084b09
+set_event=0x40084b0a
+reset_event=0x40084b0b
+wait_events=0xc0184b0c
+runtime_enable=0xc0104b25
+runtime_enable_mask=1
+event_types=0,1,2,3,4,5,6,7,8
+wait_results=0,1,2
+signal_limit=4096
+queue_exception_mask=0x00000000607f803f
+kfd_ioctl_create_event_args size=32 align=8
+kfd_ioctl_create_event_args.event_page_offset=0
+kfd_ioctl_create_event_args.event_trigger_data=8
+kfd_ioctl_create_event_args.event_type=12
+kfd_ioctl_create_event_args.auto_reset=16
+kfd_ioctl_create_event_args.node_id=20
+kfd_ioctl_create_event_args.event_id=24
+kfd_ioctl_create_event_args.event_slot_index=28
+kfd_ioctl_destroy_event_args size=8 align=4
+kfd_ioctl_set_event_args size=8 align=4
+kfd_ioctl_reset_event_args size=8 align=4
+kfd_memory_exception_failure size=16 align=4
+kfd_hsa_memory_exception_data size=32 align=8
+kfd_hsa_memory_exception_data.failure=0
+kfd_hsa_memory_exception_data.va=16
+kfd_hsa_memory_exception_data.gpu_id=24
+kfd_hsa_memory_exception_data.ErrorType=28
+kfd_hsa_hw_exception_data size=16 align=4
+kfd_hsa_signal_event_data size=8 align=8
+kfd_event_data size=48 align=8
+kfd_event_data.kfd_event_data_ext=32
+kfd_event_data.event_id=40
+kfd_event_data.pad=44
+kfd_ioctl_wait_events_args size=24 align=8
+kfd_ioctl_wait_events_args.events_ptr=0
+kfd_ioctl_wait_events_args.num_events=8
+kfd_ioctl_wait_events_args.wait_for_all=12
+kfd_ioctl_wait_events_args.timeout=16
+kfd_ioctl_wait_events_args.wait_result=20
+kfd_context_save_area_header size=40 align=8
+kfd_context_save_area_header.debug_offset=16
+kfd_context_save_area_header.debug_size=20
+kfd_context_save_area_header.err_payload_addr=24
+kfd_context_save_area_header.err_event_id=32
+kfd_context_save_area_header.reserved1=36
+kfd_ioctl_runtime_enable_args size=16 align=8
+kfd_ioctl_runtime_enable_args.r_debug=0
+kfd_ioctl_runtime_enable_args.mode_mask=8
+kfd_ioctl_runtime_enable_args.capabilities_mask=12

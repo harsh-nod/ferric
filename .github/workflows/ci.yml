@@ -20,6 +20,13 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
 
+  megakernel-measurement-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Synthetic protocol tests only, not GPU or numerical qualification.
+      - run: python3 -I qualification/gfx950-megakernel/test_validate.py
+
   qwen3-swiglu-device:
     runs-on: ubuntu-latest
     defaults:

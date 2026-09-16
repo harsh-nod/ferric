@@ -1,0 +1,104 @@
+   Compiling ferric-megakernel v0.1.0 (/home/harmenon/ferric-gfx950-42/ferric/crates/ferric-megakernel)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.38s
+     Running unittests src/lib.rs (ferric-gfx950-42/target-ferric/debug/deps/ferric_engine-c62e3a622be0961e)
+
+running 29 tests
+test epoch::tests::capability_preserves_the_contracted_epoch ... ok
+test scheduler::tests::completion_storage_failure_returns_exact_authority_for_retry ... ok
+test scheduler::tests::exact_completion_rejects_skip_and_replay_without_mutation ... ok
+test scheduler::tests::ready_retirement_is_immediately_reclaimable ... ok
+test scheduler::tests::max_generation_reclaim_preflight_fails_closed_and_frames_state ... ok
+test cache::tests::max_generation_page_fails_stop_without_recycling ... ok
+test cache::tests::out_of_pages_is_transactional ... ok
+test cache::tests::rollback_invalidates_wholly_tentative_pages ... ok
+test cache::tests::request_slot_requires_the_next_generation ... ok
+test cache::tests::partial_prefix_and_nonempty_target_are_rejected_transactionally ... ok
+test cache::tests::page_aligned_sharing_is_immutable_and_extends_by_cow ... ok
+test cache::tests::shared_reference_release_does_not_recycle_live_prefix ... ok
+test cache::tests::append_commit_and_quiescent_rollback_preserve_committed_prefix ... ok
+test cache::tests::transition_paths_preserve_fixed_storage_capacities ... ok
+test scheduler::tests::later_cancel_waits_for_its_exact_completion_before_detach ... ok
+test scheduler::tests::dispatch_rotates_and_completion_emits_exact_member_permits ... ok
+test scheduler::tests::epoch_derived_completion_frames_slots_and_only_quiesces_the_head_batch ... ok
+test cache::tests::wrong_permit_cannot_reclaim ... ok
+test system::tests::scheduler_rejection_returns_authority_and_preserves_engine_for_retry ... ok
+test system::tests::completion_publishes_before_redispatch ... ok
+test system::tests::engine_transitions_preserve_completion_scratch_capacity ... ok
+test system::tests::in_flight_kv_mutation_is_rejected_transactionally ... ok
+test system::tests::prefix_share_rejects_in_flight_source_and_target ... ok
+test scheduler::tests::retirement_after_completion_preserves_issued_detach_authority ... ok
+test system::tests::in_flight_retirement_reclaims_only_after_exact_completion ... ok
+test system::tests::ready_retirement_detaches_before_slot_reuse ... ok
+test system::tests::mixed_completion_publishes_active_and_detaches_retired_members ... ok
+test system::tests::invalid_acceptance_is_rejected_before_completion_advances ... ok
+test scheduler::tests::wrong_epoch_detachment_is_rejected_without_scheduler_reuse ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (ferric-gfx950-42/target-ferric/debug/deps/ferric_megakernel-850503561a7519b8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/planner.rs (ferric-gfx950-42/target-ferric/debug/deps/planner-4b6faec4ab54e152)
+
+running 20 tests
+test unsupported_shapes_and_page_sizes_are_rejected ... ok
+test append_reservations_do_not_alias_committed_prefix_or_workspace ... ok
+test rejects_stale_epoch_generation_cross_request_and_bad_positions ... ok
+test mutation_suite_rejects_missing_and_stale_identity_declarations ... ok
+test positions_feed_rope_kv_append_and_ragged_attention_in_every_layer ... ok
+test query_projection_does_not_assume_query_width_equals_hidden ... ok
+test sequential_operator_roster_matches_qwen3_and_tracks_residual_edges ... ok
+test workspace_and_queue_underallocation_fail_closed ... ok
+test rejects_independently_unexpected_model_even_when_graph_is_canonical ... ok
+test zero_allocation_patch_binding_accepts_ragged_and_page_boundary_contexts ... ok
+test independent_topological_walk_reaches_completion_and_covers_every_task ... ok
+test norm_and_embedding_weights_are_retained_and_tied_only_for_small_model ... ok
+test fp32_logits_and_exact_model_constants_are_part_of_the_canonical_plan ... ok
+test rejects_omitted_or_retagged_operator_even_if_edges_remain_valid ... ok
+test canonical_commitment_changes_for_shape_and_identity ... ok
+test rejects_wrong_target_wave_size_and_version ... ok
+test rejects_cycles_dangling_edges_duplicates_and_missing_fan_in ... ok
+test edge_vector_preflight_precedes_all_buffer_cross_reference_scans ... ok
+test detects_overflow_wrong_shapes_and_overlapping_live_ranges ... ok
+test complete_envelope_has_exact_graph_and_deterministic_bytes ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running unittests src/lib.rs (ferric-gfx950-42/target-ferric/debug/deps/ferric_spec-263ca7383fb3248e)
+
+running 10 tests
+test configuration::tests::invalid_limits_are_rejected ... ok
+test completion::tests::rejects_skipped_replayed_and_exhausted_epochs ... ok
+test configuration::tests::incompatible_grouped_query_attention_is_rejected ... ok
+test configuration::tests::qwen_shaped_configuration_is_accepted ... ok
+test identity::tests::all_zero_identity_is_absent ... ok
+test scheduling::tests::retiring_completion_is_terminal ... ok
+test speculation::tests::complete_match_emits_target_bonus ... ok
+test speculation::tests::first_mismatch_emits_only_target_correction ... ok
+test speculation::tests::incomplete_target_verification_is_rejected ... ok
+test speculation::tests::partial_match_commits_prefix_then_correction ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ferric_engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ferric_megakernel
+
+running 1 test
+test crates/ferric-megakernel/src/planner.rs - planner::DeclaredStepBinding (line 587) - compile fail ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests ferric_spec
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

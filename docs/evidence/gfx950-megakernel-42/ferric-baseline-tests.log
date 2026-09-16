@@ -1,0 +1,93 @@
+    Updating git repository `https://github.com/verus-lang/verus.git`
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded convert_case v0.4.0
+  Downloaded synstructure v0.13.2
+  Downloaded indexmap v2.14.0
+  Downloaded quote v1.0.47
+  Downloaded equivalent v1.0.2
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.24
+  Downloaded hashbrown v0.17.1
+  Downloaded syn v2.0.119
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling verus_syn v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_prettyplease v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling hashbrown v0.17.1
+   Compiling equivalent v1.0.2
+   Compiling syn v2.0.119
+   Compiling synstructure v0.13.2
+   Compiling indexmap v2.14.0
+   Compiling convert_case v0.4.0
+   Compiling vstd v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_builtin_macros v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_state_machines_macros v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_builtin v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling ferric-spec v0.1.0 (/home/harmenon/ferric-gfx950-42/ferric/crates/ferric-spec)
+   Compiling ferric-engine v0.1.0 (/home/harmenon/ferric-gfx950-42/ferric/crates/ferric-engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.39s
+     Running unittests src/lib.rs (/home/harmenon/ferric-gfx950-42/target-ferric/debug/deps/ferric_engine-c62e3a622be0961e)
+
+running 29 tests
+test epoch::tests::capability_preserves_the_contracted_epoch ... ok
+test scheduler::tests::completion_storage_failure_returns_exact_authority_for_retry ... ok
+test cache::tests::append_commit_and_quiescent_rollback_preserve_committed_prefix ... ok
+test cache::tests::max_generation_page_fails_stop_without_recycling ... ok
+test scheduler::tests::exact_completion_rejects_skip_and_replay_without_mutation ... ok
+test scheduler::tests::max_generation_reclaim_preflight_fails_closed_and_frames_state ... ok
+test scheduler::tests::ready_retirement_is_immediately_reclaimable ... ok
+test cache::tests::request_slot_requires_the_next_generation ... ok
+test cache::tests::partial_prefix_and_nonempty_target_are_rejected_transactionally ... ok
+test cache::tests::page_aligned_sharing_is_immutable_and_extends_by_cow ... ok
+test cache::tests::wrong_permit_cannot_reclaim ... ok
+test scheduler::tests::dispatch_rotates_and_completion_emits_exact_member_permits ... ok
+test cache::tests::out_of_pages_is_transactional ... ok
+test cache::tests::shared_reference_release_does_not_recycle_live_prefix ... ok
+test cache::tests::transition_paths_preserve_fixed_storage_capacities ... ok
+test cache::tests::rollback_invalidates_wholly_tentative_pages ... ok
+test scheduler::tests::later_cancel_waits_for_its_exact_completion_before_detach ... ok
+test scheduler::tests::epoch_derived_completion_frames_slots_and_only_quiesces_the_head_batch ... ok
+test scheduler::tests::retirement_after_completion_preserves_issued_detach_authority ... ok
+test system::tests::completion_publishes_before_redispatch ... ok
+test system::tests::in_flight_kv_mutation_is_rejected_transactionally ... ok
+test system::tests::invalid_acceptance_is_rejected_before_completion_advances ... ok
+test system::tests::engine_transitions_preserve_completion_scratch_capacity ... ok
+test system::tests::ready_retirement_detaches_before_slot_reuse ... ok
+test system::tests::prefix_share_rejects_in_flight_source_and_target ... ok
+test system::tests::in_flight_retirement_reclaims_only_after_exact_completion ... ok
+test system::tests::scheduler_rejection_returns_authority_and_preserves_engine_for_retry ... ok
+test system::tests::mixed_completion_publishes_active_and_detaches_retired_members ... ok
+test scheduler::tests::wrong_epoch_detachment_is_rejected_without_scheduler_reuse ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/harmenon/ferric-gfx950-42/target-ferric/debug/deps/ferric_spec-263ca7383fb3248e)
+
+running 10 tests
+test completion::tests::rejects_skipped_replayed_and_exhausted_epochs ... ok
+test configuration::tests::incompatible_grouped_query_attention_is_rejected ... ok
+test configuration::tests::invalid_limits_are_rejected ... ok
+test configuration::tests::qwen_shaped_configuration_is_accepted ... ok
+test identity::tests::all_zero_identity_is_absent ... ok
+test scheduling::tests::retiring_completion_is_terminal ... ok
+test speculation::tests::complete_match_emits_target_bonus ... ok
+test speculation::tests::first_mismatch_emits_only_target_correction ... ok
+test speculation::tests::incomplete_target_verification_is_rejected ... ok
+test speculation::tests::partial_match_commits_prefix_then_correction ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ferric_engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ferric_spec
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -23,6 +23,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-megakernel"
+version = "0.1.0"
+
+[[package]]
 name = "ferric-spec"
 version = "0.1.0"
 dependencies = [
