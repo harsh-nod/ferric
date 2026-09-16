@@ -72,6 +72,13 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Current M5: matching tools, executable and MFMA13 image"),
+    element("p", "", resident.integration.m5Artifacts1fad.detail),
+    element("h3", "", "Five-position native capture: guarded run completed"),
+    element("p", "", resident.integration.m5Capture1fad.detail),
+    element("h3", "", "Five matching tokens; logit differences remain unqualified"),
+    element("p", "", resident.integration.m5Reference1fad.detail),
+    element("p", "performance-scope", "The adoption, host and proof records below retain their original campaign scope. The later compiler-1fad native capture does not relabel compiler-349 host/proof or compiler-111 numerical results."),
     element("h3", "", "Compiler 1fadb7e0 adopted: dependency and source checks passed"),
     element("p", "", resident.integration.compilerAdoption1fad.detail),
     element("h3", "", "Combined M5 capture: host checks passed on compiler 349"),
@@ -182,7 +189,16 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
-    ["Status tracker source", resident.integration.compilerAdoption1fad.trackerSource],
+    ["Status tracker source", resident.integration.m5Artifacts1fad.trackerSource],
+    ["Current M5 engineering source", resident.integration.m5Artifacts1fad.source],
+    ["Compiler 1fad matching-tool evidence SHA-256", resident.integration.m5Artifacts1fad.toolsEvidenceSha256],
+    ["Compiler 1fad optimized-release evidence SHA-256", resident.integration.m5Artifacts1fad.releaseEvidenceSha256],
+    ["Compiler 1fad MFMA13 emission evidence SHA-256", resident.integration.m5Artifacts1fad.emissionEvidenceSha256],
+    ["Current five-position capture archive SHA-256", resident.integration.m5Capture1fad.evidenceSha256],
+    ["Current five-position comparison SHA-256", resident.integration.m5Reference1fad.comparisonSha256],
+    ["Current independent reference logits SHA-256", resident.integration.m5Reference1fad.referenceLogitsSha256],
+    ["Current five-position reference archive SHA-256", resident.integration.m5Reference1fad.evidenceSha256],
+    ["Observed upstream compiler; not adopted", resident.integration.m5Artifacts1fad.latestObservedCompiler],
     ["Current compiler adoption source", resident.integration.compilerAdoption1fad.source],
     ["Ferric dependency pin", resident.integration.compilerAdoption1fad.compilerSource],
     ["Compiler 1fad adoption R2 evidence SHA-256", resident.integration.compilerAdoption1fad.evidenceSha256],
