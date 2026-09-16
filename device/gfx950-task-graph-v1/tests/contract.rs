@@ -21,28 +21,6 @@ fn valid_arithmetic_and_owner_packing_fit() {
 }
 
 #[test]
-fn fixed_priority_scan_matches_the_independent_bit_intrinsic_for_every_valid_mask() {
-    // Host arithmetic contract for the device's fixed scan, not device execution.
-    for snapshot in 1u32..=ALL_TASKS {
-        let mut task = 0;
-        let mut scan = 0;
-        let mut found = false;
-        let mut bit = 1;
-        while scan < 7 {
-            if !found && snapshot & bit != 0 {
-                task = scan;
-                found = true;
-            }
-            scan += 1;
-            bit <<= 1;
-        }
-        assert!(found);
-        assert_eq!(task, snapshot.trailing_zeros());
-        assert_eq!(scan, TASKS as u32);
-    }
-}
-
-#[test]
 fn widened_checked_sums_match_the_host_intrinsic_at_boundaries() {
     // Check the arithmetic contract independently of GPU execution. Every pair
     // fits in u64, and the guarded cast agrees with checked u32 arithmetic.

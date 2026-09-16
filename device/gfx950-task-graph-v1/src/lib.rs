@@ -29,6 +29,60 @@ pub const AQL_GRID: [u32; 3] = [256, 1, 1];
 pub const ERROR_STALE_EPOCH: u32 = 1;
 pub const ERROR_DUPLICATE: u32 = 2;
 pub const ERROR_INVALID: u32 = 4;
+
+// Select the lowest ready bit without a divergent-entry scan loop. Invalid
+// and empty masks return the existing task sentinel; no queue state changes.
+#[inline(always)]
+fn lowest_ready_task(snapshot: u32) -> u32 {
+    if snapshot & !ALL_TASKS != 0 {
+        7
+    } else if snapshot & 1 != 0 {
+        0
+    } else if snapshot & 2 != 0 {
+        1
+    } else if snapshot & 4 != 0 {
+        2
+    } else if snapshot & 8 != 0 {
+        3
+    } else if snapshot & 16 != 0 {
+        4
+    } else if snapshot & 32 != 0 {
+        5
+    } else if snapshot & 64 != 0 {
+        6
+    } else {
+        7
+    }
+}
+
+#[cfg(test)]
+mod selector_tests {
+    use super::{ALL_TASKS, TASKS, lowest_ready_task};
+
+    #[test]
+    fn actual_selector_matches_bit_intrinsic_for_every_valid_mask() {
+        for snapshot in 1..=ALL_TASKS {
+            assert_eq!(lowest_ready_task(snapshot), snapshot.trailing_zeros());
+        }
+    }
+
+    #[test]
+    fn actual_selector_rejects_empty_and_out_of_domain_masks() {
+        assert_eq!(lowest_ready_task(0), TASKS as u32);
+        for high_bit in TASKS..u32::BITS as usize {
+            for low_bits in 0..=ALL_TASKS {
+                assert_eq!(
+                    lowest_ready_task((1u32 << high_bit) | low_bits),
+                    TASKS as u32
+                );
+            }
+        }
+        for snapshot in [u32::MAX, !ALL_TASKS, 0xaaaa_aaaa, 0x5555_5555] {
+            assert_eq!(lowest_ready_task(snapshot), TASKS as u32);
+        }
+    }
+}
+
 /// Execute `0 -> {1,2} -> 3 -> {4,5} -> 6` with a bounded ready-bit queue.
 ///
 /// Inputs contain seven rows of 128 values in `0..=1024`. Task payload is
@@ -49,6 +103,8 @@ pub const ERROR_INVALID: u32 = 4;
 /// wait for a particular task or assume that another workgroup is resident.
 /// An active owner publishes successors before its next attempt. One resident
 /// workgroup can finish the entire graph without waiting for another one.
+// The fixed ABI exposes two slices and thirteen distinct atomic objects.
+#[allow(clippy::too_many_arguments)]
 #[kernel(
     typed,
     launch(
@@ -57,7 +113,7 @@ pub const ERROR_INVALID: u32 = 4;
         max_grid = [2, 1, 1],
         static_shared_memory_bytes = 1024
     ),
-    control_flow(loop_bounds(16, 7, 128))
+    control_flow(loop_bounds(16, 128))
 )]
 pub fn ferric_gfx950_task_graph_v1(
     inputs: &[u32],
@@ -132,20 +188,7 @@ pub fn ferric_gfx950_task_graph_v1(
                         retired = true;
                     }
                 } else {
-                    let mut task = 0u32;
-                    let mut scan = 0u32;
-                    let mut found = false;
-                    let mut bit = 1u32;
-                    // Fixed seven-entry priority scan: source cttz lowering is
-                    // not yet available, and this has one canonical loop exit.
-                    while scan < 7 {
-                        if !found && snapshot & bit != 0 {
-                            task = scan;
-                            found = true;
-                        }
-                        scan += 1;
-                        bit <<= 1;
-                    }
+                    let task = lowest_ready_task(snapshot);
                     if task >= 7 {
                         errors
                             .as_atomic()
