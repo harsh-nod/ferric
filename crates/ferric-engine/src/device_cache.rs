@@ -2880,6 +2880,9 @@ fn commit_page_return_batch_ledgers(
             assert(cursor < count);
             assert(retired == before_retired[cursor]);
             assert(ticket == before_tickets[cursor]);
+            assert(retired.lease_spec() == before_retired[cursor].lease);
+            assert(retired.lease_spec().page.generation_spec()
+                == before_retired[cursor].lease.page.generation_spec());
             assert(page_return_batch_prefix(
                 before_retired, before_tickets, cursor,
                 before_target, before_draft, prior_target, prior_draft,
@@ -2949,6 +2952,19 @@ fn commit_page_return_batch_ledgers(
                             == prior_ledger[before_tickets[index].global_index as int]);
                     } else {
                         assert(index == cursor);
+                        assert(before_tickets[index].matches_ledgers_spec(
+                            &before_retired[index].lease, prior_target, prior_draft,
+                        ));
+                        let prior_ledger = page_return_ledger_spec(
+                            before_tickets[index].role, prior_target, prior_draft,
+                        );
+                        assert((before_tickets[index].global_index as int) < prior_ledger.len());
+                        assert(page_return_ledger_spec(
+                            before_tickets[index].role, target_pages@, draft_pages@,
+                        ) == prior_ledger.update(before_tickets[index].global_index as int,
+                            M1KvPoolPageStateV1::Free {
+                                generation: (before_retired[index].lease.page.generation_spec() as int + 1) as u32,
+                            }));
                     }
                 }
                 assert forall|slot: int| 0 <= slot < before_target.len()
