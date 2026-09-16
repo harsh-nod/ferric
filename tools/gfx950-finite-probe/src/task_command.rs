@@ -52,8 +52,10 @@ pub fn execute(options: &Options) -> Result<()> {
     let worker = fs::canonicalize(options.path("--worker"))
         .map_err(|_| "worker executable path cannot be resolved")?;
     let worker_sha256 = hex(&digest(&read_bounded(&worker, 256 * 1024 * 1024)?));
-    let executable = std::env::current_exe().map_err(|_| "probe executable path unavailable")?;
-    let probe_sha256 = hex(&digest(&read_bounded(&executable, 256 * 1024 * 1024)?));
+    let probe_sha256 = hex(&digest(&read_bounded(
+        std::path::Path::new("/proc/self/exe"),
+        256 * 1024 * 1024,
+    )?));
     let directory = options.path("--run-dir");
     fs::DirBuilder::new()
         .mode(0o700)

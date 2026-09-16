@@ -44,7 +44,7 @@ jobs:
         working-directory: qualification/gfx950-qwen3-kproj-v1
       - run: python3 -B -m unittest -v test_reference test_binding
         working-directory: qualification/gfx950-qwen3-kproj-wave64-v1
-      - run: bash -n qualification/gfx950-task-graph-v1/build.sh qualification/gfx950-task-graph-v1/verify.sh
+      - run: bash -n qualification/gfx950-task-graph-v1/build.sh qualification/gfx950-task-graph-v1/verify.sh qualification/gfx950-task-graph-v1/verify-suite.sh
       - run: bash -n qualification/gfx950-qwen3-kproj-v1/build.sh qualification/gfx950-qwen3-kproj-v1/verify.sh
       - run: bash -n qualification/gfx950-qwen3-kproj-wave64-v1/build.sh qualification/gfx950-qwen3-kproj-wave64-v1/verify.sh
 
@@ -72,6 +72,8 @@ jobs:
 
   device-binding-tests:
     runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: nightly-2026-04-03
     strategy:
       fail-fast: false
       matrix:
