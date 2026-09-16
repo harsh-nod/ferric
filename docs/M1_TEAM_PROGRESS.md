@@ -156,7 +156,23 @@ The completed clean local compiler worktree is also removed with ordinary
 and scoped no-use checks. Published history, private refs and retained evidence
 remain intact; unrelated worktrees and dirty user repositories are untouched.
 
-The public Pages checkpoint is now static commit `573a3da5`, deployed by
+The completed M5 capture/reference scratch is subsequently retired across
+exactly eight owned roots: 158 entries and 355,764 KiB reclaimed. The first
+inventory failed safely at its 256 MiB census limit without deleting anything.
+An explicit metadata sizing check measured 363,959,110 logical bytes; a fresh
+R2 changed only that bound to 512 MiB and its namespace, then passed. A separate
+apply repeated the full inventory and required byte-identical manifest and
+parsed JSON before deletion. All 39 apply/fresh-inventory records pass local
+hash checks, and the deletion journal exactly matches the selected roster.
+All eight roots are absent and all 23 protected nonselected inputs and external
+phase records are unchanged. Capture/reference archives and failed R1 evidence
+remain local; 23 regenerable private reference-cache files are not claimed
+archived. Models, snapshot, venv, current compiler/source and shared caches are
+not selected. Scoped no-use visibility limitations remain explicit. Cleanup
+receipt SHA-256 is
+`5e4fa13cb75683139169d4fbcfb78f9de276df2b3765d6a636789f931c99e96e`.
+
+The preceding public Pages checkpoint was static commit `573a3da5`, deployed by
 successful upload-only run `35081715744`. All site QA ran on mi300x: five phases,
 exhaustive widths 320 through 1440 and 64 screenshots pass. The retained archive
 has SHA-256 `e84fa90c07f6f2a1b07a497a6438babf6f21a5787e1088b9e3916b3011f28c3a`;
@@ -170,6 +186,28 @@ Five fully retained remote Pages input/build/retention roots are also removed
 after exact fresh inventories and scoped no-use checks: 785 entries and
 78,248 KiB reclaimed. All five roots are confirmed absent; foreign jobs and
 the retained publication checkout are untouched.
+
+The current public Pages checkpoint is static commit
+`2c567f76cb0a02bf8c00d427821eb30bc37f7209`, deployed by successful upload-only
+run `35086353605`. It adds the matching tool/release/emission and actual
+five-position native/reference results above, preserving their frozen source
+identities, filled-prefix limitation and open qualification status. All five
+site QA phases run on mi300x and pass, including widths 320 through 1440 and
+64 screenshots. The 11,445,986-byte retained archive has SHA-256
+`4ac3fb6668b6d4ba0cd5793990d3a016e1acb23edfbef268a33efa7839082aca`;
+all 134 members and 133 payloads are checked. All seven canonical and seven
+cache-busted live asset downloads match the admitted artifact. GitHub only
+authenticates, uploads and deploys the prebuilt static files; no build or test
+runs there. The clean source worktree at `f133db6f` is removed with ordinary
+`git worktree remove`, reclaiming 3,340 KiB while preserving its branch,
+source archive, QA evidence and isolated publication checkout.
+The three completed remote R17 input/build/retention roots are then removed
+after fresh inventory equality and scoped no-use checks, reclaiming 51,304 KiB
+across 445 entries. All 24 cleanup records are locally hash-verified and the
+deletion journal exactly matches the selected roster. The three roots are
+confirmed absent; shared inputs and other stages are untouched. Complete
+system process visibility is not claimed. Cleanup receipt SHA-256 is
+`7dae270e49ccd1cb5af2d73bffbfe9e4d29eda82061ccd808fdefddf615b6ddf`.
 
 ### Earlier Checkpoints
 
