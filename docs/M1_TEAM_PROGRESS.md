@@ -64,6 +64,15 @@ not new Ferric kernels, GPU execution, numerical acceptance, protected proof
 qualification or performance evidence. All 33 gates remain open, and prior
 native results retain their actual `7f90d187` compiler producer.
 
+A later read-only survey of four newly redundant target binaries stops on
+an unreadable interactive SSH session outside the existing approved visibility
+classes. No deletion or apply is attempted, and no exception or retry is
+introduced. All 16 failure records are retained and independently checked;
+ledger SHA is
+`dac81cbf07f65d9f9e1aad647515feff9bfee39b3930306511b73065f0062e8a`.
+This separate cleanup hold does not invalidate either completed build, but
+does not provide the additional vendor-capacity admission.
+
 ### Optimized Final-RMS Diagnostic Release
 
 The single optimized `ferric-m1-engineering-speculative-smoke` binary now
