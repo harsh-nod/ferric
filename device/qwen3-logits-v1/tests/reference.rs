@@ -383,8 +383,8 @@ fn speculative_prefix_boundaries_are_byte_exact() {
         assert_eq!(&record[8..16], &3_u64.to_le_bytes());
         assert_eq!(&record[16..48], &plan);
         assert_eq!(&record[48..52], &[accepted as u8, accepted as u8 + 1, 0, 0]);
-        for token in 0..accepted {
-            assert_eq!(record_token(&record, token), draft[token]);
+        for (token, expected) in draft.iter().take(accepted).enumerate() {
+            assert_eq!(record_token(&record, token), *expected);
         }
         assert_eq!(record_token(&record, accepted), choices[accepted]);
         assert!(
@@ -529,8 +529,8 @@ fn accepted_bound_is_unreachable_for_every_admitted_compact_profile() {
                 let record = record.expect("every admitted direct profile stays below the bound");
                 assert_eq!(record[48], 0);
                 assert_eq!(record[49], 1);
-                assert!(0 < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
-                assert!(1 <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
+                assert!((record[48] as usize) < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
+                assert!((record[49] as usize) <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
                 let correction_index = sequence * active_tokens + active_tokens - 1;
                 assert_eq!(record_token(&record, 0), choices[correction_index]);
                 assert_eq!(reads, vec![CompactRead::Choice(correction_index)]);
@@ -573,7 +573,7 @@ fn accepted_bound_is_unreachable_for_every_admitted_compact_profile() {
                     .expect("every admitted speculative outcome stays below the active width");
                 assert!(expected_accepted < active_tokens);
                 assert!(expected_accepted < QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
-                assert!(expected_accepted + 1 <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
+                assert!((record[49] as usize) <= QWEN3_LOGITS_MAX_EMITTED_TOKENS_V1);
                 assert_eq!(record[48] as usize, expected_accepted);
                 assert_eq!(record[49] as usize, expected_accepted + 1);
                 for candidate in 0..expected_accepted {
