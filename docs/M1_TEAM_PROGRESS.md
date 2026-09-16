@@ -63,6 +63,24 @@ The full 13,891,856-byte source/result archive is retained locally at SHA-256
 `e4334c6b7db87c97b494d8c70b0d1d7a8c86c6201b5780f5bbf9e916ac31ba48`.
 This is a host delta, not a new release-tool, emission, strict Clippy or GPU result.
 
+The separate current-source tool campaign now passes all four build/copy phases:
+release CLI and linker proxy, then debug0 backend and extractor. Actual Cargo
+producers are fresh, the backend binds the new CLI digest, source before/after
+checks pass and earlier tool copies remain unchanged. Complete binaries, source
+and raw phase evidence are retained locally in the 54,958,415-byte archive at
+SHA-256 `996fb0367b417e7e6ab99b91e1e74dfce48b07c14210154dd70d54efefc22e0f`.
+This does not establish current-source kernel emission or numerical GPU results.
+
+Scoped cleanup reclaimed 602,424 KiB from ten retained compiler test executables
+and four obsolete tool copies, then 1,737,320 KiB from 349 obsolete runtime
+library artifacts. All selected bytes were archived, downloaded and hash-checked
+before separate deletion. Runtime stage allocation is now 7,766,132 KiB; current
+sources, all 213 dep-info files, proof inputs and the frozen native executable
+are unchanged. Failed retention attempts remain documented. The runtime retry
+accepted only an independently audited exact lock-timestamp transition, not a
+general metadata exemption. The two redundant remote cleanup archives were
+removed after successful deletion and full local retention; receipts remain.
+
 The initial CI harness attempt failed before compiler builds on an environment-
 dependent argv expectation. Its continuation cleared only `LD_LIBRARY_PATH` for
 that harness and preserved the six completed phases. Full prebuild failure
@@ -356,7 +374,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests; full evidence independently reviewed. The approved skip marker produced no observed GitHub workflow or check run. | Current-source release tools and numerical GPU qualification. |
+| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests. All four current-source tool build/copy phases pass with complete binary retention. The approved skip marker produced no observed GitHub workflow or check run. | Current-source kernel emission and numerical GPU qualification. |
 | Runtime / Integration | The coherent e3 dependency overlay passes 42 phases, 32 graph checks and 38 source-gate tests. `359e4e12` also includes the new actual batch consumer and three regressions, not yet compiled/tested. Older source47 host/proof results remain separately attributed. | Current-source host suite and caller/whole-roster composition; idle admitted GPU for native validation. |
 | Verification | Nine actual source47 helper bodies and six ledger negatives have retained proof evidence. The new actual batch-loop contracts are implemented but unverified. | Verify the new consumer with genuine current-e3 dependencies; outer-caller completeness and native completion custody. |
 | Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
