@@ -70,17 +70,17 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 612402
+          test "$total" -eq 616600
           test "$total" -le 2097152
 
-          # September 15 checkpoint, mi300x R5-R6 QA archive: f5fe61cbecc83cc085c7d88ab711ccfdcf905527544e513e1d3e8bdd7ef0e139
+          # September 16 R4 checkpoint, mi300x R8 QA archive: 68789790008d245e79c74fb215810c8d9b2b79814775c0939efe0e5980f2810b
           sha256sum --check --strict <<'SHA256'
-          850e928a8c2034c35d05c79d96281bac14b3635dd6e9b32349e3a922b1d00da0  public/app.js
+          fb2a11b361fdccd75335eeff6cdd8ed3790e25a132d139fbe436c32530d659de  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
-          ca4b804cc11b57d0d12a58cf1f4ebcc8385072bf1fce9eeed9feee240aad5d91  public/data/project.js
-          84927238616d4858c0308c95e10ce1c7063d928216e1e4cc28005a65ffb25c93  public/index.html
+          c5c6f6d52c8a080d3f69c74dee778c6d2530adbdc8b3af4fb61925da2f5eadff  public/data/project.js
+          d9e5dd02d5d4a73659c2913d4eb3c7b87fd35f0e4ba2c62148a3fad8dfb1fba4  public/index.html
           96dad9e9ae20db7a97d39b811ef17579955160d7238243b75b609c951675e9aa  public/styles.css
           SHA256
 
