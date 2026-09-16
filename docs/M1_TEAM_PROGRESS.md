@@ -5,6 +5,57 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Published Compiler And Current Adoption
+
+The current published compiler correction is fe2o3
+`1fadb7e0a8ee2a9e8cdbcdf5b8648e20a36161de`. It was rebased onto freshly
+fetched main `958a80a3d`, then pushed normally with `[skip ci]`. Post-push and
+delayed GitHub API checks find zero workflow runs; the post-push check-run
+count is also zero. All builds and tests remain on mi300x. This eight-file
+change adds trusted write-only output ABI recognition and exact Thread-call
+value resolution with focused regressions. Kernels and inference remain in
+Ferric; private gather/slice-read experiments are excluded and remain unfixed.
+
+The clean R5 candidate on parent `4c2983820` passes all 52 selected tests:
+17 reference-effect units, 30 GPU-expression tests and five actual extraction
+integration selections. Strict Clippy exits 101 with 17 diagnostics at unchanged
+upstream source sites; the overall campaign remains 101. No clean-base Clippy
+run or successful proof admission is claimed. The positive reaches the real
+proof-runtime-unavailable boundary. R5 archive SHA-256 is
+`ebe08d207b3eb15aa86c099507724e4377c44a4c302aea27c1187b31c9240a10`.
+The later three-path upstream rebase changes only a dev dependency and related
+lock/tutorial hashes. A separate mi300x metadata check passes with identical
+155-node normal/build dependency graphs and unchanged protected artifacts.
+The 52 tests retain their original R5 attribution; they were not rerun on the
+rebased commit.
+
+Private Ferric integration `a0cc9929389d02a94a46208064f451592dd94d5b` adopts
+that published compiler across exactly 80 active pin files. The first adoption
+attempt stops on its revision-only inventory assumption after 32 locked graphs
+and 42 fresh source-gate tests pass. Its failure is retained as archive
+`0b1ebbcd5b41b56434076a9c0adec81ede14abf29be8f4a89443aa606515b530`.
+A separate fresh R2 campaign passes all 47 phases, including four actual CLI
+inventory derivations. Besides the compiler revision, the reviewed inventories
+add exactly upstream's `native_v12_text_descriptor_replay_v1` test target and
+the `dialect-amdgcn` development declaration for `fe2o3-amd-target`. The runtime
+inventory and historical property-binder pin remain unchanged. All 1,148 local
+source hashes and the full tracked-file roster match the validated remote source.
+The 20,544,105-byte successful archive has SHA-256
+`dacf7b109448bbc90d4d8bd5ea30f1eac7f1b0723630b674bb6f7776e5579fc8`;
+all 1,608 members and 1,607 payload hashes and sizes pass independent local
+verification. This is dependency/source-gate coverage, not engine, Verus, native,
+numerical or serving validation on the new compiler.
+
+After separate inventory and no-use checks, exactly 41 superseded single-link
+debug rlibs are removed from the owned compiler cache, reclaiming 528,704 KiB.
+All 960 protected files, 5,046 compiler source files and 6,909 unselected target
+entries remain unchanged. Selected-path checks pass; global process visibility
+is explicitly incomplete. Only regenerable cache is retired, with no claim of
+a complete byte archive for those discarded files. Existing compiler111 tools,
+MFMA13 objects, model inputs and foreign jobs are untouched.
+
+### Earlier Checkpoints
+
 All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
 `111722028` contains `[skip ci]`; post-push GitHub API checks find zero workflow
 runs and zero check runs for that commit. It contains only the six-file core
