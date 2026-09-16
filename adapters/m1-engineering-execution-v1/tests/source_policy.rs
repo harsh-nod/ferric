@@ -1361,7 +1361,13 @@ fn both_engineering_smokes_complete_the_same_six_startup_boundaries_in_order() {
         "shutdown_all_terminal_queue",
     ];
 
-    for source in [CLI_SOURCE, SPECULATIVE_CLI_SOURCE] {
+    for (source, artifact_operation) in [
+        (CLI_SOURCE, OPERATIONS[0]),
+        (
+            SPECULATIVE_CLI_SOURCE,
+            "let artifact = match program_strategy {",
+        ),
+    ] {
         assert!(source.contains("mod startup_diagnostics;"));
         assert!(source.contains("EngineeringStartupDiagnosticsV1::from_process_environment()"));
         assert_eq!(source.matches("diagnostics.completed(").count(), 6);
@@ -1373,12 +1379,32 @@ fn both_engineering_smokes_complete_the_same_six_startup_boundaries_in_order() {
         });
         assert!(completion_offsets.windows(2).all(|pair| pair[0] < pair[1]));
 
-        for (operation, completion) in OPERATIONS[..5].iter().zip(&COMPLETIONS[..5]) {
+        let mut operations = OPERATIONS;
+        operations[0] = artifact_operation;
+        for (operation, completion) in operations[..5].iter().zip(&COMPLETIONS[..5]) {
+            assert_eq!(source.matches(operation).count(), 1);
             assert!(
                 source.find(operation).unwrap() < source.find(completion).unwrap(),
                 "completion {completion} must follow successful operation {operation}"
             );
         }
+    }
+
+    let speculative_admission = SPECULATIVE_CLI_SOURCE
+        .split_once("let artifact = match program_strategy {")
+        .unwrap()
+        .1
+        .split_once(COMPLETIONS[0])
+        .unwrap()
+        .0;
+    for required in [
+        "M1PhysicalProgramStrategyV1::LegacyScalar12 =>",
+        "reopen_m1_engineering_aggregate_artifact_v1(observation_root)",
+        "M1PhysicalProgramStrategyV1::AttributedMfma13 =>",
+        "reopen_m1_engineering_mfma_aggregate_artifact_v1(observation_root)",
+        ".map_err(|error| format!(\"cannot admit engineering aggregate: {error}\"))?;",
+    ] {
+        assert_eq!(speculative_admission.matches(required).count(), 1);
     }
 
     let target_controller = CLI_SOURCE

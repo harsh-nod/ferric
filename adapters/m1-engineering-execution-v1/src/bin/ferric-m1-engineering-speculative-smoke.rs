@@ -17,9 +17,9 @@ use ferric_engine::{
     M1CompletedDeviceKvMemberV1, M1CompletedStepOutcomeV1, M1DeviceKvCompletionDispositionV1,
     M1DeviceKvCompletionMemberV1, M1DeviceKvCompletionRosterV1,
     M1FiniteSpeculativeQueueRolloverKvInputsV1, M1FullStepKvWorkspaceTablesV1,
-    M1FullStepWorkspacePlans, M1PartitionedModelMemoryKvPoolV1, M1PhysicalRunnerRecipeOutcomeV1,
-    M1PhysicalRunnerV1, M1ReleasedDeviceKvMemberV1, M1ScheduledDispatchV1,
-    M1ServingCompletionDispositionV1, M1ServingPhysicalOperationResultV1,
+    M1FullStepWorkspacePlans, M1PartitionedModelMemoryKvPoolV1, M1PhysicalProgramStrategyV1,
+    M1PhysicalRunnerRecipeOutcomeV1, M1PhysicalRunnerV1, M1ReleasedDeviceKvMemberV1,
+    M1ScheduledDispatchV1, M1ServingCompletionDispositionV1, M1ServingPhysicalOperationResultV1,
     M1ServingPhysicalOperationsV1, M1ServingPhysicalQueueCustodyV1, M1ServingPlanV1,
     M1ServingRegistryV1, M1ServingRolloverReasonV1, M1SpeculativeGenerationLoopV1,
     M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1, M1SpeculativeMemberSeedV1,
@@ -29,7 +29,8 @@ use ferric_engine::{
     schedule_m1_finite_speculative_queue_rollover_v1,
 };
 use ferric_m1_engineering_execution_v1::{
-    bind_engineering_structural_m1_physical_runner_v1, reopen_m1_engineering_aggregate_artifact_v1,
+    M1EngineeringAggregateArtifactV1, bind_engineering_structural_m1_physical_runner_v1,
+    reopen_m1_engineering_aggregate_artifact_v1, reopen_m1_engineering_mfma_aggregate_artifact_v1,
 };
 use ferric_spec::{
     Identity, M1_KV_PAGE_TOKENS, M1StepInputCandidate, M1StepInputValidationOutcome,
@@ -81,6 +82,79 @@ struct EngineeringObservationFacts {
     program_catalog: Identity,
 }
 
+#[derive(Clone, Copy)]
+struct AdmittedEngineeringArtifactFacts {
+    observation: EngineeringObservationFacts,
+    program_strategy: M1PhysicalProgramStrategyV1,
+}
+
+impl AdmittedEngineeringArtifactFacts {
+    fn from_artifact(artifact: &M1EngineeringAggregateArtifactV1) -> Self {
+        Self {
+            observation: EngineeringObservationFacts {
+                manifest: artifact.manifest_id(),
+                hsaco: artifact.hsaco_id(),
+                compiler_handoff: artifact.compiler_handoff_id(),
+                canonical_descriptor: artifact.canonical_descriptor_id(),
+                program_catalog: artifact.program_catalog_id(),
+            },
+            program_strategy: artifact.program_strategy(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct SmokeArguments<'a> {
+    prepacked_root: &'a Path,
+    observation_root: &'a Path,
+    gpu_unique_id: u64,
+    prompt: &'a str,
+    resident_limit: Option<u32>,
+    program_strategy: M1PhysicalProgramStrategyV1,
+}
+
+fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
+    let (program_strategy, positional) = match arguments.split_first() {
+        Some((flag, positional)) if flag == "--mfma13" => {
+            (M1PhysicalProgramStrategyV1::AttributedMfma13, positional)
+        }
+        _ => (M1PhysicalProgramStrategyV1::LegacyScalar12, arguments),
+    };
+    let (base, resident_limit) = match positional {
+        [prepacked_root, observation_root, gpu_unique_id, prompt] =>
+            ([prepacked_root, observation_root, gpu_unique_id, prompt], None),
+        [prepacked_root, observation_root, gpu_unique_id, prompt, limit] =>
+            ([prepacked_root, observation_root, gpu_unique_id, prompt], Some(speculative_resident_smoke::parse_limit(limit)?)),
+        _ => return Err("usage: ferric-m1-engineering-speculative-smoke [--mfma13] PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]".to_owned()),
+    };
+    let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
+    if [prepacked_root, observation_root, gpu_unique_id]
+        .iter()
+        .any(|value| value.is_empty() || value.as_encoded_bytes().starts_with(b"--"))
+    {
+        return Err(
+            "only one leading --mfma13 flag is accepted before nonempty positional inputs"
+                .to_owned(),
+        );
+    }
+    let gpu_unique_id = gpu_unique_id
+        .to_str()
+        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
+        .parse::<u64>()
+        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
+    let prompt = prompt
+        .to_str()
+        .ok_or_else(|| "RAW-PROMPT must be UTF-8".to_owned())?;
+    Ok(SmokeArguments {
+        prepacked_root: Path::new(prepacked_root),
+        observation_root: Path::new(observation_root),
+        gpu_unique_id,
+        prompt,
+        resident_limit,
+        program_strategy,
+    })
+}
+
 enum EngineeringIdentityInputV1 {
     #[allow(dead_code)]
     ExternalFile(PathBuf),
@@ -99,40 +173,33 @@ fn main() -> ExitCode {
 }
 
 fn run(arguments: &[OsString]) -> SmokeResult<()> {
+    let SmokeArguments {
+        prepacked_root,
+        observation_root,
+        gpu_unique_id,
+        prompt,
+        resident_limit,
+        program_strategy,
+    } = parse_arguments(arguments)?;
     let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
-    let (base, resident_limit) = match arguments {
-        [prepacked_root, observation_root, gpu_unique_id, prompt] =>
-            ([prepacked_root, observation_root, gpu_unique_id, prompt], None),
-        [prepacked_root, observation_root, gpu_unique_id, prompt, limit] =>
-            ([prepacked_root, observation_root, gpu_unique_id, prompt], Some(speculative_resident_smoke::parse_limit(limit)?)),
-        _ => return Err("usage: ferric-m1-engineering-speculative-smoke PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]".to_owned()),
-    };
-    let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
     let deadline = std::time::Instant::now() + std::time::Duration::from_mins(15);
-    let gpu_unique_id = gpu_unique_id
-        .to_str()
-        .ok_or_else(|| "GPU unique ID must be UTF-8 decimal".to_owned())?
-        .parse::<u64>()
-        .map_err(|_| "GPU unique ID must be a decimal u64".to_owned())?;
-    let prompt = prompt
-        .to_str()
-        .ok_or_else(|| "RAW-PROMPT must be UTF-8".to_owned())?;
 
-    let artifact = reopen_m1_engineering_aggregate_artifact_v1(Path::new(observation_root))
-        .map_err(|error| format!("cannot admit engineering aggregate: {error}"))?;
+    let artifact = match program_strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => {
+            reopen_m1_engineering_aggregate_artifact_v1(observation_root)
+        }
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => {
+            reopen_m1_engineering_mfma_aggregate_artifact_v1(observation_root)
+        }
+    }
+    .map_err(|error| format!("cannot admit engineering aggregate: {error}"))?;
     diagnostics.completed(EngineeringStartupPhaseV1::ArtifactAdmission);
-    let facts = EngineeringObservationFacts {
-        manifest: artifact.manifest_id(),
-        hsaco: artifact.hsaco_id(),
-        compiler_handoff: artifact.compiler_handoff_id(),
-        canonical_descriptor: artifact.canonical_descriptor_id(),
-        program_catalog: artifact.program_catalog_id(),
-    };
+    let facts = AdmittedEngineeringArtifactFacts::from_artifact(&artifact);
     let bootstrap = smoke_bootstrap::prepare(
-        Path::new(prepacked_root),
+        prepacked_root,
         &EngineeringIdentityInputV1::DerivedEngineeringV1,
         prompt,
-        facts,
+        facts.observation,
     )?;
     diagnostics.completed(EngineeringStartupPhaseV1::CpuModelBootstrapPreparation);
     let bound = bootstrap.bind(|publication| {
@@ -163,9 +230,13 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
 
 fn execute_and_report(
     initialized: smoke_bootstrap::InitializedSmokeBootstrapV1,
-    facts: EngineeringObservationFacts,
+    facts: AdmittedEngineeringArtifactFacts,
     diagnostics: &EngineeringStartupDiagnosticsV1,
 ) -> SmokeResult<()> {
+    let AdmittedEngineeringArtifactFacts {
+        observation: facts,
+        program_strategy,
+    } = facts;
     let smoke_bootstrap::InitializedSmokeBootstrapV1 {
         runner,
         memory,
@@ -586,6 +657,8 @@ fn execute_and_report(
         "worker_v3_authenticated": false,
         "hardware_completion_observed": true,
         "target": "gfx942:xnack-",
+        "program_strategy": program_strategy_label(program_strategy),
+        "program_count": program_strategy.program_count(),
         "gpu_unique_id": post_speculative_projection.device.gpu_unique_id(),
         "identities": {
             "observation_manifest_sha256": identity_hex(facts.manifest),
@@ -660,7 +733,7 @@ fn execute_and_report(
         },
         "registry_rollover_descriptor": "structural-host-fixture-only-no-token-or-completion-oracle",
     });
-    validate_report(&report)?;
+    validate_report(&report, program_strategy)?;
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize speculative smoke report: {error}"))?;
@@ -1052,7 +1125,30 @@ fn projection_json(projection: &DeviceKvCacheProjection) -> Value {
     })
 }
 
-fn validate_report(report: &Value) -> SmokeResult<()> {
+fn program_strategy_label(strategy: M1PhysicalProgramStrategyV1) -> &'static str {
+    match strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => "LegacyScalar12",
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => "AttributedMfma13",
+    }
+}
+
+fn validate_program_strategy_report(
+    report: &Value,
+    admitted_strategy: M1PhysicalProgramStrategyV1,
+) -> SmokeResult<()> {
+    if report.get("program_strategy") != Some(&json!(program_strategy_label(admitted_strategy)))
+        || report.get("program_count") != Some(&json!(admitted_strategy.program_count()))
+    {
+        return Err("smoke report differs from the admitted artifact program strategy".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_report(
+    report: &Value,
+    admitted_strategy: M1PhysicalProgramStrategyV1,
+) -> SmokeResult<()> {
+    validate_program_strategy_report(report, admitted_strategy)?;
     let object = report
         .as_object()
         .ok_or_else(|| "speculative smoke report is not an object".to_owned())?;
@@ -1097,6 +1193,129 @@ fn validate_report(report: &Value) -> SmokeResult<()> {
         return Err("speculative diagnostic choice shape drifted".to_owned());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod strategy_tests {
+    use super::*;
+
+    fn arguments(values: &[&str]) -> Vec<OsString> {
+        values.iter().map(OsString::from).collect()
+    }
+
+    #[test]
+    fn positional_smoke_arguments_preserve_legacy_default() {
+        for limit in [None, Some("32")] {
+            let mut values = arguments(&["snapshot", "observation", "123", "--mfma13"]);
+            if let Some(limit) = limit {
+                values.push(limit.into());
+            }
+            let parsed = parse_arguments(&values).unwrap();
+            assert_eq!(
+                parsed.program_strategy,
+                M1PhysicalProgramStrategyV1::LegacyScalar12
+            );
+            assert_eq!(parsed.prepacked_root, Path::new("snapshot"));
+            assert_eq!(parsed.observation_root, Path::new("observation"));
+            assert_eq!(parsed.gpu_unique_id, 123);
+            assert_eq!(parsed.prompt, "--mfma13");
+            assert_eq!(parsed.resident_limit, limit.map(|_| 32));
+        }
+    }
+
+    #[test]
+    fn leading_mfma_flag_selects_only_explicit_opt_in() {
+        for limit in [None, Some("32")] {
+            let mut values = arguments(&["--mfma13", "snapshot", "observation", "123", "prompt"]);
+            if let Some(limit) = limit {
+                values.push(limit.into());
+            }
+            let parsed = parse_arguments(&values).unwrap();
+            assert_eq!(
+                parsed.program_strategy,
+                M1PhysicalProgramStrategyV1::AttributedMfma13
+            );
+            assert_eq!(parsed.prepacked_root, Path::new("snapshot"));
+            assert_eq!(parsed.observation_root, Path::new("observation"));
+            assert_eq!(parsed.gpu_unique_id, 123);
+            assert_eq!(parsed.prompt, "prompt");
+            assert_eq!(parsed.resident_limit, limit.map(|_| 32));
+        }
+    }
+
+    #[test]
+    fn malformed_smoke_arguments_fail_before_artifact_or_device_io() {
+        let cases: &[&[&str]] = &[
+            &[],
+            &["--mfma13"],
+            &["snapshot", "observation", "123"],
+            &["--mfma13", "snapshot", "observation", "123"],
+            &["--mfma12", "observation", "123", "prompt"],
+            &["--mfma13=true", "observation", "123", "prompt"],
+            &["--mfma13", "--mfma13", "observation", "123", "prompt"],
+            &["snapshot", "--mfma13", "123", "prompt"],
+            &["snapshot", "observation", "--mfma13", "prompt"],
+            &["snapshot", "observation", "123", "prompt", "--mfma13"],
+            &["snapshot", "observation", "123", "prompt", "32", "extra"],
+            &["--mfma13", "snapshot", "observation", "123", "prompt", "0"],
+            &["--mfma13", "snapshot", "observation", "123", "prompt", "33"],
+            &["", "observation", "123", "prompt"],
+            &["snapshot", "", "123", "prompt"],
+            &["snapshot", "observation", "not-a-device-id", "prompt"],
+        ];
+        for values in cases {
+            let values = arguments(values);
+            let expected = parse_arguments(&values).unwrap_err();
+            assert_eq!(run(&values).unwrap_err(), expected);
+        }
+    }
+
+    #[test]
+    fn one_step_report_is_bound_to_admitted_strategy_and_count() {
+        for (admitted, label, count) in [
+            (
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+                "LegacyScalar12",
+                12,
+            ),
+            (
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+                "AttributedMfma13",
+                13,
+            ),
+        ] {
+            assert_eq!(program_strategy_label(admitted), label);
+            assert_eq!(admitted.program_count(), count);
+            let other = match admitted {
+                M1PhysicalProgramStrategyV1::LegacyScalar12 => {
+                    M1PhysicalProgramStrategyV1::AttributedMfma13
+                }
+                M1PhysicalProgramStrategyV1::AttributedMfma13 => {
+                    M1PhysicalProgramStrategyV1::LegacyScalar12
+                }
+            };
+            let report = json!({
+                "authority": "none", "artifact_authority": "none", "benchmark_comparable": false,
+                "authenticated_AB_exercised": false, "compiler_origin_authenticated": false,
+                "current_publication_selected": false, "worker_v3_authenticated": false,
+                "hardware_completion_observed": true, "status": STATUS, "nonclaim": NONCLAIM,
+                "program_strategy": label, "program_count": count,
+                "registry_rollover_descriptor": "structural-host-fixture-only-no-token-or-completion-oracle",
+                "speculative_k4": {"draft_choices": [1, 2, 3, 4], "target_choices": [1, 2, 3, 4, 5]},
+            });
+            assert!(validate_report(&report, admitted).is_ok());
+            assert!(validate_report(&report, other).is_err());
+            let mut wrong_count = report.clone();
+            wrong_count["program_count"] = json!(other.program_count());
+            assert!(validate_report(&wrong_count, admitted).is_err());
+            let mut wrong_label = report.clone();
+            wrong_label["program_strategy"] = json!(program_strategy_label(other));
+            assert!(validate_report(&wrong_label, admitted).is_err());
+            let mut missing = report;
+            missing.as_object_mut().unwrap().remove("program_strategy");
+            assert!(validate_report(&missing, admitted).is_err());
+        }
+    }
 }
 
 #[cfg(test)]

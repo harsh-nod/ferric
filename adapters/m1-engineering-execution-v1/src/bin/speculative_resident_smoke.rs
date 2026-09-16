@@ -1,8 +1,8 @@
 //! Explicit, nonqualifying repeated K4 smoke using the real structural resident controller.
 
 use super::{
-    ActiveDeviceKvCache, CompletionEpoch, DRAFT_DECODE, DRAFT_PREFILL, Engine,
-    EngineeringObservationFacts, EngineeringStartupDiagnosticsV1, EngineeringStartupPhaseV1,
+    ActiveDeviceKvCache, AdmittedEngineeringArtifactFacts, CompletionEpoch, DRAFT_DECODE,
+    DRAFT_PREFILL, Engine, EngineeringStartupDiagnosticsV1, EngineeringStartupPhaseV1,
     M1FiniteSpeculativeQueueRolloverKvInputsV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspacePlans, M1ServingCompletionDispositionV1, M1ServingPhysicalQueueCustodyV1,
     M1ServingPlanV1, M1ServingRegistryV1, M1SpeculativeGenerationLoopV1,
@@ -10,15 +10,17 @@ use super::{
     QWEN3_END_OF_TEXT_TOKEN, Qwen3ModelRole, Qwen3PlanSelection, SmokeResult,
     SpecialTokenDecodePolicy, TARGET_PREFILL, TARGET_SPECULATIVE, TokenizerExecutionLimits, Value,
     Write, bind_m1_kv_workspace_table_v1, bytes_hex, elapsed_ns, fail_stop, identity_hex, json,
-    lease_pages, monotonic_raw_ns, prefill_workspace_plans, require_or_abort, smoke_bootstrap,
-    speculative_workspace_plans, step_inputs, verification_name, workspace_plan,
+    lease_pages, monotonic_raw_ns, prefill_workspace_plans, program_strategy_label,
+    require_or_abort, smoke_bootstrap, speculative_workspace_plans, step_inputs,
+    validate_program_strategy_report, verification_name, workspace_plan,
 };
 use ferric_engine::{
-    CheckedCompletionSemantics, M1QueueWaitTimeoutV1, M1QueuedServingPhysicalInputProviderV1,
-    M1ServingPhysicalRunnerOperationsV1, M1ServingPhysicalRunnerReadbackEvidenceV1,
-    M1ServingQueuedFiniteSpeculativeRolloverV1, M1ServingQueuedFirstPublicationV1,
-    M1ServingQueuedGenerationBindingV1, M1ServingQueuedGenerationInputV1,
-    M1StructuralResidentCommittedRoundV1, M1StructuralResidentRoundInputV1,
+    CheckedCompletionSemantics, M1PhysicalProgramStrategyV1, M1QueueWaitTimeoutV1,
+    M1QueuedServingPhysicalInputProviderV1, M1ServingPhysicalRunnerOperationsV1,
+    M1ServingPhysicalRunnerReadbackEvidenceV1, M1ServingQueuedFiniteSpeculativeRolloverV1,
+    M1ServingQueuedFirstPublicationV1, M1ServingQueuedGenerationBindingV1,
+    M1ServingQueuedGenerationInputV1, M1StructuralResidentCommittedRoundV1,
+    M1StructuralResidentRoundInputV1,
 };
 use std::time::Instant;
 
@@ -95,11 +97,15 @@ fn round_observation(committed: &M1StructuralResidentCommittedRoundV1) -> Value 
 
 pub(super) fn execute_and_report(
     initialized: smoke_bootstrap::InitializedSmokeBootstrapV1,
-    facts: EngineeringObservationFacts,
+    facts: AdmittedEngineeringArtifactFacts,
     diagnostics: &EngineeringStartupDiagnosticsV1,
     limit: u32,
     deadline: Instant,
 ) -> SmokeResult<()> {
+    let AdmittedEngineeringArtifactFacts {
+        observation: facts,
+        program_strategy,
+    } = facts;
     let smoke_bootstrap::InitializedSmokeBootstrapV1 {
         runner,
         mut memory,
@@ -433,6 +439,8 @@ pub(super) fn execute_and_report(
         "current_publication_selected": false, "worker_v3_authenticated": false,
         "hardware_completion_observed": true, "native_queue_destroyed": true,
         "target": "gfx942:xnack-", "gpu_unique_id": initial_projection.device.gpu_unique_id(),
+        "program_strategy": program_strategy_label(program_strategy),
+        "program_count": program_strategy.program_count(),
         "registry_path": "actual-structural-registry-bridge-coordinator",
         "maximum_new_tokens": limit, "prefill_anchor": first_token,
         "published_token_scope": "speculative-rounds-exclude-prefill-anchor",
@@ -453,7 +461,7 @@ pub(super) fn execute_and_report(
         },
         "timing": { "scope": "single-process-structural-observation-not-benchmark", "prefill-through-native-teardown_ns": elapsed },
     });
-    validate_resident_report(&report)?;
+    validate_resident_report(&report, program_strategy)?;
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize resident report: {error}"))?;
@@ -463,7 +471,11 @@ pub(super) fn execute_and_report(
     Ok(())
 }
 
-fn validate_resident_report(report: &Value) -> SmokeResult<()> {
+fn validate_resident_report(
+    report: &Value,
+    admitted_strategy: M1PhysicalProgramStrategyV1,
+) -> SmokeResult<()> {
+    validate_program_strategy_report(report, admitted_strategy)?;
     for (field, expected) in [
         ("authority", json!("none")),
         ("artifact_authority", json!("none")),
@@ -528,6 +540,55 @@ fn validate_resident_report(report: &Value) -> SmokeResult<()> {
 mod tests {
     use super::*;
     use ferric_spec::Qwen3ExecutionMode;
+
+    #[test]
+    fn resident_report_is_bound_to_admitted_strategy_and_count() {
+        for (admitted, label, count) in [
+            (
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+                "LegacyScalar12",
+                12,
+            ),
+            (
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+                "AttributedMfma13",
+                13,
+            ),
+        ] {
+            assert_eq!(program_strategy_label(admitted), label);
+            assert_eq!(admitted.program_count(), count);
+            let other = match admitted {
+                M1PhysicalProgramStrategyV1::LegacyScalar12 => {
+                    M1PhysicalProgramStrategyV1::AttributedMfma13
+                }
+                M1PhysicalProgramStrategyV1::AttributedMfma13 => {
+                    M1PhysicalProgramStrategyV1::LegacyScalar12
+                }
+            };
+            let report = json!({
+                "authority": "none", "artifact_authority": "none", "benchmark_comparable": false,
+                "authenticated_AB_exercised": false, "compiler_origin_authenticated": false,
+                "current_publication_selected": false, "worker_v3_authenticated": false,
+                "hardware_completion_observed": true, "native_queue_destroyed": true,
+                "status": RESIDENT_STATUS, "nonclaim": RESIDENT_NONCLAIM,
+                "registry_path": "actual-structural-registry-bridge-coordinator",
+                "program_strategy": label, "program_count": count,
+                "maximum_new_tokens": 1, "published_token_ids": [1],
+                "rounds": [{"terminal": true, "draft_choices": [1, 2, 3, 4], "target_choices": [1, 2, 3, 4, 5]}],
+            });
+            assert!(validate_resident_report(&report, admitted).is_ok());
+            assert!(validate_resident_report(&report, other).is_err());
+            let mut wrong_count = report.clone();
+            wrong_count["program_count"] = json!(other.program_count());
+            assert!(validate_resident_report(&wrong_count, admitted).is_err());
+            let mut wrong_label = report.clone();
+            wrong_label["program_strategy"] = json!(program_strategy_label(other));
+            assert!(validate_resident_report(&wrong_label, admitted).is_err());
+            let mut missing = report;
+            missing.as_object_mut().unwrap().remove("program_count");
+            assert!(validate_resident_report(&missing, admitted).is_err());
+        }
+    }
 
     #[test]
     fn resident_cli_limit_is_bounded_and_canonical() {
