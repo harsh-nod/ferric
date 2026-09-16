@@ -80,9 +80,46 @@ its original `21682228` producer attribution. The 112,680-byte HSACO has SHA-256
 The 2,034,624-byte emission archive has SHA-256
 `4bd5880951496586b7134c9ad00f5512f950ca223c5b8354e1ef00baba026666`;
 all 169 members and 168 payload hashes and sizes pass local custody checks.
-Engineering emission grants remain false. This is not production admission or
-a GPU numerical result. A separate guarded five-position M5 capture has started;
-its outcome and the independent reference comparison are not yet established.
+Engineering emission grants remain false. This is not production admission.
+
+A separate guarded M5 native capture and independent reference comparison now
+both complete on mi300x GPU 4 at exact `a0cc9929`/`1fad`. Both process and outer
+wrapper exits are zero; source, input and control checks pass, both owned
+process groups are absent, and GPU allocation returns to its original
+298,647,552-byte idle baseline. The capture contains 1,519,360 BF16 bytes for
+all five target positions 128 through 132 from one actual S1/K4 round. This
+uses the historical 128-active-token filled prefix, not normal real-prompt
+serving. The reference evaluates the entire 133-token context without Ferric
+KV twice, with byte-identical results. All logits are finite, and all five
+argmax tokens match: `[4710, 16, 15, 16, 198]`.
+
+| Position | Maximum Absolute Error | RMSE |
+| --- | --- | --- |
+| 128 | 0.2421875 | 0.07160754675058952 |
+| 129 | 0.203125 | 0.06948075238695375 |
+| 130 | 0.125 | 0.03128908742969308 |
+| 131 | 0.1875 | 0.07552450047396397 |
+| 132 | 0.2001953125 | 0.05692751000637275 |
+
+Maximum BF16 ULP distance is 31,640. No tolerance has been accepted, and token
+agreement does not establish logit conformance or close R29/R30. The capture
+archive is 5,580,101 bytes, SHA-256
+`e6b01d2b8ae509eb74c64a132b776877a90cfabe716d93be707bb067aa25c3be`;
+all 50 members and 49 payloads are checked. The reference archive is 2,345,460
+bytes, SHA-256
+`b9d57066228ac02f24b1a597e693253bf3871b04235ce9e6b79277477adbc2f2`;
+all 59 members and 58 payloads are checked. Both have complete local custody,
+including exact roster, payload hashes/sizes and retained raw terminal records.
+Comparison SHA-256 is
+`e4e46d68e521a1391d09cb44f3eac03f12ee2b5d50429225f339d3ad0ac7eec6`.
+There is no new TTFT, TPOT, throughput or serving-qualification claim.
+
+Read-only source review identifies a concrete early rounding-boundary candidate:
+Ferric RMSNorm keeps normalization and weight multiplication in FP32 until its
+final BF16 store, whereas the retained pinned-reference diagnostic narrows
+normalization before multiplication. The current RMSNorm source is unchanged
+from that diagnostic. This is not yet established as the cause of the actual
+five-row differences. No numerical kernel change is included in this checkpoint.
 
 A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
 five commits after `1fad`. The 63-file change introduces kernel-context
@@ -114,6 +151,10 @@ normalizes the 55 exact Git packages offline. Formation and later emission stay
 within their separately reviewed bounds. The scoped
 no-use checks retain their explicit process-visibility limitations. No historical
 test pass or complete byte archive is inferred for the discarded cache.
+The completed clean local compiler worktree is also removed with ordinary
+`git worktree remove`, reclaiming 87,152 KiB after exact HEAD/tree, source-archive
+and scoped no-use checks. Published history, private refs and retained evidence
+remain intact; unrelated worktrees and dirty user repositories are untouched.
 
 The public Pages checkpoint is now static commit `573a3da5`, deployed by
 successful upload-only run `35081715744`. All site QA ran on mi300x: five phases,
