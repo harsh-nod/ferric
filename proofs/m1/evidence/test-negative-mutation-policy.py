@@ -331,12 +331,22 @@ def reconstruct_mutation(
 
 
 def build_run(
-    repo: Path, root: Path, row: tuple[str, ...], source_closure_sha256: str
+    repo: Path,
+    root: Path,
+    row: tuple[str, ...],
+    source_closure_sha256: str,
+    selected_rows: list[tuple[str, ...]] | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     run = root / "run"
     run.mkdir()
     active, _ = registry(repo)
-    selected = ("|".join(row) + "\n").encode("ascii")
+    if selected_rows is None:
+        selected_rows = [row]
+    if row not in selected_rows:
+        fail("primary fixture row is not selected")
+    selected = "".join(
+        "|".join(selected_row) + "\n" for selected_row in selected_rows
+    ).encode("ascii")
     (run / "active-foundations").write_bytes(active)
     (run / "selected-foundations").write_bytes(selected)
     manifest_sha, closure_sha, closure_transcript = closure_identity(repo)
@@ -363,6 +373,22 @@ def build_run(
     }
     write_kv(run / "RUN_IDENTITY", RUN_KEYS, run_values)
 
+    for selected_row in selected_rows:
+        result, context = build_result(
+            repo, root / selected_row[0], run, selected_row, source_closure_sha256
+        )
+        if selected_row == row:
+            primary = result, context
+    return primary
+
+
+def build_result(
+    repo: Path,
+    root: Path,
+    run: Path,
+    row: tuple[str, ...],
+    source_closure_sha256: str,
+) -> tuple[Path, dict[str, Any]]:
     (
         name,
         foundation,
@@ -630,19 +656,40 @@ def main() -> None:
         expect_pass(repo, artifact_context, "canonical artifact-manifest mutation fixture")
         if artifact_result.name != f"{artifact_row[0]}.result":
             fail("artifact-manifest result identity drifted")
-        model_row = next(
+        model_rows = [
             selected
             for selected in rows
-            if selected[0] == "model-bundle-record-binding"
-        )
+            if selected[2:4] == ("model_bundle_well_formed", "model-bundle-proof")
+        ]
+        if [selected[0] for selected in model_rows] != [
+            "model-bundle-manifest-canonical-bytes",
+            "model-bundle-manifest-layout",
+            "model-bundle-record-binding",
+        ]:
+            fail("model-bundle mutation product drifted")
+        model_row = model_rows[-1]
         model_root = root / "model-bundle-baseline"
         model_root.mkdir()
         model_result, model_context = build_run(
-            repo, model_root, model_row, source_identity
+            repo, model_root, model_row, source_identity, model_rows
         )
         expect_pass(repo, model_context, "canonical model-bundle mutation fixture")
         if model_result.name != f"{model_row[0]}.result":
             fail("model-bundle result identity drifted")
+        for missing in model_rows:
+            incomplete_model_root = root / f"missing-{missing[0]}"
+            incomplete_model_root.mkdir()
+            remaining = [selected for selected in model_rows if selected != missing]
+            _, incomplete_model_context = build_run(
+                repo, incomplete_model_root, remaining[0], source_identity, remaining
+            )
+            incomplete_model = invoke(repo, incomplete_model_context)
+            if (
+                incomplete_model.returncode == 0
+                or b"incomplete for its bound property and path"
+                not in incomplete_model.stdout
+            ):
+                fail(f"model-bundle product missing {missing[0]} was not rejected")
         target_row = next(
             selected
             for selected in rows
@@ -1097,7 +1144,7 @@ def main() -> None:
 
     print(
         f"PASS: M1 negative validator accepted its canonical fixtures and rejected "
-        f"{len(cases) + 4} hostile artifacts"
+        f"{len(cases) + 6 + len(model_rows)} hostile artifacts"
     )
 
 

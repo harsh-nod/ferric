@@ -7,7 +7,16 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ### Upstream Tracking And Build Policy
 
-The latest read-only fetch of fe2o3 `main` is
+The latest read-only `ls-remote` observation of fe2o3 `main` is
+`ec2b88cfb050cb954a426f9968b8a73e1688ad37`, two commits after `d5424f5b`.
+Both commit objects are already locally available. Their source diff adds
+opt-in, bounded numeric diagnostics for pipeline scalar-definition rejection
+and missing ranked-effect correspondence, with refusal-preservation tests.
+Only the MIR-lowering and compiler-backend source files change; manifests,
+locks, runtime, KFD and toolchain do not. This is source review, not adoption or
+a new test result. The candidate and retained results remain on `7f90d187`.
+
+The preceding read-only fetch of fe2o3 `main` is
 `d5424f5bf00b7531e11380a86d5d2cb71603807c`, three commits after the previous
 `e7aff682` observation. Production race analysis now bounds actual SSA value
 names through a newer Pliron API. Pliron changes from
@@ -65,7 +74,7 @@ live assets return HTTP 200 and match the validated artifact.
 
 The site records the mixed matched numerical comparison below, not a numerical
 pass or a performance improvement. Its upstream snapshot remains `e7aff682`;
-the later `d5424f5b` observation and unavailable protected-runtime prerequisite
+the later `d5424f5b`/`ec2b88cf` observations and unavailable protected-runtime prerequisite
 above are not retroactively attributed to that frozen site artifact. The
 completed clean source worktree was removed with ordinary non-force Git
 removal, reclaiming 1,608 KiB. Its source branch and commits, QA evidence and
@@ -463,8 +472,9 @@ A broader source review identifies exactly one more such helper in the covered
 crates, `CanonicalKernargProfiles::new`. Both local corrections move unchanged
 legacy-strategy test wrappers into whole test-only impls, without changing
 production methods or conditional-source policy. These two relocations and
-the original prepublication relocation still require their engine regression
-checks and successful inventory generation.
+the original prepublication relocation required their engine regression
+checks and successful inventory generation; the independent host result below
+subsequently covers the regression checks only.
 
 The sixth attempt reuses the exact fifth-attempt gate executable, with its
 original producer and unchanged source/manifest/lock/toolchain bindings checked;
@@ -485,6 +495,50 @@ The 2,232,498-byte terminal archive has SHA-256
 all 17 external hashes, 115 payload hashes and sizes, embedded metadata and
 source/predecessor before-after identities pass root's independent checks.
 All campaign and retention sessions are closed; no successor is launched.
+
+Subsequent per-body review accounts for all 92 missing entries: 86 remain
+`pending-verus` and six inert Debug implementations are `excluded-presentation`.
+The reviewed update removes 13 stale entries: eight bodies now appear inside
+`verus!`, two wrappers are test-only, and three old methods no longer exist.
+No executable method is promoted to proved by this accounting correction.
+The updated admission file has SHA-256
+`5c4f81e293fa21e14fe95d8bcecfb533542269420863dbc77d13b4607144af35`.
+Actual generation must still confirm complete coverage, including all eight
+checked-body reclassifications.
+
+The separate ordinary engine-host campaign passes all 29 phases on the unchanged
+retained sixth-attempt source: a fresh engine test build, exactly 18 selected
+regressions, strict engine Clippy and source/control/predecessor after-checks.
+The selections cover nine operation-plan tests, eight kernarg-recipe tests and
+the original draft catch-up reservation-binding test. None failed or was ignored;
+the full engine suite was not run. Its 19,192,852-byte retained archive has SHA-256
+`e5ee86dc3c969875ee5b3f54f8fa33d13467739fc6442281a158952de4acb407`.
+Root independently checks all 17 external and 263 payload hashes, exact archive
+roster/metadata, embedded records and unchanged source/prior evidence. This does
+not waive source inventory generation or establish a Verus or qualification pass.
+After retention and root acknowledgement, a successful exact-stage cleanup
+removes only this campaign's `target` and `tmp`, reclaiming 1,422,360,576 allocated
+bytes. Its 22 retained control/raw records, selected-path journal and protected
+file checks pass. Logs, copied test ELF, archive and all R5/R6 source and cache
+inputs remain intact; all campaign, retention and cleanup sessions are closed.
+
+The seventh source-policy campaign applies only the reviewed admission-list
+overlay to a fresh copy of the sixth-attempt source. All eight phases pass,
+including both fresh locked metadata graphs, genuine inventory generation and
+unchanged source/prior evidence checks. The 2,251,944-byte archive has SHA-256
+`ed4778cbf5a379a1db8be3e878f4d72108f1dbc245be9ca1267d6678c0691932`.
+Root independently checks all 17 external and 96 payload hashes, sizes, archive
+roster/metadata and embedded records. The exact generated inventory is applied
+locally at SHA-256
+`a948b32e0d7d17bcb2813f3494f276b1481d62277f55e86f81cf55b6dc682eb2`.
+Its complete delta is 92 unverified additions, 13 unverified removals and
+20 checked-body additions: the three bundle functions, eight reclassifications
+and nine existing KV-ledger/metadata bodies missing from the old inventory.
+All nine additional bodies are independently reviewed against matching source
+hashes. Runtime dependency records and all other inventory rows are unchanged.
+Checked-body classification is not a new Verus pass. Registered same-source
+theorem and mutation runs remain pending; no protected-runtime or roadmap gate
+is closed by inventory generation.
 
 The two new manifest mutations also require a complete three-row model-bundle
 product in the negative-evidence validator's synthetic test fixture. The local

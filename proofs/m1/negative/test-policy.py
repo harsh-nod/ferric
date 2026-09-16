@@ -207,8 +207,8 @@ def main() -> None:
         if result.returncode != 0:
             fail(f"baseline M1 negative registry check failed\n{result.stdout}")
         rows = active.read_text(encoding="utf-8").splitlines()
-        if len(rows) != 33:
-            fail(f"baseline selected {len(rows)} M1 mutations instead of 33")
+        if len(rows) != 35:
+            fail(f"baseline selected {len(rows)} M1 mutations instead of 35")
         mutator_count = verify_current_mutators(repo, root, active)
 
         cases: list[tuple[str, str, FixtureMutation]] = []
@@ -394,6 +394,22 @@ def main() -> None:
             lambda fixture: (
                 fixture
                 / "proofs/m1/negative/components/model-bundle-record-binding.py"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-model-bundle-manifest-canonical-mutator",
+            "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/model-bundle-manifest-canonical-bytes.py"
+            ).unlink(),
+        ))
+        cases.append((
+            "missing-model-bundle-manifest-layout-mutator",
+            "M1 foundation mutator is unavailable",
+            lambda fixture: (
+                fixture
+                / "proofs/m1/negative/components/model-bundle-manifest-layout.py"
             ).unlink(),
         ))
         cases.append((

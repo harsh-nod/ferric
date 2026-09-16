@@ -339,8 +339,8 @@ pub struct M1PrepublicationStepCustodyV1 {
     >,
 }
 
+#[cfg(test)]
 impl M1PrepublicationStepCustodyV1 {
-    #[cfg(test)]
     pub(crate) fn for_step_binding_test(
         scheduled: M1ScheduledDispatchV1,
         target_plan: StepPlan,
@@ -356,7 +356,9 @@ impl M1PrepublicationStepCustodyV1 {
             speculative_rollover_intent: None,
         }
     }
+}
 
+impl M1PrepublicationStepCustodyV1 {
     /// Exact scheduler-issued roster.
     pub const fn scheduled_dispatch(&self) -> &M1ScheduledDispatchV1 {
         &self.scheduled

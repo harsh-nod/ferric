@@ -324,12 +324,14 @@ struct CanonicalKernargProfiles {
     logits: logits::Qwen3LogitsProfileCatalogV1,
 }
 
+#[cfg(test)]
 impl CanonicalKernargProfiles {
-    #[cfg(test)]
     fn new() -> Result<Self, M1PhysicalKernargRecipeErrorV1> {
         Self::new_with_strategy(crate::M1PhysicalProgramStrategyV1::LegacyScalar12)
     }
+}
 
+impl CanonicalKernargProfiles {
     fn new_with_strategy(
         strategy: crate::M1PhysicalProgramStrategyV1,
     ) -> Result<Self, M1PhysicalKernargRecipeErrorV1> {

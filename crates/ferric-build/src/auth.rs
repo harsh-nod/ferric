@@ -184,6 +184,18 @@ pub(crate) proof fn authenticated_bundle_deployment_is_prepacked(
     reveal(AuthenticatedBundleAdmission::deployment_spec);
 }
 
+/// Exposes the exact retained manifest projections to sibling proof modules.
+pub(crate) proof fn authenticated_bundle_manifests_are_prepacked(
+    authority: AuthenticatedBundleAdmission,
+)
+    ensures
+        authority.target_manifest_spec() == authority.prepacked_spec().target_manifest_spec(),
+        authority.draft_manifest_spec() == authority.prepacked_spec().draft_manifest_spec(),
+{
+    reveal(AuthenticatedBundleAdmission::target_manifest_spec);
+    reveal(AuthenticatedBundleAdmission::draft_manifest_spec);
+}
+
 /// Failure while sealing or decoding an authenticated bundle commitment.
 #[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]

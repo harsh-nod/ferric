@@ -21,7 +21,7 @@ Each row binds one unique body mutation and contract clause to:
 - the exact `postcondition` or `assertion` failure class required from pinned
   Verus after the mutated source first passes ordinary Cargo compilation.
 
-`check-registry.py` hard-codes the exact thirty-three-row roster. It first runs the M1
+`check-registry.py` hard-codes the exact thirty-five-row roster. It first runs the M1
 requirements checker, then rejects row omission, addition, reordering,
 rebinding, duplicate mutators or clauses, unsafe paths, missing files, targets
 outside compiler-rooted coverage, and any property or path that is no longer
@@ -54,6 +54,13 @@ and a freshly recomputed verified seal. That is an internal consistency check,
 not independent authentication, `WeightSectionManifest::valid_commitment`,
 manifest destination layout, tensor-name semantics, runtime `BTreeSet` roster
 completeness, or plan composition.
+
+The two retained-manifest mutations select the executable borrowed-manifest
+revalidator used by model-bundle composition. They independently accept a
+canonical-byte mismatch or a destination-layout rejection. Each must fail the
+same actual body's validity postcondition. This covers retained manifest
+metadata, not weight-image I/O, cryptographic provenance, tensor-name semantics,
+or the full model-bundle requirement.
 
 The three kernel-safety rows alter distinct executable Ferric checks reached by
 their positive wrappers. Public memory validation first enforces the resource

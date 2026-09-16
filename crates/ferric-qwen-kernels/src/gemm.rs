@@ -1973,9 +1973,8 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 }
 
 fn emit_gemm_kernel(output: &mut String, symbol: &str, schedule: Qwen3GemmScheduleV1) {
-    assert_ne!(
-        schedule,
-        Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1,
+    assert!(
+        schedule != Qwen3GemmScheduleV1::MfmaBf16K16Wave64V1,
         "MFMA requires attributed Rust compilation, not the legacy scalar renderer"
     );
     writeln!(

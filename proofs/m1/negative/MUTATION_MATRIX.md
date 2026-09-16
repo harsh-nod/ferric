@@ -22,6 +22,8 @@ closure status.
 | `kv-rollback-retirement` | `paged_kv_refinement::rollback_physical_token` | removing a one-token tentative tail retires its exact initialized prefix | `kv_refined` / `kv-proof` |
 | `kv-terminal-release-exact-epoch` | `request_isolation::release_isolated_page` | the selected request's recorded quiescent epoch exactly matches the release authority epoch | `lifetime_safe` / `kv-proof` |
 | `kv-write-prefix` | `paged_kv_refinement::write_physical_token` | physical initialization advances with logical residency | `kv_refined` / `kv-proof` |
+| `model-bundle-manifest-canonical-bytes` | `weight_stream::revalidate_weight_manifest_commitment` | retained manifest bytes must equal the canonical encoding of the actual retained fields and sections | `model_bundle_well_formed` / `model-bundle-proof` |
+| `model-bundle-manifest-layout` | `weight_stream::revalidate_weight_manifest_commitment` | a destination-layout rejection must not enter proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
 | `model-bundle-record-binding` | `auth::admission_records_equal` | mismatching retained and recomputed record bytes are rejected before proof custody | `model_bundle_well_formed` / `model-bundle-proof` |
 | `operator-declared-profile-effect` | `operation_kernel_plan::select_declared_operator_certificate` | the caller-supplied opaque operator profile identity field must be nonempty after the structural match | `operator_refined` / `kernel-contract-proof` |
 | `physical-new-window-admit-count` | `m1_new_window_cardinality::plan_m1_new_window_cardinality_v1` | fresh admissions equal the successor cardinality minus reused slots | `scheduler_refined` / `physical-runner` |

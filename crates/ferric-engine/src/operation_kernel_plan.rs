@@ -987,12 +987,14 @@ struct CanonicalCatalogs {
     logits: logits::Qwen3LogitsProfileCatalogV1,
 }
 
+#[cfg(test)]
 impl CanonicalCatalogs {
-    #[cfg(test)]
     fn build() -> Result<Self, OperationKernelPlanError> {
         Self::build_with_strategy(M1PhysicalProgramStrategyV1::LegacyScalar12)
     }
+}
 
+impl CanonicalCatalogs {
     fn build_with_strategy(
         strategy: M1PhysicalProgramStrategyV1,
     ) -> Result<Self, OperationKernelPlanError> {

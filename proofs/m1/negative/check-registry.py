@@ -135,6 +135,20 @@ EXPECTED = {
         "postcondition", "paged_kv_refinement",
         "write_physical_token", "initialized-prefix-advance",
     ),
+    "model-bundle-manifest-canonical-bytes": (
+        "model-bundle-composition", "model_bundle_well_formed",
+        "model-bundle-proof", "ferric-build",
+        "crates/ferric-build/src/weight_stream.rs",
+        "model-bundle-manifest-canonical-bytes.py", "postcondition", "weight_stream",
+        "revalidate_weight_manifest_commitment", "retained-manifest-canonical-bytes",
+    ),
+    "model-bundle-manifest-layout": (
+        "model-bundle-composition", "model_bundle_well_formed",
+        "model-bundle-proof", "ferric-build",
+        "crates/ferric-build/src/weight_stream.rs",
+        "model-bundle-manifest-layout.py", "postcondition", "weight_stream",
+        "revalidate_weight_manifest_commitment", "retained-manifest-destination-layout",
+    ),
     "model-bundle-record-binding": (
         "model-bundle-composition", "model_bundle_well_formed",
         "model-bundle-proof", "ferric-build",

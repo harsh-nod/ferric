@@ -1456,6 +1456,83 @@ fn build_weight_manifest_verified(
     Ok(manifest)
 }
 
+fn manifest_bytes_equal(left: &[u8], right: &[u8]) -> (equal: bool)
+    ensures equal == (left@ == right@),
+{
+    if left.len() != right.len() {
+        return false;
+    }
+    let mut index = 0;
+    while index < left.len()
+        invariant
+            left@.len() == right@.len(),
+            0 <= index <= left@.len(),
+            forall|prior: int| 0 <= prior < index ==> left@[prior] == right@[prior],
+        decreases left@.len() - index,
+    {
+        if left[index] != right[index] {
+            return false;
+        }
+        index += 1;
+    }
+    assert(left@ =~= right@) by {
+        assert forall|position: int| 0 <= position < left@.len() implies
+            left@[position] == right@[position] by {}
+    }
+    true
+}
+
+/// Rechecks the finalizer's relation on the exact retained manifest.
+///
+/// This borrows only manifest metadata, not the weight image. Functional digest
+/// equality does not establish collision resistance, provenance, tensor-name
+/// semantics, or that any separately stored section bytes match their digests.
+pub(crate) fn revalidate_weight_manifest_commitment(
+    manifest: &WeightSectionManifest,
+) -> (valid: bool)
+    ensures valid ==> {
+        &&& manifest.valid_commitment()
+        &&& destination_layout_spec(
+            manifest.role_spec(), manifest.output_bytes_spec(), manifest.sections_spec(),
+        )
+    },
+{
+    if manifest.version != PREPACKED_WEIGHT_MANIFEST_VERSION {
+        return false;
+    }
+    match validate_destination_coverage_verified(
+        manifest.role, manifest.output_bytes, &manifest.sections,
+    ) {
+        Ok(()) => {},
+        Err(_) => return false,
+    }
+    let section_count = match u32::try_from(manifest.sections.len()) {
+        Ok(count) => count,
+        Err(_) => return false,
+    };
+    let descriptor = WeightDescriptor {
+        weights_id: manifest.source_weights_id,
+        artifact_bytes: manifest.source_artifact_bytes,
+        tensor_data_bytes: manifest.tensor_data_bytes,
+        sections: section_count,
+    };
+    let canonical_bytes = match encode_manifest_record_verified(
+        manifest.role, descriptor, manifest.output_bytes, &manifest.sections,
+    ) {
+        Ok(bytes) => bytes,
+        Err(_) => return false,
+    };
+    if !manifest_bytes_equal(&canonical_bytes, &manifest.canonical_bytes) {
+        return false;
+    }
+    let aggregate_id = crate::sha256::digest(&manifest.canonical_bytes);
+    if !manifest_bytes_equal(&aggregate_id, &manifest.aggregate_id) {
+        return false;
+    }
+    assert(manifest.valid_commitment());
+    true
+}
+
 }
 
 fn finish_prepacked(
@@ -3065,6 +3142,114 @@ pub(crate) mod tests {
                 seen[ordinal as usize] = true;
             }
             assert!(seen.into_iter().all(|present| present));
+        }
+    }
+
+    #[test]
+    fn borrowed_manifest_revalidation_accepts_exact_finalizer_outputs() {
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let prepacked = test_prepacked(role);
+            let manifest = prepacked.manifest();
+            let bytes = manifest.canonical_bytes().to_vec();
+            let digest = manifest.aggregate_id();
+            assert!(super::revalidate_weight_manifest_commitment(manifest));
+            assert_eq!(manifest.canonical_bytes(), bytes);
+            assert_eq!(manifest.aggregate_id(), digest);
+        }
+    }
+
+    #[test]
+    fn borrowed_manifest_revalidation_rejects_field_drift() {
+        let mutations: [fn(&mut WeightSectionManifest); 7] = [
+            |manifest| manifest.version += 1,
+            |manifest| {
+                manifest.role = match manifest.role {
+                    Qwen3ModelRole::Target8B => Qwen3ModelRole::Draft06B,
+                    Qwen3ModelRole::Draft06B => Qwen3ModelRole::Target8B,
+                };
+            },
+            |manifest| manifest.source_weights_id[0] ^= 1,
+            |manifest| manifest.source_artifact_bytes += 1,
+            |manifest| manifest.tensor_data_bytes += SECTION_ALIGNMENT,
+            |manifest| manifest.output_bytes += SECTION_ALIGNMENT,
+            |manifest| manifest.sections[0].sha256[0] ^= 1,
+        ];
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            for mutate in mutations {
+                let mut prepacked = test_prepacked(role);
+                mutate(&mut prepacked.manifest);
+                assert!(!super::revalidate_weight_manifest_commitment(
+                    prepacked.manifest()
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_manifest_revalidation_rejects_record_and_digest_drift() {
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let mut prepacked = test_prepacked(role);
+            prepacked.manifest.canonical_bytes[0] ^= 1;
+            prepacked.manifest.aggregate_id = sha256::digest(prepacked.manifest.canonical_bytes());
+            assert!(!super::revalidate_weight_manifest_commitment(
+                prepacked.manifest()
+            ));
+
+            let mut prepacked = test_prepacked(role);
+            prepacked.manifest.aggregate_id[0] ^= 1;
+            assert!(!super::revalidate_weight_manifest_commitment(
+                prepacked.manifest()
+            ));
+
+            let mut prepacked = test_prepacked(role);
+            assert!(prepacked.manifest.canonical_bytes.pop().is_some());
+            prepacked.manifest.aggregate_id = sha256::digest(prepacked.manifest.canonical_bytes());
+            assert!(!super::revalidate_weight_manifest_commitment(
+                prepacked.manifest()
+            ));
+        }
+    }
+
+    #[test]
+    fn borrowed_manifest_revalidation_binds_actual_section_count() {
+        const COUNT_OFFSET: usize = super::MANIFEST_DOMAIN.len() + 4 + 1 + 32 + 8 + 8 + 8;
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let mut prepacked = test_prepacked(role);
+            let manifest = &mut prepacked.manifest;
+            let actual_count = u32::try_from(manifest.sections.len()).expect("bounded count");
+            assert_eq!(
+                manifest.canonical_bytes[COUNT_OFFSET..COUNT_OFFSET + 4],
+                actual_count.to_le_bytes()
+            );
+            manifest.canonical_bytes[COUNT_OFFSET..COUNT_OFFSET + 4]
+                .copy_from_slice(&(actual_count - 1).to_le_bytes());
+            manifest.aggregate_id = sha256::digest(&manifest.canonical_bytes);
+            assert!(!super::revalidate_weight_manifest_commitment(manifest));
+        }
+    }
+
+    #[test]
+    fn borrowed_manifest_revalidation_rejects_reencoded_layout_drift() {
+        let mutations: [fn(&mut WeightSectionManifest); 3] = [
+            |manifest| manifest.sections[1].destination_offset += SECTION_ALIGNMENT,
+            |manifest| manifest.sections[1].destination_offset -= SECTION_ALIGNMENT,
+            |manifest| manifest.sections[0].alignment = 4,
+        ];
+        for role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            for mutate in mutations {
+                let mut prepacked = test_prepacked(role);
+                let manifest = &mut prepacked.manifest;
+                mutate(manifest);
+                manifest.canonical_bytes = encode_manifest_record(
+                    role,
+                    descriptor(role),
+                    manifest.output_bytes,
+                    &manifest.sections,
+                )
+                .expect("malformed layout still has a bounded canonical record");
+                manifest.aggregate_id = sha256::digest(&manifest.canonical_bytes);
+                assert!(!super::revalidate_weight_manifest_commitment(manifest));
+            }
         }
     }
 

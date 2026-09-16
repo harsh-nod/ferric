@@ -4,11 +4,12 @@
 //!
 //! This exact roadmap path lifts the executable `ferric-build` foundation. It
 //! proves that successful revalidation retains the exact sealed admission and
-//! its canonical deployment consequence. It does not close
-//! `model_bundle_well_formed`: signatures, independent provenance, complete
-//! weight-manifest validity and layout, runtime roster and plan joins, artifact
-//! loading, launch, hardware, numerical, performance, and qualification
-//! evidence remain separate Open obligations.
+//! its canonical deployment consequence, plus canonical commitment and
+//! destination layout for both exact retained manifests. It does not close
+//! `model_bundle_well_formed`: signatures, independent provenance, weight-image
+//! bytes, tensor-name semantics, runtime roster and plan joins, artifact loading,
+//! launch, hardware, numerical, performance, and qualification evidence remain
+//! separate Open obligations.
 
 use ferric_build::{AuthenticatedBundleAdmission, ModelBundleProof, ModelBundleProofFailure};
 use vstd::prelude::*;

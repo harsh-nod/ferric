@@ -83,10 +83,13 @@ index, qualification receipt, or path implementation. Even an authenticated
 positive result establishes only a selected source-level function under the
 pinned compiler and explicit TCB. It does not close an assurance property, path
 obligation, or ROADMAP item, and adds no artifact, machine, hardware, numerical,
-load, launch, side-channel, or performance authority. The model-bundle row
-proves retained scalar, digest, and wire commitments only; it does not prove
-`WeightSectionManifest::valid_commitment`, manifest destination layout,
-tensor-name semantics, the runtime `BTreeSet` roster, or a later plan join.
+load, launch, side-channel, or performance authority. The model-bundle row's
+contract includes retained scalar, digest and wire commitments, plus
+`WeightSectionManifest::valid_commitment` and destination layout for both exact
+retained manifests. It does not read weight-image bytes or prove independent
+provenance, tensor-name semantics, the runtime `BTreeSet` roster, or a later
+plan join. A component proof run does not replace this registered runner's
+same-source evidence requirement.
 The operator row proves only the conditional modeled access/effect relation.
 It does not authenticate the opaque declaration identities, prove they came
 from the production resolver, discharge its compiler or runtime premises, or

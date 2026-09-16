@@ -3,15 +3,17 @@
 //! The boundary recomputes the existing verified seal through shared borrows
 //! and moves the original non-clone admission only after every check finishes.
 //! A successful value is internal consistency authority, not independent
-//! authentication. It also does not prove `WeightSectionManifest::valid_commitment`,
-//! destination layout, tensor-name semantics, or the runtime `BTreeSet` roster.
+//! authentication. Both retained manifests are rechecked for canonical record
+//! commitment and destination layout, without reading the weight images. This
+//! does not prove tensor-name semantics or the runtime `BTreeSet` roster.
 //! It grants no signature, provenance, artifact, plan join, load, launch,
 //! machine, hardware, performance, or qualification authority.
 
 use crate::auth::{
     revalidate_authenticated_bundle, AuthenticatedBundleAdmission, BundleAdmissionError,
 };
-use ferric_spec::DeploymentBundle;
+use crate::weight_stream::{revalidate_weight_manifest_commitment, WeightSectionManifest};
+use ferric_spec::{DeploymentBundle, Qwen3ModelRole};
 use vstd::prelude::*;
 
 verus! {
@@ -22,6 +24,18 @@ pub closed spec fn model_bundle_composition_spec(
 ) -> bool {
     &&& crate::auth::authenticated_bundle_admission_spec(authority)
     &&& crate::bundle::canonical_deployment_bundle_spec(authority.deployment_spec())
+    &&& authority.target_manifest_spec().valid_commitment()
+    &&& authority.draft_manifest_spec().valid_commitment()
+    &&& crate::weight_stream::destination_layout_spec(
+        authority.target_manifest_spec().role_spec(),
+        authority.target_manifest_spec().output_bytes_spec(),
+        authority.target_manifest_spec().sections_spec(),
+    )
+    &&& crate::weight_stream::destination_layout_spec(
+        authority.draft_manifest_spec().role_spec(),
+        authority.draft_manifest_spec().output_bytes_spec(),
+        authority.draft_manifest_spec().sections_spec(),
+    )
 }
 
 /// Non-clone custody of one source-level model-bundle composition result.
@@ -128,14 +142,34 @@ impl ModelBundleProofFailure {
     }
 }
 
-proof fn authenticated_admission_composes(
-    authority: AuthenticatedBundleAdmission,
-)
-    requires crate::auth::authenticated_bundle_admission_spec(authority),
-    ensures model_bundle_composition_spec(authority),
+fn revalidate_model_bundle_manifests(
+    target: &WeightSectionManifest,
+    draft: &WeightSectionManifest,
+) -> (result: Result<(), BundleAdmissionError>)
+    ensures result.is_ok() ==> {
+        &&& target.valid_commitment()
+        &&& draft.valid_commitment()
+        &&& crate::weight_stream::destination_layout_spec(
+            target.role_spec(), target.output_bytes_spec(), target.sections_spec(),
+        )
+        &&& crate::weight_stream::destination_layout_spec(
+            draft.role_spec(), draft.output_bytes_spec(), draft.sections_spec(),
+        )
+    },
 {
-    crate::auth::authenticated_bundle_admission_retains_canonical_deployment(authority);
-    reveal(model_bundle_composition_spec);
+    if !revalidate_weight_manifest_commitment(target) {
+        return Err(BundleAdmissionError::InvalidManifest {
+            role: Qwen3ModelRole::Target8B,
+            reason: "retained manifest commitment or layout",
+        });
+    }
+    if !revalidate_weight_manifest_commitment(draft) {
+        return Err(BundleAdmissionError::InvalidManifest {
+            role: Qwen3ModelRole::Draft06B,
+            reason: "retained manifest commitment or layout",
+        });
+    }
+    Ok(())
 }
 
 fn model_bundle_proof(
@@ -162,9 +196,10 @@ fn model_bundle_failure(
 ///
 /// All executable checks borrow `admission`. A rejection moves the original
 /// value unchanged into [`ModelBundleProofFailure`]; it never decomposes or
-/// reconstructs that authority. This does not prove
-/// `WeightSectionManifest::valid_commitment`, manifest destination layout,
-/// tensor-name semantics, the runtime `BTreeSet` roster, or a later plan join.
+/// reconstructs that authority. The exact retained target and draft manifests
+/// are revalidated for canonical commitment and destination layout. This does
+/// not read the weight images or prove tensor-name semantics, the runtime
+/// `BTreeSet` roster, or a later plan join.
 ///
 /// # Errors
 ///
@@ -184,7 +219,20 @@ pub fn prove_model_bundle_composition(
     match revalidate_authenticated_bundle(&admission) {
         Ok(()) => {
             assert(crate::auth::authenticated_bundle_admission_spec(admission));
-            proof { authenticated_admission_composes(admission); }
+            let prepacked = admission.prepacked_exact();
+            match revalidate_model_bundle_manifests(
+                prepacked.target_manifest_exact(), prepacked.draft_manifest_exact(),
+            ) {
+                Ok(()) => {},
+                Err(error) => return Err(model_bundle_failure(error, admission)),
+            }
+            proof {
+                crate::auth::authenticated_bundle_manifests_are_prepacked(admission);
+                crate::auth::authenticated_bundle_admission_retains_canonical_deployment(
+                    admission,
+                );
+                reveal(model_bundle_composition_spec);
+            }
             Ok(model_bundle_proof(admission))
         },
         Err(error) => Err(model_bundle_failure(error, admission)),
@@ -195,7 +243,7 @@ pub fn prove_model_bundle_composition(
 
 #[cfg(test)]
 mod tests {
-    use super::prove_model_bundle_composition;
+    use super::{prove_model_bundle_composition, revalidate_model_bundle_manifests};
     use crate::{
         build_prepacked_deployment_bundle, seal_authenticated_bundle,
         tokenizer::tests::{authenticated_assets, test_tokenizer},
@@ -226,5 +274,30 @@ mod tests {
         let admission = proof.into_admission();
         assert_eq!(admission.record().record_id(), record_id);
         assert_eq!(*admission.prepacked().deployment(), deployment);
+    }
+
+    #[test]
+    fn retained_manifest_gate_checks_both_roles_without_changing_bytes() {
+        for invalid_role in [Qwen3ModelRole::Target8B, Qwen3ModelRole::Draft06B] {
+            let mut target = test_prepacked(Qwen3ModelRole::Target8B).into_parts().1;
+            let mut draft = test_prepacked(Qwen3ModelRole::Draft06B).into_parts().1;
+            let target_bytes = target.canonical_bytes().to_vec();
+            let draft_bytes = draft.canonical_bytes().to_vec();
+            assert_eq!(revalidate_model_bundle_manifests(&target, &draft), Ok(()));
+            let invalid = match invalid_role {
+                Qwen3ModelRole::Target8B => &mut target,
+                Qwen3ModelRole::Draft06B => &mut draft,
+            };
+            invalid.test_sections_mut()[0].test_increment_destination_offset();
+            assert_eq!(
+                revalidate_model_bundle_manifests(&target, &draft),
+                Err(crate::BundleAdmissionError::InvalidManifest {
+                    role: invalid_role,
+                    reason: "retained manifest commitment or layout",
+                })
+            );
+            assert_eq!(target.canonical_bytes(), target_bytes);
+            assert_eq!(draft.canonical_bytes(), draft_bytes);
+        }
     }
 }

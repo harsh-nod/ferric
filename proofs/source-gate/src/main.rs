@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use verus_syn::ext::IdentExt;
 use verus_syn::parse::{ParseStream, Parser};
 use verus_syn::visit::{self, Visit};
 use verus_syn::{
@@ -777,6 +778,8 @@ struct SyntaxAudit {
     errors: Vec<String>,
     allow_root_function: bool,
     allow_solver_attributes: bool,
+    item_depth: usize,
+    prophetic_impl_depth: Option<usize>,
     root_function_seen: bool,
 }
 
@@ -4463,7 +4466,38 @@ impl SyntaxAudit {
             errors: Vec::new(),
             allow_root_function,
             allow_solver_attributes,
+            item_depth: 0,
+            prophetic_impl_depth: None,
             root_function_seen: false,
+        }
+    }
+
+    fn visit_function_attributes(
+        &mut self,
+        attributes: &[Attribute],
+        signature: &Signature,
+        checked_context: bool,
+    ) {
+        let allow_prophetic = checked_context
+            && self.allow_solver_attributes
+            && matches!(signature.mode, FnMode::Spec(_) | FnMode::SpecChecked(_))
+            && !matches!(signature.publish, Publish::Uninterp(_));
+        let mut prophetic_seen = false;
+        for attribute in attributes {
+            if allow_prophetic
+                && !prophetic_seen
+                && matches!(attribute.style, AttrStyle::Outer)
+                && matches!(&attribute.meta, Meta::Path(path)
+                    if path.leading_colon.is_none()
+                        && path_name(path) == "verifier::prophetic"
+                        && path.segments.iter().all(|segment|
+                            matches!(segment.arguments, verus_syn::PathArguments::None)))
+            {
+                prophetic_seen = true;
+                visit::visit_attribute(self, attribute);
+            } else {
+                self.visit_attribute(attribute);
+            }
         }
     }
 
@@ -4499,6 +4533,20 @@ impl SyntaxAudit {
 }
 
 impl<'ast> Visit<'ast> for SyntaxAudit {
+    fn visit_item(&mut self, item: &'ast Item) {
+        let prophetic_impl_depth = self.prophetic_impl_depth;
+        if self.item_depth == 0
+            && self.allow_solver_attributes
+            && matches!(item, Item::Impl(item_impl) if item_impl.trait_.is_none())
+        {
+            self.prophetic_impl_depth = Some(1);
+        }
+        self.item_depth += 1;
+        visit::visit_item(self, item);
+        self.item_depth -= 1;
+        self.prophetic_impl_depth = prophetic_impl_depth;
+    }
+
     fn visit_attribute(&mut self, attribute: &'ast Attribute) {
         if let Err(error) = validate_attributes(
             std::slice::from_ref(attribute),
@@ -4519,13 +4567,34 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
     fn visit_item_fn(&mut self, function: &'ast verus_syn::ItemFn) {
         if self.allow_root_function && !self.root_function_seen {
             self.root_function_seen = true;
-            visit::visit_item_fn(self, function);
+            self.visit_function_attributes(
+                &function.attrs,
+                &function.sig,
+                function.semi_token.is_none(),
+            );
+            self.visit_visibility(&function.vis);
+            self.visit_signature(&function.sig);
+            self.visit_block(&function.block);
         } else {
             self.errors.push(format!(
                 "nested executable item is forbidden: {}",
                 function.sig.ident
             ));
         }
+    }
+
+    fn visit_impl_item_fn(&mut self, function: &'ast verus_syn::ImplItemFn) {
+        // Nested impls and trait impls do not inherit the root's spec context.
+        self.visit_function_attributes(
+            &function.attrs,
+            &function.sig,
+            self.prophetic_impl_depth == Some(self.item_depth)
+                && function.defaultness.is_none()
+                && function.semi_token.is_none(),
+        );
+        self.visit_visibility(&function.vis);
+        self.visit_signature(&function.sig);
+        self.visit_block(&function.block);
     }
 
     fn visit_item_macro(&mut self, item: &'ast verus_syn::ItemMacro) {
@@ -4558,7 +4627,12 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
 
     fn visit_expr_macro(&mut self, expression: &'ast verus_syn::ExprMacro) {
         let name = path_name(&expression.mac.path);
-        if matches!(name.as_str(), "include" | "include_bytes" | "include_str") {
+        if matches!(
+            name.as_str(),
+            "assert" | "debug_assert" | "debug_assert_eq" | "eprintln" | "println"
+        ) {
+            self.visit_expression_macro_arguments(expression.mac.tokens.clone(), &name);
+        } else if matches!(name.as_str(), "include" | "include_bytes" | "include_str") {
             self.errors
                 .push(format!("source inclusion macro is forbidden: {name}!"));
         }
@@ -4568,7 +4642,7 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
     fn visit_expr_call(&mut self, call: &'ast verus_syn::ExprCall) {
         if let Expr::Path(path) = call.func.as_ref() {
             if let Some(last) = path.path.segments.last() {
-                if matches!(last.ident.to_string().as_str(), "assume" | "admit") {
+                if matches!(last.ident.unraw().to_string().as_str(), "assume" | "admit") {
                     self.errors
                         .push(format!("forbidden trust call: {}", path_name(&path.path)));
                 }
@@ -4580,6 +4654,12 @@ impl<'ast> Visit<'ast> for SyntaxAudit {
     fn visit_assume_specification(&mut self, _item: &'ast verus_syn::AssumeSpecification) {
         self.errors
             .push("assume_specification is forbidden".to_owned());
+    }
+
+    fn visit_assume(&mut self, expression: &'ast verus_syn::Assume) {
+        self.errors
+            .push("forbidden trust expression: assume".to_owned());
+        visit::visit_assume(self, expression);
     }
 }
 
@@ -7958,6 +8038,9 @@ mod tests {
             "fn check() { assert!(ready(),); }",
             "fn check() { assert!(ready(), \"slot {} is occupied\", slot()); }",
             "fn check() { debug_assert!(ready(), \"slot is occupied\"); }",
+            "fn check() { let _ = assert!(ready(), \"slot {} is occupied\", slot()); }",
+            "fn check() { let _ = debug_assert_eq!(slot(), 0); }",
+            "fn check() { let _ = println!(\"slot {}\", slot()); }",
         ] {
             let file = verus_syn::parse_file(source).expect("assertion fixture parses");
             let mut audit = SyntaxAudit::new(true, false);
@@ -7970,6 +8053,8 @@ mod tests {
             "fn check() { assert!(ready(), \"message {}\", assume()); }",
             "fn check() { debug_assert!(ready(), \"message {}\", admit()); }",
             "fn check() { assert!(ready(), \"message\"; extra); }",
+            "fn check() { let _ = assert!(ready(), \"message {}\", admit()); }",
+            "fn check() { let _ = assert!(ready(), \"message\"; extra); }",
         ] {
             let file = verus_syn::parse_file(source).expect("rejected assertion fixture parses");
             let mut audit = SyntaxAudit::new(true, false);
@@ -7978,6 +8063,208 @@ mod tests {
                 !audit.errors.is_empty(),
                 "unreviewed assertion accepted: {source}"
             );
+        }
+    }
+
+    const PROPHETIC_METHOD_SOURCE: &str = r"
+verus! {
+    pub struct PhysicalKvRetirementMetadataBatchV1<'a> {
+        state: &'a mut PhysicalKvState,
+    }
+
+    impl PhysicalKvRetirementMetadataBatchV1<'_> {
+        #[verifier::prophetic]
+        pub closed spec fn future_state_spec(&self) -> PhysicalKvState {
+            mut_ref_future(self.state)
+        }
+
+        pub fn commit(self) {}
+    }
+}
+";
+
+    fn prophetic_source_functions(source: &str) -> super::GateResult<BTreeSet<super::Function>> {
+        let repo = Path::new("/source-gate-fixture");
+        let package = super::Package {
+            name: "ferric-spec".to_owned(),
+            crate_name: "ferric_spec".to_owned(),
+            root: repo.join("src/lib.rs"),
+            dependencies: BTreeSet::new(),
+            additional_targets: Vec::new(),
+        };
+        let mut walker = super::SourceWalker {
+            repo,
+            package: &package,
+            source_root: repo.join("src"),
+            module_dir: repo.join("src"),
+            visited: BTreeSet::new(),
+            modules: BTreeMap::new(),
+            functions: BTreeSet::new(),
+            type_owners: BTreeMap::new(),
+            inherent_methods: Vec::new(),
+        };
+        let file = verus_syn::parse_file(source).unwrap_or_else(|error| {
+            panic!("prophetic policy fixture parses: {error}; source: {source}")
+        });
+        for item in &file.items {
+            if let Item::Macro(item_macro) = item {
+                assert!(item_macro.mac.path.is_ident("verus"));
+                verus_syn::parse2::<verus_syn::File>(item_macro.mac.tokens.clone()).unwrap_or_else(
+                    |error| panic!("prophetic policy verus body parses: {error}; source: {source}"),
+                );
+            }
+        }
+        validate_attributes(&file.attrs, false)?;
+        walker.walk_items(&file.items, "src/lib.rs", repo, "ferric_spec", false)?;
+        walker.resolve_inherent_methods()?;
+        Ok(walker.functions)
+    }
+
+    #[test]
+    fn prophetic_spec_functions_are_checked_and_not_executable() {
+        let functions = prophetic_source_functions(PROPHETIC_METHOD_SOURCE)
+            .expect("checked future-state method is admitted");
+        assert_eq!(functions.len(), 1);
+        let function = functions.first().expect("commit remains executable");
+        assert_eq!(
+            function.compiler_path,
+            "ferric_spec::PhysicalKvRetirementMetadataBatchV1::commit"
+        );
+        assert!(function.verified);
+
+        let functions = prophetic_source_functions(
+            "verus! { #[verifier::prophetic] spec fn future_value(a: &mut u64) -> u64 { mut_ref_future(a) } }",
+        )
+        .expect("checked spec function is admitted");
+        assert!(functions.is_empty());
+
+        let checked = replace_once(PROPHETIC_METHOD_SOURCE, "spec fn", "spec(checked) fn");
+        let functions = prophetic_source_functions(&checked)
+            .expect("explicitly checked spec method is admitted");
+        assert_eq!(functions.len(), 1);
+    }
+
+    #[test]
+    fn prophetic_attributes_reject_malformed_forms() {
+        for attribute in [
+            "#[verifier::prophetic()]",
+            "#[verifier::prophetic(true)]",
+            "#[verifier::prophetic = true]",
+            "#[verifier::prophetic] #[verifier::prophetic]",
+            "#[::verifier::prophetic]",
+        ] {
+            let source = replace_once(PROPHETIC_METHOD_SOURCE, "#[verifier::prophetic]", attribute);
+            assert!(
+                prophetic_source_functions(&source).is_err(),
+                "unreviewed prophetic attribute accepted: {attribute}"
+            );
+        }
+    }
+
+    #[test]
+    fn prophetic_attributes_reject_unreviewed_contexts() {
+        for source in [
+            "#[verifier::prophetic] spec fn future_value() -> bool { true }",
+            "verus! { #![verifier::prophetic] spec fn future_value() -> bool { true } }",
+            "verus! { #[verifier::prophetic] fn run() {} }",
+            "verus! { #[verifier::prophetic] proof fn lemma() {} }",
+            "verus! { #[verifier::prophetic] uninterp spec fn future_value() -> bool; }",
+            "verus! { #[verifier::prophetic] struct State {} }",
+            "verus! { struct State {} #[verifier::prophetic] impl State {} }",
+            "verus! { #[verifier::prophetic] trait View {} }",
+            "verus! { trait View { #[verifier::prophetic] spec fn value(&self) -> bool; } }",
+            "verus! { struct State {} impl View for State { #[verifier::prophetic] spec fn value(&self) -> bool { true } } }",
+            "verus! { struct State { #[verifier::prophetic] value: bool } }",
+            "verus! { spec fn value(#[verifier::prophetic] arg: bool) -> bool { arg } }",
+            "verus! { spec fn value() -> bool { #![verifier::prophetic] true } }",
+            "verus! { proof fn lemma() { #[verifier::prophetic] let ghost value = true; } }",
+            "verus! { fn run() { #[verifier::prophetic] spec fn value() -> bool { true } } }",
+            "verus! { struct State {} impl State { fn run() { impl State { #[verifier::prophetic] spec fn value(&self) -> bool { true } } } } }",
+            "verus! { struct State {} impl State { const VALUE: bool = { impl State { #[verifier::prophetic] spec fn value(&self) -> bool { true } } true }; } }",
+        ] {
+            assert!(
+                prophetic_source_functions(source).is_err(),
+                "unreviewed prophetic context accepted: {source}"
+            );
+        }
+        let outside_verus = PROPHETIC_METHOD_SOURCE.replace("verus! {", "mod plain {");
+        assert!(prophetic_source_functions(&outside_verus).is_err());
+        for mode in ["fn", "proof fn"] {
+            let source = replace_once(PROPHETIC_METHOD_SOURCE, "closed spec fn", mode);
+            assert!(prophetic_source_functions(&source).is_err());
+        }
+    }
+
+    #[test]
+    fn prophetic_spec_bodies_keep_trust_rejections() {
+        for attribute in ["#[verifier::external_body]", "#[verifier::external]"] {
+            let source = replace_once(
+                PROPHETIC_METHOD_SOURCE,
+                "#[verifier::prophetic]",
+                &format!("#[verifier::prophetic] {attribute}"),
+            );
+            assert!(prophetic_source_functions(&source).is_err());
+        }
+        for body in [
+            "assume(false); mut_ref_future(self.state)",
+            "admit(); mut_ref_future(self.state)",
+            "#[verifier::external_body] proof fn trusted() {} mut_ref_future(self.state)",
+            "#[verifier::external] proof fn trusted() {} mut_ref_future(self.state)",
+            "pub axiom fn trusted(); mut_ref_future(self.state)",
+            "proof fn trusted() { assume(false); } mut_ref_future(self.state)",
+        ] {
+            let source = replace_once(PROPHETIC_METHOD_SOURCE, "mut_ref_future(self.state)", body);
+            assert!(
+                prophetic_source_functions(&source).is_err(),
+                "trust-expanding body accepted: {body}"
+            );
+        }
+        for source in [
+            "verus! { axiom fn trusted(); }",
+            "verus! { #[verifier::prophetic] axiom fn trusted(); }",
+            "verus! { struct State {} impl State { axiom fn trusted(&self); } }",
+            "verus! { struct State {} impl State { #[verifier::prophetic] axiom fn trusted(&self); } }",
+        ] {
+            assert!(
+                prophetic_source_functions(source).is_err(),
+                "axiom declaration accepted: {source}"
+            );
+        }
+    }
+
+    #[test]
+    fn assume_and_admit_are_rejected_in_all_function_contexts() {
+        for call in [
+            "assume(false)",
+            "vstd::prelude::assume(false)",
+            "admit()",
+            "vstd::prelude::admit()",
+            "r#assume(false)",
+            "vstd::prelude::r#assume(false)",
+            "r#admit()",
+            "vstd::prelude::r#admit()",
+        ] {
+            for template in [
+                "fn run() { TRUST_CALL; }",
+                "verus! { spec fn value() -> bool { TRUST_CALL; true } }",
+                "verus! { proof fn lemma() { TRUST_CALL; } }",
+                "verus! { fn run() { TRUST_CALL; } }",
+                "verus! { struct State {} impl State { spec fn value(&self) -> bool { TRUST_CALL; true } } }",
+                "verus! { struct State {} impl State { proof fn lemma(&self) { TRUST_CALL; } } }",
+                "verus! { struct State {} impl State { fn run(&self) { TRUST_CALL; } } }",
+                "verus! { fn run() { assert!(true, \"{}\", { TRUST_CALL; 0 }); } }",
+                "verus! { fn run() { debug_assert!(true, \"{}\", { TRUST_CALL; 0 }); } }",
+                "verus! { proof fn lemma() { let _ = assert!({ TRUST_CALL; true }); } }",
+                "verus! { fn run() { let _ = debug_assert!(true, \"{}\", { TRUST_CALL; 0 }); } }",
+                "verus! { fn run() { let _ = debug_assert_eq!(0, { TRUST_CALL; 0 }); } }",
+                "verus! { fn run() { let _ = println!(\"{}\", { TRUST_CALL; 0 }); } }",
+            ] {
+                let source = replace_once(template, "TRUST_CALL", call);
+                let error = prophetic_source_functions(&source)
+                    .err()
+                    .expect("trust expression is rejected");
+                assert!(error.contains("forbidden trust "), "{source}: {error}");
+            }
         }
     }
 
