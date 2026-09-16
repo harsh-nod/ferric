@@ -1444,11 +1444,11 @@ mod tests {
         fn reopen(_: &Path) -> CaptureResult<Self::Artifact> {
             Err("invocation-only fixture".to_owned())
         }
-        fn program_catalog_id(_: &Self::Artifact) -> ferric_spec::Identity {
+        fn program_catalog_id((): &Self::Artifact) -> ferric_spec::Identity {
             unreachable!("invocation-only fixture")
         }
         fn bind(
-            _: Self::Artifact,
+            (): Self::Artifact,
             _: ferric_build::PublishedRunnerDeclaration,
         ) -> CaptureResult<ferric_engine::M1PhysicalRunnerV1> {
             Err("invocation-only fixture".to_owned())
