@@ -317,6 +317,7 @@ pub struct M1ObservedSpeculativeDiagnosticChoicesV1 {
     target_choice_matrix: Box<[TokenId]>,
     legacy_k4_target_choices: [TokenId; M1_SPECULATIVE_DIAGNOSTIC_TARGET_CHOICES_V1 as usize],
     target_sha256: [u8; 32],
+    engineering_logits: Option<crate::M1ObservedEngineeringS1K4LogitsV1>,
 }
 
 #[derive(Debug)]
@@ -331,6 +332,21 @@ enum M1ObservedSpeculativeDiagnosticChoiceBackingV1 {
 }
 
 impl M1ObservedSpeculativeDiagnosticChoicesV1 {
+    /// All five target logits rows when the separate engineering attachment
+    /// was explicitly reserved before publication; never qualification evidence.
+    #[must_use]
+    pub const fn engineering_s1_k4_logits(&self) -> Option<&crate::M1ObservedEngineeringS1K4LogitsV1> {
+        self.engineering_logits.as_ref()
+    }
+
+    pub(crate) fn with_engineering_logits(
+        mut self,
+        logits: Option<crate::M1ObservedEngineeringS1K4LogitsV1>,
+    ) -> Self {
+        self.engineering_logits = logits;
+        self
+    }
+
     /// Exact finite speculative geometry carried by these copied choices.
     #[must_use]
     pub const fn shape(&self) -> M1SpeculativeDiagnosticChoicesShapeV1 {
@@ -877,6 +893,7 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_v1(
         target_sha256,
         target_choice_matrix,
         legacy_k4_target_choices,
+        engineering_logits: None,
     })
 }
 
@@ -977,6 +994,7 @@ pub(crate) fn observe_m1_speculative_diagnostic_choices_with_storage_v1(
         target_sha256,
         target_choice_matrix,
         legacy_k4_target_choices,
+        engineering_logits: None,
     })
 }
 
@@ -1180,6 +1198,7 @@ pub(crate) fn synthetic_observed_choices_for_test(
         draft_choice_matrix,
         lane_major_draft_choices,
         target_choice_matrix,
+        engineering_logits: None,
     }
 }
 

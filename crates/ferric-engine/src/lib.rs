@@ -755,6 +755,8 @@ pub use physical_step::{
     StructurallyBoundPhysicalStep,
 };
 pub use qualification_logits::{
+    m1_engineering_s1_k4_logits_shape_v1, M1EngineeringS1K4LogitsErrorV1,
+    M1ObservedEngineeringS1K4LogitsV1,
     m1_qualification_logits_shape_v1, BoundM1QualificationLogitsV1,
     M1ObservedQualificationLogitsRowV1, M1ObservedQualificationLogitsV1,
     M1QualificationFinalLogitsErrorV1, M1QualificationLogitsAllocationFailureV1,

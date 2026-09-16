@@ -435,7 +435,9 @@ pub(crate) fn attach_m1_qualification_logits_v1(
     allocations: &mut ServiceAllocationSessionV1,
     completion: BoundM1CompletionOutputV1,
 ) -> Result<BoundM1CompletionOutputV1, Box<M1QualificationLogitsAllocationFailureV1>> {
-    if completion.qualification_logits().is_some() {
+    if completion.qualification_logits().is_some()
+        || completion.engineering_s1_k4_logits().is_some()
+    {
         return Err(Box::new(M1QualificationLogitsAllocationFailureV1 {
             error: M1QualificationLogitsErrorV1::AlreadyEnabled,
             completion,
@@ -447,6 +449,202 @@ pub(crate) fn attach_m1_qualification_logits_v1(
             error,
             completion,
         })),
+    }
+}
+
+/// Exact engineering-only S1/K4 target geometry. This does not admit a
+/// speculative graph to the protected target-only qualification path.
+///
+/// # Errors
+/// Rejects any role, mode, or bucket other than Target8B/Speculative/S1K4.
+pub fn m1_engineering_s1_k4_logits_shape_v1(
+    selection: Qwen3PlanSelection,
+) -> Result<M1QualificationLogitsShapeV1, M1QualificationLogitsErrorV1> {
+    if !crate::speculative_diagnostic_choices::m1_speculative_diagnostic_is_s1_k4_selection_v1(
+        selection,
+    ) {
+        return Err(M1QualificationLogitsErrorV1::InvalidTargetSelection { selection });
+    }
+    m1_qualification_logits_shape_v1(selection)
+}
+
+pub(crate) fn attach_m1_engineering_s1_k4_logits_v1(
+    allocations: &mut ServiceAllocationSessionV1,
+    completion: BoundM1CompletionOutputV1,
+) -> Result<BoundM1CompletionOutputV1, Box<M1QualificationLogitsAllocationFailureV1>> {
+    let result = m1_engineering_s1_k4_logits_shape_v1(completion.shape().selection())
+        .and_then(|_| {
+            if completion.qualification_logits().is_some()
+                || completion.engineering_s1_k4_logits().is_some()
+                || completion.completion_canary().is_some()
+                || completion.direct_diagnostic_choices().is_some()
+                || completion.speculative_diagnostic_choices().is_none()
+                || completion.is_draft_catchup()
+            {
+                return Err(M1QualificationLogitsErrorV1::AlreadyEnabled);
+            }
+            allocate_m1_qualification_logits_v1(allocations, completion.shape().selection())
+        });
+    match result {
+        Ok(logits) => Ok(completion.attach_engineering_s1_k4_logits(logits)),
+        Err(error) => Err(Box::new(M1QualificationLogitsAllocationFailureV1 {
+            error,
+            completion,
+        })),
+    }
+}
+
+/// Inert, move-only engineering evidence for all five target positions in one
+/// actual S1/K4 generation. It grants no qualification or completion authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1ObservedEngineeringS1K4LogitsV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1ObservedEngineeringS1K4LogitsV1>();
+/// ```
+#[must_use = "all five copied target rows must be reported or retained"]
+#[derive(Debug)]
+pub struct M1ObservedEngineeringS1K4LogitsV1 {
+    shape: M1QualificationLogitsShapeV1,
+    readback: ServiceCompletedReadbackV1,
+    raw_sha256: [u8; 32],
+    choices: [TokenId; 5],
+}
+
+impl M1ObservedEngineeringS1K4LogitsV1 {
+    pub(crate) fn into_readback(self) -> ServiceCompletedReadbackV1 {
+        self.readback
+    }
+
+    #[must_use]
+    pub const fn shape(&self) -> M1QualificationLogitsShapeV1 {
+        self.shape
+    }
+
+    #[must_use]
+    pub const fn dispatch_generation(&self) -> u64 {
+        self.readback.dispatch_generation()
+    }
+
+    #[must_use]
+    pub const fn offset_bytes(&self) -> u64 {
+        self.readback.offset_bytes()
+    }
+
+    #[must_use]
+    pub fn raw_bytes(&self) -> &[u8] {
+        self.readback.bytes()
+    }
+
+    #[must_use]
+    pub const fn raw_sha256(&self) -> &[u8; 32] {
+        &self.raw_sha256
+    }
+
+    /// A bounded row in sequence-major `[1,5,151936]` order.
+    #[must_use]
+    pub fn row_bytes(&self, active_index: usize) -> Option<&[u8]> {
+        engineering_s1_k4_row_bounds(self.shape, active_index)
+            .and_then(|(start, end)| self.readback.bytes().get(start..end))
+    }
+
+    #[must_use]
+    pub const fn choices(&self) -> &[TokenId; 5] {
+        &self.choices
+    }
+}
+
+#[derive(Debug)]
+pub enum M1EngineeringS1K4LogitsErrorV1 {
+    Geometry(M1QualificationLogitsErrorV1),
+    Values(M1QualificationFinalLogitsErrorV1),
+}
+
+fn engineering_s1_k4_row_bounds(
+    shape: M1QualificationLogitsShapeV1,
+    active_index: usize,
+) -> Option<(usize, usize)> {
+    if m1_engineering_s1_k4_logits_shape_v1(shape.selection).ok() != Some(shape)
+        || active_index >= 5
+    {
+        return None;
+    }
+    let width = usize::try_from(shape.row_bytes).ok()?;
+    let start = active_index.checked_mul(width)?;
+    let end = start.checked_add(width)?;
+    (u64::try_from(end).ok()? <= shape.extent_bytes).then_some((start, end))
+}
+
+fn validate_engineering_s1_k4_logits(
+    shape: M1QualificationLogitsShapeV1,
+    offset: u64,
+    generation: u64,
+    coordinates: M1QualificationLogitsRowCoordinatesV1,
+    bytes: &[u8],
+) -> Result<[TokenId; 5], M1EngineeringS1K4LogitsErrorV1> {
+    let geometry = || -> Result<(), M1QualificationLogitsErrorV1> {
+        if m1_engineering_s1_k4_logits_shape_v1(shape.selection)? != shape {
+            return Err(M1QualificationLogitsErrorV1::InvalidTargetSelection {
+                selection: shape.selection,
+            });
+        }
+        if coordinates.dispatch_generation != generation {
+            return Err(M1QualificationLogitsErrorV1::DispatchGeneration {
+                lane: 0,
+                expected: generation,
+                actual: coordinates.dispatch_generation,
+            });
+        }
+        if coordinates.offset_bytes != offset {
+            return Err(M1QualificationLogitsErrorV1::RowOffset {
+                lane: 0,
+                expected: offset,
+                actual: coordinates.offset_bytes,
+            });
+        }
+        if coordinates.extent_bytes != shape.extent_bytes
+            || u64::try_from(bytes.len()).ok() != Some(shape.extent_bytes)
+        {
+            return Err(M1QualificationLogitsErrorV1::RowExtent {
+                lane: 0,
+                expected: shape.extent_bytes,
+                actual: coordinates.extent_bytes,
+            });
+        }
+        Ok(())
+    };
+    geometry().map_err(M1EngineeringS1K4LogitsErrorV1::Geometry)?;
+    let mut choices = [0; 5];
+    for (index, choice) in choices.iter_mut().enumerate() {
+        let (start, end) = engineering_s1_k4_row_bounds(shape, index)
+            .expect("validated exact S1/K4 geometry");
+        *choice = lowest_id_finite_bf16_argmax(&bytes[start..end], index)
+            .map_err(M1EngineeringS1K4LogitsErrorV1::Values)?;
+    }
+    Ok(choices)
+}
+
+pub(crate) fn observe_m1_engineering_s1_k4_logits_v1(
+    shape: M1QualificationLogitsShapeV1,
+    range: ServiceHostDispatchRangeV1,
+    generation: u64,
+    readback: ServiceCompletedReadbackV1,
+) -> Result<M1ObservedEngineeringS1K4LogitsV1, (M1EngineeringS1K4LogitsErrorV1, ServiceCompletedReadbackV1)> {
+    let coordinates = M1QualificationLogitsRowCoordinatesV1 {
+        dispatch_generation: readback.dispatch_generation(),
+        offset_bytes: readback.offset_bytes(),
+        extent_bytes: u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
+    };
+    match validate_engineering_s1_k4_logits(
+        shape, range.offset_bytes(), generation, coordinates, readback.bytes(),
+    ) {
+        Ok(choices) => Ok(M1ObservedEngineeringS1K4LogitsV1 {
+            shape,
+            raw_sha256: Sha256::digest(readback.bytes()).into(),
+            readback,
+            choices,
+        }),
+        Err(error) => Err((error, readback)),
     }
 }
 
@@ -763,6 +961,63 @@ pub(crate) mod tests {
                 extent_bytes: shape.row_bytes,
             })
             .collect()
+    }
+
+    #[test]
+    fn engineering_s1_k4_shape_rejects_target_only_and_other_speculative_buckets() {
+        let exact = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        };
+        let shape = m1_engineering_s1_k4_logits_shape_v1(exact).unwrap();
+        assert_eq!((shape.sequences(), shape.active_tokens()), (1, 5));
+        assert_eq!(shape.extent_bytes(), 1_519_360);
+        for bucket in TARGET_ONLY_BUCKETS {
+            assert!(m1_engineering_s1_k4_logits_shape_v1(selection(bucket)).is_err());
+        }
+        for bucket in [Qwen3PlanBucket::SpeculativeS8K4C8192, Qwen3PlanBucket::SpeculativeS1K8C8192, Qwen3PlanBucket::SpeculativeS1K16C8192] {
+            assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection { bucket, ..exact }).is_err());
+        }
+        assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B, ..exact
+        }).is_err());
+    }
+
+    #[test]
+    fn engineering_s1_k4_all_rows_bind_generation_extent_offsets_and_finite_values() {
+        let shape = m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        }).unwrap();
+        let width = usize::try_from(shape.row_bytes()).unwrap();
+        let mut bytes = vec![0; usize::try_from(shape.extent_bytes()).unwrap()];
+        for index in 0..5 {
+            let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
+            assert_eq!((start, end), (index * width, (index + 1) * width));
+            set_bf16(&mut bytes[start..end], index + 11, 0x3f80);
+        }
+        assert_eq!(engineering_s1_k4_row_bounds(shape, 5), None);
+        assert_eq!(engineering_s1_k4_row_bounds(shape, usize::MAX), None);
+        let coordinates = M1QualificationLogitsRowCoordinatesV1 {
+            dispatch_generation: 9, offset_bytes: 64, extent_bytes: shape.extent_bytes(),
+        };
+        assert_eq!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes).unwrap(), [11, 12, 13, 14, 15]);
+        for wrong in [
+            M1QualificationLogitsRowCoordinatesV1 { dispatch_generation: 8, ..coordinates },
+            M1QualificationLogitsRowCoordinatesV1 { offset_bytes: 66, ..coordinates },
+            M1QualificationLogitsRowCoordinatesV1 { extent_bytes: shape.extent_bytes() - 2, ..coordinates },
+        ] {
+            assert!(matches!(validate_engineering_s1_k4_logits(shape, 64, 9, wrong, &bytes), Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))));
+        }
+        assert!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes[..bytes.len() - 2]).is_err());
+        for index in 0..5 {
+            let mut missing = bytes.clone();
+            let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
+            set_bf16(&mut missing[start..end], 0, M1_QUALIFICATION_UNWRITTEN_BF16_V1);
+            assert!(matches!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &missing), Err(M1EngineeringS1K4LogitsErrorV1::Values(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token: 0 })) if lane == index));
+        }
     }
 
     #[test]

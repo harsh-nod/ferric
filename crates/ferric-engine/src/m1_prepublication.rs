@@ -621,6 +621,18 @@ impl M1AllocatedScheduledStepV1 {
             .reserve_finite_speculative_rollover_outputs()
     }
 
+    /// Preallocates one S1/K4 engineering diagnostic output with all five target
+    /// logits rows. Protected qualification and ordinary reserves are unchanged.
+    ///
+    /// # Errors
+    /// Rejects repeated reservation or any compact, choice, or logits allocation
+    /// failure, retaining the allocation owner and any partial output.
+    pub fn reserve_engineering_s1_k4_logits_output(
+        &mut self,
+    ) -> Result<(), crate::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.partitioned_memory.reserve_engineering_s1_k4_logits_output()
+    }
+
     /// Attaches qualification logits without permitting another device allocation.
     ///
     /// # Errors

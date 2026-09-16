@@ -1496,6 +1496,7 @@ fn validate_authenticated_rearm_eligibility(
     shape: M1PhysicalFixedBatchShapeV1,
     selection: Qwen3PlanSelection,
     qualification_logits_enabled: bool,
+    engineering_logits_enabled: bool,
 ) -> Result<(), M1LongLivedQueueRearmScheduleErrorV1> {
     let supported = match shape {
         M1PhysicalFixedBatchShapeV1::TargetOnly => selection.mode == Qwen3ExecutionMode::Decode,
@@ -1511,7 +1512,7 @@ fn validate_authenticated_rearm_eligibility(
     let qualification_supported = !qualification_logits_enabled
         || (shape == M1PhysicalFixedBatchShapeV1::TargetOnly
             && selection.mode == Qwen3ExecutionMode::Decode);
-    if supported && qualification_supported {
+    if supported && qualification_supported && !engineering_logits_enabled {
         Ok(())
     } else {
         Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)
@@ -1749,6 +1750,7 @@ fn schedule_m1_authenticated_long_lived_queue_rearm_inner_v1<const C: usize>(
             .completion_output()
             .qualification_logits()
             .is_some(),
+        released.queue().custody().completion_output().engineering_s1_k4_logits().is_some(),
     ) {
         return Err(authenticated_schedule_rejection(
             M1AuthenticatedLongLivedQueueRearmScheduleErrorV1::Shared(error),
@@ -8476,6 +8478,31 @@ mod tests {
     use super::*;
     use crate::authenticated_test_runtime::{ModelPreparedQueueV1, ModelQueueV1};
     use ferric_spec::Identity;
+
+    #[test]
+    fn engineering_s1_k4_logits_cannot_reenter_authenticated_rearm() {
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192,
+        };
+        assert!(validate_authenticated_rearm_eligibility(
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4, selection, false, false,
+        ).is_ok());
+        assert!(matches!(validate_authenticated_rearm_eligibility(
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4, selection, false, true,
+        ), Err(M1LongLivedQueueRearmScheduleErrorV1::UnsupportedPriorShape)));
+        let direct = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B, mode: Qwen3ExecutionMode::Decode,
+            bucket: ferric_spec::Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert!(validate_authenticated_rearm_eligibility(
+            M1PhysicalFixedBatchShapeV1::TargetOnly, direct, true, false,
+        ).is_ok());
+        assert!(validate_authenticated_rearm_eligibility(
+            M1PhysicalFixedBatchShapeV1::TargetOnly, direct, false, true,
+        ).is_err());
+    }
 
     #[test]
     fn finite_resident_scratch_binds_typed_phase_and_worst_case_tail_pages() {

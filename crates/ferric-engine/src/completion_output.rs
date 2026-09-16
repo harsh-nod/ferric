@@ -206,6 +206,7 @@ pub struct BoundM1CompletionOutputV1 {
     completion_canary: Option<BoundM1CompletionCanaryV1>,
     direct_diagnostic_choices: Option<BoundM1DirectDiagnosticChoicesV1>,
     qualification_logits: Option<BoundM1QualificationLogitsV1>,
+    engineering_s1_k4_logits: Option<BoundM1QualificationLogitsV1>,
     speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
     draft_catchup: Option<M1DraftCatchupOutputCustodyV1>,
 }
@@ -329,6 +330,12 @@ impl BoundM1CompletionOutputV1 {
         self.qualification_logits.as_ref()
     }
 
+    /// Separate engineering-only all-row capture; never qualification authority.
+    #[must_use]
+    pub const fn engineering_s1_k4_logits(&self) -> Option<&BoundM1QualificationLogitsV1> {
+        self.engineering_s1_k4_logits.as_ref()
+    }
+
     /// Returns diagnostic-only S1/K4 choice capture when explicitly enabled.
     #[must_use = "speculative diagnostic choice custody remains paired with compact output"]
     pub const fn speculative_diagnostic_choices(
@@ -371,6 +378,7 @@ impl BoundM1CompletionOutputV1 {
             && self.completion_canary.is_none()
             && self.direct_diagnostic_choices.is_none()
             && self.qualification_logits.is_none()
+            && self.engineering_s1_k4_logits.is_none()
             && self.draft_catchup.is_none()
             && self
                 .speculative_diagnostic_choices
@@ -420,6 +428,7 @@ impl BoundM1CompletionOutputV1 {
             || self.completion_canary.is_some()
             || self.direct_diagnostic_choices.is_some()
             || self.qualification_logits.is_some()
+            || self.engineering_s1_k4_logits.is_some()
             || self.speculative_diagnostic_choices.is_some()
         {
             return Err(Box::new(self));
@@ -447,6 +456,7 @@ impl BoundM1CompletionOutputV1 {
             || self.completion_canary.is_some()
             || self.direct_diagnostic_choices.is_some()
             || self.qualification_logits.is_some()
+            || self.engineering_s1_k4_logits.is_some()
             || self.speculative_diagnostic_choices.is_some()
             || self.draft_catchup.is_some()
         {
@@ -465,6 +475,7 @@ impl BoundM1CompletionOutputV1 {
                 && self.completion_canary.is_none()
                 && self.direct_diagnostic_choices.is_none()
                 && self.qualification_logits.is_none()
+                && self.engineering_s1_k4_logits.is_none()
                 && self.speculative_diagnostic_choices.is_none()
                 && self.draft_catchup.is_none()
         })
@@ -475,6 +486,14 @@ impl BoundM1CompletionOutputV1 {
         qualification_logits: BoundM1QualificationLogitsV1,
     ) -> Self {
         self.qualification_logits = Some(qualification_logits);
+        self
+    }
+
+    pub(crate) fn attach_engineering_s1_k4_logits(
+        mut self,
+        logits: BoundM1QualificationLogitsV1,
+    ) -> Self {
+        self.engineering_s1_k4_logits = Some(logits);
         self
     }
 
@@ -511,6 +530,7 @@ impl BoundM1CompletionOutputV1 {
             && (self.completion_canary.is_some()
                 || self.direct_diagnostic_choices.is_some()
                 || self.qualification_logits.is_some()
+                || self.engineering_s1_k4_logits.is_some()
                 || self.speculative_diagnostic_choices.is_some())
         {
             return Err(M1CompletionOutputErrorV1::DraftCatchupCustodyDrift);
@@ -655,6 +675,7 @@ pub fn allocate_m1_completion_output_v1(
         completion_canary: None,
         direct_diagnostic_choices: None,
         qualification_logits: None,
+        engineering_s1_k4_logits: None,
         speculative_diagnostic_choices: None,
         draft_catchup: None,
     })
@@ -705,6 +726,7 @@ pub fn allocate_m1_guarded_completion_output_v1(
         completion_canary: Some(BoundM1CompletionCanaryV1::new(layout, snapshot_range)),
         direct_diagnostic_choices: None,
         qualification_logits: None,
+        engineering_s1_k4_logits: None,
         speculative_diagnostic_choices: None,
         draft_catchup: None,
     })

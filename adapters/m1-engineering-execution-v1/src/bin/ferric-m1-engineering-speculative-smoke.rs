@@ -5,6 +5,7 @@
 mod smoke_bootstrap;
 mod speculative_resident_smoke;
 mod startup_diagnostics;
+mod engineering_m5_capture;
 
 use fe2o3_kfd::{DeviceSelector, GFX942_MAX_FIXED_DISPATCH_DATA_V1, OpenedKfd};
 use ferric_build::{
@@ -111,6 +112,7 @@ struct SmokeArguments<'a> {
     prompt: &'a str,
     resident_limit: Option<u32>,
     program_strategy: M1PhysicalProgramStrategyV1,
+    m5_capture: Option<&'a Path>,
 }
 
 fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
@@ -120,6 +122,17 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
         }
         _ => (M1PhysicalProgramStrategyV1::LegacyScalar12, arguments),
     };
+    let (m5_capture, positional) = match positional {
+        [flag, directory, remaining @ ..] if flag == "--capture-m5" => {
+            if program_strategy != M1PhysicalProgramStrategyV1::AttributedMfma13
+                || directory.is_empty() || directory.as_encoded_bytes().starts_with(b"--")
+            {
+                return Err("--capture-m5 requires leading --mfma13 and a nonempty output directory".to_owned());
+            }
+            (Some(Path::new(directory)), remaining)
+        }
+        _ => (None, positional),
+    };
     let (base, resident_limit) = match positional {
         [prepacked_root, observation_root, gpu_unique_id, prompt] =>
             ([prepacked_root, observation_root, gpu_unique_id, prompt], None),
@@ -128,6 +141,9 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
         _ => return Err("usage: ferric-m1-engineering-speculative-smoke [--mfma13] PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]".to_owned()),
     };
     let [prepacked_root, observation_root, gpu_unique_id, prompt] = base;
+    if m5_capture.is_some() && resident_limit.is_some() {
+        return Err("engineering M=5 capture supports exactly one S1/K4 round, not resident execution".to_owned());
+    }
     if [prepacked_root, observation_root, gpu_unique_id]
         .iter()
         .any(|value| value.is_empty() || value.as_encoded_bytes().starts_with(b"--"))
@@ -152,6 +168,7 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
         prompt,
         resident_limit,
         program_strategy,
+        m5_capture,
     })
 }
 
@@ -180,6 +197,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         prompt,
         resident_limit,
         program_strategy,
+        m5_capture,
     } = parse_arguments(arguments)?;
     let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
     let deadline = std::time::Instant::now() + std::time::Duration::from_mins(15);
@@ -224,7 +242,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
             limit,
             deadline,
         ),
-        None => execute_and_report(initialized, facts, &diagnostics),
+        None => execute_and_report(initialized, facts, &diagnostics, m5_capture),
     }
 }
 
@@ -232,6 +250,7 @@ fn execute_and_report(
     initialized: smoke_bootstrap::InitializedSmokeBootstrapV1,
     facts: AdmittedEngineeringArtifactFacts,
     diagnostics: &EngineeringStartupDiagnosticsV1,
+    m5_capture: Option<&Path>,
 ) -> SmokeResult<()> {
     let AdmittedEngineeringArtifactFacts {
         observation: facts,
@@ -367,7 +386,11 @@ fn execute_and_report(
         "allocate paired-prefill workspaces",
     );
     require_or_abort(
-        allocated.reserve_s1_k4_rollover_output(),
+        if m5_capture.is_some() {
+            allocated.reserve_engineering_s1_k4_logits_output()
+        } else {
+            allocated.reserve_s1_k4_rollover_output()
+        },
         "reserve S1/K4 rollover output",
     );
     let completion = require_or_abort(
@@ -379,7 +402,7 @@ fn execute_and_report(
         "attach independent paired-prefill choice capture",
     );
     let prefill_queue_data_allocations = allocated.partitioned_memory().retained_allocation_count();
-    if prefill_queue_data_allocations != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS
+    if prefill_queue_data_allocations != EXPECTED_PREFILL_QUEUE_DATA_ALLOCATIONS + usize::from(m5_capture.is_some())
         || prefill_queue_data_allocations > GFX942_MAX_FIXED_DISPATCH_DATA_V1
     {
         fail_stop(
@@ -575,7 +598,7 @@ fn execute_and_report(
     }
     drop(retirement_preflight);
     let speculative_compact_sha256 = *checked.raw_sha256();
-    let (readback, _speculative_choices) = diagnostic.into_parts();
+    let (readback, speculative_choices) = diagnostic.into_parts();
     require_or_abort(engine.retire(request), "retire one-round S1/K4 request");
     let physical = require_or_abort(
         readback.complete(&mut engine, vec![M1DeviceKvCompletionDispositionV1::Retire]),
@@ -697,7 +720,11 @@ fn execute_and_report(
             "independent_choice_sha256": bytes_hex(&prefill_choice_sha256),
             "queue_data_allocation_count": prefill_queue_data_allocations,
             "queue_data_allocation_maximum": GFX942_MAX_FIXED_DISPATCH_DATA_V1,
-            "queue_data_allocation_portfolio": "4-model-memory+2-paired-workspaces+3-k4-successor-output+1-prefill-compact+1-prefill-direct-choice",
+            "queue_data_allocation_portfolio": if m5_capture.is_some() {
+                "4-model-memory+2-paired-workspaces+4-k4-engineering-successor-output+1-prefill-compact+1-prefill-direct-choice"
+            } else {
+                "4-model-memory+2-paired-workspaces+3-k4-successor-output+1-prefill-compact+1-prefill-direct-choice"
+            },
             "kv_before": projection_json(&initial_projection),
             "kv_after": projection_json(&prefill_projection),
         },
@@ -734,6 +761,11 @@ fn execute_and_report(
         "registry_rollover_descriptor": "structural-host-fixture-only-no-token-or-completion-oracle",
     });
     validate_report(&report, program_strategy)?;
+    if let Some(directory) = m5_capture {
+        engineering_m5_capture::publish(directory, &report, &speculative_choices)?;
+    } else if speculative_choices.engineering_s1_k4_logits().is_some() {
+        return Err("unrequested engineering logits capture was attached".to_owned());
+    }
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &report)
         .map_err(|error| format!("cannot serialize speculative smoke report: {error}"))?;
@@ -1267,6 +1299,22 @@ mod strategy_tests {
             let values = arguments(values);
             let expected = parse_arguments(&values).unwrap_err();
             assert_eq!(run(&values).unwrap_err(), expected);
+        }
+    }
+
+    #[test]
+    fn m5_capture_requires_explicit_mfma_and_exactly_one_round() {
+        let values = arguments(&["--mfma13", "--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt"]);
+        let parsed = parse_arguments(&values).unwrap();
+        assert_eq!(parsed.m5_capture, Some(Path::new("/tmp/new-capture")));
+        assert_eq!(parsed.resident_limit, None);
+        assert_eq!(parsed.program_strategy, M1PhysicalProgramStrategyV1::AttributedMfma13);
+        for values in [
+            arguments(&["--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt"]),
+            arguments(&["--mfma13", "--capture-m5", "", "snapshot", "observation", "123", "prompt"]),
+            arguments(&["--mfma13", "--capture-m5", "/tmp/new-capture", "snapshot", "observation", "123", "prompt", "32"]),
+        ] {
+            assert!(parse_arguments(&values).is_err());
         }
     }
 
