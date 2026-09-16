@@ -158,7 +158,7 @@ fn epsilon_constant_preserves_exact_bits_without_a_kernel_runtime_conversion() {
     );
 
     let source =
-        compact_tokens(&syn::parse_file(SOURCE).expect("device source parses as ordinary Rust"));
+        compact_tokens(syn::parse_file(SOURCE).expect("device source parses as ordinary Rust"));
     let definition =
         "pubconstQWEN3_RMSNORM_EPSILON_V1:f32=f32::from_bits(QWEN3_RMSNORM_EPSILON_BITS_V1)";
     assert_eq!(source.matches(definition).count(), 1);
