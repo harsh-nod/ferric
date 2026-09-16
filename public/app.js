@@ -72,10 +72,12 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "55-pinned MFMA host checkpoint; consumer proof still open"),
+    element("h3", "", "14 selected proofs; maintenance fix host-tested"),
+    element("p", "", resident.integration.latestProgress.detail),
+    element("h3", "", "Earlier retained checkpoints, including the R4 snapshot"),
+    element("p", "performance-scope", "The following records keep their original source identities and dated pending states. They do not supersede the current proof or maintenance results above."),
+    element("h3", "", "Earlier 55-pinned MFMA host checkpoint; consumer proof then open"),
     element("p", "", resident.integration.currentValidation.detail),
-    element("h3", "", "Earlier retained checkpoints: September 15 and prior"),
-    element("p", "performance-scope", "The following records keep their original source identities and dated pending states. They do not describe the latest compiler pin or a new GPU result."),
     element("h3", "", "Earlier e3 dependency refresh; caller then unvalidated"),
     element("p", "", resident.integration.dependencyRefresh.detail),
     element("h3", "", "Frozen native runtime: tested diagnostics, maintenance still blocked"),
@@ -154,9 +156,12 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
-    ["Status tracker source", resident.integration.currentValidation.trackerSource],
+    ["Status tracker source", resident.integration.latestProgress.trackerSource],
+    ["R9 selected proof source", resident.integration.latestProgress.proofSource],
+    ["Host-tested maintenance fix", resident.integration.latestProgress.fixSource],
+    ["Latest fetched compiler; adoption pending", resident.integration.latestProgress.latestFetchedCompiler],
     ["Validated compiler pin", resident.integration.currentValidation.validatedCompilerPin],
-    ["Latest fetched compiler; adoption pending", resident.integration.currentValidation.latestFetchedCompiler],
+    ["Earlier R4 checkpoint compiler fetch", resident.integration.currentValidation.latestFetchedCompiler],
     ["55-pinned dependency/source-gate evidence SHA-256", resident.integration.currentValidation.precheckEvidenceSha256],
     ["Host R1 source; 1,141 passes / 14 ignored", resident.integration.currentValidation.r1Source],
     ["Host R2 source; 54 aggregate passes", resident.integration.currentValidation.r2Source],
